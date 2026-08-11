@@ -165,4 +165,32 @@ class DiagnosticTest < Minitest::Spec
       refute_includes literal, "line:"
     end
   end
+
+  describe "#with_node" do
+    def diagnostic(node: nil)
+      Herb::Diagnostic.new(template: "a.erb", message: "x", node: node)
+    end
+
+    test "says which render it was found during" do
+      assert_equal "2", diagnostic.with_node("2").node
+    end
+
+    test "leaves the one it was given alone" do
+      assert_equal "already-set", diagnostic(node: "already-set").with_node("2").node
+    end
+
+    test "changes nothing when there is no render to name" do
+      original = diagnostic
+
+      assert_same original, original.with_node(nil)
+    end
+
+    test "does not alter the diagnostic it copies" do
+      original = diagnostic
+
+      original.with_node("2")
+
+      assert_nil original.node
+    end
+  end
 end

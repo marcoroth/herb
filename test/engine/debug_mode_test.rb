@@ -3,10 +3,15 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
+require_relative "../../lib/herb/engine/instrumentation_visitor"
 
 module Engine
   class DebugModeTest < Minitest::Spec
     include SnapshotUtils
+
+    LINK_SOURCE = %(<li><%= link_to "Abc", "" %></li>)
+    STATIC_SOURCE = %(<div><a href="">Abc</a></div>)
+    FILENAME = "app/views/posts/_card.html.erb"
 
     class ZeroLocationInjector < Herb::Visitor
       def visit_document_node(node)
@@ -644,6 +649,62 @@ module Engine
       assert_includes compiled, %(data-herb-debug-line="1")
       assert_includes compiled, %(data-herb-debug-column="1")
       refute_includes compiled, %(data-herb-debug-line="0")
+    end
+
+    describe "marking which render a tag came from" do
+      def visitors_for(node:, instrument: true)
+        visitors = [Herb::Engine::DebugVisitor.new(node: node)]
+        visitors << Herb::Engine::InstrumentationVisitor.new if instrument
+
+        visitors
+      end
+
+      def compiled(node:, instrument: true, source: LINK_SOURCE)
+        Herb::Engine.new(source, filename: FILENAME, visitors: visitors_for(node: node, instrument: instrument)).src
+      end
+
+      def linking_object
+        Object.new.tap do |object|
+          object.define_singleton_method(:link_to) { |text, href| %(<a href="#{href}">#{text}</a>) }
+        end
+      end
+
+      def assert_rendered_snapshot(name, renders: 1, **options)
+        source = compiled(**options)
+        object = linking_object
+
+        html = [] #: Array[String]
+
+        Herb::Engine::Report::Session.capture do
+          renders.times { html << object.instance_eval(source) }
+        end
+
+        assert_snapshot_matches(html.join("\n"), name, options)
+      end
+
+      test "says nothing about the render unless asked" do
+        assert_compiled_snapshot(LINK_SOURCE, filename: FILENAME, visitors: visitors_for(node: false))
+      end
+
+      test "compiles the marker as a tag the session fills in" do
+        assert_compiled_snapshot(LINK_SOURCE, filename: FILENAME, visitors: visitors_for(node: true))
+      end
+
+      test "keeps the marker on the element the tag produced" do
+        assert_rendered_snapshot("one render", node: true)
+      end
+
+      test "tells two renders of one tag apart" do
+        assert_rendered_snapshot("two renders", renders: 2, node: true)
+      end
+
+      test "still says which render markup that came from no tag belongs to" do
+        assert_rendered_snapshot("static markup", renders: 2, node: true, source: STATIC_SOURCE)
+      end
+
+      test "leaves the marker empty when nothing is instrumenting the render" do
+        assert_rendered_snapshot("no instrumentation", node: true, instrument: false)
+      end
     end
   end
 end

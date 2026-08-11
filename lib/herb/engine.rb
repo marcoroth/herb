@@ -62,6 +62,7 @@ module Herb
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
       @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
+      @visitors.validate_order!
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
       @freeze = properties[:freeze]

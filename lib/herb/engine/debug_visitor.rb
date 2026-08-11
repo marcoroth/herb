@@ -9,8 +9,24 @@ module Herb
     class DebugVisitor < Herb::Visitor
       include ContextAware
 
-      def initialize
-        super
+      #: () -> bool
+      def self.reads_erb_source?
+        true
+      end
+
+      # `node` adds the render occurrence to every marker, which needs `InstrumentationVisitor` in the
+      # same stack to have anything to report. Without it the value is empty on every tag, so it is
+      # asked for rather than assumed.
+      #
+      #     Herb::Engine.new(source, visitors: [
+      #       Herb::Engine::DebugVisitor.new(node: true),
+      #       Herb::Engine::InstrumentationVisitor.new
+      #     ])
+      #
+      def initialize(node: false)
+        super()
+
+        @node = node
 
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
@@ -87,7 +103,9 @@ module Herb
       end
 
       def inspect
-        "#<#{self.class.name}>"
+        return "#<#{self.class.name}>" unless @node
+
+        "#<#{self.class.name} node=true>"
       end
 
       private
@@ -165,6 +183,8 @@ module Herb
           create_debug_attribute("data-herb-debug-file-full-path", filename&.to_s || "unknown")
         ]
 
+        debug_attributes << create_debug_node_attribute if @node
+
         if @top_level_elements.length > 1
           debug_attributes << create_debug_attribute("data-herb-debug-attach-to-parent", "true")
         end
@@ -172,6 +192,33 @@ module Herb
         open_tag_node.children.concat(debug_attributes)
 
         @debug_attributes_applied = true
+      end
+
+      def create_debug_node_attribute
+        name_literal = Herb::AST::LiteralNode.build(content: +"data-herb-debug-node")
+        name_node = Herb::AST::HTMLAttributeNameNode.build(children: [name_literal])
+
+        value_node = Herb::AST::HTMLAttributeValueNode.build(
+          open_quote: Herb::Token.from(:quote, '"'),
+          children: [current_node_erb],
+          close_quote: Herb::Token.from(:quote, '"'),
+          quoted: true
+        )
+
+        Herb::AST::HTMLAttributeNode.build(
+          name: name_node,
+          equals: Herb::Token.from(:equals, "="),
+          value: value_node
+        )
+      end
+
+      def current_node_erb
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " ::Herb::Engine::Report::Session.current_node "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true
+        )
       end
 
       def create_debug_attribute(name, value)
@@ -219,6 +266,8 @@ module Herb
           create_debug_attribute("data-herb-debug-file-full-path", filename&.to_s || "unknown"),
           create_debug_attribute("data-herb-debug-inserted", "true")
         ]
+
+        debug_attributes << create_debug_node_attribute if @node
 
         if position
           debug_attributes << create_debug_attribute("data-herb-debug-line", position[:line].to_s)
@@ -327,10 +376,6 @@ module Herb
         end
 
         false
-      end
-
-      def erb_output?(opening)
-        opening.include?("=") && !opening.include?("#")
       end
 
       # TODO: Rewrite using Prism Nodes once available

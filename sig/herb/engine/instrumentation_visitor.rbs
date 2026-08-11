@@ -35,6 +35,9 @@ module Herb
     class InstrumentationVisitor < Herb::Visitor
       include ContextAware
 
+      # : () -> bool
+      def self.rewrites_erb_source?: () -> bool
+
       SESSION: ::String
 
       ASSIGNMENT_NODES: untyped
@@ -57,13 +60,11 @@ module Herb
 
       private
 
+      def frame_render: (untyped node) -> untyped
+
       def instrument: (untyped node) -> untyped
 
       def rewrite: (untyped nodes) -> untyped
-
-      def output?: (untyped node) -> untyped
-
-      def statement?: (untyped node) -> untyped
 
       def framed?: (untyped node) -> untyped
 
@@ -71,7 +72,7 @@ module Herb
 
       def block?: (untyped node) -> untyped
 
-      def opening: (untyped node) -> untyped
+      def via: (untyped node) -> untyped
 
       def wrapped_output: (untyped node) -> untyped
 

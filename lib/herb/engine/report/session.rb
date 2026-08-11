@@ -69,23 +69,52 @@ module Herb
           nil
         end
 
-        #: [T] (String?, Integer, Integer) { () -> T } -> T
-        def self.at(template, line, column)
-          enter(template, line, column)
+        #: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
+        def self.at(template, line, column, via = nil)
+          enter(template, line, column, via)
 
           yield
         ensure
           leave
         end
 
-        #: (String?, Integer, Integer) -> void
-        def self.enter(template, line, column)
-          current.enter(template, line, column)
+        #: (String?, Integer, Integer, ?Symbol?) -> void
+        def self.enter(template, line, column, via = nil)
+          current.enter(template, line, column, via)
         end
 
         #: () -> void
         def self.leave
           current.leave
+        end
+
+        #: [T] (String?) { () -> T } -> T
+        def self.render(template)
+          enter_render(template)
+
+          yield
+        ensure
+          leave_render
+        end
+
+        #: (String?) -> String
+        def self.enter_render(template)
+          current.enter_render(template)
+        end
+
+        #: () -> void
+        def self.leave_render
+          current.leave_render
+        end
+
+        #: () -> String?
+        def self.current_node
+          current.current_node
+        end
+
+        #: (Symbol, untyped, origin: String) -> void
+        def self.annotate(key, value, origin:)
+          current.annotate(key, value, origin: origin)
         end
 
         #: (Symbol, untyped) -> void
@@ -119,6 +148,8 @@ module Herb
           @report = report || Report.new
           @frames = [] #: Array[Array[untyped]]
           @entries = {} #: Hash[Array[untyped], Herb::Engine::Report::Entry]
+          @renders = [] #: Array[String]
+          @minted = 0 #: Integer
           @previous = previous
         end
 
@@ -129,7 +160,7 @@ module Herb
 
         #: (Herb::Diagnostic) -> Herb::Diagnostic
         def record(diagnostic)
-          report.add(diagnostic)
+          report.add(diagnostic.with_node(current_node))
         end
 
         #: (String, String?) -> void
@@ -147,9 +178,9 @@ module Herb
           report.empty? && entries.empty?
         end
 
-        #: (String?, Integer, Integer) -> void
-        def enter(template, line, column)
-          @frames.push([template, line, column])
+        #: (String?, Integer, Integer, ?Symbol?) -> void
+        def enter(template, line, column, via = nil)
+          @frames.push([template, line, column, via])
 
           nil
         end
@@ -175,17 +206,65 @@ module Herb
         # Taking it costs an array per observation, which is why it is offered rather than recorded.
         #: () -> Array[Array[untyped]]
         def stack
-          @frames.reverse.map(&:dup)
+          @frames.reverse.map { |frame| frame.first(3) }
         end
 
+        # Filed under the render it happened in, not only the position it happened at.
+        #
+        # A partial rendered three times has one tag at one position, so keying on position alone
+        # merges all three into one entry reading "3 queries" at one place. That reads as one slow
+        # tag when the finding is a tag that runs once per item, which is the thing worth noticing.
         #: (Symbol, untyped) -> void
         def observe(key, value)
           frame = @frames.last
 
           return unless frame
 
-          entry = (@entries[frame] ||= Entry.new(frame[0], frame[1], frame[2]))
+          entry = (@entries[[@renders.last, frame[0], frame[1], frame[2]]] ||= Entry.new(frame[0], frame[1], frame[2]))
+
           entry.observe(key, value)
+
+          nil
+        end
+
+        # One render of one template, which is what a node in the payload is.
+        #
+        # A template rendered three times is three nodes, because what gets said about it is said
+        # about an occurrence and not about the file. The id is minted here so there is exactly one
+        # of them per occurrence, rather than one per producer that wants to name it.
+        #
+        # The tag that is open when a render starts is the tag that started it, so the call site
+        # comes for free. Without it the tree would say a partial rendered twice under one parent but
+        # not from where, which `stack` can say and a payload built from the tree alone could not.
+        #: (String?) -> String
+        def enter_render(template)
+          id = (@minted += 1).to_s
+
+          report.render(id, template, @renders.last, called_from: @frames.last)
+          @renders.push(id)
+
+          id
+        end
+
+        #: () -> void
+        def leave_render
+          @renders.pop
+
+          nil
+        end
+
+        #: () -> String?
+        def current_node
+          @renders.last
+        end
+
+        #: (Symbol, untyped, origin: String) -> void
+        def annotate(key, value, origin:)
+          node = current_node
+
+          return unless node
+
+          report.annotate(node, key, value, origin: origin)
 
           nil
         end

@@ -5,7 +5,18 @@ module Herb
     class DebugVisitor < Herb::Visitor
       include ContextAware
 
-      def initialize: () -> untyped
+      # : () -> bool
+      def self.reads_erb_source?: () -> bool
+
+      # `node` adds the render occurrence to every marker, which needs `InstrumentationVisitor` in the
+      # same stack to have anything to report. Without it the value is empty on every tag, so it is
+      # asked for rather than assumed.
+      #
+      #     Herb::Engine.new(source, visitors: [
+      #       Herb::Engine::DebugVisitor.new(node: true),
+      #       Herb::Engine::InstrumentationVisitor.new
+      #     ])
+      def initialize: (?node: untyped) -> untyped
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -45,6 +56,10 @@ module Herb
 
       def add_debug_attributes_to_element: (untyped open_tag_node) -> untyped
 
+      def create_debug_node_attribute: () -> untyped
+
+      def current_node_erb: () -> untyped
+
       def create_debug_attribute: (untyped name, untyped value) -> untyped
 
       def create_debug_span_for_erb: (untyped erb_node) -> untyped
@@ -66,8 +81,6 @@ module Herb
       def in_script_or_style_context?: () -> untyped
 
       def in_excluded_context?: () -> untyped
-
-      def erb_output?: (untyped opening) -> untyped
 
       # TODO: Rewrite using Prism Nodes once available
       def complex_rails_helper?: (untyped code) -> untyped

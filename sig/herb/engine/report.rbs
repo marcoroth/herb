@@ -20,6 +20,10 @@ module Herb
 
       attr_reader sources: Hash[String, String]
 
+      attr_reader nodes: Hash[String, Hash[String, Hash[Symbol, untyped]]]
+
+      attr_reader render_tree: Array[Hash[Symbol, untyped]]
+
       # : (?max_diagnostics: Integer) -> void
       def initialize: (?max_diagnostics: Integer) -> void
 
@@ -31,6 +35,12 @@ module Herb
 
       # : (String, String?) -> void
       def source: (String, String?) -> void
+
+      # : (String, String?, String?, ?called_from: Array[untyped]?) -> void
+      def render: (String, String?, String?, ?called_from: Array[untyped]?) -> void
+
+      # : (String, Symbol, untyped, origin: String) -> void
+      def annotate: (String, Symbol, untyped, origin: String) -> void
 
       # : () -> Array[Herb::Diagnostic]
       def diagnostics: () -> Array[Herb::Diagnostic]

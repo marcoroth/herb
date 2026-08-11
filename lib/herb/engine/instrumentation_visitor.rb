@@ -39,6 +39,13 @@ module Herb
     class InstrumentationVisitor < Herb::Visitor
       include ContextAware
 
+      recommended_parser_option render_nodes: true
+
+      #: () -> bool
+      def self.rewrites_erb_source?
+        true
+      end
+
       SESSION = "::Herb::Engine::Report::Session"
 
       ASSIGNMENT_NODES = [
@@ -76,6 +83,8 @@ module Herb
         super
 
         instrument(node)
+
+        frame_render(node)
       end
 
       def inspect
@@ -83,6 +92,15 @@ module Herb
       end
 
       private
+
+      def frame_render(node)
+        template = context.relative_file_path.dump
+
+        node.children.unshift(erb_node(node, "<%", "#{SESSION}.enter_render(#{template}); begin"))
+        node.children.push(erb_node(node, "<%", "ensure; #{SESSION}.leave_render; end"))
+
+        nil
+      end
 
       def instrument(node)
         ARRAY_PROPERTIES.each do |property|
@@ -104,9 +122,9 @@ module Herb
 
           if framed?(node)
             [enter_node(node), node, leave_node(node)]
-          elsif output?(node)
+          elsif erb_outputs?(node)
             [wrapped_output(node)]
-          elsif statement?(node)
+          elsif erb_statement?(node)
             [wrapped_statement(node)]
           else
             [node]
@@ -116,20 +134,8 @@ module Herb
         nodes.replace(rewritten)
       end
 
-      def output?(node)
-        node.is_a?(Herb::AST::ERBContentNode) && opening(node).start_with?("<%=")
-      end
-
-      def statement?(node)
-        return false unless node.is_a?(Herb::AST::ERBContentNode)
-
-        opening = opening(node)
-
-        opening.start_with?("<%") && !opening.start_with?("<%=", "<%#")
-      end
-
       def framed?(node)
-        block?(node) || (output?(node) && assignment?(node))
+        block?(node) || (erb_outputs?(node) && assignment?(node))
       end
 
       def assignment?(node)
@@ -146,16 +152,19 @@ module Herb
       end
 
       def block?(node)
-        return false if node.is_a?(Herb::AST::ERBRenderNode)
         return false unless node.respond_to?(:end_node)
 
         !node.end_node.nil?
       end
 
-      def opening(node)
-        return "" unless node.respond_to?(:tag_opening)
+      def via(node)
+        return nil unless node.is_a?(Herb::AST::ERBRenderNode)
+        return :layout if node.layout_name
+        return :template if node.template_name
+        return :collection if node.keywords&.collection
+        return nil if node.keywords&.object
 
-        node.tag_opening&.value.to_s
+        :partial
       end
 
       def wrapped_output(node)
@@ -176,8 +185,12 @@ module Herb
 
       def position(node)
         location = node.location
+        parts = [context.relative_file_path.dump, location.start.line, location.start.column]
+        kind = via(node)
 
-        [context.relative_file_path.dump, location.start.line, location.start.column].join(", ")
+        parts << kind.inspect if kind
+
+        parts.join(", ")
       end
 
       def code(node)

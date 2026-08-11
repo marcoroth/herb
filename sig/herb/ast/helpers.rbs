@@ -4,7 +4,16 @@ module Herb
   module AST
     module Helpers
       # : (Herb::AST::Node?) -> bool
+      def erb_node?: (Herb::AST::Node?) -> bool
+
+      # : (Herb::AST::Node?) -> String
+      def erb_opening: (Herb::AST::Node?) -> String
+
+      # : (Herb::AST::Node?) -> bool
       def erb_outputs?: (Herb::AST::Node?) -> bool
+
+      # : (Herb::AST::Node?) -> bool
+      def erb_statement?: (Herb::AST::Node?) -> bool
 
       # : (String) -> bool
       def erb_comment?: (String) -> bool
