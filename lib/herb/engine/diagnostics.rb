@@ -31,9 +31,10 @@ module Herb
         @diagnostics ||= [] #: Array[Herb::Diagnostic]
       end
 
-      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def error(message, location, code: nil, suggestion: nil, docs_url: nil)
-        add_diagnostic(message, location, :error, code: code, suggestion: suggestion, docs_url: docs_url)
+      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def error(message, location, code: nil, suggestion: nil, docs_url: nil, error_class: nil)
+        add_diagnostic(message, location, :error, code: code, suggestion: suggestion, docs_url: docs_url,
+                                                  error_class: error_class)
       end
 
       #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
@@ -85,8 +86,8 @@ module Herb
 
       private
 
-      #: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def add_diagnostic(message, location, severity, code: nil, suggestion: nil, docs_url: nil)
+      #: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def add_diagnostic(message, location, severity, code: nil, suggestion: nil, docs_url: nil, error_class: nil)
         diagnostic = Herb::Diagnostic.new(
           template: diagnostic_template,
           message: message,
@@ -97,7 +98,8 @@ module Herb
           suggestion: suggestion,
           docs_url: docs_url,
           phase: :compile,
-          data: diagnostic_data
+          data: diagnostic_data,
+          error_class: error_class
         )
 
         diagnostics << diagnostic

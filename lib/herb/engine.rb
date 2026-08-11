@@ -23,7 +23,6 @@ require_relative "engine/validators"
 
 module Herb
   class Engine
-    SECURITY_VIOLATION_CODE = "security-violation" #: String
     PARSER_ORIGIN = "Herb Parser" #: String
 
     attr_reader :src, :context, :bufvar, :visitors
@@ -390,15 +389,16 @@ module Herb
     def raise_for(errors, input)
       return if errors.empty?
 
-      security_error = errors.find { |error| error.code == SECURITY_VIOLATION_CODE }
+      declared = errors.find(&:error_class)
+      error_class = declared&.error_class
 
-      if security_error
-        raise SecurityError.new(
-          security_error.message,
-          line: security_error.location&.start&.line,
-          column: security_error.location&.start&.column,
+      if declared && error_class
+        raise error_class.new(
+          declared.message,
+          line: declared.location&.start&.line,
+          column: declared.location&.start&.column,
           filename: filename,
-          suggestion: security_error.suggestion
+          suggestion: declared.suggestion
         )
       end
 
