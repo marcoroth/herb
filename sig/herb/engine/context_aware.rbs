@@ -25,11 +25,8 @@ module Herb
       # : (Herb::Engine::VisitorContext) -> void
       def inherit_context: (Herb::Engine::VisitorContext) -> void
 
-      # : () -> untyped
-      def stack: () -> untyped
-
-      # : (untyped) -> void
-      def inherit_stack: (untyped) -> void
+      # : () -> Herb::Engine::Origin
+      def origin: () -> Herb::Engine::Origin
     end
   end
 end

@@ -3,7 +3,6 @@
 
 require_relative "../visitor"
 require_relative "context_aware"
-require_relative "instrumentation_visitor"
 
 module Herb
   class Engine
@@ -35,21 +34,6 @@ module Herb
         true
       end
 
-      #: () -> bool
-      def self.rewrites_erb_source?
-        true
-      end
-
-      # A spliced partial is instrumented when the template it lands in is, which is what the engine
-      # was already given enough to answer. Passing `instrument` decides it either way instead.
-      #
-      #: (?instrument: bool?) -> void
-      def initialize(instrument: nil)
-        super()
-
-        @instrument = instrument
-      end
-
       #: (Herb::AST::DocumentNode) -> void
       def visit_document_node(node)
         @inlining = [] #: Array[String]
@@ -61,14 +45,12 @@ module Herb
 
       #: () -> String
       def inspect
-        return "#<#{self.class.name}>" if @instrument.nil?
-
-        "#<#{self.class.name} instrument=#{@instrument}>"
+        "#<#{self.class.name}>"
       end
 
       private
 
-      #: (untyped) -> void
+      #: (Herb::AST::Node) -> void
       def inline(node)
         ARRAY_PROPERTIES.each do |property|
           next unless node.respond_to?(property) && node.send(property).is_a?(Array)
@@ -85,7 +67,7 @@ module Herb
         nil
       end
 
-      #: (Array[untyped]) -> void
+      #: (Array[Herb::AST::Node]) -> void
       def expand(nodes)
         nodes.replace(nodes.flat_map { |child|
           inline(child)
@@ -96,12 +78,12 @@ module Herb
         nil
       end
 
-      #: (untyped) -> bool
+      #: (Herb::AST::Node) -> bool
       def inlinable?(node)
         node.is_a?(Herb::AST::ERBRenderNode) && inliner.can_inline?(node)
       end
 
-      #: (untyped) -> Array[untyped]
+      #: (Herb::AST::Node) -> Array[Herb::AST::Node]
       def spliced(node)
         path = inliner.resolve_path(node)
 
@@ -110,20 +92,30 @@ module Herb
 
         @inlining.push(path.to_s)
 
-        partial = parse(File.read(path))
-
-        instrument(partial, path)
-
-        body = partial&.children || []
+        body = parse(File.read(path)).children
 
         inline_nested(body)
 
         @inlining.pop
 
-        [erb(opening_for(node)), *body, erb(inliner.collection?(node) ? "end; end" : "end")]
+        record(body, node, path)
+
+        [block(node, body)]
       end
 
-      #: (Array[untyped]) -> void
+      #: (Array[Herb::AST::Node], Herb::AST::Node, Pathname) -> void
+      def record(body, node, path)
+        file = VisitorContext.derive_relative_file_path(
+          Pathname.new(File.expand_path(path.to_s)),
+          Pathname.new(File.expand_path(context.project_path))
+        )
+
+        body.each { |child| origin.authored(child, file, from: node) }
+
+        nil
+      end
+
+      #: (Array[Herb::AST::Node]) -> void
       def inline_nested(body)
         body.each { |child| inline(child) }
 
@@ -132,7 +124,7 @@ module Herb
         nil
       end
 
-      #: (String) -> untyped
+      #: (String) -> Herb::AST::DocumentNode
       def parse(source)
         configured = context.options[:parser_options] || {} #: Hash[Symbol, untyped]
         options = Herb::Visitor.parser_options_for([self], configured)
@@ -140,31 +132,7 @@ module Herb
         ::Herb.parse(source, **options, track_whitespace: true).value
       end
 
-      #: () -> bool
-      def instrument?
-        return @instrument unless @instrument.nil?
-
-        stack.any? { |visitor| visitor.is_a?(InstrumentationVisitor) }
-      end
-
-      #: (untyped, untyped) -> void
-      def instrument(partial, path)
-        return unless instrument?
-        return unless partial
-
-        instrumenter = InstrumentationVisitor.new
-
-        instrumenter.context = VisitorContext.new(
-          file_path: File.expand_path(path),
-          project_path: File.expand_path(context.project_path)
-        )
-
-        partial.accept(instrumenter)
-
-        nil
-      end
-
-      #: (untyped) -> String
+      #: (Herb::AST::Node) -> String
       def opening_for(node)
         locals = inliner.local_assignments(node).map { |name, value| "#{name} = (#{value});" }
 
@@ -175,13 +143,25 @@ module Herb
         "begin; (#{inliner.collection_expression(node)}).each_with_index do |#{item}, #{item}_counter|; #{locals.join(" ")}"
       end
 
-      #: (String) -> untyped
-      def erb(code)
-        Herb::AST::ERBContentNode.build(
+      #: (Herb::AST::Node, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
+      def block(node, body)
+        Herb::AST::ERBBlockNode.build(
           tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
-          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{code} "),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{opening_for(node)} "),
           tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
-          valid: true
+          body: body,
+          end_node: closing_for(node),
+          location: node.location
+        ).tap { |generated| origin.generated(generated) }
+      end
+
+      #: (Herb::AST::Node) -> Herb::AST::ERBEndNode
+      def closing_for(node)
+        Herb::AST::ERBEndNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", inliner.collection?(node) ? " end; end " : " end "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          location: node.location
         )
       end
 

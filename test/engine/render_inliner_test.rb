@@ -5,6 +5,8 @@ require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 require_relative "../../lib/herb/engine/inline_render_visitor"
 require_relative "../../lib/herb/engine/instrumentation_visitor"
+require_relative "../../lib/herb/engine/component_visitor"
+require_relative "../../lib/herb/engine/validators"
 
 module Engine
   class RenderInlinerTest < Minitest::Spec
@@ -84,12 +86,16 @@ module Engine
 
     describe "what an inlined partial still reports" do
       def compiled(inline:)
-        visitors = [Herb::Engine::InstrumentationVisitor.new]
-        visitors.push(Herb::Engine::InlineRenderVisitor.new) if inline
+        visitors = inline ? [Herb::Engine::InlineRenderVisitor.new] : []
+        visitors.push(Herb::Engine::InstrumentationVisitor.new)
 
-        Herb::Engine.new(%(<%= render "posts/card" %>), filename: "app/views/posts/index.html.erb",
-                                                        project_path: PROJECT_PATH, escape: false,
-                                                        visitors: visitors).src
+        Herb::Engine.new(
+          %(<%= render "posts/card" %>),
+          filename: "app/views/posts/index.html.erb",
+          project_path: PROJECT_PATH,
+          escape: false,
+          visitors: visitors
+        ).src
       end
 
       def view
@@ -104,8 +110,6 @@ module Engine
         refute_includes compiled(inline: true), %(_buf << (render "posts/card"))
       end
 
-      # A partial that was inlined never renders, so without the frames it would vanish from the
-      # report and the page would describe itself differently depending on an optimization.
       test "reports the render it no longer performs" do
         session = SESSION.capture { view.instance_eval(compiled(inline: true)) }
 
@@ -116,8 +120,6 @@ module Engine
         assert_equal "1", node[:parent]
       end
 
-      # The nodes came from the partial's own source, so they carry its lines and columns. Only the
-      # name had to be carried across with them.
       test "files what happens inside it under the partial, not the template it landed in" do
         session = SESSION.capture { view.instance_eval(compiled(inline: true)) }
 
@@ -130,6 +132,79 @@ module Engine
         templates = inlined.map { |node| node[:template] }
 
         assert_equal ["app/views/posts/index.html.erb", CARD], templates
+      end
+
+      test "instruments nothing it wrote itself" do
+        source = compiled(inline: true)
+
+        assert_equal ['("app/views/posts/index.html.erb", 1, 0, :partial)'], source.scan(/Session\.enter(\([^)]*\))/).flatten
+        assert_equal ["(\"#{CARD}\", 1, 5)"], source.scan(/Session\.at(\([^)]*\))/).flatten
+      end
+
+      test "reports one render per item of a collection rather than one for the lot" do
+        source = %(<%= render partial: "posts/post", collection: posts %>)
+
+        compiled = Herb::Engine.new(
+          source,
+          filename: "app/views/posts/index.html.erb",
+          project_path: PROJECT_PATH, escape: false,
+          visitors: [
+            Herb::Engine::InlineRenderVisitor.new,
+            Herb::Engine::InstrumentationVisitor.new
+          ]
+        ).src
+
+        object = view.tap { |view| view.define_singleton_method(:posts) { [1, 2, 3] } }
+        tree = SESSION.capture { object.instance_eval(compiled) }.report.render_tree
+
+        assert_equal(3, tree.count { |node| node[:template] == "app/views/posts/_post.html.erb" })
+      end
+
+      test "keeps a partial rendered from a partial inside the one that rendered it" do
+        source = %(<%= render "shared/outer" %>)
+        compiled = Herb::Engine.new(
+          source,
+          filename: "app/views/posts/index.html.erb",
+          project_path: PROJECT_PATH, escape: false,
+          visitors: [
+            Herb::Engine::InlineRenderVisitor.new,
+            Herb::Engine::InstrumentationVisitor.new
+          ]
+        ).src
+
+        tree = SESSION.capture { view.instance_eval(compiled) }.report.render_tree
+
+        assert_equal(["app/views/shared/_outer.html.erb", "app/views/shared/_inner.html.erb"],
+                     tree.drop(1).map { |node| node[:template] })
+        assert_equal([tree[0][:id], tree[1][:id]], tree.drop(1).map { |node| node[:parent] })
+      end
+    end
+
+    describe "what the rest of the stack sees" do
+      def compiled(source, visitors)
+        Herb::Engine.new(
+          source,
+          filename: "app/views/posts/index.html.erb",
+          project_path: PROJECT_PATH,
+          escape: false,
+          visitors: [
+            Herb::Engine::InlineRenderVisitor.new, *visitors
+          ]
+        ).src
+      end
+
+      test "a validator refuses markup in a partial the way it refuses it in a template" do
+        error = assert_raises(Herb::Engine::SecurityError) do
+          compiled(%(<%= render "shared/unsafe" %>), Herb::Engine::Validators.all(fatal: true))
+        end
+
+        assert_match(/attribute/i, error.message)
+      end
+
+      test "a transforming visitor transforms what the partial brought with it" do
+        compiled = compiled(%(<%= render "shared/component" %>), [Herb::Engine::ComponentVisitor.new])
+
+        assert_includes compiled, %(render Card.new(title: "hi"))
       end
     end
   end

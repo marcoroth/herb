@@ -90,10 +90,7 @@ module Herb
         handle_parser_errors(result.errors, input, result.value)
       else
         @visitors.each do |visitor|
-          if visitor.is_a?(ContextAware)
-            visitor.inherit_context(@context)
-            visitor.inherit_stack(@visitors)
-          end
+          visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
 
           result.value.accept(visitor)
         end

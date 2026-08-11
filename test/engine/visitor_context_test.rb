@@ -69,7 +69,7 @@ module Engine
 
       assert_equal "dark", subject[:theme]
       assert_equal 2, subject[:level]
-      assert_equal({ theme: "dark", level: 2 }, subject.data)
+      assert_equal({ theme: "dark", level: 2 }, subject.data.except(:origin))
     end
 
     test "well known keys are readable through the bag" do

@@ -27,15 +27,6 @@ module Herb
       # : () -> bool
       def self.inlines_renders?: () -> bool
 
-      # : () -> bool
-      def self.rewrites_erb_source?: () -> bool
-
-      # A spliced partial is instrumented when the template it lands in is, which is what the engine
-      # was already given enough to answer. Passing `instrument` decides it either way instead.
-      #
-      # : (?instrument: bool?) -> void
-      def initialize: (?instrument: bool?) -> void
-
       # : (Herb::AST::DocumentNode) -> void
       def visit_document_node: (Herb::AST::DocumentNode) -> void
 
@@ -44,35 +35,35 @@ module Herb
 
       private
 
-      # : (untyped) -> void
-      def inline: (untyped) -> void
+      # : (Herb::AST::Node) -> void
+      def inline: (Herb::AST::Node) -> void
 
-      # : (Array[untyped]) -> void
-      def expand: (Array[untyped]) -> void
+      # : (Array[Herb::AST::Node]) -> void
+      def expand: (Array[Herb::AST::Node]) -> void
 
-      # : (untyped) -> bool
-      def inlinable?: (untyped) -> bool
+      # : (Herb::AST::Node) -> bool
+      def inlinable?: (Herb::AST::Node) -> bool
 
-      # : (untyped) -> Array[untyped]
-      def spliced: (untyped) -> Array[untyped]
+      # : (Herb::AST::Node) -> Array[Herb::AST::Node]
+      def spliced: (Herb::AST::Node) -> Array[Herb::AST::Node]
 
-      # : (Array[untyped]) -> void
-      def inline_nested: (Array[untyped]) -> void
+      # : (Array[Herb::AST::Node], Herb::AST::Node, Pathname) -> void
+      def record: (Array[Herb::AST::Node], Herb::AST::Node, Pathname) -> void
 
-      # : (String) -> untyped
-      def parse: (String) -> untyped
+      # : (Array[Herb::AST::Node]) -> void
+      def inline_nested: (Array[Herb::AST::Node]) -> void
 
-      # : () -> bool
-      def instrument?: () -> bool
+      # : (String) -> Herb::AST::DocumentNode
+      def parse: (String) -> Herb::AST::DocumentNode
 
-      # : (untyped, untyped) -> void
-      def instrument: (untyped, untyped) -> void
+      # : (Herb::AST::Node) -> String
+      def opening_for: (Herb::AST::Node) -> String
 
-      # : (untyped) -> String
-      def opening_for: (untyped) -> String
+      # : (Herb::AST::Node, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
+      def block: (Herb::AST::Node, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
 
-      # : (String) -> untyped
-      def erb: (String) -> untyped
+      # : (Herb::AST::Node) -> Herb::AST::ERBEndNode
+      def closing_for: (Herb::AST::Node) -> Herb::AST::ERBEndNode
 
       # : () -> untyped
       def inliner: () -> untyped

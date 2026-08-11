@@ -3,6 +3,7 @@
 
 require_relative "../visitor"
 require_relative "context_aware"
+require_relative "origin"
 
 module Herb
   class Engine
@@ -80,6 +81,8 @@ module Herb
       end
 
       def visit_document_node(node)
+        @file = context.relative_file_path
+
         super
 
         instrument(node)
@@ -117,21 +120,43 @@ module Herb
       end
 
       def rewrite(nodes)
-        rewritten = nodes.flat_map { |node|
-          instrument(node)
+        runs = nodes.chunk_while { |before, after| origin.of(before) == origin.of(after) }
 
-          if framed?(node)
-            [enter_node(node), node, leave_node(node)]
-          elsif erb_outputs?(node)
-            [wrapped_output(node)]
-          elsif erb_statement?(node)
-            [wrapped_statement(node)]
-          else
-            [node]
-          end
-        }
+        nodes.replace(runs.flat_map { |group| rewrite_chunk(origin.of(group.first), group) })
+      end
 
-        nodes.replace(rewritten)
+      #: (Herb::Engine::Origin::Entry?, Array[Herb::AST::Node]) -> Array[Herb::AST::Node]
+      def rewrite_chunk(entry, group)
+        return group.each { |node| instrument(node) } if entry&.generated?
+        return group.flat_map { |node| rewrite_node(node) } unless entry
+
+        outer = @file
+        @file = entry.file
+        rewritten = group.flat_map { |node| rewrite_node(node) }
+        @file = outer
+
+        [
+          enter_node(entry.from),
+          enter_render_node(entry.from, entry.file),
+          *rewritten,
+          leave_render_node(entry.from),
+          leave_node(entry.from)
+        ]
+      end
+
+      #: (Herb::AST::Node) -> Array[Herb::AST::Node]
+      def rewrite_node(node)
+        instrument(node)
+
+        if framed?(node)
+          [enter_node(node), node, leave_node(node)]
+        elsif erb_outputs?(node)
+          [wrapped_output(node)]
+        elsif erb_statement?(node)
+          [wrapped_statement(node)]
+        else
+          [node]
+        end
       end
 
       def framed?(node)
@@ -185,9 +210,17 @@ module Herb
         erb_node(node, "<%", "#{SESSION}.leave")
       end
 
+      def enter_render_node(node, file)
+        erb_node(node, "<%", "#{SESSION}.enter_render(#{file.dump}); begin")
+      end
+
+      def leave_render_node(node)
+        erb_node(node, "<%", "ensure; #{SESSION}.leave_render; end")
+      end
+
       def position(node)
         location = node.location
-        parts = [context.relative_file_path.dump, location.start.line, location.start.column]
+        parts = [@file.dump, location.start.line, location.start.column]
         kind = via(node)
 
         parts << kind.inspect if kind

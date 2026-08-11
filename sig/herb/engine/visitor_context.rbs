@@ -36,6 +36,9 @@ module Herb
       # : (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
       def initialize: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
 
+      # : () -> Herb::Engine::Origin
+      def origin: () -> Herb::Engine::Origin
+
       # : (Symbol) -> untyped
       def []: (Symbol) -> untyped
 

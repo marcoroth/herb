@@ -27,19 +27,35 @@ module Herb
       #: () -> void
       def validate_order!
         each_with_index do |visitor, position|
-          next unless answers?(visitor, :reads_erb_source?)
-
-          rewriter = take(position).find { |earlier| answers?(earlier, :rewrites_erb_source?) }
-
-          next unless rewriter
-
-          raise OrderError, "#{visitor.class} reads the ERB a template was written with, so it has to run before #{rewriter.class}, which rewrites it. Put it earlier in `visitors:`."
+          validate_inlining!(visitor, position)
+          validate_reading!(visitor, position)
         end
 
         nil
       end
 
       private
+
+      #: (untyped, Integer) -> void
+      def validate_inlining!(visitor, position)
+        return unless answers?(visitor, :inlines_renders?)
+        return if position.zero?
+
+        earlier = self[position - 1]
+
+        raise OrderError, "#{visitor.class} brings markup from other templates into this one, so it has to run first. #{earlier.class} would otherwise never see what it brought in. Put it first in `visitors:`."
+      end
+
+      #: (untyped, Integer) -> void
+      def validate_reading!(visitor, position)
+        return unless answers?(visitor, :reads_erb_source?)
+
+        rewriter = take(position).find { |earlier| answers?(earlier, :rewrites_erb_source?) }
+
+        return unless rewriter
+
+        raise OrderError, "#{visitor.class} reads the ERB a template was written with, so it has to run before #{rewriter.class}, which rewrites it. Put it earlier in `visitors:`."
+      end
 
       #: (untyped, Symbol) -> bool
       def answers?(visitor, question)

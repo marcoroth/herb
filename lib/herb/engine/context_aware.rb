@@ -36,14 +36,9 @@ module Herb
         @context = context unless @context_explicit
       end
 
-      #: () -> untyped
-      def stack
-        @stack ||= [] #: Array[untyped]
-      end
-
-      #: (untyped) -> void
-      def inherit_stack(stack)
-        @stack = stack
+      #: () -> Herb::Engine::Origin
+      def origin
+        context.origin
       end
     end
   end
