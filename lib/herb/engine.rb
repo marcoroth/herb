@@ -6,6 +6,7 @@ require "time"
 require "pathname"
 
 require_relative "engine/visitor_context"
+require_relative "engine/visitor_stack"
 require_relative "engine/context_aware"
 require_relative "engine/diagnostics"
 require_relative "engine/debug_visitor"
@@ -104,23 +105,16 @@ module Herb
         warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
       end
 
-      @visitors = properties.fetch(:visitors, default_visitors)
-
-      if @debug && @visitors.empty?
-        debug_visitor = DebugVisitor.new(
-          file_path: filename,
-          project_path: project_path
-        )
-
-        @visitors << debug_visitor
-      end
-
-      @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
-
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
       end
+
+      @visitors = VisitorStack.build(validation_visitors)
+      @visitors.concat(Array(properties.fetch(:visitors, default_visitors)))
+      @visitors.use(DebugVisitor.new(file_path: filename, project_path: project_path)) if @debug
+
+      @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
       @freeze = properties[:freeze]
       @freeze_template_literals = properties.fetch(:freeze_template_literals, true)
@@ -165,25 +159,13 @@ module Herb
           # Skip both errors and compilation, but still need minimal Ruby code
         end
       else
-        validators = run_validation(ast) unless @validation_mode == :none
-
-        if validators
-          handle_validation_errors(validators, input) if @validation_mode == :raise
-          add_validation_overlay(validators, input) if @validation_mode == :overlay
-        end
-
         @visitors.each do |visitor|
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
 
           ast.accept(visitor)
         end
 
-        reporting_visitors = @visitors.select { |visitor| visitor.is_a?(Diagnostics) }
-
-        unless reporting_visitors.empty? || @validation_mode == :none
-          handle_validation_errors(reporting_visitors, input) if @validation_mode == :raise
-          add_validation_overlay(reporting_visitors, input) if @validation_mode == :overlay
-        end
+        report(@visitors.grep(Diagnostics).flat_map(&:diagnostics), input)
 
         compiler = Compiler.new(self, properties)
 
@@ -428,20 +410,15 @@ module Herb
 
     private
 
-    def run_validation(ast)
-      validators = [
+    #: () -> Array[Herb::Engine::Validator]
+    def validation_visitors
+      return [] if @validation_mode == :none
+
+      [
         Validators::SecurityValidator.new(enabled: @enabled_validators[:security]),
         Validators::NestingValidator.new(enabled: @enabled_validators[:nesting]),
         Validators::AccessibilityValidator.new(enabled: @enabled_validators[:accessibility])
-      ]
-
-      validators.select(&:enabled?).each do |validator|
-        validator.inherit_context(@context) if validator.is_a?(ContextAware)
-
-        ast.accept(validator)
-      end
-
-      validators
+      ].select(&:enabled?)
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
@@ -461,13 +438,19 @@ module Herb
       end
     end
 
-    def enabled_reporters(reporters)
-      reporters.reject { |reporter| reporter.respond_to?(:enabled?) && !reporter.enabled? }
+    #: (Array[Herb::Diagnostic], String) -> void
+    def report(diagnostics, input)
+      return if diagnostics.empty?
+
+      case @validation_mode
+      when :raise then raise_for(diagnostics.select(&:error?), input)
+      when :overlay then add_validation_overlay(diagnostics, input)
+      end
     end
 
-    def handle_validation_errors(validators, input)
-      errors = enabled_reporters(validators).flat_map(&:errors)
-      return unless errors.any?
+    #: (Array[Herb::Diagnostic], String) -> void
+    def raise_for(errors, input)
+      return if errors.empty?
 
       security_error = errors.find { |error| error.code == SECURITY_VIOLATION_CODE }
 
@@ -486,8 +469,7 @@ module Herb
       raise CompilationError, "\n#{message}"
     end
 
-    def add_validation_overlay(validators, input = nil)
-      errors = enabled_reporters(validators).flat_map(&:diagnostics)
+    def add_validation_overlay(errors, input = nil)
       return unless errors.any?
 
       templates = errors.map { |error|

@@ -101,15 +101,18 @@ module Herb
 
     private
 
-    def run_validation: (untyped ast) -> untyped
+    # : () -> Array[Herb::Engine::Validator]
+    def validation_visitors: () -> Array[Herb::Engine::Validator]
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
-    def enabled_reporters: (untyped reporters) -> untyped
+    # : (Array[Herb::Diagnostic], String) -> void
+    def report: (Array[Herb::Diagnostic], String) -> void
 
-    def handle_validation_errors: (untyped validators, untyped input) -> untyped
+    # : (Array[Herb::Diagnostic], String) -> void
+    def raise_for: (Array[Herb::Diagnostic], String) -> void
 
-    def add_validation_overlay: (untyped validators, ?untyped input) -> untyped
+    def add_validation_overlay: (untyped errors, ?untyped input) -> untyped
 
     def escape_attr: (untyped text) -> untyped
 
