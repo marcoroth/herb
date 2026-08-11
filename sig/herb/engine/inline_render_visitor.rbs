@@ -21,10 +21,10 @@ module Herb
     # reported from inside an inlined partial name the partial rather than the template it landed
     # in, and leaves the wrapper written here attributed to nobody.
     #
-    # A partial is inlined only when the file it names is knowable and inlining it changes nothing:
-    # a literal path, no block, no `content_for`, no `yield`, no `local_assigns`, and not one
-    # already being inlined further up. Anything else is left as the `render` call it was written
-    # as.
+    # A partial is inlined only when the file it names is knowable and the copy would mean what the
+    # original did. Some of what a partial means is answered by where it is rather than by what it
+    # says, and none of that survives being copied, so `Inliner` reads the partial and leaves it
+    # alone when it finds any of it. Anything left alone stays the `render` call it was written as.
     class InlineRenderVisitor < Herb::Visitor
       include ContextAware
 
@@ -101,8 +101,16 @@ module Herb
       # A lambda takes them as parameters, which both scopes them and evaluates them once, where
       # they were written. A collection is a block already, so what it needs instead is its locals
       # declared block-local, or assigning them would reach back out to the template's.
-      # : (Herb::AST::Node) -> String
-      def opening_for: (Herb::AST::Node) -> String
+      # : (Herb::AST::Node, Array[String]) -> String
+      def opening_for: (Herb::AST::Node, Array[String]) -> String
+
+      # Declared block-local, so that assigning them reaches no further than the partial does.
+      #
+      # Without this a partial assigning a name the template already has a local for would assign
+      # over the template's, because a block body shares the locals around it rather than making
+      # its own. A name that is already a parameter here is not repeated, which would not parse.
+      # : (Array[String], Array[String]) -> String
+      def block_locals: (Array[String], Array[String]) -> String
 
       # : (Herb::AST::Node) -> String
       def closing_for_code: (Herb::AST::Node) -> String
@@ -113,8 +121,8 @@ module Herb
       # Both are the same point: what was moved is the partial, not each node of it. A flat run
       # would be split by anything spliced into the middle of it, which is what a partial rendering
       # a partial is, and each half would then report as a render of its own.
-      # : (Herb::AST::Node, Array[Herb::AST::Node], Pathname) -> Herb::AST::ERBBlockNode
-      def block: (Herb::AST::Node, Array[Herb::AST::Node], Pathname) -> Herb::AST::ERBBlockNode
+      # : (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
+      def block: (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
 
       # : (Herb::AST::Node) -> Herb::AST::ERBEndNode
       def closing_for: (Herb::AST::Node) -> Herb::AST::ERBEndNode

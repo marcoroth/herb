@@ -123,6 +123,15 @@ module Engine
         assert_includes compile(%(<% label = "t" %><%= render "shared/labelled", label: "x" %>)), "->(label)"
       end
 
+      # A name the partial assigns for itself is declared block-local where it is spliced, so it
+      # never reaches the template's, and the partial does not have to be left alone over it.
+      test "inlines a partial that assigns a name the template has a local for" do
+        compiled = compile(%(<% label = "template" %><%= render "shared/assigns" %>))
+
+        assert_includes compiled, "->(; label)"
+        refute_includes compiled, "_buf << (render"
+      end
+
       # The inliner resolves against the directory of the template it was given, so one kept between
       # compiles answers the next template with the last one's directory.
       test "resolves against the template it is compiling rather than the first it ever saw" do

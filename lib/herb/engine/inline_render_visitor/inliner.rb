@@ -4,10 +4,6 @@ module Herb
   class Engine
     class InlineRenderVisitor
       class Inliner
-        # `t(".title")` in `posts/_card.html.erb` means `posts.card.title`, because the lookup is
-        # keyed on `@virtual_path`. Inlined into `posts/index.html.erb` the virtual path is the
-        # template's, so the same call asks for `posts.index.title` instead. `cache` keys its
-        # fragment digests the same way.
         VIRTUAL_PATH_DEPENDENT = /\bI18n\.[tl]\b|\b(?:t|l|translate|localize)\(/
 
         attr_reader :filename
@@ -66,6 +62,14 @@ module Herb
           node.resolve(view_root: @view_root, source_directory: @source_directory)
         end
 
+        def own_locals(source)
+          require "prism"
+
+          ::Prism.parse(::Herb.extract_ruby(source)).value.locals.map(&:to_s)
+        rescue StandardError
+          []
+        end
+
         def local_assignments(node)
           locals = {} #: Hash[String, String]
 
@@ -85,11 +89,6 @@ module Herb
 
         private
 
-        # What the partial would mean somewhere else, screened by reading it.
-        #
-        # A partial is only worth inlining if the copy means what the original did, and some of what
-        # a partial can say is answered by where it is rather than by what it says. Those cannot be
-        # made to work in the copy, so a partial that says any of them is left alone.
         def safe_to_inline?(file_path, item: nil, shadowed: [])
           source = File.read(file_path)
 
@@ -99,7 +98,10 @@ module Herb
           return false if source.include?("local_assigns")
           return false if source.match?(VIRTUAL_PATH_DEPENDENT)
           return false if item && source.include?("#{item}_iteration")
-          return false if shadowed.any? { |name| source.match?(/\b#{Regexp.escape(name)}\b/) }
+
+          at_risk = shadowed - own_locals(source)
+
+          return false if at_risk.any? { |name| source.match?(/\b#{Regexp.escape(name)}\b/) }
 
           true
         end

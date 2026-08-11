@@ -49,9 +49,6 @@ module Herb
         true
       end
 
-      # Everything here is per-template, including the inliner, which resolves against the directory
-      # the template is in. A visitor instance outlives one compile, so anything kept between them
-      # would answer the next template with the last one's directory.
       #: (Herb::AST::DocumentNode) -> void
       def visit_document_node(node)
         @inlining = [] #: Array[String]
@@ -98,19 +95,11 @@ module Herb
         nil
       end
 
-      # A `<% render %>` that does not output has its value thrown away, so putting the partial's
-      # markup where the tag was would add output the template never asked for.
       #: (Herb::AST::Node) -> bool
       def inlinable?(node)
         node.is_a?(Herb::AST::ERBRenderNode) && outputs?(node) && inliner.can_inline?(node, shadowed: shadowed(node))
       end
 
-      # The names the partial would read from the template if it read them at all.
-      #
-      # A partial only ever sees the locals it was passed, but the copy sits inside the template and
-      # a lambda closes over what is around it. So a partial calling a helper the template happens
-      # to have a local of the same name for would read the local instead once inlined. The names it
-      # was passed are its own and shadow anything outside, so they are not at risk.
       #: (Herb::AST::Node) -> Array[String]
       def shadowed(node)
         @assigned - inliner.local_assignments(node).keys
@@ -161,7 +150,8 @@ module Herb
         return [node] unless path
         return [node] if @inlining.include?(path.to_s)
 
-        partial = parse(File.read(path))
+        source = File.read(path)
+        partial = parse(source)
 
         return [node] unless partial
 
@@ -173,7 +163,7 @@ module Herb
 
         @inlining.pop
 
-        [block(node, body, path)]
+        [block(node, body, path, inliner.own_locals(source))]
       end
 
       #: (Pathname) -> String
@@ -193,10 +183,6 @@ module Herb
         nil
       end
 
-      # A partial that does not parse is left as the `render` call it was written as, so that the
-      # error is reported against the partial when it is compiled rather than swallowed here. The
-      # engine only ever sees the tree it was handed, so a broken partial spliced into it would
-      # take its errors out of reach of everything that reports them.
       #: (String) -> Herb::AST::DocumentNode?
       def parse(source)
         configured = context.options[:parser_options] || {} #: Hash[Symbol, untyped]
@@ -209,25 +195,27 @@ module Herb
         result.value
       end
 
-      # The partial goes inside something that is a scope, so that the locals it was given are its
-      # own. `begin`/`end` is not one, and reads as though it were: locals assigned in the partial
-      # went on existing in the template after it, and a name the template had already used was
-      # assigned over rather than shadowed.
-      #
-      # A lambda takes them as parameters, which both scopes them and evaluates them once, where
-      # they were written. A collection is a block already, so what it needs instead is its locals
-      # declared block-local, or assigning them would reach back out to the template's.
-      #: (Herb::AST::Node) -> String
-      def opening_for(node)
+      #: (Herb::AST::Node, Array[String]) -> String
+      def opening_for(node, own)
         locals = inliner.local_assignments(node)
 
-        return "->(#{locals.keys.join(", ")}) {" unless inliner.collection?(node)
+        return "->(#{locals.keys.join(", ")}#{block_locals(own, locals.keys)}) {" unless inliner.collection?(node)
 
         item = inliner.collection_item_name(node)
-        scoped = locals.empty? ? "" : "; #{locals.keys.join(", ")}"
+        taken = [item, "#{item}_counter"]
         assigned = locals.map { |name, value| "#{name} = (#{value});" }.join(" ")
 
-        "((#{inliner.collection_expression(node)}) || []).each_with_index do |#{item}, #{item}_counter#{scoped}| #{assigned}"
+        "((#{inliner.collection_expression(node)}) || []).each_with_index " \
+          "do |#{item}, #{item}_counter#{block_locals(own + locals.keys, taken)}| #{assigned}"
+      end
+
+      #: (Array[String], Array[String]) -> String
+      def block_locals(names, taken)
+        scoped = names.uniq - taken
+
+        return "" if scoped.empty?
+
+        "; #{scoped.join(", ")}"
       end
 
       #: (Herb::AST::Node) -> String
@@ -237,17 +225,11 @@ module Herb
         "}.call(#{inliner.local_assignments(node).values.map { |value| "(#{value})" }.join(", ")})"
       end
 
-      # The partial goes in as one block rather than as a flat run of nodes, and the block is what
-      # carries where its contents came from.
-      #
-      # Both are the same point: what was moved is the partial, not each node of it. A flat run
-      # would be split by anything spliced into the middle of it, which is what a partial rendering
-      # a partial is, and each half would then report as a render of its own.
-      #: (Herb::AST::Node, Array[Herb::AST::Node], Pathname) -> Herb::AST::ERBBlockNode
-      def block(node, body, path)
+      #: (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
+      def block(node, body, path, own)
         Herb::AST::ERBBlockNode.build(
           tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
-          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{opening_for(node)} "),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{opening_for(node, own)} "),
           tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
           body: body,
           end_node: closing_for(node),

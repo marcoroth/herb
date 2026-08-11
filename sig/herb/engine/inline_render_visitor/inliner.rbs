@@ -26,6 +26,13 @@ module Herb
 
         def resolve_path: (untyped node) -> untyped
 
+        # The locals the partial assigns for itself, as opposed to the ones it was handed.
+        #
+        # Prism answers this exactly rather than by pattern: `Herb.extract_ruby` leaves the
+        # template's Ruby at the offsets it was written at, and a parsed program knows which names
+        # it assigns. Block parameters are not among them, because a block already scopes its own.
+        def own_locals: (untyped source) -> untyped
+
         def local_assignments: (untyped node) -> untyped
 
         private
