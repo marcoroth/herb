@@ -49,10 +49,10 @@ module Herb
         result = analyze(erb_files, view_root)
         duration = Time.now - start_time
 
-        print_results(result, duration)
-
         warnings = check_dependencies(erb_files, view_root)
         print_dependency_warnings(warnings) if warnings.any?
+
+        print_results(result, duration)
 
         result.issues?
       end
