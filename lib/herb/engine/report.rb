@@ -16,7 +16,7 @@ module Herb
     #
     # A reader that does not recognize `version` ignores the whole payload, so it only moves when a
     # change is one an older reader cannot survive. Adding a field is not one of those.
-    class DiagnosticsReport
+    class Report
       VERSION = 1 #: Integer
       MAX_DIAGNOSTICS = 200 #: Integer
       ATTRIBUTE = "data-herb-diagnostics" #: String
@@ -39,7 +39,7 @@ module Herb
         diagnostic
       end
 
-      #: (untyped) -> DiagnosticsReport
+      #: (untyped) -> Report
       def concat(diagnostics)
         Array(diagnostics).each { |diagnostic| add(diagnostic) }
 

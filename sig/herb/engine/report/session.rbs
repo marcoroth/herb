@@ -1,0 +1,68 @@
+# Generated from lib/herb/engine/report/session.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class Report
+      # Where everything found while a page renders collects, so that findings from separate
+      # producers end up in one payload rather than one channel each.
+      #
+      # Anything can record into the session that is open, without knowing whether one is open or who
+      # else is recording:
+      #
+      #     Herb::Engine::Report::Session.record(diagnostic)
+      #
+      # A scoped session is one somebody opened deliberately, which is what a request or a test does.
+      # Outside of one, recording still works and collects into a session nobody reads, so a producer
+      # never has to guard its own calls.
+      class Session
+        STATE_KEY: Symbol
+
+        attr_reader report: Herb::Engine::Report
+
+        attr_reader previous: Session?
+
+        # : () -> Session
+        def self.current: () -> Session
+
+        # : [T] () { () -> T } -> Session
+        def self.capture: [T] () { () -> T } -> Session
+
+        # : () -> Session
+        def self.open: () -> Session
+
+        # : () -> Session?
+        def self.close: () -> Session?
+
+        # : (Herb::Diagnostic) -> Herb::Diagnostic
+        def self.record: (Herb::Diagnostic) -> Herb::Diagnostic
+
+        # : (String, String?) -> void
+        def self.source: (String, String?) -> void
+
+        # : () -> bool
+        def self.scoped?: () -> bool
+
+        # : () -> void
+        def self.reset!: () -> void
+
+        # : (?scoped: bool, ?report: Herb::Engine::Report?, ?previous: Session?) -> void
+        def initialize: (?scoped: bool, ?report: Herb::Engine::Report?, ?previous: Session?) -> void
+
+        # : () -> bool
+        def scoped?: () -> bool
+
+        # : (Herb::Diagnostic) -> Herb::Diagnostic
+        def record: (Herb::Diagnostic) -> Herb::Diagnostic
+
+        # : (String, String?) -> void
+        def source: (String, String?) -> void
+
+        # : () -> Array[Herb::Diagnostic]
+        def diagnostics: () -> Array[Herb::Diagnostic]
+
+        # : () -> bool
+        def empty?: () -> bool
+      end
+    end
+  end
+end

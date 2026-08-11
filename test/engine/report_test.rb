@@ -3,9 +3,9 @@
 require_relative "../test_helper"
 
 module Engine
-  class DiagnosticsReportTest < Minitest::Spec
+  class ReportTest < Minitest::Spec
     def report
-      @report ||= Herb::Engine::DiagnosticsReport.new
+      @report ||= Herb::Engine::Report.new
     end
 
     def diagnostic(template: "app/views/a.html.erb", message: "m", code: "c", line: 1)
@@ -24,7 +24,7 @@ module Engine
     end
 
     test "carries the version the reader checks" do
-      assert_equal 1, Herb::Engine::DiagnosticsReport::VERSION
+      assert_equal 1, Herb::Engine::Report::VERSION
       assert_equal 1, report.to_h[:version]
     end
 
@@ -59,7 +59,7 @@ module Engine
     end
 
     test "drops the oldest past the cap rather than growing" do
-      capped = Herb::Engine::DiagnosticsReport.new(max_diagnostics: 2)
+      capped = Herb::Engine::Report.new(max_diagnostics: 2)
 
       capped.add(diagnostic(code: "first"))
       capped.add(diagnostic(code: "second"))

@@ -1,4 +1,4 @@
-# Generated from lib/herb/engine/diagnostics_report.rb with RBS::Inline
+# Generated from lib/herb/engine/report.rb with RBS::Inline
 
 module Herb
   class Engine
@@ -11,7 +11,7 @@ module Herb
     #
     # A reader that does not recognize `version` ignores the whole payload, so it only moves when a
     # change is one an older reader cannot survive. Adding a field is not one of those.
-    class DiagnosticsReport
+    class Report
       VERSION: Integer
 
       MAX_DIAGNOSTICS: Integer
@@ -26,8 +26,8 @@ module Herb
       # : (Herb::Diagnostic) -> Herb::Diagnostic
       def add: (Herb::Diagnostic) -> Herb::Diagnostic
 
-      # : (untyped) -> DiagnosticsReport
-      def concat: (untyped) -> DiagnosticsReport
+      # : (untyped) -> Report
+      def concat: (untyped) -> Report
 
       # : (String, String?) -> void
       def source: (String, String?) -> void
@@ -38,8 +38,6 @@ module Herb
       # : () -> bool
       def empty?: () -> bool
 
-      # Every key is always here, empty or not, so a reader never has to tell "there were none"
-      # apart from "this producer does not send those".
       # : () -> Hash[Symbol, untyped]
       def to_h: () -> Hash[Symbol, untyped]
 
