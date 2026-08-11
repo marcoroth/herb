@@ -89,6 +89,13 @@ module Herb
       severity == :hint
     end
 
+    #: (String?) -> Diagnostic
+    def with_node(node)
+      return self if node.nil? || @node
+
+      dup.tap { |copy| copy.instance_variable_set(:@node, node) }
+    end
+
     #: () -> Array[untyped]
     def key
       [template, location&.start&.line, code || message]
