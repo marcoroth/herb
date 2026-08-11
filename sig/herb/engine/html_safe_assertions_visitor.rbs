@@ -25,6 +25,8 @@ module Herb
     #
     #     Herb.parse(source, prism_program: true)
     class HTMLSafeAssertionsVisitor < Herb::Visitor
+      include ContextAware
+
       RUNTIME: ::String
 
       MAX_SOURCE_LENGTH: ::Integer
