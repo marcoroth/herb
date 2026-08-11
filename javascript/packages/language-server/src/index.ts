@@ -20,7 +20,5 @@ export * from "./references_provider"
 export * from "./autofix_service"
 export * from "./config_service"
 export * from "./linter_service"
-export * from "./partial_caller_index_service"
-export * from "./partial_index_service"
 
 export * from "./utils"

@@ -1,27 +1,30 @@
-import { Diagnostic, DiagnosticRelatedInformation, CodeDescription, Connection, Position, Range } from "vscode-languageserver/node"
-import { join } from "node:path"
 import { TextDocument } from "vscode-languageserver-textdocument"
+import { Diagnostic, DiagnosticRelatedInformation, CodeDescription, Connection, Position, Range } from "vscode-languageserver/node"
 
-import { Linter, rules, ruleDocumentationUrl, type RuleClass } from "@herb-tools/linter"
-import { loadCustomRules as loadCustomRulesFromFs } from "@herb-tools/linter/loader"
 import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "@herb-tools/linter"
 import { Config } from "@herb-tools/config"
 
+import { Project } from "./project"
 import { UserSettings } from "./user_settings"
 import { Capabilities } from "./capabilities"
-import { Project } from "./project"
 
+import { join } from "node:path"
+import { rules, ruleDocumentationUrl } from "@herb-tools/linter"
+import { loadCustomRules as loadCustomRulesFromFs } from "@herb-tools/linter/loader"
+import { isConfigDocument, lintToDiagnosticSeverity, lintToDiagnosticTags } from "./utils"
+import { lspRangeFromLocation } from "@herb-tools/language-service"
+
+import type { RuleClass } from "@herb-tools/linter"
 import type { AncestorChain } from "@herb-tools/analysis"
+import type { ProjectIndex } from "@herb-tools/analysis/node"
 
 const FRAME_VERBS: Record<string, string> = {
   render: "rendered from",
   layout: "rendered into",
   declaration: "declared at",
 }
-import { PartialIndexService } from "./partial_index_service"
-import { PartialCallerIndexService } from "./partial_caller_index_service"
-import { isConfigDocument, lintToDiagnosticSeverity, lintToDiagnosticTags } from "./utils"
-import { lspRangeFromLocation } from "@herb-tools/language-service"
+
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
   warnings: LinterWarning[]
@@ -42,8 +45,7 @@ export class LinterService {
   private readonly userSettings: UserSettings
   private readonly capabilities: Capabilities
   private readonly project: Project
-  private readonly partialIndexService: PartialIndexService
-  private readonly partialCallerIndexService?: PartialCallerIndexService
+  private readonly index: ProjectIndex
   private readonly source = "Herb Linter "
   private config?: Config
   private linter?: Linter
@@ -53,13 +55,12 @@ export class LinterService {
   private hasShownCustomRuleWarning = false
   private customRulePaths: Map<string, string> = new Map()
 
-  constructor(connection: Connection, userSettings: UserSettings, capabilities: Capabilities, project: Project, partialIndexService: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
+  constructor(connection: Connection, userSettings: UserSettings, capabilities: Capabilities, project: Project, index: ProjectIndex) {
     this.connection = connection
     this.userSettings = userSettings
     this.capabilities = capabilities
     this.project = project
-    this.partialIndexService = partialIndexService
-    this.partialCallerIndexService = partialCallerIndexService
+    this.index = index
   }
 
   setConfig(config: Config): void {
@@ -235,9 +236,9 @@ export class LinterService {
     const content = textDocument.getText()
 
     const lintResult = this.linter.lint(content, {
-      fileName: this.partialIndexService.relativePathFor(textDocument.uri) ?? textDocument.uri,
-      partials: this.partialIndexService.index,
-      partialCallers: this.partialCallerIndexService?.index,
+      fileName: this.index.relativePathFor(textDocument.uri) ?? textDocument.uri,
+      partials: this.index.partials,
+      partialCallers: this.index?.callers,
     })
 
     const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {

@@ -1,19 +1,18 @@
-import { readFileSync } from "node:fs"
 import { join } from "node:path"
+import { readFileSync } from "node:fs"
 
 import { isPartialPath } from "@herb-tools/analysis"
+import { uriFromPath } from "@herb-tools/language-service"
 
 import { Location, Position, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Project } from "./project"
 import { DefinitionProvider } from "@herb-tools/language-service"
-import { PartialCallerIndexService } from "./partial_caller_index_service"
-import { PartialIndexService } from "./partial_index_service"
 import { Documents } from "./documents"
 
 import type { PartialReference } from "@herb-tools/language-service"
-import { uriFromPath } from "@herb-tools/language-service"
+import type { ProjectIndex } from "@herb-tools/analysis/node"
 
 const LANGUAGE_ID = "erb"
 const DECLARATION_RANGE = Range.create(Position.create(0, 0), Position.create(0, 0))
@@ -21,16 +20,14 @@ const DECLARATION_RANGE = Range.create(Position.create(0, 0), Position.create(0,
 export class ReferencesProvider {
   private project: Project
   private definitionProvider: DefinitionProvider
-  private partialIndexService: PartialIndexService
-  private partialCallerIndexService: PartialCallerIndexService
+  private index: ProjectIndex
   private documents: Documents
   private read: (filePath: string) => string | null
 
   constructor(
     project: Project,
     definitionProvider: DefinitionProvider,
-    partialIndexService: PartialIndexService,
-    partialCallerIndexService: PartialCallerIndexService,
+    index: ProjectIndex,
     documents: Documents,
     read: (filePath: string) => string | null = filePath => {
       try {
@@ -42,20 +39,19 @@ export class ReferencesProvider {
   ) {
     this.project = project
     this.definitionProvider = definitionProvider
-    this.partialIndexService = partialIndexService
-    this.partialCallerIndexService = partialCallerIndexService
+    this.index = index
     this.documents = documents
     this.read = read
   }
 
   getReferences(document: TextDocument, position: Position, includeDeclaration: boolean): Location[] {
-    const callers = this.partialCallerIndexService.index
+    const callers = this.index.callers
     if (!callers) return []
 
     const partial = this.partialAt(document, position)
     if (!partial) return []
 
-    const current = this.partialIndexService.relativePathFor(document.uri)
+    const current = this.index.relativePathFor(document.uri)
     const uriFor = (file: string) => file === current ? document.uri : this.uriFor(file)
 
     const locations = includeDeclaration ? [Location.create(uriFor(partial), DECLARATION_RANGE)] : []
@@ -71,7 +67,7 @@ export class ReferencesProvider {
   }
 
   private partialAt(document: TextDocument, position: Position): string | null {
-    const file = this.partialIndexService.relativePathFor(document.uri)
+    const file = this.index.relativePathFor(document.uri)
     const reference = this.definitionProvider.referenceAt(document, position)
 
     if (!reference) return file && isPartialPath(document.uri) ? file : null
@@ -103,7 +99,7 @@ export class ReferencesProvider {
   }
 
   private resolve(reference: PartialReference, file: string | null): string | null {
-    return this.partialIndexService.index?.lookup(reference.name, file ?? undefined)?.file ?? null
+    return this.index.partials?.lookup(reference.name, file ?? undefined)?.file ?? null
   }
 
   private uriFor(file: string): string {

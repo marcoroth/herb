@@ -312,31 +312,25 @@ export class Server {
       return false
     }
 
-    const partials = project.partialIndexService
-    const callers = project.partialCallerIndexService
+    const index = project.index
 
     if (event.type === FileChangeType.Deleted) {
-      const stoppedCalling = callers.remove(event.uri)
-
       this.session.diagnostics.clear(event.uri)
 
-      return partials.remove(event.uri) || stoppedCalling
+      return index.remove(event.uri)
     }
 
-    const isOpen = this.session.documents.get(event.uri) !== undefined
-    const changed = isOpen ? false : partials.updateFromDisk(event.uri)
-
     if (event.type === FileChangeType.Created && isPartialPath(event.uri)) {
-      await callers.initialize()
+      await index.indexCallers()
 
       return true
     }
 
-    if (!isOpen) {
-      return callers.updateFromDisk(event.uri) || changed
+    if (this.session.documents.get(event.uri)) {
+      return false
     }
 
-    return changed
+    return index.handleChange(event.uri)
   }
 
   listen() {

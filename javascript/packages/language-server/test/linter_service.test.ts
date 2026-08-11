@@ -6,8 +6,7 @@ import { LinterService } from "../src/linter_service"
 import { UserSettings } from "../src/user_settings"
 import { Capabilities } from "../src/capabilities"
 import { Project } from "../src/project"
-import { PartialIndexService } from "../src/partial_index_service"
-import { PartialCallerIndexService } from "../src/partial_caller_index_service"
+import { ProjectIndex } from "@herb-tools/analysis/node"
 import { PartialCallerIndex } from "@herb-tools/analysis"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
@@ -47,7 +46,7 @@ describe("LinterService", () => {
 
   const capabilities = new Capabilities(mockParams)
 
-  const partialIndexService = new PartialIndexService(mockConnection, mockProject)
+  const index = new ProjectIndex({ root: mockProject.root, backend: Herb, logger: mockConnection.console })
 
   const createTestDocument = (content: string) => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
@@ -58,7 +57,7 @@ describe("LinterService", () => {
       const userSettings = new UserSettings(mockConnection, capabilities)
       userSettings.getDocumentSettings = vi.fn().mockResolvedValue(null)
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -74,7 +73,7 @@ describe("LinterService", () => {
         // linter is undefined
       })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -89,7 +88,7 @@ describe("LinterService", () => {
         linter: { enabled: false }
       })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       const textDocument = createTestDocument("<DIV>Test</DIV>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -103,7 +102,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       const textDocument = createTestDocument("<DIV><SPAN>Hello</SPAN></DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -114,7 +113,7 @@ describe("LinterService", () => {
     test("uses default settings when no configuration is provided", async () => {
       const userSettings = new UserSettings(mockConnection, capabilities)
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       const textDocument = createTestDocument("<DIV>Test</DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -128,7 +127,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       const textDocument = createTestDocument("<h2>Content<h3>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -151,7 +150,7 @@ describe("LinterService", () => {
         linter: { enabled: true, rules: {} }
       }, { projectPath: process.cwd() })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       linterService.setConfig(projectConfig)
 
       const result = await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
@@ -167,7 +166,7 @@ describe("LinterService", () => {
         linter: { enabled: true, rules: {} }
       }, { projectPath: process.cwd() })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       linterService.setConfig(projectConfig)
 
       const result = await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
@@ -197,7 +196,7 @@ describe("LinterService", () => {
         root: "/test/project"
       } as Project
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings, "/test/project"), new PartialIndexService(mockConnection, mockProjectWithPath))
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings, "/test/project"), new ProjectIndex({ root: mockProjectWithPath.root, backend: Herb, logger: mockConnection.console }))
       linterService.setConfig(projectConfig)
       const textDocument = TextDocument.create("file:///test/project/vendor/cache/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
@@ -227,7 +226,7 @@ describe("LinterService", () => {
         root: "/test/project"
       } as Project
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings, "/test/project"), new PartialIndexService(mockConnection, mockProjectWithPath))
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings, "/test/project"), new ProjectIndex({ root: mockProjectWithPath.root, backend: Herb, logger: mockConnection.console }))
       linterService.setConfig(projectConfig)
       const textDocument = TextDocument.create("file:///test/project/something/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
@@ -259,7 +258,7 @@ describe("LinterService", () => {
         root: "/test/project"
       } as Project
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings, "/test/project"), new PartialIndexService(mockConnection, mockProjectWithPath))
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings, "/test/project"), new ProjectIndex({ root: mockProjectWithPath.root, backend: Herb, logger: mockConnection.console }))
       linterService.setConfig(projectConfig)
       const textDocument = TextDocument.create("file:///test/project/app/views/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
@@ -291,7 +290,7 @@ describe("LinterService", () => {
         applySeverityOverrides: (offenses: any) => offenses
       } as any
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       linterService.setConfig(projectConfig)
 
       const textDocument = createTestDocument("<DIV>Content</DIV>")
@@ -310,7 +309,7 @@ describe("LinterService", () => {
       const userSettings = new UserSettings(mockConnection, capabilities)
       userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
 
       linterService["failedCustomRules"].set("custom-rules", "boom")
 
@@ -325,7 +324,7 @@ describe("LinterService", () => {
       const userSettings = new UserSettings(mockConnection, capabilities)
       userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
 
-      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
 
       linterService["failedCustomRules"].set("custom-rules", "boom")
 
@@ -342,10 +341,10 @@ describe("LinterService", () => {
   describe("cross-file rules", () => {
     const PARTIAL = "app/views/shared/_meta.html.erb"
 
-    function callerServiceFor(callers: PartialCallerIndex): PartialCallerIndexService {
-      const service = new PartialCallerIndexService(mockConnection, mockProject, partialIndexService)
+    function callerServiceFor(callers: PartialCallerIndex): ProjectIndex {
+      const service = index
 
-      vi.spyOn(service, "index", "get").mockReturnValue(callers)
+      vi.spyOn(service, "callers", "get").mockReturnValue(callers)
 
       return service
     }
@@ -373,9 +372,9 @@ describe("LinterService", () => {
 
       const client = clientWith()
 
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), partialIndexService, callerServiceFor(callers))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(callers))
 
-      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+      vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
       const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<meta charset="UTF-8">`)
       const result = await service.lintDocument(document)
@@ -386,9 +385,9 @@ describe("LinterService", () => {
     test("stays silent for the same partial when no call site is known", async () => {
       const empty = new PartialCallerIndex(new Map(), new Set(), new Map(), new Set())
       const client = clientWith()
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), partialIndexService, callerServiceFor(empty))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(empty))
 
-      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+      vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
       const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<meta charset="UTF-8">`)
       const result = await service.lintDocument(document)
@@ -412,9 +411,9 @@ describe("LinterService", () => {
 
       const client = clientWith()
 
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), partialIndexService, callerServiceFor(callers))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(callers))
 
-      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+      vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
       const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<a href="/">link</a>`)
       const result = await service.lintDocument(document)
@@ -432,9 +431,9 @@ describe("LinterService", () => {
     test("omits related information when nothing rendered the file", async () => {
       const empty = new PartialCallerIndex(new Map(), new Set(), new Map(), new Set())
       const client = clientWith()
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), partialIndexService, callerServiceFor(empty))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(empty))
 
-      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+      vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
       const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<meta charset="UTF-8">`)
       const result = await service.lintDocument(document)
@@ -458,9 +457,9 @@ describe("LinterService", () => {
 
       const client = clientWith(false)
 
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), partialIndexService, callerServiceFor(callers))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(callers))
 
-      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+      vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
       const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<a href="/">link</a>`)
       const result = await service.lintDocument(document)

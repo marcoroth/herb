@@ -106,7 +106,7 @@ export class Session {
 
   private viewRootFor(documentPath: string): string | null {
     const project = this.projects.containing(documentPath)
-    const viewRoot = project?.partialIndexService.index?.viewRoot
+    const viewRoot = project?.index.viewRoot
 
     if (!project || viewRoot === undefined) return null
 
@@ -128,10 +128,7 @@ export class Session {
       const project = await this.projects.ensure(change.document.uri)
 
       if (project) {
-        const callersChanged = project.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
-        const partialsChanged = project.partialIndexService.updateFromSource(change.document.uri, change.document.getText())
-
-        if (callersChanged || partialsChanged) {
+        if (project.index.handleChange(change.document.uri, change.document.getText())) {
           await this.diagnostics.refreshAllDocuments()
 
           return
