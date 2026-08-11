@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "../visitor"
 require_relative "context_aware"
 
 module Herb

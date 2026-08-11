@@ -486,6 +486,8 @@ module Herb
     end
 
     def compile_file(file_path, file_content)
+      require_relative "engine/validators"
+
       Herb::Engine.new(
         file_content,
         filename: file_path,

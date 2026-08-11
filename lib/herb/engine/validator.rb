@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../visitor"
 require_relative "context_aware"
 require_relative "diagnostics"
 
