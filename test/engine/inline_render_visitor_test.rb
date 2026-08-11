@@ -64,7 +64,7 @@ module Engine
       assert_compiled_snapshot('<%= render "shared/a" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRenderVisitor.new], escape: false)
     end
 
-    test "scopes locals with begin/end block" do
+    test "takes the locals it was given as parameters, which is what scopes them" do
       assert_compiled_snapshot('<%= render partial: "posts/card", locals: { name: "test" } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRenderVisitor.new], escape: false)
     end
 
@@ -82,6 +82,75 @@ module Engine
 
     test "inlines shorthand render with multiple inline locals" do
       assert_compiled_snapshot('<%= render "posts/card", title: "Title", name: @user.name %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRenderVisitor.new], escape: false)
+    end
+
+    # A partial means what it means because of where it is, not only because of what it says. Every
+    # one of these is a way the copy would have meant something else, and the copy is only worth
+    # having if it means the same.
+    describe "what the copy has to keep meaning" do
+      def compile(source, file: "app/views/posts/index.html.erb", visitor: Herb::Engine::InlineRenderVisitor.new)
+        Herb::Engine.new(source, filename: file, project_path: PROJECT_PATH, escape: false,
+                                 visitors: [visitor]).src
+      end
+
+      def refute_inlined(source, **)
+        assert_match(/_buf << \(render/, compile(source, **))
+      end
+
+      # `app/views/posts/_card.html.erb` and `app/views/_card.html.erb` both exist. Rails resolves a
+      # partial named without a directory against the template's own.
+      test "resolves a partial named without a directory against the template's directory" do
+        assert_includes compile(%(<%= render "card" %>)), "<div>"
+        refute_includes compile(%(<%= render "card" %>)), "root card"
+      end
+
+      test "leaves a partial that translates against its own virtual path" do
+        refute_inlined(%(<%= render "shared/translated" %>))
+      end
+
+      test "leaves a partial that reads the iteration of the collection it is rendered for" do
+        refute_inlined(%(<%= render partial: "shared/counted", collection: @items %>))
+      end
+
+      # The partial would read the template's local rather than call the method of that name it
+      # meant, and only where it is says which of the two it was.
+      test "leaves a partial naming something the template has a local for" do
+        refute_inlined(%(<% label = "template" %><%= render "shared/labelled" %>))
+      end
+
+      # A name it was passed is its own, so nothing outside can reach it.
+      test "inlines it when that same name is what was passed to it" do
+        assert_includes compile(%(<% label = "t" %><%= render "shared/labelled", label: "x" %>)), "->(label)"
+      end
+
+      # The inliner resolves against the directory of the template it was given, so one kept between
+      # compiles answers the next template with the last one's directory.
+      test "resolves against the template it is compiling rather than the first it ever saw" do
+        visitor = Herb::Engine::InlineRenderVisitor.new
+
+        compile(%(<%= render "card" %>), file: "app/views/posts/index.html.erb", visitor: visitor)
+        second = compile(%(<%= render "card" %>), file: "app/views/index.html.erb", visitor: visitor)
+
+        assert_includes second, "root card"
+      end
+
+      test "leaves a partial that does not parse, so the error is still reported against it" do
+        refute_inlined(%(<%= render "shared/broken" %>))
+      end
+
+      # Rails throws away what a non-output render returns, so putting the markup where the tag was
+      # would add output the template never asked for.
+      test "leaves a render that does not output" do
+        compiled = compile(%(<% render "shared/header" %>))
+
+        refute_includes compiled, "_buf << '<header>"
+      end
+
+      test "renders nothing for a collection that is nil, the way Rails does" do
+        compiled = compile(%(<%= render partial: "posts/post", collection: nil %>))
+
+        assert_includes compiled, "|| []"
+      end
     end
 
     describe "what an inlined partial still reports" do

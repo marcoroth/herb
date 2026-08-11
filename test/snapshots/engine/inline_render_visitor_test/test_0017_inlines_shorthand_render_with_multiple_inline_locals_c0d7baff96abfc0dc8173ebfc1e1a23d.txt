@@ -2,7 +2,7 @@
 source: "Engine::InlineRenderVisitorTest#test_0017_inlines shorthand render with multiple inline locals"
 input: "{source: \"<%= render \\\"posts/card\\\", title: \\\"Title\\\", name: @user.name %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::InlineRenderVisitor>], escape: false}}"
 ---
-_buf = ::String.new; begin; title = ("Title"); name = (@user.name); 
+_buf = ::String.new; ->(title, name) { 
  _buf << '<div>'.freeze; _buf << (title).to_s; _buf << '</div>
-'.freeze; end 
+'.freeze; }.call(("Title"), (@user.name)) 
 _buf.to_s

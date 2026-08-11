@@ -1,8 +1,8 @@
 ---
-source: "Engine::InlineRenderVisitorTest#test_0013_scopes locals with begin/end block"
+source: "Engine::InlineRenderVisitorTest#test_0013_takes the locals it was given as parameters, which is what scopes them"
 input: "{source: \"<%= render partial: \\\"posts/card\\\", locals: { name: \\\"test\\\" } %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::InlineRenderVisitor>], escape: false}}"
 ---
-_buf = ::String.new; begin; name = ("test"); 
+_buf = ::String.new; ->(name) { 
  _buf << '<div>'.freeze; _buf << (title).to_s; _buf << '</div>
-'.freeze; end 
+'.freeze; }.call(("test")) 
 _buf.to_s

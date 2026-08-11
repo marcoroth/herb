@@ -2,8 +2,8 @@
 source: "Engine::InlineRenderVisitorTest#test_0012_detects circular references and falls back"
 input: "{source: \"<%= render \\\"shared/a\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::InlineRenderVisitor>], escape: false}}"
 ---
-_buf = ::String.new; begin; 
- begin; 
- _buf << (render "shared/a").to_s; end 
- end 
+_buf = ::String.new; ->() { 
+ ->() { 
+ _buf << (render "shared/a").to_s; }.call() 
+ }.call() 
 _buf.to_s
