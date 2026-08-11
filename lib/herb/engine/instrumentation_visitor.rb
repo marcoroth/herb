@@ -117,9 +117,9 @@ module Herb
 
           if framed?(node)
             [enter_node(node), node, leave_node(node)]
-          elsif output?(node)
+          elsif erb_outputs?(node)
             [wrapped_output(node)]
-          elsif statement?(node)
+          elsif erb_statement?(node)
             [wrapped_statement(node)]
           else
             [node]
@@ -129,26 +129,8 @@ module Herb
         nodes.replace(rewritten)
       end
 
-      def output?(node)
-        return false unless erb?(node)
-
-        opening(node).start_with?("<%=")
-      end
-
-      def erb?(node)
-        node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBRenderNode)
-      end
-
-      def statement?(node)
-        return false unless erb?(node)
-
-        opening = opening(node)
-
-        opening.start_with?("<%") && !opening.start_with?("<%=", "<%#")
-      end
-
       def framed?(node)
-        block?(node) || (output?(node) && assignment?(node))
+        block?(node) || (erb_outputs?(node) && assignment?(node))
       end
 
       def assignment?(node)
@@ -178,12 +160,6 @@ module Herb
         return nil if node.keywords&.object
 
         :partial
-      end
-
-      def opening(node)
-        return "" unless node.respond_to?(:tag_opening)
-
-        node.tag_opening&.value.to_s
       end
 
       def wrapped_output(node)
