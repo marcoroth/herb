@@ -8,14 +8,22 @@ import { pathToFileURL, fileURLToPath } from "node:url"
 import { Herb } from "@herb-tools/node-wasm"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Project } from "../src/project"
-import { Documents } from "../src/documents"
 import { ReferencesProvider } from "../src/references_provider"
-import { DefinitionProvider } from "@herb-tools/language-service"
-import { ParserService } from "@herb-tools/language-service"
+import { DefinitionProvider } from "../src/definition_provider"
+import { ParserService } from "../src/parser_service"
+
+import type { OpenDocuments } from "../src/references_provider"
 import { ProjectIndex } from "@herb-tools/analysis/node"
 
 import type { Connection, Location } from "vscode-languageserver/node"
+
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
+  }
+}
 
 const roots: string[] = []
 
@@ -45,13 +53,13 @@ function project(files: Record<string, string>): Project {
     writeFileSync(file, contents, "utf-8")
   }
 
-  return { root: root, herbBackend: Herb } as Project
+  return { root: root, herbBackend: Herb }
 }
 
 interface Services {
   service: ReferencesProvider
   index: ProjectIndex
-  project: Project
+  project: { root: string }
   buffers: Record<string, string>
 }
 
@@ -69,14 +77,14 @@ async function serviceFor(files: Record<string, string>, buffers: Record<string,
 
   const documents = {
     get: (uri: string) => open.get(uri)
-  } as unknown as Documents
+  } as OpenDocuments
 
-  const service = new ReferencesProvider(created, new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }), index, documents)
+  const service = new ReferencesProvider(new DefinitionProvider(parserService, existsSync, readFile), index, documents, readFile)
 
   return { service, index, project: created, buffers }
 }
 
-function uriFor(project: Project, path: string): string {
+function uriFor(project: { root: string }, path: string): string {
   return pathToFileURL(join(project.root, path)).toString()
 }
 

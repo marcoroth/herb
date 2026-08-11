@@ -1,43 +1,33 @@
-import { join } from "node:path"
-import { readFileSync } from "node:fs"
-
 import { isPartialPath } from "@herb-tools/analysis"
-import { uriFromPath } from "@herb-tools/language-service"
+import { join } from "./posix_path"
+import { uriFromPath } from "./uri"
 
-import { Location, Position, Range } from "vscode-languageserver/node"
+import { Location, Position, Range } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
-
-import { Project } from "./project"
-import { DefinitionProvider } from "@herb-tools/language-service"
-import { Documents } from "./documents"
+import { DefinitionProvider } from "./definition_provider"
 
 import type { PartialReference } from "@herb-tools/language-service"
 import type { ProjectIndex } from "@herb-tools/analysis/node"
+
+export interface OpenDocuments {
+  get(uri: string): TextDocument | undefined
+}
 
 const LANGUAGE_ID = "erb"
 const DECLARATION_RANGE = Range.create(Position.create(0, 0), Position.create(0, 0))
 
 export class ReferencesProvider {
-  private project: Project
   private definitionProvider: DefinitionProvider
   private index: ProjectIndex
-  private documents: Documents
+  private documents: OpenDocuments
   private read: (filePath: string) => string | null
 
   constructor(
-    project: Project,
     definitionProvider: DefinitionProvider,
     index: ProjectIndex,
-    documents: Documents,
-    read: (filePath: string) => string | null = filePath => {
-      try {
-        return readFileSync(filePath, "utf-8")
-      } catch {
-        return null
-      }
-    }
+    documents: OpenDocuments,
+    read: (filePath: string) => string | null
   ) {
-    this.project = project
     this.definitionProvider = definitionProvider
     this.index = index
     this.documents = documents
@@ -93,7 +83,7 @@ export class ReferencesProvider {
     const open = this.documents.get(uri)
     if (open) return open
 
-    const source = this.read(join(this.project.root, file))
+    const source = this.read(join(this.index.root, file))
 
     return source === null ? null : TextDocument.create(uri, LANGUAGE_ID, 0, source)
   }
@@ -103,6 +93,6 @@ export class ReferencesProvider {
   }
 
   private uriFor(file: string): string {
-    return uriFromPath(join(this.project.root, file))
+    return uriFromPath(join(this.index.root, file))
   }
 }
