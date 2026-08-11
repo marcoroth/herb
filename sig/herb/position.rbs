@@ -22,6 +22,9 @@ module Herb
     # : () -> serialized_position
     def to_hash: () -> serialized_position
 
+    # : () -> serialized_position
+    def to_one_based: () -> serialized_position
+
     # : (?untyped) -> String
     def to_json: (?untyped) -> String
 

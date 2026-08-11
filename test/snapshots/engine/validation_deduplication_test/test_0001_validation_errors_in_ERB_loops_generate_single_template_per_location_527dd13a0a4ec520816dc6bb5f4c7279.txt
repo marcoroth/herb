@@ -7,7 +7,7 @@ _buf = ::String.new; 10.times do |i|
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"
-  data-code="SecurityViolation"
+  data-code="security-violation"
   data-line="1"
   data-column="26"
   data-filename="loop_test.html.erb"

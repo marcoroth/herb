@@ -35,7 +35,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template)
       end
 
-      assert_includes error.message, "InvalidNestingError"
+      assert_includes error.message, "invalid-nesting"
     end
 
     test "nesting validator can be disabled" do
@@ -49,7 +49,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, validators: { security: false })
       end
 
-      assert_includes error.message, "InvalidNestingError"
+      assert_includes error.message, "invalid-nesting"
     end
 
     test "disabling nesting does not disable security" do

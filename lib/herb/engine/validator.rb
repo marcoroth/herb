@@ -1,79 +1,37 @@
 # frozen_string_literal: true
 
+require_relative "context_aware"
+require_relative "diagnostics"
+
 module Herb
   class Engine
+    # A visitor that reads the tree and reports what it finds without rewriting anything.
+    #
+    # Reporting itself lives in `Herb::Engine::Diagnostics` and is available to any visitor, so
+    # this class is only the convenience of the two mixins plus an enabled flag. A validator that
+    # wants to be one of the engine's own is expected to subclass it; a validator that comes from
+    # somewhere else can just include the mixins.
     class Validator < Herb::Visitor
-      attr_reader :diagnostics, :enabled
+      include ContextAware
+      include Diagnostics
 
+      attr_reader :enabled #: bool
+
+      #: (?enabled: bool) -> void
       def initialize(enabled: true)
         super()
 
         @enabled = enabled
-        @diagnostics = []
       end
 
+      #: () -> bool
       def enabled?
         @enabled
       end
 
+      #: (Herb::AST::Node) -> void
       def validate(node)
         visit(node)
-      end
-
-      def error(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :error, code: code, source: source)
-      end
-
-      def warning(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :warning, code: code, source: source)
-      end
-
-      def info(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :info, code: code, source: source)
-      end
-
-      def hint(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :hint, code: code, source: source)
-      end
-
-      def errors?
-        @diagnostics.any? { |diagnostic| diagnostic[:severity] == :error }
-      end
-
-      def warnings?
-        @diagnostics.any? { |diagnostic| diagnostic[:severity] == :warning }
-      end
-
-      def errors
-        @diagnostics.select { |diagnostic| diagnostic[:severity] == :error }
-      end
-
-      def warnings
-        @diagnostics.select { |diagnostic| diagnostic[:severity] == :warning }
-      end
-
-      def clear_diagnostics
-        @diagnostics.clear
-      end
-
-      def diagnostic_count(severity = nil)
-        return @diagnostics.length unless severity
-
-        @diagnostics.count { |diagnostic| diagnostic[:severity] == severity }
-      end
-
-      private
-
-      def add_diagnostic(message, location, severity, code: nil, source: nil)
-        diagnostic = {
-          message: message,
-          location: location,
-          severity: severity,
-          code: code,
-          source: source || self.class.name,
-        }
-
-        @diagnostics << diagnostic
       end
     end
   end

@@ -2,6 +2,8 @@
 
 module Herb
   class Engine
+    SECURITY_VIOLATION_CODE: String
+
     attr_reader src: untyped
 
     attr_reader context: untyped
@@ -102,6 +104,8 @@ module Herb
     def run_validation: (untyped ast) -> untyped
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
+
+    def enabled_reporters: (untyped reporters) -> untyped
 
     def handle_validation_errors: (untyped validators, untyped input) -> untyped
 
