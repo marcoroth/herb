@@ -160,7 +160,7 @@ module Herb
 
         #: (Herb::Diagnostic) -> Herb::Diagnostic
         def record(diagnostic)
-          report.add(diagnostic)
+          report.add(diagnostic.with_node(current_node))
         end
 
         #: (String, String?) -> void

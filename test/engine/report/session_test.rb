@@ -380,6 +380,28 @@ module Engine
         )
       end
 
+      test "tells a diagnostic which render it was recorded during" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.render("_card.html.erb") do
+            Herb::Engine::Report::Session.record(
+              Herb::Diagnostic.new(template: "_card.html.erb", message: "This element has a problem.")
+            )
+          end
+        end
+
+        assert_equal "1", session.diagnostics.first.node
+      end
+
+      test "leaves a diagnostic recorded outside a render without one" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.record(
+            Herb::Diagnostic.new(template: "_card.html.erb", message: "This element has a problem.")
+          )
+        end
+
+        assert_nil session.diagnostics.first.node
+      end
+
       test "says what kind of render reached each template" do
         session = Herb::Engine::Report::Session.capture do
           Herb::Engine::Report::Session.render("index.html.erb") do

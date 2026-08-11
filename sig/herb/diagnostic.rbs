@@ -53,6 +53,9 @@ module Herb
     # : () -> bool
     def hint?: () -> bool
 
+    # : (String?) -> Diagnostic
+    def with_node: (String?) -> Diagnostic
+
     # : () -> Array[untyped]
     def key: () -> Array[untyped]
 
