@@ -37,6 +37,29 @@ class TemplateDependenciesTest < Minitest::Spec
     full_path
   end
 
+  test "traces state in a project that does not keep templates in app/views" do
+    flat_root = Dir.mktmpdir("herb_deps_flat")
+
+    begin
+      FileUtils.mkdir_p(File.join(flat_root, "posts"))
+
+      entry = File.join(flat_root, "posts", "show.html.erb")
+      File.write(entry, '<%= @post.title %><%= render "posts/header", post: @post %>')
+      File.write(File.join(flat_root, "posts", "_header.html.erb"), "<h1><%= post.name %></h1>")
+
+      a = Herb::Analysis::TemplateDependencies.new(flat_root)
+
+      assert_includes a.analyze(entry).instance_variables, "@post"
+
+      affected = a.affected_templates(entry, "@post")
+
+      assert_includes affected, entry
+      assert_includes affected, File.join(flat_root, "posts", "_header.html.erb")
+    ensure
+      FileUtils.rm_rf(flat_root)
+    end
+  end
+
   test "detects instance variables" do
     path = write_template("posts/show.html.erb", "<h1><%= @post.title %></h1><p><%= @user.name %></p>")
 

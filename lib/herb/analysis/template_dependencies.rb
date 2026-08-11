@@ -207,7 +207,7 @@ module Herb
       end
 
       def find_erb_files
-        Dir[@project_path.join("app", "views", "**", "*.erb")].sort
+        Dir[@view_root.join("**", "*.erb")].sort
       end
 
       def build_partial_to_file_map(files)
@@ -270,7 +270,12 @@ module Herb
       end
 
       def find_view_root
-        @project_path.join("app", "views")
+        candidates = [
+          @project_path.join("app", "views"),
+          @project_path
+        ]
+
+        candidates.find(&:directory?) || @project_path
       end
     end
   end
