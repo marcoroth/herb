@@ -25,7 +25,7 @@ module Herb
     SECURITY_VIOLATION_CODE = "security-violation" #: String
     PARSER_ORIGIN = "Herb Parser" #: String
 
-    attr_reader :src, :context, :bufvar, :debug, :visitors
+    attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
     def filename
@@ -77,7 +77,6 @@ module Herb
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-      @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
       @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
@@ -88,7 +87,6 @@ module Herb
       end
 
       @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
-      @visitors.use(DebugVisitor.new(file_path: filename, project_path: project_path)) if @debug
 
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
