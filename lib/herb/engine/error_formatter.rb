@@ -97,6 +97,7 @@ module Herb
 
       def format_error(error, number)
         output = String.new
+        location = error.location
 
         error_name = if error.is_a?(Herb::Diagnostic)
                        error.code || "UnknownError"
@@ -107,14 +108,12 @@ module Herb
         output << "Error ##{number}: #{error_name}\n"
         output << ("-" * 40) << "\n"
 
-        location = error.location
         if location
           output << "  File: #{@filename}\n"
           output << "  Location: Line #{location.start.line}, Column #{location.start.column}\n"
         end
 
-        error_message = error.message
-        output << "  Message: #{error_message}\n\n"
+        output << "  Message: #{error.message}\n\n"
         output << format_source_context(error) if location
         output << format_error_details(error)
 
@@ -309,6 +308,7 @@ module Herb
         nil
       end
 
+      # TODO: deduplicate this conversion logic
       def herb_error_to_diagnostic(error)
         if error.is_a?(Herb::Diagnostic)
           location = error.location
@@ -363,8 +363,7 @@ module Herb
                     "  #{number}. #{error.class.name.split("::").last.gsub(/Error$/, "")}: #{error.message}\n"
                   end
 
-        location = error.location
-        output << "     Location: Line #{location.start.line}, Column #{location.start.column}\n" if location
+        output << "     Location: Line #{error.location.start.line}, Column #{error.location.start.column}\n" if error.location
 
         output
       end
@@ -385,6 +384,7 @@ module Herb
         format_source_context(error)
       end
 
+      # TODO: move to config.yml definition
       def get_error_suggestion(error)
         case error
         when Herb::Errors::MissingClosingTagError

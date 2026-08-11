@@ -148,7 +148,7 @@ module Herb
 
     #: (Herb::Position) -> Hash[Symbol, Integer]
     def serialized_position(position)
-      { line: [position.line, 1].max, column: position.column + 1 }
+      position.to_one_based
     end
   end
 end
