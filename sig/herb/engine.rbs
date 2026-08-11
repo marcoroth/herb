@@ -16,11 +16,6 @@ module Herb
 
     attr_reader visitors: untyped
 
-    attr_reader enabled_validators: untyped
-
-    # : (?fatal: bool, ?validators: Hash[Symbol, untyped]) -> Herb::Engine::VisitorStack
-    def self.default_visitors: (?fatal: bool, ?validators: Hash[Symbol, untyped]) -> Herb::Engine::VisitorStack
-
     # : () -> Pathname?
     def filename: () -> Pathname?
 

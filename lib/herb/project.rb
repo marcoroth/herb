@@ -486,7 +486,13 @@ module Herb
     end
 
     def compile_file(file_path, file_content)
-      Herb::Engine.new(file_content, filename: file_path, escape: true, validate_ruby: validate_ruby)
+      Herb::Engine.new(
+        file_content,
+        filename: file_path,
+        escape: true,
+        validate_ruby: validate_ruby,
+        visitors: Herb::Engine::Validators.all
+      )
 
       { status: :successful, log: "✅ Compiled #{file_path} successfully" }
     rescue Herb::Engine::GeneratorTemplateError => e

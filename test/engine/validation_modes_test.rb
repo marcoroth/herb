@@ -22,7 +22,7 @@ module Engine
 
     test "a fatal validator raises SecurityError for security violations" do
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERB output tags"
@@ -32,7 +32,7 @@ module Engine
 
     test "a fatal validator raises CompilationError for other validation errors" do
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(@invalid_nesting_template)
+        Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "invalid-nesting"
@@ -41,11 +41,11 @@ module Engine
 
     test "a fatal validator is the default behavior" do
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
     end
 
@@ -55,35 +55,35 @@ module Engine
     end
 
     test "a non-fatal validator compiles successfully with validation errors" do
-      assert_compiled_snapshot(@invalid_security_template, visitors: Herb::Engine.default_visitors(fatal: false))
+      assert_compiled_snapshot(@invalid_security_template, visitors: Herb::Engine::Validators.all(fatal: false))
     end
 
     test "a non-fatal validator with valid template does not include validation errors" do
-      assert_compiled_snapshot(@valid_template, visitors: Herb::Engine.default_visitors(fatal: false))
+      assert_compiled_snapshot(@valid_template, visitors: Herb::Engine::Validators.all(fatal: false))
     end
 
     test "a non-fatal validator includes filename in HTML" do
       filename = "/path/to/template.html.erb"
       project_path = "/path"
 
-      assert_compiled_snapshot(@invalid_security_template, visitors: Herb::Engine.default_visitors(fatal: false), filename: filename, project_path: project_path)
+      assert_compiled_snapshot(@invalid_security_template, visitors: Herb::Engine::Validators.all(fatal: false), filename: filename, project_path: project_path)
     end
 
     test "a non-fatal validator with multiple validation errors" do
       complex_invalid_template = '<div <%= @attr %> data-<%= @name %>="value">Content</div>'
 
-      assert_compiled_snapshot(complex_invalid_template, visitors: Herb::Engine.default_visitors(fatal: false))
+      assert_compiled_snapshot(complex_invalid_template, visitors: Herb::Engine::Validators.all(fatal: false))
     end
 
     test "validation modes work with debug mode" do
       engine1 = assert_compiled_snapshot(@valid_template, visitors: [], debug: true)
       assert_kind_of String, engine1.src
 
-      engine2 = assert_compiled_snapshot(@valid_template, visitors: Herb::Engine.default_visitors(fatal: false), debug: true)
+      engine2 = assert_compiled_snapshot(@valid_template, visitors: Herb::Engine::Validators.all(fatal: false), debug: true)
       assert_kind_of String, engine2.src
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template, debug: true)
+        Herb::Engine.new(@invalid_security_template, debug: true, visitors: Herb::Engine::Validators.all)
       end
     end
 
