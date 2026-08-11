@@ -24,8 +24,6 @@ module Herb
     # This lives on the compile rather than on a visitor, because the visitor that needs the answer
     # is never the one that knows it.
     class Origin
-      # Two questions with one answer: which file the content was written in, and which node
-      # brought it here.
       Entry = Data.define(:file, :from)
 
       #: () -> void
@@ -35,8 +33,6 @@ module Herb
         @entries = entries.compare_by_identity
       end
 
-      # The first claim on a node wins, so a partial spliced into a partial keeps the file it was
-      # really written in rather than the one it was spliced through.
       #: (Herb::AST::Node, String, ?from: Herb::AST::Node?) -> void
       def authored(node, file, from: nil)
         @entries[node] = Entry.new(file, from) unless @entries.key?(node)

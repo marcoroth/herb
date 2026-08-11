@@ -108,6 +108,24 @@ module Engine
         refute_inlined(%(<%= render "shared/translated" %>))
       end
 
+      test "leaves a partial that caches against its own virtual path" do
+        refute_inlined(%(<%= render "shared/cached" %>))
+      end
+
+      # The declaration is Rails asking Rails to check what a caller passed, and the copy has no
+      # signature left to check anything against.
+      test "leaves a partial that declares strict locals" do
+        refute_inlined(%(<%= render "shared/strict" %>))
+      end
+
+      # `shared/_fmt` exists as both `.html.erb` and `.turbo_stream.erb`, and the shared candidate
+      # order puts HTML first for everyone else who asks.
+      test "resolves a partial in the format the template renders in" do
+        assert_includes compile(%(<%= render "shared/fmt" %>), file: "app/views/posts/index.turbo_stream.erb"),
+                        "turbo version"
+        assert_includes compile(%(<%= render "shared/fmt" %>)), "html version"
+      end
+
       test "leaves a partial that reads the iteration of the collection it is rendered for" do
         refute_inlined(%(<%= render partial: "shared/counted", collection: @items %>))
       end

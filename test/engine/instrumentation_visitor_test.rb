@@ -189,9 +189,6 @@ module Engine
         assert_includes compile(%(<%= render "posts/card" %>)), "Session.enter"
       end
 
-      # Wrapping would replace the render tag with a plain content node holding the same code, which
-      # renders the same and leaves the compiler nothing to recognise. Anything that resolves a
-      # render into the partial it names needs the tag to still be one.
       test "leaves a render tag a render tag" do
         compiled = compile(%(<%= render "posts/card" %>))
 

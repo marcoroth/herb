@@ -37,9 +37,6 @@ module Herb
       # : () -> bool
       def self.inlines_renders?: () -> bool
 
-      # Everything here is per-template, including the inliner, which resolves against the directory
-      # the template is in. A visitor instance outlives one compile, so anything kept between them
-      # would answer the next template with the last one's directory.
       # : (Herb::AST::DocumentNode) -> void
       def visit_document_node: (Herb::AST::DocumentNode) -> void
 
@@ -54,17 +51,9 @@ module Herb
       # : (Array[Herb::AST::Node]) -> void
       def expand: (Array[Herb::AST::Node]) -> void
 
-      # A `<% render %>` that does not output has its value thrown away, so putting the partial's
-      # markup where the tag was would add output the template never asked for.
       # : (Herb::AST::Node) -> bool
       def inlinable?: (Herb::AST::Node) -> bool
 
-      # The names the partial would read from the template if it read them at all.
-      #
-      # A partial only ever sees the locals it was passed, but the copy sits inside the template and
-      # a lambda closes over what is around it. So a partial calling a helper the template happens
-      # to have a local of the same name for would read the local instead once inlined. The names it
-      # was passed are its own and shadow anything outside, so they are not at risk.
       # : (Herb::AST::Node) -> Array[String]
       def shadowed: (Herb::AST::Node) -> Array[String]
 
@@ -86,41 +75,18 @@ module Herb
       # : (Array[Herb::AST::Node]) -> void
       def inline_nested: (Array[Herb::AST::Node]) -> void
 
-      # A partial that does not parse is left as the `render` call it was written as, so that the
-      # error is reported against the partial when it is compiled rather than swallowed here. The
-      # engine only ever sees the tree it was handed, so a broken partial spliced into it would
-      # take its errors out of reach of everything that reports them.
       # : (String) -> Herb::AST::DocumentNode?
       def parse: (String) -> Herb::AST::DocumentNode?
 
-      # The partial goes inside something that is a scope, so that the locals it was given are its
-      # own. `begin`/`end` is not one, and reads as though it were: locals assigned in the partial
-      # went on existing in the template after it, and a name the template had already used was
-      # assigned over rather than shadowed.
-      #
-      # A lambda takes them as parameters, which both scopes them and evaluates them once, where
-      # they were written. A collection is a block already, so what it needs instead is its locals
-      # declared block-local, or assigning them would reach back out to the template's.
       # : (Herb::AST::Node, Array[String]) -> String
       def opening_for: (Herb::AST::Node, Array[String]) -> String
 
-      # Declared block-local, so that assigning them reaches no further than the partial does.
-      #
-      # Without this a partial assigning a name the template already has a local for would assign
-      # over the template's, because a block body shares the locals around it rather than making
-      # its own. A name that is already a parameter here is not repeated, which would not parse.
       # : (Array[String], Array[String]) -> String
       def block_locals: (Array[String], Array[String]) -> String
 
       # : (Herb::AST::Node) -> String
       def closing_for_code: (Herb::AST::Node) -> String
 
-      # The partial goes in as one block rather than as a flat run of nodes, and the block is what
-      # carries where its contents came from.
-      #
-      # Both are the same point: what was moved is the partial, not each node of it. A flat run
-      # would be split by anything spliced into the middle of it, which is what a partial rendering
-      # a partial is, and each half would then report as a render of its own.
       # : (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
       def block: (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
 

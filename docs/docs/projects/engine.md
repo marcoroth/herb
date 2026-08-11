@@ -629,6 +629,9 @@ A partial is inlined only when the file it names is knowable and inlining it mea
 | `t(".title")`, `l(...)`, `I18n.t` | The lookup is keyed on `@virtual_path`, which would become the template's |
 | `card_iteration` | Rails binds it per item; the copy has only the counter |
 | A name the template has a local for | The copy would read the local rather than call the method of that name |
+| `cache` | Its fragment digest is keyed the same way |
+| A partial declaring strict locals | Rails is the only one who can enforce them; the copy has no signature to check against |
+| A partial in another format | Resolved in the template's own format instead, since the shared candidate order puts HTML first |
 | A partial that does not parse | So the error is still reported against the partial |
 | `<% render %>` that does not output | Rails throws its value away, so the markup was never asked for |
 

@@ -4,7 +4,8 @@ module Herb
   class Engine
     class InlineRenderVisitor
       class Inliner
-        VIRTUAL_PATH_DEPENDENT = /\bI18n\.[tl]\b|\b(?:t|l|translate|localize)\(/
+        VIRTUAL_PATH_DEPENDENT = /\bI18n\.[tl]\b|\b(?:t|l|translate|localize)\(|\bcache\b/
+        STRICT_LOCALS = /<%#[-\s]*locals:/
 
         attr_reader :filename
 
@@ -13,6 +14,7 @@ module Herb
           @filename = options[:filename]
           @view_root = find_view_root
           @source_directory = find_source_directory
+          @format = find_format
         end
 
         def can_inline?(node, shadowed: [])
@@ -59,7 +61,13 @@ module Herb
         end
 
         def resolve_path(node)
-          node.resolve(view_root: @view_root, source_directory: @source_directory)
+          candidates = node.candidate_paths(nil, @view_root, @source_directory)
+
+          return candidates.find(&:exist?) unless @format
+
+          preferred, rest = candidates.partition { |path| path.basename.to_s.include?(".#{@format}.") }
+
+          (preferred + rest).find(&:exist?)
         end
 
         def own_locals(source)
@@ -97,6 +105,7 @@ module Herb
           return false if source.match?(/\byield\b/)
           return false if source.include?("local_assigns")
           return false if source.match?(VIRTUAL_PATH_DEPENDENT)
+          return false if source.match?(STRICT_LOCALS)
           return false if item && source.include?("#{item}_iteration")
 
           at_risk = shadowed - own_locals(source)
@@ -104,6 +113,14 @@ module Herb
           return false if at_risk.any? { |name| source.match?(/\b#{Regexp.escape(name)}\b/) }
 
           true
+        end
+
+        def find_format
+          return nil unless @filename
+
+          parts = File.basename(@filename).split(".")
+
+          parts.length >= 3 ? parts[-2] : nil
         end
 
         def find_view_root
@@ -114,12 +131,6 @@ module Herb
           candidates.find(&:directory?)
         end
 
-        # The template's own directory, which is where a partial named without one is looked up.
-        #
-        # `@filename` is already relative to the project and so already carries `app/views`, which
-        # is what makes joining it onto the view root wrong: it produces `app/views/app/views/...`,
-        # a directory that never exists, and every same-directory render then falls through to the
-        # partial of that name at the view root instead.
         def find_source_directory
           return nil unless @filename && @view_root
 
