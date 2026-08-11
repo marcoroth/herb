@@ -2,8 +2,6 @@
 
 module Herb
   class Engine
-    SECURITY_VIOLATION_CODE: String
-
     PARSER_ORIGIN: String
 
     attr_reader src: untyped

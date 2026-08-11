@@ -116,6 +116,12 @@ module Engine
       refute_includes engine.src, "record_compile_diagnostics"
     end
 
+    test "a fatal visitor raises the exception it named" do
+      assert_raises(NotAllowedError) do
+        compile("<marquee>Hello</marquee>", visitors: [NamedErrorReporter.new])
+      end
+    end
+
     test "a visitor that calls itself fatal aborts compilation" do
       assert_raises(Herb::Engine::CompilationError) do
         compile("<marquee>Hello</marquee>", visitors: [FailingReporter.new])
@@ -174,6 +180,27 @@ module Engine
 
       def visit_html_element_node(node)
         warning(MESSAGE, node.location, code: "AwkwardMessage")
+
+        Herb::Visitor.instance_method(:visit_html_element_node).bind_call(self, node)
+      end
+    end
+
+    class NotAllowedError < Herb::Engine::CompilationError
+      def initialize(message, line: nil, column: nil, filename: nil, suggestion: nil)
+        super([filename, line, column, message, suggestion].compact.join(":"))
+      end
+    end
+
+    # Any visitor can name the exception its findings raise; the engine never has to know which.
+    class NamedErrorReporter < RewritingReporter
+      def fatal?
+        true
+      end
+
+      def visit_html_element_node(node)
+        if node.open_tag&.tag_name&.value == "marquee"
+          error("Not allowed.", node.location, code: "NotAllowed", error_class: NotAllowedError)
+        end
 
         Herb::Visitor.instance_method(:visit_html_element_node).bind_call(self, node)
       end

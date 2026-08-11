@@ -25,8 +25,8 @@ module Herb
       # : () -> Array[Herb::Diagnostic]
       def diagnostics: () -> Array[Herb::Diagnostic]
 
-      # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def error: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+      # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def error: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
 
       # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
       def warning: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
@@ -57,8 +57,8 @@ module Herb
 
       private
 
-      # : (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def add_diagnostic: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+      # : (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def add_diagnostic: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
 
       # : () -> String
       def diagnostic_origin: () -> String
