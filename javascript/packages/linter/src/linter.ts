@@ -1,4 +1,5 @@
 import picomatch from "picomatch"
+import { ZodError } from "zod"
 
 import { Location, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
@@ -63,6 +64,33 @@ export interface FilterRulesOptions {
   all?: boolean
 }
 
+export class RuleOptionsValidationError extends Error {
+  constructor(ruleName: string, problem: string) {
+    super(`${ruleName}: ${problem}`)
+  }
+}
+
+function unknownOptionsError(ruleName: string, optionNames: string[], path: PropertyKey[] = []): RuleOptionsValidationError {
+  const prefix = path.map(String)
+  const names = optionNames.map(key => [...prefix, key].join("."))
+
+  return new RuleOptionsValidationError(ruleName, `Unknown options: ${names.join(", ")}`)
+}
+
+function validationErrorFor(ruleName: string, error: ZodError): RuleOptionsValidationError {
+  const issue = error.issues[0]!
+
+  if (issue.code === "unrecognized_keys") {
+    return unknownOptionsError(ruleName, issue.keys, issue.path)
+  }
+
+  const optionName = issue.path.map(String).join(".")
+  const message = issue.message.replace(/^Invalid input: /, "")
+  const problem = optionName ? `${optionName}: ${message}` : message
+
+  return new RuleOptionsValidationError(ruleName, `Invalid options: ${problem}`)
+}
+
 export class Linter {
   public rules: RuleClass[]
   public rulesSkippedByVersion: VersionSkippedRule[] = []
@@ -88,7 +116,13 @@ export class Linter {
    * @returns A configured Linter instance
    */
   static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[], options?: FilterRulesOptions): Linter {
-    const allRules = customRules ? [...rules, ...customRules] : rules
+    const availableRules = new Map(rules.map(ruleClass => [ruleClass.ruleName, ruleClass]))
+
+    for (const ruleClass of customRules ?? []) {
+      availableRules.set(ruleClass.ruleName, ruleClass)
+    }
+
+    const allRules = [...availableRules.values()]
     const configVersion = config?.configVersion
     const filterResult = Linter.filterRulesByConfig(allRules, config?.linter?.rules, configVersion, options)
 
@@ -120,18 +154,50 @@ export class Linter {
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.allAvailableRules = allAvailableRules !== undefined ? allAvailableRules : this.rules
     this.offenses = []
+    this.validateRuleOptions()
   }
 
   /** Create a rule instance with its custom per-rule options applied. */
   protected createRule(ruleClass: RuleClass): Rule {
     const rule = new ruleClass()
+    const options = this.config?.getRuleOptions(ruleClass.ruleName) ?? {}
     const configure = (rule as { configure?: (options: Record<string, unknown>) => Rule }).configure
 
-    if (typeof configure === "function") {
-      return configure.call(rule, this.config?.getRuleOptions(ruleClass.ruleName) ?? {})
+    if (typeof configure !== "function") {
+      const optionNames = Object.keys(options)
+
+      if (optionNames.length > 0) {
+        throw unknownOptionsError(ruleClass.ruleName, optionNames)
+      }
+
+      return rule
     }
 
-    return rule
+    try {
+      return configure.call(rule, options)
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw validationErrorFor(ruleClass.ruleName, error)
+      }
+
+      throw error
+    }
+  }
+
+  /** Validate custom options after built-in and project-local rules are available. */
+  protected validateRuleOptions(): void {
+    const allOptions = this.config?.getRuleOptions(ALL_RULES_KEY) ?? {}
+    const allOptionNames = Object.keys(allOptions)
+
+    if (allOptionNames.length > 0) {
+      throw unknownOptionsError(ALL_RULES_KEY, allOptionNames)
+    }
+
+    const availableRules = new Map(this.allAvailableRules.map(ruleClass => [ruleClass.ruleName, ruleClass]))
+
+    for (const ruleClass of availableRules.values()) {
+      this.createRule(ruleClass)
+    }
   }
 
   /**

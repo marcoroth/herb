@@ -1,6 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue } from "@herb-tools/core"
+import { z } from "zod"
 
 import type { BaseAutofixContext, UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -90,6 +91,13 @@ export class HTMLAllowedScriptTypeRule extends ParserRule<BaseAutofixContext, HT
       allowedTypes: ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"],
       allowBlank: true
     }
+  }
+
+  get optionsSchema(): z.ZodType<HTMLAllowedScriptTypeOptions> {
+    return z.object({
+      allowedTypes: z.array(z.string()),
+      allowBlank: z.boolean()
+    }).strict()
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {

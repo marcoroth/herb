@@ -1,4 +1,5 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
+import { z } from "zod"
 
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
@@ -131,14 +132,22 @@ export abstract class ParserRule<
     return {} as TOptions
   }
 
+  get optionsSchema(): z.ZodType<TOptions> {
+    return z.object({}).strict() as z.ZodType<TOptions>
+  }
+
   get options(): TOptions {
-    this.configuredOptions ??= this.defaultOptions
+    this.configuredOptions ??= this.validateOptions()
 
     return this.configuredOptions
   }
 
+  validateOptions(options: Partial<TOptions> = {}): TOptions {
+    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
+  }
+
   configure(options: Partial<TOptions> = {}): this {
-    this.configuredOptions = { ...this.defaultOptions, ...options }
+    this.configuredOptions = this.validateOptions(options)
 
     return this
   }
@@ -228,14 +237,22 @@ export abstract class LexerRule<
     return {} as TOptions
   }
 
+  get optionsSchema(): z.ZodType<TOptions> {
+    return z.object({}).strict() as z.ZodType<TOptions>
+  }
+
   get options(): TOptions {
-    this.configuredOptions ??= this.defaultOptions
+    this.configuredOptions ??= this.validateOptions()
 
     return this.configuredOptions
   }
 
+  validateOptions(options: Partial<TOptions> = {}): TOptions {
+    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
+  }
+
   configure(options: Partial<TOptions> = {}): this {
-    this.configuredOptions = { ...this.defaultOptions, ...options }
+    this.configuredOptions = this.validateOptions(options)
 
     return this
   }
@@ -353,14 +370,22 @@ export abstract class SourceRule<
     return {} as TOptions
   }
 
+  get optionsSchema(): z.ZodType<TOptions> {
+    return z.object({}).strict() as z.ZodType<TOptions>
+  }
+
   get options(): TOptions {
-    this.configuredOptions ??= this.defaultOptions
+    this.configuredOptions ??= this.validateOptions()
 
     return this.configuredOptions
   }
 
+  validateOptions(options: Partial<TOptions> = {}): TOptions {
+    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
+  }
+
   configure(options: Partial<TOptions> = {}): this {
-    this.configuredOptions = { ...this.defaultOptions, ...options }
+    this.configuredOptions = this.validateOptions(options)
 
     return this
   }

@@ -1,6 +1,7 @@
 import { ParserRule } from "../types.js"
 import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 import { BaseRuleVisitor } from "./rule-utils.js"
+import { z } from "zod"
 
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
 import { isAssignmentNode, isDebugOutputCall, isSleepCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
@@ -191,6 +192,12 @@ export class ERBNoUnusedExpressionsRule extends ParserRule<BaseAutofixContext, E
     return {
       allowedMethods: []
     }
+  }
+
+  get optionsSchema(): z.ZodType<ERBNoUnusedExpressionsOptions> {
+    return z.object({
+      allowedMethods: z.array(z.string())
+    }).strict()
   }
 
   get parserOptions(): Partial<ParserOptions> {
