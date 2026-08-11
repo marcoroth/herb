@@ -8,6 +8,29 @@ module Engine
   class DebugModeTest < Minitest::Spec
     include SnapshotUtils
 
+    class ZeroLocationInjector < Herb::Visitor
+      def visit_document_node(node)
+        super
+
+        node.children << Herb::AST::ERBContentNode.new(
+          "ERBContentNode",
+          Herb::Location.zero,
+          [],
+          Herb::Token.from("TOKEN_ERB_START", "<%="),
+          Herb::Token.from("TOKEN_ERB_CONTENT", " generated "),
+          Herb::Token.from("TOKEN_ERB_END", "%>"),
+          nil,
+          false,
+          true,
+          nil
+        )
+      end
+
+      def inspect
+        "#<ZeroLocationInjector>"
+      end
+    end
+
     test "debug mode disabled by default" do
       template = "<h1>Hello <%= @name %>!</h1>"
 
@@ -615,6 +638,18 @@ module Engine
       assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <title><%= @page_title %></title>
       ERB
+    end
+
+    test "annotates a generated node with the first line rather than line zero" do
+      compiled = Herb::Engine.new(
+        "<div>Hello</div>",
+        filename: "app/views/test.html.erb",
+        visitors: [ZeroLocationInjector.new, Herb::Engine::DebugVisitor.new]
+      ).src
+
+      assert_includes compiled, %(data-herb-debug-line="1")
+      assert_includes compiled, %(data-herb-debug-column="1")
+      refute_includes compiled, %(data-herb-debug-line="0")
     end
   end
 end

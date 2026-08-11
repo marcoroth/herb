@@ -47,8 +47,9 @@ module Herb
         #: () -> String
         def to_s
           summary = observations.map { |key, values| "#{values.size} #{key}" }.join(", ")
+          position = location.start.to_one_based
 
-          "#{template || "(unknown)"}:#{line}:#{column} (#{summary})"
+          "#{template || "(unknown)"}:#{position[:line]}:#{position[:column]} (#{summary})"
         end
       end
     end

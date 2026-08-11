@@ -200,8 +200,7 @@ module Herb
 
         return erb_node if complex_rails_helper?(code)
 
-        line = erb_node.location&.start&.line
-        column = erb_node.location&.start&.column
+        position = erb_node.location&.start&.to_one_based
 
         escaped_erb = erb_code.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'",
                                                                                                                "&#39;")
@@ -221,8 +220,11 @@ module Herb
           create_debug_attribute("data-herb-debug-inserted", "true")
         ]
 
-        debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s) if line
-        debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
+        if position
+          debug_attributes << create_debug_attribute("data-herb-debug-line", position[:line].to_s)
+          debug_attributes << create_debug_attribute("data-herb-debug-column", position[:column].to_s)
+        end
+
         debug_attributes << create_debug_attribute("style", "display: contents;")
 
         tag_name_token = Herb::Token.from(:tag_name, "span")

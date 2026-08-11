@@ -239,8 +239,10 @@ module Herb
         location = node.location
 
         if location
-          parts << "line: #{location.start.line}"
-          parts << "column: #{location.start.column + 1}"
+          position = location.start.to_one_based
+
+          parts << "line: #{position[:line]}"
+          parts << "column: #{position[:column]}"
         end
 
         parts << "source: #{erb_source(node, code).dump}.freeze"
