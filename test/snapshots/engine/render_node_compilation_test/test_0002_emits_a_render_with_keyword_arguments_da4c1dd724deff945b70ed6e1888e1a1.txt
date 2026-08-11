@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderNodeCompilationTest#test_0002_emits a render with keyword arguments"
+input: "{source: \"<%= render partial: \\\"x\\\", locals: { a: 1 } %>\", options: {parser_options: {render_nodes: true}}}"
+---
+_buf = ::String.new; _buf << (render partial: "x", locals: { a: 1 }).to_s;
+_buf.to_s
