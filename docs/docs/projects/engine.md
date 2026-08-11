@@ -137,6 +137,7 @@ Herb ships the following transform visitors:
 | `DebugVisitor`                | Annotates output with the template and position it came from            |
 | `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)       |
 | `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental) |
+| `InlineRenderVisitor`         | Replaces a `render` of a static partial with the partial (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
@@ -192,6 +193,8 @@ end
 ```
 
 `reads_erb_source?` means it copies the template's own ERB somewhere, the way `DebugVisitor` puts it in `data-herb-debug-erb`. `rewrites_erb_source?` means it leaves ERB behind that the author did not write, the way `InstrumentationVisitor` wraps every tag. A visitor that answers neither is unconstrained and can run anywhere.
+
+A third question, `inlines_renders?`, means the visitor brings markup from other files into the tree, the way `InlineRenderVisitor` does. One that answers it has to run first, so everything else sees what it brought in.
 
 The engine checks this before it compiles anything, so a stack in the wrong order raises rather than producing a template that is quietly wrong:
 
@@ -592,6 +595,41 @@ ActionView::Helpers::TagHelper, but here it is defined by ApplicationHelper.
 ```
 
 The check costs a call per render and only reports, so it belongs in development rather than production, and compiling it in is opt-in for the same reason the optimization is.
+
+### `InlineRenderVisitor` <Badge type="warning" text="experimental" />
+
+Replaces a `render` of a static partial with the partial itself, so the rendered page costs no partial lookup at run time.
+
+```ruby
+require "herb/engine/inline_render_visitor"
+
+Herb::Engine.new(source, visitors: [Herb::Engine::InlineRenderVisitor.new])
+```
+
+`<%= render partial: "posts/card", locals: { title: @post.title } %>` compiles to the card's own markup, wrapped so that the locals it was given stop where the partial does:
+
+```ruby
+begin; title = (@post.title); _buf << '<div>'.freeze; _buf << (title).to_s; _buf << '</div>'.freeze; end
+```
+
+A partial is inlined only when the file it names is knowable and inlining it changes nothing: a literal path, no block, no `content_for`, no `yield`, no `local_assigns`, and not one already being inlined further up. Anything else is left as the `render` call it was written as.
+
+It has to run first, and the engine refuses a stack that puts it anywhere else. Everything after it sees the partial's markup as part of the template it landed in, which is what holds a partial to whatever the template around it is held to. A validator that refuses markup in a template refuses it in a partial, and a transform that rewrites a tag rewrites it wherever it was written. Were it to run last, moving markup into a partial would be a way of turning those off.
+
+A partial that is inlined never renders, so nothing about it would reach the session either. What was moved is recorded on `Herb::Engine::Origin`, and `InstrumentationVisitor` reads it, so the page describes itself the same way whether the partial was inlined or rendered:
+
+```ruby
+Herb::Engine.new(source, visitors: [
+  Herb::Engine::InlineRenderVisitor.new,
+  Herb::Engine::InstrumentationVisitor.new
+])
+```
+
+```json
+{ "id": "2", "template": "app/views/posts/_card.html.erb", "parent": "1", "line": 1, "column": 6, "via": "partial" }
+```
+
+A query issued inside an inlined partial is filed under the partial, not under the template it landed in, and a collection reports one render per item rather than one for all of them. The lines and columns need no adjusting, because the nodes came from the partial's own source.
 
 ## Diagnostics
 
