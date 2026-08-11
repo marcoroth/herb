@@ -29,7 +29,7 @@ import { PersonalHerbSettings } from "./user_settings"
 import { Config } from "@herb-tools/config"
 import { isPartialPath } from "@herb-tools/core"
 import { isConfigDocument, isPathInside } from "./utils"
-import { version } from "../package.json"
+import { serverVersion } from "./build_info"
 
 import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "@herb-tools/language-service"
@@ -57,7 +57,7 @@ export class Server {
       const result: InitializeResult = {
         serverInfo: {
           name: "Herb Language Server",
-          version,
+          version: serverVersion,
         },
         capabilities: {
           textDocumentSync: {
