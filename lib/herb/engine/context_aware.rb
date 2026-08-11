@@ -35,6 +35,11 @@ module Herb
       def inherit_context(context)
         @context = context unless @context_explicit
       end
+
+      #: () -> Herb::Engine::Origin
+      def origin
+        context.origin
+      end
     end
   end
 end

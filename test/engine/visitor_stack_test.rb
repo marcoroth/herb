@@ -16,6 +16,10 @@ module Engine
       def self.rewrites_erb_source? = true
     end
 
+    class InliningVisitor < Herb::Visitor
+      def self.inlines_renders? = true
+    end
+
     def stack
       @stack ||= Herb::Engine::VisitorStack.build([FirstVisitor.new, SecondVisitor.new])
     end
@@ -198,6 +202,19 @@ module Engine
         end
 
         assert_includes error.message, "ReadingVisitor"
+      end
+
+      test "refuses an inlining visitor that runs after anything else" do
+        error = assert_raises(Herb::Engine::VisitorStack::OrderError) do
+          order(FirstVisitor.new, InliningVisitor.new).validate_order!
+        end
+
+        assert_includes error.message, "InliningVisitor"
+        assert_includes error.message, "has to run first"
+      end
+
+      test "accepts an inlining visitor that runs first" do
+        assert_nil order(InliningVisitor.new, FirstVisitor.new, ReadingVisitor.new).validate_order!
       end
 
       test "is what the engine checks before it compiles anything" do

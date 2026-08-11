@@ -66,6 +66,12 @@ module Herb
 
       def rewrite: (untyped nodes) -> untyped
 
+      # : (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+      def rewrite_import: (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+
+      # : (Herb::AST::Node) -> Array[Herb::AST::Node]
+      def rewrite_node: (Herb::AST::Node) -> Array[Herb::AST::Node]
+
       def framed?: (untyped node) -> untyped
 
       def assignment?: (untyped node) -> untyped
@@ -81,6 +87,10 @@ module Herb
       def enter_node: (untyped node) -> untyped
 
       def leave_node: (untyped node) -> untyped
+
+      def enter_render_node: (untyped node, untyped file) -> untyped
+
+      def leave_render_node: (untyped node) -> untyped
 
       def position: (untyped node) -> untyped
 

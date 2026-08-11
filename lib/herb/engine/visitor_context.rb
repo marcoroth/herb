@@ -3,6 +3,8 @@
 
 require "pathname"
 
+require_relative "origin"
+
 module Herb
   class Engine
     # Per-template information the engine hands to the visitors it runs before compilation.
@@ -39,9 +41,14 @@ module Herb
         @project_path = self.class.coerce_project_path(project_path)
         @relative_file_path = self.class.derive_relative_file_path(@file_path, @project_path)
         @options = options.dup.freeze
-        @data = data.freeze
+        @data = data.tap { |values| values[:origin] ||= Origin.new }.freeze
 
         freeze
+      end
+
+      #: () -> Herb::Engine::Origin
+      def origin
+        data[:origin]
       end
 
       #: (Symbol) -> untyped

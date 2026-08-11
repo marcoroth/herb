@@ -27,6 +27,12 @@ module Herb
 
       private
 
+      # : (untyped, Integer) -> void
+      def validate_inlining!: (untyped, Integer) -> void
+
+      # : (untyped, Integer) -> void
+      def validate_reading!: (untyped, Integer) -> void
+
       # : (untyped, Symbol) -> bool
       def answers?: (untyped, Symbol) -> bool
 

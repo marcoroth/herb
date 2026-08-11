@@ -186,7 +186,14 @@ module Engine
       end
 
       test "frames a render tag at all" do
-        assert_includes compile(%(<%= render "posts/card" %>)), "Session.at"
+        assert_includes compile(%(<%= render "posts/card" %>)), "Session.enter"
+      end
+
+      test "leaves a render tag a render tag" do
+        compiled = compile(%(<%= render "posts/card" %>))
+
+        assert_includes compiled, %(_buf << (render "posts/card").to_s)
+        refute_includes compiled, "Session.at("
       end
 
       test "keeps the body of a render that takes a block" do

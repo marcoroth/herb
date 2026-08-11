@@ -24,6 +24,9 @@ module Herb
 
       # : (Herb::Engine::VisitorContext) -> void
       def inherit_context: (Herb::Engine::VisitorContext) -> void
+
+      # : () -> Herb::Engine::Origin
+      def origin: () -> Herb::Engine::Origin
     end
   end
 end
