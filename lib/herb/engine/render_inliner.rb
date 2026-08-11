@@ -10,6 +10,7 @@ module Herb
         @view_root = find_view_root
         @source_directory = find_source_directory
         @inlining_stack = Set.new
+        @inlining_path = [] #: Array[untyped]
       end
 
       def can_inline?(node)
@@ -93,7 +94,12 @@ module Herb
           transform_conditionals: true
         )
 
-        result.value
+        ast = result.value
+        instrumenter = instrumenter_for(@inlining_path.last)
+
+        ast&.accept(instrumenter) if instrumenter
+
+        ast
       end
 
       attr_reader :filename
@@ -117,6 +123,7 @@ module Herb
       # visitors the engine ran. Giving it its own visitor, carrying its own context, is what makes
       # a tag inside an inlined partial report the partial rather than the file it landed in.
       def instrumenter_for(path)
+        return nil unless path
         return nil unless instrumented?
 
         visitor = @engine.visitors.find { |v| v.class.name.to_s.end_with?("InstrumentationVisitor") }
@@ -134,10 +141,12 @@ module Herb
 
       def push(path)
         @inlining_stack.add(path.to_s)
+        @inlining_path.push(path)
       end
 
       def pop(path)
         @inlining_stack.delete(path.to_s)
+        @inlining_path.pop
       end
 
       private
