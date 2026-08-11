@@ -317,5 +317,38 @@ module Engine
 
       assert_includes error.message, "unknown check :scripts"
     end
+
+    HTML_SAFE_TEMPLATE = "<%= @user.bio.html_safe %>"
+
+    describe "which file the assertion names" do
+      def file_argument(**properties)
+        visitor = Herb::Engine::HTMLSafeAssertionsVisitor.new(**properties.delete(:visitor).to_h)
+        engine = Herb::Engine.new(
+          HTML_SAFE_TEMPLATE, parser_options: { strict: false }, visitors: [visitor], **properties
+        )
+
+        engine.src[/file: (.+?),/, 1]
+      end
+
+      test "names the template the engine was compiling" do
+        assert_equal %("app/views/users/show.html.erb".freeze),
+                     file_argument(filename: "app/views/users/show.html.erb")
+      end
+
+      test "names it relative to the project rather than absolutely" do
+        assert_equal %("app/views/users/show.html.erb".freeze),
+                     file_argument(filename: File.join(Dir.pwd, "app/views/users/show.html.erb"))
+      end
+
+      test "lets a file path passed to the visitor win over the one the engine has" do
+        assert_equal %("explicit/path.html.erb".freeze),
+                     file_argument(filename: "app/views/engine.html.erb",
+                                   visitor: { file_path: "explicit/path.html.erb" })
+      end
+
+      test "falls back to the compiled file only when nothing knows the template" do
+        assert_equal "__FILE__", file_argument
+      end
+    end
   end
 end

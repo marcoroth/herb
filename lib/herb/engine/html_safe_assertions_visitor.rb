@@ -38,6 +38,8 @@ module Herb
     #     Herb.parse(source, prism_program: true)
     #
     class HTMLSafeAssertionsVisitor < Herb::Visitor
+      include ContextAware
+
       RUNTIME = "::Herb::Engine::HTMLSafeAssertions"
 
       MAX_SOURCE_LENGTH = 120
@@ -53,8 +55,9 @@ module Herb
 
         @mode = validated_mode(mode)
         @ignore = validated_ignore(ignore)
-        @file_path = file_path&.to_s
         @erb_nodes = [] #: Array[untyped]
+
+        self.context = VisitorContext.new(file_path: file_path) if file_path
       end
 
       #: (Herb::AST::DocumentNode) -> void
@@ -73,7 +76,7 @@ module Herb
 
       #: () -> String
       def inspect
-        "#<#{self.class.name} mode=#{@mode.inspect} ignore=#{@ignore.inspect} file_path=#{@file_path.inspect}>"
+        "#<#{self.class.name} mode=#{@mode.inspect} ignore=#{@ignore.inspect} file_path=#{context.file_path&.to_s.inspect}>"
       end
 
       private
@@ -254,7 +257,13 @@ module Herb
 
       #: () -> String
       def file_argument
-        @file_path ? "#{@file_path.dump}.freeze" : "__FILE__"
+        # `__FILE__` is the compiled template at render time, which is the right answer only when
+        # the compiler happens to be ActionView and the wrong one everywhere else. The engine knows
+        # the real path whenever it was given one, so that wins, and this stays as the last resort
+        # for a visitor run on its own against a source with no name.
+        return "__FILE__" unless context.file_path
+
+        "#{context.relative_file_path.dump}.freeze"
       end
 
       #: (untyped, String) -> String
