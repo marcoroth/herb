@@ -329,7 +329,7 @@ module Herb
       return unless issue_type[:key] == :invalid_ruby && file_content
 
       begin
-        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, validation_mode: :none)
+        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [])
         puts ""
         puts "**Compiled Ruby:**"
         puts "```ruby"
@@ -502,7 +502,7 @@ module Herb
 
       # Retry without validators
       begin
-        Herb::Engine.new(file_content, filename: file_path, escape: true, validation_mode: :none, validate_ruby: validate_ruby)
+        Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [], validate_ruby: validate_ruby)
         error_name = e.is_a?(Herb::Engine::SecurityError) ? "SecurityError" : "ValidationError"
         return { status: :validation_error, file_content: file_content,
                  compilation_error: compilation_error,

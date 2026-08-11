@@ -71,17 +71,14 @@ module Engine
       assert_kind_of String, engine.src
     end
 
-    test "disabled validators work with validation_mode: :overlay" do
-      engine = Herb::Engine.new(@security_violation_template,
-                                validators: { security: false },
-                                validation_mode: :overlay)
+    test "disabled validators work with visitors: Herb::Engine.default_visitors(fatal: false)" do
+      engine = Herb::Engine.new(@security_violation_template, validators: { security: false }, visitors: Herb::Engine.default_visitors(fatal: false))
 
       assert_kind_of String, engine.src
     end
 
-    test "validators do not run when validation_mode: :none" do
-      engine = Herb::Engine.new(@security_violation_template,
-                                validation_mode: :none)
+    test "validators do not run when visitors: []" do
+      engine = Herb::Engine.new(@security_violation_template, visitors: [])
 
       assert_kind_of String, engine.src
     end

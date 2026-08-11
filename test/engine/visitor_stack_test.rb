@@ -107,15 +107,29 @@ module Engine
         assert_equal(visitors, classes(compile.visitors))
       end
 
-      test "keeps the validators when the caller passes its own visitors" do
+      test "hands the whole stack over when the caller names its own" do
         engine = compile(visitors: [ThirdVisitor.new])
+
+        assert_equal [ThirdVisitor], classes(engine.visitors)
+      end
+
+      test "lets a caller build on the defaults rather than instead of them" do
+        engine = compile(visitors: Herb::Engine.default_visitors.use(ThirdVisitor.new))
 
         assert_equal(3, engine.visitors.count { |visitor| visitor.is_a?(Herb::Engine::Validator) })
         assert_equal ThirdVisitor, classes(engine.visitors).last
       end
 
-      test "drops the validators when there is nothing to report to" do
-        assert_empty compile(validation_mode: :none).visitors
+      test "runs nothing when the caller asks for nothing" do
+        assert_empty compile(visitors: []).visitors
+      end
+
+      test "makes its validators fatal by default" do
+        assert(compile.visitors.all?(&:fatal?))
+      end
+
+      test "builds them non-fatal when asked" do
+        refute(Herb::Engine.default_visitors(fatal: false).any?(&:fatal?))
       end
 
       test "honours a validator turned off in configuration" do

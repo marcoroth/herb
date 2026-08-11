@@ -1,6 +1,0 @@
----
-source: "Engine::DiagnosticsTest#test_0007_emits nothing for a template with nothing to say"
-input: "{source: \"<div>Hello</div>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Engine::DiagnosticsTest::RewritingReporter>], validation_mode: :overlay}}"
----
-_buf = ::String.new; _buf << '<div>Hello</div>'.freeze;
-_buf.to_s
