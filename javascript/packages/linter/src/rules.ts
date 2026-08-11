@@ -53,6 +53,7 @@ import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.j
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoReturnRule } from "./rules/erb-no-return.js"
 import { ERBNoShadowedBlockArgumentRule } from "./rules/erb-no-shadowed-block-argument.js"
 import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
@@ -201,6 +202,7 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoReturnRule,
   ERBNoShadowedBlockArgumentRule,
   ERBNoSilentStatementRule,
   ERBNoUnusedBlockArgumentRule,
