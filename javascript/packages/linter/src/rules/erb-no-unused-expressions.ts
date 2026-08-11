@@ -5,7 +5,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
 import { isAssignmentNode, isDebugOutputCall, isSleepCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
 
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { BaseAutofixContext, UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ERBRenderNode, ERBBlockNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 const MUTATION_METHODS = new Set([
@@ -25,14 +25,20 @@ const MUTATION_METHODS = new Set([
   "assert_valid_keys",
 ])
 
+export interface ERBNoUnusedExpressionsOptions {
+  allowedMethods: string[]
+}
+
 class UnusedExpressionCollector extends PrismVisitor {
   public readonly expressions: PrismNode[] = []
   private readonly blockLocalNames: Set<string>
+  private readonly allowedMethods: Set<string>
 
-  constructor(blockLocalNames: Set<string> = new Set()) {
+  constructor(blockLocalNames: Set<string> = new Set(), allowedMethods: Set<string> = SIDE_EFFECT_METHODS) {
     super()
 
     this.blockLocalNames = blockLocalNames
+    this.allowedMethods = allowedMethods
   }
 
   override visit(node: PrismNode): void {
@@ -59,7 +65,7 @@ class UnusedExpressionCollector extends PrismVisitor {
   private isSideEffectCall(node: PrismNode): boolean {
     if (node.receiver) return false
 
-    return SIDE_EFFECT_METHODS.has(node.name)
+    return this.allowedMethods.has(node.name)
   }
 
   private isUnusedExpression(node: PrismNode): boolean {
@@ -87,6 +93,13 @@ class UnusedExpressionCollector extends PrismVisitor {
 
 class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
   private exemptLocalNames: Set<string> = new Set()
+  private readonly allowedMethods: Set<string>
+
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, options: ERBNoUnusedExpressionsOptions) {
+    super(ruleName, context)
+
+    this.allowedMethods = new Set([...SIDE_EFFECT_METHODS, ...options.allowedMethods])
+  }
 
   visitERBRenderNode(node: ERBRenderNode): void {
     this.visitExemptingBlockArguments(node)
@@ -134,7 +147,7 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
     const source = node.source
     if (!source) return
 
-    const collector = new UnusedExpressionCollector(this.exemptLocalNames)
+    const collector = new UnusedExpressionCollector(this.exemptLocalNames, this.allowedMethods)
     collector.visit(prismNode)
 
     const tagOpening = node.tag_opening?.value ?? "<%"
@@ -160,7 +173,7 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
   }
 }
 
-export class ERBNoUnusedExpressionsRule extends ParserRule {
+export class ERBNoUnusedExpressionsRule extends ParserRule<BaseAutofixContext, ERBNoUnusedExpressionsOptions> {
   static ruleName = "erb-no-unused-expressions"
   static introducedIn = this.version("0.9.3")
 
@@ -174,6 +187,12 @@ export class ERBNoUnusedExpressionsRule extends ParserRule {
     }
   }
 
+  get defaultOptions(): ERBNoUnusedExpressionsOptions {
+    return {
+      allowedMethods: []
+    }
+  }
+
   get parserOptions(): Partial<ParserOptions> {
     return {
       prism_nodes: true,
@@ -182,7 +201,7 @@ export class ERBNoUnusedExpressionsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoUnusedExpressionsVisitor(this.ruleName, context)
+    const visitor = new ERBNoUnusedExpressionsVisitor(this.ruleName, context, this.options)
 
     visitor.visit(result.value)
 
