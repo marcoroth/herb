@@ -9,8 +9,6 @@ import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
 
-import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
-
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
 
@@ -122,6 +120,18 @@ export class Linter {
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.allAvailableRules = allAvailableRules !== undefined ? allAvailableRules : this.rules
     this.offenses = []
+  }
+
+  /** Create a rule instance with its custom per-rule options applied. */
+  protected createRule(ruleClass: RuleClass): Rule {
+    const rule = new ruleClass()
+    const configure = (rule as { configure?: (options: Record<string, unknown>) => Rule }).configure
+
+    if (typeof configure === "function") {
+      return configure.call(rule, this.config?.getRuleOptions(ruleClass.ruleName) ?? {})
+    }
+
+    return rule
   }
 
   /**
@@ -464,8 +474,8 @@ export class Linter {
       const hasParserRule = this.findRuleClass("parser-no-errors")
 
       if (hasParserRule) {
-        const rule = new ParserNoErrorsRule()
-        const offenses = rule.check(parseResult)
+        const rule = this.createRule(hasParserRule) as ParserRule
+        const offenses = rule.check(parseResult) as LintOffense[]
 
         this.offenses.push(...offenses)
       }
@@ -493,7 +503,7 @@ export class Linter {
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
 
     for (const ruleClass of regularRules) {
-      const rule = new ruleClass()
+      const rule = this.createRule(ruleClass)
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
@@ -522,7 +532,7 @@ export class Linter {
     const unnecessaryRuleClass = this.findRuleClass("herb-disable-comment-unnecessary")
 
     if (unnecessaryRuleClass) {
-      const unnecessaryRule = new unnecessaryRuleClass() as ParserRule
+      const unnecessaryRule = this.createRule(unnecessaryRuleClass) as ParserRule
       const parseResult = this.parseCache.get(source, unnecessaryRule.parserOptions)
       const unboundOffenses = unnecessaryRule.check(parseResult, context)
       const boundOffenses = this.bindSeverity(unboundOffenses, unnecessaryRuleClass.ruleName)
@@ -646,7 +656,7 @@ export class Linter {
           continue
         }
 
-        const rule = new ruleClass() as ParserRule
+        const rule = this.createRule(ruleClass) as ParserRule
         const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {
@@ -719,7 +729,7 @@ export class Linter {
           continue
         }
 
-        const rule = new ruleClass() as SourceRule
+        const rule = this.createRule(ruleClass) as SourceRule
         const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {

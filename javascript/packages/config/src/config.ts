@@ -4,16 +4,17 @@ import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
-import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
+import { stringify, parse, parseDocument, isMap, isScalar, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
 import { promises as fs } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
 import { ZodError, z } from "zod"
-import { HerbConfigSchema } from "./config-schema.js"
+import { BASE_RULE_CONFIG_KEYS, HerbConfigSchema } from "./config-schema.js"
+import { omit } from "./utils/omit.js"
 
-import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+import type { BaseRuleConfigSchema, FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -62,14 +63,9 @@ export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): Dia
  */
 export const ALL_RULES_KEY = "all"
 
-export type RuleConfig = {
-  enabled?: boolean
-  severity?: SeverityConfig
-  autoCorrect?: boolean
-  include?: string[]
-  only?: string[]
-  exclude?: string[]
-}
+export type BaseRuleConfig = z.infer<typeof BaseRuleConfigSchema>
+
+export type RuleConfig = BaseRuleConfig & Record<string, unknown>
 
 export type LinterConfig = {
   enabled?: boolean
@@ -271,6 +267,17 @@ export class Config {
    */
   public isRuleEnabled(ruleName: string): boolean {
     return !this.isRuleDisabled(ruleName)
+  }
+
+  /**
+   * Return custom options configured for a rule.
+   * @param ruleName - The name of the rule to check
+   * @returns The custom options for the rule
+   */
+  public getRuleOptions(ruleName: string): Record<string, unknown> {
+    const ruleConfig = this.config.linter?.rules?.[ruleName] || {}
+
+    return omit(ruleConfig, BASE_RULE_CONFIG_KEYS)
   }
 
   /**
