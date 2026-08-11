@@ -6,14 +6,14 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, dirname } from "node:path"
 
-import { ancestorVerdict } from "@herb-tools/core"
-import { buildPartialIndex } from "../src/partial-index-builder.js"
-import { buildPartialCallerIndex } from "../src/partial-caller-builder.js"
+import { ancestorVerdict } from "@herb-tools/analysis"
+import { buildPartialIndex } from "@herb-tools/analysis/node"
+import { buildPartialCallerIndex } from "@herb-tools/analysis/node"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { PartialCallerIndex } from "@herb-tools/core"
+import { PartialCallerIndex } from "@herb-tools/analysis"
 
-import type { AncestorChain } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 
 const LAYOUT = `<html>
   <head>
@@ -226,8 +226,8 @@ describe("contextOf", () => {
       "app/views/layouts/application.html.erb": LAYOUT,
     })
 
-    const core = await import("@herb-tools/core")
-    const restored = core.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers)))
+    const analysis = await import("@herb-tools/analysis")
+    const restored = analysis.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers)))
 
     expect(tagsOf(restored.contextOf("app/views/shared/_meta.html.erb"))).toEqual([["html", "head"]])
     expect(restored.contextOf("app/views/shared/_meta.html.erb").resolved).toBe(true)
@@ -240,8 +240,8 @@ describe("contextOf", () => {
       "app/views/layouts/application.html.erb": LAYOUT,
     })
 
-    const core = await import("@herb-tools/core")
-    const restored = core.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers)))
+    const analysis = await import("@herb-tools/analysis")
+    const restored = analysis.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers)))
 
     expect(restored.contextOf("app/views/shared/_meta.html.erb").chains[0].frames).toEqual([
       {

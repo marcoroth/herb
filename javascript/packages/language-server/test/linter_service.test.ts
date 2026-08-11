@@ -8,7 +8,7 @@ import { Capabilities } from "../src/capabilities"
 import { Project } from "../src/project"
 import { PartialIndexService } from "../src/partial_index_service"
 import { PartialCallerIndexService } from "../src/partial_caller_index_service"
-import { PartialCallerIndex } from "@herb-tools/core"
+import { PartialCallerIndex } from "@herb-tools/analysis"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 

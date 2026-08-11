@@ -4,15 +4,16 @@ import { glob } from "tinyglobby"
 import { join } from "node:path"
 import { readFileSync } from "node:fs"
 
-import { getTagLocalName, isHTMLElementNode, isPrismNodeType, isRubyRenderLocalNode, layoutCandidatesFor, outranksTemplate, templateNameForFile } from "@herb-tools/core"
-import { isOutputRender, renderPartialExpression } from "./rules/prism-rule-utils.js"
-import { staticAncestorAttributes } from "./ancestor-attributes.js"
+import { getTagLocalName, isERBOutputNode, isHTMLElementNode, isPrismNodeType, isRubyRenderLocalNode } from "@herb-tools/core"
+import { PartialCallerIndex } from "./partial-callers"
+import { outranksTemplate } from "./partial-index"
+import { layoutCandidatesFor, templateNameForFile, TEMPLATE_GLOB_PATTERN } from "./partial-resolution"
+import { renderPartialExpression } from "./render-expression"
+import { staticAncestorAttributes } from "./ancestor-attributes"
 
-import { PartialCallerIndex } from "@herb-tools/core"
-
-import { TEMPLATE_GLOB_PATTERN } from "@herb-tools/core"
-
-import type { CallSiteLocation, ERBRenderNode, ERBYieldNode, HerbBackend, Node, PartialCallSite, PartialIndex, SerializedPartialCallerIndex, StaticAttributeMap } from "@herb-tools/core"
+import type { ERBRenderNode, ERBYieldNode, HerbBackend, Node } from "@herb-tools/core"
+import type { CallSiteLocation, PartialCallSite, SerializedPartialCallerIndex, StaticAttributeMap } from "./partial-callers"
+import type { PartialIndex } from "./partial-index"
 
 const RENDER_MARKER = "render"
 const YIELD_MARKER = "yield"
@@ -120,7 +121,7 @@ function partialNameRenderedBy(node: ERBRenderNode): string | null {
   const call = node.prismNode
   if (!call) return null
 
-  if (!isOutputRender(node)) return null
+  if (!isERBOutputNode(node)) return null
 
   const expression = renderPartialExpression(call)
   if (!expression) return null

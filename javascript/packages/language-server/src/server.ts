@@ -27,7 +27,7 @@ import {
 import { Session } from "./session"
 import { PersonalHerbSettings } from "./user_settings"
 import { Config } from "@herb-tools/config"
-import { isPartialPath } from "@herb-tools/core"
+import { isPartialPath } from "@herb-tools/analysis"
 import { isConfigDocument, isPathInside } from "./utils"
 import { version } from "../package.json"
 

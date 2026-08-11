@@ -1,6 +1,7 @@
 import { getAttribute, getStaticAttributeValue } from "@herb-tools/core"
 
-import type { HTMLElementNode, StaticAttributeMap } from "@herb-tools/core"
+import type { HTMLElementNode } from "@herb-tools/core"
+import type { StaticAttributeMap } from "./partial-callers"
 
 export const ANCESTOR_CONTEXT_ATTRIBUTES = [
   "class",

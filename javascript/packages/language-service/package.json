@@ -30,6 +30,7 @@
     }
   },
   "dependencies": {
+    "@herb-tools/analysis": "0.10.3",
     "@herb-tools/core": "0.10.3",
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",

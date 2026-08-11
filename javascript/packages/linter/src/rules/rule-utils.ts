@@ -1,45 +1,11 @@
-import {
-  Visitor,
-  Location,
-  hasDynamicOutput,
-  getValidatableStaticContent,
-  getAttributeName,
-  getStaticAttributeValue,
-  hasDynamicAttributeName,
-  getCombinedAttributeNameString,
-  getAttributeValueNodes,
-  getAttributeValue,
-  getTagLocalName,
-  ancestorVerdict,
-  closestAncestor,
-  EMPTY_CHAIN,
-  projectRelativePath,
-  forEachAttribute,
-  getAttribute,
-  findAttributeByName,
-  hasAttribute,
-  isERBOpenTagNode,
-  isRubyLiteralNode,
-} from "@herb-tools/core"
+import { Visitor, Location, hasDynamicOutput, getValidatableStaticContent, getAttributeName, getStaticAttributeValue, hasDynamicAttributeName, getCombinedAttributeNameString, getAttributeValueNodes, getAttributeValue, getTagLocalName, forEachAttribute, getAttribute, findAttributeByName, hasAttribute, isERBOpenTagNode, isRubyLiteralNode } from "@herb-tools/core"
+import { ancestorVerdict, closestAncestor, EMPTY_CHAIN, projectRelativePath } from "@herb-tools/analysis"
 
-import type {
-  AncestorChain,
-  PartialDeclaration,
-  AncestorVerdict,
-  ERBOpenTagNode,
-  HTMLAttributeNameNode,
-  HTMLAttributeNode,
-  HTMLElementNode,
-  HTMLOpenTagNode,
-  LexResult,
-  PartialContext,
-  StaticAttributeMap,
-  Token,
-  Node
-} from "@herb-tools/core"
+import type { ERBOpenTagNode, HTMLAttributeNameNode, HTMLAttributeNode, HTMLElementNode, HTMLOpenTagNode, LexResult, Token, Node } from "@herb-tools/core"
+import type { AncestorChain, PartialDeclaration, AncestorVerdict, PartialContext, StaticAttributeMap } from "@herb-tools/analysis"
 
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
-import { staticAncestorAttributes } from "../ancestor-attributes.js"
+import { staticAncestorAttributes } from "@herb-tools/analysis"
 
 import type * as Nodes from "@herb-tools/core"
 import type { DiagnosticTag } from "@herb-tools/core"

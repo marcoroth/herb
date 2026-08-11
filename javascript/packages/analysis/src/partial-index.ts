@@ -1,9 +1,9 @@
-import { isERBStrictLocalsNode, isRubyParameterNode } from "./node-type-guards.js"
-import { PARTIAL_EXTENSIONS, partialNameForFile, resolvePartial } from "./action-view-partial-resolution.js"
+import { isERBStrictLocalsNode, isRubyParameterNode } from "@herb-tools/core"
+import { PARTIAL_EXTENSIONS, partialNameForFile, resolvePartial } from "./partial-resolution"
 
-import type { DocumentNode } from "./nodes.js"
-import type { PartialPaths } from "./action-view-partial-resolution.js"
-import type { CallSiteLocation } from "./action-view-partial-callers.js"
+import type { DocumentNode } from "@herb-tools/core"
+import type { PartialPaths } from "./partial-resolution"
+import type { CallSiteLocation } from "./partial-callers"
 
 const KEYWORD_KIND = "keyword"
 const KEYWORD_REST_KIND = "keyword_rest"

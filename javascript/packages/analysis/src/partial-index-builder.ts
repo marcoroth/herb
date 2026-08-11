@@ -1,10 +1,11 @@
 import { join } from "node:path"
 import { glob } from "tinyglobby"
 import { readFileSync } from "node:fs"
-import { PARTIAL_GLOB_PATTERN, PartialIndex, STRICT_LOCALS_MARKER, TEMPLATE_GLOB_PATTERN, declarationFromDocument, declarationWithoutStrictLocals, isPartialPath, outranksTemplate, partialNameForFile } from "@herb-tools/core"
+import { PartialIndex, STRICT_LOCALS_MARKER, declarationFromDocument, declarationWithoutStrictLocals, outranksTemplate } from "./partial-index"
+import { PARTIAL_GLOB_PATTERN, TEMPLATE_GLOB_PATTERN, isPartialPath, partialNameForFile } from "./partial-resolution"
 
 import type { HerbBackend } from "@herb-tools/core"
-import type { PartialDeclaration, SerializedPartialIndex } from "@herb-tools/core"
+import type { PartialDeclaration, SerializedPartialIndex } from "./partial-index"
 
 const VIEW_ROOT_CANDIDATE = "app/views"
 const PROJECT_ROOT = "."

@@ -1,7 +1,7 @@
 import dedent from "dedent"
 
 import { describe, test } from "vitest"
-import { PartialCallerIndex } from "@herb-tools/core"
+import { PartialCallerIndex } from "@herb-tools/analysis"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { HTMLHeadOnlyElementsRule } from "../../src/rules/html-head-only-elements.js"
 import { LAYOUT, renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"

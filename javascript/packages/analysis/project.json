@@ -1,7 +1,7 @@
 {
-  "name": "@herb-tools/language-service",
+  "name": "@herb-tools/analysis",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "javascript/packages/language-service/src",
+  "sourceRoot": "javascript/packages/analysis/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,10 +10,7 @@
         "script": "build"
       },
       "dependsOn": [
-        "@herb-tools/analysis:build",
-        "@herb-tools/core:build",
-        "@herb-tools/printer:build",
-        "@herb-tools/rewriter:build"
+        "@herb-tools/core:build"
       ]
     },
     "test": {

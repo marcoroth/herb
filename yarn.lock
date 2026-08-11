@@ -6562,7 +6562,7 @@ vscode-languageserver-textdocument@1.0.13:
   resolved "https://registry.yarnpkg.com/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.13.tgz#81846745d77b9fc787911e64e2e110d244c9b8b2"
   integrity sha512-nx0ZHwMGIsVkzFG3/VLeJYBLTaFBRuNdGDvevvjuoayU5EOS2fEYazOhtCM3PI9ClMMg5igc0uwXtAq4tJj+Dw==
 
-vscode-languageserver-textdocument@^1.0.0, vscode-languageserver-textdocument@^1.0.12:
+vscode-languageserver-textdocument@^1.0.12:
   version "1.0.12"
   resolved "https://registry.npmjs.org/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.12.tgz"
   integrity sha512-cxWNPesCnQCcMPeenjKKsOCKQZ/L6Tv19DTRIGuLWe32lyzWhihGVJ/rcckZXJxfdKCFvRLS3fpBIsV/ZGX4zA==

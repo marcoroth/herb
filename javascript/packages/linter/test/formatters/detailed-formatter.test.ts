@@ -9,7 +9,8 @@ import { Location, Position } from "@herb-tools/core"
 
 import { DetailedFormatter } from "../../src/cli/formatters/detailed-formatter.js"
 
-import type { AncestorChain, Diagnostic } from "@herb-tools/core"
+import type { Diagnostic } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 import type { ProcessedFile } from "../../src/cli/file-processor.js"
 
 const projects: string[] = []

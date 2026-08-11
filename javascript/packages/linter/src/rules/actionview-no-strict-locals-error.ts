@@ -3,7 +3,8 @@ import { ParserRule } from "../types.js"
 
 import { isPrismNodeType, isRubyRenderLocalNode } from "@herb-tools/core"
 
-import type { ERBRenderNode, ParseResult, ParserOptions, PartialDeclaration, PrismNode, PrismNodes, RubyRenderLocalNode } from "@herb-tools/core"
+import type { ERBRenderNode, ParseResult, ParserOptions, PrismNode, PrismNodes, RubyRenderLocalNode } from "@herb-tools/core"
+import type { PartialDeclaration } from "@herb-tools/analysis"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const LOCALS_KEYWORD = "locals"

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { isPartialPath } from "@herb-tools/core"
+import { isPartialPath } from "@herb-tools/analysis"
 
 import { Location, Position, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
