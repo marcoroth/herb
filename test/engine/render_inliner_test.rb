@@ -85,7 +85,7 @@ module Engine
     describe "what an inlined partial still reports" do
       def compiled(inline:)
         visitors = [Herb::Engine::InstrumentationVisitor.new]
-        visitors.unshift(Herb::Engine::InlineRenderVisitor.new) if inline
+        visitors.push(Herb::Engine::InlineRenderVisitor.new(instrument: true)) if inline
 
         Herb::Engine.new(%(<%= render "posts/card" %>), filename: "app/views/posts/index.html.erb",
                                                         project_path: PROJECT_PATH, escape: false,

@@ -2,6 +2,7 @@
 # typed: true
 
 require_relative "../visitor"
+require_relative "context_aware"
 
 module Herb
   class Engine
@@ -21,25 +22,164 @@ module Herb
     # `local_assigns`, and not one already being inlined further up. Anything else is left as the
     # `render` call it was written as.
     class InlineRenderVisitor < Herb::Visitor
+      include ContextAware
+
+      ARRAY_PROPERTIES = [:children, :body, :statements].freeze #: Array[Symbol]
+      NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
+
       recommended_parser_option render_nodes: true
 
-      # The engine asks this rather than being told through an option, so that wanting the
-      # optimization and having it are the same thing.
       #: () -> bool
       def self.inlines_renders?
         true
       end
 
-      # The partial's markup ends up in the compiled output of the template that rendered it, which
-      # is the whole point and also the thing that makes it a rewriter.
       #: () -> bool
       def self.rewrites_erb_source?
         true
       end
 
+      # `instrument` gives the spliced partial its own instrumenting visitor, which needs
+      # `InstrumentationVisitor` in the same stack to be worth anything. A visitor cannot see what
+      # else the engine was given, so it is asked for rather than assumed:
+      #
+      #     Herb::Engine.new(source, visitors: [
+      #       Herb::Engine::InstrumentationVisitor.new,
+      #       Herb::Engine::InlineRenderVisitor.new(instrument: true)
+      #     ])
+      #
+      #: (?instrument: bool) -> void
+      def initialize(instrument: false)
+        super()
+
+        @instrument = instrument
+      end
+
+      #: (Herb::AST::DocumentNode) -> void
+      def visit_document_node(node)
+        super
+
+        inline(node)
+      end
+
       #: () -> String
       def inspect
-        "#<#{self.class.name}>"
+        return "#<#{self.class.name}>" unless @instrument
+
+        "#<#{self.class.name} instrument=true>"
+      end
+
+      private
+
+      #: (untyped) -> void
+      def inline(node)
+        ARRAY_PROPERTIES.each do |property|
+          next unless node.respond_to?(property) && node.send(property).is_a?(Array)
+
+          expand(node.send(property))
+        end
+
+        NODE_PROPERTIES.each do |property|
+          next unless node.respond_to?(property) && node.send(property)
+
+          inline(node.send(property))
+        end
+
+        nil
+      end
+
+      #: (Array[untyped]) -> void
+      def expand(nodes)
+        nodes.replace(nodes.flat_map { |child|
+          inline(child)
+
+          inlinable?(child) ? spliced(child) : [child]
+        })
+
+        nil
+      end
+
+      #: (untyped) -> bool
+      def inlinable?(node)
+        node.is_a?(Herb::AST::ERBRenderNode) && inliner.can_inline?(node)
+      end
+
+      #: (untyped) -> Array[untyped]
+      def spliced(node)
+        path = inliner.resolve_path(node)
+        return [node] unless path
+
+        inliner.push(path)
+
+        partial = inliner.parse(File.read(path))
+
+        instrument(partial, path)
+
+        body = partial&.children || []
+
+        inline_nested(body)
+
+        inliner.pop(path)
+
+        [erb(opening_for(node)), *body, erb(inliner.collection?(node) ? "end; end" : "end")]
+      end
+
+      #: (Array[untyped]) -> void
+      def inline_nested(body)
+        body.each { |child| inline(child) }
+
+        expand(body)
+
+        nil
+      end
+
+      #: (untyped, untyped) -> void
+      def instrument(partial, path)
+        return unless @instrument
+        return unless partial
+
+        require_relative "instrumentation_visitor"
+
+        instrumenter = InstrumentationVisitor.new
+
+        instrumenter.context = VisitorContext.new(
+          file_path: File.expand_path(path),
+          project_path: File.expand_path(context.project_path)
+        )
+
+        partial.accept(instrumenter)
+
+        nil
+      end
+
+      #: (untyped) -> String
+      def opening_for(node)
+        locals = inliner.local_assignments(node).map { |name, value| "#{name} = (#{value});" }
+
+        return "begin; #{locals.join(" ")}" unless inliner.collection?(node)
+
+        item = inliner.collection_item_name(node)
+
+        "begin; (#{inliner.collection_expression(node)}).each_with_index do |#{item}, #{item}_counter|; #{locals.join(" ")}"
+      end
+
+      #: (String) -> untyped
+      def erb(code)
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{code} "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true
+        )
+      end
+
+      #: () -> untyped
+      def inliner
+        @inliner ||= begin
+          require_relative "render_inliner"
+
+          RenderInliner.new(nil, project_path: context.project_path, filename: context.relative_file_path)
+        end
       end
     end
   end

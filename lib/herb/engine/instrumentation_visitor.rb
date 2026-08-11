@@ -134,10 +134,6 @@ module Herb
         nodes.replace(rewritten)
       end
 
-      # A render tag is framed rather than wrapped so that it survives as a render tag. Wrapping
-      # replaces it with a plain content node holding the same code, which reads the same but leaves
-      # the compiler with nothing to recognise, and the compiler is where a render can be resolved
-      # into the partial it names.
       def framed?(node)
         return true if node.is_a?(Herb::AST::ERBRenderNode)
 

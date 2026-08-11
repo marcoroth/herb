@@ -73,11 +73,6 @@ module Herb
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
-    # The inliner exists only when a visitor asked for it, so that wanting the optimization and
-    # having it are the same thing rather than an option that has to agree with a visitor list.
-    # : () -> untyped
-    def render_inliner: () -> untyped
-
     # : (String) -> void
     def report: (String) -> void
 

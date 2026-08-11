@@ -18,7 +18,6 @@ module Herb
 
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
-        @render_inliner = options[:render_inliner]
         @tokens = [] #: Array[untyped]
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
@@ -323,10 +322,6 @@ module Herb
       end
 
       def visit_erb_render_node(node)
-        if @render_inliner&.can_inline?(node)
-          return @render_inliner.collection?(node) ? inline_collection(node) : inline_partial(node)
-        end
-
         return process_erb_tag(node) unless node.end_node
 
         visit_erb_block_node(node)
@@ -365,53 +360,6 @@ module Herb
       end
 
       private
-
-      def inline_partial(node)
-        resolved_path = @render_inliner.resolve_path(node)
-        return process_erb_tag(node) unless resolved_path
-
-        source = File.read(resolved_path)
-        locals = @render_inliner.local_assignments(node)
-
-        @render_inliner.push(resolved_path)
-
-        add_code("begin")
-        locals.each { |name, value| add_code("; #{name} = (#{value})") }
-        add_code(";")
-
-        partial_ast = @render_inliner.parse(source)
-
-        partial_ast&.accept(self)
-
-        add_code("; end;")
-
-        @render_inliner.pop(resolved_path)
-      end
-
-      def inline_collection(node)
-        resolved_path = @render_inliner.resolve_path(node)
-        return process_erb_tag(node) unless resolved_path
-
-        source = File.read(resolved_path)
-        collection_expr = @render_inliner.collection_expression(node)
-        item_name = @render_inliner.collection_item_name(node)
-        counter_name = "#{item_name}_counter"
-        locals = @render_inliner.local_assignments(node)
-
-        @render_inliner.push(resolved_path)
-
-        add_code("; __herb_collection = (#{collection_expr}); __herb_collection.each_with_index do |#{item_name}, #{counter_name}|")
-        locals.each { |name, value| add_code("; #{name} = (#{value})") }
-        add_code(";")
-
-        partial_ast = @render_inliner.parse(source)
-
-        partial_ast&.accept(self)
-
-        add_code("; end;")
-
-        @render_inliner.pop(resolved_path)
-      end
 
       def check_for_escaped_erb_tag!(opening)
         return unless opening.start_with?("<%%")

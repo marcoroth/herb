@@ -98,7 +98,7 @@ module Herb
 
         report(input)
 
-        compiler = Compiler.new(self, properties.merge(render_inliner: render_inliner))
+        compiler = Compiler.new(self, properties)
 
         parse_result.value.accept(compiler)
 
@@ -327,19 +327,6 @@ module Herb
         source: input,
         filename: relative_file_path
       )
-    end
-
-    # The inliner exists only when a visitor asked for it, so that wanting the optimization and
-    # having it are the same thing rather than an option that has to agree with a visitor list.
-    #: () -> untyped
-    def render_inliner
-      return nil unless @visitors.any? { |visitor|
-        visitor.class.respond_to?(:inlines_renders?) && visitor.class.inlines_renders?
-      }
-
-      require_relative "engine/render_inliner"
-
-      RenderInliner.new(self, project_path: @context.project_path, filename: relative_file_path)
     end
 
     #: (String) -> void

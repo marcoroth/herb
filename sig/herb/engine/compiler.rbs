@@ -105,10 +105,6 @@ module Herb
 
       private
 
-      def inline_partial: (untyped node) -> untyped
-
-      def inline_collection: (untyped node) -> untyped
-
       def check_for_escaped_erb_tag!: (untyped opening) -> untyped
 
       def current_context: () -> untyped

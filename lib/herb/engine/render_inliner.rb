@@ -3,6 +3,8 @@
 module Herb
   class Engine
     class RenderInliner
+      attr_reader :filename
+
       def initialize(engine, options = {})
         @engine = engine
         @project_path = options[:project_path] || Pathname.new(Dir.pwd)
@@ -102,10 +104,6 @@ module Herb
         ast
       end
 
-      attr_reader :filename
-
-      # The partial's path as a template name, which is what the report and every marker call a
-      # template.
       def relative_path(path)
         pathname = Pathname.new(path)
 
@@ -116,12 +114,6 @@ module Herb
         pathname.to_s
       end
 
-      # An instrumenting visitor for the partial, or nothing when the template being compiled is not
-      # instrumented in the first place.
-      #
-      # The partial's tree is compiled straight into the parent, so it never passes through the
-      # visitors the engine ran. Giving it its own visitor, carrying its own context, is what makes
-      # a tag inside an inlined partial report the partial rather than the file it landed in.
       def instrumenter_for(path)
         return nil unless path
         return nil unless instrumented?
@@ -136,6 +128,8 @@ module Herb
       end
 
       def instrumented?
+        return false unless @engine
+
         @engine.visitors.any? { |visitor| visitor.class.name.to_s.end_with?("InstrumentationVisitor") }
       end
 
@@ -182,6 +176,7 @@ module Herb
 
       def initialize(inliner)
         super()
+
         @inliner = inliner
         @results = [] #: Array[Hash[Symbol, untyped]]
       end
