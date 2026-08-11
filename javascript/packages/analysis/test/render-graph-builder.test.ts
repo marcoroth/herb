@@ -5,15 +5,15 @@ import { join, dirname } from "node:path"
 import { beforeAll, afterEach, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { strictLocalsDeclaration } from "../src/partial-callers"
+import { strictLocalsDeclaration } from "../src/render-graph-utils"
 
 import { buildPartialIndex } from "../src/partial-index-builder"
-import { buildPartialCallerIndex } from "../src/partial-caller-builder"
+import { buildRenderGraph } from "../src/render-graph-builder"
 
 const projects: string[] = []
 
 function project(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), "herb-partial-callers-"))
+  const root = mkdtempSync(join(tmpdir(), "herb-render-graph-"))
 
   projects.push(root)
 
@@ -31,7 +31,7 @@ async function indexFor(files: Record<string, string>) {
   const root = project(files)
   const partials = await buildPartialIndex(Herb, root)
 
-  return { callers: await buildPartialCallerIndex(Herb, root, partials), partials }
+  return { callers: await buildRenderGraph(Herb, root, partials), partials }
 }
 
 beforeAll(async () => {
@@ -44,7 +44,7 @@ afterEach(() => {
   }
 })
 
-describe("buildPartialCallerIndex", () => {
+describe("buildRenderGraph", () => {
   test("collects the locals every call site passes", async () => {
     const { callers } = await indexFor({
       "app/views/posts/_card.html.erb": `<h1><%= title %></h1>`,
@@ -138,7 +138,7 @@ describe("buildPartialCallerIndex", () => {
       "app/views/posts/index.html.erb": `<%= render "posts/card", title: "Hi" %>`,
     })
 
-    const restored = await import("../src/partial-callers").then(module => module.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers))))
+    const restored = await import("../src/render-graph").then(module => module.RenderGraph.from(JSON.parse(JSON.stringify(callers))))
 
     expect(restored.inferSignature("app/views/posts/_card.html.erb").locals.map(local => local.name)).toEqual(["title"])
   })
@@ -150,8 +150,8 @@ describe("buildPartialCallerIndex", () => {
     })
 
     const partials = await buildPartialIndex(Herb, root)
-    const withoutInclude = await buildPartialCallerIndex(Herb, root, partials)
-    const withInclude = await buildPartialCallerIndex(Herb, root, partials, { include: ["**/*.rhtml"] })
+    const withoutInclude = await buildRenderGraph(Herb, root, partials)
+    const withInclude = await buildRenderGraph(Herb, root, partials, { include: ["**/*.rhtml"] })
 
     expect(withoutInclude.inferSignature("app/views/posts/_card.html.erb").locals).toEqual([])
     expect(withInclude.inferSignature("app/views/posts/_card.html.erb").locals.map(local => local.name)).toEqual(["author"])
@@ -165,7 +165,7 @@ describe("buildPartialCallerIndex", () => {
     })
 
     const partials = await buildPartialIndex(Herb, root)
-    const callers = await buildPartialCallerIndex(Herb, root, partials, { exclude: ["app/views/legacy/**"] })
+    const callers = await buildRenderGraph(Herb, root, partials, { exclude: ["app/views/legacy/**"] })
 
     expect(callers.skippedFileCount).toBe(1)
     expect(callers.isComplete).toBe(false)

@@ -2,7 +2,7 @@ import { Visitor, Location, hasDynamicOutput, getValidatableStaticContent, getAt
 import { ancestorVerdict, closestAncestor, EMPTY_CHAIN, projectRelativePath } from "@herb-tools/analysis"
 
 import type { ERBOpenTagNode, HTMLAttributeNameNode, HTMLAttributeNode, HTMLElementNode, HTMLOpenTagNode, LexResult, Token, Node } from "@herb-tools/core"
-import type { AncestorChain, PartialDeclaration, AncestorVerdict, PartialContext, StaticAttributeMap } from "@herb-tools/analysis"
+import type { AncestorChain, PartialDeclaration, Verdict, PartialContext, StaticAttributeMap } from "@herb-tools/analysis"
 
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 import { staticAncestorAttributes } from "@herb-tools/analysis"
@@ -354,7 +354,7 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * Returns `mixed` when the call sites disagree and `unknown` when there is
    * not enough information to tell, both of which rules should stay silent on.
    */
-  protected isInsideElementAcrossCallers(...tagNames: string[]): AncestorVerdict {
+  protected isInsideElementAcrossCallers(...tagNames: string[]): Verdict {
     return ancestorVerdict(this.renderedContext, this.ancestorTagNames, ...tagNames)
   }
 
@@ -364,7 +364,7 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * For rules that already check the current file themselves, so the two
    * checks don't report the same nesting twice.
    */
-  protected isRenderedInsideElement(...tagNames: string[]): AncestorVerdict {
+  protected isRenderedInsideElement(...tagNames: string[]): Verdict {
     return ancestorVerdict(this.renderedContext, [], ...tagNames)
   }
 
@@ -406,7 +406,7 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * Returns an offending chain alongside the verdict, so a `mixed` report can
    * point at a call site that is actually at fault.
    */
-  protected placementAcrossCallers(misplaced: (ancestors: string[], attributes: StaticAttributeMap[]) => boolean): { verdict: AncestorVerdict, chain: AncestorChain | null } {
+  protected placementAcrossCallers(misplaced: (ancestors: string[], attributes: StaticAttributeMap[]) => boolean): { verdict: Verdict, chain: AncestorChain | null } {
     const { chains } = this.renderedContext
     const local = this.ancestorTagNames
 

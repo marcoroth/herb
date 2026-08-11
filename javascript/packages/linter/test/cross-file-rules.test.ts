@@ -11,7 +11,7 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../src/linter.js"
 
 import { buildPartialIndex } from "@herb-tools/analysis/node"
-import { buildPartialCallerIndex } from "@herb-tools/analysis/node"
+import { buildRenderGraph } from "@herb-tools/analysis/node"
 
 import { A11yNestedInteractiveElementsRule } from "../src/rules/a11y-nested-interactive-elements.js"
 import { A11yNoVisuallyHiddenInteractiveElementsRule } from "../src/rules/a11y-no-visually-hidden-interactive-elements.js"
@@ -60,7 +60,7 @@ interface LintOptions {
 async function lintInProject(files: Record<string, string>, ruleClass: RuleClass, target: string, options: LintOptions = {}): Promise<string[]> {
   const root = project(files)
   const partials = await buildPartialIndex(Herb, root)
-  const partialCallers = await buildPartialCallerIndex(Herb, root, partials)
+  const partialCallers = await buildRenderGraph(Herb, root, partials)
 
   const instance = new (ruleClass as any)()
   const ruleConfig = { ...instance.defaultConfig, ...(options.enabled === undefined ? {} : { enabled: options.enabled }) }
@@ -80,7 +80,7 @@ async function lintInProject(files: Record<string, string>, ruleClass: RuleClass
 async function offensesInProject(files: Record<string, string>, ruleClass: RuleClass, target: string, options: LintOptions = {}) {
   const root = project(files)
   const partials = await buildPartialIndex(Herb, root)
-  const partialCallers = await buildPartialCallerIndex(Herb, root, partials)
+  const partialCallers = await buildRenderGraph(Herb, root, partials)
 
   const instance = new (ruleClass as any)()
   const ruleConfig = { ...instance.defaultConfig, ...(options.enabled === undefined ? {} : { enabled: options.enabled }) }

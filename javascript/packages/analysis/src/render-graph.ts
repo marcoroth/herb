@@ -1,81 +1,31 @@
-import type { StrictLocal } from "./partial-index"
+import { EMPTY_CHAIN, NO_ROOTS, MAX_ANCESTOR_CHAINS } from "./render-graph-utils.js"
 
-export type CallSiteKind = "render" | "layout" | "declaration"
-
-export interface CallSiteLocation {
-  line: number
-  column: number
-}
-
-export interface PartialCallSite {
-  caller: string
-  locals: string[]
-  ancestors: string[]
-  ancestorAttributes?: StaticAttributeMap[]
-  via?: CallSiteKind
-  location?: CallSiteLocation
-}
-
-export type StaticAttributeMap = Record<string, string>
-
-export interface InferredSignature {
-  locals: StrictLocal[]
-  callSiteCount: number
-  keywordRest: boolean
-}
-
-export interface CallFrame {
-  file: string
-  ancestors: string[]
-  ancestorAttributes?: StaticAttributeMap[]
-  via: CallSiteKind
-  location: CallSiteLocation | null
-}
-
-export interface AncestorChain {
-  tags: string[]
-  attributes?: StaticAttributeMap[]
-  frames: CallFrame[]
-  occurrences: number
-}
-
-export interface PartialContext {
-  chains: AncestorChain[]
-  resolved: boolean
-}
-
-export interface SerializedPartialCallerIndex {
-  callSites: Record<string, PartialCallSite[]>
-  documentRoots: string[]
-  unresolvedRenders: Record<string, number>
-  skippedFiles: string[]
-}
-
-export const MAX_ANCESTOR_CHAINS = 32
-
-export const EMPTY_CHAIN: AncestorChain = Object.freeze({ tags: [], frames: [], occurrences: 1 })
+import type { PartialContext, PartialCallSite, TemplateRoots, SerializedRenderGraph, InferredSignature, AncestorChain, CallFrame } from "./render-graph-utils.js"
 
 const UNRESOLVED: PartialContext = Object.freeze({ chains: [], resolved: false })
 const DOCUMENT_ROOT: PartialContext = Object.freeze({ chains: [EMPTY_CHAIN], resolved: true })
 
-export class PartialCallerIndex {
+export class RenderGraph {
   private readonly callSites: Map<string, PartialCallSite[]>
+  private readonly roots: Map<string, TemplateRoots>
   private readonly documentRoots: Set<string>
   private readonly unresolvedRenders: Map<string, number>
   private readonly skippedFiles: Set<string>
   private readonly contexts: Map<string, PartialContext>
 
-  static from(data: SerializedPartialCallerIndex): PartialCallerIndex {
-    return new PartialCallerIndex(
+  static from(data: SerializedRenderGraph): RenderGraph {
+    return new RenderGraph(
       new Map(Object.entries(data.callSites)),
+      new Map(Object.entries(data.roots ?? {})),
       new Set(data.documentRoots ?? []),
       new Map(Object.entries(data.unresolvedRenders ?? {})),
       new Set(data.skippedFiles ?? [])
     )
   }
 
-  constructor(callSites: Map<string, PartialCallSite[]>, documentRoots: Set<string>, unresolvedRenders: Map<string, number>, skippedFiles: Set<string>) {
+  constructor(callSites: Map<string, PartialCallSite[]>, roots: Map<string, TemplateRoots>, documentRoots: Set<string>, unresolvedRenders: Map<string, number>, skippedFiles: Set<string>) {
     this.callSites = callSites
+    this.roots = roots
     this.documentRoots = documentRoots
     this.contexts = new Map()
     this.unresolvedRenders = unresolvedRenders
@@ -85,7 +35,9 @@ export class PartialCallerIndex {
   get unresolvedRenderCount(): number {
     let total = 0
 
-    for (const count of this.unresolvedRenders.values()) total += count
+    for (const count of this.unresolvedRenders.values()) {
+      total += count
+    }
 
     return total
   }
@@ -96,6 +48,14 @@ export class PartialCallerIndex {
 
   get isComplete(): boolean {
     return this.unresolvedRenders.size === 0 && this.skippedFiles.size === 0
+  }
+
+  rootsOf(file: string): TemplateRoots {
+    return this.roots.get(file) ?? NO_ROOTS
+  }
+
+  setRoots(file: string, roots: TemplateRoots): void {
+    this.roots.set(file, roots)
   }
 
   callersOf(partialFile: string): PartialCallSite[] {
@@ -211,6 +171,7 @@ export class PartialCallerIndex {
           ...(prefix.attributes ?? prefix.tags.map(() => ({}))),
           ...(callSite.ancestorAttributes ?? callSite.ancestors.map(() => ({}))),
         ]
+
         const key = JSON.stringify([tags, attributes])
         const existing = byKey.get(key)
 
@@ -247,9 +208,10 @@ export class PartialCallerIndex {
     return this.callSites.size
   }
 
-  toJSON(): SerializedPartialCallerIndex {
+  toJSON(): SerializedRenderGraph {
     return {
       callSites: Object.fromEntries(this.callSites),
+      roots: Object.fromEntries(this.roots),
       documentRoots: [...this.documentRoots].sort(),
       unresolvedRenders: Object.fromEntries(this.unresolvedRenders),
       skippedFiles: [...this.skippedFiles].sort()
@@ -265,52 +227,4 @@ export class PartialCallerIndex {
       location: callSite.location ?? null,
     }
   }
-}
-
-export type AncestorVerdict = "always" | "never" | "mixed" | "unknown"
-
-export function ancestorVerdict(context: PartialContext, localAncestors: string[], ...tagNames: string[]): AncestorVerdict {
-  const inside = (chain: string[]) => chain.some(tag => tagNames.includes(tag))
-
-  if (inside(localAncestors)) return "always"
-  if (context.chains.length === 0) return "unknown"
-
-  const matches = context.chains.filter(chain => inside(chain.tags)).length
-  if (matches === context.chains.length) return "always"
-  if (matches > 0) return "mixed"
-
-  return context.resolved ? "never" : "unknown"
-}
-
-export function closestAncestor(context: PartialContext, localAncestors: string[], ...tagNames: string[]): string | null {
-  const innermost = (chain: string[]) => {
-    for (let index = chain.length - 1; index >= 0; index--) {
-      if (tagNames.includes(chain[index])) return chain[index]
-    }
-
-    return null
-  }
-
-  const local = innermost(localAncestors)
-  if (local) return local
-
-  for (const chain of context.chains) {
-    const match = innermost(chain.tags)
-
-    if (match) {
-      return match
-    }
-  }
-
-  return null
-}
-
-export function strictLocalsDeclaration(signature: InferredSignature): string {
-  const parameters = signature.locals.map(local => (local.required ? `${local.name}:` : `${local.name}: nil`))
-
-  if (signature.keywordRest) {
-    parameters.push("**")
-  }
-
-  return `<%# locals: (${parameters.join(", ")}) %>`
 }
