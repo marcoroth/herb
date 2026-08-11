@@ -172,6 +172,46 @@ module Herb
         def entries
           @entries.values.sort_by { |entry| [entry.template.to_s, entry.line, entry.column] }
         end
+
+        # Turns what was observed under one key into one diagnostic per tag that saw any.
+        #
+        #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+        #       Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+        #     end
+        #
+        #     session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+        #       "#{queries.size} SQL queries"
+        #     end
+        #
+        # A count is a measurement rather than a fault, so what comes out carries a badge and no
+        # severity. Three queries at one tag is worth showing every time and worth worrying about
+        # only sometimes, and which of those it is depends on what the tag is for. Reporting it as a
+        # warning would make that call on the reader's behalf and get it wrong often enough to train
+        # them to ignore it.
+        #: (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+        def measure(key, origin:, code: nil, message: nil)
+          entries.filter_map { |entry|
+            observed = entry[key]
+
+            next if observed.empty?
+
+            value = yield(observed)
+
+            record(
+              Herb::Diagnostic.new(
+                template: entry.template.to_s,
+                message: message || value,
+                severity: nil,
+                kind: :metric,
+                origin: origin,
+                code: code,
+                location: entry.location,
+                value: value,
+                data: { key => observed }
+              )
+            )
+          }
+        end
       end
     end
   end
