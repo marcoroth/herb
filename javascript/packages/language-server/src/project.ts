@@ -8,8 +8,7 @@ import { AutofixService } from "./autofix_service"
 
 import { CodeActionProvider } from "./code_action_provider"
 import { FormattingProvider } from "./formatting_provider"
-import { ReferencesProvider } from "./references_provider"
-import { CompletionProvider } from "@herb-tools/language-service"
+import { CompletionProvider, ReferencesProvider } from "@herb-tools/language-service"
 
 import { version } from "../package.json"
 
@@ -26,6 +25,7 @@ export interface SharedServices {
   definitionProvider: DefinitionProvider
   userSettings: UserSettings
   capabilities: Capabilities
+  readFile: (filePath: string) => string | null
 }
 
 export class Project {
@@ -68,10 +68,10 @@ export class Project {
     )
 
     this.referencesProvider = new ReferencesProvider(
-      this,
       shared.definitionProvider,
       this.index,
       shared.documents,
+      shared.readFile,
     )
   }
 

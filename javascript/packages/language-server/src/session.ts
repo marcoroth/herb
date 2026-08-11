@@ -52,13 +52,7 @@ export class Session {
     this.definitionProvider = new DefinitionProvider(
       this.parserService,
       existsSync,
-      filePath => {
-        try {
-          return readFileSync(filePath, "utf-8")
-        } catch {
-          return null
-        }
-      },
+      readFile,
       documentPath => this.viewRootFor(documentPath),
     )
 
@@ -68,6 +62,7 @@ export class Session {
       definitionProvider: this.definitionProvider,
       userSettings: this.userSettings,
       capabilities: this.capabilities,
+      readFile,
     })
 
     this.diagnostics = new DiagnosticsPublisher(this.connection, this.documents, this.parserService, this.configService, this.workspaceFolders, this.projects, warning => this.showWarning(warning))
@@ -155,5 +150,13 @@ export class Session {
     for (const project of this.projects.all()) {
       await project.refreshConfig()
     }
+  }
+}
+
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
   }
 }

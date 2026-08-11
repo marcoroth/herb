@@ -15,7 +15,6 @@ export * from "./save_orchestrator"
 
 export * from "./code_action_provider"
 export * from "./formatting_provider"
-export * from "./references_provider"
 
 export * from "./autofix_service"
 export * from "./config_service"
