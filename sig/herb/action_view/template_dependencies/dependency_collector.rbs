@@ -1,0 +1,41 @@
+# Generated from lib/herb/action_view/template_dependencies/dependency_collector.rb with RBS::Inline
+
+module Herb
+  module ActionView
+    class TemplateDependencies
+      class DependencyCollector < ::Herb::Visitor
+        attr_reader instance_variables: untyped
+
+        attr_reader constants: untyped
+
+        attr_reader locals_declared: untyped
+
+        attr_reader locals_received: untyped
+
+        attr_reader helper_calls: untyped
+
+        attr_reader unknown_calls: untyped
+
+        attr_reader render_calls: untyped
+
+        def initialize: (untyped helper_registry, untyped custom_helpers, ?untyped prescanned_locals) -> untyped
+
+        def visit_erb_node: (untyped node) -> untyped
+
+        def visit_erb_render_node: (untyped node) -> untyped
+
+        def visit_erb_strict_locals_node: (untyped node) -> untyped
+
+        private
+
+        def analyze_erb_node: (untyped erb_node) -> untyped
+
+        def analyze_ruby_expression: (untyped code) -> untyped
+
+        def walk_prism_node: (untyped node) -> untyped
+
+        def check_call_node: (untyped node) -> untyped
+      end
+    end
+  end
+end

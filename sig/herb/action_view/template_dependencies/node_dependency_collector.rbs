@@ -1,0 +1,45 @@
+# Generated from lib/herb/action_view/template_dependencies/node_dependency_collector.rb with RBS::Inline
+
+module Herb
+  module ActionView
+    class TemplateDependencies
+      class NodeDependencyCollector < ::Herb::Visitor
+        attr_reader affected: untyped
+
+        def initialize: (untyped state, untyped helper_registry, untyped custom_helpers) -> untyped
+
+        def visit_document_node: (untyped node) -> untyped
+
+        def visit_html_element_node: (untyped node) -> untyped
+
+        def visit_html_open_tag_node: (untyped node) -> untyped
+
+        def visit_erb_content_node: (untyped node) -> untyped
+
+        def visit_erb_if_node: (untyped node) -> untyped
+
+        def visit_erb_unless_node: (untyped node) -> untyped
+
+        def visit_erb_case_node: (untyped node) -> untyped
+
+        def visit_erb_node: (untyped node) -> untyped
+
+        def visit_erb_render_node: (untyped node) -> untyped
+
+        private
+
+        def visit_children_with_paths: (untyped children) -> untyped
+
+        def check_block_for_state: (untyped node, untyped type) -> untyped
+
+        def collect_all_expressions: (untyped node) -> untyped
+
+        def check_erb_expression: (untyped node, untyped type) -> untyped
+
+        def check_attribute: (untyped attribute_node, untyped path) -> untyped
+
+        def references_state?: (untyped code) -> untyped
+      end
+    end
+  end
+end
