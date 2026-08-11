@@ -143,11 +143,11 @@ describe("Projects", () => {
     const outer = await projects.ensure(uriFor(folder, "app/views/posts/index.html.erb"))
     const inner = await projects.ensure(uriFor(folder, "nested/app/views/posts/index.html.erb"))
 
-    expect(outer?.partialIndexService.index?.lookup("posts/outer", undefined)).not.toBeNull()
-    expect(outer?.partialIndexService.index?.lookup("posts/inner", undefined)).toBeNull()
+    expect(outer?.index.partials?.lookup("posts/outer", undefined)).not.toBeNull()
+    expect(outer?.index.partials?.lookup("posts/inner", undefined)).toBeNull()
 
-    expect(inner?.partialIndexService.index?.lookup("posts/inner", undefined)).not.toBeNull()
-    expect(inner?.partialIndexService.index?.lookup("posts/outer", undefined)).toBeNull()
+    expect(inner?.index.partials?.lookup("posts/inner", undefined)).not.toBeNull()
+    expect(inner?.index.partials?.lookup("posts/outer", undefined)).toBeNull()
   })
 
   test("refuses a document outside every workspace folder", async () => {
@@ -213,7 +213,7 @@ describe("Projects", () => {
 
     const indexedOnResolve = projects
       .ensure(uriFor(folder, "app/views/posts/_outer.html.erb"))
-      .then(project => project!.partialIndexService.index?.size ?? 0)
+      .then(project => project!.index.partials?.size ?? 0)
 
     expect(await indexedOnResolve).toBeGreaterThan(0)
     expect(await first).toBe(await projects.ensure(uriFor(folder, "app/views/posts/_outer.html.erb")))

@@ -1,14 +1,15 @@
 import { Config } from "@herb-tools/config"
 import { Herb, HerbBackend } from "@herb-tools/node-wasm"
+import { ProjectIndex } from "@herb-tools/analysis/node"
 
 import { ConfigService } from "./config_service"
 import { LinterService } from "./linter_service"
 import { AutofixService } from "./autofix_service"
+
 import { CodeActionProvider } from "./code_action_provider"
 import { FormattingProvider } from "./formatting_provider"
 import { ReferencesProvider } from "./references_provider"
-import { PartialIndexService } from "./partial_index_service"
-import { PartialCallerIndexService } from "./partial_caller_index_service"
+import { CompletionProvider } from "@herb-tools/language-service"
 
 import { version } from "../package.json"
 
@@ -16,7 +17,6 @@ import type { Connection } from "vscode-languageserver/node"
 import type { UserSettings, PersonalHerbSettings } from "./user_settings"
 import type { Capabilities } from "./capabilities"
 import type { Documents } from "./documents"
-import { CompletionProvider } from "@herb-tools/language-service"
 
 import type { ParserService, DefinitionProvider } from "@herb-tools/language-service"
 
@@ -32,11 +32,10 @@ export class Project {
   readonly root: string
   readonly herbBackend: HerbBackend
 
-  config?: Config
+  public config?: Config
 
   readonly configService: ConfigService
-  readonly partialIndexService: PartialIndexService
-  readonly partialCallerIndexService: PartialCallerIndexService
+  readonly index: ProjectIndex
   readonly linterService: LinterService
   readonly autofixService: AutofixService
   readonly codeActionProvider: CodeActionProvider
@@ -56,23 +55,22 @@ export class Project {
     this.herbBackend = Herb
 
     this.configService = new ConfigService(root)
-    this.partialIndexService = new PartialIndexService(connection, this)
-    this.partialCallerIndexService = new PartialCallerIndexService(connection, this, this.partialIndexService)
-    this.linterService = new LinterService(connection, userSettings, capabilities, this, this.partialIndexService, this.partialCallerIndexService)
-    this.autofixService = new AutofixService(connection, undefined, this.partialIndexService, this.partialCallerIndexService)
-    this.codeActionProvider = new CodeActionProvider(this, undefined, this.partialIndexService, this.partialCallerIndexService)
+    this.index = new ProjectIndex({ root, backend: this.herbBackend, logger: connection.console })
+    this.linterService = new LinterService(connection, userSettings, capabilities, this, this.index)
+    this.autofixService = new AutofixService(connection, undefined, this.index)
+    this.codeActionProvider = new CodeActionProvider(this, undefined, this.index)
     this.formattingProvider = new FormattingProvider(connection, shared.documents, this, userSettings, capabilities)
+
     this.completionProvider = new CompletionProvider(
       shared.parserService,
-      this.partialIndexService.index,
-      uri => this.partialIndexService.relativePathFor(uri),
+      this.index.partials,
+      uri => this.index.relativePathFor(uri),
     )
 
     this.referencesProvider = new ReferencesProvider(
       this,
       shared.definitionProvider,
-      this.partialIndexService,
-      this.partialCallerIndexService,
+      this.index,
       shared.documents,
     )
   }
@@ -81,13 +79,11 @@ export class Project {
     await this.herbBackend.load()
     await this.loadConfig()
     await this.formattingProvider.initialize(this.config)
-    await this.partialIndexService.initialize()
-    await this.partialCallerIndexService.initialize()
+    await this.index.indexAll()
   }
 
   async reindex() {
-    await this.partialIndexService.initialize()
-    await this.partialCallerIndexService.initialize()
+    await this.index.indexAll()
   }
 
   async loadConfig() {

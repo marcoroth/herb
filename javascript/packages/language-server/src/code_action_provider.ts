@@ -1,32 +1,32 @@
 import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Config } from "@herb-tools/config"
-import { VALID_FRAMEWORKS, isValidFramework } from "@herb-tools/core"
-import { Project } from "./project"
-import { PartialIndexService } from "./partial_index_service"
-import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { Herb } from "@herb-tools/node-wasm"
+import { Config } from "@herb-tools/config"
 import { Linter } from "@herb-tools/linter"
+import { Project } from "./project"
 
+import { isValidFramework } from "@herb-tools/core"
 import { getFullDocumentRange, lspRangeFromLocation } from "@herb-tools/language-service"
+
 import type { Framework, HerbConfigOptions } from "@herb-tools/config"
 import type { LintOffense } from "@herb-tools/linter"
+import type { ProjectIndex } from "@herb-tools/analysis/node"
+
+import { VALID_FRAMEWORKS } from "@herb-tools/core"
 
 const FRAMEWORK_OPTION_RULE = "herb-config-framework-option"
 
 export class CodeActionProvider {
   private project: Project
-  private partialIndexService?: PartialIndexService
-  private partialCallerIndexService?: PartialCallerIndexService
+  private index?: ProjectIndex
   private config?: Config
   private linter: Linter
 
-  constructor(project: Project, config?: Config, partialIndexService?: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
+  constructor(project: Project, config?: Config, index?: ProjectIndex) {
     this.project = project
     this.config = config
-    this.partialIndexService = partialIndexService
-    this.partialCallerIndexService = partialCallerIndexService
+    this.index = index
     this.linter = Linter.from(Herb, config)
   }
 
@@ -39,7 +39,6 @@ export class CodeActionProvider {
     const actions: CodeAction[] = []
     const linesWithDisableAll = new Set<number>()
     const disableAllActions: CodeAction[] = []
-
     const linterDiagnostics = diagnostics.filter(diagnostic => diagnostic.source === "Herb Linter ")
 
     for (const diagnostic of linterDiagnostics) {
@@ -96,10 +95,11 @@ export class CodeActionProvider {
     const text = document.getText()
 
     const lintResult = this.linter.lint(text, {
-      fileName: this.partialIndexService?.relativePathFor(document.uri) ?? document.uri,
-      partials: this.partialIndexService?.index,
-      partialCallers: this.partialCallerIndexService?.index,
+      fileName: this.index?.relativePathFor(document.uri) ?? document.uri,
+      partials: this.index?.partials,
+      partialCallers: this.index?.callers,
     })
+
     const offenses = lintResult.offenses
 
     const relevantDiagnostics = params.context.diagnostics.filter(diagnostic => {

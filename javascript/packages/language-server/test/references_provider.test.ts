@@ -13,8 +13,7 @@ import { Documents } from "../src/documents"
 import { ReferencesProvider } from "../src/references_provider"
 import { DefinitionProvider } from "@herb-tools/language-service"
 import { ParserService } from "@herb-tools/language-service"
-import { PartialIndexService } from "../src/partial_index_service"
-import { PartialCallerIndexService } from "../src/partial_caller_index_service"
+import { ProjectIndex } from "@herb-tools/analysis/node"
 
 import type { Connection, Location } from "vscode-languageserver/node"
 
@@ -51,20 +50,16 @@ function project(files: Record<string, string>): Project {
 
 interface Services {
   service: ReferencesProvider
-  callers: PartialCallerIndexService
+  index: ProjectIndex
   project: Project
   buffers: Record<string, string>
 }
 
 async function serviceFor(files: Record<string, string>, buffers: Record<string, string> = {}): Promise<Services> {
   const created = project(files)
-  const partials = new PartialIndexService(connection, created)
+  const index = new ProjectIndex({ root: created.root, backend: Herb, logger: connection.console })
 
-  await partials.initialize()
-
-  const callers = new PartialCallerIndexService(connection, created, partials)
-
-  await callers.initialize()
+  await index.indexAll()
 
   const open = new Map(Object.entries(buffers).map(([path, contents]) => {
     const uri = uriFor(created, path)
@@ -76,9 +71,9 @@ async function serviceFor(files: Record<string, string>, buffers: Record<string,
     get: (uri: string) => open.get(uri)
   } as unknown as Documents
 
-  const service = new ReferencesProvider(created, new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }), partials, callers, documents)
+  const service = new ReferencesProvider(created, new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }), index, documents)
 
-  return { service, callers, project: created, buffers }
+  return { service, index, project: created, buffers }
 }
 
 function uriFor(project: Project, path: string): string {
@@ -212,7 +207,7 @@ describe("ReferencesProvider", () => {
     const buffer = `<%= render "posts/badge" %>\n<%= render "posts/card" %>\n`
     const services = await serviceFor(PROJECT, { "app/views/other/index.html.erb": buffer })
 
-    services.callers.updateFromSource(uriFor(services.project, "app/views/other/index.html.erb"), buffer)
+    services.index.handleChange(uriFor(services.project, "app/views/other/index.html.erb"), buffer)
 
     expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([
       "app/views/events/show.html.erb:0 posts/card",
@@ -225,7 +220,7 @@ describe("ReferencesProvider", () => {
   test("drops a call site removed from an open buffer", async () => {
     const services = await serviceFor(PROJECT, { "app/views/events/show.html.erb": `<div></div>\n` })
 
-    services.callers.updateFromSource(uriFor(services.project, "app/views/events/show.html.erb"), `<div></div>\n`)
+    services.index.handleChange(uriFor(services.project, "app/views/events/show.html.erb"), `<div></div>\n`)
 
     expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([
       "app/views/posts/index.html.erb:1 posts/card",
