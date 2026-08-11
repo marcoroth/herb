@@ -12,18 +12,64 @@ module Herb
     #
     # Inserting it is the whole opt-in. There is no check first for whether a template looks like
     # it contains helpers, because a caller that added this has already answered that question.
+    #
+    # Replacing a helper call with its markup is only the same thing as calling it while the helper
+    # is the one it was resolved against. An application that defines its own `content_tag` gets the
+    # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
+    # check into the template that runs when it renders and reports a helper that has since been
+    # overwritten:
+    #
+    #     Herb::Engine::OptimizeVisitor.new(verify: true)
+    #
+    # It costs a call per render and reports rather than corrects, so it earns its place in
+    # development and not in production. Compiling it in is the caller's decision for the same reason
+    # the optimization itself is.
     class OptimizeVisitor < Herb::Visitor
+      include ContextAware
+
+      SESSION: String
+
+      CODE: String
+
+      ORIGIN: String
+
+      # : () -> Array[String]
+      def self.helper_sources: () -> Array[String]
+
       def self.experimental_warning_issued: () -> bool
 
       def self.experimental_warning_issued=: (bool) -> bool
 
       attr_accessor experimental_warning_issued: bool
 
-      # : () -> void
-      def initialize: () -> void
+      # : (?verify: bool) -> void
+      def initialize: (?verify: bool) -> void
+
+      # : (Herb::AST::DocumentNode) -> void
+      def visit_document_node: (Herb::AST::DocumentNode) -> void
+
+      # : (Herb::AST::HTMLElementNode) -> void
+      def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
+
+      # : (Herb::AST::HTMLConditionalElementNode) -> void
+      def visit_html_conditional_element_node: (Herb::AST::HTMLConditionalElementNode) -> void
 
       # : () -> String
       def inspect: () -> String
+
+      private
+
+      # : (String?, Herb::Location?) -> void
+      def collect: (String?, Herb::Location?) -> void
+
+      # : (Herb::AST::DocumentNode) -> Herb::AST::ERBContentNode
+      def check_node: (Herb::AST::DocumentNode) -> Herb::AST::ERBContentNode
+
+      # : (String, Herb::Location?) -> String
+      def check_for: (String, Herb::Location?) -> String
+
+      # : (String, String, Herb::Location?) -> String
+      def entry_for: (String, String, Herb::Location?) -> String
     end
   end
 end

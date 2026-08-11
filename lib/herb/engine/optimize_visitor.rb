@@ -2,6 +2,8 @@
 # typed: true
 
 require_relative "../visitor"
+require_relative "context_aware"
+require_relative "../action_view/helper_registry"
 
 module Herb
   class Engine
@@ -15,8 +17,31 @@ module Herb
     #
     # Inserting it is the whole opt-in. There is no check first for whether a template looks like
     # it contains helpers, because a caller that added this has already answered that question.
+    #
+    # Replacing a helper call with its markup is only the same thing as calling it while the helper
+    # is the one it was resolved against. An application that defines its own `content_tag` gets the
+    # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
+    # check into the template that runs when it renders and reports a helper that has since been
+    # overwritten:
+    #
+    #     Herb::Engine::OptimizeVisitor.new(verify: true)
+    #
+    # It costs a call per render and reports rather than corrects, so it earns its place in
+    # development and not in production. Compiling it in is the caller's decision for the same reason
+    # the optimization itself is.
     class OptimizeVisitor < Herb::Visitor
+      include ContextAware
+
       required_parser_option action_view_helpers: true, transform_conditionals: true
+
+      SESSION = "::Herb::Engine::Report::Session" #: String
+      CODE = "overwritten-helper" #: String
+      ORIGIN = "Herb Engine" #: String
+
+      #: () -> Array[String]
+      def self.helper_sources
+        @helper_sources ||= Herb::ActionView::HelperRegistry.supported.map(&:source).freeze
+      end
 
       # @rbs!
       #   def self.experimental_warning_issued: () -> bool
@@ -28,9 +53,12 @@ module Herb
 
       self.experimental_warning_issued = false
 
-      #: () -> void
-      def initialize
-        super
+      #: (?verify: bool) -> void
+      def initialize(verify: false)
+        super()
+
+        @verify = verify
+        @sources = {} #: Hash[String, Herb::Location?]
 
         return if self.class.experimental_warning_issued
 
@@ -39,9 +67,92 @@ module Herb
         warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
       end
 
+      #: (Herb::AST::DocumentNode) -> void
+      def visit_document_node(node)
+        @sources = {} #: Hash[String, Herb::Location?]
+
+        super
+
+        return unless @verify
+        return if @sources.empty?
+
+        node.children << check_node(node)
+      end
+
+      #: (Herb::AST::HTMLElementNode) -> void
+      def visit_html_element_node(node)
+        collect(node.element_source, node.location)
+
+        super
+      end
+
+      #: (Herb::AST::HTMLConditionalElementNode) -> void
+      def visit_html_conditional_element_node(node)
+        collect(node.element_source, node.location)
+
+        super
+      end
+
       #: () -> String
       def inspect
-        "#<#{self.class.name}>"
+        return "#<#{self.class.name}>" unless @verify
+
+        "#<#{self.class.name} verify=true>"
+      end
+
+      private
+
+      #: (String?, Herb::Location?) -> void
+      def collect(source, location)
+        return unless source
+        return unless self.class.helper_sources.include?(source)
+        return if @sources.key?(source)
+
+        @sources[source] = location
+
+        nil
+      end
+
+      #: (Herb::AST::DocumentNode) -> Herb::AST::ERBContentNode
+      def check_node(node)
+        checks = @sources.map { |source, location| check_for(source, location) }.join("; ")
+
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{checks} "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true,
+          location: node.location
+        )
+      end
+
+      #: (String, Herb::Location?) -> String
+      def check_for(source, location)
+        expected, _, name = source.rpartition("#")
+
+        "#{SESSION}.record_compile_diagnostics(#{context.relative_file_path.dump}, " \
+          "[#{entry_for(name, expected, location)}].freeze) " \
+          "if respond_to?(#{name.to_sym.inspect}, true) && method(#{name.to_sym.inspect}).owner.to_s != #{expected.dump}"
+      end
+
+      #: (String, String, Herb::Location?) -> String
+      def entry_for(name, expected, location)
+        message = "`#{name}` was compiled away as #{expected}, but here it is defined by "
+
+        parts = [
+          "message: #{message.dump} + method(#{name.to_sym.inspect}).owner.to_s",
+          "severity: :warning",
+          "code: #{CODE.dump}",
+          "origin: #{ORIGIN.dump}",
+          "suggestion: #{"Remove the override, or compile this template without `OptimizeVisitor`.".dump}"
+        ]
+
+        if location
+          parts << "line: #{location.start.line}" << "column: #{location.start.column}"
+          parts << "end_line: #{location.end.line}" << "end_column: #{location.end.column}"
+        end
+
+        "{ #{parts.join(", ")} }"
       end
     end
   end
