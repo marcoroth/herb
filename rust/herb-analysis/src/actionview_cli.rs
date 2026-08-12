@@ -88,6 +88,30 @@ fn header(title: &str) {
   println!();
 }
 
+fn nesting_depths(nodes: &[herb_analysis::state_flow::AffectedNode]) -> Vec<usize> {
+  let mut stack: Vec<&[usize]> = Vec::new();
+
+  nodes
+    .iter()
+    .map(|node| {
+      let path = node.node_path.as_slice();
+
+      while stack.last().map(|outer| !path_contains(outer, path)).unwrap_or(false) {
+        stack.pop();
+      }
+
+      let depth = stack.len();
+      stack.push(path);
+
+      depth
+    })
+    .collect()
+}
+
+fn path_contains(outer: &[usize], inner: &[usize]) -> bool {
+  outer.len() < inner.len() && inner[..outer.len()] == *outer
+}
+
 fn one_line(expression: &str, limit: usize) -> String {
   let collapsed = expression.split_whitespace().collect::<Vec<_>>().join(" ");
 
@@ -343,6 +367,10 @@ fn print_available(state_flow: &StateFlow, path: &str, available: &[String], roo
 }
 
 fn print_flow_node(node: &FlowNode, root: &Path, prefix: &str, last: bool, is_root: bool) {
+  if !is_root {
+    println!("{}", format!(" {prefix}").trim_end());
+  }
+
   let connector = if is_root {
     String::new()
   } else if last {
@@ -371,12 +399,15 @@ fn print_flow_node(node: &FlowNode, root: &Path, prefix: &str, last: bool, is_ro
     format!("{prefix}\u{2502}   ")
   };
 
-  for affected in &node.nodes {
+  let depths = nesting_depths(&node.nodes);
+
+  for (index, affected) in node.nodes.iter().enumerate() {
     let expression = one_line(&affected.expression.clone().unwrap_or_default(), 72);
     let location = affected.location.clone().unwrap_or_default();
+    let nesting = "  ".repeat(depths[index]);
 
     println!(
-      " {child_prefix}{} {} {} {}",
+      " {child_prefix}{nesting}{} {} {} {}",
       "\u{00b7}".dimmed(),
       affected.kind,
       expression.dimmed(),

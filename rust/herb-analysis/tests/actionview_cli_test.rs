@@ -236,3 +236,23 @@ fn flow_keeps_a_multi_line_render_on_one_line() {
 
   assert!(output.contains("locals: { talk: talk"), "{output}");
 }
+
+#[test]
+fn flow_indents_a_node_nested_inside_a_conditional() {
+  let project = Project::new("flow_nesting");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<% if admin? %>\n  <p><%= @post.title %></p>\n<% end %>\n<% if @post.draft? %>\n  <p>draft</p>\n<% end %>\n",
+  );
+
+  let (output, status) = project.run(&["flow", &entry, "@post"]);
+
+  assert_eq!(status, 0);
+
+  let nested = output.lines().find(|line| line.contains("@post.title")).expect("nested line");
+  let sibling = output.lines().find(|line| line.contains("if @post.draft?")).expect("sibling line");
+
+  let indent = |line: &str| line.len() - line.trim_start().len();
+
+  assert!(indent(nested) > indent(sibling), "nested: {nested:?} sibling: {sibling:?}");
+}

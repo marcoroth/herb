@@ -166,3 +166,23 @@ fn builds_a_reverse_index_from_state_to_nodes() {
   assert!(index.contains_key("@post"));
   assert!(index.contains_key("@user"));
 }
+
+#[test]
+fn reports_an_attribute_value_that_reads_the_state() {
+  let project = Project::new("attribute");
+  let entry = project.write("app/views/posts/show.html.erb", r#"<img src="<%= @post.avatar %>">"#);
+
+  let nodes = project.flow().affected_nodes(&entry, "@post");
+
+  assert!(nodes.iter().any(|node| node.kind == "attribute_value"));
+}
+
+#[test]
+fn names_erb_output_in_text_the_same_way_ruby_does() {
+  let project = Project::new("text_content");
+  let entry = project.write("app/views/posts/show.html.erb", "<h1><%= @post.title %></h1>");
+
+  let nodes = project.flow().affected_nodes(&entry, "@post");
+
+  assert!(nodes.iter().any(|node| node.kind == "text_content"));
+}

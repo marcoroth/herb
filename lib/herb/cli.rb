@@ -726,6 +726,25 @@ class Herb::CLI
     puts ""
   end
 
+  def nesting_depths(nodes)
+    stack = [] #: Array[Array[Integer]]
+
+    nodes.map do |node|
+      path = node[:node_path] || []
+
+      stack.pop while stack.any? && !path_contains?(stack.last, path)
+
+      depth = stack.size
+      stack.push(path)
+
+      depth
+    end
+  end
+
+  def path_contains?(outer, inner)
+    outer.length < inner.length && inner[0, outer.length] == outer
+  end
+
   def one_line(expression, limit = 72)
     text = expression.to_s.gsub(/\s+/, " ").strip
 
@@ -733,6 +752,8 @@ class Herb::CLI
   end
 
   def print_flow_node(node, project_root, prefix, last, root)
+    puts " #{prefix}".rstrip unless root
+
     relative = Pathname.new(node.file).relative_path_from(Pathname.new(project_root)).to_s
     connector = if root
                   ""
@@ -755,8 +776,12 @@ class Herb::CLI
                      prefix + (last ? "    " : "\u2502   ")
                    end
 
-    node.nodes.each do |affected|
-      puts " #{child_prefix}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(one_line(affected[:expression]))} #{dimmed("(#{affected[:location]})")}"
+    depths = nesting_depths(node.nodes)
+
+    node.nodes.each_with_index do |affected, index|
+      nesting = "  " * depths[index]
+
+      puts " #{child_prefix}#{nesting}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(one_line(affected[:expression]))} #{dimmed("(#{affected[:location]})")}"
     end
 
     node.children.each_with_index do |child, index|

@@ -284,7 +284,7 @@ fn is_word_byte(byte: u8) -> bool {
 
 fn collect_affected(node: &AnyNode, state: &str, path: &mut Vec<usize>, affected: &mut Vec<AffectedNode>) {
   let kind = match node {
-    AnyNode::ERBContentNode(_) => Some("expression"),
+    AnyNode::ERBContentNode(_) => Some("text_content"),
     AnyNode::ERBIfNode(_) => Some("conditional"),
     AnyNode::ERBUnlessNode(_) => Some("conditional"),
     AnyNode::ERBCaseNode(_) => Some("conditional"),
@@ -307,10 +307,56 @@ fn collect_affected(node: &AnyNode, state: &str, path: &mut Vec<usize>, affected
     }
   }
 
+  if let AnyNode::HTMLElementNode(element) = node {
+    collect_attributes(element, state, path, affected);
+  }
+
   for (index, child) in any_children(node).into_iter().enumerate() {
     path.push(index);
     collect_affected(child, state, path, affected);
     path.pop();
+  }
+}
+
+fn collect_attributes(element: &herb::nodes::HTMLElementNode, state: &str, path: &[usize], affected: &mut Vec<AffectedNode>) {
+  let Some(open_tag) = element.open_tag.as_ref() else {
+    return;
+  };
+
+  let children = match open_tag {
+    herb::union_types::ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(node) => &node.children,
+    _ => return,
+  };
+
+  for child in children {
+    let AnyNode::HTMLAttributeNode(attribute) = child else {
+      continue;
+    };
+
+    let Some(value) = attribute.value.as_ref() else {
+      continue;
+    };
+
+    for value_child in &value.children {
+      let Some(code) = content_of(value_child) else {
+        continue;
+      };
+
+      let trimmed = code.trim();
+
+      if trimmed.is_empty() || !references_state(trimmed, state) {
+        continue;
+      }
+
+      let location = value_child.location();
+
+      affected.push(AffectedNode {
+        node_path: path.to_vec(),
+        kind: "attribute_value".to_string(),
+        expression: Some(trimmed.to_string()),
+        location: Some(format!("{}:{}", location.start.line, location.start.column)),
+      });
+    }
   }
 }
 
