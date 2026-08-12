@@ -14,6 +14,7 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  InlayHintParams,
   DocumentSymbolParams,
   HoverParams,
   CompletionParams,
@@ -76,6 +77,7 @@ export class Server {
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
+          inlayHintProvider: true,
           hoverProvider: true,
           completionProvider: {
             triggerCharacters: [".", ":", "<", "&", "\"", "'", "/", ",", " ", "@"],
@@ -140,6 +142,10 @@ export class Server {
         this.session.userSettings.global = (
           (change.settings.languageServerHerb || this.session.userSettings.defaults)
         ) as PersonalHerbSettings
+      }
+
+      if (this.session.capabilities.supportsInlayHintRefresh) {
+        await this.connection.languages.inlayHint.refresh()
       }
 
       await this.session.refresh()
@@ -284,6 +290,21 @@ export class Server {
       if (!document) return []
 
       return this.session.foldingRangeProvider.getFoldingRanges(document)
+    })
+
+    this.connection.languages.inlayHint.on(async (params: InlayHintParams) => {
+      const document = this.session.documents.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const settings = await this.session.userSettings.getDocumentSettings(params.textDocument.uri)
+
+      if (!settings.inlayHints?.enabled) return []
+
+      return this.session.inlayHintProvider.getInlayHints(document, {
+        minimumLines: settings.inlayHints.minimumLines,
+        maximumClasses: settings.inlayHints.maximumClasses
+      })
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {

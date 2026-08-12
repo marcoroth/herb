@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0006_names the type on a marker for everything that is not a child"
+input: "{source: \"<div><% if @admin %>x<% end %></div>\", locals: {\"@admin\" => true}, options: {visitors: [#<Herb::Engine::SlotVisitor>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:a6ef770d--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->x<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

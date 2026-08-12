@@ -8,6 +8,7 @@ module Engine
       "Herb::Engine::Validators" => "herb/engine/validators",
       "Herb::Engine::DebugVisitor" => "herb/engine/debug_visitor",
       "Herb::Engine::OptimizeVisitor" => "herb/engine/optimize_visitor",
+      "Herb::Engine::SlotVisitor" => "herb/engine/slot_visitor",
       "Herb::Engine::Report::Middleware" => "herb/engine/report/middleware",
     }.freeze
 
