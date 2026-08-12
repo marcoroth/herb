@@ -5,6 +5,9 @@
 
 require "optparse"
 
+require_relative "project"
+require_relative "configuration"
+
 class Herb::CLI
   include Herb::Colors
 

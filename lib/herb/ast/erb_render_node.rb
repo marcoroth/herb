@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "did_you_mean"
+require "pathname"
 
 module Herb
   module AST

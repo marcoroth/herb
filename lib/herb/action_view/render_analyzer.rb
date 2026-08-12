@@ -3,6 +3,9 @@
 
 require "pathname"
 
+require_relative "../colors"
+require_relative "../configuration"
+
 module Herb
   module ActionView
     class RenderAnalyzer

@@ -236,6 +236,7 @@ namespace :parse do
   desc "Parse ERB files in a project directory"
   task :project, [:path, :output_file] do |_t, args|
     require_relative "lib/herb"
+    require_relative "lib/herb/project"
 
     Herb::Project.new(args[:path], output_file: args[:output_file]).parse!
   end

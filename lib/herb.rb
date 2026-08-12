@@ -7,6 +7,8 @@ module Herb
   ].freeze
 
   PARTIAL_GLOB_PATTERN = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}"
+
+  autoload :Diff, File.expand_path("herb/diff", __dir__ || __FILE__)
 end
 
 require_relative "herb/colors"
@@ -21,8 +23,6 @@ require_relative "herb/result"
 require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
-require_relative "herb/diff_operation"
-require_relative "herb/diff_result"
 
 require_relative "herb/ast"
 require_relative "herb/ast/node"
@@ -35,15 +35,9 @@ require_relative "herb/errors"
 require_relative "herb/warnings"
 require_relative "herb/diagnostic"
 
-require_relative "herb/cli"
-require_relative "herb/project"
-require_relative "herb/configuration"
-
 require_relative "herb/version"
 
-require_relative "herb/html/util"
 require_relative "herb/visitor"
-require_relative "herb/engine"
 
 begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
@@ -99,10 +93,14 @@ module Herb
     end
 
     def configuration(project_path = nil)
+      require_relative "herb/configuration"
+
       @configuration ||= Configuration.load(project_path)
     end
 
     def configure(project_path = nil)
+      require_relative "herb/configuration"
+
       @configuration = Configuration.load(project_path)
     end
 

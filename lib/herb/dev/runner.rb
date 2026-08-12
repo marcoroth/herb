@@ -2,6 +2,7 @@
 # typed: ignore
 
 require_relative "../colors"
+require_relative "../configuration"
 
 module Herb
   module Dev

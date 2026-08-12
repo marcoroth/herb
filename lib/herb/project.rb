@@ -8,6 +8,9 @@ require "pathname"
 require "English"
 require "stringio"
 
+require_relative "colors"
+require_relative "configuration"
+
 module Herb
   class Project
     include Colors

@@ -4,6 +4,12 @@
 
 ## Usage
 
+The engine is not loaded by `require "herb"`. Require it explicitly:
+
+```ruby
+require "herb/engine"
+```
+
 Basic usage (same as `Erubi::Engine`):
 
 ```ruby

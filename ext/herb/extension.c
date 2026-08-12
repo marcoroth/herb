@@ -441,7 +441,8 @@ typedef struct {
 } diff_args_T;
 
 static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
-  VALUE cDiffOperation = rb_const_get(mHerb, rb_intern("DiffOperation"));
+  VALUE mDiff = rb_const_get(mHerb, rb_intern("Diff"));
+  VALUE cDiffOperation = rb_const_get(mDiff, rb_intern("Operation"));
 
   VALUE type = ID2SYM(rb_intern(herb_diff_operation_type_to_string(operation->type)));
 
@@ -470,7 +471,8 @@ static VALUE diff_convert_body(VALUE arg) {
   diff_args_T* args = (diff_args_T*) arg;
   herb_diff_result_T* diff_result = args->diff_result;
 
-  VALUE cDiffResult = rb_const_get(mHerb, rb_intern("DiffResult"));
+  VALUE mDiff = rb_const_get(mHerb, rb_intern("Diff"));
+  VALUE cDiffResult = rb_const_get(mDiff, rb_intern("Result"));
 
   size_t operation_count = herb_diff_operation_count(diff_result);
   VALUE operations_array = rb_ary_new_capa((long) operation_count);

@@ -1,5 +1,7 @@
 # frozen_string_literal: false
 
+require_relative "../html/util"
+
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor

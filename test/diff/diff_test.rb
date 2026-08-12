@@ -4,16 +4,16 @@ require_relative "../test_helper"
 
 module Diff
   class DiffTest < Minitest::Spec
-    test "returns a DiffResult" do
+    test "returns a Diff::Result" do
       result = Herb.diff("<div>Hello</div>", "<div>Hello</div>")
 
-      assert_kind_of Herb::DiffResult, result
+      assert_kind_of Herb::Diff::Result, result
     end
 
-    test "operations returns DiffOperation instances" do
+    test "operations returns Diff::Operation instances" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
-      assert_kind_of Herb::DiffOperation, result.operations[0]
+      assert_kind_of Herb::Diff::Operation, result.operations[0]
     end
 
     test "identical documents" do
@@ -284,7 +284,7 @@ module Diff
       assert_match(/1 operation/, changed_result.inspect)
     end
 
-    test "DiffResult is Enumerable" do
+    test "Diff::Result is Enumerable" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       assert_kind_of Enumerable, result
@@ -293,7 +293,7 @@ module Diff
       assert_includes types, :text_changed
     end
 
-    test "DiffResult#each yields operations" do
+    test "Diff::Result#each yields operations" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       count = 0
@@ -302,14 +302,14 @@ module Diff
       assert_equal result.operations.size, count
     end
 
-    test "DiffResult#each returns enumerator without block" do
+    test "Diff::Result#each returns enumerator without block" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       enumerator = result.each
       assert_kind_of Enumerator, enumerator
     end
 
-    test "DiffOperation equality" do
+    test "Diff::Operation equality" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       op = result.operations[0]
@@ -319,19 +319,19 @@ module Diff
       assert_equal op, op
     end
 
-    test "DiffOperation is frozen" do
+    test "Diff::Operation is frozen" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       assert_predicate result.operations[0], :frozen?
     end
 
-    test "DiffResult is frozen" do
+    test "Diff::Result is frozen" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       assert_predicate result, :frozen?
     end
 
-    test "DiffOperation is a Data class" do
+    test "Diff::Operation is a Data class" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
       assert_kind_of Data, result.operations[0]
