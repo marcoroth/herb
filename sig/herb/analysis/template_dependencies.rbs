@@ -51,8 +51,6 @@ module Herb
 
       def analyze: (untyped file_path) -> untyped
 
-      def analyze_all: (?untyped erb_files) -> untyped
-
       def affected_templates: (untyped entry_point, untyped state) -> untyped
 
       def state_flow: (untyped entry_point, untyped state) -> untyped
@@ -74,8 +72,6 @@ module Herb
       def collect_reachable_files: (untyped entry_point) -> untyped
 
       def component_methods_for: (untyped template_path) -> untyped
-
-      def find_erb_files: () -> untyped
 
       def partial_index: () -> untyped
 

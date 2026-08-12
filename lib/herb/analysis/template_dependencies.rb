@@ -58,17 +58,6 @@ module Herb
         )
       end
 
-      def analyze_all(erb_files = nil)
-        erb_files ||= find_erb_files
-        results = {} #: Hash[String, Result]
-
-        erb_files.each do |file|
-          results[file] = analyze(file)
-        end
-
-        results
-      end
-
       def affected_templates(entry_point, state)
         trace = trace_state(entry_point, state)
 
@@ -251,10 +240,6 @@ module Herb
         return [] unless File.exist?(rb_path)
 
         extract_helper_methods(rb_path)
-      end
-
-      def find_erb_files
-        partial_index.templates
       end
 
       def partial_index
