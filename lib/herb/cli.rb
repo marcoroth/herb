@@ -513,6 +513,9 @@ class Herb::CLI
       end
 
       exit(0)
+    when "flow"
+      actionview_flow(config)
+      exit(0)
     when "context"
       actionview_context(config)
       exit(0)
@@ -533,6 +536,7 @@ class Herb::CLI
           check [path]          Check render calls and flag dependency warnings
           graph [path]          Show render dependency graph for a project or file
           dependencies [path]   Show template dependency manifest (state, locals, helpers)
+          flow <file> <state>   Trace one piece of state through every partial it reaches
           context <partial>     Show what a partial is always, sometimes, or never rendered inside
           signature <partial>   Show the strict locals a partial receives across every call site
           render [file]         Render ERB template using ActionView helpers
@@ -543,6 +547,7 @@ class Herb::CLI
           bundle exec herb actionview graph app/views/posts/show.html.erb
           bundle exec herb actionview dependencies app/views/posts/show.html.erb
           bundle exec herb actionview dependencies
+          bundle exec herb actionview flow app/views/posts/show.html.erb @post
           bundle exec herb actionview context app/views/posts/_card.html.erb
           bundle exec herb actionview signature app/views/posts/_card.html.erb
           bundle exec herb actionview render app/views/posts/show.html.erb
@@ -632,6 +637,79 @@ class Herb::CLI
     when :never  then dimmed("\u2717")
     when :mixed  then yellow("~")
     else dimmed("?")
+    end
+  end
+
+  def actionview_flow(config)
+    require_relative "analysis/template_dependencies"
+
+    @file = @args[2]
+    state = @args[3]
+
+    unless @file && state
+      puts "Please provide a template path and a state name."
+      puts "Example: herb actionview flow app/views/posts/show.html.erb @post"
+      exit(1)
+    end
+
+    path = File.expand_path(@file)
+
+    unless File.file?(path)
+      puts "Not a file: '#{path}'."
+      exit(1)
+    end
+
+    project_root = config.project_root&.to_s || File.dirname(path)
+    dependencies = Herb::Analysis::TemplateDependencies.new(project_root)
+    dependencies.scan_helpers!
+
+    flow = dependencies.state_flow(path, state)
+
+    actionview_header(path, project_root)
+
+    unless flow
+      puts " #{dimmed("'#{state}' is not read by this template.")}"
+      puts ""
+      exit(0)
+    end
+
+    puts " #{bold("State flow")} #{dimmed("for #{yellow(state)}")}"
+    puts ""
+
+    print_flow_node(flow, project_root, "", true, true)
+
+    puts ""
+  end
+
+  def print_flow_node(node, project_root, prefix, last, root)
+    relative = Pathname.new(node.file).relative_path_from(Pathname.new(project_root)).to_s
+    connector = if root
+                  ""
+                else
+                  last ? "\u2514\u2500\u2500 " : "\u251c\u2500\u2500 "
+                end
+    carried = node.names.map { |name| yellow(name) }.join(", ")
+
+    via = if node.via&.any?
+            dimmed(" \u2190 #{node.via.map { |name, expression| "#{name}: #{expression}" }.join(", ")}")
+          else
+            ""
+          end
+
+    puts " #{prefix}#{connector}#{cyan(relative)} #{dimmed("[")}#{carried}#{dimmed("]")}#{via}"
+
+    child_prefix = if root
+                     prefix
+                   else
+                     prefix + (last ? "    " : "\u2502   ")
+                   end
+
+    node.nodes.each do |affected|
+      puts " #{child_prefix}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(affected[:expression].to_s)} #{dimmed("(#{affected[:location]})")}"
+    end
+
+    node.children.each_with_index do |child, index|
+      print_flow_node(child, project_root, child_prefix, index == node.children.size - 1, false)
     end
   end
 

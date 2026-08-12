@@ -11,6 +11,8 @@ require_relative "template_dependencies/node_dependency_collector"
 module Herb
   module Analysis
     class TemplateDependencies
+      FlowNode = Data.define(:file, :names, :via, :nodes, :children)
+
       Result = Data.define(
         :file,
         :instance_variables,
@@ -68,73 +70,19 @@ module Herb
       end
 
       def affected_templates(entry_point, state)
-        entry_point = @project_path.join(entry_point).to_s unless Pathname.new(entry_point).absolute?
+        trace = trace_state(entry_point, state)
 
-        all = {} #: Hash[String, Result]
+        return [] unless trace
 
-        reachable = collect_reachable_files(entry_point)
-        reachable.each { |file| all[file] = analyze(file) }
+        trace[:affected].to_a.sort
+      end
 
-        affected = Set.new #: Set[String]
-        partial_to_file = PartialIndex.new(@view_root, reachable)
-        entry_result = all[entry_point]
+      def state_flow(entry_point, state)
+        trace = trace_state(entry_point, state)
 
-        return [] unless entry_result
+        return nil unless trace
 
-        if entry_result.instance_variables.include?(state) || entry_result.constants.include?(state)
-          affected.add(entry_point)
-        else
-          return []
-        end
-
-        state_locals = {} #: Hash[String, Set[String]]
-        reachable.each { |file| state_locals[file] = Set.new }
-        state_locals[entry_point].add(state)
-
-        queue = [entry_point]
-        visited = Set.new #: Set[String]
-
-        while (file = queue.shift)
-          next if visited.include?(file)
-
-          visited.add(file)
-          result = all[file]
-          next unless result
-
-          carrying = state_locals[file]
-
-          result.render_calls.each do |call|
-            flowing_locals = {} #: Hash[String, bool]
-
-            call[:locals].each do |local_name, value_expr|
-              flows = carrying.any? { |name| expression_references?(value_expr, name) }
-              flowing_locals[local_name] = true if flows
-            end
-
-            collection_flows = call[:collection] && carrying.any? { |name| expression_references?(call[:collection], name) }
-
-            next unless flowing_locals.any? || collection_flows
-
-            partial_files = partial_to_file.resolve(call[:partial], file)
-
-            partial_files.each do |partial_file|
-              state_locals[partial_file] ||= Set.new
-              flowing_locals.each_key { |local_name| state_locals[partial_file].add(local_name) }
-
-              if collection_flows && call[:partial]
-                item_name = File.basename(call[:partial])
-                state_locals[partial_file].add(item_name)
-              end
-
-              unless affected.include?(partial_file)
-                affected.add(partial_file)
-                queue << partial_file
-              end
-            end
-          end
-        end
-
-        affected.to_a.sort
+        flow_node(trace, trace[:entry_point], nil, Set.new)
       end
 
       def affected_nodes(file_path, state)
@@ -176,6 +124,104 @@ module Herb
       end
 
       private
+
+      def trace_state(entry_point, state)
+        entry_point = @project_path.join(entry_point).to_s unless Pathname.new(entry_point).absolute?
+
+        all = {} #: Hash[String, Result]
+        reachable = collect_reachable_files(entry_point)
+        reachable.each { |file| all[file] = analyze(file) }
+
+        entry_result = all[entry_point]
+
+        return nil unless entry_result
+        return nil unless entry_result.instance_variables.include?(state) || entry_result.constants.include?(state)
+
+        index = PartialIndex.new(@view_root, reachable)
+        affected = Set.new([entry_point]) #: Set[String]
+
+        state_locals = {} #: Hash[String, Set[String]]
+        reachable.each { |file| state_locals[file] = Set.new }
+        state_locals[entry_point].add(state)
+
+        edges = {} #: Hash[String, Array[Hash[Symbol, untyped]]]
+        queue = [entry_point]
+        visited = Set.new #: Set[String]
+
+        while (file = queue.shift)
+          next if visited.include?(file)
+
+          visited.add(file)
+          result = all[file]
+
+          next unless result
+
+          carrying = state_locals[file]
+
+          result.render_calls.each do |call|
+            flowing_locals = {} #: Hash[String, String]
+
+            call[:locals].each do |local_name, value_expr|
+              flowing_locals[local_name] = value_expr if carrying.any? { |name| expression_references?(value_expr, name) }
+            end
+
+            collection_flows = call[:collection] && carrying.any? { |name| expression_references?(call[:collection], name) }
+
+            next unless flowing_locals.any? || collection_flows
+
+            index.resolve(call[:partial], file).each do |partial_file|
+              state_locals[partial_file] ||= Set.new
+              flowing_locals.each_key { |local_name| state_locals[partial_file].add(local_name) }
+
+              carried = flowing_locals.dup
+
+              if collection_flows && call[:partial]
+                item_name = File.basename(call[:partial])
+                state_locals[partial_file].add(item_name)
+                carried[item_name] = call[:collection]
+              end
+
+              (edges[file] ||= []) << { partial: partial_file, locals: carried }
+
+              unless affected.include?(partial_file)
+                affected.add(partial_file)
+                queue << partial_file
+              end
+            end
+          end
+        end
+
+        { entry_point: entry_point, affected: affected, state_locals: state_locals, edges: edges }
+      end
+
+      def flow_node(trace, file, via, path)
+        return nil if path.include?(file)
+
+        names = (trace[:state_locals][file] || Set.new).to_a.sort
+        descended = path | [file]
+
+        children = (trace[:edges][file] || []).filter_map do |edge|
+          flow_node(trace, edge[:partial], edge[:locals], descended)
+        end
+
+        FlowNode.new(
+          file: file,
+          names: names,
+          via: via,
+          nodes: nodes_for(file, names),
+          children: children
+        )
+      end
+
+      def nodes_for(file, names)
+        seen = Set.new #: Set[untyped]
+
+        names.flat_map { |name| affected_nodes(file, name) }.select do |node|
+          key = [node[:node_path], node[:type], node[:expression]]
+
+          seen.add?(key) ? true : false
+        end
+      end
 
       def collect_reachable_files(entry_point)
         reachable = Set.new([entry_point]) #: Set[String]

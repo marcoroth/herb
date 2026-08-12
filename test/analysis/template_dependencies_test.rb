@@ -37,6 +37,73 @@ class TemplateDependenciesTest < Minitest::Spec
     full_path
   end
 
+  test "traces state through a rename into a partial" do
+    entry = write_template("posts/show.html.erb", '<%= render "posts/byline", author: @post.user %>')
+    write_template("posts/_byline.html.erb", "<span><%= author.name %></span>")
+
+    flow = analyzer.state_flow(entry, "@post")
+
+    assert_equal ["@post"], flow.names
+    assert_equal 1, flow.children.size
+    assert_equal ["author"], flow.children.first.names
+    assert_equal({ "author" => "@post.user" }, flow.children.first.via)
+  end
+
+  test "traces state through two renames" do
+    entry = write_template("posts/show.html.erb", '<%= render "posts/byline", author: @post.user %>')
+    write_template("posts/_byline.html.erb", '<%= render "posts/avatar", user: author %>')
+    write_template("posts/_avatar.html.erb", "<span><%= user.name %></span>")
+
+    flow = analyzer.state_flow(entry, "@post")
+    avatar = flow.children.first.children.first
+
+    assert_equal ["user"], avatar.names
+    assert_includes avatar.nodes.map { |node| node[:expression] }, "user.name"
+  end
+
+  test "reports the nodes each template renders from the state" do
+    entry = write_template("posts/show.html.erb", "<h1><%= @post.title %></h1>")
+
+    flow = analyzer.state_flow(entry, "@post")
+
+    assert_includes flow.nodes.map { |node| node[:expression] }, "@post.title"
+  end
+
+  test "branches when state flows into two partials" do
+    entry = write_template("posts/show.html.erb", '<%= render "posts/byline", author: @post.user %><%= render "posts/body", text: @post.body %>')
+    write_template("posts/_byline.html.erb", "<span><%= author %></span>")
+    write_template("posts/_body.html.erb", "<p><%= text %></p>")
+
+    flow = analyzer.state_flow(entry, "@post")
+
+    assert_equal ["author", "text"], flow.children.map { |child| child.names.first }.sort
+  end
+
+  test "carries the item name into a collection render" do
+    entry = write_template("posts/show.html.erb", '<%= render partial: "posts/comment", collection: @post.comments %>')
+    write_template("posts/_comment.html.erb", "<li><%= comment %></li>")
+
+    flow = analyzer.state_flow(entry, "@post")
+
+    assert_includes flow.children.first.names, "comment"
+  end
+
+  test "does not trace state the template never reads" do
+    entry = write_template("posts/show.html.erb", "<h1><%= @post.title %></h1>")
+
+    assert_nil analyzer.state_flow(entry, "@user")
+  end
+
+  test "stops instead of looping when partials render each other" do
+    entry = write_template("posts/show.html.erb", '<%= render "posts/a", value: @post %>')
+    write_template("posts/_a.html.erb", '<%= render "posts/b", value: value %>')
+    write_template("posts/_b.html.erb", '<%= render "posts/a", value: value %>')
+
+    flow = analyzer.state_flow(entry, "@post")
+
+    assert_equal ["value"], flow.children.first.names
+  end
+
   test "traces state into a partial named relative to the rendering template" do
     entry = write_template("posts/show.html.erb", '<%= render "header", post: @post %>')
     sibling = write_template("posts/_header.html.erb", "<h1><%= post.title %></h1>")

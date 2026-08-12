@@ -3,6 +3,25 @@
 module Herb
   module Analysis
     class TemplateDependencies
+      class FlowNode < Data
+        attr_reader file(): untyped
+
+        attr_reader names(): untyped
+
+        attr_reader via(): untyped
+
+        attr_reader nodes(): untyped
+
+        attr_reader children(): untyped
+
+        def self.new: (untyped file, untyped names, untyped via, untyped nodes, untyped children) -> instance
+                    | (file: untyped, names: untyped, via: untyped, nodes: untyped, children: untyped) -> instance
+
+        def self.members: () -> [ :file, :names, :via, :nodes, :children ]
+
+        def members: () -> [ :file, :names, :via, :nodes, :children ]
+      end
+
       class Result < Data
         attr_reader file(): untyped
 
@@ -36,6 +55,8 @@ module Herb
 
       def affected_templates: (untyped entry_point, untyped state) -> untyped
 
+      def state_flow: (untyped entry_point, untyped state) -> untyped
+
       def affected_nodes: (untyped file_path, untyped state) -> untyped
 
       def dependency_index: (untyped file_path) -> untyped
@@ -43,6 +64,12 @@ module Herb
       def scan_helpers!: () -> untyped
 
       private
+
+      def trace_state: (untyped entry_point, untyped state) -> untyped
+
+      def flow_node: (untyped trace, untyped file, untyped via, untyped path) -> untyped
+
+      def nodes_for: (untyped file, untyped names) -> untyped
 
       def collect_reachable_files: (untyped entry_point) -> untyped
 
