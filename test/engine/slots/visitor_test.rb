@@ -229,6 +229,26 @@ module Engine
         assert_slots_snapshot("<p><%= @a %></p><div><% if @b %><i>x</i><% end %></div>")
       end
 
+      test "reads a key from an attribute that surrounds its expression with text" do
+        assert_slots_snapshot(%(<% @u.each do |u| %><li id="user-<%= u.id %>">x</li><% end %>))
+      end
+
+      test "reads a key from an attribute holding several expressions" do
+        assert_slots_snapshot(%(<% @u.each do |u| %><li id="<%= u.type %>-<%= u.id %>">x</li><% end %>))
+      end
+
+      test "reads an interpolated herb-key" do
+        assert_slots_snapshot(%(<% @u.each do |u| %><li herb-key="row-<%= u.id %>">x</li><% end %>))
+      end
+
+      test "keeps a literal key part from being read as Ruby" do
+        assert_slots_snapshot('<% @u.each do |u| %><li id="a\b#{c}-<%= u.id %>">x</li><% end %>')
+      end
+
+      test "falls back to index when a key attribute holds no expression" do
+        assert_slots_snapshot(%(<% @u.each do |u| %><li id="static">x</li><% end %>))
+      end
+
       test "keeps the attribute name a string so the schema stays serializable" do
         visitor = slots_for(%(<div class="<%= @c %>" <%= @attrs %>></div>))
 

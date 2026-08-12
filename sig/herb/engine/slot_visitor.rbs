@@ -139,6 +139,12 @@ module Herb
       # : (untyped) -> String?
       def key_expression_for: (untyped) -> String?
 
+      # : (untyped) -> Array[[Symbol, String]]?
+      def key_parts_for: (untyped) -> Array[[ Symbol, String ]]?
+
+      # : (String) -> String
+      def escape_key_literal: (String) -> String
+
       # : (untyped) -> Array[untyped]
       def collection_body: (untyped) -> Array[untyped]
 

@@ -376,13 +376,41 @@ module Herb
 
       #: (untyped) -> String?
       def key_expression_for(attribute)
+        parts = key_parts_for(attribute)
+        return nil if parts.nil?
+        return nil unless parts.any? { |kind, _| kind == :expression }
+        return parts.first[1] if parts.one?
+
+        interpolated = parts.map { |kind, value|
+          kind == :expression ? "\#{#{value}}" : escape_key_literal(value)
+        }
+
+        %("#{interpolated.join}")
+      end
+
+      #: (untyped) -> Array[[Symbol, String]]?
+      def key_parts_for(attribute)
         children = attribute.value&.children || []
-        return nil unless children.one?
+        return nil if children.empty?
 
-        erb = children.first
-        return nil unless erb.type.to_s == "AST_ERB_CONTENT_NODE"
+        children.map { |child|
+          case child
+          when Herb::AST::ERBContentNode
+            expression = child.content&.value.to_s.strip
+            return nil if expression.empty?
 
-        erb.content&.value&.strip
+            [:expression, expression]
+          when Herb::AST::LiteralNode
+            [:literal, child.content.to_s]
+          else
+            return nil
+          end
+        }
+      end
+
+      #: (String) -> String
+      def escape_key_literal(literal)
+        literal.gsub(/["\\]/) { |character| "\\#{character}" }.gsub('#{', '\\#{')
       end
 
       #: (untyped) -> Array[untyped]
