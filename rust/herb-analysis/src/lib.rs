@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod partial_resolution;
 pub mod rails;
 pub mod report;
 
