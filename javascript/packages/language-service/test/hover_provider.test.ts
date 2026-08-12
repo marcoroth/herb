@@ -656,6 +656,30 @@ describe("HoverProvider", () => {
       })
     })
 
+    describe("synthesized Action View helper nodes", () => {
+      it("does not throw when a helper expands to a node without a source location", () => {
+        const content = dedent`
+          <div class='x'>
+            <% if user.admin? %>
+              <%= link_to "E", p %>
+            <% end %>
+          </div>
+        `
+
+        const lines = content.split("\n")
+
+        for (let line = 0; line < lines.length; line++) {
+          for (let character = 0; character <= lines[line].length; character++) {
+            expect(() => getHover(content, line, character)).not.toThrow()
+          }
+        }
+      })
+
+      it("still resolves the helper the user actually wrote", () => {
+        expect(hoverValue('<%= link_to "E", p %>', 0, 6)).toContain("link_to")
+      })
+    })
+
     describe("no hover for non-entities", () => {
       it("returns null for bare ampersand", () => {
         expect(getHover("<div>Tom & Jerry</div>", 0, 10)).toBeNull()
