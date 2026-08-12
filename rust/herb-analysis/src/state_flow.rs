@@ -463,7 +463,16 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   analysis.resolve();
 
   let modules = analysis.helper_modules();
-  let roots: Vec<&str> = modules.iter().map(String::as_str).collect();
+  let mut roots: Vec<&str> = modules.iter().map(String::as_str).collect();
 
-  analysis.view_visible_helpers(&roots).into_keys().collect()
+  // Rails' own view helpers hang off ActionView::Base rather than a `*Helper` module.
+  roots.push("ActionView::Base");
+
+  let mut names: Vec<String> = analysis.view_visible_helpers(&roots).into_keys().collect();
+
+  // Gems and engines expose view helpers with `helper_method` in a controller, which is not a
+  // module inclusion and so never shows up in the ancestor walk.
+  names.extend(crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name));
+
+  names
 }
