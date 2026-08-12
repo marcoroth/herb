@@ -14,12 +14,11 @@ import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 import { makeTreeCollapsible, buildCollapsibleTreeHTML, decorateTreeNodeTokens, attachTreeToggles, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
-import { Linter, rules, fixabilityFor, FRAMEWORKS } from "@herb-tools/linter"
-import { analyze } from "../analyze"
+import { FRAMEWORKS } from "@herb-tools/config/schema"
+import { AnalyzeClient } from "../analyze-client"
 import { analyzeRuby } from "../analyze-ruby"
 
 window.Herb = Herb
-window.analyze = analyze
 
 const URL_UPDATE_THROTTLE = 100
 const ANALYZE_DEBOUNCE = 250
@@ -192,12 +191,13 @@ export default class extends Controller {
       this.restoreLinterOptions()
     }
 
-    this.inputTarget.focus()
-    this.load()
-
     this.lastWrittenHash = null
     this.analyzeTimeout = null
+    this.analyzeClient = new AnalyzeClient()
     this.renderedParseTree = null
+
+    this.inputTarget.focus()
+    this.load()
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: this.isRubyMode ? "ruby" : "erb",
@@ -305,6 +305,9 @@ export default class extends Controller {
 
     this.languageService?.dispose()
     this.languageService = null
+
+    this.analyzeClient?.dispose()
+    this.analyzeClient = null
 
     if (this.analyzeTimeout !== null) {
       clearTimeout(this.analyzeTimeout)
@@ -1471,7 +1474,15 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const formatterOptions = this.getFormatterOptions()
-      const result = await analyze(Herb, value, {}, {}, formatterOptions, {}, {}, ["format"])
+      const result = await this.analyzeClient.analyze({
+        source: value,
+        options: {},
+        printerOptions: {},
+        formatterOptions,
+        autofixOptions: {},
+        linterOptions: {},
+        jobs: ["format"],
+      })
 
       if (result.formatted) {
         if (this.editor) {
@@ -1494,6 +1505,20 @@ export default class extends Controller {
     }
   }
 
+  async autofixThroughWorker(source, includeUnsafe) {
+    const result = await this.analyzeClient.analyze({
+      source,
+      options: {},
+      printerOptions: {},
+      formatterOptions: {},
+      autofixOptions: { includeUnsafe },
+      linterOptions: this.getLinterOptions(),
+      jobs: ["lint", "autofix"],
+    })
+
+    return result.autofix
+  }
+
   async autofixEditor(event) {
     if (this.isRubyMode) return
 
@@ -1508,11 +1533,10 @@ export default class extends Controller {
 
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-      const linter = new Linter(Herb)
-      const result = linter.autofix(value, this.getLinterOptions())
+      const result = await this.autofixThroughWorker(value, false)
 
-      if (result && typeof result === "object" && "source" in result) {
-        const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
+      if (result) {
+        const fixedCount = result.fixedCount
 
         if (fixedCount > 0 && typeof result.source === "string") {
           if (this.editor) {
@@ -1562,11 +1586,10 @@ export default class extends Controller {
 
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-      const linter = new Linter(Herb)
-      const result = linter.autofix(value, this.getLinterOptions(), undefined, { includeUnsafe: true })
+      const result = await this.autofixThroughWorker(value, true)
 
-      if (result && typeof result === "object" && "source" in result) {
-        const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
+      if (result) {
+        const fixedCount = result.fixedCount
 
         if (fixedCount > 0 && typeof result.source === "string") {
           if (this.editor) {
@@ -1616,7 +1639,17 @@ export default class extends Controller {
     const formatterOptions = this.getFormatterOptions()
     const autofixOptions = this.getAutofixOptions()
     const linterOptions = this.getLinterOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions, linterOptions, this.analyzeJobs)
+    const result = await this.analyzeClient.analyzeLatest({
+      source: value,
+      options,
+      printerOptions,
+      formatterOptions,
+      autofixOptions,
+      linterOptions,
+      jobs: this.analyzeJobs,
+    })
+
+    if (!result) return
 
     this.updatePosition(1, 0, value.length)
 
@@ -1624,20 +1657,10 @@ export default class extends Controller {
 
     const allDiagnostics = []
 
-    if (result.parseResult) {
-      const errors = result.parseResult.recursiveErrors()
-      allDiagnostics.push(...errors.map((error) => {
-        const diagnostic = error.toMonacoDiagnostic()
+    allDiagnostics.push(...result.parserDiagnostics)
 
-        diagnostic.source = "Herb Parser"
-        diagnostic.code = diagnostic.code || error.code || error.type || 'parser-error'
-
-        return diagnostic
-      }))
-    }
-
-    if (result.lintResult && result.lintResult.offenses) {
-      const lintDiagnostics = result.lintResult.offenses.map((offense) => ({
+    if (result.lintOffenses) {
+      const lintDiagnostics = result.lintOffenses.map((offense) => ({
         severity: offense.severity,
         message: offense.message,
         line: offense.location.start.line,
@@ -1769,7 +1792,7 @@ export default class extends Controller {
       }
     }
 
-    const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+    const hasParserErrors = result.hasParserErrors
     const currentSource = this.editor ? this.editor.getValue() : this.inputTarget.value
     const isWellFormatted = currentSource === result.formatted
 
@@ -1807,11 +1830,10 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasAutofixViewerTarget && result.autofixResult !== undefined) {
-      const autofixResult = result.autofixResult
-      const autofixedSource = autofixResult && typeof autofixResult.source === "string" ? autofixResult.source : null
-      const fixedCount = autofixResult && Array.isArray(autofixResult.fixed) ? autofixResult.fixed.length : 0
-      const offenseCount = result.lintResult && Array.isArray(result.lintResult.offenses) ? result.lintResult.offenses.length : 0
+    if (this.hasAutofixViewerTarget && result.autofix !== undefined) {
+      const autofixedSource = result.autofix ? result.autofix.source : null
+      const fixedCount = result.autofix ? result.autofix.fixedCount : 0
+      const offenseCount = result.lintOffenses ? result.lintOffenses.length : 0
 
       if (hasParserErrors || autofixedSource === null) {
         this.autofixOutputTarget.classList.add('hidden')
@@ -1852,7 +1874,7 @@ export default class extends Controller {
     }
 
     if (this.hasFormatButtonTarget) {
-      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+      const hasParserErrors = result.hasParserErrors
 
       if (hasParserErrors) {
         this.formatButtonTarget.disabled = true
@@ -1869,8 +1891,8 @@ export default class extends Controller {
     }
 
     if (this.hasAutofixButtonTarget) {
-      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
-      const hasLintOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) && result.lintResult.offenses.length > 0)
+      const hasParserErrors = result.hasParserErrors
+      const hasLintOffenses = !!(result.lintOffenses && result.lintOffenses.length > 0)
 
       if (hasParserErrors) {
         this.disableAutofixButton()
@@ -1887,9 +1909,8 @@ export default class extends Controller {
     }
 
     if (this.hasAutofixUnsafeWrapperTarget) {
-      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
-      const hasUnsafeOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) &&
-        result.lintResult.offenses.some(offense => fixabilityFor(offense, rules.find(rule => rule.ruleName === offense.rule)).unsafeAutocorrectable))
+      const hasParserErrors = result.hasParserErrors
+      const hasUnsafeOffenses = result.hasUnsafeOffenses
 
       if (hasParserErrors || !hasUnsafeOffenses) {
         this.autofixUnsafeWrapperTarget.classList.add('hidden')
