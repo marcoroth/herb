@@ -7,6 +7,8 @@ require_relative "../partial_resolution"
 module Herb
   module Analysis
     class PartialIndex
+      APPLICATION_DIRECTORY = "application" #: String
+
       attr_reader :view_root #: Pathname
 
       attr_reader :templates #: Array[String]
@@ -44,6 +46,29 @@ module Herb
         @by_name[partial_name] || []
       end
 
+      #: (String?, String?) -> Array[String]
+      def resolve(partial_name, source_file)
+        return [] unless partial_name
+
+        exact = files_for(partial_name)
+
+        return exact if exact.any?
+
+        if source_file
+          relative = source_directory_for(source_file)
+
+          if relative && relative != "."
+            sibling = files_for("#{relative}/#{partial_name}")
+
+            return sibling if sibling.any?
+          end
+        end
+
+        return [] if partial_name.include?("/")
+
+        files_for("#{APPLICATION_DIRECTORY}/#{partial_name}")
+      end
+
       #: (String, String | Pathname) -> String?
       def self.partial_name_for(file, view_root)
         PartialResolution.partial_name_for(file, view_root)
@@ -60,6 +85,13 @@ module Herb
       end
 
       private
+
+      #: (String) -> String?
+      def source_directory_for(source_file)
+        Pathname.new(File.dirname(source_file)).relative_path_from(@view_root).to_s
+      rescue ArgumentError
+        nil
+      end
 
       #: (Array[String]) -> Hash[String, Array[String]]
       def build_index(files)

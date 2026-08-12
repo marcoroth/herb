@@ -100,6 +100,43 @@ class PartialIndexTest < Minitest::Spec
     assert_equal preferred, Herb::Analysis::PartialIndex.build(@project_path).files_for("posts/card").first
   end
 
+  test "resolves a partial named relative to the rendering template" do
+    caller_file = write("app/views/posts/show.html.erb")
+    sibling = write("app/views/posts/_header.html.erb")
+
+    assert_equal [sibling], Herb::Analysis::PartialIndex.build(@project_path).resolve("header", caller_file)
+  end
+
+  test "falls back to the application directory for an unqualified name" do
+    caller_file = write("app/views/posts/show.html.erb")
+    shared = write("app/views/application/_flash.html.erb")
+
+    assert_equal [shared], Herb::Analysis::PartialIndex.build(@project_path).resolve("flash", caller_file)
+  end
+
+  test "prefers a sibling partial over the application fallback" do
+    caller_file = write("app/views/posts/show.html.erb")
+    sibling = write("app/views/posts/_flash.html.erb")
+    write("app/views/application/_flash.html.erb")
+
+    assert_equal [sibling], Herb::Analysis::PartialIndex.build(@project_path).resolve("flash", caller_file)
+  end
+
+  test "does not fall back to application for a qualified name" do
+    caller_file = write("app/views/posts/show.html.erb")
+    write("app/views/application/_flash.html.erb")
+
+    assert_empty Herb::Analysis::PartialIndex.build(@project_path).resolve("admin/flash", caller_file)
+  end
+
+  test "prefers an exact name over a sibling of the same name" do
+    caller_file = write("app/views/posts/show.html.erb")
+    exact = write("app/views/_header.html.erb")
+    write("app/views/posts/posts/_header.html.erb")
+
+    assert_equal [exact], Herb::Analysis::PartialIndex.build(@project_path).resolve("header", caller_file)
+  end
+
   test "takes an explicit template list when one is given" do
     write("app/views/posts/_card.html.erb")
     kept = write("app/views/posts/_byline.html.erb")

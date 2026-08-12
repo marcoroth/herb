@@ -3,6 +3,8 @@
 module Herb
   module Analysis
     class PartialIndex
+      APPLICATION_DIRECTORY: String
+
       attr_reader view_root: Pathname
 
       attr_reader templates: Array[String]
@@ -19,6 +21,9 @@ module Herb
       # : (String?) -> Array[String]
       def files_for: (String?) -> Array[String]
 
+      # : (String?, String?) -> Array[String]
+      def resolve: (String?, String?) -> Array[String]
+
       # : (String, String | Pathname) -> String?
       def self.partial_name_for: (String, String | Pathname) -> String?
 
@@ -29,6 +34,9 @@ module Herb
       def names: () -> Array[String]
 
       private
+
+      # : (String) -> String?
+      def source_directory_for: (String) -> String?
 
       # : (Array[String]) -> Hash[String, Array[String]]
       def build_index: (Array[String]) -> Hash[String, Array[String]]

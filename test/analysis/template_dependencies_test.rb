@@ -37,6 +37,20 @@ class TemplateDependenciesTest < Minitest::Spec
     full_path
   end
 
+  test "traces state into a partial named relative to the rendering template" do
+    entry = write_template("posts/show.html.erb", '<%= render "header", post: @post %>')
+    sibling = write_template("posts/_header.html.erb", "<h1><%= post.title %></h1>")
+
+    assert_includes analyzer.affected_templates(entry, "@post"), sibling
+  end
+
+  test "traces state into a partial in the application directory" do
+    entry = write_template("posts/show.html.erb", '<%= render "flash", post: @post %>')
+    shared = write_template("application/_flash.html.erb", "<p><%= post %></p>")
+
+    assert_includes analyzer.affected_templates(entry, "@post"), shared
+  end
+
   test "traces state in a project that does not keep templates in app/views" do
     flat_root = Dir.mktmpdir("herb_deps_flat")
 

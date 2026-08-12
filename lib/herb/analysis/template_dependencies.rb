@@ -115,7 +115,7 @@ module Herb
 
             next unless flowing_locals.any? || collection_flows
 
-            partial_files = partial_to_file.files_for(call[:partial])
+            partial_files = partial_to_file.resolve(call[:partial], file)
 
             partial_files.each do |partial_file|
               state_locals[partial_file] ||= Set.new
@@ -186,7 +186,7 @@ module Herb
           result = analyze(file)
 
           result.render_calls.each do |call|
-            partial_files = index.files_for(call[:partial])
+            partial_files = index.resolve(call[:partial], file)
 
             partial_files.each do |partial_file|
               unless reachable.include?(partial_file)
