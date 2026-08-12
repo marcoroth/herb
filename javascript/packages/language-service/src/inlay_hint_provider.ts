@@ -1,8 +1,11 @@
 import { InlayHint, InlayHintKind } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, isHTMLOpenTagNode, isHTMLAttributeNode, isLiteralNode } from "@herb-tools/core"
+import { Visitor } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
+import { elementSelector, erbLabel, defaultNodeLabelOptions } from "./node_labels"
+
+import type { NodeLabelOptions } from "./node_labels"
 import { lspPosition } from "./range_utils"
 
 import type {
@@ -17,17 +20,17 @@ import type {
   ERBForNode,
   ERBBeginNode,
   HTMLElementNode,
-  HTMLOpenTagNode,
 } from "@herb-tools/core"
 
 type ERBNodeWithEnd = ERBIfNode | ERBUnlessNode | ERBBlockNode | ERBCaseNode | ERBCaseMatchNode | ERBWhileNode | ERBUntilNode | ERBForNode | ERBBeginNode
 
-export interface InlayHintOptions {
+export interface InlayHintOptions extends NodeLabelOptions {
   minimumLines?: number
 }
 
 export const defaultInlayHintOptions: Required<InlayHintOptions> = {
-  minimumLines: 2
+  ...defaultNodeLabelOptions,
+  minimumLines: 10
 }
 
 export class InlayHintProvider {
@@ -50,11 +53,13 @@ export class InlayHintProvider {
 export class InlayHintCollector extends Visitor {
   public hints: InlayHint[] = []
 
+  private options: InlayHintOptions
   private minimumLines: number
 
   constructor(options: InlayHintOptions = {}) {
     super()
 
+    this.options = options
     this.minimumLines = options.minimumLines ?? defaultInlayHintOptions.minimumLines
   }
 
@@ -64,7 +69,7 @@ export class InlayHintCollector extends Visitor {
       const startLine = node.open_tag.location.start.line
 
       if (endLine - startLine >= this.minimumLines) {
-        const label = labelForHTMLElement(node)
+        const label = labelForHTMLElement(node, this.options)
 
         if (label) {
           this.hints.push({
@@ -129,7 +134,7 @@ export class InlayHintCollector extends Visitor {
     const endNode: ERBEndNode | null = node.end_node
     if (!endNode?.tag_closing) return
 
-    const label = labelForERBNode(node)
+    const label = labelForERBNode(node, this.options)
     if (!label) return
 
     const endLine = endNode.location.start.line
@@ -146,38 +151,18 @@ export class InlayHintCollector extends Visitor {
   }
 }
 
-function labelForERBNode(node: ERBNodeWithEnd): string | null {
-  const content = node.content?.value?.trim()
+function labelForERBNode(node: ERBNodeWithEnd, options: NodeLabelOptions): string | null {
+  const content = erbLabel(node.content?.value, options)
+
   if (!content) return null
 
   return `# ${content}`
 }
 
-function labelForHTMLElement(node: HTMLElementNode): string | null {
-  if (!node.open_tag || !isHTMLOpenTagNode(node.open_tag)) return null
+function labelForHTMLElement(node: HTMLElementNode, options: NodeLabelOptions): string | null {
+  const selector = elementSelector(node, options)
 
-  const id = findAttributeValue(node.open_tag, "id")
-  if (id) return `<!-- #${id} -->`
+  if (!selector) return null
 
-  const className = findAttributeValue(node.open_tag, "class")
-
-  if (className) {
-    return `<!-- .${className.split(/\s+/).join(".")} -->`
-  }
-
-  return null
-}
-
-function findAttributeValue(openTag: HTMLOpenTagNode, attributeName: string): string | null {
-  for (const child of openTag.children) {
-    if (!isHTMLAttributeNode(child)) continue
-    if (!child.name || !child.value) continue
-
-    const name = child.name.children.filter(isLiteralNode).map(node => node.content).join("")
-    if (name !== attributeName) continue
-
-    return child.value.children.filter(isLiteralNode).map(node => node.content).join("")
-  }
-
-  return null
+  return `<!-- ${selector} -->`
 }

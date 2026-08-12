@@ -302,7 +302,8 @@ export class Server {
       if (!settings.inlayHints?.enabled) return []
 
       return this.session.inlayHintProvider.getInlayHints(document, {
-        minimumLines: settings.inlayHints.minimumLines
+        minimumLines: settings.inlayHints.minimumLines,
+        maximumClasses: settings.inlayHints.maximumClasses
       })
     })
 

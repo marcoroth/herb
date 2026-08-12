@@ -113,9 +113,17 @@
           "scope": "resource",
           "type": "number",
           "minimum": 1,
-          "default": 2,
+          "default": 10,
           "description": "How many lines below its opening tag a closing tag has to be before it gets a hint. The default of 2 leaves blocks that fit within two lines unannotated.",
           "markdownDescription": "How many lines below its opening tag a closing tag has to be before it gets a hint. The default of `2` leaves blocks that fit within two lines unannotated, since you can still see what they opened."
+        },
+        "languageServerHerb.inlayHints.maximumClasses": {
+          "scope": "resource",
+          "type": "number",
+          "minimum": 0,
+          "default": 2,
+          "description": "How many of an element's classes to include in its hint. Past a couple the list is the element's styling rather than its name, so the rest are left off. Set to 0 to name elements by id alone.",
+          "markdownDescription": "How many of an element's classes to include in its hint. Past a couple the list is the element's styling rather than its name, so the rest are left off, which keeps utility-class markup readable. Set to `0` to name elements by `id` alone."
         },
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -345,6 +353,8 @@
   "devDependencies": {
     "@herb-tools/config": "0.10.3",
     "@herb-tools/formatter": "0.10.3",
+    "@herb-tools/language-server": "0.10.3",
+    "@herb-tools/language-service": "0.10.3",
     "@herb-tools/linter": "0.10.3",
     "@herb-tools/node-wasm": "0.10.3",
     "@types/mocha": "^10.0.10",

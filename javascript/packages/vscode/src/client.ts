@@ -3,6 +3,9 @@ import * as path from "path"
 import { workspace, ExtensionContext, Disposable, window } from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, WorkspaceEdit } from "vscode-languageclient/node"
 import { Config } from "@herb-tools/config"
+import { defaultPersonalSettings } from "@herb-tools/language-server"
+
+const inlayHintDefaults = defaultPersonalSettings.inlayHints!
 
 export class Client {
   private client!: LanguageClient
@@ -97,8 +100,9 @@ export class Client {
             rewriter: projectConfig.formatter?.rewriter,
           },
           inlayHints: {
-            enabled: vscodeConfig.get('inlayHints.enabled', true),
-            minimumLines: vscodeConfig.get('inlayHints.minimumLines', 2),
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
@@ -118,8 +122,9 @@ export class Client {
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
           },
           inlayHints: {
-            enabled: vscodeConfig.get('inlayHints.enabled', true),
-            minimumLines: vscodeConfig.get('inlayHints.minimumLines', 2),
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
@@ -130,7 +135,7 @@ export class Client {
       settings = {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
-        inlayHints: { enabled: true, minimumLines: 2 },
+        inlayHints: { ...inlayHintDefaults },
         trace: { server: 'verbose' },
       }
     }
@@ -210,8 +215,9 @@ export class Client {
             rewriter: projectConfig.formatter?.rewriter,
           },
           inlayHints: {
-            enabled: vscodeConfig.get('inlayHints.enabled', true),
-            minimumLines: vscodeConfig.get('inlayHints.minimumLines', 2),
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
@@ -232,8 +238,9 @@ export class Client {
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
           },
           inlayHints: {
-            enabled: vscodeConfig.get('inlayHints.enabled', true),
-            minimumLines: vscodeConfig.get('inlayHints.minimumLines', 2),
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
@@ -245,7 +252,7 @@ export class Client {
       return {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
-        inlayHints: { enabled: true, minimumLines: 2 },
+        inlayHints: { ...inlayHintDefaults },
         trace: { server: 'verbose' },
         experimental: this.experimentalCapabilities,
       }

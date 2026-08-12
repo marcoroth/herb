@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll } from "vitest"
 import { InlayHintKind } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { InlayHintProvider } from "../src/inlay_hint_provider"
+import { InlayHintProvider, defaultInlayHintOptions } from "../src/inlay_hint_provider"
 
 import type { InlayHintOptions } from "../src/inlay_hint_provider"
 import { ParserService } from "../src/parser_service"
@@ -25,7 +25,7 @@ describe("InlayHintProvider", () => {
   }
 
   function getHints(content: string, options?: InlayHintOptions) {
-    return service.getInlayHints(createDocument(content), options)
+    return service.getInlayHints(createDocument(content), { minimumLines: 2, ...options })
   }
 
   describe("ERB if/end", () => {
@@ -229,19 +229,78 @@ describe("InlayHintProvider", () => {
 
     it("joins multiple classes with dots", () => {
       const hints = getHints(dedent`
-        <div class="flex items-center p-4">
+        <div class="card featured">
           <p>Line 1</p>
           <p>Line 2</p>
         </div>
       `)
 
       expect(hints).toHaveLength(1)
-      expect(hints[0].label).toBe(" <!-- .flex.items-center.p-4 -->")
+      expect(hints[0].label).toBe(" <!-- .card.featured -->")
+    })
+
+    it("keeps only the leading classes rather than naming a utility soup", () => {
+      const hints = getHints(dedent`
+        <div class="flex items-center justify-between rounded-lg p-4">
+          <p>Line 1</p>
+          <p>Line 2</p>
+        </div>
+      `)
+
+      expect(hints).toHaveLength(1)
+      expect(hints[0].label).toBe(" <!-- .flex.items-center -->")
+    })
+
+    it("keeps the id alongside the leading classes", () => {
+      const hints = getHints(dedent`
+        <div id="main" class="flex items-center p-4">
+          <p>Line 1</p>
+          <p>Line 2</p>
+        </div>
+      `)
+
+      expect(hints).toHaveLength(1)
+      expect(hints[0].label).toBe(" <!-- #main.flex.items-center -->")
+    })
+
+    it("honours a lowered maximumClasses", () => {
+      const hints = getHints(dedent`
+        <div class="card featured">
+          <p>Line 1</p>
+          <p>Line 2</p>
+        </div>
+      `, { maximumClasses: 1 })
+
+      expect(hints).toHaveLength(1)
+      expect(hints[0].label).toBe(" <!-- .card -->")
+    })
+
+    it("names by id alone when maximumClasses is zero", () => {
+      const hints = getHints(dedent`
+        <div id="main" class="card featured">
+          <p>Line 1</p>
+          <p>Line 2</p>
+        </div>
+      `, { maximumClasses: 0 })
+
+      expect(hints).toHaveLength(1)
+      expect(hints[0].label).toBe(" <!-- #main -->")
+    })
+
+    it("ignores a class built at runtime", () => {
+      const hints = getHints(dedent`
+        <div class="card <%= extra %>">
+          <p>Line 1</p>
+          <p>Line 2</p>
+        </div>
+      `)
+
+      expect(hints).toHaveLength(0)
     })
   })
 
-  describe("HTML elements - id takes precedence over class", () => {
-    it("shows id hint when both id and class are present", () => {
+  describe("HTML elements with both id and class", () => {
+    it("names the element the way the outline does", () => {
       const hints = getHints(dedent`
         <div id="main" class="container">
           <p>Line 1</p>
@@ -250,7 +309,7 @@ describe("InlayHintProvider", () => {
       `)
 
       expect(hints).toHaveLength(1)
-      expect(hints[0].label).toBe(" <!-- #main -->")
+      expect(hints[0].label).toBe(" <!-- #main.container -->")
     })
   })
 
@@ -312,7 +371,15 @@ describe("InlayHintProvider", () => {
       </div>
     `
 
-    it("defaults to 2", () => {
+    it("defaults to a threshold that leaves short blocks alone", () => {
+      expect(defaultInlayHintOptions.minimumLines).toBe(10)
+
+      const hints = service.getInlayHints(createDocument(twoLineBlock))
+
+      expect(hints).toHaveLength(0)
+    })
+
+    it("annotates the block once it reaches the threshold", () => {
       const hints = getHints(twoLineBlock)
 
       expect(hints).toHaveLength(1)

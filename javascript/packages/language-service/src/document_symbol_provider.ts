@@ -3,26 +3,38 @@ import { ParserService } from "./parser_service"
 import { nodeToRange, lspRangeFromLocation, erbTagToRange } from "./range_utils"
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types"
 
-import { getAttributes, getAttributeName, getStaticAttributeValue, getTagName, getTokenList } from "@herb-tools/core"
+import { getAttributeName } from "@herb-tools/core"
+import { elementName, erbLabel } from "./node_labels"
+
+import type { NodeLabelOptions } from "./node_labels"
 
 import type { Range } from "vscode-languageserver-types"
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { DocumentNode, ERBContentNode, ERBNode, ERBRenderNode, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
 
 const PARSER_OPTIONS = { render_nodes: true, action_view_helpers: true } as const
-const UNNAMED_ELEMENT = "element"
 const QUOTE = /^["']|["']$/g
-const SEMANTIC_CLASS_LIMIT = 2
-const ERB_LABEL_LIMIT = 32
+
+const LABEL_OPTIONS: NodeLabelOptions = {
+  maximumClasses: 1,
+  excessClasses: "drop"
+}
 
 class DocumentSymbolCollector extends Visitor {
   readonly symbols: DocumentSymbol[] = []
 
   private stack: DocumentSymbol[][] = [this.symbols]
   private attributes = 0
+  private options: NodeLabelOptions
+
+  constructor(options: NodeLabelOptions = {}) {
+    super()
+
+    this.options = options
+  }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    this.nest(this.symbolFor(this.elementName(node), SymbolKind.Field, nodeToRange(node), this.tagNameRange(node)), node)
+    this.nest(this.symbolFor(elementName(node, this.options), SymbolKind.Field, nodeToRange(node), this.tagNameRange(node)), node)
   }
 
   visitERBRenderNode(node: ERBRenderNode): void {
@@ -105,9 +117,7 @@ class DocumentSymbolCollector extends Visitor {
   }
 
   private erbLabel(node: ERBNode): string {
-    const content = (node.content?.value ?? "").trim()
-
-    return content.length > ERB_LABEL_LIMIT ? `${content.slice(0, ERB_LABEL_LIMIT)}…` : content
+    return erbLabel(node.content?.value, this.options)
   }
 
   private rangeOf(node: Node | null): Range | null {
@@ -118,23 +128,6 @@ class DocumentSymbolCollector extends Visitor {
     const location = node.open_tag?.tag_name?.location
 
     return location ? lspRangeFromLocation(location) : null
-  }
-
-  private elementName(node: HTMLElementNode): string {
-    const tag = getTagName(node) || UNNAMED_ELEMENT
-    const id = getStaticAttributeValue(node, "id")
-    const classes = this.classNames(node)
-    return `${tag}${id ? `#${id}` : ""}${classes.map(name => `.${name}`).join("")}`
-  }
-
-  private classNames(node: HTMLElementNode): string[] {
-    const attribute = getAttributes(node).find(candidate => getAttributeName(candidate) === "class")
-
-    if (!attribute) return []
-
-    const classes = getTokenList(getStaticAttributeValue(attribute))
-
-    return classes.length > SEMANTIC_CLASS_LIMIT ? [] : classes
   }
 
   private renderName(node: ERBRenderNode): string {
@@ -153,9 +146,9 @@ export class DocumentSymbolProvider {
     this.parserService = parserService
   }
 
-  getDocumentSymbols(document: TextDocument): DocumentSymbol[] {
+  getDocumentSymbols(document: TextDocument, options: NodeLabelOptions = {}): DocumentSymbol[] {
     const result = this.parserService.parseContent(document.getText(), PARSER_OPTIONS)
-    const collector = new DocumentSymbolCollector()
+    const collector = new DocumentSymbolCollector({ ...LABEL_OPTIONS, ...options })
 
     collector.visit(result.value as DocumentNode)
 

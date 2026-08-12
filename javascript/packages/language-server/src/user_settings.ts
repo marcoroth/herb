@@ -22,6 +22,30 @@ export interface PersonalHerbSettings {
   inlayHints?: {
     enabled?: boolean
     minimumLines?: number
+    maximumClasses?: number
+  }
+}
+
+/**
+ * What every one of these settings falls back to. Editors that surface them as
+ * their own preferences read from here rather than restating the values, so
+ * there is one place to change a default.
+ */
+export const defaultPersonalSettings: PersonalHerbSettings = {
+  linter: {
+    enabled: true,
+    fixOnSave: true
+  },
+  formatter: {
+    enabled: false,
+    indentWidth: defaultFormatOptions.indentWidth,
+    indentStyle: defaultFormatOptions.indentStyle,
+    maxLineLength: defaultFormatOptions.maxLineLength
+  },
+  inlayHints: {
+    enabled: true,
+    minimumLines: defaultInlayHintOptions.minimumLines,
+    maximumClasses: defaultInlayHintOptions.maximumClasses
   }
 }
 
@@ -31,22 +55,7 @@ export interface PersonalHerbSettings {
  * are owned by `Project` and deliberately not merged in here.
  */
 export class UserSettings {
-  readonly defaults: PersonalHerbSettings = {
-    linter: {
-      enabled: true,
-      fixOnSave: true
-    },
-    formatter: {
-      enabled: false,
-      indentWidth: defaultFormatOptions.indentWidth,
-      indentStyle: defaultFormatOptions.indentStyle,
-      maxLineLength: defaultFormatOptions.maxLineLength
-    },
-    inlayHints: {
-      enabled: true,
-      minimumLines: defaultInlayHintOptions.minimumLines
-    }
-  }
+  readonly defaults: PersonalHerbSettings = defaultPersonalSettings
 
   global: PersonalHerbSettings = this.defaults
 
@@ -110,7 +119,8 @@ export class UserSettings {
       },
       inlayHints: {
         enabled: resolved.inlayHints?.enabled ?? this.defaults.inlayHints!.enabled!,
-        minimumLines: resolved.inlayHints?.minimumLines ?? this.defaults.inlayHints!.minimumLines!
+        minimumLines: resolved.inlayHints?.minimumLines ?? this.defaults.inlayHints!.minimumLines!,
+        maximumClasses: resolved.inlayHints?.maximumClasses ?? this.defaults.inlayHints!.maximumClasses!
       }
     }
   }

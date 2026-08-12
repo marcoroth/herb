@@ -145,16 +145,17 @@ formatter:
 
 Some preferences are yours alone rather than the team's, so they live with your editor instead of in `.herb.yml`. The server reads them from the `languageServerHerb` section:
 
-| Setting                   | Default   | Description                                                       |
-|---------------------------|-----------|-------------------------------------------------------------------|
-| `linter.enabled`          | `true`    | Enable/disable the linter                                         |
-| `linter.fixOnSave`        | `true`    | Automatically apply autocorrectable fixes on save                 |
-| `formatter.enabled`       | `false`   | Enable/disable the formatter (experimental)                       |
-| `formatter.indentWidth`   | `2`       | Number of spaces per indentation level                            |
-| `formatter.indentStyle`   | `space`   | Character used for indentation (`space` or `tab`)                 |
-| `formatter.maxLineLength` | `80`      | Maximum line length before wrapping                               |
-| `inlayHints.enabled`      | `true`    | Annotate closing tags with what they close                        |
-| `inlayHints.minimumLines` | `2`       | How far below its opening tag a closing tag must be to get a hint |
+| Setting                     | Default   | Description                                                       |
+|-----------------------------|-----------|-------------------------------------------------------------------|
+| `linter.enabled`            | `true`    | Enable/disable the linter                                         |
+| `linter.fixOnSave`          | `true`    | Automatically apply autocorrectable fixes on save                 |
+| `formatter.enabled`         | `false`   | Enable/disable the formatter (experimental)                       |
+| `formatter.indentWidth`     | `2`       | Number of spaces per indentation level                            |
+| `formatter.indentStyle`     | `space`   | Character used for indentation (`space` or `tab`)                 |
+| `formatter.maxLineLength`   | `80`      | Maximum line length before wrapping                               |
+| `inlayHints.enabled`        | `true`    | Annotate closing tags with what they close                        |
+| `inlayHints.minimumLines`   | `10`      | How far below its opening tag a closing tag must be to get a hint |
+| `inlayHints.maximumClasses` | `2`       | How many of an element's classes to include in its hint           |
 
 How you set them depends on the editor. VS Code and Cursor contribute them as `languageServerHerb.*` preferences, so you set them in your `settings.json` or through the settings UI:
 

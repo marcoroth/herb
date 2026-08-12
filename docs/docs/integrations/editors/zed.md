@@ -34,7 +34,8 @@ Zed keeps language server settings under `lsp.<server>.initialization_options`, 
       "initialization_options": {
         "inlayHints": {
           "enabled": true,
-          "minimumLines": 2
+          "minimumLines": 10,
+          "maximumClasses": 2
         },
         "linter": {
           "enabled": true,

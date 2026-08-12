@@ -118,13 +118,15 @@ Both only work for partials named with a literal string, since anything assemble
 
 #### Document Symbols
 
-The outline view and breadcrumbs show the structure of a template. Elements are listed the way you would select them, `div#main.card`, attributes nest underneath, ERB in an attribute value shows its expression, and `render` calls appear by the partial they pull in.
+The outline view and breadcrumbs show the structure of a template. Elements are listed the way you would select them, `div#main.card`, attributes nest underneath, ERB in an attribute value shows its expression, and `render` calls appear by the partial they pull in. A class only qualifies the name when it is the element's whole class attribute, so styling never crowds out the tag.
 
 #### Inlay Hints
 
-Closing tags of longer blocks are annotated with what they close. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag shows the element's `id` or `class`, like `<!-- .card.card-wide -->`.
+Closing tags of longer blocks are annotated with what they close. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag names the element the way you would select it, like `<!-- #main.card -->`, matching what the outline view shows.
 
-A tag close enough to read its opening line gets no hint. `languageServerHerb.inlayHints.minimumLines` sets how far apart the two have to be, and `languageServerHerb.inlayHints.enabled` turns the feature off entirely. VS Code's own `editor.inlayHints.enabled` still applies on top, but it hides hints from every extension at once.
+Only the first couple of classes make it into the name, since past that the list is the element's styling rather than its identity. `languageServerHerb.inlayHints.maximumClasses` changes how many, and `0` names elements by `id` alone.
+
+A tag close enough to read its opening line gets no hint. `languageServerHerb.inlayHints.minimumLines` sets how far apart the two have to be, defaulting to 10 so that only blocks you cannot take in at a glance are annotated, and `languageServerHerb.inlayHints.enabled` turns the feature off entirely. VS Code's own `editor.inlayHints.enabled` still applies on top, but it hides hints from every extension at once.
 
 #### Editing
 
@@ -140,17 +142,18 @@ These are personal defaults. They apply when your project has no `.herb.yml`, an
 
 If a `.herb.yml` exists in the project root, its configuration always takes precedence over these settings. Anything the team should agree on, like whether the formatter runs and how it indents, belongs in [`.herb.yml`](#project-configuration).
 
-| Setting                                      | Default   | Description                                                      |
-|----------------------------------------------|-----------|------------------------------------------------------------------|
-| `languageServerHerb.linter.enabled`          | `true`    | Enable/disable the linter                                        |
-| `languageServerHerb.linter.fixOnSave`        | `true`    | Automatically apply autocorrectable fixes on save                |
-| `languageServerHerb.formatter.enabled`       | `false`   | Enable/disable the formatter (experimental)                      |
-| `languageServerHerb.formatter.indentWidth`   | `2`       | Number of spaces per indentation level                           |
-| `languageServerHerb.formatter.indentStyle`   | `space`   | Character used for indentation (`space` or `tab`)                |
-| `languageServerHerb.formatter.maxLineLength` | `80`      | Maximum line length before wrapping                              |
-| `languageServerHerb.inlayHints.enabled`      | `true`    | Annotate closing tags with what they close                       |
-| `languageServerHerb.inlayHints.minimumLines` | `2`       | How far below its opening tag a closing tag must be to get a hint |
-| `languageServerHerb.trace.server`            | `verbose` | Trace the communication with the language server (for debugging) |
+| Setting                                        | Default   | Description                                                       |
+|------------------------------------------------|-----------|-------------------------------------------------------------------|
+| `languageServerHerb.linter.enabled`            | `true`    | Enable/disable the linter                                         |
+| `languageServerHerb.linter.fixOnSave`          | `true`    | Automatically apply autocorrectable fixes on save                 |
+| `languageServerHerb.formatter.enabled`         | `false`   | Enable/disable the formatter (experimental)                       |
+| `languageServerHerb.formatter.indentWidth`     | `2`       | Number of spaces per indentation level                            |
+| `languageServerHerb.formatter.indentStyle`     | `space`   | Character used for indentation (`space` or `tab`)                 |
+| `languageServerHerb.formatter.maxLineLength`   | `80`      | Maximum line length before wrapping                               |
+| `languageServerHerb.inlayHints.enabled`        | `true`    | Annotate closing tags with what they close                        |
+| `languageServerHerb.inlayHints.minimumLines`   | `10`      | How far below its opening tag a closing tag must be to get a hint |
+| `languageServerHerb.inlayHints.maximumClasses` | `2`       | How many of an element's classes to include in its hint           |
+| `languageServerHerb.trace.server`              | `verbose` | Trace the communication with the language server (for debugging)  |
 
 `languageServerHerb.trace.server` is the exception: it is editor-only and is never read from `.herb.yml`.
 
