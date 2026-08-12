@@ -5,20 +5,9 @@ import { ERBNoUnusedExpressionsRule } from "../../src/rules/erb-no-unused-expres
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, expectWarning, assertOffenses } = createLinterTest(ERBNoUnusedExpressionsRule)
-const customOptions = createLinterTest(ERBNoUnusedExpressionsRule, {
-  allowedMethods: ["breadcrumb"]
-})
 
 describe("ERBNoUnusedExpressionsRule", () => {
   describe("valid cases", () => {
-    test("passes for configured side-effect methods", () => {
-      customOptions.expectNoOffenses('<% breadcrumb :projects %>')
-    })
-
-    test("keeps the built-in side-effect methods when configured", () => {
-      customOptions.expectNoOffenses('<% content_for :title, "Projects" %>')
-    })
-
     test("passes for output tags with method calls", () => {
       expectNoOffenses(dedent`
         <%= @user.name %>
@@ -308,6 +297,20 @@ describe("ERBNoUnusedExpressionsRule", () => {
         <% sleep 1 %>
         <% Kernel.sleep(0.5) %>
       `)
+    })
+  })
+
+  describe("with configured side-effects", () => {
+    const customOptions = createLinterTest(ERBNoUnusedExpressionsRule, {
+      allowedMethods: ["breadcrumb"]
+    })
+
+    test("passes for configured side-effect methods", () => {
+      customOptions.expectNoOffenses('<% breadcrumb :projects %>')
+    })
+
+    test("keeps the built-in side-effect methods when configured", () => {
+      customOptions.expectNoOffenses('<% content_for :title, "Projects" %>')
     })
   })
 

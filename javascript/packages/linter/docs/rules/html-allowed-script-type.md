@@ -72,23 +72,6 @@ An exception is made for `application/ld+json`, which the HTML specification tre
 </script>
 ```
 
-## Configuration
-
-The rule accepts these options:
-
-- `allowedTypes` (`string[]`): accepted static `type` values. Defaults to `text/javascript`, `module`, `importmap`, `speculationrules`, and `application/ld+json`.
-- `allowBlank` (`boolean`): whether a script may omit the `type` attribute. Defaults to `true`.
-
-```yaml
-linter:
-  rules:
-    html-allowed-script-type:
-      allowedTypes:
-        - text/javascript
-        - application/json
-      allowBlank: false
-```
-
 ## References
 
 - [Inspiration: ERB Lint `AllowedScriptType` rule](https://github.com/Shopify/erb_lint/tree/main?tab=readme-ov-file#allowedscripttype)

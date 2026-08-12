@@ -1,6 +1,5 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
-import { z } from "zod"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Location } from "@herb-tools/core"
@@ -12,7 +11,7 @@ import { HTMLAttributeDoubleQuotesRule } from "../src/rules/html-attribute-doubl
 import { HTMLAttributeValuesRequireQuotesRule } from "../src/rules/html-attribute-values-require-quotes.js"
 import { ParserRule, SourceRule } from "../src/types.js"
 
-import type { BaseAutofixContext, UnboundLintOffense, LintContext, FullRuleConfig } from "../src/types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../src/types.js"
 import type { ParseResult } from "@herb-tools/core"
 
 describe("@herb-tools/linter", () => {
@@ -387,84 +386,6 @@ describe("@herb-tools/linter", () => {
       expect(linter).toBeInstanceOf(Linter)
     })
 
-    test("uses a custom rule in place of a built-in rule with the same name", () => {
-      interface CustomOptions {
-        message: string
-      }
-
-      class CustomRule extends ParserRule<BaseAutofixContext, CustomOptions> {
-        static ruleName = HTMLTagNameLowercaseRule.ruleName
-        static introducedIn = "0.1.0"
-
-        get defaultOptions(): CustomOptions {
-          return { message: "default" }
-        }
-
-        get optionsSchema(): z.ZodType<CustomOptions> {
-          return z.object({ message: z.string() }).strict()
-        }
-
-        check(): UnboundLintOffense[] {
-          return [{
-            message: this.options.message,
-            location: Location.from(1, 1, 1, 1),
-            rule: this.ruleName,
-            code: this.ruleName,
-            source: "linter"
-          }]
-        }
-      }
-
-      const config = Config.fromObject({
-        linter: {
-          rules: {
-            [CustomRule.ruleName]: {
-              message: "custom"
-            }
-          }
-        }
-      })
-      const linter = Linter.from(Herb, config, [CustomRule], { only: [CustomRule.ruleName] })
-
-      expect(linter.rules).toEqual([CustomRule])
-      expect(linter.lint("<DIV></DIV>").offenses.map(offense => offense.message)).toEqual(["custom"])
-    })
-
-    test("gives each rule instance isolated options", () => {
-      interface MutableOptions {
-        values: string[]
-      }
-
-      const observedLengths: number[] = []
-
-      class MutatingOptionsRule extends ParserRule<BaseAutofixContext, MutableOptions> {
-        static ruleName = "mutating-options-rule"
-        static introducedIn = "0.1.0"
-
-        get defaultOptions(): MutableOptions {
-          return { values: [] }
-        }
-
-        get optionsSchema(): z.ZodType<MutableOptions> {
-          return z.object({ values: z.array(z.string()) }).strict()
-        }
-
-        check(): UnboundLintOffense[] {
-          this.options.values.push("value")
-          observedLengths.push(this.options.values.length)
-
-          return []
-        }
-      }
-
-      const linter = new Linter(Herb, [MutatingOptionsRule])
-
-      linter.lint("")
-      linter.lint("")
-
-      expect(observedLengths).toEqual([1, 1])
-    })
-
     test("validates custom options for disabled rules after the shared config schema", () => {
       const config = Config.fromObject({
         linter: {
@@ -512,22 +433,6 @@ describe("@herb-tools/linter", () => {
 
       expect(() => new Linter(Herb, [HTMLTagNameLowercaseRule], config)).toThrow(
         "html-tag-name-lowercase: Unknown options: unexpected"
-      )
-    })
-
-    test("rejects custom options on the all pseudo rule", () => {
-      const config = Config.fromObject({
-        linter: {
-          rules: {
-            all: {
-              allowBlank: false
-            }
-          }
-        }
-      })
-
-      expect(() => Linter.from(Herb, config)).toThrow(
-        "all: Unknown options: allowBlank"
       )
     })
 

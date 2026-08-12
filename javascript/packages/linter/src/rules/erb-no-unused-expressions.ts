@@ -35,11 +35,11 @@ class UnusedExpressionCollector extends PrismVisitor {
   private readonly blockLocalNames: Set<string>
   private readonly allowedMethods: Set<string>
 
-  constructor(blockLocalNames: Set<string> = new Set(), allowedMethods: Set<string> = SIDE_EFFECT_METHODS) {
+  constructor(blockLocalNames: Set<string> = new Set(), allowedMethods: string[] = []) {
     super()
 
     this.blockLocalNames = blockLocalNames
-    this.allowedMethods = allowedMethods
+    this.allowedMethods = new Set([...SIDE_EFFECT_METHODS, ...allowedMethods])
   }
 
   override visit(node: PrismNode): void {
@@ -94,12 +94,12 @@ class UnusedExpressionCollector extends PrismVisitor {
 
 class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
   private exemptLocalNames: Set<string> = new Set()
-  private readonly allowedMethods: Set<string>
+  private readonly options: ERBNoUnusedExpressionsOptions
 
   constructor(ruleName: string, context: Partial<LintContext> | undefined, options: ERBNoUnusedExpressionsOptions) {
     super(ruleName, context)
 
-    this.allowedMethods = new Set([...SIDE_EFFECT_METHODS, ...options.allowedMethods])
+    this.options = options
   }
 
   visitERBRenderNode(node: ERBRenderNode): void {
@@ -148,7 +148,7 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
     const source = node.source
     if (!source) return
 
-    const collector = new UnusedExpressionCollector(this.exemptLocalNames, this.allowedMethods)
+    const collector = new UnusedExpressionCollector(this.exemptLocalNames, this.options.allowedMethods)
     collector.visit(prismNode)
 
     const tagOpening = node.tag_opening?.value ?? "<%"

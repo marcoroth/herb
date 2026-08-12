@@ -14,7 +14,7 @@ import { ZodError, z } from "zod"
 import { BASE_RULE_CONFIG_KEYS, HerbConfigSchema } from "./config-schema.js"
 import { omit } from "./utils/omit.js"
 
-import type { BaseRuleConfigSchema, FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+import type { RuleConfigBaseSchema, FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -63,7 +63,7 @@ export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): Dia
  */
 export const ALL_RULES_KEY = "all"
 
-export type BaseRuleConfig = z.infer<typeof BaseRuleConfigSchema>
+export type BaseRuleConfig = z.infer<typeof RuleConfigBaseSchema>
 
 export type RuleConfig = BaseRuleConfig & Record<string, unknown>
 

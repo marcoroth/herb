@@ -81,17 +81,3 @@ ViewComponent slot setters are intentional side effects and are not flagged, inc
 ```erb
 <% User.count %>
 ```
-
-## Configuration
-
-The rule accepts these options:
-
-- `allowedMethods` (`string[]`): additional receiverless methods whose return values may be intentionally ignored. Defaults to `[]`.
-
-```yaml
-linter:
-  rules:
-    erb-no-unused-expressions:
-      allowedMethods:
-        - breadcrumb
-```

@@ -3,12 +3,6 @@ import { HTMLAllowedScriptTypeRule } from "../../src/rules/html-allowed-script-t
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAllowedScriptTypeRule)
-const configuredAllowedTypes = createLinterTest(HTMLAllowedScriptTypeRule, {
-  allowedTypes: ["application/json"]
-})
-const blankTypesDisallowed = createLinterTest(HTMLAllowedScriptTypeRule, {
-  allowBlank: false
-})
 
 describe("html-allowed-script-type", () => {
   test("passes when type attribute is blank", () => {
@@ -62,6 +56,10 @@ describe("html-allowed-script-type", () => {
   })
 
   describe("with configured allowed types", () => {
+    const configuredAllowedTypes = createLinterTest(HTMLAllowedScriptTypeRule, {
+      allowedTypes: ["application/json"]
+    })
+
     test("uses the configured allowed types", () => {
       configuredAllowedTypes.expectNoOffenses('<script type="application/json"></script>')
     })
@@ -73,6 +71,10 @@ describe("html-allowed-script-type", () => {
   })
 
   describe("with blank types disallowed", () => {
+    const blankTypesDisallowed = createLinterTest(HTMLAllowedScriptTypeRule, {
+      allowBlank: false
+    })
+
     test("can require an explicit type", () => {
       blankTypesDisallowed.expectError("`type` attribute required for `<script>` tag.")
       blankTypesDisallowed.assertOffenses("<script></script>")

@@ -14,7 +14,7 @@ export const FilesConfigSchema = z.object({
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
 }).strict().optional()
 
-export const BaseRuleConfigSchema = z.object({
+export const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
   autoCorrect: z.boolean().optional().describe("Whether autocorrection is enabled for the rule"),
@@ -23,10 +23,10 @@ export const BaseRuleConfigSchema = z.object({
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
 })
 
-export const BASE_RULE_CONFIG_KEYS = BaseRuleConfigSchema.keyof().options
+export const BASE_RULE_CONFIG_KEYS = RuleConfigBaseSchema.keyof().options
 
 // NOTE: Custom options are verified in a second step, and produce `RuleOptionsValidationError` when invalid
-const RuleConfigWithOptionsSchema = BaseRuleConfigSchema.catchall(z.unknown())
+const RuleConfigWithOptionsSchema = RuleConfigBaseSchema.catchall(z.unknown())
 
 export const RuleConfigSchema = RuleConfigWithOptionsSchema.optional()
 

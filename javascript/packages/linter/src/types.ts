@@ -25,6 +25,34 @@ export type FullRuleConfig = Required<Pick<BaseRuleConfig, 'enabled' | 'severity
 
 export type RuleOptions = Record<string, unknown>
 
+abstract class BaseRule<TOptions extends object = RuleOptions> {
+  private configuredOptions: TOptions | undefined
+
+  get defaultOptions(): TOptions {
+    return {} as TOptions
+  }
+
+  get optionsSchema(): z.ZodType<TOptions> {
+    return z.object({}).strict() as z.ZodType<TOptions>
+  }
+
+  get options(): TOptions {
+    this.configuredOptions ??= this.validateOptions()
+
+    return this.configuredOptions
+  }
+
+  validateOptions(options: Partial<TOptions> = {}): TOptions {
+    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
+  }
+
+  configure(options: Partial<TOptions> = {}): this {
+    this.configuredOptions = this.validateOptions(options)
+
+    return this
+  }
+}
+
 /**
  * Automatically inferred union type of all available linter rule names.
  * This type extracts the 'ruleName' property from each rule class.
@@ -106,7 +134,7 @@ export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
 export abstract class ParserRule<
   TAutofixContext extends BaseAutofixContext = BaseAutofixContext,
   TOptions extends object = RuleOptions
-> {
+> extends BaseRule<TOptions> {
   static type = "parser" as const
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
@@ -125,32 +153,6 @@ export abstract class ParserRule<
   static consumesParserErrors = false
   /** Indicates that the rule reports about the project rather than the file, so a CLI run collapses its offenses down to the first one. Defaults to false. */
   static reportsOncePerRun = false
-
-  private configuredOptions: TOptions | undefined
-
-  get defaultOptions(): TOptions {
-    return {} as TOptions
-  }
-
-  get optionsSchema(): z.ZodType<TOptions> {
-    return z.object({}).strict() as z.ZodType<TOptions>
-  }
-
-  get options(): TOptions {
-    this.configuredOptions ??= this.validateOptions()
-
-    return this.configuredOptions
-  }
-
-  validateOptions(options: Partial<TOptions> = {}): TOptions {
-    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
-  }
-
-  configure(options: Partial<TOptions> = {}): this {
-    this.configuredOptions = this.validateOptions(options)
-
-    return this
-  }
 
   get ruleName(): string {
     return (this.constructor as typeof ParserRule).ruleName
@@ -216,7 +218,7 @@ export abstract class ParserRule<
 export abstract class LexerRule<
   TAutofixContext extends BaseAutofixContext = BaseAutofixContext,
   TOptions extends object = RuleOptions
-> {
+> extends BaseRule<TOptions> {
   static type = "lexer" as const
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
@@ -230,32 +232,6 @@ export abstract class LexerRule<
   static unsafeAutocorrectable = false
   /** Indicates that `autofix` can only fix offenses that carry an `autofixContext`. Offenses without one are reported as not correctable. Defaults to false. */
   static autofixRequiresContext = false
-
-  private configuredOptions: TOptions | undefined
-
-  get defaultOptions(): TOptions {
-    return {} as TOptions
-  }
-
-  get optionsSchema(): z.ZodType<TOptions> {
-    return z.object({}).strict() as z.ZodType<TOptions>
-  }
-
-  get options(): TOptions {
-    this.configuredOptions ??= this.validateOptions()
-
-    return this.configuredOptions
-  }
-
-  validateOptions(options: Partial<TOptions> = {}): TOptions {
-    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
-  }
-
-  configure(options: Partial<TOptions> = {}): this {
-    this.configuredOptions = this.validateOptions(options)
-
-    return this
-  }
 
   get ruleName(): string {
     return (this.constructor as typeof LexerRule).ruleName
@@ -349,7 +325,7 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
 export abstract class SourceRule<
   TAutofixContext extends BaseAutofixContext = BaseAutofixContext,
   TOptions extends object = RuleOptions
-> {
+> extends BaseRule<TOptions> {
   static type = "source" as const
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
@@ -363,32 +339,6 @@ export abstract class SourceRule<
   static unsafeAutocorrectable = false
   /** Indicates that `autofix` can only fix offenses that carry an `autofixContext`. Offenses without one are reported as not correctable. Defaults to false. */
   static autofixRequiresContext = false
-
-  private configuredOptions: TOptions | undefined
-
-  get defaultOptions(): TOptions {
-    return {} as TOptions
-  }
-
-  get optionsSchema(): z.ZodType<TOptions> {
-    return z.object({}).strict() as z.ZodType<TOptions>
-  }
-
-  get options(): TOptions {
-    this.configuredOptions ??= this.validateOptions()
-
-    return this.configuredOptions
-  }
-
-  validateOptions(options: Partial<TOptions> = {}): TOptions {
-    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
-  }
-
-  configure(options: Partial<TOptions> = {}): this {
-    this.configuredOptions = this.validateOptions(options)
-
-    return this
-  }
 
   get ruleName(): string {
     return (this.constructor as typeof SourceRule).ruleName
