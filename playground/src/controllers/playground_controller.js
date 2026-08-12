@@ -22,6 +22,8 @@ window.Herb = Herb
 
 const URL_UPDATE_THROTTLE = 100
 const ANALYZE_DEBOUNCE = 250
+const FAST_ANALYZE_DEBOUNCE = 50
+const FAST_ANALYZE_MAX_LENGTH = 600
 const DEFAULT_FRAMEWORK = "actionview"
 
 const exampleFile = dedent`
@@ -1459,7 +1461,13 @@ export default class extends Controller {
     this.analyzeTimeout = setTimeout(() => {
       this.analyzeTimeout = null
       this.analyze()
-    }, ANALYZE_DEBOUNCE)
+    }, this.analyzeDebounce)
+  }
+
+  get analyzeDebounce() {
+    const length = this.editor ? this.editor.getValue().length : this.inputTarget.value.length
+
+    return length <= FAST_ANALYZE_MAX_LENGTH ? FAST_ANALYZE_DEBOUNCE : ANALYZE_DEBOUNCE
   }
 
   async formatEditor(event) {
