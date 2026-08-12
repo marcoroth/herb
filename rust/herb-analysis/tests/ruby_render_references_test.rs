@@ -148,3 +148,14 @@ fn ignores_an_assignment_to_an_unrelated_name() {
 
   assert!(!references.covers("posts/card"));
 }
+
+#[test]
+fn resolves_an_object_render_to_its_conventional_partial() {
+  use herb_analysis::template_dependencies::object_partial_name;
+
+  assert_eq!(object_partial_name("@post").as_deref(), Some("posts/post"));
+  assert_eq!(object_partial_name("@posts").as_deref(), Some("posts/post"));
+  assert_eq!(object_partial_name("post").as_deref(), Some("posts/post"));
+  assert_eq!(object_partial_name("@post.author"), None);
+  assert_eq!(object_partial_name(""), None);
+}

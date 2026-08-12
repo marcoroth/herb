@@ -25,6 +25,8 @@ pub struct RenderCall {
   pub collection: Option<String>,
   pub dynamic_prefix: Option<String>,
   pub dynamic: bool,
+  pub layout: Option<String>,
+  pub object: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -217,12 +219,17 @@ impl<'a> Visitor for Collector<'a> {
 
       let dynamic_prefix = interpolated_from_prism.or_else(|| raw.as_deref().filter(|_| interpolated).and_then(dynamic_prefix_of));
 
+      let layout = keywords.layout.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
+      let object = keywords.object.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
+
       self.render_calls.push(RenderCall {
         partial,
         locals,
         collection: collection.clone(),
         dynamic_prefix,
         dynamic: interpolated,
+        layout,
+        object,
       });
 
       if let Some(collection) = collection {
@@ -309,4 +316,20 @@ fn interpolated_render_prefix(node: &herb::prism::PrismNode) -> Option<String> {
   }
 
   node.children.iter().find_map(interpolated_render_prefix)
+}
+
+/// Rails resolves `render @post` through `to_partial_path`, which for a model named `Post` is
+/// `posts/post`. The variable name is the only signal available statically, so `@post` and
+/// `@posts` both point at `posts/post`.
+pub fn object_partial_name(expression: &str) -> Option<String> {
+  let name = expression.trim().trim_start_matches('@');
+
+  if name.is_empty() || !name.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_') {
+    return None;
+  }
+
+  let singular = name.strip_suffix('s').filter(|rest| !rest.is_empty()).unwrap_or(name);
+  let plural = if name.ends_with('s') { name.to_string() } else { format!("{name}s") };
+
+  Some(format!("{plural}/{singular}"))
 }

@@ -165,7 +165,13 @@ fn check(arguments: &[String]) -> i32 {
     for call in &result.render_calls {
       files_with_renders.insert(file.clone());
 
-      let Some(name) = &call.partial else {
+      let target = call
+        .partial
+        .clone()
+        .or_else(|| call.layout.clone())
+        .or_else(|| call.object.as_deref().and_then(herb_analysis::template_dependencies::object_partial_name));
+
+      let Some(name) = target else {
         if call.dynamic {
           dynamic_renders += 1;
         } else {
@@ -174,6 +180,12 @@ fn check(arguments: &[String]) -> i32 {
 
         continue;
       };
+
+      if call.partial.is_none() {
+        other_renders += 1;
+      }
+
+      let name = &name;
 
       match index.resolve(name, Some(file)).first() {
         Some(target) => rendered.push(target.clone()),
@@ -230,7 +242,7 @@ fn check(arguments: &[String]) -> i32 {
   println!();
   println!(" {}", "Summary:".bold());
   println!("  {} {}", label("Version"), herb::herb::version().cyan());
-  let with_partial = rendered.len() + unresolved.len();
+  let with_partial = rendered.len() + unresolved.len() - other_renders.min(rendered.len() + unresolved.len());
   let total_renders = with_partial + dynamic_renders + other_renders;
 
   println!(
@@ -555,9 +567,15 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
     let mut names: Vec<String> = Vec::new();
 
     for call in &result.render_calls {
-      if let Some(name) = &call.partial {
-        if !names.contains(name) {
-          names.push(name.clone());
+      let target = call
+        .partial
+        .clone()
+        .or_else(|| call.layout.clone())
+        .or_else(|| call.object.as_deref().and_then(herb_analysis::template_dependencies::object_partial_name));
+
+      if let Some(name) = target {
+        if !names.contains(&name) {
+          names.push(name);
         }
       }
 
