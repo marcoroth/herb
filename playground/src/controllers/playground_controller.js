@@ -9,8 +9,9 @@ import Prism from "prismjs"
 
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
+import { registerLanguageService } from "../language-service"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
-import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
+import { makeTreeCollapsible, buildCollapsibleTreeHTML, decorateTreeNodeTokens, attachTreeToggles, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
 import { Linter, rules, fixabilityFor, FRAMEWORKS } from "@herb-tools/linter"
@@ -21,6 +22,7 @@ window.Herb = Herb
 window.analyze = analyze
 
 const URL_UPDATE_THROTTLE = 100
+const ANALYZE_DEBOUNCE = 250
 const DEFAULT_FRAMEWORK = "actionview"
 
 const exampleFile = dedent`
@@ -193,7 +195,9 @@ export default class extends Controller {
     this.inputTarget.focus()
     this.load()
 
-    this.urlUpdatedFromChangeEvent = false
+    this.lastWrittenHash = null
+    this.analyzeTimeout = null
+    this.renderedParseTree = null
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: this.isRubyMode ? "ruby" : "erb",
@@ -299,6 +303,14 @@ export default class extends Controller {
   disconnect() {
     window.removeEventListener("popstate", this.handlePopState)
 
+    this.languageService?.dispose()
+    this.languageService = null
+
+    if (this.analyzeTimeout !== null) {
+      clearTimeout(this.analyzeTimeout)
+      this.analyzeTimeout = null
+    }
+
     if (this.urlUpdateTimeout !== null) {
       clearTimeout(this.urlUpdateTimeout)
       this.urlUpdateTimeout = null
@@ -317,14 +329,25 @@ export default class extends Controller {
   }
 
   handlePopState = async (_event) => {
-    if (this.urlUpdatedFromChangeEvent === false) {
-      this.editor.setValue(this.decompressedValue)
-    }
+    if (window.parent.location.hash.slice(1) === this.lastWrittenHash) return
+
+    this.editor.setValue(this.decompressedValue)
   }
 
   async load() {
     await Herb.load()
+    this.setupLanguageService()
     this.analyze()
+  }
+
+  setupLanguageService() {
+    if (this.isRubyMode) return
+    if (this.languageService) return
+
+    this.languageService = registerLanguageService(Herb)
+    this.languageService.setFramework(this.getLinterOptions().framework)
+
+    window.languageService = this.languageService
   }
 
   updateURL() {
@@ -388,6 +411,7 @@ export default class extends Controller {
     this.lastURLUpdateAt = Date.now()
 
     if (hash !== null && hash !== location.hash.slice(1)) {
+      this.lastWrittenHash = hash
       location.hash = hash
     }
 
@@ -682,6 +706,21 @@ export default class extends Controller {
     }
   }
 
+  get activeTab() {
+    return this.activeViewerButton?.dataset?.viewer ?? "parse"
+  }
+
+  get analyzeJobs() {
+    const jobs = ["lint"]
+    const tab = this.activeTab
+
+    if (this.isValidTab(tab) && tab !== "diagnostics" && tab !== "diff") {
+      jobs.push(tab)
+    }
+
+    return jobs
+  }
+
   isValidTab(tab) {
     const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
     return validTabs.includes(tab)
@@ -749,6 +788,7 @@ export default class extends Controller {
 
     this.setActiveTab(tabName)
     this.updateTabInURL(tabName)
+    this.analyze()
   }
 
   showDiagnostics(_event) {
@@ -1381,10 +1421,42 @@ export default class extends Controller {
     })
   }
 
-  async input() {
-    this.urlUpdatedFromChangeEvent = true
-    await this.analyze()
-    this.urlUpdatedFromChangeEvent = false
+  renderParseTree(tree) {
+    if (!this.hasParseOutputTarget) return
+    if (this.renderedParseTree === tree) return
+
+    this.renderedParseTree = tree
+
+    this.parseOutputTarget.classList.add("language-tree")
+
+    const highlighted = Prism.highlight(tree, Prism.languages.tree, "tree")
+
+    this.parseOutputTarget.innerHTML = buildCollapsibleTreeHTML(highlighted, tree)
+
+    decorateTreeNodeTokens(this.parseOutputTarget)
+    attachTreeToggles(this.parseOutputTarget)
+
+    this.treeLocations.forEach(({ element, locationElement, location }) => {
+      this.setupHoverListener(locationElement, location)
+      this.setupHoverListener(element, location)
+
+      if (element.classList.contains("string")) {
+        this.setupHoverListener(element.previousElementSibling, location)
+      }
+    })
+  }
+
+  input() {
+    this.scheduleAnalyze()
+  }
+
+  scheduleAnalyze() {
+    if (this.analyzeTimeout !== null) clearTimeout(this.analyzeTimeout)
+
+    this.analyzeTimeout = setTimeout(() => {
+      this.analyzeTimeout = null
+      this.analyze()
+    }, ANALYZE_DEBOUNCE)
   }
 
   async formatEditor(event) {
@@ -1399,7 +1471,7 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const formatterOptions = this.getFormatterOptions()
-      const result = await analyze(Herb, value, {}, {}, formatterOptions)
+      const result = await analyze(Herb, value, {}, {}, formatterOptions, {}, {}, ["format"])
 
       if (result.formatted) {
         if (this.editor) {
@@ -1544,7 +1616,7 @@ export default class extends Controller {
     const formatterOptions = this.getFormatterOptions()
     const autofixOptions = this.getAutofixOptions()
     const linterOptions = this.getLinterOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions, linterOptions)
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions, linterOptions, this.analyzeJobs)
 
     this.updatePosition(1, 0, value.length)
 
@@ -1664,31 +1736,18 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasParseOutputTarget) {
-      this.parseOutputTarget.classList.add("language-tree")
-      this.parseOutputTarget.textContent = result.string
-
-      Prism.highlightElement(this.parseOutputTarget)
-      makeTreeCollapsible(this.parseOutputTarget)
-
-      this.treeLocations.forEach(({ element, locationElement, location }) => {
-        this.setupHoverListener(locationElement, location)
-        this.setupHoverListener(element, location)
-
-        if (element.classList.contains("string")) {
-          this.setupHoverListener(element.previousElementSibling, location)
-        }
-      })
+    if (result.string !== undefined) {
+      this.renderParseTree(result.string)
     }
 
-    if (this.hasHtmlViewerTarget) {
+    if (this.hasHtmlViewerTarget && result.html !== undefined) {
       this.htmlViewerTarget.classList.add("language-html")
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
     }
 
-    if (this.hasRewriteViewerTarget) {
+    if (this.hasRewriteViewerTarget && result.rewritten !== undefined) {
       const options = this.getParserOptions()
 
       if (this.hasRewriteActionViewHelpersTarget) {
@@ -1714,7 +1773,7 @@ export default class extends Controller {
     const currentSource = this.editor ? this.editor.getValue() : this.inputTarget.value
     const isWellFormatted = currentSource === result.formatted
 
-    if (this.hasFormatViewerTarget) {
+    if (this.hasFormatViewerTarget && result.formatted !== undefined) {
       if (hasParserErrors) {
         this.formatSuccessTarget.classList.add('hidden')
         this.formatErrorTarget.classList.remove('hidden')
@@ -1748,7 +1807,7 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasAutofixViewerTarget) {
+    if (this.hasAutofixViewerTarget && result.autofixResult !== undefined) {
       const autofixResult = result.autofixResult
       const autofixedSource = autofixResult && typeof autofixResult.source === "string" ? autofixResult.source : null
       const fixedCount = autofixResult && Array.isArray(autofixResult.fixed) ? autofixResult.fixed.length : 0
@@ -1841,21 +1900,21 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasRubyViewerTarget) {
+    if (this.hasRubyViewerTarget && result.ruby !== undefined) {
       this.rubyViewerTarget.classList.add("language-ruby")
       this.rubyViewerTarget.textContent = result.ruby
 
       Prism.highlightElement(this.rubyViewerTarget)
     }
 
-    if (this.hasLexViewerTarget) {
+    if (this.hasLexViewerTarget && result.lex !== undefined) {
       this.lexViewerTarget.classList.add("language-tree")
       this.lexViewerTarget.textContent = result.lex
 
       Prism.highlightElement(this.lexViewerTarget)
     }
 
-    if (this.hasPrinterViewerTarget) {
+    if (this.hasPrinterViewerTarget && result.printed !== undefined) {
       const printedContent = result.printed || 'No printed output available'
 
       if (typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')) {
@@ -2091,6 +2150,7 @@ export default class extends Controller {
   }
 
   onLinterOptionChange(_event) {
+    this.languageService?.setFramework(this.getLinterOptions().framework)
     this.updateURL()
     this.analyze()
   }
@@ -2360,14 +2420,12 @@ export default class extends Controller {
     )
 
     if (filteredDiagnostics.length === 0) {
-      console.log('No diagnostics, showing message')
       this.diagnosticsListTarget.classList.add('hidden')
       this.noDiagnosticsTarget.classList.remove('hidden')
       this.updateNoDiagnosticsMessage()
       return
     }
 
-    console.log('Has diagnostics, showing list')
     this.noDiagnosticsTarget.classList.add('hidden')
     this.diagnosticsListTarget.classList.remove('hidden')
 
@@ -2900,14 +2958,7 @@ export default class extends Controller {
   }
 
   updateNoDiagnosticsMessage() {
-    console.log('updateNoDiagnosticsMessage called', {
-      hasTarget: !!this.noDiagnosticsTarget,
-      filter: this.currentDiagnosticsFilter,
-      allDiagnosticsCount: this.allDiagnostics?.length || 0
-    })
-
     if (!this.hasNoDiagnosticsTarget) {
-      console.log('No noDiagnosticsTarget found')
       return
     }
 
