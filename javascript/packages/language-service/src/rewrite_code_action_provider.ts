@@ -94,7 +94,7 @@ export class RewriteCodeActionProvider {
     if (parseResult.failed) return null
 
     const rewriter = new ActionViewTagHelperToHTMLRewriter()
-    const rewrittenNode = rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
+    const rewrittenNode = rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir, shallow: true })
 
     const rewrittenText = IdentityPrinter.print(rewrittenNode)
 
@@ -130,7 +130,7 @@ export class RewriteCodeActionProvider {
     if (parseResult.failed) return null
 
     const rewriter = new HTMLToActionViewTagHelperRewriter()
-    const rewrittenNode = rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
+    const rewrittenNode = rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir, shallow: true })
 
     const rewrittenText = IdentityPrinter.print(rewrittenNode)
 
@@ -159,6 +159,8 @@ export class RewriteCodeActionProvider {
   }
 
   private rangesOverlap(r1: Range, r2: Range): boolean {
+    if (r1.start.line !== r2.start.line) return false
+
     if (r1.end.line < r2.start.line) return false
     if (r1.start.line > r2.end.line) return false
 
