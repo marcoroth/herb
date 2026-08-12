@@ -35,7 +35,7 @@ import { isPartialPath } from "@herb-tools/analysis"
 import { isConfigDocument, isPathInside } from "./utils"
 import { OPEN_DOCUMENT_COMMAND, SERVER_COMMANDS } from "./commands"
 import { serverVersion } from "./build_info"
-import { handleOnTypeFormatting, ON_TYPE_FORMATTING_OPTIONS } from "./on_type_formatting"
+import { ON_TYPE_FORMATTING_OPTIONS } from "./on_type_formatting"
 
 import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "@herb-tools/language-service"
@@ -208,7 +208,11 @@ export class Server {
     })
 
     this.connection.onDocumentOnTypeFormatting((params: DocumentOnTypeFormattingParams) => {
-      return handleOnTypeFormatting(this.session.documents, params)
+      const document = this.session.documents.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.session.onTypeFormattingProvider.getTextEdits(document, params.position, params.ch)
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {

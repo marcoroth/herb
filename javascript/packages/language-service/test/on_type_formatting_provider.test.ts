@@ -1,15 +1,22 @@
-import { describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 import { Position } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
+import { Herb } from "@herb-tools/node-wasm"
 
 import { OnTypeFormattingProvider } from "../src/on_type_formatting_provider.js"
+import { ParserService } from "../src/parser_service.js"
 
 function createDocument(content: string) {
   return TextDocument.create("file:///test.html.erb", "erb", 1, content)
 }
 
 describe("OnTypeFormattingProvider", () => {
-  const provider = new OnTypeFormattingProvider()
+  let provider: OnTypeFormattingProvider
+
+  beforeAll(async () => {
+    await Herb.load()
+    provider = new OnTypeFormattingProvider(new ParserService(Herb))
+  })
 
   it("inserts an ERB end tag after a do block opener", () => {
     const source = "<% @items.each do |item| %>"
@@ -33,6 +40,8 @@ describe("OnTypeFormattingProvider", () => {
     "<% unless items.empty? %>",
     "<% while pending? %>",
     "<% for item in items %>",
+    "<% case status %>",
+    "<% begin %>",
   ])("inserts an ERB end tag for %s", (source) => {
     const document = createDocument(source)
 
@@ -125,6 +134,77 @@ describe("OnTypeFormattingProvider", () => {
       provider.getTextEdits(
         document,
         Position.create(0, firstLine.length),
+        ">",
+      ),
+    ).toEqual([])
+  })
+
+  it("inserts an end tag for a block opened inside an existing block", () => {
+    const openingTag = "  <% if item.ok? %>"
+    const document = createDocument(
+      ["<% items.each do |item| %>", openingTag, "<% end %>"].join("\n"),
+    )
+
+    expect(
+      provider.getTextEdits(
+        document,
+        Position.create(1, openingTag.length),
+        ">",
+      ),
+    ).toEqual([
+      {
+        range: {
+          start: { line: 1, character: openingTag.length },
+          end: { line: 1, character: openingTag.length },
+        },
+        newText: "\n  <% end %>",
+      },
+    ])
+  })
+
+  it("preserves indentation when inserting inside nested ERB and HTML", () => {
+    const openingTag = "      <% if y %>"
+    const document = createDocument(
+      [
+        "<section>",
+        "  <% a.each do |x| %>",
+        "    <div>",
+        "      <% b.each do |y| %>",
+        openingTag,
+        "      <% end %>",
+        "    </div>",
+        "  <% end %>",
+        "</section>",
+      ].join("\n"),
+    )
+
+    expect(
+      provider.getTextEdits(
+        document,
+        Position.create(4, openingTag.length),
+        ">",
+      ),
+    ).toEqual([
+      {
+        range: {
+          start: { line: 4, character: openingTag.length },
+          end: { line: 4, character: openingTag.length },
+        },
+        newText: "\n      <% end %>",
+      },
+    ])
+  })
+
+  it("does not insert for a non-block tag when another block is missing an end", () => {
+    const assignment = "  <% user = current_user %>"
+    const document = createDocument(
+      ["<% if signed_in? %>", assignment].join("\n"),
+    )
+
+    expect(
+      provider.getTextEdits(
+        document,
+        Position.create(1, assignment.length),
         ">",
       ),
     ).toEqual([])

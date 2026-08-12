@@ -1,12 +1,42 @@
 import { describe, expect, it, vi } from "vitest"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import {
-  ON_TYPE_FORMATTING_OPTIONS,
-  handleOnTypeFormatting,
-} from "../src/on_type_formatting"
+const connectionState = vi.hoisted(() => ({
+  onTypeFormatting: undefined as
+    | ((params: {
+        textDocument: { uri: string }
+        position: { line: number; character: number }
+        ch: string
+      }) => unknown)
+    | undefined,
+}))
 
-import type { Documents } from "../src/documents"
+vi.mock("vscode-languageserver/node", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("vscode-languageserver/node")>()
+  const connection = new Proxy(
+    {},
+    {
+      get: (_target, property) => {
+        if (property === "onDocumentOnTypeFormatting") {
+          return (handler: typeof connectionState.onTypeFormatting) => {
+            connectionState.onTypeFormatting = handler
+          }
+        }
+
+        return vi.fn()
+      },
+    },
+  )
+
+  return {
+    ...original,
+    createConnection: vi.fn(() => connection),
+  }
+})
+
+import { ON_TYPE_FORMATTING_OPTIONS } from "../src/on_type_formatting"
+import { Server } from "../src/server"
 
 describe("on-type formatting", () => {
   it("advertises > as the trigger character", () => {
@@ -15,7 +45,7 @@ describe("on-type formatting", () => {
     })
   })
 
-  it("routes an on-type formatting request to the language service", () => {
+  it("routes requests through the provider stored in Session", () => {
     const source = "<% if user.admin? %>"
     const document = TextDocument.create(
       "file:///test.html.erb",
@@ -23,41 +53,29 @@ describe("on-type formatting", () => {
       1,
       source,
     )
-    const documents = {
-      get: vi.fn().mockReturnValue(document),
-    } as unknown as Documents
+    const getTextEdits = vi.fn().mockReturnValue([{ newText: "expected" }])
+    const server = new Server()
 
-    const edits = handleOnTypeFormatting(documents, {
+    Object.assign(server, {
+      session: {
+        documents: { get: vi.fn().mockReturnValue(document) },
+        onTypeFormattingProvider: { getTextEdits },
+      },
+    })
+
+    const params = {
       textDocument: { uri: document.uri },
       position: { line: 0, character: source.length },
       ch: ">",
-      options: { tabSize: 2, insertSpaces: true },
-    })
+    }
 
-    expect(documents.get).toHaveBeenCalledWith(document.uri)
-    expect(edits).toEqual([
-      {
-        range: {
-          start: { line: 0, character: source.length },
-          end: { line: 0, character: source.length },
-        },
-        newText: "\n<% end %>",
-      },
+    expect(connectionState.onTypeFormatting?.(params)).toEqual([
+      { newText: "expected" },
     ])
-  })
-
-  it("returns no edits when the document is not open", () => {
-    const documents = {
-      get: vi.fn().mockReturnValue(undefined),
-    } as unknown as Documents
-
-    expect(
-      handleOnTypeFormatting(documents, {
-        textDocument: { uri: "file:///missing.html.erb" },
-        position: { line: 0, character: 0 },
-        ch: ">",
-        options: { tabSize: 2, insertSpaces: true },
-      }),
-    ).toEqual([])
+    expect(getTextEdits).toHaveBeenCalledWith(
+      document,
+      params.position,
+      params.ch,
+    )
   })
 })
