@@ -58,15 +58,15 @@ describe("DocumentSymbolProvider", () => {
     expect(outline(`<div id="main"></div>`)).toEqual(["div#main", "  [id]"])
   })
 
-  it("qualifies an element by its classes", () => {
-    expect(outline(`<div class="card featured"></div>`)).toEqual(["div.card.featured", "  [class]"])
+  it("qualifies an element by its class", () => {
+    expect(outline(`<div class="card"></div>`)).toEqual(["div.card", "  [class]"])
   })
 
   it("combines the id and the classes", () => {
     expect(outline(`<div id="main" class="card"></div>`)).toEqual(["div#main.card", "  [id]", "  [class]"])
   })
 
-  it("drops utility classes rather than burying the name", () => {
+  it("drops a utility list rather than naming the element after half of it", () => {
     const content = `<div class="flex items-center justify-between rounded-lg bg-white p-4"></div>`
 
     expect(outline(content)).toEqual(["div", "  [class]"])
@@ -78,9 +78,9 @@ describe("DocumentSymbolProvider", () => {
     expect(outline(content)).toEqual(["div#main", "  [id]", "  [class]"])
   })
 
-  it("keeps classes right up to the limit", () => {
-    expect(outline(`<div class="card featured"></div>`)).toEqual(["div.card.featured", "  [class]"])
-    expect(outline(`<div class="card featured wide"></div>`)).toEqual(["div", "  [class]"])
+  it("names the element after a lone class, but not after one of several", () => {
+    expect(outline(`<div class="card"></div>`)).toEqual(["div.card", "  [class]"])
+    expect(outline(`<div class="card featured"></div>`)).toEqual(["div", "  [class]"])
   })
 
   it("ignores an id it cannot read statically", () => {
@@ -228,7 +228,7 @@ describe("DocumentSymbolProvider", () => {
       expect(outline(`<%= tag.br %>`)).toEqual(["br"])
     })
 
-    it("drops utility classes from a tag helper too", () => {
+    it("drops a utility list from a tag helper too", () => {
       expect(outline(`<%= tag.div class: "flex items-center p-4" %>`)).toEqual(["div", "  [class]"])
     })
   })
