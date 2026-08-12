@@ -1041,7 +1041,7 @@ module Herb
 
         relative_root = relative_path(view_root.to_s)
 
-        Herb::PARTIAL_EXTENSIONS.map { |extension| "#{relative_root}/#{relative}#{extension}" }.join(", ")
+        PartialResolution::EXTENSIONS.map { |extension| "#{relative_root}/#{relative}#{extension}" }.join(", ")
       end
 
       def label(text, width = 12)

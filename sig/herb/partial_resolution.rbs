@@ -1,0 +1,24 @@
+# Generated from lib/herb/partial_resolution.rb with RBS::Inline
+
+module Herb
+  module PartialResolution
+    PARTIAL_PREFIX: String
+
+    EXTENSIONS: Array[String]
+
+    EXTENSION_ALTERNATIVES: String
+
+    TEMPLATE_GLOB_PATTERN: String
+
+    PARTIAL_GLOB_PATTERN: String
+
+    # : (String) -> bool
+    def self.template_path?: (String) -> bool
+
+    # : (String) -> bool
+    def self.partial_path?: (String) -> bool
+
+    # : (String, String | Pathname) -> String?
+    def self.partial_name_for: (String, String | Pathname) -> String?
+  end
+end

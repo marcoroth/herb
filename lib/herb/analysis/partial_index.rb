@@ -2,11 +2,11 @@
 
 require "pathname"
 
+require_relative "../partial_resolution"
+
 module Herb
   module Analysis
     class PartialIndex
-      TEMPLATE_GLOB_PATTERN = "*.{erb,herb}" #: String
-
       attr_reader :view_root #: Pathname
 
       attr_reader :templates #: Array[String]
@@ -15,7 +15,7 @@ module Herb
       def self.build(project_path, templates: nil)
         root = Pathname.new(project_path)
         view_root = resolve_view_root(root)
-        files = templates || Dir[view_root.join("**", TEMPLATE_GLOB_PATTERN)].sort
+        files = templates || Dir[view_root.join("**", PartialResolution::TEMPLATE_GLOB_PATTERN)].sort
 
         new(view_root, files)
       end
@@ -46,16 +46,7 @@ module Herb
 
       #: (String, String | Pathname) -> String?
       def self.partial_name_for(file, view_root)
-        basename = File.basename(file)
-
-        return nil unless basename.start_with?("_")
-
-        root = view_root.is_a?(Pathname) ? view_root : Pathname.new(view_root)
-        relative = Pathname.new(file).relative_path_from(root).to_s
-        directory = File.dirname(relative)
-        name = basename.sub(/\A_/, "").sub(/\..*\z/, "")
-
-        directory == "." ? name : "#{directory}/#{name}"
+        PartialResolution.partial_name_for(file, view_root)
       end
 
       #: (String) -> String?

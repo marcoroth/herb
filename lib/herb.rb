@@ -1,13 +1,7 @@
 # frozen_string_literal: true
 # typed: false
 
-module Herb
-  PARTIAL_EXTENSIONS = [
-    ".html.erb", ".html.herb", ".erb", ".herb", ".turbo_stream.erb", ".turbo_stream.herb"
-  ].freeze
-
-  PARTIAL_GLOB_PATTERN = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}"
-end
+require_relative "herb/partial_resolution"
 
 require_relative "herb/colors"
 require_relative "herb/range"

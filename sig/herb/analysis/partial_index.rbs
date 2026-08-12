@@ -3,8 +3,6 @@
 module Herb
   module Analysis
     class PartialIndex
-      TEMPLATE_GLOB_PATTERN: String
-
       attr_reader view_root: Pathname
 
       attr_reader templates: Array[String]
