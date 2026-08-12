@@ -686,6 +686,7 @@ module Herb
         dep_analyzer.scan_helpers!
 
         warnings = [] #: Array[Hash[Symbol, untyped]]
+        passed_locals = collect_passed_locals(erb_files, dep_analyzer, view_root)
 
         erb_files.each do |file|
           result = dep_analyzer.analyze(file)
@@ -699,8 +700,12 @@ module Herb
           end
 
           if result.unknown_calls.any?
+            candidates = result.locals_declared.empty? ? (passed_locals[file] || Set.new) : Set.new
+
             result.unknown_calls.each do |call|
-              warnings << { type: :unknown_call, file: relative, call: call }
+              type = candidates.include?(call) ? :undeclared_local : :unknown_call
+
+              warnings << { type: type, file: relative, call: call }
             end
           end
         end
@@ -711,13 +716,55 @@ module Herb
         [] #: Array[Hash[Symbol, untyped]]
       end
 
+      # Which locals every call site passes to a partial. An unknown call matching one of these is a
+      # local the partial never declared, not a missing method.
+      def collect_passed_locals(erb_files, dep_analyzer, view_root)
+        partial_files = find_partial_files(view_root)
+        passed = Hash.new { |hash, key| hash[key] = Set.new } #: Hash[String, Set[String]]
+
+        erb_files.each do |file|
+          dep_analyzer.analyze(file).render_calls.each do |call|
+            name = call[:partial]
+            next unless name
+
+            target = resolve_partial(name, file, partial_files, view_root)
+            next unless target
+
+            call[:locals].each_key { |local| passed[target].add(local) }
+
+            passed[target].add(File.basename(name)) if call[:collection]
+          end
+        rescue StandardError
+          next
+        end
+
+        passed
+      end
+
       def print_dependency_warnings(warnings)
         ivar_warnings = warnings.select { |w| w[:type] == :ivar_in_partial }
         unknown_warnings = warnings.select { |w| w[:type] == :unknown_call }
+        local_warnings = warnings.select { |w| w[:type] == :undeclared_local }
 
         puts ""
         puts " #{bold("Dependency warnings:")}"
         puts ""
+
+        if local_warnings.any?
+          grouped = local_warnings.group_by { |w| w[:file] }
+          puts "  #{yellow("Undeclared locals")} #{dimmed("(#{grouped.size} #{pluralize(grouped.size, "file")})")}"
+          puts "  #{dimmed("Every call site passes these, so they are locals. Declare them with strict locals to be sure.")}"
+          puts ""
+
+          grouped.each do |file, file_warnings|
+            names = file_warnings.map { |w| w[:call] }.uniq.sort
+            declaration = names.map { |name| "#{name}:" }.join(", ")
+
+            puts "    #{yellow(file)}"
+            puts "      #{dimmed("<%# locals: (#{declaration}) %>")}"
+            puts ""
+          end
+        end
 
         if ivar_warnings.any?
           grouped = ivar_warnings.group_by { |w| w[:file] }
