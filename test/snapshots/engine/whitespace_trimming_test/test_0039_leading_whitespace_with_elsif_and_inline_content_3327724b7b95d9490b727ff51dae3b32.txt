@@ -1,0 +1,9 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0039_leading whitespace with elsif and inline content"
+input: "{source: \"<p>\\n  <% if false %>nope<% elsif true %>text<% end %>\\n</p>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>
+  '.freeze;   if false 
+ _buf << 'nope'.freeze; elsif true; _buf << 'text'.freeze; end; _buf << '
+</p>'.freeze;
+_buf.to_s

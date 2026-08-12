@@ -1,10 +1,13 @@
-import { Token } from "@herb-tools/core"
+import { Token, RUBY_KEYWORDS } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { colorize } from "./color.js"
 
 import type { HerbBackend } from "@herb-tools/core"
 import type { Color } from "./color.js"
 import type { ColorScheme } from "./themes.js"
+
+const HIGHLIGHTED_METHODS = ["raise"]
+const HIGHLIGHTED_WORDS = new Set([...RUBY_KEYWORDS, ...HIGHLIGHTED_METHODS])
 
 type SyntaxRenderState = {
   inTag: boolean
@@ -67,45 +70,10 @@ export class SyntaxRenderer {
     if (!this.isColorEnabled) return code
 
     const words = code.split(/(\s+|[^\w\s]+)/)
-    const keywords = [
-      "if",
-      "unless",
-      "else",
-      "elsif",
-      "end",
-      "def",
-      "class",
-      "module",
-      "return",
-      "yield",
-      "break",
-      "next",
-      "case",
-      "when",
-      "then",
-      "while",
-      "until",
-      "for",
-      "in",
-      "do",
-      "begin",
-      "rescue",
-      "ensure",
-      "retry",
-      "raise",
-      "super",
-      "self",
-      "nil",
-      "true",
-      "false",
-      "and",
-      "or",
-      "not",
-    ]
 
     return words
       .map((word) => {
-        if (keywords.includes(word)) {
+        if (HIGHLIGHTED_WORDS.has(word)) {
           return this.applyColor(word, this.colors.RUBY_KEYWORD)
         }
 

@@ -1,0 +1,32 @@
+# Generated from lib/herb/analysis/render_graph/template_roots.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class TemplateRoots < Data
+        attr_reader tags(): untyped
+
+        attr_reader conditional_tags(): untyped
+
+        attr_reader renders(): untyped
+
+        attr_reader resolved(): untyped
+
+        def self.new: (untyped tags, untyped conditional_tags, untyped renders, untyped resolved) -> instance
+                    | (tags: untyped, conditional_tags: untyped, renders: untyped, resolved: untyped) -> instance
+
+        def self.members: () -> [ :tags, :conditional_tags, :renders, :resolved ]
+
+        def members: () -> [ :tags, :conditional_tags, :renders, :resolved ]
+      end
+
+      class TemplateRoots
+        # : (Hash[String, untyped]) -> TemplateRoots
+        def self.from: (Hash[String, untyped]) -> TemplateRoots
+
+        # : () -> Hash[String, untyped]
+        def to_h: () -> Hash[String, untyped]
+      end
+    end
+  end
+end

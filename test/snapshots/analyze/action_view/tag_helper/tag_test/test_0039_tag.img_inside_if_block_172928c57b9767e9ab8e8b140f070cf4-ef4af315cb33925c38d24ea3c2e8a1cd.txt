@@ -1,0 +1,87 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0039_tag.img inside if block"
+input: |2-
+<% if condition? %>
+  <%= tag.img src: "/image.png", alt: "Photo" %>
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if condition? " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:19)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:48))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ ERBOpenTagNode (location: (2:2)-(2:48))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   │       ├── content: " tag.img src: "/image.png", alt: "Photo" " (location: (2:5)-(2:46))
+    │   │   │   │       ├── tag_closing: "%>" (location: (2:46)-(2:48))
+    │   │   │   │       ├── tag_name: "img" (location: (2:10)-(2:13))
+    │   │   │   │       └── children: (2 items)
+    │   │   │   │           ├── @ HTMLAttributeNode (location: (2:14)-(2:31))
+    │   │   │   │           │   ├── name:
+    │   │   │   │           │   │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:17))
+    │   │   │   │           │   │       └── children: (1 item)
+    │   │   │   │           │   │           └── @ LiteralNode (location: (2:14)-(2:17))
+    │   │   │   │           │   │               └── content: "src"
+    │   │   │   │           │   │
+    │   │   │   │           │   │
+    │   │   │   │           │   ├── equals: ": " (location: (2:17)-(2:19))
+    │   │   │   │           │   └── value:
+    │   │   │   │           │       └── @ HTMLAttributeValueNode (location: (2:19)-(2:31))
+    │   │   │   │           │           ├── open_quote: """ (location: (2:19)-(2:20))
+    │   │   │   │           │           ├── children: (1 item)
+    │   │   │   │           │           │   └── @ LiteralNode (location: (2:20)-(2:30))
+    │   │   │   │           │           │       └── content: "/image.png"
+    │   │   │   │           │           │
+    │   │   │   │           │           ├── close_quote: """ (location: (2:30)-(2:31))
+    │   │   │   │           │           └── quoted: true
+    │   │   │   │           │
+    │   │   │   │           │
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:33)-(2:45))
+    │   │   │   │               ├── name:
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:33)-(2:36))
+    │   │   │   │               │       └── children: (1 item)
+    │   │   │   │               │           └── @ LiteralNode (location: (2:33)-(2:36))
+    │   │   │   │               │               └── content: "alt"
+    │   │   │   │               │
+    │   │   │   │               │
+    │   │   │   │               ├── equals: ": " (location: (2:36)-(2:38))
+    │   │   │   │               └── value:
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:38)-(2:45))
+    │   │   │   │                       ├── open_quote: """ (location: (2:38)-(2:39))
+    │   │   │   │                       ├── children: (1 item)
+    │   │   │   │                       │   └── @ LiteralNode (location: (2:39)-(2:44))
+    │   │   │   │                       │       └── content: "Photo"
+    │   │   │   │                       │
+    │   │   │   │                       ├── close_quote: """ (location: (2:44)-(2:45))
+    │   │   │   │                       └── quoted: true
+    │   │   │   │
+    │   │   │   │
+    │   │   │   │
+    │   │   │   ├── tag_name: "img" (location: (2:10)-(2:13))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag: ∅
+    │   │   │   ├── is_void: true
+    │   │   │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:48)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

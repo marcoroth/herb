@@ -59,5 +59,29 @@ module AST
         </div>
       ERB
     end
+
+    test "block with rescue clause" do
+      assert_parsed_snapshot(<<~ERB)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% end %>
+      ERB
+    end
+
+    test "block with rescue, else, and ensure clauses" do
+      assert_parsed_snapshot(<<~ERB)
+        <% items.each do |item| %>
+          <%= item %>
+        <% rescue StandardError => e %>
+          <%= e.message %>
+        <% else %>
+          <%= "success" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      ERB
+    end
   end
 end

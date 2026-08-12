@@ -25,6 +25,10 @@ Anchor tags without an `href` attribute are not focusable via keyboard navigatio
 ```
 
 ```erb
+<a href="#">Go to Page</a>
+```
+
+```erb
 <a data-action="click->doSomething">I'm a fake link</a>
 ```
 

@@ -68,4 +68,4 @@ input: "<div <% if admin? %>data-admin data-role=\"admin\"<% end %>></div>"
         │       └── tag_closing: ">" (location: (1:63)-(1:64))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

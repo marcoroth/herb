@@ -5,19 +5,15 @@ import { HTMLAttributeNode, HTMLAttributeNameNode, HTMLAttributeValueNode } from
 
 import { expectNodeToPrint, expectPrintRoundTrip, location, createToken, createLiteralNode } from "../helpers/printer-test-helpers.js"
 
-const name = HTMLAttributeNameNode.from({
-  type: "AST_HTML_ATTRIBUTE_NAME_NODE",
+const name = HTMLAttributeNameNode.build({
   location,
-  errors: [],
   children: [
     createLiteralNode("id")
   ]
 })
 
-const value = HTMLAttributeValueNode.from({
-  type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+const value = HTMLAttributeValueNode.build({
   location,
-  errors: [],
   open_quote: createToken("TOKEN_QUOTE", `"`),
   close_quote: createToken("TOKEN_QUOTE", `"`),
   children: [
@@ -32,10 +28,8 @@ describe("HTMLAttributeNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = HTMLAttributeNode.from({
-      type: "AST_HTML_ATTRIBUTE_NODE",
+    const node = HTMLAttributeNode.build({
       location,
-      errors: [],
       name,
       equals: createToken("TOKEN_EQUALS", "="),
       value

@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0001_content_tag with block"
+input: "{source: \"<%= content_tag :div do %>\\n  Content\\n<% end %>\\n\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div>
+  Content
+</div>

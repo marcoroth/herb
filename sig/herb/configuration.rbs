@@ -2,9 +2,19 @@
 
 module Herb
   class Configuration
-    CONFIG_FILENAMES: untyped
+    OPTIONS_PATH: String
 
-    PROJECT_INDICATORS: untyped
+    OPTIONS: Hash[String, untyped]
+
+    VALID_FRAMEWORKS: Array[String]
+
+    VALID_TEMPLATE_ENGINES: Array[String]
+
+    CONFIG_FILENAMES: Array[String]
+
+    MISNAMED_CONFIG_FILENAMES: Array[String]
+
+    PROJECT_INDICATORS: Array[String]
 
     DEFAULTS_PATH: untyped
 
@@ -12,9 +22,13 @@ module Herb
 
     attr_reader config: untyped
 
+    attr_reader user_config: untyped
+
     attr_reader config_path: untyped
 
     attr_reader project_root: untyped
+
+    attr_reader misnamed_config_paths: untyped
 
     def initialize: (?untyped project_path) -> untyped
 
@@ -24,6 +38,12 @@ module Herb
 
     def version: () -> untyped
 
+    # : () -> String
+    def framework: () -> String
+
+    # : () -> String
+    def template_engine: () -> String
+
     def files: () -> untyped
 
     def file_include_patterns: () -> untyped
@@ -31,6 +51,13 @@ module Herb
     def file_exclude_patterns: () -> untyped
 
     def linter: () -> untyped
+
+    def engine: () -> untyped
+
+    # : (String, untyped) -> untyped
+    def engine_option: (String, untyped) -> untyped
+
+    def enabled_validators: (?untyped overrides) -> untyped
 
     def formatter: () -> untyped
 
@@ -76,9 +103,13 @@ module Herb
 
     def find_config_file: () -> untyped
 
+    def find_misnamed_config_paths: () -> untyped
+
+    def warn_about_misnamed_config_files: () -> untyped
+
     def project_root?: (untyped path) -> untyped
 
-    def load_config: () -> untyped
+    def load_user_config: () -> untyped
 
     def deep_merge: (untyped base, untyped override, ?additive_keys: untyped) -> untyped
   end

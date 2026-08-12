@@ -6,18 +6,22 @@ import {
   ERBIfNode,
   ERBUnlessNode,
   ERBBlockNode,
+  ERBIterationBlockNode,
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBWhileNode,
   ERBForNode,
   ERBBeginNode,
+  ERBOpenTagNode,
   HTMLElementNode,
   HTMLOpenTagNode,
+  HTMLConditionalOpenTagNode,
   HTMLCloseTagNode,
   HTMLAttributeNode,
   HTMLAttributeNameNode,
   HTMLAttributeValueNode,
-  HTMLCommentNode
+  HTMLCommentNode,
+  WhitespaceNode
 } from "./nodes.js"
 
 import {
@@ -28,15 +32,28 @@ import {
   isHTMLCommentNode,
   isHTMLElementNode,
   isHTMLOpenTagNode,
+  isERBOpenTagNode,
+  isHTMLTextNode,
+  isWhitespaceNode,
   isHTMLAttributeNameNode,
   isHTMLAttributeValueNode,
+  isRubyLiteralNode,
   areAllOfType,
   filterLiteralNodes,
+  filterHTMLTextNodes,
   filterHTMLAttributeNodes
 } from "./node-type-guards.js"
 
-import type { Location } from "./location.js"
+import { Location } from "./location.js"
+import { Token } from "./token.js"
+
 import type { Position } from "./position.js"
+
+/**
+ * Any node that can hold HTML attributes: an element, its open tag, or the
+ * `ERBOpenTagNode` that ActionView tag helpers are parsed into.
+ */
+export type AttributeContainerNode = HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | ERBOpenTagNode
 
 export type ERBOutputNode = ERBNode & {
   tag_opening: {
@@ -50,6 +67,12 @@ export type ERBCommentNode = ERBNode & {
   }
 }
 
+export type ERBEscapedNode = ERBNode & {
+  tag_opening: {
+    value: "<%%" | "<%%="
+  }
+}
+
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
@@ -58,6 +81,16 @@ export function isERBOutputNode(node: Node): node is ERBOutputNode {
   if (!node.tag_opening?.value) return false
 
   return ["<%=", "<%=="].includes(node.tag_opening?.value)
+}
+
+/**
+ * Checks if a node is an escaped ERB node (`<%%` or `<%%=`).
+ */
+export function isERBEscapedNode(node: Node): node is ERBEscapedNode {
+  if (!isERBNode(node)) return false
+  if (!node.tag_opening?.value) return false
+
+  return ["<%%", "<%%="].includes(node.tag_opening.value)
 }
 
 /**
@@ -75,7 +108,7 @@ export function isERBCommentNode(node: Node): node is ERBCommentNode {
  * Checks if a node is a non-output ERB node (control flow: <% %>)
  */
 export function isERBControlFlowNode(node: Node): node is ERBContentNode {
-  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
+  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBIterationBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
 }
 
 /**
@@ -90,6 +123,24 @@ export function hasERBContent(nodes: Node[]): boolean {
  */
 export function hasERBOutput(nodes: Node[]): boolean {
   return nodes.some(isERBOutputNode)
+}
+
+/**
+ * Checks if a node outputs a dynamic value
+ *
+ * Covers both ERB output (`<%= %>`) and the Ruby expressions that Action View
+ * helper attribute values are made of, where `id: "#{user.name}-pending"`
+ * becomes a `RubyLiteralNode` next to a `LiteralNode` instead of an ERB node.
+ */
+export function isDynamicOutputNode(node: Node): boolean {
+  return isERBOutputNode(node) || isRubyLiteralNode(node)
+}
+
+/**
+ * Checks if an array of nodes contains any dynamic output nodes
+ */
+export function hasDynamicOutput(nodes: Node[]): boolean {
+  return nodes.some(isDynamicOutputNode)
 }
 
 
@@ -136,14 +187,27 @@ export function isEffectivelyStatic(nodes: Node[]): boolean {
 
 /**
  * Gets static-validatable content from nodes (ignores control ERB, includes literals)
- * Returns concatenated literal content for validation, or null if contains output ERB
  */
 export function getValidatableStaticContent(nodes: Node[]): string | null {
-  if (hasERBOutput(nodes)) {
+  if (hasDynamicOutput(nodes)) {
     return null
   }
 
   return filterLiteralNodes(nodes).map(node => node.content).join("")
+}
+
+/**
+ * Gets static text content from element body nodes (includes both LiteralNode and HTMLTextNode)
+ * Returns concatenated text content for validation, or null if contains output ERB
+ */
+export function getStaticBodyText(nodes: Node[]): string | null {
+  if (hasERBOutput(nodes)) {
+    return null
+  }
+
+  const textNodes = [...filterLiteralNodes(nodes), ...filterHTMLTextNodes(nodes)]
+
+  return textNodes.map(node => node.content).join("")
 }
 
 /**
@@ -182,7 +246,7 @@ export function hasStaticAttributeName(attributeNameNode: HTMLAttributeNameNode)
 /**
  * Checks if an HTML attribute name node has dynamic content (contains ERB)
  */
-export function hasDynamicAttributeName(attributeNameNode: HTMLAttributeNameNode): boolean {
+export function hasDynamicAttributeNameNode(attributeNameNode: HTMLAttributeNameNode): boolean {
   if (!attributeNameNode.children) {
     return false
   }
@@ -249,21 +313,36 @@ export function isCommentNode(node: Node): node is HTMLCommentNode | ERBCommentN
  * For conditional open tags, returns null.
  * If given an HTMLOpenTagNode directly, returns it as-is.
  */
-export function getOpenTag(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLOpenTagNode | null {
+export function getOpenTag(node: AttributeContainerNode | null | undefined): HTMLOpenTagNode | null {
   if (!node) return null
   if (isHTMLOpenTagNode(node)) return node
-  if (isHTMLElementNode(node)) return isHTMLOpenTagNode(node.open_tag) ? node.open_tag : null
+  if (isHTMLElementNode(node) && isHTMLOpenTagNode(node.open_tag)) return node.open_tag
 
   return null
 }
 
 /**
+ * Gets the children array from an element's open tag, regardless of whether
+ * it's an HTMLOpenTagNode or ERBOpenTagNode (used by action view helpers).
+ */
+function getOpenTagChildren(node: AttributeContainerNode | null | undefined): Node[] {
+  if (!node) return []
+  if (isHTMLOpenTagNode(node)) return node.children
+  if (isERBOpenTagNode(node)) return node.children
+
+  if (isHTMLElementNode(node) && node.open_tag) {
+    if (isHTMLOpenTagNode(node.open_tag)) return node.open_tag.children
+    if (isERBOpenTagNode(node.open_tag)) return node.open_tag.children
+  }
+
+  return []
+}
+
+/**
  * Gets attributes from an HTMLElementNode or HTMLOpenTagNode
  */
-export function getAttributes(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLAttributeNode[] {
-  const openTag = getOpenTag(node)
-
-  return openTag ? filterHTMLAttributeNodes(openTag.children) : []
+export function getAttributes(node: AttributeContainerNode | null | undefined): HTMLAttributeNode[] {
+  return filterHTMLAttributeNodes(getOpenTagChildren(node))
 }
 
 /**
@@ -286,10 +365,10 @@ export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = t
  * Returns false for null/undefined input.
  */
 export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode | null | undefined): boolean
-export function hasStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): boolean
-export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): boolean {
+export function hasStaticAttributeValue(node: AttributeContainerNode | null | undefined, attributeName: string): boolean
+export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | AttributeContainerNode | null | undefined, attributeName?: string): boolean {
   const attributeNode = attributeName
-    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    ? getAttribute(nodeOrAttribute as AttributeContainerNode, attributeName)
     : nodeOrAttribute as HTMLAttributeNode | null | undefined
 
   if (!attributeNode?.value?.children) return false
@@ -303,10 +382,10 @@ export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTM
  * Returns null for null/undefined input.
  */
 export function getStaticAttributeValue(attributeNode: HTMLAttributeNode | null | undefined): string | null
-export function getStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): string | null
-export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): string | null {
+export function getStaticAttributeValue(node: AttributeContainerNode | null | undefined, attributeName: string): string | null
+export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | AttributeContainerNode | null | undefined, attributeName?: string): string | null {
   const attributeNode = attributeName
-    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    ? getAttribute(nodeOrAttribute as AttributeContainerNode, attributeName)
     : nodeOrAttribute as HTMLAttributeNode | null | undefined
 
   if (!attributeNode) return null
@@ -319,15 +398,22 @@ export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTM
 }
 
 /**
+ * Attributes whose values are space-separated token lists.
+ */
+export const TOKEN_LIST_ATTRIBUTES = new Set([
+  "class", "data-controller", "data-action",
+])
+
+/**
  * Splits a space-separated attribute value into individual tokens.
  * Accepts a string, or an element/open tag + attribute name to look up.
  * Returns an empty array for null/undefined/empty input.
  */
 export function getTokenList(value: string | null | undefined): string[]
-export function getTokenList(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): string[]
-export function getTokenList(valueOrNode: string | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): string[] {
+export function getTokenList(node: AttributeContainerNode | null | undefined, attributeName: string): string[]
+export function getTokenList(valueOrNode: string | AttributeContainerNode | null | undefined, attributeName?: string): string[] {
   const value = attributeName
-    ? getStaticAttributeValue(valueOrNode as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    ? getStaticAttributeValue(valueOrNode as AttributeContainerNode, attributeName)
     : valueOrNode as string | null | undefined
 
   if (!value) return []
@@ -353,7 +439,7 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
 /**
  * Gets a specific attribute from an HTMLElementNode or HTMLOpenTagNode by name
  */
-export function getAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): HTMLAttributeNode | null {
+export function getAttribute(node: AttributeContainerNode | null | undefined, attributeName: string): HTMLAttributeNode | null {
   const attributes = getAttributes(node)
 
   return findAttributeByName(attributes, attributeName)
@@ -362,7 +448,7 @@ export function getAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | un
 /**
  * Checks if an element or open tag has a specific attribute
  */
-export function hasAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
+export function hasAttribute(node: AttributeContainerNode | null | undefined, attributeName: string): boolean {
   if (!node) return false
 
   return getAttribute(node, attributeName) !== null
@@ -370,12 +456,11 @@ export function hasAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | un
 
 /**
  * Checks if an attribute has a dynamic (ERB-containing) name.
- * Accepts an HTMLAttributeNode (wraps the core HTMLAttributeNameNode-level check).
  */
-export function hasDynamicAttributeNameOnAttribute(attributeNode: HTMLAttributeNode): boolean {
+export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
   if (!isHTMLAttributeNameNode(attributeNode.name)) return false
 
-  return hasDynamicAttributeName(attributeNode.name)
+  return hasDynamicAttributeNameNode(attributeNode.name)
 }
 
 /**
@@ -481,7 +566,7 @@ export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolea
 /**
  * Iterates over all attributes of an element or open tag node
  */
-export function forEachAttribute(node: HTMLElementNode | HTMLOpenTagNode, callback: (attributeNode: HTMLAttributeNode) => void): void {
+export function forEachAttribute(node: AttributeContainerNode, callback: (attributeNode: HTMLAttributeNode) => void): void {
   for (const attribute of getAttributes(node)) {
     callback(attribute)
   }
@@ -490,10 +575,14 @@ export function forEachAttribute(node: HTMLElementNode | HTMLOpenTagNode, callba
 // --- Class Name Grouping Utilities ---
 
 /**
- * Checks if a node is a whitespace-only literal (no visible content)
+ * Checks if a node is a whitespace-only literal or text node (no visible content)
  */
-export function isWhitespaceLiteral(node: Node): boolean {
-  return isLiteralNode(node) && !node.content.trim()
+export function isPureWhitespaceNode(node: Node): boolean {
+  if (isWhitespaceNode(node)) return true
+  if (isLiteralNode(node)) return !node.content.trim()
+  if (isHTMLTextNode(node)) return !(node.content ?? "").trim()
+
+  return false
 }
 
 /**
@@ -511,12 +600,7 @@ export function splitLiteralsAtWhitespace(nodes: Node[]): Node[] {
       const parts = node.content.match(/(\S+|\s+)/g) || []
 
       for (const part of parts) {
-        result.push(new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: part,
-          errors: [],
-          location: node.location
-        }))
+        result.push(LiteralNode.build({ content: part, location: node.location }))
       }
     } else {
       result.push(node)
@@ -559,7 +643,7 @@ export function groupNodesByClass(nodes: Node[]): Node[][] {
         startNewGroup = false
       } else if (previousNode && !isLiteralNode(previousNode)) {
         startNewGroup = true
-      } else if (currentGroup.every(member => isWhitespaceLiteral(member))) {
+      } else if (currentGroup.every(member => isPureWhitespaceNode(member))) {
         startNewGroup = true
       }
     } else {
@@ -687,4 +771,178 @@ export function getNodesAfterPosition<T extends Node>(nodes: T[], position: Posi
   return nodes.filter(node =>
     node.location && isPositionAfter(node.location.start, position, inclusive)
   )
+}
+
+/**
+ * Checks if two attributes are structurally equivalent (same name and value),
+ * ignoring positional data like location and range.
+ */
+export function isEquivalentAttribute(first: HTMLAttributeNode, second: HTMLAttributeNode): boolean {
+  const firstName = getAttributeName(first)
+  const secondName = getAttributeName(second)
+
+  if (firstName !== secondName) return false
+
+  if (firstName && TOKEN_LIST_ATTRIBUTES.has(firstName)) {
+    const firstTokens = getTokenList(getAttributeValue(first))
+    const secondTokens = getTokenList(getAttributeValue(second))
+
+    if (firstTokens.length !== secondTokens.length) return false
+
+    const sortedFirst = [...firstTokens].sort()
+    const sortedSecond = [...secondTokens].sort()
+
+    return sortedFirst.every((token, index) => token === sortedSecond[index])
+  }
+
+  return getAttributeValue(first) === getAttributeValue(second)
+}
+
+/**
+ * Checks if two open tags are structurally equivalent (same tag name and attributes),
+ * ignoring positional data like location and range.
+ */
+export function isEquivalentOpenTag(first: HTMLOpenTagNode, second: HTMLOpenTagNode): boolean {
+  if (first.tag_name?.value !== second.tag_name?.value) return false
+
+  const firstAttributes = getAttributes(first)
+  const secondAttributes = getAttributes(second)
+
+  if (firstAttributes.length !== secondAttributes.length) return false
+
+  return firstAttributes.every((attribute) =>
+    secondAttributes.some((other) => isEquivalentAttribute(attribute, other))
+  )
+}
+
+/**
+ * Checks if two elements have structurally equivalent open tags (same tag name and attributes),
+ * ignoring positional data like location and range. Does not compare body or close tag.
+ */
+export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementNode): boolean {
+  if (!isHTMLOpenTagNode(first.open_tag) || !isHTMLOpenTagNode(second.open_tag)) return false
+
+  return isEquivalentOpenTag(first.open_tag, second.open_tag)
+}
+
+// --- AST Mutation Utilities ---
+
+const CHILD_ARRAY_PROPS = ["children", "body", "statements", "conditions"]
+
+function isSearchableNode(value: any): value is Node {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'type' in value
+}
+
+/**
+ * Finds the array containing a target node in the AST, along with its index.
+ * Traverses child arrays and any node-valued property (e.g., `subsequent`, `else_clause`,
+ * `open_tag`, an attribute's `value`).
+ *
+ * Useful for autofix operations that need to splice nodes in/out of their parent array.
+ *
+ * @param root - The root node to search from
+ * @param target - The node to find
+ * @returns The containing array and the target's index, or null if not found
+ */
+export function findParentArray(root: Node, target: Node): { array: Node[], index: number } | null {
+  const search = (node: Node): { array: Node[], index: number } | null => {
+    const record = node as Record<string, any>
+
+    for (const prop of CHILD_ARRAY_PROPS) {
+      const array = record[prop]
+
+      if (Array.isArray(array)) {
+        const index = array.indexOf(target)
+
+        if (index !== -1) {
+          return { array, index }
+        }
+      }
+    }
+
+    for (const prop of CHILD_ARRAY_PROPS) {
+      const array = record[prop]
+
+      if (Array.isArray(array)) {
+        for (const child of array) {
+          if (isSearchableNode(child)) {
+            const result = search(child)
+
+            if (result) {
+              return result
+            }
+          }
+        }
+      }
+    }
+
+    for (const value of Object.values(record)) {
+      if (isSearchableNode(value)) {
+        const result = search(value)
+
+        if (result) {
+          return result
+        }
+      }
+    }
+
+    return null
+  }
+
+  return search(root)
+}
+
+/**
+ * Removes a node from an array, also removing an adjacent preceding
+ * whitespace-only literal if present.
+ */
+export function removeNodeFromArray(array: Node[], node: Node): void {
+  const index = array.indexOf(node)
+  if (index === -1) return
+
+  if (index > 0 && isPureWhitespaceNode(array[index - 1])) {
+    array.splice(index - 1, 2)
+  } else {
+    array.splice(index, 1)
+  }
+}
+
+/**
+ * Replaces an element in an array with its body (children), effectively unwrapping it.
+ */
+export function replaceNodeWithBody(array: Node[], element: HTMLElementNode): void {
+  const index = array.indexOf(element)
+  if (index === -1) return
+
+  array.splice(index, 1, ...element.body)
+}
+
+/**
+ * Creates a synthetic LiteralNode with the given content and zero location.
+ * Useful for inserting whitespace or newlines during AST mutations.
+ */
+export function createLiteral(content: string): LiteralNode {
+  return LiteralNode.build({ content })
+}
+
+export function createWhitespaceNode(): WhitespaceNode {
+  return WhitespaceNode.build({ value: Token.from("TOKEN_WHITESPACE", " ") })
+}
+
+export function createERBOutputNode(expression: string, tagOpening = "<%=", tagClosing = "%>"): ERBContentNode {
+  return ERBContentNode.build({
+    tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+    content: Token.from("TOKEN_ERB_CONTENT", expression),
+    tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
+    valid: true,
+  })
+}
+
+export function createERBSilentNode(expression: string, tagOpening = "<%", tagClosing = "%>"): ERBContentNode {
+  return ERBContentNode.build({
+    tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+    content: Token.from("TOKEN_ERB_CONTENT", expression),
+    tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
+    valid: true,
+  })
 }

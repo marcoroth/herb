@@ -13,6 +13,7 @@ module Engine
         escape: false,
         bufvar: "_buf",
         escapefunc: "::Herb::Engine.h",
+        visitors: Herb::Engine::Validators.all,
       }
     end
 
@@ -125,6 +126,61 @@ module Engine
 
       result = compile_template(template)
       assert result.is_a?(String)
+    end
+
+    test "tag.attributes in attribute position allowed" do
+      template = '<input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>'
+
+      result = compile_template(template)
+      assert result.is_a?(String)
+    end
+
+    test "tag.attributes mixed with HTML attributes allowed" do
+      template = '<button class="primary" <%= tag.attributes(id: "cta", aria: { expanded: false }) %>>Click</button>'
+
+      result = compile_template(template)
+      assert result.is_a?(String)
+    end
+
+    test "non-tag.attributes erb output in attribute position still blocked" do
+      template = "<div <%= @malicious %>>Content</div>"
+
+      error = assert_raises(Herb::Engine::SecurityError) do
+        compile_template(template)
+      end
+
+      assert_includes error.message, "ERB output tags (<%= %>) are not allowed in attribute position"
+    end
+
+    test "conditional tag.attributes in attribute position blocked" do
+      template = '<div <%= tag.attributes(id: "main") if condition %>></div>'
+
+      error = assert_raises(Herb::Engine::SecurityError) do
+        compile_template(template)
+      end
+
+      assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
+      assert_includes error.suggestion, "Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead."
+    end
+
+    test "tag.attributes with && operator blocked" do
+      template = '<div <%= condition && tag.attributes(id: "main") %>></div>'
+
+      error = assert_raises(Herb::Engine::SecurityError) do
+        compile_template(template)
+      end
+
+      assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
+    end
+
+    test "tag.attributes with ternary blocked" do
+      template = '<div <%= condition ? tag.attributes(id: "a") : tag.attributes(id: "b") %>></div>'
+
+      error = assert_raises(Herb::Engine::SecurityError) do
+        compile_template(template)
+      end
+
+      assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
     end
 
     test "token optimization basic" do

@@ -139,4 +139,26 @@ describe("erb-require-whitespace-inside-tags autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
   })
+
+  test("does not apply unsafe after-comment-equals fix without includeUnsafe", () => {
+    const input = '<%#=link_to "path", path %>'
+
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
+
+  test("applies unsafe after-comment-equals fix with includeUnsafe", () => {
+    const input = '<%#=link_to "path", path %>'
+    const expected = '<%#= link_to "path", path %>'
+
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const result = linter.autofix(input, undefined, undefined, { includeUnsafe: true })
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
 })

@@ -66,4 +66,4 @@ input: "<div <%begin%>data-one<%ensure%>data-always<%end%>></div>"
         │       └── tag_closing: ">" (location: (1:56)-(1:57))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

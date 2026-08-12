@@ -1,0 +1,9 @@
+---
+source: "Engine::Slots::VisitorTest#test_0035_does not assign a slot inside raw text elements"
+input: "<style>.a { color: <%= @a %>; }</style>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: e3b0c442
+
+slots: (none)

@@ -1,6 +1,17 @@
 import { Location, SerializedLocation } from "./location.js"
 
-export type DiagnosticSeverity = "error" | "warning" | "info" | "hint"
+export const DIAGNOSTIC_SEVERITIES = ["error", "warning", "info", "hint"] as const
+
+export type DiagnosticSeverity = typeof DIAGNOSTIC_SEVERITIES[number]
+export type DiagnosticTag = "unnecessary" | "deprecated"
+
+export function isDiagnosticSeverity(value: string): value is DiagnosticSeverity {
+  return (DIAGNOSTIC_SEVERITIES as readonly string[]).includes(value)
+}
+
+export function meetsSeverityThreshold(severity: DiagnosticSeverity, threshold: DiagnosticSeverity): boolean {
+  return DIAGNOSTIC_SEVERITIES.indexOf(severity) <= DIAGNOSTIC_SEVERITIES.indexOf(threshold)
+}
 
 /**
  * Base interface for all diagnostic information in Herb tooling.
@@ -32,6 +43,11 @@ export interface Diagnostic {
    * Optional source that generated this diagnostic (e.g., "parser", "linter", "lexer")
    */
   source?: string
+
+  /**
+   * Optional diagnostic tags for additional metadata (e.g., "unnecessary", "deprecated")
+   */
+  tags?: DiagnosticTag[]
 }
 
 /**
@@ -43,6 +59,17 @@ export interface SerializedDiagnostic {
   severity: DiagnosticSeverity
   code?: string
   source?: string
+  tags?: DiagnosticTag[]
+}
+
+/**
+ * Rebuilds a `Diagnostic` from its serialized form.
+ *
+ * @param diagnostic - The serialized diagnostic to rebuild
+ * @returns The diagnostic with its `Location` restored
+ */
+export function deserializeDiagnostic(diagnostic: SerializedDiagnostic): Diagnostic {
+  return { ...diagnostic, location: Location.from(diagnostic.location) }
 }
 
 export type MonacoSeverity = "error" | "warning" | "info"

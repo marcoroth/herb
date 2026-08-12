@@ -1,8 +1,11 @@
 import { describe, test } from "vitest"
 import { SVGTagNameCapitalizationRule } from "../../src/rules/svg-tag-name-capitalization.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(SVGTagNameCapitalizationRule)
+
+const PARTIAL = "app/views/shared/_icon.html.erb"
 
 describe("svg-tag-name-capitalization", () => {
   test("passes for correctly cased SVG elements", () => {
@@ -98,6 +101,74 @@ describe("svg-tag-name-capitalization", () => {
     `)
   })
 
+  test("fails for incorrectly cased tag.* helpers inside SVG", () => {
+    expectError('ERB opening SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('ERB opening SVG tag name `clippath` should use proper capitalization. Use `clipPath` instead.')
+
+    assertOffenses(`
+      <svg>
+        <%= tag.lineargradient id: "grad1" do %>
+          <stop offset="0%" />
+        <% end %>
+        <%= tag.clippath id: "clip" do %>
+          <rect x="0" y="0" width="100" height="100" />
+        <% end %>
+      </svg>
+    `)
+  })
+
+  test("fails for incorrectly cased content_tag helpers inside SVG", () => {
+    expectError('ERB opening SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('ERB opening SVG tag name `foreignobject` should use proper capitalization. Use `foreignObject` instead.')
+
+    assertOffenses(`
+      <svg>
+        <%= content_tag :lineargradient, id: "grad1" do %>
+          <stop offset="0%" />
+        <% end %>
+        <%= content_tag :foreignobject do %>
+          <div>HTML content</div>
+        <% end %>
+      </svg>
+    `)
+  })
+
+  test("passes for correctly cased tag.* helpers inside SVG", () => {
+    expectNoOffenses(`
+      <svg>
+        <%= tag.linearGradient id: "grad1" do %>
+          <stop offset="0%" />
+        <% end %>
+        <%= tag.clipPath id: "clip" do %>
+          <rect x="0" y="0" width="100" height="100" />
+        <% end %>
+      </svg>
+    `)
+  })
+
+  test("passes for correctly cased content_tag helpers inside SVG", () => {
+    expectNoOffenses(`
+      <svg>
+        <%= content_tag :linearGradient, id: "grad1" do %>
+          <stop offset="0%" />
+        <% end %>
+      </svg>
+    `)
+  })
+
+  test("ignores ERB tag helpers outside SVG", () => {
+    expectNoOffenses(`
+      <div>
+        <%= tag.lineargradient id: "grad1" do %>
+          <stop offset="0%" />
+        <% end %>
+        <%= content_tag :clippath do %>
+          <rect x="0" y="0" width="100" height="100" />
+        <% end %>
+      </div>
+    `)
+  })
+
   test("only checks elements within SVG context", () => {
     expectError('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
     expectError('Closing SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
@@ -112,5 +183,22 @@ describe("svg-tag-name-capitalization", () => {
         <P>Outside SVG again</P>
       </div>
     `)
+  })
+
+  describe("across call sites", () => {
+    test("reports miscased SVG tags when every call site renders the file inside an svg", () => {
+      expectError("Opening SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.")
+      expectError("Closing SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.")
+
+      assertOffenses(`<lineargradient id="g"></lineargradient>`, renderedFrom(PARTIAL, ["html", "body", "svg"]))
+    })
+
+    test("stays quiet when only some call sites supply an svg", () => {
+      expectNoOffenses(`<lineargradient id="g"></lineargradient>`, renderedFrom(PARTIAL, ["html", "body", "svg"], ["html", "body", "div"]))
+    })
+
+    test("stays quiet when nothing renders the file", () => {
+      expectNoOffenses(`<lineargradient id="g"></lineargradient>`, renderedFromNowhere(PARTIAL))
+    })
   })
 })

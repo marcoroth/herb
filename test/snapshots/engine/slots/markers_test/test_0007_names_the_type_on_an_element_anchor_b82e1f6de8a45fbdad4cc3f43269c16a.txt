@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0007_names the type on an element anchor"
+input: "{source: \"<div <%= @attrs %>>x</div>\", locals: {\"@attrs\" => \"id=\\\"1\\\"\"}, options: {visitors: [#<Herb::Engine::SlotVisitor>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:3aed3542--><div id="1" data-herb-slot="0:element">x</div><!--/herb-region:app/views/test.html.erb-->

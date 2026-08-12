@@ -16,6 +16,7 @@ else ifeq ($(os),Linux)
   JNI_LIB_EXT = so
   JNI_LIB_PREFIX = lib
   CC = clang
+  LD_UNDEFINED_FLAGS = -Wl,--no-undefined
 else
   JNI_LIB_EXT = dll
   JNI_LIB_PREFIX =
@@ -30,12 +31,12 @@ PRISM_BUILD = $(PRISM_PATH)/build
 
 JAVAC = $(JAVA_HOME)/bin/javac
 JAVA_CMD = $(JAVA_HOME)/bin/java
-CFLAGS = -std=c99 -Wall -Wextra -fPIC -O2 -DHERB_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_JSON -DPRISM_EXCLUDE_PACK -DPRISM_EXCLUDE_SERIALIZATION
+CFLAGS = -std=gnu99 -Wall -Wextra -fPIC -O2 -DHERB_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_JSON -DPRISM_EXCLUDE_PACK
 INCLUDES = -I. -I$(SRC_DIR)/include -I$(PRISM_INCLUDE) $(JNI_INCLUDES)
-LDFLAGS = -shared
+LDFLAGS = -shared $(LD_UNDEFINED_FLAGS)
 LIBS = $(PRISM_BUILD)/libprism.a
 
-HERB_SOURCES = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/**/*.c)
+HERB_SOURCES = $(shell find $(SRC_DIR) -name '*.c')
 HERB_OBJECTS = $(filter-out $(SRC_DIR)/main.o, $(HERB_SOURCES:.c=.o))
 
 JNI_SOURCES = herb_jni.c extension_helpers.c
@@ -94,11 +95,9 @@ java: $(JAVA_TIMESTAMP)
 
 $(JAVA_TIMESTAMP): $(JAVA_SOURCES) $(JUNIT_JAR)
 	@mkdir -p target/classes
-	@if [ -n "$(JAVA_SOURCES)" ]; then \
-		$(JAVAC) -cp $(JUNIT_JAR) -d target/classes $(JAVA_SOURCES); \
-		touch $(JAVA_TIMESTAMP); \
-		echo "Compiled Java classes"; \
-	fi
+	$(JAVAC) -cp $(JUNIT_JAR) -d target/classes $(JAVA_SOURCES)
+	@touch $(JAVA_TIMESTAMP)
+	@echo "Compiled Java classes"
 
 .PHONY: test
 test: jni java
@@ -106,7 +105,8 @@ test: jni java
 		-Djava.library.path=$(BUILD_DIR) \
 		-jar $(JUNIT_JAR) execute \
 		--class-path target/classes \
-		--select-package org.herb
+		--select-package org.herb \
+		--fail-if-no-tests
 
 .PHONY: cli
 cli: all

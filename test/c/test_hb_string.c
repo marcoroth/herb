@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_string.h"
+#include "../../src/include/lib/hb_string.h"
 #include <string.h>
 
 TEST(hb_string_equals_tests)
@@ -230,10 +230,27 @@ TEST(hb_string_range_tests)
   }
 END
 
+TEST(hb_string_equals_collapsing_whitespace_tests)
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string("a b"), hb_string("a b")));
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string("a  b"), hb_string("a b")));
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string("a b"), hb_string("a      b")));
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string("a\n\tb"), hb_string("a b")));
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string("  a  b  "), hb_string(" a b ")));
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string("\n  "), hb_string("\n")));
+  ck_assert(hb_string_equals_collapsing_whitespace(hb_string(""), hb_string("")));
+
+  ck_assert(!hb_string_equals_collapsing_whitespace(hb_string("a b"), hb_string("ab")));
+  ck_assert(!hb_string_equals_collapsing_whitespace(hb_string("a"), hb_string("a ")));
+  ck_assert(!hb_string_equals_collapsing_whitespace(hb_string("a"), hb_string(" a")));
+  ck_assert(!hb_string_equals_collapsing_whitespace(hb_string(""), hb_string(" ")));
+  ck_assert(!hb_string_equals_collapsing_whitespace(hb_string("a  b"), hb_string("a  c")));
+END
+
 TCase *hb_string_tests(void) {
   TCase *tags = tcase_create("Herb String");
 
   tcase_add_test(tags, hb_string_equals_tests);
+  tcase_add_test(tags, hb_string_equals_collapsing_whitespace_tests);
   tcase_add_test(tags, hb_string_offset_based_slice_tests);
   tcase_add_test(tags, hb_string_equals_case_insensitive_tests);
   tcase_add_test(tags, hb_string_is_empty_tests);

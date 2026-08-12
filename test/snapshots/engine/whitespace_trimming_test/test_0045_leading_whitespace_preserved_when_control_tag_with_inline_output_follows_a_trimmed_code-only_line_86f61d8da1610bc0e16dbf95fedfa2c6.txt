@@ -1,0 +1,12 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0045_leading whitespace preserved when control tag with inline output follows a trimmed code-only line"
+input: "{source: \"<a>\\n  <% if true %>\\n    <strong>Title</strong>\\n  <% end %>\\n  <% unless false %><%= \\\"content\\\" %>#L<%= 1 %><% end %>\\n</a>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<a>
+'.freeze;   if true 
+ _buf << '    <strong>Title</strong>
+'.freeze;   end 
+ _buf << '  '.freeze;   unless false 
+ _buf << ("content").to_s; _buf << '#L'.freeze; _buf << (1).to_s; end; _buf << '
+</a>'.freeze;
+_buf.to_s

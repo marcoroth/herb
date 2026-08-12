@@ -69,10 +69,11 @@ module Extractor
         %>
       HTML
 
-      expected = "            \n"
-
-      # TODO: it should also preserve the newlines in the ERB content
-      # expected = "\n  #\n  end\n  "
+      expected = <<~EXPECTED
+        \s\s\s
+        \s\s\s\s\s
+        \s\s
+      EXPECTED
 
       assert_equal expected, actual
     end
@@ -87,10 +88,52 @@ module Extractor
         %>
       HTML
 
-      expected = "                              \n"
+      expected = <<~EXPECTED
+        \s\s\s
+        \s\s\s\s\s
+        \s\s\s\s\s
+        \s\s\s\s\s
+        \s\s\s\s\s
+        \s\s
+      EXPECTED
 
-      # TODO: it should also preserve the newlines in the ERB content
-      # expected = "   \n     \n      \n     \n     \n  \n"
+      assert_equal expected, actual
+    end
+
+    test "multi-line erb comment with comments: true" do
+      actual = Herb.extract_ruby(<<~HTML, comments: true)
+        <%#
+          end
+          end
+          end
+          end
+        %>
+      HTML
+
+      expected = <<~EXPECTED
+        #\s\s
+        # end
+        # end
+        # end
+        # end
+        #\s\s
+      EXPECTED
+
+      assert_equal expected, actual
+    end
+
+    test "erb comment broken up over multiple lines with comments: true" do
+      actual = Herb.extract_ruby(<<~HTML, comments: true)
+        <%#
+          end
+        %>
+      HTML
+
+      expected = <<~EXPECTED
+        #\s\s
+        # end
+        #\s\s
+      EXPECTED
 
       assert_equal expected, actual
     end

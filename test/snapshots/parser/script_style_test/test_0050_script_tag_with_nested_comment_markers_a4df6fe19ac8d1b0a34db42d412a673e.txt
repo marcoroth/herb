@@ -31,7 +31,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:9)-(6:0))
         └── content: "\n"

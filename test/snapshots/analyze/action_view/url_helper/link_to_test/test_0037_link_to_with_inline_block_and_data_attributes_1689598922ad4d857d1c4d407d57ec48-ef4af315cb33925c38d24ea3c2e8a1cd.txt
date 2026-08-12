@@ -1,0 +1,71 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0037_link_to with inline block and data attributes"
+input: |2-
+<%= link_to("/profile", data: { turbo_method: "delete" }) { "Delete" } %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:73))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:73))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to("/profile", data: { turbo_method: "delete" }) { "Delete" } " (location: (1:3)-(1:71))
+    │   │       ├── tag_closing: "%>" (location: (1:71)-(1:73))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:32)-(1:54))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:44))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:32)-(1:44))
+    │   │           │   │               └── content: "data-turbo-method"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:44)-(1:46))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:46)-(1:54))
+    │   │           │           ├── open_quote: """ (location: (1:46)-(1:47))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:47)-(1:53))
+    │   │           │           │       └── content: "delete"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:53)-(1:54))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:12)-(1:22))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:22))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:12)-(1:22))
+    │   │               │               └── content: "href"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: "=" (location: (1:12)-(1:22))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:12)-(1:22))
+    │   │                       ├── open_quote: """ (location: (1:12)-(1:12))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:12)-(1:22))
+    │   │                       │       └── content: "/profile"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:22)-(1:22))
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:73))
+    │   │       └── content: "Delete"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:73)-(1:73))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:73)-(2:0))
+        └── content: "\n"

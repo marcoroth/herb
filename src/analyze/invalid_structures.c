@@ -2,11 +2,12 @@
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
-#include "../include/ast_node.h"
-#include "../include/ast_nodes.h"
+#include "../include/ast/ast_node.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_array.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
 #include "../include/visitor.h"
 
 #include <stdbool.h>
@@ -20,7 +21,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   bool is_begin_node = (node->type == AST_ERB_BEGIN_NODE);
   bool is_loop_node =
     (node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE || node->type == AST_ERB_FOR_NODE
-     || node->type == AST_ERB_BLOCK_NODE);
+     || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ITERATION_BLOCK_NODE);
 
   if (is_loop_node) { context->loop_depth++; }
   if (is_begin_node) { context->rescue_depth++; }
@@ -48,15 +49,15 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         return true;
       }
 
-      const char* keyword = NULL;
+      hb_string_T keyword = HB_STRING_NULL;
 
       if (context->loop_depth == 0) {
         if (has_error_message(analyzed, "Invalid break")) {
-          keyword = "`<% break %>`";
+          keyword = hb_string("`<% break %>`");
         } else if (has_error_message(analyzed, "Invalid next")) {
-          keyword = "`<% next %>`";
+          keyword = hb_string("`<% next %>`");
         } else if (has_error_message(analyzed, "Invalid redo")) {
-          keyword = "`<% redo %>`";
+          keyword = hb_string("`<% redo %>`");
         }
       } else {
         if (has_error_message(analyzed, "Invalid redo") || has_error_message(analyzed, "Invalid break")
@@ -70,7 +71,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
       }
 
       if (context->rescue_depth == 0) {
-        if (has_error_message(analyzed, "Invalid retry without rescue")) { keyword = "`<% retry %>`"; }
+        if (has_error_message(analyzed, "Invalid retry without rescue")) { keyword = hb_string("`<% retry %>`"); }
       } else {
         if (has_error_message(analyzed, "Invalid retry without rescue")) {
           if (is_loop_node) { context->loop_depth--; }
@@ -80,15 +81,15 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         }
       }
 
-      if (keyword == NULL) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
+      if (hb_string_is_null(keyword)) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
 
-      if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
+      if (!hb_string_is_null(keyword) && !token_value_empty(content_node->tag_closing)) {
         append_erb_control_flow_scope_error(
           keyword,
           node->location.start,
           node->location.end,
           context->allocator,
-          node->errors
+          &((AST_NODE_T*) node)->errors
         );
       }
     }
@@ -115,7 +116,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
         if (content_node->parsed && !content_node->valid && content_node->analyzed_ruby != NULL) {
           analyzed_ruby_T* analyzed = content_node->analyzed_ruby;
-          const char* keyword = erb_keyword_from_analyzed_ruby(analyzed);
+          hb_string_T keyword = erb_keyword_from_analyzed_ruby(analyzed);
 
           if (!token_value_empty(content_node->tag_closing)) {
             append_erb_control_flow_scope_error(
@@ -123,7 +124,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
               subsequent->location.start,
               subsequent->location.end,
               context->allocator,
-              subsequent->errors
+              &((AST_NODE_T*) subsequent)->errors
             );
           }
         }
@@ -161,13 +162,15 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
-      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE
+      || node->type == AST_ERB_ITERATION_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
     herb_visit_child_nodes(node, detect_invalid_erb_structures, context);
   }
 
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
-      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE
+      || node->type == AST_ERB_ITERATION_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
     check_erb_node_for_missing_end(node, context->allocator);
 
     if (is_loop_node) { context->loop_depth--; }

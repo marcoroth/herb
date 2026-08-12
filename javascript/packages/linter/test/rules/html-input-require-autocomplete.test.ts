@@ -5,7 +5,7 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 import { HTMLInputRequireAutocompleteRule } from "../../src/rules/html-input-require-autocomplete.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLInputRequireAutocompleteRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLInputRequireAutocompleteRule)
 
 describe("HTMLInputRequireAutocompleteRule", () => {
   test("when autocomplete is present on input types", () => {
@@ -21,10 +21,28 @@ describe("HTMLInputRequireAutocompleteRule", () => {
   })
 
   test("when input type requires autocomplete attribute and it is not present", () => {
-    expectError("Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.")
+    expectWarning("Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.")
 
     assertOffenses(dedent`
       <input type="email">
+    `)
+  })
+
+  test("when input is disabled", () => {
+    expectNoOffenses(dedent`
+      <input type="email" disabled>
+    `)
+  })
+
+  test("when input is disabled with a value", () => {
+    expectNoOffenses(dedent`
+      <input type="email" disabled="disabled">
+    `)
+  })
+
+  test("when input is dynamically disabled", () => {
+    expectNoOffenses(dedent`
+      <input type="email" disabled="<%= disabled? %>">
     `)
   })
 
@@ -53,7 +71,7 @@ describe("HTMLInputRequireAutocompleteRule", () => {
       })
 
       test(`usage of "${formHelper}" helper without autocomplete value`, () => {
-        expectError("Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.")
+        expectWarning("Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.")
 
         expectNoOffenses(dedent`
           <%= ${formHelper} 'foo' autocomplete: 'foo' %>

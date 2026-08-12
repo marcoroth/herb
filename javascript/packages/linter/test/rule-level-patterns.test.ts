@@ -177,6 +177,26 @@ describe("Rule-level include/only/exclude patterns", () => {
     })
   })
 
+  describe("rule.exclude with absolute file paths", () => {
+    test("excludes files when fileName is an absolute path", () => {
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              exclude: ["app/views/layouts/jasmine.*"]
+            }
+          }
+        }
+      }, { projectPath: testDir })
+
+      const linter = Linter.from(Herb, config)
+      const source = "<SPAN>Test</SPAN>"
+
+      const result = linter.lint(source, { fileName: "/test/project/app/views/layouts/jasmine.html.erb" })
+      expect(result.offenses.some(offense => offense.rule === "html-tag-name-lowercase")).toBe(false)
+    })
+  })
+
   describe("complex scenarios", () => {
     test("different rules can have different patterns", () => {
       const config = Config.fromObject({

@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SyntaxRenderer > ERB content highlighting > should highlight Ruby keywords in ERB blocks 1`] = `"[38;2;190;80;70m<%[0m [38;2;198;120;221mif[0m [38;2;198;120;221mtrue[0m %[38;2;190;80;70m>[0m"`;
+
+exports[`SyntaxRenderer > color disabled mode > should return plain text when NO_COLOR is set 1`] = `"<div>test</div>"`;
+
+exports[`SyntaxRenderer > comment state tracking > should preserve ERB highlighting in comments 1`] = `"[38;2;92;99;112m<!--[0m [38;2;190;80;70m<%[0m code[38;2;190;80;70m %[0m>[38;2;92;99;112m --[0m>"`;
+
+exports[`SyntaxRenderer > comment state tracking > should track HTML comment state 1`] = `"[38;2;92;99;112m<!--[0m[38;2;92;99;112m commen[0m[38;2;92;99;112mt -[0m->"`;
+
+exports[`SyntaxRenderer > highlight > should highlight simple HTML 1`] = `"[38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m[38;2;171;178;191mhello[0m[38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m"`;
+
+exports[`SyntaxRenderer > theme support > should work with different themes 1`] = `"[38;2;34;134;58m<[0m[38;2;34;134;58mdiv[0m[38;2;34;134;58m>[0m[38;2;36;41;46mtest[0m[38;2;34;134;58m</[0m[38;2;34;134;58mdiv[0m[38;2;34;134;58m>[0m"`;
+
+exports[`SyntaxRenderer > theme support > should work with simple theme 1`] = `"[31m<[0m[31mdiv[0m[31m>[0m[37mtest[0m[31m</[0m[31mdiv[0m[31m>[0m"`;

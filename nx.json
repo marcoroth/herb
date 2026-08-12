@@ -10,7 +10,10 @@
     "sharedGlobals": [
       "{workspaceRoot}/.github/workflows/javascript.yml",
       "{workspaceRoot}/src/**/*",
-      "{workspaceRoot}/wasm/**/*"
+      "{workspaceRoot}/wasm/**/*",
+      "{workspaceRoot}/config.yml",
+      "{workspaceRoot}/config/**/*",
+      "{workspaceRoot}/templates/**/*"
     ]
   },
   "plugins": [],
@@ -26,6 +29,7 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": ["default", "^default"],
       "options": {
         "parallel": false
       }
@@ -37,9 +41,7 @@
       "cache": false,
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "npx nx reset"
-        ],
+        "commands": ["npx nx reset"],
         "parallel": true
       }
     }
@@ -65,5 +67,6 @@
         "file": false
       }
     }
-  }
+  },
+  "analytics": false
 }

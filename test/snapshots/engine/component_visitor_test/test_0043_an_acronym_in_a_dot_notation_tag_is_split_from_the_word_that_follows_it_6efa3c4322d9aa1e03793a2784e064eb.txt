@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0043_an acronym in a dot notation tag is split from the word that follows it"
+input: "{source: \"<Users.HTTPCard />\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render "users/http_card").to_s;
+_buf.to_s

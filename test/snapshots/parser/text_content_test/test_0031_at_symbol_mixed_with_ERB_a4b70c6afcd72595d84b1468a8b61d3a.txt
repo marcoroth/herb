@@ -36,4 +36,4 @@ input: "<p>Contact <%= user.name %> @support</p>"
         │       └── tag_closing: ">" (location: (1:39)-(1:40))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

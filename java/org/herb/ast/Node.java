@@ -33,6 +33,12 @@ public interface Node {
   String inspect();
 
   /**
+   * Return a tree-like string representation of this node with all its fields.
+   * When source is provided, Prism nodes are deserialized and displayed.
+   */
+  String inspect(String source);
+
+  /**
    * Get all errors from this node and recursively from all child nodes.
    */
   List<Node> recursiveErrors();

@@ -421,7 +421,9 @@ describe("ERB Formatter Fixture Tests", () => {
               </nav>
             <% end %>
 
-            <main><%= yield %></main>
+            <main>
+              <%= yield %>
+            </main>
           </body>
         </html>
       `)
@@ -462,7 +464,9 @@ describe("ERB Formatter Fixture Tests", () => {
 
                   <% link_to "string", path, opt: "212", options: "222sdasdasd" %>
 
-                  <div><%= react_component({ greeting: 'react-rails.' }) %></div>
+                  <div>
+                    <%= react_component({ greeting: 'react-rails.' }) %>
+                  </div>
                 </div>
               </div>
             </div>
@@ -563,13 +567,21 @@ describe("ERB Formatter Fixture Tests", () => {
 
       expect(result).toBe(dedent`
         <div class="layout">
-          <header><%= yield :header %></header>
+          <header>
+            <%= yield :header %>
+          </header>
 
-          <main><%= yield %></main>
+          <main>
+            <%= yield %>
+          </main>
 
-          <aside><%= yield :sidebar if content_for?(:sidebar) %></aside>
+          <aside>
+            <%= yield :sidebar if content_for?(:sidebar) %>
+          </aside>
 
-          <footer><%= yield :footer %></footer>
+          <footer>
+            <%= yield :footer %>
+          </footer>
         </div>
       `)
     })

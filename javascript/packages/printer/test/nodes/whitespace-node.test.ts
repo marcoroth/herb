@@ -11,10 +11,8 @@ describe("WhitespaceNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = WhitespaceNode.from({
-      type: "AST_WHITESPACE_NODE",
+    const node = WhitespaceNode.build({
       location,
-      errors: [],
       value: createToken("TOKEN_WHITESPACE", "")
     })
 

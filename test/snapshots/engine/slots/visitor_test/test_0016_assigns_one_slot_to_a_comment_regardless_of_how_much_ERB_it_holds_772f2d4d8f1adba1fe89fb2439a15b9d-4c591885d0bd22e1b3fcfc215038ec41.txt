@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0016_assigns one slot to a comment regardless of how much ERB it holds"
+input: "<!-- <%= @a %> and <%= @b %> -->"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 65166bbb
+
+slots:
+  index=0  type=comment  node_path=[0]  location=1:0

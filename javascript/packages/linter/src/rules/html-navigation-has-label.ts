@@ -53,11 +53,12 @@ class NavigationHasLabelVisitor extends BaseRuleVisitor {
 
 export class HTMLNavigationHasLabelRule extends ParserRule {
   static ruleName = "html-navigation-has-label"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "error"
+      severity: "warning"
     }
   }
 

@@ -2,6 +2,12 @@
 
 module Herb
   module Colors
+    HIDE_CURSOR: ::String
+
+    SHOW_CURSOR: ::String
+
+    CLEAR_SCREEN: ::String
+
     # : () -> bool
     def self?.enabled?: () -> bool
 
@@ -31,5 +37,11 @@ module Herb
 
     # : (String) -> String
     def self?.bold: (String) -> String
+
+    # : (String, Integer) -> String
+    def self?.fg: (String, Integer) -> String
+
+    # : (String, Integer, Integer) -> String
+    def self?.fg_bg: (String, Integer, Integer) -> String
   end
 end

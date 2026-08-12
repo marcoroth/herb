@@ -1,0 +1,29 @@
+---
+name: "font_url"
+source: "ActionView::Helpers::AssetUrlHelper#font_url"
+gem: "actionview"
+output: "url"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "font_url(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-font_url"
+
+description: |-
+  Computes the full URL to a font asset.
+
+tag: null
+
+arguments:
+  - name: "source"
+    position: 1
+    type: "string"
+    optional: false
+    description: |-
+      Font file name or path.
+
+options: []
+block_arguments: []
+special_behaviors: []
+aliases:
+  - "url_to_font"

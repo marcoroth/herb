@@ -1,8 +1,8 @@
-import { isLiteralNode, isWhitespaceLiteral, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin } from "./rule-utils.js"
+
+import { isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 
 import type { Node } from "@herb-tools/core"
 import type { StaticAttributeDynamicValueParams } from "./rule-utils.js"
@@ -27,7 +27,7 @@ class ERBNoInterpolatedClassNamesVisitor extends AttributeVisitorMixin {
     const groups = groupNodesByClass(splitNodes)
 
     for (const group of groups) {
-      if (group.every(node => isWhitespaceLiteral(node))) continue
+      if (group.every(node => isPureWhitespaceNode(node))) continue
 
       const isInterpolated = group.some(node => !isLiteralNode(node))
       if (!isInterpolated) continue
@@ -47,6 +47,7 @@ class ERBNoInterpolatedClassNamesVisitor extends AttributeVisitorMixin {
 
 export class ERBNoInterpolatedClassNamesRule extends ParserRule {
   static ruleName = "erb-no-interpolated-class-names"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

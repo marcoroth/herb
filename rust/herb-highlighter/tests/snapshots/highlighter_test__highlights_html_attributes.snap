@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: "highlighter(\"onedark\").highlight(\"test.erb\",\n\"<div class=\\\"example\\\" id=\\\"test\\\">\", &plain())"
+---
+[38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m [38;2;209;154;102mclass[0m[38;2;86;182;194m=[0m[38;2;152;195;121m"[0m[38;2;152;195;121mexample[0m[38;2;152;195;121m"[0m [38;2;209;154;102mid[0m[38;2;86;182;194m=[0m[38;2;152;195;121m"[0m[38;2;152;195;121mtest[0m[38;2;152;195;121m"[0m[38;2;224;108;117m>[0m

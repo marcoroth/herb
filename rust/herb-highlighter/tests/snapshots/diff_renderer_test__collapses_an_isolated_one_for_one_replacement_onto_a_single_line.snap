@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+      1 │ <div>
+  ±   2 │   <span class='a'"a">one</span>
+      3 │   <p>untouched</p>

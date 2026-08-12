@@ -30,6 +30,24 @@ fn test_extract_ruby_with_comments() {
 }
 
 #[test]
+fn test_extract_ruby_multiline_erb_comment_with_comments() {
+  let source = "<%#\n  end\n  end\n%>\n";
+  let options = ExtractRubyOptions {
+    comments: true,
+    ..Default::default()
+  };
+  let result = extract_ruby_with_options(source, &options).unwrap();
+  assert_eq!(result, "#  \n# end\n# end\n#  \n");
+}
+
+#[test]
+fn test_extract_ruby_multiline_erb_comment_default() {
+  let source = "<%#\n  end\n  end\n%>\n";
+  let result = extract_ruby(source).unwrap();
+  assert_eq!(result, "   \n     \n     \n  \n");
+}
+
+#[test]
 fn test_extract_ruby_without_preserve_positions() {
   let source = "<% x = 1 %> <% y = 2 %>";
   let options = ExtractRubyOptions {

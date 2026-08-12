@@ -2,16 +2,19 @@ import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
 import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
+import type { DiffOptions, DiffResult } from "./diff-result.js"
 
 interface LibHerbBackendFunctions {
   lex: (source: string) => SerializedLexResult
-  lexFile: (path: string) => SerializedLexResult
 
   parse: (source: string, options?: ParseOptions) => SerializedParseResult
-  parseFile: (path: string) => SerializedParseResult
+
+  diff: (oldSource: string, newSource: string, options?: DiffOptions) => DiffResult
 
   extractRuby: (source: string, options?: ExtractRubyOptions) => string
   extractHTML: (source: string) => string
+
+  parseRuby: (source: string) => Uint8Array | null
 
   version: () => string
 }
@@ -21,10 +24,10 @@ export type BackendPromise = () => Promise<LibHerbBackend>
 const expectedFunctions = [
   "parse",
   "lex",
-  "parseFile",
-  "lexFile",
+  "diff",
   "extractRuby",
   "extractHTML",
+  "parseRuby",
   "version",
 ] as const
 

@@ -1,0 +1,19 @@
+---
+name: "compute_asset_host"
+source: "ActionView::Helpers::AssetUrlHelper#compute_asset_host"
+gem: "actionview"
+output: "text"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: 'compute_asset_host(source = "", options = {})'
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-compute_asset_host"
+
+description: |-
+  Computes the asset host for serving assets from a CDN or asset-specific subdomain.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

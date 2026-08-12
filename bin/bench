@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+bundle exec mtest "bench/"

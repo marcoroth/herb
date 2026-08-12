@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0021_tag.script with nonce false"
+input: "{source: \"<%= tag.script(nonce: false) { \\\"alert(1)\\\".html_safe } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script nonce="false">alert(1)</script>

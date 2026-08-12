@@ -1,0 +1,16 @@
+---
+source: "Analyze::RenderTest#test_0021_render disabled by default"
+input: |2-
+<%= render "header" %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:22))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render "header" " (location: (1:3)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:22)-(2:0))
+        └── content: "\n"

@@ -1,0 +1,6 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0007_<%graphql %>"
+input: "{source: \"<%graphql query { users { id } } %>\", options: {}}"
+---
+_buf = ::String.new;
+_buf.to_s

@@ -12,8 +12,7 @@ describe("ERBBeginNode Printing", () => {
   })
 
   test("can print with begin/end", () => {
-    const node = ERBBeginNode.from({
-      type: "AST_ERB_BEGIN_NODE",
+    const node = ERBBeginNode.build({
       location,
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " begin "),
@@ -30,8 +29,7 @@ describe("ERBBeginNode Printing", () => {
   })
 
   test("can print with begin/end and statements", () => {
-    const node = ERBBeginNode.from({
-      type: "AST_ERB_BEGIN_NODE",
+    const node = ERBBeginNode.build({
       location,
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " begin "),

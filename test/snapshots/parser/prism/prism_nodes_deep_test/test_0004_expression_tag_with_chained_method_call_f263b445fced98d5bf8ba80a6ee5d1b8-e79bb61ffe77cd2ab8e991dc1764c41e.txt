@@ -1,0 +1,44 @@
+---
+source: "Parser::Prism::PrismNodesDeepTest#test_0004_expression tag with chained method call"
+input: "<%= user.posts.count %>"
+options: {prism_nodes: true, prism_nodes_deep: true}
+---
+@ DocumentNode (location: (1:0)-(1:23))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:23))
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " user.posts.count " (location: (1:3)-(1:21))
+        ├── tag_closing: "%>" (location: (1:21)-(1:23))
+        ├── parsed: true
+        ├── valid: true
+        └── prism_node:
+            └── @ CallNode (location: (1:4)-(1:20))
+                ├── receiver:
+                │   └── @ CallNode (location: (1:4)-(1:14))
+                │       ├── receiver:
+                │       │   └── @ CallNode (location: (1:4)-(1:8))
+                │       │       ├── receiver: ∅
+                │       │       ├── call_operator_loc: ∅
+                │       │       ├── name: :user
+                │       │       ├── message_loc: (1:4)-(1:8)
+                │       │       ├── opening_loc: ∅
+                │       │       ├── arguments: ∅
+                │       │       ├── closing_loc: ∅
+                │       │       ├── equal_loc: ∅
+                │       │       └── block: ∅
+                │       ├── call_operator_loc: (1:8)-(1:9)
+                │       ├── name: :posts
+                │       ├── message_loc: (1:9)-(1:14)
+                │       ├── opening_loc: ∅
+                │       ├── arguments: ∅
+                │       ├── closing_loc: ∅
+                │       ├── equal_loc: ∅
+                │       └── block: ∅
+                ├── call_operator_loc: (1:14)-(1:15)
+                ├── name: :count
+                ├── message_loc: (1:15)-(1:20)
+                ├── opening_loc: ∅
+                ├── arguments: ∅
+                ├── closing_loc: ∅
+                ├── equal_loc: ∅
+                └── block: ∅

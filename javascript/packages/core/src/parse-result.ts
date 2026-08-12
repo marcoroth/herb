@@ -64,6 +64,7 @@ export class ParseResult extends Result {
     super(source, warnings, errors)
     this.value = value
     this.options = options
+    this.value.setSource(source)
   }
 
   /**

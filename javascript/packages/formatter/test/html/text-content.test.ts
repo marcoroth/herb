@@ -289,10 +289,23 @@ describe("@herb-tools/formatter", () => {
       </div>
     `)
 
-    expect(result).toEqual(dedent`
+    const expected = dedent`
       <div>
-        Check <em>this</em>: it works!
+        Check <em>this</em> : it works!
       </div>
+    `
+
+    expect(result).toEqual(expected)
+    expectFormattedToMatch(expected)
+  })
+
+  test("punctuation glued to an inline element stays glued", () => {
+    const result = formatter.format(dedent`
+      <div>Check <em>this</em>: it works!</div>
+    `)
+
+    expect(result).toEqual(dedent`
+      <div>Check <em>this</em>: it works!</div>
     `)
   })
 
@@ -406,11 +419,24 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("multiline span with text collapses to inline with spaces", () => {
+  test("multiline span with text keeps the author's newlines", () => {
     const source = dedent`
       <span>
         And on the other hand one can not remove whitespace entirely
       </span>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span>
+        And on the other hand one can not remove whitespace entirely
+      </span>
+    `)
+  })
+
+  test("single-line span with text keeps the author's single line", () => {
+    const source = dedent`
+      <span> And on the other hand one can not remove whitespace entirely </span>
     `
 
     const result = formatter.format(source)
@@ -456,8 +482,8 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("inline bold with ERB collapses when alone but preserves when adjacent", () => {
-    const source = dedent`
+  test("inline bold with ERB preserves user newlines", () => {
+    expectFormattedToMatch(dedent`
       <p>
         <b><%= a_thing %> <%= another_thing %></b>
       </p>
@@ -470,20 +496,12 @@ describe("@herb-tools/formatter", () => {
         <b><%= a_thing %> <%= another_thing %></b>
         <b><%= a_thing %> <%= another_thing %></b>a
       </p>
-    `
+    `)
 
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p><b><%= a_thing %> <%= another_thing %></b></p>
 
-      <p>
-        <b><%= a_thing %> <%= another_thing %></b>a
-      </p>
-
-      <p>
-        <b><%= a_thing %> <%= another_thing %></b>
-        <b><%= a_thing %> <%= another_thing %></b>a
-      </p>
+      <p><b><%= a_thing %> <%= another_thing %></b>a</p>
     `)
   })
 })

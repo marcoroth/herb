@@ -22,12 +22,6 @@
         "script": "dev"
       }
     },
-    "format": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "format"
-      }
-    },
     "clean": {
       "executor": "nx:run-script",
       "options": {

@@ -22,6 +22,7 @@ class HerbDisableCommentNoRedundantAllVisitor extends HerbDisableCommentParsedVi
 
 export class HerbDisableCommentNoRedundantAllRule extends ParserRule {
   static ruleName = "herb-disable-comment-no-redundant-all"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

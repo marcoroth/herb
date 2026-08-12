@@ -1,0 +1,10 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0005_tag.attributes with multiline HTML and dynamic values"
+input: "{source: \"<div\\n  data-controller=\\\"one\\\"\\n  <%= tag.attributes(class: [\\\"one\\\", \\\"two\\\", \\\"three\\\"], id: dom_id) %>\\n>\\n  Content\\n</div>\\n\", type: \"rails_output\", action_view_helpers: true}"
+---
+<div
+  data-controller="one"
+  class="one two three" id="post_1"
+>
+  Content
+</div>

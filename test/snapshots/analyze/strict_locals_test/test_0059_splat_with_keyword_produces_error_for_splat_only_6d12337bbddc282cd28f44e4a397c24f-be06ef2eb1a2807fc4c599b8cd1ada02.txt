@@ -1,0 +1,33 @@
+---
+source: "Analyze::StrictLocalsTest#test_0059_splat with keyword produces error for splat only"
+input: |2-
+<%# locals: (*items, title:) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (*items, title:) " (location: (1:3)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   └── locals: (2 items)
+    │       ├── @ RubyParameterNode (location: (1:13)-(1:19))
+    │       │   ├── errors: (1 error)
+    │       │   │   └── @ StrictLocalsSplatArgumentError (location: (1:13)-(1:19))
+    │       │   │       ├── message: "Strict locals only support keyword arguments. Splat argument `*items` is not allowed."
+    │       │   │       └── name: "items"
+    │       │   │
+    │       │   ├── name: "items" (location: (1:14)-(1:19))
+    │       │   ├── default_value: ∅
+    │       │   ├── kind: "rest"
+    │       │   └── required: false
+    │       │
+    │       └── @ RubyParameterNode (location: (1:21)-(1:27))
+    │           ├── name: "title" (location: (1:21)-(1:27))
+    │           ├── default_value: ∅
+    │           ├── kind: "keyword"
+    │           └── required: true
+    │
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

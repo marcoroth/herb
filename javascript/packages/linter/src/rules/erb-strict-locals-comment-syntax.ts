@@ -1,16 +1,40 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
+import { isRubyParameterNode } from "@herb-tools/core"
 import { isPartialFile } from "./file-utils.js"
-import { hasBalancedParentheses, splitByTopLevelComma } from "./string-utils.js"
 
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode } from "@herb-tools/core"
+import type { BaseAutofixContext, Mutable, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"
 
-export const STRICT_LOCALS_PATTERN = /^locals:\s+\(.*\)\s*$/s
+const LOCALS_PREFIX = "locals:"
 
-function isValidStrictLocalsFormat(content: string): boolean {
-  return STRICT_LOCALS_PATTERN.test(content)
+type StrictLocalsCommentNode = ERBContentNode | ERBStrictLocalsNode
+
+type StrictLocalsFix =
+  | { type: "erb-comment-tag" }
+  | { type: "plural-locals" }
+  | { type: "colon-after-locals" }
+  | { type: "space-after-colon" }
+  | { type: "wrap-parameters" }
+  | { type: "close-parameters" }
+  | { type: "remove-extra-commas" }
+  | { type: "keyword-argument", name: string }
+
+interface ERBStrictLocalsCommentSyntaxAutofixContext extends BaseAutofixContext {
+  node: Mutable<StrictLocalsCommentNode>
+  fix: StrictLocalsFix
+}
+
+interface Parameters {
+  open: number
+  close: number | null
+  commas: number[]
+}
+
+interface Segment {
+  start: number
+  end: number
 }
 
 function extractERBCommentContent(content: string): string {
@@ -23,18 +47,8 @@ function extractRubyCommentContent(content: string): string | null {
   return match ? match[1].trim() : null
 }
 
-function extractLocalsRemainder(content: string): string | null {
-  const match = content.match(/^locals?\b(.*)$/)
-
-  return match ? match[1] : null
-}
-
 function looksLikeLocalsDeclaration(content: string): boolean {
   return /^locals?\b/.test(content) && /[(:)]/.test(content)
-}
-
-function hasLocalsLikeSyntax(remainder: string): boolean {
-  return /[(:)]/.test(remainder)
 }
 
 function detectLocalsWithoutColon(content: string): boolean {
@@ -42,229 +56,427 @@ function detectLocalsWithoutColon(content: string): boolean {
 }
 
 function detectSingularLocal(content: string): boolean {
-  return content.startsWith('local:')
+  return content.startsWith("local:")
 }
 
 function detectMissingColonBeforeParens(content: string): boolean {
   return /^locals\s+\(/.test(content)
 }
 
-function detectMissingSpaceAfterColon(content: string): boolean {
-  return content.startsWith('locals:(')
+function hasError(node: { errors: HerbError[] }, type: string): boolean {
+  return node.errors.some(error => error.type === type)
 }
 
-function detectMissingParentheses(content: string): boolean {
-  return /^locals:\s*[^(]/.test(content)
-}
+function skipStringLiteral(content: string, index: number): number {
+  const quote = content[index]
+  let cursor = index + 1
 
-function detectEmptyLocalsWithoutParens(content: string): boolean {
-  return /^locals:\s*$/.test(content)
-}
+  while (cursor < content.length) {
+    if (content[cursor] === "\\") {
+      cursor += 2
 
-function validateCommaUsage(inner: string): string | null {
-  if (inner.startsWith(",") || inner.endsWith(",") || /,,/.test(inner)) {
-    return "Unexpected comma in `locals:` parameters."
-  }
-
-  return null
-}
-
-function validateBlockArgument(param: string): string | null {
-  if (param.startsWith("&")) {
-    return `Block argument \`${param}\` is not allowed. Strict locals only support keyword arguments.`
-  }
-
-  return null
-}
-
-function validateSplatArgument(param: string): string | null {
-  if (param.startsWith("*") && !param.startsWith("**")) {
-    return `Splat argument \`${param}\` is not allowed. Strict locals only support keyword arguments.`
-  }
-
-  return null
-}
-
-function validateDoubleSplatArgument(param: string): string | null {
-  if (param.startsWith("**")) {
-    if (/^\*\*\w+$/.test(param)) {
-      return null // Valid double-splat
+      continue
     }
 
-    return `Invalid double-splat syntax \`${param}\`. Use \`**name\` format (e.g., \`**attributes\`).`
+    if (content[cursor] === quote) return cursor + 1
+
+    cursor++
   }
 
-  return null
+  return cursor
 }
 
-function validateKeywordArgument(param: string): string | null {
-  if (!/^\w+:\s*/.test(param)) {
-    if (/^\w+$/.test(param)) {
-      return `Positional argument \`${param}\` is not allowed. Use keyword argument format: \`${param}:\`.`
+function scanParameters(content: string, open: number): Parameters {
+  const commas: number[] = []
+
+  let depth = 0
+  let cursor = open
+
+  while (cursor < content.length) {
+    const character = content[cursor]
+
+    if (character === '"' || character === "'") {
+      cursor = skipStringLiteral(content, cursor)
+
+      continue
     }
 
-    return `Invalid parameter \`${param}\`. Use keyword argument format: \`name:\` or \`name: default\`.`
-  }
+    if (character === "(" || character === "[" || character === "{") {
+      depth++
+    } else if (character === ")" || character === "]" || character === "}") {
+      depth--
 
-  return null
-}
-
-function validateParameter(param: string): string | null {
-  const trimmed = param.trim()
-
-  if (!trimmed) return null
-
-  return (
-    validateBlockArgument(trimmed) ||
-    validateSplatArgument(trimmed) ||
-    validateDoubleSplatArgument(trimmed) ||
-    (trimmed.startsWith("**") ? null : validateKeywordArgument(trimmed))
-  )
-}
-
-function validateLocalsSignature(paramsContent: string): string | null {
-  const match = paramsContent.match(/^\s*\(([\s\S]*)\)\s*$/)
-  if (!match) return null
-
-  const inner = match[1].trim()
-  if (!inner) return null // Empty locals is valid: locals: ()
-
-  const commaError = validateCommaUsage(inner)
-  if (commaError) return commaError
-
-  const params = splitByTopLevelComma(inner)
-
-  for (const param of params) {
-    const error = validateParameter(param)
-    if (error) return error
-  }
-
-  return null
-}
-
-class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
-  private seenStrictLocalsComment: boolean = false
-  private firstStrictLocalsLocation: { line: number; column: number } | null = null
-
-  visitERBContentNode(node: ERBContentNode): void {
-    const openingTag = node.tag_opening?.value
-    const content = node.content?.value
-
-    if (!content) return
-
-    const commentContent = this.extractCommentContent(openingTag, content, node)
-    if (!commentContent) return
-
-    const remainder = extractLocalsRemainder(commentContent)
-    if (!remainder || !hasLocalsLikeSyntax(remainder)) return
-
-    this.validateLocalsComment(commentContent, node)
-  }
-
-  private extractCommentContent(openingTag: string | undefined, content: string, node: ERBContentNode): string | null {
-    if (openingTag === "<%#") {
-      return extractERBCommentContent(content)
+      if (depth === 0) return { open, close: cursor, commas }
+    } else if (character === "," && depth === 1) {
+      commas.push(cursor)
     }
 
-    if (openingTag === "<%" || openingTag === "<%-") {
-      const rubyComment = extractRubyCommentContent(content)
+    cursor++
+  }
 
-      if (rubyComment && looksLikeLocalsDeclaration(rubyComment)) {
-        this.addOffense(`Use \`<%#\` instead of \`${openingTag} #\` for strict locals comments. Only ERB comment syntax is recognized by Rails.`, node.location)
+  return { open, close: null, commas }
+}
+
+function findParameters(content: string): Parameters | null {
+  const open = content.indexOf("(")
+
+  if (open === -1) return null
+
+  return scanParameters(content, open)
+}
+
+function segmentsOf(parameters: Parameters): Segment[] {
+  if (parameters.close === null) return []
+
+  const boundaries = [parameters.open, ...parameters.commas, parameters.close]
+
+  return boundaries.slice(0, -1).map((boundary, index) => ({ start: boundary + 1, end: boundaries[index + 1] }))
+}
+
+function isBareIdentifier(text: string): boolean {
+  return /^[a-z_][a-zA-Z0-9_]*$/.test(text)
+}
+
+function keywordizeParameters(content: string, parameters: Parameters, name?: string): string | null {
+  let result = content
+  let changed = false
+
+  for (const segment of segmentsOf(parameters).reverse()) {
+    const text = content.slice(segment.start, segment.end)
+
+    if (!isBareIdentifier(text.trim())) continue
+    if (name !== undefined && text.trim() !== name) continue
+
+    const insertAt = segment.start + text.trimEnd().length
+
+    result = `${result.slice(0, insertAt)}:${result.slice(insertAt)}`
+    changed = true
+
+    if (name !== undefined) break
+  }
+
+  return changed ? result : null
+}
+
+function suggestedParameters(inner: string): string {
+  const parameters = `(${inner})`
+
+  return keywordizeParameters(parameters, scanParameters(parameters, 0)) ?? parameters
+}
+
+function removeExtraCommas(content: string, parameters: Parameters): string | null {
+  if (parameters.close === null) return null
+
+  const ranges: Segment[] = []
+
+  for (const comma of parameters.commas) {
+    let before = comma - 1
+    let after = comma + 1
+
+    while (before > parameters.open && /\s/.test(content[before])) before--
+    while (after < parameters.close && /\s/.test(content[after])) after++
+
+    if (before === parameters.open) {
+      ranges.push({ start: comma, end: after })
+    } else if (after === parameters.close || content[before] === ",") {
+      ranges.push({ start: before + 1, end: comma + 1 })
+    }
+  }
+
+  if (ranges.length === 0) return null
+
+  let result = content
+
+  for (const range of ranges.reverse()) {
+    result = result.slice(0, range.start) + result.slice(range.end)
+  }
+
+  return result
+}
+
+function applyFix(node: Mutable<StrictLocalsCommentNode>, fix: StrictLocalsFix): boolean {
+  if (!node.tag_opening) return false
+  if (!node.content) return false
+
+  const content = node.content.value
+
+  switch (fix.type) {
+    case "erb-comment-tag": {
+      const match = content.match(/^\s*#/)
+      if (!match) return false
+
+      node.tag_opening.value = "<%#"
+      node.content.value = content.slice(match[0].length)
+
+      return true
+    }
+
+    case "plural-locals": {
+      if (!content.includes("local:")) return false
+
+      node.content.value = content.replace("local:", "locals:")
+
+      return true
+    }
+
+    case "colon-after-locals": {
+      if (!/locals?\s*\(/.test(content)) return false
+
+      node.content.value = content.replace(/locals?\s*\(/, "locals: (")
+
+      return true
+    }
+
+    case "space-after-colon": {
+      if (!/locals:\S/.test(content)) return false
+
+      node.content.value = content.replace(/locals:(?=\S)/, "locals: ")
+
+      return true
+    }
+
+    case "wrap-parameters": {
+      const index = content.indexOf(LOCALS_PREFIX)
+      if (index === -1) return false
+
+      const head = content.slice(0, index + LOCALS_PREFIX.length)
+      const rest = content.slice(index + LOCALS_PREFIX.length)
+      const trailing = rest.slice(rest.trimEnd().length)
+
+      node.content.value = `${head} ${suggestedParameters(rest.trim())}${trailing}`
+
+      return true
+    }
+
+    case "close-parameters": {
+      const parameters = findParameters(content)
+
+      if (!parameters || parameters.close !== null) {
+        return false
       }
+
+      const head = content.trimEnd()
+
+      node.content.value = `${head})${content.slice(head.length)}`
+
+      return true
     }
 
-    return null
+    case "remove-extra-commas": {
+      const parameters = findParameters(content)
+      if (!parameters) return false
+
+      const fixed = removeExtraCommas(content, parameters)
+      if (fixed === null) return false
+
+      node.content.value = fixed
+
+      return true
+    }
+
+    case "keyword-argument": {
+      const parameters = findParameters(content)
+      if (!parameters) return false
+
+      const fixed = keywordizeParameters(content, parameters, fix.name)
+      if (fixed === null) return false
+
+      node.content.value = fixed
+
+      return true
+    }
   }
+}
 
-  private validateLocalsComment(commentContent: string, node: ERBContentNode): void {
-    this.checkPartialFile(node)
-
-    if (!hasBalancedParentheses(commentContent)) {
-      this.addOffense("Unbalanced parentheses in `locals:` comment. Ensure all opening parentheses have matching closing parentheses.", node.location)
-      return
-    }
-
-    if (isValidStrictLocalsFormat(commentContent)) {
-      this.handleValidFormat(commentContent, node)
-      return
-    }
-
-    this.handleInvalidFormat(commentContent, node)
-  }
-
-  private checkPartialFile(node: ERBContentNode): void {
+class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocalsCommentSyntaxAutofixContext> {
+  visitERBStrictLocalsNode(node: ERBStrictLocalsNode): void {
     const isPartial = isPartialFile(this.context.fileName)
 
     if (isPartial === false) {
-      this.addOffense("Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.", node.location)
-    }
-  }
-
-  private handleValidFormat(commentContent: string, node: ERBContentNode): void {
-    if (this.seenStrictLocalsComment) {
       this.addOffense(
-        `Duplicate \`locals:\` declaration. Only one \`locals:\` comment is allowed per partial (first declaration at line ${this.firstStrictLocalsLocation?.line}).`,
+        "Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.",
         node.location
+      )
+    }
+
+    if (hasError(node, "STRICT_LOCALS_DUPLICATE_DECLARATION_ERROR")) {
+      this.addOffense(
+        "Duplicate strict locals declaration. Rails only uses the first `<%# locals: (...) %>` declaration in a partial.",
+        node.location
+      )
+    }
+
+    const content = node.content?.value ?? ""
+    const afterLocals = content.trim().slice(LOCALS_PREFIX.length)
+
+    if (afterLocals.length > 0 && !/^\s/.test(afterLocals)) {
+      this.addOffense(
+        "Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.",
+        node.location,
+        this.contextFor(node, { type: "space-after-colon" })
+      )
+    }
+
+    if (hasError(node, "STRICT_LOCALS_MISSING_PARENTHESIS_ERROR")) {
+      const parameters = afterLocals.trim()
+
+      this.addOffense(
+        parameters.length === 0
+          ? "Strict locals declarations always need parentheses. Use `<%# locals: () %>` for a partial without locals."
+          : `Strict locals parameters must be wrapped in parentheses. Use \`<%# locals: ${suggestedParameters(parameters)} %>\`.`,
+        node.location,
+        this.contextFor(node, { type: "wrap-parameters" })
       )
 
       return
     }
 
-    this.seenStrictLocalsComment = true
-    this.firstStrictLocalsLocation = {
-      line: node.location.start.line,
-      column: node.location.start.column
-    }
+    if (this.reportSyntaxErrors(node, content)) return
 
-    const paramsMatch = commentContent.match(/^locals:\s*(\([\s\S]*\))\s*$/)
-
-    if (paramsMatch) {
-      const error = validateLocalsSignature(paramsMatch[1])
-
-      if (error) {
-        this.addOffense(error, node.location)
-      }
-    }
+    this.reportArgumentErrors(node)
   }
 
-  private handleInvalidFormat(commentContent: string, node: ERBContentNode): void {
-    if (detectLocalsWithoutColon(commentContent)) {
-      this.addOffense("Use `locals:` with a colon, not `locals()`. Correct format: `<%# locals: (...) %>`.", node.location)
+  visitERBContentNode(node: ERBContentNode): void {
+    const openingTag = node.tag_opening?.value
+
+    const content = node.content?.value
+    if (!content) return
+
+    if (openingTag === "<%" || openingTag === "<%-") {
+      const rubyComment = extractRubyCommentContent(content)
+
+      if (rubyComment && looksLikeLocalsDeclaration(rubyComment)) {
+        this.addOffense(
+          `Use \`<%#\` instead of \`${openingTag} #\` for strict locals comments. Only ERB comment syntax is recognized by Rails.`,
+          node.location,
+          this.contextFor(node, { type: "erb-comment-tag" })
+        )
+      }
+
       return
     }
 
+    if (openingTag !== "<%#") return
+
+    const commentContent = extractERBCommentContent(content)
+    const remainder = commentContent.match(/^locals?\b(.*)/s)?.[1]
+
+    if (!remainder || !/[(:)]/.test(remainder)) return
+
     if (detectSingularLocal(commentContent)) {
-      this.addOffense("Use `locals:` (plural), not `local:`.", node.location)
+      this.addOffense(
+        "Use `locals:` (plural), not `local:`.",
+        node.location,
+        this.contextFor(node, { type: "plural-locals" })
+      )
+
+      return
+    }
+
+    if (detectLocalsWithoutColon(commentContent)) {
+      this.addOffense(
+        "Use `locals:` with a colon, not `locals()`. Correct format: `<%# locals: (...) %>`.",
+        node.location,
+        this.contextFor(node, { type: "colon-after-locals" })
+      )
+
       return
     }
 
     if (detectMissingColonBeforeParens(commentContent)) {
-      this.addOffense("Use `locals:` with a colon before the parentheses, not `locals (`.", node.location)
+      this.addOffense(
+        "Use `locals:` with a colon before the parentheses, not `locals (`.",
+        node.location,
+        this.contextFor(node, { type: "colon-after-locals" })
+      )
+
       return
     }
+  }
 
-    if (detectMissingSpaceAfterColon(commentContent)) {
-      this.addOffense("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.", node.location)
-      return
+  private reportSyntaxErrors(node: ERBStrictLocalsNode, content: string): boolean {
+    const syntaxErrors = node.errors.filter((error): error is RubyParseError => error.type === "RUBY_PARSE_ERROR")
+    if (syntaxErrors.length === 0) return false
+
+    const parameters = findParameters(content)
+
+    if (parameters && parameters.close === null) {
+      this.addOffense(
+        "Unbalanced parentheses in the strict locals declaration. Add the missing closing `)`.",
+        node.location,
+        this.contextFor(node, { type: "close-parameters" })
+      )
+
+      return true
     }
 
-    if (detectMissingParentheses(commentContent)) {
-      this.addOffense("Wrap parameters in parentheses: `locals: (name:)` or `locals: (name: default)`.", node.location)
-      return
+    if (parameters && removeExtraCommas(content, parameters) !== null) {
+      this.addOffense(
+        "Remove the extra comma from the strict locals parameters.",
+        node.location,
+        this.contextFor(node, { type: "remove-extra-commas" })
+      )
+
+      return true
     }
 
-    if (detectEmptyLocalsWithoutParens(commentContent)) {
-      this.addOffense("Add parameters after `locals:`. Use `locals: (name:)` or `locals: ()` for no locals.", node.location)
-      return
-    }
+    this.addOffense(
+      `Invalid Ruby syntax in the strict locals declaration: ${syntaxErrors[0].error_message}.`,
+      node.location
+    )
 
-    this.addOffense("Invalid `locals:` syntax. Use format: `locals: (name:, option: default)`.", node.location)
+    return true
+  }
+
+  private reportArgumentErrors(node: ERBStrictLocalsNode): void {
+    for (const local of node.locals) {
+      if (!isRubyParameterNode(local)) continue
+
+      const name = local.name?.value ?? ""
+
+      for (const error of local.errors) {
+        if (error.type === "STRICT_LOCALS_POSITIONAL_ARGUMENT_ERROR") {
+          this.addOffense(
+            `Strict locals only support keyword arguments. Use \`${name}:\` instead of the positional argument \`${name}\`.`,
+            local.location,
+            this.contextFor(node, { type: "keyword-argument", name })
+          )
+        } else if (error.type === "STRICT_LOCALS_SPLAT_ARGUMENT_ERROR") {
+          this.addOffense(
+            `Strict locals only support keyword arguments. The splat argument \`*${name}\` is not supported. Use \`**${name}\` to accept arbitrary keyword arguments.`,
+            local.location
+          )
+        } else if (error.type === "STRICT_LOCALS_BLOCK_ARGUMENT_ERROR") {
+          this.addOffense(
+            `Strict locals only support keyword arguments. The block argument \`&${name}\` is not supported.`,
+            local.location
+          )
+        }
+      }
+    }
+  }
+
+  private contextFor(node: StrictLocalsCommentNode, fix: StrictLocalsFix): ERBStrictLocalsCommentSyntaxAutofixContext {
+    return {
+      node: node as Mutable<StrictLocalsCommentNode>,
+      nodeType: "AST_ERB_CONTENT_NODE",
+      fix
+    }
   }
 }
 
-export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
+export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocalsCommentSyntaxAutofixContext> {
+  static autocorrectable = true
+  static autofixRequiresContext = true
+  static consumesParserErrors = true
   static ruleName = "erb-strict-locals-comment-syntax"
+  static introducedIn = this.version("0.8.8")
+
+  get parserOptions() {
+    return {
+      strict_locals: true
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -273,11 +485,19 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
     }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBStrictLocalsCommentSyntaxAutofixContext>[] {
     const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<ERBStrictLocalsCommentSyntaxAutofixContext>, result: ParseResult): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node, fix } = offense.autofixContext
+
+    return applyFix(node, fix) ? result : null
   }
 }

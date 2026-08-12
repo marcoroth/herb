@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0029_output tag with -%> followed by else branch"
+input: "{source: \"<% if false %>\\nX\\n<%= -%>\\n<% else %>\\nY\\n<% end %>\", locals: {}, options: {}}"
+---
+Y

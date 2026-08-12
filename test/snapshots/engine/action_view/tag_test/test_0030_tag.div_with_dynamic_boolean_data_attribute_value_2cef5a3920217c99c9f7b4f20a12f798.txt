@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0030_tag.div with dynamic boolean data attribute value"
+input: "{source: \"<%= tag.div data: { loading: is_loading } %>\", locals: {is_loading: true}, options: {action_view_helpers: true}}"
+---
+<div data-loading="true"></div>

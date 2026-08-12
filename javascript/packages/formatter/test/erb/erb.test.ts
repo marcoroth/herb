@@ -98,7 +98,9 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div>
-        <h1 class="<%= classes %>"><%= title %></h1>
+        <h1 class="<%= classes %>">
+          <%= title %>
+        </h1>
       </div>
     `)
   })
@@ -362,8 +364,7 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <p>
-        Should not be duplicated.
-        <br />
+        Should not be duplicated.<br />
         Text with a inline
         element<a href="mailto:something@something.com">something@something.com</a>
         and some more text after
@@ -619,7 +620,9 @@ describe("@herb-tools/formatter", () => {
 
         <body style="font-family: 'DM Sans', Arial, sans-serif;">
           <% if content_for?(:preheader) %>
-            <div class="hidden"><%= yield :preheader %></div>
+            <div class="hidden">
+              <%= yield :preheader %>
+            </div>
           <% end %>
 
           <div
@@ -1345,18 +1348,14 @@ describe("@herb-tools/formatter", () => {
       </p>
 
       <p>
-        Subscription Details:
-        <br>
-        Plan Name: <b><%= @subscription.plan&.name || "Custom Plan" %></b>
-        <br>
-        Resumption Date: <b><%= render_date(Time.current, format: '%B %e, %Y') %></b>
-        <br>
+        Subscription Details:<br>
+        Plan Name: <b><%= @subscription.plan&.name || "Custom Plan" %></b><br>
+        Resumption Date:
+        <b><%= render_date(Time.current, format: '%B %e, %Y') %></b><br>
         Pickups Left:
-        <b><%= @subscription.credit_service.available_credits.values.first || 0 %><%= " (#{@subscription.loads * 20}lbs per pickup)" if @subscription.loads > 0 %></b>
-        <br>
+        <b><%= @subscription.credit_service.available_credits.values.first || 0 %><%= " (#{@subscription.loads * 20}lbs per pickup)" if @subscription.loads > 0 %></b><br>
         Next Billing Date:
-        <b><%= render_date(@subscription.current_period_end, format: '%B %e, %Y') %></b>
-        <br>
+        <b><%= render_date(@subscription.current_period_end, format: '%B %e, %Y') %></b><br>
       </p>
 
       <p>Why wait now? Schedule your next pickup today!</p>

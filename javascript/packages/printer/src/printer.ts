@@ -71,7 +71,9 @@ export abstract class Printer extends Visitor {
     return this.context.getOutput()
   }
 
-  protected write(content: string): void {
-    this.context.write(content)
+  protected write(content: string | null | undefined): void {
+    if (content !== null && content !== undefined) {
+      this.context.write(content)
+    }
   }
 }

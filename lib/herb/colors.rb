@@ -5,6 +5,10 @@
 
 module Herb
   module Colors
+    HIDE_CURSOR = "\e[?25l"
+    SHOW_CURSOR = "\e[?25h"
+    CLEAR_SCREEN = "\e[2J\e[H"
+
     module_function
 
     #: () -> bool
@@ -77,6 +81,20 @@ module Herb
       return string unless enabled?
 
       "\e[1m#{string}\e[0m"
+    end
+
+    #: (String, Integer) -> String
+    def fg(string, color)
+      return string unless enabled?
+
+      "\e[38;5;#{color}m#{string}\e[0m"
+    end
+
+    #: (String, Integer, Integer) -> String
+    def fg_bg(string, foreground, background)
+      return string unless enabled?
+
+      "\e[38;5;#{foreground};48;5;#{background}m#{string}\e[0m"
     end
   end
 end

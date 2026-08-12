@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0017_expression tag with right trim inline"
+input: "{source: \"<%= \\\"hello\\\" -%> world\", locals: {}, options: {}}"
+---
+hello world

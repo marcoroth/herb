@@ -1,0 +1,19 @@
+---
+source: "Analyze::EscapeTest#test_0005_unbalanced escaped erb tag"
+input: "<%% if condition %>"
+---
+@ DocumentNode (location: (1:0)-(1:19))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:19))
+        ├── errors: (1 error)
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:19))
+        │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "`<% if %>`"
+        │
+        ├── tag_opening: "<%%" (location: (1:0)-(1:3))
+        ├── content: " if condition " (location: (1:3)-(1:17))
+        ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        ├── then_keyword: ∅
+        ├── statements: []
+        ├── subsequent: ∅
+        └── end_node: ∅

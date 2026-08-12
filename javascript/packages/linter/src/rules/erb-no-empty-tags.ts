@@ -17,17 +17,24 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
     this.addOffense(
       "ERB tag should not be empty. Remove empty ERB tags or add content.",
       node.location,
+      undefined,
+      undefined,
+      ["unnecessary"],
     )
   }
 }
 
 export class ERBNoEmptyTagsRule extends ParserRule {
   static ruleName = "erb-no-empty-tags"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
     }
   }
 

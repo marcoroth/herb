@@ -1,0 +1,50 @@
+#ifndef HERB_AST_NODES_H
+#define HERB_AST_NODES_H
+
+#include <stdbool.h>
+#include <prism.h>
+
+#include "../analyze/analyzed_ruby.h"
+#include "../prism/herb_prism_node.h"
+#include "../prism/prism_context.h"
+#include "../prism/prism_serialized.h"
+#include "../location/location.h"
+#include "../location/position.h"
+#include "../lexer/token_struct.h"
+#include "../lib/hb_allocator.h"
+#include "../lib/hb_array.h"
+#include "../lib/hb_buffer.h"
+#include "../lib/hb_string.h"
+
+typedef enum {
+<%- nodes.each do |node| -%>
+  <%= node.type.upcase %>,
+<%- end -%>
+} ast_node_type_T;
+
+typedef struct AST_NODE_STRUCT {
+  ast_node_type_T type;
+  location_T location;
+  // maybe a range too?
+  hb_array_T* errors;
+} AST_NODE_T;
+
+<%- nodes.each do |node| -%>
+<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name, ";"].join }.join("\n  ") : "/* no additional fields */" -%>
+
+typedef struct <%= node.struct_name %> {
+  AST_NODE_T base;
+  <%= arguments %>
+} <%= node.struct_type %>;
+<%- end -%>
+
+<%- nodes.each do |node| -%>
+<%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors", "hb_allocator_T* allocator"] -%>
+<%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>);
+<%- end -%>
+
+hb_string_T ast_node_type_to_string(AST_NODE_T* node);
+hb_string_T ast_node_human_type(AST_NODE_T* node);
+
+#endif

@@ -1,0 +1,88 @@
+---
+source: "Analyze::RenderBlockTest#test_0014_render with optional block argument"
+input: |2-
+<%= render FormComponent.new do |form = nil| %>
+  <p>content</p>
+<% end %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render FormComponent.new do |form = nil| " (location: (1:3)-(1:45))
+    │   ├── tag_closing: "%>" (location: (1:45)-(1:47))
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(3:9))
+    │   │       ├── partial: ∅
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: "FormComponent.new" (location: (1:11)-(1:28))
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: []
+    │   │
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:47)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:16))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(2:12))
+    │   │   │   │       └── content: "content"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:12)-(2:16))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:12)-(2:14))
+    │   │   │   │       ├── tag_name: "p" (location: (2:14)-(2:15))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:15)-(2:16))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:16)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:33)-(1:43))
+    │   │       ├── name: "form" (location: (1:33)-(1:37))
+    │   │       ├── default_value:
+    │   │       │   └── @ RubyLiteralNode (location: (1:40)-(1:43))
+    │   │       │       └── content: "nil"
+    │   │       │
+    │   │       ├── kind: "positional"
+    │   │       └── required: false
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

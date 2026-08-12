@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0038_tag.div with false boolean attribute"
+input: "{source: \"<%= tag.div disabled: false %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div></div>

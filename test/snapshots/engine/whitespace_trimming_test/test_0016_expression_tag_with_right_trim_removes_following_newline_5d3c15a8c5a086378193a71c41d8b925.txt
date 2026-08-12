@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0016_expression tag with right trim removes following newline"
+input: "{source: \"<%= \\\"hello\\\" -%>\\nworld\", locals: {}, options: {}}"
+---
+helloworld

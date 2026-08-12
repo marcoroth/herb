@@ -1,0 +1,7 @@
+<div <%= tag.attributes(class: ["one", "two", "three"]) %>>
+  Content
+</div>
+
+<input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
+
+<button class="primary" <%= tag.attributes(id: "cta", aria: { expanded: false }) %>>Click</button>

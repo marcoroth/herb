@@ -61,7 +61,7 @@ module Engine
       template = '<div <%= "class=btn" %>>Test</div>'
 
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(template, filename: "app/views/test.erb")
+        Herb::Engine.new(template, filename: "app/views/test.erb", visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "app/views/test.erb"
@@ -102,6 +102,54 @@ module Engine
           <span>Pending</span>
         <% else %>
           <span>Unknown</span>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "inline comment on end inside output block does not break parens" do
+      template = "<%= render Foo.new do %>hello<% end # comment %>"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "block with rescue compiles correctly" do
+      template = <<~ERB
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "block with rescue and ensure compiles correctly" do
+      template = <<~ERB
+        <% items.each do |item| %>
+          <%= item %>
+        <% rescue StandardError => e %>
+          <%= e.message %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "block with rescue, else, and ensure compiles correctly" do
+      template = <<~ERB
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% ensure %>
+          <%= "cleanup" %>
         <% end %>
       ERB
 

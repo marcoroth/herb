@@ -1,4 +1,6 @@
 import { FormatPrinter } from "./format-printer.js"
+import { convertIndentation } from "@herb-tools/printer"
+import { BYTE_ORDER_MARK } from "@herb-tools/core"
 
 import { isScaffoldTemplate } from "./scaffold-template-detector.js"
 import { resolveFormatOptions } from "./options.js"
@@ -6,8 +8,16 @@ import { hasFormatterIgnoreDirective } from "./format-ignore.js"
 
 import type { Config } from "@herb-tools/config"
 import type { RewriteContext } from "@herb-tools/rewriter"
-import type { HerbBackend, ParseResult } from "@herb-tools/core"
+import type { HerbBackend, ParseResult, ParseOptions } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
+
+export type FormatSkipReason = "parse-errors" | "scaffold" | "ignore-directive"
+
+export interface FormatResult {
+  output: string
+  skipped: FormatSkipReason | null
+  errorCount: number
+}
 
 /**
  * Formatter uses a Herb Backend to parse the source and then
@@ -16,6 +26,7 @@ import type { FormatOptions } from "./options.js"
 export class Formatter {
   private herb: HerbBackend
   private options: Required<FormatOptions>
+  private parseOptions: ParseOptions
 
   /**
    * Creates a Formatter instance from a Config object (recommended).
@@ -34,6 +45,7 @@ export class Formatter {
 
     const mergedOptions: FormatOptions = {
       indentWidth: options.indentWidth ?? formatterConfig.indentWidth,
+      indentStyle: options.indentStyle ?? formatterConfig.indentStyle,
       maxLineLength: options.maxLineLength ?? formatterConfig.maxLineLength,
       preRewriters: options.preRewriters,
       postRewriters: options.postRewriters,
@@ -48,20 +60,32 @@ export class Formatter {
    * @param herb - The Herb backend instance for parsing
    * @param options - Format options (including rewriters)
    */
-  constructor(herb: HerbBackend, options: FormatOptions = {}) {
+  constructor(herb: HerbBackend, options: FormatOptions = {}, parseOptions: ParseOptions = {}) {
     this.herb = herb
     this.options = resolveFormatOptions(options)
+    this.parseOptions = parseOptions
   }
 
   /**
    * Format a source string, optionally overriding format options per call.
    */
   format(source: string, options: FormatOptions = {}, filePath?: string): string {
-    const result = this.parse(source)
+    return this.formatWithResult(source, options, filePath).output
+  }
 
-    if (result.failed) return source
-    if (isScaffoldTemplate(result)) return source
-    if (hasFormatterIgnoreDirective(result.value)) return source
+  formatWithResult(source: string, options: FormatOptions = {}, filePath?: string): FormatResult {
+    const input = source.startsWith(BYTE_ORDER_MARK) ? source.slice(BYTE_ORDER_MARK.length) : source
+    const result = this.parse(input)
+
+    if (result.options.action_view_helpers) {
+      console.warn("[Herb Formatter] Warning: Formatting a document parsed with `action_view_helpers: true`. The result may not be 100% accurate.")
+    }
+
+    const errors = result.recursiveErrors()
+
+    if (errors.length > 0) return { output: source, skipped: "parse-errors", errorCount: errors.length }
+    if (isScaffoldTemplate(result)) return { output: source, skipped: "scaffold", errorCount: 0 }
+    if (hasFormatterIgnoreDirective(result.value)) return { output: source, skipped: "ignore-directive", errorCount: 0 }
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
@@ -82,7 +106,7 @@ export class Formatter {
       }
     }
 
-    let formatted = new FormatPrinter(source, resolvedOptions).print(node)
+    let formatted = new FormatPrinter(input, resolvedOptions, this.herb).print(node)
 
     if (resolvedOptions.postRewriters.length > 0) {
       const context: RewriteContext = {
@@ -99,11 +123,15 @@ export class Formatter {
       }
     }
 
-    return formatted
+    if (resolvedOptions.indentStyle === "tab") {
+      formatted = convertIndentation(formatted, resolvedOptions.indentWidth, "tab")
+    }
+
+    return { output: formatted, skipped: null, errorCount: 0 }
   }
 
   private parse(source: string): ParseResult {
     this.herb.ensureBackend()
-    return this.herb.parse(source)
+    return this.herb.parse(source, this.parseOptions)
   }
 }

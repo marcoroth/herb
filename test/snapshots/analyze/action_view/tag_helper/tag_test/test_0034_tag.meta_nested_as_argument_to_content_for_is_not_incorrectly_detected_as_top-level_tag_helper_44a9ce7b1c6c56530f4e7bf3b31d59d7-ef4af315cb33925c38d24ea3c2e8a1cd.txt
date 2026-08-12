@@ -1,0 +1,17 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0034_tag.meta nested as argument to content_for is not incorrectly detected as top-level tag helper"
+input: |2-
+<% content_for :head, tag.meta(name: "viewport", content: "width=device-width, initial-scale=1") %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:99))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " content_for :head, tag.meta(name: "viewport", content: "width=device-width, initial-scale=1") " (location: (1:2)-(1:97))
+    │   ├── tag_closing: "%>" (location: (1:97)-(1:99))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:99)-(2:0))
+        └── content: "\n"

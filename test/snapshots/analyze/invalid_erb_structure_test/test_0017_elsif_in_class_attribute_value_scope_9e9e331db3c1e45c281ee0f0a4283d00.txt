@@ -72,7 +72,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (3:4)-(3:5))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:5)-(4:0))
         └── content: "\n"

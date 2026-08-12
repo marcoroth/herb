@@ -1,0 +1,16 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: "fixture.normalize(&String::from_utf8_lossy(&output.stdout))"
+---
+<test-file>
+
+  →   1 │ <h1 class="title">
+        │     ~~~~~
+        │     [error] Test offense (test-rule)
+        │
+      2 │   <% if user.present? %>
+      3 │     Welcome <%= user.name %>!
+      4 │   <% else %>
+      5 │     Please sign in
+      6 │   <% end %>
+      7 │ </h1>

@@ -1,8 +1,8 @@
 #ifndef HERB_ANALYZE_CONTROL_TYPE_H
 #define HERB_ANALYZE_CONTROL_TYPE_H
 
+#include "../ast/ast_nodes.h"
 #include "analyze.h"
-#include "../ast_nodes.h"
 
 #include <stdbool.h>
 

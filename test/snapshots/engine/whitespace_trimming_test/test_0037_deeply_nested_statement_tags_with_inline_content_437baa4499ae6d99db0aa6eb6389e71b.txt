@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0037_deeply nested statement tags with inline content"
+input: "{source: \"<p>\\n  <% if true %><% if true %><% if true %>text<% end %><% end %><% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+  text
+</p>

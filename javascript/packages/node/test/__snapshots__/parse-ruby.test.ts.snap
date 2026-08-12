@@ -1,0 +1,136 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseRuby > parseRuby() parses a class definition 1`] = `
+"@ ProgramNode (location: (1:0)-(1:14))
+├── locals: []
+└── statements:
+    └── @ StatementsNode (location: (1:0)-(1:14))
+        └── body: (1 item)
+            └── @ ClassNode (location: (1:0)-(1:14))
+                ├── locals: []
+                ├── classKeywordLoc: (location: (1:0)-(1:5))
+                ├── constantPath:
+                │   └── @ ConstantReadNode (location: (1:6)-(1:9))
+                │       └── name: "Foo"
+                ├── inheritanceOperatorLoc: ∅
+                ├── superclass: ∅
+                ├── body: ∅
+                ├── endKeywordLoc: (location: (1:11)-(1:14))
+                └── name: "Foo"
+"
+`;
+
+exports[`parseRuby > parseRuby() parses a method definition 1`] = `
+"@ ProgramNode (location: (1:0)-(3:3))
+├── locals: []
+└── statements:
+    └── @ StatementsNode (location: (1:0)-(3:3))
+        └── body: (1 item)
+            └── @ DefNode (location: (1:0)-(3:3))
+                ├── name: "greet"
+                ├── nameLoc: (location: (1:4)-(1:9))
+                ├── receiver: ∅
+                ├── parameters:
+                │   └── @ ParametersNode (location: (1:10)-(1:14))
+                │       ├── requireds: (1 item)
+                │       │   └── @ RequiredParameterNode (location: (1:10)-(1:14))
+                │       │       └── name: "name"
+                │       ├── optionals: []
+                │       ├── rest: ∅
+                │       ├── posts: []
+                │       ├── keywords: []
+                │       ├── keywordRest: ∅
+                │       └── block: ∅
+                ├── body:
+                │   └── @ StatementsNode (location: (2:2)-(2:19))
+                │       └── body: (1 item)
+                │           └── @ InterpolatedStringNode (location: (2:2)-(2:19))
+                │               ├── openingLoc: (location: (2:2)-(2:3))
+                │               ├── parts: (3 items)
+                │               │   ├── @ StringNode (location: (2:3)-(2:10))
+                │               │   │   ├── openingLoc: ∅
+                │               │   │   ├── contentLoc: (location: (2:3)-(2:10))
+                │               │   │   ├── closingLoc: ∅
+                │               │   │   └── unescaped: "Hello, "
+                │               │   ├── @ EmbeddedStatementsNode (location: (2:10)-(2:17))
+                │               │   │   ├── openingLoc: (location: (2:10)-(2:12))
+                │               │   │   ├── statements:
+                │               │   │   │   └── @ StatementsNode (location: (2:12)-(2:16))
+                │               │   │   │       └── body: (1 item)
+                │               │   │   │           └── @ LocalVariableReadNode (location: (2:12)-(2:16))
+                │               │   │   │               ├── name: "name"
+                │               │   │   │               └── depth: 0
+                │               │   │   └── closingLoc: (location: (2:16)-(2:17))
+                │               │   └── @ StringNode (location: (2:17)-(2:18))
+                │               │       ├── openingLoc: ∅
+                │               │       ├── contentLoc: (location: (2:17)-(2:18))
+                │               │       ├── closingLoc: ∅
+                │               │       └── unescaped: "!"
+                │               └── closingLoc: (location: (2:18)-(2:19))
+                ├── locals: (1 item)
+                │   └── name
+                ├── defKeywordLoc: (location: (1:0)-(1:3))
+                ├── operatorLoc: ∅
+                ├── lparenLoc: (location: (1:9)-(1:10))
+                ├── rparenLoc: (location: (1:14)-(1:15))
+                ├── equalLoc: ∅
+                └── endKeywordLoc: (location: (3:0)-(3:3))
+"
+`;
+
+exports[`parseRuby > parseRuby() parses a simple expression 1`] = `
+"@ ProgramNode (location: (1:0)-(1:5))
+├── locals: []
+└── statements:
+    └── @ StatementsNode (location: (1:0)-(1:5))
+        └── body: (1 item)
+            └── @ CallNode (location: (1:0)-(1:5))
+                ├── receiver:
+                │   └── @ IntegerNode (location: (1:0)-(1:1))
+                │       └── value: 1
+                ├── callOperatorLoc: ∅
+                ├── name: "+"
+                ├── messageLoc: (location: (1:2)-(1:3))
+                ├── openingLoc: ∅
+                ├── arguments_:
+                │   └── @ ArgumentsNode (location: (1:4)-(1:5))
+                │       └── arguments_: (1 item)
+                │           └── @ IntegerNode (location: (1:4)-(1:5))
+                │               └── value: 2
+                ├── closingLoc: ∅
+                ├── equalLoc: ∅
+                └── block: ∅
+"
+`;
+
+exports[`parseRuby > parseRuby() parses raw Ruby, not ERB 1`] = `
+"@ ProgramNode (location: (1:0)-(1:9))
+├── locals: (1 item)
+│   └── x
+└── statements:
+    └── @ StatementsNode (location: (1:0)-(1:9))
+        └── body: (1 item)
+            └── @ LocalVariableWriteNode (location: (1:0)-(1:9))
+                ├── name: "x"
+                ├── depth: 0
+                ├── nameLoc: (location: (1:0)-(1:1))
+                ├── value:
+                │   └── @ CallNode (location: (1:4)-(1:9))
+                │       ├── receiver:
+                │       │   └── @ IntegerNode (location: (1:4)-(1:5))
+                │       │       └── value: 1
+                │       ├── callOperatorLoc: ∅
+                │       ├── name: "+"
+                │       ├── messageLoc: (location: (1:6)-(1:7))
+                │       ├── openingLoc: ∅
+                │       ├── arguments_:
+                │       │   └── @ ArgumentsNode (location: (1:8)-(1:9))
+                │       │       └── arguments_: (1 item)
+                │       │           └── @ IntegerNode (location: (1:8)-(1:9))
+                │       │               └── value: 2
+                │       ├── closingLoc: ∅
+                │       ├── equalLoc: ∅
+                │       └── block: ∅
+                └── operatorLoc: (location: (1:2)-(1:3))
+"
+`;

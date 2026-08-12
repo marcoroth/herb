@@ -1,22 +1,23 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
-#include "include/ast_node.h"
-#include "include/ast_nodes.h"
+#include "include/ast/ast_node.h"
+#include "include/ast/ast_nodes.h"
 
 #ifndef HERB_EXCLUDE_PRETTYPRINT
-#  include "include/ast_pretty_print.h"
+#  include "include/ast/ast_pretty_print.h"
 #endif
 
 #include "include/extract.h"
 #include "include/herb.h"
-#include "include/io.h"
+#include "include/lexer/lex_helpers.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_arena.h"
+#include "include/lib/hb_arena_debug.h"
+#include "include/lib/hb_buffer.h"
+#include "include/lib/string.h"
 #include "include/macros.h"
-#include "include/ruby_parser.h"
-#include "include/util/hb_allocator.h"
-#include "include/util/hb_arena.h"
-#include "include/util/hb_arena_debug.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/string.h"
+#include "include/prism/ruby_parser.h"
+#include "include/util/io.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,18 +62,18 @@ int main(const int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  hb_buffer_T output;
-
-  if (!hb_buffer_init(&output, 4096)) { return 1; }
-
-  char* source = herb_read_file(argv[2]);
+  hb_allocator_T malloc_allocator = hb_allocator_with_malloc();
+  char* source = herb_read_file(argv[2], &malloc_allocator);
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     fprintf(stderr, "Failed to initialize allocator\n");
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
     return EXIT_FAILURE;
   }
+
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, 4096, &allocator)) { return 1; }
 
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
@@ -89,9 +90,9 @@ int main(const int argc, char* argv[]) {
     puts(output.value);
     print_time_diff(start, end, "lexing");
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -114,9 +115,9 @@ int main(const int argc, char* argv[]) {
 
     ast_node_free((AST_NODE_T*) root, &allocator);
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -128,9 +129,9 @@ int main(const int argc, char* argv[]) {
     puts(output.value);
     print_time_diff(start, end, "extracting Ruby");
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -142,9 +143,9 @@ int main(const int argc, char* argv[]) {
     puts(output.value);
     print_time_diff(start, end, "extracting HTML");
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -157,9 +158,10 @@ int main(const int argc, char* argv[]) {
 
     herb_parse_ruby_to_stdout(ruby_source);
 
-    free(ruby_source);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&allocator, ruby_source);
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }

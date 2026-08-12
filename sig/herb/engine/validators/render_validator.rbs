@@ -1,0 +1,23 @@
+# Generated from lib/herb/engine/validators/render_validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Validators
+      class RenderValidator < Validator
+        def visit_erb_render_node: (untyped node) -> untyped
+
+        private
+
+        def validate_partial_exists: (untyped node) -> untyped
+
+        def view_root: () -> untyped
+
+        def filename: () -> untyped
+
+        def project_path: () -> untyped
+
+        def relative_to_project: (untyped path) -> untyped
+      end
+    end
+  end
+end

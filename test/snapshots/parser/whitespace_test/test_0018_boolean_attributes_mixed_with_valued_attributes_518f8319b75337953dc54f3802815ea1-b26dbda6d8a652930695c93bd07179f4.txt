@@ -73,7 +73,7 @@ options: {track_whitespace: true}
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:52)-(2:0))
         └── content: "\n"

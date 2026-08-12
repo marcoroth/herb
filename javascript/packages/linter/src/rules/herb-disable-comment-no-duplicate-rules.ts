@@ -28,6 +28,7 @@ class HerbDisableCommentNoDuplicateRulesVisitor extends HerbDisableCommentParsed
 
 export class HerbDisableCommentNoDuplicateRulesRule extends ParserRule {
   static ruleName = "herb-disable-comment-no-duplicate-rules"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: "highlighter(\"onedark\").highlight(\"test.erb\", \"<%= user.name %>\", &plain())"
+---
+[38;2;190;80;70m<%=[0m user.name [38;2;190;80;70m%>[0m

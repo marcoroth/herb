@@ -2,18 +2,30 @@
 #include "error_helpers.h"
 #include "nodes.h"
 
-#include "../../src/include/ast_nodes.h"
+#include "../../src/include/ast/ast_nodes.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/io.h"
-#include "../../src/include/location.h"
-#include "../../src/include/position.h"
-#include "../../src/include/range.h"
-#include "../../src/include/token.h"
-#include "../../src/include/util/hb_array.h"
+#include "../../src/include/location/location.h"
+#include "../../src/include/location/position.h"
+#include "../../src/include/location/range.h"
+#include "../../src/include/lexer/token.h"
+#include "../../src/include/lib/hb_array.h"
+#include "../../src/include/lib/hb_string.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+jstring CreateStringFromHbString(JNIEnv* env, hb_string_T string) {
+  if (hb_string_is_null(string)) { return NULL; }
+
+  char* c_string = hb_string_to_c_string_using_malloc(string);
+  if (!c_string) { return NULL; }
+
+  jstring result = (*env)->NewStringUTF(env, c_string);
+  free(c_string);
+
+  return result;
+}
 
 jobject CreatePosition(JNIEnv* env, position_T position) {
   jclass positionClass = (*env)->FindClass(env, "org/herb/Position");
@@ -47,8 +59,8 @@ jobject CreateToken(JNIEnv* env, token_T* token) {
   jmethodID constructor = (*env)->GetMethodID(
       env, tokenClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Lorg/herb/Location;Lorg/herb/Range;)V");
 
-  jstring type = (*env)->NewStringUTF(env, token_type_to_string(token->type));
-  jstring value = (*env)->NewStringUTF(env, token->value);
+  jstring type = CreateStringFromHbString(env, token_type_to_string(token->type));
+  jstring value = CreateStringFromHbString(env, token->value);
   jobject location = CreateLocation(env, token->location);
   jobject range = CreateRange(env, token->range);
 
@@ -97,14 +109,4 @@ jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source
       env, parseResultClass, "<init>", "(Lorg/herb/ast/Node;Ljava/util/List;Ljava/lang/String;)V");
 
   return (*env)->NewObject(env, parseResultClass, constructor, value, errorsList, source);
-}
-
-jstring ReadFileToString(JNIEnv* env, const char* path) {
-  char* content = herb_read_file(path);
-  if (!content) { return NULL; }
-
-  jstring result = (*env)->NewStringUTF(env, content);
-  free(content);
-
-  return result;
 }

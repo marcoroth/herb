@@ -31,12 +31,14 @@ Omitting the `alt` attribute entirely leads to poor accessibility and can negati
 ```erb
 <img src="/logo.png">
 
-<img src="/avatar.jpg" alt> <!-- TODO -->
+<img src="/avatar.jpg" alt>
 
 <%= image_tag image_path("logo.png") %> <!-- TODO -->
 ```
 
 ## References
 
-* [W3C: Alternative Text](https://www.w3.org/WAI/tutorials/images/)
-* [WCAG 2.1: Non-text Content](https://www.w3.org/WAI/WCAG22/quickref/?versions=2.1#non-text-content)
+- [W3C WAI Images Tutorial](https://www.w3.org/WAI/tutorials/images/)
+- [WCAG 2.1: Non-text Content](https://www.w3.org/WAI/WCAG22/quickref/?versions=2.1#non-text-content)
+- [Primer: Alternative text for images](https://primer.style/accessibility/design-guidance/alternative-text-for-images/)
+- [erblint-github: `GitHub::Accessibility::ImageHasAlt`](https://github.com/github/erblint-github/blob/main/docs/rules/accessibility/image-has-alt.md)

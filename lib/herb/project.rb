@@ -12,7 +12,9 @@ module Herb
   class Project
     include Colors
 
-    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats
+    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats, :leak_check, :file_timeout
+
+    DEFAULT_FILE_TIMEOUT = 1 # seconds per file for parse + compile
 
     # Known error types that indicate issues in the user's template, not bugs in the parser.
     TEMPLATE_ERRORS = [
@@ -35,6 +37,7 @@ module Herb
       "UnclosedQuoteError",
       "MissingAttributeValueError",
       "UnclosedERBTagError",
+      "MalformedERBClosingTagError",
       "StrayERBClosingTagError",
       "NestedERBTagError"
     ].freeze
@@ -71,9 +74,9 @@ module Herb
       attr_reader :successful, :failed, :timeout, :template_error, :unexpected_error,
                   :strict_parse_error, :analyze_parse_error,
                   :validation_error, :compilation_failed, :strict_compilation_failed,
-                  :invalid_ruby,
+                  :invalid_ruby, :skipped,
                   :error_outputs, :file_contents, :parse_errors, :compilation_errors,
-                  :file_diagnostics
+                  :file_diagnostics, :skip_reasons
 
       def initialize
         @successful = []
@@ -87,11 +90,13 @@ module Herb
         @compilation_failed = []
         @strict_compilation_failed = []
         @invalid_ruby = []
+        @skipped = []
         @error_outputs = {}
         @file_contents = {}
         @parse_errors = {}
         @compilation_errors = {}
         @file_diagnostics = {}
+        @skip_reasons = {}
       end
 
       def problem_files
@@ -124,6 +129,7 @@ module Herb
 
       date = Time.now.strftime("%Y-%m-%d_%H-%M-%S")
       @output_file = output_file || "#{date}_erb_parsing_result_#{@project_path.basename}.log"
+      @file_timeout = DEFAULT_FILE_TIMEOUT
     end
 
     def configuration
@@ -149,16 +155,7 @@ module Herb
     private
 
     def find_files
-      included = include_patterns.flat_map do |pattern|
-        Dir[File.join(@project_path, pattern)]
-      end.uniq
-
-      return included if exclude_patterns.empty?
-
-      included.reject do |file|
-        relative_path = file.sub("#{@project_path}/", "")
-        exclude_patterns.any? { |pattern| File.fnmatch?(pattern, relative_path, File::FNM_PATHNAME) }
-      end
+      configuration.find_files(@project_path)
     end
 
     public
@@ -209,14 +206,11 @@ module Herb
           puts dimmed("Analyzing #{files.count} #{pluralize(files.count, "file")}...")
         end
 
-        total_width = files.count.to_s.length
-
-        finish_hook = lambda do |item, index, _file_result|
+        finish_hook = lambda do |item, _index, _file_result|
           next if silent
 
           if verbose
-            relative_path = relative_path(item)
-            puts "  #{dimmed("[#{(index + 1).to_s.rjust(total_width)}/#{files.count}]")} #{relative_path}"
+            puts "  #{relative_path(item)}"
           else
             print "."
           end
@@ -258,6 +252,10 @@ module Herb
 
         if arena_stats
           print_arena_summary(file_results)
+        end
+
+        if leak_check
+          print_leak_check_summary(file_results)
         end
 
         unless no_log_file
@@ -322,7 +320,7 @@ module Herb
       return unless issue_type[:key] == :invalid_ruby && file_content
 
       begin
-        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, validation_mode: :none)
+        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [])
         puts ""
         puts "**Compiled Ruby:**"
         puts "```ruby"
@@ -347,7 +345,11 @@ module Herb
         result[:arena_stats] = capture_arena_stats(file_content)
       end
 
-      Timeout.timeout(1) do
+      if leak_check
+        result[:leak_check] = capture_leak_check(file_content)
+      end
+
+      Timeout.timeout(file_timeout) do
         parse_result = Herb.parse(file_content)
 
         if parse_result.failed?
@@ -362,7 +364,7 @@ module Herb
       result
     rescue Timeout::Error
       result.merge(status: :timeout, file_content: file_content,
-                   log: "⏱️ Parsing #{file_path} timed out after 1 second")
+                   log: "⏱️ Parsing #{file_path} timed out after #{file_timeout} #{pluralize(file_timeout, "second")}")
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -381,7 +383,7 @@ module Herb
       stdout_file = Tempfile.new("stdout")
       stderr_file = Tempfile.new("stderr")
 
-      Timeout.timeout(1) do
+      Timeout.timeout(file_timeout) do
         pid = Process.fork do
           $stdout.reopen(stdout_file.path, "w")
           $stderr.reopen(stderr_file.path, "w")
@@ -424,8 +426,7 @@ module Herb
         nil
       end
 
-      { file_path: file_path, status: :timeout, file_content: file_content,
-        log: "⏱️ Parsing #{file_path} timed out after 1 second" }
+      { file_path: file_path, status: :timeout, file_content: file_content, log: "⏱️ Parsing #{file_path} timed out after #{file_timeout} #{pluralize(file_timeout, "second")}" }
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -433,8 +434,7 @@ module Herb
         nil
       end
 
-      { file_path: file_path, status: :failed, file_content: file_content,
-        log: "⚠️ Error processing #{file_path}: #{e.message}" }
+      { file_path: file_path, status: :failed, file_content: file_content, log: "⚠️ Error processing #{file_path}: #{e.message}" }
     ensure
       [stdout_file, stderr_file].each do |tempfile|
         next unless tempfile
@@ -477,9 +477,20 @@ module Herb
     end
 
     def compile_file(file_path, file_content)
-      Herb::Engine.new(file_content, filename: file_path, escape: true, validate_ruby: validate_ruby)
+      require_relative "engine/validators"
+
+      Herb::Engine.new(
+        file_content,
+        filename: file_path,
+        escape: true,
+        validate_ruby: validate_ruby,
+        visitors: Herb::Engine::Validators.all
+      )
 
       { status: :successful, log: "✅ Compiled #{file_path} successfully" }
+    rescue Herb::Engine::GeneratorTemplateError => e
+      { status: :skipped, skip_reason: e.message,
+        log: "⊘ Skipping #{file_path}: #{e.message}" }
     rescue Herb::Engine::InvalidRubyError => e
       { status: :invalid_ruby, file_content: file_content,
         compilation_error: { error: e.message, backtrace: e.backtrace&.first(10) || [] },
@@ -490,7 +501,7 @@ module Herb
 
       # Retry without validators
       begin
-        Herb::Engine.new(file_content, filename: file_path, escape: true, validation_mode: :none, validate_ruby: validate_ruby)
+        Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [], validate_ruby: validate_ruby)
         error_name = e.is_a?(Herb::Engine::SecurityError) ? "SecurityError" : "ValidationError"
         return { status: :validation_error, file_content: file_content,
                  compilation_error: compilation_error,
@@ -537,6 +548,7 @@ module Herb
       tracker.parse_errors[file_path] = result[:parse_error] if result[:parse_error]
       tracker.compilation_errors[file_path] = result[:compilation_error] if result[:compilation_error]
       tracker.file_diagnostics[file_path] = result[:diagnostics] if result[:diagnostics]&.any?
+      tracker.skip_reasons[file_path] = result[:skip_reason] if result[:skip_reason]
     end
 
     def print_summary(results, log, duration)
@@ -555,13 +567,18 @@ module Herb
       puts "  #{label("Checked")} #{cyan("#{total} #{pluralize(total, "file")}")}"
 
       if total > 1
-        files_line = if issues.positive?
-                       "#{bold(green("#{passed} clean"))} | #{bold(red("#{issues} with issues"))}"
-                     else
-                       bold(green("#{total} clean"))
-                     end
+        files_parts = []
 
-        puts "  #{label("Files")} #{files_line}"
+        if issues.positive?
+          files_parts << bold(green("#{passed} clean"))
+          files_parts << bold(red("#{issues} with issues"))
+        else
+          files_parts << bold(green("#{total - results.skipped.count} clean"))
+        end
+
+        files_parts << dimmed("#{results.skipped.count} skipped") if results.skipped.any?
+
+        puts "  #{label("Files")} #{files_parts.join(" | ")}"
       end
 
       parser_parts = []
@@ -573,8 +590,9 @@ module Herb
       parser_parts << stat(results.analyze_parse_error.count, "analyze", :yellow) if results.analyze_parse_error.any?
       puts "  #{label("Parser")} #{parser_parts.join(" | ")}"
 
-      skipped = total - passed - results.validation_error.count - results.compilation_failed.count -
-                results.strict_compilation_failed.count - results.invalid_ruby.count
+      not_compiled = total - passed - results.skipped.count - results.validation_error.count -
+                     results.compilation_failed.count - results.strict_compilation_failed.count -
+                     results.invalid_ruby.count
 
       engine_parts = []
       engine_parts << stat(passed, "compiled", :green)
@@ -582,11 +600,15 @@ module Herb
       engine_parts << stat(results.compilation_failed.count, "compilation", :red) if results.compilation_failed.any?
       engine_parts << stat(results.strict_compilation_failed.count, "strict", :yellow) if results.strict_compilation_failed.any?
       engine_parts << stat(results.invalid_ruby.count, "produced invalid Ruby", :red) if results.invalid_ruby.any?
-      engine_parts << dimmed("#{skipped} skipped") if skipped.positive?
+      engine_parts << dimmed("#{not_compiled} not compiled") if not_compiled.positive?
       puts "  #{label("Engine")} #{engine_parts.join(" | ")}"
 
       if results.timeout.any?
         puts "  #{label("Timeout")} #{stat(results.timeout.count, "timed out", :yellow)}"
+      end
+
+      if results.skipped.any?
+        puts "  #{label("Skipped")} #{dimmed("#{results.skipped.count} #{pluralize(results.skipped.count, "file")}")}"
       end
 
       if duration
@@ -622,6 +644,7 @@ module Herb
       log.puts ""
       log.puts "--- Other ---"
       log.puts "⏱️ Timed out: #{results.timeout.count} (#{percentage(results.timeout.count, total)}%)"
+      log.puts "⊘ Skipped: #{results.skipped.count} (#{percentage(results.skipped.count, total)}%)"
 
       return unless duration
 
@@ -631,9 +654,26 @@ module Herb
     def print_file_lists(results, log)
       log_file_lists(results, log)
 
-      return unless results.problem_files.any?
-
       printed_section = false
+
+      if results.skipped.any?
+        printed_section = true
+
+        puts "\n"
+        puts " #{bold("Skipped files:")}"
+        puts " #{dimmed("These files were parsed successfully but skipped for compilation by the engine.")}"
+
+        results.skipped.each do |file|
+          relative = relative_path(file)
+          reason = results.skip_reasons[file]
+
+          puts ""
+          puts " #{cyan(relative)}:"
+          puts "   #{dimmed("⊘")} #{dimmed(reason)}"
+        end
+      end
+
+      return unless results.problem_files.any?
 
       ISSUE_TYPES.each do |type|
         file_list = results.send(type[:key])
@@ -674,6 +714,15 @@ module Herb
     end
 
     def log_file_lists(results, log)
+      if results.skipped.any?
+        log.puts "\n#{heading("Files: Skipped")}"
+
+        results.skipped.each do |file|
+          reason = results.skip_reasons[file]
+          log.puts "#{file} - #{reason}"
+        end
+      end
+
       ISSUE_TYPES.each do |type|
         file_list = results.send(type[:key])
         next unless file_list.any?
@@ -857,12 +906,7 @@ module Herb
     def ensure_parallel!
       return if defined?(Parallel)
 
-      require "bundler/inline"
-
-      gemfile(true, quiet: true) do
-        source "https://rubygems.org"
-        gem "parallel"
-      end
+      Herb.ensure_installed("parallel")
     end
 
     def separator
@@ -884,6 +928,90 @@ module Herb
         minutes = (seconds / 60).to_i
         remaining_seconds = seconds % 60
         "#{minutes}m #{remaining_seconds.round(2)}s"
+      end
+    end
+
+    def capture_leak_check(file_content)
+      Herb.leak_check(file_content)
+    rescue StandardError
+      { lex: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 },
+        parse: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 },
+        extract_ruby: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 },
+        extract_html: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 } }
+    end
+
+    def print_leak_check_summary(file_results)
+      leaky_files = file_results.filter_map { |result|
+        next unless result[:leak_check]
+
+        ops = result[:leak_check]
+        leaks = ops.select { |_op, stats| stats[:leaks]&.any? || stats[:allocations] != stats[:deallocations] || stats[:untracked_deallocations]&.positive? }
+        next if leaks.empty?
+
+        { file: result[:file_path], leaks: leaks, all: ops }
+      }
+
+      puts "\n #{separator}"
+      puts "\n"
+      puts " #{bold("Leak check:")}"
+
+      if leaky_files.empty?
+        puts ""
+        puts "  #{bold(green("✓"))} #{green("No leaks detected across all files.")}"
+        return
+      end
+
+      puts "  #{red("#{leaky_files.size} #{pluralize(leaky_files.size, "file")} with potential leaks:")}"
+      puts ""
+
+      leaky_files.each do |entry|
+        relative = relative_path(entry[:file])
+        puts "  #{cyan(relative)}:"
+
+        entry[:all].each do |op, stats|
+          leaks = stats[:leaks] || []
+          untracked_count = stats[:untracked_deallocations] || 0
+          untracked_ptrs = stats[:untracked_pointers] || []
+          leaked_bytes = stats[:bytes_allocated] - stats[:bytes_deallocated]
+
+          if leaks.any?
+            puts "    #{red("✗")} #{op}: #{stats[:allocations]} allocs, #{stats[:deallocations]} deallocs (#{bold(red("#{leaks.size} unfreed, #{format_bytes(leaked_bytes)}"))})"
+            leaks.each_with_index do |size, i|
+              puts "      #{dimmed("#{i + 1}.")} #{format_bytes(size)}"
+            end
+          elsif untracked_count.positive?
+            puts "    #{yellow("~")} #{op}: #{stats[:allocations]} allocs, #{stats[:deallocations]} deallocs"
+          else
+            puts "    #{green("✓")} #{op}: #{stats[:allocations]} allocs, #{stats[:deallocations]} deallocs"
+          end
+
+          next unless untracked_count.positive?
+
+          puts "      #{yellow("#{untracked_count} untracked #{pluralize(untracked_count, "deallocation")}")} #{dimmed("(freed through allocator but not allocated through it)")}"
+          untracked_ptrs.each_with_index do |ptr, i|
+            puts "      #{dimmed("#{i + 1}.")} #{ptr}"
+          end
+        end
+
+        puts ""
+      end
+
+      op_to_command = { lex: "lex", parse: "parse", extract_ruby: "ruby", extract_html: "html" }
+
+      commands = leaky_files.flat_map { |entry|
+        entry[:leaks].keys.map { |op| { command: op_to_command[op] || op.to_s, file: entry[:file] } }
+      }
+
+      puts "  #{dimmed("To debug, run the following from the herb repo root (build with `make` first):")}"
+      puts ""
+      puts "  #{dimmed("# macOS")}"
+      commands.each do |cmd|
+        puts "  leaks --atExit -- ./herb #{cmd[:command]} #{cmd[:file]}"
+      end
+      puts ""
+      puts "  #{dimmed("# Linux")}"
+      commands.each do |cmd|
+        puts "  valgrind --leak-check=full ./herb #{cmd[:command]} #{cmd[:file]}"
       end
     end
 
@@ -947,12 +1075,26 @@ module Herb
       puts "  #{label("Total")} #{cyan(format_bytes(total_bytes))} across #{cyan("#{stats.size} #{pluralize(stats.size, "file")}")}"
       puts "  #{label("Largest")} #{cyan(relative_path(max[:file]))} (#{cyan(format_bytes(max[:bytes]))}, #{cyan("#{max[:pages]} #{pluralize(max[:pages], "page")}")})"
 
-      thresholds = { "16 KB" => 16 * 1024, "64 KB" => 64 * 1024, "128 KB" => 128 * 1024, "256 KB" => 256 * 1024, "512 KB" => 512 * 1024 }
+      boundaries = [0, 16 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024]
 
+      total = stats.size
       puts ""
-      thresholds.each do |label_text, threshold|
-        count = stats.count { |stat| stat[:bytes] > threshold }
-        puts "  #{label("  > #{label_text}")} #{count} #{pluralize(count, "file")}"
+      bucket_counts = []
+      boundaries.each_cons(2) do |low, high|
+        count = stats.count { |stat| stat[:bytes] > low && stat[:bytes] <= high }
+        low_label = format_bytes(low).rjust(6)
+        high_label = format_bytes(high).rjust(6)
+        bucket_counts << { label: "  #{low_label} - #{high_label}", count: count }
+      end
+      last = boundaries.last
+      count = stats.count { |stat| stat[:bytes] > last }
+      bucket_counts << { label: "         > #{format_bytes(last)}", count: count }
+
+      count_width = bucket_counts.max_by { |b| b[:count] }[:count].to_s.length
+      pct_width = bucket_counts.map { |b| "#{percentage(b[:count], total)}%".length }.max
+      bucket_counts.each do |bucket|
+        pct = "#{percentage(bucket[:count], total)}%"
+        puts "  #{label(bucket[:label], 19)} #{bucket[:count].to_s.rjust(count_width)} #{pluralize(bucket[:count], "file").ljust(5)} #{pct.rjust(pct_width)}"
       end
     end
 

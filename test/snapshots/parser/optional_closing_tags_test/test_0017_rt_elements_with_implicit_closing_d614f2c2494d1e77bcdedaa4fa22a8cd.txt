@@ -47,7 +47,7 @@ input: |2-
     │   │   │   │       └── tag_name: "rt" (location: (2:4)-(2:6))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLElementNode (location: (3:3)-(4:0))
     │   │       ├── errors: (1 error)
@@ -74,7 +74,7 @@ input: |2-
     │   │       │       └── tag_name: "rt" (location: (3:4)-(3:6))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:7))
@@ -84,7 +84,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (4:6)-(4:7))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (4:7)-(5:0))
         └── content: "\n"

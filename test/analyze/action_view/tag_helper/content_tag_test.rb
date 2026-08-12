@@ -6,48 +6,56 @@ module Analyze::ActionView::TagHelper
   class ContentTagTest < Minitest::Spec
     include SnapshotUtils
 
-    before do
-      skip
-    end
-
     test "content_tag" do
-      assert_parsed_snapshot(<<~HTML)
-        <%= content_tag :div %>
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div do %>
           Content
         <% end %>
       HTML
     end
 
     test "content_tag with content as argument" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :div, "Content" %>
       HTML
     end
 
     test "content_tag with attributes" do
-      assert_parsed_snapshot(<<~HTML)
-        <%= content_tag :div, class: "content" %>
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, class: "content" do %>
           Content
         <% end %>
       HTML
     end
 
     test "content_tag with content as argument and attributes" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :div, "Content", class: "example" %>
       HTML
     end
 
     test "content_tag with data attributes in hash style" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :div, data: { controller: "example", user_id: 123 } do %>
           Content
         <% end %>
       HTML
     end
 
+    test "content_tag with data attributes using string key hashrocket" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, data: { "action" => "value" } %>
+      HTML
+    end
+
+    test "content_tag with data attributes using symbol key hashrocket" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, data: { :action => "value" } %>
+      HTML
+    end
+
     test "content_tag with attributes in string key hash style" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :div, "data-controller" => "example", "data-user-id": 123 do %>
           Content
         <% end %>
@@ -55,7 +63,7 @@ module Analyze::ActionView::TagHelper
     end
 
     test "content_tag with data attributes in underscore style" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :div, data_controller_name: "example", data_user_id: 123 do %>
           Content
         <% end %>
@@ -63,7 +71,7 @@ module Analyze::ActionView::TagHelper
     end
 
     test "content_tag with data attributes in string key hash style" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :div, "Content", data: { "controller-name" => "example", "user-id" => 123 } do %>
           Content
         <% end %>
@@ -71,26 +79,231 @@ module Analyze::ActionView::TagHelper
     end
 
     test "content_tag with variable tag name" do
-      assert_parsed_snapshot(<<~HTML)
-        <%= content_tag tag_name %>
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag tag_name do %>
           Content
         <% end %>
       HTML
     end
 
     test "content_tag with variable attribute value" do
-      assert_parsed_snapshot(<<~HTML)
-        <%= content_tag :div, class: class_name %>
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, class: class_name do %>
           Content
         <% end %>
       HTML
     end
 
     test "content_tag with attributes splat" do
-      assert_parsed_snapshot(<<~HTML)
-        <%= content_tag :div, class: "content", **attributes %>
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, class: "content", **attributes do %>
           Content
         <% end %>
+      HTML
+    end
+
+    test "content_tag with void element br" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :br %>
+      HTML
+    end
+
+    test "content_tag with void element hr with attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :hr, class: "divider" %>
+      HTML
+    end
+
+    test "content_tag with void element img with attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img, src: "/image.png", alt: "Photo" %>
+      HTML
+    end
+
+    test "content_tag with void element img with attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag tag_name, "Content" %>
+      HTML
+    end
+
+    test "content_tag with splat in data hash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, data: { controller: "example", **data_attrs } do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag with splat in aria hash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, aria: { label: "hello", **aria_attrs } do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag with only splat in data hash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :div, data: { **data_attrs } do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:details) { "Some content" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, class: "container") { "Hello" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and ruby expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:p) { @user.name } %>
+      HTML
+    end
+
+    test "content_tag with inline block and symbol tag name" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:span) { "Text" } %>
+      HTML
+    end
+
+    test "content_tag with content argument and block prefers block content" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "argument") { "Block" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, data: { controller: "example" }) { "Hello" } %>
+      HTML
+    end
+
+    test "content_tag with content argument and attributes and block prefers block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Content", class: "box") { "Block" } %>
+      HTML
+    end
+
+    test "content_tag with content argument and multiple attributes and block prefers block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Content", id: "main", class: "box") { "Block" } %>
+      HTML
+    end
+
+    test "content_tag :script with block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :script do %>
+          alert('Hello')
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :script with content as argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :script, "alert('Hello')" %>
+      HTML
+    end
+
+    test "content_tag :script with type attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :script, "alert('Hello')", type: "application/javascript" %>
+      HTML
+    end
+
+    test "content_tag nested as argument to another method is not incorrectly detected as top-level tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= t(".terms_notice", link: content_tag(:a, t(".terms_of_service"), href: terms_path)).html_safe %>
+      HTML
+    end
+
+    test "content_tag :script with HTML-like content in block (gh-1426)" do
+      template = <<~HTML
+        <%= content_tag :script do %>
+          n <o.length
+        <% end %>
+      HTML
+
+      assert_parsed_snapshot(template, action_view_helpers: true)
+      assert_parsed_snapshot(template)
+    end
+
+    test "content_tag :script with less-than in for loop condition (gh-1426)" do
+      template = <<~HTML
+        <%= content_tag :script do %>
+          for (let i = 0; i<items.length; i++) { console.log(items[i]) }
+        <% end %>
+      HTML
+
+      assert_parsed_snapshot(template, action_view_helpers: true)
+      assert_parsed_snapshot(template)
+    end
+
+    test "content_tag :script with nonce true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:script, "alert('Hello')", nonce: true) %>
+      HTML
+    end
+
+    test "content_tag :script with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:script, "alert('Hello')", nonce: false) %>
+      HTML
+    end
+
+    test "content_tag with void element img and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img, "hello" %>
+      HTML
+    end
+
+    test "content_tag with void element br and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :br, "hello" %>
+      HTML
+    end
+
+    test "content_tag with mixed array and conditional hash class" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Hello world!", class: ["strong", { highlight: current_user.admin? }]) %>
+      HTML
+    end
+
+    # TODO: The outer content_tag(:div) is correctly detected, but the inner content_tag(:p, "Hello world!")
+    # remains as a RubyLiteralNode in the body instead of being resolved to <p>Hello world!</p>.
+    # Rails renders: <div class="strong"><p>Hello world!</p></div>
+    test "content_tag with nested content_tag as content argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, content_tag(:p, "Hello world!"), class: "strong") %>
+      HTML
+    end
+
+    test "content_tag :input with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :input do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :img with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :br with inline block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:br) { "content" } %>
       HTML
     end
   end

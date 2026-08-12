@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0018_tag.div with inline block and attributes"
+input: "{source: \"<%= tag.div(class: \\\"container\\\") { \\\"Hello\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div class="container">Hello</div>

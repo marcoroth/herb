@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_arena.h"
+#include "../../src/include/lib/hb_arena.h"
 
 #include <string.h>
 
@@ -124,11 +124,13 @@ TEST(test_arena_reset_to_multipage)
   size_t checkpoint = hb_arena_position(&allocator);
 
   hb_arena_alloc(&allocator, 64);
+  hb_arena_alloc(&allocator, 128);
   ck_assert_ptr_nonnull(allocator.head->next);
 
   hb_arena_reset_to(&allocator, checkpoint);
   ck_assert_int_eq(hb_arena_position(&allocator), checkpoint);
-  ck_assert_ptr_eq(allocator.tail, allocator.head);
+  ck_assert_ptr_eq(allocator.tail, allocator.head->next);
+  ck_assert_int_eq(allocator.head->next->capacity, 192);
 
   hb_arena_free(&allocator);
 END
@@ -308,7 +310,9 @@ TEST(test_arena_page_reuse_after_reset)
 
   hb_arena_reset_to(&allocator, checkpoint);
   ck_assert_int_eq(hb_arena_position(&allocator), checkpoint);
-  ck_assert_ptr_eq(allocator.tail, allocator.head);
+  ck_assert_ptr_eq(allocator.tail, allocator.head->next);
+  ck_assert_int_eq(allocator.head->next->capacity, 128);
+
 
   char *memory = hb_arena_alloc(&allocator, 64);
   ck_assert_ptr_nonnull(memory);
@@ -350,6 +354,42 @@ TEST(test_arena_page_reuse_when_next_page_is_too_small)
   hb_arena_free(&allocator);
 END
 
+// Test reset_to with gap from page fragmentation (position != capacity)
+TEST(test_arena_reset_to_with_page_gap)
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, 4096);
+
+  char *mem1 = hb_arena_alloc(&allocator, 100);
+  ck_assert_ptr_nonnull(mem1);
+  memset(mem1, 'A', 100);
+  ck_assert_int_eq(hb_arena_position(&allocator), 104);
+
+  char *mem2 = hb_arena_alloc(&allocator, 4000);
+  ck_assert_ptr_nonnull(mem2);
+  memset(mem2, 'B', 4000);
+
+  ck_assert_int_eq(allocator.head->position, 104);
+  ck_assert_int_eq(allocator.head->capacity, 4096);
+  ck_assert_ptr_ne(allocator.tail, allocator.head);
+
+  size_t checkpoint = hb_arena_position(&allocator);
+  ck_assert_int_eq(checkpoint, 4104);
+
+  char *mem3 = hb_arena_alloc(&allocator, 64);
+  ck_assert_ptr_nonnull(mem3);
+  memset(mem3, 'C', 64);
+
+  hb_arena_reset_to(&allocator, checkpoint);
+
+  ck_assert_int_eq(allocator.head->position, 104);
+  ck_assert_int_eq(hb_arena_position(&allocator), checkpoint);
+
+  ck_assert_int_eq(mem1[0], 'A');
+  ck_assert_int_eq(mem1[99], 'A');
+
+  hb_arena_free(&allocator);
+END
+
 TCase *hb_arena_tests(void) {
   TCase *arena = tcase_create("arena");
 
@@ -369,6 +409,7 @@ TCase *hb_arena_tests(void) {
   tcase_add_test(arena, test_arena_alignment);
   tcase_add_test(arena, test_arena_page_reuse_after_reset);
   tcase_add_test(arena, test_arena_page_reuse_when_next_page_is_too_small);
+  tcase_add_test(arena, test_arena_reset_to_with_page_gap);
 
   return arena;
 }

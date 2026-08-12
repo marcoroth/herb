@@ -1,0 +1,21 @@
+---
+source: "CLI::ActionViewTest#test_0012_signature flags a local that is passed but not declared"
+input: "undeclared: <%= render \"posts/row\", post: post, extra: extra %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_row.html.erb
+
+ Inferred (from 1 call site)
+
+   <%# locals: (extra: nil, post: nil) %>
+
+ Declared
+
+   required post
+   keyword rest false
+
+ Passed but not declared: extra
+

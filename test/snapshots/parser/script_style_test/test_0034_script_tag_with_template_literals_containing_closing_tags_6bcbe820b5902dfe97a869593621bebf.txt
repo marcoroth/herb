@@ -26,7 +26,7 @@ input: "<script>var template = `</script>`;</script>"
     │   │       └── tag_closing: ">" (location: (1:32)-(1:33))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:33)-(1:35))
     │   └── content: "`;"

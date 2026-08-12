@@ -44,4 +44,4 @@ input: "<img <%= key %>-value=\"example\">"
         ├── body: []
         ├── close_tag: ∅
         ├── is_void: true
-        └── source: "HTML"
+        └── element_source: "HTML"

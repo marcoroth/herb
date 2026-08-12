@@ -5,14 +5,17 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 import { Config } from "@herb-tools/config"
 
-import { getFullDocumentRange } from "./range_utils"
+import { getFullDocumentRange } from "@herb-tools/language-service"
+import type { ProjectIndex } from "@herb-tools/analysis/node"
 
 export class AutofixService {
   private connection: Connection
   private linter: Linter
+  private index?: ProjectIndex
 
-  constructor(connection: Connection, config?: Config) {
+  constructor(connection: Connection, config?: Config, index?: ProjectIndex) {
     this.connection = connection
+    this.index = index
     this.linter = this.buildLinter(config)
   }
 
@@ -24,15 +27,23 @@ export class AutofixService {
     return Linter.from(Herb, config)
   }
 
+  private lintContextFor(uri: string) {
+    return {
+      fileName: this.index?.relativePathFor(uri) ?? uri,
+      partials: this.index?.partials,
+      partialCallers: this.index?.callers,
+    }
+  }
+
   async autofix(document: TextDocument): Promise<TextEdit[]> {
     try {
       const text = document.getText()
-      const lintResult = this.linter.lint(text, { fileName: document.uri })
+      const lintResult = this.linter.lint(text, this.lintContextFor(document.uri))
       const offensesToFix = lintResult.offenses
 
       if (offensesToFix.length === 0) return []
 
-      const autofixResult = this.linter.autofix(text, { fileName: document.uri }, offensesToFix)
+      const autofixResult = this.linter.autofix(text, this.lintContextFor(document.uri), offensesToFix)
 
       if (autofixResult.source === text) return []
 

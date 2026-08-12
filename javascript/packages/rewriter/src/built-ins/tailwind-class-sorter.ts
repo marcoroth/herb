@@ -1,5 +1,5 @@
-import { getStaticAttributeName, isLiteralNode, isWhitespaceLiteral, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
-import { LiteralNode, Location, Visitor } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
+import { LiteralNode, Visitor } from "@herb-tools/core"
 
 import { TailwindClassSorter } from "@herb-tools/tailwind-class-sorter"
 import { ASTRewriter } from "../ast-rewriter.js"
@@ -14,6 +14,7 @@ import type {
   ERBUnlessNode,
   ERBElseNode,
   ERBBlockNode,
+  ERBIterationBlockNode,
   ERBForNode,
   ERBCaseNode,
   ERBWhenNode,
@@ -88,6 +89,10 @@ class ClassAttributeSorter extends Visitor {
     asMutable(node).body = this.formatNodes(node.body, true)
   }
 
+  visitERBIterationBlockNode(node: ERBIterationBlockNode): void {
+    asMutable(node).body = this.formatNodes(node.body, true)
+  }
+
   visitERBForNode(node: ERBForNode): void {
     asMutable(node).statements = this.formatNodes(node.statements, true)
   }
@@ -135,12 +140,7 @@ class ClassAttributeSorter extends Visitor {
   }
 
   private get spaceLiteral(): LiteralNode {
-    return new LiteralNode({
-      type: "AST_LITERAL_NODE",
-      content: " ",
-      errors: [],
-      location: Location.zero
-    })
+    return LiteralNode.build({ content: " " })
   }
 
   private isInterpolatedGroup(group: Node[]): boolean {
@@ -148,7 +148,7 @@ class ClassAttributeSorter extends Visitor {
   }
 
   private isWhitespaceGroup(group: Node[]): boolean {
-    return group.every(node => isWhitespaceLiteral(node))
+    return group.every(node => isPureWhitespaceNode(node))
   }
 
   private getStaticClassContent(group: Node[]): string {
@@ -201,7 +201,7 @@ class ClassAttributeSorter extends Visitor {
 
   private formatNodes(nodes: Node[], isNested: boolean): Node[] {
     if (nodes.length === 0) return nodes
-    if (nodes.every(child => isWhitespaceLiteral(child))) return nodes
+    if (nodes.every(child => isPureWhitespaceNode(child))) return nodes
 
     const splitNodes = splitLiteralsAtWhitespace(nodes)
     const groups = groupNodesByClass(splitNodes)
@@ -248,12 +248,7 @@ class ClassAttributeSorter extends Visitor {
     const parts: Node[] = []
 
     if (sortedContent) {
-      parts.push(new LiteralNode({
-        type: "AST_LITERAL_NODE",
-        content: sortedContent,
-        errors: [],
-        location: Location.zero
-      }))
+      parts.push(LiteralNode.build({ content: sortedContent }))
     }
 
     for (const group of interpolationGroups) {
@@ -292,12 +287,7 @@ class ClassAttributeSorter extends Visitor {
       const trimmed = first.content.trimStart()
 
       if (trimmed !== first.content) {
-        result[0] = new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: trimmed,
-          errors: [],
-          location: first.location
-        })
+        result[0] = LiteralNode.build({ content: trimmed, location: first.location })
       }
     }
 
@@ -308,12 +298,7 @@ class ClassAttributeSorter extends Visitor {
       const trimmed = last.content.trimEnd()
 
       if (trimmed !== last.content) {
-        result[lastIndex] = new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: trimmed,
-          errors: [],
-          location: last.location
-        })
+        result[lastIndex] = LiteralNode.build({ content: trimmed, location: last.location })
       }
     }
 
