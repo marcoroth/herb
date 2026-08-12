@@ -101,6 +101,8 @@ module Herb
       end
 
       def scan_helpers!
+        scan_routes!
+
         helpers_dir = @project_path.join("app", "helpers")
 
         if helpers_dir.directory?
@@ -113,6 +115,116 @@ module Herb
       end
 
       private
+      # Route helpers are generated from `config/routes.rb`, so no module defines them and a plain
+      # helper scan can never find them. Mirrors the Rust extractor, including nested resources,
+      # member/collection routes, and the `_index` suffix Rails adds for singular resource names.
+      def scan_routes!
+        routes_file = @project_path.join("config", "routes.rb")
+
+        return @custom_helpers unless routes_file.file?
+
+        namespaces = [] #: Array[String]
+        depths = [] #: Array[Integer]
+        resources = [] #: Array[Array[String]]
+        resource_depths = [] #: Array[Integer]
+
+        routes_file.each_line do |line|
+          trimmed = line.strip
+
+          next if trimmed.empty? || trimmed.start_with?("#")
+
+          if trimmed == "end"
+            if (depth = depths.pop)
+              namespaces.pop
+              if resource_depths.last == depth
+                resource_depths.pop
+                resources.pop
+              end
+            end
+
+            next
+          end
+
+          prefix = namespaces.empty? ? "" : "#{namespaces.join("_")}_"
+
+          if (namespace = symbol_after(trimmed, "namespace "))
+            namespaces.push(namespace)
+            depths.push(namespaces.size)
+
+            next
+          end
+
+          if (scope = trimmed[/on: :(\w+)/, 1]) && (action = symbol_after(trimmed, trimmed[/\A(get|post|patch|put|delete) /, 1].to_s + " "))
+            owner = resources.last
+
+            if owner
+              stem = scope == "collection" ? "#{namespaces[0..-2].join("_")}#{namespaces.size > 1 ? "_" : ""}#{owner[1]}" : prefix.chomp("_")
+              add_route_pair("#{action}_#{stem}")
+            end
+
+            next
+          end
+
+          if (name = symbol_after(trimmed, "resources "))
+            singular = singularize(name)
+
+            add_route_pair("#{prefix}#{name}")
+            add_route_pair("#{prefix}#{singular}")
+            add_route_pair("new_#{prefix}#{singular}")
+            add_route_pair("edit_#{prefix}#{singular}")
+            add_route_pair("#{prefix}#{name}_index") if singular == name
+
+            if trimmed.end_with?(" do")
+              namespaces.push(singular)
+              depths.push(namespaces.size)
+              resources.push([singular, name])
+              resource_depths.push(namespaces.size)
+            end
+
+            next
+          end
+
+          if (name = symbol_after(trimmed, "resource "))
+            add_route_pair("#{prefix}#{name}")
+            add_route_pair("new_#{prefix}#{name}")
+            add_route_pair("edit_#{prefix}#{name}")
+
+            next
+          end
+
+          add_route_pair("#{prefix}root") if trimmed.start_with?("root ")
+
+          if (alias_name = trimmed[/as: :(\w+)/, 1])
+            add_route_pair("#{prefix}#{alias_name}")
+          end
+        end
+
+        @custom_helpers
+      end
+
+      def add_route_pair(stem)
+        return if stem.empty?
+
+        @custom_helpers.add("#{stem}_path")
+        @custom_helpers.add("#{stem}_url")
+      end
+
+      def symbol_after(line, keyword)
+        return nil if keyword.strip.empty?
+
+        rest = line[/\A#{Regexp.escape(keyword)}\s*:(\w+)/, 1]
+
+        rest
+      end
+
+      def singularize(name)
+        return name.sub(/ies\z/, "y") if name.end_with?("ies")
+        return name.chomp("es") if name.end_with?("sses", "ches", "shes", "xes")
+        return name.chomp("s") if name.end_with?("s") && !name.end_with?("ss")
+
+        name
+      end
+
 
       def trace_state(entry_point, state)
         entry_point = @project_path.join(entry_point).to_s unless Pathname.new(entry_point).absolute?
