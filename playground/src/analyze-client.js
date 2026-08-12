@@ -1,9 +1,5 @@
 import AnalyzeWorker from "./analyze-worker.js?worker"
 
-/**
- * Runs analyses on a worker so parsing, linting and formatting stay off the
- * main thread.
- */
 export class AnalyzeClient {
   #worker = null
   #pending = new Map()
@@ -44,10 +40,6 @@ export class AnalyzeClient {
     return this.#send(request, false)
   }
 
-  /**
-   * Resolves with `null` when a newer supersedable request has been made, so a
-   * slow analysis cannot overwrite the results of a newer one.
-   */
   analyzeLatest(request) {
     return this.#send(request, true)
   }
