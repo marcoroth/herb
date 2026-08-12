@@ -357,7 +357,7 @@ export class FileProcessor {
           partials: this.partials,
           partialCallers: this.partialCallers,
           projectPath: this.projectPath
-        }, undefined, { includeUnsafe: context?.fixUnsafe })
+        }, lintResult.offenses, { includeUnsafe: context?.fixUnsafe })
 
         if (autofixResult.fixed.length > 0) {
           writeFileSync(filePath, autofixResult.source, "utf-8")
