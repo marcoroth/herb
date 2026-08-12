@@ -162,6 +162,23 @@ fn check(arguments: &[String]) -> i32 {
   for file in &templates {
     let result = flow.analyze(file);
 
+    // Ruby scans the source for `render "name"` alongside the AST walk and counts whatever the
+    // visitor missed, so mirror that before comparing totals.
+    let mut seen: BTreeSet<String> = result.render_calls.iter().filter_map(|call| call.partial.clone()).collect();
+
+    if let Ok(source) = std::fs::read_to_string(file) {
+      for name in ruby_render_references::scan_template_source(&source) {
+        if seen.insert(name.clone()) {
+          files_with_renders.insert(file.clone());
+
+          match index.resolve(&name, Some(file)).first() {
+            Some(target) => rendered.push(target.clone()),
+            None => unresolved.push((relative(file, &root), name.clone())),
+          }
+        }
+      }
+    }
+
     for call in &result.render_calls {
       files_with_renders.insert(file.clone());
 
@@ -588,6 +605,14 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
       // partial, so a layout only ever reached that way still counts as used.
       if let Some(layout) = &call.layout {
         layouts.insert(layout.clone());
+      }
+    }
+
+    if let Ok(source) = std::fs::read_to_string(file) {
+      for name in ruby_render_references::scan_template_source(&source) {
+        if !names.contains(&name) {
+          names.push(name);
+        }
       }
     }
 

@@ -159,3 +159,68 @@ fn is_partial_name(value: &str) -> bool {
       .chars()
       .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit() || character == '_' || character == '/')
 }
+
+/// The Ruby analyzer scans each template's source for `render "name"` on top of walking the AST,
+/// and counts anything the visitor missed. Mirrored here so both agree on the render total and on
+/// which partials count as referenced.
+pub fn scan_template_source(source: &str) -> Vec<String> {
+  let mut found = Vec::new();
+  let bytes = source.as_bytes();
+  let mut index = 0;
+
+  while let Some(position) = source[index..].find("render") {
+    let start = index + position;
+    let mut cursor = start + "render".len();
+
+    // `render(` or `render ` only, so `rendered` does not match.
+    match bytes.get(cursor) {
+      Some(b' ') | Some(b'(') | Some(b'\t') => {}
+      _ => {
+        index = cursor;
+        continue;
+      }
+    }
+
+    while matches!(bytes.get(cursor), Some(b' ') | Some(b'(') | Some(b'\t')) {
+      cursor += 1;
+    }
+
+    if source[cursor..].starts_with("partial:") {
+      cursor += "partial:".len();
+
+      while matches!(bytes.get(cursor), Some(b' ') | Some(b'\t')) {
+        cursor += 1;
+      }
+    }
+
+    let quote = match bytes.get(cursor) {
+      Some(b'"') => b'"',
+      Some(b'\'') => b'\'',
+      _ => {
+        index = cursor.max(start + 1);
+        continue;
+      }
+    };
+
+    cursor += 1;
+    let value_start = cursor;
+
+    while let Some(byte) = bytes.get(cursor) {
+      if *byte == quote {
+        break;
+      }
+
+      cursor += 1;
+    }
+
+    let value = &source[value_start..cursor.min(source.len())];
+
+    if !value.is_empty() && value.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '/') {
+      found.push(value.to_string());
+    }
+
+    index = cursor.max(start + 1);
+  }
+
+  found
+}
