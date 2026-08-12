@@ -156,6 +156,7 @@ fn check(arguments: &[String]) -> i32 {
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
   let mut dynamic_renders = 0usize;
   let mut other_renders = 0usize;
+  let mut with_partial_count = 0usize;
 
   let flow = StateFlow::new(&root);
 
@@ -170,6 +171,11 @@ fn check(arguments: &[String]) -> i32 {
       for name in ruby_render_references::scan_template_source(&source) {
         if seen.insert(name.clone()) {
           files_with_renders.insert(file.clone());
+          with_partial_count += 1;
+
+          if std::env::var("HERB_DUMP_RENDERS").is_ok() {
+            eprintln!("{file}\t{name}");
+          }
 
           match index.resolve(&name, Some(file)).first() {
             Some(target) => rendered.push(target.clone()),
@@ -189,20 +195,28 @@ fn check(arguments: &[String]) -> i32 {
         .or_else(|| call.object.as_deref().and_then(herb_analysis::template_dependencies::object_partial_name));
 
       let Some(name) = target else {
+        // Ruby counts every render without a partial keyword as "other" and reports "dynamic" as a
+        // note alongside it, so an interpolated render lands in both.
+        other_renders += 1;
+
         if call.dynamic {
           dynamic_renders += 1;
-        } else {
-          other_renders += 1;
         }
 
         continue;
       };
 
-      if call.partial.is_none() {
+      if call.partial.is_some() {
+        with_partial_count += 1;
+      } else {
         other_renders += 1;
       }
 
       let name = &name;
+
+      if std::env::var("HERB_DUMP_RENDERS").is_ok() {
+        eprintln!("{file}\t{name}");
+      }
 
       match index.resolve(name, Some(file)).first() {
         Some(target) => rendered.push(target.clone()),
@@ -274,8 +288,8 @@ fn check(arguments: &[String]) -> i32 {
   println!();
   println!(" {}", "Summary:".bold());
   println!("  {} {}", label("Version"), herb::herb::version().cyan());
-  let with_partial = rendered.len() + unresolved.len() - other_renders.min(rendered.len() + unresolved.len());
-  let total_renders = with_partial + dynamic_renders + other_renders;
+  let with_partial = with_partial_count;
+  let total_renders = with_partial + other_renders;
 
   println!(
     "  {} {}",
