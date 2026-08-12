@@ -211,19 +211,19 @@ impl<'a> Visitor for Collector<'a> {
       let raw = keywords.partial.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
       let collection = keywords.collection.as_ref().map(|token| token.value.clone());
 
-      let interpolated = raw.as_deref().map(|value| value.contains("#{")).unwrap_or(false);
+      let interpolated_from_prism = node.prism().and_then(interpolated_render_prefix);
+      let interpolated = raw.as_deref().map(|value| value.contains("#{")).unwrap_or(false) || interpolated_from_prism.is_some();
       let partial = if interpolated { None } else { raw.clone() };
-      let dynamic_prefix = raw.as_deref().filter(|_| interpolated).and_then(dynamic_prefix_of);
 
-      if partial.is_some() || interpolated {
-        self.render_calls.push(RenderCall {
-          partial,
-          locals,
-          collection: collection.clone(),
-          dynamic_prefix,
-          dynamic: interpolated,
-        });
-      }
+      let dynamic_prefix = interpolated_from_prism.or_else(|| raw.as_deref().filter(|_| interpolated).and_then(dynamic_prefix_of));
+
+      self.render_calls.push(RenderCall {
+        partial,
+        locals,
+        collection: collection.clone(),
+        dynamic_prefix,
+        dynamic: interpolated,
+      });
 
       if let Some(collection) = collection {
         self.analyze_expression(&collection);
@@ -295,4 +295,18 @@ fn dynamic_prefix_of(value: &str) -> Option<String> {
   } else {
     Some(head.to_string())
   }
+}
+
+fn interpolated_render_prefix(node: &herb::prism::PrismNode) -> Option<String> {
+  if node.is("InterpolatedStringNode") {
+    let first = node.children.first()?;
+
+    if first.is("StringNode") {
+      return first.unescaped.as_deref().and_then(dynamic_prefix_of);
+    }
+
+    return None;
+  }
+
+  node.children.iter().find_map(interpolated_render_prefix)
 }

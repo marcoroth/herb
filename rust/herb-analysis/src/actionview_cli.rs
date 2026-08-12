@@ -155,6 +155,7 @@ fn check(arguments: &[String]) -> i32 {
   let mut rendered: Vec<String> = Vec::new();
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
   let mut dynamic_renders = 0usize;
+  let mut other_renders = 0usize;
 
   let flow = StateFlow::new(&root);
 
@@ -167,6 +168,8 @@ fn check(arguments: &[String]) -> i32 {
       let Some(name) = &call.partial else {
         if call.dynamic {
           dynamic_renders += 1;
+        } else {
+          other_renders += 1;
         }
 
         continue;
@@ -228,7 +231,6 @@ fn check(arguments: &[String]) -> i32 {
   println!(" {}", "Summary:".bold());
   println!("  {} {}", label("Version"), herb::herb::version().cyan());
   let with_partial = rendered.len() + unresolved.len();
-  let other_renders = 0usize;
   let total_renders = with_partial + dynamic_renders + other_renders;
 
   println!(
@@ -237,29 +239,32 @@ fn check(arguments: &[String]) -> i32 {
     format!("{} {}", files_with_renders.len(), plural(files_with_renders.len(), "file")).cyan()
   );
 
-  let mut renders_line = format!("{total_renders} total | {with_partial} with partial");
+  let mut renders_line = vec![
+    format!("{} total", total_renders).green().bold().to_string(),
+    format!("{} with partial", with_partial).green().bold().to_string(),
+  ];
 
   if dynamic_renders > 0 {
-    renders_line.push_str(&format!(" | {dynamic_renders} dynamic"));
+    renders_line.push(format!("{dynamic_renders} dynamic").green().bold().to_string());
   }
 
   if other_renders > 0 {
-    renders_line.push_str(&format!(" | {other_renders} other"));
+    renders_line.push(format!("{other_renders} other").green().bold().to_string());
   }
 
-  println!("  {} {}", label("Renders"), renders_line.cyan());
+  println!("  {} {}", label("Renders"), renders_line.join(&" | ".dimmed().to_string()));
 
-  let mut partials_line = format!("{} on disk", partials.len());
+  let mut partials_line = vec![format!("{} on disk", partials.len()).green().bold().to_string()];
 
   if !unresolved.is_empty() {
-    partials_line.push_str(&format!(" | {} unresolved", unresolved.len()));
+    partials_line.push(format!("{} unresolved", unresolved.len()).red().bold().to_string());
   }
 
   if !unused.is_empty() {
-    partials_line.push_str(&format!(" | {} unused", unused.len()));
+    partials_line.push(format!("{} unused", unused.len()).yellow().bold().to_string());
   }
 
-  println!("  {} {}", label("Partials"), partials_line.cyan());
+  println!("  {} {}", label("Partials"), partials_line.join(&" | ".dimmed().to_string()));
   println!(
     "  {} {}",
     label("Ruby"),
