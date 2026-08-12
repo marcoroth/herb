@@ -128,8 +128,21 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--slots"]).call
         end
 
-        assert_includes captured_output, "herb-slot:0"
+        assert_includes captured_output, "herb-region:"
+        assert_includes captured_output, %(data-herb-child="0")
         assert_empty captured_error
+      end
+    end
+
+    test "compile with slots emits paired comments where an element cannot carry the slot" do
+      template = "<p>Hi <%= name %>!</p>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--slots"]).call
+        end
+
+        assert_includes captured_output, "herb-slot:0"
       end
     end
 
@@ -142,6 +155,8 @@ module Engine
         end
 
         refute_includes captured_output, "herb-slot"
+        refute_includes captured_output, "herb-region"
+        refute_includes captured_output, "data-herb-"
       end
     end
 
