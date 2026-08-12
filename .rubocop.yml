@@ -93,6 +93,7 @@ Metrics/MethodLength:
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - test/engine/slots/visitor_test.rb
 
 Metrics/AbcSize:
   Exclude:
@@ -116,6 +117,7 @@ Metrics/AbcSize:
     - test/engine/rails_compatibility_test.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - test/engine/slots/visitor_test.rb
 
 Metrics/ClassLength:
   Exclude:
@@ -151,6 +153,7 @@ Metrics/BlockLength:
     - lib/herb/project.rb
     - test/**/*_test.rb
     - bin/**/*
+    - test/engine/slots/visitor_test.rb
 
 Metrics/ParameterLists:
   Exclude:
