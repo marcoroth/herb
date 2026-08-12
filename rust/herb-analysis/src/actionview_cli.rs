@@ -155,6 +155,7 @@ fn check(arguments: &[String]) -> i32 {
   let mut rendered: Vec<String> = Vec::new();
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
   let mut dynamic_renders = 0usize;
+  let mut dynamic_sites: Vec<(String, String)> = Vec::new();
   let mut other_renders = 0usize;
   let mut with_partial_count = 0usize;
 
@@ -201,6 +202,14 @@ fn check(arguments: &[String]) -> i32 {
 
         if call.dynamic {
           dynamic_renders += 1;
+
+          let shown = call
+            .dynamic_prefix
+            .as_ref()
+            .map(|prefix| format!("{prefix}/#{{...}}"))
+            .unwrap_or_else(|| "#{...}".to_string());
+
+          dynamic_sites.push((relative(file, &root), shown));
         }
 
         continue;
@@ -260,7 +269,7 @@ fn check(arguments: &[String]) -> i32 {
   );
 
   let passed_locals = collect_passed_locals(&templates, &mut index, &flow);
-  let (ivar_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
+  let (ivar_warnings, local_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
 
   println!();
 
@@ -270,6 +279,18 @@ fn check(arguments: &[String]) -> i32 {
 
     for (file, name) in &unresolved {
       println!("   {} {} {}", "\u{2717}".red().bold(), name, format!("in {file}").dimmed());
+    }
+
+    println!();
+  }
+
+  if !dynamic_sites.is_empty() {
+    println!(" {}", "Dynamic render calls:".bold());
+    println!(" {}", "The partial name is built at runtime, so it cannot be resolved statically.".dimmed());
+    println!();
+
+    for (file, shown) in &dynamic_sites {
+      println!("   {} {} {}", "\u{2717}".red().bold(), shown.red(), format!("in {file}").dimmed());
     }
 
     println!();
@@ -339,8 +360,17 @@ fn check(arguments: &[String]) -> i32 {
     )
     .cyan()
   );
-  if ivar_warnings > 0 || unknown_warnings > 0 {
+  if ivar_warnings > 0 || local_warnings > 0 || unknown_warnings > 0 {
     let mut parts = Vec::new();
+
+    if local_warnings > 0 {
+      parts.push(
+        format!("{local_warnings} undeclared {}", plural(local_warnings, "local"))
+          .yellow()
+          .bold()
+          .to_string(),
+      );
+    }
 
     if ivar_warnings > 0 {
       parts.push(
@@ -1237,7 +1267,7 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
   passed
 }
 
-fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize) {
+fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize, usize) {
   let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
   let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
@@ -1271,7 +1301,7 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
   }
 
   if ivars.is_empty() && unknown.is_empty() && likely_locals.is_empty() {
-    return (0, 0);
+    return (0, 0, 0);
   }
 
   println!();
@@ -1343,5 +1373,5 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
 
   println!();
 
-  (ivars.len(), unknown.len())
+  (ivars.len(), likely_locals.len(), unknown.len())
 }

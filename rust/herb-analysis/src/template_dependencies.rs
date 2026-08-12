@@ -336,6 +336,8 @@ fn helper_registry() -> BTreeSet<String> {
 }
 
 fn dynamic_prefix_of(value: &str) -> Option<String> {
+  // The `render partial:` form hands back the source text, quotes included.
+  let value = value.trim_start_matches(['"', '\'']);
   let head = value.split("#{").next()?.trim_end_matches('/');
 
   if head.is_empty() {
