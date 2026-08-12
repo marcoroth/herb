@@ -138,7 +138,7 @@ fn verdict_marker(verdict: Verdict) -> String {
   match verdict {
     Verdict::Always => "\u{2713}".green().to_string(),
     Verdict::Never => "\u{2717}".dimmed().to_string(),
-    Verdict::Mixed => "~".yellow().to_string(),
+    Verdict::Mixed => "~".yellow().bold().to_string(),
     Verdict::Unknown => "?".dimmed().to_string(),
   }
 }
@@ -265,18 +265,18 @@ fn check(arguments: &[String]) -> i32 {
     println!();
 
     for (file, name) in &unresolved {
-      println!("   {} {} {}", "\u{2717}".red(), name, format!("in {file}").dimmed());
+      println!("   {} {} {}", "\u{2717}".red().bold(), name, format!("in {file}").dimmed());
     }
 
     println!();
   }
 
   if !unused.is_empty() {
-    println!(" {}", "Partials nothing renders:".bold());
+    println!(" {}", "Unused partials:".bold());
     println!();
 
     for partial in &unused {
-      println!("   {} {}", "~".yellow(), relative(partial, &root).dimmed());
+      println!("   {} {}", "~".yellow().bold(), relative(partial, &root).dimmed());
     }
 
     println!();
@@ -425,7 +425,7 @@ fn graph(arguments: &[String]) -> i32 {
 
     for reference in &ruby_references.names {
       let resolved = index.resolve(reference, None).first().cloned();
-      let status = if resolved.is_some() { "\u{2713}".green() } else { "\u{2717}".red() };
+      let status = if resolved.is_some() { "\u{2713}".green() } else { "\u{2717}".red().bold() };
 
       println!();
       println!("   {} {}", status, reference.bold());
@@ -441,7 +441,7 @@ fn graph(arguments: &[String]) -> i32 {
   println!(" {} {}", "Partial usage:".bold(), "(who renders each partial)".dimmed());
 
   for name in &partial_names {
-    let status = if reachable.contains(name) { "\u{2713}".green() } else { "~".yellow() };
+    let status = if reachable.contains(name) { "\u{2713}".green() } else { "~".yellow().bold() };
 
     println!();
     println!("   {} {}", status, name);
@@ -489,7 +489,7 @@ fn graph(arguments: &[String]) -> i32 {
     for name in &unreachable {
       let file = index.resolve(name, None).first().map(|file| view_relative(file, &index)).unwrap_or_default();
 
-      println!("   {} {} {}", "~".yellow(), name, file.dimmed());
+      println!("   {} {} {}", "~".yellow().bold(), name, file.dimmed());
     }
   }
 
@@ -553,7 +553,7 @@ fn graph_file(file: &Path) -> i32 {
       return 1;
     };
 
-    let status = if reachable.contains(&name) { "\u{2713}".green() } else { "~".yellow() };
+    let status = if reachable.contains(&name) { "\u{2713}".green() } else { "~".yellow().bold() };
 
     println!(" {} {}", status, name.bold());
     println!();
@@ -721,9 +721,9 @@ fn print_partial_tree(
     let resolved = index.resolve(name, None).first().cloned();
 
     let status = match &resolved {
-      None => "\u{2717}".red(),
+      None => "\u{2717}".red().bold(),
       Some(_) if reachable.contains(name) => "\u{2713}".green(),
-      Some(_) => "~".yellow(),
+      Some(_) => "~".yellow().bold(),
     };
 
     println!("{indent}{connector} {status} {name}");

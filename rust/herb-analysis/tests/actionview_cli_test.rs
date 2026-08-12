@@ -94,7 +94,7 @@ fn check_reports_a_partial_nothing_renders() {
   let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
 
   assert_eq!(status, 1);
-  assert!(output.contains("Partials nothing renders"), "{output}");
+  assert!(output.contains("Unused partials"), "{output}");
 }
 
 #[test]

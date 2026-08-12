@@ -149,7 +149,7 @@ module Herb
           end
 
           display = file_display_name(file_path, view_root)
-          status = reachable.include?(partial_name) ? green("\u2713") : yellow("~")
+          status = reachable.include?(partial_name) ? green("\u2713") : bold(yellow("~"))
 
           puts " #{status} #{bold(partial_name)} #{dimmed(display)}"
           puts ""
@@ -309,7 +309,7 @@ module Herb
 
           ruby_static_references.sort.each do |reference|
             resolved = partial_files[reference]
-            status = resolved ? green("\u2713") : red("\u2717")
+            status = resolved ? green("\u2713") : bold(red("\u2717"))
             puts ""
             puts "   #{status} #{bold(reference)}"
 
@@ -329,7 +329,7 @@ module Herb
 
         partial_files.keys.sort.each do |name|
           callers = reverse_graph[name]
-          status = reachable.include?(name) ? green("\u2713") : yellow("~")
+          status = reachable.include?(name) ? green("\u2713") : bold(yellow("~"))
 
           puts ""
           puts "   #{status} #{bold(name)}"
@@ -355,7 +355,7 @@ module Herb
             children = render_graph[file] || []
 
             puts ""
-            puts "   #{yellow("~")} #{bold(name)} #{dimmed(display)}"
+            puts "   #{bold(yellow("~"))} #{bold(name)} #{dimmed(display)}"
 
             if children.any?
               print_partial_tree(children, render_graph, partial_files, view_root, reachable, indent: "     ", visited: Set.new)
@@ -456,7 +456,7 @@ module Herb
             calls.each do |call|
               location = call[:location] ? dimmed("at #{call[:location]}") : nil
               expected = expected_file_path(call[:partial], result.view_root)
-              puts "   #{red("\u2717")} #{bold(call[:partial])} #{location} #{dimmed("-")} #{dimmed(expected)}"
+              puts "   #{bold(red("\u2717"))} #{bold(call[:partial])} #{location} #{dimmed("-")} #{dimmed(expected)}"
             end
           end
         end
@@ -473,7 +473,7 @@ module Herb
 
           puts ""
           puts " #{cyan(relative)}:"
-          puts "   #{yellow("~")} #{bold(name)} #{dimmed("not referenced")}"
+          puts "   #{bold(yellow("~"))} #{bold(name)} #{dimmed("not referenced")}"
         end
       end
 
@@ -494,7 +494,7 @@ module Herb
       def print_summary_line(result)
         render_parts = [] #: Array[String]
 
-        partials_only = result.render_calls.count { |call| call[:partial] }
+        partials_only = result.render_calls.count { |call| call[:partial] && !dynamic_partial?(call[:partial]) }
         render_parts << stat(result.render_calls.count, "total", :green)
         render_parts << stat(partials_only, "with partial", :green)
         render_parts << stat(result.dynamic_calls.count, "dynamic", :yellow) if result.dynamic_calls.any?
@@ -520,11 +520,11 @@ module Herb
 
           resolved_file = partial_files[name]
           status = if !resolved_file
-                     red("\u2717")
+                     bold(red("\u2717"))
                    elsif reachable.include?(name)
                      green("\u2713")
                    else
-                     yellow("~")
+                     bold(yellow("~"))
                    end
 
           puts "#{indent}#{connector} #{status} #{name}"
@@ -827,6 +827,11 @@ module Herb
 
         content.scan(%r{render\s+(?:partial:\s*)?["']([a-z0-9_/]+)/\#\{}) do |match|
           dynamic_prefixes << match[0]
+
+          # The visitor already recorded this render, it just could not name the partial, so mark
+          # one of those rather than appending another call and inflating the totals.
+          unmarked = calls.find { |call| call[:partial].nil? && !call[:interpolated] }
+          unmarked[:interpolated] = true if unmarked
         end
 
         content.scan(%r{render\s+layout:\s*["']([a-z0-9_/]+)["']}) do |match|
@@ -966,7 +971,7 @@ module Herb
         dynamic = [] #: Array[Hash[Symbol, untyped]]
 
         render_calls.each do |call|
-          if call[:partial] && dynamic_partial?(call[:partial])
+          if call[:interpolated] || (call[:partial] && dynamic_partial?(call[:partial]))
             dynamic << call
           else
             static << call
