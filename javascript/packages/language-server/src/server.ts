@@ -10,6 +10,7 @@ import {
   Connection,
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
+  DocumentOnTypeFormattingParams,
   CodeActionParams,
   CodeActionKind,
   FoldingRangeParams,
@@ -32,6 +33,7 @@ import { Config } from "@herb-tools/config"
 import { isPartialPath } from "@herb-tools/analysis"
 import { isConfigDocument, isPathInside } from "./utils"
 import { serverVersion } from "./build_info"
+import { handleOnTypeFormatting, ON_TYPE_FORMATTING_OPTIONS } from "./on_type_formatting"
 
 import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "@herb-tools/language-service"
@@ -73,6 +75,7 @@ export class Server {
           },
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
+          documentOnTypeFormattingProvider: ON_TYPE_FORMATTING_OPTIONS,
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
           },
@@ -197,6 +200,10 @@ export class Server {
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.session.projects.get(params.textDocument.uri)?.formattingProvider.formatRange(params) ?? []
+    })
+
+    this.connection.onDocumentOnTypeFormatting((params: DocumentOnTypeFormattingParams) => {
+      return handleOnTypeFormatting(this.session.documents, params)
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
