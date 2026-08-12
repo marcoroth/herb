@@ -1,0 +1,83 @@
+# Generated from lib/herb/analysis/render_graph.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      MAX_ANCESTOR_CHAINS: Integer
+
+      NO_ROOTS: TemplateRoots
+
+      UNRESOLVED: PartialContext
+
+      DOCUMENT_ROOT: PartialContext
+
+      # : (Hash[String, untyped]) -> RenderGraph
+      def self.from: (Hash[String, untyped]) -> RenderGraph
+
+      # : (?Hash[String, Array[PartialCallSite]], ?Hash[String, TemplateRoots], ?Set[String], ?Hash[String, Integer], ?Set[String]) -> void
+      def initialize: (?Hash[String, Array[PartialCallSite]], ?Hash[String, TemplateRoots], ?Set[String], ?Hash[String, Integer], ?Set[String]) -> void
+
+      # : () -> Integer
+      def unresolved_render_count: () -> Integer
+
+      # : () -> Integer
+      def skipped_file_count: () -> Integer
+
+      # : () -> bool
+      def complete?: () -> bool
+
+      # : (String) -> TemplateRoots
+      def roots_of: (String) -> TemplateRoots
+
+      # : (String, TemplateRoots) -> void
+      def set_roots: (String, TemplateRoots) -> void
+
+      # : (String) -> Array[PartialCallSite]
+      def callers_of: (String) -> Array[PartialCallSite]
+
+      # : (String) -> void
+      def add_document_root: (String) -> void
+
+      # : (String) -> bool
+      def document_root?: (String) -> bool
+
+      # : (String) -> void
+      def skip: (String) -> void
+
+      # : (String, Hash[String, Array[PartialCallSite]], ?Integer) -> bool
+      def replace_calls_from: (String, Hash[String, Array[PartialCallSite]], ?Integer) -> bool
+
+      # : (String) -> bool
+      def remove_calls_to: (String) -> bool
+
+      # : (String) -> InferredSignature
+      def infer_signature: (String) -> InferredSignature
+
+      # : (String) -> PartialContext
+      def context_of: (String) -> PartialContext
+
+      # : (Array[String], *String) -> Symbol
+      def descendant_verdict: (Array[String], *String) -> Symbol
+
+      # : () -> Integer
+      def size: () -> Integer
+
+      # : () -> Hash[String, untyped]
+      def to_h: () -> Hash[String, untyped]
+
+      private
+
+      # : (String, Integer) -> bool
+      def replace_unresolved_from: (String, Integer) -> bool
+
+      # : (String, Array[String], Set[String]) -> Symbol
+      def root_verdict: (String, Array[String], Set[String]) -> Symbol
+
+      # : (String, Set[String]) -> PartialContext
+      def resolve_context: (String, Set[String]) -> PartialContext
+
+      # : (PartialCallSite) -> CallFrame
+      def frame_for: (PartialCallSite) -> CallFrame
+    end
+  end
+end

@@ -8,6 +8,7 @@ AllCops:
     - 'tmp/**/*'
     - 'node_modules/**/*'
     - 'lib/herb/action_view/**/*'
+    - 'lib/herb/analysis/**/*'
 
 Style/StringLiterals:
   Enabled: true
@@ -56,6 +57,10 @@ Style/AccessorGrouping:
 
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: diff_comma
+
+Metrics/BlockNesting:
+  Exclude:
+    - lib/herb/cli.rb
 
 Metrics/CyclomaticComplexity:
   Max: 15

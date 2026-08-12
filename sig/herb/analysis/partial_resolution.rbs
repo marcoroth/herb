@@ -1,0 +1,57 @@
+# Generated from lib/herb/analysis/partial_resolution.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    module PartialResolution
+      PARTIAL_PREFIX: String
+
+      EXTENSIONS: Array[String]
+
+      EXTENSION_ALTERNATIVES: String
+
+      TEMPLATE_GLOB_PATTERN: String
+
+      PARTIAL_GLOB_PATTERN: String
+
+      VIEW_ROOT: String
+
+      LAYOUTS_DIRECTORY: String
+
+      APPLICATION_LAYOUT: String
+
+      MAILER_LAYOUT: String
+
+      MAILER_SUFFIX: String
+
+      # : (String | Pathname) -> Pathname
+      def self.view_root_for: (String | Pathname) -> Pathname
+
+      # : (String) -> bool
+      def self.template_path?: (String) -> bool
+
+      # : (String) -> bool
+      def self.partial_path?: (String) -> bool
+
+      # : (String) -> Integer
+      def self.template_rank: (String) -> Integer
+
+      # : (String, String) -> bool
+      def self.outranks_template?: (String, String) -> bool
+
+      # : (Array[String]) -> Array[String]
+      def self.by_precedence: (Array[String]) -> Array[String]
+
+      # : (String, String | Pathname) -> String?
+      def self.template_name_for: (String, String | Pathname) -> String?
+
+      # : (String, String | Pathname) -> Array[String]
+      def self.layout_candidates_for: (String, String | Pathname) -> Array[String]
+
+      # : (String, String | Pathname) -> String?
+      def self.partial_name_for: (String, String | Pathname) -> String?
+
+      # : (String, String | Pathname) -> String?
+      private def self.relative_to_view_root: (String, String | Pathname) -> String?
+    end
+  end
+end

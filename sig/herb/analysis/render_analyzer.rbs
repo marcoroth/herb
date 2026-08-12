@@ -1,7 +1,7 @@
-# Generated from lib/herb/action_view/render_analyzer.rb with RBS::Inline
+# Generated from lib/herb/analysis/render_analyzer.rb with RBS::Inline
 
 module Herb
-  module ActionView
+  module Analysis
     class RenderAnalyzer
       include Colors
 
@@ -66,11 +66,17 @@ module Herb
 
       def print_results: (untyped result, untyped duration) -> untyped
 
+      def check_dependencies: (untyped erb_files, untyped view_root) -> untyped
+
+      def print_dependency_warnings: (untyped warnings) -> untyped
+
       def find_erb_files: () -> untyped
 
       def find_view_root: () -> untyped
 
       def find_partial_files: (untyped view_root) -> untyped
+
+      def partial_index: (untyped view_root) -> untyped
 
       def partial_name_for_file: (untyped file_path, untyped view_root) -> untyped
 
@@ -94,7 +100,7 @@ module Herb
 
       def find_unresolved: (untyped render_calls, untyped partial_files, untyped view_root) -> untyped
 
-      def resolve_partial: (untyped partial_name, untyped source_file, untyped partial_files, untyped view_root) -> untyped
+      def resolve_partial: (untyped partial_name, untyped source_file, untyped _partial_files, untyped view_root) -> untyped
 
       def expected_file_path: (untyped partial_name, untyped view_root) -> untyped
 

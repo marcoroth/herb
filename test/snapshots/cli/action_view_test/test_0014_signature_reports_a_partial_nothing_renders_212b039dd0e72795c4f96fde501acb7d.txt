@@ -1,0 +1,12 @@
+---
+source: "CLI::ActionViewTest#test_0014_signature reports a partial nothing renders"
+input: "orphan signature"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_orphan.html.erb
+
+ Not rendered by any template, so there is nothing to infer.
+

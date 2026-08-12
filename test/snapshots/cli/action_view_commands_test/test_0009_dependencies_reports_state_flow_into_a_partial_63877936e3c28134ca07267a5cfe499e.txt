@@ -1,0 +1,30 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0009_dependencies reports state flow into a partial"
+input: "state flow: <%= render \"posts/row\", post: @post %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/show.html.erb (entry point)
+
+ Instance variables (state)
+   @post
+
+ Locals received (from render calls)
+   post ← @post
+
+ Helper calls (known)
+   render
+
+ State flow (which templates are affected by each state change)
+
+   @post (2 templates)
+     app/views/posts/_row.html.erb
+     app/views/posts/show.html.erb
+
+ Node index (which DOM nodes are affected by each state change)
+
+   @post (1 node)
+     └── [0] render render "posts/row", post: @post
+

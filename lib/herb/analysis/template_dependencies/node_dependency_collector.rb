@@ -1,0 +1,171 @@
+# frozen_string_literal: true
+
+require "prism"
+
+module Herb
+  module Analysis
+    class TemplateDependencies
+      class NodeDependencyCollector < ::Herb::Visitor
+        attr_reader :affected
+
+        def initialize(state, helper_registry, custom_helpers)
+          super()
+
+          @state = state
+          @helper_registry = helper_registry
+          @custom_helpers = custom_helpers
+          @affected = [] #: Array[Hash[Symbol, untyped]]
+          @path = [] #: Array[Integer]
+          @child_index = [] #: Array[Integer]
+        end
+
+        def visit_document_node(node)
+          visit_children_with_paths(node.child_nodes)
+        end
+
+        def visit_html_element_node(node)
+          visit_children_with_paths(node.child_nodes)
+        end
+
+        def visit_html_open_tag_node(node)
+          node.child_nodes.each_with_index do |child, i|
+            if child.is_a?(Herb::AST::HTMLAttributeNode)
+              check_attribute(child, @path + [i])
+            end
+          end
+        end
+
+        def visit_erb_content_node(node)
+          check_erb_expression(node, :text_content)
+        end
+
+        def visit_erb_if_node(node)
+          check_block_for_state(node, :conditional)
+        end
+
+        def visit_erb_unless_node(node)
+          check_block_for_state(node, :conditional)
+        end
+
+        def visit_erb_case_node(node)
+          check_block_for_state(node, :conditional)
+        end
+
+        def visit_erb_node(node)
+          check_erb_expression(node, :expression)
+        end
+
+        def visit_erb_render_node(node)
+          check_erb_expression(node, :render)
+        end
+
+        private
+
+        def visit_children_with_paths(children)
+          return unless children
+
+          children.each_with_index do |child, index|
+            @path.push(index)
+            visit(child)
+            @path.pop
+          end
+        end
+
+        def check_block_for_state(node, type)
+          all_content = collect_all_expressions(node)
+
+          if all_content.any? { |code| references_state?(code) }
+            location = node.location
+            condition = node.content&.value&.strip
+
+            @affected << {
+              node_path: @path.dup,
+              type: type,
+              expression: condition,
+              location: location ? "#{location.start.line}:#{location.start.column}" : nil
+            }
+          end
+
+          visit_children_with_paths(node.child_nodes)
+        end
+
+        def collect_all_expressions(node)
+          expressions = [] #: Array[String]
+
+          if node.respond_to?(:content) && node.content
+            value = node.content.respond_to?(:value) ? node.content.value&.strip : nil
+
+            expressions << value if value && !value.empty? # steep:ignore
+          end
+
+          children = node.respond_to?(:child_nodes) ? node.child_nodes.compact : [] # steep:ignore
+          children.each { |child| expressions.concat(collect_all_expressions(child)) }
+
+          expressions
+        end
+
+        def check_erb_expression(node, type)
+          code = node.content&.value&.strip
+          return unless code
+
+          if references_state?(code)
+            location = node.location
+
+            @affected << {
+              node_path: @path.dup,
+              type: type,
+              expression: code,
+              location: location ? "#{location.start.line}:#{location.start.column}" : nil
+            }
+          end
+        end
+
+        def check_attribute(attribute_node, path)
+          attribute_name = nil
+
+          attribute_node.child_nodes.each do |child|
+            if child.is_a?(Herb::AST::HTMLAttributeNameNode)
+              first = child.child_nodes&.first
+
+              attribute_name = if first.respond_to?(:content)
+                                 content = first.content # steep:ignore
+                                 content.respond_to?(:value) ? content.value : content.to_s
+                               end
+            end
+
+            next unless child.is_a?(Herb::AST::HTMLAttributeValueNode)
+
+            child.child_nodes&.each do |value_child|
+              next unless value_child.respond_to?(:content) && value_child.content # steep:ignore
+
+              content = value_child.content # steep:ignore
+              code = (content.respond_to?(:value) ? content.value : content.to_s).strip
+              next unless code && !code.empty? && references_state?(code)
+
+              location = value_child.location # steep:ignore
+
+              @affected << {
+                node_path: path.dup,
+                type: :attribute_value,
+                attribute: attribute_name,
+                expression: code,
+                location: location ? "#{location.start.line}:#{location.start.column}" : nil
+              }
+            end
+          end
+        end
+
+        def references_state?(code)
+          if @state.start_with?("@")
+            code.include?(@state)
+          elsif @state.include?(".")
+            constant = @state.split(".").first
+            code.include?(constant.to_s)
+          else
+            code.match?(/\b#{Regexp.escape(@state)}\b/)
+          end
+        end
+      end
+    end
+  end
+end
