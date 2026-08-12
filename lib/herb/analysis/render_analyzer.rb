@@ -751,15 +751,7 @@ module Herb
       end
 
       def find_erb_files
-        patterns = configuration.file_include_patterns
-        exclude = configuration.file_exclude_patterns
-
-        files = patterns.flat_map { |pattern| Dir[File.join(@project_path, pattern)] }.uniq
-
-        files.reject do |file|
-          relative = Pathname.new(file).relative_path_from(@project_path).to_s
-          exclude.any? { |pattern| File.fnmatch?(pattern, relative, File::FNM_PATHNAME) }
-        end.sort
+        configuration.find_files(@project_path)
       end
 
       def find_view_root
