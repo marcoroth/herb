@@ -2,6 +2,7 @@ pub mod analysis;
 pub mod partial_declaration;
 pub mod partial_index;
 pub mod partial_resolution;
+pub mod project_index;
 pub mod rails;
 pub mod render_graph;
 pub mod render_graph_builder;
