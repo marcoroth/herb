@@ -44,11 +44,11 @@ pub fn print_usage() {
 }
 
 fn project_root(arguments: &[String]) -> PathBuf {
-  arguments
-    .first()
-    .map(PathBuf::from)
-    .filter(|path| path.is_dir())
-    .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
+  match arguments.first().map(PathBuf::from) {
+    Some(path) if path.is_dir() => path,
+    Some(path) if path.is_file() => containing_project(&path),
+    _ => std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+  }
 }
 
 fn resolve_file(arguments: &[String]) -> Option<PathBuf> {
@@ -153,6 +153,7 @@ fn check(arguments: &[String]) -> i32 {
 
   let mut unresolved: Vec<(String, String)> = Vec::new();
   let mut rendered: Vec<String> = Vec::new();
+  let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
 
   let flow = StateFlow::new(&root);
 
@@ -163,6 +164,8 @@ fn check(arguments: &[String]) -> i32 {
       let Some(name) = &call.partial else {
         continue;
       };
+
+      files_with_renders.insert(file.clone());
 
       match index.resolve(name, Some(file)).first() {
         Some(target) => rendered.push(target.clone()),
@@ -219,21 +222,19 @@ fn check(arguments: &[String]) -> i32 {
   println!();
   println!(" {}", "Summary:".bold());
   println!("  {} {}", label("Version"), herb::herb::version().cyan());
+  let total_renders = rendered.len() + unresolved.len();
+
   println!(
     "  {} {}",
     label("Checked"),
-    format!("{} {}", templates.len(), plural(templates.len(), "template")).cyan()
+    format!("{} {}", files_with_renders.len(), plural(files_with_renders.len(), "file")).cyan()
   );
   println!(
     "  {} {}",
     label("Renders"),
-    format!("{} resolved | {} unresolved", rendered.len(), unresolved.len()).cyan()
+    format!("{} total | {} with partial", total_renders, rendered.len()).cyan()
   );
-  println!(
-    "  {} {}",
-    label("Partials"),
-    format!("{} on disk | {} unused", partials.len(), unused.len()).cyan()
-  );
+  println!("  {} {}", label("Partials"), format!("{} on disk", partials.len()).cyan());
   println!(
     "  {} {}",
     label("Ruby"),
@@ -274,10 +275,14 @@ fn separator() -> String {
 }
 
 fn label(text: &str) -> String {
-  format!("{text:<13}").dimmed().to_string()
+  format!("{text:<12}").dimmed().to_string()
 }
 
 fn graph(arguments: &[String]) -> i32 {
+  if let Some(file) = resolve_file(arguments) {
+    return graph_file(&file);
+  }
+
   let root = project_root(arguments);
   let mut index = PartialIndex::build(&root);
   let templates = index.templates().to_vec();
@@ -434,6 +439,82 @@ fn reverse_graph(renders: &BTreeMap<String, Vec<String>>, index: &PartialIndex) 
   callers
 }
 
+fn graph_file(file: &Path) -> i32 {
+  let root = containing_project(file);
+  let mut index = PartialIndex::build(&root);
+  let templates = index.templates().to_vec();
+  let path = file.to_str().unwrap_or_default().to_string();
+
+  let renders = collect_renders(&mut index, &templates);
+  let ruby_references = ruby_render_references::collect(&root);
+  let reachable = reachable_partials(&index, &renders, &ruby_references);
+  let callers = reverse_graph(&renders, &index);
+
+  println!();
+  println!(" {} {}", "Herb".bold(), "\u{1f33f}".normal());
+  println!();
+  println!(" {}", "Building render graph...".dimmed());
+  println!();
+
+  let is_partial = herb_analysis::partial_resolution::partial_path(&path);
+
+  if is_partial {
+    let Some(name) = index.partial_name_for(&path) else {
+      println!(" {}", "Could not determine a partial name for this file.".red());
+
+      return 1;
+    };
+
+    let status = if reachable.contains(&name) { "\u{2713}".green() } else { "~".yellow() };
+
+    println!(" {} {}", status, name.bold());
+    println!();
+
+    let renderers = callers.get(&name).cloned().unwrap_or_default();
+
+    if renderers.is_empty() && ruby_references.covers(&name) {
+      println!(" {}", "Rendered by:".bold());
+      println!("   {} {}", "\u{2514}\u{2500}\u{2500}".dimmed(), "[Ruby code]".dimmed());
+    } else if renderers.is_empty() {
+      println!(" {}", "Not rendered by any file.".dimmed());
+    } else {
+      println!(" {}", "Rendered by:".bold());
+
+      for (position, renderer) in renderers.iter().enumerate() {
+        let connector = if position == renderers.len() - 1 {
+          "\u{2514}\u{2500}\u{2500}"
+        } else {
+          "\u{251c}\u{2500}\u{2500}"
+        };
+        let kind = if herb_analysis::partial_resolution::partial_path(renderer) {
+          "(partial)"
+        } else {
+          "(entry point)"
+        };
+
+        println!("   {} {} {}", connector.dimmed(), view_relative(renderer, &index).cyan(), kind.dimmed());
+      }
+    }
+  } else {
+    println!(" {} {}", view_relative(&path, &index).cyan(), "(entry point)".dimmed());
+  }
+
+  let children = renders.get(&path).cloned().unwrap_or_default();
+
+  println!();
+
+  if children.is_empty() {
+    println!(" {}", "No render calls in this file.".dimmed());
+  } else {
+    println!(" {}", "Renders:".bold());
+    print_partial_tree(&children, &renders, &index, &reachable, "   ", &mut BTreeSet::new());
+  }
+
+  println!();
+
+  0
+}
+
 fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> BTreeMap<String, Vec<String>> {
   let mut renders: BTreeMap<String, Vec<String>> = BTreeMap::new();
   let flow = StateFlow::new(index.view_root());
@@ -539,44 +620,114 @@ fn dependencies(arguments: &[String]) -> i32 {
 
   let root = containing_project(&file);
   let flow = StateFlow::new(&root);
-  let path = file.to_str().unwrap_or_default();
-  let result = flow.analyze(path);
+  let path = file.to_str().unwrap_or_default().to_string();
+  let result = flow.analyze(&path);
 
-  header(&relative(path, &root));
+  let is_partial = herb_analysis::partial_resolution::partial_path(&path);
+  let kind = if is_partial { "(partial)" } else { "(entry point)" };
 
-  print_list("Instance variables", &result.instance_variables);
-  print_list("Constants", &result.constants);
-  print_list("Declared locals", &result.locals_declared);
-  print_list("Helper calls", &result.helper_calls);
-  print_list("Unknown calls", &result.unknown_calls);
+  println!();
+  println!(" {} {}", "Herb".bold(), "\u{1f33f}".normal());
+  println!();
+  println!(" {} {}", relative(&path, &root).cyan(), kind.dimmed());
+
+  print_list("Instance variables", "(state)", &result.instance_variables);
+  print_list("Constants", "", &result.constants);
+  print_list("Declared locals", "(strict locals)", &result.locals_declared);
 
   if !result.locals_received.is_empty() {
-    println!(" {}", "Locals passed to partials".bold());
     println!();
+    println!(" {} {}", "Locals received".bold(), "(from render calls)".dimmed());
 
     for (name, expression) in &result.locals_received {
-      println!("   {} {}", name.yellow(), format!("= {expression}").dimmed());
+      println!("   {} {} {}", name.yellow(), "\u{2190}".dimmed(), expression);
     }
-
-    println!();
   }
+
+  print_list("Helper calls", "(known)", &result.helper_calls);
+  print_list("Unknown calls", "", &result.unknown_calls);
+
+  let states: Vec<String> = result.instance_variables.iter().chain(result.constants.iter()).cloned().collect();
+
+  if !is_partial && !states.is_empty() {
+    println!();
+    println!(" {} {}", "State flow".bold(), "(which templates are affected by each state change)".dimmed());
+
+    for state in &states {
+      let affected = flow.affected_templates(&path, state);
+
+      if affected.is_empty() {
+        continue;
+      }
+
+      println!();
+      println!(
+        "   {} {}",
+        state.yellow(),
+        format!("({} {})", affected.len(), plural(affected.len(), "template")).dimmed()
+      );
+
+      for template in &affected {
+        println!("     {}", relative(template, &root).dimmed());
+      }
+    }
+  }
+
+  let index = flow.dependency_index(&path);
+
+  if !index.is_empty() {
+    println!();
+    println!(" {} {}", "Node index".bold(), "(which DOM nodes are affected by each state change)".dimmed());
+
+    for (state, nodes) in &index {
+      println!();
+      println!(
+        "   {} {}",
+        state.yellow(),
+        format!("({} {})", nodes.len(), plural(nodes.len(), "node")).dimmed()
+      );
+
+      for (position, node) in nodes.iter().enumerate() {
+        let connector = if position == nodes.len() - 1 {
+          "\u{2514}\u{2500}\u{2500}"
+        } else {
+          "\u{251c}\u{2500}\u{2500}"
+        };
+        let path_label = node.node_path.iter().map(|index| index.to_string()).collect::<Vec<_>>().join(",");
+        let expression = one_line(&node.expression.clone().unwrap_or_default(), 60);
+
+        println!(
+          "     {} {} {} {}",
+          connector.dimmed(),
+          format!("[{path_label}]").dimmed(),
+          node.kind,
+          expression.dimmed()
+        );
+      }
+    }
+  }
+
+  println!();
 
   0
 }
 
-fn print_list(title: &str, values: &[String]) {
+fn print_list(title: &str, note: &str, values: &[String]) {
   if values.is_empty() {
     return;
   }
 
-  println!(" {}", title.bold());
   println!();
+
+  if note.is_empty() {
+    println!(" {}", title.bold());
+  } else {
+    println!(" {} {}", title.bold(), note.dimmed());
+  }
 
   for value in values {
     println!("   {}", value.yellow());
   }
-
-  println!();
 }
 
 fn flow(arguments: &[String]) -> i32 {

@@ -170,7 +170,9 @@ fn dependencies_reports_the_manifest_for_a_template() {
 
   assert_eq!(status, 0);
   assert!(output.contains("@post"), "{output}");
-  assert!(output.contains("Locals passed to partials"), "{output}");
+  assert!(output.contains("Locals received"), "{output}");
+  assert!(output.contains("State flow"), "{output}");
+  assert!(output.contains("Node index"), "{output}");
 }
 
 #[test]
