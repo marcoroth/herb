@@ -89,6 +89,21 @@ impl PartialIndex {
     self.by_name.keys().map(|name| name.as_str()).collect()
   }
 
+  /// Serialised form, matching `Herb::Analysis::PartialIndex#to_h`: every partial name mapped to
+  /// the declaration it resolves to.
+  pub fn to_h(&mut self) -> BTreeMap<String, PartialDeclaration> {
+    let names: Vec<String> = self.names().iter().map(|name| name.to_string()).collect();
+    let mut partials = BTreeMap::new();
+
+    for name in names {
+      if let Some(declaration) = self.lookup(&name, None) {
+        partials.insert(name, declaration.clone());
+      }
+    }
+
+    partials
+  }
+
   pub fn size(&self) -> usize {
     self.by_name.len()
   }

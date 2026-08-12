@@ -159,3 +159,35 @@ fn resolves_an_object_render_to_its_conventional_partial() {
   assert_eq!(object_partial_name("@post.author"), None);
   assert_eq!(object_partial_name(""), None);
 }
+
+#[test]
+fn scans_app_helpers_for_custom_helper_methods() {
+  use herb_analysis::template_dependencies::TemplateDependencies;
+
+  let project = Project::new("helpers");
+  project.write(
+    "app/helpers/application_helper.rb",
+    "module ApplicationHelper\n  def markdown(text)\n    text\n  end\nend\n",
+  );
+
+  let mut dependencies = TemplateDependencies::new();
+  let helpers = dependencies.scan_helpers(&project.root);
+
+  assert!(helpers.contains("markdown"), "{helpers:?}");
+}
+
+#[test]
+fn serialises_the_partial_index() {
+  use herb_analysis::partial_index::PartialIndex;
+
+  let project = Project::new("to_h");
+  project.write("app/views/posts/_card.html.erb", "<%# locals: (title:) %>\n<p></p>");
+
+  let mut index = PartialIndex::build(&project.root);
+  let serialised = index.to_h();
+
+  let declaration = serialised.get("posts/card").expect("declaration");
+
+  assert!(declaration.has_declaration);
+  assert_eq!(declaration.locals.len(), 1);
+}

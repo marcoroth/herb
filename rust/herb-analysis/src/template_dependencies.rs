@@ -267,6 +267,22 @@ impl TemplateDependencies {
     }
   }
 
+  /// Mirrors `Herb::Analysis::TemplateDependencies#scan_helpers!`: every method defined under
+  /// `app/helpers` becomes a known helper, so calls to it stop being reported as unknown.
+  pub fn scan_helpers(&mut self, project_path: &std::path::Path) -> &BTreeSet<String> {
+    let helpers = project_path.join("app").join("helpers");
+
+    if helpers.is_dir() {
+      let mut found = BTreeSet::new();
+
+      collect_helper_methods(&helpers, &mut found);
+
+      self.custom_helpers.extend(found);
+    }
+
+    &self.custom_helpers
+  }
+
   pub fn with_custom_helpers(helpers: BTreeSet<String>) -> Self {
     Self {
       helper_registry: helper_registry(),
@@ -339,4 +355,61 @@ pub fn object_partial_name(expression: &str) -> Option<String> {
   let plural = if name.ends_with('s') { name.to_string() } else { format!("{name}s") };
 
   Some(format!("{plural}/{singular}"))
+}
+
+fn collect_helper_methods(directory: &std::path::Path, found: &mut BTreeSet<String>) {
+  let Ok(entries) = std::fs::read_dir(directory) else {
+    return;
+  };
+
+  for entry in entries.flatten() {
+    let path = entry.path();
+
+    if path.is_dir() {
+      collect_helper_methods(&path, found);
+
+      continue;
+    }
+
+    if path.extension().and_then(|extension| extension.to_str()) != Some("rb") {
+      continue;
+    }
+
+    if let Ok(source) = std::fs::read_to_string(&path) {
+      collect_definitions(&source, found);
+    }
+  }
+}
+
+fn collect_definitions(source: &str, found: &mut BTreeSet<String>) {
+  let options = ParserOptions {
+    prism_nodes: true,
+    ..Default::default()
+  };
+
+  let wrapped = format!("<% {source} %>");
+
+  let Ok(result) = herb::herb::parse_with_options(&wrapped, &options) else {
+    return;
+  };
+
+  for child in &result.value.children {
+    if let AnyNode::ERBContentNode(node) = child {
+      if let Some(prism) = node.prism() {
+        walk_definitions(prism, found);
+      }
+    }
+  }
+}
+
+fn walk_definitions(node: &herb::prism::PrismNode, found: &mut BTreeSet<String>) {
+  if node.is("DefNode") {
+    if let Some(name) = node.name.as_deref() {
+      found.insert(name.to_string());
+    }
+  }
+
+  for child in &node.children {
+    walk_definitions(child, found);
+  }
 }
