@@ -100,7 +100,7 @@ module Herb
 
       def find_unresolved: (untyped render_calls, untyped partial_files, untyped view_root) -> untyped
 
-      def resolve_partial: (untyped partial_name, untyped source_file, untyped partial_files, untyped view_root) -> untyped
+      def resolve_partial: (untyped partial_name, untyped source_file, untyped _partial_files, untyped view_root) -> untyped
 
       def expected_file_path: (untyped partial_name, untyped view_root) -> untyped
 

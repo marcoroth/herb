@@ -1013,26 +1013,8 @@ module Herb
         end
       end
 
-      def resolve_partial(partial_name, source_file, partial_files, view_root)
-        return partial_files[partial_name] if partial_files.key?(partial_name)
-
-        source_directory = begin
-          Pathname.new(File.dirname(source_file)).relative_path_from(view_root).to_s
-        rescue ArgumentError
-          nil
-        end
-
-        if source_directory && source_directory != "."
-          relative_name = "#{source_directory}/#{partial_name}"
-          return partial_files[relative_name] if partial_files.key?(relative_name)
-        end
-
-        unless partial_name.include?("/")
-          application_name = "application/#{partial_name}"
-          return partial_files[application_name] if partial_files.key?(application_name)
-        end
-
-        nil
+      def resolve_partial(partial_name, source_file, _partial_files, view_root)
+        partial_index(view_root).resolve(partial_name, source_file).first
       end
 
       def expected_file_path(partial_name, view_root)
