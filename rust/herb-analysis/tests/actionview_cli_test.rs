@@ -256,3 +256,36 @@ fn flow_indents_a_node_nested_inside_a_conditional() {
 
   assert!(indent(nested) > indent(sibling), "nested: {nested:?} sibling: {sibling:?}");
 }
+
+#[test]
+fn check_does_not_flag_a_partial_rendered_from_ruby() {
+  let project = Project::new("check_ruby_reference");
+  project.write("app/views/posts/index.html.erb", "<p>hello</p>");
+  project.write("app/views/posts/_ruby_only.html.erb", "<p>from ruby</p>");
+  project.write("app/views/posts/_orphan.html.erb", "<p>unused</p>");
+  project.write(
+    "app/controllers/posts_controller.rb",
+    "class PostsController\n  def show\n    render \"posts/ruby_only\"\n  end\nend\n",
+  );
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 1);
+  assert!(!output.contains("_ruby_only"), "{output}");
+  assert!(output.contains("_orphan"), "{output}");
+}
+
+#[test]
+fn check_covers_a_partial_behind_an_interpolated_ruby_render() {
+  let project = Project::new("check_ruby_prefix");
+  project.write("app/views/widgets/_alpha.html.erb", "<p>a</p>");
+  project.write(
+    "app/controllers/widgets_controller.rb",
+    "class WidgetsController\n  def show\n    render \"widgets/#{kind}\"\n  end\nend\n",
+  );
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(!output.contains("_alpha"), "{output}");
+}

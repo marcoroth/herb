@@ -5,6 +5,7 @@ use colored::Colorize;
 use herb_analysis::partial_index::PartialIndex;
 use herb_analysis::project_index::ProjectIndex;
 use herb_analysis::render_graph::Verdict;
+use herb_analysis::ruby_render_references;
 use herb_analysis::state_flow::{FlowNode, StateFlow};
 
 pub fn run(command: &str, arguments: &[String]) -> i32 {
@@ -88,6 +89,14 @@ fn header(title: &str) {
   println!();
 }
 
+fn plural(count: usize, word: &str) -> String {
+  if count == 1 {
+    word.to_string()
+  } else {
+    format!("{word}s")
+  }
+}
+
 fn nesting_depths(nodes: &[herb_analysis::state_flow::AffectedNode]) -> Vec<usize> {
   let mut stack: Vec<&[usize]> = Vec::new();
 
@@ -166,9 +175,20 @@ fn check(arguments: &[String]) -> i32 {
     .cloned()
     .collect();
 
-  let unused: Vec<&String> = partials.iter().filter(|partial| !rendered.contains(partial)).collect();
+  let ruby_references = ruby_render_references::collect(&root);
 
-  println!(" {} {}", "Checked".bold(), format!("{} templates", templates.len()).dimmed());
+  let unused: Vec<&String> = partials
+    .iter()
+    .filter(|partial| !rendered.contains(partial))
+    .filter(|partial| index.partial_name_for(partial).map(|name| !ruby_references.covers(&name)).unwrap_or(true))
+    .collect();
+
+  println!(
+    " {} {} {}",
+    "Checked".bold(),
+    format!("{} {}", templates.len(), plural(templates.len(), "template")).dimmed(),
+    format!("and {} {}", ruby_references.files_scanned, plural(ruby_references.files_scanned, "Ruby file")).dimmed()
+  );
   println!();
 
   if !unresolved.is_empty() {
