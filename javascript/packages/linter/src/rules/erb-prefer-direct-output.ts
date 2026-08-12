@@ -13,20 +13,37 @@ interface PreferDirectOutputAutofixContext extends BaseAutofixContext {
   replacementParts: ReplacementPart[]
 }
 
+function mapReplacementParts<T>(
+  node: ERBContentNode,
+  replacementParts: ReplacementPart[],
+  mapText: (content: string) => T,
+  mapExpression: (
+    expression: string,
+    tagOpening: string,
+    tagClosing: string,
+  ) => T,
+): T[] {
+  const tagOpening = node.tag_opening?.value ?? "<%="
+  const tagClosing = node.tag_closing?.value ?? "%>"
+
+  return replacementParts.map((part) =>
+    part.type === "text"
+      ? mapText(part.content)
+      : mapExpression(part.expression.trim(), tagOpening, tagClosing),
+  )
+}
+
 function formatReplacement(
   node: ERBContentNode,
   replacementParts: ReplacementPart[],
 ): string {
-  const tagOpening = node.tag_opening?.value ?? "<%="
-  const tagClosing = node.tag_closing?.value ?? "%>"
-
-  return replacementParts
-    .map((part) =>
-      part.type === "text"
-        ? part.content
-        : `${tagOpening} ${part.expression.trim()} ${tagClosing}`,
-    )
-    .join("")
+  return mapReplacementParts(
+    node,
+    replacementParts,
+    (content) => content,
+    (expression, tagOpening, tagClosing) =>
+      `${tagOpening} ${expression} ${tagClosing}`,
+  ).join("")
 }
 
 class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofixContext> {
@@ -137,19 +154,14 @@ export class ERBPreferDirectOutputRule extends ParserRule<PreferDirectOutputAuto
 
     if (!parentInfo) return null
 
-    const tagOpening = erbNode.tag_opening?.value ?? "<%="
-    const tagClosing = erbNode.tag_closing?.value ?? "%>"
-
     const { array: parentArray, index: nodeIndex } = parentInfo
-    const replacementNodes: Node[] = []
-
-    for (const part of replacementParts) {
-      if (part.type === "text") {
-        replacementNodes.push(createLiteral(part.content))
-      } else {
-        replacementNodes.push(createERBOutputNode(` ${part.expression.trim()} `, tagOpening, tagClosing))
-      }
-    }
+    const replacementNodes = mapReplacementParts<Node>(
+      erbNode,
+      replacementParts,
+      (content) => createLiteral(content),
+      (expression, tagOpening, tagClosing) =>
+        createERBOutputNode(` ${expression} `, tagOpening, tagClosing),
+    )
 
     parentArray.splice(nodeIndex, 1, ...replacementNodes)
 
