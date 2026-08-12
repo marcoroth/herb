@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, vi } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { ParseCache } from "../src/parse-cache.js"
+import { ParseCache, MAX_ENTRIES } from "../src/parse-cache.js"
 import { Linter } from "../src/linter.js"
 import { isWhitespaceNode } from "@herb-tools/core"
 import type { HTMLElementNode } from "@herb-tools/core"
@@ -48,6 +48,64 @@ describe("ParseCache", () => {
     const result2 = cache.get("<div></div>", { strict: false })
 
     expect(result1).toBe(result2)
+  })
+
+  test("evicts the oldest entry once it is full", () => {
+    const cache = new ParseCache(Herb)
+    const oldest = cache.get("<div>0</div>")
+
+    for (let index = 1; index <= MAX_ENTRIES; index++) {
+      cache.get(`<div>${index}</div>`)
+    }
+
+    expect(cache.get("<div>0</div>")).not.toBe(oldest)
+    expect(cache.get(`<div>${MAX_ENTRIES}</div>`)).toBe(cache.get(`<div>${MAX_ENTRIES}</div>`))
+  })
+
+  test("keeps an entry alive while it is being used", () => {
+    const cache = new ParseCache(Herb)
+    const kept = cache.get("<div>kept</div>")
+
+    for (let index = 1; index <= MAX_ENTRIES; index++) {
+      cache.get(`<div>${index}</div>`)
+      cache.get("<div>kept</div>")
+    }
+
+    expect(cache.get("<div>kept</div>")).toBe(kept)
+  })
+
+  describe("getMutable", () => {
+    test("returns an equivalent result", () => {
+      const cache = new ParseCache(Herb)
+      const cached = cache.get("<div>hello</div>")
+      const mutable = cache.getMutable("<div>hello</div>")
+
+      expect(mutable).not.toBe(cached)
+      expect(mutable.source).toBe(cached.source)
+      expect(mutable.options).toEqual(cached.options)
+      expect(mutable.value.inspect()).toBe(cached.value.inspect())
+    })
+
+    test("returns a tree that is independent of the cached one", () => {
+      const cache = new ParseCache(Herb)
+      const cached = cache.get("<div>hello</div>")
+      const mutable = cache.getMutable("<div>hello</div>")
+
+      expect(mutable.value).not.toBe(cached.value)
+
+      const tree = cached.value.inspect()
+
+      ;(mutable.value as any).children = []
+
+      expect(cached.value.inspect()).toBe(tree)
+      expect(cache.get("<div>hello</div>")).toBe(cached)
+    })
+
+    test("returns a fresh copy on every call", () => {
+      const cache = new ParseCache(Herb)
+
+      expect(cache.getMutable("<div>hello</div>").value).not.toBe(cache.getMutable("<div>hello</div>").value)
+    })
   })
 
   test("clear() removes all cached results", () => {
@@ -176,7 +234,7 @@ describe("ParseCache", () => {
 
     const cacheOf = (linter: Linter) => (linter as any).parseCache as ParseCache
 
-    test("doesn't retain the previous source after another lint()", () => {
+    test("keeps the previous source after another lint()", () => {
       const linter = new Linter(Herb)
       const cache = cacheOf(linter)
 
@@ -186,10 +244,10 @@ describe("ParseCache", () => {
 
       linter.lint(second)
 
-      expect(cache.get(first)).not.toBe(cachedFirst)
+      expect(cache.get(first)).toBe(cachedFirst)
     })
 
-    test("doesn't retain the previous source after another autofix()", () => {
+    test("keeps the previous source after another autofix()", () => {
       const linter = new Linter(Herb)
       const cache = cacheOf(linter)
 
@@ -199,7 +257,23 @@ describe("ParseCache", () => {
 
       linter.autofix(second)
 
-      expect(cache.get(first)).not.toBe(cachedFirst)
+      expect(cache.get(first)).toBe(cachedFirst)
+    })
+
+    test("doesn't re-parse a source it has already linted", () => {
+      const linter = new Linter(Herb)
+
+      linter.lint(first)
+
+      const parseSpy = vi.spyOn(Herb, "parse")
+
+      try {
+        linter.lint(first)
+
+        expect(parseSpy).not.toHaveBeenCalled()
+      } finally {
+        parseSpy.mockRestore()
+      }
     })
 
     test("doesn't serve the mutated AST of a previous autofix() to lint()", () => {

@@ -436,7 +436,6 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
-    this.parseCache.clear()
 
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
@@ -598,8 +597,6 @@ export class Linter {
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
-    this.parseCache.clear()
-
     const includeUnsafe = options?.includeUnsafe ?? false
 
     context = {
@@ -634,7 +631,7 @@ export class Linter {
     const unfixed: LintOffense[] = []
 
     if (parserOffenses.length > 0) {
-      const parseResult = this.parseCache.get(currentSource)
+      const parseResult = this.parseCache.getMutable(currentSource)
       let needsReindent = false
 
       for (const offense of parserOffenses) {
