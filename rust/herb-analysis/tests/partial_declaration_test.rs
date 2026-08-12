@@ -4,8 +4,10 @@ use herb_analysis::partial_declaration::PartialDeclaration;
 const FILE: &str = "app/views/posts/_card.html.erb";
 
 fn declaration_for(source: &str) -> PartialDeclaration {
-  let mut options = ParserOptions::default();
-  options.strict_locals = true;
+  let options = ParserOptions {
+    strict_locals: true,
+    ..Default::default()
+  };
 
   let result = parse_with_options(source, &options).expect("parse failed");
 

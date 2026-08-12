@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use herb::herb::{parse_with_options, ParserOptions};
-use herb::nodes::{AnyNode, Node};
+use herb::nodes::AnyNode;
 
 use crate::partial_index::PartialIndex;
 use crate::template_dependencies::{Dependencies, TemplateDependencies};
@@ -71,11 +71,13 @@ impl StateFlow {
       return Vec::new();
     };
 
-    let mut options = ParserOptions::default();
-    options.render_nodes = true;
-    options.strict_locals = true;
-    options.prism_nodes = true;
-    options.track_whitespace = true;
+    let options = ParserOptions {
+      render_nodes: true,
+      strict_locals: true,
+      prism_nodes: true,
+      track_whitespace: true,
+      ..Default::default()
+    };
 
     let Ok(result) = parse_with_options(&source, &options) else {
       return Vec::new();

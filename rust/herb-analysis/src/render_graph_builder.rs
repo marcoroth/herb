@@ -255,10 +255,12 @@ fn merge_call_sites(graph: &mut RenderGraph, additions: BTreeMap<String, Vec<Par
 }
 
 fn scan_source(source: &str) -> Option<ScanState> {
-  let mut options = ParserOptions::default();
-  options.render_nodes = true;
-  options.prism_nodes = true;
-  options.action_view_helpers = true;
+  let options = ParserOptions {
+    render_nodes: true,
+    prism_nodes: true,
+    action_view_helpers: true,
+    ..Default::default()
+  };
 
   let result = parse_with_options(source, &options).ok()?;
 

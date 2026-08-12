@@ -74,8 +74,10 @@ impl<'a> Collector<'a> {
     }
 
     let source = format!("<%= {} %>", trimmed);
-    let mut options = ParserOptions::default();
-    options.prism_nodes = true;
+    let options = ParserOptions {
+      prism_nodes: true,
+      ..Default::default()
+    };
 
     let Ok(result) = parse_with_options(&source, &options) else {
       return;
@@ -251,11 +253,13 @@ impl TemplateDependencies {
   }
 
   pub fn analyze_source(&self, file: &str, source: &str) -> Dependencies {
-    let mut options = ParserOptions::default();
-    options.render_nodes = true;
-    options.strict_locals = true;
-    options.prism_nodes = true;
-    options.track_whitespace = true;
+    let options = ParserOptions {
+      render_nodes: true,
+      strict_locals: true,
+      prism_nodes: true,
+      track_whitespace: true,
+      ..Default::default()
+    };
 
     let Ok(result) = parse_with_options(source, &options) else {
       return Dependencies {

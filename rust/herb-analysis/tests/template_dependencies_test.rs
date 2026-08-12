@@ -95,7 +95,9 @@ fn records_the_file_it_analyzed() {
 
 #[test]
 fn agrees_with_the_ruby_implementation() {
-  let cases: Vec<(&str, Vec<&str>, Vec<&str>, Vec<&str>, Vec<&str>)> = vec![
+  type Case = (&'static str, Vec<&'static str>, Vec<&'static str>, Vec<&'static str>, Vec<&'static str>);
+
+  let cases: Vec<Case> = vec![
     (
       "<h1><%= @post.title %></h1><p><%= @user.name %></p>",
       vec!["@post", "@user"],

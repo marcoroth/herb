@@ -46,7 +46,7 @@ pub fn print_usage() {
 fn project_root(arguments: &[String]) -> PathBuf {
   arguments
     .first()
-    .map(|path| PathBuf::from(path))
+    .map(PathBuf::from)
     .filter(|path| path.is_dir())
     .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
 }
@@ -101,7 +101,7 @@ fn verdict_marker(verdict: Verdict) -> String {
 
 fn check(arguments: &[String]) -> i32 {
   let root = project_root(arguments);
-  let mut index = PartialIndex::build(&root);
+  let index = PartialIndex::build(&root);
   let templates = index.templates().to_vec();
 
   header(&format!("{}", root.display()));

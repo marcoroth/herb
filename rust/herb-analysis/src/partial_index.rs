@@ -203,8 +203,10 @@ fn build_declaration(file: &str) -> Option<PartialDeclaration> {
     return Some(PartialDeclaration::without_strict_locals(file));
   };
 
-  let mut options = ParserOptions::default();
-  options.strict_locals = true;
+  let options = ParserOptions {
+    strict_locals: true,
+    ..Default::default()
+  };
 
   match parse_with_options(&source, &options) {
     Ok(result) => Some(PartialDeclaration::from_document(&result.value, file)),
