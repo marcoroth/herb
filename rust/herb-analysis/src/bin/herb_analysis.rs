@@ -58,7 +58,6 @@ fn run() -> i32 {
       let arguments: Vec<String> = env::args().skip(3).collect();
 
       match env::args().nth(2) {
-        Some(subcommand) if subcommand == "render" => actionview::render(&arguments),
         Some(subcommand) => actionview::run(&subcommand, &arguments),
         None => {
           actionview::print_usage();

@@ -198,17 +198,6 @@ fn signature_flags_a_local_that_is_passed_but_not_declared() {
 }
 
 #[test]
-fn render_extracts_the_static_html() {
-  let project = Project::new("render");
-  let row = project.write("app/views/posts/_row.html.erb", "<tr><td><%= post.title %></td></tr>");
-
-  let (output, status) = project.run(&["render", &row]);
-
-  assert_eq!(status, 0);
-  assert!(output.contains("<tr>"), "{output}");
-}
-
-#[test]
 fn an_unknown_subcommand_exits_with_a_failure() {
   let project = Project::new("unknown");
   let (output, status) = project.run(&["nonsense"]);

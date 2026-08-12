@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
@@ -39,7 +38,6 @@ pub fn print_usage() {
   println!("  flow <file> <state>   Trace one piece of state through every partial it reaches");
   println!("  context <partial>     Show what a partial is rendered inside of");
   println!("  signature <partial>   Show the strict locals a partial receives");
-  println!("  render <file>         Extract the static HTML a template contains");
   println!();
 }
 
@@ -564,31 +562,4 @@ fn signature(arguments: &[String]) -> i32 {
   }
 
   0
-}
-
-pub fn render(arguments: &[String]) -> i32 {
-  let Some(file) = resolve_file(arguments) else {
-    eprintln!("{}", "Please provide a template path.".red());
-
-    return 1;
-  };
-
-  let Ok(source) = fs::read_to_string(&file) else {
-    eprintln!("{}", format!("Could not read {}", file.display()).red());
-
-    return 1;
-  };
-
-  match herb::herb::extract_html(&source) {
-    Ok(html) => {
-      println!("{html}");
-
-      0
-    }
-    Err(error) => {
-      eprintln!("{}", error.red());
-
-      1
-    }
-  }
 }
