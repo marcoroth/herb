@@ -64,7 +64,7 @@ describe("cloneNode", () => {
     expect(copiedElement.body[0]).not.toBe(element.body[0])
   })
 
-  test("shares tokens and locations with the original", () => {
+  test("shares locations with the original", () => {
     const node = parse("<div>Content</div>")
     const copy = cloneNode(node)
 
@@ -72,7 +72,25 @@ describe("cloneNode", () => {
     const copiedElement = copy.compactChildNodes()[0] as HTMLElementNode
 
     expect(copiedElement.location).toBe(element.location)
-    expect(copiedElement.open_tag!.tag_name).toBe(element.open_tag!.tag_name)
+    expect(copiedElement.open_tag!.tag_name!.location).toBe(element.open_tag!.tag_name!.location)
+  })
+
+  test("copies tokens, which consumers write to", () => {
+    const node = parse("<DIV>Content</DIV>")
+    const copy = cloneNode(node)
+
+    const element = node.compactChildNodes()[0] as HTMLElementNode
+    const copiedElement = copy.compactChildNodes()[0] as HTMLElementNode
+
+    const tagName = element.open_tag!.tag_name!
+    const copiedTagName = copiedElement.open_tag!.tag_name!
+
+    expect(copiedTagName).not.toBe(tagName)
+    expect(copiedTagName.value).toBe(tagName.value)
+
+    ;(copiedTagName as any).value = "div"
+
+    expect(tagName.value).toBe("DIV")
   })
 
   test("keeps the source available on copied nodes", () => {
