@@ -183,6 +183,11 @@ fn gem_roots(app_root: &Path) -> Vec<PathBuf> {
   roots.into_iter().filter(|root| root.is_dir()).collect()
 }
 
+struct Resource {
+  singular: String,
+  plural: String,
+}
+
 pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
   let Ok(source) = fs::read_to_string(app_root.join("config/routes.rb")) else {
     return BTreeSet::new();
@@ -191,6 +196,8 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
   let mut names = BTreeSet::new();
   let mut namespaces: Vec<String> = Vec::new();
   let mut depth_stack: Vec<usize> = Vec::new();
+  let mut resources: Vec<Resource> = Vec::new();
+  let mut resource_depth: Vec<usize> = Vec::new();
 
   for line in source.lines() {
     let trimmed = line.trim();
@@ -200,8 +207,13 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
     }
 
     if trimmed == "end" {
-      if depth_stack.pop().is_some() {
+      if let Some(depth) = depth_stack.pop() {
         namespaces.pop();
+
+        if resource_depth.last() == Some(&depth) {
+          resource_depth.pop();
+          resources.pop();
+        }
       }
 
       continue;
@@ -226,6 +238,34 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       continue;
     }
 
+    // `get :publish, on: :member` names the route after the enclosing resource, so it has to be
+    // handled before the generic `as:`/literal-path cases below.
+    if let Some(scope) = value_after(trimmed, "on: :") {
+      if let Some(action) = symbol_after(trimmed, "get ")
+        .or_else(|| symbol_after(trimmed, "post "))
+        .or_else(|| symbol_after(trimmed, "patch "))
+        .or_else(|| symbol_after(trimmed, "put "))
+        .or_else(|| symbol_after(trimmed, "delete "))
+      {
+        if let Some(owner) = resources.last() {
+          // `prefix` already ends with the enclosing resource's singular name, so a member route
+          // only needs the action in front of it.
+          let stem = if scope == "collection" {
+            let outer: String = namespaces[..namespaces.len().saturating_sub(1)].join("_");
+            let outer = if outer.is_empty() { String::new() } else { format!("{outer}_") };
+
+            format!("{action}_{outer}{}", owner.plural)
+          } else {
+            format!("{action}_{}", prefix.trim_end_matches('_'))
+          };
+
+          insert_pair(&mut names, &stem);
+        }
+
+        continue;
+      }
+    }
+
     if let Some(name) = symbol_after(trimmed, "resources ") {
       let singular = singularize(&name);
 
@@ -233,10 +273,39 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       insert_pair(&mut names, &format!("{prefix}{singular}"));
       insert_pair(&mut names, &format!("new_{prefix}{singular}"));
       insert_pair(&mut names, &format!("edit_{prefix}{singular}"));
+
+      // When a resource name is already singular, Rails suffixes the index route with `_index` so it
+      // does not collide with the member route: `resources :map` gives `map_index_path`.
+      if singular == name {
+        insert_pair(&mut names, &format!("{prefix}{name}_index"));
+      }
+
+      // A nested resource is prefixed by its parent's singular name: `resources :talks` inside
+      // `resources :profiles do` produces `profile_talks_path`.
+      if trimmed.ends_with(" do") {
+        namespaces.push(singular.clone());
+        depth_stack.push(namespaces.len());
+        resources.push(Resource { singular, plural: name });
+        resource_depth.push(namespaces.len());
+      }
+
+      continue;
     } else if let Some(name) = symbol_after(trimmed, "resource ") {
       insert_pair(&mut names, &format!("{prefix}{name}"));
       insert_pair(&mut names, &format!("new_{prefix}{name}"));
       insert_pair(&mut names, &format!("edit_{prefix}{name}"));
+
+      if trimmed.ends_with(" do") {
+        namespaces.push(name.clone());
+        depth_stack.push(namespaces.len());
+        resources.push(Resource {
+          singular: name.clone(),
+          plural: name,
+        });
+        resource_depth.push(namespaces.len());
+      }
+
+      continue;
     }
 
     if let Some(alias_name) = value_after(trimmed, "as: :") {

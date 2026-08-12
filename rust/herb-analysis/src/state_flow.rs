@@ -474,5 +474,8 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   // module inclusion and so never shows up in the ancestor walk.
   names.extend(crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name));
 
+  // Route helpers are generated from `config/routes.rb`, so no module defines them.
+  names.extend(crate::rails::route_helpers(project_path));
+
   names
 }

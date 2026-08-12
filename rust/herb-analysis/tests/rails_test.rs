@@ -174,3 +174,25 @@ fn records_the_file_each_exposure_came_from() {
   assert!(exposed["current_user"].ends_with("application_controller.rb"));
   assert!(exposed["search_query"].ends_with("concerns/searchable.rb"));
 }
+
+#[test]
+fn names_a_nested_resource_after_its_parent() {
+  let root = std::env::temp_dir().join(format!("herb_routes_nested_{}", std::process::id()));
+  let _ = std::fs::remove_dir_all(&root);
+  std::fs::create_dir_all(root.join("config")).expect("create");
+
+  std::fs::write(
+    root.join("config/routes.rb"),
+    "Rails.application.routes.draw do\n  resources :profiles do\n    resources :talks, only: [:index]\n    resources :map, only: :index\n    post :reindex, on: :member\n  end\nend\n",
+  )
+  .expect("write");
+
+  let names = herb_analysis::rails::route_helpers(&root);
+
+  assert!(names.contains("profile_talks_path"), "nested resource");
+  assert!(names.contains("profile_map_index_path"), "singular resource index");
+  assert!(names.contains("reindex_profile_path"), "member route");
+  assert!(names.contains("profiles_path"), "parent resource");
+
+  let _ = std::fs::remove_dir_all(&root);
+}
