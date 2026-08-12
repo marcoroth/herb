@@ -27,6 +27,12 @@
       "import": "./dist/herb-config.esm.js",
       "require": "./dist/herb-config.cjs",
       "default": "./dist/herb-config.esm.js"
+    },
+    "./schema": {
+      "types": "./dist/types/config-schema.d.ts",
+      "import": "./dist/herb-config-schema.esm.js",
+      "require": "./dist/herb-config-schema.cjs",
+      "default": "./dist/herb-config-schema.esm.js"
     }
   },
   "dependencies": {
