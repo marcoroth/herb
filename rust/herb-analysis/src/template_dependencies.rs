@@ -23,6 +23,8 @@ pub struct RenderCall {
   pub partial: Option<String>,
   pub locals: BTreeMap<String, String>,
   pub collection: Option<String>,
+  pub dynamic_prefix: Option<String>,
+  pub dynamic: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -206,14 +208,20 @@ impl<'a> Visitor for Collector<'a> {
         self.analyze_expression(&expression);
       }
 
-      let partial = keywords.partial.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
+      let raw = keywords.partial.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
       let collection = keywords.collection.as_ref().map(|token| token.value.clone());
 
-      if partial.is_some() {
+      let interpolated = raw.as_deref().map(|value| value.contains("#{")).unwrap_or(false);
+      let partial = if interpolated { None } else { raw.clone() };
+      let dynamic_prefix = raw.as_deref().filter(|_| interpolated).and_then(dynamic_prefix_of);
+
+      if partial.is_some() || interpolated {
         self.render_calls.push(RenderCall {
           partial,
           locals,
           collection: collection.clone(),
+          dynamic_prefix,
+          dynamic: interpolated,
         });
       }
 
@@ -277,4 +285,14 @@ impl TemplateDependencies {
 
 fn helper_registry() -> BTreeSet<String> {
   herb::action_view_helpers::entries().iter().map(|helper| helper.name.to_string()).collect()
+}
+
+fn dynamic_prefix_of(value: &str) -> Option<String> {
+  let head = value.split("#{").next()?.trim_end_matches('/');
+
+  if head.is_empty() {
+    None
+  } else {
+    Some(head.to_string())
+  }
 }

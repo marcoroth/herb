@@ -154,6 +154,7 @@ fn check(arguments: &[String]) -> i32 {
   let mut unresolved: Vec<(String, String)> = Vec::new();
   let mut rendered: Vec<String> = Vec::new();
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
+  let mut dynamic_renders = 0usize;
 
   let flow = StateFlow::new(&root);
 
@@ -161,11 +162,15 @@ fn check(arguments: &[String]) -> i32 {
     let result = flow.analyze(file);
 
     for call in &result.render_calls {
+      files_with_renders.insert(file.clone());
+
       let Some(name) = &call.partial else {
+        if call.dynamic {
+          dynamic_renders += 1;
+        }
+
         continue;
       };
-
-      files_with_renders.insert(file.clone());
 
       match index.resolve(name, Some(file)).first() {
         Some(target) => rendered.push(target.clone()),
@@ -222,19 +227,39 @@ fn check(arguments: &[String]) -> i32 {
   println!();
   println!(" {}", "Summary:".bold());
   println!("  {} {}", label("Version"), herb::herb::version().cyan());
-  let total_renders = rendered.len() + unresolved.len();
+  let with_partial = rendered.len() + unresolved.len();
+  let other_renders = 0usize;
+  let total_renders = with_partial + dynamic_renders + other_renders;
 
   println!(
     "  {} {}",
     label("Checked"),
     format!("{} {}", files_with_renders.len(), plural(files_with_renders.len(), "file")).cyan()
   );
-  println!(
-    "  {} {}",
-    label("Renders"),
-    format!("{} total | {} with partial", total_renders, rendered.len()).cyan()
-  );
-  println!("  {} {}", label("Partials"), format!("{} on disk", partials.len()).cyan());
+
+  let mut renders_line = format!("{total_renders} total | {with_partial} with partial");
+
+  if dynamic_renders > 0 {
+    renders_line.push_str(&format!(" | {dynamic_renders} dynamic"));
+  }
+
+  if other_renders > 0 {
+    renders_line.push_str(&format!(" | {other_renders} other"));
+  }
+
+  println!("  {} {}", label("Renders"), renders_line.cyan());
+
+  let mut partials_line = format!("{} on disk", partials.len());
+
+  if !unresolved.is_empty() {
+    partials_line.push_str(&format!(" | {} unresolved", unresolved.len()));
+  }
+
+  if !unused.is_empty() {
+    partials_line.push_str(&format!(" | {} unused", unused.len()));
+  }
+
+  println!("  {} {}", label("Partials"), partials_line.cyan());
   println!(
     "  {} {}",
     label("Ruby"),
@@ -294,9 +319,9 @@ fn graph(arguments: &[String]) -> i32 {
     format!("Building render graph for {} {}...", templates.len(), plural(templates.len(), "template")).dimmed()
   );
 
-  let renders = collect_renders(&mut index, &templates);
+  let (renders, dynamic_prefixes) = collect_renders(&mut index, &templates);
   let ruby_references = ruby_render_references::collect(&root);
-  let reachable = reachable_partials(&index, &renders, &ruby_references);
+  let reachable = reachable_partials(&index, &renders, &ruby_references, &dynamic_prefixes);
 
   let entry_points: Vec<&String> = templates.iter().filter(|file| !herb_analysis::partial_resolution::partial_path(file)).collect();
 
@@ -445,9 +470,9 @@ fn graph_file(file: &Path) -> i32 {
   let templates = index.templates().to_vec();
   let path = file.to_str().unwrap_or_default().to_string();
 
-  let renders = collect_renders(&mut index, &templates);
+  let (renders, dynamic_prefixes) = collect_renders(&mut index, &templates);
   let ruby_references = ruby_render_references::collect(&root);
-  let reachable = reachable_partials(&index, &renders, &ruby_references);
+  let reachable = reachable_partials(&index, &renders, &ruby_references, &dynamic_prefixes);
   let callers = reverse_graph(&renders, &index);
 
   println!();
@@ -515,8 +540,9 @@ fn graph_file(file: &Path) -> i32 {
   0
 }
 
-fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> BTreeMap<String, Vec<String>> {
+fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<String, Vec<String>>, BTreeSet<String>) {
   let mut renders: BTreeMap<String, Vec<String>> = BTreeMap::new();
+  let mut prefixes: BTreeSet<String> = BTreeSet::new();
   let flow = StateFlow::new(index.view_root());
 
   for file in templates {
@@ -529,6 +555,10 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> BTreeMap<S
           names.push(name.clone());
         }
       }
+
+      if let Some(prefix) = &call.dynamic_prefix {
+        prefixes.insert(prefix.clone());
+      }
     }
 
     if !names.is_empty() {
@@ -536,13 +566,18 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> BTreeMap<S
     }
   }
 
-  renders
+  (renders, prefixes)
+}
+
+fn covered_by_prefix(name: &str, prefixes: &BTreeSet<String>) -> bool {
+  prefixes.iter().any(|prefix| name.starts_with(&format!("{prefix}/")) || name == prefix)
 }
 
 fn reachable_partials(
   index: &PartialIndex,
   renders: &BTreeMap<String, Vec<String>>,
   ruby_references: &ruby_render_references::RubyRenderReferences,
+  prefixes: &BTreeSet<String>,
 ) -> BTreeSet<String> {
   let mut reachable = BTreeSet::new();
   let mut queue: Vec<String> = Vec::new();
@@ -556,6 +591,12 @@ fn reachable_partials(
   }
 
   queue.extend(ruby_references.names.iter().cloned());
+
+  for name in index.names() {
+    if covered_by_prefix(name, prefixes) {
+      queue.push(name.to_string());
+    }
+  }
 
   while let Some(name) = queue.pop() {
     if !reachable.insert(name.clone()) {
