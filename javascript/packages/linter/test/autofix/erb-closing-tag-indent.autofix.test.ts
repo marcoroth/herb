@@ -109,4 +109,31 @@ describe("erb-closing-tag-indent autofix", () => {
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
   })
+
+  test("preserves the newline after a heredoc terminator", () => {
+    const input = dedent`
+      <%= render(<<~TEXT)
+        hello
+      TEXT
+      %>
+    `
+
+    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+  })
+
+  test("fixes closing tag indentation without changing a heredoc terminator", () => {
+    const input = "  <%= render(<<~TEXT)\n    hello\n  TEXT\n    %>"
+    const expected = "  <%= render(<<~TEXT)\n    hello\n  TEXT\n  %>"
+
+    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+    expect(Herb.parse(result.source).successful).toBe(true)
+  })
 })

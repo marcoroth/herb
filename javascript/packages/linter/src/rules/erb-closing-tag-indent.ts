@@ -1,13 +1,51 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
+import { PrismVisitor, PrismNodes, substringFromByteOffset } from "@herb-tools/core"
 
-import type { ERBNode, ParseResult } from "@herb-tools/core"
+import type { ERBNode, ParseResult, ParserOptions } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 interface ClosingErbTagIndentAutofixContext extends BaseAutofixContext {
   node: Mutable<ERBNode>
   fixType: "remove-newline" | "add-newline" | "fix-indent"
   expectedIndent: number
+}
+
+type StringLikeNode = PrismNodes.StringNode | PrismNodes.InterpolatedStringNode | PrismNodes.XStringNode | PrismNodes.InterpolatedXStringNode
+
+class HeredocDetector extends PrismVisitor {
+  public found = false
+
+  constructor(private readonly source: string) {
+    super()
+  }
+
+  visitStringNode(node: PrismNodes.StringNode): void {
+    this.visitStringLikeNode(node)
+  }
+
+  visitInterpolatedStringNode(node: PrismNodes.InterpolatedStringNode): void {
+    this.visitStringLikeNode(node)
+  }
+
+  visitXStringNode(node: PrismNodes.XStringNode): void {
+    this.visitStringLikeNode(node)
+  }
+
+  visitInterpolatedXStringNode(node: PrismNodes.InterpolatedXStringNode): void {
+    this.visitStringLikeNode(node)
+  }
+
+  private visitStringLikeNode(node: StringLikeNode): void {
+    const opening = node.openingLoc
+
+    if (opening && substringFromByteOffset(this.source, opening.startOffset, opening.length).startsWith("<<")) {
+      this.found = true
+      return
+    }
+
+    this.visitChildNodes(node)
+  }
 }
 
 class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAutofixContext> {
@@ -20,7 +58,7 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
     const value = content.value
     if (!value.length) return
 
-    const startsWithNewline = value.startsWith("\n")
+    const startsWithNewline = value.startsWith("\n") || this.containsHeredoc(node)
     const endsWithNewline = this.endsWithNewline(value)
 
     if (!startsWithNewline && endsWithNewline) {
@@ -51,6 +89,19 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
     }
   }
 
+  private containsHeredoc(node: ERBNode): boolean {
+    if (!("prismNode" in node)) return false
+
+    const prismNode = node.prismNode
+    const source = node.source
+    if (!prismNode || !source) return false
+
+    const detector = new HeredocDetector(source)
+    detector.visit(prismNode)
+
+    return detector.found
+  }
+
   private endsWithNewline(value: string): boolean {
     const lastNewlineIndex = value.lastIndexOf("\n")
     if (lastNewlineIndex === -1) return false
@@ -78,6 +129,12 @@ export class ERBClosingTagIndentRule extends ParserRule<ClosingErbTagIndentAutof
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      prism_nodes: true
     }
   }
 

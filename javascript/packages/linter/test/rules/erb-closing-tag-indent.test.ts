@@ -39,6 +39,26 @@ title
 %>`)
   })
 
+  test("passes on heredoc with matching indent", () => {
+    expectNoOffenses(dedent`
+      <%= render(<<~TEXT)
+        hello
+      TEXT
+      %>
+    `)
+  })
+
+  test("reports a misindented closing tag after a heredoc", () => {
+    expectError("Incorrect indentation for `%>`. Expected 0 spaces but found 2.")
+
+    assertOffenses(dedent`
+      <%= render(<<~TEXT)
+        hello
+      TEXT
+        %>
+    `)
+  })
+
   describe("missing newline before closing tag", () => {
     test("handles closing tag not followed by matching newline", () => {
       expectError("Add newline before `%>`. The opening `<%=` is followed by a newline, so the closing tag should be on its own line.")
