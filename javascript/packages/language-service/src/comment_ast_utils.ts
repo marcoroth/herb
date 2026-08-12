@@ -5,7 +5,7 @@ import { HTMLCommentNode, Token } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
-import { asMutable } from "@herb-tools/rewriter"
+import { asMutable, cloneNode } from "@herb-tools/rewriter"
 
 import type { Node, ERBContentNode } from "@herb-tools/core"
 
@@ -137,11 +137,12 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
   }
 
   const parseResult = parserService.parseContent(content, { track_whitespace: true })
+  const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
-  parseResult.visit(lineCollector)
+
+  lineCollector.visit(document)
 
   const lineERBNodes = lineCollector.erbNodesPerLine.get(0) || []
-  const document = parseResult.value
   const children = asMutable(document).children
 
   switch (strategy) {
@@ -203,12 +204,12 @@ function commentPerSegment(content: string, erbNodes: ERBContentNode[]): string 
 
 export function uncommentLineContent(content: string, parserService: ParserService): string {
   const parseResult = parserService.parseContent(content, { track_whitespace: true })
+  const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
 
-  parseResult.visit(lineCollector)
+  lineCollector.visit(document)
 
   const lineERBNodes = lineCollector.erbNodesPerLine.get(0) || []
-  const document = parseResult.value
   const children = asMutable(document).children
 
   for (const node of lineERBNodes) {

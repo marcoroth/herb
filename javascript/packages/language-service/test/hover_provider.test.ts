@@ -8,6 +8,8 @@ import { HoverProvider } from "../src/hover_provider"
 import { ParserService } from "../src/parser_service"
 import { Herb } from "@herb-tools/node-wasm"
 
+import type { ParseOptions, ParseResult } from "@herb-tools/core"
+
 describe("HoverProvider", () => {
   let parserService: ParserService
   let service: HoverProvider
@@ -692,6 +694,60 @@ describe("HoverProvider", () => {
       it("returns null for invalid named reference", () => {
         expect(getHover("<div>&notarealentity;</div>", 0, 10)).toBeNull()
       })
+    })
+  })
+
+  describe("with a caching parser service", () => {
+    class CachingParserService extends ParserService {
+      private cache = new Map<string, ParseResult>()
+
+      parseContent(content: string, options?: ParseOptions): ParseResult {
+        const key = `${JSON.stringify(options ?? {})}:${content}`
+
+        if (!this.cache.has(key)) {
+          this.cache.set(key, super.parseContent(content, options))
+        }
+
+        return this.cache.get(key)!
+      }
+    }
+
+    it("keeps returning the same hover when the parse result is reused", () => {
+      const content = dedent`
+        <div class='x'>
+          <% if user.admin? %>
+            <%= link_to "E", p %>
+          <% end %>
+        </div>
+      `
+
+      const provider = new HoverProvider(new CachingParserService(Herb))
+      const document = createDocument(content)
+      const position = Position.create(2, 9)
+
+      const first = provider.getHover(document, position)
+      const second = provider.getHover(document, position)
+
+      expect(first).not.toBeNull()
+      expect(second).toEqual(first)
+    })
+
+    it("keeps returning the same hover for an element with a body", () => {
+      const content = dedent`
+        <%= tag.div class: "x" do %>
+          <span>Content</span>
+        <% end %>
+      `
+
+      const provider = new HoverProvider(new CachingParserService(Herb))
+      const document = createDocument(content)
+      const position = Position.create(0, 5)
+
+      const first = provider.getHover(document, position)
+      const second = provider.getHover(document, position)
+
+      expect(first).not.toBeNull()
+      expect(second).toEqual(first)
     })
   })
 })

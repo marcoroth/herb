@@ -196,3 +196,5 @@ compile_flags.txt
 .envrc.local
 
 .github/pull_request.md
+javascript/packages/formatter/test-explicit-config/
+javascript/packages/formatter/test-no-config/
