@@ -502,6 +502,11 @@
   background-color: #f5f3ff;
 }
 
+.herb-outline-slot {
+  border-color: #06b6d4;
+  background-color: #ecfeff;
+}
+
 .herb-toggle-label:hover .herb-toggle-switch {
   background: #94a3b8;
 }
@@ -918,4 +923,90 @@
 .herb-comment {
   color: #6b7280;
   font-style: italic;
+}
+
+.herb-slot-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9999;
+  contain: layout style;
+}
+
+.herb-slot-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 2px;
+  box-sizing: border-box;
+  contain: layout style;
+}
+
+.herb-slot-box-slot {
+  outline: 1px dashed #06b6d4;
+  outline-offset: 1px;
+  background: rgba(6, 182, 212, 0.06);
+}
+
+.herb-slot-box-row {
+  outline: 1px dashed #ec4899;
+  outline-offset: 2px;
+  background: rgba(236, 72, 153, 0.06);
+}
+
+.herb-slot-box-element {
+  outline: 1px dotted #0891b2;
+  outline-offset: 1px;
+}
+
+.herb-slot-box-branch {
+  outline: 1px dashed #94a3b8;
+}
+
+.herb-slot-box-empty {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(6, 182, 212, 0.25),
+    rgba(6, 182, 212, 0.25) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+.herb-slot-box-label {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  padding: 0 4px;
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 14px;
+  white-space: nowrap;
+  border-radius: 2px;
+  color: white;
+  opacity: 0.85;
+}
+
+.herb-slot-box-slot > .herb-slot-box-label {
+  background: #06b6d4;
+}
+
+.herb-slot-box-row > .herb-slot-box-label {
+  background: #ec4899;
+  left: auto;
+  right: 0;
+}
+
+.herb-slot-box-element > .herb-slot-box-label {
+  background: #0891b2;
+  top: auto;
+  bottom: -14px;
+}
+
+.herb-slot-box-branch > .herb-slot-box-label {
+  background: #94a3b8;
 }

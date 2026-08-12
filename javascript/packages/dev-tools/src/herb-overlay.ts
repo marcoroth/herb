@@ -1,4 +1,5 @@
 import { ErrorOverlay } from './error-overlay';
+import { SlotOverlay } from './slot-overlay';
 
 export interface HerbDevToolsOptions {
   projectPath?: string;
@@ -13,12 +14,14 @@ export class HerbOverlay {
   private showingViewOutlines = false;
   private showingPartialOutlines = false;
   private showingComponentOutlines = false;
+  private showingSlotOutlines = false;
   private menuOpen = false;
   private projectPath = '';
   private preferredEditor = 'auto';
   private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
   private errorOverlay: ErrorOverlay | null = null;
+  private slotOverlay: SlotOverlay | null = null;
   private destroyed = false;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
@@ -85,6 +88,9 @@ export class HerbOverlay {
     this.errorOverlay?.destroy();
     this.errorOverlay = null;
 
+    this.slotOverlay?.hide();
+    this.slotOverlay = null;
+
     document.querySelector('.herb-floating-menu')?.remove();
   }
 
@@ -126,6 +132,7 @@ export class HerbOverlay {
         this.showingViewOutlines = settings.showingViewOutlines || false;
         this.showingPartialOutlines = settings.showingPartialOutlines || false;
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
+        this.showingSlotOutlines = settings.showingSlotOutlines || false;
         this.menuOpen = settings.menuOpen || false;
         if (settings.preferredEditor) {
           this.preferredEditor = settings.preferredEditor;
@@ -145,6 +152,7 @@ export class HerbOverlay {
       showingViewOutlines: this.showingViewOutlines,
       showingPartialOutlines: this.showingPartialOutlines,
       showingComponentOutlines: this.showingComponentOutlines,
+      showingSlotOutlines: this.showingSlotOutlines,
       menuOpen: this.menuOpen,
       preferredEditor: this.preferredEditor
     };
@@ -156,7 +164,7 @@ export class HerbOverlay {
   private updateMenuButtonState() {
     const menuTrigger = document.getElementById('herbMenuTrigger');
     if (menuTrigger) {
-      const hasActiveOptions = this.showingERB || this.showingERBOutlines || this.showingViewOutlines || this.showingPartialOutlines || this.showingComponentOutlines;
+      const hasActiveOptions = this.showingERB || this.showingERBOutlines || this.showingViewOutlines || this.showingPartialOutlines || this.showingComponentOutlines || this.showingSlotOutlines;
       if (hasActiveOptions) {
         menuTrigger.classList.add('has-active-options');
       } else {
@@ -245,6 +253,14 @@ export class HerbOverlay {
             </label>
           </div>
 
+          <div class="herb-toggle-item">
+            <label class="herb-toggle-label">
+              <input type="checkbox" id="herbToggleSlotOutlines" class="herb-toggle-input">
+              <span class="herb-toggle-switch"></span>
+              <span class="herb-toggle-text herb-outline-preview herb-outline-slot">Slot Outlines</span>
+            </label>
+          </div>
+
           <div class="herb-editor-section">
             <label class="herb-editor-label">
               <span class="herb-editor-text">Editor</span>
@@ -272,6 +288,7 @@ export class HerbOverlay {
     this.toggleComponentOutlines(this.showingComponentOutlines);
     this.toggleERBTags(this.showingERB);
     this.toggleERBOutlines(this.showingERBOutlines);
+    this.toggleSlotOutlines(this.showingSlotOutlines);
 
     const menuTrigger = document.getElementById('herbMenuTrigger');
     const menuPanel = document.getElementById('herbMenuPanel');
@@ -370,6 +387,15 @@ export class HerbOverlay {
       toggleComponentOutlinesSwitch.checked = this.showingComponentOutlines;
       toggleComponentOutlinesSwitch.addEventListener('change', () => {
         this.toggleComponentOutlines(toggleComponentOutlinesSwitch.checked);
+      });
+    }
+
+    const toggleSlotOutlinesSwitch = document.getElementById('herbToggleSlotOutlines') as HTMLInputElement;
+
+    if (toggleSlotOutlinesSwitch) {
+      toggleSlotOutlinesSwitch.checked = this.showingSlotOutlines;
+      toggleSlotOutlinesSwitch.addEventListener('change', () => {
+        this.toggleSlotOutlines(toggleSlotOutlinesSwitch.checked);
       });
     }
 
@@ -527,6 +553,19 @@ export class HerbOverlay {
         this.removeOverlayLabel(element);
       }
     });
+
+    this.saveSettings();
+  }
+
+  private toggleSlotOutlines(show?: boolean) {
+    this.showingSlotOutlines = show !== undefined ? show : !this.showingSlotOutlines;
+
+    if (this.showingSlotOutlines) {
+      this.slotOverlay ||= new SlotOverlay();
+      this.slotOverlay.show();
+    } else {
+      this.slotOverlay?.hide();
+    }
 
     this.saveSettings();
   }
@@ -1142,6 +1181,7 @@ export class HerbOverlay {
     this.toggleERBOutlines(false);
     this.toggleERBHoverReveal(false);
     this.toggleTooltips(false);
+    this.toggleSlotOutlines(false);
 
     const toggleViewOutlinesSwitch = document.getElementById('herbToggleViewOutlines') as HTMLInputElement;
     const togglePartialOutlinesSwitch = document.getElementById('herbTogglePartialOutlines') as HTMLInputElement;
@@ -1150,6 +1190,7 @@ export class HerbOverlay {
     const toggleERBOutlinesSwitch = document.getElementById('herbToggleERBOutlines') as HTMLInputElement;
     const toggleERBHoverRevealSwitch = document.getElementById('herbToggleERBHoverReveal') as HTMLInputElement;
     const toggleTooltipsSwitch = document.getElementById('herbToggleTooltips') as HTMLInputElement;
+    const toggleSlotOutlinesSwitch = document.getElementById('herbToggleSlotOutlines') as HTMLInputElement;
 
     if (toggleViewOutlinesSwitch) toggleViewOutlinesSwitch.checked = false;
     if (togglePartialOutlinesSwitch) togglePartialOutlinesSwitch.checked = false;
@@ -1158,6 +1199,7 @@ export class HerbOverlay {
     if (toggleERBOutlinesSwitch) toggleERBOutlinesSwitch.checked = false;
     if (toggleERBHoverRevealSwitch) toggleERBHoverRevealSwitch.checked = false;
     if (toggleTooltipsSwitch) toggleTooltipsSwitch.checked = false;
+    if (toggleSlotOutlinesSwitch) toggleSlotOutlinesSwitch.checked = false;
   }
 
   private initializeErrorOverlay() {
