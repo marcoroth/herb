@@ -7,6 +7,7 @@ pub mod rails;
 pub mod render_graph;
 pub mod render_graph_builder;
 pub mod report;
+pub mod state_flow;
 pub mod template_dependencies;
 
 pub use analysis::{Analysis, Ancestry, ChainState};
