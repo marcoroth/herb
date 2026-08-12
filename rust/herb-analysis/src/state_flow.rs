@@ -47,9 +47,14 @@ impl StateFlow {
   pub fn new(project_path: &Path) -> Self {
     let mut dependencies = TemplateDependencies::new();
 
-    // Ruby's `check_dependencies` scans `app/helpers` before analysing anything, so a call to a
-    // custom helper is not reported as unknown.
+    // Ruby's `check_dependencies` only scans `app/helpers`, so it reports a call as unknown when the
+    // helper comes from a gem, a concern, or an inherited module. rubydex already indexes all of
+    // those, so ask it what a view can actually call and fall back to the shallow scan.
     dependencies.scan_helpers(project_path);
+
+    for name in view_visible_helper_names(project_path) {
+      dependencies.add_custom_helper(name);
+    }
 
     Self {
       project_path: project_path.to_path_buf(),
@@ -447,4 +452,18 @@ fn component_methods_for(template: &str) -> std::collections::BTreeSet<String> {
   }
 
   methods
+}
+
+fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
+  let Some(path) = project_path.to_str() else {
+    return Vec::new();
+  };
+
+  let mut analysis = crate::analysis::Analysis::index_paths(&[path.to_string()], &std::collections::HashSet::new());
+  analysis.resolve();
+
+  let modules = analysis.helper_modules();
+  let roots: Vec<&str> = modules.iter().map(String::as_str).collect();
+
+  analysis.view_visible_helpers(&roots).into_keys().collect()
 }

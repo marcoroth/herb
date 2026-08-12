@@ -269,6 +269,10 @@ impl TemplateDependencies {
 
   /// Mirrors `Herb::Analysis::TemplateDependencies#scan_helpers!`: every method defined under
   /// `app/helpers` becomes a known helper, so calls to it stop being reported as unknown.
+  pub fn add_custom_helper(&mut self, name: String) {
+    self.custom_helpers.insert(name);
+  }
+
   pub fn scan_helpers(&mut self, project_path: &std::path::Path) -> &BTreeSet<String> {
     let helpers = project_path.join("app").join("helpers");
 
