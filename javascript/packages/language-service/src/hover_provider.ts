@@ -6,7 +6,7 @@ import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
-import { lspPosition, isPositionInRange, rangeSize } from "./range_utils"
+import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation } from "./range_utils"
 
 import type { Node, HTMLElementNode, ERBOpenTagNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
 
@@ -18,7 +18,7 @@ class ActionViewElementCollector extends Visitor {
       const content = node.open_tag.content
       const tagName = node.open_tag.tag_name
 
-      if (content && tagName) {
+      if (content && tagName && hasSourceLocation(content.location)) {
         const isTagHelper = node.element_source === "ActionView::Helpers::TagHelper#tag"
         const methodName = isTagHelper ? `tag.${tagName.value}` : node.element_source.split("#").pop()!
 
@@ -67,6 +67,7 @@ class ERBHelperCollector extends Visitor {
 
   private scanContentToken(node: ERBContentNode | ERBOpenTagNode, contentToken: { value: string; location: { start: { line: number; column: number } } } | null | undefined): void {
     if (!contentToken?.value) return
+    if (!hasSourceLocation(contentToken.location)) return
 
     const value = contentToken.value
     const contentStart = lspPosition(contentToken.location.start)

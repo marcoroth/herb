@@ -1,46 +1,78 @@
-export function makeTreeCollapsible(element) {
-  const html = element.innerHTML
-  const lines = html.split("\n")
+export function buildCollapsibleTreeHTML(highlightedHTML, plainSource = null) {
+  const lines = highlightedHTML.split("\n")
+  const plainLines = plainSource === null ? null : plainSource.split("\n")
+  const depthsMatch = plainLines !== null && plainLines.length === lines.length
 
-  const processedLines = lines.map((lineHtml, index) => {
-    const tempElement = document.createElement("span")
-    tempElement.innerHTML = lineHtml
-    const plainText = tempElement.textContent || ""
-    const depth = getLineDepth(plainText)
+  let html = ""
+
+  for (let index = 0; index < lines.length; index++) {
+    const lineHtml = lines[index]
+
+    const depth = depthsMatch
+      ? getLineDepth(plainLines[index])
+      : getLineDepth(plainTextOf(lineHtml))
+
     const isNodeLine = lineHtml.includes('class="token node"') || lineHtml.includes('class="token error-class"')
 
     const toggleHtml = isNodeLine
       ? '<span class="tree-toggle" data-collapsed="false"></span>'
       : ""
 
-    const classes = ["tree-line"]
-    if (isNodeLine) classes.push("tree-collapsible")
+    const classes = isNodeLine ? "tree-line tree-collapsible" : "tree-line"
 
-    return `<span class="${classes.join(" ")}" data-depth="${depth}" data-line-index="${index}">${toggleHtml}${lineHtml}</span>`
+    html += `<span class="${classes}" data-depth="${depth}" data-line-index="${index}">${toggleHtml}${lineHtml}</span>`
+  }
+
+  return html
+}
+
+export function decorateTreeNodeTokens(element) {
+  element.querySelectorAll(".tree-collapsible .token.node, .tree-collapsible .token.error-class").forEach((token) => {
+    token.dataset.name = token.textContent.replace(/^@ /, "")
+    token.dataset.prefix = "@"
   })
+}
 
-  element.innerHTML = processedLines.join("")
+export function attachTreeToggles(element) {
+  if (element.dataset.treeTogglesAttached === "true") return
 
-  element.querySelectorAll(".tree-toggle").forEach((toggle) => {
-    toggle.addEventListener("click", (event) => {
+  element.dataset.treeTogglesAttached = "true"
+
+  element.addEventListener("click", (event) => {
+    const toggle = event.target.closest(".tree-toggle")
+
+    if (toggle && element.contains(toggle)) {
       event.preventDefault()
       event.stopPropagation()
       toggleTreeNode(toggle)
-    })
-  })
 
-  element.querySelectorAll(".tree-collapsible .token.node, .tree-collapsible .token.error-class").forEach((token) => {
-    const name = token.textContent.replace(/^@ /, "")
-    token.dataset.name = name
-    token.dataset.prefix = "@"
+      return
+    }
 
-    token.addEventListener("click", (event) => {
+    const token = event.target.closest(".tree-collapsible .token.node, .tree-collapsible .token.error-class")
+
+    if (token && element.contains(token)) {
       event.preventDefault()
       event.stopPropagation()
-      const toggle = token.closest(".tree-collapsible").querySelector(".tree-toggle")
-      if (toggle) toggleTreeNode(toggle)
-    })
+
+      const lineToggle = token.closest(".tree-collapsible").querySelector(".tree-toggle")
+      if (lineToggle) toggleTreeNode(lineToggle)
+    }
   })
+}
+
+export function makeTreeCollapsible(element, plainSource = null) {
+  element.innerHTML = buildCollapsibleTreeHTML(element.innerHTML, plainSource)
+
+  decorateTreeNodeTokens(element)
+  attachTreeToggles(element)
+}
+
+function plainTextOf(lineHtml) {
+  const tempElement = document.createElement("span")
+  tempElement.innerHTML = lineHtml
+
+  return tempElement.textContent || ""
 }
 
 export function expandAllNodes(element) {
