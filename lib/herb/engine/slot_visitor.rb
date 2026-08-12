@@ -88,9 +88,7 @@ module Herb
 
       #: () -> String
       def version
-        @version ||= Digest::SHA256.hexdigest(
-          @slots.map { |slot| "#{slot.index}:#{slot.type}" }.join(",")
-        ).slice(0, 8).to_s
+        @version ||= Digest::SHA256.hexdigest(slot_entries.map(&:inspect).join(",")).slice(0, 8).to_s
       end
 
       def inspect
@@ -102,12 +100,17 @@ module Herb
         {
           file: context.relative_file_path,
           version: version,
-          slots: @slots.map { |slot|
-            entry = { index: slot.index, type: slot.type, node_path: slot.node_path }
-            entry = entry.merge(attribute: slot.attribute) if slot.attribute
-            entry = entry.merge(key_source: slot.key_source) if slot.key_source
-            entry
-          },
+          slots: slot_entries,
+        }
+      end
+
+      #: () -> Array[Hash[Symbol, untyped]]
+      def slot_entries
+        @slot_entries ||= @slots.map { |slot|
+          entry = { index: slot.index, type: slot.type, node_path: slot.node_path }
+          entry = entry.merge(attribute: slot.attribute) if slot.attribute
+          entry = entry.merge(key_source: slot.key_source) if slot.key_source
+          entry
         }
       end
 
@@ -437,6 +440,8 @@ module Herb
       end
 
       def insert_markers(node)
+        anchored = child_anchor_index(node)
+
         each_child_array(node) do |array|
           index = 0
 
@@ -448,7 +453,7 @@ module Herb
             wrap_rows(child, slot_index)
             mark_branches(child, slot_index)
 
-            if slot_index
+            if slot_index && slot_index != anchored
               array.insert(index, comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)))
               array.insert(index + 2, comment_node(@markers.slot_close(slot_index)))
 
@@ -460,6 +465,31 @@ module Herb
         end
 
         anchor_attributes(node)
+        anchor_child(node, anchored)
+      end
+
+      #: (untyped) -> Integer?
+      def child_anchor_index(node)
+        return nil unless node.is_a?(Herb::AST::HTMLElementNode)
+
+        body = node.body
+        return nil unless body.is_a?(Array) && body.size == 1
+
+        slot_index = @pending[body[0]]
+        return nil unless slot_index
+        return nil unless @slots[slot_index].type == :child
+
+        slot_index
+      end
+
+      #: (untyped, Integer?) -> void
+      def anchor_child(node, slot_index)
+        return unless slot_index
+
+        open_tag = node.open_tag
+        return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode)
+
+        open_tag.children << attribute_node("data-herb-child", @markers.child_anchor(slot_index))
       end
 
       #: (untyped, Integer?) -> void
@@ -532,7 +562,9 @@ module Herb
         indices = @element_anchored[open_tag]
         return if indices.nil? || indices.empty?
 
-        open_tag.children << attribute_node("data-herb-slot", indices.join(","))
+        types = indices.map { |index| @slots[index].type }
+
+        open_tag.children << attribute_node("data-herb-slot", @markers.element_anchors(indices, types))
       end
 
       #: (untyped) { (Array[untyped]) -> void } -> void

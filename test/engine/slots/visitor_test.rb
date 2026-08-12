@@ -241,17 +241,45 @@ module Engine
       end
 
       test "schema version is stable for the same slot layout" do
-        assert_equal slots_for("<p><%= @a %></p>").version, slots_for("<p><%= @b %></p>").version
+        assert_equal(
+          slots_for("<p><%= @a %></p>").version,
+          slots_for("<p><%= @b %></p>").version
+        )
       end
 
       test "schema version changes when a slot is added" do
-        refute_equal slots_for("<p><%= @a %></p>").version,
-                     slots_for("<p><%= @a %></p><p><%= @b %></p>").version
+        refute_equal(
+          slots_for("<p><%= @a %></p>").version,
+          slots_for("<p><%= @a %></p><p><%= @b %></p>").version
+        )
       end
 
       test "schema version changes when a slot type changes" do
-        refute_equal slots_for("<div><%= @a %></div>").version,
-                     slots_for("<div><% if @a %>x<% end %></div>").version
+        refute_equal(
+          slots_for("<div><%= @a %></div>").version,
+          slots_for("<div><% if @a %>x<% end %></div>").version
+        )
+      end
+
+      test "schema version changes when the attribute a slot writes to changes" do
+        refute_equal(
+          slots_for(%(<a href="<%= @url %>">link</a>)).version,
+          slots_for(%(<a title="<%= @url %>">link</a>)).version
+        )
+      end
+
+      test "schema version changes when a slot moves in the tree" do
+        refute_equal(
+          slots_for("<div><%= @a %></div>").version,
+          slots_for("<div><span><%= @a %></span></div>").version
+        )
+      end
+
+      test "schema version changes when a collection key source changes" do
+        refute_equal(
+          slots_for(%(<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>)).version,
+          slots_for(%(<% @u.each do |u| %><li id="<%= u.id %>">x</li><% end %>)).version
+        )
       end
 
       test "assigns no slots when the template has parser errors" do
