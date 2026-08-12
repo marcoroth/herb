@@ -213,7 +213,14 @@ impl<'a> Visitor for Collector<'a> {
       let raw = keywords.partial.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
       let collection = keywords.collection.as_ref().map(|token| token.value.clone());
 
-      let interpolated_from_prism = node.prism().and_then(interpolated_render_prefix);
+      // Only consult the prism tree when the parser could not name a partial. Searching it
+      // unconditionally also finds interpolation inside a local's value, which would misread
+      // `render "posts/card", title: "a #{b}"` as a dynamic render.
+      let interpolated_from_prism = if raw.is_none() {
+        node.prism().and_then(interpolated_render_prefix)
+      } else {
+        None
+      };
       let interpolated = raw.as_deref().map(|value| value.contains("#{")).unwrap_or(false) || interpolated_from_prism.is_some();
       let partial = if interpolated { None } else { raw.clone() };
 
