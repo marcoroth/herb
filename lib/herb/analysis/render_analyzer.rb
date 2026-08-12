@@ -461,9 +461,23 @@ module Herb
           end
         end
 
+        if result.dynamic_calls.any?
+          puts "\n #{separator}" if result.unresolved.any?
+          puts "\n"
+          puts " #{bold("Dynamic render calls:")}"
+          puts " #{dimmed("The partial name is built at runtime, so it cannot be resolved statically.")}"
+          puts ""
+
+          result.dynamic_calls.each do |call|
+            shown = dynamic_call_display(call)
+
+            puts "   #{bold(red("\u2717"))} #{red(shown)} #{dimmed("in #{relative_path(call[:file])}")}"
+          end
+        end
+
         return unless result.unused.any?
 
-        puts "\n #{separator}" if result.unresolved.any?
+        puts "\n #{separator}" if result.unresolved.any? || result.dynamic_calls.any?
         puts "\n"
         puts " #{bold("Unused partials:")}"
         puts " #{dimmed("These partial files are not referenced by any reachable render call.")}"
@@ -741,6 +755,17 @@ module Herb
         passed
       end
 
+      def dynamic_call_display(call)
+        prefix = call[:dynamic_prefix]
+
+        unless prefix
+          raw = call[:partial].to_s.sub(/\A["']/, "")
+          prefix = raw.split("\#{").first.to_s.chomp("/")
+        end
+
+        prefix.to_s.empty? ? "\#{...}" : "#{prefix}/\#{...}"
+      end
+
       def print_dependency_warnings(warnings)
         ivar_warnings = warnings.select { |w| w[:type] == :ivar_in_partial }
         unknown_warnings = warnings.select { |w| w[:type] == :unknown_call }
@@ -878,7 +903,11 @@ module Herb
           # The visitor already recorded this render, it just could not name the partial, so mark
           # one of those rather than appending another call and inflating the totals.
           unmarked = calls.find { |call| call[:partial].nil? && !call[:interpolated] }
-          unmarked[:interpolated] = true if unmarked
+
+          if unmarked
+            unmarked[:interpolated] = true
+            unmarked[:dynamic_prefix] = match[0]
+          end
         end
 
         content.scan(%r{render\s+layout:\s*["']([a-z0-9_/]+)["']}) do |match|
