@@ -108,6 +108,61 @@ fn graph_shows_the_call_sites_of_each_partial() {
 }
 
 #[test]
+fn graph_descends_recursively_from_an_entry_point() {
+  let project = Project::new("graph_recursive");
+  project.write("app/views/posts/index.html.erb", "<html><%= render \"posts/row\" %></html>");
+  project.write("app/views/posts/_row.html.erb", "<tr><%= render \"posts/cell\" %></tr>");
+  project.write("app/views/posts/_cell.html.erb", "<td>x</td>");
+
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Entry points:"), "{output}");
+
+  let row = output.lines().find(|line| line.contains("posts/row")).expect("row line");
+  let cell = output.lines().find(|line| line.contains("posts/cell")).expect("cell line");
+
+  let indent = |line: &str| line.len() - line.trim_start().len();
+
+  assert!(indent(cell) > indent(row), "row: {row:?} cell: {cell:?}");
+}
+
+#[test]
+fn graph_reports_partial_usage_and_a_summary() {
+  let project = Project::new("graph_sections");
+  project.write("app/views/posts/index.html.erb", "<html><%= render \"posts/row\" %></html>");
+  project.write("app/views/posts/_row.html.erb", "<tr></tr>");
+  project.write("app/views/posts/_orphan.html.erb", "<p>x</p>");
+
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Partial usage:"), "{output}");
+  assert!(output.contains("rendered by posts/index.html.erb"), "{output}");
+  assert!(output.contains("Unreachable partials:"), "{output}");
+  assert!(output.contains("posts/orphan"), "{output}");
+  assert!(output.contains("Summary:"), "{output}");
+  assert!(output.contains("Entry points"), "{output}");
+}
+
+#[test]
+fn graph_uses_distinct_connectors_for_siblings() {
+  let project = Project::new("graph_connectors");
+  project.write(
+    "app/views/posts/index.html.erb",
+    "<html><%= render \"posts/row\" %><%= render \"posts/footer\" %></html>",
+  );
+  project.write("app/views/posts/_row.html.erb", "<tr></tr>");
+  project.write("app/views/posts/_footer.html.erb", "<footer></footer>");
+
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("\u{251c}\u{2500}\u{2500}"), "{output}");
+  assert!(output.contains("\u{2514}\u{2500}\u{2500}"), "{output}");
+}
+
+#[test]
 fn dependencies_reports_the_manifest_for_a_template() {
   let project = project_with_layout("dependencies");
   let entry = project.root.join("app/views/posts/index.html.erb");
@@ -288,4 +343,36 @@ fn check_covers_a_partial_behind_an_interpolated_ruby_render() {
 
   assert_eq!(status, 0);
   assert!(!output.contains("_alpha"), "{output}");
+}
+
+#[test]
+fn check_does_not_flag_a_partial_assigned_without_the_word_render() {
+  let project = Project::new("check_partial_assignment");
+  project.write("app/views/posts/index.html.erb", "<p>hello</p>");
+  project.write("app/views/posts/_assigned.html.erb", "<p>x</p>");
+  project.write("app/views/posts/_orphan.html.erb", "<p>y</p>");
+  project.write(
+    "app/models/post_component.rb",
+    "class PostComponent\n  def initialize\n    self.partial = \"posts/assigned\"\n  end\nend\n",
+  );
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 1);
+  assert!(!output.contains("_assigned"), "{output}");
+  assert!(output.contains("_orphan"), "{output}");
+}
+
+#[test]
+fn check_ends_with_a_summary() {
+  let project = project_with_layout("check_summary");
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Summary:"), "{output}");
+  assert!(output.contains("Version"), "{output}");
+  assert!(output.contains("Renders"), "{output}");
+  assert!(output.contains("Partials"), "{output}");
+  assert!(output.contains("Ruby"), "{output}");
+  assert!(output.contains("Duration"), "{output}");
 }

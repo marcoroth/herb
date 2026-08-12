@@ -10,6 +10,10 @@ const RENDER: &str = "render";
 const CALL_NODE: &str = "CallNode";
 const STRING_NODE: &str = "StringNode";
 const INTERPOLATED_STRING_NODE: &str = "InterpolatedStringNode";
+const PARTIAL_WRITER: &str = "partial=";
+const PARTIAL: &str = "partial";
+const LOCAL_VARIABLE_WRITE: &str = "LocalVariableWriteNode";
+const INSTANCE_VARIABLE_WRITE: &str = "InstanceVariableWriteNode";
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct RubyRenderReferences {
@@ -56,7 +60,7 @@ pub fn collect(project_path: &Path) -> RubyRenderReferences {
 
     references.files_scanned += 1;
 
-    if !source.contains(RENDER) {
+    if !source.contains(RENDER) && !source.contains(PARTIAL) {
       continue;
     }
 
@@ -87,15 +91,25 @@ pub fn collect_from_source(source: &str, references: &mut RubyRenderReferences) 
 }
 
 fn walk(node: &PrismNode, references: &mut RubyRenderReferences) {
-  if node.is(CALL_NODE) && node.name.as_deref() == Some(RENDER) {
+  if node.is(CALL_NODE) && matches!(node.name.as_deref(), Some(RENDER) | Some(PARTIAL_WRITER)) {
     for argument in &node.children {
       collect_argument(argument, references);
+    }
+  }
+
+  if (node.is(LOCAL_VARIABLE_WRITE) || node.is(INSTANCE_VARIABLE_WRITE)) && assigns_partial(node) {
+    for child in &node.children {
+      collect_argument(child, references);
     }
   }
 
   for child in &node.children {
     walk(child, references);
   }
+}
+
+fn assigns_partial(node: &PrismNode) -> bool {
+  node.name.as_deref().map(|name| name.trim_start_matches('@') == PARTIAL).unwrap_or(false)
 }
 
 fn collect_argument(node: &PrismNode, references: &mut RubyRenderReferences) {

@@ -113,3 +113,38 @@ fn returns_nothing_for_a_project_without_ruby_directories() {
   assert!(references.names.is_empty());
   assert_eq!(references.files_scanned, 0);
 }
+
+#[test]
+fn finds_a_partial_assigned_with_self_partial() {
+  let references = from_source("self.partial = \"posts/card\"");
+
+  assert!(references.covers("posts/card"));
+}
+
+#[test]
+fn finds_a_partial_assigned_to_a_local_variable() {
+  let references = from_source("partial = \"posts/card\"");
+
+  assert!(references.covers("posts/card"));
+}
+
+#[test]
+fn finds_a_partial_assigned_to_an_instance_variable() {
+  let references = from_source("@partial = \"posts/card\"");
+
+  assert!(references.covers("posts/card"));
+}
+
+#[test]
+fn records_a_prefix_for_an_interpolated_partial_assignment() {
+  let references = from_source("self.partial = \"widgets/#{kind}\"");
+
+  assert!(references.covers("widgets/alpha"));
+}
+
+#[test]
+fn ignores_an_assignment_to_an_unrelated_name() {
+  let references = from_source("template = \"posts/card\"");
+
+  assert!(!references.covers("posts/card"));
+}

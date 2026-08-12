@@ -1,3 +1,4 @@
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
@@ -143,6 +144,7 @@ fn verdict_marker(verdict: Verdict) -> String {
 }
 
 fn check(arguments: &[String]) -> i32 {
+  let started = std::time::Instant::now();
   let root = project_root(arguments);
   let index = PartialIndex::build(&root);
   let templates = index.templates().to_vec();
@@ -184,10 +186,8 @@ fn check(arguments: &[String]) -> i32 {
     .collect();
 
   println!(
-    " {} {} {}",
-    "Checked".bold(),
-    format!("{} {}", templates.len(), plural(templates.len(), "template")).dimmed(),
-    format!("and {} {}", ruby_references.files_scanned, plural(ruby_references.files_scanned, "Ruby file")).dimmed()
+    " {}",
+    format!("Checking render calls in {} {}...", templates.len(), plural(templates.len(), "template")).dimmed()
   );
   println!();
 
@@ -213,55 +213,321 @@ fn check(arguments: &[String]) -> i32 {
     println!();
   }
 
-  if unresolved.is_empty() && unused.is_empty() {
-    println!(" {} All render calls resolve and all partials are used!", "\u{2713}".green());
+  let issues = unresolved.len() + unused.len();
+
+  println!(" {}", separator().dimmed());
+  println!();
+  println!(" {}", "Summary:".bold());
+  println!("  {} {}", label("Version"), herb::herb::version().cyan());
+  println!(
+    "  {} {}",
+    label("Checked"),
+    format!("{} {}", templates.len(), plural(templates.len(), "template")).cyan()
+  );
+  println!(
+    "  {} {}",
+    label("Renders"),
+    format!("{} resolved | {} unresolved", rendered.len(), unresolved.len()).cyan()
+  );
+  println!(
+    "  {} {}",
+    label("Partials"),
+    format!("{} on disk | {} unused", partials.len(), unused.len()).cyan()
+  );
+  println!(
+    "  {} {}",
+    label("Ruby"),
+    format!(
+      "{} {} | {} {}",
+      ruby_references.files_scanned,
+      plural(ruby_references.files_scanned, "file"),
+      ruby_references.names.len() + ruby_references.prefixes.len(),
+      plural(ruby_references.names.len() + ruby_references.prefixes.len(), "reference")
+    )
+    .cyan()
+  );
+  println!(
+    "  {} {}",
+    label("Duration"),
+    format!("{:.2}ms", started.elapsed().as_secs_f64() * 1000.0).cyan()
+  );
+
+  if issues == 0 {
+    println!();
+    println!(
+      " {} {}",
+      "\u{2713}".green().bold(),
+      "All render calls resolve and all partials are used!".green()
+    );
     println!();
 
     return 0;
   }
 
+  println!();
+
   1
+}
+
+fn separator() -> String {
+  "\u{2500}".repeat(60)
+}
+
+fn label(text: &str) -> String {
+  format!("{text:<13}").dimmed().to_string()
 }
 
 fn graph(arguments: &[String]) -> i32 {
   let root = project_root(arguments);
-  let mut project = ProjectIndex::new(&root);
-  project.index_all();
-
-  let Some(graph) = project.graph() else {
-    eprintln!("{}", "Could not index the project.".red());
-
-    return 1;
-  };
-
-  let Some(partials) = project.partials() else {
-    return 1;
-  };
+  let mut index = PartialIndex::build(&root);
+  let templates = index.templates().to_vec();
 
   header(&format!("{}", root.display()));
 
-  println!(" {}", "Render graph".bold());
+  println!(
+    " {}",
+    format!("Building render graph for {} {}...", templates.len(), plural(templates.len(), "template")).dimmed()
+  );
+
+  let renders = collect_renders(&mut index, &templates);
+  let ruby_references = ruby_render_references::collect(&root);
+  let reachable = reachable_partials(&index, &renders, &ruby_references);
+
+  let entry_points: Vec<&String> = templates.iter().filter(|file| !herb_analysis::partial_resolution::partial_path(file)).collect();
+
+  println!();
+  println!(" {}", separator().dimmed());
   println!();
 
-  for name in partials.names() {
-    let files = partials.files_for(name);
+  if !entry_points.is_empty() {
+    println!(
+      " {} {}",
+      "Entry points:".bold(),
+      format!("({} {})", entry_points.len(), plural(entry_points.len(), "template")).dimmed()
+    );
 
-    let Some(file) = files.first() else {
-      continue;
-    };
+    for file in &entry_points {
+      println!();
+      println!(" {}", view_relative(file, &index).cyan());
 
-    let callers = graph.callers_of(file);
+      let children = renders.get(*file).cloned().unwrap_or_default();
 
-    println!("   {} {}", name.bold(), format!("({} call sites)", callers.len()).dimmed());
+      if children.is_empty() {
+        println!("   {}", "(no render calls)".dimmed());
+      } else {
+        print_partial_tree(&children, &renders, &index, &reachable, "   ", &mut BTreeSet::new());
+      }
+    }
+  }
 
-    for call_site in callers {
-      println!("     {} {}", "\u{2514}\u{2500}\u{2500}".dimmed(), relative(&call_site.caller, &root).cyan());
+  if !ruby_references.names.is_empty() {
+    println!();
+    println!(" {}", separator().dimmed());
+    println!();
+    println!(
+      " {} {}",
+      "Ruby references:".bold(),
+      format!("({} {})", ruby_references.names.len(), plural(ruby_references.names.len(), "partial")).dimmed()
+    );
+
+    for reference in &ruby_references.names {
+      let resolved = index.resolve(reference, None).first().cloned();
+      let status = if resolved.is_some() { "\u{2713}".green() } else { "\u{2717}".red() };
+
+      println!();
+      println!("   {} {}", status, reference.bold());
+    }
+  }
+
+  let partial_names: Vec<String> = index.names().iter().map(|name| name.to_string()).collect();
+  let callers = reverse_graph(&renders, &index);
+
+  println!();
+  println!(" {}", separator().dimmed());
+  println!();
+  println!(" {} {}", "Partial usage:".bold(), "(who renders each partial)".dimmed());
+
+  for name in &partial_names {
+    let status = if reachable.contains(name) { "\u{2713}".green() } else { "~".yellow() };
+
+    println!();
+    println!("   {} {}", status, name);
+
+    let renderers = callers.get(name).cloned().unwrap_or_default();
+
+    if renderers.is_empty() && ruby_references.covers(name) {
+      println!("     {} {}", "\u{2514}\u{2500}\u{2500}".dimmed(), format!("rendered by [Ruby] {name}").dimmed());
+    } else if renderers.is_empty() {
+      println!("     {}", "(not rendered by any file)".dimmed());
+    } else {
+      for (position, renderer) in renderers.iter().enumerate() {
+        let connector = if position == renderers.len() - 1 {
+          "\u{2514}\u{2500}\u{2500}"
+        } else {
+          "\u{251c}\u{2500}\u{2500}"
+        };
+
+        println!(
+          "     {} {}",
+          connector.dimmed(),
+          format!("rendered by {}", view_relative(renderer, &index)).dimmed()
+        );
+      }
+    }
+  }
+
+  let unreachable: Vec<&String> = partial_names
+    .iter()
+    .filter(|name| !reachable.contains(*name))
+    .filter(|name| !ruby_references.covers(name))
+    .collect();
+
+  if !unreachable.is_empty() {
+    println!();
+    println!(" {}", separator().dimmed());
+    println!();
+    println!(
+      " {} {}",
+      "Unreachable partials:".bold(),
+      format!("({} {})", unreachable.len(), plural(unreachable.len(), "partial")).dimmed()
+    );
+    println!();
+
+    for name in &unreachable {
+      let file = index.resolve(name, None).first().map(|file| view_relative(file, &index)).unwrap_or_default();
+
+      println!("   {} {} {}", "~".yellow(), name, file.dimmed());
     }
   }
 
   println!();
+  println!(" {}", separator().dimmed());
+  println!();
+  println!(" {}", "Summary:".bold());
+  println!("  {} {}", label("Entry points"), entry_points.len().to_string().cyan());
+  println!("  {} {}", label("Partials"), partial_names.len().to_string().cyan());
+  println!("  {} {}", label("Reachable"), (partial_names.len() - unreachable.len()).to_string().cyan());
+  println!("  {} {}", label("Unreachable"), unreachable.len().to_string().cyan());
+  println!();
 
   0
+}
+
+fn view_relative(file: &str, index: &PartialIndex) -> String {
+  Path::new(file)
+    .strip_prefix(index.view_root())
+    .map(|rest| rest.display().to_string())
+    .unwrap_or_else(|_| file.to_string())
+}
+
+fn reverse_graph(renders: &BTreeMap<String, Vec<String>>, index: &PartialIndex) -> BTreeMap<String, Vec<String>> {
+  let mut callers: BTreeMap<String, Vec<String>> = BTreeMap::new();
+
+  for (file, names) in renders {
+    for name in names {
+      if index.resolve(name, None).first().is_some() {
+        callers.entry(name.clone()).or_default().push(file.clone());
+      }
+    }
+  }
+
+  callers
+}
+
+fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> BTreeMap<String, Vec<String>> {
+  let mut renders: BTreeMap<String, Vec<String>> = BTreeMap::new();
+  let flow = StateFlow::new(index.view_root());
+
+  for file in templates {
+    let result = flow.analyze(file);
+    let mut names: Vec<String> = Vec::new();
+
+    for call in &result.render_calls {
+      if let Some(name) = &call.partial {
+        if !names.contains(name) {
+          names.push(name.clone());
+        }
+      }
+    }
+
+    if !names.is_empty() {
+      renders.insert(file.clone(), names);
+    }
+  }
+
+  renders
+}
+
+fn reachable_partials(
+  index: &PartialIndex,
+  renders: &BTreeMap<String, Vec<String>>,
+  ruby_references: &ruby_render_references::RubyRenderReferences,
+) -> BTreeSet<String> {
+  let mut reachable = BTreeSet::new();
+  let mut queue: Vec<String> = Vec::new();
+
+  for (file, names) in renders {
+    if herb_analysis::partial_resolution::partial_path(file) {
+      continue;
+    }
+
+    queue.extend(names.clone());
+  }
+
+  queue.extend(ruby_references.names.iter().cloned());
+
+  while let Some(name) = queue.pop() {
+    if !reachable.insert(name.clone()) {
+      continue;
+    }
+
+    let Some(file) = index.resolve(&name, None).first() else {
+      continue;
+    };
+
+    if let Some(children) = renders.get(file) {
+      queue.extend(children.clone());
+    }
+  }
+
+  reachable
+}
+
+fn print_partial_tree(
+  names: &[String],
+  renders: &BTreeMap<String, Vec<String>>,
+  index: &PartialIndex,
+  reachable: &BTreeSet<String>,
+  indent: &str,
+  visited: &mut BTreeSet<String>,
+) {
+  for (position, name) in names.iter().enumerate() {
+    let last = position == names.len() - 1;
+    let connector = if last { "\u{2514}\u{2500}\u{2500}" } else { "\u{251c}\u{2500}\u{2500}" };
+    let child_indent = if last { "    " } else { "\u{2502}   " };
+
+    let resolved = index.resolve(name, None).first().cloned();
+
+    let status = match &resolved {
+      None => "\u{2717}".red(),
+      Some(_) if reachable.contains(name) => "\u{2713}".green(),
+      Some(_) => "~".yellow(),
+    };
+
+    println!("{indent}{connector} {status} {name}");
+
+    let Some(file) = resolved else {
+      continue;
+    };
+
+    if !visited.insert(name.clone()) {
+      continue;
+    }
+
+    if let Some(children) = renders.get(&file) {
+      print_partial_tree(children, renders, index, reachable, &format!("{indent}{child_indent}"), visited);
+    }
+  }
 }
 
 fn dependencies(arguments: &[String]) -> i32 {
