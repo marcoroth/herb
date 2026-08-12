@@ -68,12 +68,30 @@ module Herb
       def partial_name_for(file, view_root)
         return nil unless partial_path?(file)
 
-        root = view_root.is_a?(Pathname) ? view_root : Pathname.new(view_root)
-        relative = Pathname.new(file).relative_path_from(root).to_s
+        relative = relative_to_view_root(file, view_root)
+
+        return nil unless relative
+
         directory = File.dirname(relative)
         name = File.basename(relative).delete_prefix(PARTIAL_PREFIX).sub(/\..*\z/, "")
 
+        return nil if name.empty?
+
         directory == "." ? name : "#{directory}/#{name}"
+      end
+
+      private
+
+      #: (String, String | Pathname) -> String?
+      def relative_to_view_root(file, view_root)
+        root = view_root.is_a?(Pathname) ? view_root : Pathname.new(view_root)
+        relative = Pathname.new(file).relative_path_from(root).to_s
+
+        return nil if relative == "." || relative.start_with?("..")
+
+        relative
+      rescue ArgumentError
+        nil
       end
     end
   end

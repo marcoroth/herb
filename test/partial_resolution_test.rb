@@ -65,6 +65,18 @@ class PartialResolutionTest < Minitest::Spec
     assert_equal ["_card.html.erb", "_card.erb", "_card.herb", "_card.turbo_stream.erb"], Subject.by_precedence(files)
   end
 
+  test "does not name a file that sits outside the view root" do
+    assert_nil Subject.partial_name_for("other/place/_card.html.erb", "app/views")
+  end
+
+  test "does not name a partial whose name is only an extension" do
+    assert_nil Subject.partial_name_for("app/views/_.html.erb", "app/views")
+  end
+
+  test "does not name the view root itself" do
+    assert_nil Subject.partial_name_for("app/views", "app/views")
+  end
+
   test "does not name a file that is not a partial" do
     assert_nil Subject.partial_name_for("app/views/posts/index.html.erb", "app/views")
   end

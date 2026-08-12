@@ -29,5 +29,8 @@ module Herb
 
     # : (String, String | Pathname) -> String?
     def self.partial_name_for: (String, String | Pathname) -> String?
+
+    # : (String, String | Pathname) -> String?
+    private def self.relative_to_view_root: (String, String | Pathname) -> String?
   end
 end
