@@ -2,6 +2,7 @@
 
 require "pathname"
 
+require_relative "partial_declaration"
 require_relative "partial_resolution"
 
 module Herb
@@ -32,6 +33,7 @@ module Herb
         @view_root = Pathname.new(view_root)
         @templates = templates
         @by_name = build_index(templates)
+        @declarations = {} #: Hash[String, PartialDeclaration?]
       end
 
       #: (String?) -> Array[String]
@@ -79,6 +81,73 @@ module Herb
         @by_name.keys
       end
 
+      #: (String?, String?) -> PartialDeclaration?
+      def lookup(partial_name, source_file)
+        file = resolve(partial_name, source_file).first
+
+        return nil unless file
+
+        declaration_for_file(file)
+      end
+
+      #: (String) -> PartialDeclaration?
+      def declaration_for_file(file)
+        @declarations[file] ||= build_declaration(file)
+      end
+
+      #: (String) -> String?
+      def update(file)
+        name = partial_name_for(file)
+
+        return nil unless name
+
+        @declarations.delete(file)
+        @templates = (@templates | [file]).sort
+
+        files = (@by_name[name] || []) | [file]
+        @by_name[name] = PartialResolution.by_precedence(files)
+
+        name
+      end
+
+      #: (String) -> String?
+      def remove(file)
+        name = partial_name_for(file)
+
+        return nil unless name
+
+        @declarations.delete(file)
+        @templates = @templates - [file]
+
+        files = (@by_name[name] || []) - [file]
+
+        if files.empty?
+          @by_name.delete(name)
+        else
+          @by_name[name] = files
+        end
+
+        name
+      end
+
+      #: () -> Integer
+      def size
+        @by_name.size
+      end
+
+      #: () -> Hash[String, untyped]
+      def to_h
+        partials = {} #: Hash[String, untyped]
+
+        names.sort.each do |name|
+          declaration = lookup(name, nil)
+
+          partials[name] = declaration.to_h if declaration
+        end
+
+        { "viewRoot" => @view_root.to_s, "partials" => partials }
+      end
+
       private
 
       #: (String) -> String?
@@ -86,6 +155,18 @@ module Herb
         Pathname.new(File.dirname(source_file)).relative_path_from(@view_root).to_s
       rescue ArgumentError
         nil
+      end
+
+      #: (String) -> PartialDeclaration?
+      def build_declaration(file)
+        return nil unless File.exist?(file)
+
+        source = File.read(file)
+        document = ::Herb.parse(source, strict_locals: true).value
+
+        PartialDeclaration.from_document(document, file)
+      rescue StandardError
+        PartialDeclaration.without_strict_locals(file)
       end
 
       #: (Array[String]) -> Hash[String, Array[String]]

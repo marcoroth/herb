@@ -33,10 +33,31 @@ module Herb
       # : () -> Array[String]
       def names: () -> Array[String]
 
+      # : (String?, String?) -> PartialDeclaration?
+      def lookup: (String?, String?) -> PartialDeclaration?
+
+      # : (String) -> PartialDeclaration?
+      def declaration_for_file: (String) -> PartialDeclaration?
+
+      # : (String) -> String?
+      def update: (String) -> String?
+
+      # : (String) -> String?
+      def remove: (String) -> String?
+
+      # : () -> Integer
+      def size: () -> Integer
+
+      # : () -> Hash[String, untyped]
+      def to_h: () -> Hash[String, untyped]
+
       private
 
       # : (String) -> String?
       def source_directory_for: (String) -> String?
+
+      # : (String) -> PartialDeclaration?
+      def build_declaration: (String) -> PartialDeclaration?
 
       # : (Array[String]) -> Hash[String, Array[String]]
       def build_index: (Array[String]) -> Hash[String, Array[String]]

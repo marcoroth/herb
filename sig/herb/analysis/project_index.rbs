@@ -1,0 +1,54 @@
+# Generated from lib/herb/analysis/project_index.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class ProjectIndex
+      attr_reader project_path: Pathname
+
+      attr_reader partials: PartialIndex?
+
+      attr_reader graph: RenderGraph?
+
+      # : (String | Pathname) -> void
+      def initialize: (String | Pathname) -> void
+
+      # : () -> void
+      def index_all: () -> void
+
+      # : () -> void
+      def index_partials: () -> void
+
+      # : () -> void
+      def index_call_sites: () -> void
+
+      # : () -> Pathname?
+      def view_root: () -> Pathname?
+
+      # : (String, ?String?) -> bool
+      def handle_change: (String, ?String?) -> bool
+
+      # : (String) -> bool
+      def remove: (String) -> bool
+
+      private
+
+      # : (String) -> String?
+      def template_file_for: (String) -> String?
+
+      # : (String) -> bool
+      def update_partial: (String) -> bool
+
+      # : (String) -> bool
+      def remove_partial: (String) -> bool
+
+      # : (String, String?) -> bool
+      def update_call_sites: (String, String?) -> bool
+
+      # : (String) -> bool
+      def remove_call_sites: (String) -> bool
+
+      # : (String) -> String?
+      def read: (String) -> String?
+    end
+  end
+end
