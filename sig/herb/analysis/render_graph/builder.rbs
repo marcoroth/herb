@@ -1,0 +1,150 @@
+# Generated from lib/herb/analysis/render_graph/builder.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class Builder
+        RENDER_MARKER: String
+
+        YIELD_MARKER: String
+
+        DOCUMENT_ROOT_TAG: String
+
+        ANCESTOR_CONTEXT_ATTRIBUTES: Array[String]
+
+        PARSER_OPTIONS: Hash[Symbol, bool]
+
+        class ScannedTemplate < Data
+          attr_reader sites(): untyped
+
+          attr_reader document_root(): untyped
+
+          attr_reader roots(): untyped
+
+          def self.new: (untyped sites, untyped document_root, untyped roots) -> instance
+                      | (sites: untyped, document_root: untyped, roots: untyped) -> instance
+
+          def self.members: () -> [ :sites, :document_root, :roots ]
+
+          def members: () -> [ :sites, :document_root, :roots ]
+        end
+
+        class RenderSite < Data
+          attr_reader node(): untyped
+
+          attr_reader ancestors(): untyped
+
+          attr_reader ancestor_attributes(): untyped
+
+          def self.new: (untyped node, untyped ancestors, untyped ancestor_attributes) -> instance
+                      | (node: untyped, ancestors: untyped, ancestor_attributes: untyped) -> instance
+
+          def self.members: () -> [ :node, :ancestors, :ancestor_attributes ]
+
+          def members: () -> [ :node, :ancestors, :ancestor_attributes ]
+        end
+
+        class CollectedCallSites < Data
+          attr_reader unresolved(): untyped
+
+          attr_reader document_root(): untyped
+
+          attr_reader roots(): untyped
+
+          def self.new: (untyped unresolved, untyped document_root, untyped roots) -> instance
+                      | (unresolved: untyped, document_root: untyped, roots: untyped) -> instance
+
+          def self.members: () -> [ :unresolved, :document_root, :roots ]
+
+          def members: () -> [ :unresolved, :document_root, :roots ]
+        end
+
+        class StackEntry < Data
+          attr_reader tag_name(): untyped
+
+          attr_reader attributes(): untyped
+
+          def self.new: (untyped tag_name, untyped attributes) -> instance
+                      | (tag_name: untyped, attributes: untyped) -> instance
+
+          def self.members: () -> [ :tag_name, :attributes ]
+
+          def members: () -> [ :tag_name, :attributes ]
+        end
+
+        class ScanState
+          attr_reader sites: Array[RenderSite]
+
+          attr_reader stack: Array[StackEntry]
+
+          attr_reader tags: Array[String]
+
+          attr_reader conditional_tags: Array[String]
+
+          attr_reader renders: Array[String]
+
+          attr_accessor document_root: bool
+
+          attr_accessor conditional_depth: Integer
+
+          attr_accessor roots_resolved: bool
+
+          # : () -> void
+          def initialize: () -> void
+        end
+
+        NOTHING_COLLECTED: CollectedCallSites
+
+        # : (PartialIndex) -> void
+        def initialize: (PartialIndex) -> void
+
+        # : (String, String, Hash[String, Array[PartialCallSite]]) -> CollectedCallSites
+        def collect_call_sites: (String, String, Hash[String, Array[PartialCallSite]]) -> CollectedCallSites
+
+        # : (Array[String]) -> RenderGraph
+        def build: (Array[String]) -> RenderGraph
+
+        private
+
+        # : (String) -> Herb::AST::DocumentNode
+        def parse: (String) -> Herb::AST::DocumentNode
+
+        # : (String) -> String?
+        def read: (String) -> String?
+
+        # : (Herb::AST::Node) -> ScannedTemplate
+        def scan_template: (Herb::AST::Node) -> ScannedTemplate
+
+        # : (Herb::AST::Node, ScanState) -> void
+        def walk: (Herb::AST::Node, ScanState) -> void
+
+        # : (Herb::AST::Node, String?, ScanState) -> void
+        def collect_root: (Herb::AST::Node, String?, ScanState) -> void
+
+        # : (Herb::AST::Node) -> bool
+        def conditional_node?: (Herb::AST::Node) -> bool
+
+        # : (Herb::AST::HTMLElementNode?) -> Hash[String, String]
+        def static_ancestor_attributes: (Herb::AST::HTMLElementNode?) -> Hash[String, String]
+
+        # : (Herb::AST::HTMLAttributeNode) -> String?
+        def attribute_name: (Herb::AST::HTMLAttributeNode) -> String?
+
+        # : (Herb::AST::HTMLAttributeNode) -> String
+        def static_attribute_value: (Herb::AST::HTMLAttributeNode) -> String
+
+        # : (Array[Herb::AST::Node]) -> String?
+        def literal_content: (Array[Herb::AST::Node]) -> String?
+
+        # : (Herb::AST::ERBRenderNode) -> String?
+        def partial_name_rendered_by: (Herb::AST::ERBRenderNode) -> String?
+
+        # : (Herb::AST::ERBRenderNode) -> Array[String]
+        def locals_passed_by: (Herb::AST::ERBRenderNode) -> Array[String]
+
+        # : (Herb::AST::Node) -> CallSiteLocation?
+        def call_site_location: (Herb::AST::Node) -> CallSiteLocation?
+      end
+    end
+  end
+end

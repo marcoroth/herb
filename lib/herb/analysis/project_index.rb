@@ -4,7 +4,7 @@ require "pathname"
 
 require_relative "partial_index"
 require_relative "partial_resolution"
-require_relative "render_graph_builder"
+require_relative "render_graph/builder"
 
 module Herb
   module Analysis
@@ -18,6 +18,7 @@ module Herb
         @project_path = Pathname.new(project_path)
         @partials = nil
         @graph = nil
+        @builder = nil
       end
 
       #: () -> void
@@ -29,15 +30,18 @@ module Herb
       #: () -> void
       def index_partials
         @partials = PartialIndex.build(@project_path)
+        @builder = nil
       end
 
       #: () -> void
       def index_call_sites
         partials = @partials
 
-        return @graph = nil unless partials
+        graph_builder = builder
 
-        @graph = RenderGraphBuilder.new(partials).build(partials.templates, "")
+        return @graph = nil unless partials && graph_builder
+
+        @graph = graph_builder.build(partials.templates)
       end
 
       #: () -> Pathname?
@@ -71,6 +75,15 @@ module Herb
 
       private
 
+      #: () -> RenderGraph::Builder?
+      def builder
+        partials = @partials
+
+        return nil unless partials
+
+        @builder ||= RenderGraph::Builder.new(partials)
+      end
+
       #: (String) -> String?
       def template_file_for(path)
         return nil unless PartialResolution.template_path?(path)
@@ -99,16 +112,16 @@ module Herb
       #: (String, String?) -> bool
       def update_call_sites(file, source)
         graph = @graph
-        partials = @partials
+        graph_builder = builder
 
-        return false unless graph && partials
+        return false unless graph && graph_builder
 
         contents = source || read(file)
 
         return false unless contents
 
         sites = {} #: Hash[String, Array[RenderGraph::PartialCallSite]]
-        collected = RenderGraphBuilder.new(partials).collect_call_sites(file, contents, sites)
+        collected = graph_builder.collect_call_sites(file, contents, sites)
 
         changed = graph.replace_calls_from(file, sites, collected.unresolved)
         graph.set_roots(file, collected.roots)

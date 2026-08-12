@@ -32,6 +32,9 @@ module Herb
 
       private
 
+      # : () -> RenderGraph::Builder?
+      def builder: () -> RenderGraph::Builder?
+
       # : (String) -> String?
       def template_file_for: (String) -> String?
 
