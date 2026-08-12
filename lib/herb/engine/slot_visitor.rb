@@ -3,12 +3,42 @@
 
 require "digest"
 
+require_relative "../visitor"
+require_relative "context_aware"
 require_relative "slot_markers"
 
 module Herb
   class Engine
+    # Records where a template's dynamic content ends up, and marks those places in the output so
+    # something outside Ruby can find them again:
+    #
+    #     visitor = Herb::Engine::SlotVisitor.new
+    #
+    #     Herb::Engine.new(source, visitors: [visitor], filename: "app/views/posts/index.html.erb")
+    #
+    #     visitor.slots
+    #
+    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive. Deciding what
+    # that means belongs to whoever builds the stack, so the directive is only recognised here:
+    #
+    #     visitors = Herb::Engine::SlotVisitor.directive?(source) ? [Herb::Engine::SlotVisitor.new] : []
+    #
     class SlotVisitor < Herb::Visitor
+      include ContextAware
+
       recommended_parser_option iteration_nodes: true
+
+      SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\s*-?%>/ #: Regexp
+
+      #: (String) -> bool
+      def self.directive?(source)
+        SLOTS_DIRECTIVE.match?(source)
+      end
+
+      #: () -> bool
+      def self.reads_erb_source?
+        true
+      end
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
       ELEMENT_ANCHORED_TYPES = [*ATTRIBUTE_TYPES, :boolean_attribute, :element, :raw_text].freeze #: Array[Symbol]
@@ -29,12 +59,11 @@ module Herb
         :key_expression #: String?
       )
 
-      #: (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
-      def initialize(file_path: nil, project_path: nil, markers: SlotMarkers.new)
+      #: (?markers: SlotMarkers) -> void
+      def initialize(markers: SlotMarkers.new)
         super()
 
         @markers = markers
-        @relative_file_path = relative_path_for(file_path, project_path)
 
         @slots = [] #: Array[Slot]
         @warnings = [] #: Array[Herb::Warnings::Warning]
@@ -64,10 +93,14 @@ module Herb
         ).slice(0, 8).to_s
       end
 
+      def inspect
+        "#<#{self.class.name}>"
+      end
+
       #: () -> Hash[Symbol, untyped]
       def schema
         {
-          file: @relative_file_path,
+          file: context.relative_file_path,
           version: version,
           slots: @slots.map { |slot|
             entry = { index: slot.index, type: slot.type, node_path: slot.node_path }
@@ -195,19 +228,6 @@ module Herb
       end
 
       private
-
-      #: (untyped, untyped) -> String
-      def relative_path_for(file_path, project_path)
-        return "unknown" unless file_path
-
-        filename = file_path.is_a?(::Pathname) ? file_path : ::Pathname.new(file_path.to_s)
-        return filename.to_s unless filename.absolute?
-
-        root = project_path ? ::Pathname.new(project_path.to_s) : ::Pathname.new(Dir.pwd)
-        filename.relative_path_from(root).to_s
-      rescue ArgumentError
-        file_path.to_s
-      end
 
       def visit_children_with_paths(children)
         return unless children.is_a?(Array)
@@ -533,9 +553,11 @@ module Herb
       end
 
       def wrap_region(document_node)
-        document_node.children.unshift(comment_node(@markers.region_open(@relative_file_path, version)))
+        relative_file_path = context.relative_file_path
 
-        document_node.children.push(comment_node(@markers.region_close(@relative_file_path)))
+        document_node.children.unshift(comment_node(@markers.region_open(relative_file_path, version)))
+
+        document_node.children.push(comment_node(@markers.region_close(relative_file_path)))
       end
 
       def text_node(content)

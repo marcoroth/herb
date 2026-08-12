@@ -10,7 +10,6 @@ require_relative "engine/visitor_stack"
 require_relative "engine/report/session"
 require_relative "engine/context_aware"
 require_relative "engine/diagnostics"
-require_relative "engine/slot_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/errors"
@@ -18,7 +17,7 @@ require_relative "engine/parse_error"
 
 module Herb
   class Engine
-    attr_reader :src, :context, :bufvar, :visitors, :slot_visitor
+    attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
     def filename
@@ -43,8 +42,6 @@ module Herb
       "'" => "&#39;",
     }.freeze
 
-    SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\s*-?%>/
-
     def initialize(input, properties = {})
       @context = VisitorContext.new(
         file_path: properties[:filename],
@@ -62,20 +59,9 @@ module Herb
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-      @slots = properties.fetch(:slots) { self.class.slots_directive?(input) || Herb.configuration.engine_option("slots", false) }
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
       @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
-
-      if @slots
-        @slot_visitor = SlotVisitor.new(
-          file_path: @context.file_path,
-          project_path: @context.project_path
-        )
-
-        @visitors.insert(slot_visitor_position, @slot_visitor)
-      end
-
       @visitors.validate_order!
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
@@ -178,11 +164,6 @@ module Herb
 
     def self.heredoc?(code)
       code.match?(/<<[~-]?\s*['"`]?\w/)
-    end
-
-    #: (String) -> bool
-    def self.slots_directive?(source)
-      SLOTS_DIRECTIVE.match?(source)
     end
 
     protected
@@ -393,16 +374,6 @@ module Herb
 
     def context_options(properties)
       properties.except(:visitors, :src, :context)
-    end
-
-    #: () -> Integer
-    def slot_visitor_position
-      first = @visitors.first
-
-      return 0 unless first
-      return 0 unless first.class.respond_to?(:inlines_renders?) && first.class.inlines_renders?
-
-      1
     end
 
     #: () -> Hash[Symbol, untyped]

@@ -5,6 +5,9 @@
 
 require "optparse"
 
+require_relative "../herb"
+require_relative "engine/slot_visitor"
+
 class Herb::CLI
   include Herb::Colors
 
@@ -687,11 +690,14 @@ class Herb::CLI
 
       options[:optimize] = true if optimize
       options[:trim] = true if trim
-      options[:slots] = true if slots
       options[:validate_ruby] = true
+
+      slot_visitor = Herb::Engine::SlotVisitor.new if slots || Herb::Engine::SlotVisitor.directive?(file_content)
+      options[:visitors] = [slot_visitor] if slot_visitor
+
       engine = Herb::Engine.new(file_content, options)
 
-      print_warnings(engine.slot_visitor&.warnings || []) unless json
+      print_warnings(slot_visitor&.warnings || []) unless json
 
       if json
         result = {

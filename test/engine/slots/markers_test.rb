@@ -3,23 +3,26 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
+require_relative "../../../lib/herb/engine/slot_visitor"
 
 module Engine
   module Slots
     class MarkersTest < Minitest::Spec
       include SnapshotUtils
 
-      OPTIONS = { slots: true, filename: "app/views/test.html.erb", validation_mode: :none }.freeze
+      def options
+        { visitors: [Herb::Engine::SlotVisitor.new], filename: "app/views/test.html.erb", validation_mode: :none }
+      end
 
       test "delimits a child slot with paired comments" do
-        assert_evaluated_snapshot("<p><%= @name %></p>", { "@name" => "Marco" }, OPTIONS)
+        assert_evaluated_snapshot("<p><%= @name %></p>", { "@name" => "Marco" }, options)
       end
 
       test "gives sibling interpolations independent slots" do
         assert_evaluated_snapshot(
           "<p>Hi <%= @name %>, you have <%= @count %></p>",
           { "@name" => "Marco", "@count" => 3 },
-          OPTIONS
+          options
         )
       end
 
@@ -27,7 +30,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% if @admin %><b>secret</b><% end %></div>",
           { "@admin" => false },
-          OPTIONS
+          options
         )
       end
 
@@ -35,7 +38,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% if @admin %><b><%= @secret %></b><% end %></div>",
           { "@admin" => true, "@secret" => "s" },
-          OPTIONS
+          options
         )
       end
 
@@ -43,43 +46,43 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% if @admin %><b><%= @secret %></b><% end %></div>",
           { "@admin" => false, "@secret" => "s" },
-          OPTIONS
+          options
         )
       end
 
       test "anchors attribute slots on the element instead of inside the tag" do
-        assert_evaluated_snapshot(%(<div class="<%= @klass %>"></div>), { "@klass" => "card" }, OPTIONS)
+        assert_evaluated_snapshot(%(<div class="<%= @klass %>"></div>), { "@klass" => "card" }, options)
       end
 
       test "does not inject markers into raw text elements" do
-        assert_evaluated_snapshot(%(<script>var a = "<%= @a %>";</script>), { "@a" => "1" }, OPTIONS)
+        assert_evaluated_snapshot(%(<script>var a = "<%= @a %>";</script>), { "@a" => "1" }, options)
       end
 
       test "wraps the document in a region marker carrying file and version" do
-        assert_evaluated_snapshot("<p><%= @name %></p>", { "@name" => "x" }, OPTIONS)
+        assert_evaluated_snapshot("<p><%= @name %></p>", { "@name" => "x" }, options)
       end
 
       test "compiles slot markers into the generated source" do
-        assert_compiled_snapshot("<p><%= @name %></p>", OPTIONS)
+        assert_compiled_snapshot("<p><%= @name %></p>", options)
       end
 
       test "compiles a conditional into the generated source" do
-        assert_compiled_snapshot("<div><% if @admin %><b><%= @secret %></b><% end %></div>", OPTIONS)
+        assert_compiled_snapshot("<div><% if @admin %><b><%= @secret %></b><% end %></div>", options)
       end
 
       test "compiles a collection into the generated source" do
-        assert_compiled_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", OPTIONS)
+        assert_compiled_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", options)
       end
 
       test "compiles attribute slots into the generated source" do
-        assert_compiled_snapshot(%(<div class="<%= @c %>" id="<%= @i %>"></div>), OPTIONS)
+        assert_compiled_snapshot(%(<div class="<%= @c %>" id="<%= @i %>"></div>), options)
       end
 
       test "treats an if/elsif/else chain as one conditional slot" do
         assert_evaluated_snapshot(
           "<div><% if @a %>A<% elsif @b %><%= @n %><% else %>C<% end %></div>",
           { "@a" => false, "@b" => true, "@n" => "N" },
-          OPTIONS
+          options
         )
       end
 
@@ -87,7 +90,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% unless @a %><%= @n %><% else %>E<% end %></div>",
           { "@a" => false, "@n" => "N" },
-          OPTIONS
+          options
         )
       end
 
@@ -95,7 +98,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% case @x %><% when 1 %><%= @a %><% end %></div>",
           { "@x" => 1, "@a" => "A" },
-          OPTIONS
+          options
         )
       end
 
@@ -103,7 +106,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% case @x %><% when 9 %>N<% else %><%= @a %><% end %></div>",
           { "@x" => 1, "@a" => "A" },
-          OPTIONS
+          options
         )
       end
 
@@ -111,7 +114,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% if @a %>A<% else %><% if @b %><%= @n %><% end %><% end %></div>",
           { "@a" => false, "@b" => true, "@n" => "N" },
-          OPTIONS
+          options
         )
       end
 
@@ -119,7 +122,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% if @a %>A<% elsif @b %><% if @c %><%= @n %><% end %><% end %></div>",
           { "@a" => false, "@b" => true, "@c" => true, "@n" => "N" },
-          OPTIONS
+          options
         )
       end
 
@@ -127,7 +130,7 @@ module Engine
         assert_evaluated_snapshot(
           "<div><% if @a %>A<% else %><% @l.each do |i| %><%= i %><% end %><% end %></div>",
           { "@a" => false, "@l" => [1] },
-          OPTIONS
+          options
         )
       end
 
@@ -135,7 +138,7 @@ module Engine
         assert_evaluated_snapshot(
           "<% @rows.each do |row| %><% row.each do |cell| %><%= cell %><% end %><% end %>",
           { "@rows" => [[1, 2]] },
-          OPTIONS
+          options
         )
       end
 
@@ -143,7 +146,7 @@ module Engine
         assert_evaluated_snapshot(
           "<ul><% @users.each do |u| %><li><%= u %> (<%= u %>)</li><% end %></ul>",
           { "@users" => ["a", "b"] },
-          OPTIONS
+          options
         )
       end
 
@@ -151,43 +154,43 @@ module Engine
         assert_evaluated_snapshot(
           %(<div class="<%= @c %>" id="<%= @i %>"></div>),
           { "@c" => "C", "@i" => "I" },
-          OPTIONS
+          options
         )
       end
 
       test "anchors an interpolated attribute value" do
-        assert_evaluated_snapshot(%(<div class="a <%= @c %> b"></div>), { "@c" => "C" }, OPTIONS)
+        assert_evaluated_snapshot(%(<div class="a <%= @c %> b"></div>), { "@c" => "C" }, options)
       end
 
       test "delimits raw output" do
-        assert_evaluated_snapshot("<p><%== @h %></p>", { "@h" => "<b>x</b>" }, OPTIONS)
+        assert_evaluated_snapshot("<p><%== @h %></p>", { "@h" => "<b>x</b>" }, options)
       end
 
       test "does not assign a slot to an ERB comment" do
-        assert_evaluated_snapshot("<p><%# skip %><%= @a %></p>", { "@a" => "A" }, OPTIONS)
+        assert_evaluated_snapshot("<p><%# skip %><%= @a %></p>", { "@a" => "A" }, options)
       end
 
       test "preserves surrounding whitespace" do
-        assert_evaluated_snapshot("<div>\n  <h1><%= @t %></h1>\n</div>", { "@t" => "T" }, OPTIONS)
+        assert_evaluated_snapshot("<div>\n  <h1><%= @t %></h1>\n</div>", { "@t" => "T" }, options)
       end
 
       test "delimits a slot with no surrounding element" do
-        assert_evaluated_snapshot("<%= @a %>", { "@a" => "A" }, OPTIONS)
+        assert_evaluated_snapshot("<%= @a %>", { "@a" => "A" }, options)
       end
 
       test "emits only a region marker when there are no slots" do
-        assert_evaluated_snapshot("<div>static</div>", {}, OPTIONS)
+        assert_evaluated_snapshot("<div>static</div>", {}, options)
       end
 
       test "delimits a yield" do
-        assert_compiled_snapshot("<main><%= yield %></main>", OPTIONS)
+        assert_compiled_snapshot("<main><%= yield %></main>", options)
       end
 
       test "keeps head content free of injected elements" do
         assert_evaluated_snapshot(
           %(<head><meta name="a" content="b"><title><%= @t %></title></head>),
           { "@t" => "T" },
-          OPTIONS
+          options
         )
       end
 
@@ -195,7 +198,7 @@ module Engine
         assert_evaluated_snapshot(
           %(<svg viewBox="0 0 1 1"><circle r="<%= @r %>"></circle></svg>),
           { "@r" => "4" },
-          OPTIONS
+          options
         )
       end
 
@@ -203,20 +206,20 @@ module Engine
         assert_evaluated_snapshot(
           %(<div><input class="peer"><%= @x %><p class="peer-checked:block">y</p></div>),
           { "@x" => "" },
-          OPTIONS
+          options
         )
       end
 
       test "delimits a dynamic HTML comment from the outside" do
-        assert_evaluated_snapshot("<!-- Content: <%= @c %> -->", { "@c" => "X" }, OPTIONS)
+        assert_evaluated_snapshot("<!-- Content: <%= @c %> -->", { "@c" => "X" }, options)
       end
 
       test "delimits a conditional inside an HTML comment" do
-        assert_evaluated_snapshot("<!-- <% if @a %>yes<% end %> -->", { "@a" => true }, OPTIONS)
+        assert_evaluated_snapshot("<!-- <% if @a %>yes<% end %> -->", { "@a" => true }, options)
       end
 
       test "does not delimit a static HTML comment" do
-        assert_evaluated_snapshot("<!-- just a note --><p><%= @a %></p>", { "@a" => "A" }, OPTIONS)
+        assert_evaluated_snapshot("<!-- just a note --><p><%= @a %></p>", { "@a" => "A" }, options)
       end
 
       test "never emits a wrapper element" do
@@ -225,7 +228,7 @@ module Engine
           ["<div><% if @x %><b>y</b><% end %></div>", { "@x" => true }],
           ["<ul><% @x.each do |i| %><li>i</li><% end %></ul>", { "@x" => ["a"] }]
         ].each do |template, locals|
-          engine = Herb::Engine.new(template, **OPTIONS)
+          engine = Herb::Engine.new(template, **options)
           output = evaluate_herb_source(engine.src, locals)
 
           refute_includes output, "<span", "expected no wrapper element for: #{template}"
@@ -234,18 +237,18 @@ module Engine
       end
 
       test "keeps markers out of a tag for ERB in element position" do
-        assert_evaluated_snapshot(%(<div <%= @a %>>x</div>), { "@a" => %(id="y") }, OPTIONS)
+        assert_evaluated_snapshot(%(<div <%= @a %>>x</div>), { "@a" => %(id="y") }, options)
       end
 
       test "keeps markers out of RCDATA content" do
-        assert_evaluated_snapshot("<textarea><%= @a %></textarea>", { "@a" => "A" }, OPTIONS)
+        assert_evaluated_snapshot("<textarea><%= @a %></textarea>", { "@a" => "A" }, options)
       end
 
       test "delimits a for loop" do
         assert_evaluated_snapshot(
           "<% for x in @l %><b><%= x %></b><% end %>",
           { "@l" => [1] },
-          OPTIONS
+          options
         )
       end
 
@@ -253,7 +256,7 @@ module Engine
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><li herb-key="<%= user[:id] %>"><%= user[:name] %></li><% end %>),
           { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
-          OPTIONS
+          options
         )
       end
 
@@ -261,7 +264,7 @@ module Engine
         assert_evaluated_snapshot(
           "<% @users.each do |user| %><li><%= user[:name] %></li><% end %>",
           { "@users" => [{ id: 1, name: "Marco" }] },
-          OPTIONS
+          options
         )
       end
 
@@ -269,7 +272,7 @@ module Engine
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><%# herb:key user[:id] %><dt><%= user[:name] %></dt><dd><%= user[:email] %></dd><% end %>),
           { "@users" => [{ id: 1, name: "Marco", email: "marco@example.com" }] },
-          OPTIONS
+          options
         )
       end
 
@@ -277,7 +280,7 @@ module Engine
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><%# herb:key user[:id] %><%= user[:name] %><% end %>),
           { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
-          OPTIONS
+          options
         )
       end
 
@@ -285,7 +288,7 @@ module Engine
         assert_evaluated_snapshot(
           "<% if @a %>A<% elsif @b %>B<% else %>C<% end %>",
           { "@a" => false, "@b" => true },
-          OPTIONS
+          options
         )
       end
 
@@ -293,7 +296,7 @@ module Engine
         assert_evaluated_snapshot(
           "<% if @a %>A<% elsif @b %>B<% else %>C<% end %>",
           { "@a" => false, "@b" => false },
-          OPTIONS
+          options
         )
       end
 
@@ -301,19 +304,19 @@ module Engine
         assert_evaluated_snapshot(
           "<% case @x %><% when 1 %>ONE<% else %>OTHER<% end %>",
           { "@x" => 9 },
-          OPTIONS
+          options
         )
       end
 
       test "names no branch when a conditional renders nothing" do
-        assert_evaluated_snapshot("<% if @a %>A<% end %>", { "@a" => false }, OPTIONS)
+        assert_evaluated_snapshot("<% if @a %>A<% end %>", { "@a" => false }, options)
       end
 
       test "keeps nested collection rows distinguishable" do
         assert_evaluated_snapshot(
           %(<% @rows.each do |row| %><tr id="<%= row[:id] %>"><% row[:cells].each do |cell| %><td id="<%= cell %>"><%= cell %></td><% end %></tr><% end %>),
           { "@rows" => [{ id: 1, cells: [11, 12] }] },
-          OPTIONS
+          options
         )
       end
 
@@ -321,7 +324,7 @@ module Engine
         template = %(<div class="a"><h1><%= @title %></h1><% if @admin %><b>x</b><% end %></div>)
         locals = { "@title" => "T", "@admin" => true }
 
-        slotted = evaluate_herb_source(Herb::Engine.new(template, **OPTIONS).src, locals)
+        slotted = evaluate_herb_source(Herb::Engine.new(template, **options).src, locals)
         plain = evaluate_herb_source(Herb::Engine.new(template, validation_mode: :none).src, locals)
 
         assert_equal plain, slotted.gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")

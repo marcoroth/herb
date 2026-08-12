@@ -13,8 +13,6 @@ module Herb
     # : () -> Pathname?
     def filename: () -> Pathname?
 
-    attr_reader slot_visitor: untyped
-
     # : () -> Pathname
     def project_path: () -> Pathname
 
@@ -22,8 +20,6 @@ module Herb
     def relative_file_path: () -> String
 
     ESCAPE_TABLE: untyped
-
-    SLOTS_DIRECTIVE: ::Regexp
 
     def initialize: (untyped input, ?untyped properties) -> untyped
 
@@ -40,9 +36,6 @@ module Herb
     def self.comment?: (untyped code) -> untyped
 
     def self.heredoc?: (untyped code) -> untyped
-
-    # : (String) -> bool
-    def self.slots_directive?: (String) -> bool
 
     def add_text: (untyped text) -> untyped
 

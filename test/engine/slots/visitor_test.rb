@@ -2,12 +2,17 @@
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine"
+require_relative "../../../lib/herb/engine/slot_visitor"
 
 module Engine
   module Slots
     class VisitorTest < Minitest::Spec
       def slots_for(template, file_path: "app/views/test.html.erb")
-        Herb::Engine.new(template, slots: true, filename: file_path, validation_mode: :none).slot_visitor
+        visitor = Herb::Engine::SlotVisitor.new
+
+        Herb::Engine.new(template, visitors: [visitor], filename: file_path, validation_mode: :none)
+
+        visitor
       end
 
       test "assigns an index to ERB output in child position" do
@@ -296,9 +301,10 @@ module Engine
 
       test "assigns no slots when the template has parser errors" do
         ["<div><p><%= @a %></div>", "</div><p><%= @a %></p>"].each do |template|
-          engine = Herb::Engine.new(template, slots: true, filename: "t.html.erb", validation_mode: :none)
+          visitor = Herb::Engine::SlotVisitor.new
+          engine = Herb::Engine.new(template, visitors: [visitor], filename: "t.html.erb", validation_mode: :none)
 
-          assert_empty engine.slot_visitor.slots, "expected no slots for: #{template}"
+          assert_empty visitor.slots, "expected no slots for: #{template}"
           refute_includes engine.src, "herb-slot"
           refute_includes engine.src, "herb-region"
         end
@@ -342,36 +348,26 @@ module Engine
       end
 
       test "a herb:slots directive opts a single template in" do
-        engine = Herb::Engine.new("<%# herb:slots %>\n<p><%= @a %></p>", validation_mode: :none)
-
-        refute_nil engine.slot_visitor
-        assert_includes engine.src, "herb-slot:0"
+        assert Herb::Engine::SlotVisitor.directive?("<%# herb:slots %>\n<p><%= @a %></p>")
       end
 
       test "recognises the trimming and unspaced forms of the directive" do
         ["<%#- herb:slots -%>", "<%#herb:slots%>", "<%#   herb:slots   %>"].each do |directive|
-          engine = Herb::Engine.new("#{directive}<p><%= @a %></p>", validation_mode: :none)
-
-          refute_nil engine.slot_visitor, "expected slots for: #{directive}"
+          assert Herb::Engine::SlotVisitor.directive?("#{directive}<p><%= @a %></p>"), "expected slots for: #{directive}"
         end
       end
 
       test "leaves other ERB comments alone" do
         ["<%# just a note %>", "<%# herb:key u.id %>", "<%# slots %>"].each do |comment|
-          engine = Herb::Engine.new("#{comment}<p><%= @a %></p>", validation_mode: :none)
-
-          assert_nil engine.slot_visitor, "expected no slots for: #{comment}"
+          refute Herb::Engine::SlotVisitor.directive?("#{comment}<p><%= @a %></p>"), "expected no slots for: #{comment}"
         end
       end
 
-      test "an explicit slots option wins over the directive" do
-        engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>", slots: false, validation_mode: :none)
+      test "the engine emits no markers unless the visitor is in the stack" do
+        engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>", validation_mode: :none)
 
-        assert_nil engine.slot_visitor
-      end
-
-      test "engine exposes no slot visitor unless slots are enabled" do
-        assert_nil Herb::Engine.new("<p><%= @a %></p>", validation_mode: :none).slot_visitor
+        refute_includes engine.src, "herb-slot"
+        refute_includes engine.src, "herb-region"
       end
     end
   end
