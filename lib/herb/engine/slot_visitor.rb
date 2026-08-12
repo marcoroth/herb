@@ -601,7 +601,7 @@ module Herb
           "ERBContentNode", Herb::Location.zero, [],
           token(:erb_start, "<%="), token(:erb_content, " #{code} "), token(:erb_end, "%>"),
           nil, false, true,
-          nil # steep:ignore
+          nil
         )
       end
 

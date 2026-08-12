@@ -2,7 +2,30 @@
 
 module Herb
   class Engine
+    # Records where a template's dynamic content ends up, and marks those places in the output so
+    # something outside Ruby can find them again:
+    #
+    #     visitor = Herb::Engine::SlotVisitor.new
+    #
+    #     Herb::Engine.new(source, visitors: [visitor], filename: "app/views/posts/index.html.erb")
+    #
+    #     visitor.slots
+    #
+    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive. Deciding what
+    # that means belongs to whoever builds the stack, so the directive is only recognised here:
+    #
+    #     visitors = Herb::Engine::SlotVisitor.directive?(source) ? [Herb::Engine::SlotVisitor.new] : []
     class SlotVisitor < Herb::Visitor
+      include ContextAware
+
+      SLOTS_DIRECTIVE: Regexp
+
+      # : (String) -> bool
+      def self.directive?: (String) -> bool
+
+      # : () -> bool
+      def self.reads_erb_source?: () -> bool
+
       ATTRIBUTE_TYPES: Array[Symbol]
 
       ELEMENT_ANCHORED_TYPES: Array[Symbol]
@@ -40,14 +63,19 @@ module Herb
         def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
       end
 
-      # : (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
-      def initialize: (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
+      # : (?markers: SlotMarkers) -> void
+      def initialize: (?markers: SlotMarkers) -> void
 
       # : () -> String
       def version: () -> String
 
+      def inspect: () -> untyped
+
       # : () -> Hash[Symbol, untyped]
       def schema: () -> Hash[Symbol, untyped]
+
+      # : () -> Array[Hash[Symbol, untyped]]
+      def slot_entries: () -> Array[Hash[Symbol, untyped]]
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -82,9 +110,6 @@ module Herb
       def visit_erb_for_node: (untyped node) -> untyped
 
       private
-
-      # : (untyped, untyped) -> String
-      def relative_path_for: (untyped, untyped) -> String
 
       def visit_children_with_paths: (untyped children) -> untyped
 
@@ -133,6 +158,12 @@ module Herb
       def erb_output?: (untyped opening) -> untyped
 
       def insert_markers: (untyped node) -> untyped
+
+      # : (untyped) -> Integer?
+      def child_anchor_index: (untyped) -> Integer?
+
+      # : (untyped, Integer?) -> void
+      def anchor_child: (untyped, Integer?) -> void
 
       # : (untyped, Integer?) -> void
       def mark_branches: (untyped, Integer?) -> void

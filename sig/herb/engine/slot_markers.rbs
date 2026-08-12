@@ -3,8 +3,16 @@
 module Herb
   class Engine
     class SlotMarkers
+      DEFAULT_TYPE: Symbol
+
       # : (Integer, Symbol) -> String
       def slot_open: (Integer, Symbol) -> String
+
+      # : (Array[Integer], Array[Symbol]) -> String
+      def element_anchors: (Array[Integer], Array[Symbol]) -> String
+
+      # : (Integer) -> String
+      def child_anchor: (Integer) -> String
 
       # : (Integer) -> String
       def slot_close: (Integer) -> String
