@@ -28,7 +28,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
 
-    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if true %>` instead.")
     assertOffenses(html)
   })
 
@@ -39,7 +39,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
 
-    expectError("Control flow statements like `unless` should not be used with output tags. Use `<% unless ... %>` instead.")
+    expectError("Control flow statements like `unless` should not be used with output tags. Use `<% unless false %>` instead.")
     assertOffenses(html)
   })
 
@@ -50,7 +50,7 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
 
-    expectError("Control flow statements like `end` should not be used with output tags. Use `<% end ... %>` instead.")
+    expectError("Control flow statements like `end` should not be used with output tags. Use `<% end %>` instead.")
     assertOffenses(html)
   })
 
@@ -64,7 +64,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
 
-    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if true %>` instead.")
     assertOffenses(html)
   })
 
@@ -79,9 +79,9 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
 
-    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
-    expectError("Control flow statements like `else` should not be used with output tags. Use `<% else ... %>` instead.")
-    expectError("Control flow statements like `end` should not be used with output tags. Use `<% end ... %>` instead.")
+    expectError("Control flow statements like `elsif` should not be used with output tags. Use `<% elsif false %>` instead.")
+    expectError("Control flow statements like `else` should not be used with output tags. Use `<% else %>` instead.")
+    expectError("Control flow statements like `end` should not be used with output tags. Use `<% end %>` instead.")
     assertOffenses(html)
   })
 
@@ -94,7 +94,46 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
 
-    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if true %>` instead.")
+    assertOffenses(html)
+  })
+
+  it("names `elsif` instead of `if` and suggests the actual condition", () => {
+    const html = dedent`
+      <% if condition? %>
+        ...
+      <%= elsif another_condition? %>
+        ...
+      <% end %>
+    `
+
+    expectError("Control flow statements like `elsif` should not be used with output tags. Use `<% elsif another_condition? %>` instead.")
+
+    assertOffenses(html)
+  })
+
+  it("preserves trim tags in the suggested control flow replacement", () => {
+    const html = dedent`
+      <%= if condition? -%>
+        ...
+      <% end %>
+    `
+
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if condition? -%>` instead.")
+
+    assertOffenses(html)
+  })
+
+  it("collapses a multi-line condition onto one line in the suggestion", () => {
+    const html = dedent`
+      <%= if first_condition? &&
+            second_condition? %>
+        ...
+      <% end %>
+    `
+
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if first_condition? && second_condition? %>` instead.")
+
     assertOffenses(html)
   })
 

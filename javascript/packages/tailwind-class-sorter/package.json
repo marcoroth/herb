@@ -29,8 +29,8 @@
     "directory": "javascript/packages/tailwind-class-sorter"
   },
   "scripts": {
-    "build": "yarn clean && rollup -c",
-    "dev": "rollup -c -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist",
     "setup-fixtures": "bash scripts/setup-fixtures.sh",
     "pretest": "yarn setup-fixtures",
@@ -51,6 +51,11 @@
   },
   "peerDependencies": {
     "tailwindcss": "^3.0 || ^4.0"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=14.21.3"

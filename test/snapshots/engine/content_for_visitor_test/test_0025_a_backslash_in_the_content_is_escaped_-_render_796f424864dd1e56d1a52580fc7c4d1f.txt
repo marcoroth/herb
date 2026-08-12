@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0025_a backslash in the content is escaped - render"
+input: "{source: \"<main></main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={} content=\"<p class=\\\"back\\\\slash\\\"></p>\">]}}"
+---
+<main><p class="back\slash"></p></main>

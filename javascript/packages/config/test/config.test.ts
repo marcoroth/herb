@@ -146,6 +146,18 @@ describe("@herb-tools/config", () => {
       expect(config.config.formatter?.maxLineLength).toBe(120)
     })
 
+    test("creates config with formatter indentStyle", () => {
+      const configOptions: HerbConfigOptions = {
+        formatter: {
+          indentStyle: "tab"
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.config.formatter?.indentStyle).toBe("tab")
+    })
+
     test("uses custom version when provided", () => {
       const config = Config.fromObject({}, { projectPath: testDir, version: "1.0.0" })
 
@@ -1521,6 +1533,200 @@ describe("@herb-tools/config", () => {
       const config = await Config.load(testDir, { version: "0.10.3", silent: true })
 
       expect(config.configVersion).toBeUndefined()
+    })
+  })
+
+  describe("engine configuration", () => {
+    test("keeps the documented engine options", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        engine:
+          optimize: true
+          debug: true
+          validators:
+            security: false
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.config.engine).toEqual({
+        optimize: true,
+        debug: true,
+        validators: {
+          security: false,
+          nesting: true,
+          accessibility: true
+        }
+      })
+    })
+
+    test("accepts engine options the JavaScript tools don't know about", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        engine:
+          slots: true
+          parser_options:
+            timeout: 5
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.config.engine).toMatchObject({
+        slots: true,
+        parser_options: { timeout: 5 }
+      })
+    })
+
+    test("accepts an empty engine section without dropping the defaults", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nengine:\n")
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.config.engine).toEqual({
+        validators: {
+          security: true,
+          nesting: true,
+          accessibility: true
+        }
+      })
+    })
+
+    test("accepts an engine section with no options", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nengine: {}\n")
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isLinterEnabled).toBe(true)
+    })
+
+    test("rejects an engine section that isn't a mapping", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nengine: true\n")
+
+      await expect(
+        Config.load(testDir, { version: "0.10.3", silent: true })
+      ).rejects.toThrow(/at "engine"/)
+    })
+  })
+
+  describe("YAML anchors and aliases", () => {
+    test("loads configuration using YAML anchors and aliases", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        files:
+          include: &patterns
+            - "**/*.custom.erb"
+            - "**/*.other.erb"
+          exclude: *patterns
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+      const files = config.getFilesConfigForTool("linter")
+
+      expect(files.include).toContain("**/*.custom.erb")
+      expect(files.include).toContain("**/*.other.erb")
+      expect(files.exclude).toContain("**/*.custom.erb")
+      expect(files.exclude).toContain("**/*.other.erb")
+    })
+  })
+
+  describe("YAML merge keys", () => {
+    test("merges a mapping that uses a merge key", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        linter:
+          rules:
+            html-tag-name-lowercase: &disabled
+              enabled: false
+            html-no-self-closing:
+              <<: *disabled
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(true)
+      expect(config.isRuleDisabled("html-no-self-closing")).toBe(true)
+    })
+  })
+
+  describe("anchor definition keys", () => {
+    test("ignores `x-` prefixed keys used to declare anchors", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        x-defaults: &defaults
+          enabled: false
+
+        formatter:
+          <<: *defaults
+          indentWidth: 2
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isFormatterEnabled).toBe(false)
+      expect(config.config.formatter?.indentWidth).toBe(2)
+      expect((config.config as any)["x-defaults"]).toBeUndefined()
+    })
+
+    test("still rejects unknown top-level keys without the prefix", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\ndefaults: true\n")
+
+      await expect(
+        Config.load(testDir, { version: "0.10.3", silent: true })
+      ).rejects.toThrow()
+    })
+  })
+
+  describe("Config.aliasedMutationTargets", () => {
+    const shared = dedent`
+      version: 0.10.3
+
+      linter:
+        enabled: &flag true
+
+      formatter:
+        enabled: *flag
+    `
+
+    test("reports a mutation target whose value is aliased elsewhere", () => {
+      const targets = Config.aliasedMutationTargets(shared, { linter: { enabled: false } })
+
+      expect(targets).toEqual(["linter.enabled"])
+    })
+
+    test("reports nothing when the mutation target is not anchored", () => {
+      const targets = Config.aliasedMutationTargets(shared, { formatter: { indentWidth: 4 } })
+
+      expect(targets).toEqual([])
+    })
+
+    test("reports nothing when the anchor is never aliased", () => {
+      const unaliased = dedent`
+        version: 0.10.3
+
+        linter:
+          enabled: &flag true
+      `
+
+      expect(Config.aliasedMutationTargets(unaliased, { linter: { enabled: false } })).toEqual([])
+    })
+
+    test("reports nothing for a config without anchors", () => {
+      const plain = "version: 0.10.3\n\nlinter:\n  enabled: true\n"
+
+      expect(Config.aliasedMutationTargets(plain, { linter: { enabled: false } })).toEqual([])
+    })
+
+    test("mutateConfigFile returns the affected paths", async () => {
+      const configPath = createTestFile(testDir, ".herb.yml", shared)
+
+      const targets = await Config.mutateConfigFile(configPath, { linter: { enabled: false } })
+
+      expect(targets).toEqual(["linter.enabled"])
     })
   })
 

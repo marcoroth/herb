@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: result
+---
+  -   2 │   <span>x</span>                                           ┃   +   2 │   <section>
+        │                                                            ┃   +   3 │     <span>x</span>
+        │                                                            ┃   +   4 │   </section>

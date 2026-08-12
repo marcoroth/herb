@@ -176,4 +176,52 @@ describe("html-no-empty-attributes", () => {
       <div class="<%%= form_class %>">Content</div>
     `)
   })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with a non-empty attribute", () => {
+      expectNoOffenses('<%= tag.div class: "container" %>')
+    })
+
+    test("fails for tag.div with an empty attribute", () => {
+      expectWarning("Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= tag.div class: "" %>')
+    })
+
+    test("passes for an empty data attribute, which can't be written without a value", () => {
+      expectNoOffenses('<%= tag.div data: { foo: "" } %>')
+    })
+
+    test("passes for an empty data attribute written as a dasherized string key", () => {
+      expectNoOffenses('<%= tag.div "data-foo": "" %>')
+    })
+
+    test("fails for an empty aria attribute, which has no valueless form in HTML either", () => {
+      expectWarning("Attribute `aria-label` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= tag.div aria: { label: "" } %>')
+    })
+
+    test("fails for content_tag with an empty attribute", () => {
+      expectWarning("Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= content_tag :div, "content", class: "" %>')
+    })
+
+    test("passes for a dynamic value, which must not be read as an empty one", () => {
+      expectNoOffenses('<%= tag.div class: value %>')
+    })
+
+    test("passes for an interpolated value", () => {
+      expectNoOffenses('<%= tag.div class: "btn-#{kind}" %>')
+    })
+
+    test("passes for a nil value, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div class: nil %>')
+    })
+
+    test("passes for a nil data value, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div data: { foo: nil } %>')
+    })
+  })
 })

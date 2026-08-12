@@ -105,4 +105,47 @@ describe("ERB glued text flow", () => {
     expectFormattedToMatch(source)
   })
 
+  test("keeps spacing around ERB output in an else branch", () => {
+    expectFormattedToMatch(`<span><% if a %>A<% else %>B <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing around ERB output in an elsif branch", () => {
+    expectFormattedToMatch(`<span><% if a %>A<% elsif b %>B <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing on both sides of ERB output in an else branch", () => {
+    expectFormattedToMatch(`<span><% if a %>A<% else %>B <%= d %> C<% end %></span>`)
+  })
+
+  test("keeps spacing in an else branch of an unless", () => {
+    expectFormattedToMatch(`<span><% unless a %>A<% else %>B <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing in a when branch", () => {
+    expectFormattedToMatch(`<span><% case a %><% when 1 %>B <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing in an in branch", () => {
+    expectFormattedToMatch(`<span><% case a %><% in Integer %>B <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing in a rescue branch", () => {
+    expectFormattedToMatch(`<span><% begin %>A <%= b %><% rescue %>C <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing in an ensure branch", () => {
+    expectFormattedToMatch(`<span><% begin %>A<% ensure %>C <%= d %><% end %></span>`)
+  })
+
+  test("keeps spacing inline in loops", () => {
+    expectFormattedToMatch(`<span><% while a %>A <%= b %><% end %></span>`)
+    expectFormattedToMatch(`<span><% until a %>A <%= b %><% end %></span>`)
+    expectFormattedToMatch(`<span><% for a in b %>A <%= b %><% end %></span>`)
+    expectFormattedToMatch(`<span><% items.each do |item| %>A <%= item %><% end %></span>`)
+  })
+
+  test("keeps spacing in an if nested in an else branch", () => {
+    expectFormattedToMatch(`<span>You watched this talk<% if a %> on <%= b %><% end %>!</span>`)
+    expectFormattedToMatch(`<span><% if a %>A<% else %>B<% if c %> on <%= d %><% end %>!<% end %></span>`)
+  })
 })

@@ -1,0 +1,110 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0043_ERB tag without any closing delimiter cuts at the first HTML tag"
+input: "<div><%= foo <b>a</b><b>b</b><b>c</b></div>"
+---
+@ DocumentNode (location: (1:0)-(1:43))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:43))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (4 items)
+        │   ├── @ ERBContentNode (location: (1:5)-(1:13))
+        │   │   ├── errors: (1 error)
+        │   │   │   └── @ UnclosedERBTagError (location: (1:5)-(1:13))
+        │   │   │       ├── message: "ERB tag `<%=` at (1:5) is missing closing `%>`."
+        │   │   │       └── opening_tag: "<%=" (location: (1:5)-(1:8))
+        │   │   │
+        │   │   ├── tag_opening: "<%=" (location: (1:5)-(1:8))
+        │   │   ├── content: " foo " (location: (1:8)-(1:13))
+        │   │   ├── tag_closing: ∅
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   ├── @ HTMLElementNode (location: (1:13)-(1:21))
+        │   │   ├── open_tag:
+        │   │   │   └── @ HTMLOpenTagNode (location: (1:13)-(1:16))
+        │   │   │       ├── tag_opening: "<" (location: (1:13)-(1:14))
+        │   │   │       ├── tag_name: "b" (location: (1:14)-(1:15))
+        │   │   │       ├── tag_closing: ">" (location: (1:15)-(1:16))
+        │   │   │       ├── children: []
+        │   │   │       └── is_void: false
+        │   │   │
+        │   │   ├── tag_name: "b" (location: (1:14)-(1:15))
+        │   │   ├── body: (1 item)
+        │   │   │   └── @ HTMLTextNode (location: (1:16)-(1:17))
+        │   │   │       └── content: "a"
+        │   │   │
+        │   │   ├── close_tag:
+        │   │   │   └── @ HTMLCloseTagNode (location: (1:17)-(1:21))
+        │   │   │       ├── tag_opening: "</" (location: (1:17)-(1:19))
+        │   │   │       ├── tag_name: "b" (location: (1:19)-(1:20))
+        │   │   │       ├── children: []
+        │   │   │       └── tag_closing: ">" (location: (1:20)-(1:21))
+        │   │   │
+        │   │   ├── is_void: false
+        │   │   └── element_source: "HTML"
+        │   │
+        │   ├── @ HTMLElementNode (location: (1:21)-(1:29))
+        │   │   ├── open_tag:
+        │   │   │   └── @ HTMLOpenTagNode (location: (1:21)-(1:24))
+        │   │   │       ├── tag_opening: "<" (location: (1:21)-(1:22))
+        │   │   │       ├── tag_name: "b" (location: (1:22)-(1:23))
+        │   │   │       ├── tag_closing: ">" (location: (1:23)-(1:24))
+        │   │   │       ├── children: []
+        │   │   │       └── is_void: false
+        │   │   │
+        │   │   ├── tag_name: "b" (location: (1:22)-(1:23))
+        │   │   ├── body: (1 item)
+        │   │   │   └── @ HTMLTextNode (location: (1:24)-(1:25))
+        │   │   │       └── content: "b"
+        │   │   │
+        │   │   ├── close_tag:
+        │   │   │   └── @ HTMLCloseTagNode (location: (1:25)-(1:29))
+        │   │   │       ├── tag_opening: "</" (location: (1:25)-(1:27))
+        │   │   │       ├── tag_name: "b" (location: (1:27)-(1:28))
+        │   │   │       ├── children: []
+        │   │   │       └── tag_closing: ">" (location: (1:28)-(1:29))
+        │   │   │
+        │   │   ├── is_void: false
+        │   │   └── element_source: "HTML"
+        │   │
+        │   └── @ HTMLElementNode (location: (1:29)-(1:37))
+        │       ├── open_tag:
+        │       │   └── @ HTMLOpenTagNode (location: (1:29)-(1:32))
+        │       │       ├── tag_opening: "<" (location: (1:29)-(1:30))
+        │       │       ├── tag_name: "b" (location: (1:30)-(1:31))
+        │       │       ├── tag_closing: ">" (location: (1:31)-(1:32))
+        │       │       ├── children: []
+        │       │       └── is_void: false
+        │       │
+        │       ├── tag_name: "b" (location: (1:30)-(1:31))
+        │       ├── body: (1 item)
+        │       │   └── @ HTMLTextNode (location: (1:32)-(1:33))
+        │       │       └── content: "c"
+        │       │
+        │       ├── close_tag:
+        │       │   └── @ HTMLCloseTagNode (location: (1:33)-(1:37))
+        │       │       ├── tag_opening: "</" (location: (1:33)-(1:35))
+        │       │       ├── tag_name: "b" (location: (1:35)-(1:36))
+        │       │       ├── children: []
+        │       │       └── tag_closing: ">" (location: (1:36)-(1:37))
+        │       │
+        │       ├── is_void: false
+        │       └── element_source: "HTML"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:37)-(1:43))
+        │       ├── tag_opening: "</" (location: (1:37)-(1:39))
+        │       ├── tag_name: "div" (location: (1:39)-(1:42))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:42)-(1:43))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

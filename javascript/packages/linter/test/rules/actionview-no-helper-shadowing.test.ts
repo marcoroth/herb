@@ -5,12 +5,12 @@ import { describe, test } from "vitest"
 import { ActionViewNoHelperShadowingRule } from "../../src/rules/actionview-no-helper-shadowing.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, expectHint, assertOffenses } = createLinterTest(ActionViewNoHelperShadowingRule)
+const { expectNoOffenses, expectWarning, expectHint, assertOffenses } = createLinterTest(ActionViewNoHelperShadowingRule)
 
 describe("ActionViewNoHelperShadowingRule", () => {
-  describe("transformed helpers (error)", () => {
-    test("block argument named tag is flagged as an error", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+  describe("transformed helpers (warning)", () => {
+    test("block argument named tag is flagged as a warning", () => {
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% @tags.each do |tag| %>
@@ -19,8 +19,8 @@ describe("ActionViewNoHelperShadowingRule", () => {
       `)
     })
 
-    test("block argument named content_tag is flagged as an error", () => {
-      expectError("Local variable `content_tag` shadows the Action View `content_tag` helper. Rename it to avoid confusion (for example `content_tag_item`).")
+    test("block argument named content_tag is flagged as a warning", () => {
+      expectWarning("Local variable `content_tag` shadows the Action View `content_tag` helper. Rename it to avoid confusion (for example `content_tag_item`).")
 
       assertOffenses(dedent`
         <% items.each do |content_tag| %>
@@ -30,7 +30,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("only the shadowing argument is flagged in a multi-argument block", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% pairs.each do |key, tag| %>
@@ -40,7 +40,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("nested block shadowing is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% groups.each do |group| %>
@@ -52,7 +52,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("render block argument named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <%= render @tags do |tag| %>
@@ -62,7 +62,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("for-loop variable named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% for tag in @tags %>
@@ -72,7 +72,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("local assignment named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% tag = @tags.first %>
@@ -81,7 +81,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("multiple assignment target named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% first, tag = @tags %>
@@ -90,7 +90,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("or-assignment named link_to is flagged", () => {
-      expectError("Local variable `link_to` shadows the Action View `link_to` helper. Rename it to avoid confusion (for example `link_to_item`).")
+      expectWarning("Local variable `link_to` shadows the Action View `link_to` helper. Rename it to avoid confusion (for example `link_to_item`).")
 
       assertOffenses(dedent`
         <% link_to ||= default_link %>
@@ -99,7 +99,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("and-assignment named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% tag &&= @default_tag %>
@@ -108,7 +108,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("operator-assignment named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% tag += @extra %>
@@ -117,7 +117,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("for-loop with multiple targets flags only the shadowing target", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% for first, tag in @pairs %>
@@ -127,7 +127,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("self-assignment flags the written variable once", () => {
-      expectError("Local variable `link_to` shadows the Action View `link_to` helper. Rename it to avoid confusion (for example `link_to_item`).")
+      expectWarning("Local variable `link_to` shadows the Action View `link_to` helper. Rename it to avoid confusion (for example `link_to_item`).")
 
       assertOffenses(dedent`
         <% link_to = link_to("Home", root_path) %>
@@ -136,7 +136,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("strict local named tag is flagged", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <%# locals: (tag:) %>
@@ -210,9 +210,61 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
   })
 
+  describe("form builder helpers", () => {
+    test("block argument named button is allowed", () => {
+      expectNoOffenses(dedent`
+        <% buttons.each do |button| %>
+          <%= link_to button.title, button.path %>
+        <% end %>
+      `)
+    })
+
+    test("block argument named submit is allowed", () => {
+      expectNoOffenses(dedent`
+        <% actions.each do |submit| %>
+          <%= submit %>
+        <% end %>
+      `)
+    })
+
+    test("local variable named button is allowed", () => {
+      expectNoOffenses(dedent`
+        <% button = params[:button] %>
+        <%= button %>
+      `)
+    })
+
+    test("strict local named button is allowed", () => {
+      expectNoOffenses(dedent`
+        <%# locals: (button:) %>
+        <%= button %>
+      `)
+    })
+
+    test("block argument named button_tag is still flagged", () => {
+      expectHint("Local variable `button_tag` shadows the Action View `button_tag` helper. Rename it to avoid confusion (for example `button_tag_item`).")
+
+      assertOffenses(dedent`
+        <% items.each do |button_tag| %>
+          <%= button_tag %>
+        <% end %>
+      `)
+    })
+
+    test("block argument named submit_tag is still flagged", () => {
+      expectHint("Local variable `submit_tag` shadows the Action View `submit_tag` helper. Rename it to avoid confusion (for example `submit_tag_item`).")
+
+      assertOffenses(dedent`
+        <% items.each do |submit_tag| %>
+          <%= submit_tag %>
+        <% end %>
+      `)
+    })
+  })
+
   describe("iteration blocks", () => {
-    test("iteration block argument named tag is flagged as an error", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+    test("iteration block argument named tag is flagged as a warning", () => {
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% @tags.map do |tag| %>
@@ -232,7 +284,7 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
 
     test("only the shadowing target is flagged in a multi-argument iteration block", () => {
-      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+      expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
       assertOffenses(dedent`
         <% @tags.each_with_index do |tag, index| %>

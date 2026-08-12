@@ -204,6 +204,88 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
+  test("nested multi-line HTML comment keeps its indentation", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <div>
+          <div>
+            <!--
+              <p>deep</p>
+            -->
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("nested multi-line HTML comment preserves relative indentation", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <!--
+          <ul>
+            <li>one</li>
+          </ul>
+        -->
+      </div>
+    `)
+  })
+
+  test("nested multi-line HTML comment gets re-indented", () => {
+    const source = dedent`
+      <div>
+        <!--
+      Comment
+          on
+      multiple
+      lines
+        -->
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <!--
+          Comment
+              on
+          multiple
+          lines
+        -->
+      </div>
+    `)
+  })
+
+  test("nested HTML comment with content on the opening line", () => {
+    const source = dedent`
+      <div>
+        <!-- Status: <%= status %> |
+             Updated: <%= updated_at %> -->
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <!--
+          Status: <%= status %> |
+          Updated: <%= updated_at %>
+        -->
+      </div>
+    `)
+  })
+
+  test("HTML comment with content on the opening line aligns the closing tag", () => {
+    const source = dedent`
+      <!-- line1
+      line2 -->
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <!--
+        line1
+        line2
+      -->
+    `)
+  })
+
   describe("Mixed content with comments", () => {
     test("div with comment and another element stays multiline", () => {
       const source = dedent`

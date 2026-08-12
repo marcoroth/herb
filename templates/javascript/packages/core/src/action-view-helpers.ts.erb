@@ -6,6 +6,7 @@ export enum HelperType {
 
 export type HelperDetectStyle = "call_name" | "receiver_call"
 export type HelperOutput = "html" | "text" | "url" | "boolean" | "void" | "object"
+export type HelperReceiver = "view" | "form_builder"
 
 export interface HelperArgument {
   readonly name: string
@@ -24,12 +25,30 @@ export interface HelperOption {
   readonly description: string
 }
 
+export interface HelperBlockArgument {
+  readonly name: string
+  readonly position: number
+  readonly type: string
+  readonly optional: boolean
+  readonly description: string
+}
+
 export interface HelperImplicitAttribute {
   readonly name: string
   readonly source: string
   readonly sourceWithBlock: string | null
   readonly wrapper: string
   readonly skipWrappingFor: string[]
+}
+
+export type HelperContentSource = "first_arg" | "block_or_arg"
+
+export interface HelperContent {
+  readonly source: HelperContentSource
+  readonly argPosition: number | null
+  readonly skipIfHash: boolean
+  readonly toSSuffixWhenSingle: boolean
+  readonly positionalArgumentsWithBlock: number | null
 }
 
 export interface HelperEntry {
@@ -39,6 +58,7 @@ export interface HelperEntry {
   readonly gem: string
   readonly output: HelperOutput
   readonly visibility: "public" | "internal"
+  readonly receiver: HelperReceiver
   readonly tagName: string | null
   readonly isVoid: boolean
   readonly supportsBlock: boolean
@@ -49,8 +69,10 @@ export interface HelperEntry {
   readonly signature: string
   readonly documentationURL: string
   readonly implicitAttribute: HelperImplicitAttribute | null
+  readonly content: HelperContent | null
   readonly arguments: HelperArgument[]
   readonly options: HelperOption[]
+  readonly blockArguments: HelperBlockArgument[]
   readonly specialBehaviors: string[]
   readonly aliases: string[]
 }
@@ -63,6 +85,7 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   gem: "<%= helper.gem %>",
   output: "<%= helper.output %>",
   visibility: "<%= helper.visibility %>",
+  receiver: "<%= helper.receiver %>",
   tagName: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
   isVoid: <%= helper.void? %>,
   supportsBlock: <%= helper.supports_block %>,
@@ -83,6 +106,17 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   <%- else -%>
   implicitAttribute: null,
   <%- end -%>
+  <%- if helper.content? -%>
+  content: {
+    source: "<%= helper.content.source %>",
+    argPosition: <%= helper.content.arg_position || "null" %>,
+    skipIfHash: <%= helper.content.skip_if_hash %>,
+    toSSuffixWhenSingle: <%= helper.content.to_s_suffix_when_single %>,
+    positionalArgumentsWithBlock: <%= helper.content.positional_arguments_with_block || "null" %>,
+  },
+  <%- else -%>
+  content: null,
+  <%- end -%>
   arguments: [
   <%- helper.arguments.each do |arg| -%>
     { name: "<%= arg.name %>", position: <%= arg.position %>, type: "<%= arg.type_display %>", optional: <%= arg.optional %>, default: <%= arg.default ? "\"#{arg.escaped_default}\"" : "null" %>, splat: <%= arg.splat %>, description: "<%= arg.escaped_description %>" },
@@ -91,6 +125,11 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   options: [
   <%- helper.options.each do |opt| -%>
     { name: "<%= opt.name %>", type: "<%= opt.type_display %>", mapsTo: <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "null" %>, description: "<%= opt.escaped_description %>" },
+  <%- end -%>
+  ],
+  blockArguments: [
+  <%- helper.block_arguments.each do |arg| -%>
+    { name: "<%= arg.name %>", position: <%= arg.position %>, type: "<%= arg.type_display %>", optional: <%= arg.optional %>, description: "<%= arg.escaped_description %>" },
   <%- end -%>
   ],
   specialBehaviors: [<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>],
@@ -140,6 +179,10 @@ export function helperExists(name: string): boolean {
   return name in HELPER_REGISTRY
 }
 
+export function viewHelperExists(name: string): boolean {
+  return HELPER_REGISTRY[name]?.receiver === "view"
+}
+
 export function getHelpersForTag(tagName: string): HelperEntry[] {
   return HELPERS_BY_TAG_NAME[tagName] ?? []
 }
@@ -161,6 +204,10 @@ export function getHelpersByGem(gem: string): HelperEntry[] {
 
 export function getHelpersByOutput(output: HelperOutput): HelperEntry[] {
   return Object.values(HELPER_REGISTRY).filter(entry => entry.output === output)
+}
+
+export function getHelpersByReceiver(receiver: HelperReceiver): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY).filter(entry => entry.receiver === receiver)
 }
 
 export function getHelpersByModule(moduleName: string): HelperEntry[] {

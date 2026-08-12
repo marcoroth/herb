@@ -1,0 +1,11 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: "result.replace(&*file.to_string_lossy(), \"<test-file>\")"
+---
+[36m<test-file>[0m
+
+    [90m  1[0m [90m│[0m [31m<[0m[31mh1[0m[31m>[0m
+    [90m  2[0m [90m│[0m   [33m<%[0m [35munless[0m condition [33m%>[0m
+    [90m  3[0m [90m│[0m     [31m<[0m[31mp[0m[31m>[0m[37mDefault[0m [37mcontent[0m[31m</[0m[31mp[0m[31m>[0m
+    [90m  4[0m [90m│[0m   [33m<%[0m [35mend[0m [33m%>[0m
+    [90m  5[0m [90m│[0m [31m</[0m[31mh1[0m[31m>[0m

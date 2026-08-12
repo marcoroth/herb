@@ -13,6 +13,8 @@ const SEVERITY_COLORS: Record<DiagnosticSeverity, "brightRed" | "brightYellow" |
   hint: "gray"
 }
 
+export type RuleFilterFlag = "--only" | "--all-rules"
+
 export interface SummaryData {
   files: string[]
   totalErrors: number
@@ -26,6 +28,8 @@ export interface SummaryData {
   filesNotFailing?: number
   failLevel?: DiagnosticSeverity
   logLevel?: DiagnosticSeverity
+  logLevelLoweredFrom?: DiagnosticSeverity
+  logLevelLoweredBy?: RuleFilterFlag
   ruleCount: number
   startTime: number
   startDate: Date
@@ -169,6 +173,13 @@ export class SummaryReporter {
       console.log(`  ${colorize(pad("Not shown"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
     }
 
+    if (data.logLevelLoweredFrom && data.logLevelLoweredBy) {
+      const level = colorize(colorize(logLevel, SEVERITY_COLORS[logLevel]), "bold")
+      const reason = colorize(`lowered from ${data.logLevelLoweredFrom} by ${data.logLevelLoweredBy}`, "cyan")
+
+      console.log(`  ${colorize(pad("Log level"), "gray")} ${level} | ${reason}`)
+    }
+
     if (ignoreDisableComments && totalWouldBeIgnored && totalWouldBeIgnored > 0) {
       const message = `${colorize(colorize(`${totalWouldBeIgnored} additional ${this.pluralize(totalWouldBeIgnored, "offense")} reported (would have been ignored)`, "cyan"), "bold")}`
       console.log(`  ${colorize(pad("Note"), "gray")} ${message}`)
@@ -288,7 +299,7 @@ export class SummaryReporter {
       for (const ruleName of ruleNames) {
         const ruleText = colorize(ruleName, "white")
         const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(ruleName))
-        console.log(`  ${ruleLink} ${colorize(`(introduced in ${versionLabel})`, "gray")}`)
+        console.log(`  ${ruleLink}${colorize(` (introduced in ${versionLabel})`, "gray")}`)
       }
     }
 

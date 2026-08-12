@@ -58,4 +58,38 @@ describe("html-aria-attribute-must-be-valid", () => {
     expectWarning('The attribute `aria-described-by` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.')
     assertOffenses(html)
   })
+
+  describe("ActionView tag helpers", () => {
+    it("passes for tag.div with a valid ARIA attribute", () => {
+      expectNoOffenses('<%= tag.div aria: { label: "Close" } %>')
+    })
+
+    it("fails for tag.div with an invalid ARIA attribute", () => {
+      expectWarning("The attribute `aria-labl` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.")
+
+      assertOffenses('<%= tag.div aria: { labl: "Close" } %>')
+    })
+
+    it("fails for content_tag with an invalid ARIA attribute", () => {
+      expectWarning("The attribute `aria-labl` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.")
+
+      assertOffenses('<%= content_tag :div, "content", aria: { labl: "Close" } %>')
+    })
+
+    it("passes for a dynamic aria value", () => {
+      expectNoOffenses('<%= tag.div aria: { label: label_text } %>')
+    })
+
+    it("still fails with a nil value, since the attribute name is what's invalid", () => {
+      expectWarning("The attribute `aria-labl` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.")
+
+      assertOffenses('<%= tag.div aria: { labl: nil } %>')
+    })
+
+    it("still fails with a dynamic value, since the attribute name is what's invalid", () => {
+      expectWarning("The attribute `aria-labl` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.")
+
+      assertOffenses('<%= tag.div aria: { labl: label_text } %>')
+    })
+  })
 })

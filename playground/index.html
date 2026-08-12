@@ -675,6 +675,16 @@
                       class="px-2 py-1 text-xs rounded font-mono font-medium"
                       style="color: #abb2bf; background: rgba(171, 178, 191, 0.1)"
                     >Checkpoint</button>
+
+                    <label class="flex items-center gap-1.5 text-gray-300 text-sm ml-2" title="Report whitespace changes that HTML collapses away as `whitespace_changed` operations instead of leaving them out">
+                      <input
+                        type="checkbox"
+                        data-playground-target="diffWhitespaceCheckbox"
+                        data-action="change->playground#onDiffOptionChange"
+                        class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      />
+                      <span class="select-none">Track insignificant whitespace changes</span>
+                    </label>
                   </div>
 
                   <div class="flex items-center gap-2">
@@ -889,32 +899,43 @@
                 class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] text-[#dcdfe4] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               >
                 <div data-playground-target="diagnosticsContent" class="h-full">
-                  <div class="p-3 border-b border-gray-600 flex gap-2 items-center flex-wrap">
-                    <span class="text-sm text-gray-300 mr-2">Filter:</span>
-                    <button
-                      data-action="click->playground#filterDiagnostics"
-                      data-playground-target="diagnosticsFilter"
-                      data-filter="all"
-                      class="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      All
-                    </button>
-                    <button
-                      data-action="click->playground#filterDiagnostics"
-                      data-playground-target="diagnosticsFilter"
-                      data-filter="parser"
-                      class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white"
-                    >
-                      Parser
-                    </button>
-                    <button
-                      data-action="click->playground#filterDiagnostics"
-                      data-playground-target="diagnosticsFilter"
-                      data-filter="linter"
-                      class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white"
-                    >
-                      Linter
-                    </button>
+                  <div class="p-3 border-b border-gray-600 flex gap-4 items-center flex-wrap justify-between">
+                    <div class="flex gap-2 items-center flex-wrap">
+                      <span class="text-sm text-gray-300 mr-2">Filter:</span>
+                      <button
+                        data-action="click->playground#filterDiagnostics"
+                        data-playground-target="diagnosticsFilter"
+                        data-filter="all"
+                        class="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        All
+                      </button>
+                      <button
+                        data-action="click->playground#filterDiagnostics"
+                        data-playground-target="diagnosticsFilter"
+                        data-filter="parser"
+                        class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white"
+                      >
+                        Parser
+                      </button>
+                      <button
+                        data-action="click->playground#filterDiagnostics"
+                        data-playground-target="diagnosticsFilter"
+                        data-filter="linter"
+                        class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white"
+                      >
+                        Linter
+                      </button>
+                    </div>
+
+                    <label class="flex items-center gap-2 text-gray-300 text-sm" title="Framework Herb assumes for this template, matching the framework option in .herb.yml">
+                      <span class="select-none">Framework:</span>
+                      <select
+                        data-playground-target="linterFramework"
+                        data-action="change->playground#onLinterOptionChange"
+                        class="px-2 py-1 text-sm rounded border-gray-600 bg-gray-700 text-gray-200 focus:ring-green-500 focus:border-green-500"
+                      ></select>
+                    </label>
                   </div>
                   <div class="p-3 flex-1 overflow-auto">
                     <div data-playground-target="noDiagnostics" class="relative h-full min-h-[200px] overflow-hidden">

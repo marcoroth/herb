@@ -1,0 +1,16 @@
+---
+source: herb-highlighter/tests/inline_diagnostic_renderer_test.rs
+expression: "render(content, &[diagnostic], true)"
+---
+/test/file.erb
+
+      1 │ <div id="gems">
+  →   2 │   <% @gems.each do |topic_gem| %>
+        │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  →   3 │     <%= render partial: "gem_card" %>
+        │     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  →   4 │   <% end %>
+        │   ~~~~~~~~~
+        │   [warning] Multi-line offense (multi-line-rule)
+        │
+      5 │ </div>

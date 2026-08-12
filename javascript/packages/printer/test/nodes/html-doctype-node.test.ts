@@ -11,10 +11,8 @@ describe("HTMLDoctypeNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = HTMLDoctypeNode.from({
-      type: "AST_HTML_DOCTYPE_NODE",
+    const node = HTMLDoctypeNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_DOCTYPE", "<!DOCTYPE"),
       children: [],
       tag_closing: createToken("TOKEN_HTML_TAG_END", ">")
@@ -24,10 +22,8 @@ describe("HTMLDoctypeNode Printing", () => {
   })
 
   test("can print from node with child", () => {
-    const node = HTMLDoctypeNode.from({
-      type: "AST_HTML_DOCTYPE_NODE",
+    const node = HTMLDoctypeNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_DOCTYPE", "<!doctype"),
       children: [
         createLiteralNode(" html5")

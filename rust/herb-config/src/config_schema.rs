@@ -84,23 +84,20 @@ pub struct FormatterConfig {
   pub indent_width: Option<usize>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub indent_style: Option<IndentStyle>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
   pub max_line_length: Option<usize>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub rewriter: Option<RewriterConfig>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ValidatorsConfig {
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub security: Option<bool>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub nesting: Option<bool>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub accessibility: Option<bool>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum IndentStyle {
+  Space,
+  Tab,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -120,34 +117,7 @@ pub enum TemplateEngine {
   Herb,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ParserOptionsConfig {
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub strict: Option<bool>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub render_nodes: Option<bool>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub strict_locals: Option<bool>,
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct EngineConfig {
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub optimize: Option<bool>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub debug: Option<bool>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub parser_options: Option<ParserOptionsConfig>,
-
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub validators: Option<ValidatorsConfig>,
-}
+pub type EngineConfig = serde_yaml::Mapping;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

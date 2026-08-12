@@ -1,32 +1,44 @@
 ---
-name: translate
+name: "translate"
 source: "ActionView::Helpers::TranslationHelper#translate"
-gem: actionview
-output: text
-visibility: public
+gem: "actionview"
+output: "text"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Delegates to `I18n#translate` but also performs key scoping relative to the current view template. Also available as `t()`.
 signature: "translate(key, **options)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TranslationHelper.html#method-i-translate"
+
+description: |-
+  Delegates to `I18n#translate` but also performs key scoping relative to the current view template. Also available as `t()`.
+
 tag: null
+
 arguments:
-  - name: key
+  - name: "key"
     position: 1
-    type: [string, symbol]
+    type: ["string", "symbol"]
     optional: false
-    description: "Translation key."
+    description: |-
+      Translation key.
+
 options:
-  - name: default
-    type: [string, array]
-    description: "Default value if key is missing."
-  - name: scope
-    type: [string, array]
-    description: "Scope for the translation key."
-  - name: count
-    type: integer
-    description: "Count for pluralization."
+  - name: "default"
+    type: ["string", "array"]
+    description: |-
+      Default value if key is missing.
+
+  - name: "scope"
+    type: ["string", "array"]
+    description: |-
+      Scope for the translation key.
+
+  - name: "count"
+    type: "integer"
+    description: |-
+      Count for pluralization.
+
+block_arguments: []
 special_behaviors: []
 aliases:
-  - t
+  - "t"

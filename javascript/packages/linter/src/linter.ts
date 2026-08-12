@@ -484,7 +484,10 @@ export class Linter {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine,
-      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
+      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
+      indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
+      framework: context?.framework ?? this.config?.framework,
+      herb: context?.herb ?? this.herb
     }
 
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
@@ -601,7 +604,9 @@ export class Linter {
 
     context = {
       ...context,
-      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
+      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
+      indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
+      framework: context?.framework ?? this.config?.framework
     }
 
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)
@@ -657,7 +662,7 @@ export class Linter {
         }
 
         if (offense.autofixContext) {
-          const originalNodeType = offense.autofixContext.node.type
+          const originalNodeType = offense.autofixContext.nodeType ?? offense.autofixContext.node.type
           const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(

@@ -33,6 +33,11 @@ module Herb
       { line: line, column: column } #: Herb::serialized_position
     end
 
+    #: () -> serialized_position
+    def to_one_based
+      { line: [line, 1].max, column: column + 1 } #: Herb::serialized_position
+    end
+
     #: (?untyped) -> String
     def to_json(state = nil)
       to_hash.to_json(state)

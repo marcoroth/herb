@@ -60,9 +60,24 @@ export interface ColorScheme {
   TOKEN_CHARACTER: Color
   TOKEN_ERROR: Color
   TOKEN_EOF: Color | null
+
+  // Diff backgrounds
+  DIFF_REMOVED_LINE_BACKGROUND?: Color
+  DIFF_ADDED_LINE_BACKGROUND?: Color
+  DIFF_REMOVED_BACKGROUND?: Color
+  DIFF_ADDED_BACKGROUND?: Color
 }
 
-// Built-in themes are now bundled directly
+/**
+ * Keys a custom theme may leave out. Everything else in `ColorScheme` is required.
+ */
+export const OPTIONAL_COLOR_SCHEME_KEYS: readonly (keyof ColorScheme)[] = [
+  "DIFF_REMOVED_LINE_BACKGROUND",
+  "DIFF_ADDED_LINE_BACKGROUND",
+  "DIFF_REMOVED_BACKGROUND",
+  "DIFF_ADDED_BACKGROUND",
+]
+
 export const themes: Record<Theme, ColorScheme> = {
   onedark: onedarkTheme as ColorScheme,
   "github-light": githubLightTheme as ColorScheme,
@@ -93,7 +108,8 @@ export function loadCustomTheme(themePath: string): ColorScheme {
     const themeContent = readFileSync(absolutePath, 'utf-8')
     const customTheme = JSON.parse(themeContent) as ColorScheme
 
-    const requiredKeys = Object.keys(themes.onedark) as (keyof ColorScheme)[]
+    const requiredKeys = (Object.keys(themes.onedark) as (keyof ColorScheme)[])
+      .filter(key => !OPTIONAL_COLOR_SCHEME_KEYS.includes(key))
     const customKeys = Object.keys(customTheme) as (keyof ColorScheme)[]
 
     const missingKeys = requiredKeys.filter(key => !customKeys.includes(key))

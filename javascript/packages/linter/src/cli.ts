@@ -17,6 +17,7 @@ import { version } from "../package.json"
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
+import type { RuleFilterFlag } from "./cli/summary-reporter.js"
 
 export * from "./cli/index.js"
 
@@ -137,6 +138,27 @@ export class CLI {
     return { files, explicitFile }
   }
 
+  protected rejectUnsupportedFiles(files: string[], config: Config, force: boolean, formatOption: FormatOption): string[] {
+    if (force) {
+      return files
+    }
+
+    const supported = files.filter(file => config.isPathIncludedForTool(file, 'linter'))
+    const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'linter'))
+
+    if (unsupported.length > 0 && formatOption !== 'json') {
+      console.error(`⚠️  Skipped ${unsupported.length} ${unsupported.length === 1 ? 'file' : 'files'} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
+
+      for (const file of unsupported) {
+        console.error(`  ${colorize(relative(process.cwd(), resolve(file)), "cyan")}`)
+      }
+
+      console.error(`   Use --force to lint ${unsupported.length === 1 ? 'it' : 'them'} anyway.\n`)
+    }
+
+    return supported
+  }
+
   protected async beforeProcess(): Promise<void> {
     // Hook for subclasses to add custom output before processing
   }
@@ -149,13 +171,32 @@ export class CLI {
     // Hook for subclasses to add custom output after processing
   }
 
+  /**
+   * Returns the severity `--only` or `--all-rules` should lower the log level to, together with the flag
+   * that asked for it, or `undefined` when the log level stays as configured.
+   */
+  protected loweredLogLevel(counts: Record<DiagnosticSeverity, number>, effectiveLogLevel: DiagnosticSeverity, options: { only?: string[], allRules?: boolean, logLevelFlag?: DiagnosticSeverity }): { severity: DiagnosticSeverity, flag: RuleFilterFlag } | undefined {
+    const { only, allRules, logLevelFlag } = options
+    const flag: RuleFilterFlag | undefined = (only && only.length > 0) ? "--only" : (allRules ? "--all-rules" : undefined)
+
+    if (!flag) return undefined
+    if (logLevelFlag !== undefined) return undefined
+
+    const lowestSeverity = DIAGNOSTIC_SEVERITIES.filter(severity => counts[severity] > 0).pop()
+
+    if (!lowestSeverity) return undefined
+    if (meetsSeverityThreshold(lowestSeverity, effectiveLogLevel)) return undefined
+
+    return { severity: lowestSeverity, flag }
+  }
+
   async run() {
     await Herb.load()
 
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -230,8 +271,7 @@ export class CLI {
         await Herb.load()
 
         const files = await config.findFilesForTool('linter', this.projectPath)
-        const upgradeProcessor = new FileProcessor()
-        const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
+        const results = await this.fileProcessor.processFiles(files, 'json', upgradeContext)
 
         for (const { offense } of results.allOffenses) {
           if (offense.severity !== "error" && offense.severity !== "warning") continue
@@ -314,8 +354,7 @@ export class CLI {
         jobs,
       }
 
-      const processor = new FileProcessor()
-      const results = await processor.processFiles(files, 'json', disableFailingContext)
+      const results = await this.fileProcessor.processFiles(files, 'json', disableFailingContext)
       const failingRules = new Map<string, number>()
       const PROTECTED_RULES = new Set(["parser-no-errors"])
 
@@ -424,7 +463,7 @@ export class CLI {
           }
         }
 
-        files = [...new Set(allFiles)]
+        files = this.rejectUnsupportedFiles([...new Set(allFiles)], config, force, formatOption)
       }
 
       if (files.length === 0) {
@@ -461,6 +500,7 @@ export class CLI {
         fix,
         fixUnsafe,
         ignoreDisableComments,
+        showFixDiff,
         linterConfig,
         config: processingConfig,
         hasConfigFile,
@@ -472,14 +512,21 @@ export class CLI {
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
-      await this.outputManager.outputResults({ ...results, files }, outputOptions)
-
       const counts: Record<DiagnosticSeverity, number> = {
         error: results.totalErrors,
         warning: results.totalWarnings,
         info: results.totalInfo,
         hint: results.totalHints
       }
+
+      const lowered = this.loweredLogLevel(counts, effectiveLogLevel, { only, allRules, logLevelFlag: logLevel })
+
+      await this.outputManager.outputResults({ ...results, files }, {
+        ...outputOptions,
+        logLevel: lowered?.severity ?? effectiveLogLevel,
+        logLevelLoweredFrom: lowered ? effectiveLogLevel : undefined,
+        logLevelLoweredBy: lowered?.flag
+      })
 
       const showTips = formatOption !== 'json' && !useGitHubActions
 

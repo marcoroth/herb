@@ -132,11 +132,11 @@ static hb_array_T* extract_strict_locals(
     hb_string_T name = local->name ? local->name->value : hb_string("");
 
     if (string_equals(local->kind.data, "positional")) {
-      append_strict_locals_positional_argument_error(name, start, end, allocator, local->base.errors);
+      append_strict_locals_positional_argument_error(name, start, end, allocator, &local->base.errors);
     } else if (string_equals(local->kind.data, "rest")) {
-      append_strict_locals_splat_argument_error(name, start, end, allocator, local->base.errors);
+      append_strict_locals_splat_argument_error(name, start, end, allocator, &local->base.errors);
     } else if (string_equals(local->kind.data, "block")) {
-      append_strict_locals_block_argument_error(name, start, end, allocator, local->base.errors);
+      append_strict_locals_block_argument_error(name, start, end, allocator, &local->base.errors);
     }
   }
 
@@ -183,7 +183,7 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
       error_start,
       error_end,
       allocator,
-      errors
+      &errors
     );
     hb_allocator_dealloc(allocator, rest);
 
@@ -309,7 +309,7 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
         strict_locals_node->base.location.start,
         strict_locals_node->base.location.end,
         context->allocator,
-        strict_locals_node->base.errors
+        &strict_locals_node->base.errors
       );
     }
 

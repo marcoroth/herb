@@ -463,10 +463,148 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     })
   })
 
+  describe("stylesheet_link_tag for stylesheet link elements", () => {
+    test("stylesheet link", () => {
+      expect(transform('<link rel="stylesheet" href="application.css">')).toBe(
+        '<%= stylesheet_link_tag "application.css" %>'
+      )
+    })
+
+    test("stylesheet link self-closing", () => {
+      expect(transform('<link rel="stylesheet" href="application.css" />')).toBe(
+        '<%= stylesheet_link_tag "application.css" %>'
+      )
+    })
+
+    test("stylesheet link with media", () => {
+      expect(transform('<link rel="stylesheet" href="application.css" media="all">')).toBe(
+        '<%= stylesheet_link_tag "application.css", media: "all" %>'
+      )
+    })
+
+    test("stylesheet link with data attributes", () => {
+      expect(transform('<link rel="stylesheet" href="application.css" data-turbo-track="reload">')).toBe(
+        '<%= stylesheet_link_tag "application.css", data: { turbo_track: "reload" } %>'
+      )
+    })
+
+    test("stylesheet link with ERB href", () => {
+      expect(transform('<link rel="stylesheet" href="<%= stylesheet_path("application") %>">')).toBe(
+        '<%= stylesheet_link_tag stylesheet_path("application") %>'
+      )
+    })
+
+    test("stylesheet link with attribute order preserved", () => {
+      expect(transform('<link href="application.css" media="print" rel="stylesheet">')).toBe(
+        '<%= stylesheet_link_tag "application.css", media: "print" %>'
+      )
+    })
+  })
+
+  describe("tag.link for other link elements", () => {
+    test("non-stylesheet link", () => {
+      expect(transform('<link rel="icon" href="favicon.ico">')).toBe(
+        '<%= tag.link rel: "icon", href: "favicon.ico" %>'
+      )
+    })
+
+    test("preload link", () => {
+      expect(transform('<link rel="preload" href="font.woff2" as="font">')).toBe(
+        '<%= tag.link rel: "preload", href: "font.woff2", as: "font" %>'
+      )
+    })
+
+    test("link without rel", () => {
+      expect(transform('<link href="application.css">')).toBe(
+        '<%= tag.link href: "application.css" %>'
+      )
+    })
+
+    test("stylesheet link without href", () => {
+      expect(transform('<link rel="stylesheet">')).toBe(
+        '<%= tag.link rel: "stylesheet" %>'
+      )
+    })
+
+    test("link with dynamic rel", () => {
+      expect(transform('<link rel="<%= rel %>" href="application.css">')).toBe(
+        '<%= tag.link rel: rel, href: "application.css" %>'
+      )
+    })
+  })
+
   describe("ERB in attribute values", () => {
     test("single ERB expression becomes Ruby variable", () => {
       expect(transform('<div class="<%= class_name %>">Content</div>')).toBe(
         '<%= tag.div "Content", class: class_name %>'
+      )
+    })
+
+    test("a call with parentheses is used as written", () => {
+      expect(transform('<div class="<%= merge("a", "b") %>">Content</div>')).toBe(
+        '<%= tag.div "Content", class: merge("a", "b") %>'
+      )
+    })
+
+    test("an index is used as written", () => {
+      expect(transform('<div class="<%= styles[:card] %>">Content</div>')).toBe(
+        '<%= tag.div "Content", class: styles[:card] %>'
+      )
+    })
+
+    test("a call without parentheses is parenthesized so it cannot swallow the next option", () => {
+      expect(transform('<div class="<%= merge "a", b: 1 %>" id="card">Content</div>')).toBe(
+        '<%= tag.div "Content", class: (merge "a", b: 1), id: "card" %>'
+      )
+    })
+  })
+
+  describe("attributes that cannot be represented faithfully", () => {
+    test("escapes a double quote in a value", () => {
+      expect(transform(`<div title='He said "hi"'>Content</div>`)).toBe(
+        '<%= tag.div "Content", title: "He said \\"hi\\"" %>'
+      )
+    })
+
+    test("escapes interpolation so literal text stays literal", () => {
+      expect(transform('<div title="Cost: #{price}">Content</div>')).toBe(
+        '<%= tag.div "Content", title: "Cost: \\#{price}" %>'
+      )
+    })
+
+    test("leaves an element with an entity reference alone", () => {
+      expect(transform('<div title="a &amp; b">Content</div>')).toBe(
+        '<div title="a &amp; b">Content</div>'
+      )
+    })
+
+    test("converts a valueless attribute Rails treats as boolean", () => {
+      expect(transform('<input type="checkbox" checked>')).toBe(
+        '<%= tag.input type: "checkbox", checked: true %>'
+      )
+    })
+
+    test("leaves an element with a valueless non-boolean attribute alone", () => {
+      expect(transform('<a href="/files/report.pdf" download>Report</a>')).toBe(
+        '<a href="/files/report.pdf" download>Report</a>'
+      )
+    })
+
+    test("leaves an element with a name that is not a Ruby key alone", () => {
+      expect(transform('<div @click="go()">Content</div>')).toBe(
+        '<div @click="go()">Content</div>'
+      )
+    })
+
+    test("leaves an element with a dynamic attribute name alone", () => {
+      expect(transform('<div data-<%= key %>="value">Content</div>')).toBe(
+        '<div data-<%= key %>="value">Content</div>'
+      )
+    })
+
+    test("leaves an element with a repeated attribute alone", () => {
+      expect(transform('<div title="first" title="second">Content</div>')).toBe(
+        '<div title="first" title="second">Content</div>'
       )
     })
   })

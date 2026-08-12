@@ -3,7 +3,7 @@ import { TreeChildrenProvider } from './tree-children-provider'
 import { AnalysisService } from './analysis-service'
 import { VersionService } from './version-service'
 
-import { workspace, window, commands, EventEmitter, ProgressLocation } from 'vscode'
+import { workspace, window, commands, EventEmitter, ProgressLocation, RelativePattern } from 'vscode'
 
 import { Config } from "@herb-tools/config"
 
@@ -90,7 +90,13 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
       includePattern = Config.getDefaultFilePatterns().join(",")
     }
 
-    const uris = await workspace.findFiles(includePattern, excludePattern)
+    // Scoped to the folder the config came from. An unscoped glob searches
+    // every workspace folder, which in a multi-root window would list files
+    // from projects this config says nothing about.
+    const uris = await workspace.findFiles(
+      workspaceRoot ? new RelativePattern(workspaceRoot, includePattern) : includePattern,
+      excludePattern
+    )
 
     this.lastAnalysisTime = new Date()
 

@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0023_an all-caps tag is left as HTML"
+input: "{source: \"<DIV>hello</DIV>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<DIV>hello</DIV>'.freeze;
+_buf.to_s

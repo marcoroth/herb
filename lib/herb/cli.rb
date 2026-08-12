@@ -181,12 +181,7 @@ class Herb::CLI
                   puts Herb.extract_html(file_content)
                   exit(0)
                 when "playground"
-                  require "bundler/inline"
-
-                  gemfile do
-                    source "https://rubygems.org"
-                    gem "lz_string"
-                  end
+                  Herb.ensure_installed("lz_string")
 
                   hash = LZString::UriSafe.compress(file_content)
                   local_url = "http://localhost:5173"

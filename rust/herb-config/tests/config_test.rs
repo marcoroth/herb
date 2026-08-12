@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use herb_config::{Config, HerbConfig, HerbConfigOptions, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
+use herb_config::{Config, HerbConfig, HerbConfigOptions, IndentStyle, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
 
 fn default_include_patterns() -> Vec<String> {
   Config::get_default_file_patterns()
@@ -202,6 +202,13 @@ mod config_from_object {
   }
 
   #[test]
+  fn creates_config_with_indent_style_tab() {
+    let config = config_from_yaml("formatter:\n  indentStyle: tab\n");
+
+    assert_eq!(config.formatter().unwrap().indent_style, Some(IndentStyle::Tab));
+  }
+
+  #[test]
   fn uses_custom_version_when_provided() {
     let config = Config::from_object(&HerbConfigOptions::default(), Path::new("/project"), Some("1.2.3"), None).unwrap();
 
@@ -233,8 +240,10 @@ mod config_create_config_yaml_string {
     let yaml = herb_config::create_config_yaml_string(&mutation, None).unwrap();
 
     assert!(yaml.contains("formatter:"));
-    assert!(yaml.contains("enabled: true"));
-    assert!(yaml.contains("indentWidth: 4"));
+    assert!(yaml.contains("enabled: true"), "expected unquoted boolean true");
+    assert!(!yaml.contains("enabled: \"true\""), "boolean must not be double-quoted");
+    assert!(yaml.contains("indentWidth: 4"), "expected unquoted number");
+    assert!(!yaml.contains("indentWidth: \"4\""), "number must not be double-quoted");
   }
 }
 
@@ -277,6 +286,39 @@ mod config_apply_mutation_to_yaml_string {
     assert!(updated.contains("html-tag-name-lowercase:"));
     assert!(updated.contains("enabled: false"));
     assert!(updated.contains("severity: error"));
+  }
+
+  #[test]
+  fn updates_boolean_from_true_to_false_without_quoting() {
+    let original = "version: 0.10.3\nlinter:\n  enabled: true\n";
+    let mutation: HerbConfigOptions = serde_yaml::from_str("linter:\n  enabled: false\n").unwrap();
+
+    let updated = herb_config::apply_mutation_to_yaml_string(original, &mutation).unwrap();
+
+    assert!(updated.contains("enabled: false"), "expected unquoted boolean false");
+    assert!(!updated.contains("enabled: \"false\""), "boolean must not be double-quoted");
+  }
+
+  #[test]
+  fn updates_boolean_from_false_to_true_without_quoting() {
+    let original = "version: 0.10.3\nlinter:\n  enabled: false\n";
+    let mutation: HerbConfigOptions = serde_yaml::from_str("linter:\n  enabled: true\n").unwrap();
+
+    let updated = herb_config::apply_mutation_to_yaml_string(original, &mutation).unwrap();
+
+    assert!(updated.contains("enabled: true"), "expected unquoted boolean true");
+    assert!(!updated.contains("enabled: \"true\""), "boolean must not be double-quoted");
+  }
+
+  #[test]
+  fn updates_number_value_without_quoting() {
+    let original = "version: 0.10.3\nformatter:\n  enabled: true\n  indentWidth: 2\n";
+    let mutation: HerbConfigOptions = serde_yaml::from_str("formatter:\n  indentWidth: 4\n").unwrap();
+
+    let updated = herb_config::apply_mutation_to_yaml_string(original, &mutation).unwrap();
+
+    assert!(updated.contains("indentWidth: 4"), "expected unquoted number");
+    assert!(!updated.contains("indentWidth: \"4\""), "number must not be double-quoted");
   }
 }
 

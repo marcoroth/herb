@@ -11,10 +11,8 @@ describe("HTMLCommentNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = HTMLCommentNode.from({
-      type: "AST_HTML_COMMENT_NODE",
+    const node = HTMLCommentNode.build({
       location,
-      errors: [],
       comment_start: createToken("TOKEN_HTML_COMMENT_START", "<!--"),
       children: [
         createLiteralNode(" Content ")
@@ -26,10 +24,8 @@ describe("HTMLCommentNode Printing", () => {
   })
 
   test("can print from node with multiple children", () => {
-    const node = HTMLCommentNode.from({
-      type: "AST_HTML_COMMENT_NODE",
+    const node = HTMLCommentNode.build({
       location,
-      errors: [],
       comment_start: createToken("TOKEN_HTML_COMMENT_START", "<!--"),
       children: [
         createLiteralNode("One"),

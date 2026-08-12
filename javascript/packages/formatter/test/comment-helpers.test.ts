@@ -86,6 +86,20 @@ describe("comment-helpers", () => {
       expect(result).toBe("\n  line1\n    indented\n  line3\n")
     })
 
+    test("indents multiline content relative to the base indent", () => {
+      const raw = ["", "    line1", "      indented", "    line3", ""].join("\n")
+      const result = formatHTMLCommentInner(raw, 2, "    ")
+
+      expect(result.split("\n")).toEqual(["", "      line1", "        indented", "      line3", "    "])
+    })
+
+    test("aligns the closing line with the base indent", () => {
+      const raw = ["line1", "line2"].join("\n")
+      const result = formatHTMLCommentInner(raw, 2, "  ")
+
+      expect(result.split("\n")).toEqual(["", "    line1", "    line2", "  "])
+    })
+
     test("handles empty inner string", () => {
       const result = formatHTMLCommentInner("", 2)
       expect(result).toBe("  ")

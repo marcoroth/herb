@@ -1,8 +1,11 @@
 import { describe, test } from "vitest"
 import { HTMLNoNestedLinksRule } from "../../src/rules/html-no-nested-links.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoNestedLinksRule)
+
+const PARTIAL = "app/views/shared/_link_body.html.erb"
 
 describe("html-no-nested-links", () => {
   test("passes for separate links", () => {
@@ -43,6 +46,59 @@ describe("html-no-nested-links", () => {
   })
 
   test("fails for nested links in ERB", () => {
-    expectNoOffenses(`<%= link_to "Products", products_path do %><%= link_to "Special offer", offer_path %><% end %>`)
+    expectError("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+
+    assertOffenses(`<%= link_to "Products", products_path do %><%= link_to "Special offer", offer_path %><% end %>`)
+  })
+
+  test("fails for a plain link inside a link_to block", () => {
+    expectError("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+
+    assertOffenses(`<%= link_to "/outer" do %><a href="/inner">Inner</a><% end %>`)
+  })
+
+  test("fails for a link_to inside a plain link", () => {
+    expectError("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+
+    assertOffenses(`<a href="/outer"><%= link_to "Inner", "/x" %></a>`)
+  })
+
+  test("passes for sibling link_to calls", () => {
+    expectNoOffenses(`<%= link_to "One", one_path %><%= link_to "Two", two_path %>`)
+  })
+
+  describe("across call sites", () => {
+    test("fails when every call site renders the file inside a link", () => {
+      expectError("Nested `<a>` elements are not allowed. Every call site renders this file inside an `<a>` element.")
+
+      assertOffenses(`<a href="/inner">Inner</a>`, renderedFrom(PARTIAL, ["html", "body", "a"]))
+    })
+
+    test("fails when only some call sites render the file inside a link", () => {
+      expectError("Nested `<a>` elements are not allowed. At least one call site renders this file inside an `<a>` element.")
+
+      assertOffenses(`<a href="/inner">Inner</a>`, renderedFrom(PARTIAL, ["html", "body", "a"], ["html", "body", "div"]))
+    })
+
+    test("passes when no call site renders the file inside a link", () => {
+      expectNoOffenses(`<a href="/inner">Inner</a>`, renderedFrom(PARTIAL, ["html", "body", "div"]))
+    })
+
+    test("passes when nothing renders the file", () => {
+      expectNoOffenses(`<a href="/inner">Inner</a>`, renderedFromNowhere(PARTIAL))
+    })
+
+    test("reports the outer link against the callers and the inner one against the outer", () => {
+      expectError("Nested `<a>` elements are not allowed. Every call site renders this file inside an `<a>` element.")
+      expectError("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+
+      assertOffenses(`<a href="/outer"><a href="/inner">Inner</a></a>`, renderedFrom(PARTIAL, ["html", "body", "a"]))
+    })
+
+    test("does not report the same element against both the local stack and the callers", () => {
+      expectError("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+
+      assertOffenses(`<div><a href="/outer"><a href="/inner">Inner</a></a></div>`, renderedFrom(PARTIAL, ["html", "body", "div"]))
+    })
   })
 })

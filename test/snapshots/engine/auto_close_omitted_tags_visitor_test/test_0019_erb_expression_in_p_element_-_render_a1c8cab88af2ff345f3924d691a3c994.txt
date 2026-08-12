@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0019_erb expression in p element - render"
+input: "{source: \"<p><%= message %>\", locals: {message: \"Hello\"}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<p>Hello</p>

@@ -15,7 +15,7 @@
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rollup -c",
+    "build": "yarn clean && tsc -b && rolldown -c",
     "dev": "tsc -b -w",
     "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

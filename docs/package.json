@@ -21,12 +21,13 @@
   "dependencies": {
     "@herb-tools/browser": "0.10.3",
     "@herb-tools/core": "0.10.3",
+    "@herb-tools/linter": "0.10.3",
     "@herb-tools/node": "0.10.3",
     "medium-zoom": "^1.1.0"
   },
   "devDependencies": {
     "@shikijs/vitepress-twoslash": "^4.3.1",
     "vitepress": "^2.0.0-alpha.18",
-    "vitepress-plugin-group-icons": "^1.7.5"
+    "vitepress-plugin-group-icons": "^1.7.6"
   }
 }

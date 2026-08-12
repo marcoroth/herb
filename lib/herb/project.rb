@@ -37,6 +37,7 @@ module Herb
       "UnclosedQuoteError",
       "MissingAttributeValueError",
       "UnclosedERBTagError",
+      "MalformedERBClosingTagError",
       "StrayERBClosingTagError",
       "NestedERBTagError"
     ].freeze
@@ -328,7 +329,7 @@ module Herb
       return unless issue_type[:key] == :invalid_ruby && file_content
 
       begin
-        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, validation_mode: :none)
+        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [])
         puts ""
         puts "**Compiled Ruby:**"
         puts "```ruby"
@@ -485,7 +486,15 @@ module Herb
     end
 
     def compile_file(file_path, file_content)
-      Herb::Engine.new(file_content, filename: file_path, escape: true, validate_ruby: validate_ruby)
+      require_relative "engine/validators"
+
+      Herb::Engine.new(
+        file_content,
+        filename: file_path,
+        escape: true,
+        validate_ruby: validate_ruby,
+        visitors: Herb::Engine::Validators.all
+      )
 
       { status: :successful, log: "✅ Compiled #{file_path} successfully" }
     rescue Herb::Engine::GeneratorTemplateError => e
@@ -501,7 +510,7 @@ module Herb
 
       # Retry without validators
       begin
-        Herb::Engine.new(file_content, filename: file_path, escape: true, validation_mode: :none, validate_ruby: validate_ruby)
+        Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [], validate_ruby: validate_ruby)
         error_name = e.is_a?(Herb::Engine::SecurityError) ? "SecurityError" : "ValidationError"
         return { status: :validation_error, file_content: file_content,
                  compilation_error: compilation_error,
@@ -906,7 +915,7 @@ module Herb
     def ensure_parallel!
       return if defined?(Parallel)
 
-      Herb.ensure_installed { gem "parallel" } # steep:ignore
+      Herb.ensure_installed("parallel")
     end
 
     def separator

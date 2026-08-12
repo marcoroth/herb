@@ -7,11 +7,14 @@ import { Config } from "@herb-tools/config"
 
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
-import { fixabilityFor } from "./fixability.js"
+import { fixabilityFor } from "../fixability.js"
+import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
+import { renderGraphFrom } from "@herb-tools/analysis/node"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
-import type { Fixability } from "./fixability.js"
+import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
+import type { AncestorChain, SerializedRenderGraph, SerializedPartialIndex } from "@herb-tools/analysis"
 
 export interface WorkerInput {
   files: string[]
@@ -23,11 +26,14 @@ export interface WorkerInput {
   loadCustomRules: boolean
   only?: string[]
   allRules: boolean
+  partials?: SerializedPartialIndex
+  partialCallers?: SerializedRenderGraph
 }
 
 export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
+  renderedFrom?: AncestorChain
   autocorrectable: boolean
   unsafeAutocorrectable: boolean
 }
@@ -71,6 +77,8 @@ async function run() {
   }
 
   const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
+  const partials = partialIndexFrom(data.partials)
+  const partialCallers = renderGraphFrom(data.partialCallers)
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -100,17 +108,24 @@ async function run() {
 
     const lintResult = linter.lint(content, {
       fileName: filename,
-      ignoreDisableComments: data.ignoreDisableComments
+      ignoreDisableComments: data.ignoreDisableComments,
+      partials,
+      partialCallers,
+      projectPath: data.projectPath
     })
 
     if (data.fix && lintResult.offenses.length > 0) {
       const autofixResult = linter.autofix(content, {
         fileName: filename,
-        ignoreDisableComments: data.ignoreDisableComments
+        ignoreDisableComments: data.ignoreDisableComments,
+        partials,
+        partialCallers,
+        projectPath: data.projectPath
       }, undefined, { includeUnsafe: data.fixUnsafe })
 
       if (autofixResult.fixed.length > 0) {
         writeFileSync(filePath, autofixResult.source, "utf-8")
+        refreshPartialAfterFix(Herb, partials, filename, content, autofixResult.source)
         filesFixed++
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
@@ -119,6 +134,7 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
+          renderedFrom: offense.renderedFrom,
           ...fixabilityOf(offense)
         })
 
@@ -140,6 +156,7 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
+          renderedFrom: offense.renderedFrom,
           ...fixabilityOf(offense)
         })
 

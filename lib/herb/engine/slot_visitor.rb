@@ -8,6 +8,8 @@ require_relative "slot_markers"
 module Herb
   class Engine
     class SlotVisitor < Herb::Visitor
+      recommended_parser_option iteration_nodes: true
+
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
       ELEMENT_ANCHORED_TYPES = [*ATTRIBUTE_TYPES, :boolean_attribute, :element, :raw_text].freeze #: Array[Symbol]
       BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]

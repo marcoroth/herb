@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0029_a component with an ERB body compiles the body inside the block"
+input: "{source: \"<Card><%= @thing %></Card>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render Card.new do; _buf << (@thing).to_s; end);
+_buf.to_s

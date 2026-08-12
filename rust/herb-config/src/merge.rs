@@ -40,3 +40,11 @@ pub fn deep_merge(target: &Value, source: &Value) -> Value {
 
   Value::Mapping(output)
 }
+
+pub const ANCHOR_DEFINITION_PREFIX: &str = "x-";
+
+pub fn strip_anchor_definitions(value: &mut Value) {
+  if let Some(mapping) = value.as_mapping_mut() {
+    mapping.retain(|key, _| !key.as_str().map(|key| key.starts_with(ANCHOR_DEFINITION_PREFIX)).unwrap_or(false));
+  }
+}

@@ -196,7 +196,7 @@ val Herb_parse_ruby(const std::string& source) {
   return result;
 }
 
-val Herb_diff(const std::string& old_source, const std::string& new_source) {
+val Herb_diff(const std::string& old_source, const std::string& new_source, val options) {
   hb_allocator_T old_allocator;
   hb_allocator_T new_allocator;
   hb_allocator_T diff_allocator;
@@ -219,6 +219,13 @@ val Herb_diff(const std::string& old_source, const std::string& new_source) {
   }
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+
+  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (options.hasOwnProperty("track_whitespace_changes")) {
+      diff_options.track_whitespace_changes = options["track_whitespace_changes"].as<bool>();
+    }
+  }
 
   AST_DOCUMENT_NODE_T* old_root = herb_parse(old_source.c_str(), &parser_options, &old_allocator);
   AST_DOCUMENT_NODE_T* new_root = herb_parse(new_source.c_str(), &parser_options, &new_allocator);
@@ -234,7 +241,7 @@ val Herb_diff(const std::string& old_source, const std::string& new_source) {
     return val::null();
   }
 
-  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_options, &diff_allocator);
 
   val result = val::object();
   result.set("identical", diff_result->trees_identical);

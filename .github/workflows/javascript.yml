@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, labeled, closed]
+    types: [opened, synchronize, reopened, labeled, closed]
   release:
     types: [published]
 
@@ -15,7 +15,9 @@ permissions:
 
 jobs:
   main:
-    if: github.event.action != 'closed'
+    if: |
+      github.event.action != 'closed' &&
+      (github.event.action != 'labeled' || github.event.label.name == 'release-preview')
     env:
       GH_TOKEN: ${{ github.token }}
 
@@ -101,7 +103,7 @@ jobs:
           retention-days: 1
 
       - name: Upload docs artifact
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.auto_merge == null
         uses: actions/upload-artifact@v7
         with:
           name: docs-preview
@@ -180,9 +182,10 @@ jobs:
 
   preview-check:
     if: |
+      (github.event.action != 'labeled' || github.event.label.name == 'release-preview') && (
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main'))
 
     runs-on: ubuntu-latest
     outputs:
@@ -201,10 +204,43 @@ jobs:
         if: github.event_name == 'push'
         run: echo "result=true" >> $GITHUB_OUTPUT
 
+  auto-merge-check:
+    name: Check auto-merge status
+    needs: main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+
+    steps:
+      - name: Check whether auto-merge is enabled
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          enabled=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.auto_merge != null')
+
+          echo "Auto-merge enabled for #$PR_NUMBER: $enabled"
+          echo "enabled=$enabled" >> $GITHUB_OUTPUT
+
   preview:
     name: Publish preview packages
-    needs: [main, preview-check]
-    if: needs.preview-check.outputs.has-permissions == 'true'
+    needs: [main, preview-check, auto-merge-check]
+    if: |
+      needs.preview-check.outputs.has-permissions == 'true' &&
+      needs.auto-merge-check.outputs.enabled != 'true'
     runs-on: ubuntu-latest
 
     permissions:
@@ -266,10 +302,11 @@ jobs:
 
   deploy-preview:
     name: Deploy docs preview to Cloudflare Pages
-    needs: [main, preview-check]
+    needs: [main, preview-check, auto-merge-check]
     if: |
       github.event_name == 'pull_request' &&
-      needs.preview-check.outputs.has-permissions == 'true'
+      needs.preview-check.outputs.has-permissions == 'true' &&
+      needs.auto-merge-check.outputs.enabled != 'true'
     runs-on: ubuntu-latest
 
     permissions:

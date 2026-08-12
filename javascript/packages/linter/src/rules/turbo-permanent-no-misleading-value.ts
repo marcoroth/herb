@@ -1,9 +1,10 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
-import { findAttributeByName, getStaticAttributeValue, hasAttributeValue, hasStaticAttributeValue } from "@herb-tools/core"
+import { getStaticAttributeValue, hasAttributeValue, isERBOpenTagNode } from "@herb-tools/core"
 
+import type { StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, HTMLOpenTagNode, ERBOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
@@ -11,39 +12,31 @@ interface TurboPermanentAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLAttributeNode>
 }
 
-class TurboPermanentNoMisleadingValueVisitor extends BaseRuleVisitor<TurboPermanentAutofixContext> {
-  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    const attribute = findAttributeByName(node.children, "data-turbo-permanent")
-
-    if (attribute) {
-      this.checkTurboPermanentAttribute(attribute, { node: attribute })
-    }
-
-    super.visitHTMLOpenTagNode(node)
+class TurboPermanentNoMisleadingValueVisitor extends AttributeVisitorMixin<TurboPermanentAutofixContext> {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeNode, parentNode }: StaticAttributeStaticValueParams): void {
+    this.checkTurboPermanentAttribute(attributeName, attributeNode, parentNode)
   }
 
-  visitERBOpenTagNode(node: ERBOpenTagNode): void {
-    const attribute = findAttributeByName(node.children, "data-turbo-permanent")
+  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode, parentNode }: StaticAttributeDynamicValueParams): void {
+    if (isERBOpenTagNode(parentNode)) return
 
-    if (attribute && hasStaticAttributeValue(attribute)) {
-      this.checkTurboPermanentAttribute(attribute, undefined)
-    }
-
-    super.visitERBOpenTagNode(node)
+    this.checkTurboPermanentAttribute(attributeName, attributeNode, parentNode)
   }
 
-  private checkTurboPermanentAttribute(attribute: HTMLAttributeNode, autofixContext: TurboPermanentAutofixContext | undefined): void {
-    if (!hasAttributeValue(attribute)) return
+  private checkTurboPermanentAttribute(attributeName: string, attributeNode: HTMLAttributeNode, parentNode: HTMLOpenTagNode | ERBOpenTagNode): void {
+    if (attributeName !== "data-turbo-permanent") return
+    if (!hasAttributeValue(attributeNode)) return
 
-    const isTruthyValue = getStaticAttributeValue(attribute)?.trim().toLowerCase() === "true"
+    const autofixContext = isERBOpenTagNode(parentNode) ? undefined : { node: attributeNode }
+    const isTruthyValue = getStaticAttributeValue(attributeNode)?.trim().toLowerCase() === "true"
 
     const explanation = isTruthyValue
       ? `is redundant, because Turbo only checks whether the attribute is present.`
       : `still makes the element permanent, because Turbo only checks whether the attribute is present.`
 
     this.addOffense(
-      `Attribute \`data-turbo-permanent\` should not have a value. \`${IdentityPrinter.print(attribute)}\` ${explanation} Use \`data-turbo-permanent\` instead.`,
-      attribute.value!.location,
+      `Attribute \`data-turbo-permanent\` should not have a value. \`${IdentityPrinter.print(attributeNode)}\` ${explanation} Use \`data-turbo-permanent\` instead.`,
+      attributeNode.value!.location,
       autofixContext
     )
   }

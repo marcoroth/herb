@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderNodeCompilationTest#test_0005_emits a render in statement position"
+input: "{source: \"<% render \\\"silent\\\" %>\", options: {parser_options: {render_nodes: true}}}"
+---
+_buf = ::String.new; render "silent" 
+_buf.to_s
