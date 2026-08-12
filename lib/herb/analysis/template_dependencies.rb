@@ -102,6 +102,7 @@ module Herb
 
       def scan_helpers!
         scan_routes!
+        scan_helper_methods!
 
         helpers_dir = @project_path.join("app", "helpers")
 
@@ -115,6 +116,30 @@ module Herb
       end
 
       private
+      # `helper_method :foo` in a controller exposes a controller method to every view. It is not a
+      # module inclusion, so scanning `app/helpers` alone never finds it.
+      def scan_helper_methods!
+        ["app", "lib"].each do |directory|
+          root = @project_path.join(directory)
+
+          next unless root.directory?
+
+          Dir[root.join("**", "*.rb")].each do |file|
+            source = File.read(file)
+
+            next unless source.include?("helper_method")
+
+            source.scan(/helper_method\s+([:\w\s,]+)/) do |match|
+              match[0].scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
+            end
+          rescue StandardError
+            next
+          end
+        end
+
+        @custom_helpers
+      end
+
       # Route helpers are generated from `config/routes.rb`, so no module defines them and a plain
       # helper scan can never find them. Mirrors the Rust extractor, including nested resources,
       # member/collection routes, and the `_index` suffix Rails adds for singular resource names.
