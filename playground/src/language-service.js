@@ -10,6 +10,7 @@ import {
   FoldingRangeProvider,
   DocumentSymbolProvider,
   DocumentHighlightProvider,
+  RewriteCodeActionProvider,
   TextDocument,
   CompletionItemKind,
   SymbolKind,
@@ -23,6 +24,7 @@ const BASE_DIR = "/"
 const PARSE_CACHE_LIMIT = 12
 
 const TRIGGER_CHARACTERS = [".", ":", "<", "&", '"', "'", "/", ",", " ", "@"]
+const REWRITE_CODE_ACTION_KIND = "refactor.rewrite"
 
 function kindsByName(lspKind, monacoKind) {
   const mapping = new Map()
@@ -58,6 +60,30 @@ function monacoRange(range) {
     range.end.line + 1,
     range.end.character + 1,
   )
+}
+
+function lspRange(range) {
+  return {
+    start: { line: range.startLineNumber - 1, character: range.startColumn - 1 },
+    end: { line: range.endLineNumber - 1, character: range.endColumn - 1 },
+  }
+}
+
+function codeActionFor(action, model) {
+  const changes = action.edit?.changes ?? {}
+
+  const edits = Object.values(changes).flat().map(edit => ({
+    resource: model.uri,
+    versionId: undefined,
+    textEdit: { range: monacoRange(edit.range), text: edit.newText },
+  }))
+
+  return {
+    title: action.title,
+    kind: action.kind,
+    isPreferred: action.isPreferred,
+    edit: { edits },
+  }
 }
 
 function documentFor(model) {
@@ -160,6 +186,7 @@ export function createLanguageService(herb) {
     folding: new FoldingRangeProvider(parserService),
     symbols: new DocumentSymbolProvider(parserService),
     highlights: new DocumentHighlightProvider(parserService),
+    rewriteCodeActions: new RewriteCodeActionProvider(parserService, BASE_DIR),
   }
 }
 
@@ -228,6 +255,24 @@ export function registerLanguageService(herb) {
       provideDocumentSymbols(model) {
         return safely(() =>
           service.symbols.getDocumentSymbols(documentFor(model)).map(documentSymbolFor), [])
+      },
+    }),
+
+    languages.registerCodeActionProvider(LANGUAGE_ID, {
+      providedCodeActionKinds: [REWRITE_CODE_ACTION_KIND],
+
+      provideCodeActions(model, range) {
+        return safely(() => {
+          const actions = service.rewriteCodeActions.getCodeActions(
+            documentFor(model),
+            lspRange(range),
+          )
+
+          return {
+            actions: actions.map(action => codeActionFor(action, model)),
+            dispose() {},
+          }
+        }, { actions: [], dispose() {} })
       },
     }),
 
