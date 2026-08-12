@@ -646,8 +646,8 @@ class Herb::CLI
     @file = @args[2]
     state = @args[3]
 
-    unless @file && state
-      puts "Please provide a template path and a state name."
+    unless @file
+      puts "Please provide a template path."
       puts "Example: herb actionview flow app/views/posts/show.html.erb @post"
       exit(1)
     end
@@ -663,6 +663,15 @@ class Herb::CLI
     dependencies = Herb::Analysis::TemplateDependencies.new(project_root)
     dependencies.scan_helpers!
 
+    result = dependencies.analyze(path)
+    available = (result.instance_variables + result.constants).sort
+
+    unless state
+      actionview_header(path, project_root)
+      print_available_state(dependencies, path, available, project_root)
+      exit(0)
+    end
+
     flow = dependencies.state_flow(path, state)
 
     actionview_header(path, project_root)
@@ -670,7 +679,10 @@ class Herb::CLI
     unless flow
       puts " #{dimmed("'#{state}' is not read by this template.")}"
       puts ""
-      exit(0)
+
+      print_available_state(dependencies, path, available, project_root)
+
+      exit(1)
     end
 
     puts " #{bold("State flow")} #{dimmed("for #{yellow(state)}")}"
@@ -678,6 +690,32 @@ class Herb::CLI
 
     print_flow_node(flow, project_root, "", true, true)
 
+    puts ""
+  end
+
+  def print_available_state(dependencies, path, available, project_root)
+    if available.empty?
+      puts " #{dimmed("This template does not read any instance variables or constants.")}"
+      puts ""
+
+      return
+    end
+
+    relative = Pathname.new(path).relative_path_from(Pathname.new(project_root)).to_s
+
+    puts " #{bold("Available state")} #{dimmed("(#{available.size} in this template)")}"
+    puts ""
+
+    available.each do |name|
+      affected = dependencies.affected_templates(path, name)
+      reach = affected.size <= 1 ? dimmed("this template only") : dimmed("#{affected.size} templates")
+
+      puts "   #{yellow(name)} #{reach}"
+    end
+
+    puts ""
+    puts " #{dimmed("Trace one with:")}"
+    puts "   #{dimmed("herb actionview flow #{relative} #{available.first}")}"
     puts ""
   end
 
