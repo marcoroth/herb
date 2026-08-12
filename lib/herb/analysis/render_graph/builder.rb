@@ -14,13 +14,15 @@ module Herb
 
         PARSER_OPTIONS = { render_nodes: true, prism_nodes: true, action_view_helpers: true }.freeze #: Hash[Symbol, bool]
 
-        ScannedTemplate = Data.define(:sites, :document_root, :roots)
+        ScannedTemplate = Data.define(:sites, :yields, :document_root, :roots)
+        YieldSite = Data.define(:ancestors, :ancestor_attributes, :location)
         RenderSite = Data.define(:node, :ancestors, :ancestor_attributes)
-        CollectedCallSites = Data.define(:unresolved, :document_root, :roots)
+        CollectedCallSites = Data.define(:unresolved, :yields, :document_root, :roots)
         StackEntry = Data.define(:tag_name, :attributes)
 
         class ScanState
           attr_reader :sites #: Array[RenderSite]
+          attr_reader :yields #: Array[YieldSite]
           attr_reader :stack #: Array[StackEntry]
           attr_reader :tags #: Array[String]
           attr_reader :conditional_tags #: Array[String]
@@ -33,6 +35,7 @@ module Herb
           #: () -> void
           def initialize
             @sites = [] #: Array[RenderSite]
+            @yields = [] #: Array[YieldSite]
             @stack = [] #: Array[StackEntry]
             @tags = [] #: Array[String]
             @conditional_tags = [] #: Array[String]
@@ -45,13 +48,15 @@ module Herb
 
         NOTHING_COLLECTED = CollectedCallSites.new(
           unresolved: 0,
+          yields: [],
           document_root: false,
           roots: NO_ROOTS
         ) #: CollectedCallSites
 
-        #: (PartialIndex) -> void
-        def initialize(partials)
+        #: (PartialIndex, ?resolve_layouts: bool) -> void
+        def initialize(partials, resolve_layouts: true)
           @partials = partials
+          @resolve_layouts = resolve_layouts
         end
 
         #: (String, String, Hash[String, Array[PartialCallSite]]) -> CollectedCallSites
@@ -104,6 +109,7 @@ module Herb
 
           CollectedCallSites.new(
             unresolved: unresolved,
+            yields: scanned.yields,
             document_root: scanned.document_root,
             roots: TemplateRoots.new(
               tags: scanned.roots.tags,
@@ -116,8 +122,13 @@ module Herb
 
         #: (Array[String]) -> RenderGraph
         def build(templates)
-          graph = RenderGraph.new
+          call_sites = {} #: Hash[String, Array[PartialCallSite]]
+          roots = {} #: Hash[String, TemplateRoots]
+          document_roots = Set.new #: Set[String]
+          unresolved_renders = {} #: Hash[String, Integer]
           skipped = Set.new #: Set[String]
+          layout_yields = {} #: Hash[String, Array[YieldSite]]
+          scanned = [] #: Array[String]
 
           templates.each do |file|
             source = read(file)
@@ -127,20 +138,60 @@ module Herb
               next
             end
 
-            sites = {} #: Hash[String, Array[PartialCallSite]]
-            collected = collect_call_sites(file, source, sites)
+            collected = collect_call_sites(file, source, call_sites)
 
-            graph.replace_calls_from(file, sites, collected.unresolved)
-            graph.set_roots(file, collected.roots)
-            graph.add_document_root(file) if collected.document_root
+            unresolved_renders[file] = collected.unresolved if collected.unresolved.positive?
+            document_roots.add(file) if collected.document_root
+            layout_yields[file] = collected.yields if collected.yields.any?
+            roots[file] = collected.roots
+            scanned << file
           end
 
-          skipped.each { |file| graph.skip(file) }
+          add_layout_call_sites(scanned, layout_yields, call_sites) if @resolve_layouts
 
-          graph
+          RenderGraph.new(call_sites, roots, document_roots, unresolved_renders, skipped)
         end
 
         private
+
+        #: (Array[String], Hash[String, Array[YieldSite]], Hash[String, Array[PartialCallSite]]) -> void
+        def add_layout_call_sites(files, layout_yields, call_sites)
+          view_root = @partials.view_root
+          layouts = {} #: Hash[String, String]
+
+          files.each do |file|
+            name = PartialResolution.template_name_for(file, view_root)
+
+            next unless name && layout_yields.key?(file)
+
+            existing = layouts[name]
+
+            next if existing && !PartialResolution.outranks_template?(file, existing)
+
+            layouts[name] = file
+          end
+
+          files.each do |file|
+            PartialResolution.layout_candidates_for(file, view_root).each do |candidate|
+              layout = layouts[candidate]
+
+              next if layout.nil? || layout == file
+
+              (layout_yields[layout] || []).each do |site|
+                (call_sites[file] ||= []) << PartialCallSite.new(
+                  caller: layout,
+                  locals: [],
+                  ancestors: site.ancestors,
+                  ancestor_attributes: site.ancestor_attributes,
+                  via: "layout",
+                  location: site.location
+                )
+              end
+
+              break
+            end
+          end
+        end
 
         #: (String) -> Herb::AST::DocumentNode
         def parse(source)
@@ -162,6 +213,7 @@ module Herb
 
           ScannedTemplate.new(
             sites: state.sites,
+            yields: state.yields,
             document_root: state.document_root,
             roots: TemplateRoots.new(
               tags: state.tags,
@@ -197,6 +249,14 @@ module Herb
             )
           end
 
+          if bare_yield?(current)
+            state.yields << YieldSite.new(
+              ancestors: state.stack.map(&:tag_name),
+              ancestor_attributes: ancestor_attributes_for(state),
+              location: call_site_location(current)
+            )
+          end
+
           current.child_nodes.each { |child| walk(child, state) if child }
 
           state.stack.pop if tag_name
@@ -217,6 +277,18 @@ module Herb
               state.roots_resolved = false
             end
           end
+        end
+
+        #: (ScanState) -> Array[Hash[String, String]]?
+        def ancestor_attributes_for(state)
+          attributes = state.stack.map(&:attributes)
+
+          attributes.any? { |attribute| attribute.any? } ? attributes : nil
+        end
+
+        #: (Herb::AST::Node) -> bool
+        def bare_yield?(node)
+          node.is_a?(AST::ERBYieldNode) && node.content&.value&.strip == YIELD_MARKER
         end
 
         #: (Herb::AST::Node) -> bool

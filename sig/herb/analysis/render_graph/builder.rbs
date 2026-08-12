@@ -17,16 +17,33 @@ module Herb
         class ScannedTemplate < Data
           attr_reader sites(): untyped
 
+          attr_reader yields(): untyped
+
           attr_reader document_root(): untyped
 
           attr_reader roots(): untyped
 
-          def self.new: (untyped sites, untyped document_root, untyped roots) -> instance
-                      | (sites: untyped, document_root: untyped, roots: untyped) -> instance
+          def self.new: (untyped sites, untyped yields, untyped document_root, untyped roots) -> instance
+                      | (sites: untyped, yields: untyped, document_root: untyped, roots: untyped) -> instance
 
-          def self.members: () -> [ :sites, :document_root, :roots ]
+          def self.members: () -> [ :sites, :yields, :document_root, :roots ]
 
-          def members: () -> [ :sites, :document_root, :roots ]
+          def members: () -> [ :sites, :yields, :document_root, :roots ]
+        end
+
+        class YieldSite < Data
+          attr_reader ancestors(): untyped
+
+          attr_reader ancestor_attributes(): untyped
+
+          attr_reader location(): untyped
+
+          def self.new: (untyped ancestors, untyped ancestor_attributes, untyped location) -> instance
+                      | (ancestors: untyped, ancestor_attributes: untyped, location: untyped) -> instance
+
+          def self.members: () -> [ :ancestors, :ancestor_attributes, :location ]
+
+          def members: () -> [ :ancestors, :ancestor_attributes, :location ]
         end
 
         class RenderSite < Data
@@ -47,16 +64,18 @@ module Herb
         class CollectedCallSites < Data
           attr_reader unresolved(): untyped
 
+          attr_reader yields(): untyped
+
           attr_reader document_root(): untyped
 
           attr_reader roots(): untyped
 
-          def self.new: (untyped unresolved, untyped document_root, untyped roots) -> instance
-                      | (unresolved: untyped, document_root: untyped, roots: untyped) -> instance
+          def self.new: (untyped unresolved, untyped yields, untyped document_root, untyped roots) -> instance
+                      | (unresolved: untyped, yields: untyped, document_root: untyped, roots: untyped) -> instance
 
-          def self.members: () -> [ :unresolved, :document_root, :roots ]
+          def self.members: () -> [ :unresolved, :yields, :document_root, :roots ]
 
-          def members: () -> [ :unresolved, :document_root, :roots ]
+          def members: () -> [ :unresolved, :yields, :document_root, :roots ]
         end
 
         class StackEntry < Data
@@ -74,6 +93,8 @@ module Herb
 
         class ScanState
           attr_reader sites: Array[RenderSite]
+
+          attr_reader yields: Array[YieldSite]
 
           attr_reader stack: Array[StackEntry]
 
@@ -95,8 +116,8 @@ module Herb
 
         NOTHING_COLLECTED: CollectedCallSites
 
-        # : (PartialIndex) -> void
-        def initialize: (PartialIndex) -> void
+        # : (PartialIndex, ?resolve_layouts: bool) -> void
+        def initialize: (PartialIndex, ?resolve_layouts: bool) -> void
 
         # : (String, String, Hash[String, Array[PartialCallSite]]) -> CollectedCallSites
         def collect_call_sites: (String, String, Hash[String, Array[PartialCallSite]]) -> CollectedCallSites
@@ -105,6 +126,9 @@ module Herb
         def build: (Array[String]) -> RenderGraph
 
         private
+
+        # : (Array[String], Hash[String, Array[YieldSite]], Hash[String, Array[PartialCallSite]]) -> void
+        def add_layout_call_sites: (Array[String], Hash[String, Array[YieldSite]], Hash[String, Array[PartialCallSite]]) -> void
 
         # : (String) -> Herb::AST::DocumentNode
         def parse: (String) -> Herb::AST::DocumentNode
@@ -120,6 +144,12 @@ module Herb
 
         # : (Herb::AST::Node, String?, ScanState) -> void
         def collect_root: (Herb::AST::Node, String?, ScanState) -> void
+
+        # : (ScanState) -> Array[Hash[String, String]]?
+        def ancestor_attributes_for: (ScanState) -> Array[Hash[String, String]]?
+
+        # : (Herb::AST::Node) -> bool
+        def bare_yield?: (Herb::AST::Node) -> bool
 
         # : (Herb::AST::Node) -> bool
         def conditional_node?: (Herb::AST::Node) -> bool

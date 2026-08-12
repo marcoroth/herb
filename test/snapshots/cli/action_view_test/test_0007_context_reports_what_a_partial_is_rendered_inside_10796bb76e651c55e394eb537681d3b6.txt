@@ -1,0 +1,20 @@
+---
+source: "CLI::ActionViewTest#test_0007_context reports what a partial is rendered inside"
+input: "<html><body><table><%= render \"posts/row\" %></table></body></html>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_row.html.erb
+
+ Rendered inside (1 path)
+
+   └── html › body › table
+
+ Verdicts
+
+   ✓ body always
+   ✓ html always
+   ✓ table always
+

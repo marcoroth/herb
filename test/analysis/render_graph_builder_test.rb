@@ -132,6 +132,88 @@ class RenderGraphBuilderTest < Minitest::Spec
     assert_equal :always, graph.context_of(File.join(@view_root, "_row.html.erb")).ancestor_verdict([], "table")
   end
 
+  def write_layout(name, content)
+    path = File.join(@project_path, "app", "views", "layouts", name)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, content)
+    path
+  end
+
+  def graph_for(resolve_layouts: true)
+    index = Herb::Analysis::PartialIndex.build(@project_path)
+
+    Herb::Analysis::RenderGraph::Builder.new(index, resolve_layouts: resolve_layouts).build(index.templates)
+  end
+
+  test "prefixes a partial context with the ancestors from its layout" do
+    write_layout("application.html.erb", "<html><body><main><%= yield %></main></body></html>")
+    write("index.html.erb", '<table><%= render "posts/row" %></table>')
+    row = write("_row.html.erb", "<tr></tr>")
+
+    assert_equal [["html", "body", "main", "table"]], graph_for.context_of(row).chains.map(&:tags)
+  end
+
+  test "resolves the context once a layout supplies the document root" do
+    write_layout("application.html.erb", "<html><body><%= yield %></body></html>")
+    write("index.html.erb", '<table><%= render "posts/row" %></table>')
+    row = write("_row.html.erb", "<tr></tr>")
+
+    context = graph_for.context_of(row)
+
+    assert context.resolved
+    assert_equal :never, context.ancestor_verdict([], "form")
+  end
+
+  test "leaves the context unresolved when layouts are not resolved" do
+    write_layout("application.html.erb", "<html><body><%= yield %></body></html>")
+    write("index.html.erb", '<table><%= render "posts/row" %></table>')
+    row = write("_row.html.erb", "<tr></tr>")
+
+    context = graph_for(resolve_layouts: false).context_of(row)
+
+    refute context.resolved
+    assert_equal :unknown, context.ancestor_verdict([], "form")
+  end
+
+  test "prefers a directory layout over the application layout" do
+    write_layout("application.html.erb", "<html><body><%= yield %></body></html>")
+    write_layout("posts.html.erb", "<html><section><%= yield %></section></html>")
+    write("index.html.erb", '<%= render "posts/row" %>')
+    row = write("_row.html.erb", "<tr></tr>")
+
+    assert_includes graph_for.context_of(row).chains.first.tags, "section"
+  end
+
+  test "records the layout as the caller" do
+    write_layout("application.html.erb", "<html><body><%= yield %></body></html>")
+    entry = write("index.html.erb", "<p>hello</p>")
+
+    call_site = graph_for.callers_of(entry).first
+
+    assert_equal "layout", call_site.via
+    assert_equal File.join(@project_path, "app", "views", "layouts", "application.html.erb"), call_site.caller
+  end
+
+  test "does not give a layout a layout of its own" do
+    layout = write_layout("application.html.erb", "<html><body><%= yield %></body></html>")
+
+    assert_empty graph_for.callers_of(layout)
+  end
+
+  test "does not give a partial a layout" do
+    write_layout("application.html.erb", "<html><body><%= yield %></body></html>")
+    row = write("_row.html.erb", "<tr></tr>")
+
+    assert_empty graph_for.callers_of(row)
+  end
+
+  test "ignores a yield that names a content area" do
+    write_layout("application.html.erb", "<html><body><%= yield :sidebar %></body></html>")
+    entry = write("index.html.erb", "<p>hello</p>")
+
+    assert_empty graph_for.callers_of(entry)
+  end
+
   test "records a template it could not read as skipped" do
     index = Herb::Analysis::PartialIndex.build(@project_path)
     graph = Herb::Analysis::RenderGraph::Builder.new(index).build([File.join(@view_root, "missing.html.erb")])

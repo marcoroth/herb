@@ -15,6 +15,14 @@ module Herb
 
       VIEW_ROOT: String
 
+      LAYOUTS_DIRECTORY: String
+
+      APPLICATION_LAYOUT: String
+
+      MAILER_LAYOUT: String
+
+      MAILER_SUFFIX: String
+
       # : (String | Pathname) -> Pathname
       def self.view_root_for: (String | Pathname) -> Pathname
 
@@ -32,6 +40,12 @@ module Herb
 
       # : (Array[String]) -> Array[String]
       def self.by_precedence: (Array[String]) -> Array[String]
+
+      # : (String, String | Pathname) -> String?
+      def self.template_name_for: (String, String | Pathname) -> String?
+
+      # : (String, String | Pathname) -> Array[String]
+      def self.layout_candidates_for: (String, String | Pathname) -> Array[String]
 
       # : (String, String | Pathname) -> String?
       def self.partial_name_for: (String, String | Pathname) -> String?

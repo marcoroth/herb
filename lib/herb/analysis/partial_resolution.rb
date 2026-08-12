@@ -23,6 +23,11 @@ module Herb
 
       VIEW_ROOT = File.join("app", "views") #: String
 
+      LAYOUTS_DIRECTORY = "layouts" #: String
+      APPLICATION_LAYOUT = "application" #: String
+      MAILER_LAYOUT = "mailer" #: String
+      MAILER_SUFFIX = "_mailer" #: String
+
       class << self
         #: (String | Pathname) -> Pathname
         def view_root_for(project_path)
@@ -77,6 +82,48 @@ module Herb
         #: (Array[String]) -> Array[String]
         def by_precedence(files)
           files.sort { |a, b| outranks_template?(a, b) ? -1 : 1 }
+        end
+
+        #: (String, String | Pathname) -> String?
+        def template_name_for(file, view_root)
+          return nil if partial_path?(file)
+
+          relative = relative_to_view_root(file, view_root)
+
+          return nil unless relative
+
+          directory = File.dirname(relative)
+          name = File.basename(relative).sub(/\..*\z/, "")
+
+          return nil if name.empty?
+
+          directory == "." ? name : "#{directory}/#{name}"
+        end
+
+        #: (String, String | Pathname) -> Array[String]
+        def layout_candidates_for(template_file, view_root)
+          relative = relative_to_view_root(template_file, view_root)
+
+          return [] unless relative
+          return [] if File.basename(relative).start_with?(PARTIAL_PREFIX)
+
+          directory = File.dirname(relative)
+
+          return [] if directory == LAYOUTS_DIRECTORY || directory.start_with?("#{LAYOUTS_DIRECTORY}/")
+          return ["#{LAYOUTS_DIRECTORY}/#{APPLICATION_LAYOUT}"] if directory == "." || directory == "/"
+
+          segments = directory.split("/")
+          mailer = segments.last.end_with?(MAILER_SUFFIX)
+          candidates = [] #: Array[String]
+
+          until segments.empty?
+            candidates << "#{LAYOUTS_DIRECTORY}/#{segments.join("/")}"
+            segments.pop
+          end
+
+          candidates << "#{LAYOUTS_DIRECTORY}/#{mailer ? MAILER_LAYOUT : APPLICATION_LAYOUT}"
+
+          candidates
         end
 
         #: (String, String | Pathname) -> String?
