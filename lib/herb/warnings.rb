@@ -8,7 +8,6 @@ module Herb
     #|  location: serialized_location?,
     #|  message: String
     #| }
-
     class Warning
       attr_reader :type #: String
       attr_reader :location #: Location?

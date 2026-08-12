@@ -153,7 +153,6 @@ Metrics/BlockLength:
     - lib/herb/project.rb
     - test/**/*_test.rb
     - bin/**/*
-    - test/engine/slots/visitor_test.rb
 
 Metrics/ParameterLists:
   Exclude:

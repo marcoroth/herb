@@ -410,7 +410,7 @@ module Herb
 
       #: (String) -> String
       def escape_key_literal(literal)
-        literal.gsub(/["\\]/) { |character| "\\#{character}" }.gsub('#{', '\\#{')
+        literal.gsub(/["\\]|\#\{/) { |match| "\\#{match}" }
       end
 
       #: (untyped) -> Array[untyped]
