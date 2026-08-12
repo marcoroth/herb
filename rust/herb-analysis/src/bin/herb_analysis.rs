@@ -24,7 +24,6 @@ struct CLIOptions {
   built_ins: bool,
   help: bool,
   version: bool,
-  no_color: bool,
 }
 
 fn main() {
@@ -33,10 +32,6 @@ fn main() {
 
 fn run() -> i32 {
   let options = parse_args(env::args().collect());
-
-  if options.no_color {
-    colored::control::set_override(false);
-  }
 
   if options.help || (options.command.is_none() && !options.version) {
     print_usage();
@@ -76,7 +71,6 @@ fn parse_args(args: Vec<String>) -> CLIOptions {
     match arg.as_str() {
       "--help" | "-h" => options.help = true,
       "--version" | "-v" => options.version = true,
-      "--no-color" => options.no_color = true,
       "--built-ins" => options.built_ins = true,
       "--roots" => {
         index += 1;
@@ -632,7 +626,6 @@ fn print_usage() {
   println!("  --include-internal            include registry entries marked internal in `audit`");
   println!("  --nesting <A::B>              lexical nesting to resolve a constant against");
   println!("  --built-ins                   seed core class data before resolving ancestors");
-  println!("  --no-color                    disable colored output");
   println!();
   println!("Examples:");
   println!("  herb-analysis helpers                      # everything a template in this app can call");

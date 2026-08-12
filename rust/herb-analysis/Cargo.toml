@@ -15,9 +15,14 @@ path = "src/lib.rs"
 [[bin]]
 name = "herb-analysis"
 path = "src/bin/herb_analysis.rs"
+required-features = ["cli"]
+
+[features]
+default = []
+cli = ["dep:colored"]
 
 [dependencies]
-colored = "3"
+colored = { version = "3", optional = true }
 herb = { path = ".." }
 rubydex = "=0.2.5"
 
