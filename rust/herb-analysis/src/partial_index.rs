@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use herb::herb::{parse_with_options, ParserOptions};
 
 use crate::partial_declaration::PartialDeclaration;
-use crate::partial_resolution::{self, by_precedence, partial_name_for, partial_path, template_path, view_root_for, APPLICATION_DIRECTORY};
+use crate::partial_resolution::{self, by_precedence, partial_name_for, template_path, view_root_for, APPLICATION_DIRECTORY};
 
 pub struct PartialIndex {
   view_root: PathBuf,

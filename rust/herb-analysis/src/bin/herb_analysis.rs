@@ -30,6 +30,9 @@ fn main() {
   process::exit(run());
 }
 
+#[path = "../actionview_cli.rs"]
+mod actionview;
+
 fn run() -> i32 {
   let options = parse_args(env::args().collect());
 
@@ -51,6 +54,19 @@ fn run() -> i32 {
     Some("ancestors") => ancestors(&options),
     Some("constants") => constants(&options),
     Some("stats") => stats(&options),
+    Some("actionview") => {
+      let arguments: Vec<String> = env::args().skip(3).collect();
+
+      match env::args().nth(2) {
+        Some(subcommand) if subcommand == "render" => actionview::render(&arguments),
+        Some(subcommand) => actionview::run(&subcommand, &arguments),
+        None => {
+          actionview::print_usage();
+
+          0
+        }
+      }
+    }
     Some(other) => {
       eprintln!("{}", format!("Unknown command: {other}").red());
       print_usage();
