@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
+import { ActionViewTagHelperToHTMLRewriter, cloneNode } from "@herb-tools/rewriter"
 import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize } from "./range_utils"
@@ -185,7 +185,7 @@ export class HoverProvider {
 
     if (isLeaf) {
       const rewriter = new ActionViewTagHelperToHTMLRewriter()
-      const rewrittenNode = rewriter.rewrite(bestElement.node, { baseDir: this.baseDir, shallow: true })
+      const rewrittenNode = rewriter.rewrite(cloneNode(bestElement.node), { baseDir: this.baseDir, shallow: true })
       const htmlOutput = IdentityPrinter.print(rewrittenNode)
 
       parts.push(`**HTML equivalent**\n\`\`\`erb\n${dedent(htmlOutput.trim())}\n\`\`\``)
@@ -278,15 +278,15 @@ export class HoverProvider {
 
     if (!match) return ""
 
-    const rewrittenNode = rewriter.rewrite(match.node, {
+    const rewrittenNode = rewriter.rewrite(cloneNode(match.node), {
       baseDir: this.baseDir,
       shallow: true,
       includeBody: options.includeBody,
     })
 
     if (!options.includeBody) {
-      const openTag = match.node.open_tag ? IdentityPrinter.print(match.node.open_tag) : ""
-      const closeTag = match.node.close_tag ? IdentityPrinter.print(match.node.close_tag) : ""
+      const openTag = rewrittenNode.open_tag ? IdentityPrinter.print(rewrittenNode.open_tag) : ""
+      const closeTag = rewrittenNode.close_tag ? IdentityPrinter.print(rewrittenNode.close_tag) : ""
       return `${openTag}\n  ...\n${closeTag}`
     }
 

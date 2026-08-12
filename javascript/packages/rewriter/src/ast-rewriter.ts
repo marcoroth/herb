@@ -62,6 +62,10 @@ export abstract class ASTRewriter {
    * This method is called synchronously for each file being formatted.
    * Modify the AST in place or return a new Node.
    *
+   * Rewriters take ownership of the node they are given, so a caller that
+   * keeps using its tree afterwards, such as one holding a shared or cached
+   * parse result, has to pass a `cloneNode()` copy instead.
+   *
    * @param node - The AST node from @herb-tools/core
    * @param context - Context with filePath and baseDir
    * @returns The modified Node (can be the same object mutated in place)

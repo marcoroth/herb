@@ -94,9 +94,9 @@ export class RewriteCodeActionProvider {
     if (parseResult.failed) return null
 
     const rewriter = new ActionViewTagHelperToHTMLRewriter()
-    rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
+    const rewrittenNode = rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
 
-    const rewrittenText = IdentityPrinter.print(parseResult.value)
+    const rewrittenText = IdentityPrinter.print(rewrittenNode)
 
     if (rewrittenText === originalText) return null
 
@@ -130,9 +130,9 @@ export class RewriteCodeActionProvider {
     if (parseResult.failed) return null
 
     const rewriter = new HTMLToActionViewTagHelperRewriter()
-    rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
+    const rewrittenNode = rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
 
-    const rewrittenText = IdentityPrinter.print(parseResult.value)
+    const rewrittenText = IdentityPrinter.print(rewrittenNode)
 
     if (rewrittenText === originalText) return null
 
