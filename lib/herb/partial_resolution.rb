@@ -37,6 +37,33 @@ module Herb
         EXTENSIONS.any? { |extension| name.end_with?(extension) }
       end
 
+      #: (String) -> Integer
+      def template_rank(file)
+        basename = File.basename(file)
+        dot = basename.index(".")
+
+        return EXTENSIONS.size unless dot
+
+        rank = EXTENSIONS.index(basename[dot..])
+
+        rank || EXTENSIONS.size
+      end
+
+      #: (String, String) -> bool
+      def outranks_template?(candidate, incumbent)
+        candidate_rank = template_rank(candidate)
+        incumbent_rank = template_rank(incumbent)
+
+        return candidate_rank < incumbent_rank unless candidate_rank == incumbent_rank
+
+        candidate < incumbent
+      end
+
+      #: (Array[String]) -> Array[String]
+      def by_precedence(files)
+        files.sort { |a, b| outranks_template?(a, b) ? -1 : 1 }
+      end
+
       #: (String, String | Pathname) -> String?
       def partial_name_for(file, view_root)
         return nil unless partial_path?(file)

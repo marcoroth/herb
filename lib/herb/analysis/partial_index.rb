@@ -73,6 +73,7 @@ module Herb
           (map[name] ||= []) << file
         end
 
+        map.each_value { |files| files.replace(PartialResolution.by_precedence(files)) }
         map
       end
     end

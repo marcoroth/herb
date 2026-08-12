@@ -18,6 +18,15 @@ module Herb
     # : (String) -> bool
     def self.partial_path?: (String) -> bool
 
+    # : (String) -> Integer
+    def self.template_rank: (String) -> Integer
+
+    # : (String, String) -> bool
+    def self.outranks_template?: (String, String) -> bool
+
+    # : (Array[String]) -> Array[String]
+    def self.by_precedence: (Array[String]) -> Array[String]
+
     # : (String, String | Pathname) -> String?
     def self.partial_name_for: (String, String | Pathname) -> String?
   end

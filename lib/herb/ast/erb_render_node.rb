@@ -2,6 +2,8 @@
 
 require "did_you_mean"
 
+require_relative "../partial_resolution"
+
 module Herb
   module AST
     class ERBRenderNode < Node

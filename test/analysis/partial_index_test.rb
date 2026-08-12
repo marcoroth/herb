@@ -93,6 +93,13 @@ class PartialIndexTest < Minitest::Spec
     assert_equal 1, Herb::Analysis::PartialIndex.build(@project_path).templates.size
   end
 
+  test "puts the preferred variant first when a name has several" do
+    write("app/views/posts/_card.erb")
+    preferred = write("app/views/posts/_card.html.erb")
+
+    assert_equal preferred, Herb::Analysis::PartialIndex.build(@project_path).files_for("posts/card").first
+  end
+
   test "takes an explicit template list when one is given" do
     write("app/views/posts/_card.html.erb")
     kept = write("app/views/posts/_byline.html.erb")
