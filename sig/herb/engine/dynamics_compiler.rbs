@@ -11,7 +11,7 @@ module Herb
     #
     #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
     #     view.instance_eval(source)
-    #     #=> ["Hello"]
+    #     #=> { 0 => "Hello" }
     #
     # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
     # and its `dynamic` values for the same reason. A template's statics never change between
@@ -20,28 +20,42 @@ module Herb
     # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
     # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
     #
-    # ## One entry per tag, at a fixed index
+    # ## The shape follows the template, not the render
     #
-    # Every `<%= %>` in the template owns an index, decided while compiling and the same on every
-    # render. Control flow contributes no entries of its own, so the length of the result is a fact
-    # about the template rather than about the render:
+    # Every insertion point owns an index, decided while compiling and the same on every render.
+    # Control flow owns one too, because what it decided is itself a value that changes:
     #
     #     <% if admin? %><%= secret %><% else %><%= public %><% end %>
-    #     #=> ["s", nil]   when admin?
-    #     #=> [nil, "p"]   otherwise
+    #     #=> { 0 => { branch: 0, slots: { 1 => "s" } } }   when admin?
+    #     #=> { 0 => { branch: 1, slots: { 2 => "p" } } }   otherwise
     #
-    # A branch that did not run leaves its tags `nil`. Both branches keep their own indices, so a
-    # condition flipping changes which entries are filled and never what the entries mean.
+    # Both branches keep their own indices, so a condition flipping changes which indices are
+    # present and never what an index means.
     #
-    # ## Loops are the exception
+    # ## Absent means it did not run
     #
-    # A tag inside a loop runs once per iteration, and how many iterations there are is only known
-    # at render time. Its entry is therefore a list rather than a value:
+    # A key is missing when the code that would have filled it never ran, which is the same thing
+    # the rendered markup says by not being there. Nothing has to be sent about a branch that was
+    # not taken, and nothing can be learned about one either.
     #
-    #     <% names.each do |name| %><h1><%= name %></h1><% end %>
-    #     #=> [["Marco", "Joe"]]
+    # A conditional and a collection are always present, because both are evaluated on every render
+    # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
+    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
     #
-    # The index still belongs to the tag. Only its shape depends on the render.
+    # ## Collections group by row
+    #
+    # A collection holds its rows in render order, each row carrying the slots inside it:
+    #
+    #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
+    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #
+    # Grouping the other way would give one list per slot and leave the client to zip them back
+    # together, which it cannot do once a row is inserted rather than appended.
+    #
+    # Rows are keyed by their position for now. Taking the key the template declares, through
+    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
+    # reordered, and it belongs to `SlotVisitor` rather than here.
     #
     # ## Escaping
     #
@@ -59,12 +73,34 @@ module Herb
 
       BLOCK_BUFFER: String
 
-      # Records, while walking, which tag each expression belongs to and whether that tag sits
-      # inside a loop. Both are decided by where the tag is written, so both are known here and
-      # neither can be worked out from the token stream alone.
+      SLOT_BUFFER: String
+
+      SCOPE_BUFFER: String
+
+      ROWS_BUFFER: String
+
+      KEY_BUFFER: String
+
+      BRANCHING_NODES: Array[String]
+
       class Compiler < Herb::Engine::Compiler
         # : (untyped, ?Hash[Symbol, untyped]) -> void
         def initialize: (untyped, ?Hash[Symbol, untyped]) -> void
+
+        # : (untyped) { () -> void } -> void
+        def visit_erb_control_node: (untyped) { () -> void } -> void
+
+        # : (untyped) -> void
+        def visit_erb_if_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_unless_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_case_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_case_match_node: (untyped) -> void
 
         # : (untyped) -> void
         def visit_erb_iteration_block_node: (untyped) -> void
@@ -78,26 +114,46 @@ module Herb
         # : (untyped) -> void
         def visit_erb_until_node: (untyped) -> void
 
-        # Dynamics are a token type the base compiler does not know, so the dispatch is repeated
-        # here rather than inherited. Everything else is handed over unchanged.
+        # : (untyped) -> void
+        def visit_erb_block_node: (untyped) -> void
+
         # : () -> void
         def generate_output: () -> void
 
         private
 
-        # The extras ride in the slot the base compiler already carries through its token
-        # optimization, so nothing here depends on that implementation keeping a wider tuple.
+        # : () -> Integer?
+        def claim: () -> Integer?
+
         # : (String) -> void
         def add_expression: (String) -> void
 
         # : (String) -> void
         def add_expression_escaped: (String) -> void
 
-        # : () -> bool
-        def in_loop?: () -> bool
+        # : (untyped) -> bool
+        def output_block?: (untyped) -> bool
 
-        # : [T] () { () -> T } -> T
-        def within_loop: [T] () { () -> T } -> T
+        # : (untyped) -> bool
+        def branch?: (untyped) -> bool
+
+        # : (Integer) -> Integer
+        def next_branch: (Integer) -> Integer
+
+        # : (untyped) { () -> void } -> void
+        def conditional: (untyped) { () -> void } -> void
+
+        # : (untyped, Integer) -> void
+        def own_branches: (untyped, Integer) -> void
+
+        # : () { (Integer?) -> void } -> void
+        def collection: () { (Integer?) -> void } -> void
+
+        # : (Integer?) { () -> void } -> void
+        def row: (Integer?) { () -> void } -> void
+
+        # : (untyped, Symbol) -> void
+        def iteration: (untyped, Symbol) -> void
       end
 
       # : (String, ?Hash[Symbol, untyped]) -> void
@@ -106,49 +162,59 @@ module Herb
       # : () -> untyped
       def compiler_class: () -> untyped
 
-      # Static markup is what this compiler exists to leave out. Inside a block it is kept, because
-      # there the buffer is a String the block returns rather than the list of dynamics.
       # : (String) -> void
       def add_text: (String) -> void
 
-      # A tag writes to the index it was given. Inside a loop it appends there instead, because it
-      # runs once per iteration and the entry holds all of them.
-      # : (String, Symbol?, Integer, bool, bool) -> void
-      def add_dynamic: (String, Symbol?, Integer, bool, bool) -> void
+      # : (Symbol, *untyped) -> void
+      def add_scope: (Symbol, *untyped) -> void
 
-      # A tag that takes a block owns an index like any other, so the tags after it keep theirs.
-      # : (String, Integer, bool) -> void
-      def add_dynamic_block: (String, Integer, bool) -> void
+      # : (String, Symbol?, Integer?, bool) -> void
+      def add_dynamic: (String, Symbol?, Integer?, bool) -> void
+
+      # : (String, Integer?, bool) -> void
+      def add_dynamic_block: (String, Integer?, bool) -> void
 
       # : (String, ?escaped: bool) -> void
       def add_expression_block_end: (String, ?escaped: bool) -> void
-
-      # Assigning by index only grows the array as far as the tags that ran, so a template whose
-      # last tag sat in a branch that was skipped would come back short. The length is a fact about
-      # the template, so it is set once the walk has counted the tags.
-      # : (String) -> void
-      def add_postamble: (String) -> void
 
       # : () -> String
       def inspect: () -> String
 
       private
 
-      # : (Integer) -> void
-      def claim: (Integer) -> void
+      # : () -> String
+      def current_scope: () -> String
 
-      # Where a tag was written decides how it is escaped, so an attribute, a `<script>`, and
-      # ordinary text each get their own function even for the same expression.
+      # : (Integer) -> void
+      def scope_open_conditional: (Integer) -> void
+
+      # : (Integer, Integer) -> void
+      def scope_branch: (Integer, Integer) -> void
+
+      # : (Integer) -> void
+      def scope_close_conditional: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_open_collection: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_row_begin: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_row_end: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_close_collection: (Integer) -> void
+
+      # : (Integer) -> void
+      def leave_scope: (Integer) -> void
+
       # : (String, Symbol?, bool) -> String
       def dynamic_value: (String, Symbol?, bool) -> String
 
-      # Inside a block the buffer is a String being assembled, so a tag appends to it the way it
-      # would in a normal template. The block as a whole is what becomes one dynamic.
       # : (String) -> void
       def add_block_dynamic: (String) -> void
 
-      # Everything the engine emits goes through `@bufvar`, so a block only has to point it
-      # somewhere else. Every other path, including the escaping ones, then works unchanged.
       # : () -> void
       def open_block: () -> void
 

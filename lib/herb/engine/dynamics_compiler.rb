@@ -15,7 +15,7 @@ module Herb
     #
     #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
     #     view.instance_eval(source)
-    #     #=> ["Hello"]
+    #     #=> { 0 => "Hello" }
     #
     # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
     # and its `dynamic` values for the same reason. A template's statics never change between
@@ -24,28 +24,42 @@ module Herb
     # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
     # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
     #
-    # ## One entry per tag, at a fixed index
+    # ## The shape follows the template, not the render
     #
-    # Every `<%= %>` in the template owns an index, decided while compiling and the same on every
-    # render. Control flow contributes no entries of its own, so the length of the result is a fact
-    # about the template rather than about the render:
+    # Every insertion point owns an index, decided while compiling and the same on every render.
+    # Control flow owns one too, because what it decided is itself a value that changes:
     #
     #     <% if admin? %><%= secret %><% else %><%= public %><% end %>
-    #     #=> ["s", nil]   when admin?
-    #     #=> [nil, "p"]   otherwise
+    #     #=> { 0 => { branch: 0, slots: { 1 => "s" } } }   when admin?
+    #     #=> { 0 => { branch: 1, slots: { 2 => "p" } } }   otherwise
     #
-    # A branch that did not run leaves its tags `nil`. Both branches keep their own indices, so a
-    # condition flipping changes which entries are filled and never what the entries mean.
+    # Both branches keep their own indices, so a condition flipping changes which indices are
+    # present and never what an index means.
     #
-    # ## Loops are the exception
+    # ## Absent means it did not run
     #
-    # A tag inside a loop runs once per iteration, and how many iterations there are is only known
-    # at render time. Its entry is therefore a list rather than a value:
+    # A key is missing when the code that would have filled it never ran, which is the same thing
+    # the rendered markup says by not being there. Nothing has to be sent about a branch that was
+    # not taken, and nothing can be learned about one either.
     #
-    #     <% names.each do |name| %><h1><%= name %></h1><% end %>
-    #     #=> [["Marco", "Joe"]]
+    # A conditional and a collection are always present, because both are evaluated on every render
+    # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
+    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
     #
-    # The index still belongs to the tag. Only its shape depends on the render.
+    # ## Collections group by row
+    #
+    # A collection holds its rows in render order, each row carrying the slots inside it:
+    #
+    #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
+    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #
+    # Grouping the other way would give one list per slot and leave the client to zip them back
+    # together, which it cannot do once a row is inserted rather than appended.
+    #
+    # Rows are keyed by their position for now. Taking the key the template declares, through
+    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
+    # reordered, and it belongs to `SlotVisitor` rather than here.
     #
     # ## Escaping
     #
@@ -61,65 +75,150 @@ module Herb
     class DynamicsCompiler < Herb::Engine
       BUFFER = "__herb_dynamics" #: String
       BLOCK_BUFFER = "__herb_block" #: String
+      SLOT_BUFFER = "__herb_slot" #: String
+      SCOPE_BUFFER = "__herb_scope" #: String
+      ROWS_BUFFER = "__herb_rows" #: String
+      KEY_BUFFER = "__herb_key" #: String
 
-      # Records, while walking, which tag each expression belongs to and whether that tag sits
-      # inside a loop. Both are decided by where the tag is written, so both are known here and
-      # neither can be worked out from the token stream alone.
+      BRANCHING_NODES = [
+        "AST_ERB_IF_NODE",
+        "AST_ERB_UNLESS_NODE",
+        "AST_ERB_ELSE_NODE",
+        "AST_ERB_WHEN_NODE",
+        "AST_ERB_IN_NODE"
+      ].freeze #: Array[String]
+
       class Compiler < Herb::Engine::Compiler
         #: (untyped, ?Hash[Symbol, untyped]) -> void
         def initialize(engine, options = {})
           super
 
-          @loop_depth = 0
+          @slots = 0
+          @block_depth = 0
+
+          branch_counts = {} #: Hash[Integer, Integer]
+          branch_owner = {} #: Hash[untyped, Integer]
+
+          @branch_counts = branch_counts
+          @branch_owner = branch_owner.compare_by_identity
+        end
+
+        #: (untyped) { () -> void } -> void
+        def visit_erb_control_node(node, &block)
+          return super unless block
+          return super unless branch?(node)
+
+          index = @branch_owner[node]
+
+          branched = lambda do
+            @tokens << [:scope, "", nil, [:branch, index, next_branch(index)]]
+
+            block.call
+          end
+
+          super(node, &branched)
+        end
+
+        #: (untyped) -> void
+        def visit_erb_if_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_unless_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_case_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_case_match_node(node)
+          conditional(node) { super }
         end
 
         #: (untyped) -> void
         def visit_erb_iteration_block_node(node)
-          within_loop { super }
+          return visit_erb_block_node(node) if output_block?(node)
+
+          collection do |index|
+            visit_erb_control_node(node) do
+              row(index) do
+                visit_all(node.body)
+
+                visit(node.rescue_clause)
+                visit(node.else_clause)
+                visit(node.ensure_clause)
+              end
+
+              visit(node.end_node)
+            end
+          end
         end
 
         #: (untyped) -> void
         def visit_erb_for_node(node)
-          within_loop { super }
+          iteration(node, :statements)
         end
 
         #: (untyped) -> void
         def visit_erb_while_node(node)
-          within_loop { super }
+          iteration(node, :statements)
         end
 
         #: (untyped) -> void
         def visit_erb_until_node(node)
-          within_loop { super }
+          iteration(node, :statements)
         end
 
-        # Dynamics are a token type the base compiler does not know, so the dispatch is repeated
-        # here rather than inherited. Everything else is handed over unchanged.
+        #: (untyped) -> void
+        def visit_erb_block_node(node)
+          return super unless output_block?(node)
+
+          opening = node.tag_opening.value
+
+          check_for_escaped_erb_tag!(opening)
+
+          should_escape = should_escape_output?(opening)
+          index = claim
+
+          @tokens << [
+            should_escape ? :expr_block_escaped : :expr_block,
+            node.content.value.strip,
+            current_context,
+            index
+          ]
+
+          @last_trim_consumed_newline = false
+          @trim_next_whitespace = true if right_trim?(node)
+
+          @block_depth += 1
+
+          begin
+            visit_all(node.body)
+          ensure
+            @block_depth -= 1
+          end
+
+          visit_erb_block_end_node(node.end_node, escaped: should_escape)
+        end
+
         #: () -> void
         def generate_output
-          index = 0
-          depth = 0
-
           optimize_tokens(@tokens).each do |type, value, context, extra|
             case type
             when :text then @engine.send(:add_text, value)
             when :code then @engine.send(:add_code, value)
+            when :scope then @engine.send(:add_scope, *extra)
             when :dynamic
-              escaped, in_loop = extra
+              index, escaped = extra
 
-              @engine.send(:add_dynamic, value, context, index, in_loop, escaped)
-
-              # A tag inside a block writes into the string that block returns, so it is part of
-              # that block's single entry rather than an entry of its own.
-              index += 1 if depth.zero?
+              @engine.send(:add_dynamic, value, context, index, escaped)
             when :expr_block, :expr_block_escaped
-              @engine.send(:add_dynamic_block, value, index, type == :expr_block_escaped)
-
-              index += 1 if depth.zero?
-              depth += 1
+              @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
             when :expr_block_end
-              depth -= 1
-
               @engine.send(:add_expression_block_end, value, escaped: extra)
             end
           end
@@ -127,42 +226,125 @@ module Herb
 
         private
 
-        # The extras ride in the slot the base compiler already carries through its token
-        # optimization, so nothing here depends on that implementation keeping a wider tuple.
+        #: () -> Integer?
+        def claim
+          return nil if @block_depth.positive?
+
+          index = @slots
+          @slots += 1
+
+          index
+        end
+
         #: (String) -> void
         def add_expression(code)
-          @tokens << [:dynamic, code, current_context, [false, in_loop?]]
+          @tokens << [:dynamic, code, current_context, [claim, false]]
           @last_trim_consumed_newline = false
         end
 
         #: (String) -> void
         def add_expression_escaped(code)
-          @tokens << [:dynamic, code, current_context, [true, in_loop?]]
+          @tokens << [:dynamic, code, current_context, [claim, true]]
           @last_trim_consumed_newline = false
         end
 
-        #: () -> bool
-        def in_loop?
-          @loop_depth.positive?
+        #: (untyped) -> bool
+        def output_block?(node)
+          node.tag_opening.value.include?("=")
         end
 
-        #: [T] () { () -> T } -> T
-        def within_loop
-          @loop_depth += 1
+        #: (untyped) -> bool
+        def branch?(node)
+          @branch_owner.key?(node)
+        end
+
+        #: (Integer) -> Integer
+        def next_branch(index)
+          count = @branch_counts[index] || 0
+          @branch_counts[index] = count + 1
+
+          count
+        end
+
+        #: (untyped) { () -> void } -> void
+        def conditional(node)
+          return yield if branch?(node)
+
+          index = claim
+
+          return yield unless index
+
+          own_branches(node, index)
+
+          @tokens << [:scope, "", nil, [:open_conditional, index]]
 
           yield
-        ensure
-          @loop_depth -= 1
+
+          @tokens << [:scope, "", nil, [:close_conditional, index]]
+        end
+
+        #: (untyped, Integer) -> void
+        def own_branches(node, index)
+          return unless node
+
+          @branch_owner[node] = index if BRANCHING_NODES.include?(node.type.to_s)
+
+          [:subsequent, :else_clause, :conditions].each do |property|
+            next unless node.respond_to?(property)
+
+            value = node.send(property)
+
+            case value
+            when Array then value.each { |child| own_branches(child, index) }
+            when nil then next
+            else own_branches(value, index)
+            end
+          end
+        end
+
+        #: () { (Integer?) -> void } -> void
+        def collection
+          index = claim
+
+          return yield(nil) unless index
+
+          @tokens << [:scope, "", nil, [:open_collection, index]]
+
+          yield(index)
+
+          @tokens << [:scope, "", nil, [:close_collection, index]]
+        end
+
+        #: (Integer?) { () -> void } -> void
+        def row(index)
+          return yield unless index
+
+          @tokens << [:scope, "", nil, [:row_begin, index]]
+
+          yield
+
+          @tokens << [:scope, "", nil, [:row_end, index]]
+        end
+
+        #: (untyped, Symbol) -> void
+        def iteration(node, part)
+          collection do |index|
+            visit_erb_control_node(node) do
+              row(index) do
+                visit_all(node.send(part) || [])
+              end
+
+              visit(node.end_node)
+            end
+          end
         end
       end
 
       #: (String, ?Hash[Symbol, untyped]) -> void
       def initialize(input, properties = {})
         @block_depth = 0
-        @dynamics_size = 0
+        @scopes = [] #: Array[Integer]
 
-        # `.each do` is only its own node, and so only recognisable as a loop, when the parser is
-        # asked for iteration nodes. Without it every loop would look like an ordinary block.
         given = properties[:parser_options] || {} #: Hash[Symbol, untyped]
         parser_options = given.merge(iteration_nodes: true)
 
@@ -170,7 +352,7 @@ module Herb
           input,
           properties.merge(
             bufvar: BUFFER,
-            bufval: "::Array.new",
+            bufval: "::Hash.new",
             postamble: "#{BUFFER}\n",
             parser_options: parser_options
           )
@@ -182,8 +364,6 @@ module Herb
         Compiler
       end
 
-      # Static markup is what this compiler exists to leave out. Inside a block it is kept, because
-      # there the buffer is a String the block returns rather than the list of dynamics.
       #: (String) -> void
       def add_text(text)
         return if @block_depth.zero?
@@ -191,38 +371,32 @@ module Herb
         super
       end
 
-      # A tag writes to the index it was given. Inside a loop it appends there instead, because it
-      # runs once per iteration and the entry holds all of them.
-      #: (String, Symbol?, Integer, bool, bool) -> void
-      def add_dynamic(code, context, index, in_loop, escaped)
+      #: (Symbol, *untyped) -> void
+      def add_scope(kind, *)
+        send(:"scope_#{kind}", *)
+      end
+
+      #: (String, Symbol?, Integer?, bool) -> void
+      def add_dynamic(code, context, index, escaped)
         value = dynamic_value(code, context, escaped)
 
         return add_block_dynamic(value) unless @block_depth.zero?
 
-        claim(index)
-
-        target = in_loop ? "(#{BUFFER}[#{index}] ||= ::Array.new) << " : "#{BUFFER}[#{index}] = "
-
-        @src << "; " << target << value
+        @src << "; " << current_scope << "[" << index.to_s << "] = " << value << ";"
       end
 
-      # A tag that takes a block owns an index like any other, so the tags after it keep theirs.
-      #: (String, Integer, bool) -> void
+      #: (String, Integer?, bool) -> void
       def add_dynamic_block(code, index, escaped)
         @_in_expression_block = true
         @_expression_block_open_paren = true
 
         opening = escaped ? "#{@escapefunc}((" : "("
 
-        # A block inside another block is part of what that one renders, so it goes into its
-        # string rather than taking an entry of its own.
-        if @block_depth.zero?
-          claim(index)
-
-          @src << "; #{BUFFER}[#{index}] = #{opening}#{code}"
-        else
-          @src << "; #{@bufvar} << #{opening}#{code}"
-        end
+        @src << if @block_depth.zero?
+                  "; #{current_scope}[#{index}] = #{opening}#{code}"
+                else
+                  "; #{@bufvar} << #{opening}#{code}"
+                end
 
         open_block
       end
@@ -236,16 +410,6 @@ module Herb
         super
       end
 
-      # Assigning by index only grows the array as far as the tags that ran, so a template whose
-      # last tag sat in a branch that was skipped would come back short. The length is a fact about
-      # the template, so it is set once the walk has counted the tags.
-      #: (String) -> void
-      def add_postamble(postamble)
-        @src << "; #{BUFFER}[#{@dynamics_size - 1}] ||= nil\n" if @dynamics_size.positive?
-
-        super
-      end
-
       #: () -> String
       def inspect
         "#<#{self.class.name}>"
@@ -253,13 +417,61 @@ module Herb
 
       private
 
-      #: (Integer) -> void
-      def claim(index)
-        @dynamics_size = index + 1 if index >= @dynamics_size
+      #: () -> String
+      def current_scope
+        @scopes.empty? ? BUFFER : "#{SCOPE_BUFFER}#{@scopes.last}"
       end
 
-      # Where a tag was written decides how it is escaped, so an attribute, a `<script>`, and
-      # ordinary text each get their own function even for the same expression.
+      #: (Integer) -> void
+      def scope_open_conditional(index)
+        @src << "; #{SLOT_BUFFER}#{index} = nil;"
+      end
+
+      #: (Integer, Integer) -> void
+      def scope_branch(index, branch)
+        leave_scope(index)
+
+        @src << "; #{SLOT_BUFFER}#{index} = { branch: #{branch}, slots: (#{SCOPE_BUFFER}#{index} = ::Hash.new) };"
+
+        @scopes.push(index)
+      end
+
+      #: (Integer) -> void
+      def scope_close_conditional(index)
+        leave_scope(index)
+
+        @src << "; #{current_scope}[#{index}] = (#{SLOT_BUFFER}#{index} || { branch: nil });"
+      end
+
+      #: (Integer) -> void
+      def scope_open_collection(index)
+        @src << "; #{ROWS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
+      end
+
+      #: (Integer) -> void
+      def scope_row_begin(index)
+        @src << "; #{KEY_BUFFER}#{index} += 1; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+
+        @scopes.push(index)
+      end
+
+      #: (Integer) -> void
+      def scope_row_end(index)
+        leave_scope(index)
+
+        @src << "; #{ROWS_BUFFER}#{index}[#{KEY_BUFFER}#{index}] = #{SCOPE_BUFFER}#{index};"
+      end
+
+      #: (Integer) -> void
+      def scope_close_collection(index)
+        @src << "; #{current_scope}[#{index}] = { rows: #{ROWS_BUFFER}#{index} };"
+      end
+
+      #: (Integer) -> void
+      def leave_scope(index)
+        @scopes.pop if @scopes.last == index
+      end
+
       #: (String, Symbol?, bool) -> String
       def dynamic_value(code, context, escaped)
         escapefunc = context_escape_function(context)
@@ -270,15 +482,11 @@ module Herb
         "(#{code}).to_s"
       end
 
-      # Inside a block the buffer is a String being assembled, so a tag appends to it the way it
-      # would in a normal template. The block as a whole is what becomes one dynamic.
       #: (String) -> void
       def add_block_dynamic(value)
         @src << "; " << @bufvar << " << " << value << ";"
       end
 
-      # Everything the engine emits goes through `@bufvar`, so a block only has to point it
-      # somewhere else. Every other path, including the escaping ones, then works unchanged.
       #: () -> void
       def open_block
         @block_depth += 1
