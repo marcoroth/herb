@@ -1,238 +1,232 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slot_visitor"
 
 module Engine
   module Slots
     class VisitorTest < Minitest::Spec
+      include SnapshotUtils
+
       def slots_for(template, file_path: "app/views/test.html.erb")
         visitor = Herb::Engine::SlotVisitor.new
 
-        Herb::Engine.new(template, visitors: [visitor], filename: file_path, validation_mode: :none)
+        Herb::Engine.new(template, visitors: [visitor], filename: file_path)
 
         visitor
       end
 
-      test "assigns an index to ERB output in child position" do
-        visitor = slots_for("<p><%= @name %></p>")
+      def assert_slots_snapshot(template, file_path: "app/views/test.html.erb")
+        visitor = slots_for(template, file_path: file_path)
 
-        assert_equal 1, visitor.slots.size
-        assert_equal 0, visitor.slots[0].index
-        assert_equal :child, visitor.slots[0].type
-        assert_equal "@name", visitor.slots[0].expression
+        assert_snapshot_matches(format_slots(visitor), template, { filename: file_path })
+
+        visitor
+      end
+
+      # The Slot struct carries more than `schema` exposes, and the difference is what most of
+      # these tests are about, so the dump reads off the slots themselves and adds the two
+      # schema-level fields on top.
+      def format_slots(visitor)
+        schema = visitor.schema
+        lines = ["file: #{schema[:file]}", "version: #{schema[:version]}", ""]
+
+        if visitor.slots.empty?
+          lines << "slots: (none)"
+        else
+          lines << "slots:"
+
+          visitor.slots.each do |slot|
+            fields = ["index=#{slot.index}", "type=#{slot.type}", "node_path=#{slot.node_path.inspect}"]
+
+            fields << "expression=#{slot.expression.inspect}" unless slot.expression.nil?
+            fields << "location=#{slot.location}" unless slot.location.nil?
+            fields << "attribute=#{slot.attribute.inspect}" unless slot.attribute.nil?
+            fields << "key_source=#{slot.key_source}" unless slot.key_source.nil?
+            fields << "key_expression=#{slot.key_expression.inspect}" unless slot.key_expression.nil?
+
+            lines << "  #{fields.join("  ")}"
+          end
+        end
+
+        unless visitor.warnings.empty?
+          lines << ""
+          lines << "warnings:"
+
+          visitor.warnings.each do |warning|
+            fields = ["type=#{warning.type}"]
+
+            fields << "tag_name=#{warning.tag_name.inspect}" if warning.respond_to?(:tag_name)
+            fields << "message=#{warning.message.inspect}"
+
+            lines << "  #{fields.join("  ")}"
+          end
+        end
+
+        "#{lines.join("\n")}\n"
+      end
+
+      test "assigns an index to ERB output in child position" do
+        assert_slots_snapshot("<p><%= @name %></p>")
       end
 
       test "assigns indices in document order" do
-        visitor = slots_for("<p><%= @a %></p><p><%= @b %></p><p><%= @c %></p>")
-
-        assert_equal [0, 1, 2], visitor.slots.map(&:index)
-        assert_equal ["@a", "@b", "@c"], visitor.slots.map(&:expression)
+        assert_slots_snapshot("<p><%= @a %></p><p><%= @b %></p><p><%= @c %></p>")
       end
 
       test "records the node_path that TemplateDependencies reports" do
-        visitor = slots_for("<div><h1><%= @title %></h1></div>")
-
-        assert_equal [0, 0, 0], visitor.slots[0].node_path
+        assert_slots_snapshot("<div><h1><%= @title %></h1></div>")
       end
 
       test "records source location" do
-        visitor = slots_for("<p>\n  <%= @name %>\n</p>")
-
-        assert_equal "2:2", visitor.slots[0].location
+        assert_slots_snapshot("<p>\n  <%= @name %>\n</p>")
       end
 
       test "classifies conditionals" do
-        visitor = slots_for("<div><% if @admin %><b>x</b><% end %></div>")
-
-        assert_equal :conditional, visitor.slots[0].type
+        assert_slots_snapshot("<div><% if @admin %><b>x</b><% end %></div>")
       end
 
       test "classifies ERB inside an attribute value" do
-        visitor = slots_for(%(<div class="<%= @klass %>"></div>))
-
-        assert_equal :attribute, visitor.slots[0].type
+        assert_slots_snapshot(%(<div class="<%= @klass %>"></div>))
       end
 
       test "classifies an each block as a collection" do
-        visitor = slots_for("<ul><% @items.each do |item| %><li>x</li><% end %></ul>")
-
-        assert_equal :collection, visitor.slots[0].type
+        assert_slots_snapshot("<ul><% @items.each do |item| %><li>x</li><% end %></ul>")
       end
 
       test "classifies other iteration methods as collections" do
-        [
-          "<div><% 3.times do |i| %><b>x</b><% end %></div>",
-          "<div><% @a.map do |i| %><b>x</b><% end %></div>"
-        ].each do |template|
-          assert_equal :collection, slots_for(template).slots[0].type, "unexpected type for: #{template}"
-        end
+        assert_slots_snapshot("<div><% 3.times do |i| %><b>x</b><% end %></div>")
+        assert_slots_snapshot("<div><% @a.map do |i| %><b>x</b><% end %></div>")
       end
 
       test "treats an if/elsif/else chain as a single conditional slot" do
-        visitor = slots_for("<div><% if @a %>A<% elsif @b %>B<% else %>C<% end %></div>")
-
-        assert_equal [:conditional], visitor.slots.map(&:type)
+        assert_slots_snapshot("<div><% if @a %>A<% elsif @b %>B<% else %>C<% end %></div>")
       end
 
       test "gives a conditional nested inside an else its own slot" do
-        visitor = slots_for("<div><% if @a %>A<% else %><% if @b %>B<% end %><% end %></div>")
-
-        assert_equal [:conditional, :conditional], visitor.slots.map(&:type)
+        assert_slots_snapshot("<div><% if @a %>A<% else %><% if @b %>B<% end %><% end %></div>")
       end
 
       test "assigns a slot inside a when branch" do
-        visitor = slots_for("<div><% case @x %><% when 1 %><%= @a %><% end %></div>")
-
-        assert_equal [:conditional, :child], visitor.slots.map(&:type)
+        assert_slots_snapshot("<div><% case @x %><% when 1 %><%= @a %><% end %></div>")
       end
 
       test "classifies a builder block as a plain block" do
-        visitor = slots_for("<div><%= form_with model: @user do |f| %><input><% end %></div>")
-
-        assert_equal :block, visitor.slots[0].type
+        assert_slots_snapshot("<div><%= form_with model: @user do |f| %><input><% end %></div>")
       end
 
       test "classifies a non-iteration method block as a plain block" do
-        visitor = slots_for("<div><% @user.tap do |u| %><b>x</b><% end %></div>")
-
-        assert_equal :block, visitor.slots[0].type
+        assert_slots_snapshot("<div><% @user.tap do |u| %><b>x</b><% end %></div>")
       end
 
       test "classifies a dynamic HTML comment" do
-        visitor = slots_for("<!-- Content: <%= @c %> -->")
-
-        assert_equal [:comment], visitor.slots.map(&:type)
+        assert_slots_snapshot("<!-- Content: <%= @c %> -->")
       end
 
       test "does not assign a slot to a static HTML comment" do
-        visitor = slots_for("<!-- just a note -->")
-
-        assert_empty visitor.slots
+        assert_slots_snapshot("<!-- just a note -->")
       end
 
       test "assigns one slot to a comment regardless of how much ERB it holds" do
-        visitor = slots_for("<!-- <%= @a %> and <%= @b %> -->")
-
-        assert_equal [:comment], visitor.slots.map(&:type)
+        assert_slots_snapshot("<!-- <%= @a %> and <%= @b %> -->")
       end
 
       test "detects an explicit herb-key on a collection" do
-        visitor = slots_for(%(<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>))
-
-        assert_equal :herb_key, visitor.slots.find { |slot| slot.type == :collection }.key_source
+        assert_slots_snapshot(%(<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>))
       end
 
-      test "falls back to an id, which Rails templates already carry for Turbo" do
-        visitor = slots_for(%(<% @u.each do |u| %><li id="<%= dom_id(u) %>">x</li><% end %>))
-
-        assert_equal :id, visitor.slots.find { |slot| slot.type == :collection }.key_source
+      test "falls back to an id, which Rails templates already carry for Turbo, and records its expression" do
+        assert_slots_snapshot(%(<% @u.each do |u| %><li id="<%= dom_id(u) %>">x</li><% end %>))
       end
 
       test "prefers herb-key over an id" do
-        visitor = slots_for(%(<% @u.each do |u| %><li id="a" herb-key="<%= u.id %>">x</li><% end %>))
-
-        assert_equal :herb_key, visitor.slots.find { |slot| slot.type == :collection }.key_source
+        assert_slots_snapshot(%(<% @u.each do |u| %><li id="a" herb-key="<%= u.id %>">x</li><% end %>))
       end
 
-      test "falls back to index when a collection row carries no key" do
-        visitor = slots_for("<% @u.each do |u| %><li>x</li><% end %>")
-
-        assert_equal :index, visitor.slots.find { |slot| slot.type == :collection }.key_source
+      test "falls back to index and names the row to key when a collection row carries no key" do
+        assert_slots_snapshot("<% @u.each do |u| %><li>x</li><% end %>")
       end
 
-      test "warns about an unkeyed collection and names the row to key" do
-        visitor = slots_for("<% @u.each do |u| %><li>x</li><% end %>")
-
-        assert_equal 1, visitor.warnings.size
-        assert_equal "unkeyed_collection", visitor.warnings[0].type
-        assert_equal "li", visitor.warnings[0].tag_name
-        assert_includes visitor.warnings[0].message, "Add a `herb-key` or `id` attribute to `<li>`"
-      end
-
-      test "warns about an unkeyed collection with several roots by suggesting a wrapper" do
-        visitor = slots_for("<% @u.each do |u| %><li>a</li><li>b</li><% end %>")
-
-        assert_equal 1, visitor.warnings.size
-        assert_nil visitor.warnings[0].tag_name
-        assert_includes visitor.warnings[0].message, "wrap each row in a single element"
+      test "falls back to index and suggests a wrapper when a collection body has several roots" do
+        assert_slots_snapshot("<% @u.each do |u| %><li>a</li><li>b</li><% end %>")
       end
 
       test "does not warn when a collection carries a key" do
-        assert_empty slots_for("<% @u.each do |u| %><li id='<%= u.id %>'>x</li><% end %>").warnings
-        assert_empty slots_for("<% @u.each do |u| %><%# herb:key u.id %><li>a</li><li>b</li><% end %>").warnings
+        assert_slots_snapshot("<% @u.each do |u| %><li id='<%= u.id %>'>x</li><% end %>")
       end
 
       test "detects a herb:key directive on a body with several roots" do
-        visitor = slots_for("<% @u.each do |u| %><%# herb:key u.id %><li>a</li><li>b</li><% end %>")
-        slot = visitor.slots.find { |candidate| candidate.type == :collection }
-
-        assert_equal :directive, slot.key_source
-        assert_equal "u.id", slot.key_expression
+        assert_slots_snapshot("<% @u.each do |u| %><%# herb:key u.id %><li>a</li><li>b</li><% end %>")
       end
 
       test "detects a herb:key directive on a body with no element at all" do
-        visitor = slots_for("<% @u.each do |u| %><%# herb:key u.id %><%= u.name %><% end %>")
-
-        assert_equal :directive, visitor.slots.find { |slot| slot.type == :collection }.key_source
+        assert_slots_snapshot("<% @u.each do |u| %><%# herb:key u.id %><%= u.name %><% end %>")
       end
 
       test "prefers a herb:key directive over an attribute" do
-        visitor = slots_for(%(<% @u.each do |u| %><%# herb:key u.uuid %><li id="<%= u.id %>">x</li><% end %>))
-        slot = visitor.slots.find { |candidate| candidate.type == :collection }
-
-        assert_equal :directive, slot.key_source
-        assert_equal "u.uuid", slot.key_expression
-      end
-
-      test "records the key expression from the attribute it was found on" do
-        visitor = slots_for(%(<% @u.each do |u| %><li id="<%= dom_id(u) %>">x</li><% end %>))
-
-        assert_equal "dom_id(u)", visitor.slots.find { |slot| slot.type == :collection }.key_expression
-      end
-
-      test "falls back to index when a collection body has no single root" do
-        visitor = slots_for("<% @u.each do |u| %><li>a</li><li>b</li><% end %>")
-
-        assert_equal :index, visitor.slots.find { |slot| slot.type == :collection }.key_source
-      end
-
-      test "exposes the key source in the schema" do
-        schema = slots_for(%(<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>)).schema
-
-        assert_equal :herb_key, schema[:slots].find { |slot| slot[:type] == :collection }[:key_source]
+        assert_slots_snapshot(%(<% @u.each do |u| %><%# herb:key u.uuid %><li id="<%= u.id %>">x</li><% end %>))
       end
 
       test "records no key source for slots that are not collections" do
-        visitor = slots_for("<p><%= @a %></p>")
-
-        assert_nil visitor.slots[0].key_source
+        assert_slots_snapshot("<p><%= @a %></p>")
       end
 
       test "records the attribute a slot belongs to" do
-        visitor = slots_for(%(<div class="<%= @c %>" id="<%= @i %>"></div>))
-
-        assert_equal ["class", "id"], visitor.slots.map(&:attribute)
+        assert_slots_snapshot(%(<div class="<%= @c %>" id="<%= @i %>"></div>))
       end
 
-      test "distinguishes a whole attribute value from an interpolated one" do
-        assert_equal :attribute, slots_for(%(<div class="<%= @c %>"></div>)).slots[0].type
-        assert_equal :attribute_interpolation, slots_for(%(<div class="a <%= @c %> b"></div>)).slots[0].type
+      test "distinguishes an interpolated attribute value from a whole one" do
+        assert_slots_snapshot(%(<div class="a <%= @c %> b"></div>))
       end
 
       test "anchors an attributes splat to the element instead of an attribute" do
-        visitor = slots_for(%(<div <%= @attrs %>></div>))
-
-        assert_equal :element, visitor.slots[0].type
-        assert_nil visitor.slots[0].attribute
+        assert_slots_snapshot(%(<div <%= @attrs %>></div>))
       end
 
       test "anchors a dynamically named attribute to the element" do
-        visitor = slots_for(%(<div <%= @key %>="1"></div>))
+        assert_slots_snapshot(%(<div <%= @key %>="1"></div>))
+      end
 
-        assert_equal :element, visitor.slots[0].type
-        assert_nil visitor.slots[0].attribute
+      test "gives an attribute one slot however many bindings it holds" do
+        assert_slots_snapshot(%(<div class="a <%= @x %> b <%= @y %>"></div>))
+      end
+
+      test "does not assign a slot to a static attribute" do
+        assert_slots_snapshot(%(<div class="static"><%= @a %></div>))
+      end
+
+      test "anchors ERB in element position on the element" do
+        assert_slots_snapshot("<div <%= @attributes %>>x</div>")
+      end
+
+      test "anchors RCDATA content on the element" do
+        assert_slots_snapshot("<textarea><%= @a %></textarea>")
+        assert_slots_snapshot("<title><%= @a %></title>")
+      end
+
+      test "does not assign a slot inside raw text elements" do
+        assert_slots_snapshot("<script>var a = \"<%= @a %>\";</script>")
+        assert_slots_snapshot("<style>.a { color: <%= @a %>; }</style>")
+      end
+
+      test "classifies while, until and for as repeating regions" do
+        assert_slots_snapshot("<% while @i %><b>x</b><% end %>")
+        assert_slots_snapshot("<% until @i %><b>x</b><% end %>")
+        assert_slots_snapshot("<% for x in @l %><b>x</b><% end %>")
+      end
+
+      test "does not assign a slot to non-output ERB" do
+        assert_slots_snapshot("<% x = 1 %><p>static</p>")
+      end
+
+      test "assigns nested slots inside a conditional" do
+        assert_slots_snapshot("<div><% if @admin %><b><%= @secret %></b><% end %></div>")
+      end
+
+      test "schema exposes slot count, types and paths" do
+        assert_slots_snapshot("<p><%= @a %></p><div><% if @b %><i>x</i><% end %></div>")
       end
 
       test "keeps the attribute name a string so the schema stays serializable" do
@@ -244,93 +238,6 @@ module Engine
         attributes = parsed["slots"].filter_map { |slot| slot["attribute"] }
 
         assert_equal ["class"], attributes
-      end
-
-      test "gives an attribute one slot however many bindings it holds" do
-        visitor = slots_for(%(<div class="a <%= @x %> b <%= @y %>"></div>))
-
-        assert_equal 1, visitor.slots.size
-        assert_equal "class", visitor.slots[0].attribute
-      end
-
-      test "exposes the attribute name in the schema" do
-        schema = slots_for(%(<div class="<%= @c %>"></div>)).schema
-
-        assert_equal "class", schema[:slots][0][:attribute]
-      end
-
-      test "does not assign a slot to a static attribute" do
-        visitor = slots_for(%(<div class="static"><%= @a %></div>))
-
-        assert_equal [:child], visitor.slots.map(&:type)
-      end
-
-      test "anchors ERB in element position on the element" do
-        visitor = slots_for("<div <%= @attributes %>>x</div>")
-
-        assert_equal [:element], visitor.slots.map(&:type)
-      end
-
-      test "anchors RCDATA content on the element" do
-        ["<textarea><%= @a %></textarea>", "<title><%= @a %></title>"].each do |template|
-          visitor = slots_for(template)
-
-          assert_equal [:raw_text], visitor.slots.map(&:type), "unexpected type for: #{template}"
-        end
-      end
-
-      test "does not assign a slot inside raw text elements" do
-        ["<script>var a = \"<%= @a %>\";</script>", "<style>.a { color: <%= @a %>; }</style>"].each do |template|
-          visitor = slots_for(template)
-
-          assert_empty visitor.slots, "expected no slot for: #{template}"
-        end
-      end
-
-      test "classifies while, until and for as repeating regions" do
-        {
-          "<% while @i %><b>x</b><% end %>" => :collection,
-          "<% until @i %><b>x</b><% end %>" => :collection,
-          "<% for x in @l %><b>x</b><% end %>" => :collection,
-        }.each do |template, expected|
-          visitor = slots_for(template)
-
-          assert_equal expected, visitor.slots.first&.type, "unexpected type for: #{template}"
-        end
-      end
-
-      test "assigns no slots when the template has parser errors" do
-        ["<div><p><%= @a %></div>", "</div><p><%= @a %></p>"].each do |template|
-          visitor = Herb::Engine::SlotVisitor.new
-          engine = Herb::Engine.new(template, visitors: [visitor], filename: "t.html.erb", validation_mode: :none)
-
-          assert_empty visitor.slots, "expected no slots for: #{template}"
-          refute_includes engine.src, "herb-slot"
-          refute_includes engine.src, "herb-region"
-        end
-      end
-
-      test "does not assign a slot to non-output ERB" do
-        visitor = slots_for("<% x = 1 %><p>static</p>")
-
-        assert_empty visitor.slots
-      end
-
-      test "assigns nested slots inside a conditional" do
-        visitor = slots_for("<div><% if @admin %><b><%= @secret %></b><% end %></div>")
-
-        assert_equal [:conditional, :child], visitor.slots.map(&:type)
-        assert_equal [0, 0], visitor.slots[0].node_path
-        assert_equal [0, 0, 0, 0], visitor.slots[1].node_path
-      end
-
-      test "schema exposes slot count, types and paths" do
-        visitor = slots_for("<p><%= @a %></p><div><% if @b %><i>x</i><% end %></div>")
-        schema = visitor.schema
-
-        assert_equal "app/views/test.html.erb", schema[:file]
-        assert_equal 2, schema[:slots].size
-        assert_equal([:child, :conditional], schema[:slots].map { |slot| slot[:type] })
       end
 
       test "schema version is stable for the same slot layout" do
@@ -345,6 +252,18 @@ module Engine
       test "schema version changes when a slot type changes" do
         refute_equal slots_for("<div><%= @a %></div>").version,
                      slots_for("<div><% if @a %>x<% end %></div>").version
+      end
+
+      test "assigns no slots when the template has parser errors" do
+        ["<div><p><%= @a %></div>", "</div><p><%= @a %></p>"].each do |template|
+          visitor = Herb::Engine::SlotVisitor.new
+
+          assert_raises(Herb::Engine::ParseError, "expected a parse error for: #{template}") do
+            Herb::Engine.new(template, visitors: [visitor], filename: "t.html.erb")
+          end
+
+          assert_empty visitor.slots, "expected no slots for: #{template}"
+        end
       end
 
       test "a herb:slots directive opts a single template in" do
@@ -364,7 +283,7 @@ module Engine
       end
 
       test "the engine emits no markers unless the visitor is in the stack" do
-        engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>", validation_mode: :none)
+        engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>")
 
         refute_includes engine.src, "herb-slot"
         refute_includes engine.src, "herb-region"

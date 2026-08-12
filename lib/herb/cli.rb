@@ -677,7 +677,11 @@ class Herb::CLI
     require_relative "engine"
 
     begin
+      source = file_content
       options = {}
+
+      slot_visitor = Herb::Engine::SlotVisitor.new if slots || Herb::Engine::SlotVisitor.directive?(source)
+
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
@@ -691,11 +695,9 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
       options[:validate_ruby] = true
-
-      slot_visitor = Herb::Engine::SlotVisitor.new if slots || Herb::Engine::SlotVisitor.directive?(file_content)
       options[:visitors] = [slot_visitor] if slot_visitor
 
-      engine = Herb::Engine.new(file_content, options)
+      engine = Herb::Engine.new(source, options)
 
       print_warnings(slot_visitor&.warnings || []) unless json
 

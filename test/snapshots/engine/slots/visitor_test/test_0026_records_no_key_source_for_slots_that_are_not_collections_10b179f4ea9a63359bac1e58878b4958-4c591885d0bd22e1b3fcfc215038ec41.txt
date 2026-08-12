@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0026_records no key source for slots that are not collections"
+input: "<p><%= @a %></p>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 3877ae64
+
+slots:
+  index=0  type=child  node_path=[0, 0]  expression="@a"  location=1:3

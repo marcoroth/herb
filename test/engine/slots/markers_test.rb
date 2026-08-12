@@ -11,7 +11,7 @@ module Engine
       include SnapshotUtils
 
       def options
-        { visitors: [Herb::Engine::SlotVisitor.new], filename: "app/views/test.html.erb", validation_mode: :none }
+        { visitors: [Herb::Engine::SlotVisitor.new], filename: "app/views/test.html.erb" }
       end
 
       test "delimits a child slot with paired comments" do
@@ -325,7 +325,7 @@ module Engine
         locals = { "@title" => "T", "@admin" => true }
 
         slotted = evaluate_herb_source(Herb::Engine.new(template, **options).src, locals)
-        plain = evaluate_herb_source(Herb::Engine.new(template, validation_mode: :none).src, locals)
+        plain = evaluate_herb_source(Herb::Engine.new(template).src, locals)
 
         assert_equal plain, slotted.gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")
       end

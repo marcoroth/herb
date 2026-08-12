@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0011_assigns a slot inside a when branch"
+input: "<div><% case @x %><% when 1 %><%= @a %><% end %></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 6f56441c
+
+slots:
+  index=0  type=conditional  node_path=[0, 0]  expression="case @x"  location=1:5
+  index=1  type=child  node_path=[0, 0, 0]  expression="@a"  location=1:30

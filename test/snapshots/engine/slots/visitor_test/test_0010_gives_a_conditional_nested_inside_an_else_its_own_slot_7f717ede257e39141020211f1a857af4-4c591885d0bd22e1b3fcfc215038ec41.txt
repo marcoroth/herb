@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0010_gives a conditional nested inside an else its own slot"
+input: "<div><% if @a %>A<% else %><% if @b %>B<% end %><% end %></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 6f5c1c03
+
+slots:
+  index=0  type=conditional  node_path=[0, 0]  expression="if @a"  location=1:5
+  index=1  type=conditional  node_path=[0, 0]  expression="if @b"  location=1:27
