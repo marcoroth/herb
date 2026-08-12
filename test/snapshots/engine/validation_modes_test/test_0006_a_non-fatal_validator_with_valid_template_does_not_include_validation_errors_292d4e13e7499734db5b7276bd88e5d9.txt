@@ -1,0 +1,6 @@
+---
+source: "Engine::ValidationModesTest#test_0006_a non-fatal validator with valid template does not include validation errors"
+input: "{source: \"<div>Valid template</div>\", options: {visitors: [#<Herb::Engine::Validators::SecurityValidator fatal=false>, #<Herb::Engine::Validators::NestingValidator fatal=false>, #<Herb::Engine::Validators::AccessibilityValidator fatal=false>]}}"
+---
+_buf = ::String.new; _buf << '<div>Valid template</div>'.freeze;
+_buf.to_s

@@ -50,4 +50,22 @@ describe("html-img-require-alt", () => {
     expectWarning('The `alt` attribute has no value. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     assertOffenses('<img src="/avatar.jpg" alt>')
   })
+
+  test("passes for image_tag helper with alt attribute", () => {
+    expectNoOffenses('<%= image_tag "logo.png", alt: "Company logo" %>')
+  })
+
+  test("fails for image_tag helper without alt attribute", () => {
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    assertOffenses('<%= image_tag "logo.png" %>')
+  })
+
+  test("passes for image_tag helper with empty alt attribute", () => {
+    expectNoOffenses('<%= image_tag "logo.png", alt: "" %>')
+  })
+
+  test("fails for image_tag helper with ruby expression and no alt", () => {
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    assertOffenses('<%= image_tag user.avatar %>')
+  })
 })

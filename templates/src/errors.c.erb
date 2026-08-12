@@ -1,12 +1,12 @@
 #include "include/errors.h"
-#include "include/location.h"
-#include "include/position.h"
-#include "include/pretty_print.h"
-#include "include/token.h"
-#include "include/util.h"
-#include "include/util/hb_allocator.h"
-#include "include/util/hb_array.h"
-#include "include/util/hb_string.h"
+#include "include/location/location.h"
+#include "include/location/position.h"
+#include "include/ast/pretty_print.h"
+#include "include/lexer/token.h"
+#include "include/util/util.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_array.h"
+#include "include/lib/hb_string.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -90,8 +90,8 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   return <%= error.human %>;
 }
 
-void append_<%= error.human %>(<%= (arguments + ["hb_array_T* errors"]).join(", ") %>) {
-  hb_array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+void append_<%= error.human %>(<%= (arguments + ["hb_array_T** errors"]).join(", ") %>) {
+  hb_array_append_lazy(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>), allocator);
 }
 <%- end -%>
 

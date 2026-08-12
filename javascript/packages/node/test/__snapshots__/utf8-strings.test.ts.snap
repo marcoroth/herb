@@ -76,7 +76,7 @@ exports[`UTF-8 string handling > handles edge cases > non-breaking space is pres
         │       └── tag_closing: ">" (location: (1:18)-(1:19))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves UTF-8 in attribute values > Cyrillic in attribute value 1`] = `
@@ -133,7 +133,7 @@ exports[`UTF-8 string handling > parse preserves UTF-8 in attribute values > Cyr
         │       └── tag_closing: ">" (location: (1:23)-(1:24))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves UTF-8 in attribute values > emoji in attribute value 1`] = `
@@ -190,7 +190,7 @@ exports[`UTF-8 string handling > parse preserves UTF-8 in attribute values > emo
         │       └── tag_closing: ">" (location: (1:20)-(1:21))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 2-byte characters (Latin Extended) 1`] = `
@@ -224,7 +224,7 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:23)-(1:24))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 2-byte characters (special symbols) 1`] = `
@@ -258,7 +258,7 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:21)-(1:22))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 3-byte characters (CJK) 1`] = `
@@ -292,7 +292,7 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:16)-(1:17))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 3-byte characters (Cyrillic) 1`] = `
@@ -326,7 +326,7 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:21)-(1:22))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 3-byte characters (em dash, en dash) 1`] = `
@@ -360,7 +360,7 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:25)-(1:26))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 4-byte characters (emoji) 1`] = `
@@ -394,7 +394,7 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:15)-(1:16))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;
 
 exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > mixed multi-byte characters 1`] = `
@@ -428,5 +428,5 @@ exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text conten
         │       └── tag_closing: ">" (location: (1:19)-(1:20))
         │       
         ├── is_void: false
-        └── source: "HTML""
+        └── element_source: "HTML""
 `;

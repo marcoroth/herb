@@ -78,7 +78,7 @@ input: |2-
     │   │   │   │       │       └── tag_name: "p" (location: (3:5)-(3:6))
     │   │   │   │       │
     │   │   │   │       ├── is_void: false
-    │   │   │   │       └── source: "HTML"
+    │   │   │   │       └── element_source: "HTML"
     │   │   │   │
     │   │   │   ├── close_tag:
     │   │   │   │   └── @ HTMLCloseTagNode (location: (5:4)-(5:10))
@@ -88,7 +88,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:9)-(5:10))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (5:10)-(6:2))
     │   │   │   └── content: "\n  "
@@ -115,7 +115,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (7:6)-(7:7))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (7:7)-(8:0))
         └── content: "\n"

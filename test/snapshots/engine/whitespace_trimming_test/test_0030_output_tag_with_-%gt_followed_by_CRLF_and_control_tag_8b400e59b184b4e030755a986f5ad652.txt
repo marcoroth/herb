@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0030_output tag with -%> followed by CRLF and control tag"
+input: "{source: \"A<%= -%>\\r\\n <% if true %>\\r\\nB\\r\\n<% end %>\", locals: {}, options: {}}"
+---
+AB

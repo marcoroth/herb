@@ -1,0 +1,50 @@
+---
+source: "Parser::AttributesTest#test_0137_attribute value with ERB output containing quotes"
+input: "<div data-something=\"<%= hello(\"hello\") %>\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:50))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:50))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:44))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:43)-(1:44))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:43))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:19))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:19))
+        │       │       │               └── content: "data-something"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:19)-(1:20))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:20)-(1:43))
+        │       │               ├── open_quote: """ (location: (1:20)-(1:21))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ ERBContentNode (location: (1:21)-(1:42))
+        │       │               │       ├── tag_opening: "<%=" (location: (1:21)-(1:24))
+        │       │               │       ├── content: " hello("hello") " (location: (1:24)-(1:40))
+        │       │               │       ├── tag_closing: "%>" (location: (1:40)-(1:42))
+        │       │               │       ├── parsed: true
+        │       │               │       └── valid: true
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:42)-(1:43))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:44)-(1:50))
+        │       ├── tag_opening: "</" (location: (1:44)-(1:46))
+        │       ├── tag_name: "div" (location: (1:46)-(1:49))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:49)-(1:50))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

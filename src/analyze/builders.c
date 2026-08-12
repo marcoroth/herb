@@ -1,13 +1,13 @@
 #include "../include/analyze/builders.h"
 #include "../include/analyze/analyze.h"
-#include "../include/ast_nodes.h"
-#include "../include/location.h"
-#include "../include/position.h"
-#include "../include/prism_helpers.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_allocator.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
+#include "../include/ast/ast_nodes.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_allocator.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
+#include "../include/location/location.h"
+#include "../include/location/position.h"
+#include "../include/prism/prism_helpers.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -162,6 +162,7 @@ static AST_NODE_T* build_if_node(control_builder_context_T* context) {
     context->content,
     context->tag_closing,
     context->then_keyword,
+    HERB_PRISM_NODE_EMPTY,
     context->children,
     context->subsequent,
     context->end_node,
@@ -258,6 +259,7 @@ static AST_NODE_T* build_unless_node(control_builder_context_T* context) {
     context->content,
     context->tag_closing,
     context->then_keyword,
+    HERB_PRISM_NODE_EMPTY,
     context->children,
     else_clause,
     context->end_node,
@@ -273,6 +275,7 @@ static AST_NODE_T* build_while_node(control_builder_context_T* context) {
     context->tag_opening,
     context->content,
     context->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
     context->start_position,
@@ -287,6 +290,7 @@ static AST_NODE_T* build_until_node(control_builder_context_T* context) {
     context->tag_opening,
     context->content,
     context->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
     context->start_position,
@@ -301,6 +305,7 @@ static AST_NODE_T* build_for_node(control_builder_context_T* context) {
     context->tag_opening,
     context->content,
     context->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
     context->start_position,
@@ -315,7 +320,12 @@ static AST_NODE_T* build_block_node(control_builder_context_T* context) {
     context->tag_opening,
     context->content,
     context->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
     context->children,
+    hb_array_init(0, context->allocator),
+    NULL,
+    NULL,
+    NULL,
     context->end_node,
     context->start_position,
     context->end_position,

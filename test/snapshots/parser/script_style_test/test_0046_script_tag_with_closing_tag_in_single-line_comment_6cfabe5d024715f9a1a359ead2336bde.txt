@@ -29,7 +29,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (2:13)-(2:14))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (2:14)-(3:0))
     │   └── content: "\n"

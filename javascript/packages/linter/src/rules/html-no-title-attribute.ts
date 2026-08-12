@@ -31,6 +31,7 @@ class NoTitleAttributeVisitor extends BaseRuleVisitor {
 
 export class HTMLNoTitleAttributeRule extends ParserRule {
   static ruleName = "html-no-title-attribute"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

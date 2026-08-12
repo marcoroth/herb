@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0028_output tag with -%> same-line with control tag preserves space"
+input: "{source: \"A<%= -%> <% if true %>B<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << 'A'.freeze; _buf << ().to_s; _buf << ' '.freeze; if true; _buf << 'B'.freeze; end;
+_buf.to_s

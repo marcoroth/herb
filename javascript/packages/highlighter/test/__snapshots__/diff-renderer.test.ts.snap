@@ -1,0 +1,136 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DiffRenderer > NO_COLOR environment > renders the diff without any escape codes 1`] = `
+"/test/file.erb
+
+      1 │ <div id="gems">
+  -   2 │   <span class='card'>
+  +     │   <span class="card">
+      3 │     <%= render partial: "gem_card" %>
+      4 │   </span>
+  -   5 │   <img src="a.png">
+  +     │   <img src="a.png" alt="">
+      6 │ </div>"
+`;
+
+exports[`DiffRenderer > indents the whole diff for nesting under an offense 1`] = `
+"        -   2 │   <span class='card'>
+        +     │   <span class="card">
+              │ ⋮
+        -   5 │   <img src="a.png">
+        +     │   <img src="a.png" alt="">"
+`;
+
+exports[`DiffRenderer > inline change highlighting > backgrounds only the characters that changed, keeping syntax colors 1`] = `
+"[36m/test/file.erb[0m
+
+[31m  - [0m[1m  2[0m [90m│[0m [48;2;58;34;36m  [38;2;224;108;117m<[0m[38;2;224;108;117m[48;2;58;34;36mspan[0m[48;2;58;34;36m [38;2;209;154;102mclass[0m[38;2;86;182;194m[48;2;58;34;36m=[0m[38;2;152;195;121m[48;2;107;46;49m'[0m[38;2;152;195;121m[48;2;58;34;36mcard[0m[38;2;152;195;121m[48;2;107;46;49m'[0m[38;2;224;108;117m[48;2;58;34;36m>[0m
+[32m  + [0m    [90m│[0m [48;2;30;50;38m  [38;2;224;108;117m<[0m[38;2;224;108;117m[48;2;30;50;38mspan[0m[48;2;30;50;38m [38;2;209;154;102mclass[0m[38;2;86;182;194m[48;2;30;50;38m=[0m[38;2;152;195;121m[48;2;46;94;61m"[0m[38;2;152;195;121m[48;2;30;50;38mcard[0m[38;2;152;195;121m[48;2;46;94;61m"[0m[38;2;224;108;117m[48;2;30;50;38m>[0m
+        [90m│[0m [90m⋮[0m
+[31m  - [0m[1m  5[0m [90m│[0m [48;2;58;34;36m  [38;2;224;108;117m<[0m[38;2;224;108;117m[48;2;58;34;36mimg[0m[48;2;58;34;36m [38;2;209;154;102msrc[0m[38;2;86;182;194m[48;2;58;34;36m=[0m[38;2;152;195;121m[48;2;58;34;36m"[0m[38;2;152;195;121m[48;2;58;34;36ma[0m[38;2;171;178;191m[48;2;58;34;36m.[0m[38;2;152;195;121m[48;2;58;34;36mpng[0m[38;2;152;195;121m[48;2;58;34;36m"[0m[38;2;224;108;117m[48;2;58;34;36m>[0m
+[32m  + [0m    [90m│[0m [48;2;30;50;38m  [38;2;224;108;117m<[0m[38;2;224;108;117m[48;2;30;50;38mimg[0m[48;2;30;50;38m [38;2;209;154;102msrc[0m[38;2;86;182;194m[48;2;30;50;38m=[0m[38;2;152;195;121m[48;2;30;50;38m"[0m[38;2;152;195;121m[48;2;30;50;38ma[0m[38;2;171;178;191m[48;2;30;50;38m.[0m[38;2;152;195;121m[48;2;30;50;38mpng[0m[38;2;152;195;121m[48;2;30;50;38m"[0m[48;2;46;94;61m [38;2;209;154;102malt[0m[38;2;86;182;194m[48;2;46;94;61m=[0m[38;2;152;195;121m[48;2;46;94;61m"[0m[38;2;152;195;121m[48;2;46;94;61m"[0m[38;2;224;108;117m[48;2;30;50;38m>[0m"
+`;
+
+exports[`DiffRenderer > inline change highlighting > marks the inserted indentation when a block is re-indented line for line 1`] = `
+"/test/file.erb
+
+  -   2 │ <span>one</span>
+  -   3 │ <span>two</span>
+  +     │   <span>one</span>
+  +     │   <span>two</span>"
+`;
+
+exports[`DiffRenderer > keeps context numbering monotonic when the fix changes the line count 1`] = `
+"/test/file.erb
+
+      1 │ <div>
+      2 │   <span>one</span>
+  +     │   <span>two</span>
+      3 │ </div>"
+`;
+
+exports[`DiffRenderer > omits the header and gutter when line numbers are hidden 1`] = `
+"  <div id="gems">
+-   <span class='card'>
++   <span class="card">
+      <%= render partial: "gem_card" %>
+    </span>
+-   <img src="a.png">
++   <img src="a.png" alt="">
+  </div>"
+`;
+
+exports[`DiffRenderer > renderFromHunks > renders hunks that arrived without their sources 1`] = `
+"/test/file.erb
+
+      1 │ <div id="gems">
+  -   2 │   <span class='card'>
+  +     │   <span class="card">
+      3 │     <%= render partial: "gem_card" %>
+      4 │   </span>
+  -   5 │   <img src="a.png">
+  +     │   <img src="a.png" alt="">
+      6 │ </div>"
+`;
+
+exports[`DiffRenderer > renders removals and additions in the gutter alongside line numbers 1`] = `
+"/test/file.erb
+
+      1 │ <div id="gems">
+  -   2 │   <span class='card'>
+  +     │   <span class="card">
+      3 │     <%= render partial: "gem_card" %>
+      4 │   </span>
+  -   5 │   <img src="a.png">
+  +     │   <img src="a.png" alt="">
+      6 │ </div>"
+`;
+
+exports[`DiffRenderer > separates distant hunks with a marker 1`] = `
+"/test/file.erb
+
+      1 │ <div>
+  -   2 │ <a>
+  +     │ <a2>
+      3 │ <b>
+        │ ⋮
+      5 │ <d>
+  -   6 │ <e>
+  +     │ <e2>
+      7 │ <f>"
+`;
+
+exports[`DiffRenderer > single-line collapsing > collapses an isolated one-for-one replacement onto a single line 1`] = `
+"      1 │ <div>
+  ±   2 │   <span class='a'"a">one</span>
+      3 │   <p>untouched</p>"
+`;
+
+exports[`DiffRenderer > single-line collapsing > falls back to splitting when color is off, since the composite needs tinting to be read 1`] = `
+"      1 │ <div>
+  -   2 │   <span class='a'>one</span>
+  +     │   <span class="a">one</span>
+      3 │   <p>untouched</p>"
+`;
+
+exports[`DiffRenderer > split layout > leaves the shorter side blank when the two runs differ in length 1`] = `
+"  -   2 │   <span>x</span>                                           ┃   +   2 │   <section>
+        │                                                            ┃   +   3 │     <span>x</span>
+        │                                                            ┃   +   4 │   </section>"
+`;
+
+exports[`DiffRenderer > split layout > puts the original on the left and the modified on the right 1`] = `
+"      1 │ <div id="gems">                                            ┃       1 │ <div id="gems">
+  -   2 │   <span class='card'>                                      ┃   +   2 │   <span class="card">
+      3 │     <%= render partial: "gem_card" %>                      ┃       3 │     <%= render partial: "gem_card" %>
+      4 │   </span>                                                  ┃       4 │   </span>
+  -   5 │   <img src="a.png">                                        ┃   +   5 │   <img src="a.png" alt="">
+      6 │ </div>                                                     ┃       6 │ </div>"
+`;
+
+exports[`DiffRenderer > truncates long lines when asked 1`] = `
+"/test/file.erb
+
+  -   1 │ <div class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…
+  +     │ <div class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…"
+`;

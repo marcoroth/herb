@@ -2,7 +2,7 @@
   "compilerOptions": {
     "types": ["node"],
     "rootDir": "./src",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
@@ -13,6 +13,8 @@
     "isolatedModules": true,
     "preserveConstEnums": true,
     "outDir": "dist",
+    "declaration": true,
+    "declarationDir": "./dist/types",
 
     "skipLibCheck": true,
     "strict": true,

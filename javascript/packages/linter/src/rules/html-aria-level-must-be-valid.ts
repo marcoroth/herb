@@ -3,7 +3,7 @@ import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttribut
 import { getValidatableStaticContent, hasERBOutput, filterLiteralNodes, filterERBContentNodes, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, ParserOptions } from "@herb-tools/core"
 
 class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams) {
@@ -64,11 +64,18 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
 
 export class HTMLAriaLevelMustBeValidRule extends ParserRule {
   static ruleName = "html-aria-level-must-be-valid"
+  static introducedIn = this.version("0.4.3")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

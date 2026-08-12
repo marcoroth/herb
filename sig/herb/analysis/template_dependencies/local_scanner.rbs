@@ -1,0 +1,19 @@
+# Generated from lib/herb/analysis/template_dependencies/local_scanner.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class TemplateDependencies
+      class LocalScanner < ::Herb::Visitor
+        attr_reader locals: untyped
+
+        def initialize: () -> untyped
+
+        def visit_erb_node: (untyped node) -> untyped
+
+        private
+
+        def collect_locals: (untyped node) -> untyped
+      end
+    end
+  end
+end

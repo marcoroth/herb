@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0002_image_tag with alt attribute"
+input: "{source: \"<%= image_tag \\\"icon.png\\\", alt: \\\"Icon\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<img alt="Icon" src="/images/icon.png" />

@@ -34,7 +34,7 @@ input: |2-
     │   │   │   ├── body: []
     │   │   │   ├── close_tag: ∅
     │   │   │   ├── is_void: true
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLCloseTagNode (location: (2:6)-(2:11))
     │   │   │   ├── errors: (1 error)
@@ -60,7 +60,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:6)-(4:0))
         └── content: "\n"

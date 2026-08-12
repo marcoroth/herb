@@ -3,6 +3,7 @@ import { createContentLoader } from 'vitepress'
 interface Post {
   title: string
   url: string
+  image: string | undefined
   date: {
     time: number
     string: string
@@ -16,6 +17,7 @@ export default createContentLoader('blog/*.md', {
   transform(raw): Post[] {
     return raw.map(({ url, frontmatter }) => ({
       title: frontmatter.head.find((e: any) => e[1].property === 'og:title')[1].content,
+      image: frontmatter.head.find((e: any) => e[1].property === 'og:image')?.[1]?.content,
       url,
       date: formatDate(frontmatter.date),
     })).sort((a, b) => b.date.time - a.date.time)

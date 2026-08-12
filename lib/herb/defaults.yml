@@ -1,3 +1,5 @@
+template_engine: erubi
+
 files:
   include:
     - "**/*.herb"
@@ -16,6 +18,12 @@ files:
     - "tmp/**/*"
     - "vendor/**/*"
 
+engine:
+  validators:
+    security: true
+    nesting: true
+    accessibility: true
+
 linter:
   enabled: true
   rules: {}
@@ -23,4 +31,5 @@ linter:
 formatter:
   enabled: false
   indentWidth: 2
+  indentStyle: space
   maxLineLength: 80

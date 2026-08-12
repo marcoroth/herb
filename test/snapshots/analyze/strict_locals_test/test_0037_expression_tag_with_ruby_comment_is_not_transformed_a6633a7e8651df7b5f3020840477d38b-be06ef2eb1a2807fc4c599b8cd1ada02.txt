@@ -1,0 +1,17 @@
+---
+source: "Analyze::StrictLocalsTest#test_0037_expression tag with ruby comment is not transformed"
+input: |2-
+<% # locals: (user:) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:23))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " # locals: (user:) " (location: (1:2)-(1:21))
+    │   ├── tag_closing: "%>" (location: (1:21)-(1:23))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:23)-(2:0))
+        └── content: "\n"

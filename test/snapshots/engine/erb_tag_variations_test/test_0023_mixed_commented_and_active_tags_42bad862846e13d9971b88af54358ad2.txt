@@ -3,10 +3,7 @@ source: "Engine::ERBTagVariationsTest#test_0023_mixed commented and active tags"
 input: "{source: \"<div>\\n  <%#= render \\\"disabled_partial\\\" %>\\n  <%= value %>\\n  <%# this is a comment %>\\n  <%#== raw_disabled %>\\n  <p>Content</p>\\n</div>\\n\", options: {}}"
 ---
 _buf = ::String.new; _buf << '<div>
-  
   '.freeze; _buf << (value).to_s; _buf << '
-  
-  
   <p>Content</p>
 </div>
 '.freeze;

@@ -63,7 +63,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_name: "td" (location: (3:5)-(3:7))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLElementNode (location: (4:4)-(5:2))
     │   │   │   │       ├── errors: (1 error)
@@ -90,7 +90,7 @@ input: |2-
     │   │   │   │       │       └── tag_name: "th" (location: (4:5)-(4:7))
     │   │   │   │       │
     │   │   │   │       ├── is_void: false
-    │   │   │   │       └── source: "HTML"
+    │   │   │   │       └── element_source: "HTML"
     │   │   │   │
     │   │   │   ├── close_tag:
     │   │   │   │   └── @ HTMLCloseTagNode (location: (5:2)-(5:7))
@@ -100,7 +100,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:6)-(5:7))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (5:7)-(6:0))
     │   │       └── content: "\n"
@@ -113,7 +113,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (6:7)-(6:8))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:8)-(7:0))
         └── content: "\n"

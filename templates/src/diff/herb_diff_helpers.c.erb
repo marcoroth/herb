@@ -1,0 +1,38 @@
+#include "../include/diff/herb_diff.h"
+
+const hb_array_T* herb_diff_get_node_children(const AST_NODE_T* node) {
+  if (node == NULL) { return NULL; }
+
+  switch (node->type) {
+  <%- nodes.each do |node| -%>
+    <%- primary_array = node.fields.find { |field| field.is_a?(Herb::Template::ArrayField) && (field.name == "children" || field.name == "body" || field.name == "statements" || field.name == "conditions") } -%>
+    <%- if primary_array -%>
+    case <%= node.type %>:
+      return ((const <%= node.struct_type %>*) node)-><%= primary_array.name %>;
+
+    <%- end -%>
+  <%- end -%>
+    default:
+      return NULL;
+  }
+}
+
+const AST_NODE_T* herb_diff_find_child_by_hash(
+  const AST_NODE_T* parent,
+  const herb_hash_T target_hash,
+  const herb_hash_map_T* hash_map
+) {
+  const hb_array_T* children = herb_diff_get_node_children(parent);
+  if (children == NULL) { return NULL; }
+
+  const size_t count = hb_array_size(children);
+
+  for (size_t index = 0; index < count; index++) {
+    const AST_NODE_T* child = (const AST_NODE_T*) hb_array_get(children, index);
+    herb_hash_T child_hash = herb_hash_map_get(hash_map, child);
+
+    if (child_hash == target_hash) { return child; }
+  }
+
+  return NULL;
+}

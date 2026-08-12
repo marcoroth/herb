@@ -1,7 +1,7 @@
 #include "include/test.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/lex_helpers.h"
-#include "../../src/include/util/hb_allocator.h"
+#include "../../src/include/lexer/lex_helpers.h"
+#include "../../src/include/lib/hb_allocator.h"
 
 TEST(herb_lex_to_buffer_empty_file)
   char* html = "";

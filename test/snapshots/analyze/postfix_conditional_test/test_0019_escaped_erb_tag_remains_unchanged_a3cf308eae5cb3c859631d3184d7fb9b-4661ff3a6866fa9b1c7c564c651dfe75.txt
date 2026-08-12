@@ -1,0 +1,17 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0019_escaped erb tag remains unchanged"
+input: |2-
+<%%= 'text' if condition %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:27))
+    │   ├── tag_opening: "<%%=" (location: (1:0)-(1:4))
+    │   ├── content: " 'text' if condition " (location: (1:4)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:27)-(2:0))
+        └── content: "\n"

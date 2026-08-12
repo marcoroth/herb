@@ -4,3 +4,27 @@ export * from "./types.js"
 
 export { ruleDocumentationUrl } from "./urls.js"
 export { rules } from "./rules.js"
+export { fixabilityFor } from "./fixability.js"
+
+export type { Fixability } from "./fixability.js"
+
+export {
+  findAttributeByName,
+  getAttribute,
+  getAttributeName,
+  getAttributes,
+  getAttributeValue,
+  getAttributeValueNodes,
+  getAttributeValueQuoteType,
+  getCombinedAttributeNameString,
+  getStaticAttributeValue,
+  getStaticAttributeValueContent,
+  getTagName,
+  hasAttribute,
+  hasAttributeValue,
+  hasDynamicAttributeName,
+  hasDynamicAttributeValue,
+  hasStaticAttributeValue,
+  hasStaticAttributeValueContent,
+  isAttributeValueQuoted,
+} from "@herb-tools/core"

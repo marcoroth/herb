@@ -13,14 +13,19 @@ require_relative "herb/result"
 require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
+require_relative "herb/diff_operation"
+require_relative "herb/diff_result"
 
 require_relative "herb/ast"
 require_relative "herb/ast/node"
 require_relative "herb/ast/nodes"
+require_relative "herb/ast/erb_content_node"
 require_relative "herb/ast/helpers"
+require_relative "herb/ast/erb_render_node"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"
+require_relative "herb/diagnostic"
 
 require_relative "herb/cli"
 require_relative "herb/project"
@@ -28,6 +33,7 @@ require_relative "herb/configuration"
 
 require_relative "herb/version"
 
+require_relative "herb/html/util"
 require_relative "herb/visitor"
 require_relative "herb/engine"
 
@@ -68,13 +74,20 @@ end
 module Herb
   class << self
     #: (String path, ?arena_stats: bool) -> LexResult
-    def lex_file(path, **options)
-      lex(File.read(path), **options)
+    def lex_file(path, **)
+      lex(File.read(path), **)
     end
 
-    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
-    def parse_file(path, **options)
-      parse(File.read(path), **options)
+    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
+    def parse_file(path, **)
+      parse(File.read(path), **)
+    end
+
+    #: (String source) -> Prism::ParseResult
+    def parse_ruby(source)
+      require "prism"
+
+      Prism.parse(source)
     end
 
     def configuration(project_path = nil)
@@ -87,6 +100,42 @@ module Herb
 
     def reset_configuration!
       @configuration = nil
+    end
+
+    def dev_server_port(project_path = nil)
+      require_relative "herb/dev/server_entry"
+
+      project_path ||= Dir.pwd
+      entry = Dev::ServerEntry.find_by_project(project_path)
+      entry&.port
+    rescue StandardError
+      nil
+    end
+
+    #: (*String gems) -> void
+    def ensure_installed(*gems)
+      missing = gems.reject do |name|
+        require name
+        true
+      rescue LoadError
+        false
+      end
+
+      return if missing.empty?
+
+      require "bundler/inline"
+
+      verbose = $VERBOSE
+      $VERBOSE = nil
+
+      begin
+        gemfile(true, quiet: true) do # steep:ignore
+          source "https://rubygems.org" # steep:ignore
+          missing.each { |name| gem name }
+        end
+      ensure
+        $VERBOSE = verbose
+      end
     end
   end
 end

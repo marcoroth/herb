@@ -34,7 +34,7 @@ options: {track_whitespace: true}
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (2:3)-(2:0))
     │   └── content: "\n"

@@ -12,10 +12,8 @@ describe("ERBUntilNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBUntilNode.from({
-      type: "AST_ERB_UNTIL_NODE",
+    const node = ERBUntilNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " until true "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

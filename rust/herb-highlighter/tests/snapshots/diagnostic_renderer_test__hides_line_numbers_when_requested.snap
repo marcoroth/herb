@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[error] Test error message (test-rule)
+
+line 1
+line <error> content
+     ~~~~~
+line 3

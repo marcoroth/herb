@@ -56,7 +56,7 @@ input: |2-
     │   │   │   │   │   ├── body: []
     │   │   │   │   │   ├── close_tag: ∅
     │   │   │   │   │   ├── is_void: true
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (3:9)-(4:2))
     │   │   │   │       └── content: "\n  "
@@ -66,7 +66,7 @@ input: |2-
     │   │   │   │       └── tag_name: "colgroup" (location: (2:3)-(2:11))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLElementNode (location: (4:2)-(4:24))
     │   │   │   ├── open_tag:
@@ -101,7 +101,7 @@ input: |2-
     │   │   │   │       │       └── tag_closing: ">" (location: (4:18)-(4:19))
     │   │   │   │       │
     │   │   │   │       ├── is_void: false
-    │   │   │   │       └── source: "HTML"
+    │   │   │   │       └── element_source: "HTML"
     │   │   │   │
     │   │   │   ├── close_tag:
     │   │   │   │   └── @ HTMLCloseTagNode (location: (4:19)-(4:24))
@@ -111,7 +111,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (4:23)-(4:24))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:24)-(5:0))
     │   │       └── content: "\n"
@@ -124,7 +124,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (5:7)-(5:8))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:8)-(6:0))
         └── content: "\n"

@@ -1,4 +1,6 @@
 #include "../include/analyze/analyze.h"
+#include "../include/analyze/action_view/tag_helper_handler.h"
+#include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/builders.h"
 #include "../include/analyze/conditional_elements.h"
@@ -6,16 +8,23 @@
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
-#include "../include/ast_node.h"
-#include "../include/ast_nodes.h"
+#include "../include/analyze/iteration_nodes.h"
+#include "../include/analyze/postfix_conditionals.h"
+#include "../include/analyze/render_nodes.h"
+#include "../include/analyze/strict_locals.h"
+#include "../include/analyze/ternary_conditionals.h"
+#include "../include/ast/ast_node.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
-#include "../include/location.h"
-#include "../include/parser.h"
-#include "../include/position.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
-#include "../include/util/string.h"
+#include "../include/extract.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_buffer.h"
+#include "../include/lib/hb_string.h"
+#include "../include/lib/string.h"
+#include "../include/location/location.h"
+#include "../include/location/position.h"
+#include "../include/parser/parser.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -71,8 +80,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     hb_string_T opening = erb_content_node->tag_opening->value;
 
-    if (!hb_string_equals(opening, hb_string("<%%")) && !hb_string_equals(opening, hb_string("<%%="))
-        && !hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
+    if (!hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
       erb_content_node->parsed = true;
@@ -84,7 +92,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           allocator,
-          erb_content_node->base.errors
+          &erb_content_node->base.errors
         );
       }
 
@@ -93,7 +101,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           allocator,
-          erb_content_node->base.errors
+          &erb_content_node->base.errors
         );
       }
     } else {
@@ -249,6 +257,14 @@ static size_t process_begin_structure(
   analyze_ruby_context_T* context
 );
 
+static size_t process_block_structure(
+  AST_NODE_T* node,
+  hb_array_T* array,
+  size_t index,
+  hb_array_T* output_array,
+  analyze_ruby_context_T* context
+);
+
 static size_t process_generic_structure(
   AST_NODE_T* node,
   hb_array_T* array,
@@ -269,8 +285,8 @@ static size_t process_control_structure(
   switch (initial_type) {
     case CONTROL_TYPE_CASE:
     case CONTROL_TYPE_CASE_MATCH: return process_case_structure(node, array, index, output_array, context);
-
     case CONTROL_TYPE_BEGIN: return process_begin_structure(node, array, index, output_array, context);
+    case CONTROL_TYPE_BLOCK: return process_block_structure(node, array, index, output_array, context);
 
     default: return process_generic_structure(node, array, index, output_array, context, initial_type);
   }
@@ -472,6 +488,7 @@ static size_t process_case_structure(
       erb_node->content,
       erb_node->tag_closing,
       non_when_non_in_children,
+      HERB_PRISM_NODE_EMPTY,
       in_conditions,
       else_clause,
       end_node,
@@ -492,6 +509,7 @@ static size_t process_case_structure(
     erb_node->content,
     erb_node->tag_closing,
     non_when_non_in_children,
+    HERB_PRISM_NODE_EMPTY,
     when_conditions,
     else_clause,
     end_node,
@@ -607,6 +625,7 @@ static size_t process_begin_structure(
     erb_node->tag_opening,
     erb_node->content,
     erb_node->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
     children,
     rescue_clause,
     else_clause,
@@ -620,6 +639,146 @@ static size_t process_begin_structure(
 
   ast_node_free((AST_NODE_T*) erb_node, allocator);
   hb_array_append(output_array, (AST_NODE_T*) begin_node);
+
+  return index;
+}
+
+static size_t process_block_structure(
+  AST_NODE_T* node,
+  hb_array_T* array,
+  size_t index,
+  hb_array_T* output_array,
+  analyze_ruby_context_T* context
+) {
+  hb_allocator_T* allocator = context->allocator;
+  AST_ERB_CONTENT_NODE_T* erb_node = get_erb_content_at(array, index);
+  if (!erb_node) { return index; }
+  hb_array_T* children = hb_array_init(8, allocator);
+
+  index++;
+  index = process_block_children(node, array, index, children, context, CONTROL_TYPE_BLOCK);
+
+  AST_ERB_RESCUE_NODE_T* rescue_clause = NULL;
+  AST_ERB_ELSE_NODE_T* else_clause = NULL;
+  AST_ERB_ENSURE_NODE_T* ensure_clause = NULL;
+
+  control_type_t next_type = CONTROL_TYPE_UNKNOWN;
+  AST_ERB_CONTENT_NODE_T* next_erb = NULL;
+
+  if (peek_control_type(array, index, &next_type, &next_erb) && next_type == CONTROL_TYPE_RESCUE) {
+    AST_NODE_T* rescue_node = NULL;
+    index = process_subsequent_block(node, array, index, &rescue_node, context, CONTROL_TYPE_BLOCK);
+    rescue_clause = (AST_ERB_RESCUE_NODE_T*) rescue_node;
+  }
+
+  if (peek_control_type(array, index, &next_type, &next_erb) && next_type == CONTROL_TYPE_ELSE) {
+    hb_array_T* else_children = hb_array_init(8, allocator);
+    index++;
+
+    index = process_block_children(node, array, index, else_children, context, CONTROL_TYPE_BLOCK);
+
+    hb_array_T* else_errors = next_erb->base.errors;
+    next_erb->base.errors = NULL;
+
+    else_clause = ast_erb_else_node_init(
+      next_erb->tag_opening,
+      next_erb->content,
+      next_erb->tag_closing,
+      else_children,
+      next_erb->tag_opening->location.start,
+      erb_content_end_position(next_erb),
+      else_errors,
+      allocator
+    );
+
+    ast_node_free((AST_NODE_T*) next_erb, allocator);
+  }
+
+  if (peek_control_type(array, index, &next_type, &next_erb) && next_type == CONTROL_TYPE_ENSURE) {
+    hb_array_T* ensure_children = hb_array_init(8, allocator);
+    index++;
+
+    const control_type_t ensure_stop[] = { CONTROL_TYPE_END, CONTROL_TYPE_BLOCK_CLOSE };
+    collect_children_until(array, &index, ensure_children, ensure_stop, sizeof(ensure_stop) / sizeof(ensure_stop[0]));
+
+    hb_array_T* ensure_errors = next_erb->base.errors;
+    next_erb->base.errors = NULL;
+
+    ensure_clause = ast_erb_ensure_node_init(
+      next_erb->tag_opening,
+      next_erb->content,
+      next_erb->tag_closing,
+      ensure_children,
+      next_erb->tag_opening->location.start,
+      erb_content_end_position(next_erb),
+      ensure_errors,
+      allocator
+    );
+
+    ast_node_free((AST_NODE_T*) next_erb, allocator);
+  }
+
+  const control_type_t end_types[] = { CONTROL_TYPE_BLOCK_CLOSE, CONTROL_TYPE_END };
+  AST_ERB_END_NODE_T* end_node =
+    consume_end_node(array, &index, end_types, sizeof(end_types) / sizeof(end_types[0]), allocator);
+
+  position_T start_position = erb_node->tag_opening->location.start;
+  position_T end_position = erb_content_end_position(erb_node);
+
+  if (end_node) {
+    end_position = end_node->base.location.end;
+  } else if (ensure_clause) {
+    end_position = ensure_clause->base.location.end;
+  } else if (else_clause) {
+    end_position = else_clause->base.location.end;
+  } else if (rescue_clause) {
+    end_position = rescue_clause->base.location.end;
+  } else if (hb_array_size(children) > 0) {
+    AST_NODE_T* last_child = hb_array_last(children);
+    end_position = last_child->location.end;
+  }
+
+  hb_array_T* block_errors = erb_node->base.errors;
+  erb_node->base.errors = NULL;
+
+  // Filter out "incomplete block" Prism errors since we've matched the block with its end tag.
+  if (block_errors) {
+    for (size_t error_index = hb_array_size(block_errors); error_index > 0; error_index--) {
+      ERROR_T* error = hb_array_get(block_errors, error_index - 1);
+      if (!error || error->type != RUBY_PARSE_ERROR) { continue; }
+
+      RUBY_PARSE_ERROR_T* parse_error = (RUBY_PARSE_ERROR_T*) error;
+
+      if (string_equals(parse_error->diagnostic_id.data, "block_term_end")
+          || string_equals(parse_error->diagnostic_id.data, "block_term_brace")
+          || string_equals(parse_error->diagnostic_id.data, "unexpected_token_close_context")) {
+        hb_array_remove(block_errors, error_index - 1);
+      }
+    }
+  }
+
+  hb_array_T* block_arguments =
+    extract_block_arguments_from_erb_node(erb_node, context->source, &block_errors, allocator);
+
+  AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
+    erb_node->tag_opening,
+    erb_node->content,
+    erb_node->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
+    children,
+    block_arguments,
+    rescue_clause,
+    else_clause,
+    ensure_clause,
+    end_node,
+    start_position,
+    end_position,
+    block_errors,
+    allocator
+  );
+
+  ast_node_free((AST_NODE_T*) erb_node, allocator);
+  hb_array_append(output_array, (AST_NODE_T*) block_node);
 
   return index;
 }
@@ -790,6 +949,30 @@ static size_t process_block_children(
   return index;
 }
 
+hb_array_T* get_node_children_array(const AST_NODE_T* node) {
+  if (!node) { return NULL; }
+
+  switch (node->type) {
+    case AST_DOCUMENT_NODE: return ((AST_DOCUMENT_NODE_T*) node)->children;
+    case AST_HTML_ELEMENT_NODE: return ((AST_HTML_ELEMENT_NODE_T*) node)->body;
+    case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->body;
+    case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->body;
+    case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->statements;
+    case AST_ERB_UNLESS_NODE: return ((AST_ERB_UNLESS_NODE_T*) node)->statements;
+    case AST_ERB_ELSE_NODE: return ((AST_ERB_ELSE_NODE_T*) node)->statements;
+    case AST_ERB_WHILE_NODE: return ((AST_ERB_WHILE_NODE_T*) node)->statements;
+    case AST_ERB_UNTIL_NODE: return ((AST_ERB_UNTIL_NODE_T*) node)->statements;
+    case AST_ERB_FOR_NODE: return ((AST_ERB_FOR_NODE_T*) node)->statements;
+    case AST_ERB_BEGIN_NODE: return ((AST_ERB_BEGIN_NODE_T*) node)->statements;
+    case AST_ERB_RESCUE_NODE: return ((AST_ERB_RESCUE_NODE_T*) node)->statements;
+    case AST_ERB_ENSURE_NODE: return ((AST_ERB_ENSURE_NODE_T*) node)->statements;
+    case AST_ERB_CASE_NODE: return ((AST_ERB_CASE_NODE_T*) node)->children;
+    case AST_ERB_WHEN_NODE: return ((AST_ERB_WHEN_NODE_T*) node)->statements;
+    case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->body;
+    default: return NULL;
+  }
+}
+
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
   hb_allocator_T* allocator = context->allocator;
   hb_array_T* new_array = hb_array_init(hb_array_size(array), allocator);
@@ -835,6 +1018,63 @@ hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby
   return new_array;
 }
 
+static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocator_T* allocator) {
+  if (!source) { return NULL; }
+
+  tag_helper_scope_T* scope = hb_allocator_alloc(allocator, sizeof(tag_helper_scope_T));
+
+  if (!scope) { return NULL; }
+
+  memset(scope, 0, sizeof(tag_helper_scope_T));
+
+  if (!hb_buffer_init(&scope->buffer, strlen(source), allocator)) {
+    hb_allocator_dealloc(allocator, scope);
+
+    return NULL;
+  }
+
+  herb_extract_ruby_options_T extract_options = {
+    .semicolons = true,
+    .comments = false,
+    .preserve_positions = true,
+  };
+
+  herb_extract_ruby_to_buffer_with_options(source, &scope->buffer, &extract_options, allocator);
+
+  if (!scope->buffer.value || scope->buffer.length == 0) {
+    hb_buffer_free(&scope->buffer);
+    hb_allocator_dealloc(allocator, scope);
+
+    return NULL;
+  }
+
+  pm_options_partial_script_set(&scope->options, true);
+  pm_parser_init(&scope->parser, (const uint8_t*) scope->buffer.value, scope->buffer.length, &scope->options);
+
+  scope->root = pm_parse(&scope->parser);
+
+  if (!scope->root) {
+    pm_parser_free(&scope->parser);
+    pm_options_free(&scope->options);
+    hb_buffer_free(&scope->buffer);
+    hb_allocator_dealloc(allocator, scope);
+
+    return NULL;
+  }
+
+  return scope;
+}
+
+static void tag_helper_scope_free(tag_helper_scope_T* scope, hb_allocator_T* allocator) {
+  if (!scope) { return; }
+
+  pm_node_destroy(&scope->parser, scope->root);
+  pm_parser_free(&scope->parser);
+  pm_options_free(&scope->options);
+  hb_buffer_free(&scope->buffer);
+  hb_allocator_dealloc(allocator, scope);
+}
+
 void herb_analyze_parse_tree(
   AST_DOCUMENT_NODE_T* document,
   const char* source,
@@ -848,10 +1088,36 @@ void herb_analyze_parse_tree(
     .document = document,
     .parent = NULL,
     .ruby_context_stack = hb_array_init(8, allocator),
+    .tag_helper_scope = NULL,
     .allocator = allocator,
+    .source = source,
   };
 
+  if (options && (options->transform_conditionals || options->action_view_helpers)) {
+    herb_visit_node((AST_NODE_T*) document, transform_conditional_nodes, &context);
+    herb_visit_node((AST_NODE_T*) document, transform_ternary_conditional_nodes, &context);
+  }
+
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
+
+  if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
+  if (options && options->iteration_nodes) {
+    herb_visit_node((AST_NODE_T*) document, transform_iteration_nodes, &context);
+  }
+
+  if (options && options->strict_locals) {
+    herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);
+  }
+
+  if (options && options->action_view_helpers) {
+    context.tag_helper_scope = tag_helper_scope_init(source, allocator);
+
+    herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);
+
+    tag_helper_scope_free(context.tag_helper_scope, allocator);
+    context.tag_helper_scope = NULL;
+  }
+
   herb_transform_conditional_elements(document, allocator);
   herb_transform_conditional_open_tags(document, allocator);
 
@@ -863,7 +1129,7 @@ void herb_analyze_parse_tree(
 
   herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, &invalid_context);
 
-  herb_analyze_parse_errors(document, source, allocator);
+  herb_analyze_parse_errors(document, source, options, allocator);
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 

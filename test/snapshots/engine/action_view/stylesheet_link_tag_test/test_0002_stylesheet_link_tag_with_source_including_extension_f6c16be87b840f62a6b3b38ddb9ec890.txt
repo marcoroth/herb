@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0002_stylesheet_link_tag with source including extension"
+input: "{source: \"<%= stylesheet_link_tag \\\"style.css\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/style.css" />

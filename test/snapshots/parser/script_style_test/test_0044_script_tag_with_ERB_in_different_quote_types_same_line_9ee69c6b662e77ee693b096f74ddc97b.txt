@@ -46,4 +46,4 @@ input: "<script>var a = \"ERB: <%= @a %>\"; var b = 'ERB: <%= @b %>';</script>"
         │       └── tag_closing: ">" (location: (1:67)-(1:68))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

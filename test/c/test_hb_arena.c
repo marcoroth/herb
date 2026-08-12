@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_arena.h"
+#include "../../src/include/lib/hb_arena.h"
 
 #include <string.h>
 

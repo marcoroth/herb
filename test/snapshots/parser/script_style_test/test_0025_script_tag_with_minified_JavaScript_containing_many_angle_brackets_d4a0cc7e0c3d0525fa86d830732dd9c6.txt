@@ -26,4 +26,4 @@ input: "<script>!function(){for(var i=0;i<10;i++)if(arr[i]>5&&arr[i]<15)console.
         │       └── tag_closing: ">" (location: (1:114)-(1:115))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

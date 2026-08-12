@@ -15,6 +15,8 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   }
 
   private checkImgTag(openTag: HTMLOpenTagNode): void {
+    if (this.context.framework !== "actionview") return
+
     const tagName = getTagLocalName(openTag)
 
     if (tagName !== "img") return
@@ -92,6 +94,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
 
 export class ERBPreferImageTagHelperRule extends ParserRule {
   static ruleName = "erb-prefer-image-tag-helper"
+  static introducedIn = this.version("0.4.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

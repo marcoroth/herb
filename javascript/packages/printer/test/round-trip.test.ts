@@ -225,4 +225,28 @@ describe("Round-trip Parser Accuracy Tests", () => {
       </div>
     `)
   })
+
+  test("ActionView Tag Helpers", () => {
+    expectPrintRoundTrip(dedent`
+      <%= tag.div(
+        data: {
+          controller: "hello",
+          action: "click->hello#greet"
+        }
+      ) do %>
+        <div>Hello</div>
+      <% end %>
+    `, true, { action_view_helpers: true })
+  })
+
+  test("ERB Render Nodes", () => {
+    expectPrintRoundTrip('<%= render "card" %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render partial: "card" %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render partial: "card", locals: { title: @title } %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render "card", title: @title, body: "Hello" %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render partial: "product", collection: @products %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render partial: "product", collection: @products, as: :item %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render @product %>', true, { render_nodes: true })
+    expectPrintRoundTrip('<%= render layout: "wrapper" %>', false, { render_nodes: true })
+  })
 })

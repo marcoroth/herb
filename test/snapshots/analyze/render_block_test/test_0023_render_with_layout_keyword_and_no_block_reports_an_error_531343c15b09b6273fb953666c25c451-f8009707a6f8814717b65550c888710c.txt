@@ -1,0 +1,43 @@
+---
+source: "Analyze::RenderBlockTest#test_0023_render with layout keyword and no block reports an error"
+input: "<%= render layout: \"wrapper\" %>"
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:31))
+└── children: (1 item)
+    └── @ ERBRenderNode (location: (1:0)-(1:31))
+        ├── errors: (1 error)
+        │   └── @ RenderLayoutWithoutBlockError (location: (1:0)-(1:31))
+        │       ├── message: "Layout rendering needs a block. Use `render layout: 'wrapper' do ... end` so the layout has content to wrap."
+        │       └── layout: "wrapper"
+        │
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " render layout: "wrapper" " (location: (1:3)-(1:29))
+        ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        ├── keywords:
+        │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:31))
+        │       ├── partial: ∅
+        │       ├── template_path: ∅
+        │       ├── layout: "wrapper" (location: (1:19)-(1:28))
+        │       ├── file: ∅
+        │       ├── inline_template: ∅
+        │       ├── body: ∅
+        │       ├── plain: ∅
+        │       ├── html: ∅
+        │       ├── renderable: ∅
+        │       ├── collection: ∅
+        │       ├── object: ∅
+        │       ├── as_name: ∅
+        │       ├── spacer_template: ∅
+        │       ├── formats: ∅
+        │       ├── variants: ∅
+        │       ├── handlers: ∅
+        │       ├── content_type: ∅
+        │       └── locals: []
+        │
+        ├── body: []
+        ├── block_arguments: []
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
+        └── end_node: ∅

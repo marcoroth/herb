@@ -1,0 +1,28 @@
+# Generated from lib/herb/prism_inspect.rb with RBS::Inline
+
+module Herb
+  module PrismInspect
+    SKIP_FIELDS: untyped
+
+    # : (String, String, String) -> String
+    def self.inspect_prism_serialized: (String, String, String) -> String
+
+    # : (Prism::Node, String, String) -> String
+    def self.inspect_prism_node: (Prism::Node, String, String) -> String
+
+    # : (Symbol, untyped, String, String, String, String) -> String
+    private def self.inspect_field: (Symbol, untyped, String, String, String, String) -> String
+
+    # : (Symbol, Prism::Node, String, String, String, String) -> String
+    private def self.inspect_node_field: (Symbol, Prism::Node, String, String, String, String) -> String
+
+    # : (Symbol, Array[untyped], String, String, String, String) -> String
+    private def self.inspect_array_field: (Symbol, Array[untyped], String, String, String, String) -> String
+
+    # : (untyped) -> Array[[Symbol, untyped]]
+    private def self.display_fields: (untyped) -> Array[[ Symbol, untyped ]]
+
+    # : (Prism::Location) -> String
+    private def self.format_location: (Prism::Location) -> String
+  end
+end

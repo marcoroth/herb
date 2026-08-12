@@ -1,0 +1,170 @@
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { ParserRule, BaseAutofixContext } from "../types.js"
+import { ERBStringToDirectOutputRewriter, isSafeToInline } from "@herb-tools/rewriter"
+
+import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType , locationFromByteOffset } from "@herb-tools/core"
+
+import type { Mutable, ReplacementPart } from "@herb-tools/rewriter"
+import type { ParseResult, ERBContentNode, HTMLAttributeValueNode, ParserOptions, Node } from "@herb-tools/core"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+
+interface PreferDirectOutputAutofixContext extends BaseAutofixContext {
+  node: Mutable<ERBContentNode>
+  replacementParts: ReplacementPart[]
+}
+
+function mapReplacementParts<T>(
+  node: ERBContentNode,
+  replacementParts: ReplacementPart[],
+  mapText: (content: string) => T,
+  mapExpression: (
+    expression: string,
+    tagOpening: string,
+    tagClosing: string,
+  ) => T,
+): T[] {
+  const tagOpening = node.tag_opening?.value ?? "<%="
+  const tagClosing = node.tag_closing?.value ?? "%>"
+
+  return replacementParts.map((part) =>
+    part.type === "text"
+      ? mapText(part.content)
+      : mapExpression(part.expression.trim(), tagOpening, tagClosing),
+  )
+}
+
+function formatReplacement(
+  node: ERBContentNode,
+  replacementParts: ReplacementPart[],
+): string {
+  return mapReplacementParts(
+    node,
+    replacementParts,
+    (content) => content,
+    (expression, tagOpening, tagClosing) =>
+      `${tagOpening} ${expression} ${tagClosing}`,
+  ).join("")
+}
+
+class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofixContext> {
+  private attributeValue: HTMLAttributeValueNode | null = null
+
+  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
+    const previousAttributeValue = this.attributeValue
+
+    this.attributeValue = node
+
+    super.visitHTMLAttributeValueNode(node)
+
+    this.attributeValue = previousAttributeValue
+  }
+
+  visitERBContentNode(node: ERBContentNode): void {
+    if (!isERBOutputNode(node)) return
+
+    const prismNode = node.prismNode
+    if (!prismNode) return
+
+    const source = node.source
+    if (!source) return
+
+    const content = node.content?.value?.trim() ?? ""
+
+    if (!ERBStringToDirectOutputRewriter.isStringOutputNode(prismNode)) return
+
+    const replacementParts = ERBStringToDirectOutputRewriter.extractReplacementParts(prismNode, source)
+
+    if (replacementParts && !isSafeToInline(replacementParts, { attributeValue: this.attributeValue })) return
+
+    const { startOffset, length } = prismNode.location
+    const stringLocation = locationFromByteOffset(source, startOffset, length)
+
+    const autofixContext = replacementParts
+      ? { node: node as Mutable<ERBContentNode>, replacementParts }
+      : undefined
+
+    const replacement = replacementParts
+      ? formatReplacement(node, replacementParts)
+      : null
+
+    if (isPrismNodeType(prismNode, "StringNode")) {
+      const recommendation =
+        replacement === null
+          ? "Write the text directly without wrapping it in an ERB output tag."
+          : replacement.length === 0
+            ? "Remove the empty output tag instead."
+            : `Use \`${replacement}\` instead.`
+
+      this.addOffense(
+        `Avoid outputting string literal \`${content}\`. ${recommendation}`,
+        stringLocation,
+        autofixContext,
+      )
+    }
+
+    if (isPrismNodeType(prismNode, "InterpolatedStringNode")) {
+      const recommendation =
+        replacement === null
+          ? "Use separate `<%= %>` tags for each dynamic value instead."
+          : `Use \`${replacement}\` instead.`
+
+      this.addOffense(
+        `Avoid outputting interpolated string \`${content}\`. ${recommendation}`,
+        stringLocation,
+        autofixContext,
+      )
+    }
+
+    super.visitERBContentNode(node)
+  }
+}
+
+export class ERBPreferDirectOutputRule extends ParserRule<PreferDirectOutputAutofixContext> {
+  static ruleName = "erb-prefer-direct-output"
+  static introducedIn = this.version("0.9.4")
+  static autocorrectable = true
+
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      prism_nodes: true,
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<PreferDirectOutputAutofixContext>[] {
+    const visitor = new PreferDirectOutputVisitor(this.ruleName, context)
+
+    visitor.visit(result.value)
+
+    return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<PreferDirectOutputAutofixContext>, result: ParseResult): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node, replacementParts } = offense.autofixContext
+    const erbNode = node as unknown as ERBContentNode
+    const parentInfo = findParentArray(result.value, erbNode)
+
+    if (!parentInfo) return null
+
+    const { array: parentArray, index: nodeIndex } = parentInfo
+    const replacementNodes = mapReplacementParts<Node>(
+      erbNode,
+      replacementParts,
+      (content) => createLiteral(content),
+      (expression, tagOpening, tagClosing) =>
+        createERBOutputNode(` ${expression} `, tagOpening, tagClosing),
+    )
+
+    parentArray.splice(nodeIndex, 1, ...replacementNodes)
+
+    return result
+  }
+}

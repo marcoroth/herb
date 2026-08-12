@@ -1,0 +1,13 @@
+dependencies:
+  - name: delegate
+  - name: did_you_mean
+  - name: fileutils
+  - name: json
+  - name: optparse
+  - name: pathname
+  - name: socket
+  - name: stringio
+  - name: tempfile
+  - name: time
+  - name: timeout
+  - name: yaml

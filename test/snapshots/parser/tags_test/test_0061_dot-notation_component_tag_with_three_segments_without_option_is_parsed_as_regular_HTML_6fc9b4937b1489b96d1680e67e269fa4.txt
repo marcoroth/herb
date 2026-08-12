@@ -1,0 +1,52 @@
+---
+source: "Parser::TagsTest#test_0061_dot-notation component tag with three segments without option is parsed as regular HTML"
+input: "<Namespace.Dialog.Button></Namespace.Dialog.Button>"
+---
+@ DocumentNode (location: (1:0)-(1:51))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:36))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:25))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ UnexpectedError (location: (1:10)-(1:11))
+    │   │       │       ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
+    │   │       │       ├── description: "Unexpected Token"
+    │   │       │       ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+    │   │       │       └── found: "a character"
+    │   │       │
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "Namespace" (location: (1:1)-(1:10))
+    │   │       ├── tag_closing: ">" (location: (1:24)-(1:25))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:11)-(1:24))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:24))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:11)-(1:24))
+    │   │       │       │               └── content: "Dialog.Button"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: ∅
+    │   │       │       └── value: ∅
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "Namespace" (location: (1:1)-(1:10))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:25)-(1:36))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ UnclosedCloseTagError (location: (1:25)-(1:36))
+    │   │       │       ├── message: "Closing tag `</Namespace>` at (1:27) is missing closing `>`."
+    │   │       │       └── tag_name: "Namespace" (location: (1:27)-(1:36))
+    │   │       │
+    │   │       ├── tag_opening: "</" (location: (1:25)-(1:27))
+    │   │       ├── tag_name: "Namespace" (location: (1:27)-(1:36))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ∅
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:36)-(1:51))
+        └── content: ".Dialog.Button>"

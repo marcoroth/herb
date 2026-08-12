@@ -73,4 +73,4 @@ input: "<div <% if a? %>data-a<% end %> <% if b? %>data-b<% end %>></div>"
         │       └── tag_closing: ">" (location: (1:64)-(1:65))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

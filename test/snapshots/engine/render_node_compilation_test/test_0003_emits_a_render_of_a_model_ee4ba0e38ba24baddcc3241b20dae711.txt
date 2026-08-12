@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderNodeCompilationTest#test_0003_emits a render of a model"
+input: "{source: \"<%= render @post %>\", options: {parser_options: {render_nodes: true}}}"
+---
+_buf = ::String.new; _buf << (render @post).to_s;
+_buf.to_s

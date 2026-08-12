@@ -41,7 +41,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (2:21)-(2:22))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:22)-(3:0))
     │   │       └── content: "\n"

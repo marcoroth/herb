@@ -4,12 +4,12 @@
 #include "nodes.h"
 
 extern "C" {
-#include "../extension/libherb/include/ast_node.h"
-#include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/ast/ast_node.h"
+#include "../extension/libherb/include/ast/ast_nodes.h"
 #include "../extension/libherb/include/errors.h"
 #include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/token.h"
-#include "../extension/libherb/include/util/hb_array.h"
+#include "../extension/libherb/include/lexer/token.h"
+#include "../extension/libherb/include/lib/hb_array.h"
 }
 
 napi_value ErrorFromCStruct(napi_env env, ERROR_T* error);

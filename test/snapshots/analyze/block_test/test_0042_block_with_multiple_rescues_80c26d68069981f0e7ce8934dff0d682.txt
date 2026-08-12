@@ -1,0 +1,84 @@
+---
+source: "Analyze::BlockTest#test_0042_block with multiple rescues"
+input: |2-
+<% 5.times do %>
+  <%= "foo" %>
+<% rescue StandardError %>
+  <%= "standard error" %>
+<% rescue ArgumentError %>
+  <%= "argument error" %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " 5.times do " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:16)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:14))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " "foo" " (location: (2:5)-(2:12))
+    │   │   │   ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:14)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause:
+    │   │   └── @ ERBRescueNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " rescue StandardError " (location: (3:2)-(3:24))
+    │   │       ├── tag_closing: "%>" (location: (3:24)-(3:26))
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (3:26)-(4:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (4:2)-(4:25))
+    │   │       │   │   ├── tag_opening: "<%=" (location: (4:2)-(4:5))
+    │   │       │   │   ├── content: " "standard error" " (location: (4:5)-(4:23))
+    │   │       │   │   ├── tag_closing: "%>" (location: (4:23)-(4:25))
+    │   │       │   │   ├── parsed: true
+    │   │       │   │   └── valid: true
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (4:25)-(5:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       └── subsequent:
+    │   │           └── @ ERBRescueNode (location: (5:0)-(7:0))
+    │   │               ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │               ├── content: " rescue ArgumentError " (location: (5:2)-(5:24))
+    │   │               ├── tag_closing: "%>" (location: (5:24)-(5:26))
+    │   │               ├── statements: (3 items)
+    │   │               │   ├── @ HTMLTextNode (location: (5:26)-(6:2))
+    │   │               │   │   └── content: "\n  "
+    │   │               │   │
+    │   │               │   ├── @ ERBContentNode (location: (6:2)-(6:25))
+    │   │               │   │   ├── tag_opening: "<%=" (location: (6:2)-(6:5))
+    │   │               │   │   ├── content: " "argument error" " (location: (6:5)-(6:23))
+    │   │               │   │   ├── tag_closing: "%>" (location: (6:23)-(6:25))
+    │   │               │   │   ├── parsed: true
+    │   │               │   │   └── valid: true
+    │   │               │   │
+    │   │               │   └── @ HTMLTextNode (location: (6:25)-(7:0))
+    │   │               │       └── content: "\n"
+    │   │               │
+    │   │               └── subsequent: ∅
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

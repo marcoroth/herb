@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0031_output tag with -%> followed by another expression tag"
+input: "{source: \"A<%= -%>\\n<%= \\\"B\\\" %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << 'A'.freeze; _buf << ().to_s; _buf << ("B").to_s; _buf << '
+'.freeze;
+_buf.to_s

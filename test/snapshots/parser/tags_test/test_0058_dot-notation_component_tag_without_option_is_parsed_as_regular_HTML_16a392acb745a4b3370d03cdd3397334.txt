@@ -1,0 +1,52 @@
+---
+source: "Parser::TagsTest#test_0058_dot-notation component tag without option is parsed as regular HTML"
+input: "<Dialog.Button></Dialog.Button>"
+---
+@ DocumentNode (location: (1:0)-(1:31))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:23))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:15))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ UnexpectedError (location: (1:7)-(1:8))
+    │   │       │       ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
+    │   │       │       ├── description: "Unexpected Token"
+    │   │       │       ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+    │   │       │       └── found: "a character"
+    │   │       │
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "Dialog" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:14)-(1:15))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:8)-(1:14))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:14))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:8)-(1:14))
+    │   │       │       │               └── content: "Button"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: ∅
+    │   │       │       └── value: ∅
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "Dialog" (location: (1:1)-(1:7))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:15)-(1:23))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ UnclosedCloseTagError (location: (1:15)-(1:23))
+    │   │       │       ├── message: "Closing tag `</Dialog>` at (1:17) is missing closing `>`."
+    │   │       │       └── tag_name: "Dialog" (location: (1:17)-(1:23))
+    │   │       │
+    │   │       ├── tag_opening: "</" (location: (1:15)-(1:17))
+    │   │       ├── tag_name: "Dialog" (location: (1:17)-(1:23))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ∅
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:23)-(1:31))
+        └── content: ".Button>"

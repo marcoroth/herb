@@ -1,11 +1,10 @@
 #include "../include/analyze/conditional_open_tags.h"
-#include "../include/ast_nodes.h"
-#include "../include/element_source.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_allocator.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_allocator.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
 #include "../include/visitor.h"
 
 #include <stdbool.h>
@@ -265,9 +264,7 @@ static void add_multiple_tags_error_to_erb_node(
     allocator
   );
 
-  if (!erb_node->errors) { erb_node->errors = hb_array_init(0, allocator); }
-
-  hb_array_append(erb_node->errors, error);
+  hb_array_append_lazy(&erb_node->errors, error, allocator);
 }
 
 static void check_and_report_multiple_tags_in_if(AST_ERB_IF_NODE_T* if_node, hb_allocator_T* allocator) {
@@ -409,7 +406,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       body,
       (AST_NODE_T*) close_tag,
       false,
-      ELEMENT_SOURCE_HTML,
+      hb_string("HTML"),
       start_position,
       end_position,
       element_errors,
@@ -529,6 +526,12 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
     case AST_ERB_BLOCK_NODE: {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) node;
       transform_conditional_open_tags_in_array(block_node->body, context);
+      return false;
+    }
+
+    case AST_ERB_ITERATION_BLOCK_NODE: {
+      AST_ERB_ITERATION_BLOCK_NODE_T* iteration_block_node = (AST_ERB_ITERATION_BLOCK_NODE_T*) node;
+      transform_conditional_open_tags_in_array(iteration_block_node->body, context);
       return false;
     }
 

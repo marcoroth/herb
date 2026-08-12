@@ -6,6 +6,8 @@
 
 Prefer using Rails' `image_tag` helper over manual `<img>` tags with dynamic ERB expressions like `image_path` or `asset_path`.
 
+This rule only reports offenses when `framework` is set to `actionview` in `.herb.yml`, since `image_tag` is an Action View helper. Projects on any other framework never see this rule.
+
 ## Rationale
 
 The `image_tag` helper provides several advantages over manual `<img>` tags with dynamic ERB expressions. It properly escapes the `src` value to prevent XSS vulnerabilities and ensures consistent rendering across different contexts. Using `image_tag` also reduces template complexity by eliminating the need for manual string interpolation and makes it easier to add additional attributes like `alt`, `class`, or `data-*` attributes in a clean, readable way. Additionally, it prevents common interpolation issues that can arise when mixing ERB expressions with static text in attribute values.

@@ -25,3 +25,35 @@ impl std::fmt::Display for Severity {
     write!(formatter, "{}", self.as_str())
   }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SeverityConfig {
+  Severity(Severity),
+  PerMode { editor: Severity, cli: Severity },
+}
+
+impl From<Severity> for SeverityConfig {
+  fn from(severity: Severity) -> Self {
+    SeverityConfig::Severity(severity)
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum LinterMode {
+  Editor,
+  #[default]
+  Cli,
+}
+
+pub fn resolve_severity(severity: SeverityConfig, mode: LinterMode) -> Severity {
+  match severity {
+    SeverityConfig::Severity(severity) => severity,
+
+    SeverityConfig::PerMode { editor, cli } => match mode {
+      LinterMode::Editor => editor,
+      LinterMode::Cli => cli,
+    },
+  }
+}

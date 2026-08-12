@@ -1,8 +1,8 @@
 exec = herb
 test_exec = run_herb_tests
 
-sources = $(wildcard src/*.c) $(wildcard src/**/*.c)
-headers = $(wildcard src/*.h) $(wildcard src/**/*.h)
+sources = $(shell find src -name '*.c')
+headers = $(shell find src -name '*.h')
 objects = $(sources:.c=.o)
 
 extension_sources = $(wildcard ext/**/*.c)
@@ -53,7 +53,7 @@ production_flags = $(warning_flags) -O3 -march=native -flto
 shared_library_flags = -fPIC
 
 # Default build mode (change this as needed)
-flags = $(warning_flags) $(debug_flags) $(prism_flags) -std=c99
+flags = $(warning_flags) $(debug_flags) $(prism_flags) -std=gnu99
 
 # Separate test compilation flags
 test_flags = $(debug_flags) $(prism_flags) -std=gnu99

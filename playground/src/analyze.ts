@@ -3,8 +3,9 @@ import type { HerbBackend, ParseResult, LexResult, ParserOptions } from "@herb-t
 import { Formatter } from "@herb-tools/formatter"
 import { Linter } from "@herb-tools/linter"
 import { IdentityPrinter, DEFAULT_PRINT_OPTIONS } from "@herb-tools/printer"
+import { rewrite, ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 
-import type { LintResult } from "@herb-tools/linter"
+import type { LintResult, AutofixResult, Framework } from "@herb-tools/linter"
 import type { FormatOptions } from "@herb-tools/formatter"
 import type { PrintOptions } from "@herb-tools/printer"
 
@@ -17,7 +18,15 @@ async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
-export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}) {
+export type AutofixOptions = {
+  includeUnsafe?: boolean
+}
+
+export type LinterOptions = {
+  framework?: Framework
+}
+
+export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}) {
   const startTime = performance.now()
 
   const parseResult = await safeExecute<ParseResult>(
@@ -62,14 +71,37 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
     new Promise((resolve) => resolve((new IdentityPrinter()).print(parseResult.value, printerOptions))),
   )
 
+  let rewritten: string | null = null
+
+  if (parseResult && parseResult.value) {
+    rewritten = await safeExecute<string>(
+      new Promise((resolve) => {
+        const rewriteParseResult = herb.parse(source, { ...options, track_whitespace: true })
+        const rewriter = new ActionViewTagHelperToHTMLRewriter()
+        const { output } = rewrite(rewriteParseResult.value, [rewriter], { baseDir: "/" })
+        resolve(output)
+      }),
+    )
+  }
+
   let lintResult: LintResult | null = null
+  let autofixResult: AutofixResult | null = null
 
   if (parseResult && parseResult.value) {
     const linter = new Linter(herb)
+    const lintContext = { framework: linterOptions.framework }
 
     lintResult = await safeExecute<LintResult>(
-      new Promise((resolve) => resolve(linter.lint(source))),
+      new Promise((resolve) => resolve(linter.lint(source, lintContext))),
     )
+
+    try {
+      autofixResult = new Linter(herb).autofix(source, lintContext, undefined, { includeUnsafe: autofixOptions.includeUnsafe === true })
+    } catch (error) {
+      console.error(error)
+
+      autofixResult = null
+    }
   }
 
   const endTime = performance.now()
@@ -84,8 +116,10 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
     html,
     formatted,
     printed,
+    rewritten,
     version,
     lintResult,
+    autofixResult,
     duration: endTime - startTime,
   }
 }

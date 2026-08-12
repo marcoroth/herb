@@ -44,7 +44,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (2:21)-(2:22))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (2:22)-(3:2))
     │   │   │   └── content: "\n  "
@@ -71,7 +71,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (3:21)-(3:22))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:22)-(4:0))
     │   │       └── content: "\n"
@@ -84,7 +84,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (4:4)-(4:5))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (4:5)-(5:0))
         └── content: "\n"

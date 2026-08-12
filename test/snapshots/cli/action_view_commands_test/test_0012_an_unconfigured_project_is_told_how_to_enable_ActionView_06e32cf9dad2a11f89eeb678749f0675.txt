@@ -1,0 +1,14 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0012_an unconfigured project is told how to enable ActionView"
+input: "unconfigured framework"
+---
+exit: 1
+[Herb] Unknown framework: "rails". Valid values: ruby, actionview, hanami, sinatra. Defaulting to 'ruby'.
+[Herb] Unknown framework: "rails". Valid values: ruby, actionview, hanami, sinatra. Defaulting to 'ruby'.
+Herb also works outside of ActionView, but the `herb actionview` commands require the project to be explicitly configured for ActionView.
+
+The project at '<project>' is not configured to use ActionView (current framework: 'ruby').
+
+To enable ActionView support, add the following to your `.herb.yml`:
+
+  framework: actionview

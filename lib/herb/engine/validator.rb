@@ -1,74 +1,45 @@
 # frozen_string_literal: true
 
+require_relative "../visitor"
+require_relative "context_aware"
+require_relative "diagnostics"
+
 module Herb
   class Engine
+    # A visitor that reads the tree and reports what it finds without rewriting anything.
+    #
+    # Whether a validator runs at all is decided by whoever builds the visitor stack: one that is
+    # not wanted is simply not inserted. What is left for the validator itself is whether what it
+    # finds is worth refusing to compile over, which is a decision that changes between
+    # environments rather than between templates:
+    #
+    #     Herb::Engine::Validators::SecurityValidator.new(fatal: false)
+    #
+    # A fatal validator aborts compilation when it reports an error. A validator that is not fatal
+    # reports the same thing and lets the template compile, so the page still renders and the
+    # finding reaches the browser instead.
+    #
+    # Reporting itself lives in `Herb::Engine::Diagnostics` and is open to any visitor, so a
+    # validator from somewhere else can include the mixins rather than subclass this.
     class Validator < Herb::Visitor
-      attr_reader :diagnostics
+      include ContextAware
+      include Diagnostics
 
-      def initialize
-        super
+      #: (?fatal: bool) -> void
+      def initialize(fatal: true)
+        super()
 
-        @diagnostics = []
+        @fatal = fatal
       end
 
-      def validate(node)
-        visit(node)
+      #: () -> bool
+      def fatal?
+        @fatal
       end
 
-      def error(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :error, code: code, source: source)
-      end
-
-      def warning(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :warning, code: code, source: source)
-      end
-
-      def info(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :info, code: code, source: source)
-      end
-
-      def hint(message, location, code: nil, source: nil)
-        add_diagnostic(message, location, :hint, code: code, source: source)
-      end
-
-      def errors?
-        @diagnostics.any? { |diagnostic| diagnostic[:severity] == :error }
-      end
-
-      def warnings?
-        @diagnostics.any? { |diagnostic| diagnostic[:severity] == :warning }
-      end
-
-      def errors
-        @diagnostics.select { |diagnostic| diagnostic[:severity] == :error }
-      end
-
-      def warnings
-        @diagnostics.select { |diagnostic| diagnostic[:severity] == :warning }
-      end
-
-      def clear_diagnostics
-        @diagnostics.clear
-      end
-
-      def diagnostic_count(severity = nil)
-        return @diagnostics.length unless severity
-
-        @diagnostics.count { |diagnostic| diagnostic[:severity] == severity }
-      end
-
-      private
-
-      def add_diagnostic(message, location, severity, code: nil, source: nil)
-        diagnostic = {
-          message: message,
-          location: location,
-          severity: severity,
-          code: code,
-          source: source || self.class.name,
-        }
-
-        @diagnostics << diagnostic
+      #: () -> String
+      def inspect
+        "#<#{self.class.name} fatal=#{fatal?}>"
       end
     end
   end

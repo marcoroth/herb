@@ -1,0 +1,6 @@
+---
+source: "Engine::EvaluationTest#test_0040_block with rescue when error occurs"
+input: "{source: \"<% [1, 0].each do |n| %>\\n  <p><%= 10 / n %></p>\\n<% rescue ZeroDivisionError %>\\n  <p>Cannot divide by zero</p>\\n<% end %>\\n\", locals: {}, options: {escape: false}}"
+---
+  <p>10</p>
+  <p>  <p>Cannot divide by zero</p>

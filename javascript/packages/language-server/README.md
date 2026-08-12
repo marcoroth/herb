@@ -33,6 +33,10 @@ require('lspconfig')
 vim.lsp.enable('herb_ls')
 ```
 
+#### Nova
+
+After installing the Herb Language Server (see below), install the [Herb LSP extension](https://extensions.panic.com/extensions/com.freelancing-gods/com.freelancing-gods.herb-lsp/) from the Nova Extension Library. The extension is a community plugin maintained at [pat/herb-lsp.novaextension](https://github.com/pat/herb-lsp.novaextension).
+
 #### Sublime Text (using Sublime LSP)
 
 After installing the Herb Language Server (see below) and [Sublime LSP](http://lsp.sublimetext.io), update the preferences for the `LSP` package:
@@ -66,10 +70,18 @@ You can use the language server in any editor that supports the [Language Server
 npm install -g @herb-tools/language-server
 ```
 
-###### Yarn (Global)
+###### Yarn 1 (Global)
 
 ```bash
 yarn global add @herb-tools/language-server
+```
+
+###### Yarn 4
+
+Yarn 4 removed global installs, use `yarn dlx` as the server command instead:
+
+```bash
+yarn dlx -q @herb-tools/language-server --stdio
 ```
 
 ##### Preview Releases
@@ -116,14 +128,14 @@ See the [Configuration documentation](https://herb-tools.dev/configuration) for 
 
 ### Example Configuration
 
-```yaml
-# .herb.yml
+```yaml [.herb.yml]
 linter:
   enabled: true
 
 formatter:
   enabled: true
   indentWidth: 2
+  indentStyle: space
   maxLineLength: 80
 ```
 

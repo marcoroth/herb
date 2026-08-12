@@ -94,27 +94,80 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     `)
   })
 
-  test("flags missing parentheses around parameters", () => {
-    expectError("Wrap parameters in parentheses: `locals: (name:)` or `locals: (name: default)`.")
+  test("flags parameters that are not wrapped in parentheses", () => {
+    expectError("Strict locals parameters must be wrapped in parentheses. Use `<%# locals: (user:) %>`.")
 
-    assertOffenses(dedent`
-      <%# locals: user %>
-    `)
+    assertOffenses(`<%# locals: user %>`)
   })
 
-  test("flags empty locals: without parentheses", () => {
-    expectError("Add parameters after `locals:`. Use `locals: (name:)` or `locals: ()` for no locals.")
+  test("flags parameters without parentheses and keeps the keyword arguments in the suggestion", () => {
+    expectError("Strict locals parameters must be wrapped in parentheses. Use `<%# locals: (user:, admin: false) %>`.")
 
-    assertOffenses(dedent`
-      <%# locals: %>
-    `)
+    assertOffenses(`<%# locals: user:, admin: false %>`)
+  })
+
+  test("flags an empty declaration without parentheses", () => {
+    expectError("Strict locals declarations always need parentheses. Use `<%# locals: () %>` for a partial without locals.")
+
+    assertOffenses(`<%# locals: %>`)
   })
 
   test("flags unbalanced parentheses", () => {
-    expectError("Unbalanced parentheses in `locals:` comment. Ensure all opening parentheses have matching closing parentheses.")
+    expectError("Unbalanced parentheses in the strict locals declaration. Add the missing closing `)`.")
+
+    assertOffenses(`<%# locals: (user: %>`)
+  })
+
+  test("flags positional arguments", () => {
+    expectError("Strict locals only support keyword arguments. Use `user:` instead of the positional argument `user`.")
+
+    assertOffenses(`<%# locals: (user) %>`)
+  })
+
+  test("flags every positional argument", () => {
+    expectError("Strict locals only support keyword arguments. Use `user:` instead of the positional argument `user`.")
+    expectError("Strict locals only support keyword arguments. Use `admin:` instead of the positional argument `admin`.")
+
+    assertOffenses(`<%# locals: (user, admin) %>`)
+  })
+
+  test("flags block arguments", () => {
+    expectError("Strict locals only support keyword arguments. The block argument `&block` is not supported.")
+
+    assertOffenses(`<%# locals: (&block) %>`)
+  })
+
+  test("flags splat arguments", () => {
+    expectError("Strict locals only support keyword arguments. The splat argument `*args` is not supported. Use `**args` to accept arbitrary keyword arguments.")
+
+    assertOffenses(`<%# locals: (*args) %>`)
+  })
+
+  test("flags a trailing comma", () => {
+    expectError("Remove the extra comma from the strict locals parameters.")
+
+    assertOffenses(`<%# locals: (user:,) %>`)
+  })
+
+  test("flags a leading comma", () => {
+    expectError("Remove the extra comma from the strict locals parameters.")
+
+    assertOffenses(`<%# locals: (, user:) %>`)
+  })
+
+  test("flags a double comma", () => {
+    expectError("Remove the extra comma from the strict locals parameters.")
+
+    assertOffenses(`<%# locals: (user:,, admin:) %>`)
+  })
+
+  test("flags duplicate declarations", () => {
+    expectError("Duplicate strict locals declaration. Rails only uses the first `<%# locals: (...) %>` declaration in a partial.")
 
     assertOffenses(dedent`
-      <%# locals: (user: %>
+      <%# locals: (user:) %>
+      <p>Content</p>
+      <%# locals: (admin:) %>
     `)
   })
 
@@ -125,64 +178,6 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     assertOffenses(dedent`
       <% # locals: (user:) %>
       <%- # locals: (admin: false) %>
-    `)
-  })
-
-  test("flags positional arguments (not supported)", () => {
-    expectError("Positional argument `user` is not allowed. Use keyword argument format: `user:`.")
-
-    assertOffenses(dedent`
-      <%# locals: (user) %>
-    `)
-  })
-
-  test("flags block arguments (not supported)", () => {
-    expectError("Block argument `&block` is not allowed. Strict locals only support keyword arguments.")
-
-    assertOffenses(dedent`
-      <%# locals: (&block) %>
-    `)
-  })
-
-  test("flags single splat arguments (not supported)", () => {
-    expectError("Splat argument `*args` is not allowed. Strict locals only support keyword arguments.")
-
-    assertOffenses(dedent`
-      <%# locals: (*args) %>
-    `)
-  })
-
-  test("flags trailing comma in parameters", () => {
-    expectError("Unexpected comma in `locals:` parameters.")
-
-    assertOffenses(dedent`
-      <%# locals: (user:,) %>
-    `)
-  })
-
-  test("flags leading comma in parameters", () => {
-    expectError("Unexpected comma in `locals:` parameters.")
-
-    assertOffenses(dedent`
-      <%# locals: (, user:) %>
-    `)
-  })
-
-  test("flags double commas in parameters", () => {
-    expectError("Unexpected comma in `locals:` parameters.")
-
-    assertOffenses(dedent`
-      <%# locals: (user:,, admin:) %>
-    `)
-  })
-
-  test("flags duplicate strict locals comments", () => {
-    expectError("Duplicate `locals:` declaration. Only one `locals:` comment is allowed per partial (first declaration at line 1).")
-
-    assertOffenses(dedent`
-      <%# locals: (user:) %>
-      <p>Content</p>
-      <%# locals: (admin:) %>
     `)
   })
 

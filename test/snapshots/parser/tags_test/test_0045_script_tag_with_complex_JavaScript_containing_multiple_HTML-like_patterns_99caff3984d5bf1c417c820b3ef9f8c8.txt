@@ -39,7 +39,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (13:8)-(13:9))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (13:9)-(14:0))
         └── content: "\n"

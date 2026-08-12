@@ -4,7 +4,6 @@ input: "{source: \"<!-- HTML comment -->\\n<div>\\n  <%# ERB comment %>\\n  Cont
 ---
 _buf = ::String.new; _buf << '<!-- HTML comment -->
 <div>
-  
   Content
 </div>
 '.freeze;

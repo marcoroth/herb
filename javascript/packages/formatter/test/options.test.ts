@@ -55,4 +55,29 @@ describe("@herb-tools/formatter", () => {
       </p>
     `)
   })
+
+  test("respects indentStyle option", () => {
+    const source = dedent`
+      <div>
+        <p>Hello</p>
+        <span>World</span>
+      </div>
+    `
+    const result = formatter.format(source, { indentStyle: "tab" })
+
+    expect(result).toEqual("<div>\n\t<p>Hello</p>\n\t<span>World</span>\n</div>")
+  })
+
+  test("indentStyle tabs respects a custom indentWidth for level width", () => {
+    const source = dedent`
+      <div>
+        <section>
+          <p>Hello</p>
+        </section>
+      </div>
+    `
+    const result = formatter.format(source, { indentStyle: "tab", indentWidth: 4 })
+
+    expect(result).toEqual("<div>\n\t<section>\n\t\t<p>Hello</p>\n\t</section>\n</div>")
+  })
 })

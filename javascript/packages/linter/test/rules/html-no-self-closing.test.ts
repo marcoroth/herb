@@ -130,6 +130,14 @@ describe("html-no-self-closing", () => {
     `)
   })
 
+  test("passes for self-closing elements inside tag.svg helper", () => {
+    expectNoOffenses(`
+      <%= tag.svg(height:, width:) do %>
+        <path d="M29.396,2.303 L27.867,2.924 L25.13,18.045 L25.735,18.571 L27.167,18.045 L29.953,2.781 z" fill="currentColor" />
+      <% end %>
+    `)
+  })
+
   describe("ActionMailer exclusion", () => {
     test("excludes ActionMailer view files without any config", () => {
       const linter = Linter.from(Herb)

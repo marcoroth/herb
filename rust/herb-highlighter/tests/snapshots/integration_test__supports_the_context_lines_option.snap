@@ -1,0 +1,9 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: "fixture.normalize(&String::from_utf8_lossy(&output.stdout))"
+---
+[36m<test-file>[0m
+
+    [90m  2[0m [90m│[0m [2m  [22m[2;38;2;190;80;70m[2m<%[22m[0m[2m [22m[2;38;2;198;120;221m[2mif[22m[0m[2m user.present? [22m[2;38;2;190;80;70m[2m%>[22m[0m
+[36m  → [0m[1m  3[0m [90m│[0m     [38;2;171;178;191mWelcome[0m [38;2;190;80;70m<%=[0m user.name [38;2;190;80;70m%>[0m[38;2;198;120;221m![0m
+    [90m  4[0m [90m│[0m [2m  [22m[2;38;2;190;80;70m[2m<%[22m[0m[2m [22m[2;38;2;198;120;221m[2melse[22m[0m[2m [22m[2;38;2;190;80;70m[2m%>[22m[0m

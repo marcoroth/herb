@@ -45,6 +45,7 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin<AttributeDouble
 export class HTMLAttributeDoubleQuotesRule extends ParserRule<AttributeDoubleQuotesAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-attribute-double-quotes"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

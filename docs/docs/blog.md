@@ -10,4 +10,6 @@ import BlogIndex from '../.vitepress/components/BlogIndex.vue'
 
 # Latest From the Herb Blog
 
+<div style="margin-bottom: 2em"></div>
+
 <BlogIndex />

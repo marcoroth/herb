@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0003_javascript_include_tag with URL"
+input: "{source: \"<%= javascript_include_tag \\\"http://www.example.com/xmlhr.js\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="http://www.example.com/xmlhr.js"></script>

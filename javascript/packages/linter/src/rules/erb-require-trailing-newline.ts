@@ -25,11 +25,15 @@ class ERBRequireTrailingNewlineVisitor extends BaseSourceRuleVisitor {
 export class ERBRequireTrailingNewlineRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "erb-require-trailing-newline"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
     }
   }
 

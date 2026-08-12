@@ -1,0 +1,24 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0022_unclosed HTML tag after ERB tag in attribute position at EOF"
+input: "<input <%= tag.attributes(type: :text) %>"
+---
+@ DocumentNode (location: (1:0)-(1:41))
+└── children: (1 item)
+    └── @ HTMLOpenTagNode (location: (1:0)-(1:41))
+        ├── errors: (1 error)
+        │   └── @ UnclosedOpenTagError (location: (1:1)-(1:41))
+        │       ├── message: "Opening tag `<input>` at (1:1) is missing closing `>`."
+        │       └── tag_name: "input" (location: (1:1)-(1:6))
+        │
+        ├── tag_opening: "<" (location: (1:0)-(1:1))
+        ├── tag_name: "input" (location: (1:1)-(1:6))
+        ├── tag_closing: ∅
+        ├── children: (1 item)
+        │   └── @ ERBContentNode (location: (1:7)-(1:41))
+        │       ├── tag_opening: "<%=" (location: (1:7)-(1:10))
+        │       ├── content: " tag.attributes(type: :text) " (location: (1:10)-(1:39))
+        │       ├── tag_closing: "%>" (location: (1:39)-(1:41))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        └── is_void: false

@@ -69,6 +69,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
 
 export class HTMLNoBlockInsideInlineRule extends ParserRule {
   static ruleName = "html-no-block-inside-inline"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

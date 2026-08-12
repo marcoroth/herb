@@ -4,7 +4,7 @@ import dedent from "dedent"
 import { ERBNoDuplicateBranchElementsRule } from "../../src/rules/erb-no-duplicate-branch-elements.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ERBNoDuplicateBranchElementsRule)
+const { expectNoOffenses, expectWarning, expectHint, assertOffenses } = createLinterTest(ERBNoDuplicateBranchElementsRule)
 
 describe("erb-no-duplicate-branch-elements", () => {
   describe("no offense", () => {
@@ -58,6 +58,106 @@ describe("erb-no-duplicate-branch-elements", () => {
       `)
     })
 
+    it("branches with different text content", () => {
+      expectNoOffenses(dedent`
+        <% if condition %>
+          Hello
+        <% else %>
+          World
+        <% end %>
+      `)
+    })
+
+    it("branches with identical text content", () => {
+      expectWarning("All branches of this conditional have identical content. The conditional can be removed.")
+
+      assertOffenses(dedent`
+        <% if condition? %>
+          123
+        <% else %>
+          123
+        <% end %>
+      `)
+    })
+
+    it("branches with identical multi-element content", () => {
+      expectWarning("All branches of this conditional have identical content. The conditional can be removed.")
+
+      assertOffenses(dedent`
+        <% if condition? %>
+          <h1>Hello</h1>
+          <div><%= hello %></div>
+          <h1>World</h1>
+        <% else %>
+          <h1>Hello</h1>
+          <div><%= hello %></div>
+          <h1>World</h1>
+        <% end %>
+      `)
+    })
+
+    it("identical prefix, different middle, identical suffix", () => {
+      expectWarning("The `<h1>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<h1>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectWarning("The `<h1>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<h1>` element is duplicated across all branches of this conditional and can be moved outside.")
+
+      assertOffenses(dedent`
+        <% if condition? %>
+          <h1>Hello</h1>
+          <div>One</div>
+          <h1>World</h1>
+        <% else %>
+          <h1>Hello</h1>
+          <div>Two</div>
+          <h1>World</h1>
+        <% end %>
+      `)
+    })
+
+    it("branches with different prefix and identical suffix element", () => {
+      expectHint("The `<h1>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<h1>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+
+      assertOffenses(dedent`
+        <% if condition? %>
+          <h1>Hello</h1>
+          <div><%= hello %></div>
+        <% else %>
+          <h1>World</h1>
+          <div><%= hello %></div>
+        <% end %>
+      `)
+    })
+
+    it("branches with identical elements containing ERB output", () => {
+      expectWarning("All branches of this conditional have identical content. The conditional can be removed.")
+
+      assertOffenses(dedent`
+        <% if condition? %>
+          <div><%= hello %></div>
+        <% else %>
+          <div><%= hello %></div>
+        <% end %>
+      `)
+    })
+
+    it("branches with identical ERB output", () => {
+      expectWarning("All branches of this conditional have identical content. The conditional can be removed.")
+
+      assertOffenses(dedent`
+        <% if condition? %>
+          <%= hello %>
+        <% else %>
+          <%= hello %>
+        <% end %>
+      `)
+    })
+
     it("unless without else (incomplete coverage)", () => {
       expectNoOffenses(dedent`
         <% unless condition %>
@@ -76,12 +176,36 @@ describe("erb-no-duplicate-branch-elements", () => {
         <% end %>
       `)
     })
+
+    it("shared tag with different content next to a sibling that cannot be hoisted", () => {
+      expectNoOffenses(dedent`
+        <% if condition? %>
+          <p class="mt-3 text-balance">Content</p>
+          <%= link_to "Link", other_path %>
+        <% else %>
+          <p class="mt-3 text-balance">Other content</p>
+          <%= link_to "Other link", other_path %>
+        <% end %>
+      `)
+    })
+
+    it("more than one shared tag with different content", () => {
+      expectNoOffenses(dedent`
+        <% if condition? %>
+          <p>One</p>
+          <div>Two</div>
+        <% else %>
+          <p>Three</p>
+          <div>Four</div>
+        <% end %>
+      `)
+    })
   })
 
   describe("offense: if/else", () => {
     it("basic case with same wrapping div", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -93,8 +217,8 @@ describe("erb-no-duplicate-branch-elements", () => {
     })
 
     it("case with same wrapping div but different whitesapce", () => {
-      expectWarning("The `<div class=\"card\">` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div class=\"card\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div class=\"card\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div class=\"card\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -108,8 +232,8 @@ describe("erb-no-duplicate-branch-elements", () => {
     })
 
     it("case with same wrapping div but attributes in different order", () => {
-      expectWarning("The `<div id=\"one\" class=\"card\">` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div class=\"card\" id=\"one\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div id=\"one\" class=\"card\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div class=\"card\" id=\"one\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -123,8 +247,8 @@ describe("erb-no-duplicate-branch-elements", () => {
     })
 
     it("case with same classes in different order", () => {
-      expectWarning("The `<div class=\"b a\">` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div class=\"a b\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div class=\"b a\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div class=\"a b\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -136,8 +260,8 @@ describe("erb-no-duplicate-branch-elements", () => {
     })
 
     it("case with same data-controller tokens in different order", () => {
-      expectWarning("The `<div data-controller=\"b a\">` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div data-controller=\"a b\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div data-controller=\"b a\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div data-controller=\"a b\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -159,8 +283,8 @@ describe("erb-no-duplicate-branch-elements", () => {
     })
 
     it("case with same wrapping div but differnt attribute formatting", () => {
-      expectWarning("The `<div class=\"\n    card\n  \">` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div class=\"card\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div class=\"\n    card\n  \">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div class=\"card\">` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -174,13 +298,42 @@ describe("erb-no-duplicate-branch-elements", () => {
         <% end %>
       `)
     })
+
+    it("fully identical elements trigger identical branches warning", () => {
+      expectWarning("All branches of this conditional have identical content. The conditional can be removed.")
+
+      assertOffenses(dedent`
+        <% if condition %>
+          <div>Same</div>
+        <% else %>
+          <div>Same</div>
+        <% end %>
+      `)
+    })
+
+    it("identical elements with different bodies are per-element warnings", () => {
+      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<span>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<span>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+
+      assertOffenses(dedent`
+        <% if condition %>
+          <div>Hello</div>
+          <span>unique to if</span>
+        <% else %>
+          <div>Hello</div>
+          <span>unique to else</span>
+        <% end %>
+      `)
+    })
   })
 
   describe("offense: if/elsif/else", () => {
     it("same wrapping element in all branches", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -196,8 +349,8 @@ describe("erb-no-duplicate-branch-elements", () => {
 
   describe("offense: unless/else", () => {
     it("same wrapping element", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% unless condition %>
@@ -211,9 +364,9 @@ describe("erb-no-duplicate-branch-elements", () => {
 
   describe("offense: case/when/else", () => {
     it("same wrapping element", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% case value %>
@@ -264,10 +417,10 @@ describe("erb-no-duplicate-branch-elements", () => {
 
   describe("offense: recursive descent", () => {
     it("flags both outer and inner common elements", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<p>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<p>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<p>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<p>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -279,8 +432,8 @@ describe("erb-no-duplicate-branch-elements", () => {
     })
 
     it("flags only outer common elements", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if condition %>
@@ -304,10 +457,10 @@ describe("erb-no-duplicate-branch-elements", () => {
 
   describe("offense: nested conditionals flagged independently", () => {
     it("each conditional is checked separately", () => {
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<div>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<span>` element is duplicated across all branches of this conditional and can be moved outside.")
-      expectWarning("The `<span>` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<div>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<span>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
+      expectHint("The `<span>` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.")
 
       assertOffenses(dedent`
         <% if outer %>

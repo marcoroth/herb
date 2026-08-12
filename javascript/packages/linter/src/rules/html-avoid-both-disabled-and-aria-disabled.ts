@@ -53,6 +53,7 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
 
 export class HTMLAvoidBothDisabledAndAriaDisabledRule extends ParserRule {
   static ruleName = "html-avoid-both-disabled-and-aria-disabled"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

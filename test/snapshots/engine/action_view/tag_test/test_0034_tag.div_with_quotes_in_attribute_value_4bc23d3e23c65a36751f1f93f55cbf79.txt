@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0034_tag.div with quotes in attribute value"
+input: "{source: \"<%= tag.div title: user_input %>\", locals: {user_input: \"He said \\\"hello\\\" & goodbye\"}, options: {action_view_helpers: true}}"
+---
+<div title="He said &quot;hello&quot; &amp; goodbye"></div>

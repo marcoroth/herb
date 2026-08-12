@@ -1,0 +1,16 @@
+---
+source: "Analyze::StrictLocalsTest#test_0022_strict locals comment without option enabled stays as ERBContentNode"
+input: |2-
+<%# locals: (message:) %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:25))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (message:) " (location: (1:3)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:25)-(2:0))
+        └── content: "\n"

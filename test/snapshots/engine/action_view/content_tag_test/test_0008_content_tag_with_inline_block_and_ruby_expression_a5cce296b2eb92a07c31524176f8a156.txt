@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0008_content_tag with inline block and ruby expression"
+input: "{source: \"<%= content_tag(:p) { @user_name } %>\", locals: {\"@user_name\": \"Alice\"}, options: {action_view_helpers: true}}"
+---
+<p>Alice</p>

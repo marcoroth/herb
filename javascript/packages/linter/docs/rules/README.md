@@ -4,30 +4,108 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+#### Accessibility
+
+- [`a11y-avoid-generic-link-text`](./a11y-avoid-generic-link-text.md) - Avoid generic link text like "Click here" or "Read more"
+- [`a11y-disabled-attribute`](./a11y-disabled-attribute.md) - Prevent usage of the `disabled` attribute on unsupported elements
+- [`a11y-nested-interactive-elements`](./a11y-nested-interactive-elements.md) - Disallow nesting interactive elements
+- [`a11y-no-accesskey-attribute`](./a11y-no-accesskey-attribute.md) - Prevent usage of the `accesskey` attribute
+- [`a11y-no-aria-label-misuse`](./a11y-no-aria-label-misuse.md) - Prevent `aria-label` and `aria-labelledby` on non-interactive elements
+- [`a11y-no-aria-unsupported-elements`](./a11y-no-aria-unsupported-elements.md) - Prevent usage of ARIA on unsupported elements
+- [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
+- [`a11y-no-redundant-image-alt`](./a11y-no-redundant-image-alt.md) - Prevent redundant words in `<img>` `alt` attributes
+- [`a11y-no-visually-hidden-interactive-elements`](./a11y-no-visually-hidden-interactive-elements.md) - Prevent visually hidden interactive elements
+- [`a11y-svg-has-accessible-text`](./a11y-svg-has-accessible-text.md) - Require accessible text on `<svg>` elements
+
+#### Action View
+
+- [`actionview-no-content-argument-with-block`](./actionview-no-content-argument-with-block.md) - Disallow passing a content argument to a helper that is given a block
+- [`actionview-no-dynamic-partial-path`](./actionview-no-dynamic-partial-path.md) - Disallow partial paths that are built at runtime
+- [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
+- [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object
+- [`actionview-no-implicit-polymorphic-url`](./actionview-no-implicit-polymorphic-url.md) - Prefer explicit route helpers over implicit polymorphic URLs
+- [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) - Disallow `local_assigns` reads that the strict locals declaration already answers
+- [`actionview-no-render-option-shadowing`](./actionview-no-render-option-shadowing.md) - Disallow locals that shadow a `render` option name
+- [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
+- [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
+- [`actionview-no-strict-locals-error`](./actionview-no-strict-locals-error.md) - Disallow `render` calls that would raise an `ActionView::StrictLocalsError`
+- [`actionview-no-unnecessary-html-safe`](./actionview-no-unnecessary-html-safe.md) - Disallow calling `.html_safe` on String literals
+- [`actionview-no-unnecessary-tag-attributes`](./actionview-no-unnecessary-tag-attributes.md) - Disallow unnecessary attributes on Action View tag helpers
+- [`actionview-no-unused-strict-locals`](./actionview-no-unused-strict-locals.md) - Disallow strict locals that are never used in the partial
+- [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
+- [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
+- [`actionview-prefer-link-to-helper`](./actionview-prefer-link-to-helper.md) - Prefer `link_to` over a manual `<a>` tag with an ERB `href`
+- [`actionview-prefer-pluralize-helper`](./actionview-prefer-pluralize-helper.md) - Prefer the `pluralize` helper over a separate count and `String#pluralize`
+- [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
+- [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
+- [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
+
+
+#### ERB
+
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
+- [`erb-no-byte-order-mark`](./erb-no-byte-order-mark.md) - Disallow a byte order mark at the start of a template
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
-- [`erb-no-inline-case-conditions`](./erb-no-inline-case-conditions.md) - Disallow inline `case`/`when` and `case`/`in` conditions in a single ERB tag
+- [`erb-no-class-definitions`](./erb-no-class-definitions.md) - Disallow class definitions in ERB templates
+- [`erb-no-commented-out-output-tags`](./erb-no-commented-out-output-tags.md) - Disallow commented-out ERB output tags (`<%#=`, `<%# =`)
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
+- [`erb-no-conditional-open-tag`](./erb-no-conditional-open-tag.md) - Disallow conditional HTML open tags
+- [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates
 - [`erb-no-duplicate-branch-elements`](./erb-no-duplicate-branch-elements.md) - Disallow duplicate elements across conditional branches
+- [`erb-no-empty-control-flow`](./erb-no-empty-control-flow.md) - Disallow empty ERB control flow blocks
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
-- [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
 - [`erb-no-extra-newline`](./erb-no-extra-newline.md) - Disallow extra newlines.
 - [`erb-no-extra-whitespace-inside-tags`](./erb-no-extra-whitespace-inside-tags.md) - Disallow multiple consecutive spaces inside ERB tags
+- [`erb-no-inline-case-conditions`](./erb-no-inline-case-conditions.md) - Disallow inline `case`/`when` and `case`/`in` conditions in a single ERB tag
+- [`erb-no-instance-variables-in-partials`](./erb-no-instance-variables-in-partials.md) - Disallow instance variables in partials
+- [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
+- [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
+- [`erb-no-method-definitions`](./erb-no-method-definitions.md) - Disallow method definitions in ERB templates
+- [`erb-no-module-definitions`](./erb-no-module-definitions.md) - Disallow module definitions in ERB templates
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
-- [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
+- [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
+- [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
+- [`erb-no-raw-output-in-attribute-value`](./erb-no-raw-output-in-attribute-value.md) - Disallow `<%==` in attribute values
+- [`erb-no-return`](./erb-no-return.md) - Disallow return statements in ERB templates
+- [`erb-no-shadowed-block-argument`](./erb-no-shadowed-block-argument.md) - Disallow block arguments that shadow an enclosing binding
+- [`erb-no-silent-statement`](./erb-no-silent-statement.md) - Disallow silent ERB statements
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
+- [`erb-no-sleep`](./erb-no-sleep.md) - Disallow `sleep` in ERB templates
+- [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
+- [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
 - [`erb-no-trailing-whitespace`](./erb-no-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
+- [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
+- [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
+- [`erb-no-unsafe-script-interpolation`](./erb-no-unsafe-script-interpolation.md) - Disallow unsafe ERB output inside `<script>` tags
+- [`erb-no-unused-block-argument`](./erb-no-unused-block-argument.md) - Disallow unused block arguments in ERB blocks
+- [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
+- [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
+- [`erb-no-unused-local-variable`](./erb-no-unused-local-variable.md) - Disallow unused local variables in ERB templates
+- [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
+- [`erb-prefer-do-end-blocks`](./erb-prefer-do-end-blocks.md) - Prefer `do ... end` over `{ ... }` for blocks that span multiple ERB tags
+- [`erb-prefer-each-over-map`](./erb-prefer-each-over-map.md) - Prefer `each` over `map` when the result is discarded
+- [`erb-prefer-explicit-conditionals`](./erb-prefer-explicit-conditionals.md) - Prefer explicit `if`/`unless` blocks over inline conditions in ERB output tags
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
-- [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
+- [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
 - [`erb-strict-locals-comment-syntax`](./erb-strict-locals-comment-syntax.md) - Enforce strict locals comment syntax.
+- [`erb-strict-locals-required`](./erb-strict-locals-required.md) - Require strict locals in Rails partials.
+
+
+#### Herb
+
+- [`herb-config-framework-option`](./herb-config-framework-option.md) - Require the `framework` option to be set in `.herb.yml`.
 - [`herb-disable-comment-malformed`](./herb-disable-comment-malformed.md) - Detect malformed `herb:disable` comments.
 - [`herb-disable-comment-missing-rules`](./herb-disable-comment-missing-rules.md) - Require rule names in `herb:disable` comments.
 - [`herb-disable-comment-no-duplicate-rules`](./herb-disable-comment-no-duplicate-rules.md) - Disallow duplicate rule names in `herb:disable` comments.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+
+
+#### HTML
+
 - [`html-allowed-script-type`](./html-allowed-script-type.md) - Restrict allowed `type` attributes for `<script>` tags
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
@@ -41,10 +119,11 @@ This page contains documentation for all Herb Linter rules.
 - [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-body-only-elements`](./html-body-only-elements.md) - Require content elements inside `<body>`.
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
+- [`html-details-has-summary`](./html-details-has-summary.md) - Require `<summary>` in `<details>` elements
 - [`html-head-only-elements`](./html-head-only-elements.md) - Require head-scoped elements inside `<head>`.
 - [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
-- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
+- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-navigation-has-label`](./html-navigation-has-label.md) - Navigation landmarks must have accessible labels
 - [`html-no-abstract-roles`](./html-no-abstract-roles.md) - No abstract ARIA roles
 - [`html-no-aria-hidden-on-body`](./html-no-aria-hidden-on-body.md) - No `aria-hidden` on `<body>`
@@ -54,30 +133,58 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
 - [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
+- [`html-no-empty-headings`](./html-no-empty-headings.md) - Disallow empty heading elements
+- [`html-no-event-handler-attributes`](./html-no-event-handler-attributes.md) - Disallow inline event handler attributes
+- [`html-no-inline-script-elements`](./html-no-inline-script-elements.md) - Disallow inline script elements
+- [`html-no-literal-nbsp`](./html-no-literal-nbsp.md) - Disallow literal non-breaking spaces, prefer `&nbsp;`
+- [`html-no-nested-forms`](./html-no-nested-forms.md) - Prevents nested form elements, including Rails form helpers
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
+- [`html-no-style-attributes`](./html-no-style-attributes.md) - Disallow inline `style` attributes
+- [`html-no-style-elements`](./html-no-style-elements.md) - Disallow inline `<style>` tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
+- [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
+- [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
+- [`html-require-closing-tags`](./html-require-closing-tags.md) - Require closing tags for non-void HTML elements
+- [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
+
+
+#### Parser
+
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
+
+
+#### Source
+
+- [`source-indentation`](./source-indentation.md) - Indent with spaces instead of tabs.
+
+
+#### SVG
+
+- [`svg-no-deprecated-tags`](./svg-no-deprecated-tags.md) - Disallow SVG elements removed from SVG 2
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
+
+
+#### Turbo
+
+- [`turbo-permanent-no-misleading-value`](./turbo-permanent-no-misleading-value.md) - Disallow misleading values on `data-turbo-permanent`
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
+
+#### UJS
+
+- [`ujs-no-remote-attribute`](./ujs-no-remote-attribute.md) - Disallow the deprecated `data-remote` attribute and helper option
+- [`ujs-prefer-turbo-confirm`](./ujs-prefer-turbo-confirm.md) - Prefer `data-turbo-confirm` over the deprecated `data-confirm`
+- [`ujs-prefer-turbo-method`](./ujs-prefer-turbo-method.md) - Prefer `data-turbo-method` over the deprecated `data-method`
+- [`ujs-prefer-turbo-submits-with`](./ujs-prefer-turbo-submits-with.md) - Prefer `data-turbo-submits-with` over the deprecated `data-disable-with`
+
 
 ## Contributing
 
-To add a new linter rule you can scaffold a new rule by running:
-
-```bash
-cd javascript/packages/linter
-
-scripts/generate-rule
-```
-
-The script creates the documentation, rule stub, and test stub based on the GitHub issue (requires the `linter` label and a `Rule name: [rule-name]` line).
-
-Alternatively, you can create one manually:
+To add a new linter rule:
 
 1. Create the rule class implementing the `Rule` interface
 2. Add comprehensive tests in `test/rules/`

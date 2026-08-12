@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0017_rt and rp elements without closing tags - render"
+input: "{source: \"<ruby>Base<rp>(<rt>annotation<rp>)</ruby>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ruby>Base<rp>(</rp><rt>annotation</rt><rp>)</rp></ruby>

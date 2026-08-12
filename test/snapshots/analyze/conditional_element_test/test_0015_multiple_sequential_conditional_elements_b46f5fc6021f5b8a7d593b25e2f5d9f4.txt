@@ -123,7 +123,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (4:19)-(4:20))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:20)-(5:0))
     │   │       └── content: "\n"
@@ -163,7 +163,7 @@ input: |2-
     │   │
     │   │
     │   ├── tag_name: "div" (location: (2:3)-(2:6))
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (7:9)-(9:0))
     │   └── content: "\n\n"
@@ -272,7 +272,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (12:20)-(12:21))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (12:21)-(13:0))
     │   │       └── content: "\n"
@@ -312,7 +312,7 @@ input: |2-
     │   │
     │   │
     │   ├── tag_name: "section" (location: (10:3)-(10:10))
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (15:9)-(16:0))
         └── content: "\n"

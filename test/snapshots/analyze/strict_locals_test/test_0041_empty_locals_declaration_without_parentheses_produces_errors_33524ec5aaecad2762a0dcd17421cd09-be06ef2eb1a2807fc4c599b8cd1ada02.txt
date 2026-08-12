@@ -1,0 +1,21 @@
+---
+source: "Analyze::StrictLocalsTest#test_0041_empty locals declaration without parentheses produces errors"
+input: |2-
+<%# locals: %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:14))
+    │   ├── errors: (1 error)
+    │   │   └── @ StrictLocalsMissingParenthesisError (location: (1:12)-(1:12))
+    │   │       ├── message: "Strict locals declaration requires parentheses. Expected `locals: (...)` but got `locals: `."
+    │   │       └── rest: ""
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: " (location: (1:3)-(1:12))
+    │   ├── tag_closing: "%>" (location: (1:12)-(1:14))
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:14)-(2:0))
+        └── content: "\n"

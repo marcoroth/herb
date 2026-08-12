@@ -1,0 +1,8 @@
+---
+source: "Engine::EvaluationTest#test_0041_block with rescue and ensure"
+input: "{source: \"<% 2.times do |i| %>\\n  <p><%= i %></p>\\n<% rescue %>\\n  <p>Error</p>\\n<% ensure %>\\n  <p>Done</p>\\n<% end %>\\n\", locals: {}, options: {escape: false}}"
+---
+  <p>0</p>
+  <p>Done</p>
+  <p>1</p>
+  <p>Done</p>

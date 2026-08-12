@@ -1,0 +1,39 @@
+# Generated from lib/herb/engine/report/entry.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class Report
+      # What was observed at one position in one template while it rendered.
+      #
+      # A collector puts things here by name, so several can share a position without knowing about
+      # each other: a query count and a render time sit side by side under different keys.
+      class Entry
+        attr_reader template: String?
+
+        attr_reader line: Integer
+
+        attr_reader column: Integer
+
+        attr_reader observations: Hash[Symbol, Array[untyped]]
+
+        # : (String?, Integer, Integer) -> void
+        def initialize: (String?, Integer, Integer) -> void
+
+        # : (Symbol, untyped) -> void
+        def observe: (Symbol, untyped) -> void
+
+        # : (Symbol) -> Array[untyped]
+        def []: (Symbol) -> Array[untyped]
+
+        # : () -> bool
+        def empty?: () -> bool
+
+        # : () -> Herb::Location
+        def location: () -> Herb::Location
+
+        # : () -> String
+        def to_s: () -> String
+      end
+    end
+  end
+end

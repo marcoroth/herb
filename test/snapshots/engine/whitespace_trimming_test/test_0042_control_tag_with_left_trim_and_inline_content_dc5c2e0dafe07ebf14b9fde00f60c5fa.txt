@@ -1,0 +1,9 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0042_control tag with left trim and inline content"
+input: "{source: \"<p>\\n  <%- if true %>text<% end %>\\n</p>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>
+  '.freeze;   if true 
+ _buf << 'text'.freeze; end; _buf << '
+</p>'.freeze;
+_buf.to_s

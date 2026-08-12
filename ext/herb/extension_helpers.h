@@ -4,10 +4,10 @@
 #include <ruby.h>
 
 #include "../../src/include/herb.h"
-#include "../../src/include/location.h"
-#include "../../src/include/position.h"
-#include "../../src/include/range.h"
-#include "../../src/include/token.h"
+#include "../../src/include/lexer/token.h"
+#include "../../src/include/location/location.h"
+#include "../../src/include/location/position.h"
+#include "../../src/include/location/range.h"
 
 const char* check_string(VALUE value);
 VALUE rb_string_from_hb_string(hb_string_T string);

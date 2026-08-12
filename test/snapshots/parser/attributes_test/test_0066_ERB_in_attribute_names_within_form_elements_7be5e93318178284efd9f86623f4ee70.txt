@@ -71,7 +71,7 @@ input: |2-
     │   │   │   ├── body: []
     │   │   │   ├── close_tag: ∅
     │   │   │   ├── is_void: true
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (3:50)-(4:10))
     │   │   │   └── content: "\n          "
@@ -125,7 +125,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (4:63)-(4:64))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (4:64)-(5:10))
     │   │   │   └── content: "\n          "
@@ -179,7 +179,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:63)-(5:64))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (5:64)-(6:8))
     │   │       └── content: "\n        "
@@ -192,7 +192,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (6:14)-(6:15))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:15)-(7:6))
         └── content: "\n      "

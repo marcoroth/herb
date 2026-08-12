@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/file_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+/test/file.erb
+
+  →   1 │ line 1
+      2 │ line 2

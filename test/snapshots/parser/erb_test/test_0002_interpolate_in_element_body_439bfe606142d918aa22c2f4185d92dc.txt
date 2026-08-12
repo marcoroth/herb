@@ -30,4 +30,4 @@ input: "<h1><%= hello %></h1>"
         │       └── tag_closing: ">" (location: (1:20)-(1:21))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

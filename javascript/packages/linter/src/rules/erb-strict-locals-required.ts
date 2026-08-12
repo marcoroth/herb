@@ -1,35 +1,92 @@
-import { SourceRule } from "../types.js"
-import { Location } from "@herb-tools/core"
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
+import { Location, ERBStrictLocalsNode, RubyReferenceCollector, createLiteral, isProbableLocal } from "@herb-tools/core"
+import { strictLocalsDeclaration } from "@herb-tools/analysis"
+import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isPartialFile } from "./file-utils.js"
 
-import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { BaseAutofixContext, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, DocumentNode } from "@herb-tools/core"
+import type { InferredSignature, StrictLocal } from "@herb-tools/analysis"
 
-function hasStrictLocals(source: string): boolean {
-  return source.includes("<%# locals:") || source.includes("<%#locals:")
+const LOCAL_ASSIGNS = "local_assigns"
+
+interface StrictLocalsRequiredAutofixContext extends BaseAutofixContext {
+  declaration: string
 }
 
-class ERBStrictLocalsRequiredVisitor extends BaseSourceRuleVisitor {
-  protected visitSource(source: string): void {
-    const isPartial = isPartialFile(this.context.fileName)
+interface BodyLocals {
+  names: string[]
+  usesLocalAssigns: boolean
+}
 
-    if (isPartial !== true) return
-    if (hasStrictLocals(source)) return
+class ERBStrictLocalsRequiredVisitor extends BaseRuleVisitor {
+  foundStrictLocals: boolean = false
 
-    const firstLineLength = source.indexOf("\n") === -1 ? source.length : source.indexOf("\n")
-    const location = Location.from(1, 0, 1, firstLineLength)
-
-    this.addOffense(
-      "Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.",
-      location
-    )
+  visitERBStrictLocalsNode(_node: ERBStrictLocalsNode): void {
+    this.foundStrictLocals = true
   }
 }
 
-export class ERBStrictLocalsRequiredRule extends SourceRule {
+function localsUsedInBody(document: DocumentNode): BodyLocals {
+  const program = document.prismNode
+
+  if (!program) {
+    return {
+      names: [],
+      usesLocalAssigns: false
+    }
+  }
+
+  const collector = new RubyReferenceCollector()
+
+  collector.visit(program)
+
+  const bound = new Set(collector.localBindings.map(binding => binding.name))
+  const names: string[] = []
+
+  let usesLocalAssigns = false
+
+  for (const call of collector.bareCalls) {
+    if (call.name === LOCAL_ASSIGNS) {
+      usesLocalAssigns = true
+
+      continue
+    }
+
+    if (bound.has(call.name)) continue
+    if (!isProbableLocal(call.name)) continue
+    if (names.includes(call.name)) continue
+
+    names.push(call.name)
+  }
+
+  return { names, usesLocalAssigns }
+}
+
+function mergeLocals(fromCallSites: StrictLocal[], fromBody: string[]): StrictLocal[] {
+  const locals = [...fromCallSites]
+
+  for (const name of fromBody) {
+    if (locals.some(local => local.name === name)) continue
+
+    locals.push({ name, required: false })
+  }
+
+  return locals.sort((left, right) => left.name.localeCompare(right.name))
+}
+
+export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequiredAutofixContext> {
   static unsafeAutocorrectable = true
   static ruleName = "erb-strict-locals-required"
+  static introducedIn = this.version("0.8.8")
+
+  get parserOptions() {
+    return {
+      strict_locals: true,
+      prism_program: true
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -38,15 +95,57 @@ export class ERBStrictLocalsRequiredRule extends SourceRule {
     }
   }
 
-  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<StrictLocalsRequiredAutofixContext>[] {
+    if (isPartialFile(context?.fileName) !== true) return []
+
     const visitor = new ERBStrictLocalsRequiredVisitor(this.ruleName, context)
+    visitor.visit(result.value)
 
-    visitor.visit(source)
+    if (visitor.foundStrictLocals) return []
 
-    return visitor.offenses
+    const document = result.value
+
+    return [
+      this.createOffense(
+        "Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.",
+        this.firstLineOf(document),
+        { node: document, declaration: this.declarationFor(document, context), unsafe: true }
+      )
+    ]
   }
 
-  autofix(_offense: LintOffense, source: string, _context?: Partial<LintContext>): string | null {
-    return `<%# locals: () %>\n\n${source}`
+  autofix(offense: LintOffense<StrictLocalsRequiredAutofixContext>, result: ParseResult): ParseResult | null {
+    const declaration = offense.autofixContext?.declaration
+    if (!declaration) return null
+
+    result.value.children.unshift(createLiteral(`${declaration}\n\n`))
+
+    return result
+  }
+
+  private firstLineOf(document: DocumentNode): Location {
+    const [firstLine] = (document.source ?? "").split("\n")
+
+    return Location.from(1, 0, 1, firstLine?.length ?? 0)
+  }
+
+  private declarationFor(document: DocumentNode, context?: Partial<LintContext>): string {
+    const body = localsUsedInBody(document)
+    const signature = this.signatureFor(context)
+
+    return strictLocalsDeclaration({
+      locals: mergeLocals(signature?.locals ?? [], body.names),
+      callSiteCount: signature?.callSiteCount ?? 0,
+      keywordRest: (signature?.keywordRest ?? true) || body.usesLocalAssigns
+    })
+  }
+
+  private signatureFor(context?: Partial<LintContext>): InferredSignature | null {
+    const callers = context?.partialCallers
+    if (!callers || !context?.fileName) return null
+
+    const signature = callers.inferSignature(context.fileName)
+
+    return signature.callSiteCount > 0 ? signature : null
   }
 }
