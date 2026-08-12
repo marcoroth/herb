@@ -322,6 +322,7 @@ DEPENDENCIES
   lz_string
   maxitest (~> 6.0)
   minitest-difftastic (~> 0.2)
+  nokogiri (~> 1.19)
   prism!
   rake (~> 13.4)
   rake-compiler (~> 1.3)
