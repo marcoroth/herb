@@ -107,6 +107,7 @@ class Herb::CLI
         bundle exec herb actionview check [path]    Check if render calls resolve to valid partial files.
         bundle exec herb actionview graph [path]    Show render dependency graph for a project or file.
         bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
+        bundle exec herb actionview context [file]  Show what a partial is rendered inside of.
 
         bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
         bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
@@ -512,6 +513,12 @@ class Herb::CLI
       end
 
       exit(0)
+    when "context"
+      actionview_context(config)
+      exit(0)
+    when "signature"
+      actionview_signature(config)
+      exit(0)
     when "render"
       @file = @args[2]
       actionview_render
@@ -526,6 +533,8 @@ class Herb::CLI
           check [path]          Check render calls and flag dependency warnings
           graph [path]          Show render dependency graph for a project or file
           dependencies [path]   Show template dependency manifest (state, locals, helpers)
+          context <partial>     Show what a partial is always, sometimes, or never rendered inside
+          signature <partial>   Show the strict locals a partial receives across every call site
           render [file]         Render ERB template using ActionView helpers
 
         Examples:
@@ -534,6 +543,8 @@ class Herb::CLI
           bundle exec herb actionview graph app/views/posts/show.html.erb
           bundle exec herb actionview dependencies app/views/posts/show.html.erb
           bundle exec herb actionview dependencies
+          bundle exec herb actionview context app/views/posts/_card.html.erb
+          bundle exec herb actionview signature app/views/posts/_card.html.erb
           bundle exec herb actionview render app/views/posts/show.html.erb
 
       HELP
@@ -581,6 +592,145 @@ class Herb::CLI
     puts " #{bold("Unknown calls")}"
     result.unknown_calls.each { |u| puts "   #{yellow(u)}" }
     puts ""
+  end
+
+  def actionview_project_index(config)
+    require_relative "analysis/project_index"
+
+    unless @file
+      puts "Please provide a partial path."
+      exit(1)
+    end
+
+    path = File.expand_path(@file)
+
+    unless File.file?(path)
+      puts "Not a file: '#{path}'."
+      exit(1)
+    end
+
+    project_root = config.project_root&.to_s || File.dirname(path)
+    project = Herb::Analysis::ProjectIndex.new(project_root)
+    project.index_all
+
+    [project, path, project_root]
+  end
+
+  def actionview_header(path, project_root)
+    relative = Pathname.new(path).relative_path_from(Pathname.new(project_root)).to_s
+
+    puts ""
+    puts " #{bold("Herb")} \u{1f33f} #{dimmed("v#{Herb::VERSION}")}"
+    puts ""
+    puts " #{cyan(relative)}"
+    puts ""
+  end
+
+  def verdict_marker(verdict)
+    case verdict
+    when :always then green("\u2713")
+    when :never  then dimmed("\u2717")
+    when :mixed  then yellow("~")
+    else dimmed("?")
+    end
+  end
+
+  def actionview_context(config)
+    @file = @args[2]
+    project, path, project_root = actionview_project_index(config)
+
+    actionview_header(path, project_root)
+
+    context = project.graph.context_of(path)
+    callers = project.graph.callers_of(path)
+
+    if callers.empty?
+      puts " #{dimmed("Not rendered by any template.")}"
+      puts ""
+      exit(0)
+    end
+
+    puts " #{bold("Rendered inside")} #{dimmed("(#{context.chains.size} #{context.chains.size == 1 ? "path" : "paths"})")}"
+    puts ""
+
+    context.chains.each_with_index do |chain, index|
+      connector = index == context.chains.size - 1 ? "\u2514\u2500\u2500" : "\u251c\u2500\u2500"
+      trail = chain.tags.any? ? chain.tags.join(dimmed(" \u203a ")) : dimmed("(top level)")
+      times = chain.occurrences > 1 ? dimmed(" \u00d7#{chain.occurrences}") : ""
+
+      puts "   #{connector} #{trail}#{times}"
+    end
+
+    puts ""
+
+    unless context.resolved
+      puts " #{yellow("Some call sites could not be resolved, so 'never' is reported as unknown.")}"
+      puts ""
+    end
+
+    tags = context.chains.flat_map(&:tags).uniq.sort
+
+    return if tags.empty?
+
+    puts " #{bold("Verdicts")}"
+    puts ""
+
+    tags.each do |tag|
+      verdict = context.ancestor_verdict([], tag)
+
+      puts "   #{verdict_marker(verdict)} #{tag} #{dimmed(verdict.to_s)}"
+    end
+
+    puts ""
+  end
+
+  def actionview_signature(config)
+    @file = @args[2]
+    project, path, project_root = actionview_project_index(config)
+
+    actionview_header(path, project_root)
+
+    signature = project.graph.infer_signature(path)
+    declaration = project.partials.declaration_for_file(path)
+
+    if signature.call_site_count.zero?
+      puts " #{dimmed("Not rendered by any template, so there is nothing to infer.")}"
+      puts ""
+      exit(0)
+    end
+
+    puts " #{bold("Inferred")} #{dimmed("(from #{signature.call_site_count} #{signature.call_site_count == 1 ? "call site" : "call sites"})")}"
+    puts ""
+    puts "   #{signature.strict_locals_declaration}"
+    puts ""
+
+    if declaration&.has_declaration
+      puts " #{bold("Declared")}"
+      puts ""
+      puts "   #{dimmed("required")} #{declaration.required_locals.join(", ")}" if declaration.required_locals.any?
+      puts "   #{dimmed("optional")} #{declaration.optional_locals.join(", ")}" if declaration.optional_locals.any?
+      puts "   #{dimmed("keyword rest")} #{declaration.has_keyword_rest}"
+      puts ""
+
+      declared = declaration.required_locals + declaration.optional_locals
+      passed = signature.locals.map(&:name)
+
+      undeclared = passed - declared
+      unused = declared - passed
+
+      if undeclared.any? && !declaration.has_keyword_rest
+        puts " #{yellow("Passed but not declared:")} #{undeclared.join(", ")}"
+        puts ""
+      end
+
+      if unused.any?
+        puts " #{dimmed("Declared but never passed:")} #{unused.join(", ")}"
+        puts ""
+      end
+    else
+      puts " #{dimmed("This partial does not declare strict locals yet.")}"
+      puts ""
+    end
   end
 
   def actionview_render
