@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../analysis/partial_resolution"
+
 module Herb
   class Engine
     class InlineRenderVisitor
@@ -18,7 +20,6 @@ module Herb
         end
 
         def can_inline?(node, shadowed: [])
-          return false unless @view_root
           return false unless node.static_partial?
           return false if node.body&.any?
 
@@ -124,15 +125,11 @@ module Herb
         end
 
         def find_view_root
-          candidates = [
-            @project_path.join("app", "views")
-          ]
-
-          candidates.find(&:directory?)
+          Analysis::PartialResolution.view_root_for(@project_path)
         end
 
         def find_source_directory
-          return nil unless @filename && @view_root
+          return nil unless @filename
 
           @project_path.join(Pathname.new(@filename).dirname)
         end

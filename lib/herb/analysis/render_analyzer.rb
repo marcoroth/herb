@@ -3,7 +3,7 @@
 
 require "pathname"
 
-require_relative "../partial_resolution"
+require_relative "partial_resolution"
 require_relative "partial_index"
 
 module Herb

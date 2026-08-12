@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../validator"
+require_relative "../../analysis/partial_resolution"
 
 module Herb
   class Engine
@@ -64,13 +65,7 @@ module Herb
         end
 
         def view_root
-          return @view_root if defined?(@view_root)
-
-          @view_root = begin
-            candidate = project_path.join("app", "views")
-
-            candidate.directory? ? candidate : nil
-          end
+          @view_root ||= Analysis::PartialResolution.view_root_for(project_path)
         end
 
         def filename

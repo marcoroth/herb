@@ -52,6 +52,42 @@ module Engine
       validator.diagnostics
     end
 
+    def flat_project_diagnostics(partial)
+      root = Dir.mktmpdir("herb_render_flat")
+
+      begin
+        FileUtils.mkdir_p(File.join(root, "posts"))
+        File.write(File.join(root, "posts", "_card.html.erb"), "<div>Card</div>")
+
+        result = Herb.parse(%(<%= render "#{partial}" %>), render_nodes: true)
+        validator = Herb::Engine::Validators::RenderValidator.new
+
+        validator.inherit_context(
+          Herb::Engine::VisitorContext.new(
+            file_path: "posts/show.html.erb",
+            project_path: Pathname.new(root)
+          )
+        )
+
+        result.value.accept(validator)
+
+        validator.diagnostics
+      ensure
+        FileUtils.rm_rf(root)
+      end
+    end
+
+    test "resolves a partial in a project that does not keep templates in app/views" do
+      assert_empty flat_project_diagnostics("posts/card")
+    end
+
+    test "still reports a missing partial in a project that does not keep templates in app/views" do
+      diagnostics = flat_project_diagnostics("posts/nope")
+
+      assert_equal 1, diagnostics.size
+      assert_includes diagnostics.first.message, "could not be resolved"
+    end
+
     test "no diagnostics for existing partial" do
       diagnostics = render_diagnostics('<%= render "shared/header" %>')
 

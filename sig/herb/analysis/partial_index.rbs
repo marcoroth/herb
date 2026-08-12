@@ -12,8 +12,8 @@ module Herb
       # : (String | Pathname, ?templates: Array[String]?) -> PartialIndex
       def self.build: (String | Pathname, ?templates: Array[String]?) -> PartialIndex
 
-      # : (Pathname) -> Pathname
-      def self.resolve_view_root: (Pathname) -> Pathname
+      # : (String | Pathname) -> Pathname
+      def self.resolve_view_root: (String | Pathname) -> Pathname
 
       # : (String | Pathname, Array[String]) -> void
       def initialize: (String | Pathname, Array[String]) -> void

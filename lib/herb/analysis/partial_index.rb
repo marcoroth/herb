@@ -2,7 +2,7 @@
 
 require "pathname"
 
-require_relative "../partial_resolution"
+require_relative "partial_resolution"
 
 module Herb
   module Analysis
@@ -22,14 +22,9 @@ module Herb
         new(view_root, files)
       end
 
-      #: (Pathname) -> Pathname
+      #: (String | Pathname) -> Pathname
       def self.resolve_view_root(project_path)
-        candidates = [
-          project_path.join("app", "views"),
-          project_path
-        ]
-
-        candidates.find(&:directory?) || project_path
+        PartialResolution.view_root_for(project_path)
       end
 
       #: (String | Pathname, Array[String]) -> void

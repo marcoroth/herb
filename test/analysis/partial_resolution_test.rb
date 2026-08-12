@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../test_helper"
 
 class PartialResolutionTest < Minitest::Spec
-  Subject = Herb::PartialResolution
+  Subject = Herb::Analysis::PartialResolution
 
   test "derives the partial glob from the extension list" do
     assert_equal "_#{Subject::TEMPLATE_GLOB_PATTERN}", Subject::PARTIAL_GLOB_PATTERN
