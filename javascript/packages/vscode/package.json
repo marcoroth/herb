@@ -14,7 +14,9 @@
   "engines": {
     "vscode": "^1.100.0"
   },
-  "extensionDependencies": [],
+  "extensionDependencies": [
+    "Shopify.ruby-lsp"
+  ],
   "categories": [
     "Programming Languages",
     "Linters",

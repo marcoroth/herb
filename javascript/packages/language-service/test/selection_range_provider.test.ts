@@ -28,6 +28,19 @@ describe("SelectionRangeProvider", () => {
     return ranges[0]
   }
 
+  function isStrictlyNested(chain: { start: { line: number; character: number }; end: { line: number; character: number } }[]): boolean {
+    const before = (a: { line: number; character: number }, b: { line: number; character: number }) =>
+      a.line < b.line || (a.line === b.line && a.character <= b.character)
+
+    return chain.every((range, index) => {
+      const parent = chain[index + 1]
+
+      if (!parent) return true
+
+      return before(parent.start, range.start) && before(range.end, parent.end)
+    })
+  }
+
   function rangeChain(content: string, line: number, character: number) {
     let range = getSelectionRange(content, line, character)
     const chain: { start: { line: number; character: number }; end: { line: number; character: number } }[] = []
@@ -48,7 +61,7 @@ describe("SelectionRangeProvider", () => {
       const content = "<div>hello</div>"
       const chain = rangeChain(content, 0, 6)
 
-      expect(chain.length).toBeGreaterThanOrEqual(3)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start).toEqual({ line: 0, character: 5 })
       expect(chain[0].end).toEqual({ line: 0, character: 10 })
       expect(chain[1].start).toEqual({ line: 0, character: 0 })
@@ -59,7 +72,7 @@ describe("SelectionRangeProvider", () => {
       const content = '<div class="foo">hello</div>'
       const chain = rangeChain(content, 0, 13)
 
-      expect(chain.length).toBeGreaterThanOrEqual(5)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start).toEqual({ line: 0, character: 12 })
       expect(chain[0].end).toEqual({ line: 0, character: 15 })
       expect(chain[1].start).toEqual({ line: 0, character: 11 })
@@ -72,7 +85,7 @@ describe("SelectionRangeProvider", () => {
       const content = "<br>"
       const chain = rangeChain(content, 0, 1)
 
-      expect(chain.length).toBeGreaterThanOrEqual(2)
+      expect(isStrictlyNested(chain)).toBe(true)
     })
   })
 
@@ -85,7 +98,7 @@ describe("SelectionRangeProvider", () => {
       `
       const chain = rangeChain(content, 1, 8)
 
-      expect(chain.length).toBeGreaterThanOrEqual(3)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start.line).toBe(1)
       expect(chain[1].start.line).toBe(1)
       expect(chain[1].end.line).toBe(1)
@@ -101,7 +114,7 @@ describe("SelectionRangeProvider", () => {
       `
       const chain = rangeChain(content, 1, 3)
 
-      expect(chain.length).toBeGreaterThanOrEqual(3)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start).toEqual({ line: 0, character: 18 })
       expect(chain[0].end.line).toBe(2)
       expect(chain[1].start.line).toBe(0)
@@ -118,7 +131,7 @@ describe("SelectionRangeProvider", () => {
       `
       const chain = rangeChain(content, 2, 6)
 
-      expect(chain.length).toBeGreaterThanOrEqual(4)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start.line).toBe(1)
       expect(chain[1].start.line).toBe(1)
       expect(chain[1].end.line).toBe(3)
@@ -132,7 +145,7 @@ describe("SelectionRangeProvider", () => {
       const content = "<%= hello %>"
       const chain = rangeChain(content, 0, 5)
 
-      expect(chain.length).toBeGreaterThanOrEqual(2)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start).toEqual({ line: 0, character: 0 })
       expect(chain[0].end).toEqual({ line: 0, character: 12 })
     })
@@ -148,7 +161,7 @@ describe("SelectionRangeProvider", () => {
         </div>
       `
       const chain = rangeChain(content, 2, 10)
-      expect(chain.length).toBeGreaterThanOrEqual(4)
+      expect(isStrictlyNested(chain)).toBe(true)
     })
   })
 
@@ -157,7 +170,7 @@ describe("SelectionRangeProvider", () => {
       const content = '<div class="1231312 <%= hello %>">1231</div>'
       const chain = rangeChain(content, 0, 15)
 
-      expect(chain.length).toBeGreaterThanOrEqual(5)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start).toEqual({ line: 0, character: 12 })
       expect(chain[0].end).toEqual({ line: 0, character: 20 })
       expect(chain[1].start).toEqual({ line: 0, character: 11 })
@@ -184,12 +197,42 @@ describe("SelectionRangeProvider", () => {
     })
   })
 
+  describe("element contents", () => {
+    it("expands to what sits between the tags before taking the tags too", () => {
+      const content = dedent`
+        <div class="card">
+              <%= actions %>
+            </div>
+      `
+      const chain = rangeChain(content, 1, 11)
+
+      expect(chain[0].start).toEqual({ line: 1, character: 6 })
+      expect(chain[0].end).toEqual({ line: 1, character: 20 })
+
+      expect(chain[1].start).toEqual({ line: 0, character: 18 })
+      expect(chain[1].end).toEqual({ line: 2, character: 4 })
+
+      expect(chain[2].start).toEqual({ line: 0, character: 0 })
+      expect(chain[2].end).toEqual({ line: 2, character: 10 })
+
+      expect(isStrictlyNested(chain)).toBe(true)
+    })
+
+    it("does not repeat a range when the contents are the only child", () => {
+      const chain = rangeChain("<div>hello</div>", 0, 6)
+
+      expect(chain).toHaveLength(2)
+      expect(chain[0].start).toEqual({ line: 0, character: 5 })
+      expect(chain[0].end).toEqual({ line: 0, character: 10 })
+    })
+  })
+
   describe("HTML comments", () => {
     it("expands through comment node", () => {
       const content = "<!-- comment -->"
       const chain = rangeChain(content, 0, 6)
 
-      expect(chain.length).toBeGreaterThanOrEqual(3)
+      expect(isStrictlyNested(chain)).toBe(true)
       expect(chain[0].start).toEqual({ line: 0, character: 4 })
       expect(chain[0].end).toEqual({ line: 0, character: 13 })
       expect(chain[1].start).toEqual({ line: 0, character: 0 })
