@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "nokogiri"
+
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
@@ -12,6 +14,52 @@ module Engine
 
       def options
         { visitors: [Herb::Engine::SlotVisitor.new], filename: "app/views/test.html.erb" }
+      end
+
+      def parse_slotted(template, locals)
+        Nokogiri::HTML5.fragment(evaluate_herb_source(Herb::Engine.new(template, **options).src, locals))
+      end
+
+      def row_marker_parents(document)
+        parents = []
+
+        document.traverse do |node|
+          parents << [node.text, node.parent.name] if node.comment? && node.text.include?("herb-row")
+        end
+
+        parents
+      end
+
+      test "anchors a child slot to its element when the slot is the whole content" do
+        assert_evaluated_snapshot(%(<td class="name"><%= @name %></td>), { "@name" => "Marco" }, options)
+      end
+
+      test "keeps paired comments when a child slot shares its element with text" do
+        assert_evaluated_snapshot("<p>Hi <%= @name %>!</p>", { "@name" => "Marco" }, options)
+      end
+
+      test "keeps paired comments when an element holds several slots" do
+        assert_evaluated_snapshot("<div><%= @a %><%= @b %></div>", { "@a" => "x", "@b" => "y" }, options)
+      end
+
+      test "keeps paired comments for a slot that can render nothing" do
+        assert_evaluated_snapshot("<div><% if @admin %>x<% end %></div>", { "@admin" => false }, options)
+      end
+
+      test "distinguishes an element's attribute slot from its content slot" do
+        assert_evaluated_snapshot(
+          %(<li class="<%= @c %>"><%= @name %></li>),
+          { "@c" => "row", "@name" => "Marco" },
+          options
+        )
+      end
+
+      test "names the type on a marker for everything that is not a child" do
+        assert_evaluated_snapshot("<div><% if @admin %>x<% end %></div>", { "@admin" => true }, options)
+      end
+
+      test "names the type on an element anchor" do
+        assert_evaluated_snapshot(%(<div <%= @attrs %>>x</div>), { "@attrs" => "id=\"1\"" }, options)
       end
 
       test "delimits a child slot with paired comments" do
@@ -327,7 +375,29 @@ module Engine
         slotted = evaluate_herb_source(Herb::Engine.new(template, **options).src, locals)
         plain = evaluate_herb_source(Herb::Engine.new(template).src, locals)
 
-        assert_equal plain, slotted.gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")
+        unmarked = slotted
+                   .gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")
+                   .gsub(/ data-herb-(child|slot)="[^"]*"/, "")
+
+        assert_equal plain, unmarked
+      end
+
+      test "a table collection has its row markers split across table and tbody" do
+        document = parse_slotted(
+          %(<table><% @rows.each do |row| %><tr id="<%= row %>"><td>x</td></tr><% end %></table>),
+          { "@rows" => [1] }
+        )
+
+        assert_equal [["herb-row:0:1", "table"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
+      end
+
+      test "an explicit tbody keeps a row's markers under one parent" do
+        document = parse_slotted(
+          %(<table><tbody><% @rows.each do |row| %><tr id="<%= row %>"><td>x</td></tr><% end %></tbody></table>),
+          { "@rows" => [1] }
+        )
+
+        assert_equal [["herb-row:0:1", "tbody"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
       end
     end
   end

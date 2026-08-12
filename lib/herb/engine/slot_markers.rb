@@ -4,9 +4,23 @@
 module Herb
   class Engine
     class SlotMarkers
+      DEFAULT_TYPE = :child #: Symbol
+
       #: (Integer, Symbol) -> String
-      def slot_open(index, _type)
-        "<!--herb-slot:#{index}-->"
+      def slot_open(index, type)
+        return "<!--herb-slot:#{index}-->" if type == DEFAULT_TYPE
+
+        "<!--herb-slot:#{index}:#{type}-->"
+      end
+
+      #: (Array[Integer], Array[Symbol]) -> String
+      def element_anchors(indices, types)
+        indices.zip(types).map { |index, type| "#{index}:#{type}" }.join(",")
+      end
+
+      #: (Integer) -> String
+      def child_anchor(index)
+        index.to_s
       end
 
       #: (Integer) -> String

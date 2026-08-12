@@ -4,7 +4,7 @@ input: "<% while @i %><b>x</b><% end %>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 8943755f
+version: e66fea0f
 
 slots:
   index=0  type=collection  node_path=[0]  expression="while @i"  location=1:0  key_source=index

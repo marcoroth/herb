@@ -4,7 +4,7 @@ input: "<title><%= @a %></title>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 0ab48c31
+version: 03789892
 
 slots:
   index=0  type=raw_text  node_path=[0, 0]  expression="@a"  location=1:7

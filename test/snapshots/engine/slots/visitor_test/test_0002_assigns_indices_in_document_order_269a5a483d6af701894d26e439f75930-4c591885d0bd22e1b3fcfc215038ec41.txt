@@ -4,7 +4,7 @@ input: "<p><%= @a %></p><p><%= @b %></p><p><%= @c %></p>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 51638ab7
+version: 52930ad0
 
 slots:
   index=0  type=child  node_path=[0, 0]  expression="@a"  location=1:3

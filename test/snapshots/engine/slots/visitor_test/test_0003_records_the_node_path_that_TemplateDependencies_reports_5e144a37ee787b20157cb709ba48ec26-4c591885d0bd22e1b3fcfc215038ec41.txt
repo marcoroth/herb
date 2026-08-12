@@ -4,7 +4,7 @@ input: "<div><h1><%= @title %></h1></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 3877ae64
+version: 9d410987
 
 slots:
   index=0  type=child  node_path=[0, 0, 0]  expression="@title"  location=1:9

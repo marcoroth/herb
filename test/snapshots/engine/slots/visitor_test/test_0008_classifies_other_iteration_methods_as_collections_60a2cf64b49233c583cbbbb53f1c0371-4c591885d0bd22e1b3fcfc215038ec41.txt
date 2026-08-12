@@ -4,7 +4,7 @@ input: "<div><% 3.times do |i| %><b>x</b><% end %></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 8943755f
+version: 6e821eff
 
 slots:
   index=0  type=collection  node_path=[0, 0]  expression="3.times do |i|"  location=1:5  key_source=index

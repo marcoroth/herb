@@ -4,7 +4,7 @@ input: "<div class=\"static\"><%= @a %></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 3877ae64
+version: fd3dfd36
 
 slots:
   index=0  type=child  node_path=[0, 0]  expression="@a"  location=1:20

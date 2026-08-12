@@ -4,7 +4,7 @@ input: "<div class=\"<%= @klass %>\"></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: ac144d5f
+version: 1028a42b
 
 slots:
   index=0  type=attribute  node_path=[0]  location=1:5  attribute="class"

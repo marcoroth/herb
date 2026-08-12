@@ -4,7 +4,7 @@ input: "<div class=\"a <%= @c %> b\"></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 2518ad79
+version: 0861a400
 
 slots:
   index=0  type=attribute_interpolation  node_path=[0]  location=1:5  attribute="class"

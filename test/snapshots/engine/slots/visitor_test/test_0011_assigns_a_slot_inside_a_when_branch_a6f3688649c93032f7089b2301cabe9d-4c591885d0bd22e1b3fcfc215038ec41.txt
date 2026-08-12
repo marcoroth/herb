@@ -4,7 +4,7 @@ input: "<div><% case @x %><% when 1 %><%= @a %><% end %></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 6f56441c
+version: 91d5564b
 
 slots:
   index=0  type=conditional  node_path=[0, 0]  expression="case @x"  location=1:5

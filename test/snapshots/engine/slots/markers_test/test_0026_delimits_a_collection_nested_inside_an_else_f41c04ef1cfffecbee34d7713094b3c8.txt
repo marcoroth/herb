@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0026_delimits a collection nested inside an else"
+input: "{source: \"<div><% if @a %>A<% else %><% @l.each do |i| %><%= i %><% end %><% end %></div>\", locals: {\"@a\" => false, \"@l\" => [1]}, options: {visitors: [#<Herb::Engine::SlotVisitor>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:b5c46e05--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><!--herb-slot:1:collection--><!--herb-slot:2-->1<!--/herb-slot:2--><!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->
