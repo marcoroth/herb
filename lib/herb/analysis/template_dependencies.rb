@@ -281,6 +281,9 @@ module Herb
 
         ActionView::HelperRegistry.entries.each do |entry|
           names.add(entry.name.to_s)
+
+          # A helper answers to every alias it declares: `l` is `localize`, `t` is `translate`.
+          entry.aliases&.each { |alias_name| names.add(alias_name.to_s) }
         end
 
         names

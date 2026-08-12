@@ -328,7 +328,11 @@ impl TemplateDependencies {
 }
 
 fn helper_registry() -> BTreeSet<String> {
-  herb::action_view_helpers::entries().iter().map(|helper| helper.name.to_string()).collect()
+  // A helper is callable by every name it answers to: `l` is `localize`, `t` is `translate`.
+  herb::action_view_helpers::entries()
+    .iter()
+    .flat_map(|helper| std::iter::once(helper.name.to_string()).chain(helper.aliases.iter().map(|alias| alias.to_string())))
+    .collect()
 }
 
 fn dynamic_prefix_of(value: &str) -> Option<String> {
