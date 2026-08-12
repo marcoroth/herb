@@ -13,6 +13,22 @@ interface PreferDirectOutputAutofixContext extends BaseAutofixContext {
   replacementParts: ReplacementPart[]
 }
 
+function formatReplacement(
+  node: ERBContentNode,
+  replacementParts: ReplacementPart[],
+): string {
+  const tagOpening = node.tag_opening?.value ?? "<%="
+  const tagClosing = node.tag_closing?.value ?? "%>"
+
+  return replacementParts
+    .map((part) =>
+      part.type === "text"
+        ? part.content
+        : `${tagOpening} ${part.expression.trim()} ${tagClosing}`,
+    )
+    .join("")
+}
+
 class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofixContext> {
   private attributeValue: HTMLAttributeValueNode | null = null
 
@@ -50,17 +66,33 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
       ? { node: node as Mutable<ERBContentNode>, replacementParts }
       : undefined
 
+    const replacement = replacementParts
+      ? formatReplacement(node, replacementParts)
+      : null
+
     if (isPrismNodeType(prismNode, "StringNode")) {
+      const recommendation =
+        replacement === null
+          ? "Write the text directly without wrapping it in an ERB output tag."
+          : replacement.length === 0
+            ? "Remove the empty output tag instead."
+            : `Use \`${replacement}\` instead.`
+
       this.addOffense(
-        `Avoid outputting string literal \`${content}\`. Write the text directly without wrapping it in an ERB output tag.`,
+        `Avoid outputting string literal \`${content}\`. ${recommendation}`,
         stringLocation,
         autofixContext,
       )
     }
 
     if (isPrismNodeType(prismNode, "InterpolatedStringNode")) {
+      const recommendation =
+        replacement === null
+          ? "Use separate `<%= %>` tags for each dynamic value instead."
+          : `Use \`${replacement}\` instead.`
+
       this.addOffense(
-        `Avoid outputting interpolated string \`${content}\`. Use separate \`<%= %>\` tags for each dynamic value instead.`,
+        `Avoid outputting interpolated string \`${content}\`. ${recommendation}`,
         stringLocation,
         autofixContext,
       )
