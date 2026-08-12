@@ -3,6 +3,7 @@ pub mod partial_declaration;
 pub mod partial_index;
 pub mod partial_resolution;
 pub mod rails;
+pub mod render_graph;
 pub mod report;
 
 pub use analysis::{Analysis, Ancestry, ChainState};
