@@ -147,4 +147,28 @@ describe("erb-closing-tag-indent autofix", () => {
     expect(result.fixed).toHaveLength(1)
     expect(Herb.parse(result.source).successful).toBe(true)
   })
+
+  test("does not reindent surrounding content while fixing a nested ERB tag", () => {
+    const input = dedent`
+      <li>
+      <%
+        value = true
+        %>
+      </li>
+    `
+    const expected = dedent`
+      <li>
+      <%
+        value = true
+      %>
+      </li>
+    `
+
+    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+    expect(linter.lint(result.source).offenses).toHaveLength(0)
+  })
 })

@@ -125,7 +125,6 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
 
 export class ERBClosingTagIndentRule extends ParserRule<ClosingErbTagIndentAutofixContext> {
   static autocorrectable = true
-  static reindentAfterAutofix = true
   static ruleName = "erb-closing-tag-indent"
   static introducedIn = this.version("unreleased")
 
