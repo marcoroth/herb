@@ -290,6 +290,16 @@ impl TemplateDependencies {
     }
   }
 
+  pub fn analyze_source_with(&self, file: &str, source: &str, extra_helpers: &BTreeSet<String>) -> Dependencies {
+    let mut analyzer = Self {
+      helper_registry: self.helper_registry.clone(),
+      custom_helpers: self.custom_helpers.clone(),
+    };
+
+    analyzer.custom_helpers.extend(extra_helpers.iter().cloned());
+    analyzer.analyze_source(file, source)
+  }
+
   pub fn analyze_source(&self, file: &str, source: &str) -> Dependencies {
     let options = ParserOptions {
       render_nodes: true,
@@ -379,6 +389,10 @@ fn collect_helper_methods(directory: &std::path::Path, found: &mut BTreeSet<Stri
       collect_definitions(&source, found);
     }
   }
+}
+
+pub fn collect_definitions_in(source: &str, found: &mut BTreeSet<String>) {
+  collect_definitions(source, found)
 }
 
 fn collect_definitions(source: &str, found: &mut BTreeSet<String>) {

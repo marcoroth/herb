@@ -45,9 +45,15 @@ struct Edge {
 
 impl StateFlow {
   pub fn new(project_path: &Path) -> Self {
+    let mut dependencies = TemplateDependencies::new();
+
+    // Ruby's `check_dependencies` scans `app/helpers` before analysing anything, so a call to a
+    // custom helper is not reported as unknown.
+    dependencies.scan_helpers(project_path);
+
     Self {
       project_path: project_path.to_path_buf(),
-      dependencies: TemplateDependencies::new(),
+      dependencies,
       index: PartialIndex::build(project_path),
     }
   }
@@ -55,7 +61,15 @@ impl StateFlow {
   pub fn analyze(&self, file: &str) -> Dependencies {
     let source = fs::read_to_string(file).unwrap_or_default();
 
-    self.dependencies.analyze_source(file, &source)
+    // A component template's sibling class defines methods the template may call, which Ruby folds
+    // in through `component_methods_for`.
+    let component_methods = component_methods_for(file);
+
+    if component_methods.is_empty() {
+      self.dependencies.analyze_source(file, &source)
+    } else {
+      self.dependencies.analyze_source_with(file, &source, &component_methods)
+    }
   }
 
   pub fn project_path(&self) -> &Path {
@@ -414,4 +428,23 @@ fn content_of(node: &AnyNode) -> Option<String> {
 
 fn references_state(code: &str, state: &str) -> bool {
   expression_references(code, state)
+}
+
+fn component_methods_for(template: &str) -> std::collections::BTreeSet<String> {
+  let mut methods = std::collections::BTreeSet::new();
+
+  let sibling = template
+    .strip_suffix(".html.erb")
+    .or_else(|| template.strip_suffix(".erb"))
+    .map(|stem| format!("{stem}.rb"));
+
+  let Some(sibling) = sibling else {
+    return methods;
+  };
+
+  if let Ok(source) = fs::read_to_string(&sibling) {
+    crate::template_dependencies::collect_definitions_in(&source, &mut methods);
+  }
+
+  methods
 }

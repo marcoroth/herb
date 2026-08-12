@@ -258,6 +258,9 @@ fn check(arguments: &[String]) -> i32 {
     " {}",
     format!("Checking render calls in {} {}...", templates.len(), plural(templates.len(), "template")).dimmed()
   );
+
+  let (ivar_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow);
+
   println!();
 
   if !unresolved.is_empty() {
@@ -281,8 +284,6 @@ fn check(arguments: &[String]) -> i32 {
 
     println!();
   }
-
-  print_dependency_warnings(&templates, &root, &flow);
 
   let issues = unresolved.len() + unused.len();
 
@@ -337,6 +338,30 @@ fn check(arguments: &[String]) -> i32 {
     )
     .cyan()
   );
+  if ivar_warnings > 0 || unknown_warnings > 0 {
+    let mut parts = Vec::new();
+
+    if ivar_warnings > 0 {
+      parts.push(
+        format!("{ivar_warnings} {}", plural(ivar_warnings, "instance variable"))
+          .yellow()
+          .bold()
+          .to_string(),
+      );
+    }
+
+    if unknown_warnings > 0 {
+      parts.push(
+        format!("{unknown_warnings} unknown {}", plural(unknown_warnings, "call"))
+          .yellow()
+          .bold()
+          .to_string(),
+      );
+    }
+
+    println!("  {} {}", label("Warnings"), parts.join(&" | ".dimmed().to_string()));
+  }
+
   println!(
     "  {} {}",
     label("Duration"),
@@ -1180,7 +1205,7 @@ fn signature(arguments: &[String]) -> i32 {
 /// Mirrors `RenderAnalyzer#check_dependencies`: an instance variable read inside a partial breaks
 /// state tracing, and a call the helper registry has never heard of is usually a typo or a helper
 /// Herb cannot see.
-fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow) {
+fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow) -> (usize, usize) {
   let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
 
@@ -1198,7 +1223,7 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
   }
 
   if ivars.is_empty() && unknown.is_empty() {
-    return;
+    return (0, 0);
   }
 
   println!();
@@ -1243,4 +1268,6 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
   }
 
   println!();
+
+  (ivars.len(), unknown.len())
 }
