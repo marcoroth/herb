@@ -282,6 +282,8 @@ fn check(arguments: &[String]) -> i32 {
     println!();
   }
 
+  print_dependency_warnings(&templates, &root, &flow);
+
   let issues = unresolved.len() + unused.len();
 
   println!(" {}", separator().dimmed());
@@ -1173,4 +1175,72 @@ fn signature(arguments: &[String]) -> i32 {
   }
 
   0
+}
+
+/// Mirrors `RenderAnalyzer#check_dependencies`: an instance variable read inside a partial breaks
+/// state tracing, and a call the helper registry has never heard of is usually a typo or a helper
+/// Herb cannot see.
+fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow) {
+  let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
+  let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
+
+  for file in templates {
+    let result = flow.analyze(file);
+    let relative = relative(file, root);
+
+    if herb_analysis::partial_resolution::partial_path(file) && !result.instance_variables.is_empty() {
+      ivars.push((relative.clone(), result.instance_variables.clone()));
+    }
+
+    if !result.unknown_calls.is_empty() {
+      unknown.push((relative, result.unknown_calls.clone()));
+    }
+  }
+
+  if ivars.is_empty() && unknown.is_empty() {
+    return;
+  }
+
+  println!();
+  println!(" {}", "Dependency warnings:".bold());
+
+  if !ivars.is_empty() {
+    println!();
+    println!(
+      "  {} {}",
+      "Instance variables in partials".bold(),
+      format!("({} {})", ivars.len(), plural(ivars.len(), "file")).dimmed()
+    );
+    println!("  {}", "Partials should receive data as locals for reactivity tracing.".dimmed());
+
+    for (file, names) in &ivars {
+      println!();
+      println!("    {file}");
+
+      for name in names {
+        println!("      {}", name.yellow());
+      }
+    }
+  }
+
+  if !unknown.is_empty() {
+    println!();
+    println!(
+      "  {} {}",
+      "Unknown method calls".bold(),
+      format!("({} {})", unknown.len(), plural(unknown.len(), "file")).dimmed()
+    );
+    println!("  {}", "Methods not in the ActionView helper registry or app/helpers/.".dimmed());
+
+    for (file, names) in &unknown {
+      println!();
+      println!("    {file}");
+
+      for name in names {
+        println!("      {}", name.yellow());
+      }
+    }
+  }
+
+  println!();
 }
