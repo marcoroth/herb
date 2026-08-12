@@ -752,7 +752,7 @@ class Herb::CLI
   end
 
   def print_flow_node(node, project_root, prefix, last, root)
-    puts " #{prefix}".rstrip unless root
+    puts " #{prefix}\u2502" unless root
 
     relative = Pathname.new(node.file).relative_path_from(Pathname.new(project_root)).to_s
     connector = if root

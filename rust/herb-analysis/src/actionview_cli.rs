@@ -368,7 +368,7 @@ fn print_available(state_flow: &StateFlow, path: &str, available: &[String], roo
 
 fn print_flow_node(node: &FlowNode, root: &Path, prefix: &str, last: bool, is_root: bool) {
   if !is_root {
-    println!("{}", format!(" {prefix}").trim_end());
+    println!(" {prefix}\u{2502}");
   }
 
   let connector = if is_root {

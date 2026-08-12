@@ -12,7 +12,7 @@ exit: 0
 
  app/views/posts/show.html.erb [@post]
  · render render "posts/byline", author: @post.user (1:0)
-
+ │
  └── app/views/posts/_byline.html.erb [author] ← author: @post.user
      · text_content author.name (1:6)
 
