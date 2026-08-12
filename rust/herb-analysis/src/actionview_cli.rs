@@ -146,7 +146,7 @@ fn verdict_marker(verdict: Verdict) -> String {
 fn check(arguments: &[String]) -> i32 {
   let started = std::time::Instant::now();
   let root = project_root(arguments);
-  let index = PartialIndex::build_with_config(&root);
+  let mut index = PartialIndex::build_with_config(&root);
   let templates = index.templates().to_vec();
 
   header(&format!("{}", root.display()));
@@ -259,7 +259,8 @@ fn check(arguments: &[String]) -> i32 {
     format!("Checking render calls in {} {}...", templates.len(), plural(templates.len(), "template")).dimmed()
   );
 
-  let (ivar_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow);
+  let passed_locals = collect_passed_locals(&templates, &mut index, &flow);
+  let (ivar_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
 
   println!();
 
@@ -1205,9 +1206,41 @@ fn signature(arguments: &[String]) -> i32 {
 /// Mirrors `RenderAnalyzer#check_dependencies`: an instance variable read inside a partial breaks
 /// state tracing, and a call the helper registry has never heard of is usually a typo or a helper
 /// Herb cannot see.
-fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow) -> (usize, usize) {
+fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &StateFlow) -> BTreeMap<String, BTreeSet<String>> {
+  let mut passed: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+
+  for file in templates {
+    for call in &flow.analyze(file).render_calls {
+      let Some(name) = &call.partial else {
+        continue;
+      };
+
+      let Some(target) = index.resolve(name, Some(file)).first().cloned() else {
+        continue;
+      };
+
+      let entry = passed.entry(target).or_default();
+
+      for local in call.locals.keys() {
+        entry.insert(local.clone());
+      }
+
+      // `render collection:` names each item after the partial itself.
+      if call.collection.is_some() {
+        if let Some(item) = name.rsplit('/').next() {
+          entry.insert(item.to_string());
+        }
+      }
+    }
+  }
+
+  passed
+}
+
+fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize) {
   let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
+  let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
 
   for file in templates {
     let result = flow.analyze(file);
@@ -1218,11 +1251,26 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
     }
 
     if !result.unknown_calls.is_empty() {
-      unknown.push((relative, result.unknown_calls.clone()));
+      let declared = !result.locals_declared.is_empty();
+      let candidates = passed_locals.get(file);
+
+      let (locals, rest): (Vec<String>, Vec<String>) = result
+        .unknown_calls
+        .iter()
+        .cloned()
+        .partition(|call| !declared && candidates.map(|names| names.contains(call)).unwrap_or(false));
+
+      if !locals.is_empty() {
+        likely_locals.push((relative.clone(), locals));
+      }
+
+      if !rest.is_empty() {
+        unknown.push((relative, rest));
+      }
     }
   }
 
-  if ivars.is_empty() && unknown.is_empty() {
+  if ivars.is_empty() && unknown.is_empty() && likely_locals.is_empty() {
     return (0, 0);
   }
 
@@ -1245,6 +1293,32 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
       for name in names {
         println!("      {}", name.yellow());
       }
+    }
+  }
+
+  if !likely_locals.is_empty() {
+    println!();
+    println!(
+      "  {} {}",
+      "Undeclared locals".bold(),
+      format!("({} {})", likely_locals.len(), plural(likely_locals.len(), "file")).dimmed()
+    );
+    println!(
+      "  {}",
+      "Every call site passes these, so they are locals. Declare them with strict locals to be sure.".dimmed()
+    );
+
+    for (file, names) in &likely_locals {
+      println!();
+      println!("    {file}");
+      println!(
+        "      {}",
+        format!(
+          "<%# locals: ({}) %>",
+          names.iter().map(|name| format!("{name}:")).collect::<Vec<_>>().join(", ")
+        )
+        .yellow()
+      );
     }
   }
 
