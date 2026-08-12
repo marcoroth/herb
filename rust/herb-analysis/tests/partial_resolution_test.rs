@@ -105,7 +105,6 @@ fn orders_variants_by_precedence() {
   assert_eq!(files, vec!["_card.html.erb", "_card.erb", "_card.herb", "_card.turbo_stream.erb"]);
 }
 
-// These six cases are checked byte for byte against the Ruby and TypeScript implementations.
 #[test]
 fn matches_the_other_implementations_on_layout_candidates() {
   assert_eq!(
@@ -129,8 +128,6 @@ fn matches_the_other_implementations_on_layout_candidates() {
   assert!(layout_candidates_for("app/views/posts/_row.html.erb", "app/views").is_empty());
 }
 
-// Every row here was produced by running the Ruby implementation over the same input, so the two
-// stay pinned to one contract. The one deliberate difference is noted inline.
 #[test]
 fn agrees_with_the_ruby_implementation_over_a_table_of_paths() {
   let root = "app/views";
@@ -164,9 +161,5 @@ fn agrees_with_the_ruby_implementation_over_a_table_of_paths() {
     Some("layouts/application")
   );
 
-  // Both name functions gate on `partial_path`, which requires a template extension as well as the
-  // `_` prefix, so a `.md` file is neither a partial nor rejected as one. TypeScript checks only the
-  // prefix and so answers "posts/card" here; the inputs that separate them cannot reach either
-  // function, since every caller feeds it glob results that already carry a template extension.
   assert_eq!(template_name_for("app/views/posts/_card.md", root).as_deref(), Some("posts/_card"));
 }

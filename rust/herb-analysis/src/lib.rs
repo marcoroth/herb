@@ -1,4 +1,6 @@
 pub mod analysis;
+pub mod partial_declaration;
+pub mod partial_index;
 pub mod partial_resolution;
 pub mod rails;
 pub mod report;
