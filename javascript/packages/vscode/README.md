@@ -90,6 +90,12 @@ The [Herb Linter](https://herb-tools.dev/projects/linter) validates HTML+ERB aga
 * Disable a rule (or all rules) for the current line via a `herb:disable` comment
 * Disable a rule project-wide by updating `.herb.yml`
 
+#### Refactoring
+
+Select some markup and run `Herb: Extract to Partial` to move it into a new partial, with a `render` call left behind in its place. Herb writes the file, works out which locals the extracted markup depends on, declares them in a `<%# locals: %>` comment, and passes them through at the call site.
+
+Tag helpers and plain HTML convert in both directions. On a `link_to` you are offered `Herb: Convert to <a>`, and on an `<a>` you are offered `Herb: Convert to link_to`. Elements with no dedicated helper fall back to the `tag.` form.
+
 #### Formatting
 
 Whole-document and selection formatting through the [Herb Formatter](https://herb-tools.dev/projects/formatter) (experimental preview, opt-in).
@@ -98,13 +104,27 @@ Whole-document and selection formatting through the [Herb Formatter](https://her
 
 Hover over Action View tag helpers to see their signature, documentation, and the HTML they produce, or over an HTML character reference to see its character and codepoints.
 
+Hovering a `render` call shows the partial it resolves to, along with a preview of its contents. When the name is built at runtime, from a variable, an interpolation, or `to_partial_path`, the hover says so and shows what to write instead so that Herb can follow it.
+
 #### Completions
 
 HTML tags, HTML character references, Action View helpers, and `tag.` / `content_tag` element names.
 
+#### Navigation
+
+Go to Definition on a `render` call opens the partial it resolves to. Find All References works the other way, listing every `render` call site for a partial across the project, whether you invoke it from inside the partial itself or from one of the calls to it.
+
+Both only work for partials named with a literal string, since anything assembled at runtime cannot be resolved without running the app.
+
+#### Document Symbols
+
+The outline view and breadcrumbs show the structure of a template. Elements are listed the way you would select them, `div#main.card`, attributes nest underneath, ERB in an attribute value shows its expression, and `render` calls appear by the partial they pull in.
+
 #### Inlay Hints
 
-Closing tags of longer blocks are annotated with what they close. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag shows the element's `id` or `class`, like `<!-- .card.card-wide -->`. Use the built-in `editor.inlayHints.enabled` setting to turn them off or show them on demand.
+Closing tags of longer blocks are annotated with what they close. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag shows the element's `id` or `class`, like `<!-- .card.card-wide -->`.
+
+A tag close enough to read its opening line gets no hint. `languageServerHerb.inlayHints.minimumLines` sets how far apart the two have to be, and `languageServerHerb.inlayHints.enabled` turns the feature off entirely. VS Code's own `editor.inlayHints.enabled` still applies on top, but it hides hints from every extension at once.
 
 #### Editing
 
@@ -128,6 +148,8 @@ If a `.herb.yml` exists in the project root, its configuration always takes prec
 | `languageServerHerb.formatter.indentWidth`   | `2`       | Number of spaces per indentation level                           |
 | `languageServerHerb.formatter.indentStyle`   | `space`   | Character used for indentation (`space` or `tab`)                |
 | `languageServerHerb.formatter.maxLineLength` | `80`      | Maximum line length before wrapping                              |
+| `languageServerHerb.inlayHints.enabled`      | `true`    | Annotate closing tags with what they close                       |
+| `languageServerHerb.inlayHints.minimumLines` | `2`       | How far below its opening tag a closing tag must be to get a hint |
 | `languageServerHerb.trace.server`            | `verbose` | Trace the communication with the language server (for debugging) |
 
 `languageServerHerb.trace.server` is the exception: it is editor-only and is never read from `.herb.yml`.

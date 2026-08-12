@@ -102,6 +102,21 @@
           "description": "Maximum line length before wrapping.",
           "markdownDescription": "Maximum line length before wrapping.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
+        "languageServerHerb.inlayHints.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Annotate the closing tag of longer blocks with what it closes. An ERB end tag shows the expression that opened the block, and an HTML closing tag shows the element's id or class.",
+          "markdownDescription": "Annotate the closing tag of longer blocks with what it closes. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag shows the element's `id` or `class`, like `<!-- .card.card-wide -->`.\n\n**Note**: VS Code's own `editor.inlayHints.enabled` still applies on top of this, and turning it off hides hints from every extension."
+        },
+        "languageServerHerb.inlayHints.minimumLines": {
+          "scope": "resource",
+          "type": "number",
+          "minimum": 1,
+          "default": 2,
+          "description": "How many lines below its opening tag a closing tag has to be before it gets a hint. The default of 2 leaves blocks that fit within two lines unannotated.",
+          "markdownDescription": "How many lines below its opening tag a closing tag has to be before it gets a hint. The default of `2` leaves blocks that fit within two lines unannotated, since you can still see what they opened."
+        },
         "languageServerHerb.trace.server": {
           "scope": "window",
           "type": "string",

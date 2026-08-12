@@ -1,4 +1,5 @@
 import { defaultFormatOptions } from "@herb-tools/formatter"
+import { defaultInlayHintOptions } from "@herb-tools/language-service"
 
 import type { Connection } from "vscode-languageserver/node"
 import type { Capabilities } from "./capabilities"
@@ -18,6 +19,10 @@ export interface PersonalHerbSettings {
     indentStyle?: "space" | "tab"
     maxLineLength?: number
   }
+  inlayHints?: {
+    enabled?: boolean
+    minimumLines?: number
+  }
 }
 
 /**
@@ -36,6 +41,10 @@ export class UserSettings {
       indentWidth: defaultFormatOptions.indentWidth,
       indentStyle: defaultFormatOptions.indentStyle,
       maxLineLength: defaultFormatOptions.maxLineLength
+    },
+    inlayHints: {
+      enabled: true,
+      minimumLines: defaultInlayHintOptions.minimumLines
     }
   }
 
@@ -77,8 +86,15 @@ export class UserSettings {
     this.byDocument.clear()
   }
 
+  /**
+   * Layers an answer from the client over what we already have. A client that
+   * supports `workspace/configuration` but has nothing filed under
+   * `languageServerHerb`, which is every editor that keeps LSP settings under
+   * its own key, answers with nothing, and then the settings it sent at
+   * `initialize` are all we have to go on.
+   */
   private withDefaults(settings: PersonalHerbSettings | null): PersonalHerbSettings {
-    const resolved = settings || this.defaults
+    const resolved = settings || this.global
 
     return {
       trace: resolved.trace,
@@ -91,6 +107,10 @@ export class UserSettings {
         indentWidth: resolved.formatter?.indentWidth ?? this.defaults.formatter!.indentWidth!,
         indentStyle: resolved.formatter?.indentStyle ?? this.defaults.formatter!.indentStyle!,
         maxLineLength: resolved.formatter?.maxLineLength ?? this.defaults.formatter!.maxLineLength!
+      },
+      inlayHints: {
+        enabled: resolved.inlayHints?.enabled ?? this.defaults.inlayHints!.enabled!,
+        minimumLines: resolved.inlayHints?.minimumLines ?? this.defaults.inlayHints!.minimumLines!
       }
     }
   }

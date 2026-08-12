@@ -144,6 +144,10 @@ export class Server {
         ) as PersonalHerbSettings
       }
 
+      if (this.session.capabilities.supportsInlayHintRefresh) {
+        await this.connection.languages.inlayHint.refresh()
+      }
+
       await this.session.refresh()
     })
 
@@ -288,12 +292,18 @@ export class Server {
       return this.session.foldingRangeProvider.getFoldingRanges(document)
     })
 
-    this.connection.languages.inlayHint.on((params: InlayHintParams) => {
+    this.connection.languages.inlayHint.on(async (params: InlayHintParams) => {
       const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.session.inlayHintProvider.getInlayHints(document)
+      const settings = await this.session.userSettings.getDocumentSettings(params.textDocument.uri)
+
+      if (!settings.inlayHints?.enabled) return []
+
+      return this.session.inlayHintProvider.getInlayHints(document, {
+        minimumLines: settings.inlayHints.minimumLines
+      })
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {

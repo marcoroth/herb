@@ -140,3 +140,44 @@ formatter:
 ```
 
 **Note**: VS Code users can also control settings through `languageServerHerb.*` settings in VS Code preferences. Project configuration in `.herb.yml` takes precedence over editor settings.
+
+### Editor Settings
+
+Some preferences are yours alone rather than the team's, so they live with your editor instead of in `.herb.yml`. The server reads them from the `languageServerHerb` section:
+
+| Setting                   | Default   | Description                                                       |
+|---------------------------|-----------|-------------------------------------------------------------------|
+| `linter.enabled`          | `true`    | Enable/disable the linter                                         |
+| `linter.fixOnSave`        | `true`    | Automatically apply autocorrectable fixes on save                 |
+| `formatter.enabled`       | `false`   | Enable/disable the formatter (experimental)                       |
+| `formatter.indentWidth`   | `2`       | Number of spaces per indentation level                            |
+| `formatter.indentStyle`   | `space`   | Character used for indentation (`space` or `tab`)                 |
+| `formatter.maxLineLength` | `80`      | Maximum line length before wrapping                               |
+| `inlayHints.enabled`      | `true`    | Annotate closing tags with what they close                        |
+| `inlayHints.minimumLines` | `2`       | How far below its opening tag a closing tag must be to get a hint |
+
+How you set them depends on the editor. VS Code and Cursor contribute them as `languageServerHerb.*` preferences, so you set them in your `settings.json` or through the settings UI:
+
+```json [settings.json]
+{
+  "languageServerHerb.inlayHints.minimumLines": 4
+}
+```
+
+Editors that keep language server settings under their own key, like Zed, pass them at startup as initialization options instead, nested rather than dotted and without the `languageServerHerb` prefix:
+
+```json [settings.json]
+{
+  "lsp": {
+    "herb": {
+      "initialization_options": {
+        "inlayHints": {
+          "minimumLines": 4
+        }
+      }
+    }
+  }
+}
+```
+
+Anything you leave out falls back to the default, and `.herb.yml` still wins for the settings a project can own, which is whether the linter and formatter run at all.

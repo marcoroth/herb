@@ -22,6 +22,14 @@ import type {
 
 type ERBNodeWithEnd = ERBIfNode | ERBUnlessNode | ERBBlockNode | ERBCaseNode | ERBCaseMatchNode | ERBWhileNode | ERBUntilNode | ERBForNode | ERBBeginNode
 
+export interface InlayHintOptions {
+  minimumLines?: number
+}
+
+export const defaultInlayHintOptions: Required<InlayHintOptions> = {
+  minimumLines: 2
+}
+
 export class InlayHintProvider {
   private parserService: ParserService
 
@@ -29,9 +37,9 @@ export class InlayHintProvider {
     this.parserService = parserService
   }
 
-  getInlayHints(textDocument: TextDocument): InlayHint[] {
+  getInlayHints(textDocument: TextDocument, options: InlayHintOptions = {}): InlayHint[] {
     const parseResult = this.parserService.parseDocument(textDocument)
-    const collector = new InlayHintCollector()
+    const collector = new InlayHintCollector(options)
 
     collector.visit(parseResult.document)
 
@@ -42,12 +50,20 @@ export class InlayHintProvider {
 export class InlayHintCollector extends Visitor {
   public hints: InlayHint[] = []
 
+  private minimumLines: number
+
+  constructor(options: InlayHintOptions = {}) {
+    super()
+
+    this.minimumLines = options.minimumLines ?? defaultInlayHintOptions.minimumLines
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (node.close_tag && node.open_tag) {
       const endLine = node.close_tag.location.start.line
       const startLine = node.open_tag.location.start.line
 
-      if (endLine - startLine >= 2) {
+      if (endLine - startLine >= this.minimumLines) {
         const label = labelForHTMLElement(node)
 
         if (label) {
@@ -119,7 +135,7 @@ export class InlayHintCollector extends Visitor {
     const endLine = endNode.location.start.line
     const nodeLine = node.location.start.line
 
-    if (endLine - nodeLine < 2) return
+    if (endLine - nodeLine < this.minimumLines) return
 
     this.hints.push({
       position: lspPosition(endNode.tag_closing.location.end),

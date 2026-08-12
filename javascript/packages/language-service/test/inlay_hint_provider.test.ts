@@ -5,6 +5,8 @@ import { InlayHintKind } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { InlayHintProvider } from "../src/inlay_hint_provider"
+
+import type { InlayHintOptions } from "../src/inlay_hint_provider"
 import { ParserService } from "../src/parser_service"
 import { Herb } from "@herb-tools/node-wasm"
 
@@ -22,8 +24,8 @@ describe("InlayHintProvider", () => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
 
-  function getHints(content: string) {
-    return service.getInlayHints(createDocument(content))
+  function getHints(content: string, options?: InlayHintOptions) {
+    return service.getInlayHints(createDocument(content), options)
   }
 
   describe("ERB if/end", () => {
@@ -299,6 +301,49 @@ describe("InlayHintProvider", () => {
     it("returns no hints for single-line elements", () => {
       const hints = getHints('<div id="main">Content</div>')
       expect(hints).toHaveLength(0)
+    })
+  })
+
+  describe("minimumLines", () => {
+    const twoLineBlock = dedent`
+      <div id="main">
+        <% if user.admin? %>
+        <% end %>
+      </div>
+    `
+
+    it("defaults to 2", () => {
+      const hints = getHints(twoLineBlock)
+
+      expect(hints).toHaveLength(1)
+      expect(hints[0].label).toBe(" <!-- #main -->")
+    })
+
+    it("annotates closer tags when lowered to 1", () => {
+      const hints = getHints(twoLineBlock, { minimumLines: 1 })
+
+      expect(hints.map(hint => hint.label)).toEqual([" <!-- #main -->", " # if user.admin?"])
+    })
+
+    it("drops hints that no longer reach the threshold when raised", () => {
+      const hints = getHints(twoLineBlock, { minimumLines: 4 })
+
+      expect(hints).toHaveLength(0)
+    })
+
+    it("applies to ERB and HTML alike", () => {
+      const source = dedent`
+        <div id="main">
+          <% if user.admin? %>
+            <p>One</p>
+            <p>Two</p>
+          <% end %>
+        </div>
+      `
+
+      expect(getHints(source, { minimumLines: 3 }).map(hint => hint.label)).toEqual([" <!-- #main -->", " # if user.admin?"])
+      expect(getHints(source, { minimumLines: 5 })).toHaveLength(1)
+      expect(getHints(source, { minimumLines: 6 })).toHaveLength(0)
     })
   })
 })

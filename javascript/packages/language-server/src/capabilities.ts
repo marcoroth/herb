@@ -32,6 +32,10 @@ export class Capabilities {
     this.hasDiagnosticRelatedInformation = !!this.client.textDocument?.publishDiagnostics?.relatedInformation
   }
 
+  get supportsInlayHintRefresh(): boolean {
+    return this.client.workspace?.inlayHint?.refreshSupport === true
+  }
+
   get supportsDefinitionLinks(): boolean {
     return this.client.textDocument?.definition?.linkSupport === true
   }

@@ -72,7 +72,8 @@ describe("UserSettings", () => {
           indentWidth: 2,
           indentStyle: "space",
           maxLineLength: 80
-        }
+        },
+        inlayHints: { enabled: true, minimumLines: 2 }
       })
 
       expect(mockConnection.workspace.getConfiguration).toHaveBeenCalledWith({
@@ -94,8 +95,42 @@ describe("UserSettings", () => {
           indentWidth: 2,
           indentStyle: "space",
           maxLineLength: 80
-        }
+        },
+        inlayHints: { enabled: true, minimumLines: 2 }
       })
+    })
+
+    test("falls back to what the client sent at initialize when it answers with nothing", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue(null)
+
+      const settings = settingsFor(withConfiguration)
+
+      settings.global = { inlayHints: { enabled: false, minimumLines: 7 } }
+
+      const result = await settings.getDocumentSettings("file:///test.erb")
+
+      expect(result.inlayHints).toEqual({ enabled: false, minimumLines: 7 })
+      expect(result.linter?.enabled).toBe(true)
+    })
+
+    test("keeps the inlay hint settings the user set", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        inlayHints: { enabled: false, minimumLines: 5 }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.inlayHints).toEqual({ enabled: false, minimumLines: 5 })
+    })
+
+    test("fills in the inlay hint settings the user left out", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        inlayHints: { minimumLines: 5 }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.inlayHints).toEqual({ enabled: true, minimumLines: 5 })
     })
 
     test("keeps fixOnSave when the user turns it off", async () => {
