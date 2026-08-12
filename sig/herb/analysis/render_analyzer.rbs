@@ -76,6 +76,8 @@ module Herb
 
       def find_partial_files: (untyped view_root) -> untyped
 
+      def partial_index: (untyped view_root) -> untyped
+
       def partial_name_for_file: (untyped file_path, untyped view_root) -> untyped
 
       def collect_render_calls_by_file: (untyped files) -> untyped

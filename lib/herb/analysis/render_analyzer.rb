@@ -3,6 +3,8 @@
 
 require "pathname"
 
+require_relative "partial_index"
+
 module Herb
   module Analysis
     class RenderAnalyzer
@@ -760,42 +762,31 @@ module Herb
       end
 
       def find_view_root
-        candidates = [
-          @project_path.join("app", "views"),
-          @project_path
-        ]
-
-        candidates.find(&:directory?) || @project_path
+        PartialIndex.resolve_view_root(@project_path)
       end
 
       def find_partial_files(view_root)
         return {} unless view_root.directory?
 
         partials = {} #: Hash[String, String]
+        index = partial_index(view_root)
 
-        Dir[File.join(view_root, "**", Herb::PARTIAL_GLOB_PATTERN)].each do |file|
-          partial_name = partial_name_for_file(file, view_root)
-          partials[partial_name] = file if partial_name
+        index.names.each do |name|
+          file = index.files_for(name).first
+
+          partials[name] = file if file
         end
 
         partials
       end
 
+      def partial_index(view_root)
+        @partial_index ||= {} #: Hash[String, PartialIndex]
+        @partial_index[view_root.to_s] ||= PartialIndex.build(view_root)
+      end
+
       def partial_name_for_file(file_path, view_root)
-        relative = Pathname.new(file_path).relative_path_from(view_root).to_s
-
-        directory = File.dirname(relative)
-        basename = File.basename(relative)
-
-        return nil unless basename.start_with?("_")
-
-        name = basename.sub(/\A_/, "").sub(/\..*\z/, "")
-
-        if directory == "."
-          name
-        else
-          "#{directory}/#{name}"
-        end
+        PartialIndex.partial_name_for(file_path, view_root)
       end
 
       def collect_render_calls_by_file(files)

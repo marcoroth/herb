@@ -74,6 +74,25 @@ class PartialIndexTest < Minitest::Spec
     assert_includes Herb::Analysis::PartialIndex.build(@project_path).names, "posts/card"
   end
 
+  test "finds partials written with the herb extension" do
+    file = write("app/views/posts/_card.html.herb")
+
+    assert_equal [file], Herb::Analysis::PartialIndex.build(@project_path).files_for("posts/card")
+  end
+
+  test "finds a partial with a bare erb extension" do
+    file = write("app/views/posts/_card.erb")
+
+    assert_equal [file], Herb::Analysis::PartialIndex.build(@project_path).files_for("posts/card")
+  end
+
+  test "collects templates that are not erb neighbours" do
+    write("app/views/posts/index.html.erb")
+    write("app/views/posts/README.md")
+
+    assert_equal 1, Herb::Analysis::PartialIndex.build(@project_path).templates.size
+  end
+
   test "takes an explicit template list when one is given" do
     write("app/views/posts/_card.html.erb")
     kept = write("app/views/posts/_byline.html.erb")

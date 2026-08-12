@@ -3,6 +3,8 @@
 module Herb
   module Analysis
     class PartialIndex
+      TEMPLATE_GLOB_PATTERN: String
+
       attr_reader view_root: Pathname
 
       attr_reader templates: Array[String]
@@ -18,6 +20,9 @@ module Herb
 
       # : (String?) -> Array[String]
       def files_for: (String?) -> Array[String]
+
+      # : (String, String | Pathname) -> String?
+      def self.partial_name_for: (String, String | Pathname) -> String?
 
       # : (String) -> String?
       def partial_name_for: (String) -> String?
