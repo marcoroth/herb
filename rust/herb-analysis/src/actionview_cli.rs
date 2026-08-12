@@ -336,9 +336,9 @@ fn graph(arguments: &[String]) -> i32 {
     format!("Building render graph for {} {}...", templates.len(), plural(templates.len(), "template")).dimmed()
   );
 
-  let (renders, dynamic_prefixes) = collect_renders(&mut index, &templates);
+  let (renders, dynamic_prefixes, layouts) = collect_renders(&mut index, &templates);
   let ruby_references = ruby_render_references::collect(&root);
-  let reachable = reachable_partials(&index, &renders, &ruby_references, &dynamic_prefixes);
+  let reachable = reachable_partials(&index, &renders, &ruby_references, &dynamic_prefixes, &layouts);
 
   let entry_points: Vec<&String> = templates.iter().filter(|file| !herb_analysis::partial_resolution::partial_path(file)).collect();
 
@@ -487,9 +487,9 @@ fn graph_file(file: &Path) -> i32 {
   let templates = index.templates().to_vec();
   let path = file.to_str().unwrap_or_default().to_string();
 
-  let (renders, dynamic_prefixes) = collect_renders(&mut index, &templates);
+  let (renders, dynamic_prefixes, layouts) = collect_renders(&mut index, &templates);
   let ruby_references = ruby_render_references::collect(&root);
-  let reachable = reachable_partials(&index, &renders, &ruby_references, &dynamic_prefixes);
+  let reachable = reachable_partials(&index, &renders, &ruby_references, &dynamic_prefixes, &layouts);
   let callers = reverse_graph(&renders, &index);
 
   println!();
@@ -557,9 +557,10 @@ fn graph_file(file: &Path) -> i32 {
   0
 }
 
-fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<String, Vec<String>>, BTreeSet<String>) {
+fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<String, Vec<String>>, BTreeSet<String>, BTreeSet<String>) {
   let mut renders: BTreeMap<String, Vec<String>> = BTreeMap::new();
   let mut prefixes: BTreeSet<String> = BTreeSet::new();
+  let mut layouts: BTreeSet<String> = BTreeSet::new();
   let flow = StateFlow::new(index.view_root());
 
   for file in templates {
@@ -582,6 +583,12 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
       if let Some(prefix) = &call.dynamic_prefix {
         prefixes.insert(prefix.clone());
       }
+
+      // Ruby records every `layout:` reference separately, even when the same call also names a
+      // partial, so a layout only ever reached that way still counts as used.
+      if let Some(layout) = &call.layout {
+        layouts.insert(layout.clone());
+      }
     }
 
     if !names.is_empty() {
@@ -589,7 +596,7 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
     }
   }
 
-  (renders, prefixes)
+  (renders, prefixes, layouts)
 }
 
 fn covered_by_prefix(name: &str, prefixes: &BTreeSet<String>) -> bool {
@@ -601,6 +608,7 @@ fn reachable_partials(
   renders: &BTreeMap<String, Vec<String>>,
   ruby_references: &ruby_render_references::RubyRenderReferences,
   prefixes: &BTreeSet<String>,
+  layouts: &BTreeSet<String>,
 ) -> BTreeSet<String> {
   let mut reachable = BTreeSet::new();
   let mut queue: Vec<String> = Vec::new();
@@ -614,6 +622,7 @@ fn reachable_partials(
   }
 
   queue.extend(ruby_references.names.iter().cloned());
+  queue.extend(layouts.iter().cloned());
 
   for name in index.names() {
     if covered_by_prefix(name, prefixes) {
