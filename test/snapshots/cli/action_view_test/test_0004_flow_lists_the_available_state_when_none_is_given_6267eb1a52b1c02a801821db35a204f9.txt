@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0003_flow lists the available state when none is given"
+source: "CLI::ActionViewTest#test_0004_flow lists the available state when none is given"
 input: "<h1><%= @post.title %></h1><p><%= @user.name %></p>"
 ---
 exit: 0

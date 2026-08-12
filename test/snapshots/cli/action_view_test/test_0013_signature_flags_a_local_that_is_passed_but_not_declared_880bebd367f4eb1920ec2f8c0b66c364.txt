@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0012_signature flags a local that is passed but not declared"
+source: "CLI::ActionViewTest#test_0013_signature flags a local that is passed but not declared"
 input: "undeclared: <%= render \"posts/row\", post: post, extra: extra %>"
 ---
 exit: 0

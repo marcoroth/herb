@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0005_flow reports a template that reads no state"
+source: "CLI::ActionViewTest#test_0006_flow reports a template that reads no state"
 input: "<p>static</p>"
 ---
 exit: 0

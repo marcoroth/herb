@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0014_signature reports a partial nothing renders"
+source: "CLI::ActionViewTest#test_0015_signature reports a partial nothing renders"
 input: "orphan signature"
 ---
 exit: 0

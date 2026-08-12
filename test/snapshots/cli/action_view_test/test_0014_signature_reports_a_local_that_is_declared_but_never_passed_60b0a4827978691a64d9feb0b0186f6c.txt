@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0013_signature reports a local that is declared but never passed"
+source: "CLI::ActionViewTest#test_0014_signature reports a local that is declared but never passed"
 input: "unused: <%= render \"posts/row\", post: post %>"
 ---
 exit: 0

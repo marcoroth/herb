@@ -88,6 +88,18 @@ fn header(title: &str) {
   println!();
 }
 
+fn one_line(expression: &str, limit: usize) -> String {
+  let collapsed = expression.split_whitespace().collect::<Vec<_>>().join(" ");
+
+  if collapsed.chars().count() > limit {
+    let truncated: String = collapsed.chars().take(limit - 1).collect();
+
+    format!("{truncated}\u{2026}")
+  } else {
+    collapsed
+  }
+}
+
 fn verdict_marker(verdict: Verdict) -> String {
   match verdict {
     Verdict::Always => "\u{2713}".green().to_string(),
@@ -360,7 +372,7 @@ fn print_flow_node(node: &FlowNode, root: &Path, prefix: &str, last: bool, is_ro
   };
 
   for affected in &node.nodes {
-    let expression = affected.expression.clone().unwrap_or_default();
+    let expression = one_line(&affected.expression.clone().unwrap_or_default(), 72);
     let location = affected.location.clone().unwrap_or_default();
 
     println!(

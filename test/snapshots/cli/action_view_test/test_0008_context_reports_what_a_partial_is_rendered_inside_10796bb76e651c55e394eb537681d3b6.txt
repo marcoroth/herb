@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0007_context reports what a partial is rendered inside"
+source: "CLI::ActionViewTest#test_0008_context reports what a partial is rendered inside"
 input: "<html><body><table><%= render \"posts/row\" %></table></body></html>"
 ---
 exit: 0

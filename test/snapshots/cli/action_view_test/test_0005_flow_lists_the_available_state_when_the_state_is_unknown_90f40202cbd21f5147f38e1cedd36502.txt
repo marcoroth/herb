@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0004_flow lists the available state when the state is unknown"
+source: "CLI::ActionViewTest#test_0005_flow lists the available state when the state is unknown"
 input: "unknown state: <h1><%= @post.title %></h1>"
 ---
 exit: 1

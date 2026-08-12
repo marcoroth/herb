@@ -478,7 +478,7 @@ class Herb::CLI
               nodes.each_with_index do |n, i|
                 connector = i == nodes.size - 1 ? "\u2514\u2500\u2500" : "\u251c\u2500\u2500"
                 attr = n[:attribute] ? " #{dimmed("attr=#{n[:attribute]}")}" : ""
-                puts "     #{connector} #{dimmed("[#{n[:node_path].join(",")}]")} #{n[:type]}#{attr} #{dimmed(n[:expression].to_s[0..60])}"
+                puts "     #{connector} #{dimmed("[#{n[:node_path].join(",")}]")} #{n[:type]}#{attr} #{dimmed(one_line(n[:expression], 60))}"
               end
 
               puts ""
@@ -726,6 +726,12 @@ class Herb::CLI
     puts ""
   end
 
+  def one_line(expression, limit = 72)
+    text = expression.to_s.gsub(/\s+/, " ").strip
+
+    text.length > limit ? "#{text[0, limit - 1]}\u2026" : text
+  end
+
   def print_flow_node(node, project_root, prefix, last, root)
     relative = Pathname.new(node.file).relative_path_from(Pathname.new(project_root)).to_s
     connector = if root
@@ -750,7 +756,7 @@ class Herb::CLI
                    end
 
     node.nodes.each do |affected|
-      puts " #{child_prefix}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(affected[:expression].to_s)} #{dimmed("(#{affected[:location]})")}"
+      puts " #{child_prefix}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(one_line(affected[:expression]))} #{dimmed("(#{affected[:location]})")}"
     end
 
     node.children.each_with_index do |child, index|

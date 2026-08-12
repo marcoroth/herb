@@ -215,3 +215,24 @@ fn no_subcommand_prints_the_usage() {
   assert!(output.contains("Herb ActionView Commands"), "{output}");
   assert!(output.contains("signature <partial>"), "{output}");
 }
+
+#[test]
+fn flow_keeps_a_multi_line_render_on_one_line() {
+  let project = Project::new("flow_multiline");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<%= render partial: \"posts/card\",\n  locals: {\n    talk: talk,\n    ids: @ids\n  } %>\n",
+  );
+  project.write("app/views/posts/_card.html.erb", "<p>card</p>");
+
+  let (output, status) = project.run(&["flow", &entry, "@ids"]);
+
+  assert_eq!(status, 0);
+
+  for line in output.lines().filter(|line| line.contains("\u{00b7} render")) {
+    assert!(!line.contains('\n'), "{line}");
+    assert!(line.chars().count() < 120, "{line}");
+  }
+
+  assert!(output.contains("locals: { talk: talk"), "{output}");
+}

@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0006_flow rejects a path that is not a file"
+source: "CLI::ActionViewTest#test_0007_flow rejects a path that is not a file"
 input: "missing file"
 ---
 exit: 1

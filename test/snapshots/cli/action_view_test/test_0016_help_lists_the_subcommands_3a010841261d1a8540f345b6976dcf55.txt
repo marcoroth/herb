@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0015_help lists the subcommands"
+source: "CLI::ActionViewTest#test_0016_help lists the subcommands"
 input: "actionview help"
 ---
 exit: 0

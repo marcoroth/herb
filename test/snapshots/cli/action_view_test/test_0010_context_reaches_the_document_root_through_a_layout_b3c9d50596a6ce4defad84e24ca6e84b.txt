@@ -1,5 +1,5 @@
 ---
-source: "CLI::ActionViewTest#test_0009_context reaches the document root through a layout"
+source: "CLI::ActionViewTest#test_0010_context reaches the document root through a layout"
 input: "through layout: <table><%= render \"posts/row\" %></table>"
 ---
 exit: 0
