@@ -102,6 +102,10 @@ Hover over Action View tag helpers to see their signature, documentation, and th
 
 HTML tags, HTML character references, Action View helpers, and `tag.` / `content_tag` element names.
 
+#### Inlay Hints
+
+Closing tags of longer blocks are annotated with what they close. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag shows the element's `id` or `class`, like `<!-- .card.card-wide -->`. Use the built-in `editor.inlayHints.enabled` setting to turn them off or show them on demand.
+
 #### Editing
 
 Folding ranges, matching tag highlighting, and HTML-aware comment toggling with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>/</kbd> that knows whether the cursor is in HTML or ERB.

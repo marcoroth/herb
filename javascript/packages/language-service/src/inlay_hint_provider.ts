@@ -111,11 +111,9 @@ export class InlayHintCollector extends Visitor {
 
   private addERBEndNodeHint(node: ERBNodeWithEnd): void {
     const endNode: ERBEndNode | null = node.end_node
-
     if (!endNode?.tag_closing) return
 
     const label = labelForERBNode(node)
-
     if (!label) return
 
     const endLine = endNode.location.start.line
@@ -134,7 +132,6 @@ export class InlayHintCollector extends Visitor {
 
 function labelForERBNode(node: ERBNodeWithEnd): string | null {
   const content = node.content?.value?.trim()
-
   if (!content) return null
 
   return `# ${content}`
@@ -144,12 +141,13 @@ function labelForHTMLElement(node: HTMLElementNode): string | null {
   if (!node.open_tag || !isHTMLOpenTagNode(node.open_tag)) return null
 
   const id = findAttributeValue(node.open_tag, "id")
-
   if (id) return `<!-- #${id} -->`
 
   const className = findAttributeValue(node.open_tag, "class")
 
-  if (className) return `<!-- .${className.split(/\s+/).join(".")} -->`
+  if (className) {
+    return `<!-- .${className.split(/\s+/).join(".")} -->`
+  }
 
   return null
 }
@@ -159,17 +157,10 @@ function findAttributeValue(openTag: HTMLOpenTagNode, attributeName: string): st
     if (!isHTMLAttributeNode(child)) continue
     if (!child.name || !child.value) continue
 
-    const name = child.name.children
-      .filter(isLiteralNode)
-      .map(node => node.content)
-      .join("")
-
+    const name = child.name.children.filter(isLiteralNode).map(node => node.content).join("")
     if (name !== attributeName) continue
 
-    return child.value.children
-      .filter(isLiteralNode)
-      .map(node => node.content)
-      .join("")
+    return child.value.children.filter(isLiteralNode).map(node => node.content).join("")
   }
 
   return null
