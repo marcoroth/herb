@@ -39,6 +39,10 @@ title
 %>`)
   })
 
+  test("passes when horizontal whitespace precedes the opening newline", () => {
+    expectNoOffenses("<%= \t\n  title\n%>")
+  })
+
   test("passes on heredoc with matching indent", () => {
     expectNoOffenses(dedent`
       <%= render(<<~TEXT)
@@ -67,6 +71,12 @@ title
         <%=
           title %>
       `)
+    })
+
+    test("handles horizontal whitespace before the opening newline", () => {
+      expectError("Add newline before `%>`. The opening `<%=` is followed by a newline, so the closing tag should be on its own line.")
+
+      assertOffenses("<%= \n  title %>")
     })
   })
 

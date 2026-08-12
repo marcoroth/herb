@@ -71,6 +71,17 @@ describe("erb-closing-tag-indent autofix", () => {
     expect(result.fixed).toHaveLength(1)
   })
 
+  test("preserves horizontal whitespace before the opening newline", () => {
+    const input = "<%= \n  title %>"
+    const expected = "<%= \n  title\n%>"
+
+    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
   test("adds indentation to closing tag to match opening tag", () => {
     const input = '<%=\n  title\n  %>'
     const expected = '<%=\n  title\n%>'

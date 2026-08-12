@@ -58,7 +58,7 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
     const value = content.value
     if (!value.length) return
 
-    const startsWithNewline = value.startsWith("\n") || this.containsHeredoc(node)
+    const startsWithNewline = this.startsWithNewline(value) || this.containsHeredoc(node)
     const endsWithNewline = this.endsWithNewline(value)
 
     if (!startsWithNewline && endsWithNewline) {
@@ -87,6 +87,10 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
         { node, fixType: "fix-indent", expectedIndent }
       )
     }
+  }
+
+  private startsWithNewline(value: string): boolean {
+    return /^\s*\r?\n/.test(value)
   }
 
   private containsHeredoc(node: ERBNode): boolean {
