@@ -33,6 +33,27 @@ fn collect_templates(directory: &Path, found: &mut Vec<String>) {
 }
 
 impl PartialIndex {
+  /// Templates as the Ruby gem sees them: `Configuration#find_files`, which honours the
+  /// `files.include` / `files.exclude` patterns from `.herb.yml`. Falls back to the plain glob when
+  /// no config resolves, so a project without `.herb.yml` behaves as before.
+  pub fn build_with_config(project_path: &Path) -> Self {
+    let mut index = Self::build(project_path);
+
+    if let Ok(config) = herb_config::Config::load(project_path, None) {
+      let files = config.find_files_for_tool(herb_config::Tool::Linter, Some(project_path));
+
+      if !files.is_empty() {
+        let templates: Vec<String> = files.into_iter().filter(|file| crate::partial_resolution::template_path(file)).collect();
+
+        if !templates.is_empty() {
+          index.replace_templates(templates);
+        }
+      }
+    }
+
+    index
+  }
+
   pub fn build(project_path: &Path) -> Self {
     let view_root = view_root_for(project_path);
     let mut templates = Vec::new();
@@ -102,6 +123,12 @@ impl PartialIndex {
     }
 
     partials
+  }
+
+  fn replace_templates(&mut self, templates: Vec<String>) {
+    self.templates = templates;
+    self.declarations.clear();
+    self.rebuild();
   }
 
   pub fn size(&self) -> usize {

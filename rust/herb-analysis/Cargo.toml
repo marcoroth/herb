@@ -24,6 +24,7 @@ cli = ["dep:colored"]
 [dependencies]
 colored = { version = "3", optional = true }
 herb = { path = ".." }
+herb-config = { path = "../herb-config" }
 rubydex = "=0.2.5"
 
 [dev-dependencies]

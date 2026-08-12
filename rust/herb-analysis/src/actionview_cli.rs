@@ -146,7 +146,7 @@ fn verdict_marker(verdict: Verdict) -> String {
 fn check(arguments: &[String]) -> i32 {
   let started = std::time::Instant::now();
   let root = project_root(arguments);
-  let index = PartialIndex::build(&root);
+  let index = PartialIndex::build_with_config(&root);
   let templates = index.templates().to_vec();
 
   header(&format!("{}", root.display()));
@@ -326,7 +326,7 @@ fn graph(arguments: &[String]) -> i32 {
   }
 
   let root = project_root(arguments);
-  let mut index = PartialIndex::build(&root);
+  let mut index = PartialIndex::build_with_config(&root);
   let templates = index.templates().to_vec();
 
   header(&format!("{}", root.display()));
@@ -483,7 +483,7 @@ fn reverse_graph(renders: &BTreeMap<String, Vec<String>>, index: &PartialIndex) 
 
 fn graph_file(file: &Path) -> i32 {
   let root = containing_project(file);
-  let mut index = PartialIndex::build(&root);
+  let mut index = PartialIndex::build_with_config(&root);
   let templates = index.templates().to_vec();
   let path = file.to_str().unwrap_or_default().to_string();
 
