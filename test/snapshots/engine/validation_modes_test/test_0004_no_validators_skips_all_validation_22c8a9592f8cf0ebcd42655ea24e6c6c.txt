@@ -1,0 +1,6 @@
+---
+source: "Engine::ValidationModesTest#test_0004_no validators skips all validation"
+input: "{source: \"<div data-<%= @name %>=\\\"value\\\">Content</div>\", options: {visitors: []}}"
+---
+_buf = ::String.new; _buf << '<div data-'.freeze; _buf << (@name).to_s; _buf << '="value">Content</div>'.freeze;
+_buf.to_s

@@ -1,0 +1,8 @@
+---
+source: "Engine::InstrumentationVisitorTest::what it says a render was reached by#test_0001_frames a partial"
+input: "{source: \"<%= render \\\"posts/card\\\" %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
+ ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0, :partial) 
+ _buf << (render "posts/card").to_s; ::Herb::Engine::Report::Session.leave; ensure; ::Herb::Engine::Report::Session.leave_render; end;
+_buf.to_s

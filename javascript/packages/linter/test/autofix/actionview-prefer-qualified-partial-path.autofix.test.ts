@@ -1,11 +1,11 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { PartialIndex } from "@herb-tools/core"
+import { PartialIndex } from "@herb-tools/analysis"
 import { Linter } from "../../src/linter.js"
 import { ActionViewPreferQualifiedPartialPathRule } from "../../src/rules/actionview-prefer-qualified-partial-path.js"
 
-import type { PartialDeclaration } from "@herb-tools/core"
+import type { PartialDeclaration } from "@herb-tools/analysis"
 
 function declaration(file: string): PartialDeclaration {
   return { file, hasDeclaration: false, hasKeywordRest: false, locals: [] }

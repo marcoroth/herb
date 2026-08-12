@@ -14,9 +14,7 @@
   "engines": {
     "vscode": "^1.100.0"
   },
-  "extensionDependencies": [
-    "Shopify.ruby-lsp"
-  ],
+  "extensionDependencies": [],
   "categories": [
     "Programming Languages",
     "Linters",
@@ -114,6 +112,13 @@
           ],
           "default": "verbose",
           "description": "Traces the communication between Visual Studio Code and the Herb language server (for debugging)."
+        },
+        "languageServerHerb.workspace.suggestAddingProjects": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Suggest adding a file's project folder to the workspace when an HTML+ERB file outside the current workspace folders is opened. Herb only analyzes files inside workspace folders.",
+          "markdownDescription": "Suggest adding a file's project folder to the workspace when an HTML+ERB file outside the current workspace folders is opened. Herb only analyzes files inside workspace folders."
         }
       }
     },

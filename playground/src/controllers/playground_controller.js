@@ -1558,7 +1558,7 @@ export default class extends Controller {
         const diagnostic = error.toMonacoDiagnostic()
 
         diagnostic.source = "Herb Parser"
-        diagnostic.code = diagnostic.code || error.constructor?.name || 'parser-error'
+        diagnostic.code = diagnostic.code || error.code || error.type || 'parser-error'
 
         return diagnostic
       }))

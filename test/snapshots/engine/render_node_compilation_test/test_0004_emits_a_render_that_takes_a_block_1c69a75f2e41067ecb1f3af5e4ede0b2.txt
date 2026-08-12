@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderNodeCompilationTest#test_0004_emits a render that takes a block"
+input: "{source: \"<%= render layout: \\\"box\\\" do %>inner<% end %>\", options: {parser_options: {render_nodes: true}}}"
+---
+_buf = ::String.new; _buf << (render layout: "box" do; _buf << 'inner'.freeze; end);
+_buf.to_s

@@ -113,6 +113,10 @@ jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array) {
   return javaList;
 }
 
+jobject CreateASTNode(JNIEnv* env, AST_NODE_T* node) {
+  return NodeFromCStruct(env, node);
+}
+
 <%- nodes.each do |node| -%>
 jobject Create<%= node.name %>(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>) {
   return <%= node.name %>FromCStruct(env, <%= node.human %>);

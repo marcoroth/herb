@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderNodeCompilationTest#test_0001_emits an inline render"
+input: "{source: \"<div><%= render \\\"shared/header\\\" %></div>\", options: {parser_options: {render_nodes: true}}}"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (render "shared/header").to_s; _buf << '</div>'.freeze;
+_buf.to_s

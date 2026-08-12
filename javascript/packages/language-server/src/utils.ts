@@ -9,12 +9,11 @@ export function isConfigDocument(uriOrPath: string): boolean {
   return path.basename(uriOrPath) === Config.configPath || Config.isMisnamedConfigPath(uriOrPath)
 }
 
-export function pathFromUri(uri: string): string {
-  return decodeURIComponent(uri.replace(/^file:\/\//, ""))
-}
-
-export function uriFromPath(filePath: string): string {
-  return `file://${filePath.split("/").map(segment => encodeURIComponent(segment)).join("/")}`
+/**
+ * Compares whole path segments, so `/app/foo` does not claim `/app/foo-bar`.
+ */
+export function isPathInside(filePath: string, root: string): boolean {
+  return filePath === root || filePath.startsWith(`${root}/`)
 }
 
 export function camelize(value: string) {
@@ -29,7 +28,7 @@ export function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-export function lintToDignosticSeverity(severity: LintSeverity | HerbDiagnosticSeverity): DiagnosticSeverity {
+export function lintToDiagnosticSeverity(severity: LintSeverity | HerbDiagnosticSeverity): DiagnosticSeverity {
   switch (severity) {
     case "error": return DiagnosticSeverity.Error
     case "warning": return DiagnosticSeverity.Warning
@@ -38,7 +37,7 @@ export function lintToDignosticSeverity(severity: LintSeverity | HerbDiagnosticS
   }
 }
 
-export function lintToDignosticTags(tags?: HerbDiagnosticTag[]): DiagnosticTag[] {
+export function lintToDiagnosticTags(tags?: HerbDiagnosticTag[]): DiagnosticTag[] {
   if (!tags) return []
 
   return tags.flatMap(tag => {

@@ -2,7 +2,8 @@ import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
-import type { AncestorChain, HerbBackend, Node, ParserOptions, PartialCallerIndex, PartialIndex } from "@herb-tools/core"
+import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
+import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
 import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
@@ -262,7 +263,7 @@ export interface LintContext {
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
   partials: PartialIndex | undefined
-  partialCallers: PartialCallerIndex | undefined
+  partialCallers: RenderGraph | undefined
   projectPath: string | undefined
   herb: HerbBackend | undefined
 }

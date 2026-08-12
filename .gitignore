@@ -103,6 +103,7 @@ java/nodes.c
 java/nodes.h
 java/org/herb/ast/Errors.java
 java/org/herb/ast/HelperRegistry.java
+java/org/herb/ast/HelperType.java
 java/org/herb/ast/Nodes.java
 java/org/herb/ast/NodeVisitor.java
 java/org/herb/ast/Visitor.java

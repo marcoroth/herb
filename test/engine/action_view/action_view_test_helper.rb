@@ -12,7 +12,7 @@ module Engine
     private
 
     def assert_optimized_snapshot(template, locals = {}, evaluate: true)
-      options = { optimize: true }
+      options = { visitors: [Herb::Engine::OptimizeVisitor.new] }
       options[:locals] = locals unless locals.empty?
 
       assert_compiled_snapshot(template, options)
@@ -24,13 +24,13 @@ module Engine
     end
 
     def assert_optimized_mismatch_snapshot(template, locals = {}, evaluate: true)
-      assert_compiled_snapshot(template, optimize: true)
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::OptimizeVisitor.new])
 
       if evaluate
         assert_optimized_evaluated_snapshot(template, locals)
       end
 
-      engine = Herb::Engine.new(template, escape: false, optimize: true)
+      engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::OptimizeVisitor.new])
       herb_result = action_view_eval(engine.src, locals)
       rails_result = render_with_action_view(template, locals)
       herb_snapshot_key = { source: template, type: "herb_output", action_view_helpers: true }.to_s
@@ -46,7 +46,7 @@ module Engine
     end
 
     def assert_optimized_output_match(template, locals = {})
-      optimized_engine = Herb::Engine.new(template, escape: false, optimize: true)
+      optimized_engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::OptimizeVisitor.new])
 
       erubi_result = render_with_action_view(template, locals)
       herb_optimized_result = action_view_eval(optimized_engine.src, locals)
@@ -66,7 +66,7 @@ module Engine
     end
 
     def assert_optimized_evaluated_snapshot(template, locals = {})
-      engine = Herb::Engine.new(template, escape: false, optimize: true)
+      engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::OptimizeVisitor.new])
 
       result = action_view_eval(engine.src, locals)
 

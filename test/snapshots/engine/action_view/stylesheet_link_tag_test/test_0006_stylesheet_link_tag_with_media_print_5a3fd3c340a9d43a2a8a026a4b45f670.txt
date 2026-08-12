@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0006_stylesheet_link_tag with media print"
+input: "{source: \"<%= stylesheet_link_tag \\\"style\\\", media: \\\"print\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("style"))); _buf << '" media="print" />'.freeze;
+_buf.to_s

@@ -6,4 +6,5 @@ export interface LanguageServiceOptions extends UpstreamLanguageServiceOptions {
   herb?: HerbBackend
   herbParseOptions?: ParseOptions
   tokenListAttributes?: string[]
+  framework?: string
 }

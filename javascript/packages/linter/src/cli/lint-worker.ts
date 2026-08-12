@@ -8,13 +8,13 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
-import { partialIndexFrom, refreshPartialAfterFix } from "../partial-index-builder.js"
-import { partialCallerIndexFrom } from "../partial-caller-builder.js"
+import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
+import { renderGraphFrom } from "@herb-tools/analysis/node"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
-import type { AncestorChain, SerializedPartialCallerIndex, SerializedPartialIndex } from "@herb-tools/core"
+import type { AncestorChain, SerializedRenderGraph, SerializedPartialIndex } from "@herb-tools/analysis"
 
 export interface WorkerInput {
   files: string[]
@@ -27,7 +27,7 @@ export interface WorkerInput {
   only?: string[]
   allRules: boolean
   partials?: SerializedPartialIndex
-  partialCallers?: SerializedPartialCallerIndex
+  partialCallers?: SerializedRenderGraph
 }
 
 export interface WorkerOffense {
@@ -78,7 +78,7 @@ async function run() {
 
   const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
   const partials = partialIndexFrom(data.partials)
-  const partialCallers = partialCallerIndexFrom(data.partialCallers)
+  const partialCallers = renderGraphFrom(data.partialCallers)
 
   let totalErrors = 0
   let totalWarnings = 0

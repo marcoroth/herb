@@ -4,6 +4,10 @@ module Herb
   class Visitor
     include AST::Helpers
 
+    include ParserOptionRequirements
+
+    extend Herb::Visitor::ParserOptionRequirements::ClassMethods
+
     # : (Herb::AST::Node?) -> void
     def visit: (Herb::AST::Node?) -> void
 

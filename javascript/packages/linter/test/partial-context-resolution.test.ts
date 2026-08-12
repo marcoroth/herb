@@ -6,14 +6,14 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, dirname } from "node:path"
 
-import { ancestorVerdict } from "@herb-tools/core"
-import { buildPartialIndex } from "../src/partial-index-builder.js"
-import { buildPartialCallerIndex } from "../src/partial-caller-builder.js"
+import { ancestorVerdict } from "@herb-tools/analysis"
+import { buildPartialIndex } from "@herb-tools/analysis/node"
+import { buildRenderGraph } from "@herb-tools/analysis/node"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { PartialCallerIndex } from "@herb-tools/core"
+import { RenderGraph } from "@herb-tools/analysis"
 
-import type { AncestorChain } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 
 const LAYOUT = `<html>
   <head>
@@ -53,7 +53,7 @@ async function indexFor(files: Record<string, string>) {
   const root = project(files)
   const partials = await buildPartialIndex(Herb, root)
 
-  return buildPartialCallerIndex(Herb, root, partials)
+  return buildRenderGraph(Herb, root, partials)
 }
 
 beforeAll(async () => {
@@ -226,8 +226,8 @@ describe("contextOf", () => {
       "app/views/layouts/application.html.erb": LAYOUT,
     })
 
-    const core = await import("@herb-tools/core")
-    const restored = core.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers)))
+    const analysis = await import("@herb-tools/analysis")
+    const restored = analysis.RenderGraph.from(JSON.parse(JSON.stringify(callers)))
 
     expect(tagsOf(restored.contextOf("app/views/shared/_meta.html.erb"))).toEqual([["html", "head"]])
     expect(restored.contextOf("app/views/shared/_meta.html.erb").resolved).toBe(true)
@@ -240,8 +240,8 @@ describe("contextOf", () => {
       "app/views/layouts/application.html.erb": LAYOUT,
     })
 
-    const core = await import("@herb-tools/core")
-    const restored = core.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers)))
+    const analysis = await import("@herb-tools/analysis")
+    const restored = analysis.RenderGraph.from(JSON.parse(JSON.stringify(callers)))
 
     expect(restored.contextOf("app/views/shared/_meta.html.erb").chains[0].frames).toEqual([
       {
@@ -337,8 +337,9 @@ describe("call frames", () => {
   })
 
   test("leaves the location null when the call site has none", () => {
-    const index = new PartialCallerIndex(
+    const index = new RenderGraph(
       new Map([["app/views/shared/_a.html.erb", [{ caller: "app/views/layouts/application.html.erb", locals: [], ancestors: ["html", "body"] }]]]),
+      new Map(),
       new Set(["app/views/layouts/application.html.erb"]),
       new Map(),
       new Set(),
@@ -506,7 +507,7 @@ describe("layout resolution", () => {
     })
 
     const partials = await buildPartialIndex(Herb, root)
-    const callers = await buildPartialCallerIndex(Herb, root, partials, { resolveLayouts: false })
+    const callers = await buildRenderGraph(Herb, root, partials, { resolveLayouts: false })
 
     expect(callers.callersOf("app/views/posts/index.html.erb")).toEqual([])
   })

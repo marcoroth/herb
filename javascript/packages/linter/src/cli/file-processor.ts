@@ -12,17 +12,18 @@ import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
-import { buildPartialIndex, refreshPartialAfterFix } from "../partial-index-builder.js"
-import { buildPartialCallerIndex } from "../partial-caller-builder.js"
+import { buildPartialIndex, refreshPartialAfterFix } from "@herb-tools/analysis/node"
+import { buildRenderGraph } from "@herb-tools/analysis/node"
 
-import type { AncestorChain, Diagnostic } from "@herb-tools/core"
+import type { Diagnostic } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 import type { Fixability } from "../fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
 import type { LintOffense, RuleClass } from "../types.js"
-import type { PartialCallerIndex, PartialIndex } from "@herb-tools/core"
+import type { RenderGraph, PartialIndex } from "@herb-tools/analysis"
 
 const AUTOMATIC_FIX_DIFF_LIMIT = 20
 
@@ -95,7 +96,7 @@ export class FileProcessor {
   private customRulesLoaded: boolean = false
   private customRules: RuleClass[] | undefined = undefined
   private partials: PartialIndex | undefined = undefined
-  private partialCallers: PartialCallerIndex | undefined = undefined
+  private partialCallers: RenderGraph | undefined = undefined
   private projectPath: string | undefined = undefined
 
   /**
@@ -307,7 +308,7 @@ export class FileProcessor {
     if (!this.partials) return
 
     try {
-      this.partialCallers = await buildPartialCallerIndex(Herb, projectPath, this.partials)
+      this.partialCallers = await buildRenderGraph(Herb, projectPath, this.partials)
     } catch {
       this.partialCallers = undefined
     }

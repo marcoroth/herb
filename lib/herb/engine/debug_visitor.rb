@@ -1,29 +1,33 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "../visitor"
+require_relative "context_aware"
+
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
-      def initialize(file_path: nil, project_path: nil)
+      include ContextAware
+
+      #: () -> bool
+      def self.reads_erb_source?
+        true
+      end
+
+      # `node` adds the render occurrence to every marker, which needs `InstrumentationVisitor` in the
+      # same stack to have anything to report. Without it the value is empty on every tag, so it is
+      # asked for rather than assumed.
+      #
+      #     Herb::Engine.new(source, visitors: [
+      #       Herb::Engine::DebugVisitor.new(node: true),
+      #       Herb::Engine::InstrumentationVisitor.new
+      #     ])
+      #
+      def initialize(node: false)
         super()
 
-        @filename = case file_path
-                    when ::Pathname
-                      file_path
-                    when String
-                      file_path.empty? ? nil : ::Pathname.new(file_path)
-                    end
+        @node = node
 
-        @project_path = case project_path
-                        when ::Pathname
-                          project_path
-                        when String
-                          ::Pathname.new(project_path)
-                        else
-                          ::Pathname.new(Dir.pwd)
-                        end
-
-        @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
         @erb_block_stack = [] #: Array[(Herb::AST::ERBBlockNode | Herb::AST::ERBIterationBlockNode)]
@@ -98,18 +102,20 @@ module Herb
         @erb_block_stack.pop
       end
 
+      def inspect
+        return "#<#{self.class.name}>" unless @node
+
+        "#<#{self.class.name} node=true>"
+      end
+
       private
 
-      def calculate_relative_path
-        return "unknown" unless @filename
+      def filename
+        context.file_path
+      end
 
-        if @filename.absolute?
-          @filename.relative_path_from(@project_path).to_s
-        else
-          @filename.to_s
-        end
-      rescue ArgumentError
-        @filename.to_s
+      def relative_file_path
+        context.relative_file_path
       end
 
       def wrap_all_erb_nodes(node)
@@ -173,9 +179,11 @@ module Herb
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", view_type),
           create_debug_attribute("data-herb-debug-file-name", component_display_name),
-          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
-          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown")
+          create_debug_attribute("data-herb-debug-file-relative-path", relative_file_path),
+          create_debug_attribute("data-herb-debug-file-full-path", filename&.to_s || "unknown")
         ]
+
+        debug_attributes << create_debug_node_attribute if @node
 
         if @top_level_elements.length > 1
           debug_attributes << create_debug_attribute("data-herb-debug-attach-to-parent", "true")
@@ -184,6 +192,33 @@ module Herb
         open_tag_node.children.concat(debug_attributes)
 
         @debug_attributes_applied = true
+      end
+
+      def create_debug_node_attribute
+        name_literal = Herb::AST::LiteralNode.build(content: +"data-herb-debug-node")
+        name_node = Herb::AST::HTMLAttributeNameNode.build(children: [name_literal])
+
+        value_node = Herb::AST::HTMLAttributeValueNode.build(
+          open_quote: Herb::Token.from(:quote, '"'),
+          children: [current_node_erb],
+          close_quote: Herb::Token.from(:quote, '"'),
+          quoted: true
+        )
+
+        Herb::AST::HTMLAttributeNode.build(
+          name: name_node,
+          equals: Herb::Token.from(:equals, "="),
+          value: value_node
+        )
+      end
+
+      def current_node_erb
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " ::Herb::Engine::Report::Session.current_node "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true
+        )
       end
 
       def create_debug_attribute(name, value)
@@ -212,8 +247,7 @@ module Herb
 
         return erb_node if complex_rails_helper?(code)
 
-        line = erb_node.location&.start&.line
-        column = erb_node.location&.start&.column
+        position = erb_node.location&.start&.to_one_based
 
         escaped_erb = erb_code.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'",
                                                                                                                "&#39;")
@@ -228,13 +262,18 @@ module Herb
           create_debug_attribute("data-herb-debug-outline-type", outline_type),
           create_debug_attribute("data-herb-debug-erb", escaped_erb),
           create_debug_attribute("data-herb-debug-file-name", component_display_name),
-          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
-          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown"),
+          create_debug_attribute("data-herb-debug-file-relative-path", relative_file_path),
+          create_debug_attribute("data-herb-debug-file-full-path", filename&.to_s || "unknown"),
           create_debug_attribute("data-herb-debug-inserted", "true")
         ]
 
-        debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s) if line
-        debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
+        debug_attributes << create_debug_node_attribute if @node
+
+        if position
+          debug_attributes << create_debug_attribute("data-herb-debug-line", position[:line].to_s)
+          debug_attributes << create_debug_attribute("data-herb-debug-column", position[:column].to_s)
+        end
+
         debug_attributes << create_debug_attribute("style", "display: contents;")
 
         tag_name_token = Herb::Token.from(:tag_name, "span")
@@ -272,30 +311,30 @@ module Herb
       end
 
       def partial?
-        return false unless @filename
+        return false unless filename
 
-        basename = @filename.basename.to_s
+        basename = filename.basename.to_s
         basename.start_with?("_")
       end
 
       def component?
-        return false unless @filename
+        return false unless filename
 
-        @filename.to_s.match?(%r{(^|/)app/components/})
+        filename.to_s.match?(%r{(^|/)app/components/})
       end
 
       def sidecar_component?
         return false unless component?
-        return false unless @filename
+        return false unless filename
 
-        @filename.basename.to_s.match?(/\Acomponent\.(html\.erb|html\.herb|erb|herb)\z/)
+        filename.basename.to_s.match?(/\Acomponent\.(html\.erb|html\.herb|erb|herb)\z/)
       end
 
       def component_display_name
-        return @filename&.basename&.to_s || "unknown" unless @filename
+        return filename&.basename&.to_s || "unknown" unless filename
 
-        basename = @filename.basename.to_s
-        path = @filename.to_s
+        basename = filename.basename.to_s
+        path = filename.to_s
 
         if sidecar_component? && (match = path.match(%r{/components/(.+)/component\.[^/]+\z}))
           return match[1].split("/").map { |s| classify(s) }.join("::")
@@ -337,10 +376,6 @@ module Herb
         end
 
         false
-      end
-
-      def erb_output?(opening)
-        opening.include?("=") && !opening.include?("#")
       end
 
       # TODO: Rewrite using Prism Nodes once available

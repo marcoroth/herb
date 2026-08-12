@@ -1,0 +1,33 @@
+# Generated from lib/herb/engine/errors.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class CompilationError < StandardError
+    end
+
+    class GeneratorTemplateError < CompilationError
+    end
+
+    class InvalidRubyError < CompilationError
+      attr_reader compiled_source: untyped
+
+      def initialize: (untyped message, ?compiled_source: untyped) -> untyped
+    end
+
+    class SecurityError < StandardError
+      attr_reader line: untyped
+
+      attr_reader column: untyped
+
+      attr_reader filename: untyped
+
+      attr_reader suggestion: untyped
+
+      def initialize: (untyped message, ?line: untyped, ?column: untyped, ?filename: untyped, ?suggestion: untyped) -> untyped
+
+      private
+
+      def build_error_message: (untyped message) -> untyped
+    end
+  end
+end

@@ -5,20 +5,17 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 import { Config } from "@herb-tools/config"
 
-import { getFullDocumentRange } from "./range_utils"
-import { PartialIndexService } from "./partial_index_service"
-import { PartialCallerIndexService } from "./partial_caller_index_service"
+import { getFullDocumentRange } from "@herb-tools/language-service"
+import type { ProjectIndex } from "@herb-tools/analysis/node"
 
 export class AutofixService {
   private connection: Connection
   private linter: Linter
-  private partialIndexService?: PartialIndexService
-  private partialCallerIndexService?: PartialCallerIndexService
+  private index?: ProjectIndex
 
-  constructor(connection: Connection, config?: Config, partialIndexService?: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
+  constructor(connection: Connection, config?: Config, index?: ProjectIndex) {
     this.connection = connection
-    this.partialIndexService = partialIndexService
-    this.partialCallerIndexService = partialCallerIndexService
+    this.index = index
     this.linter = this.buildLinter(config)
   }
 
@@ -32,9 +29,9 @@ export class AutofixService {
 
   private lintContextFor(uri: string) {
     return {
-      fileName: this.partialIndexService?.relativePathFor(uri) ?? uri,
-      partials: this.partialIndexService?.index,
-      partialCallers: this.partialCallerIndexService?.index,
+      fileName: this.index?.relativePathFor(uri) ?? uri,
+      partials: this.index?.partials,
+      partialCallers: this.index?.callers,
     }
   }
 

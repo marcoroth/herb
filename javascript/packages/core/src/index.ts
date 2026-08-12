@@ -1,7 +1,4 @@
 export * from "./action-view-helpers.js"
-export * from "./action-view-partial-callers.js"
-export * from "./action-view-partial-index.js"
-export * from "./action-view-partial-resolution.js"
 export * from "./ruby-reference-collector.js"
 export * from "./ast-utils.js"
 export * from "./backend.js"

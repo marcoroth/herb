@@ -1,13 +1,13 @@
 import dedent from "dedent"
 import { beforeAll, describe, expect, test } from "vitest"
 
-import { PartialIndex } from "@herb-tools/core"
+import { PartialIndex } from "@herb-tools/analysis"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
 import { ActionViewNoStrictLocalsErrorRule } from "../../src/rules/actionview-no-strict-locals-error.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-import type { PartialDeclaration } from "@herb-tools/core"
+import type { PartialDeclaration } from "@herb-tools/analysis"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ActionViewNoStrictLocalsErrorRule)
 

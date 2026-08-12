@@ -24,19 +24,19 @@ import {
   FileChangeType,
 } from "vscode-languageserver/node"
 
-import { Service } from "./service"
-import { DefinitionService } from "./definition_service"
-import { PersonalHerbSettings } from "./settings"
+import { Session } from "./session"
+import { PersonalHerbSettings } from "./user_settings"
 import { Config } from "@herb-tools/config"
-import { isPartialPath } from "@herb-tools/core"
-import { isConfigDocument } from "./utils"
-import { version } from "../package.json"
+import { isPartialPath } from "@herb-tools/analysis"
+import { isConfigDocument, isPathInside } from "./utils"
+import { serverVersion } from "./build_info"
 
 import type { FileEvent } from "vscode-languageserver/node"
-import type { ExtractToPartialResult } from "./extract_code_action_service"
+import type { ExtractToPartialResult } from "@herb-tools/language-service"
+import { DefinitionProvider, pathFromUri } from "@herb-tools/language-service"
 
 export class Server {
-  private service!: Service
+  private session!: Session
   private connection: Connection
 
   constructor() {
@@ -46,18 +46,18 @@ export class Server {
 
   private setupEventHandlers() {
     this.connection.onInitialize(async (params: InitializeParams) => {
-      this.service = new Service(this.connection, params)
+      this.session = new Session(this.connection, params)
 
-      await this.service.init()
+      await this.session.init()
 
-      this.service.documentService.documents.onWillSaveWaitUntil(async (event) => {
-        return this.service.documentSaveService.applyFixes(event.document)
+      this.session.documents.documents.onWillSaveWaitUntil(async (event) => {
+        return this.session.saveOrchestrator.applyFixes(event.document)
       })
 
       const result: InitializeResult = {
         serverInfo: {
           name: "Herb Language Server",
-          version,
+          version: serverVersion,
         },
         capabilities: {
           textDocumentSync: {
@@ -86,10 +86,11 @@ export class Server {
         },
       }
 
-      if (this.service.settings.hasWorkspaceFolderCapability) {
+      if (this.session.capabilities.hasWorkspaceFolders) {
         result.capabilities.workspace = {
           workspaceFolders: {
             supported: true,
+            changeNotifications: true,
           },
         }
       }
@@ -98,13 +99,21 @@ export class Server {
     })
 
     this.connection.onInitialized(() => {
-      if (this.service.settings.hasConfigurationCapability) {
+      if (this.session.capabilities.hasConfiguration) {
         this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
       }
 
-      if (this.service.settings.hasWorkspaceFolderCapability) {
-        this.connection.workspace.onDidChangeWorkspaceFolders((_event) => {
-          this.connection.console.log("Workspace folder change event received.")
+      if (this.session.capabilities.hasWorkspaceFolders) {
+        this.connection.workspace.onDidChangeWorkspaceFolders(async (event) => {
+          this.session.workspaceFolders.update(event)
+
+          const dropped = this.session.projects.prune()
+
+          this.connection.console.log(`[Project] Folders changed, dropped ${dropped.length} project(s)`)
+
+          this.session.diagnostics.clearWhere(uri => dropped.some(root => isPathInside(pathFromUri(uri), root)))
+
+          await this.session.diagnostics.refreshAllDocuments()
         })
       }
 
@@ -124,24 +133,16 @@ export class Server {
     })
 
     this.connection.onDidChangeConfiguration(async (change) => {
-      if (this.service.settings.hasConfigurationCapability) {
+      if (this.session.capabilities.hasConfiguration) {
         // Reset all cached document settings
-        this.service.settings.documentSettings.clear()
+        this.session.userSettings.forgetAll()
       } else {
-        this.service.settings.globalSettings = (
-          (change.settings.languageServerHerb || this.service.settings.defaultSettings)
+        this.session.userSettings.global = (
+          (change.settings.languageServerHerb || this.session.userSettings.defaults)
         ) as PersonalHerbSettings
       }
 
-      await this.service.refresh()
-    })
-
-    this.connection.onDidOpenTextDocument(async (params) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
-
-      if (document) {
-        await this.service.diagnostics.refreshDocument(document)
-      }
+      await this.session.refresh()
     })
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
@@ -151,180 +152,185 @@ export class Server {
         const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
 
         if (isConfigChange) {
-          await this.service.refreshConfig()
+          await this.session.refreshConfig()
 
-          const documents = this.service.documentService.getAll()
+          const documents = this.session.documents.getAll()
           await Promise.all(documents.map(document =>
-            this.service.diagnostics.refreshDocument(document)
+            this.session.diagnostics.refreshDocument(document)
           ))
         } else if (isCustomRuleChange || isCustomRewriterChange) {
           if (isCustomRuleChange) {
             this.connection.console.log(`[Linter] Custom rule changed: ${event.uri}`)
-            this.service.linterService.rebuildLinter()
+            for (const project of this.session.projects.all()) project.linterService.rebuildLinter()
           }
 
           if (isCustomRewriterChange) {
             this.connection.console.log(`[Rewriter] Custom rewriter changed: ${event.uri}`)
-            await this.service.formattingService.refreshConfig(this.service.config)
+            for (const project of this.session.projects.all()) await project.formattingProvider.refreshConfig(project.config)
           }
 
-          const documents = this.service.documentService.getAll()
+          const documents = this.session.documents.getAll()
           await Promise.all(documents.map(document =>
-            this.service.diagnostics.refreshDocument(document)
+            this.session.diagnostics.refreshDocument(document)
           ))
         } else if (await this.updatePartialIndex(event)) {
-          await this.service.diagnostics.refreshAllDocuments()
+          await this.session.diagnostics.refreshAllDocuments()
         }
       }
     })
 
     this.connection.onDocumentFormatting(async (params: DocumentFormattingParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.documentSaveService.applyFixesAndFormatting(document, TextDocumentSaveReason.Manual)
+      return this.session.saveOrchestrator.applyFixesAndFormatting(document, TextDocumentSaveReason.Manual)
     })
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
-      return this.service.formattingService.formatRange(params)
+      return this.session.projects.get(params.textDocument.uri)?.formattingProvider.formatRange(params) ?? []
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
+      return this.session.documentHighlightProvider.getDocumentHighlights(document, params.position)
     })
 
     this.connection.onHover((params: HoverParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return null
 
-      return this.service.hoverService.getHover(document, params.position) ?? this.service.definitionService.getHover(document, params.position)
+      return this.session.hoverProvider.getHover(document, params.position) ?? this.session.definitionProvider.getHover(document, params.position)
     })
 
     this.connection.onCompletion((params: CompletionParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return null
 
-      return this.service.completionService.getCompletions(document, params.position)
+      return this.session.projects.get(params.textDocument.uri)?.completionProvider.getCompletions(document, params.position) ?? null
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      const parseResult = this.service.parserService.parseDocument(document)
+      const project = this.session.projects.get(params.textDocument.uri)
+      if (!project) return []
+
+      const parseResult = this.session.parserService.parseDocument(document)
       if (parseResult.diagnostics.length > 0) return []
 
       const diagnostics = params.context.diagnostics
       const documentText = document.getText()
 
-      const linterDisableCodeActions = this.service.codeActionService.createCodeActions(
+      const linterDisableCodeActions = project.codeActionProvider.createCodeActions(
         params.textDocument.uri,
         diagnostics,
         documentText
       )
 
-      const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
-      const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
-      const extractCodeActions = this.service.extractCodeActionService.getCodeActions(document, params.range)
+      const autofixCodeActions = project.codeActionProvider.autofixCodeActions(params, document)
+      const rewriteCodeActions = this.session.rewriteCodeActionProvider.getCodeActions(document, params.range)
+      const extractCodeActions = this.session.extractCodeActionProvider.getCodeActions(document, params.range)
 
       return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions).concat(extractCodeActions)
     })
 
     this.connection.onRequest<ExtractToPartialResult, void>('herb/extractToPartial', (params: { textDocument: TextDocumentIdentifier, range: Range, name: string }) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return { error: "The document isn't open." }
 
-      return this.service.extractCodeActionService.extractToPartial(document, params.range, params.name)
+      return this.session.extractCodeActionProvider.extractToPartial(document, params.range, params.name)
     })
 
     this.connection.onDefinition((params: DefinitionParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      const links = this.service.definitionService.getDefinition(document, params.position)
+      const links = this.session.definitionProvider.getDefinition(document, params.position)
 
-      if (this.service.settings.supportsDefinitionLinks) return links
+      if (this.session.capabilities.supportsDefinitionLinks) return links
 
-      return DefinitionService.asLocations(links)
+      return DefinitionProvider.asLocations(links)
     })
 
     this.connection.onReferences((params: ReferenceParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.referencesService.getReferences(document, params.position, params.context.includeDeclaration)
+      return this.session.projects.get(params.textDocument.uri)?.referencesProvider.getReferences(document, params.position, params.context.includeDeclaration) ?? []
     })
 
     this.connection.onDocumentSymbol((params: DocumentSymbolParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.documentSymbolService.getDocumentSymbols(document)
+      return this.session.documentSymbolProvider.getDocumentSymbols(document)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.foldingRangeService.getFoldingRanges(document)
+      return this.session.foldingRangeProvider.getFoldingRanges(document)
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.commentService.toggleLineComment(document, params.range)
+      return this.session.commentProvider.toggleLineComment(document, params.range)
     })
 
     this.connection.onRequest('herb/toggleBlockComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
+      const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.service.commentService.toggleBlockComment(document, params.range)
+      return this.session.commentProvider.toggleBlockComment(document, params.range)
     })
   }
 
   private async updatePartialIndex(event: FileEvent): Promise<boolean> {
-    const partials = this.service.partialIndexService
-    const callers = this.service.partialCallerIndexService
+    const project = this.session.projects.get(event.uri)
 
-    if (event.type === FileChangeType.Deleted) {
-      const stoppedCalling = callers.remove(event.uri)
+    if (!project) {
+      this.session.diagnostics.clear(event.uri)
 
-      this.service.diagnostics.clear(event.uri)
-
-      return partials.remove(event.uri) || stoppedCalling
+      return false
     }
 
-    const isOpen = this.service.documentService.get(event.uri) !== undefined
-    const changed = isOpen ? false : partials.updateFromDisk(event.uri)
+    const index = project.index
+
+    if (event.type === FileChangeType.Deleted) {
+      this.session.diagnostics.clear(event.uri)
+
+      return index.remove(event.uri)
+    }
 
     if (event.type === FileChangeType.Created && isPartialPath(event.uri)) {
-      await callers.initialize()
+      await index.indexCallers()
 
       return true
     }
 
-    if (!isOpen) {
-      return callers.updateFromDisk(event.uri) || changed
+    if (this.session.documents.get(event.uri)) {
+      return false
     }
 
-    return changed
+    return index.handleChange(event.uri)
   }
 
   listen() {

@@ -355,4 +355,56 @@ describe("erb-no-unused-local-variable", () => {
       <% end %>
     `)
   })
+
+  test("flags a local variable that is only shadowed by a block argument", () => {
+    expectError("Local variable `post` is assigned but never used. Remove the assignment, or prefix it with an underscore as `_post` to show it is intentionally unused.", [1, 3])
+
+    assertOffenses(dedent`
+      <% post = posts.first %>
+
+      <% posts.each do |post| %>
+        <%= post.title %>
+      <% end %>
+    `)
+  })
+
+  test("passes for a local variable used outside the block that shadows it", () => {
+    expectNoOffenses(dedent`
+      <% post = posts.first %>
+
+      <h1><%= post.title %></h1>
+
+      <% posts.each do |post| %>
+        <%= post.title %>
+      <% end %>
+    `)
+  })
+
+  test("flags a block-local variable that is only used in a sibling block", () => {
+    expectError("Local variable `label` is assigned but never used. Remove the assignment, or prefix it with an underscore as `_label` to show it is intentionally unused.", [2, 5])
+
+    assertOffenses(dedent`
+      <% tags.each do |tag| %>
+        <% label = tag.name %>
+        <span>Tag</span>
+      <% end %>
+
+      <% posts.each do |post| %>
+        <% label = post.title %>
+        <%= label %>
+      <% end %>
+    `)
+  })
+
+  test("passes for an outer local variable read from inside a nested block", () => {
+    expectNoOffenses(dedent`
+      <% separator = " / " %>
+
+      <% sections.each do |section| %>
+        <% section.posts.each do |post| %>
+          <%= post.title %><%= separator %>
+        <% end %>
+      <% end %>
+    `)
+  })
 })
