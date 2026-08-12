@@ -219,10 +219,25 @@ fn check(arguments: &[String]) -> i32 {
 
   let ruby_references = ruby_render_references::collect(&root);
 
+  let mut template_prefixes: BTreeSet<String> = BTreeSet::new();
+
+  for file in &templates {
+    if let Ok(source) = std::fs::read_to_string(file) {
+      for prefix in ruby_render_references::scan_template_dynamic_prefixes(&source) {
+        template_prefixes.insert(prefix);
+      }
+    }
+  }
+
   let unused: Vec<&String> = partials
     .iter()
     .filter(|partial| !rendered.contains(partial))
-    .filter(|partial| index.partial_name_for(partial).map(|name| !ruby_references.covers(&name)).unwrap_or(true))
+    .filter(|partial| {
+      index
+        .partial_name_for(partial)
+        .map(|name| !ruby_references.covers(&name) && !template_prefixes.iter().any(|prefix| name.starts_with(&format!("{prefix}/"))))
+        .unwrap_or(true)
+    })
     .collect();
 
   println!(
@@ -613,6 +628,10 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
         if !names.contains(&name) {
           names.push(name);
         }
+      }
+
+      for prefix in ruby_render_references::scan_template_dynamic_prefixes(&source) {
+        prefixes.insert(prefix);
       }
     }
 

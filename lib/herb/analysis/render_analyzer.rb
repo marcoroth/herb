@@ -806,7 +806,7 @@ module Herb
       end
 
       def process_file_for_render_calls(file)
-        content = File.read(file)
+        content = File.read(file, encoding: "UTF-8")
         result = Herb.parse(content, render_nodes: true)
 
         visitor = RenderCallVisitor.new(file)
@@ -820,7 +820,7 @@ module Herb
 
         content.scan(%r{render[\s(]+(?:partial:\s*)?["']([a-z0-9_/]+)["']}) do |match|
           partial = match[0]
-          next if visitor_partials.include?(partial)
+          next unless visitor_partials.add?(partial)
 
           calls << { file: file, partial: partial }
         end

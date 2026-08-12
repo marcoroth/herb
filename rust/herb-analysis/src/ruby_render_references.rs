@@ -174,21 +174,21 @@ pub fn scan_template_source(source: &str) -> Vec<String> {
 
     // `render(` or `render ` only, so `rendered` does not match.
     match bytes.get(cursor) {
-      Some(b' ') | Some(b'(') | Some(b'\t') => {}
+      Some(b' ') | Some(b'(') | Some(b'\t') | Some(b'\n') | Some(b'\r') => {}
       _ => {
         index = cursor;
         continue;
       }
     }
 
-    while matches!(bytes.get(cursor), Some(b' ') | Some(b'(') | Some(b'\t')) {
+    while matches!(bytes.get(cursor), Some(b' ') | Some(b'(') | Some(b'\t') | Some(b'\n') | Some(b'\r')) {
       cursor += 1;
     }
 
     if source[cursor..].starts_with("partial:") {
       cursor += "partial:".len();
 
-      while matches!(bytes.get(cursor), Some(b' ') | Some(b'\t')) {
+      while matches!(bytes.get(cursor), Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r')) {
         cursor += 1;
       }
     }
@@ -220,6 +220,42 @@ pub fn scan_template_source(source: &str) -> Vec<String> {
     }
 
     index = cursor.max(start + 1);
+  }
+
+  found
+}
+
+/// Ruby also scans template source for `render "prefix/#{...}"` and treats everything under
+/// `prefix/` as referenced. Mirrored so both agree on which partials count as reachable.
+pub fn scan_template_dynamic_prefixes(source: &str) -> Vec<String> {
+  let mut found = Vec::new();
+  let mut index = 0;
+
+  while let Some(position) = source[index..].find("render") {
+    let start = index + position;
+    let rest = &source[start..];
+
+    let Some(quote_offset) = rest.find(['"', '\'']) else {
+      break;
+    };
+
+    let after_quote = &rest[quote_offset + 1..];
+
+    let Some(interpolation) = after_quote.find("#{") else {
+      index = start + quote_offset + 1;
+      continue;
+    };
+
+    let literal = &after_quote[..interpolation];
+
+    // Only a directory boundary counts, matching Ruby's `([a-z0-9_/]+)/#{` pattern.
+    if let Some(prefix) = literal.strip_suffix('/') {
+      if !prefix.is_empty() && prefix.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '/') {
+        found.push(prefix.to_string());
+      }
+    }
+
+    index = start + quote_offset + 1;
   }
 
   found
