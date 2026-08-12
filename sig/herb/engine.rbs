@@ -37,6 +37,11 @@ module Herb
 
     def self.heredoc?: (untyped code) -> untyped
 
+    # Which compiler walks the AST. A subclass that needs to emit something other than HTML
+    # overrides this rather than reimplementing the walk.
+    # : () -> untyped
+    def compiler_class: () -> untyped
+
     def add_text: (untyped text) -> untyped
 
     def add_code: (untyped code) -> untyped
