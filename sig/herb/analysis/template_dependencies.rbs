@@ -50,7 +50,7 @@ module Herb
 
       def find_erb_files: () -> untyped
 
-      def build_partial_to_file_map: (untyped files) -> untyped
+      def partial_index: () -> untyped
 
       def expression_references?: (untyped expression, untyped name) -> untyped
 

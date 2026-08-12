@@ -1,0 +1,34 @@
+# Generated from lib/herb/analysis/partial_index.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class PartialIndex
+      attr_reader view_root: Pathname
+
+      attr_reader templates: Array[String]
+
+      # : (String | Pathname, ?templates: Array[String]?) -> PartialIndex
+      def self.build: (String | Pathname, ?templates: Array[String]?) -> PartialIndex
+
+      # : (Pathname) -> Pathname
+      def self.resolve_view_root: (Pathname) -> Pathname
+
+      # : (String | Pathname, Array[String]) -> void
+      def initialize: (String | Pathname, Array[String]) -> void
+
+      # : (String?) -> Array[String]
+      def files_for: (String?) -> Array[String]
+
+      # : (String) -> String?
+      def partial_name_for: (String) -> String?
+
+      # : () -> Array[String]
+      def names: () -> Array[String]
+
+      private
+
+      # : (Array[String]) -> Hash[String, Array[String]]
+      def build_index: (Array[String]) -> Hash[String, Array[String]]
+    end
+  end
+end

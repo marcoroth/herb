@@ -3,6 +3,7 @@
 require "prism"
 require "set"
 
+require_relative "partial_index"
 require_relative "template_dependencies/dependency_collector"
 require_relative "template_dependencies/local_scanner"
 require_relative "template_dependencies/node_dependency_collector"
@@ -75,7 +76,7 @@ module Herb
         reachable.each { |file| all[file] = analyze(file) }
 
         affected = Set.new #: Set[String]
-        partial_to_file = build_partial_to_file_map(reachable)
+        partial_to_file = PartialIndex.new(@view_root, reachable)
         entry_result = all[entry_point]
 
         return [] unless entry_result
@@ -114,7 +115,7 @@ module Herb
 
             next unless flowing_locals.any? || collection_flows
 
-            partial_files = partial_to_file[call[:partial]] || []
+            partial_files = partial_to_file.files_for(call[:partial])
 
             partial_files.each do |partial_file|
               state_locals[partial_file] ||= Set.new
@@ -179,13 +180,13 @@ module Herb
       def collect_reachable_files(entry_point)
         reachable = Set.new([entry_point]) #: Set[String]
         queue = [entry_point]
-        all_partials = build_partial_to_file_map(find_erb_files)
+        index = partial_index
 
         while (file = queue.shift)
           result = analyze(file)
 
           result.render_calls.each do |call|
-            partial_files = all_partials[call[:partial]] || []
+            partial_files = index.files_for(call[:partial])
 
             partial_files.each do |partial_file|
               unless reachable.include?(partial_file)
@@ -207,26 +208,11 @@ module Herb
       end
 
       def find_erb_files
-        Dir[@view_root.join("**", "*.erb")].sort
+        partial_index.templates
       end
 
-      def build_partial_to_file_map(files)
-        map = {} #: Hash[String, Array[String]]
-
-        files.each do |file|
-          basename = File.basename(file)
-          next unless basename.start_with?("_")
-
-          relative = Pathname.new(file).relative_path_from(@view_root).to_s
-          directory = File.dirname(relative)
-          name = basename.sub(/\A_/, "").sub(/\.html\.erb\z/, "").sub(/\.erb\z/, "").sub(/\.\w+\.erb\z/, "")
-          partial_name = directory == "." ? name : "#{directory}/#{name}"
-
-          map[partial_name] ||= [] #: Array[String]
-          map[partial_name] << file
-        end
-
-        map
+      def partial_index
+        @partial_index ||= PartialIndex.build(@project_path)
       end
 
       def expression_references?(expression, name)
@@ -270,12 +256,7 @@ module Herb
       end
 
       def find_view_root
-        candidates = [
-          @project_path.join("app", "views"),
-          @project_path
-        ]
-
-        candidates.find(&:directory?) || @project_path
+        PartialIndex.resolve_view_root(@project_path)
       end
     end
   end
