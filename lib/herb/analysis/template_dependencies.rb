@@ -207,6 +207,14 @@ module Herb
             next
           end
 
+          # A bare `get :daily_page_views` inside a resource block is a member route: it takes the
+          # enclosing resource's name, exactly as `on: :member` does.
+          if resources.any? && (verb = trimmed[/\A(?:get|post|patch|put|delete)\s+:(\w+)/, 1])
+            add_route_pair("#{verb}_#{prefix.chomp("_")}")
+
+            next
+          end
+
           if (name = symbol_after(trimmed, "resources "))
             singular = singularize(name)
 

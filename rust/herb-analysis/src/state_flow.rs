@@ -462,9 +462,24 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
     return Vec::new();
   };
 
-  // `helper_method :foo` in the app's own controllers, and route helpers from `config/routes.rb`.
-  let mut names: Vec<String> = crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name).collect();
+  // rubydex indexes the app *and its gems*, so a helper reaching the view through a gem module, a
+  // concern, or an inherited module resolves here. The Ruby analyzer cannot see those, which is the
+  // one place the two `check` commands legitimately disagree.
+  let mut analysis = crate::analysis::Analysis::index_paths(&[path.to_string()], &std::collections::HashSet::new());
+  analysis.resolve();
 
+  let modules = analysis.helper_modules();
+  let mut roots: Vec<&str> = modules.iter().map(String::as_str).collect();
+
+  // Rails' own view helpers hang off ActionView::Base rather than a `*Helper` module.
+  roots.push("ActionView::Base");
+
+  let mut names: Vec<String> = analysis.view_visible_helpers(&roots).into_keys().collect();
+
+  // `helper_method :foo` in a controller is not a module inclusion, so the ancestor walk misses it.
+  names.extend(crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name));
+
+  // Route helpers are generated from `config/routes.rb`, so no module defines them.
   names.extend(crate::rails::route_helpers(project_path));
 
   names
