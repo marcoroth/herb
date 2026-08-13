@@ -127,6 +127,7 @@ export class ActionViewPreferQualifiedPartialPathRule extends ParserRule<PreferQ
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

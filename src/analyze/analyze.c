@@ -92,7 +92,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           allocator,
-          &erb_content_node->base.errors
+          &erb_content_node->base.errors,
+          options
         );
       }
 
@@ -101,7 +102,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           allocator,
-          &erb_content_node->base.errors
+          &erb_content_node->base.errors,
+          options
         );
       }
     } else {
@@ -1091,6 +1093,7 @@ void herb_analyze_parse_tree(
     .tag_helper_scope = NULL,
     .allocator = allocator,
     .source = source,
+    .options = options,
   };
 
   if (options && (options->transform_conditionals || options->action_view_helpers)) {
@@ -1125,6 +1128,7 @@ void herb_analyze_parse_tree(
     .loop_depth = 0,
     .rescue_depth = 0,
     .allocator = allocator,
+    .options = options,
   };
 
   herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, &invalid_context);

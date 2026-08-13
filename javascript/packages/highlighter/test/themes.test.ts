@@ -4,7 +4,8 @@ import { writeFileSync, mkdtempSync, readFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 
-import { loadCustomTheme, themes, THEME_NAMES } from "../src/themes.js"
+import { themes, THEME_NAMES } from "../src/themes.js"
+import { loadCustomTheme } from "../src/index.js"
 
 describe("loadCustomTheme", () => {
   it("accepts a theme written before BACKGROUND, FOREGROUND and ANSI_PALETTE existed", () => {

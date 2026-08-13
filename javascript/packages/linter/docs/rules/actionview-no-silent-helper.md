@@ -68,6 +68,14 @@ A silent tag is fine when the helper's return value is used instead of being dis
 <% content_tag :div, "Hello", class: "greeting" %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 * [Rails Action View Helpers documentation](https://api.rubyonrails.org/classes/ActionView/Helpers.html)

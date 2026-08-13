@@ -202,6 +202,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     }
   }
 
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
+
   parse_args_T args = { 0 };
   args.source = source;
   args.parser_options = &parser_options;

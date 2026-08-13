@@ -99,6 +99,7 @@ export class ActionViewNoUnnecessaryHTMLSafeRule extends ParserRule<UnnecessaryH
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

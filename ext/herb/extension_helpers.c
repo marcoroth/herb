@@ -137,7 +137,9 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_
   VALUE parser_options_args[1] = { kwargs };
   VALUE parser_options = rb_class_new_instance_kw(1, parser_options_args, cParserOptions, RB_PASS_KEYWORDS);
 
-  VALUE args[5] = { value, source, warnings, errors, parser_options };
+  VALUE error_count = options->error_count != NULL ? UINT2NUM(*options->error_count) : Qnil;
 
-  return rb_class_new_instance(5, args, cParseResult);
+  VALUE args[6] = { value, source, warnings, errors, parser_options, error_count };
+
+  return rb_class_new_instance(6, args, cParseResult);
 }

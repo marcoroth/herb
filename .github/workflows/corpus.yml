@@ -152,7 +152,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMBER: ${{ github.event.pull_request.number }}
+          FROM_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
         run: |-
+          if [ "$FROM_FORK" = "true" ]; then
+            echo "Pull request comes from a fork, so the token cannot comment. Report follows."
+            echo
+
+            cat comment.md
+
+            exit 0
+          fi
+
           existing=$(gh api "repos/${{ github.repository }}/issues/$NUMBER/comments" \
             --jq 'map(select(.body | contains("<!-- corpus-report -->"))) | .[0].id // empty')
 

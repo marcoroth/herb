@@ -18,7 +18,7 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -35,7 +35,7 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -52,7 +52,7 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -69,7 +69,7 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -86,7 +86,7 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

@@ -45,6 +45,7 @@ export type { SeverityConfig, LinterMode }
 export type RuleConfig = {
   enabled?: boolean
   severity?: SeverityConfig
+  frameworks?: Framework[]
   autoCorrect?: boolean
   include?: string[]
   only?: string[]

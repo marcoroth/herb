@@ -118,6 +118,9 @@ val Herb_parse(const std::string& source, val options) {
     }
   }
 
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
+
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     return val::null();

@@ -18,7 +18,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
     const expected = `<div><%= user.name %></div>`
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "show.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "show.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -33,7 +33,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "show.html.erb" })
+    const result = linter.autofix(input, { fileName: "show.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -48,7 +48,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -70,7 +70,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "application.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "application.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

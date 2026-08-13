@@ -92,7 +92,8 @@ void parser_consume_dot_notation_segments(parser_T* parser, token_T* tag_name, h
       tag_name->location.start,
       tag_name->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   }
 

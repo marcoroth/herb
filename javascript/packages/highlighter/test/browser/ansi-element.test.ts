@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest"
 
+import { ANSI_ESCAPE } from "../../src/ansi.js"
 import { ANSI_PALETTE } from "../../src/ansi-html.js"
 import { HERB_ANSI_SURFACE, HerbANSIElement } from "../../src/ansi-element.js"
+
+import linterOutput from "../fixtures/terminal-linter.txt?raw"
+
+const CSI_REGEX = new RegExp(`${ANSI_ESCAPE}\\[[0-9;?]*[a-zA-Z]`, "g")
+const OSC_REGEX = new RegExp(`${ANSI_ESCAPE}\\]\\d*;[^\\x07${ANSI_ESCAPE}]*(?:${ANSI_ESCAPE}\\\\|\\x07)`, "g")
 
 const channels = (hex: string): number[] => [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16))
 const rgb = (hex: string): string => `rgb(${channels(hex).join(", ")})`
@@ -125,6 +131,15 @@ describe("HerbANSIElement in a browser", () => {
       expect(styles.color).toBe("rgb(36, 41, 46)")
 
       style.remove()
+    })
+  })
+
+  describe("real captured CLI output", () => {
+    it("keeps every visible character of the captured linter output", () => {
+      const element = mount(linterOutput)
+      const stripped = linterOutput.replace(OSC_REGEX, "").replace(CSI_REGEX, "")
+
+      expect(shadowOf(element).textContent).toBe(stripped)
     })
   })
 
