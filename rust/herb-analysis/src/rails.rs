@@ -214,14 +214,26 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       continue;
     }
 
-    let prefix = if namespaces.is_empty() {
+    let named: Vec<&str> = namespaces.iter().map(String::as_str).filter(|part| !part.is_empty()).collect();
+
+    let prefix = if named.is_empty() {
       String::new()
     } else {
-      format!("{}_", namespaces.join("_"))
+      format!("{}_", named.join("_"))
     };
 
     if let Some(namespace) = symbol_after(trimmed, "namespace ") {
       namespaces.push(namespace);
+      depth_stack.push(namespaces.len());
+
+      continue;
+    }
+
+    // `scope module: :events do` opens a block without contributing to the helper name, so it still
+    // has to be tracked: otherwise its `end` pops the enclosing resource and every route nested
+    // inside loses the parent's prefix. Only `as:` names a scope.
+    if trimmed.starts_with("scope ") && trimmed.ends_with(" do") {
+      namespaces.push(value_after(trimmed, "as: :").unwrap_or_default());
       depth_stack.push(namespaces.len());
 
       continue;
