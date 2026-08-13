@@ -242,7 +242,7 @@ export class DocumentHighlightProvider {
 
     if (local) {
       return [
-        DocumentHighlight.create(local.binding, DocumentHighlightKind.Write),
+        DocumentHighlight.create(local.declaration, DocumentHighlightKind.Write),
         ...local.usages.map(usage => DocumentHighlight.create(usage, DocumentHighlightKind.Read))
       ]
     }
