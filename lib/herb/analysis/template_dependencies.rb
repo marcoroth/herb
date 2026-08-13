@@ -214,6 +214,15 @@ module Herb
             add_route_pair("new_#{prefix}#{name}")
             add_route_pair("edit_#{prefix}#{name}")
 
+            # A singular resource can open a block too. Without pushing here, its `end` pops the
+            # enclosing namespace and every later route is named against the wrong parent.
+            if trimmed.end_with?(" do")
+              namespaces.push(name)
+              depths.push(namespaces.size)
+              resources.push([name, name])
+              resource_depths.push(namespaces.size)
+            end
+
             next
           end
 
