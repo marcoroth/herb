@@ -79,7 +79,7 @@ module Parser
       without_locations = Herb.parse(source, track_locations: false).errors
 
       assert_equal with_locations.map(&:class), without_locations.map(&:class)
-      assert_equal with_locations.map { |error| error.location.tree_inspect }, without_locations.map { |error| error.location.tree_inspect }
+      assert_equal(with_locations.map { |error| error.location.tree_inspect }, without_locations.map { |error| error.location.tree_inspect })
       assert_equal with_locations.map(&:message), without_locations.map(&:message)
     end
   end
