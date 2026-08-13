@@ -71,8 +71,8 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install
 
-      - name: Cache nx build artifacts
-        uses: actions/cache@v6
+      - name: Restore nx build artifacts
+        uses: actions/cache/restore@v6
         with:
           path: .nx/cache
           key: nx-${{ runner.os }}-${{ github.sha }}
@@ -93,6 +93,13 @@ jobs:
 
       - name: Run `test` for all NX packages
         run: yarn test
+
+      - name: Save nx build artifacts
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/cache/save@v6
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ github.sha }}
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
