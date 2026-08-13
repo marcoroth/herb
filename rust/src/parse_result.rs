@@ -16,13 +16,7 @@ impl ParseResult {
     Self::with_error_count(value, source, errors, options, None)
   }
 
-  pub fn with_error_count(
-    value: DocumentNode,
-    source: String,
-    errors: Vec<AnyError>,
-    options: &ParserOptions,
-    error_count: Option<u32>,
-  ) -> Self {
+  pub fn with_error_count(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions, error_count: Option<u32>) -> Self {
     Self {
       value,
       source,
