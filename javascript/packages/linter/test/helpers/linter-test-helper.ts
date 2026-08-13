@@ -79,6 +79,16 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride
+  const declaredFrameworks = ruleInstance.defaultConfig?.frameworks
+  const defaultFramework = declaredFrameworks?.[0]
+
+  const resolveContext = (options?: any | TestOptions) => {
+    const context = options?.context ?? options
+
+    if (defaultFramework === undefined) return context
+
+    return { framework: defaultFramework, ...context }
+  }
 
   beforeAll(async () => {
     await Herb.load()
@@ -111,7 +121,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     hasAsserted = true
 
-    const context = options?.context ?? options
+    const context = resolveContext(options)
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
@@ -198,7 +208,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     hasAsserted = true
 
-    const context = options?.context ?? options
+    const context = resolveContext(options)
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {

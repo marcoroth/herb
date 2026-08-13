@@ -81,6 +81,7 @@ export class ActionViewNoUnnecessaryTagAttributesRule extends ParserRule<Unneces
     return {
       enabled: true,
       severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

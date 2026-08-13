@@ -70,6 +70,7 @@ export class ActionViewNoRenderOptionShadowingRule extends ParserRule {
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

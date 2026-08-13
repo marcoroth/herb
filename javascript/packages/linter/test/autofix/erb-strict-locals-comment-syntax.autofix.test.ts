@@ -12,7 +12,7 @@ describe("erb-strict-locals-comment-syntax autofix", () => {
   const autofix = (input: string) => {
     const linter = new Linter(Herb, [ERBStrictLocalsCommentSyntaxRule])
 
-    return linter.autofix(input, { fileName: "_partial.html.erb" })
+    return linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
   }
 
   const expectFix = (input: string, expected: string, count: number = 1) => {

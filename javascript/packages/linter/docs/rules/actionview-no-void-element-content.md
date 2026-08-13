@@ -50,6 +50,14 @@ The correct way to set attributes on void elements is to use keyword arguments, 
 <%= content_tag :br, "hello" %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 * [Rails `ActionView::Helpers::TagHelper#tag`](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)

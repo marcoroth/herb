@@ -465,6 +465,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
   }
 }
 
+// TODO: Strict locals is an Action View feature, so this rule belongs under the `actionview-` prefix next to the four rules that already validate it. The rename waits on a rule-alias mechanism, since it breaks every `.herb.yml` and `herb:disable` comment naming it.
 export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocalsCommentSyntaxAutofixContext> {
   static autocorrectable = true
   static autofixRequiresContext = true
@@ -481,7 +482,8 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocals
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

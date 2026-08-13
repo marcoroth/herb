@@ -97,7 +97,6 @@ class ActionViewPreferLinkToHelperVisitor extends BaseRuleVisitor<PreferLinkToHe
   }
 
   private checkAnchor(node: HTMLElementNode): void {
-    if (this.context.framework !== "actionview") return
     if (getTagLocalName(node) !== "a") return
 
     const openTag = node.open_tag
@@ -148,6 +147,7 @@ export class ActionViewPreferLinkToHelperRule extends ParserRule<PreferLinkToHel
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

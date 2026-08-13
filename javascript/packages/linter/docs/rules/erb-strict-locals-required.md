@@ -27,6 +27,12 @@ This rule encourages partials to be explicit about what they expect. Partials th
 
 ## Configuration
 
+Strict locals is an Action View feature, so this rule only applies to Action View projects and needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 This rule is disabled by default. To enable it, add to your [`.herb.yml`](/configuration):
 
 ```yaml [.herb.yml]

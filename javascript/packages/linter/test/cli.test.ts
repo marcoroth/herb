@@ -92,7 +92,7 @@ describe("CLI Output Formatting", () => {
   })
 
   test("allows tag.attributes in attribute position", () => {
-    const { output, exitCode } = runLinter("tag-attributes.html.erb", "--no-wrap-lines")
+    const { output, exitCode } = runLinter("tag-attributes.html.erb", "--no-wrap-lines", "--config-file test/fixtures/actionview.herb.yml")
 
     expect(output).toMatchSnapshot()
     expect(output).not.toContain("erb-no-output-in-attribute-position")

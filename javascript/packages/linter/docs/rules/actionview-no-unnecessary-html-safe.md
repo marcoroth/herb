@@ -54,6 +54,14 @@ The third is content containing the quote that encloses the attribute value. Not
 <%= "&copy; 2026".html_safe %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 * [Rails `String#html_safe` API](https://api.rubyonrails.org/classes/String.html#method-i-html_safe)

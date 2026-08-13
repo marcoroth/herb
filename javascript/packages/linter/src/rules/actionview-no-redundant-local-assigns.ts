@@ -106,6 +106,7 @@ export class ActionViewNoRedundantLocalAssignsRule extends ParserRule {
         cli: "error",
         editor: "info",
       },
+      frameworks: ["actionview"],
     }
   }
 

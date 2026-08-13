@@ -144,6 +144,7 @@ export class ActionViewNoUnusedStrictLocalsRule extends ParserRule {
         cli: "error",
         editor: "info",
       },
+      frameworks: ["actionview"],
     }
   }
 

@@ -100,6 +100,14 @@ Loops that do more than render a single partial are not flagged, because collect
 <% end %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [Action View Partials: Rendering Collections](https://guides.rubyonrails.org/layouts_and_rendering.html#rendering-collections)

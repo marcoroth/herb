@@ -175,6 +175,14 @@ Only one `locals:` comment is allowed per partial:
 <%# locals: (admin:) %>
 ```
 
+## Configuration
+
+Strict locals is an Action View feature, so this rule only applies to Action View projects and needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [Action View - Strict Locals](https://guides.rubyonrails.org/action_view_overview.html#strict-locals)
