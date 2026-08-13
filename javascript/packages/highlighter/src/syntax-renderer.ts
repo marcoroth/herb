@@ -1,5 +1,4 @@
 import { Token, RUBY_KEYWORDS } from "@herb-tools/core"
-import { Herb } from "@herb-tools/node-wasm"
 import { colorize } from "./color.js"
 
 import type { HerbBackend } from "@herb-tools/core"
@@ -25,10 +24,10 @@ export class SyntaxRenderer {
   private isColorEnabled: boolean
   private herb: HerbBackend
 
-  public constructor(colors: ColorScheme, herb?: HerbBackend) {
+  public constructor(colors: ColorScheme, herb: HerbBackend) {
     this.colors = colors
     this.isColorEnabled = process.env.NO_COLOR === undefined
-    this.herb = herb || Herb
+    this.herb = herb
   }
 
   public async initialize(): Promise<void> {

@@ -6,6 +6,7 @@ import { ANSI_REGEX } from "../src/ansi.js"
 import { stripAnsiColors } from "./util.js"
 
 import { DiagnosticRenderer } from "../src/diagnostic-renderer.js"
+import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
 import type { Diagnostic } from "@herb-tools/core"
@@ -15,7 +16,7 @@ describe("DiagnosticRenderer", () => {
   let syntaxRenderer: SyntaxRenderer
 
   beforeEach(async () => {
-    syntaxRenderer = new SyntaxRenderer(themes.onedark)
+    syntaxRenderer = new SyntaxRenderer(themes.onedark, Herb)
     await syntaxRenderer.initialize()
     renderer = new DiagnosticRenderer(syntaxRenderer)
   })

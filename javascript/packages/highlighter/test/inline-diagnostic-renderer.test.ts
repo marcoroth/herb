@@ -5,6 +5,7 @@ import { themes } from "../src/themes.js"
 import { stripAnsiColors } from "./util.js"
 
 import { InlineDiagnosticRenderer } from "../src/inline-diagnostic-renderer.js"
+import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
 import type { Diagnostic } from "@herb-tools/core"
@@ -13,7 +14,7 @@ describe("InlineDiagnosticRenderer", () => {
   let renderer: InlineDiagnosticRenderer
 
   beforeEach(async () => {
-    const syntaxRenderer = new SyntaxRenderer(themes.onedark)
+    const syntaxRenderer = new SyntaxRenderer(themes.onedark, Herb)
     await syntaxRenderer.initialize()
     renderer = new InlineDiagnosticRenderer(syntaxRenderer)
   })

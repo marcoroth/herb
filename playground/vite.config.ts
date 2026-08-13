@@ -2,6 +2,10 @@ import { resolve } from "path"
 import { defineConfig } from "vite"
 import { execSync } from "child_process"
 
+import { noNodeBuiltins } from "./vite-plugins/no-node-builtins.js"
+
+const { customLogger, plugin: noNodeBuiltinsPlugin } = noNodeBuiltins()
+
 function getCommitInfo() {
   let hash = "unknown"
   let tag = "unknown"
@@ -101,5 +105,6 @@ export default defineConfig({
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173
   },
-  plugins: [],
+  customLogger,
+  plugins: [noNodeBuiltinsPlugin],
 })

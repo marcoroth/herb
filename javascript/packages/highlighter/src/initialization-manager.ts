@@ -2,16 +2,14 @@ import type { HerbBackend } from "@herb-tools/core"
 
 export class InitializationManager {
   private _initialized = false
-  private herb?: HerbBackend
+  private herb: HerbBackend
 
-  constructor(herb?: HerbBackend) {
+  constructor(herb: HerbBackend) {
     this.herb = herb
   }
 
   async initialize(): Promise<void> {
-    if (this.herb) {
-      await this.herb.load()
-    }
+    await this.herb.load()
 
     this._initialized = true
   }
