@@ -42,3 +42,26 @@ describe("findProjectRootSync", () => {
     expect(projectRoot).toBe(tempDir)
   })
 })
+
+describe("findProjectRootSync without a .herb.yml", () => {
+  const tempDir = join(process.cwd(), "tmp-test-find-project-root-gemspec")
+  const gem = join(tempDir, "some_gem")
+
+  beforeAll(() => {
+    mkdirSync(join(gem, "app", "views"), { recursive: true })
+
+    writeFileSync(join(tempDir, "Gemfile"), "source 'https://rubygems.org'\n")
+    writeFileSync(join(gem, "some_gem.gemspec"), "Gem::Specification.new\n")
+    writeFileSync(join(gem, "app", "views", "index.html.erb"), "<div></div>\n")
+  })
+
+  afterAll(() => {
+    rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  test("recognizes a gemspec as a project indicator", () => {
+    const projectRoot = Config.findProjectRootSync(join(gem, "app", "views", "index.html.erb"))
+
+    expect(projectRoot).toBe(gem)
+  })
+})

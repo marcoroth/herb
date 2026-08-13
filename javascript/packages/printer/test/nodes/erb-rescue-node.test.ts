@@ -12,10 +12,8 @@ describe("ERBRescueNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBRescueNode.from({
-      type: "AST_ERB_RESCUE_NODE",
+    const node = ERBRescueNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " rescue StandardError => e "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

@@ -5,6 +5,7 @@
 #include "../../include/analyze/analyze.h"
 #include "../../include/ast/ast_nodes.h"
 #include "../../include/herb.h"
+#include "../../include/lexer/token.h"
 #include "../../include/lib/hb_allocator.h"
 #include "../../include/lib/hb_array.h"
 #include "../../include/lib/hb_buffer.h"
@@ -35,6 +36,9 @@ extern bool detect_image_tag(pm_call_node_t*, pm_parser_t*);
 extern char* extract_image_tag_src(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
 extern char* wrap_in_image_path(const char*, size_t, const char*, hb_allocator_T*);
 extern bool image_tag_source_is_url(const char*, size_t);
+extern bool detect_stylesheet_link_tag(pm_call_node_t*, pm_parser_t*);
+extern char* wrap_in_stylesheet_path(const char*, size_t, const char*, hb_allocator_T*);
+extern bool stylesheet_link_tag_source_is_url(const char*, size_t);
 
 typedef struct {
   pm_parser_t parser;
@@ -47,10 +51,91 @@ typedef struct {
   size_t erb_content_offset;
 } tag_helper_parse_context_T;
 
+typedef struct {
+  tag_helper_scope_T* scope;
+  hb_array_T* constants;
+  size_t from;
+  size_t to;
+} local_read_search_T;
+
+static void append_local_read_constant(local_read_search_T* search, pm_constant_id_t constant_id) {
+  pm_constant_t* constant = pm_constant_pool_id_to_constant(&search->scope->parser.constant_pool, constant_id);
+
+  if (!constant || constant->length == 0) { return; }
+
+  for (size_t index = 0; index < hb_array_size(search->constants); index++) {
+    pm_constant_t* existing = hb_array_get(search->constants, index);
+
+    if (existing && existing->length == constant->length
+        && memcmp(existing->start, constant->start, constant->length) == 0) {
+      return;
+    }
+  }
+
+  hb_array_append(search->constants, constant);
+}
+
+static bool search_local_variable_reads(const pm_node_t* node, void* data) {
+  local_read_search_T* search = (local_read_search_T*) data;
+  const uint8_t* base = (const uint8_t*) search->scope->buffer.value;
+
+  size_t start = (size_t) (node->location.start - base);
+  size_t end = (size_t) (node->location.end - base);
+
+  if (end <= search->from || start >= search->to) { return false; }
+
+  if (PM_NODE_TYPE(node) == PM_LOCAL_VARIABLE_READ_NODE && start >= search->from && end <= search->to) {
+    append_local_read_constant(search, ((pm_local_variable_read_node_t*) node)->name);
+  }
+
+  return true;
+}
+
+static bool build_scope_options_from_context(
+  analyze_ruby_context_T* context,
+  pm_options_t* options,
+  size_t from,
+  size_t to
+) {
+  if (!context || !context->tag_helper_scope || !context->tag_helper_scope->root) { return false; }
+  if (to <= from) { return false; }
+
+  local_read_search_T search = { .scope = context->tag_helper_scope,
+                                 .constants = hb_array_init(4, context->allocator),
+                                 .from = from,
+                                 .to = to };
+
+  pm_visit_node(context->tag_helper_scope->root, search_local_variable_reads, &search);
+
+  size_t locals_count = hb_array_size(search.constants);
+  bool built = false;
+
+  if (locals_count > 0 && pm_options_scopes_init(options, 1)) {
+    pm_options_scope_t* scope = &options->scopes[0];
+
+    if (pm_options_scope_init(scope, locals_count)) {
+      for (size_t index = 0; index < locals_count; index++) {
+        pm_constant_t* constant = hb_array_get(search.constants, index);
+
+        pm_string_constant_init(&scope->locals[index], (const char*) constant->start, constant->length);
+      }
+
+      built = true;
+    } else {
+      pm_options_free(options);
+    }
+  }
+
+  hb_array_free(&search.constants);
+
+  return built;
+}
+
 static tag_helper_parse_context_T* parse_tag_helper_content(
   const char* content_string,
   const char* original_source,
   size_t erb_content_offset,
+  analyze_ruby_context_T* context,
   hb_allocator_T* allocator
 ) {
   if (!content_string) { return NULL; }
@@ -63,8 +148,21 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
   parse_context->original_source = original_source;
   parse_context->erb_content_offset = erb_content_offset;
 
-  pm_parser_init(&parse_context->parser, parse_context->prism_source, strlen(parse_context->content_string), NULL);
+  size_t content_length = strlen(parse_context->content_string);
+
+  pm_options_t options = { 0 };
+  bool has_scope_options =
+    build_scope_options_from_context(context, &options, erb_content_offset, erb_content_offset + content_length);
+
+  pm_parser_init(
+    &parse_context->parser,
+    parse_context->prism_source,
+    content_length,
+    has_scope_options ? &options : NULL
+  );
   parse_context->root = pm_parse(&parse_context->parser);
+
+  if (has_scope_options) { pm_options_free(&options); }
 
   if (!parse_context->root) {
     pm_parser_free(&parse_context->parser);
@@ -115,22 +213,22 @@ bool search_tag_helper_node(const pm_node_t* node, void* data) {
 
   if (node->type == PM_CALL_NODE) {
     pm_call_node_t* call_node = (pm_call_node_t*) node;
-    tag_helper_handler_T* handlers = get_tag_helper_handlers();
+    const tag_helper_handler_T* const* handlers = get_tag_helper_handlers();
     size_t handlers_count = get_tag_helper_handlers_count();
 
     for (size_t i = 0; i < handlers_count; i++) {
-      if (handlers[i].detect(call_node, search_data->parser)) {
+      if (handlers[i]->detect(call_node, search_data->parser)) {
         search_data->tag_helper_node = node;
-        search_data->matched_handler = &handlers[i];
+        search_data->matched_handler = handlers[i];
         search_data->found = true;
 
         if (search_data->info) {
           search_data->info->call_node = call_node;
           search_data->info->tag_name =
-            handlers[i].extract_tag_name(call_node, search_data->parser, search_data->info->allocator);
+            handlers[i]->extract_tag_name(call_node, search_data->parser, search_data->info->allocator);
           search_data->info->content =
-            handlers[i].extract_content(call_node, search_data->parser, search_data->info->allocator);
-          search_data->info->has_block = handlers[i].supports_block();
+            handlers[i]->extract_content(call_node, search_data->parser, search_data->info->allocator);
+          search_data->info->has_block = handlers[i]->supports_block();
         }
 
         return false;
@@ -242,6 +340,7 @@ static void calculate_tag_name_positions(
 }
 
 static const char* JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS[] = { "protocol", "extname", "host", "skip_pipeline", NULL };
+static const char* STYLESHEET_LINK_TAG_PATH_OPTIONS[] = { "protocol", "extname", "host", "skip_pipeline", NULL };
 static const char* IMAGE_TAG_PATH_OPTIONS[] = { "skip_pipeline", NULL };
 
 static char* extract_path_options_from_keyword_hash(
@@ -333,6 +432,71 @@ static AST_NODE_T* remove_attribute_by_name(hb_array_T* attributes, const char* 
 
   return NULL;
 }
+
+static hb_array_T* prepend_stylesheet_link_tag_attributes(
+  hb_array_T* attributes,
+  tag_helper_parse_context_T* parse_context,
+  pm_node_t* source_argument,
+  const char* path_options,
+  hb_allocator_T* allocator
+) {
+  bool source_is_string = (source_argument->type == PM_STRING_NODE);
+  char* source_value = NULL;
+
+  if (source_is_string) {
+    pm_string_node_t* string_node = (pm_string_node_t*) source_argument;
+    size_t length = pm_string_length(&string_node->unescaped);
+    source_value = hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
+  } else {
+    size_t length = source_argument->location.end - source_argument->location.start;
+    source_value = hb_allocator_strndup(allocator, (const char*) source_argument->location.start, length);
+  }
+
+  if (!source_value) { return attributes; }
+
+  position_T source_start, source_end;
+  prism_node_location_to_positions(&source_argument->location, parse_context, &source_start, &source_end);
+
+  size_t source_length = strlen(source_value);
+  bool is_url = stylesheet_link_tag_source_is_url(source_value, source_length);
+  bool source_is_path_helper = is_route_helper_node(source_argument, &parse_context->parser);
+
+  char* href_value = source_value;
+
+  if (source_is_string && !is_url) {
+    size_t quoted_length = source_length + 2;
+    char* quoted_source = hb_allocator_alloc(allocator, quoted_length + 1);
+    quoted_source[0] = '"';
+    memcpy(quoted_source + 1, source_value, source_length);
+    quoted_source[quoted_length - 1] = '"';
+    quoted_source[quoted_length] = '\0';
+
+    href_value = wrap_in_stylesheet_path(quoted_source, quoted_length, path_options, allocator);
+    hb_allocator_dealloc(allocator, quoted_source);
+  } else if (!source_is_string && !is_url && !source_is_path_helper) {
+    href_value = wrap_in_stylesheet_path(source_value, source_length, path_options, allocator);
+  }
+
+  AST_HTML_ATTRIBUTE_NODE_T* href_attribute =
+    is_url ? create_html_attribute_node("href", href_value, source_start, source_end, allocator)
+           : create_html_attribute_with_ruby_literal("href", href_value, source_start, source_end, allocator);
+
+  if (href_value != source_value) { hb_allocator_dealloc(allocator, href_value); }
+  hb_allocator_dealloc(allocator, source_value);
+
+  if (href_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) href_attribute, allocator); }
+
+  AST_NODE_T* rel_attribute = remove_attribute_by_name(attributes, "rel");
+
+  if (!rel_attribute) {
+    rel_attribute = (AST_NODE_T*) create_html_attribute_node("rel", "stylesheet", source_start, source_end, allocator);
+  }
+
+  if (rel_attribute) { attributes = prepend_attribute(attributes, rel_attribute, allocator); }
+
+  return attributes;
+}
+
 static AST_NODE_T* transform_tag_helper_with_attributes(
   AST_ERB_CONTENT_NODE_T* erb_node,
   analyze_ruby_context_T* context,
@@ -365,7 +529,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   }
 
   if (attributes && handler->name
-      && (strcmp(handler->name, "javascript_include_tag") == 0 || strcmp(handler->name, "javascript_tag") == 0)) {
+      && (strcmp(handler->name, "javascript_include_tag") == 0 || strcmp(handler->name, "javascript_tag") == 0
+          || strcmp(handler->name, "stylesheet_link_tag") == 0)) {
     resolve_nonce_attribute(attributes, allocator);
   }
 
@@ -375,6 +540,19 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     path_options = extract_path_options_from_keyword_hash(
       parse_context->info->call_node,
       JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS,
+      allocator
+    );
+
+    remove_attribute_by_name(attributes, "extname");
+    remove_attribute_by_name(attributes, "host");
+    remove_attribute_by_name(attributes, "protocol");
+    remove_attribute_by_name(attributes, "skip-pipeline");
+  }
+
+  if (attributes && handler->name && strcmp(handler->name, "stylesheet_link_tag") == 0) {
+    path_options = extract_path_options_from_keyword_hash(
+      parse_context->info->call_node,
+      STYLESHEET_LINK_TAG_PATH_OPTIONS,
       allocator
     );
 
@@ -621,6 +799,18 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
+  if (detect_stylesheet_link_tag(parse_context->info->call_node, &parse_context->parser)
+      && parse_context->info->call_node->arguments && parse_context->info->call_node->arguments->arguments.size >= 1) {
+    pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
+
+    if (first_argument->type != PM_KEYWORD_HASH_NODE) {
+      if (!attributes) { attributes = hb_array_init(4, allocator); }
+
+      attributes =
+        prepend_stylesheet_link_tag_attributes(attributes, parse_context, first_argument, path_options, allocator);
+    }
+  }
+
   token_T* tag_name_token =
     tag_name ? create_synthetic_token(allocator, tag_name, TOKEN_IDENTIFIER, tag_name_start, tag_name_end) : NULL;
 
@@ -642,7 +832,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   hb_array_T* element_errors = hb_array_init(0, allocator);
   bool is_void = tag_name && is_void_element(hb_string_from_c_string(tag_name))
               && (string_equals(handler->name, "tag") || string_equals(handler->name, "content_tag")
-                  || string_equals(handler->name, "image_tag"));
+                  || string_equals(handler->name, "image_tag") || string_equals(handler->name, "stylesheet_link_tag"));
 
   if (helper_content) {
     if (is_void && tag_name) {
@@ -685,7 +875,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         content_start,
         content_end,
         allocator,
-        element_errors
+        &element_errors
       );
     }
 
@@ -753,7 +943,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   return (AST_NODE_T*) element;
 }
 
-static size_t count_javascript_include_tag_sources(pm_call_node_t* call_node) {
+static size_t count_asset_tag_sources(pm_call_node_t* call_node) {
   if (!call_node || !call_node->arguments) { return 0; }
 
   size_t count = 0;
@@ -874,7 +1064,7 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
 ) {
   hb_allocator_T* allocator = context->allocator;
   pm_call_node_t* call_node = parse_context->info->call_node;
-  size_t source_count = count_javascript_include_tag_sources(call_node);
+  size_t source_count = count_asset_tag_sources(call_node);
 
   if (source_count == 0) { return NULL; }
 
@@ -901,6 +1091,121 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
   for (size_t i = 0; i < source_count; i++) {
     pm_node_t* source_arg = call_node->arguments->arguments.nodes[i];
     AST_NODE_T* element = create_javascript_include_tag_element(
+      erb_node,
+      parse_context,
+      source_arg,
+      shared_attributes,
+      path_options,
+      allocator
+    );
+
+    if (element) {
+      if (hb_array_size(elements) > 0) {
+        position_T position = erb_node->base.location.start;
+        AST_HTML_TEXT_NODE_T* newline = ast_html_text_node_init(
+          hb_string_from_c_string("\n"),
+          position,
+          position,
+          hb_array_init(0, allocator),
+          allocator
+        );
+        if (newline) { hb_array_append(elements, (AST_NODE_T*) newline); }
+      }
+
+      hb_array_append(elements, element);
+    }
+  }
+
+  return elements;
+}
+
+static AST_NODE_T* create_stylesheet_link_tag_element(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  tag_helper_parse_context_T* parse_context,
+  pm_node_t* source_argument,
+  hb_array_T* shared_attributes,
+  const char* path_options,
+  hb_allocator_T* allocator
+) {
+  position_T tag_name_start, tag_name_end;
+  calculate_tag_name_positions(
+    parse_context,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    &tag_name_start,
+    &tag_name_end
+  );
+
+  token_T* tag_name_token = create_synthetic_token(allocator, "link", TOKEN_IDENTIFIER, tag_name_start, tag_name_end);
+
+  hb_array_T* attributes = hb_array_init(hb_array_size(shared_attributes) + 2, allocator);
+
+  for (size_t i = 0; i < hb_array_size(shared_attributes); i++) {
+    hb_array_append(attributes, hb_array_get(shared_attributes, i));
+  }
+
+  attributes =
+    prepend_stylesheet_link_tag_attributes(attributes, parse_context, source_argument, path_options, allocator);
+
+  AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
+    erb_node->tag_opening,
+    erb_node->content,
+    erb_node->tag_closing,
+    tag_name_token,
+    attributes,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  return (AST_NODE_T*) ast_html_element_node_init(
+    (AST_NODE_T*) open_tag_node,
+    tag_name_token,
+    hb_array_init(0, allocator),
+    NULL,
+    true,
+    parse_context->matched_handler->source,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+}
+
+static hb_array_T* transform_stylesheet_link_tag_multi_source(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  analyze_ruby_context_T* context,
+  tag_helper_parse_context_T* parse_context
+) {
+  hb_allocator_T* allocator = context->allocator;
+  pm_call_node_t* call_node = parse_context->info->call_node;
+  size_t source_count = count_asset_tag_sources(call_node);
+
+  if (source_count == 0) { return NULL; }
+
+  hb_array_T* shared_attributes = extract_html_attributes_from_call_node(
+    call_node,
+    parse_context->prism_source,
+    parse_context->original_source,
+    parse_context->erb_content_offset,
+    allocator
+  );
+  if (!shared_attributes) { shared_attributes = hb_array_init(0, allocator); }
+
+  resolve_nonce_attribute(shared_attributes, allocator);
+
+  char* path_options = extract_path_options_from_keyword_hash(call_node, STYLESHEET_LINK_TAG_PATH_OPTIONS, allocator);
+  remove_attribute_by_name(shared_attributes, "extname");
+  remove_attribute_by_name(shared_attributes, "host");
+  remove_attribute_by_name(shared_attributes, "protocol");
+  remove_attribute_by_name(shared_attributes, "skip-pipeline");
+
+  hb_array_T* elements = hb_array_init(source_count * 2, allocator);
+
+  for (size_t i = 0; i < source_count; i++) {
+    pm_node_t* source_arg = call_node->arguments->arguments.nodes[i];
+    AST_NODE_T* element = create_stylesheet_link_tag_element(
       erb_node,
       parse_context,
       source_arg,
@@ -1116,7 +1421,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       block_node->base.location.start,
       block_node->base.location.end,
       allocator,
-      element_errors
+      &element_errors
     );
   }
 
@@ -1426,6 +1731,8 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
     if (child->type == AST_ERB_BLOCK_NODE) {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) child;
 
+      if (token_is_escaped_erb_tag_opening(block_node->tag_opening)) { continue; }
+
       if (block_node->tag_opening && !hb_string_is_empty(block_node->tag_opening->value)) {
         const char* opening_string = block_node->tag_opening->value.data;
         if (opening_string && strstr(opening_string, "=") == NULL) { continue; }
@@ -1442,7 +1749,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
         }
 
         tag_helper_parse_context_T* parse_context =
-          parse_tag_helper_content(block_string, context->source, erb_content_offset, context->allocator);
+          parse_tag_helper_content(block_string, context->source, erb_content_offset, context, context->allocator);
 
         if (parse_context) {
           replacement = transform_erb_block_to_tag_helper(block_node, context, parse_context);
@@ -1454,6 +1761,8 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
     } else if (child->type == AST_ERB_CONTENT_NODE) {
       AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
       token_T* tag_opening = erb_node->tag_opening;
+
+      if (token_is_escaped_erb_tag_opening(tag_opening)) { continue; }
 
       if (tag_opening && !hb_string_is_empty(tag_opening->value)) {
         const char* opening_string = tag_opening->value.data;
@@ -1473,13 +1782,18 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
         }
 
         tag_helper_parse_context_T* parse_context =
-          parse_tag_helper_content(erb_string, context->source, erb_content_offset, context->allocator);
+          parse_tag_helper_content(erb_string, context->source, erb_content_offset, context, context->allocator);
 
         if (parse_context) {
-          if (strcmp(parse_context->matched_handler->name, "javascript_include_tag") == 0
-              && parse_context->info->call_node
-              && count_javascript_include_tag_sources(parse_context->info->call_node) > 1) {
-            hb_array_T* multi = transform_javascript_include_tag_multi_source(erb_node, context, parse_context);
+          bool is_multi_source_asset_tag = (strcmp(parse_context->matched_handler->name, "javascript_include_tag") == 0
+                                            || strcmp(parse_context->matched_handler->name, "stylesheet_link_tag") == 0)
+                                        && parse_context->info->call_node
+                                        && count_asset_tag_sources(parse_context->info->call_node) > 1;
+
+          if (is_multi_source_asset_tag) {
+            hb_array_T* multi = strcmp(parse_context->matched_handler->name, "stylesheet_link_tag") == 0
+                                ? transform_stylesheet_link_tag_multi_source(erb_node, context, parse_context)
+                                : transform_javascript_include_tag_multi_source(erb_node, context, parse_context);
 
             if (multi && hb_array_size(multi) > 0) {
               size_t old_size = hb_array_size(array);
@@ -1568,7 +1882,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
             }
 
             tag_helper_parse_context_T* parse_context =
-              parse_tag_helper_content(erb_string, context->source, erb_content_offset, context->allocator);
+              parse_tag_helper_content(erb_string, context->source, erb_content_offset, context, context->allocator);
 
             if (parse_context && string_equals(parse_context->matched_handler->name, "tag")
                 && parse_context->info->tag_name && string_equals(parse_context->info->tag_name, "attributes")) {
@@ -1709,6 +2023,9 @@ void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T*
       transform_tag_helper_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
       break;
     case AST_ERB_BLOCK_NODE: transform_tag_helper_array(((AST_ERB_BLOCK_NODE_T*) node)->body, context); break;
+    case AST_ERB_ITERATION_BLOCK_NODE:
+      transform_tag_helper_array(((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->body, context);
+      break;
     case AST_ERB_IF_NODE: transform_tag_helper_array(((AST_ERB_IF_NODE_T*) node)->statements, context); break;
     case AST_ERB_ELSE_NODE: transform_tag_helper_array(((AST_ERB_ELSE_NODE_T*) node)->statements, context); break;
     case AST_ERB_UNLESS_NODE: transform_tag_helper_array(((AST_ERB_UNLESS_NODE_T*) node)->statements, context); break;

@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: "highlighter(\"onedark\").highlight(\"test.erb\", \"<% if true %>\", &plain())"
+---
+[38;2;190;80;70m<%[0m [38;2;198;120;221mif[0m [38;2;198;120;221mtrue[0m [38;2;190;80;70m%>[0m

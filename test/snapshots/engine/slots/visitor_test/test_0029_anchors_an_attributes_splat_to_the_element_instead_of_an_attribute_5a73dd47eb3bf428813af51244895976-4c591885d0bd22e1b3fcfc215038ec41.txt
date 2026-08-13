@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0029_anchors an attributes splat to the element instead of an attribute"
+input: "<div <%= @attrs %>></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 3aed3542
+
+slots:
+  index=0  type=element  node_path=[0]  expression="@attrs"  location=1:5

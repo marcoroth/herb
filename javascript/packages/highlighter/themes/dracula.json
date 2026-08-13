@@ -27,5 +27,29 @@
   "TOKEN_AMPERSAND": "#8be9fd",
   "TOKEN_CHARACTER": "#f8f8f2",
   "TOKEN_ERROR": "#ff5555",
-  "TOKEN_EOF": null
+  "TOKEN_EOF": null,
+  "DIFF_REMOVED_LINE_BACKGROUND": "#3B2229",
+  "DIFF_ADDED_LINE_BACKGROUND": "#1F3529",
+  "DIFF_REMOVED_BACKGROUND": "#6E3040",
+  "DIFF_ADDED_BACKGROUND": "#2F6141",
+  "BACKGROUND": "#282A36",
+  "FOREGROUND": "#F8F8F2",
+  "ANSI_PALETTE": {
+    "black": "#21222C",
+    "red": "#FF5555",
+    "green": "#50FA7B",
+    "yellow": "#F1FA8C",
+    "blue": "#BD93F9",
+    "magenta": "#FF79C6",
+    "cyan": "#8BE9FD",
+    "white": "#F8F8F2",
+    "bright-black": "#6272A4",
+    "bright-red": "#FF6E6E",
+    "bright-green": "#69FF94",
+    "bright-yellow": "#FFFFA5",
+    "bright-blue": "#D6ACFF",
+    "bright-magenta": "#FF92DF",
+    "bright-cyan": "#A4FFFF",
+    "bright-white": "#FFFFFF"
+  }
 }

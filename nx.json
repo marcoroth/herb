@@ -13,7 +13,10 @@
     "sharedGlobals": [
       "{workspaceRoot}/.github/workflows/javascript.yml",
       "{workspaceRoot}/src/**/*",
-      "{workspaceRoot}/wasm/**/*"
+      "{workspaceRoot}/wasm/**/*",
+      "{workspaceRoot}/config.yml",
+      "{workspaceRoot}/config/**/*",
+      "{workspaceRoot}/templates/**/*"
     ]
   },
   "plugins": [],
@@ -32,6 +35,10 @@
     "build": {
       "dependsOn": [
         "^build"
+      ],
+      "inputs": [
+        "default", 
+        "^default"
       ],
       "options": {
         "parallel": false

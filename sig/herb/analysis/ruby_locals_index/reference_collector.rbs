@@ -1,0 +1,40 @@
+# Generated from lib/herb/analysis/ruby_locals_index/reference_collector.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RubyLocalsIndex
+      class ReferenceCollector
+        attr_reader local_reads: Array[NamedReference]
+
+        attr_reader bare_calls: Array[NamedReference]
+
+        attr_reader parameters: Array[NamedReference]
+
+        attr_reader assignments: Array[NamedReference]
+
+        # : (Prism::Node) -> void
+        def initialize: (Prism::Node) -> void
+
+        private
+
+        # : (Prism::Node) -> void
+        def walk: (Prism::Node) -> void
+
+        # : (Prism::Node) -> void
+        def record: (Prism::Node) -> void
+
+        # : (Prism::Node) -> void
+        def record_read: (Prism::Node) -> void
+
+        # : (Prism::Node) -> void
+        def record_binding: (Prism::Node) -> void
+
+        # : (Prism::CallNode) -> bool
+        def bare_call?: (Prism::CallNode) -> bool
+
+        # : (Array[NamedReference], Symbol?, Prism::Location?) -> void
+        def add: (Array[NamedReference], Symbol?, Prism::Location?) -> void
+      end
+    end
+  end
+end

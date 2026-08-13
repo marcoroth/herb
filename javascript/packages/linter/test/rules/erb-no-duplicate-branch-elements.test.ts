@@ -176,6 +176,30 @@ describe("erb-no-duplicate-branch-elements", () => {
         <% end %>
       `)
     })
+
+    it("shared tag with different content next to a sibling that cannot be hoisted", () => {
+      expectNoOffenses(dedent`
+        <% if condition? %>
+          <p class="mt-3 text-balance">Content</p>
+          <%= link_to "Link", other_path %>
+        <% else %>
+          <p class="mt-3 text-balance">Other content</p>
+          <%= link_to "Other link", other_path %>
+        <% end %>
+      `)
+    })
+
+    it("more than one shared tag with different content", () => {
+      expectNoOffenses(dedent`
+        <% if condition? %>
+          <p>One</p>
+          <div>Two</div>
+        <% else %>
+          <p>Three</p>
+          <div>Four</div>
+        <% end %>
+      `)
+    })
   })
 
   describe("offense: if/else", () => {

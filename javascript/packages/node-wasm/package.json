@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/node-wasm",
-  "version": "0.10.1",
+  "version": "0.10.3",
   "description": "WebAssembly-based HTML-aware ERB parser for Node.js.",
   "type": "module",
   "license": "MIT",
@@ -19,8 +19,8 @@
     "build": "yarn clean && yarn build:wasm && yarn build:javascript",
     "build:wasm": "cd ../../../wasm && make ../javascript/packages/node-wasm/build/libherb.js && cd -",
     "clean:wasm": "cd ../../../wasm && make clean_node && cd -",
-    "build:javascript": "rollup -c",
-    "dev": "rollup -c -w",
+    "build:javascript": "tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist && rimraf build",
     "test": "vitest run",
     "test:ui": "vitest --watch --ui",
@@ -36,7 +36,8 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.10.1"
+    "@herb-tools/core": "0.10.3",
+    "@ruby/prism": "^1.9.0"
   },
   "files": [
     "package.json",

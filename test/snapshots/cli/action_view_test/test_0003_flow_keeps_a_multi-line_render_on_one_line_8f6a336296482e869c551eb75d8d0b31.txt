@@ -1,0 +1,22 @@
+---
+source: "CLI::ActionViewTest#test_0003_flow keeps a multi-line render on one line"
+input: |2-
+multiline render: <%= render partial: "posts/card",
+  locals: {
+    talk: talk,
+    ids: @ids
+  } %>
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/show.html.erb
+
+ State flow for @ids
+
+ app/views/posts/show.html.erb [@ids]
+ · render render partial: "posts/card", locals: { talk: talk, ids: @ids } (1:0)
+ │
+ └── app/views/posts/_card.html.erb [ids] ← ids: @ids
+

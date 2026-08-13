@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/linter",
-  "version": "0.10.1",
+  "version": "0.10.3",
   "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -18,11 +18,11 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rollup -c",
+    "build": "yarn clean && tsc -b && rolldown -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n✗ Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
+    "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n\u2717 Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
     "prepublishOnly": "yarn check:rule-versions && yarn clean && yarn build && yarn test"
   },
   "exports": {
@@ -47,13 +47,15 @@
     }
   },
   "dependencies": {
-    "@herb-tools/config": "0.10.1",
-    "@herb-tools/core": "0.10.1",
-    "@herb-tools/highlighter": "0.10.1",
-    "@herb-tools/node-wasm": "0.10.1",
-    "@herb-tools/printer": "0.10.1",
-    "@herb-tools/rewriter": "0.10.1",
-    "picomatch": "^4.0.4",
+    "@herb-tools/analysis": "0.10.3",
+    "@herb-tools/config": "0.10.3",
+    "@herb-tools/core": "0.10.3",
+    "@herb-tools/highlighter": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.3",
+    "@herb-tools/printer": "0.10.3",
+    "@herb-tools/rewriter": "0.10.3",
+    "@ruby/prism": "^1.9.0",
+    "picomatch": "^4.0.5",
     "tinyglobby": "^0.2.15"
   },
   "files": [

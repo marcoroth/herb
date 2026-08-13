@@ -36,13 +36,6 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
 
         if (hasExtraWhitespace) {
           this.reportWhitespace(node, openTag, closeTag, value, "start", prefix.length, `Remove extra whitespace after \`${tag}\`. This looks like a temporarily commented ERB tag.`, "after-comment-equals", "info")
-        } else {
-          this.addOffense(
-            `\`${tag}\` looks like a temporarily commented ERB tag.`,
-            openTag.location,
-            { node, openTag, closeTag, content: value, fixType: "after-comment-equals", unsafe: true },
-            "info"
-          )
         }
       }
     }

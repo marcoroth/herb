@@ -57,7 +57,7 @@ class NoRedundantImageAltVisitor extends BaseRuleVisitor {
 
 export class A11yNoRedundantImageAltRule extends ParserRule {
   static ruleName = "a11y-no-redundant-image-alt"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.10.2")
 
   get defaultConfig(): FullRuleConfig {
     return {

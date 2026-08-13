@@ -90,8 +90,8 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   return <%= error.human %>;
 }
 
-void append_<%= error.human %>(<%= (arguments + ["hb_array_T* errors"]).join(", ") %>) {
-  hb_array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+void append_<%= error.human %>(<%= (arguments + ["hb_array_T** errors"]).join(", ") %>) {
+  hb_array_append_lazy(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>), allocator);
 }
 <%- end -%>
 

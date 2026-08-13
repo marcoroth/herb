@@ -1,0 +1,36 @@
+# Generated from lib/herb/analysis/render_graph/partial_call_site.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class PartialCallSite < Data
+        attr_reader caller(): untyped
+
+        attr_reader locals(): untyped
+
+        attr_reader ancestors(): untyped
+
+        attr_reader ancestor_attributes(): untyped
+
+        attr_reader via(): untyped
+
+        attr_reader location(): untyped
+
+        def self.new: (untyped caller, untyped locals, untyped ancestors, untyped ancestor_attributes, untyped via, untyped location) -> instance
+                    | (caller: untyped, locals: untyped, ancestors: untyped, ancestor_attributes: untyped, via: untyped, location: untyped) -> instance
+
+        def self.members: () -> [ :caller, :locals, :ancestors, :ancestor_attributes, :via, :location ]
+
+        def members: () -> [ :caller, :locals, :ancestors, :ancestor_attributes, :via, :location ]
+      end
+
+      class PartialCallSite
+        # : (Hash[String, untyped]) -> PartialCallSite
+        def self.from: (Hash[String, untyped]) -> PartialCallSite
+
+        # : () -> Hash[String, untyped]
+        def to_h: () -> Hash[String, untyped]
+      end
+    end
+  end
+end

@@ -66,16 +66,13 @@ describe("@herb-tools/formatter", () => {
       </p>
     `
     const result = formatter.format(source)
+
     expect(result).toEqual(dedent`
       <p>
-        One
-        <br>
-        Two
-        <br>
-        Three
-        <br>
-        Four
-        <br>
+        One<br>
+        Two<br>
+        Three<br>
+        Four<br>
       </p>
     `)
   })
@@ -100,16 +97,13 @@ describe("@herb-tools/formatter", () => {
       </p>
     `
     const result = formatter.format(source)
+
     expect(result).toEqual(dedent`
       <p>
-        One
-        <hr>
-        Two
-        <hr>
-        Three
-        <hr>
-        Four
-        <hr>
+        One<hr>
+        Two<hr>
+        Three<hr>
+        Four<hr>
       </p>
     `)
   })

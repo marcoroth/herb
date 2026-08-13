@@ -86,7 +86,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for double-quoted string literal", () => {
     expectError(
-      'Avoid outputting string literal `"Title"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Title"`. Use `Title` instead.',
     )
 
     assertOffenses('<%= "Title" %>')
@@ -94,7 +94,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for single-quoted string literal", () => {
     expectError(
-      "Avoid outputting string literal `'Title'`. Write the text directly without wrapping it in an ERB output tag.",
+      "Avoid outputting string literal `'Title'`. Use `Title` instead.",
     )
 
     assertOffenses("<%= 'Title' %>")
@@ -102,7 +102,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for empty string literal", () => {
     expectError(
-      'Avoid outputting string literal `""`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `""`. Remove the empty output tag instead.',
     )
 
     assertOffenses('<%= "" %>')
@@ -110,7 +110,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for interpolated string with single expression", () => {
     expectError(
-      'Avoid outputting interpolated string `"#{key}"`. Use separate `<%= %>` tags for each dynamic value instead.',
+      'Avoid outputting interpolated string `"#{key}"`. Use `<%= key %>` instead.',
     )
 
     assertOffenses('<%= "#{key}" %>')
@@ -118,7 +118,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for interpolated string with multiple expressions", () => {
     expectError(
-      'Avoid outputting interpolated string `"#{key} (#{participants.size})"`. Use separate `<%= %>` tags for each dynamic value instead.',
+      'Avoid outputting interpolated string `"#{key} (#{participants.size})"`. Use `<%= key %> (<%= participants.size %>)` instead.',
     )
 
     assertOffenses('<%= "#{key} (#{participants.size})" %>')
@@ -126,15 +126,23 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for interpolated string with text and expression", () => {
     expectError(
-      'Avoid outputting interpolated string `"Hello #{name}"`. Use separate `<%= %>` tags for each dynamic value instead.',
+      'Avoid outputting interpolated string `"Hello #{name}"`. Use `Hello <%= name %>` instead.',
     )
 
     assertOffenses('<%= "Hello #{name}" %>')
   })
 
+  test("shows the exact rewrite for trailing text", () => {
+    expectError(
+      'Avoid outputting interpolated string `"#{i + 1}."`. Use `<%= i + 1 %>.` instead.',
+    )
+
+    assertOffenses('<%= "#{i + 1}." %>')
+  })
+
   test("fails for raw output with string literal", () => {
     expectError(
-      'Avoid outputting string literal `"Title"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Title"`. Use `Title` instead.',
     )
 
     assertOffenses('<%== "Title" %>')
@@ -142,7 +150,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for raw output with interpolated string", () => {
     expectError(
-      'Avoid outputting interpolated string `"#{key}"`. Use separate `<%= %>` tags for each dynamic value instead.',
+      'Avoid outputting interpolated string `"#{key}"`. Use `<%== key %>` instead.',
     )
 
     assertOffenses('<%== "#{key}" %>')
@@ -150,7 +158,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for string literal inside element", () => {
     expectError(
-      'Avoid outputting string literal `"Title"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Title"`. Use `Title` instead.',
     )
 
     assertOffenses('<h1><%= "Title" %></h1>')
@@ -158,7 +166,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for string literal in attribute value", () => {
     expectError(
-      'Avoid outputting string literal `"active"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"active"`. Use `active` instead.',
     )
 
     assertOffenses('<div class="<%= "active" %>">content</div>')
@@ -166,10 +174,10 @@ describe("erb-prefer-direct-output", () => {
 
   test("reports multiple offenses", () => {
     expectError(
-      'Avoid outputting string literal `"Hello"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Hello"`. Use `Hello` instead.',
     )
     expectError(
-      'Avoid outputting string literal `"World"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"World"`. Use `World` instead.',
     )
 
     assertOffenses(dedent`
@@ -182,7 +190,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("reports offense at correct location", () => {
     expectError(
-      'Avoid outputting string literal `"Title"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Title"`. Use `Title` instead.',
       [2, 6],
     )
 
@@ -195,10 +203,10 @@ describe("erb-prefer-direct-output", () => {
 
   test("reports mixed string and interpolated string offenses", () => {
     expectError(
-      'Avoid outputting string literal `"Title"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Title"`. Use `Title` instead.',
     )
     expectError(
-      'Avoid outputting interpolated string `"#{key}"`. Use separate `<%= %>` tags for each dynamic value instead.',
+      'Avoid outputting interpolated string `"#{key}"`. Use `<%= key %>` instead.',
     )
 
     assertOffenses(dedent`
@@ -211,7 +219,7 @@ describe("erb-prefer-direct-output", () => {
 
   test("fails for string literal inside control flow", () => {
     expectError(
-      'Avoid outputting string literal `"Admin"`. Write the text directly without wrapping it in an ERB output tag.',
+      'Avoid outputting string literal `"Admin"`. Use `Admin` instead.',
     )
 
     assertOffenses(dedent`
@@ -219,5 +227,61 @@ describe("erb-prefer-direct-output", () => {
         <%= "Admin" %>
       <% end %>
     `)
+  })
+
+  test("passes for string literal containing `<`", () => {
+    expectNoOffenses('<p><%= "a <b> c" %></p>')
+  })
+
+  test("passes for string literal containing `&`", () => {
+    expectNoOffenses('<p><%= "a & b" %></p>')
+  })
+
+  test("passes for interpolated string containing `<`", () => {
+    expectNoOffenses('<p><%= "#{a} <request body> -- #{b}" %></p>')
+  })
+
+  test("passes for interpolated string containing `&`", () => {
+    expectNoOffenses('<p><%= "#{a} & #{b}" %></p>')
+  })
+
+  test("passes for string literal in an unquoted attribute value", () => {
+    expectNoOffenses('<div id=<%= "foo" %>>y</div>')
+  })
+
+  test("passes for interpolated string in an unquoted attribute value", () => {
+    expectNoOffenses('<div id=<%= "#{a}_#{b}" %>>y</div>')
+  })
+
+  test("passes for string literal containing the enclosing double quote", () => {
+    expectNoOffenses(`<div title="<%= "say \\"hi\\"" %>">y</div>`)
+  })
+
+  test("passes for string literal containing the enclosing single quote", () => {
+    expectNoOffenses(`<div title='<%= "it\\'s" %>'>y</div>`)
+  })
+
+  test("fails for string literal containing a quote the enclosing attribute does not use", () => {
+    expectError(
+      `Avoid outputting string literal \`"it's"\`. Use \`it's\` instead.`,
+    )
+
+    assertOffenses(`<div title="<%= "it's" %>">y</div>`)
+  })
+
+  test("fails for string literal containing `>`", () => {
+    expectError(
+      'Avoid outputting string literal `"a > b"`. Use `a > b` instead.',
+    )
+
+    assertOffenses('<p><%= "a > b" %></p>')
+  })
+
+  test("fails for interpolated string in a quoted attribute value", () => {
+    expectError(
+      'Avoid outputting interpolated string `"#{a}_#{b}"`. Use `<%= a %>_<%= b %>` instead.',
+    )
+
+    assertOffenses('<div id="<%= "#{a}_#{b}" %>">y</div>')
   })
 })

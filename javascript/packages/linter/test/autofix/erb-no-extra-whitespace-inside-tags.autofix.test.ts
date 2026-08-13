@@ -76,6 +76,24 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     expect(result.fixed).toHaveLength(2)
   })
 
+  test("leaves well-formed commented ERB tags untouched, including unsafe fixes", () => {
+    const input = '<%#= link_to "path", path %>'
+
+    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
+
+    expect(linter.autofix(input).source).toBe(input)
+    expect(linter.autofix(input, undefined, undefined, { includeUnsafe: true }).source).toBe(input)
+  })
+
+  test("leaves commented ERB tags with whitespace after the hash untouched", () => {
+    const input = '<%# = link_to "path", path %>'
+
+    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
+
+    expect(linter.autofix(input).source).toBe(input)
+    expect(linter.autofix(input, undefined, undefined, { includeUnsafe: true }).source).toBe(input)
+  })
+
   test("fixes multiple ERB tags with extra spaces", () => {
     const input = dedent`
       <%  if admin  %>

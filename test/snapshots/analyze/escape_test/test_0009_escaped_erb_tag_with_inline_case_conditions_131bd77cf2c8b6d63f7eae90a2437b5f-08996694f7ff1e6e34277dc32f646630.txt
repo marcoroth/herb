@@ -1,0 +1,33 @@
+---
+source: "Analyze::EscapeTest#test_0009_escaped erb tag with inline case conditions"
+input: "<% case x when 1 %>a<% end %>"
+options: {strict: true}
+---
+@ DocumentNode (location: (1:0)-(1:29))
+└── children: (1 item)
+    └── @ ERBCaseNode (location: (1:0)-(1:29))
+        ├── errors: (1 error)
+        │   └── @ ERBCaseWithConditionsError (location: (1:0)-(1:19))
+        │       └── message: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " case x when 1 " (location: (1:2)-(1:17))
+        ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        ├── children: []
+        ├── conditions: (1 item)
+        │   └── @ ERBWhenNode (location: (1:19)-(1:20))
+        │       ├── tag_opening: ∅
+        │       ├── content: ∅
+        │       ├── tag_closing: ∅
+        │       ├── then_keyword: ∅
+        │       └── statements: (1 item)
+        │           └── @ HTMLTextNode (location: (1:19)-(1:20))
+        │               └── content: "a"
+        │
+        │
+        ├── else_clause: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:20)-(1:29))
+                ├── tag_opening: "<%" (location: (1:20)-(1:22))
+                ├── content: " end " (location: (1:22)-(1:27))
+                └── tag_closing: "%>" (location: (1:27)-(1:29))

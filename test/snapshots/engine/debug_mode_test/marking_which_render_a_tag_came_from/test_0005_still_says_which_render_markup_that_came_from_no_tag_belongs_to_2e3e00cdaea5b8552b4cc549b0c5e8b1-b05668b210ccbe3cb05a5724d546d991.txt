@@ -1,0 +1,7 @@
+---
+source: "Engine::DebugModeTest::marking which render a tag came from#test_0005_still says which render markup that came from no tag belongs to"
+input: "static markup"
+options: {node: true, source: "<div><a href=\"\">Abc</a></div>"}
+---
+<div data-herb-debug-outline-type="partial" data-herb-debug-file-name="_card.html.erb" data-herb-debug-file-relative-path="app/views/posts/_card.html.erb" data-herb-debug-file-full-path="app/views/posts/_card.html.erb" data-herb-debug-node="1"><a href="">Abc</a></div>
+<div data-herb-debug-outline-type="partial" data-herb-debug-file-name="_card.html.erb" data-herb-debug-file-relative-path="app/views/posts/_card.html.erb" data-herb-debug-file-full-path="app/views/posts/_card.html.erb" data-herb-debug-node="2"><a href="">Abc</a></div>

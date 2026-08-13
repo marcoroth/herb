@@ -1,0 +1,121 @@
+# Generated from lib/herb/analysis/template_dependencies.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class TemplateDependencies
+      class FlowNode < Data
+        attr_reader file(): untyped
+
+        attr_reader names(): untyped
+
+        attr_reader via(): untyped
+
+        attr_reader nodes(): untyped
+
+        attr_reader children(): untyped
+
+        def self.new: (untyped file, untyped names, untyped via, untyped nodes, untyped children) -> instance
+                    | (file: untyped, names: untyped, via: untyped, nodes: untyped, children: untyped) -> instance
+
+        def self.members: () -> [ :file, :names, :via, :nodes, :children ]
+
+        def members: () -> [ :file, :names, :via, :nodes, :children ]
+      end
+
+      class Result < Data
+        attr_reader file(): untyped
+
+        attr_reader instance_variables(): untyped
+
+        attr_reader constants(): untyped
+
+        attr_reader locals_declared(): untyped
+
+        attr_reader locals_received(): untyped
+
+        attr_reader render_calls(): untyped
+
+        attr_reader helper_calls(): untyped
+
+        attr_reader unknown_calls(): untyped
+
+        def self.new: (untyped file, untyped instance_variables, untyped constants, untyped locals_declared, untyped locals_received, untyped render_calls, untyped helper_calls, untyped unknown_calls) -> instance
+                    | (file: untyped, instance_variables: untyped, constants: untyped, locals_declared: untyped, locals_received: untyped, render_calls: untyped, helper_calls: untyped, unknown_calls: untyped) -> instance
+
+        def self.members: () -> [ :file, :instance_variables, :constants, :locals_declared, :locals_received, :render_calls, :helper_calls, :unknown_calls ]
+
+        def members: () -> [ :file, :instance_variables, :constants, :locals_declared, :locals_received, :render_calls, :helper_calls, :unknown_calls ]
+      end
+
+      def initialize: (untyped project_path) -> untyped
+
+      def analyze: (untyped file_path) -> untyped
+
+      def affected_templates: (untyped entry_point, untyped state) -> untyped
+
+      def state_flow: (untyped entry_point, untyped state) -> untyped
+
+      def affected_nodes: (untyped file_path, untyped state) -> untyped
+
+      def dependency_index: (untyped file_path) -> untyped
+
+      # @rbs!
+      #   KERNEL_METHODS: Array[String]
+      KERNEL_METHODS: untyped
+
+      def scan_helpers!: () -> untyped
+
+      private
+
+      # : (String) -> Set[String]
+      def guarded_locals: (String) -> Set[String]
+
+      # : () -> Set[String]
+      def scan_helper_methods!: () -> Set[String]
+
+      # : () -> Set[String]
+      def scan_routes!: () -> Set[String]
+
+      # : (String) -> void
+      def add_route_pair: (String) -> void
+
+      # : (String, String) -> String?
+      def symbol_after: (String, String) -> String?
+
+      # @rbs!
+      #   UNCOUNTABLE: Array[String]
+      UNCOUNTABLE: untyped
+
+      # : (String, String) -> String?
+      def keyword_value: (String, String) -> String?
+
+      # : (String) -> String?
+      def route_alias: (String) -> String?
+
+      # : (String) -> String
+      def singularize: (String) -> String
+
+      def trace_state: (untyped entry_point, untyped state) -> untyped
+
+      def flow_node: (untyped trace, untyped file, untyped via, untyped path) -> untyped
+
+      def nodes_for: (untyped file, untyped names) -> untyped
+
+      def collect_reachable_files: (untyped entry_point) -> untyped
+
+      def component_methods_for: (untyped template_path) -> untyped
+
+      def partial_index: () -> untyped
+
+      def expression_references?: (untyped expression, untyped name) -> untyped
+
+      def extract_helper_methods: (untyped file) -> untyped
+
+      def walk_for_defs: (untyped node, untyped methods) -> untyped
+
+      def load_helper_registry: () -> untyped
+
+      def find_view_root: () -> untyped
+    end
+  end
+end

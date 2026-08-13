@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0032_does not assign a slot to a static attribute"
+input: "<div class=\"static\"><%= @a %></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: fd3dfd36
+
+slots:
+  index=0  type=child  node_path=[0, 0]  expression="@a"  location=1:20

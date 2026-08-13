@@ -1,5 +1,6 @@
 export type DiffOperationType =
   | "text_changed"
+  | "whitespace_changed"
   | "attribute_value_changed"
   | "attribute_added"
   | "attribute_removed"

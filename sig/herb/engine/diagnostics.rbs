@@ -1,0 +1,73 @@
+# Generated from lib/herb/engine/diagnostics.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Opt-in for visitors that find something worth telling the developer about.
+    #
+    # A visitor records what it finds and keeps walking. The engine collects from every visitor
+    # afterwards and decides what to do with the result. That split is what lets a visitor that
+    # rewrites the tree also report, which a base class reserved for read-only validators could
+    # never do:
+    #
+    #     class MyVisitor < Herb::Visitor
+    #       include Herb::Engine::ContextAware
+    #       include Herb::Engine::Diagnostics
+    #
+    #       def visit_html_element_node(node)
+    #         warning("This element is suspicious.", node.location, code: "suspicious-element")
+    #
+    #         super
+    #       end
+    #     end
+    module Diagnostics
+      include Kernel
+
+      # : () -> Array[Herb::Diagnostic]
+      def diagnostics: () -> Array[Herb::Diagnostic]
+
+      # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def error: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+
+      # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+      def warning: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+
+      # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+      def info: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+
+      # : (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+      def hint: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
+
+      # : () -> Array[Herb::Diagnostic]
+      def errors: () -> Array[Herb::Diagnostic]
+
+      # : () -> Array[Herb::Diagnostic]
+      def warnings: () -> Array[Herb::Diagnostic]
+
+      # : () -> bool
+      def errors?: () -> bool
+
+      # : () -> bool
+      def warnings?: () -> bool
+
+      # : () -> void
+      def clear_diagnostics: () -> void
+
+      # : (?Symbol?) -> Integer
+      def diagnostic_count: (?Symbol?) -> Integer
+
+      private
+
+      # : (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def add_diagnostic: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
+
+      # : () -> String
+      def diagnostic_origin: () -> String
+
+      # : () -> Hash[Symbol, untyped]
+      def diagnostic_data: () -> Hash[Symbol, untyped]
+
+      # : () -> String
+      def diagnostic_template: () -> String
+    end
+  end
+end

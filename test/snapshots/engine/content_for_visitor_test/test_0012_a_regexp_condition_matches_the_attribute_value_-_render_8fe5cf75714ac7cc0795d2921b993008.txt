@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0012_a regexp condition matches the attribute value - render"
+input: "{source: \"<main class=\\\"a-panel\\\">One</main><main class=\\\"a-card\\\">Two</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"class\" => /panel/} content=\"<p>Appended</p>\">]}}"
+---
+<main class="a-panel">One<p>Appended</p></main><main class="a-card">Two</main>

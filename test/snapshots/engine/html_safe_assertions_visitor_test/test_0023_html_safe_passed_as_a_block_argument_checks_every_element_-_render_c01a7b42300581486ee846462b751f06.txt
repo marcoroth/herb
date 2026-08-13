@@ -1,0 +1,5 @@
+---
+source: "Engine::HTMLSafeAssertionsVisitorTest#test_0023_html_safe passed as a block argument checks every element - render"
+input: "{source: \"<div><%= items.map(&:html_safe).join %></div>\", locals: {items: [\"<p>one</p>\", \"<p>two</p>\"]}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+<div><p>one</p><p>two</p></div>

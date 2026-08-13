@@ -1,27 +1,35 @@
 ---
-name: cache_unless
+name: "cache_unless"
 source: "ActionView::Helpers::CacheHelper#cache_unless"
-gem: actionview
-output: void
-visibility: public
+gem: "actionview"
+output: "void"
+visibility: "public"
 supported: false
 supports_block: true
-description: |-
-  Cache fragments of a view unless condition is true.
 signature: "cache_unless(condition, name = {}, options = {}, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CacheHelper.html#method-i-cache_unless"
+
+description: |-
+  Cache fragments of a view unless condition is true.
+
 tag: null
+
 arguments:
-  - name: condition
+  - name: "condition"
     position: 1
-    type: boolean
+    type: "boolean"
     optional: false
-    description: "Condition to evaluate."
-  - name: name
+    description: |-
+      Condition to evaluate.
+
+  - name: "name"
     position: 2
-    type: [string, hash, object]
+    type: ["string", "hash", "object"]
     optional: true
     default: "{}"
-    description: "Cache key."
+    description: |-
+      Cache key.
+
 options: []
+block_arguments: []
 special_behaviors: []

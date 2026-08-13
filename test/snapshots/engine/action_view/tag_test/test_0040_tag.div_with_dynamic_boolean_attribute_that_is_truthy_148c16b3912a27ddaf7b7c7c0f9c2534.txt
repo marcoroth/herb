@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0040_tag.div with dynamic boolean attribute that is truthy"
+input: "{source: \"<%= tag.div hidden: a != b %>\", type: \"herb_output\", action_view_helpers: true}"
+---
+<div hidden></div>

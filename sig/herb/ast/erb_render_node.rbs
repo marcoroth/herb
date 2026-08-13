@@ -3,8 +3,6 @@
 module Herb
   module AST
     class ERBRenderNode < Node
-      PARTIAL_EXTENSIONS: untyped
-
       def static_partial?: () -> untyped
 
       def dynamic?: () -> untyped

@@ -1,0 +1,22 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0001_check reports a project where every render resolves"
+input: "<table><%= render \"posts/row\" %></table>"
+---
+exit: 0
+
+Herb 🌿 vVERSION
+
+✓ Using Herb config file at <project>/.herb.yml
+Checking render calls in 2 files...
+
+ ────────────────────────────────────────────────────────────
+
+ Summary:
+  Version      herb gem vVERSION, libprism vVERSION, libherb vVERSION (Ruby C native extension)
+  Checked      1 file
+  Renders      1 total | 1 with partial
+  Partials     1 on disk
+  Duration     <duration>
+
+ ✓ All render calls resolve and all partials are used!
+

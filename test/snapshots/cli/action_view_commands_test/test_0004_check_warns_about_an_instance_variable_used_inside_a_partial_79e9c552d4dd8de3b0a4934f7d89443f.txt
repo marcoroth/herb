@@ -1,0 +1,32 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0004_check warns about an instance variable used inside a partial"
+input: "ivar in partial: <%= render \"posts/row\" %>"
+---
+exit: 0
+
+Herb 🌿 vVERSION
+
+✓ Using Herb config file at <project>/.herb.yml
+Checking render calls in 2 files...
+
+ Dependency warnings:
+
+  Instance variables in partials (1 file)
+  Partials should receive data as locals for reactivity tracing.
+
+    app/views/posts/_row.html.erb
+      @post
+
+
+ ────────────────────────────────────────────────────────────
+
+ Summary:
+  Version      herb gem vVERSION, libprism vVERSION, libherb vVERSION (Ruby C native extension)
+  Checked      1 file
+  Renders      1 total | 1 with partial
+  Partials     1 on disk
+  Warnings     1 instance variable
+  Duration     <duration>
+
+ ✓ All render calls resolve and all partials are used!
+

@@ -116,6 +116,7 @@ void herb_diff_attributes(
               herb_diff_path_append(parent_path, (uint32_t) new_index),
               old_hashes,
               new_hashes,
+              false,
               result
             );
           }

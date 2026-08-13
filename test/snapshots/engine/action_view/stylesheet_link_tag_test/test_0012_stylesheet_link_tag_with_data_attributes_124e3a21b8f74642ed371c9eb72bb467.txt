@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0012_stylesheet_link_tag with data attributes"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", data: { turbo_track: \\\"reload\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" data-turbo-track="reload" />

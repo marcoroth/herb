@@ -58,6 +58,25 @@ module Herb
       def maps_to_aria_attribute? = maps_to&.start_with?("aria-") || false
     end
 
+    class HelperBlockArgument
+      attr_reader :name #: String
+      attr_reader :position #: Integer
+      attr_reader :type #: String
+      attr_reader :description #: String
+
+      #: (String, Integer, String, bool, String) -> void
+      def initialize(name, position, type, optional, description)
+        @name = name
+        @position = position
+        @type = type
+        @optional = optional
+        @description = description
+      end
+
+      #: () -> bool
+      def optional? = @optional
+    end
+
     class HelperImplicitAttribute
       attr_reader :name #: String
       attr_reader :source #: String
@@ -75,6 +94,35 @@ module Herb
       end
     end
 
+    class HelperContent
+      attr_reader :source #: Symbol
+      attr_reader :arg_position #: Integer?
+      attr_reader :skip_if_hash #: bool
+      attr_reader :to_s_suffix_when_single #: bool
+      attr_reader :positional_arguments_with_block #: Integer?
+
+      #: (Symbol, Integer?, bool, bool, Integer?) -> void
+      def initialize(source, arg_position, skip_if_hash, to_s_suffix_when_single, positional_arguments_with_block)
+        @source = source
+        @arg_position = arg_position
+        @skip_if_hash = skip_if_hash
+        @to_s_suffix_when_single = to_s_suffix_when_single
+        @positional_arguments_with_block = positional_arguments_with_block
+      end
+
+      #: () -> bool
+      def first_arg? = @source == :first_arg
+
+      #: () -> bool
+      def block_or_arg? = @source == :block_or_arg
+
+      #: () -> bool
+      def skip_if_hash? = @skip_if_hash
+
+      #: () -> bool
+      def to_s_suffix_when_single? = @to_s_suffix_when_single
+    end
+
     class HelperEntry
       attr_reader :name #: String
       attr_reader :type #: Symbol
@@ -82,22 +130,25 @@ module Herb
       attr_reader :gem #: String
       attr_reader :output #: Symbol
       attr_reader :visibility #: String
+      attr_reader :receiver #: String
       attr_reader :tag_name #: String?
       attr_reader :detect_style #: Symbol
       attr_reader :description #: String
       attr_reader :signature #: String
       attr_reader :documentation_url #: String
       attr_reader :implicit_attribute #: HelperImplicitAttribute?
+      attr_reader :content #: HelperContent?
       attr_reader :arguments #: Array[HelperArgument]
       attr_reader :options #: Array[HelperOption]
+      attr_reader :block_arguments #: Array[HelperBlockArgument]
       attr_reader :special_behaviors #: Array[Symbol]
       attr_reader :aliases #: Array[String]
 
-      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, receiver: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, content: HelperContent?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
       def initialize( # rubocop:disable Metrics/ParameterLists
-        name:, type:, source:, gem:, output:, visibility:, tag_name:, is_void:, supports_block:,
+        name:, type:, source:, gem:, output:, visibility:, receiver:, tag_name:, is_void:, supports_block:,
         preferred_for_tag:, supported:, detect_style:, description:, signature:, documentation_url:,
-        implicit_attribute:, arguments:, options:, special_behaviors:, aliases:
+        implicit_attribute:, content:, arguments:, options:, block_arguments:, special_behaviors:, aliases:
       )
         @name = name
         @type = type
@@ -105,6 +156,7 @@ module Herb
         @gem = gem
         @output = output
         @visibility = visibility
+        @receiver = receiver
         @tag_name = tag_name
         @is_void = is_void
         @supports_block = supports_block
@@ -115,8 +167,10 @@ module Herb
         @signature = signature
         @documentation_url = documentation_url
         @implicit_attribute = implicit_attribute
+        @content = content
         @arguments = arguments
         @options = options
+        @block_arguments = block_arguments
         @special_behaviors = special_behaviors
         @aliases = aliases
       end
@@ -140,6 +194,9 @@ module Herb
       def implicit_attribute? = !@implicit_attribute.nil?
 
       #: () -> bool
+      def content? = !@content.nil?
+
+      #: () -> bool
       def call_name_detect? = @detect_style == :call_name
 
       #: () -> bool
@@ -155,6 +212,7 @@ module Herb
         gem: "<%= helper.gem %>",
         output: :<%= helper.output %>,
         visibility: "<%= helper.visibility %>",
+        receiver: "<%= helper.receiver %>",
         tag_name: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "nil" %>,
         is_void: <%= helper.void? %>,
         supports_block: <%= helper.supports_block %>,
@@ -175,6 +233,17 @@ module Herb
       <%- else -%>
         implicit_attribute: nil,
       <%- end -%>
+      <%- if helper.content? -%>
+        content: HelperContent.new(
+          :<%= helper.content.source %>,
+          <%= helper.content.arg_position || "nil" %>,
+          <%= helper.content.skip_if_hash %>,
+          <%= helper.content.to_s_suffix_when_single %>,
+          <%= helper.content.positional_arguments_with_block || "nil" %>
+        ),
+      <%- else -%>
+        content: nil,
+      <%- end -%>
         arguments: [
         <%- helper.arguments.each do |arg| -%>
           HelperArgument.new("<%= arg.name %>", <%= arg.position %>, "<%= arg.type_display %>", <%= arg.optional %>, <%= arg.default ? "\"#{arg.escaped_default}\"" : "nil" %>, <%= arg.splat %>, "<%= arg.escaped_description %>"),
@@ -183,6 +252,11 @@ module Herb
         options: [
         <%- helper.options.each do |opt| -%>
           HelperOption.new("<%= opt.name %>", "<%= opt.type_display %>", <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "nil" %>, "<%= opt.escaped_description %>"),
+        <%- end -%>
+        ],
+        block_arguments: [
+        <%- helper.block_arguments.each do |arg| -%>
+          HelperBlockArgument.new("<%= arg.name %>", <%= arg.position %>, "<%= arg.type_display %>", <%= arg.optional %>, "<%= arg.escaped_description %>"),
         <%- end -%>
         ],
         special_behaviors: [<%= helper.special_behaviors.map { |b| ":#{b}" }.join(", ") %>],

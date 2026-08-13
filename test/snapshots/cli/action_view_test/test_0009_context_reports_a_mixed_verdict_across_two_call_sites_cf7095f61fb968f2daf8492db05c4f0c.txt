@@ -1,0 +1,22 @@
+---
+source: "CLI::ActionViewTest#test_0009_context reports a mixed verdict across two call sites"
+input: "mixed: <html><body><table><%= render \"posts/row\" %></table></body></html>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_row.html.erb
+
+ Rendered inside (2 paths)
+
+   ├── html › body › table
+   └── html › body › div
+
+ Verdicts
+
+   ✓ body always
+   ~ div mixed
+   ✓ html always
+   ~ table mixed
+
