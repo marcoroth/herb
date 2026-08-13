@@ -524,10 +524,12 @@ module Herb
         puts "  #{label("Partials")} #{partial_parts.join(" | ")}"
       end
 
+      #: (String) -> bool
       def component_template?(relative)
         relative.start_with?("app/components/")
       end
 
+      #: (Array[Hash[Symbol, untyped]]) -> void
       def print_warning_summary_line(warnings)
         return if warnings.empty?
 
@@ -774,6 +776,7 @@ module Herb
         [] #: Array[Hash[Symbol, untyped]]
       end
 
+      #: (Array[String], untyped, Pathname) -> Hash[String, Set[String]]
       def collect_passed_locals(erb_files, dep_analyzer, view_root)
         partial_files = find_partial_files(view_root)
         passed = Hash.new { |hash, key| hash[key] = Set.new } #: Hash[String, Set[String]]
@@ -805,6 +808,7 @@ module Herb
         passed
       end
 
+      #: (Hash[Symbol, untyped]) -> String
       def dynamic_call_display(call)
         prefix = call[:dynamic_prefix]
 
@@ -889,6 +893,7 @@ module Herb
         end
       end
 
+      #: (Array[Hash[Symbol, untyped]]) -> void
       def print_unknown_call_tally(warnings)
         tally = Hash.new(0) #: Hash[String, Integer]
 

@@ -17,6 +17,6 @@ impl Local {
   }
 
   pub fn locations(&self) -> Vec<Location> {
-    std::iter::once(self.declaration.clone()).chain(self.usages.iter().cloned()).collect()
+    std::iter::once(self.declaration).chain(self.usages.iter().copied()).collect()
   }
 }

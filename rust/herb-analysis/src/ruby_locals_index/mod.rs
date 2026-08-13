@@ -136,7 +136,7 @@ fn declaration_for(local: &AnyNode) -> Option<(String, Location)> {
 
   let token = parameter.name.as_ref()?;
   let name = token.value.clone();
-  let start = token.location.start.clone();
+  let start = token.location.start;
 
   Some((
     name.clone(),
@@ -182,7 +182,7 @@ fn block_locations(document: &herb::nodes::DocumentNode) -> Vec<Location> {
 
 fn collect_block_locations(node: &AnyNode, found: &mut Vec<Location>) {
   if matches!(node, AnyNode::ERBBlockNode(_) | AnyNode::ERBIterationBlockNode(_)) {
-    found.push(node.location().clone());
+    found.push(*node.location());
   }
 
   for child in any_children(node) {

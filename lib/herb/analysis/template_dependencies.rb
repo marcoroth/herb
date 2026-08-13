@@ -99,6 +99,8 @@ module Herb
         index
       end
 
+      # @rbs!
+      #   KERNEL_METHODS: Array[String]
       KERNEL_METHODS = [
         "rand", "srand", "format", "sprintf", "raise", "loop", "sleep", "catch", "throw",
         "block_given?", "caller", "binding", "frozen?", "freeze", "dup", "clone", "tap", "then",
@@ -123,10 +125,12 @@ module Herb
       end
 
       private
+      #: (String) -> Set[String]
       def guarded_locals(source)
         source.scan(/defined\?\s*\(\s*([a-z_]\w*)\s*\)/).flatten.to_set
       end
 
+      #: () -> Set[String]
       def scan_helper_methods!
         ["app", "lib"].each do |directory|
           root = @project_path.join(directory)
@@ -139,11 +143,11 @@ module Herb
             next unless source.include?("helper_method") || source.include?("add_flash_types")
 
             source.scan(/helper_method\s+([:\w\s,?!]+)/) do |match|
-              match[0].scan(/:(\w+[?!]?)/) { |name| @custom_helpers.add(name[0]) }
+              match[0].to_s.scan(/:(\w+[?!]?)/) { |name| @custom_helpers.add(name[0]) }
             end
 
             source.scan(/add_flash_types[\s(]+([:\w\s,]+)/) do |match|
-              match[0].scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
+              match[0].to_s.scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
             end
           rescue StandardError
             next
@@ -153,6 +157,7 @@ module Herb
         @custom_helpers
       end
 
+      #: () -> Set[String]
       def scan_routes!
         routes_file = @project_path.join("config", "routes.rb")
 
@@ -317,6 +322,7 @@ module Herb
         @custom_helpers
       end
 
+      #: (String) -> void
       def add_route_pair(stem)
         return if stem.empty?
 
@@ -324,6 +330,7 @@ module Herb
         @custom_helpers.add("#{stem}_url")
       end
 
+      #: (String, String) -> String?
       def symbol_after(line, keyword)
         return nil if keyword.strip.empty?
 
@@ -332,16 +339,21 @@ module Herb
         rest
       end
 
+      # @rbs!
+      #   UNCOUNTABLE: Array[String]
       UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
 
+      #: (String, String) -> String?
       def keyword_value(line, keyword)
         line[/(?:\A|[\s,(])#{Regexp.escape(keyword)}: :(\w+)/, 1]
       end
 
+      #: (String) -> String?
       def route_alias(line)
         keyword_value(line, "as") || line[/:as\s*=>\s*:(\w+)/, 1]
       end
 
+      #: (String) -> String
       def singularize(name)
         return name if UNCOUNTABLE.include?(name)
 
