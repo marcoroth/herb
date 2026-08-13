@@ -6,6 +6,6 @@
 #include <stdbool.h>
 
 void rb_init_node_classes(void);
-VALUE rb_node_from_c_struct(AST_NODE_T* node, bool track_locations);
+VALUE rb_node_from_c_struct(AST_NODE_T* node, const parser_options_T* options);
 
 #endif

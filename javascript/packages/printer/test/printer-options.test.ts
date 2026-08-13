@@ -16,6 +16,34 @@ describe("Printer Options", () => {
     })
   })
 
+  describe("track_locations option", () => {
+    const source = `<div class="card">Hello</div>`
+    const message = "Cannot print the node (AST_DOCUMENT_NODE) since it was parsed with `track_locations: false`. The printer needs source locations, so re-parse the source with `track_locations: true`."
+
+    test("throws when printing a node parsed without locations", () => {
+      const parseResult = Herb.parse(source, { track_whitespace: true, track_locations: false })
+
+      expect(() => {
+        new IdentityPrinter().print(parseResult.value!)
+      }).toThrow(message)
+    })
+
+    test("throws when printing a parse result produced without locations", () => {
+      const parseResult = Herb.parse(source, { track_whitespace: true, track_locations: false })
+
+      expect(() => {
+        new IdentityPrinter().print(parseResult)
+      }).toThrow(message)
+    })
+
+    test("prints normally when locations are tracked", () => {
+      const parseResult = Herb.parse(source, { track_whitespace: true })
+
+      expect(new IdentityPrinter().print(parseResult.value!)).toBe(source)
+      expect(new IdentityPrinter().print(parseResult)).toBe(source)
+    })
+  })
+
   describe("ignoreErrors option", () => {
     test("throws error when printing nodes with errors (default behavior)", () => {
       const source = "<% if condition without end %>"

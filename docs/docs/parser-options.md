@@ -35,6 +35,7 @@ Any option you leave out falls back to its default. `Herb.parse_file`/`Herb.pars
 | [`strict`](#strict)                     | `Boolean` | `true`                                    | Report diagnostics for patterns that are valid HTML+ERB but ambiguous for tooling                      |
 | [`analyze`](#analyze)                   | `Boolean` | `true`                                    | Run the post-parse analysis passes (ERB control-flow structure, HTML tag matching, Ruby syntax errors) |
 | [`track_whitespace`](#track-whitespace) | `Boolean` | `false`                                   | Keep insignificant whitespace in the syntax tree as `WhitespaceNode`s                                  |
+| [`track_locations`](#track-locations)   | `Boolean` | `true`                                    | Attach source locations and ranges to every node and token                                             |
 | `html`                                  | `Boolean` | `true`                                    | Parse HTML tags. When `false`, HTML-like content is treated as literal text                            |
 | `action_view_helpers`                   | `Boolean` | `false`                                   | Detect Action View tag helpers (`tag`, `content_tag`, `link_to`, …) and parse their block bodies       |
 | `transform_conditionals`                | `Boolean` | `false`                                   | Transform postfix conditionals and ternaries in ERB content                                            |
@@ -255,6 +256,33 @@ herb parse index.html.erb --track-whitespace
 
 > [!TIP]
 > Enable `track_whitespace` whenever you intend to print, rewrite, or format a template and need the output to match the input exactly. Herb's own printer, formatter, rewriter, and linter all opt into it. Leave it off when you are only inspecting or analyzing the tree, since the extra nodes are noise you would have to skip over.
+
+## `track_locations` <Badge type="tip" text="^0.11.0" />
+
+**Type:** `Boolean` **Default:** `true`
+
+Every node and token normally carries a `location` (a start and end `Position`) and, for tokens, a `range` of byte offsets. Building those objects is a meaningful share of the work a parse does, and callers that never read them pay for objects they immediately discard.
+
+With `track_locations: false`, the parser skips materializing them. `location` and `range` come back empty on every node and token:
+
+:::code-group
+```ruby [Ruby]
+result = Herb.parse("<div>Hello</div>", track_locations: false)
+
+result.value.location # => nil
+```
+
+```js [JavaScript]
+const result = Herb.parse("<div>Hello</div>", { track_locations: false })
+
+result.value.location // => null
+```
+:::
+
+Everything else about the tree is unchanged. The same nodes are built in the same order, and errors keep their locations so diagnostics stay usable.
+
+> [!WARNING]
+> Most tooling built on Herb reads locations, so disabling them is only safe for a pipeline you control end to end. The linter, formatter, printer, rewriter, and language server all require locations, and the type definitions in every binding still declare `location` as present. Use this when you parse purely to compile or inspect content, such as rendering a template with validation disabled.
 
 ## Inspecting the Options Used for a Parse
 

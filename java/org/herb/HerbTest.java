@@ -103,6 +103,19 @@ public class HerbTest {
   }
 
   @Test
+  void testParserOptionsTrackLocations() {
+    String source = "<div class=\"example\">content</div>";
+
+    ParseResult withLocations = Herb.parse(source);
+    ParseResult withoutLocations = Herb.parse(source, ParserOptions.create().trackLocations(false));
+
+    assertNotNull(withLocations.value.getLocation());
+    assertNull(withoutLocations.value.getLocation());
+    assertEquals(withLocations.value.getType(), withoutLocations.value.getType());
+    assertEquals(withLocations.getErrorCount(), withoutLocations.getErrorCount());
+  }
+
+  @Test
   void testParserOptionsPrismNodes() {
     String source = "<%= user.name %>";
 

@@ -11,7 +11,7 @@ require_relative "engine/slot_visitor"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout
 
   def initialize(args)
     @args = args
@@ -171,7 +171,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, track_locations: track_locations.nil? || track_locations, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
                 when "compile"
                   compile_template
                 when "render"
@@ -319,6 +319,14 @@ class Herb::CLI
 
       parser.on("--track-whitespace", "Enable whitespace tracking (for parse command) (default: false)") do
         self.track_whitespace = true
+      end
+
+      parser.on("--track-locations", "Enable source location tracking (for parse command) (default: true)") do
+        self.track_locations = true
+      end
+
+      parser.on("--no-track-locations", "Disable source location tracking (for parse command)") do
+        self.track_locations = false
       end
 
       parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do

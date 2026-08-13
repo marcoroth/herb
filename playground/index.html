@@ -462,6 +462,17 @@
                     <span class="select-none">Track insignificant whitespace</span>
                   </label>
 
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Attach source locations and ranges to every node and token — uncheck to skip building them, which shows every location as ∅">
+                    <input
+                      type="checkbox"
+                      data-option="track_locations"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      checked
+                    />
+                    <span class="select-none">Track locations</span>
+                  </label>
+
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Enable strict HTML parsing mode with additional validation">
                     <input
                       type="checkbox"

@@ -162,7 +162,7 @@ class <%= node.name %> extends BaseNode {
   public String inspect(String source) {
     StringBuilder output = new StringBuilder();
 
-    output.append("@ <%= node.name %> ").append(location != null ? "(location: " + location.toString() + ")" : "no-location").append("\n");
+    output.append("@ <%= node.name %> ").append("(location: " + (location != null ? location.toString() : "∅") + ")").append("\n");
     <%- if node.fields.any? -%>
     output.append(inspectErrors("│   "));
     <%- else -%>

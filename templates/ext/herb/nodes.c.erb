@@ -9,8 +9,8 @@
 #include "../../src/include/herb.h"
 #include "../../src/include/lexer/token.h"
 
-VALUE rb_node_from_c_struct(AST_NODE_T* node, bool track_locations);
-static VALUE rb_nodes_array_from_c_array(hb_array_T* array, bool track_locations);
+VALUE rb_node_from_c_struct(AST_NODE_T* node, const parser_options_T* options);
+static VALUE rb_nodes_array_from_c_array(hb_array_T* array, const parser_options_T* options);
 
 static VALUE mAST;
 static VALUE cNode;
@@ -27,13 +27,13 @@ void rb_init_node_classes(void) {
 }
 
 <%- nodes.each do |node| -%>
-static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= node.human %>, bool track_locations) {
+static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= node.human %>, const parser_options_T* options) {
   if (<%= node.human %> == NULL) { return Qnil; }
 
   AST_NODE_T* node = &<%= node.human %>->base;
 
   VALUE type = rb_string_from_hb_string(ast_node_type_to_string(node));
-  VALUE location = track_locations ? rb_location_from_c_struct(node->location) : Qnil;
+  VALUE location = options->track_locations ? rb_location_from_c_struct(node->location) : Qnil;
   VALUE errors = rb_errors_array_from_c_array(node->errors);
 
   <%- node.fields.each do |field| -%>
@@ -41,17 +41,17 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- when Herb::Template::StringField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct((AST_NODE_T*) <%= node.human %>-><%= field.name %>, track_locations);
+  VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct((AST_NODE_T*) <%= node.human %>-><%= field.name %>, options);
   <%- when Herb::Template::TokenField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_token_from_c_struct(<%= node.human %>-><%= field.name %>, track_locations);
+  VALUE <%= node.human %>_<%= field.name %> = rb_token_from_c_struct(<%= node.human %>-><%= field.name %>, options);
   <%- when Herb::Template::BooleanField -%>
   VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %>) ? Qtrue : Qfalse;
   <%- when Herb::Template::ArrayField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>, track_locations);
+  VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>, options);
   <%- when Herb::Template::ElementSourceField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::LocationField -%>
-  VALUE <%= node.human %>_<%= field.name %> = (track_locations && <%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
+  VALUE <%= node.human %>_<%= field.name %> = (options->track_locations && <%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
   <%- when Herb::Template::PrismSerializedField -%>
   VALUE <%= node.human %>_<%= field.name %>;
   if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
@@ -101,19 +101,19 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
 
 <%- end -%>
 
-VALUE rb_node_from_c_struct(AST_NODE_T* node, bool track_locations) {
+VALUE rb_node_from_c_struct(AST_NODE_T* node, const parser_options_T* options) {
   if (!node) { return Qnil; }
 
   switch (node->type) {
   <%- nodes.each do |node| -%>
-    case <%= node.type %>: return rb_<%= node.human %>_from_c_struct((<%= node.struct_type %>*) node, track_locations); break;
+    case <%= node.type %>: return rb_<%= node.human %>_from_c_struct((<%= node.struct_type %>*) node, options); break;
   <%- end -%>
   }
 
   return Qnil;
 }
 
-static VALUE rb_nodes_array_from_c_array(hb_array_T* array, bool track_locations) {
+static VALUE rb_nodes_array_from_c_array(hb_array_T* array, const parser_options_T* options) {
   VALUE rb_array = rb_ary_new();
 
   if (array) {
@@ -121,7 +121,7 @@ static VALUE rb_nodes_array_from_c_array(hb_array_T* array, bool track_locations
       AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
       if (child_node) {
-        VALUE rb_child = rb_node_from_c_struct(child_node, track_locations);
+        VALUE rb_child = rb_node_from_c_struct(child_node, options);
         rb_ary_push(rb_array, rb_child);
       }
     }

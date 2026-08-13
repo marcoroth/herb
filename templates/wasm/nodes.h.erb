@@ -5,11 +5,11 @@ extern "C" {
 #include "../src/include/herb.h"
 }
 
-emscripten::val NodeFromCStruct(AST_NODE_T* node);
-emscripten::val NodesArrayFromCArray(hb_array_T* array);
+emscripten::val NodeFromCStruct(AST_NODE_T* node, const parser_options_T* options);
+emscripten::val NodesArrayFromCArray(hb_array_T* array, const parser_options_T* options);
 
 <%- nodes.each do |node| -%>
-emscripten::val <%= node.human %>NodeFromCStruct(<%= node.struct_type %>* <%= node.human %>);
+emscripten::val <%= node.human %>NodeFromCStruct(<%= node.struct_type %>* <%= node.human %>, const parser_options_T* options);
 <%- end -%>
 
 #endif

@@ -84,6 +84,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         }
       }
 
+      napi_value track_locations_prop;
+      bool has_track_locations_prop;
+      napi_has_named_property(env, args[1], "track_locations", &has_track_locations_prop);
+
+      if (has_track_locations_prop) {
+        napi_get_named_property(env, args[1], "track_locations", &track_locations_prop);
+        bool track_locations_value;
+        napi_get_value_bool(env, track_locations_prop, &track_locations_value);
+        parser_options.track_locations = track_locations_value;
+      }
+
       napi_value analyze_prop;
       bool has_analyze_prop;
       napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
@@ -471,7 +482,7 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
     napi_set_named_property(env, operation_object, "path", path);
 
     if (operation->old_node != NULL) {
-      napi_set_named_property(env, operation_object, "oldNode", NodeFromCStruct(env, (AST_NODE_T*) operation->old_node));
+      napi_set_named_property(env, operation_object, "oldNode", NodeFromCStruct(env, (AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       napi_value null_val;
       napi_get_null(env, &null_val);
@@ -479,7 +490,7 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
     }
 
     if (operation->new_node != NULL) {
-      napi_set_named_property(env, operation_object, "newNode", NodeFromCStruct(env, (AST_NODE_T*) operation->new_node));
+      napi_set_named_property(env, operation_object, "newNode", NodeFromCStruct(env, (AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       napi_value null_val;
       napi_get_null(env, &null_val);

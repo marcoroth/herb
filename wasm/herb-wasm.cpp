@@ -53,6 +53,10 @@ val Herb_parse(const std::string& source, val options) {
       }
     }
 
+    if (options.hasOwnProperty("track_locations")) {
+      parser_options.track_locations = options["track_locations"].as<bool>();
+    }
+
     if (options.hasOwnProperty("analyze")) {
       bool analyze = options["analyze"].as<bool>();
       if (!analyze) {
@@ -264,13 +268,13 @@ val Herb_diff(const std::string& old_source, const std::string& new_source, val 
     operation_object.set("path", path);
 
     if (operation->old_node != NULL) {
-      operation_object.set("oldNode", NodeFromCStruct((AST_NODE_T*) operation->old_node));
+      operation_object.set("oldNode", NodeFromCStruct((AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       operation_object.set("oldNode", val::null());
     }
 
     if (operation->new_node != NULL) {
-      operation_object.set("newNode", NodeFromCStruct((AST_NODE_T*) operation->new_node));
+      operation_object.set("newNode", NodeFromCStruct((AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       operation_object.set("newNode", val::null());
     }

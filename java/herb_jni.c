@@ -44,6 +44,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       }
     }
 
+    jmethodID getTrackLocations =
+        (*env)->GetMethodID(env, optionsClass, "isTrackLocations", "()Z");
+
+    if (getTrackLocations != NULL) {
+      jboolean trackLocations = (*env)->CallBooleanMethod(env, options, getTrackLocations);
+      parser_options.track_locations = (trackLocations == JNI_TRUE);
+    }
+
     jmethodID getAnalyze =
         (*env)->GetMethodID(env, optionsClass, "isAnalyze", "()Z");
 
@@ -175,7 +183,7 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
 
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, &allocator);
 
-  jobject result = CreateParseResult(env, ast, source);
+  jobject result = CreateParseResult(env, ast, source, &parser_options);
 
   ast_node_free((AST_NODE_T*) ast, &allocator);
   hb_allocator_destroy(&allocator);
@@ -384,8 +392,8 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
 
     (*env)->ReleaseIntArrayElements(env, path_array, path_elements, 0);
 
-    jobject old_node = operation->old_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->old_node) : NULL;
-    jobject new_node = operation->new_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->new_node) : NULL;
+    jobject old_node = operation->old_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS) : NULL;
+    jobject new_node = operation->new_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS) : NULL;
 
     jobject diff_operation = (*env)->NewObject(
       env, diff_operation_class, diff_operation_constructor,

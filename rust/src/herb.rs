@@ -6,6 +6,7 @@ use std::ffi::{CStr, CString};
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
   pub track_whitespace: bool,
+  pub track_locations: bool,
   pub analyze: bool,
   pub strict: bool,
   pub action_view_helpers: bool,
@@ -18,7 +19,6 @@ pub struct ParserOptions {
   pub prism_program: bool,
   pub dot_notation_tags: bool,
   pub html: bool,
-  pub track_locations: bool,
   pub timeout: u32,
   pub max_errors: Option<u32>,
 }
@@ -27,6 +27,7 @@ impl Default for ParserOptions {
   fn default() -> Self {
     Self {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,
@@ -39,7 +40,6 @@ impl Default for ParserOptions {
       prism_program: false,
       dot_notation_tags: false,
       html: true,
-      track_locations: true,
       timeout: 1000,
       max_errors: Some(25),
     }
@@ -115,6 +115,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
 
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
+      track_locations: options.track_locations,
       analyze: options.analyze,
       strict: options.strict,
       action_view_helpers: options.action_view_helpers,
@@ -127,7 +128,6 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       prism_nodes_deep: options.prism_nodes_deep,
       dot_notation_tags: options.dot_notation_tags,
       html: options.html,
-      track_locations: options.track_locations,
       start_line: 0,
       start_column: 0,
       timeout_ms: options.timeout,

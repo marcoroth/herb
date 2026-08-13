@@ -1856,6 +1856,7 @@ export default class extends Controller {
     }
 
     if (this.hasPrinterViewerTarget) {
+      const trackLocations = this.getParserOptions().track_locations
       const printedContent = result.printed || 'No printed output available'
 
       if (typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')) {
@@ -1874,7 +1875,13 @@ export default class extends Controller {
         const trackWhitespace = options.track_whitespace
         const isError = typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')
 
-        if (isError) {
+        if (!trackLocations) {
+          this.printerVerificationTarget.textContent = '⚠ Enable "Track locations"'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+          this.updatePrinterVerificationTooltip('The printer needs source locations. Enable "Track locations" to print the parsed document.')
+          this.hidePrinterDiff()
+          this.hidePrinterLegend()
+        } else if (isError) {
           this.printerVerificationTarget.textContent = '⚠ Round-trip Failed'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
           this.updatePrinterVerificationTooltip('Source → Parse → AST → Print → Source failed due to printer error - unable to verify document preservation. Try enabling "Ignore errors" to attempt printing anyway.')
@@ -2155,6 +2162,7 @@ export default class extends Controller {
   setOptionsInURL(options) {
     const defaults = {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,

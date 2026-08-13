@@ -76,7 +76,7 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
   if (parseResult && parseResult.value) {
     rewritten = await safeExecute<string>(
       new Promise((resolve) => {
-        const rewriteParseResult = herb.parse(source, { ...options, track_whitespace: true })
+        const rewriteParseResult = herb.parse(source, { ...options, track_whitespace: true, track_locations: true })
         const rewriter = new ActionViewTagHelperToHTMLRewriter()
         const { output } = rewrite(rewriteParseResult.value, [rewriter], { baseDir: "/" })
         resolve(output)

@@ -92,7 +92,9 @@ module Herb
       def tree_inspect(indent: 0, depth: 0, depth_limit: 10)
         output = +""
 
-        output += white("@ #{bold(yellow(node_name.to_s))} #{dimmed("(location: #{location.tree_inspect})")}")
+        location_inspect = location ? location.tree_inspect : "∅"
+
+        output += white("@ #{bold(yellow(node_name.to_s))} #{dimmed("(location: #{location_inspect})")}")
         output += "\n"
 
         if depth >= depth_limit

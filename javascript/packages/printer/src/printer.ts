@@ -60,6 +60,12 @@ export abstract class Printer extends Visitor {
 
     const node: Node = isParseResult(input) ? input.value : input
 
+    const trackedLocations = isParseResult(input) ? input.options.track_locations : node.location !== null && node.location !== undefined
+
+    if (!trackedLocations) {
+      throw new Error(`Cannot print the node (${node.type}) since it was parsed with \`track_locations: false\`. The printer needs source locations, so re-parse the source with \`track_locations: true\`.`)
+    }
+
     if (options.ignoreErrors === false && node.recursiveErrors().length > 0) {
       throw new Error(`Cannot print the node (${node.type}) since it or any of its children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)
     }
