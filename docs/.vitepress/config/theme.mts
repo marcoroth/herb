@@ -21,6 +21,7 @@ const defaultSidebar = [
       { text: "CLI", link: "/projects/cli" },
       { text: "Dev Server", link: "/projects/dev-server" },
       { text: "Dev Tools", link: "/projects/dev-tools" },
+      { text: "Client Runtime", link: "/projects/client" },
     ],
   },
   {
