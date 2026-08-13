@@ -29,6 +29,7 @@ export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
     return {
       enabled: true,
       severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

@@ -52,6 +52,14 @@ A `String#pluralize` call that passes a locale is not reported, because the help
 <%= aliases.size %> Known <%= "Alias".pluralize(aliases.size) %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [`ActionView::Helpers::TextHelper#pluralize`](https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-pluralize)

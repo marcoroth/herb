@@ -117,6 +117,36 @@ describe('AutofixService', () => {
       expect(result).toEqual([])
     })
 
+    it('should fix framework-scoped rules when the project configures their framework', async () => {
+      const config = Config.fromObject({
+        framework: 'actionview',
+        linter: { enabled: true }
+      }, { projectPath: '/test', version: '0.10.3' })
+
+      autofixService.setConfig(config)
+
+      const input = '<%= "Sale".html_safe %>\n'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      const result = await autofixService.autofix(document)
+
+      expect(result[0].newText).not.toContain('html_safe')
+    })
+
+    it('should leave framework-scoped rules alone when the project configures another framework', async () => {
+      const config = Config.fromObject({
+        framework: 'sinatra',
+        linter: { enabled: true }
+      }, { projectPath: '/test', version: '0.10.3' })
+
+      autofixService.setConfig(config)
+
+      const input = '<%= "Sale".html_safe %>\n'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      const result = await autofixService.autofix(document)
+
+      expect(result).toEqual([])
+    })
+
     it('should rebuild linter when config changes', async () => {
       const config1 = Config.fromObject({
         linter: { enabled: true }

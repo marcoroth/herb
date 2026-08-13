@@ -64,6 +64,7 @@ export class ActionViewStrictLocalsFirstLineRule extends ParserRule {
     return {
       enabled: false,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

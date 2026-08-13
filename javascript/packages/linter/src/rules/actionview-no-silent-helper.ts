@@ -102,7 +102,8 @@ export class ActionViewNoSilentHelperRule extends ParserRule<ActionViewNoSilentH
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

@@ -55,6 +55,7 @@ export class ActionViewNoImplicitPartialRule extends ParserRule {
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

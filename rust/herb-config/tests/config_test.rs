@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use herb_config::{Config, HerbConfig, HerbConfigOptions, IndentStyle, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
+use herb_config::{Config, Framework, HerbConfig, HerbConfigOptions, IndentStyle, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
 
 fn default_include_patterns() -> Vec<String> {
   Config::get_default_file_patterns()
@@ -213,6 +213,15 @@ mod config_from_object {
     let config = Config::from_object(&HerbConfigOptions::default(), Path::new("/project"), Some("1.2.3"), None).unwrap();
 
     assert_eq!(config.version(), "1.2.3");
+  }
+
+  #[test]
+  fn creates_config_with_rule_frameworks() {
+    let config = config_from_yaml("linter:\n  rules:\n    actionview-no-silent-render:\n      frameworks:\n        - ruby\n        - actionview\n");
+
+    let rule = config.get_rule_config("actionview-no-silent-render").unwrap();
+
+    assert_eq!(rule.frameworks, Some(vec![Framework::Ruby, Framework::ActionView]));
   }
 }
 

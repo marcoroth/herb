@@ -130,7 +130,8 @@ export class ActionViewNoHelperShadowingRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

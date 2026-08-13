@@ -727,20 +727,6 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
 
-[info] The partial \`post\` is looked up relative to the directory of the template rendering it. Moving this template changes which file that resolves to, and renaming the partial means hunting for callers that never spell its full name. Write the full path from the view root so it resolves to the same file from any template, and a search for that path finds every caller. (actionview-prefer-qualified-partial-path)
-
-test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:21
-
-      7 │ <% end %>
-      8 │ 
-  →   9 │ <%=  render partial: "post",
-        │                      ~~~~~~
-     10 │            as: :post
-     11 │ %>
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/5] ⎯⎯⎯⎯
-
 [error] Remove extra whitespace after \`<%\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
 test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
@@ -759,7 +745,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
               2 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/5] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/4] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace before \`%>\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -779,7 +765,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
               2 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/5] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/4] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%=\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -802,7 +788,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
              10 │            as: :post
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/5] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
 
 [error] Avoid unused expressions in silent ERB tags. \`<% extra_whitespace %>\` is evaluated but its return value is discarded. Use \`<%= extra_whitespace %>\` to output the value or remove the expression. (erb-no-unused-expressions)
 
@@ -817,15 +803,13 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
  Rule offenses:
   erb-no-extra-whitespace-inside-tags (3 offenses in 1 file)
-  actionview-prefer-qualified-partial-path (1 offense in 1 file)
   erb-no-unused-expressions (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Failing      4 errors (4 offenses across 1 file)
-  Not failing  1 info (1 offense across 1 file, below --fail-level=error)
-  Fixable      5 offenses | 3 autocorrectable using \`--fix\`
+  Offenses     4 errors (4 offenses across 1 file)
+  Fixable      4 offenses | 3 autocorrectable using \`--fix\`
   Rules        119 enabled | 21 not enabled"
 `;
 
@@ -892,7 +876,7 @@ test/fixtures/ignored.html.erb:6:14
 exports[`CLI Output Formatting > New rules available hint > keeps the space before the version label inside the gray sequence 1`] = `"  ]8;;https://herb-tools.dev/linter/rules/svg-tag-name-capitalization\\[37msvg-tag-name-capitalization[0m]8;;\\[90m (introduced in 0.4.2)[0m"`;
 
 exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `
-"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/actionview.herb.yml
 
 [warning] Avoid using \`tag.attributes\` to set all attributes on \`<div>\`. Use \`tag.div\` or add the attributes directly to the \`<div>\` tag instead. (actionview-no-unnecessary-tag-attributes) [Correctable]
 

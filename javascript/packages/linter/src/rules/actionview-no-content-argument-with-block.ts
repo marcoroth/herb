@@ -88,6 +88,7 @@ export class ActionViewNoContentArgumentWithBlockRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

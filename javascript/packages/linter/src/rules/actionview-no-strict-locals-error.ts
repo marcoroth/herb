@@ -141,6 +141,7 @@ export class ActionViewNoStrictLocalsErrorRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

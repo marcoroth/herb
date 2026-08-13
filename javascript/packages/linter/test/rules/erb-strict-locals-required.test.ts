@@ -117,7 +117,7 @@ describe("ERBStrictLocalsRequiredRule", () => {
       `
 
       const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule], config)
-      const result = linter.lint(html, { fileName: "_user_card.html.erb" })
+      const result = linter.lint(html, { fileName: "_user_card.html.erb", framework: "actionview" })
 
       expect(result.offenses).toHaveLength(1)
 
@@ -131,7 +131,7 @@ describe("ERBStrictLocalsRequiredRule", () => {
 
     test("points at the first line for a single-line partial", () => {
       const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule], config)
-      const result = linter.lint(`<%= user.name %>`, { fileName: "_user.html.erb" })
+      const result = linter.lint(`<%= user.name %>`, { fileName: "_user.html.erb", framework: "actionview" })
 
       expect(result.offenses).toHaveLength(1)
 

@@ -21,7 +21,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -33,7 +33,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     const expected = "<%# locals: (user:) %>\n\n<div><%= user.name %></div>\n"
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -49,7 +49,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
 
     expect(result.source).toContain("<%# locals: (user:) %>")
     expect(result.source).toMatch(/^<%# locals: \(user:\) %>/)
@@ -66,7 +66,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -89,7 +89,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -104,7 +104,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" })
+    const result = linter.autofix(input, { fileName: "_partial.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -118,7 +118,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
-    const result = linter.autofix(input, { fileName: "show.html.erb" })
+    const result = linter.autofix(input, { fileName: "show.html.erb", framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)

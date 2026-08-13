@@ -208,6 +208,7 @@ export class ActionViewPreferPluralizeHelperRule extends ParserRule {
     return {
       enabled: true,
       severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 
