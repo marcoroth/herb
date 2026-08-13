@@ -85,6 +85,15 @@ export default class extends Controller {
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
+    "highlighterViewer",
+    "highlighterOutput",
+    "highlighterShowDiagnostics",
+    "highlighterShowLineNumbers",
+    "highlighterSplitDiagnostics",
+    "highlighterSplitDiagnosticsLabel",
+    "highlighterFocusLine",
+    "highlighterFocusLineLabel",
+    "highlighterContextLines",
     "rewriteViewer",
     "rewriteOutput",
     "rewriteStatus",
@@ -708,7 +717,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full', 'highlighter']
     return validTabs.includes(tab)
   }
 
@@ -974,6 +983,7 @@ export default class extends Controller {
         formatterOptions,
         autofixOptions: {},
         linterOptions: {},
+        highlighterOptions: {},
         jobs: ["format"],
       })
 
@@ -1006,6 +1016,7 @@ export default class extends Controller {
       formatterOptions: {},
       autofixOptions: { includeUnsafe },
       linterOptions: this.getLinterOptions(),
+      highlighterOptions: {},
       jobs: ["lint", "autofix"],
     })
 
@@ -1132,6 +1143,8 @@ export default class extends Controller {
     const formatterOptions = this.getFormatterOptions()
     const autofixOptions = this.getAutofixOptions()
     const linterOptions = this.getLinterOptions()
+    const highlighterOptions = this.getHighlighterOptions()
+
     const result = await this.analyzeClient.analyzeLatest({
       source: value,
       options,
@@ -1139,6 +1152,7 @@ export default class extends Controller {
       formatterOptions,
       autofixOptions,
       linterOptions,
+      highlighterOptions,
       jobs: this.analyzeJobs,
     })
 
@@ -1282,6 +1296,28 @@ export default class extends Controller {
         this.rewriteOutputTarget.textContent = result.rewritten || 'No rewritten output available'
 
         Prism.highlightElement(this.rewriteOutputTarget)
+      }
+    }
+
+    if (this.hasHighlighterOutputTarget && result.highlighted !== undefined) {
+      this.highlighterOutputTarget.textContent = result.highlighted || "No highlighter output available"
+
+      const offenses = result.lintOffenses ? result.lintOffenses.length : 0
+
+      const showingDiagnostics = this.hasHighlighterShowDiagnosticsTarget
+        ? this.highlighterShowDiagnosticsTarget.checked && offenses > 0
+        : offenses > 0
+
+      if (this.hasHighlighterFocusLineTarget) {
+        this.highlighterFocusLineTarget.disabled = showingDiagnostics
+      }
+
+      if (this.hasHighlighterFocusLineLabelTarget) {
+        this.highlighterFocusLineLabelTarget.classList.toggle("opacity-40", showingDiagnostics)
+      }
+
+      if (this.hasHighlighterSplitDiagnosticsLabelTarget) {
+        this.highlighterSplitDiagnosticsLabelTarget.classList.toggle("opacity-40", !showingDiagnostics)
       }
     }
 
@@ -1674,6 +1710,44 @@ export default class extends Controller {
     }
 
     return options
+  }
+
+  getHighlighterOptions() {
+    const options = {}
+
+    if (this.hasHighlighterShowDiagnosticsTarget) {
+      options.showDiagnostics = this.highlighterShowDiagnosticsTarget.checked
+    }
+
+    if (this.hasHighlighterShowLineNumbersTarget) {
+      options.showLineNumbers = this.highlighterShowLineNumbersTarget.checked
+    }
+
+    if (this.hasHighlighterSplitDiagnosticsTarget) {
+      options.splitDiagnostics = this.highlighterSplitDiagnosticsTarget.checked
+    }
+
+    if (this.hasHighlighterFocusLineTarget) {
+      const focusLine = parseInt(this.highlighterFocusLineTarget.value, 10)
+
+      if (!isNaN(focusLine) && focusLine > 0) {
+        options.focusLine = focusLine
+      }
+    }
+
+    if (this.hasHighlighterContextLinesTarget) {
+      const contextLines = parseInt(this.highlighterContextLinesTarget.value, 10)
+
+      if (!isNaN(contextLines) && contextLines >= 0) {
+        options.contextLines = contextLines
+      }
+    }
+
+    return options
+  }
+
+  onHighlighterOptionChange() {
+    this.analyze()
   }
 
   getLinterOptions() {

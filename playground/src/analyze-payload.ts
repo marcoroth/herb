@@ -21,6 +21,7 @@ export type AnalyzePayload = {
   formatted?: string
   printed?: string
   rewritten?: string | null
+  highlighted?: string
   version?: string
   duration: number
   parserDiagnostics: AnalyzeDiagnostic[]
@@ -81,6 +82,7 @@ export function toAnalyzePayload(result: AnalyzeResult): AnalyzePayload {
     formatted: result.formatted,
     printed: result.printed,
     rewritten: result.rewritten,
+    highlighted: result.highlighted,
     version: result.version,
     duration: result.duration,
     parserDiagnostics,

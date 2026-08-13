@@ -1,7 +1,7 @@
 import AnalyzeWorker from "./analyze-worker.ts?worker"
 
 import type { AnalyzePayload } from "./analyze-payload"
-import type { AnalyzeJob, AutofixOptions, LinterOptions } from "./analyze"
+import type { AnalyzeJob, AutofixOptions, HighlighterOptions, LinterOptions } from "./analyze"
 import type { ParserOptions } from "@herb-tools/core"
 import type { PrintOptions } from "@herb-tools/printer"
 import type { FormatOptions } from "@herb-tools/formatter"
@@ -13,6 +13,7 @@ export type AnalyzeRequest = {
   formatterOptions: FormatOptions
   autofixOptions: AutofixOptions
   linterOptions: LinterOptions
+  highlighterOptions: HighlighterOptions
   jobs: AnalyzeJob[]
 }
 

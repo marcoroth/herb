@@ -1,7 +1,8 @@
 import type { HerbBackend, ParseResult, LexResult, ParserOptions } from "@herb-tools/core"
 
 import { Formatter } from "@herb-tools/formatter"
-import { Linter } from "@herb-tools/linter"
+import { Linter, ruleDocumentationUrl } from "@herb-tools/linter"
+import { Highlighter } from "@herb-tools/highlighter"
 import { IdentityPrinter, DEFAULT_PRINT_OPTIONS } from "@herb-tools/printer"
 import { rewrite, ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 
@@ -37,6 +38,7 @@ export type AnalyzeJob =
   | "rewrite"
   | "lint"
   | "autofix"
+  | "highlighter"
 
 export const ALL_ANALYZE_JOBS: AnalyzeJob[] = [
   "parse",
@@ -49,9 +51,59 @@ export const ALL_ANALYZE_JOBS: AnalyzeJob[] = [
   "rewrite",
   "lint",
   "autofix",
+  "highlighter",
 ]
 
-export async function analyze(herb: HerbBackend, source: string, options: Partial<ParserOptions> = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}, jobs: Iterable<AnalyzeJob> = ALL_ANALYZE_JOBS) {
+export type HighlighterOptions = {
+  showDiagnostics?: boolean
+  showLineNumbers?: boolean
+  splitDiagnostics?: boolean
+  focusLine?: number
+  contextLines?: number
+}
+
+const HIGHLIGHTER_PATH = "template.html.erb"
+const HIGHLIGHTER_CONTEXT_LINES = 2
+
+let highlighterPromise: Promise<Highlighter> | null = null
+
+function getHighlighter(herb: HerbBackend): Promise<Highlighter> {
+  if (highlighterPromise === null) {
+    highlighterPromise = (async () => {
+      const highlighter = new Highlighter("onedark", herb)
+
+      await highlighter.initialize()
+
+      return highlighter
+    })().catch((error) => {
+      highlighterPromise = null
+
+      throw error
+    })
+  }
+
+  return highlighterPromise
+}
+
+
+async function renderHighlighter(herb: HerbBackend, source: string, lintResult: LintResult | null, highlighterOptions: HighlighterOptions): Promise<string> {
+  const highlighter = await getHighlighter(herb)
+
+  const showDiagnostics = highlighterOptions.showDiagnostics ?? true
+  const diagnostics = showDiagnostics ? (lintResult?.offenses ?? []) : []
+
+  return highlighter.highlight(HIGHLIGHTER_PATH, source, {
+    diagnostics,
+    splitDiagnostics: highlighterOptions.splitDiagnostics ?? true,
+    showLineNumbers: highlighterOptions.showLineNumbers ?? true,
+    contextLines: highlighterOptions.contextLines ?? HIGHLIGHTER_CONTEXT_LINES,
+    focusLine: highlighterOptions.focusLine,
+    wrapLines: false,
+    codeUrlBuilder: ruleDocumentationUrl,
+  })
+}
+
+export async function analyze(herb: HerbBackend, source: string, options: Partial<ParserOptions> = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}, highlighterOptions: HighlighterOptions = {}, jobs: Iterable<AnalyzeJob> = ALL_ANALYZE_JOBS) {
   const startTime = performance.now()
   const requested = new Set(jobs)
   const wants = (job: AnalyzeJob) => requested.has(job)
@@ -150,11 +202,16 @@ export async function analyze(herb: HerbBackend, source: string, options: Partia
     }
   }
 
+  const highlighted = wants("highlighter")
+    ? await safeExecute<string>(renderHighlighter(herb, source, lintResult ?? null, highlighterOptions))
+    : undefined
+
   const endTime = performance.now()
 
   return {
     parseResult,
     lexResult,
+    highlighted,
     string,
     json,
     lex,

@@ -104,6 +104,13 @@ pub struct ColorScheme {
   pub token_eof: Option<Color>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub background: Option<Color>,
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub foreground: Option<Color>,
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub ansi_palette: Option<std::collections::BTreeMap<String, Color>>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
   pub diff_removed_line_background: Option<Color>,
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub diff_added_line_background: Option<Color>,

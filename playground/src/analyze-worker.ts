@@ -14,7 +14,7 @@ function ready() {
 }
 
 self.addEventListener("message", async (event: MessageEvent<AnalyzeRequest & { id: number }>) => {
-  const { id, source, options, printerOptions, formatterOptions, autofixOptions, linterOptions, jobs } = event.data
+  const { id, source, options, printerOptions, formatterOptions, autofixOptions, linterOptions, highlighterOptions, jobs } = event.data
 
   try {
     await ready()
@@ -27,6 +27,7 @@ self.addEventListener("message", async (event: MessageEvent<AnalyzeRequest & { i
       formatterOptions,
       autofixOptions,
       linterOptions,
+      highlighterOptions,
       jobs,
     )
 
