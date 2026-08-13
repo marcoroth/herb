@@ -14,6 +14,7 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  SelectionRangeParams,
   InlayHintParams,
   DocumentSymbolParams,
   HoverParams,
@@ -77,6 +78,7 @@ export class Server {
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
+          selectionRangeProvider: true,
           inlayHintProvider: true,
           hoverProvider: true,
           completionProvider: {
@@ -290,6 +292,14 @@ export class Server {
       if (!document) return []
 
       return this.session.foldingRangeProvider.getFoldingRanges(document)
+    })
+
+    this.connection.onSelectionRanges((params: SelectionRangeParams) => {
+      const document = this.session.documents.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.session.selectionRangeProvider.getSelectionRanges(document, params.positions)
     })
 
     this.connection.languages.inlayHint.on(async (params: InlayHintParams) => {
