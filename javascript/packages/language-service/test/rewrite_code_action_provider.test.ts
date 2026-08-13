@@ -97,6 +97,21 @@ describe("RewriteCodeActionProvider", () => {
       const changes = convertAction!.edit!.changes!["file:///test.html.erb"]
       expect(changes[0].newText).toContain("container")
     })
+
+    it("only rewrites the selected nested tag helper", () => {
+      const content = dedent`
+        <%= tag.div do %>
+          <%= tag.span "text" %>
+        <% end %>
+      `
+
+      const actions = getCodeActions(content, 0, 0, 0, 17)
+      const convertAction = actions.find(a => a.title.includes("<div>"))
+      const changes = convertAction!.edit!.changes!["file:///test.html.erb"]
+
+      expect(actions).toHaveLength(1)
+      expect(changes[0].newText).toContain('<%= tag.span "text" %>')
+    })
   })
 
   describe("HTML to ActionView", () => {
@@ -154,6 +169,35 @@ describe("RewriteCodeActionProvider", () => {
 
       const convertAction = actions.find(a => a.title.includes("tag.div"))
       expect(convertAction).toBeUndefined()
+    })
+
+    it("offers actions when cursor is on a later line of a multiline opening tag", () => {
+      const content = dedent`
+        <div
+          class="panel">
+          Content
+        </div>
+      `
+
+      const actions = getCodeActions(content, 1, 2, 1, 7)
+
+      const convertAction = actions.find(a => a.title.includes("tag.div"))
+      expect(convertAction).toBeDefined()
+    })
+
+    it("only rewrites the selected nested HTML element", () => {
+      const content = dedent`
+        <div>
+          <span>text</span>
+        </div>
+      `
+
+      const actions = getCodeActions(content, 0, 0, 0, 5)
+      const convertAction = actions.find(a => a.title.includes("tag.div"))
+      const changes = convertAction!.edit!.changes!["file:///test.html.erb"]
+
+      expect(actions).toHaveLength(1)
+      expect(changes[0].newText).toContain("<span>text</span>")
     })
   })
 
