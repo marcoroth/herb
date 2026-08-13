@@ -127,6 +127,7 @@ class Herb::CLI
           bundle exec herb compile -
 
       Options:
+        #{option_parser.to_s.strip.gsub(/^    /, "  ")}
 
     HELP
 
