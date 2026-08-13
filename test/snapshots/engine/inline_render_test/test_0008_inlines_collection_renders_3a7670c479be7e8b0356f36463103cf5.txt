@@ -1,0 +1,8 @@
+---
+source: "Engine::InlineRenderTest#test_0008_inlines collection renders"
+input: "{source: \"<%= render partial: \\\"posts/post\\\", collection: @posts %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::Visitors::InlineRender>], escape: false}}"
+---
+_buf = ::String.new; ((@posts) || []).each_with_index do |post, post_counter| 
+ _buf << '<div>Post</div>
+'.freeze; end 
+_buf.to_s

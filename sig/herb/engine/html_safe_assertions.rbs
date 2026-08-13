@@ -2,7 +2,7 @@
 
 module Herb
   class Engine
-    # Runtime counterpart of `Herb::Engine::HTMLSafeAssertionsVisitor`.
+    # Runtime counterpart of `Herb::Engine::Visitors::HTMLSafeAssertions`.
     #
     # `check` inspects the value a template is about to mark as HTML-safe and reports it when
     # the value contains HTML that the browser executes, such as a `<script>` element, an

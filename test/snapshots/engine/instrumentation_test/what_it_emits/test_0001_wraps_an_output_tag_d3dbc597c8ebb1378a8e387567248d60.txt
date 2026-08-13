@@ -1,0 +1,9 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0001_wraps an output tag"
+input: "{source: \"<div><%= title %></div>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::Visitors::Instrumentation>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
+ _buf << '<div>'.freeze; _buf << (::Herb::Engine::Report::Session.at("app/views/test.html.erb", 1, 5) {
+title
+}).to_s; _buf << '</div>'.freeze; ensure; ::Herb::Engine::Report::Session.leave_render; end;
+_buf.to_s

@@ -1,0 +1,8 @@
+---
+source: "Engine::InlineRenderTest#test_0001_inlines a simple partial"
+input: "{source: \"<%= render \\\"shared/header\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::Visitors::InlineRender>], escape: false}}"
+---
+_buf = ::String.new; ->() { 
+ _buf << '<header>Hello</header>
+'.freeze; }.call() 
+_buf.to_s

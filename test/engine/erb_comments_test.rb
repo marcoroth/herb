@@ -101,7 +101,7 @@ module Engine
     test "evaluation: trailing comment in output tag with debug mode" do
       template = %(<%= value # this is a comment %>)
 
-      assert_evaluated_snapshot(template, { value: "Hello World" }, visitors: [Herb::Engine::DebugVisitor.new])
+      assert_evaluated_snapshot(template, { value: "Hello World" }, visitors: [Herb::Engine::Visitors::Debug.new])
     end
 
     test "trailing comment in escaped output tag" do

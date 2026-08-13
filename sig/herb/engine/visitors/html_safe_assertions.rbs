@@ -1,0 +1,102 @@
+# Generated from lib/herb/engine/visitors/html_safe_assertions.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Visitors
+      # Wraps the receiver of every `.html_safe` call in a template with a runtime assertion, so
+      # that marking a value as HTML-safe raises when the value contains HTML that the browser
+      # executes.
+      #
+      # This visitor is not loaded by default. Require it explicitly and pass it to the engine:
+      #
+      #     require "herb/engine/visitors/html_safe_assertions"
+      #
+      #     Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::HTMLSafeAssertions.new])
+      #
+      # `<%= @user.bio.html_safe %>` then compiles as if the template had been written as:
+      #
+      #     <%= ::Herb::Engine::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 1, source: "<%= @user.bio.html_safe %>", mode: :raise).html_safe %>
+      #
+      # The assertion runs on every render, and the value keeps flowing through `.html_safe`
+      # unchanged. See `Herb::Engine::HTMLSafeAssertions` for what counts as unsafe.
+      #
+      # The calls are found in the Prism program the parser attaches to the document, which the
+      # engine enables through `required_parser_option`. Parsing an AST for this visitor by hand
+      # needs the same option:
+      #
+      #     Herb.parse(source, prism_program: true)
+      class HTMLSafeAssertions < Herb::Visitor
+        include ContextAware
+
+        RUNTIME: ::String
+
+        MAX_SOURCE_LENGTH: ::Integer
+
+        class MissingPrismProgramError < StandardError
+        end
+
+        # : (?mode: Symbol, ?ignore: Array[Symbol], ?file_path: (String | ::Pathname)?) -> void
+        def initialize: (?mode: Symbol, ?ignore: Array[Symbol], ?file_path: (String | ::Pathname)?) -> void
+
+        # : (Herb::AST::DocumentNode) -> void
+        def visit_document_node: (Herb::AST::DocumentNode) -> void
+
+        # : (Herb::AST::Node) -> void
+        def visit_erb_node: (Herb::AST::Node) -> void
+
+        # : () -> String
+        def inspect: () -> String
+
+        private
+
+        # : (Symbol) -> Symbol
+        def validated_mode: (Symbol) -> Symbol
+
+        # : (Array[Symbol]) -> Array[Symbol]
+        def validated_ignore: (Array[Symbol]) -> Array[Symbol]
+
+        # : (Herb::AST::DocumentNode) -> void
+        def add_assertions: (Herb::AST::DocumentNode) -> void
+
+        # : (Herb::AST::DocumentNode) -> Array[[Symbol, Prism::Location]]
+        def html_safe_targets: (Herb::AST::DocumentNode) -> Array[[ Symbol, Prism::Location ]]
+
+        # : (Prism::Node) -> [Symbol, Prism::Location]?
+        def target_for: (Prism::Node) -> [ Symbol, Prism::Location ]?
+
+        # : (Prism::CallNode) -> bool
+        def html_safe_call?: (Prism::CallNode) -> bool
+
+        # : (Prism::BlockArgumentNode) -> bool
+        def html_safe_symbol?: (Prism::BlockArgumentNode) -> bool
+
+        # : (untyped, Array[[Symbol, Prism::Location]]) -> void
+        def rewrite: (untyped, Array[[ Symbol, Prism::Location ]]) -> void
+
+        # : (Symbol, Prism::Location, Herb::Range) -> [Symbol, Integer, Integer]?
+        def local_target: (Symbol, Prism::Location, Herb::Range) -> [ Symbol, Integer, Integer ]?
+
+        # : (Array[[Symbol, Integer, Integer]], String) -> Array[[Integer, Integer, String]]
+        def edits: (Array[[ Symbol, Integer, Integer ]], String) -> Array[[ Integer, Integer, String ]]
+
+        # : (String, Integer, Integer, String) -> String
+        def splice: (String, Integer, Integer, String) -> String
+
+        # : (untyped) -> Herb::Token?
+        def content_token: (untyped) -> Herb::Token?
+
+        # : (untyped, String) -> String
+        def check_arguments: (untyped, String) -> String
+
+        # : () -> String
+        def file_argument: () -> String
+
+        # : (untyped, String) -> String
+        def erb_source: (untyped, String) -> String
+
+        # : (String) -> String
+        def truncate: (String) -> String
+      end
+    end
+  end
+end

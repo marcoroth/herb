@@ -1,0 +1,6 @@
+---
+source: "Engine::HTMLSafeAssertionsTest#test_0019_template without html_safe is left alone - compilation"
+input: "{source: \"<div><%= @user.bio %></div>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::Visitors::HTMLSafeAssertions mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (@user.bio).to_s; _buf << '</div>'.freeze;
+_buf.to_s

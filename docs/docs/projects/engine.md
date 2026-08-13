@@ -136,21 +136,21 @@ Herb ships the following transform visitors:
 
 | Visitor                       | Description                                                             |
 |-------------------------------|-------------------------------------------------------------------------|
-| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                        |
-| `ContentForVisitor`           | Appends HTML to the end of every matching element                       |
-| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                               |
-| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental)            |
-| `DebugVisitor`                | Annotates output with the template and position it came from            |
-| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)       |
-| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental) |
-| `InlineRenderVisitor`         | Replaces a `render` of a static partial with the partial (experimental) |
+| `Visitors::AutoCloseOmittedTags` | Replaces omitted closing tags with explicit ones                        |
+| `Visitors::ContentFor`           | Appends HTML to the end of every matching element                       |
+| `Visitors::HTMLSafeAssertions`   | Checks every `.html_safe` call at runtime                               |
+| `Visitors::Component`            | Rewrites capitalized tags into `render` calls (experimental)            |
+| `Visitors::Debug`                | Annotates output with the template and position it came from            |
+| `Visitors::Optimize`             | Compile-time optimizations for Action View helpers (experimental)       |
+| `Visitors::Instrumentation`      | Frames every ERB tag so a render can be attributed to it (experimental) |
+| `Visitors::InlineRender`         | Replaces a `render` of a static partial with the partial (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
 ```ruby
-require "herb/engine/auto_close_omitted_tags_visitor"
+require "herb/engine/visitors/auto_close_omitted_tags"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::AutoCloseOmittedTagsVisitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::AutoCloseOmittedTags.new])
 ```
 
 Your own visitors are passed the same way. See [Visitors](/bindings/ruby/reference#visitors) for how to write one.
@@ -198,16 +198,16 @@ class MyReadingVisitor < Herb::Visitor
 end
 ```
 
-`reads_erb_source?` means it copies the template's own ERB somewhere, the way `DebugVisitor` puts it in `data-herb-debug-erb`. `rewrites_erb_source?` means it leaves ERB behind that the author did not write, the way `InstrumentationVisitor` wraps every tag. A visitor that answers neither is unconstrained and can run anywhere.
+`reads_erb_source?` means it copies the template's own ERB somewhere, the way `Visitors::Debug` puts it in `data-herb-debug-erb`. `rewrites_erb_source?` means it leaves ERB behind that the author did not write, the way `Visitors::Instrumentation` wraps every tag. A visitor that answers neither is unconstrained and can run anywhere.
 
-A third question, `inlines_renders?`, means the visitor brings markup from other files into the tree, the way `InlineRenderVisitor` does. One that answers it has to run first, so everything else sees what it brought in.
+A third question, `inlines_renders?`, means the visitor brings markup from other files into the tree, the way `Visitors::InlineRender` does. One that answers it has to run first, so everything else sees what it brought in.
 
 The engine checks this before it compiles anything, so a stack in the wrong order raises rather than producing a template that is quietly wrong:
 
 ```ruby
 Herb::Engine.new(source, visitors: [
-  Herb::Engine::InstrumentationVisitor.new,
-  Herb::Engine::DebugVisitor.new
+  Herb::Engine::Visitors::Instrumentation.new,
+  Herb::Engine::Visitors::Debug.new
 ])
 # => Herb::Engine::VisitorStack::OrderError
 ```
@@ -254,7 +254,7 @@ visitor.context = Herb::Engine::VisitorContext.new(file_path: "app/views/users/s
 Herb.parse(source).value.accept(visitor)
 ```
 
-### `AutoCloseOmittedTagsVisitor`
+### `Visitors::AutoCloseOmittedTags`
 
 Makes sure the compiled output always contains a closing tag, even when the template omits it.
 
@@ -278,15 +278,15 @@ The engine renders:
 
 The closing tag is inserted where the parser determined the element ends, which keeps the surrounding whitespace (and therefore the rendering of `inline-block` elements) identical to the template without the visitor.
 
-### `ContentForVisitor`
+### `Visitors::ContentFor`
 
 Appends HTML to the end of every element matching a tag name, so that it ends up right before that element's closing tag.
 
 ```ruby
-require "herb/engine/content_for_visitor"
+require "herb/engine/visitors/content_for"
 
 Herb::Engine.new(source, visitors: [
-  Herb::Engine::ContentForVisitor.new("<p>Footer</p>", tag_name: "main")
+  Herb::Engine::Visitors::ContentFor.new("<p>Footer</p>", tag_name: "main")
 ])
 ```
 
@@ -295,7 +295,7 @@ Tag names are matched case-insensitively, and every matching element in the temp
 Pass `attributes` to narrow which elements match. Every condition in the hash has to hold:
 
 ```ruby
-Herb::Engine::ContentForVisitor.new(
+Herb::Engine::Visitors::ContentFor.new(
   "<p>Footer</p>",
   tag_name: "main",
   attributes: { "id" => "content", "data-role" => /page/, "hidden" => false }
@@ -331,14 +331,14 @@ The engine renders:
 
 The content is emitted as a Ruby string literal marked `html_safe`, so it is never escaped, and quotes, backslashes and `#{}` in it are not interpreted.
 
-### `HTMLSafeAssertionsVisitor`
+### `Visitors::HTMLSafeAssertions`
 
 Wraps the receiver of every `.html_safe` call in a template with a runtime assertion, so that marking a value as HTML-safe raises when the value contains HTML that the browser executes.
 
 ```ruby
-require "herb/engine/html_safe_assertions_visitor"
+require "herb/engine/visitors/html_safe_assertions"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::HTMLSafeAssertionsVisitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::HTMLSafeAssertions.new])
 ```
 
 This template:
@@ -395,7 +395,7 @@ The visitor takes the following options:
 | `file_path` | `nil`    | Path baked into the assertion. Defaults to `__FILE__`, which Rails sets to the template |
 
 ```ruby
-Herb::Engine::HTMLSafeAssertionsVisitor.new(mode: :warn, ignore: [:risky_element])
+Herb::Engine::Visitors::HTMLSafeAssertions.new(mode: :warn, ignore: [:risky_element])
 ```
 
 Set `on_violation` to report violations somewhere else instead of raising or warning. It receives the same error object, and is consulted before `mode`:
@@ -418,17 +418,17 @@ end
 
 Since the assertions run on every render, this visitor is meant for development and test environments. In production, either leave it out or run it with `mode: :warn`.
 
-### `ComponentVisitor`
+### `Visitors::Component`
 
 > [!WARNING]
-> `ComponentVisitor` is experimental and a proof of concept. The generated `render` calls, the attribute mapping, and the class itself may change or be removed without a major version bump. It prints a warning the first time it is instantiated in a process.
+> `Visitors::Component` is experimental and a proof of concept. The generated `render` calls, the attribute mapping, and the class itself may change or be removed without a major version bump. It prints a warning the first time it is instantiated in a process.
 
 Rewrites capitalized tags into `render` calls, so a component can be written as a tag instead of an ERB expression.
 
 ```ruby
-require "herb/engine/component_visitor"
+require "herb/engine/visitors/component"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::ComponentVisitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Component.new])
 ```
 
 A tag is transformed when its name is CamelCase in every segment. `<DIV>`, `<BR>` and `<My-Component />` are left alone, since uppercase HTML tags are valid HTML.
@@ -448,7 +448,7 @@ Dot notation needs the [`dot_notation_tags`](/parser-options) parser option for 
 ```ruby
 Herb::Engine.new(source,
   parser_options: { dot_notation_tags: true },
-  visitors: [Herb::Engine::ComponentVisitor.new],
+  visitors: [Herb::Engine::Visitors::Component.new],
 )
 ```
 
@@ -512,14 +512,14 @@ A partial with a body is rendered as a layout, so the body reaches the partial t
 <%= render layout: "users/card", locals: { title: "Hello" } do %>Body<% end %>
 ```
 
-### `DebugVisitor`
+### `Visitors::Debug`
 
 Annotates the rendered output with where it came from, so a rendered element can be traced back to the tag that produced it.
 
 ```ruby
-require "herb/engine/debug_visitor"
+require "herb/engine/visitors/debug"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Debug.new])
 ```
 
 The first top-level element of a template carries which template it is, and each ERB output tag is wrapped in a `<span style="display: contents">` carrying where in that template it was written:
@@ -562,12 +562,12 @@ Anything looking at the rendered page, such as a linter running over the respons
 
 Not every element ends up under a marker. An element written as plain HTML has no tag to name, an ERB tag inside an attribute value cannot be wrapped in a span, a template with more than one root only marks the first, and helpers that take a block are skipped. Treat a missing marker as unattributed rather than assuming coverage.
 
-`node: true` adds the render as well, which needs `InstrumentationVisitor` in the same stack to have anything to report:
+`node: true` adds the render as well, which needs `Visitors::Instrumentation` in the same stack to have anything to report:
 
 ```ruby
 Herb::Engine.new(source, visitors: [
-  Herb::Engine::DebugVisitor.new(node: true),
-  Herb::Engine::InstrumentationVisitor.new
+  Herb::Engine::Visitors::Debug.new(node: true),
+  Herb::Engine::Visitors::Instrumentation.new
 ])
 ```
 
@@ -575,14 +575,14 @@ Without it the markers say only where in a file something was written, so a part
 
 The wrapper is a real cost. A `<span>` is not valid everywhere an ERB tag can appear, `<ul>` being the obvious case, so a strict linter reading the rendered page will have findings about Herb's own instrumentation.
 
-### `OptimizeVisitor` <Badge type="warning" text="experimental" />
+### `Visitors::Optimize` <Badge type="warning" text="experimental" />
 
 Asks the parser to resolve Action View helpers into the markup they produce, so the compiler emits that markup instead of a call the renderer has to make.
 
 ```ruby
-require "herb/engine/optimize_visitor"
+require "herb/engine/visitors/optimize"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::OptimizeVisitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Optimize.new])
 ```
 
 `<%= tag.div do %>Content<% end %>` compiles to `<div>Content</div>` with no helper call left at all. Only the helpers the registry marks supported are resolved.
@@ -590,7 +590,7 @@ Herb::Engine.new(source, visitors: [Herb::Engine::OptimizeVisitor.new])
 Replacing a helper call with its markup is the same thing as calling it only while the helper is the one it was resolved against. An application that defines its own `content_tag` gets the stock markup everywhere instead of its own, with nothing at the call site to say so. `verify` compiles a check into the template that reports a helper that has since been overwritten:
 
 ```ruby
-Herb::Engine::OptimizeVisitor.new(verify: true)
+Herb::Engine::Visitors::Optimize.new(verify: true)
 ```
 
 It reports rather than raises, because the markup is already rendered by the time the check runs:
@@ -602,14 +602,14 @@ ActionView::Helpers::TagHelper, but here it is defined by ApplicationHelper.
 
 The check costs a call per render and only reports, so it belongs in development rather than production, and compiling it in is opt-in for the same reason the optimization is.
 
-### `InlineRenderVisitor` <Badge type="warning" text="experimental" />
+### `Visitors::InlineRender` <Badge type="warning" text="experimental" />
 
 Replaces a `render` of a static partial with the partial itself, so the rendered page costs no partial lookup at run time.
 
 ```ruby
-require "herb/engine/inline_render_visitor"
+require "herb/engine/visitors/inline_render"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::InlineRenderVisitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::InlineRender.new])
 ```
 
 `<%= render partial: "posts/card", locals: { title: @post.title } %>` compiles to the card's own markup, inside a lambda that takes the locals it was given as parameters:
@@ -643,12 +643,12 @@ A partial is inlined only when the file it names is knowable and inlining it mea
 
 It has to run first, and the engine refuses a stack that puts it anywhere else. Everything after it sees the partial's markup as part of the template it landed in, which is what holds a partial to whatever the template around it is held to. A validator that refuses markup in a template refuses it in a partial, and a transform that rewrites a tag rewrites it wherever it was written. Were it to run last, moving markup into a partial would be a way of turning those off.
 
-A partial that is inlined never renders, so nothing about it would reach the session either. What was moved is recorded on `Herb::Engine::Origin`, and `InstrumentationVisitor` reads it, so the page describes itself the same way whether the partial was inlined or rendered:
+A partial that is inlined never renders, so nothing about it would reach the session either. What was moved is recorded on `Herb::Engine::Origin`, and `Visitors::Instrumentation` reads it, so the page describes itself the same way whether the partial was inlined or rendered:
 
 ```ruby
 Herb::Engine.new(source, visitors: [
-  Herb::Engine::InlineRenderVisitor.new,
-  Herb::Engine::InstrumentationVisitor.new
+  Herb::Engine::Visitors::InlineRender.new,
+  Herb::Engine::Visitors::Instrumentation.new
 ])
 ```
 
@@ -726,14 +726,14 @@ session = Herb::Engine::Report::Session.capture { get "/posts" }
 
 ## Instrumentation <Badge type="warning" text="experimental" />
 
-`InstrumentationVisitor` frames every ERB tag with a call saying which tag is rendering, so whatever happens while it renders can be attributed to it rather than to the template as a whole.
+`Visitors::Instrumentation` frames every ERB tag with a call saying which tag is rendering, so whatever happens while it renders can be attributed to it rather than to the template as a whole.
 
 It supplies where, and something else has to supply what. A template compiled with it and rendered with nothing watching records nothing at all, and only costs a call per tag. What makes it worth having is anything that calls `Herb::Engine::Report::Session.observe` while a tag is rendering:
 
 ```ruby
-require "herb/engine/instrumentation_visitor"
+require "herb/engine/visitors/instrumentation"
 
-engine = Herb::Engine.new(source, visitors: [Herb::Engine::InstrumentationVisitor.new])
+engine = Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Instrumentation.new])
 
 ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
   Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
@@ -832,11 +832,11 @@ Validator settings from `.herb.yml` are respected automatically, with no ReActio
 ReActionView also lets you run transform visitors on every template it compiles, through `config.transform_visitors`:
 
 ```ruby [config/initializers/reactionview.rb]
-require "herb/engine/auto_close_omitted_tags_visitor"
+require "herb/engine/visitors/auto_close_omitted_tags"
 
 ReActionView.configure do |config|
   config.transform_visitors = [
-    Herb::Engine::AutoCloseOmittedTagsVisitor.new
+    Herb::Engine::Visitors::AutoCloseOmittedTags.new
   ]
 end
 ```

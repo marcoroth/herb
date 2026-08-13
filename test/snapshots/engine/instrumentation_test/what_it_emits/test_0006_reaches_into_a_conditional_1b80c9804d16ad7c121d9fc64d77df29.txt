@@ -1,0 +1,11 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0006_reaches into a conditional"
+input: "{source: \"<% if admin? %><%= secret %><% end %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::Visitors::Instrumentation>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
+ ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0) 
+ if admin? 
+ _buf << (::Herb::Engine::Report::Session.at("app/views/test.html.erb", 1, 15) {
+secret
+}).to_s; end; ::Herb::Engine::Report::Session.leave; ensure; ::Herb::Engine::Report::Session.leave_render; end;
+_buf.to_s

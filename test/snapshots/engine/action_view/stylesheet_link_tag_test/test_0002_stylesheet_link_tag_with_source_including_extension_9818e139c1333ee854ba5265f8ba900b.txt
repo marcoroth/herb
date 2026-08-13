@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0002_stylesheet_link_tag with source including extension"
+input: "{source: \"<%= stylesheet_link_tag \\\"style.css\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("style.css"))); _buf << '" />'.freeze;
+_buf.to_s
