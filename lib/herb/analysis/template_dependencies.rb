@@ -247,7 +247,7 @@ module Herb
 
       def singularize(name)
         return name.sub(/ies\z/, "y") if name.end_with?("ies")
-        return name.chomp("es") if name.end_with?("sses", "ches", "shes", "xes")
+        return name.chomp("es") if name.end_with?("sses", "ches", "shes", "xes", "ses", "zes")
         return name.chomp("s") if name.end_with?("s") && !name.end_with?("ss")
 
         name
