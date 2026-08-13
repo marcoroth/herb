@@ -39,15 +39,7 @@ typedef struct {
 static VALUE parse_convert_body(VALUE arg) {
   parse_args_T* args = (parse_args_T*) arg;
 
-  // Reset the per-parse error counter, then record the total on the result so
-  // Ruby can skip the recursive error walk when the template parsed cleanly.
-  herb_ext_error_count = 0;
-
-  VALUE result = create_parse_result(args->root, args->source, args->parser_options);
-
-  rb_ivar_set(result, rb_intern("@total_error_count"), UINT2NUM(herb_ext_error_count));
-
-  return result;
+  return create_parse_result(args->root, args->source, args->parser_options);
 }
 
 static VALUE parse_cleanup(VALUE arg) {
@@ -209,6 +201,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
       parser_options.max_errors = NIL_P(max_errors) ? 0 : (uint32_t) NUM2UINT(max_errors);
     }
   }
+
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
 
   parse_args_T args = { 0 };
   args.source = source;

@@ -18,6 +18,7 @@ export type SerializedParseResult = {
   warnings: SerializedHerbWarning[]
   errors: SerializedHerbError[]
   options: SerializedParserOptions
+  error_count: number | null
 }
 
 declare const locationless: unique symbol
@@ -61,6 +62,9 @@ export class ParseResult extends Result {
   /** The parser options used during parsing. */
   readonly options: ParserOptions
 
+  /** Total number of errors attached to the tree, counted by the parser. */
+  readonly errorCount: number | null
+
   /**
    * Creates a `ParseResult` instance from a serialized result.
    * @param result - The serialized parse result containing the value and source.
@@ -73,6 +77,7 @@ export class ParseResult extends Result {
       result.warnings.map((warning) => HerbWarning.from(warning)),
       result.errors.map((error) => HerbError.from(error)),
       ParserOptions.from(result.options),
+      result.error_count,
     )
   }
 
@@ -90,10 +95,12 @@ export class ParseResult extends Result {
     warnings: HerbWarning[] = [],
     errors: HerbError[] = [],
     options: ParserOptions = new ParserOptions(),
+    errorCount: number | null = null,
   ) {
     super(source, warnings, errors)
     this.value = value
     this.options = options
+    this.errorCount = errorCount
     this.value.setSource(source)
   }
 
@@ -123,6 +130,8 @@ export class ParseResult extends Result {
   }
 
   recursiveErrors(): HerbError[] {
+    if (this.errorCount === 0) return [...this.errors]
+
     return [...this.errors, ...this.value.recursiveErrors()]
   }
 

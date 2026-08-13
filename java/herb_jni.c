@@ -181,6 +181,9 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     return NULL;
   }
 
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
+
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, &allocator);
 
   jobject result = CreateParseResult(env, ast, source, &parser_options);

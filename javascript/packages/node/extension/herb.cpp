@@ -84,6 +84,25 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         }
       }
 
+      napi_value max_errors_prop;
+      bool has_max_errors_prop;
+      napi_has_named_property(env, args[1], "max_errors", &has_max_errors_prop);
+
+      if (has_max_errors_prop) {
+        napi_get_named_property(env, args[1], "max_errors", &max_errors_prop);
+
+        napi_valuetype max_errors_type;
+        napi_typeof(env, max_errors_prop, &max_errors_type);
+
+        if (max_errors_type == napi_number) {
+          uint32_t max_errors_value;
+          napi_get_value_uint32(env, max_errors_prop, &max_errors_value);
+          parser_options.max_errors = max_errors_value;
+        } else {
+          parser_options.max_errors = 0;
+        }
+      }
+
       napi_value track_locations_prop;
       bool has_track_locations_prop;
       napi_has_named_property(env, args[1], "track_locations", &has_track_locations_prop);
@@ -198,6 +217,9 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
       }
     }
   }
+
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {

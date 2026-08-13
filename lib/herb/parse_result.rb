@@ -7,11 +7,13 @@ module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode
     attr_reader :options #: Herb::ParserOptions
+    attr_reader :error_count #: Integer?
 
-    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
-    def initialize(value, source, warnings, errors, options)
+    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions, ?Integer?) -> void
+    def initialize(value, source, warnings, errors, options, error_count = nil)
       @value = value
       @options = options
+      @error_count = error_count
       super(source, warnings, errors)
 
       if options.prism_nodes || options.prism_nodes_deep
@@ -24,10 +26,7 @@ module Herb
 
     #: () -> Array[Herb::Errors::Error]
     def errors
-      # The native extension records the total number of errors materialized
-      # onto the AST during parsing. When it is zero we can skip the recursive
-      # walk of every node entirely — the common case for valid templates.
-      return super if defined?(@total_error_count) && @total_error_count.zero?
+      return super if error_count&.zero?
 
       super + value.recursive_errors
     end

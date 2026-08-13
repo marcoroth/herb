@@ -8,6 +8,7 @@
 #include "include/lib/hb_array.h"
 #include "include/parser/parser.h"
 #include "include/version.h"
+#include "include/visitor.h"
 
 #include <prism.h>
 #include <stdlib.h>
@@ -31,11 +32,15 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* 
   return tokens;
 }
 
-HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
-  const char* source,
-  const parser_options_T* options,
-  hb_allocator_T* allocator
-) {
+HERB_EXPORTED_FUNCTION static bool herb_count_node_errors(const AST_NODE_T* node, void* data) {
+  if (node == NULL) { return false; }
+
+  if (node->errors != NULL) { *((uint32_t*) data) += (uint32_t) hb_array_size(node->errors); }
+
+  return true;
+}
+
+AST_DOCUMENT_NODE_T* herb_parse(const char* source, const parser_options_T* options, hb_allocator_T* allocator) {
   if (!source) { source = ""; }
 
   lexer_T lexer = { 0 };
@@ -46,7 +51,7 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   if (options != NULL) { parser_options = *options; }
 
   uint32_t error_count = 0;
-  parser_options.error_count = &error_count;
+  if (parser_options.error_count == NULL) { parser_options.error_count = &error_count; }
 
   parser_options_set_deadline(&parser_options);
 
@@ -68,6 +73,11 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
 
   if (parser_options.analyze) { herb_analyze_parse_tree(document, source, &parser_options, allocator); }
 
+  if (parser_options.error_count != NULL) {
+    *parser_options.error_count = 0;
+    herb_visit_node((AST_NODE_T*) document, herb_count_node_errors, parser_options.error_count);
+  }
+
   if (parser_options.prism_nodes || parser_options.prism_program) {
     herb_annotate_prism_nodes(
       document,
@@ -85,7 +95,8 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
       document->base.location.start,
       document->base.location.end,
       allocator,
-      &document->base.errors
+      &document->base.errors,
+      options
     );
   }
 

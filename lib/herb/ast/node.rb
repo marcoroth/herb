@@ -119,11 +119,6 @@ module Herb
       def recursive_errors(accumulator = [])
         accumulator.concat(errors) unless errors.empty?
 
-        # Walk children iteratively into a single shared accumulator rather than
-        # allocating an intermediate array at every node (compact + flat_map +
-        # concat). This is a hot path: it runs for every node on every parse, so
-        # for large error-free trees the previous approach allocated several
-        # throwaway arrays per node.
         children = child_nodes
         index = 0
         count = children.size
