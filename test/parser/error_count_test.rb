@@ -17,7 +17,7 @@ module Parser
         "<div><span>hello</div>",
         "<% if condition without end %>",
         "<% if x %>",
-        "</div>" * 30,
+        "</div>" * 30
       ].each do |source|
         result = Herb.parse(source)
 

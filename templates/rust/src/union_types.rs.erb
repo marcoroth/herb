@@ -49,9 +49,15 @@ impl <%= enum_name %> {
   }
 
   pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
+    let mut accumulator: Vec<&dyn ErrorNode> = Vec::new();
+    self.collect_errors(&mut accumulator);
+    accumulator
+  }
+
+  pub fn collect_errors<'a>(&'a self, accumulator: &mut Vec<&'a dyn ErrorNode>) {
     match self {
       <%- kinds.each do |kind| -%>
-      <%= enum_name %>::<%= kind %>(n) => n.recursive_errors(),
+      <%= enum_name %>::<%= kind %>(n) => n.collect_errors(accumulator),
       <%- end -%>
     }
   }
