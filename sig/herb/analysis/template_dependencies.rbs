@@ -59,9 +59,41 @@ module Herb
 
       def dependency_index: (untyped file_path) -> untyped
 
+      # @rbs!
+      #   KERNEL_METHODS: Array[String]
+      KERNEL_METHODS: untyped
+
       def scan_helpers!: () -> untyped
 
       private
+
+      # : (String) -> Set[String]
+      def guarded_locals: (String) -> Set[String]
+
+      # : () -> Set[String]
+      def scan_helper_methods!: () -> Set[String]
+
+      # : () -> Set[String]
+      def scan_routes!: () -> Set[String]
+
+      # : (String) -> void
+      def add_route_pair: (String) -> void
+
+      # : (String, String) -> String?
+      def symbol_after: (String, String) -> String?
+
+      # @rbs!
+      #   UNCOUNTABLE: Array[String]
+      UNCOUNTABLE: untyped
+
+      # : (String, String) -> String?
+      def keyword_value: (String, String) -> String?
+
+      # : (String) -> String?
+      def route_alias: (String) -> String?
+
+      # : (String) -> String
+      def singularize: (String) -> String
 
       def trace_state: (untyped entry_point, untyped state) -> untyped
 

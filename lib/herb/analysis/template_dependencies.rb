@@ -42,7 +42,7 @@ module Herb
 
         locals = RubyLocalsIndex.from_document(ast, source)
 
-        collector = DependencyCollector.new(@helper_registry, known_helpers, locals.assignment_names)
+        collector = DependencyCollector.new(@helper_registry, known_helpers, locals.assignment_names.to_set | guarded_locals(source))
         ast.accept(collector)
 
         Result.new(
@@ -99,7 +99,20 @@ module Herb
         index
       end
 
+      # @rbs!
+      #   KERNEL_METHODS: Array[String]
+      KERNEL_METHODS = [
+        "rand", "srand", "format", "sprintf", "raise", "loop", "sleep", "catch", "throw",
+        "block_given?", "caller", "binding", "frozen?", "freeze", "dup", "clone", "tap", "then",
+        "itself", "send", "public_send", "respond_to?", "instance_variable_get", "instance_variables"
+      ].freeze
+
       def scan_helpers!
+        scan_routes!
+        scan_helper_methods!
+
+        KERNEL_METHODS.each { |name| @custom_helpers.add(name) }
+
         helpers_dir = @project_path.join("app", "helpers")
 
         if helpers_dir.directory?
@@ -112,6 +125,244 @@ module Herb
       end
 
       private
+      #: (String) -> Set[String]
+      def guarded_locals(source)
+        source.scan(/defined\?\s*\(\s*([a-z_]\w*)\s*\)/).flatten.to_set
+      end
+
+      #: () -> Set[String]
+      def scan_helper_methods!
+        ["app", "lib"].each do |directory|
+          root = @project_path.join(directory)
+
+          next unless root.directory?
+
+          Dir[root.join("**", "*.rb")].each do |file|
+            source = File.read(file)
+
+            next unless source.include?("helper_method") || source.include?("add_flash_types")
+
+            source.scan(/helper_method\s+([:\w\s,?!]+)/) do |match|
+              match[0].to_s.scan(/:(\w+[?!]?)/) { |name| @custom_helpers.add(name[0]) }
+            end
+
+            source.scan(/add_flash_types[\s(]+([:\w\s,]+)/) do |match|
+              match[0].to_s.scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
+            end
+          rescue StandardError
+            next
+          end
+        end
+
+        @custom_helpers
+      end
+
+      #: () -> Set[String]
+      def scan_routes!
+        routes_file = @project_path.join("config", "routes.rb")
+
+        return @custom_helpers unless routes_file.file?
+
+        namespaces = [] #: Array[String]
+        depths = [] #: Array[Integer]
+        resources = [] #: Array[Array[String]]
+        resource_depths = [] #: Array[Integer]
+        collection_depths = [] #: Array[Integer]
+
+        routes_file.each_line do |line|
+          trimmed = line.strip
+
+          next if trimmed.empty? || trimmed.start_with?("#")
+
+          if trimmed == "end"
+            if (depth = depths.pop)
+              namespaces.pop
+              if resource_depths.last == depth
+                resource_depths.pop
+                resources.pop
+              end
+
+              collection_depths.pop if collection_depths.last == depth
+            end
+
+            next
+          end
+
+          named = namespaces.reject(&:empty?)
+          prefix = named.empty? ? "" : "#{named.join("_")}_"
+
+          if (namespace = symbol_after(trimmed, "namespace "))
+            namespaces.push(namespace)
+            depths.push(namespaces.size)
+
+            next
+          end
+
+          if trimmed.start_with?("scope ") && trimmed.end_with?(" do")
+            scope_name = route_alias(trimmed)
+
+            if scope_name
+              namespaces.push(scope_name)
+            else
+              namespaces.push("")
+            end
+
+            depths.push(namespaces.size)
+
+            next
+          end
+
+          if trimmed == "member do" || trimmed == "collection do"
+            namespaces.push("")
+            depths.push(namespaces.size)
+            collection_depths.push(namespaces.size) if trimmed == "collection do"
+
+            next
+          end
+
+          if collection_depths.last == namespaces.size && (owner = resources.last)
+            outer = named[0..-2].to_a
+            outer_prefix = outer.empty? ? "" : "#{outer.join("_")}_"
+
+            if (alias_name = route_alias(trimmed))
+              add_route_pair("#{alias_name}_#{outer_prefix}#{owner[1]}")
+
+              next
+            end
+
+            if (action = trimmed[/\A(?:get|post|patch|put|delete)\s+:(\w+)/, 1])
+              add_route_pair("#{action}_#{outer_prefix}#{owner[1]}")
+
+              next
+            end
+
+            if (name = symbol_after(trimmed, "resources "))
+              singular = singularize(name)
+
+              add_route_pair(name)
+              add_route_pair(singular)
+
+              if trimmed.end_with?(" do")
+                namespaces.push(singular)
+                depths.push(namespaces.size)
+                resources.push([singular, name])
+                resource_depths.push(namespaces.size)
+              end
+
+              next
+            end
+          end
+
+          if (scope = keyword_value(trimmed, "on")) && (action = symbol_after(trimmed, trimmed[/\A(get|post|patch|put|delete) /, 1].to_s + " ") || route_alias(trimmed))
+            owner = resources.last
+
+            if owner
+              stem = if scope == "collection"
+                       outer = named[0..-2].to_a
+                       "#{outer.empty? ? "" : "#{outer.join("_")}_"}#{owner[1]}"
+                     else
+                       prefix.chomp("_")
+                     end
+
+              add_route_pair("#{action}_#{stem}")
+            end
+
+            next
+          end
+
+          if resources.any? && (verb = trimmed[/\A(?:get|post|patch|put|delete)\s+:(\w+)/, 1])
+            add_route_pair("#{verb}_#{prefix.chomp("_")}")
+
+            next
+          end
+
+          if (name = symbol_after(trimmed, "resources "))
+            singular = singularize(name)
+
+            add_route_pair("#{prefix}#{name}")
+            add_route_pair("#{prefix}#{singular}")
+            add_route_pair("new_#{prefix}#{singular}")
+            add_route_pair("edit_#{prefix}#{singular}")
+            add_route_pair("#{prefix}#{name}_index") if singular == name
+
+            if trimmed.end_with?(" do")
+              namespaces.push(singular)
+              depths.push(namespaces.size)
+              resources.push([singular, name])
+              resource_depths.push(namespaces.size)
+            end
+
+            next
+          end
+
+          if (name = symbol_after(trimmed, "resource "))
+            add_route_pair("#{prefix}#{name}")
+            add_route_pair("new_#{prefix}#{name}")
+            add_route_pair("edit_#{prefix}#{name}")
+
+            if trimmed.end_with?(" do")
+              namespaces.push(name)
+              depths.push(namespaces.size)
+              resources.push([name, name])
+              resource_depths.push(namespaces.size)
+            end
+
+            next
+          end
+
+          add_route_pair("#{prefix}root") if trimmed.start_with?("root ")
+
+          if (alias_name = trimmed[/as: :(\w+)/, 1])
+            add_route_pair("#{prefix}#{alias_name}")
+          elsif (literal = trimmed[/\A(?:get|post|patch|put|delete)\s+["']([a-z0-9_\/-]+)["']/, 1])
+            add_route_pair("#{prefix}#{literal.delete_prefix("/").tr("/-", "__")}")
+          end
+        end
+
+        @custom_helpers
+      end
+
+      #: (String) -> void
+      def add_route_pair(stem)
+        return if stem.empty?
+
+        @custom_helpers.add("#{stem}_path")
+        @custom_helpers.add("#{stem}_url")
+      end
+
+      #: (String, String) -> String?
+      def symbol_after(line, keyword)
+        return nil if keyword.strip.empty?
+
+        rest = line[/\A#{Regexp.escape(keyword)}\s*(?::|["'])(\w+)/, 1]
+
+        rest
+      end
+
+      # @rbs!
+      #   UNCOUNTABLE: Array[String]
+      UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
+
+      #: (String, String) -> String?
+      def keyword_value(line, keyword)
+        line[/(?:\A|[\s,(])#{Regexp.escape(keyword)}: :(\w+)/, 1]
+      end
+
+      #: (String) -> String?
+      def route_alias(line)
+        keyword_value(line, "as") || line[/:as\s*=>\s*:(\w+)/, 1]
+      end
+
+      #: (String) -> String
+      def singularize(name)
+        return name if UNCOUNTABLE.include?(name)
+
+        return name.sub(/ies\z/, "y") if name.end_with?("ies")
+        return name.chomp("es") if name.end_with?("sses", "ches", "shes", "xes", "ses", "zes")
+        return name.chomp("s") if name.end_with?("s") && !name.end_with?("ss")
+
+        name
+      end
 
       def trace_state(entry_point, state)
         entry_point = @project_path.join(entry_point).to_s unless Pathname.new(entry_point).absolute?
@@ -280,6 +531,8 @@ module Herb
 
         ActionView::HelperRegistry.entries.each do |entry|
           names.add(entry.name.to_s)
+
+          entry.aliases&.each { |alias_name| names.add(alias_name.to_s) }
         end
 
         names
