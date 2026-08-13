@@ -12,6 +12,8 @@
     ],
     "sharedGlobals": [
       "{workspaceRoot}/.github/workflows/javascript.yml",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/yarn.lock",
       "{workspaceRoot}/src/**/*",
       "{workspaceRoot}/wasm/**/*",
       "{workspaceRoot}/config.yml",
