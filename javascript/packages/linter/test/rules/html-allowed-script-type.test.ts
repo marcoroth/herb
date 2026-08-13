@@ -54,4 +54,34 @@ describe("html-allowed-script-type", () => {
   test("ignores non-script tags", () => {
     expectNoOffenses('<input type="text">')
   })
+
+  describe("with configured allowed types", () => {
+    const configuredAllowedTypes = createLinterTest(HTMLAllowedScriptTypeRule, {
+      allowedTypes: ["application/json"]
+    })
+
+    test("uses the configured allowed types", () => {
+      configuredAllowedTypes.expectNoOffenses('<script type="application/json"></script>')
+    })
+
+    test("replaces the default allowed types", () => {
+      configuredAllowedTypes.expectError("Avoid using `text/javascript` as the `type` attribute for the `<script>` tag. Must be one of: `application/json` or blank.")
+      configuredAllowedTypes.assertOffenses('<script type="text/javascript"></script>')
+    })
+  })
+
+  describe("with blank types disallowed", () => {
+    const blankTypesDisallowed = createLinterTest(HTMLAllowedScriptTypeRule, {
+      allowBlank: false
+    })
+
+    test("can require an explicit type", () => {
+      blankTypesDisallowed.expectError("`type` attribute required for `<script>` tag.")
+      blankTypesDisallowed.assertOffenses("<script></script>")
+    })
+
+    test("merges configured options with rule defaults", () => {
+      blankTypesDisallowed.expectNoOffenses('<script type="text/javascript"></script>')
+    })
+  })
 })

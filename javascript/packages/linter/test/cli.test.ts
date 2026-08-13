@@ -2233,7 +2233,9 @@ describe("CLI Output Formatting", () => {
         `)
 
         writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
-          export default class NoHelloWorldRule {
+          import { ParserRule } from "@herb-tools/linter"
+
+          export default class NoHelloWorldRule extends ParserRule {
             static ruleName = "no-hello-world"
 
             check(document, context) {
@@ -2283,7 +2285,9 @@ describe("CLI Output Formatting", () => {
         `)
 
         writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
-          export default class NoHelloWorldRule {
+          import { ParserRule } from "@herb-tools/linter"
+
+          export default class NoHelloWorldRule extends ParserRule {
             static ruleName = "no-hello-world"
 
             check(document, context) {
@@ -2329,7 +2333,9 @@ describe("CLI Output Formatting", () => {
         `)
 
         writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
-          export default class NoHelloWorldRule {
+          import { ParserRule } from "@herb-tools/linter"
+
+          export default class NoHelloWorldRule extends ParserRule {
             static ruleName = "no-hello-world"
 
             check(document, context) {

@@ -300,6 +300,20 @@ describe("ERBNoUnusedExpressionsRule", () => {
     })
   })
 
+  describe("with configured side-effects", () => {
+    const customOptions = createLinterTest(ERBNoUnusedExpressionsRule, {
+      allowedMethods: ["breadcrumb"]
+    })
+
+    test("passes for configured side-effect methods", () => {
+      customOptions.expectNoOffenses('<% breadcrumb :projects %>')
+    })
+
+    test("keeps the built-in side-effect methods when configured", () => {
+      customOptions.expectNoOffenses('<% content_for :title, "Projects" %>')
+    })
+  })
+
   describe("invalid cases", () => {
     test("fails for bare method call on instance variable", () => {
       expectError(

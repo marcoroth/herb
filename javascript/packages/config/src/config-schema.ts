@@ -16,15 +16,21 @@ export const FilesConfigSchema = z.object({
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
 }).strict().optional()
 
-const RuleConfigBaseSchema = z.object({
+export const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
+  autoCorrect: z.boolean().optional().describe("Whether autocorrection is enabled for the rule"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
 })
 
-export const RuleConfigSchema = RuleConfigBaseSchema.optional()
+export const BASE_RULE_CONFIG_KEYS = RuleConfigBaseSchema.keyof().options
+
+// NOTE: Custom options are verified in a second step, and produce `RuleOptionsValidationError` when invalid
+const RuleConfigWithOptionsSchema = RuleConfigBaseSchema.catchall(z.unknown())
+
+export const RuleConfigSchema = RuleConfigWithOptionsSchema.optional()
 
 export const LinterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the linter is enabled"),
@@ -32,7 +38,7 @@ export const LinterConfigSchema = z.object({
   logLevel: SeveritySchema.optional().describe("Only report diagnostics of this severity or higher (e.g., 'warning' hides info and hint diagnostics from the output and from CI annotations)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from linting"),
-  rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),
+  rules: z.record(z.string(), RuleConfigWithOptionsSchema).optional().describe("Per-rule configuration"),
 }).strict().optional()
 
 const RewriterConfigSchema = z.object({

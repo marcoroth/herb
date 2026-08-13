@@ -1610,6 +1610,41 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("custom rule options", () => {
+    test("loads arbitrary options from YAML", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        linter:
+          rules:
+            html-allowed-script-type:
+              enabled: true
+              severity: warning
+              autoCorrect: true
+              include:
+                - app/views/**/*.erb
+              only:
+                - app/views/scripts/**/*.erb
+              exclude:
+                - app/views/scripts/legacy/**/*.erb
+              allowedTypes:
+                - text/javascript
+                - application/json
+              allowBlank: false
+              nested:
+                mode: strict
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.getRuleOptions("html-allowed-script-type")).toEqual({
+        allowedTypes: ["text/javascript", "application/json"],
+        allowBlank: false,
+        nested: { mode: "strict" }
+      })
+    })
+  })
+
   describe("YAML anchors and aliases", () => {
     test("loads configuration using YAML anchors and aliases", async () => {
       createTestFile(testDir, ".herb.yml", dedent`

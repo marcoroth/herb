@@ -386,6 +386,56 @@ describe("@herb-tools/linter", () => {
       expect(linter).toBeInstanceOf(Linter)
     })
 
+    test("validates custom options for disabled rules after the shared config schema", () => {
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-allowed-script-type": {
+              enabled: false,
+              allowBlank: "false"
+            }
+          }
+        }
+      })
+
+      expect(config.getRuleOptions("html-allowed-script-type")).toEqual({ allowBlank: "false" })
+      expect(() => Linter.from(Herb, config)).toThrow(
+        "html-allowed-script-type: Invalid options: allowBlank: expected boolean, received string"
+      )
+    })
+
+    test("rejects unknown options for configurable rules", () => {
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-allowed-script-type": {
+              allowBlakn: false
+            }
+          }
+        }
+      })
+
+      expect(() => Linter.from(Herb, config)).toThrow(
+        "html-allowed-script-type: Unknown options: allowBlakn"
+      )
+    })
+
+    test("rejects custom options for rules that do not declare any", () => {
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              unexpected: true
+            }
+          }
+        }
+      })
+
+      expect(() => new Linter(Herb, [HTMLTagNameLowercaseRule], config)).toThrow(
+        "html-tag-name-lowercase: Unknown options: unexpected"
+      )
+    })
+
     test("filters rules based on default config", () => {
       class EnabledByDefaultRule extends ParserRule {
         static ruleName = "enabled-by-default-rule"

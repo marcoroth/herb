@@ -1,4 +1,5 @@
 import picomatch from "picomatch"
+import { ZodError } from "zod"
 
 import { Location, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
@@ -8,8 +9,6 @@ import { findNodeByLocation } from "./rules/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
-
-import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config/schema"
@@ -63,6 +62,41 @@ export interface FilterRulesResult {
 export interface FilterRulesOptions {
   only?: string[]
   all?: boolean
+}
+
+export class RuleOptionsValidationError extends Error {
+  constructor(ruleName: string, problem: string) {
+    super(`${ruleName}: ${problem}`)
+  }
+}
+
+export class UnknownRuleOptionsError extends RuleOptionsValidationError {
+  constructor(ruleName: string, issue: Extract<ZodError["issues"][number], { code: "unrecognized_keys" }>) {
+    const prefix = issue.path.map(String)
+    const names = issue.keys.map(key => [...prefix, key].join("."))
+
+    super(ruleName, `Unknown options: ${names.join(", ")}`)
+  }
+}
+
+export class InvalidRuleOptionsError extends RuleOptionsValidationError {
+  constructor(ruleName: string, issue: ZodError["issues"][number]) {
+    const optionName = issue.path.map(String).join(".")
+    const message = issue.message.replace(/^Invalid input: /, "")
+    const problem = optionName ? `${optionName}: ${message}` : message
+
+    super(ruleName, `Invalid options: ${problem}`)
+  }
+}
+
+function validationErrorFor(ruleName: string, error: ZodError): RuleOptionsValidationError {
+  const issue = error.issues[0]!
+
+  if (issue.code === "unrecognized_keys") {
+    return new UnknownRuleOptionsError(ruleName, issue)
+  } else {
+    return new InvalidRuleOptionsError(ruleName, issue)
+  }
 }
 
 export class Linter {
@@ -122,6 +156,30 @@ export class Linter {
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.allAvailableRules = allAvailableRules !== undefined ? allAvailableRules : this.rules
     this.offenses = []
+    this.validateRuleOptions()
+  }
+
+  /** Create a rule instance with its custom per-rule options applied. */
+  protected createRule(ruleClass: RuleClass): Rule {
+    const rule = new ruleClass()
+    const options = this.config?.getRuleOptions(ruleClass.ruleName) ?? {}
+
+    try {
+      return rule.configure(options)
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw validationErrorFor(ruleClass.ruleName, error)
+      }
+
+      throw error
+    }
+  }
+
+  /** Validate custom options after built-in and project-local rules are available. */
+  protected validateRuleOptions(): void {
+    for (const ruleClass of this.allAvailableRules) {
+      this.createRule(ruleClass)
+    }
   }
 
   /**
@@ -464,8 +522,8 @@ export class Linter {
       const hasParserRule = this.findRuleClass("parser-no-errors")
 
       if (hasParserRule) {
-        const rule = new ParserNoErrorsRule()
-        const offenses = rule.check(parseResult)
+        const rule = this.createRule(hasParserRule) as ParserRule
+        const offenses = rule.check(parseResult) as LintOffense[]
 
         this.offenses.push(...offenses)
       }
@@ -493,7 +551,7 @@ export class Linter {
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
 
     for (const ruleClass of regularRules) {
-      const rule = new ruleClass()
+      const rule = this.createRule(ruleClass)
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
@@ -522,7 +580,7 @@ export class Linter {
     const unnecessaryRuleClass = this.findRuleClass("herb-disable-comment-unnecessary")
 
     if (unnecessaryRuleClass) {
-      const unnecessaryRule = new unnecessaryRuleClass() as ParserRule
+      const unnecessaryRule = this.createRule(unnecessaryRuleClass) as ParserRule
       const parseResult = this.parseCache.get(source, unnecessaryRule.parserOptions)
       const unboundOffenses = unnecessaryRule.check(parseResult, context)
       const boundOffenses = this.bindSeverity(unboundOffenses, unnecessaryRuleClass.ruleName)
@@ -646,7 +704,7 @@ export class Linter {
           continue
         }
 
-        const rule = new ruleClass() as ParserRule
+        const rule = this.createRule(ruleClass) as ParserRule
         const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {
@@ -719,7 +777,7 @@ export class Linter {
           continue
         }
 
-        const rule = new ruleClass() as SourceRule
+        const rule = this.createRule(ruleClass) as SourceRule
         const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {

@@ -10,6 +10,7 @@ export type {
   LinterConfig,
   FormatterConfig,
   EngineConfig,
+  BaseRuleConfig,
   RuleConfig,
   FilesConfig,
   LoadOptions,

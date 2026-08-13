@@ -172,6 +172,13 @@ linter:
     html-tag-name-lowercase:
       severity: warning  # Options: error, warning, info, hint
 
+    # Set options defined by a specific rule
+    html-allowed-script-type:
+      allowedTypes:
+        - text/javascript
+        - application/json
+      allowBlank: false
+
     # Rule with file pattern restrictions
     html-img-require-alt:
       # Only apply this rule to files matching these patterns
@@ -229,6 +236,8 @@ Each rule can be configured with the following options:
 - **`include`**: Array of glob patterns - Restrict rule to files matching these patterns (can override parent excludes)
 - **`only`**: Array of glob patterns - Restrict rule to ONLY these files (can override parent excludes, overrides `include`)
 - **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
+
+Rules may also define their own options. These are documented on the individual rule page and can be set alongside the common options above. Herb validates those options after built-in and project-local rules are loaded, so misspelled option names and values of the wrong type produce configuration errors.
 
 ### Setting the Default for All Rules <Badge type="tip" text="^0.11.0" />
 

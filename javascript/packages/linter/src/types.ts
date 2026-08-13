@@ -1,10 +1,11 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
+import { z } from "zod"
 
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
 import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
-import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
+import type { Framework, BaseRuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
 
@@ -20,7 +21,37 @@ export const DEFAULT_LINTER_PARSER_OPTIONS: Partial<ParserOptions> = {
   track_whitespace: true,
 }
 
-export type FullRuleConfig = Required<Pick<RuleConfig, 'enabled' | 'severity'>> & Omit<RuleConfig, 'enabled' | 'severity'>
+export type FullRuleConfig = Required<Pick<BaseRuleConfig, 'enabled' | 'severity'>> & Omit<BaseRuleConfig, 'enabled' | 'severity'>
+
+export type RuleOptions = Record<string, unknown>
+
+abstract class BaseRule<TOptions extends object = RuleOptions> {
+  private configuredOptions: TOptions | undefined
+
+  get defaultOptions(): TOptions {
+    return {} as TOptions
+  }
+
+  get optionsSchema(): z.ZodType<TOptions> {
+    return z.object({}).strict() as z.ZodType<TOptions>
+  }
+
+  get options(): TOptions {
+    this.configuredOptions ??= this.validateOptions()
+
+    return this.configuredOptions
+  }
+
+  validateOptions(options: Partial<TOptions> = {}): TOptions {
+    return this.optionsSchema.parse({ ...this.defaultOptions, ...options })
+  }
+
+  configure(options: Partial<TOptions> = {}): this {
+    this.configuredOptions = this.validateOptions(options)
+
+    return this
+  }
+}
 
 /**
  * Automatically inferred union type of all available linter rule names.
@@ -100,7 +131,10 @@ export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
 /**
  * Base class for parser rules.
  */
-export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+export abstract class ParserRule<
+  TAutofixContext extends BaseAutofixContext = BaseAutofixContext,
+  TOptions extends object = RuleOptions
+> extends BaseRule<TOptions> {
   static type = "parser" as const
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
@@ -181,7 +215,10 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
 /**
  * Base class for lexer rules.
  */
-export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+export abstract class LexerRule<
+  TAutofixContext extends BaseAutofixContext = BaseAutofixContext,
+  TOptions extends object = RuleOptions
+> extends BaseRule<TOptions> {
   static type = "lexer" as const
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
@@ -241,7 +278,7 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
 
 export interface LexerRuleConstructor {
   type: "lexer"
-  new (): LexerRule
+  new (): LexerRule<any, any>
   ruleName: string
   introducedIn: RuleVersion
   autocorrectable?: boolean
@@ -285,7 +322,10 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   herb: undefined
 } as const
 
-export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+export abstract class SourceRule<
+  TAutofixContext extends BaseAutofixContext = BaseAutofixContext,
+  TOptions extends object = RuleOptions
+> extends BaseRule<TOptions> {
   static type = "source" as const
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
@@ -345,7 +385,7 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
 
 export interface SourceRuleConstructor {
   type: "source"
-  new (): SourceRule
+  new (): SourceRule<any, any>
   ruleName: string
   introducedIn: RuleVersion
   autocorrectable?: boolean
@@ -359,7 +399,7 @@ export interface SourceRuleConstructor {
  * The Linter accepts rule classes rather than instances for better performance and memory usage.
  * Parser rules are the default and don't require static properties.
  */
-export type ParserRuleClass = (new () => ParserRule) & {
+export type ParserRuleClass = (new () => ParserRule<any, any>) & {
   type?: "parser"
   ruleName: string
   introducedIn: RuleVersion
@@ -377,7 +417,7 @@ export type SourceRuleClass = SourceRuleConstructor
 /**
  * Union type for any rule instance (Parser/AST, Lexer, or Source)
  */
-export type Rule = ParserRule | LexerRule | SourceRule
+export type Rule = ParserRule<any, any> | LexerRule<any, any> | SourceRule<any, any>
 
 /**
  * Union type for any rule class (Parser/AST, Lexer, or Source)

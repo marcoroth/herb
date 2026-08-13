@@ -1,16 +1,25 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue } from "@herb-tools/core"
+import { z } from "zod"
 
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { BaseAutofixContext, UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
-// NOTE: Rules are not configurable for now, keep some sane defaults
-//   See https://github.com/marcoroth/herb/issues/1204
-const ALLOW_BLANK = true
-const ALLOWED_TYPES = ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"]
+export interface HTMLAllowedScriptTypeOptions {
+  allowedTypes: string[]
+  allowBlank: boolean
+}
 
 class AllowedScriptTypeVisitor extends BaseRuleVisitor {
+  private readonly options: HTMLAllowedScriptTypeOptions
+
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, options: HTMLAllowedScriptTypeOptions) {
+    super(ruleName, context)
+
+    this.options = options
+  }
+
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     if (getTagLocalName(node) === "script") {
       this.visitScriptNode(node)
@@ -18,10 +27,11 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   }
 
   private visitScriptNode(node: HTMLOpenTagNode): void {
+    const { allowBlank } = this.options
     const typeAttribute = getAttribute(node, "type")
 
     if (!typeAttribute) {
-      if (!ALLOW_BLANK) {
+      if (!allowBlank) {
         this.addOffense("`type` attribute required for `<script>` tag.", node.location)
       }
 
@@ -41,6 +51,7 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   }
 
   private validateTypeAttribute(typeAttribute: HTMLAttributeNode): void {
+    const { allowedTypes, allowBlank } = this.options
     const typeValue = getStaticAttributeValue(typeAttribute)
     if (typeValue === null) return
 
@@ -53,18 +64,18 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
       return
     }
 
-    if (ALLOWED_TYPES.includes(typeValue)) return
+    if (allowedTypes.includes(typeValue)) return
 
     this.addOffense(
       `Avoid using \`${typeValue}\` as the \`type\` attribute for the \`<script>\` tag. ` +
-      `Must be one of: ${ALLOWED_TYPES.map(t => `\`${t}\``).join(", ")}` +
-      `${ALLOW_BLANK ? " or blank" : ""}.`,
+      `Must be one of: ${allowedTypes.map(t => `\`${t}\``).join(", ")}` +
+      `${allowBlank ? " or blank" : ""}.`,
       typeAttribute.location
     )
   }
 }
 
-export class HTMLAllowedScriptTypeRule extends ParserRule {
+export class HTMLAllowedScriptTypeRule extends ParserRule<BaseAutofixContext, HTMLAllowedScriptTypeOptions> {
   static ruleName = "html-allowed-script-type"
   static introducedIn = this.version("0.9.0")
 
@@ -75,8 +86,22 @@ export class HTMLAllowedScriptTypeRule extends ParserRule {
     }
   }
 
+  get defaultOptions(): HTMLAllowedScriptTypeOptions {
+    return {
+      allowedTypes: ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"],
+      allowBlank: true
+    }
+  }
+
+  get optionsSchema(): z.ZodType<HTMLAllowedScriptTypeOptions> {
+    return z.object({
+      allowedTypes: z.array(z.string()),
+      allowBlank: z.boolean()
+    }).strict()
+  }
+
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AllowedScriptTypeVisitor(this.ruleName, context)
+    const visitor = new AllowedScriptTypeVisitor(this.ruleName, context, this.options)
 
     visitor.visit(result.value)
 
