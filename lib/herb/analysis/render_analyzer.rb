@@ -471,7 +471,7 @@ module Herb
           result.dynamic_calls.each do |call|
             shown = dynamic_call_display(call)
 
-            puts "   #{bold(red("\u2717"))} #{red(shown)} #{dimmed("in #{relative_path(call[:file])}")}"
+            puts "   #{bold(red("\u2717"))} #{bold(red(shown))} #{dimmed("in #{relative_path(call[:file])}")}"
           end
         end
 

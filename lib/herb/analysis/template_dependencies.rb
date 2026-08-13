@@ -43,7 +43,7 @@ module Herb
         prescan = LocalScanner.new
         ast.accept(prescan)
 
-        collector = DependencyCollector.new(@helper_registry, known_helpers, prescan.locals)
+        collector = DependencyCollector.new(@helper_registry, known_helpers, prescan.locals | guarded_locals(source))
         ast.accept(collector)
 
         Result.new(
@@ -125,6 +125,12 @@ module Herb
       end
 
       private
+      # `<% if defined?(sponsor) %>` is how a partial declares an optional local, so the name is a
+      # local the caller may omit rather than a method the template is missing.
+      def guarded_locals(source)
+        source.scan(/defined\?\s*\(\s*([a-z_]\w*)\s*\)/).flatten.to_set
+      end
+
       # `helper_method :foo` in a controller exposes a controller method to every view. It is not a
       # module inclusion, so scanning `app/helpers` alone never finds it.
       def scan_helper_methods!

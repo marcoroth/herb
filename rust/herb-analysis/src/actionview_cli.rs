@@ -290,7 +290,7 @@ fn check(arguments: &[String]) -> i32 {
     println!();
 
     for (file, shown) in &dynamic_sites {
-      println!("   {} {} {}", "\u{2717}".red().bold(), shown.red(), format!("in {file}").dimmed());
+      println!("   {} {} {}", "\u{2717}".red().bold(), shown.red().bold(), format!("in {file}").dimmed());
     }
 
     println!();

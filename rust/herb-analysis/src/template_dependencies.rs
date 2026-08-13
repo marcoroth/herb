@@ -320,11 +320,31 @@ impl TemplateDependencies {
       };
     };
 
-    let mut collector = Collector::new(&self.helper_registry, &self.custom_helpers, BTreeSet::new());
+    let mut collector = Collector::new(&self.helper_registry, &self.custom_helpers, guarded_locals(source));
     collector.visit_document_node(&result.value);
 
     collector.into_dependencies(file)
   }
+}
+
+/// `<% if defined?(sponsor) %>` is how a partial declares an optional local, so the name is a local
+/// the caller may omit rather than a method the template is missing.
+fn guarded_locals(source: &str) -> BTreeSet<String> {
+  let mut names = BTreeSet::new();
+  let mut rest = source;
+
+  while let Some(index) = rest.find("defined?") {
+    rest = &rest[index + "defined?".len()..];
+
+    let candidate = rest.trim_start().trim_start_matches('(').trim_start();
+    let name: String = candidate.chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '_').collect();
+
+    if !name.is_empty() && name.chars().next().is_some_and(|c| c.is_ascii_lowercase() || c == '_') {
+      names.insert(name);
+    }
+  }
+
+  names
 }
 
 fn helper_registry() -> BTreeSet<String> {
