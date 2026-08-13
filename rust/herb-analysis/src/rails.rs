@@ -273,6 +273,30 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       }
     }
 
+    // `member do` and `collection do` name their routes after the enclosing resource without adding
+    // anything to the prefix, but they still open a block that has to balance against its `end`.
+    if trimmed == "member do" || trimmed == "collection do" {
+      namespaces.push(String::new());
+      depth_stack.push(namespaces.len());
+
+      continue;
+    }
+
+    // A bare `get :talks` inside a resource block is a member route, named exactly as the
+    // `on: :member` form above.
+    if !resources.is_empty() {
+      if let Some(action) = symbol_after(trimmed, "get ")
+        .or_else(|| symbol_after(trimmed, "post "))
+        .or_else(|| symbol_after(trimmed, "patch "))
+        .or_else(|| symbol_after(trimmed, "put "))
+        .or_else(|| symbol_after(trimmed, "delete "))
+      {
+        insert_pair(&mut names, &format!("{action}_{}", prefix.trim_end_matches('_')));
+
+        continue;
+      }
+    }
+
     if let Some(name) = symbol_after(trimmed, "resources ") {
       let singular = singularize(&name);
 
@@ -359,14 +383,16 @@ fn literal_path(line: &str) -> Option<String> {
 
   let segment = path.trim_matches('/');
 
-  if segment.is_empty() || segment.contains('/') || segment.contains(':') || segment.contains('*') {
+  // A dynamic segment or a glob makes the helper name unpredictable, but a multi-segment literal
+  // path is fine: `get "/pages/assets"` gives `pages_assets_path`.
+  if segment.is_empty() || segment.contains(':') || segment.contains('*') {
     return None;
   }
 
   segment
     .chars()
-    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
-    .then(|| segment.replace('-', "_"))
+    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '/')
+    .then(|| segment.replace(['-', '/'], "_"))
 }
 
 fn singularize(word: &str) -> String {
