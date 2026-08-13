@@ -136,10 +136,16 @@ module Herb
           Dir[root.join("**", "*.rb")].each do |file|
             source = File.read(file)
 
-            next unless source.include?("helper_method")
+            next unless source.include?("helper_method") || source.include?("add_flash_types")
 
             source.scan(/helper_method\s+([:\w\s,?!]+)/) do |match|
               match[0].scan(/:(\w+[?!]?)/) { |name| @custom_helpers.add(name[0]) }
+            end
+
+            # `add_flash_types(:alert, :notice)` exposes each type to views, but it does so through
+            # `helper_method(type)` with a variable, so only the declaration site names them.
+            source.scan(/add_flash_types[\s(]+([:\w\s,]+)/) do |match|
+              match[0].scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
             end
           rescue StandardError
             next

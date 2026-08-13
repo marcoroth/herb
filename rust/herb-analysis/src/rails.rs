@@ -580,14 +580,16 @@ fn collect_helper_sources(path: &Path, found: &mut BTreeMap<String, PathBuf>, mo
       collect_action_view_modules(&source, modules);
     }
 
-    if !source.contains("helper_method") {
+    if !source.contains("helper_method") && !source.contains("add_flash_types") {
       continue;
     }
 
     for line in source.lines() {
       let trimmed = line.trim_start();
 
-      if !trimmed.starts_with("helper_method") {
+      // `add_flash_types(:alert, :notice)` exposes each type to views, but it does so through
+      // `helper_method(type)` with a variable, so only the declaration site names them.
+      if !trimmed.starts_with("helper_method") && !trimmed.starts_with("add_flash_types") {
         continue;
       }
 
