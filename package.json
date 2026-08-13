@@ -31,11 +31,11 @@
     "yaml": "^2.9.0"
   },
   "scripts": {
-    "dev": "nx run-many -t dev --all --parallel --exclude=herb-language-server",
-    "build": "nx run-many -t build --all --exclude=herb-language-server",
-    "build:affected": "nx affected -t build --exclude=herb-language-server",
-    "test": "nx run-many -t test --all --parallel --exclude=herb-language-server",
-    "test:affected": "nx affected -t test --exclude=herb-language-server",
+    "dev": "nx run-many -t dev --all --parallel",
+    "build": "nx run-many -t build --all",
+    "build:affected": "nx affected -t build",
+    "test": "nx run-many -t test --all --parallel",
+    "test:affected": "nx affected -t test",
     "clean": "nx run-many -t clean --all --parallel && nx reset",
     "playground": "nx run playground:dev",
     "docs": "nx dev docs",
