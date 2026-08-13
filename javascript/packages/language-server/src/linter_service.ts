@@ -239,6 +239,8 @@ export class LinterService {
       fileName: this.index.relativePathFor(textDocument.uri) ?? textDocument.uri,
       partials: this.index.partials,
       partialCallers: this.index?.callers,
+      indentWidth: settings?.formatter?.indentWidth,
+      indentStyle: settings?.formatter?.indentStyle,
     })
 
     const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {

@@ -3,7 +3,8 @@ import { mkdirSync, writeFileSync, rmSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
-import { Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/node"
+import { CodeActionParams, Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/node"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
@@ -11,6 +12,7 @@ import { CodeActionProvider } from "../src/code_action_provider"
 import { Project } from "../src/project"
 
 import type { TextDocumentEdit } from "vscode-languageserver/node"
+import type { PersonalHerbSettings } from "../src/user_settings"
 
 const RULE = "herb-config-framework-option"
 const URI = "file:///project/app/views/users/show.html.erb"
@@ -36,8 +38,8 @@ describe("CodeActionProvider", () => {
     writeFileSync(join(projectPath, ".herb.yml"), content)
   }
 
-  async function createService() {
-    const project = { root: projectPath, herbBackend: Herb } as unknown as Project
+  async function createService(settings: Partial<PersonalHerbSettings> = {}) {
+    const project = { root: projectPath, herbBackend: Herb, settingsFor: async () => settings } as unknown as Project
     const config = await Config.loadForEditor(projectPath, "0.10.3")
 
     return new CodeActionProvider(project, config)
@@ -130,5 +132,31 @@ describe("CodeActionProvider", () => {
     const actions = setFrameworkActions(service.createCodeActions(URI, [diagnostic], "<%= image_tag %>"))
 
     expect(actions).toHaveLength(0)
+  })
+
+  it("fixes indentation to the style the diagnostics were reported against", async () => {
+    const service = await createService({ formatter: { indentStyle: "tab", indentWidth: 2 } })
+    const document = TextDocument.create(URI, "erb", 1, "<div>\n  <span>Hello</span>\n</div>\n")
+
+    const diagnostic: Diagnostic = {
+      range: Range.create(1, 0, 1, 2),
+      message: "Indent with tabs instead of spaces.",
+      severity: DiagnosticSeverity.Error,
+      source: "Herb Linter ",
+      code: "source-indentation",
+      data: { rule: "source-indentation" }
+    }
+
+    const params = {
+      textDocument: { uri: URI },
+      range: diagnostic.range,
+      context: { diagnostics: [diagnostic] }
+    } as CodeActionParams
+
+    const actions = await service.autofixCodeActions(params, document)
+    const fix = actions.find(action => action.title.includes("Indent with tabs"))
+
+    expect(fix).toBeDefined()
+    expect(fix?.edit?.changes?.[URI][0].newText).toBe("<div>\n\t<span>Hello</span>\n</div>\n")
   })
 })

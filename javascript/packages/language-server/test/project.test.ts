@@ -95,6 +95,35 @@ describe("Project", () => {
       expect(settings.formatter?.maxLineLength).toBe(120)
     })
 
+    test("carries the config's indent style through", async () => {
+      writeFileSync(join(root, ".herb.yml"), "formatter:\n  enabled: true\n  indentStyle: tab\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      const settings = await project.settingsFor(`file://${join(root, "app/views/posts/index.html.erb")}`)
+
+      expect(settings.formatter?.indentStyle).toBe("tab")
+    })
+
+    test("reads an unset indent style as space, not as an opening for the user's preference", async () => {
+      writeFileSync(join(root, ".herb.yml"), "formatter:\n  enabled: true\n")
+
+      const capabilities = new Capabilities(params)
+      const userSettings = new UserSettings(connection, capabilities)
+
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({
+        formatter: { indentStyle: "tab" }
+      })
+
+      const project = projectFor(userSettings, capabilities)
+      await project.loadConfig()
+
+      const settings = await project.settingsFor(`file://${join(root, "app/views/posts/index.html.erb")}`)
+
+      expect(settings.formatter?.indentStyle).toBe("space")
+    })
+
     test("leaves personal settings alone, since a project can't have an opinion on them", async () => {
       writeFileSync(join(root, ".herb.yml"), "formatter:\n  enabled: true\n")
 
