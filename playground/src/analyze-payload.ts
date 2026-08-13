@@ -1,14 +1,13 @@
+import { toMonacoDiagnostic } from "@herb-tools/core"
 import { rules, fixabilityFor } from "@herb-tools/linter"
 
-import type { ParseResult } from "@herb-tools/core"
+import type { HerbError, MonacoDiagnostic, ParseResult } from "@herb-tools/core"
+import type { AutofixResult, LintOffense, LintResult } from "@herb-tools/linter"
+import type { analyze } from "./analyze"
 
-export type AnalyzeDiagnostic = {
-  severity: string
-  message: string
-  line: number
-  column: number
-  endLine: number
-  endColumn: number
+export type AnalyzeResult = Awaited<ReturnType<typeof analyze>>
+
+export type AnalyzeDiagnostic = MonacoDiagnostic & {
   source: string
   code: string
 }
@@ -26,24 +25,24 @@ export type AnalyzePayload = {
   duration: number
   parserDiagnostics: AnalyzeDiagnostic[]
   hasParserErrors: boolean
-  lintOffenses?: any[]
+  lintOffenses?: LintOffense[]
   hasUnsafeOffenses: boolean
   autofix?: { source: string | null, fixedCount: number } | null
 }
 
-function parserErrorsFor(parseResult: ParseResult | undefined) {
-  if (!parseResult || typeof (parseResult as any).recursiveErrors !== "function") return []
+function parserErrorsFor(parseResult: ParseResult | undefined): HerbError[] {
+  if (!parseResult || typeof parseResult.recursiveErrors !== "function") return []
 
-  return (parseResult as any).recursiveErrors()
+  return parseResult.recursiveErrors()
 }
 
-function offensesFor(lintResult: any) {
+function offensesFor(lintResult: LintResult | null | undefined): LintOffense[] | undefined {
   if (!lintResult || !Array.isArray(lintResult.offenses)) return undefined
 
   return lintResult.offenses
 }
 
-function hasUnsafeOffenses(offenses: any[] | undefined) {
+function hasUnsafeOffenses(offenses: LintOffense[] | undefined): boolean {
   if (!offenses) return false
 
   return offenses.some(offense => {
@@ -53,7 +52,7 @@ function hasUnsafeOffenses(offenses: any[] | undefined) {
   })
 }
 
-function autofixFor(autofixResult: any) {
+function autofixFor(autofixResult: AutofixResult | null | undefined): { source: string | null, fixedCount: number } | null | undefined {
   if (autofixResult === undefined) return undefined
   if (!autofixResult) return null
 
@@ -63,27 +62,15 @@ function autofixFor(autofixResult: any) {
   }
 }
 
-/**
- * Flattens an analysis into structured-cloneable data.
- *
- * `parseResult` carries methods that do not survive `postMessage`, so the
- * errors it holds are resolved into diagnostics before the payload is sent.
- *
- * @param {Object} result
- * @returns {AnalyzePayload}
- */
-export function toAnalyzePayload(result: any): AnalyzePayload {
+export function toAnalyzePayload(result: AnalyzeResult): AnalyzePayload {
   const errors = parserErrorsFor(result.parseResult)
   const offenses = offensesFor(result.lintResult)
 
-  const parserDiagnostics = errors.map((error: any) => {
-    const diagnostic = error.toMonacoDiagnostic()
-
-    diagnostic.source = "Herb Parser"
-    diagnostic.code = diagnostic.code || error.code || error.type || "parser-error"
-
-    return diagnostic
-  })
+  const parserDiagnostics: AnalyzeDiagnostic[] = errors.map((error) => ({
+    ...toMonacoDiagnostic(error),
+    source: "Herb Parser",
+    code: error.code || error.type || "parser-error",
+  }))
 
   return {
     string: result.string,
