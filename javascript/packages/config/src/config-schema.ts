@@ -2,6 +2,8 @@ import { z } from "zod"
 
 import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
+
 export const SeveritySchema = z.enum(DIAGNOSTIC_SEVERITIES)
 
 export const SeverityConfigSchema = z.union([
@@ -79,3 +81,31 @@ export type HerbConfigSchemaType = z.infer<typeof HerbConfigSchema>
 export type RuleConfigSchemaType = z.infer<typeof RuleConfigSchema>
 export type FilesConfigSchemaType = z.infer<typeof FilesConfigSchema>
 export type SeveritySchemaType = z.infer<typeof SeveritySchema>
+
+export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
+
+export type LinterMode = "editor" | "cli"
+
+export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
+  if (typeof severity === "string") {
+    return severity
+  }
+
+  return severity[mode]
+}
+
+/**
+ * Pseudo rule name used inside `linter.rules` to set the default `enabled`
+ * state for every rule that isn't explicitly configured.
+ *
+ * ```yaml
+ * linter:
+ *   rules:
+ *     all:
+ *       enabled: false
+ *
+ *     html-no-event-handlers:
+ *       enabled: true
+ * ```
+ */
+export const ALL_RULES_KEY = "all"

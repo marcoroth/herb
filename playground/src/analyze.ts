@@ -38,6 +38,7 @@ export type AnalyzeJob =
   | "rewrite"
   | "lint"
   | "autofix"
+  | "highlighter"
 
 export const ALL_ANALYZE_JOBS: AnalyzeJob[] = [
   "parse",
@@ -50,6 +51,7 @@ export const ALL_ANALYZE_JOBS: AnalyzeJob[] = [
   "rewrite",
   "lint",
   "autofix",
+  "highlighter",
 ]
 
 export type HighlighterOptions = {
@@ -101,13 +103,13 @@ async function renderHighlighter(herb: HerbBackend, source: string, lintResult: 
   })
 }
 
-export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}, highlighterOptions: HighlighterOptions = {}, jobs: Iterable<AnalyzeJob> = ALL_ANALYZE_JOBS) {
+export async function analyze(herb: HerbBackend, source: string, options: Partial<ParserOptions> = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}, highlighterOptions: HighlighterOptions = {}, jobs: Iterable<AnalyzeJob> = ALL_ANALYZE_JOBS) {
   const startTime = performance.now()
   const requested = new Set(jobs)
   const wants = (job: AnalyzeJob) => requested.has(job)
 
   const parseResult = await safeExecute<ParseResult>(
-    new Promise((resolve) => resolve(herb.parse(source, options))),
+    new Promise((resolve) => resolve(herb.parse(source, options as ParserOptions))),
   )
 
   const parsed = parseResult && parseResult.value
@@ -169,7 +171,7 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
   if (parsed && wants("rewrite")) {
     rewritten = await safeExecute<string>(
       new Promise((resolve) => {
-        const rewriteParseResult = herb.parse(source, { ...options, track_whitespace: true })
+        const rewriteParseResult = herb.parse(source, { ...options, track_whitespace: true } as ParserOptions)
         const rewriter = new ActionViewTagHelperToHTMLRewriter()
         const { output } = rewrite(rewriteParseResult.value, [rewriter], { baseDir: "/" })
         resolve(output)
@@ -200,7 +202,9 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
     }
   }
 
-  const highlighted = await safeExecute<string>(renderHighlighter(herb, source, lintResult, highlighterOptions))
+  const highlighted = wants("highlighter")
+    ? await safeExecute<string>(renderHighlighter(herb, source, lintResult ?? null, highlighterOptions))
+    : undefined
 
   const endTime = performance.now()
 

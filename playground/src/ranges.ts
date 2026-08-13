@@ -1,3 +1,5 @@
+export type Range = [number, number, number, number]
+
 /**
  * Finds the range that contains a specific position
  *
@@ -6,7 +8,7 @@
  * @param {number} column - Column number to search for
  * @returns {Array<number>|null} - The matching range or null if no match found
  */
-export function findRangeContainingPosition(ranges, line, column) {
+export function findRangeContainingPosition(ranges: Range[], line: number, column: number): Range | null {
   if (!ranges || !ranges.length) {
     return null
   }
@@ -45,12 +47,12 @@ export function findRangeContainingPosition(ranges, line, column) {
  * @param {number} column - Column number to search for
  * @returns {Array<Array<number>>} - Array of matching ranges
  */
-export function findAllRangesContainingPosition(ranges, line, column) {
+export function findAllRangesContainingPosition(ranges: Range[], line: number, column: number): Range[] {
   if (!ranges || !ranges.length) {
     return []
   }
 
-  return ranges.filter((range) => {
+  return ranges.filter((range: Range) => {
     const [startLine, startColumn, endLine, endColumn] = range
 
     if (line < startLine || line > endLine) {
@@ -78,14 +80,14 @@ export function findAllRangesContainingPosition(ranges, line, column) {
  * @param {number} column - Column number to search for
  * @returns {Array<number>|null} - The smallest matching range or null if no match found
  */
-export function findSmallestRangeContainingPosition(ranges, line, column) {
+export function findSmallestRangeContainingPosition(ranges: Range[], line: number, column: number): Range | null {
   const matchingRanges = findAllRangesContainingPosition(ranges, line, column)
 
   if (!matchingRanges.length) {
     return null
   }
 
-  return matchingRanges.sort((a, b) => {
+  return matchingRanges.sort((a: Range, b: Range) => {
     const sizeA = calculateRangeSize(a)
     const sizeB = calculateRangeSize(b)
     return sizeA - sizeB
@@ -98,7 +100,7 @@ export function findSmallestRangeContainingPosition(ranges, line, column) {
  * @param {Array<number>} range - [startLine, startColumn, endLine, endColumn]
  * @returns {number} - Size in characters (approximate)
  */
-export function calculateRangeSize(range) {
+export function calculateRangeSize(range: Range): number {
   const [startLine, startColumn, endLine, endColumn] = range
 
   if (startLine === endLine) {
@@ -109,11 +111,11 @@ export function calculateRangeSize(range) {
   return lineCount * 80 + (endColumn - startColumn)
 }
 
-export function findTreeLocationItemWithSmallestRangeFromPosition(
-  treeLocations,
-  line,
-  column,
-) {
+export function findTreeLocationItemWithSmallestRangeFromPosition<T extends { location: Range }>(
+  treeLocations: T[],
+  line: number,
+  column: number,
+): T | undefined {
   const allLocations = treeLocations.map(({ location }) => location)
 
   const smallestRange = findSmallestRangeContainingPosition(
@@ -123,7 +125,7 @@ export function findTreeLocationItemWithSmallestRangeFromPosition(
   )
 
   if (!smallestRange) {
-    return null
+    return undefined
   }
 
   return treeLocations.find(({ location }) => {
