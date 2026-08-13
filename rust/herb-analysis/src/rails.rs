@@ -193,6 +193,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
   let mut depth_stack: Vec<usize> = Vec::new();
   let mut resources: Vec<String> = Vec::new();
   let mut resource_depth: Vec<usize> = Vec::new();
+  let mut collection_depth: Vec<usize> = Vec::new();
 
   for line in source.lines() {
     let trimmed = line.trim();
@@ -208,6 +209,10 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
         if resource_depth.last() == Some(&depth) {
           resource_depth.pop();
           resources.pop();
+        }
+
+        if collection_depth.last() == Some(&depth) {
+          collection_depth.pop();
         }
       }
 
@@ -248,17 +253,24 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
     // `get :publish, on: :member` names the route after the enclosing resource, so it has to be
     // handled before the generic `as:`/literal-path cases below.
     if let Some(scope) = value_after(trimmed, "on: :") {
+      // The verb can take a path string rather than a symbol, in which case `as:` supplies the name.
       if let Some(action) = symbol_after(trimmed, "get ")
         .or_else(|| symbol_after(trimmed, "post "))
         .or_else(|| symbol_after(trimmed, "patch "))
         .or_else(|| symbol_after(trimmed, "put "))
         .or_else(|| symbol_after(trimmed, "delete "))
+        .or_else(|| route_alias(trimmed))
       {
         if let Some(owner) = resources.last() {
           // `prefix` already ends with the enclosing resource's singular name, so a member route
           // only needs the action in front of it.
           let stem = if scope == "collection" {
-            let outer: String = namespaces[..namespaces.len().saturating_sub(1)].join("_");
+            let outer: String = namespaces[..namespaces.len().saturating_sub(1)]
+              .iter()
+              .filter(|part| !part.is_empty())
+              .cloned()
+              .collect::<Vec<_>>()
+              .join("_");
             let outer = if outer.is_empty() { String::new() } else { format!("{outer}_") };
 
             format!("{action}_{outer}{owner}")
@@ -279,7 +291,52 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       namespaces.push(String::new());
       depth_stack.push(namespaces.len());
 
+      if trimmed == "collection do" {
+        collection_depth.push(namespaces.len());
+      }
+
       continue;
+    }
+
+    // Inside a `collection do` block Rails names routes after the parent's *plural*, as a suffix:
+    // `as: :past` within `resources :events` gives `past_events_path`, not `event_past_path`.
+    let in_collection = collection_depth.last() == Some(&namespaces.len());
+
+    if in_collection {
+      if let Some(owner) = resources.last() {
+        let outer: Vec<&str> = namespaces
+          .iter()
+          .map(String::as_str)
+          .filter(|part| !part.is_empty())
+          .take(namespaces.iter().filter(|part| !part.is_empty()).count().saturating_sub(1))
+          .collect();
+
+        let outer = if outer.is_empty() { String::new() } else { format!("{}_", outer.join("_")) };
+
+        if let Some(alias_name) = route_alias(trimmed) {
+          insert_pair(&mut names, &format!("{alias_name}_{outer}{owner}"));
+
+          continue;
+        }
+
+        // A `resources` nested straight into a collection block hangs off the collection path, so it
+        // keeps its own name rather than picking up the parent's.
+        if let Some(name) = symbol_after(trimmed, "resources ") {
+          let singular = singularize(&name);
+
+          insert_pair(&mut names, &name);
+          insert_pair(&mut names, &singular);
+
+          if trimmed.ends_with(" do") {
+            namespaces.push(singular);
+            depth_stack.push(namespaces.len());
+            resources.push(name);
+            resource_depth.push(namespaces.len());
+          }
+
+          continue;
+        }
+      }
     }
 
     // A bare `get :talks` inside a resource block is a member route, named exactly as the
@@ -353,6 +410,10 @@ fn insert_pair(names: &mut BTreeSet<String>, stem: &str) {
 
   names.insert(format!("{stem}_path"));
   names.insert(format!("{stem}_url"));
+}
+
+fn route_alias(line: &str) -> Option<String> {
+  value_after(line, "as: :").or_else(|| value_after(line, ":as => :"))
 }
 
 fn symbol_after(line: &str, keyword: &str) -> Option<String> {
