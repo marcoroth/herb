@@ -25,7 +25,6 @@ module Herb
         end
 
         def visit_erb_node(node)
-          # `<%# ... %>` is prose, not code. Parsing it yields bogus calls from ordinary words.
           return if node.tag_opening&.value&.start_with?("<%#")
 
           analyze_erb_node(node)
@@ -109,7 +108,6 @@ module Herb
           when Prism::BlockParameterNode, Prism::RequiredParameterNode
             @known_locals.add(node.name.to_s)
           when Prism::ConstantReadNode
-            # Standalone constants are just references, not state
           when Prism::CallNode
             check_call_node(node)
           when Prism::LocalVariableReadNode
@@ -128,7 +126,6 @@ module Herb
             elsif @custom_helpers.include?(name)
               @helper_calls.add(name)
             elsif name == "render"
-              # render calls are handled by visit_erb_render_node
             elsif !@known_locals.include?(name) && !@locals_received.key?(name) && !@locals_declared.include?(name)
               @unknown_calls.add(name)
             end

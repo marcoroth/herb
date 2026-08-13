@@ -23,7 +23,6 @@ pub struct RenderCall {
   pub partial: Option<String>,
   pub locals: BTreeMap<String, String>,
   pub collection: Option<String>,
-  /// `as: :series` renames the local each collection item is bound to.
   pub as_name: Option<String>,
   pub dynamic_prefix: Option<String>,
   pub dynamic: bool,
@@ -220,9 +219,6 @@ impl<'a> Visitor for Collector<'a> {
         .map(|token| token.value.trim().trim_start_matches(':').trim_matches('"').trim_matches('\'').to_string())
         .filter(|value| !value.is_empty());
 
-      // Only consult the prism tree when the parser could not name a partial. Searching it
-      // unconditionally also finds interpolation inside a local's value, which would misread
-      // `render "posts/card", title: "a #{b}"` as a dynamic render.
       let interpolated_from_prism = if raw.is_none() {
         node.prism().and_then(interpolated_render_prefix)
       } else {
@@ -275,8 +271,6 @@ impl TemplateDependencies {
     }
   }
 
-  /// Mirrors `Herb::Analysis::TemplateDependencies#scan_helpers!`: every method defined under
-  /// `app/helpers` becomes a known helper, so calls to it stop being reported as unknown.
   pub fn add_custom_helper(&mut self, name: String) {
     self.custom_helpers.insert(name);
   }
@@ -328,15 +322,16 @@ impl TemplateDependencies {
       };
     };
 
-    let mut collector = Collector::new(&self.helper_registry, &self.custom_helpers, guarded_locals(source));
+    let mut known = crate::ruby_locals_index::RubyLocalsIndex::from_document(&result.value, source).assignment_names;
+    known.extend(guarded_locals(source));
+
+    let mut collector = Collector::new(&self.helper_registry, &self.custom_helpers, known);
     collector.visit_document_node(&result.value);
 
     collector.into_dependencies(file)
   }
 }
 
-/// `<% if defined?(sponsor) %>` is how a partial declares an optional local, so the name is a local
-/// the caller may omit rather than a method the template is missing.
 fn guarded_locals(source: &str) -> BTreeSet<String> {
   let mut names = BTreeSet::new();
   let mut rest = source;
@@ -356,7 +351,6 @@ fn guarded_locals(source: &str) -> BTreeSet<String> {
 }
 
 fn helper_registry() -> BTreeSet<String> {
-  // A helper is callable by every name it answers to: `l` is `localize`, `t` is `translate`.
   herb::action_view_helpers::entries()
     .iter()
     .flat_map(|helper| std::iter::once(helper.name.to_string()).chain(helper.aliases.iter().map(|alias| alias.to_string())))
@@ -364,7 +358,6 @@ fn helper_registry() -> BTreeSet<String> {
 }
 
 fn dynamic_prefix_of(value: &str) -> Option<String> {
-  // The `render partial:` form hands back the source text, quotes included.
   let value = value.trim_start_matches(['"', '\'']);
   let head = value.split("#{").next()?.trim_end_matches('/');
 
@@ -389,9 +382,6 @@ fn interpolated_render_prefix(node: &herb::prism::PrismNode) -> Option<String> {
   node.children.iter().find_map(interpolated_render_prefix)
 }
 
-/// Rails resolves `render @post` through `to_partial_path`, which for a model named `Post` is
-/// `posts/post`. The variable name is the only signal available statically, so `@post` and
-/// `@posts` both point at `posts/post`.
 pub fn object_partial_name(expression: &str) -> Option<String> {
   let name = expression.trim().trim_start_matches('@');
 

@@ -127,7 +127,6 @@ class Herb::CLI
           bundle exec herb compile -
 
       Options:
-        #{option_parser.to_s.strip.gsub(/^    /, "  ")}
 
     HELP
 
@@ -465,7 +464,6 @@ class Herb::CLI
             puts ""
           end
 
-          # Show node-level dependency index
           index = dep_analyzer.dependency_index(path)
 
           if index.any?

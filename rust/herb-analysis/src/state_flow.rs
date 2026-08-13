@@ -47,9 +47,6 @@ impl StateFlow {
   pub fn new(project_path: &Path) -> Self {
     let mut dependencies = TemplateDependencies::new();
 
-    // Ruby's `check_dependencies` only scans `app/helpers`, so it reports a call as unknown when the
-    // helper comes from a gem, a concern, or an inherited module. rubydex already indexes all of
-    // those, so ask it what a view can actually call and fall back to the shallow scan.
     dependencies.scan_helpers(project_path);
 
     for name in view_visible_helper_names(project_path) {
@@ -66,8 +63,6 @@ impl StateFlow {
   pub fn analyze(&self, file: &str) -> Dependencies {
     let source = fs::read_to_string(file).unwrap_or_default();
 
-    // A component template's sibling class defines methods the template may call, which Ruby folds
-    // in through `component_methods_for`.
     let component_methods = component_methods_for(file);
 
     if component_methods.is_empty() {
@@ -454,9 +449,6 @@ fn component_methods_for(template: &str) -> std::collections::BTreeSet<String> {
   methods
 }
 
-/// The sources the Ruby analyzer can also reach, so both `check` commands agree on what counts as a
-/// known helper. The deeper rubydex resolution (gem `*Helper` modules, `ActionView::Base`, ancestor
-/// walks) stays behind `herb-analysis helpers` and `audit`, which exist to report exactly that.
 const KERNEL_METHODS: [&str; 24] = [
   "rand",
   "srand",
@@ -494,31 +486,22 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
 
   let (helper_method_names, action_view_modules) = crate::rails::helper_sources(&helper_roots);
 
-  // Index the gem sources alongside the app. A helper reaching the view through a gem module, a
-  // concern, or an inherited module only resolves if rubydex was given those files to begin with.
   let mut analysis = crate::analysis::Analysis::index_paths(&helper_roots, &std::collections::HashSet::new());
   analysis.resolve();
 
   let modules = analysis.helper_modules();
   let mut roots: Vec<&str> = modules.iter().map(String::as_str).collect();
 
-  // Rails' own view helpers hang off ActionView::Base rather than a `*Helper` module.
   roots.push("ActionView::Base");
 
-  // A gem mixes its helpers in at boot, so nothing in the module's name or location marks it as one.
   roots.extend(action_view_modules.iter().map(String::as_str));
 
   let mut names: Vec<String> = analysis.view_visible_helpers(&roots).into_keys().collect();
 
-  // `helper_method :foo` in a controller is not a module inclusion, so the ancestor walk misses it.
-  // Gems do this too, inside `included do` blocks that no `*Helper` module covers: turbo-rails
-  // exposes `hotwire_native_app?` that way.
   names.extend(helper_method_names.into_keys());
 
-  // `Kernel` is mixed into `Object`, so these need no receiver and are callable from any template.
   names.extend(KERNEL_METHODS.iter().map(|name| (*name).to_string()));
 
-  // Route helpers are generated from `config/routes.rb`, so no module defines them.
   names.extend(crate::rails::route_helpers(project_path));
 
   names

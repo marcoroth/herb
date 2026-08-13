@@ -164,8 +164,6 @@ fn check(arguments: &[String]) -> i32 {
   for file in &templates {
     let result = flow.analyze(file);
 
-    // Ruby scans the source for `render "name"` alongside the AST walk and counts whatever the
-    // visitor missed, so mirror that before comparing totals.
     let mut seen: BTreeSet<String> = result.render_calls.iter().filter_map(|call| call.partial.clone()).collect();
 
     if let Ok(source) = std::fs::read_to_string(file) {
@@ -196,8 +194,6 @@ fn check(arguments: &[String]) -> i32 {
         .or_else(|| call.object.as_deref().and_then(herb_analysis::template_dependencies::object_partial_name));
 
       let Some(name) = target else {
-        // Ruby counts every render without a partial keyword as "other" and reports "dynamic" as a
-        // note alongside it, so an interpolated render lands in both.
         other_renders += 1;
 
         if call.dynamic {
@@ -269,7 +265,8 @@ fn check(arguments: &[String]) -> i32 {
   );
 
   let passed_locals = collect_passed_locals(&templates, &mut index, &flow);
-  let (ivar_warnings, local_warnings, uninferable_warnings, unknown_warnings, ignored_components) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
+  let (ivar_warnings, local_warnings, uninferable_warnings, unknown_warnings, ignored_components) =
+    print_dependency_warnings(&templates, &root, &flow, &passed_locals);
 
   println!();
 
@@ -705,8 +702,6 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
         prefixes.insert(prefix.clone());
       }
 
-      // Ruby records every `layout:` reference separately, even when the same call also names a
-      // partial, so a layout only ever reached that way still counts as used.
       if let Some(layout) = &call.layout {
         layouts.insert(layout.clone());
       }
@@ -1250,9 +1245,6 @@ fn signature(arguments: &[String]) -> i32 {
   0
 }
 
-/// Mirrors `RenderAnalyzer#check_dependencies`: an instance variable read inside a partial breaks
-/// state tracing, and a call the helper registry has never heard of is usually a typo or a helper
-/// Herb cannot see.
 fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &StateFlow) -> BTreeMap<String, BTreeSet<String>> {
   let mut passed: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
 
@@ -1272,10 +1264,7 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
         entry.insert(local.clone());
       }
 
-      // `render collection:` names each item after the partial itself, and supplies a counter and an
-      // iteration alongside it.
       if call.collection.is_some() {
-        // `as: :series` renames the item, so the partial's own basename is only the default.
         let item = call.as_name.clone().or_else(|| name.rsplit('/').next().map(str::to_string));
 
         if let Some(item) = item {
@@ -1290,7 +1279,12 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
   passed
 }
 
-fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize, usize, usize, usize) {
+fn print_dependency_warnings(
+  templates: &[String],
+  root: &Path,
+  flow: &StateFlow,
+  passed_locals: &BTreeMap<String, BTreeSet<String>>,
+) -> (usize, usize, usize, usize, usize) {
   let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
   let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
@@ -1320,12 +1314,7 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
         likely_locals.push((relative.clone(), locals));
       }
 
-      // With no call site contributing a single local name there is no signature to learn from, so
-      // the leftovers are locals Herb cannot infer rather than methods it cannot find. An empty set
-      // means the call sites pass their locals opaquely, as `render "share", **@wrapped_locals` does.
       if !rest.is_empty() {
-        // A component's template calls methods on its own class, which this analyzer does not read,
-        // so every one of them would be a false positive.
         if relative.starts_with("app/components/") {
           ignored_components += 1;
         } else if partial && !declared && candidates.is_none_or(BTreeSet::is_empty) {
@@ -1429,7 +1418,6 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
       }
     }
 
-    // The same name usually recurs across many templates, so the tally shows what to fix first.
     let mut tally: BTreeMap<&str, usize> = BTreeMap::new();
 
     for (_, names) in &unknown {

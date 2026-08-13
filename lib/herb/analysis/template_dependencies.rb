@@ -99,7 +99,6 @@ module Herb
         index
       end
 
-      # `Kernel` is mixed into `Object`, so these need no receiver and are callable from any template.
       KERNEL_METHODS = [
         "rand", "srand", "format", "sprintf", "raise", "loop", "sleep", "catch", "throw",
         "block_given?", "caller", "binding", "frozen?", "freeze", "dup", "clone", "tap", "then",
@@ -124,14 +123,10 @@ module Herb
       end
 
       private
-      # `<% if defined?(sponsor) %>` is how a partial declares an optional local, so the name is a
-      # local the caller may omit rather than a method the template is missing.
       def guarded_locals(source)
         source.scan(/defined\?\s*\(\s*([a-z_]\w*)\s*\)/).flatten.to_set
       end
 
-      # `helper_method :foo` in a controller exposes a controller method to every view. It is not a
-      # module inclusion, so scanning `app/helpers` alone never finds it.
       def scan_helper_methods!
         ["app", "lib"].each do |directory|
           root = @project_path.join(directory)
@@ -147,8 +142,6 @@ module Herb
               match[0].scan(/:(\w+[?!]?)/) { |name| @custom_helpers.add(name[0]) }
             end
 
-            # `add_flash_types(:alert, :notice)` exposes each type to views, but it does so through
-            # `helper_method(type)` with a variable, so only the declaration site names them.
             source.scan(/add_flash_types[\s(]+([:\w\s,]+)/) do |match|
               match[0].scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
             end
@@ -160,9 +153,6 @@ module Herb
         @custom_helpers
       end
 
-      # Route helpers are generated from `config/routes.rb`, so no module defines them and a plain
-      # helper scan can never find them. Mirrors the Rust extractor, including nested resources,
-      # member/collection routes, and the `_index` suffix Rails adds for singular resource names.
       def scan_routes!
         routes_file = @project_path.join("config", "routes.rb")
 
@@ -203,8 +193,6 @@ module Herb
             next
           end
 
-          # `scope "/states/:slug", as: :state do` prefixes every route inside it, the same way a
-          # namespace does. Without pushing here, nested resources are named against the wrong parent.
           if trimmed.start_with?("scope ") && trimmed.end_with?(" do")
             scope_name = route_alias(trimmed)
 
@@ -219,8 +207,6 @@ module Herb
             next
           end
 
-          # `member do` and `collection do` name their routes after the enclosing resource without
-          # adding anything to the prefix, but they still open a block that has to balance.
           if trimmed == "member do" || trimmed == "collection do"
             namespaces.push("")
             depths.push(namespaces.size)
@@ -229,8 +215,6 @@ module Herb
             next
           end
 
-          # Inside a `collection do` block Rails names routes after the parent's *plural*, as a
-          # suffix: `as: :past` within `resources :events` gives `past_events_path`.
           if collection_depths.last == namespaces.size && (owner = resources.last)
             outer = named[0..-2].to_a
             outer_prefix = outer.empty? ? "" : "#{outer.join("_")}_"
@@ -247,8 +231,6 @@ module Herb
               next
             end
 
-            # A `resources` nested straight into a collection block hangs off the collection path, so
-            # it keeps its own name rather than picking up the parent's.
             if (name = symbol_after(trimmed, "resources "))
               singular = singularize(name)
 
@@ -283,8 +265,6 @@ module Herb
             next
           end
 
-          # A bare `get :daily_page_views` inside a resource block is a member route: it takes the
-          # enclosing resource's name, exactly as `on: :member` does.
           if resources.any? && (verb = trimmed[/\A(?:get|post|patch|put|delete)\s+:(\w+)/, 1])
             add_route_pair("#{verb}_#{prefix.chomp("_")}")
 
@@ -315,8 +295,6 @@ module Herb
             add_route_pair("new_#{prefix}#{name}")
             add_route_pair("edit_#{prefix}#{name}")
 
-            # A singular resource can open a block too. Without pushing here, its `end` pops the
-            # enclosing namespace and every later route is named against the wrong parent.
             if trimmed.end_with?(" do")
               namespaces.push(name)
               depths.push(namespaces.size)
@@ -332,7 +310,6 @@ module Herb
           if (alias_name = trimmed[/as: :(\w+)/, 1])
             add_route_pair("#{prefix}#{alias_name}")
           elsif (literal = trimmed[/\A(?:get|post|patch|put|delete)\s+["']([a-z0-9_\/-]+)["']/, 1])
-            # `get "about"` names the helper after the path itself.
             add_route_pair("#{prefix}#{literal.delete_prefix("/").tr("/-", "__")}")
           end
         end
@@ -350,7 +327,6 @@ module Herb
       def symbol_after(line, keyword)
         return nil if keyword.strip.empty?
 
-        # Rails takes a string as readily as a symbol: `namespace "spotlight" do`.
         rest = line[/\A#{Regexp.escape(keyword)}\s*(?::|["'])(\w+)/, 1]
 
         rest
@@ -358,20 +334,15 @@ module Herb
 
       UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
 
-      # `trimmed[/on: :(\w+)/]` also matches inside `action: :show`, so a keyword has to be read at a
-      # boundary: preceded by the start of the line, whitespace, a comma, or a paren.
       def keyword_value(line, keyword)
         line[/(?:\A|[\s,(])#{Regexp.escape(keyword)}: :(\w+)/, 1]
       end
 
-      # Routes files mix `as: :past` with the hashrocket `:as => :past`.
       def route_alias(line)
         keyword_value(line, "as") || line[/:as\s*=>\s*:(\w+)/, 1]
       end
 
       def singularize(name)
-        # An uncountable noun is its own singular, which is what makes Rails add the `_index`
-        # suffix: `resources :series` gives `series_index_path`.
         return name if UNCOUNTABLE.include?(name)
 
         return name.sub(/ies\z/, "y") if name.end_with?("ies")
@@ -380,7 +351,6 @@ module Herb
 
         name
       end
-
 
       def trace_state(entry_point, state)
         entry_point = @project_path.join(entry_point).to_s unless Pathname.new(entry_point).absolute?
@@ -550,7 +520,6 @@ module Herb
         ActionView::HelperRegistry.entries.each do |entry|
           names.add(entry.name.to_s)
 
-          # A helper answers to every alias it declares: `l` is `localize`, `t` is `translate`.
           entry.aliases&.each { |alias_name| names.add(alias_name.to_s) }
         end
 

@@ -528,8 +528,6 @@ module Herb
         relative.start_with?("app/components/")
       end
 
-      # An undeclared local is a name a call site passes, so it is a signature gap rather than a
-      # missing method. Counting them together with unknown calls hides that distinction.
       def print_warning_summary_line(warnings)
         return if warnings.empty?
 
@@ -623,8 +621,6 @@ module Herb
           queue << resolved_file if resolved_file
         end
 
-        # A partial matched by a dynamic prefix is reachable, and so is everything it renders. Seed
-        # these before the walk, otherwise their own renders are never followed.
         partial_files.each do |name, file|
           next unless dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
 
@@ -651,8 +647,6 @@ module Herb
             queue << resolved_file if resolved_file && render_graph.key?(resolved_file)
           end
         end
-
-
 
         reachable
       end
@@ -754,8 +748,6 @@ module Herb
           end
 
           if result.unknown_calls.any?
-            # No call site contributing a single local name leaves nothing to infer from, whether the
-            # partial is never rendered or its callers pass locals opaquely through `**locals`.
             call_sites_known = passed_locals.fetch(file, Set.new).any?
             candidates = result.locals_declared.empty? ? passed_locals.fetch(file, Set.new) : Set.new
             uninferable = is_partial && result.locals_declared.empty? && !call_sites_known
@@ -764,8 +756,6 @@ module Herb
               type = if candidates.include?(call)
                        :undeclared_local
                      elsif component_template?(relative)
-                       # A component's template calls methods on its own class, which this analyzer
-                       # does not read. Every one of them would be a false positive.
                        :ignored_component
                      elsif uninferable
                        :uninferable_local
@@ -784,8 +774,6 @@ module Herb
         [] #: Array[Hash[Symbol, untyped]]
       end
 
-      # Which locals every call site passes to a partial. An unknown call matching one of these is a
-      # local the partial never declared, not a missing method.
       def collect_passed_locals(erb_files, dep_analyzer, view_root)
         partial_files = find_partial_files(view_root)
         passed = Hash.new { |hash, key| hash[key] = Set.new } #: Hash[String, Set[String]]
@@ -798,15 +786,11 @@ module Herb
             target = resolve_partial(name, file, partial_files, view_root)
             next unless target
 
-            # Touch the entry even when the call passes nothing, so a missing key means "no call site
-            # resolved here" rather than "rendered without locals".
             passed[target]
 
             call[:locals].each_key { |local| passed[target].add(local) }
 
             if call[:collection]
-              # `render collection:` names each item after the partial itself, and supplies a counter
-              # and an iteration alongside it. `as: :series` renames it.
               item = call[:as_name].to_s.empty? ? File.basename(name) : call[:as_name]
 
               passed[target].add(item)
@@ -905,7 +889,6 @@ module Herb
         end
       end
 
-      # The same name usually recurs across many templates, so the tally shows what to fix first.
       def print_unknown_call_tally(warnings)
         tally = Hash.new(0) #: Hash[String, Integer]
 
@@ -1001,8 +984,6 @@ module Herb
         content.scan(%r{render\s+(?:partial:\s*)?["']([a-z0-9_/]+)/\#\{}) do |match|
           dynamic_prefixes << match[0]
 
-          # The visitor already recorded this render, it just could not name the partial, so mark
-          # one of those rather than appending another call and inflating the totals.
           unmarked = calls.find { |call| call[:partial].nil? && !call[:interpolated] }
 
           if unmarked

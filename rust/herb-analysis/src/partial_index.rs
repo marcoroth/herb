@@ -33,9 +33,6 @@ fn collect_templates(directory: &Path, found: &mut Vec<String>) {
 }
 
 impl PartialIndex {
-  /// Templates as the Ruby gem sees them: `Configuration#find_files`, which honours the
-  /// `files.include` / `files.exclude` patterns from `.herb.yml`. Falls back to the plain glob when
-  /// no config resolves, so a project without `.herb.yml` behaves as before.
   pub fn build_with_config(project_path: &Path) -> Self {
     let mut index = Self::build(project_path);
 
@@ -110,8 +107,6 @@ impl PartialIndex {
     self.by_name.keys().map(|name| name.as_str()).collect()
   }
 
-  /// Serialised form, matching `Herb::Analysis::PartialIndex#to_h`: every partial name mapped to
-  /// the declaration it resolves to.
   pub fn to_h(&mut self) -> BTreeMap<String, PartialDeclaration> {
     let names: Vec<String> = self.names().iter().map(|name| name.to_string()).collect();
     let mut partials = BTreeMap::new();

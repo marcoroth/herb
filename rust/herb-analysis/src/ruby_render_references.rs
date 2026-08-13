@@ -160,9 +160,6 @@ fn is_partial_name(value: &str) -> bool {
       .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit() || character == '_' || character == '/')
 }
 
-/// The Ruby analyzer scans each template's source for `render "name"` on top of walking the AST,
-/// and counts anything the visitor missed. Mirrored here so both agree on the render total and on
-/// which partials count as referenced.
 pub fn scan_template_source(source: &str) -> Vec<String> {
   let mut found = Vec::new();
   let bytes = source.as_bytes();
@@ -172,7 +169,6 @@ pub fn scan_template_source(source: &str) -> Vec<String> {
     let start = index + position;
     let mut cursor = start + "render".len();
 
-    // `render(` or `render ` only, so `rendered` does not match.
     match bytes.get(cursor) {
       Some(b' ') | Some(b'(') | Some(b'\t') | Some(b'\n') | Some(b'\r') => {}
       _ => {
@@ -225,8 +221,6 @@ pub fn scan_template_source(source: &str) -> Vec<String> {
   found
 }
 
-/// Ruby also scans template source for `render "prefix/#{...}"` and treats everything under
-/// `prefix/` as referenced. Mirrored so both agree on which partials count as reachable.
 pub fn scan_template_dynamic_prefixes(source: &str) -> Vec<String> {
   let mut found = Vec::new();
   let mut index = 0;
@@ -248,7 +242,6 @@ pub fn scan_template_dynamic_prefixes(source: &str) -> Vec<String> {
 
     let literal = &after_quote[..interpolation];
 
-    // Only a directory boundary counts, matching Ruby's `([a-z0-9_/]+)/#{` pattern.
     if let Some(prefix) = literal.strip_suffix('/') {
       if !prefix.is_empty() && prefix.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '/') {
         found.push(prefix.to_string());

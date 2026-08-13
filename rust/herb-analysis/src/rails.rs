@@ -221,11 +221,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
 
     let named: Vec<&str> = namespaces.iter().map(String::as_str).filter(|part| !part.is_empty()).collect();
 
-    let prefix = if named.is_empty() {
-      String::new()
-    } else {
-      format!("{}_", named.join("_"))
-    };
+    let prefix = if named.is_empty() { String::new() } else { format!("{}_", named.join("_")) };
 
     if let Some(namespace) = symbol_after(trimmed, "namespace ") {
       namespaces.push(namespace);
@@ -234,9 +230,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       continue;
     }
 
-    // `scope module: :events do` opens a block without contributing to the helper name, so it still
-    // has to be tracked: otherwise its `end` pops the enclosing resource and every route nested
-    // inside loses the parent's prefix. Only `as:` names a scope.
     if trimmed.starts_with("scope ") && trimmed.ends_with(" do") {
       namespaces.push(value_after(trimmed, "as: :").unwrap_or_default());
       depth_stack.push(namespaces.len());
@@ -250,10 +243,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       continue;
     }
 
-    // `get :publish, on: :member` names the route after the enclosing resource, so it has to be
-    // handled before the generic `as:`/literal-path cases below.
     if let Some(scope) = keyword_value(trimmed, "on") {
-      // The verb can take a path string rather than a symbol, in which case `as:` supplies the name.
       if let Some(action) = symbol_after(trimmed, "get ")
         .or_else(|| symbol_after(trimmed, "post "))
         .or_else(|| symbol_after(trimmed, "patch "))
@@ -262,8 +252,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
         .or_else(|| route_alias(trimmed))
       {
         if let Some(owner) = resources.last() {
-          // `prefix` already ends with the enclosing resource's singular name, so a member route
-          // only needs the action in front of it.
           let stem = if scope == "collection" {
             let outer: String = namespaces[..namespaces.len().saturating_sub(1)]
               .iter()
@@ -285,8 +273,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       }
     }
 
-    // `member do` and `collection do` name their routes after the enclosing resource without adding
-    // anything to the prefix, but they still open a block that has to balance against its `end`.
     if trimmed == "member do" || trimmed == "collection do" {
       namespaces.push(String::new());
       depth_stack.push(namespaces.len());
@@ -298,8 +284,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       continue;
     }
 
-    // Inside a `collection do` block Rails names routes after the parent's *plural*, as a suffix:
-    // `as: :past` within `resources :events` gives `past_events_path`, not `event_past_path`.
     let in_collection = collection_depth.last() == Some(&namespaces.len());
 
     if in_collection {
@@ -319,7 +303,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
           continue;
         }
 
-        // A bare `get :feed` here is a collection route, so it takes the parent's plural too.
         if let Some(action) = symbol_after(trimmed, "get ")
           .or_else(|| symbol_after(trimmed, "post "))
           .or_else(|| symbol_after(trimmed, "patch "))
@@ -331,8 +314,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
           continue;
         }
 
-        // A `resources` nested straight into a collection block hangs off the collection path, so it
-        // keeps its own name rather than picking up the parent's.
         if let Some(name) = symbol_after(trimmed, "resources ") {
           let singular = singularize(&name);
 
@@ -351,8 +332,6 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       }
     }
 
-    // A bare `get :talks` inside a resource block is a member route, named exactly as the
-    // `on: :member` form above.
     if !resources.is_empty() {
       if let Some(action) = symbol_after(trimmed, "get ")
         .or_else(|| symbol_after(trimmed, "post "))
@@ -374,14 +353,10 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       insert_pair(&mut names, &format!("new_{prefix}{singular}"));
       insert_pair(&mut names, &format!("edit_{prefix}{singular}"));
 
-      // When a resource name is already singular, Rails suffixes the index route with `_index` so it
-      // does not collide with the member route: `resources :map` gives `map_index_path`.
       if singular == name {
         insert_pair(&mut names, &format!("{prefix}{name}_index"));
       }
 
-      // A nested resource is prefixed by its parent's singular name: `resources :talks` inside
-      // `resources :profiles do` produces `profile_talks_path`.
       if trimmed.ends_with(" do") {
         namespaces.push(singular.clone());
         depth_stack.push(namespaces.len());
@@ -424,8 +399,6 @@ fn insert_pair(names: &mut BTreeSet<String>, stem: &str) {
   names.insert(format!("{stem}_url"));
 }
 
-/// `value_after(line, "on: :")` also matches inside `action: :show`, so a keyword has to be read at
-/// a boundary: preceded by the start of the line, whitespace, or a comma.
 fn keyword_value(line: &str, keyword: &str) -> Option<String> {
   let marker = format!("{keyword}: :");
   let mut from = 0;
@@ -454,7 +427,6 @@ fn route_alias(line: &str) -> Option<String> {
 fn symbol_after(line: &str, keyword: &str) -> Option<String> {
   let rest = line.strip_prefix(keyword)?.trim_start();
 
-  // Rails takes a string as readily as a symbol: `namespace "spotlight" do`.
   let rest = rest.strip_prefix(':').or_else(|| rest.strip_prefix('"')).or_else(|| rest.strip_prefix('\''))?;
 
   let name: String = rest.chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '_').collect();
@@ -481,8 +453,6 @@ fn literal_path(line: &str) -> Option<String> {
 
   let segment = path.trim_matches('/');
 
-  // A dynamic segment or a glob makes the helper name unpredictable, but a multi-segment literal
-  // path is fine: `get "/pages/assets"` gives `pages_assets_path`.
   if segment.is_empty() || segment.contains(':') || segment.contains('*') {
     return None;
   }
@@ -496,8 +466,6 @@ fn literal_path(line: &str) -> Option<String> {
 const UNCOUNTABLE: [&str; 6] = ["series", "species", "news", "information", "equipment", "money"];
 
 fn singularize(word: &str) -> String {
-  // An uncountable noun is its own singular, which is what makes Rails add the `_index` suffix:
-  // `resources :series` gives `series_index_path`.
   if UNCOUNTABLE.contains(&word) {
     return word.to_string();
   }
@@ -519,9 +487,6 @@ pub fn helper_methods(roots: &[String]) -> BTreeMap<String, PathBuf> {
   helper_sources(roots).0
 }
 
-/// Walks each root once, collecting both `helper_method` symbols and the modules a gem mixes into
-/// views through `ActiveSupport.on_load :action_view`. The two share a walk because these roots are
-/// every gem in the bundle, and traversing them twice doubles the cost of `check`.
 pub fn helper_sources(roots: &[String]) -> (BTreeMap<String, PathBuf>, Vec<String>) {
   let mut found = BTreeMap::new();
   let mut modules = Vec::new();
@@ -536,8 +501,6 @@ pub fn helper_sources(roots: &[String]) -> (BTreeMap<String, PathBuf>, Vec<Strin
   (found, modules)
 }
 
-/// `include MetaTags::ViewHelper` inside an `on_load :action_view` block makes every public method
-/// of that module a view helper, but nothing about the module's own name says so.
 fn collect_action_view_modules(source: &str, modules: &mut Vec<String>) {
   let mut remaining = 0usize;
 
@@ -599,8 +562,6 @@ fn collect_helper_sources(path: &Path, found: &mut BTreeMap<String, PathBuf>, mo
     for line in source.lines() {
       let trimmed = line.trim_start();
 
-      // `add_flash_types(:alert, :notice)` exposes each type to views, but it does so through
-      // `helper_method(type)` with a variable, so only the declaration site names them.
       if !trimmed.starts_with("helper_method") && !trimmed.starts_with("add_flash_types") {
         continue;
       }
