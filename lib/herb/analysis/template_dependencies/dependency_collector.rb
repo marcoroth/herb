@@ -25,6 +25,9 @@ module Herb
         end
 
         def visit_erb_node(node)
+          # `<%# ... %>` is prose, not code. Parsing it yields bogus calls from ordinary words.
+          return if node.tag_opening&.value&.start_with?("<%#")
+
           analyze_erb_node(node)
         end
 
