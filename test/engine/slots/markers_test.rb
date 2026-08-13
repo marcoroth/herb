@@ -399,6 +399,37 @@ module Engine
 
         assert_equal [["herb-row:0:1", "tbody"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
       end
+
+      def rendered(template, locals)
+        evaluate_herb_source(Herb::Engine.new(template, **options).src, locals)
+      end
+
+      test "renders the same markers whichever branch of a same-shaped conditional runs" do
+        template = "<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>"
+        locals = { "@today" => "Mon", "@tomorrow" => "Tue" }
+
+        taken = rendered(template, locals.merge("@c" => true))
+        untaken = rendered(template, locals.merge("@c" => false))
+
+        assert_equal taken.sub("Mon", "?"), untaken.sub("Tue", "?")
+        refute_includes taken, "herb-branch"
+      end
+
+      test "collapses a same-shaped conditional to one slot" do
+        assert_evaluated_snapshot(
+          "<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>",
+          { "@c" => false, "@today" => "Mon", "@tomorrow" => "Tue" },
+          options
+        )
+      end
+
+      test "keeps the conditional when the branches do not lay out the same" do
+        assert_evaluated_snapshot(
+          "<% if @c %><h1><%= @today %></h1><% else %><h2><%= @tomorrow %></h2><% end %>",
+          { "@c" => false, "@today" => "Mon", "@tomorrow" => "Tue" },
+          options
+        )
+      end
     end
   end
 end
