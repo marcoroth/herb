@@ -3,7 +3,7 @@ test_exec = run_herb_tests
 
 sources = $(shell find src -name '*.c')
 headers = $(shell find src -name '*.h')
-objects = $(sources:.c=.o)
+objects = $(sources:%.c=$(obj_dir)/%.o)
 
 extension_sources = $(wildcard ext/**/*.c)
 extension_headers = $(wildcard ext/**/*.h)
@@ -17,8 +17,8 @@ nodejs_extension_files = $(wildcard node/**/*.cpp) $(wildcard node/**/*.h) $(wil
 project_and_extension_files = $(project_files) $(extension_files) $(nodejs_extension_files)
 
 test_sources = $(wildcard test/**/*.c)
-test_objects = $(test_sources:.c=.o)
-non_main_objects = $(filter-out src/main.o, $(objects))
+test_objects = $(test_sources:%.c=$(obj_dir)/%.o)
+non_main_objects = $(filter-out $(obj_dir)/src/main.o, $(objects))
 
 bench_allocs_exec = bench_allocs
 bench_allocs_source = bench/bench_allocs.c
@@ -29,6 +29,7 @@ static_lib_name = $(build_dir)/lib$(exec).a
 ruby_extension = ext/herb/$(lib_name)
 
 build_dir = build
+obj_dir = $(build_dir)/obj
 $(shell mkdir -p $(build_dir))
 
 os := $(shell uname -s)
@@ -95,10 +96,18 @@ $(lib_name): $(objects)
 $(static_lib_name): $(objects)
 	ar rcs $(static_lib_name) $(objects)
 
-src/%.o: src/%.c templates
+# Objects live outside src/ and test/ so they cannot shadow the flat object names
+# ext/herb/extconf.rb resolves through $VPATH; the find clears ones older builds left
+$(obj_dir):
+	@mkdir -p $(obj_dir)
+	@find src test -name '*.o' -delete
+
+$(obj_dir)/src/%.o: src/%.c templates | $(obj_dir)
+	@mkdir -p $(dir $@)
 	$(cc) -c $(flags) -fPIC $< -o $@
 
-test/%.o: test/%.c templates prism
+$(obj_dir)/test/%.o: test/%.c templates prism | $(obj_dir)
+	@mkdir -p $(dir $@)
 	$(cc) -c $(test_cflags) $(test_flags) $(prism_flags) $< -o $@
 
 .PHONY: test
@@ -113,7 +122,8 @@ bench_allocs: $(non_main_objects)
 .PHONY: clean
 clean:
 	rm -f $(exec) $(test_exec) $(bench_allocs_exec) $(lib_name) $(shared_lib_name) $(ruby_extension)
-	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
+	rm -rf $(obj_dir) $(extension_objects) lib/herb/*.bundle tmp
+	find src test -name '*.o' -delete
 	rm -rf $(prism_path)
 	rake prism:clean
 

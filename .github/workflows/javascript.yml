@@ -20,6 +20,7 @@ jobs:
       (github.event.action != 'labeled' || github.event.label.name == 'release-preview')
     env:
       GH_TOKEN: ${{ github.token }}
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
     runs-on: ubicloud-standard-2
     timeout-minutes: 15
@@ -70,6 +71,14 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install
 
+      - name: Restore nx build artifacts
+        uses: actions/cache/restore@v6
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            nx-${{ runner.os }}-
+
       - name: Build tailwind-class-sorter package
         env:
           RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
@@ -84,6 +93,13 @@ jobs:
 
       - name: Run `test` for all NX packages
         run: yarn test
+
+      - name: Save nx build artifacts
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/cache/save@v6
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ github.sha }}
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
