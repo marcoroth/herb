@@ -1,0 +1,53 @@
+{
+  "name": "herb-highlighter-gem",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "gems/herb-highlighter",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "bundle exec rake compile"
+      },
+      "inputs": [
+        "{projectRoot}/ext/**/*",
+        "{projectRoot}/lib/**/*",
+        "{projectRoot}/rust/**/*",
+        "{projectRoot}/Rakefile",
+        "{projectRoot}/herb-highlighter.gemspec",
+        "{workspaceRoot}/rust/herb-highlighter/**/*",
+        "{workspaceRoot}/rust/src/**/*",
+        "{workspaceRoot}/rust/Cargo.toml",
+        "{workspaceRoot}/rust/build.rs",
+        "{workspaceRoot}/javascript/packages/highlighter/themes/*.json",
+        "sharedGlobals"
+      ],
+      "outputs": ["{projectRoot}/lib/herb/highlighter/herb_highlighter.bundle", "{projectRoot}/lib/herb/highlighter/herb_highlighter.so"],
+      "dependsOn": ["prism:build"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "bundle exec rake test"
+      },
+      "dependsOn": ["herb-highlighter-gem:build"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "bundle exec rubocop"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "bundle exec rake clean clobber"
+      }
+    }
+  },
+  "tags": ["ruby", "native", "gem"]
+}

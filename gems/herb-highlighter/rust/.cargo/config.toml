@@ -1,0 +1,7 @@
+# herb-highlighter is developed in this repository, so builds from a monorepo checkout use the
+# working tree rather than the published crate. This file is not part of the packaged gem, which
+# resolves the dependency from crates.io like any other consumer.
+#
+# Cargo reads this based on the working directory, so builds have to run from inside `rust/`.
+[patch.crates-io]
+herb-highlighter = { path = "../../../rust/herb-highlighter" }

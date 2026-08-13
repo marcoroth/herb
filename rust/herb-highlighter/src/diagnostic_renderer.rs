@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::fmt::Write as _;
 
 use std::collections::HashMap;
@@ -12,7 +13,8 @@ use crate::syntax_renderer::SyntaxRenderer;
 use crate::text_formatter::replace_backticks;
 use crate::util::dim_styled_text;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct DiagnosticRenderOptions {
   pub context_lines: usize,
   pub show_line_numbers: bool,

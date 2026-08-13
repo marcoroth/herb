@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 gemspec
+gemspec path: "gems/herb-highlighter", name: "herb-highlighter"
 
 gem "prism", github: "ruby/prism", tag: "v1.9.0"
 
@@ -19,6 +20,7 @@ gem "minitest-difftastic", "~> 0.2"
 gem "rake", "~> 13.4"
 gem "rake-compiler", "~> 1.3"
 gem "rake-compiler-dock", "~> 1.12"
+gem "rb_sys", "~> 0.9.128"
 gem "rbs", "~> 4.1"
 gem "rbs-inline", "~> 0.14"
 gem "reactionview", "~> 0.3.0"

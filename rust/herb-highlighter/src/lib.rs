@@ -1,4 +1,6 @@
 pub mod ansi;
+#[cfg(feature = "cli")]
+pub mod cli;
 pub mod color;
 pub mod diagnostic;
 pub mod diagnostic_markers;

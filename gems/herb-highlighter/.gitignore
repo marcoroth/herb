@@ -1,0 +1,35 @@
+/.bundle/
+/tmp/
+/pkg/
+/vendor/bundle/
+
+# Rust
+/rust/target/
+
+# Platform-specific binaries
+/exe/arm64-darwin/
+/exe/x86_64-darwin/
+/exe/aarch64-linux-gnu/
+/exe/aarch64-linux-musl/
+/exe/x86_64-linux-gnu/
+/exe/x86_64-linux-musl/
+/exe/arm-linux-gnu/
+/exe/arm-linux-musl/
+/exe/x86-linux-gnu/
+/exe/x86-linux-musl/
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.bundle
+*.dSYM/
+
+/ext/herb_highlighter/include/herb_highlighter.h
+/ext/herb_highlighter/Makefile
+/ext/herb_highlighter/mkmf.log
+/lib/herb/highlighter/herb_highlighter.bundle
+/lib/herb/highlighter/herb_highlighter.so
+
+# Built gems
+*.gem

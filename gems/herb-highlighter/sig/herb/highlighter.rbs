@@ -1,0 +1,62 @@
+module Herb
+  class Highlighter
+    VERSION: String
+    EXECUTABLE_NAME: String
+    GEM_ROOT: String
+    NATIVE_PLATFORMS: Hash[String, String]
+
+    type diagnostic = Hash[Symbol | String, untyped]
+    type options = Hash[Symbol, untyped]
+
+    class Error < StandardError
+    end
+
+    class ThemeError < Error
+    end
+
+    class UnsupportedPlatformError < Error
+    end
+
+    class ExecutableNotFoundError < Error
+    end
+
+    class CompilationError < Error
+    end
+
+    attr_reader theme: String
+
+    def self.highlight: (String content, ?theme: String, ?path: String, **untyped options) -> String
+    def self.highlight_file: (String path, ?theme: String, **untyped options) -> String
+    def self.highlight_diff: (String original, String modified, ?theme: String, ?path: String, **untyped options) -> String
+
+    def self.themes: () -> Array[String]
+    def self.theme_names: () -> Array[String]
+    def self.default_theme: () -> String
+    def self.bundled_theme?: (String theme) -> bool
+    def self.strip_ansi: (String text) -> String
+    def self.visible_width: (String text) -> Integer
+    def self.native_version: () -> String
+    def self.executable: (?exe_path: String?) -> String
+
+    def initialize: (?String theme) -> void
+
+    def highlight: (String content, ?path: String, **untyped options) -> String
+    def highlight_file: (String path, **untyped options) -> String
+    def highlight_diagnostic: (String content, diagnostic diagnostic, ?path: String, **untyped options) -> String
+    def highlight_diff: (String original, String modified, ?path: String, **untyped options) -> String
+    def highlight_diff_hunks: (Array[Hash[Symbol | String, untyped]] hunks, ?path: String, **untyped options) -> String
+
+    def custom_theme?: () -> bool
+    def inspect: () -> String
+
+    private
+
+    def _initialize: (String theme) -> void
+    def _highlight: (String path, String content, String options) -> String
+    def _highlight_file: (String path, String options) -> String
+    def _highlight_diagnostic: (String path, String diagnostic, String content, String options) -> String
+    def _highlight_diff: (String path, String original, String modified, String options) -> String
+    def _highlight_diff_hunks: (String path, String hunks, String options) -> String
+
+  end
+end

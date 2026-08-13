@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::fmt::Write as _;
 
 use std::collections::HashMap;
@@ -11,7 +12,8 @@ use crate::syntax_renderer::SyntaxRenderer;
 use crate::themes::ColorScheme;
 use crate::util::{apply_background, dim_styled_text, slice_styled, BackgroundOptions, BackgroundRange};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum RemovedLineStyle {
   #[default]
   Tint,
@@ -19,7 +21,8 @@ pub enum RemovedLineStyle {
   None,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SingleLineStyle {
   #[default]
   Split,
@@ -27,14 +30,16 @@ pub enum SingleLineStyle {
   Auto,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum DiffLayout {
   #[default]
   Unified,
   Split,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct DiffRenderOptions {
   pub context_lines: usize,
   pub show_line_numbers: bool,

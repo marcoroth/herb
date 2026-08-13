@@ -6,11 +6,11 @@ use std::sync::OnceLock;
 use crate::color::Color;
 use crate::error::HighlightError;
 
-const ONEDARK_THEME: &str = include_str!("../../../javascript/packages/highlighter/themes/onedark.json");
-const GITHUB_LIGHT_THEME: &str = include_str!("../../../javascript/packages/highlighter/themes/github-light.json");
-const DRACULA_THEME: &str = include_str!("../../../javascript/packages/highlighter/themes/dracula.json");
-const TOKYO_NIGHT_THEME: &str = include_str!("../../../javascript/packages/highlighter/themes/tokyo-night.json");
-const SIMPLE_THEME: &str = include_str!("../../../javascript/packages/highlighter/themes/simple.json");
+const ONEDARK_THEME: &str = include_str!("../themes/onedark.json");
+const GITHUB_LIGHT_THEME: &str = include_str!("../themes/github-light.json");
+const DRACULA_THEME: &str = include_str!("../themes/dracula.json");
+const TOKYO_NIGHT_THEME: &str = include_str!("../themes/tokyo-night.json");
+const SIMPLE_THEME: &str = include_str!("../themes/simple.json");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Theme {

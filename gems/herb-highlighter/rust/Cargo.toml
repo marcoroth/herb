@@ -1,0 +1,28 @@
+[workspace]
+
+[package]
+name = "herb-highlighter-ffi"
+version = "0.10.3"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "C FFI bindings for the herb-highlighter crate, used by the herb-highlighter gem"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+publish = false
+
+[lib]
+name = "herb_highlighter_ffi"
+path = "src/lib.rs"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[[bin]]
+name = "herb-highlight"
+path = "src/bin/herb_highlight.rs"
+
+[dependencies]
+herb-highlighter = { version = "0.10.3", features = ["cli"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[build-dependencies]
+cbindgen = "0.28"

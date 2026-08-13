@@ -19,6 +19,7 @@
     "herb-language-server": "javascript/packages/herb-language-server",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",
+    "herb-highlighter-gem": "./gems/herb-highlighter",
     "libherb": "./src",
     "playground": "./playground",
     "prism": "./prism",
