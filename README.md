@@ -61,6 +61,7 @@ The Herb ecosystem offers multiple tools that integrate seamlessly into editors,
 | [Herb Engine](https://herb-tools.dev/projects/engine) | HTML-aware ERB rendering engine, API-compatible with Erubi. |
 | [Herb Dev Server](https://herb-tools.dev/projects/dev-server) | File-watching dev server with live DOM patching for templates. *(experimental)* |
 | [Herb Dev Tools](https://herb-tools.dev/projects/dev-tools) | In-browser dev tools for inspecting and debugging templates, shipped with ReActionView. |
+| [Herb Client Runtime](https://herb-tools.dev/projects/client) | Browser runtime that updates the slots a template rendered, in place. *(experimental)* |
 | [ReActionView](https://reactionview.dev) | ActionView-compatible ERB engine with modern DX for Rails. |
 
 You can use the Herb Parser programmatically in **Ruby**, **Java**, **Rust**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
