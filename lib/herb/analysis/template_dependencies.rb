@@ -100,9 +100,18 @@ module Herb
         index
       end
 
+      # `Kernel` is mixed into `Object`, so these need no receiver and are callable from any template.
+      KERNEL_METHODS = [
+        "rand", "srand", "format", "sprintf", "raise", "loop", "sleep", "catch", "throw",
+        "block_given?", "caller", "binding", "frozen?", "freeze", "dup", "clone", "tap", "then",
+        "itself", "send", "public_send", "respond_to?", "instance_variable_get", "instance_variables"
+      ].freeze
+
       def scan_helpers!
         scan_routes!
         scan_helper_methods!
+
+        KERNEL_METHODS.each { |name| @custom_helpers.add(name) }
 
         helpers_dir = @project_path.join("app", "helpers")
 

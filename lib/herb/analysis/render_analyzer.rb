@@ -754,8 +754,9 @@ module Herb
           end
 
           if result.unknown_calls.any?
-            # Check before reading: `passed_locals` defaults new keys into existence.
-            call_sites_known = passed_locals.key?(file)
+            # No call site contributing a single local name leaves nothing to infer from, whether the
+            # partial is never rendered or its callers pass locals opaquely through `**locals`.
+            call_sites_known = passed_locals.fetch(file, Set.new).any?
             candidates = result.locals_declared.empty? ? passed_locals.fetch(file, Set.new) : Set.new
             uninferable = is_partial && result.locals_declared.empty? && !call_sites_known
 

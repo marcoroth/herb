@@ -457,6 +457,33 @@ fn component_methods_for(template: &str) -> std::collections::BTreeSet<String> {
 /// The sources the Ruby analyzer can also reach, so both `check` commands agree on what counts as a
 /// known helper. The deeper rubydex resolution (gem `*Helper` modules, `ActionView::Base`, ancestor
 /// walks) stays behind `herb-analysis helpers` and `audit`, which exist to report exactly that.
+const KERNEL_METHODS: [&str; 24] = [
+  "rand",
+  "srand",
+  "format",
+  "sprintf",
+  "raise",
+  "loop",
+  "sleep",
+  "catch",
+  "throw",
+  "block_given?",
+  "caller",
+  "binding",
+  "frozen?",
+  "freeze",
+  "dup",
+  "clone",
+  "tap",
+  "then",
+  "itself",
+  "send",
+  "public_send",
+  "respond_to?",
+  "instance_variable_get",
+  "instance_variables",
+];
+
 fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   let Some(path) = project_path.to_str() else {
     return Vec::new();
@@ -487,6 +514,9 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   // Gems do this too, inside `included do` blocks that no `*Helper` module covers: turbo-rails
   // exposes `hotwire_native_app?` that way.
   names.extend(helper_method_names.into_keys());
+
+  // `Kernel` is mixed into `Object`, so these need no receiver and are callable from any template.
+  names.extend(KERNEL_METHODS.iter().map(|name| (*name).to_string()));
 
   // Route helpers are generated from `config/routes.rb`, so no module defines them.
   names.extend(crate::rails::route_helpers(project_path));

@@ -1314,14 +1314,15 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
         likely_locals.push((relative.clone(), locals));
       }
 
-      // With no call site resolving here there is no signature to learn from, so the leftovers are
-      // locals Herb cannot infer rather than methods it cannot find.
+      // With no call site contributing a single local name there is no signature to learn from, so
+      // the leftovers are locals Herb cannot infer rather than methods it cannot find. An empty set
+      // means the call sites pass their locals opaquely, as `render "share", **@wrapped_locals` does.
       if !rest.is_empty() {
         // A component's template calls methods on its own class, which this analyzer does not read,
         // so every one of them would be a false positive.
         if relative.starts_with("app/components/") {
           ignored_components += 1;
-        } else if partial && !declared && candidates.is_none() {
+        } else if partial && !declared && candidates.is_none_or(BTreeSet::is_empty) {
           uninferable.push((relative, rest));
         } else {
           unknown.push((relative, rest));
