@@ -589,6 +589,15 @@ module Herb
           queue << resolved_file if resolved_file
         end
 
+        # A partial matched by a dynamic prefix is reachable, and so is everything it renders. Seed
+        # these before the walk, otherwise their own renders are never followed.
+        partial_files.each do |name, file|
+          next unless dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
+
+          reachable << name
+          queue << file if file
+        end
+
         visited_files = Set.new
 
         until queue.empty?
@@ -609,11 +618,7 @@ module Herb
           end
         end
 
-        partial_files.each_key do |name|
-          if dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
-            reachable << name
-          end
-        end
+
 
         reachable
       end
