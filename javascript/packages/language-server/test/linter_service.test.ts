@@ -174,6 +174,36 @@ describe("LinterService", () => {
       expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain("herb-config-framework-option")
     })
 
+    test("passes the resolved indent style through to the rules", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true },
+        formatter: { indentStyle: "tab", indentWidth: 2 }
+      })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
+
+      const result = await linterService.lintDocument(createTestDocument("<div>\n\t<span>Hello</span>\n</div>\n"))
+
+      expect(result.diagnostics.map(diagnostic => diagnostic.code)).not.toContain("source-indentation")
+    })
+
+    test("flags the other indent character once the indent style is tab", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true },
+        formatter: { indentStyle: "tab", indentWidth: 2 }
+      })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
+
+      const result = await linterService.lintDocument(createTestDocument("<div>\n  <span>Hello</span>\n</div>\n"))
+
+      const offense = result.diagnostics.find(diagnostic => diagnostic.code === "source-indentation")
+
+      expect(offense?.message).toBe("Indent with tabs instead of spaces.")
+    })
+
     test("respects files.exclude patterns from config", async () => {
       vi.spyOn(Config, "exists").mockReturnValue(true)
 

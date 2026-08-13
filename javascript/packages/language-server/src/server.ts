@@ -223,7 +223,7 @@ export class Server {
       return this.session.projects.get(params.textDocument.uri)?.completionProvider.getCompletions(document, params.position) ?? null
     })
 
-    this.connection.onCodeAction((params: CodeActionParams) => {
+    this.connection.onCodeAction(async (params: CodeActionParams) => {
       const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
@@ -243,7 +243,7 @@ export class Server {
         documentText
       )
 
-      const autofixCodeActions = project.codeActionProvider.autofixCodeActions(params, document)
+      const autofixCodeActions = await project.codeActionProvider.autofixCodeActions(params, document)
       const rewriteCodeActions = this.session.rewriteCodeActionProvider.getCodeActions(document, params.range)
       const extractCodeActions = this.session.extractCodeActionProvider.getCodeActions(document, params.range)
 

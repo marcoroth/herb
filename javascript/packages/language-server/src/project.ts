@@ -57,7 +57,7 @@ export class Project {
     this.configService = new ConfigService(root)
     this.index = new ProjectIndex({ root, backend: this.herbBackend, logger: connection.console })
     this.linterService = new LinterService(connection, userSettings, capabilities, this, this.index)
-    this.autofixService = new AutofixService(connection, undefined, this.index)
+    this.autofixService = new AutofixService(connection, this, undefined, this.index)
     this.codeActionProvider = new CodeActionProvider(this, undefined, this.index)
     this.formattingProvider = new FormattingProvider(connection, shared.documents, this, userSettings, capabilities)
 

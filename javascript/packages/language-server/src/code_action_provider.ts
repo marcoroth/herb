@@ -86,18 +86,30 @@ export class CodeActionProvider {
     return actions.concat(disableAllActions)
   }
 
-  autofixCodeActions(params: CodeActionParams, document: TextDocument): CodeAction[] {
+  private async formatterContextFor(uri: string) {
+    const settings = await this.project.settingsFor(uri)
+
+    return {
+      indentWidth: settings?.formatter?.indentWidth,
+      indentStyle: settings?.formatter?.indentStyle
+    }
+  }
+
+  async autofixCodeActions(params: CodeActionParams, document: TextDocument): Promise<CodeAction[]> {
     if (this.config && !this.config.isLinterEnabled) {
       return []
     }
 
     const codeActions: CodeAction[] = []
     const text = document.getText()
+    const formatterContext = await this.formatterContextFor(document.uri)
+    const autofixContext = { fileName: document.uri, ...formatterContext }
 
     const lintResult = this.linter.lint(text, {
       fileName: this.index?.relativePathFor(document.uri) ?? document.uri,
       partials: this.index?.partials,
       partialCallers: this.index?.callers,
+      ...formatterContext,
     })
 
     const offenses = lintResult.offenses
@@ -113,7 +125,7 @@ export class CodeActionProvider {
         continue
       }
 
-      const fixResult = this.linter.autofix(text, { fileName: document.uri }, [offense])
+      const fixResult = this.linter.autofix(text, autofixContext, [offense])
 
       if (fixResult.fixed.length > 0 && fixResult.source !== text) {
         const codeAction: CodeAction = {
@@ -125,7 +137,7 @@ export class CodeActionProvider {
 
         codeActions.push(codeAction)
       } else {
-        const unsafeFixResult = this.linter.autofix(text, { fileName: document.uri }, [offense], { includeUnsafe: true })
+        const unsafeFixResult = this.linter.autofix(text, autofixContext, [offense], { includeUnsafe: true })
 
         if (unsafeFixResult.fixed.length > 0 && unsafeFixResult.source !== text) {
           const codeAction: CodeAction = {
@@ -141,13 +153,13 @@ export class CodeActionProvider {
     }
 
     const allFixableOffenses = offenses.filter(offense => {
-      const fixResult = this.linter.autofix(text, { fileName: document.uri }, [offense])
+      const fixResult = this.linter.autofix(text, autofixContext, [offense])
 
       return fixResult.fixed.length > 0
     })
 
     if (allFixableOffenses.length > 0) {
-      const fixAllResult = this.linter.autofix(text, { fileName: document.uri }, allFixableOffenses)
+      const fixAllResult = this.linter.autofix(text, autofixContext, allFixableOffenses)
 
       if (fixAllResult.fixed.length > 0 && fixAllResult.source !== text) {
         const fixAllAction: CodeAction = {
