@@ -129,8 +129,8 @@ module Herb
 
             next unless source.include?("helper_method")
 
-            source.scan(/helper_method\s+([:\w\s,]+)/) do |match|
-              match[0].scan(/:(\w+)/) { |name| @custom_helpers.add(name[0]) }
+            source.scan(/helper_method\s+([:\w\s,?!]+)/) do |match|
+              match[0].scan(/:(\w+[?!]?)/) { |name| @custom_helpers.add(name[0]) }
             end
           rescue StandardError
             next
