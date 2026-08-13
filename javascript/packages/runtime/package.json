@@ -1,18 +1,18 @@
 {
-  "name": "@herb-tools/dev-tools",
+  "name": "@herb-tools/runtime",
   "version": "0.10.3",
-  "description": "Development tools for visual debugging of HTML+ERB templates",
+  "description": "Browser runtime for indexing and updating the slots an HTML+ERB template renders",
   "type": "module",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
-  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/dev-tools%60:%20",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/runtime%60:%20",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marcoroth/herb.git",
-    "directory": "javascript/packages/dev-tools"
+    "directory": "javascript/packages/client"
   },
-  "main": "./dist/herb-dev-tools.umd.js",
-  "module": "./dist/herb-dev-tools.esm.js",
+  "main": "./dist/herb-runtime.esm.js",
+  "module": "./dist/herb-runtime.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
@@ -25,19 +25,14 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/herb-dev-tools.esm.js",
-      "default": "./dist/herb-dev-tools.umd.js"
+      "import": "./dist/herb-runtime.esm.js",
+      "default": "./dist/herb-runtime.esm.js"
     }
   },
-  "dependencies": {
-    "@herb-tools/core": "0.10.3",
-    "@herb-tools/client": "0.10.3",
-    "@herb-tools/runtime": "0.10.3"
-  },
+  "dependencies": {},
   "files": [
     "package.json",
     "README.md",
-    "dist/",
-    "src/"
+    "dist/"
   ]
 }

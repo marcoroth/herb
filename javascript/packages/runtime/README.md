@@ -1,0 +1,246 @@
+# Herb Runtime
+
+Browser runtime for HTML+ERB templates compiled with slot markers. It reads the markers the compiler emits, keeps an index of where a template's dynamic parts ended up, and updates them in place.
+
+> [!WARNING]
+> Slots and the runtime are experimental. The marker format is not stable yet.
+
+## What it is for
+
+A template compiled with `Herb::Engine::SlotVisitor` marks every expression, conditional, collection and dynamic attribute in its output. Those markers survive rendering, so the browser can still find each part afterwards and replace just that part when its data changes. Scroll position, focus, form state and playing media all survive an update that would otherwise have replaced the page.
+
+This package is the browser half. It does not fetch anything and it does not decide when to update. It answers where a slot is, and applies the markup it is given.
+
+> [!NOTE]
+> This ships to production. The development tools and the dev server client are separate packages, so nothing dev-only is in this bundle.
+
+## Usage
+
+Nothing starts on its own. A page that has not asked for the runtime does not get an observer:
+
+```typescript
+import { HerbRuntime } from "@herb-tools/runtime"
+
+const { slots } = HerbRuntime.init()
+```
+
+`init` is idempotent and returns the same runtime every time, so anything that needs the runtime can ask for it rather than build its own:
+
+```typescript
+const runtime = HerbRuntime.get()
+```
+
+Constructing it directly throws. A second runtime would be a second index over the same document, and neither would see the other's updates. To stop watching:
+
+```typescript
+runtime.stop()
+```
+
+## Finding slots
+
+A slot is addressed by the template it came from and its index:
+
+```typescript
+slots.slot("app/views/posts/index.html.erb", 0)
+```
+
+A template rendered more than once has one region per rendering. `occurrence` says which, and `slotsFor` gives the same slot in every one of them:
+
+```typescript
+slots.slot("app/views/posts/index.html.erb", 0, 2)
+slots.slotsFor("app/views/posts/index.html.erb", 0)
+slots.regionsFor("app/views/posts/index.html.erb")
+```
+
+Every row of a collection repeats the same slot indices, so a row's key is what says which one is meant. The rows of a collection:
+
+```typescript
+slots.rowsFor(file, 0) // Map<key, Row>
+```
+
+And one slot inside one of those rows:
+
+```typescript
+slots.slotInRow(file, 0, "42", 2)
+```
+
+## Updating
+
+Replace what a slot covers:
+
+```typescript
+slots.update(slot, "<b>new</b>")
+```
+
+Replace a single row of a collection, leaving its siblings alone:
+
+```typescript
+slots.updateRow(collection, "42", html)
+```
+
+Write an attribute, for slots anchored to an element rather than delimited by comments. The slot knows which attribute it stands for, so saying it is only for the case where the marker did not:
+
+```typescript
+slots.setAttribute(slot, "active")
+```
+
+Markup is parsed against the range it is going into, so a replacement `<tr>` lands correctly inside a table rather than being dropped.
+
+`rangeFor` gives the live range a slot covers, when you would rather write the update yourself:
+
+```typescript
+slots.rangeFor(slot)
+slots.rangeForRow(row)
+```
+
+## Deciding what to update
+
+A slot inside a conditional or a collection is destroyed when that conditional or collection re-renders, so the runtime tracks what contains what. Everything an update to a slot would destroy:
+
+```typescript
+slots.descendantsOf(slot)
+```
+
+And the chain out to the top of its region:
+
+```typescript
+slots.ancestorsOf(slot)
+```
+
+For collections, `reconcile` says what has to happen to the rows on the page for them to match the keys the server sent. A reorder reports as moves rather than rebuilds, which is the reason to key a collection at all:
+
+```typescript
+slots.reconcile(collection, ["3", "1", "2"])
+// { added: [], removed: [], moved: ["3", "1"], kept: [...], unchanged: false }
+```
+
+## Branches that never rendered
+
+A conditional that was false rendered nothing, so its markup was never on the page and the client has nothing to show if it turns true. A template can park what it did not render in a `<template>`, which the runtime indexes without making it addressable. A `<template>`'s content is a separate fragment, so nothing inside one is reachable by the walker or by a selector until it is moved into the document:
+
+```html
+<template data-herb-region="app/views/posts/_card.html.erb:aaaaaaaa">
+  <!--herb-branch:0:1--><b>Hello <!--herb-slot:3--><!--/herb-slot:3--></b>
+  <!--herb-branch:0:2--><i>Goodbye</i>
+</template>
+```
+
+Naming its own region frees it from where it sits, so it can be parked once for the page rather than once per rendering, and the parser moving it is of no consequence. Which branch is which comes out of the payload, because `herb-branch` is the same marker the rendered output carries. A branch runs to the next branch marker among the payload's own children, so a conditional nested inside a branch stays with the branch containing it.
+
+A `<template>` that says nothing about its region belongs to the region it was delivered in, and names one branch by attribute:
+
+```html
+<template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template>
+```
+
+The runtime takes each one out of the document once it has read it, the way a `<turbo-stream>` element removes itself after acting. A `<template>` keeps its content when it leaves the document, so nothing is lost. What is left is the rendered output and its markers, with no trace of the parked copy. This matters for one delivered inside its region, which until it is removed sits inside the range of that region and of any slot spanning it, where an update would copy it into the page or destroy it.
+
+Building a branch then costs only its values, with no round trip for markup the page already has:
+
+```typescript
+slots.materialize(file, "0:1", { 3: "Marco" })
+```
+
+How much a template parks is the server's call. Sending everything makes a template fully client-rendered, sending nothing leaves it server-rendered, and sending statics for one conditional and not another leaves it both. Ask which before deciding whether to fetch:
+
+```typescript
+slots.renderModeFor(file) // "client" | "server"
+slots.renderModeFor(file, 0)
+slots.branchesFor(file, 0)
+```
+
+A template the index has not seen reports `server`, and `materialize` returns `null` for anything it has no markup for, so a caller that always asks first is correct in every format.
+
+Nothing parks the branch that rendered, so there is nothing to build it from once it has been replaced. Take a copy of it first and there is:
+
+```typescript
+slots.capture(slot)
+```
+
+It registers exactly what a parked branch would have been, with the values emptied out of it, and defers to the server's copy where there is one. Call it before an update that replaces a branch and no branch is ever lost.
+
+Statics are merged as they arrive rather than read as the whole set, so a later rendering can park a branch an earlier one did not. A rendering of a version the index has not seen replaces what it held, because statics compiled from one version of a template say nothing about the next.
+
+The compiler decides what to park while rendering, and a branch that rendered is on the page already, so it parks the ones that did not. A template whose every branch ran parks nothing at all. That means a slot can report `client` while one of its branches is still a question for the server, which is what `materialize` returning `null` says.
+
+Some conditionals never reach any of this. A conditional whose branches lay out the same way is compiled to one set of slots and no conditional at all, because which branch ran changes only what those slots hold:
+
+```erb
+<% if today? %><h1><%= Date.today %></h1><% else %><h1><%= Date.tomorrow %></h1><% end %>
+```
+
+is one child slot inside an `<h1>`, whichever way the condition goes. There is no branch to rebuild and nothing to park, and the update is a value.
+
+## Who renders a branch
+
+A template says so itself, and saying nothing means the server:
+
+```erb
+<%# herb:slots server %>
+```
+
+The client is told where this template's dynamic parts are, and asks the server for the markup of a branch that has not rendered. Nothing about a branch the request did not take reaches the page.
+
+```erb
+<%# herb:slots client %>
+```
+
+The client is sent the branches that did not render, parked in a `<template>`, and builds them itself. Both are slot aware, and these two only say who fills a slot.
+
+## Naming a template
+
+Every marker names the template it came from, and by default that name is the path. That is the useful answer while developing and the wrong one to serve, because the markers go out with the page and a view tree says more about an application than its pages do. The compiler can name a template by a digest of its path instead:
+
+```ruby
+Herb::Engine::SlotVisitor.new(identifier: :digest)
+```
+
+Then the page carries `<!--herb-region:bf0ebc682928:fd3dfd36-->` and nothing else changes. The runtime treats the name as opaque, so `slots.slot(name, 0)` works the same either way. A callable decides for itself, and the visitor keeps the real path in `schema[:file]` for the server, which is the side that holds the mapping back.
+
+## Keeping the index current
+
+`init` starts a `MutationObserver` on `document.documentElement`, so markup that arrives after it is indexed as it lands and markup that leaves is dropped. Nothing has to be called on navigation.
+
+The root is the document element rather than the body because Turbo replaces the whole body on a visit. An observer rooted at the body would be left watching a node that is no longer in the document, and the next page would never be indexed. Frames, streams and restored cache snapshots are all mutations inside the document, so they need nothing special.
+
+To drive the index yourself instead, index what just arrived:
+
+```typescript
+const index = new SlotIndex()
+
+index.scan(element)
+```
+
+And drop what left the document:
+
+```typescript
+index.prune()
+```
+
+`scan` takes a node or a list of nodes and only walks what it is given, so its cost tracks what changed rather than the size of the page.
+
+## How slots are marked
+
+Most slots are a pair of comments around what they render:
+
+```html
+<p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->!</p>
+```
+
+A slot that is the whole content of one element is marked on the element instead, which costs no extra nodes:
+
+```html
+<td class="name" data-herb-child="0">Marco</td>
+```
+
+Slots that cannot take comments at all are named on the element with their type. That covers attributes, whole-element expressions, and the content of `<title>` and `<textarea>`:
+
+```html
+<li id="1" data-herb-slot="1:attribute" data-herb-child="2">Marco</li>
+```
+
+Comments are kept where an element cannot carry the slot: mid-text, spanning siblings, or anywhere the slot might render nothing. An untaken conditional still leaves an empty pair, so the position stays addressable:
+
+```html
+<div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>
+```

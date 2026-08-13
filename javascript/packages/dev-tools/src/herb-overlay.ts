@@ -1,4 +1,5 @@
 import { ErrorOverlay } from './error-overlay';
+import type { HerbClient } from '@herb-tools/client';
 
 export interface HerbDevToolsOptions {
   projectPath?: string;
@@ -48,10 +49,9 @@ export class HerbOverlay {
   }
 
   private syncConnectionDot() {
-    const herbClient = (window as any).__herbClient;
-    if (herbClient) {
-      herbClient.applyConnectionDot();
-    }
+    const client = (window as any).__herbClient as HerbClient | undefined;
+
+    client?.applyConnectionDot();
   }
 
   private init() {
