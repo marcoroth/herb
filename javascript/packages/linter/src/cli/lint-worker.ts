@@ -121,7 +121,7 @@ async function run() {
         partials,
         partialCallers,
         projectPath: data.projectPath
-      }, undefined, { includeUnsafe: data.fixUnsafe })
+      }, lintResult.offenses, { includeUnsafe: data.fixUnsafe })
 
       if (autofixResult.fixed.length > 0) {
         writeFileSync(filePath, autofixResult.source, "utf-8")

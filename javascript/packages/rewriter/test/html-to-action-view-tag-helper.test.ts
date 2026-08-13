@@ -7,7 +7,7 @@ import { HTMLToActionViewTagHelperRewriter } from "@herb-tools/rewriter"
 
 import type { Node } from "@herb-tools/core"
 
-function transform(input: string): string {
+function transform(input: string, options: { shallow?: boolean } = {}): string {
   const parseResult = Herb.parse(input, { track_whitespace: true })
 
   if (parseResult.failed) {
@@ -17,7 +17,7 @@ function transform(input: string): string {
   }
 
   const rewriter = new HTMLToActionViewTagHelperRewriter()
-  const node = rewriter.rewrite(parseResult.value as Node, { baseDir: process.cwd() })
+  const node = rewriter.rewrite(parseResult.value as Node, { baseDir: process.cwd(), ...options })
 
   return IdentityPrinter.print(node)
 }
@@ -204,6 +204,22 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
       `
 
       expect(transform(input)).toBe(expected)
+    })
+
+    test("shallow rewrites preserve nested elements", () => {
+      const input = dedent`
+        <div class="outer">
+          <span>Inner</span>
+        </div>
+      `
+
+      const expected = dedent`
+        <%= tag.div class: "outer" do %>
+          <span>Inner</span>
+        <% end %>
+      `
+
+      expect(transform(input, { shallow: true })).toBe(expected)
     })
   })
 

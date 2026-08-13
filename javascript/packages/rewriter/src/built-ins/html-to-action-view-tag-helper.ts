@@ -192,6 +192,13 @@ function isTextOnlyBody(body: Node[]): boolean {
 }
 
 class HTMLToActionViewTagHelperVisitor extends Visitor {
+  private readonly shallow: boolean
+
+  constructor(options: { shallow?: boolean } = {}) {
+    super()
+    this.shallow = options.shallow ?? false
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     const openTag = node.open_tag
 
@@ -207,7 +214,7 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       return
     }
 
-    if (node.body) {
+    if (!this.shallow && node.body) {
       for (const child of node.body) {
         this.visit(child)
       }
@@ -428,8 +435,8 @@ export class HTMLToActionViewTagHelperRewriter extends ASTRewriter {
     return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag, image_tag, stylesheet_link_tag)"
   }
 
-  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
-    const visitor = new HTMLToActionViewTagHelperVisitor()
+  rewrite<T extends Node>(node: T, context: RewriteContext): T {
+    const visitor = new HTMLToActionViewTagHelperVisitor({ shallow: context.shallow })
 
     visitor.visit(node)
 

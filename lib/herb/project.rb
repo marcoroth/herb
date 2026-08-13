@@ -158,16 +158,7 @@ module Herb
     private
 
     def find_files
-      included = include_patterns.flat_map do |pattern|
-        Dir[File.join(@project_path, pattern)]
-      end.uniq
-
-      return included if exclude_patterns.empty?
-
-      included.reject do |file|
-        relative_path = file.sub("#{@project_path}/", "")
-        exclude_patterns.any? { |pattern| File.fnmatch?(pattern, relative_path, File::FNM_PATHNAME) }
-      end
+      configuration.find_files(@project_path)
     end
 
     public

@@ -84,6 +84,76 @@ module Engine
       assert_compiled_snapshot('<%= render "posts/card", title: "Title", name: @user.name %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
     end
 
+    describe "a project that does not keep templates in app/views" do
+      def in_project(&block)
+        root = Dir.mktmpdir("herb_inliner_layout")
+
+        begin
+          block.call(root)
+        ensure
+          FileUtils.rm_rf(root)
+        end
+      end
+
+      def write_partial(root, path)
+        full_path = File.join(root, path)
+        FileUtils.mkdir_p(File.dirname(full_path))
+        File.write(full_path, "<p>the card</p>")
+      end
+
+      def compile_in(root, filename, inline:)
+        Herb::Engine.new(
+          %(<div><%= render "posts/card" %></div>),
+          filename: filename,
+          project_path: Pathname.new(root),
+          escape: false,
+          visitors: inline ? [Herb::Engine::Visitors::InlineRender.new] : []
+        ).src
+      end
+
+      def render_with(source)
+        context = Object.new
+        context.define_singleton_method(:render) { |*| "<p>the card</p>" }
+        context.instance_eval(source)
+      end
+
+      test "inlines a partial when the templates sit at the project root" do
+        in_project do |root|
+          write_partial(root, "posts/_card.html.erb")
+
+          refute_match(/_buf << \(render/, compile_in(root, "posts/index.html.erb", inline: true))
+        end
+      end
+
+      test "still inlines a partial under app/views" do
+        in_project do |root|
+          write_partial(root, "app/views/posts/_card.html.erb")
+
+          refute_match(/_buf << \(render/, compile_in(root, "app/views/posts/index.html.erb", inline: true))
+        end
+      end
+
+      test "renders the same output inlined or not when templates sit at the project root" do
+        in_project do |root|
+          write_partial(root, "posts/_card.html.erb")
+
+          inlined = render_with(compile_in(root, "posts/index.html.erb", inline: true))
+          plain = render_with(compile_in(root, "posts/index.html.erb", inline: false))
+
+          assert_equal "<div><p>the card</p></div>", plain
+          assert_equal plain, inlined
+        end
+      end
+
+      test "leaves the render call alone when the partial does not exist" do
+        in_project do |root|
+          FileUtils.mkdir_p(File.join(root, "posts"))
+
+          assert_match(/_buf << \(render/, compile_in(root, "posts/index.html.erb", inline: true))
+        end
+      end
+    end
+
     # A partial means what it means because of where it is, not only because of what it says. Every
     # one of these is a way the copy would have meant something else, and the copy is only worth
     # having if it means the same.

@@ -2,12 +2,6 @@
 # typed: false
 
 module Herb
-  PARTIAL_EXTENSIONS = [
-    ".html.erb", ".html.herb", ".erb", ".herb", ".turbo_stream.erb", ".turbo_stream.herb"
-  ].freeze
-
-  PARTIAL_GLOB_PATTERN = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}"
-
   autoload :Diff, File.expand_path("herb/diff", __dir__ || __FILE__)
 end
 

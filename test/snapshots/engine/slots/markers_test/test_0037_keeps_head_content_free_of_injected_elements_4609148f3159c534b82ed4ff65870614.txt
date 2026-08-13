@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0037_keeps head content free of injected elements"
+input: "{source: \"<head><meta name=\\\"a\\\" content=\\\"b\\\"><title><%= @t %></title></head>\", locals: {\"@t\" => \"T\"}, options: {visitors: [#<Herb::Engine::Visitors::Slots>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:d041f54c--><head><meta name="a" content="b"><title data-herb-slot="0:raw_text">T</title></head><!--/herb-region:app/views/test.html.erb-->

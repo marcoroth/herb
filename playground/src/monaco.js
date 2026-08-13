@@ -1,3 +1,5 @@
+import "./monaco-environment.js"
+
 import {
   editor as MonacoEditor,
   Selection,
@@ -10,6 +12,28 @@ import {
 
 import "monaco-editor/esm/vs/basic-languages/ruby/ruby.contribution.js"
 
+const OVERFLOW_WIDGETS_ROOT_ID = "monaco-overflow-widgets-root"
+
+/**
+ * Returns the shared body-level node Monaco renders overflow widgets into
+ *
+ * @returns {HTMLElement} - The overflow widgets root
+ */
+function overflowWidgetsRoot() {
+  const existing = document.getElementById(OVERFLOW_WIDGETS_ROOT_ID)
+
+  if (existing) return existing
+
+  const root = document.createElement("div")
+
+  root.id = OVERFLOW_WIDGETS_ROOT_ID
+  root.classList.add("monaco-editor")
+
+  document.body.appendChild(root)
+
+  return root
+}
+
 /**
  * Replaces a textarea with a Monaco editor instance
  *
@@ -18,11 +42,7 @@ import "monaco-editor/esm/vs/basic-languages/ruby/ruby.contribution.js"
  * @param {Object} options - Monaco editor options
  * @returns {Object} - The Monaco editor instance
  */
-export function replaceTextareaWithMonaco(
-  textareaId,
-  textareaElement = null,
-  options = {},
-) {
+export function replaceTextareaWithMonaco(textareaId, textareaElement = null, options = {}) {
   const textarea =
     textareaElement ||
     document.getElementById(textareaId) ||
@@ -71,6 +91,8 @@ export function replaceTextareaWithMonaco(
     fontSize: 14,
     suggestFontSize: 14,
     lineHeight: 21,
+    fixedOverflowWidgets: true,
+    overflowWidgetsDomNode: overflowWidgetsRoot(),
   }
 
   const editor = MonacoEditor.create(container, {

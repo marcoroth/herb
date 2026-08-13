@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0041_reads a key from an attribute holding several expressions"
+input: "<% @u.each do |u| %><li id=\"<%= u.type %>-<%= u.id %>\">x</li><% end %>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: e7649cfc
+
+slots:
+  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  location=1:0  key_source=id  key_expression="\"\#{u.type}-\#{u.id}\""
+  index=1  type=attribute_interpolation  node_path=[0, 0]  location=1:24  attribute="id"

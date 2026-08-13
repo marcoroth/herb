@@ -14,6 +14,8 @@ import {
   uncommentLineContent,
 } from "../src/comment_ast_utils"
 
+import type { ParseOptions, ParseResult } from "@herb-tools/core"
+
 describe("comment_ast_utils", () => {
   let parserService: ParserService
 
@@ -338,6 +340,50 @@ describe("comment_ast_utils", () => {
       const result = uncommentLineContent(`<%# a %><%# b %><%# c %>`, parserService)
 
       expect(result).toBe("<% a %><% b %><% c %>")
+    })
+  })
+
+  describe("with a caching parser service", () => {
+    class CachingParserService extends ParserService {
+      private cache = new Map<string, ParseResult>()
+
+      parseContent(content: string, options?: ParseOptions): ParseResult {
+        const key = `${JSON.stringify(options ?? {})}:${content}`
+
+        if (!this.cache.has(key)) {
+          this.cache.set(key, super.parseContent(content, options))
+        }
+
+        return this.cache.get(key)!
+      }
+    }
+
+    function erbNodes(content: string) {
+      const collector = new LineContextCollector()
+
+      Herb.parse(content, { track_whitespace: true }).visit(collector)
+
+      return collector.erbNodesPerLine.get(0) || []
+    }
+
+    it("comments the same line content twice", () => {
+      const caching = new CachingParserService(Herb)
+      const content = `<%= link_to "Edit", edit_path %> text`
+
+      const first = commentLineContent(content, erbNodes(content), "whole-line", caching)
+      const second = commentLineContent(content, erbNodes(content), "whole-line", caching)
+
+      expect(first).toBe(`<!-- <%#= link_to "Edit", edit_path %> text -->`)
+      expect(second).toBe(first)
+    })
+
+    it("uncomments a line that was commented before", () => {
+      const caching = new CachingParserService(Herb)
+      const content = `<%# a %>`
+
+      commentLineContent(content, erbNodes(content), "all-erb", caching)
+
+      expect(uncommentLineContent(content, caching)).toBe(`<% a %>`)
     })
   })
 })

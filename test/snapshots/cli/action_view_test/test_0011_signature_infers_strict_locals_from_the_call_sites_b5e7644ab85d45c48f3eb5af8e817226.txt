@@ -1,0 +1,16 @@
+---
+source: "CLI::ActionViewTest#test_0011_signature infers strict locals from the call sites"
+input: "<%= render \"posts/row\", post: post, index: index %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_row.html.erb
+
+ Inferred (from 1 call site)
+
+   <%# locals: (index: nil, post: nil) %>
+
+ This partial does not declare strict locals yet.
+

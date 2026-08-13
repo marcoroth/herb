@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0048_does not delimit rows of an unkeyed collection"
+input: "{source: \"<% @users.each do |user| %><li><%= user[:name] %></li><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\"}]}, options: {visitors: [#<Herb::Engine::Visitors::Slots>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:8ba0ff48--><!--herb-slot:0:collection--><li data-herb-child="1">Marco</li><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

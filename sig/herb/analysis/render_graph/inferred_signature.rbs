@@ -1,0 +1,27 @@
+# Generated from lib/herb/analysis/render_graph/inferred_signature.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class InferredSignature < Data
+        attr_reader locals(): untyped
+
+        attr_reader call_site_count(): untyped
+
+        attr_reader keyword_rest(): untyped
+
+        def self.new: (untyped locals, untyped call_site_count, untyped keyword_rest) -> instance
+                    | (locals: untyped, call_site_count: untyped, keyword_rest: untyped) -> instance
+
+        def self.members: () -> [ :locals, :call_site_count, :keyword_rest ]
+
+        def members: () -> [ :locals, :call_site_count, :keyword_rest ]
+      end
+
+      class InferredSignature
+        # : () -> String
+        def strict_locals_declaration: () -> String
+      end
+    end
+  end
+end

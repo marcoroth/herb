@@ -176,6 +176,7 @@ vitest.config.*.timestamp*
 
 # Vitest
 **/test/__screenshots__/**/*
+**/test/**/__screenshots__/**/*
 **/.vitest-attachments/**/*
 
 # Doxygen
@@ -196,3 +197,5 @@ compile_flags.txt
 .envrc.local
 
 .github/pull_request.md
+javascript/packages/formatter/test-explicit-config/
+javascript/packages/formatter/test-no-config/

@@ -212,7 +212,7 @@ module Engine
       assert_evaluated_snapshot(template, {}, two_visitor_options)
     end
 
-    test "composes with AutoCloseOmittedTagsVisitor - render" do
+    test "composes with Visitors::AutoCloseOmittedTags - render" do
       template = "<head><title>Hello</title></head><ul><li>One<li>Two</ul>"
 
       assert_evaluated_snapshot(template, {}, {

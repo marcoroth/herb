@@ -61,6 +61,13 @@ export interface ColorScheme {
   TOKEN_ERROR: Color
   TOKEN_EOF: Color | null
 
+  // Surface the output is meant to be read on
+  BACKGROUND?: Color
+  FOREGROUND?: Color
+
+  // What a terminal renders the sixteen base ANSI colors as
+  ANSI_PALETTE?: Record<string, Color>
+
   // Diff backgrounds
   DIFF_REMOVED_LINE_BACKGROUND?: Color
   DIFF_ADDED_LINE_BACKGROUND?: Color
@@ -72,6 +79,9 @@ export interface ColorScheme {
  * Keys a custom theme may leave out. Everything else in `ColorScheme` is required.
  */
 export const OPTIONAL_COLOR_SCHEME_KEYS: readonly (keyof ColorScheme)[] = [
+  "BACKGROUND",
+  "FOREGROUND",
+  "ANSI_PALETTE",
   "DIFF_REMOVED_LINE_BACKGROUND",
   "DIFF_ADDED_LINE_BACKGROUND",
   "DIFF_REMOVED_BACKGROUND",

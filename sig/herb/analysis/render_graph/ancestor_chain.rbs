@@ -1,0 +1,22 @@
+# Generated from lib/herb/analysis/render_graph/ancestor_chain.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class AncestorChain
+        attr_reader tags: Array[String]
+
+        attr_reader attributes: Array[Hash[String, String]]?
+
+        attr_reader frames: Array[CallFrame]
+
+        attr_accessor occurrences: Integer
+
+        # : (Array[String], Array[Hash[String, String]]?, Array[CallFrame], Integer) -> void
+        def initialize: (Array[String], Array[Hash[String, String]]?, Array[CallFrame], Integer) -> void
+
+        EMPTY: AncestorChain
+      end
+    end
+  end
+end

@@ -11,7 +11,7 @@ import type { RuleVersion } from "@herb-tools/core"
 export type { Mutable } from "@herb-tools/rewriter"
 export type { RuleVersion } from "@herb-tools/core"
 export type { Framework, SeverityConfig, LinterMode } from "@herb-tools/config"
-export { FRAMEWORKS, FRAMEWORK_NAMES } from "@herb-tools/config"
+export { FRAMEWORKS, FRAMEWORK_NAMES } from "@herb-tools/config/schema"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
 

@@ -1,0 +1,62 @@
+# Generated from lib/herb/analysis/ruby_locals_index.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RubyLocalsIndex
+      KEYWORD_KIND: String
+
+      attr_reader locals: Array[Local]
+
+      attr_reader assignment_names: Set[String]
+
+      # : (String) -> RubyLocalsIndex
+      def self.from_source: (String) -> RubyLocalsIndex
+
+      # : (Herb::AST::DocumentNode, String) -> RubyLocalsIndex
+      def self.from_document: (Herb::AST::DocumentNode, String) -> RubyLocalsIndex
+
+      # : (Array[Local], ?Set[String]) -> void
+      def initialize: (Array[Local], ?Set[String]) -> void
+
+      # : (Integer, Integer) -> Local?
+      def at: (Integer, Integer) -> Local?
+
+      # : (String) -> Local?
+      def find: (String) -> Local?
+
+      # Every name the template binds, regardless of where.
+      # : () -> Set[String]
+      def names: () -> Set[String]
+
+      # : (Herb::Location, Integer, Integer) -> bool
+      def self.covers?: (Herb::Location, Integer, Integer) -> bool
+
+      # : (Herb::Location, Herb::Location) -> bool
+      def self.encloses?: (Herb::Location, Herb::Location) -> bool
+
+      # : (Herb::AST::DocumentNode, ReferenceCollector, OffsetTable) -> Array[Local]
+      def self.strict_locals: (Herb::AST::DocumentNode, ReferenceCollector, OffsetTable) -> Array[Local]
+
+      # : (Herb::AST::DocumentNode) -> Array[[String, Herb::Location]]
+      def self.declarations: (Herb::AST::DocumentNode) -> Array[[ String, Herb::Location ]]
+
+      # : (Herb::AST::Node) -> [String, Herb::Location]?
+      def self.declaration_for: (Herb::AST::Node) -> [ String, Herb::Location ]?
+
+      # : (Herb::AST::DocumentNode, ReferenceCollector, OffsetTable) -> Array[Local]
+      def self.block_locals: (Herb::AST::DocumentNode, ReferenceCollector, OffsetTable) -> Array[Local]
+
+      # : (NamedReference, ReferenceCollector, OffsetTable, Herb::Location?) -> Array[Herb::Location]
+      def self.reads_in_scope: (NamedReference, ReferenceCollector, OffsetTable, Herb::Location?) -> Array[Herb::Location]
+
+      # : (Herb::AST::DocumentNode) -> Array[Herb::Location]
+      def self.block_locations: (Herb::AST::DocumentNode) -> Array[Herb::Location]
+
+      # : (Herb::AST::Node) -> bool
+      def self.block_node?: (Herb::AST::Node) -> bool
+
+      # : (Array[Herb::Location], Herb::Location) -> Herb::Location?
+      def self.innermost_enclosing: (Array[Herb::Location], Herb::Location) -> Herb::Location?
+    end
+  end
+end

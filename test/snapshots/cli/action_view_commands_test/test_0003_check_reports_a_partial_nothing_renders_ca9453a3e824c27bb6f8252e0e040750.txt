@@ -1,0 +1,33 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0003_check reports a partial nothing renders"
+input: "unused partial"
+---
+exit: 1
+
+Herb 🌿 vVERSION
+
+✓ Using Herb config file at <project>/.herb.yml
+Checking render calls in 2 files...
+
+────────────────────────────────────────────────────────────
+
+ Unused partials:
+ These partial files are not referenced by any reachable render call.
+
+ app/views/posts/_orphan.html.erb:
+   ~ posts/orphan not referenced
+
+ ────────────────────────────────────────────────────────────
+
+ Issue summary:
+  Unused partials (1 file)
+
+ ────────────────────────────────────────────────────────────
+
+ Summary:
+  Version      herb gem vVERSION, libprism vVERSION, libherb vVERSION (Ruby C native extension)
+  Checked      0 files
+  Renders      0 total | 0 with partial
+  Partials     1 on disk | 1 unused
+  Duration     <duration>
+
