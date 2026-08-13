@@ -804,7 +804,15 @@ module Herb
 
             call[:locals].each_key { |local| passed[target].add(local) }
 
-            passed[target].add(File.basename(name)) if call[:collection]
+            if call[:collection]
+              # `render collection:` names each item after the partial itself, and supplies a counter
+              # and an iteration alongside it.
+              item = File.basename(name)
+
+              passed[target].add(item)
+              passed[target].add("#{item}_counter")
+              passed[target].add("#{item}_iteration")
+            end
           end
         rescue StandardError
           next

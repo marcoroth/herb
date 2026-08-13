@@ -1272,10 +1272,13 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
         entry.insert(local.clone());
       }
 
-      // `render collection:` names each item after the partial itself.
+      // `render collection:` names each item after the partial itself, and supplies a counter and an
+      // iteration alongside it.
       if call.collection.is_some() {
         if let Some(item) = name.rsplit('/').next() {
           entry.insert(item.to_string());
+          entry.insert(format!("{item}_counter"));
+          entry.insert(format!("{item}_iteration"));
         }
       }
     }

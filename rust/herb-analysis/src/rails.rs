@@ -252,7 +252,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
 
     // `get :publish, on: :member` names the route after the enclosing resource, so it has to be
     // handled before the generic `as:`/literal-path cases below.
-    if let Some(scope) = value_after(trimmed, "on: :") {
+    if let Some(scope) = keyword_value(trimmed, "on") {
       // The verb can take a path string rather than a symbol, in which case `as:` supplies the name.
       if let Some(action) = symbol_after(trimmed, "get ")
         .or_else(|| symbol_after(trimmed, "post "))
@@ -412,8 +412,31 @@ fn insert_pair(names: &mut BTreeSet<String>, stem: &str) {
   names.insert(format!("{stem}_url"));
 }
 
+/// `value_after(line, "on: :")` also matches inside `action: :show`, so a keyword has to be read at
+/// a boundary: preceded by the start of the line, whitespace, or a comma.
+fn keyword_value(line: &str, keyword: &str) -> Option<String> {
+  let marker = format!("{keyword}: :");
+  let mut from = 0;
+
+  while let Some(offset) = line[from..].find(&marker) {
+    let index = from + offset;
+    let boundary = index == 0 || line[..index].ends_with([' ', ',', '(']);
+
+    if boundary {
+      let rest = &line[index + marker.len()..];
+      let name: String = rest.chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '_').collect();
+
+      return (!name.is_empty()).then_some(name);
+    }
+
+    from = index + marker.len();
+  }
+
+  None
+}
+
 fn route_alias(line: &str) -> Option<String> {
-  value_after(line, "as: :").or_else(|| value_after(line, ":as => :"))
+  keyword_value(line, "as").or_else(|| value_after(line, ":as => :"))
 }
 
 fn symbol_after(line: &str, keyword: &str) -> Option<String> {
