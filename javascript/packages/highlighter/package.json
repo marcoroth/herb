@@ -20,15 +20,22 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
-    },
-    "./browser": {
-      "types": "./dist/types/browser.d.ts",
-      "import": "./dist/browser.js",
-      "default": "./dist/browser.js"
+      "browser": {
+        "types": "./dist/types/browser.d.ts",
+        "default": "./dist/browser.js"
+      },
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "default": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "scripts": {

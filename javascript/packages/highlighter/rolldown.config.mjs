@@ -47,7 +47,7 @@ export default [
     external: isExternal,
   },
 
-  // Browser ANSI renderer (ESM)
+  // Browser exports (ESM)
   {
     input: "src/browser.ts",
     output: {
