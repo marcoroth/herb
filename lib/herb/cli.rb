@@ -333,8 +333,15 @@ class Herb::CLI
         self.optimize = true
       end
 
-      parser.on("--slots", "Emit slot markers for reactive rendering (for compile/render commands) (default: false)") do
-        self.slots = true
+      parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
+        self.slots = (mode || "server").to_sym
+
+        unless Herb::Engine::SlotVisitor::MODES.include?(slots)
+          puts "Unknown --slots mode: #{mode}"
+          puts "Expected one of: #{Herb::Engine::SlotVisitor::MODES.join(", ")}"
+
+          exit(1)
+        end
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -1077,7 +1084,8 @@ class Herb::CLI
       source = file_content
       options = {}
 
-      slot_visitor = Herb::Engine::SlotVisitor.new if slots || Herb::Engine::SlotVisitor.directive?(source)
+      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
+      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
@@ -1186,7 +1194,12 @@ class Herb::CLI
     require_relative "engine"
 
     begin
+      source = file_content
       options = {}
+
+      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
+      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
@@ -1199,11 +1212,14 @@ class Herb::CLI
 
       options[:optimize] = true if optimize
       options[:trim] = true if trim
+      options[:visitors] = [slot_visitor] if slot_visitor
 
-      engine = Herb::Engine.new(file_content, options)
+      engine = Herb::Engine.new(source, options)
       compiled_code = engine.src
 
       rendered_output = eval(compiled_code)
+
+      print_warnings(slot_visitor&.warnings || []) unless json
 
       if json
         result = {
@@ -1212,6 +1228,8 @@ class Herb::CLI
           filename: engine.filename,
           strict: options[:strict],
         }
+
+        result[:slots] = slot_visitor.schema if slot_visitor
 
         puts result.to_json
       elsif silent
