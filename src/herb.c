@@ -40,7 +40,11 @@ static bool herb_count_node_errors(const AST_NODE_T* node, void* data) {
   return true;
 }
 
-HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, const parser_options_T* options, hb_allocator_T* allocator) {
+HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
+  const char* source,
+  const parser_options_T* options,
+  hb_allocator_T* allocator
+) {
   if (!source) { source = ""; }
 
   lexer_T lexer = { 0 };
