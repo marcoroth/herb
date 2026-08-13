@@ -170,10 +170,27 @@ module Herb
             next
           end
 
-          prefix = namespaces.empty? ? "" : "#{namespaces.join("_")}_"
+          named = namespaces.reject(&:empty?)
+          prefix = named.empty? ? "" : "#{named.join("_")}_"
 
           if (namespace = symbol_after(trimmed, "namespace "))
             namespaces.push(namespace)
+            depths.push(namespaces.size)
+
+            next
+          end
+
+          # `scope "/states/:slug", as: :state do` prefixes every route inside it, the same way a
+          # namespace does. Without pushing here, nested resources are named against the wrong parent.
+          if trimmed.start_with?("scope ") && trimmed.end_with?(" do")
+            scope_name = trimmed[/as: :(\w+)/, 1]
+
+            if scope_name
+              namespaces.push(scope_name)
+            else
+              namespaces.push("")
+            end
+
             depths.push(namespaces.size)
 
             next
