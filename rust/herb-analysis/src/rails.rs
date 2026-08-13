@@ -319,6 +319,18 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
           continue;
         }
 
+        // A bare `get :feed` here is a collection route, so it takes the parent's plural too.
+        if let Some(action) = symbol_after(trimmed, "get ")
+          .or_else(|| symbol_after(trimmed, "post "))
+          .or_else(|| symbol_after(trimmed, "patch "))
+          .or_else(|| symbol_after(trimmed, "put "))
+          .or_else(|| symbol_after(trimmed, "delete "))
+        {
+          insert_pair(&mut names, &format!("{action}_{outer}{owner}"));
+
+          continue;
+        }
+
         // A `resources` nested straight into a collection block hangs off the collection path, so it
         // keeps its own name rather than picking up the parent's.
         if let Some(name) = symbol_after(trimmed, "resources ") {

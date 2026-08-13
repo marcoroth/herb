@@ -899,7 +899,27 @@ module Herb
             puts ""
           end
 
+          print_unknown_call_tally(unknown_warnings)
+
           puts ""
+        end
+      end
+
+      # The same name usually recurs across many templates, so the tally shows what to fix first.
+      def print_unknown_call_tally(warnings)
+        tally = Hash.new(0) #: Hash[String, Integer]
+
+        warnings.group_by { |warning| warning[:file] }.each_value do |file_warnings|
+          file_warnings.map { |warning| warning[:call] }.uniq.each { |call| tally[call] += 1 }
+        end
+
+        ranked = tally.sort_by { |call, count| [-count, call] }
+
+        puts "    #{bold("Most frequent")} #{dimmed("(#{ranked.size} distinct #{pluralize(ranked.size, "method")})")}"
+        puts ""
+
+        ranked.first(10).each do |call, count|
+          puts "      #{dimmed(count.to_s.rjust(3))}  #{yellow(call)}"
         end
       end
 

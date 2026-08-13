@@ -1425,6 +1425,30 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
         println!("      {}", name.yellow());
       }
     }
+
+    // The same name usually recurs across many templates, so the tally shows what to fix first.
+    let mut tally: BTreeMap<&str, usize> = BTreeMap::new();
+
+    for (_, names) in &unknown {
+      for name in names {
+        *tally.entry(name.as_str()).or_default() += 1;
+      }
+    }
+
+    let mut ranked: Vec<(&str, usize)> = tally.into_iter().collect();
+    ranked.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
+
+    println!();
+    println!(
+      "    {} {}",
+      "Most frequent".bold(),
+      format!("({} distinct {})", ranked.len(), plural(ranked.len(), "method")).dimmed()
+    );
+    println!();
+
+    for (name, count) in ranked.iter().take(10) {
+      println!("      {:>3}  {}", count.to_string().dimmed(), name.yellow());
+    }
   }
 
   println!();
