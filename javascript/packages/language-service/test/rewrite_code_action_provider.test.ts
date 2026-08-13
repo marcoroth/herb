@@ -171,6 +171,20 @@ describe("RewriteCodeActionProvider", () => {
       expect(convertAction).toBeUndefined()
     })
 
+    it("offers actions when cursor is on a later line of a multiline opening tag", () => {
+      const content = dedent`
+        <div
+          class="panel">
+          Content
+        </div>
+      `
+
+      const actions = getCodeActions(content, 1, 2, 1, 7)
+
+      const convertAction = actions.find(a => a.title.includes("tag.div"))
+      expect(convertAction).toBeDefined()
+    })
+
     it("only rewrites the selected nested HTML element", () => {
       const content = dedent`
         <div>
