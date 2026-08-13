@@ -117,7 +117,25 @@ module Herb
 
       #: () -> Array[Herb::Errors::Error]
       def recursive_errors
-        errors + compact_child_nodes.flat_map(&:recursive_errors)
+        accumulator = [] #: Array[Herb::Errors::Error]
+        collect_errors(accumulator)
+        accumulator
+      end
+
+      protected
+
+      #: (Array[Herb::Errors::Error] accumulator) -> void
+      def collect_errors(accumulator)
+        accumulator.concat(errors) unless errors.empty?
+
+        children = child_nodes
+        index = 0
+        count = children.size
+
+        while index < count
+          children[index]&.collect_errors(accumulator)
+          index += 1
+        end
       end
     end
   end

@@ -23,6 +23,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   hb_allocator_T* allocator;
   const char* source;
   bool found_strict_locals;
+  const parser_options_T* options;
 } analyze_ruby_context_T;
 
 typedef enum {
@@ -51,6 +52,7 @@ typedef struct {
   int loop_depth;
   int rescue_depth;
   hb_allocator_T* allocator;
+  const parser_options_T* options;
 } invalid_erb_context_T;
 
 void herb_analyze_parse_errors(

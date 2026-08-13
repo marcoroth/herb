@@ -92,21 +92,24 @@ jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source
 
   jclass arrayListClass = (*env)->FindClass(env, "java/util/ArrayList");
   jmethodID arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "()V");
-  jmethodID addMethod = (*env)->GetMethodID(env, arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
   jobject errorsList = (*env)->NewObject(env, arrayListClass, arrayListConstructor);
 
-  if (root->base.errors) {
-    for (size_t i = 0; i < hb_array_size(root->base.errors); i++) {
-      AST_NODE_T* error_node = (AST_NODE_T*) hb_array_get(root->base.errors, i);
-      jobject errorObj = CreateErrorNode(env, error_node);
-      (*env)->CallBooleanMethod(env, errorsList, addMethod, errorObj);
-    }
+  jobject errorCount = NULL;
+
+  if (options->error_count != NULL) {
+    jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+    jmethodID valueOf = (*env)->GetStaticMethodID(env, integerClass, "valueOf", "(I)Ljava/lang/Integer;");
+    errorCount = (*env)->CallStaticObjectMethod(env, integerClass, valueOf, (jint) *options->error_count);
   }
 
   jclass parseResultClass = (*env)->FindClass(env, "org/herb/ParseResult");
   jmethodID constructor = (*env)->GetMethodID(
-      env, parseResultClass, "<init>", "(Lorg/herb/ast/Node;Ljava/util/List;Ljava/lang/String;)V");
+      env,
+      parseResultClass,
+      "<init>",
+      "(Lorg/herb/ast/Node;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V"
+  );
 
-  return (*env)->NewObject(env, parseResultClass, constructor, value, errorsList, source);
+  return (*env)->NewObject(env, parseResultClass, constructor, value, errorsList, source, errorCount);
 }

@@ -52,6 +52,7 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .start_column = 0,
                                                        .timeout_ms = 1000,
                                                        .max_errors = 25,
+                                                       .error_count = NULL,
                                                        .deadline_ms = 0 };
 
 size_t parser_sizeof(void) {
@@ -150,7 +151,8 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
       comment_end->location.start,
       comment_end->location.end,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
   } else {
     comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, &errors);
@@ -299,7 +301,13 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
         position_T stray_end = peek_token->location.end;
         token_free(peek_token, parser->allocator);
 
-        append_stray_erb_closing_tag_error(stray_start, stray_end, parser->allocator, document_errors);
+        append_stray_erb_closing_tag_error(
+          stray_start,
+          stray_end,
+          parser->allocator,
+          document_errors,
+          &parser->options
+        );
 
         token_T* percent = parser_advance(parser);
         hb_buffer_append_string(&content, percent->value);
@@ -454,7 +462,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
         opening_quote->location.start,
         parser->current_token->location.start,
         parser->allocator,
-        errors
+        errors,
+        &parser->options
       );
 
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
@@ -501,7 +510,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
           opening_quote->location.start,
           parser->current_token->location.start,
           parser->allocator,
-          errors
+          errors,
+          &parser->options
         );
 
         parser_append_literal_node_from_buffer(parser, &buffer, children, start);
@@ -555,7 +565,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
         potential_closing->location.start,
         potential_closing->location.end,
         parser->allocator,
-        errors
+        errors,
+        &parser->options
       );
 
       lexer_restore_state(parser->lexer, saved_state);
@@ -673,7 +684,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       start,
       end,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
 
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* value =
@@ -693,7 +705,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     parser->current_token->location.start,
     parser->current_token->location.end,
     parser->allocator,
-    &errors
+    &errors,
+    &parser->options
   );
 
   hb_allocator_dealloc(parser->allocator, expected);
@@ -835,7 +848,8 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
         equals->location.start,
         parser->current_token->location.start,
         parser->allocator,
-        &errors
+        &errors,
+        &parser->options
       );
 
       AST_HTML_ATTRIBUTE_VALUE_NODE_T* empty_value = ast_html_attribute_value_node_init(
@@ -1049,7 +1063,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
         tag_name->location.start,
         parser->current_token->location.start,
         parser->allocator,
-        &errors
+        &errors,
+        &parser->options
       );
 
       AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
@@ -1113,7 +1128,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
         position_T stray_end = peek_token->location.end;
         token_free(peek_token, parser->allocator);
 
-        append_stray_erb_closing_tag_error(stray_start, stray_end, parser->allocator, &errors);
+        append_stray_erb_closing_tag_error(stray_start, stray_end, parser->allocator, &errors, &parser->options);
 
         token_T* percent = parser_advance(parser);
         token_T* gt = parser_advance(parser);
@@ -1149,7 +1164,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       tag_name->location.start,
       parser->current_token->location.start,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
 
     AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
@@ -1231,7 +1247,8 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
       tag_opening->location.start,
       tag_name->location.end,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
   }
 
@@ -1247,7 +1264,8 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
       tag_opening->location.start,
       tag_closing->location.end,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
 
     hb_allocator_dealloc(parser->allocator, expected.data);
@@ -1339,7 +1357,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
           unclosed->location.start,
           unclosed->location.end,
           parser->allocator,
-          &errors
+          &errors,
+          &parser->options
         );
         token_free(unclosed, parser->allocator);
       }
@@ -1412,7 +1431,8 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
         opening_tag->location.start,
         closing_tag->location.end,
         parser->allocator,
-        &errors
+        &errors,
+        &parser->options
       );
     }
   } else if (token_is(parser, TOKEN_ERB_START)) {
@@ -1423,7 +1443,8 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
       parser->current_token->location.start,
       parser->current_token->location.end,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
     end_position = parser->current_token->location.start;
   } else {
@@ -1432,7 +1453,8 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
       opening_tag->location.start,
       parser->current_token->location.start,
       parser->allocator,
-      &errors
+      &errors,
+      &parser->options
     );
     end_position = parser->current_token->location.start;
   }
@@ -1767,7 +1789,8 @@ static hb_array_T* parser_build_elements_from_tags(
               open_tag->base.location.start,
               open_tag->base.location.end,
               allocator,
-              &element_errors
+              &element_errors,
+              options
             );
           }
 
@@ -1791,16 +1814,15 @@ static hb_array_T* parser_build_elements_from_tags(
 
           index = implicit_close_index - 1;
         } else {
-          if (hb_array_size(open_tag->base.errors) == 0 && !parser_options_errors_exceeded(options)) {
+          if (hb_array_size(open_tag->base.errors) == 0) {
             append_missing_closing_tag_error(
               open_tag->tag_name,
               open_tag->base.location.start,
               open_tag->base.location.end,
               allocator,
-              &open_tag->base.errors
+              &open_tag->base.errors,
+              options
             );
-
-            parser_options_increment_error_count(options);
           }
 
           hb_array_append(result, node);
@@ -1840,16 +1862,15 @@ static hb_array_T* parser_build_elements_from_tags(
       AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
       if (!is_void_element(close_tag->tag_name->value)) {
-        if (hb_array_size(close_tag->base.errors) == 0 && !parser_options_errors_exceeded(options)) {
+        if (hb_array_size(close_tag->base.errors) == 0) {
           append_missing_opening_tag_error(
             close_tag->tag_name,
             close_tag->base.location.start,
             close_tag->base.location.end,
             allocator,
-            &close_tag->base.errors
+            &close_tag->base.errors,
+            options
           );
-
-          parser_options_increment_error_count(options);
         }
       }
 

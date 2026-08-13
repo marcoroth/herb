@@ -205,5 +205,15 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
 
   napi_set_named_property(env, result, "options", options_object);
 
+  napi_value error_count_value;
+
+  if (options->error_count != nullptr) {
+    napi_create_uint32(env, *options->error_count, &error_count_value);
+  } else {
+    napi_get_null(env, &error_count_value);
+  }
+
+  napi_set_named_property(env, result, "error_count", error_count_value);
+
   return result;
 }

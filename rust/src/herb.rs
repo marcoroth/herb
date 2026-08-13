@@ -108,6 +108,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
 
     let mut allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
+    let mut error_count: u32 = 0;
 
     if !crate::ffi::hb_allocator_init(&mut allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
       return Err("Failed to initialize allocator".to_string());
@@ -132,7 +133,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       start_column: 0,
       timeout_ms: options.timeout,
       max_errors: options.max_errors.unwrap_or(0),
-      error_count: std::ptr::null_mut(),
+      error_count: &mut error_count,
       deadline_ms: 0,
     };
 
@@ -151,7 +152,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       "Failed to convert AST".to_string()
     })?;
 
-    let result = ParseResult::new(document_node, source.to_string(), Vec::new(), options);
+    let result = ParseResult::with_error_count(document_node, source.to_string(), Vec::new(), options, Some(error_count));
 
     crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T, &mut allocator);
     crate::ffi::hb_allocator_destroy(&mut allocator);

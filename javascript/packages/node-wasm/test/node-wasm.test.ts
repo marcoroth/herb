@@ -140,6 +140,34 @@ describe("@herb-tools/node-wasm", () => {
     expect(result.value.inspect()).toContain('"   "')
   })
 
+  test("parse() reports the total error count", () => {
+    expect(Herb.parse('<div class="example">content</div>').errorCount).toBe(0)
+    expect(Herb.parse("<div>").errorCount).toBe(1)
+    expect(Herb.parse("<% if condition without end %>").errorCount).toBe(1)
+  })
+
+  test("the error count matches the errors attached to the tree", () => {
+    for (const source of ["<div>", "<div><span>hello</div>", "<% if x %>", "</div>".repeat(30)]) {
+      const result = Herb.parse(source)
+
+      expect(result.errorCount).toBe(result.value.recursiveErrors().length)
+      expect(result.errorCount).toBe(result.recursiveErrors().length)
+    }
+  })
+
+  test("a zero error count skips the recursive walk without losing errors", () => {
+    const result = Herb.parse("<div>ok</div>")
+
+    expect(result.errorCount).toBe(0)
+    expect(result.recursiveErrors()).toHaveLength(0)
+    expect(result.failed).toBe(false)
+  })
+
+  test("the error count respects max_errors", () => {
+    expect(Herb.parse("<div>".repeat(1000)).errorCount).toBe(25)
+    expect(Herb.parse("<div>".repeat(1000), { max_errors: 5 }).errorCount).toBe(5)
+  })
+
   test("parse() tracks locations by default", () => {
     const result = Herb.parse('<div class="example">content</div>')
     const element = result.value.children[0] as any

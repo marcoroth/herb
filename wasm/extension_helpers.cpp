@@ -139,6 +139,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   options_object.set("html", val(options->html));
 
   result.set("options", options_object);
+  result.set("error_count", options->error_count != nullptr ? val(*options->error_count) : val::null());
 
   return result;
 }
