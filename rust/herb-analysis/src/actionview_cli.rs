@@ -332,7 +332,7 @@ fn check(arguments: &[String]) -> i32 {
   }
 
   if other_renders > 0 {
-    renders_line.push(format!("{other_renders} other").green().bold().to_string());
+    renders_line.push(format!("{other_renders} other").yellow().bold().to_string());
   }
 
   println!("  {} {}", label("Renders"), renders_line.join(&" | ".dimmed().to_string()));

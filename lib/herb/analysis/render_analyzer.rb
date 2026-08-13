@@ -513,7 +513,7 @@ module Herb
         render_parts << stat(partials_only, "with partial", :green)
         render_parts << stat(result.dynamic_calls.count, "dynamic", :red) if result.dynamic_calls.any?
         other_count = result.render_calls.count - partials_only
-        render_parts << stat(other_count, "other", :green) if other_count.positive?
+        render_parts << stat(other_count, "other", :yellow) if other_count.positive?
 
         partial_parts = [] #: Array[String]
         partial_parts << stat(result.partial_files.count, "on disk", :green)
