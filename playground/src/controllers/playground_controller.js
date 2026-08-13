@@ -11,7 +11,7 @@ import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
 import { registerLanguageService } from "../language-service"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
-import { makeTreeCollapsible, buildCollapsibleTreeHTML, decorateTreeNodeTokens, attachTreeToggles, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
+import { ParseTreeView } from "../parse-tree-view"
 
 import { Herb } from "@herb-tools/browser"
 import { FRAMEWORKS } from "@herb-tools/config/schema"
@@ -176,11 +176,6 @@ export default class extends Controller {
       icon.style.display = 'none'
     })
 
-    this.diffMode = "live"
-    this.diffSnapshotSource = null
-    this.previousSource = null
-    this.diffFeedEntries = []
-
     this.restoreInput()
     this.restoreActiveTab()
 
@@ -193,10 +188,15 @@ export default class extends Controller {
       this.restoreLinterOptions()
     }
 
+    this.diffMode = "live"
+    this.diffSnapshotSource = null
+    this.previousSource = null
+    this.diffFeedEntries = []
+
     this.lastWrittenHash = null
     this.analyzeTimeout = null
+    this.parseTreeView = this.hasParseOutputTarget ? this.createParseTreeView() : null
     this.analyzeClient = new AnalyzeClient()
-    this.renderedParseTree = null
 
     this.inputTarget.focus()
     this.load()
@@ -210,7 +210,7 @@ export default class extends Controller {
 
     this.editor.onEditorClick((position) => {
       this.editor.clearAllHighlights()
-      this.clearTreeLocationHighlights()
+      this.parseTreeView?.clearHighlights()
 
       const range = findTreeLocationItemWithSmallestRangeFromPosition(
         this.treeLocations,
@@ -218,15 +218,10 @@ export default class extends Controller {
         position.column - 1,
       )
 
-      if (range) {
-        revealTreeLine(range.element)
-        range.element.classList.add("tree-location-highlight")
-        range.element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        })
-      }
+      if (!range) return
+
+      this.parseTreeView.revealLine(range.lineIndex)
+      this.parseTreeView.highlightLine(range.lineIndex)
     })
 
     this.editor.onDidChangeCursorPosition(({ position }) => {
@@ -310,6 +305,9 @@ export default class extends Controller {
 
     this.analyzeClient?.dispose()
     this.analyzeClient = null
+
+    this.parseTreeView?.dispose()
+    this.parseTreeView = null
 
     if (this.analyzeTimeout !== null) {
       clearTimeout(this.analyzeTimeout)
@@ -836,31 +834,302 @@ export default class extends Controller {
     this.currentViewer.style.cursor = null
   }
 
-  setupHoverListener(element, location) {
-    element.addEventListener("mouseenter", () => {
-      this.clearTreeLocationHighlights()
-      this.editor.clearAllHighlights()
-      this.editor.highlightAndRevealSection(
-        ...location,
-        element.classList.contains("error-class")
-          ? "error-highlight"
-          : "info-highlight",
-      )
-    })
-
-    element.classList.add("hover-highlight")
-  }
-
   expandAllNodes() {
-    if (this.hasParseOutputTarget) {
-      expandAll(this.parseOutputTarget)
-    }
+    this.parseTreeView?.expandAll()
   }
 
   collapseAllNodes() {
-    if (this.hasParseOutputTarget) {
-      collapseAll(this.parseOutputTarget)
+    this.parseTreeView?.collapseAll()
+  }
+
+  setupTooltip() {
+    if (this.hasFormatTooltipTarget) {
+      this.formatButtonTarget.addEventListener('mouseenter', this.showTooltip)
+      this.formatButtonTarget.addEventListener('mouseleave', this.hideTooltip)
     }
+  }
+
+  removeTooltip() {
+    if (this.hasFormatTooltipTarget) {
+      this.formatButtonTarget.removeEventListener('mouseenter', this.showTooltip)
+      this.formatButtonTarget.removeEventListener('mouseleave', this.hideTooltip)
+
+      this.hideTooltip()
+    }
+  }
+
+  setupAutofixTooltip() {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixButtonTarget.addEventListener('mouseenter', this.showAutofixTooltip)
+      this.autofixButtonTarget.addEventListener('mouseleave', this.hideAutofixTooltip)
+    }
+  }
+
+  removeAutofixTooltip() {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixButtonTarget.removeEventListener('mouseenter', this.showAutofixTooltip)
+      this.autofixButtonTarget.removeEventListener('mouseleave', this.hideAutofixTooltip)
+
+      this.hideAutofixTooltip()
+    }
+  }
+
+  setupAutofixUnsafeTooltip() {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeButtonTarget.addEventListener('mouseenter', this.showAutofixUnsafeTooltip)
+      this.autofixUnsafeButtonTarget.addEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
+    }
+  }
+
+  removeAutofixUnsafeTooltip() {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeButtonTarget.removeEventListener('mouseenter', this.showAutofixUnsafeTooltip)
+      this.autofixUnsafeButtonTarget.removeEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
+
+      this.hideAutofixUnsafeTooltip()
+    }
+  }
+
+  setupShareTooltip() {
+    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
+      this.shareButtonTarget.addEventListener('mouseenter', this.showShareTooltip)
+      this.shareButtonTarget.addEventListener('mouseleave', this.hideShareTooltip)
+    }
+  }
+
+  removeShareTooltip() {
+    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
+      this.shareButtonTarget.removeEventListener('mouseenter', this.showShareTooltip)
+      this.shareButtonTarget.removeEventListener('mouseleave', this.hideShareTooltip)
+      this.hideShareTooltip()
+    }
+  }
+
+  setupGitHubTooltip() {
+    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
+      this.githubButtonTarget.addEventListener('mouseenter', this.showGitHubTooltip)
+      this.githubButtonTarget.addEventListener('mouseleave', this.hideGitHubTooltip)
+    }
+  }
+
+  removeGitHubTooltip() {
+    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
+      this.githubButtonTarget.removeEventListener('mouseenter', this.showGitHubTooltip)
+      this.githubButtonTarget.removeEventListener('mouseleave', this.hideGitHubTooltip)
+      this.hideGitHubTooltip()
+    }
+  }
+
+  setupCopyTooltip() {
+    if (this.hasCopyButtonTarget && this.hasCopyTooltipTarget) {
+      this.copyButtonTarget.addEventListener('mouseenter', this.showCopyTooltip)
+      this.copyButtonTarget.addEventListener('mouseleave', this.hideCopyTooltip)
+    }
+  }
+
+  removeCopyTooltip() {
+    if (this.hasCopyButtonTarget && this.hasCopyTooltipTarget) {
+      this.copyButtonTarget.removeEventListener('mouseenter', this.showCopyTooltip)
+      this.copyButtonTarget.removeEventListener('mouseleave', this.hideCopyTooltip)
+      this.hideCopyTooltip()
+    }
+  }
+
+  setupExampleTooltip() {
+    if (this.hasExampleButtonTarget && this.hasExampleTooltipTarget) {
+      this.exampleButtonTarget.addEventListener('mouseenter', this.showExampleTooltip)
+      this.exampleButtonTarget.addEventListener('mouseleave', this.hideExampleTooltip)
+    }
+  }
+
+  removeExampleTooltip() {
+    if (this.hasExampleButtonTarget && this.hasExampleTooltipTarget) {
+      this.exampleButtonTarget.removeEventListener('mouseenter', this.showExampleTooltip)
+      this.exampleButtonTarget.removeEventListener('mouseleave', this.hideExampleTooltip)
+      this.hideExampleTooltip()
+    }
+  }
+
+  setupCopyViewerTooltip() {
+    if (this.hasCopyViewerButtonTarget && this.hasCopyViewerTooltipTarget) {
+      this.copyViewerButtonTarget.addEventListener('mouseenter', this.showCopyViewerTooltip)
+      this.copyViewerButtonTarget.addEventListener('mouseleave', this.hideCopyViewerTooltip)
+    }
+  }
+
+  removeCopyViewerTooltip() {
+    if (this.hasCopyViewerButtonTarget && this.hasCopyViewerTooltipTarget) {
+      this.copyViewerButtonTarget.removeEventListener('mouseenter', this.showCopyViewerTooltip)
+      this.copyViewerButtonTarget.removeEventListener('mouseleave', this.hideCopyViewerTooltip)
+      this.hideCopyViewerTooltip()
+    }
+  }
+
+  setupPrinterVerificationTooltip() {
+    if (this.hasPrinterVerificationTarget) {
+      this.printerVerificationTarget.addEventListener('mouseenter', this.showPrinterVerificationTooltip)
+      this.printerVerificationTarget.addEventListener('mouseleave', this.hidePrinterVerificationTooltip)
+    }
+  }
+
+  removePrinterVerificationTooltip() {
+    if (this.hasPrinterVerificationTarget) {
+      this.printerVerificationTarget.removeEventListener('mouseenter', this.showPrinterVerificationTooltip)
+      this.printerVerificationTarget.removeEventListener('mouseleave', this.hidePrinterVerificationTooltip)
+      this.hidePrinterVerificationTooltip()
+    }
+  }
+
+  showTooltip = ()  => {
+    if (this.hasFormatTooltipTarget) {
+      this.formatTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideTooltip = () => {
+    if (this.hasFormatTooltipTarget) {
+      this.formatTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showAutofixTooltip = () => {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideAutofixTooltip = () => {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showAutofixUnsafeTooltip = () => {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideAutofixUnsafeTooltip = () => {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showShareTooltip = () => {
+    if (this.hasShareTooltipTarget) {
+      this.shareTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideShareTooltip = () => {
+    if (this.hasShareTooltipTarget) {
+      this.shareTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showGitHubTooltip = () => {
+    if (this.hasGithubTooltipTarget) {
+      this.githubTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideGitHubTooltip = () => {
+    if (this.hasGithubTooltipTarget) {
+      this.githubTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showCopyTooltip = () => {
+    if (this.hasCopyTooltipTarget) {
+      this.copyTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideCopyTooltip = () => {
+    if (this.hasCopyTooltipTarget) {
+      this.copyTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showExampleTooltip = () => {
+    if (this.hasExampleTooltipTarget) {
+      this.exampleTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideExampleTooltip = () => {
+    if (this.hasExampleTooltipTarget) {
+      this.exampleTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showCopyViewerTooltip = () => {
+    if (this.hasCopyViewerTooltipTarget) {
+      this.copyViewerTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideCopyViewerTooltip = () => {
+    if (this.hasCopyViewerTooltipTarget) {
+      this.copyViewerTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  showPrinterVerificationTooltip = () => {
+    if (!this.printerVerificationTooltipText) return
+
+    const existing = document.getElementById('printer-verification-tooltip')
+    if (existing) existing.remove()
+
+    const rect = this.printerVerificationTarget.getBoundingClientRect()
+
+    const tooltip = document.createElement('div')
+    tooltip.id = 'printer-verification-tooltip'
+    tooltip.className = 'fixed px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-[9999] pointer-events-none'
+    tooltip.textContent = this.printerVerificationTooltipText
+
+    tooltip.style.left = `${rect.left + (rect.width / 2)}px`
+    tooltip.style.top = `${rect.top - 8}px`
+    tooltip.style.transform = 'translate(-50%, -100%)'
+
+    document.body.appendChild(tooltip)
+  }
+
+  hidePrinterVerificationTooltip = () => {
+    const tooltip = document.getElementById('printer-verification-tooltip')
+    if (tooltip) tooltip.remove()
+  }
+
+  updateFormatTooltipText(text) {
+    if (this.hasFormatTooltipTarget) {
+      const textNode = this.formatTooltipTarget.firstChild
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = text
+      }
+    }
+  }
+
+  updateAutofixTooltipText(text) {
+    if (this.hasAutofixTooltipTarget) {
+      const textNode = this.autofixTooltipTarget.firstChild
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = text
+      }
+    }
+  }
+
+  updateAutofixUnsafeTooltipText(text) {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      const textNode = this.autofixUnsafeTooltipTarget.firstChild
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = text
+      }
+    }
+  }
+
+  updatePrinterVerificationTooltip(text) {
+    this.printerVerificationTooltipText = text
   }
 
   setDiffModeLive() {
@@ -1402,53 +1671,31 @@ export default class extends Controller {
     }
   }
 
+  createParseTreeView() {
+    return new ParseTreeView(this.parseOutputTarget, {
+      onHoverLocation: (location, isError) => {
+        this.parseTreeView.clearHighlights()
+        this.editor?.clearAllHighlights()
+        this.editor?.highlightAndRevealSection(
+          ...location,
+          isError ? "error-highlight" : "info-highlight",
+        )
+      },
+    })
+  }
+
   clearTreeLocationHighlights() {
-    this.parseOutputTarget
-      .querySelectorAll(".tree-location-highlight")
-      .forEach((element) => {
-        element.classList.remove("tree-location-highlight")
-      })
+    this.parseTreeView?.clearHighlights()
   }
 
   get treeLocations() {
-    return Array.from(
-      this.parseOutputTarget?.querySelectorAll(".token.location") || [],
-    ).map((locationElement) => {
-      const element = locationElement.previousElementSibling
-      const location = Array.from(
-        locationElement.textContent.matchAll(/\d+/g),
-      ).map((i) => parseInt(i))
-
-      location[1] += 1
-      location[3] += 1
-
-      return { element, locationElement, location }
-    })
+    return this.parseTreeView?.locations ?? []
   }
 
   renderParseTree(tree) {
     if (!this.hasParseOutputTarget) return
-    if (this.renderedParseTree === tree) return
 
-    this.renderedParseTree = tree
-
-    this.parseOutputTarget.classList.add("language-tree")
-
-    const highlighted = Prism.highlight(tree, Prism.languages.tree, "tree")
-
-    this.parseOutputTarget.innerHTML = buildCollapsibleTreeHTML(highlighted, tree)
-
-    decorateTreeNodeTokens(this.parseOutputTarget)
-    attachTreeToggles(this.parseOutputTarget)
-
-    this.treeLocations.forEach(({ element, locationElement, location }) => {
-      this.setupHoverListener(locationElement, location)
-      this.setupHoverListener(element, location)
-
-      if (element.classList.contains("string")) {
-        this.setupHoverListener(element.previousElementSibling, location)
-      }
-    })
+    this.parseTreeView?.render(tree)
   }
 
   input() {
@@ -2071,22 +2318,7 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasParseOutputTarget) {
-      this.parseOutputTarget.classList.add("language-tree")
-      this.parseOutputTarget.textContent = result.string
-
-      Prism.highlightElement(this.parseOutputTarget)
-      makeTreeCollapsible(this.parseOutputTarget)
-
-      this.treeLocations.forEach(({ element, locationElement, location }) => {
-        this.setupHoverListener(locationElement, location)
-        this.setupHoverListener(element, location)
-
-        if (element.classList.contains("string")) {
-          this.setupHoverListener(element.previousElementSibling, location)
-        }
-      })
-    }
+    this.renderParseTree(result.string)
   }
 
   get compressedValue() {
@@ -2603,79 +2835,15 @@ export default class extends Controller {
     })
   }
 
-  setupTooltip() {
-    if (this.hasFormatTooltipTarget) {
-      this.formatButtonTarget.addEventListener('mouseenter', this.showTooltip)
-      this.formatButtonTarget.addEventListener('mouseleave', this.hideTooltip)
-    }
-  }
 
-  removeTooltip() {
-    if (this.hasFormatTooltipTarget) {
-      this.formatButtonTarget.removeEventListener('mouseenter', this.showTooltip)
-      this.formatButtonTarget.removeEventListener('mouseleave', this.hideTooltip)
 
-      this.hideTooltip()
-    }
-  }
 
-  showTooltip = ()  => {
-    if (this.hasFormatTooltipTarget) {
-      this.formatTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideTooltip = () => {
-    if (this.hasFormatTooltipTarget) {
-      this.formatTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  updateFormatTooltipText(text) {
-    if (this.hasFormatTooltipTarget) {
-      const textNode = this.formatTooltipTarget.firstChild
-      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        textNode.textContent = text
-      }
-    }
-  }
 
-  setupAutofixTooltip() {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixButtonTarget.addEventListener('mouseenter', this.showAutofixTooltip)
-      this.autofixButtonTarget.addEventListener('mouseleave', this.hideAutofixTooltip)
-    }
-  }
 
-  removeAutofixTooltip() {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixButtonTarget.removeEventListener('mouseenter', this.showAutofixTooltip)
-      this.autofixButtonTarget.removeEventListener('mouseleave', this.hideAutofixTooltip)
 
-      this.hideAutofixTooltip()
-    }
-  }
 
-  showAutofixTooltip = () => {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixTooltipTarget.classList.remove('hidden')
-    }
-  }
-
-  hideAutofixTooltip = () => {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixTooltipTarget.classList.add('hidden')
-    }
-  }
-
-  updateAutofixTooltipText(text) {
-    if (this.hasAutofixTooltipTarget) {
-      const textNode = this.autofixTooltipTarget.firstChild
-      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        textNode.textContent = text
-      }
-    }
-  }
 
   enableAutofixButton() {
     this.autofixButtonTarget.disabled = false
@@ -2706,42 +2874,10 @@ export default class extends Controller {
     }
   }
 
-  setupAutofixUnsafeTooltip() {
-    if (this.hasAutofixUnsafeTooltipTarget) {
-      this.autofixUnsafeButtonTarget.addEventListener('mouseenter', this.showAutofixUnsafeTooltip)
-      this.autofixUnsafeButtonTarget.addEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
-    }
-  }
 
-  removeAutofixUnsafeTooltip() {
-    if (this.hasAutofixUnsafeTooltipTarget) {
-      this.autofixUnsafeButtonTarget.removeEventListener('mouseenter', this.showAutofixUnsafeTooltip)
-      this.autofixUnsafeButtonTarget.removeEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
 
-      this.hideAutofixUnsafeTooltip()
-    }
-  }
 
-  showAutofixUnsafeTooltip = () => {
-    if (this.hasAutofixUnsafeTooltipTarget) {
-      this.autofixUnsafeTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideAutofixUnsafeTooltip = () => {
-    if (this.hasAutofixUnsafeTooltipTarget) {
-      this.autofixUnsafeTooltipTarget.classList.add('hidden')
-    }
-  }
-
-  updateAutofixUnsafeTooltipText(text) {
-    if (this.hasAutofixUnsafeTooltipTarget) {
-      const textNode = this.autofixUnsafeTooltipTarget.firstChild
-      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        textNode.textContent = text
-      }
-    }
-  }
 
   enableAutofixUnsafeButton() {
     this.autofixUnsafeButtonTarget.disabled = false
@@ -2772,184 +2908,30 @@ export default class extends Controller {
     }
   }
 
-  setupShareTooltip() {
-    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
-      this.shareButtonTarget.addEventListener('mouseenter', this.showShareTooltip)
-      this.shareButtonTarget.addEventListener('mouseleave', this.hideShareTooltip)
-    }
-  }
 
-  removeShareTooltip() {
-    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
-      this.shareButtonTarget.removeEventListener('mouseenter', this.showShareTooltip)
-      this.shareButtonTarget.removeEventListener('mouseleave', this.hideShareTooltip)
-      this.hideShareTooltip()
-    }
-  }
 
-  showShareTooltip = () => {
-    if (this.hasShareTooltipTarget) {
-      this.shareTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideShareTooltip = () => {
-    if (this.hasShareTooltipTarget) {
-      this.shareTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupGitHubTooltip() {
-    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
-      this.githubButtonTarget.addEventListener('mouseenter', this.showGitHubTooltip)
-      this.githubButtonTarget.addEventListener('mouseleave', this.hideGitHubTooltip)
-    }
-  }
 
-  removeGitHubTooltip() {
-    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
-      this.githubButtonTarget.removeEventListener('mouseenter', this.showGitHubTooltip)
-      this.githubButtonTarget.removeEventListener('mouseleave', this.hideGitHubTooltip)
-      this.hideGitHubTooltip()
-    }
-  }
 
-  showGitHubTooltip = () => {
-    if (this.hasGithubTooltipTarget) {
-      this.githubTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideGitHubTooltip = () => {
-    if (this.hasGithubTooltipTarget) {
-      this.githubTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupCopyTooltip() {
-    if (this.hasCopyButtonTarget && this.hasCopyTooltipTarget) {
-      this.copyButtonTarget.addEventListener('mouseenter', this.showCopyTooltip)
-      this.copyButtonTarget.addEventListener('mouseleave', this.hideCopyTooltip)
-    }
-  }
 
-  removeCopyTooltip() {
-    if (this.hasCopyButtonTarget && this.hasCopyTooltipTarget) {
-      this.copyButtonTarget.removeEventListener('mouseenter', this.showCopyTooltip)
-      this.copyButtonTarget.removeEventListener('mouseleave', this.hideCopyTooltip)
-      this.hideCopyTooltip()
-    }
-  }
 
-  showCopyTooltip = () => {
-    if (this.hasCopyTooltipTarget) {
-      this.copyTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideCopyTooltip = () => {
-    if (this.hasCopyTooltipTarget) {
-      this.copyTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupExampleTooltip() {
-    if (this.hasExampleButtonTarget && this.hasExampleTooltipTarget) {
-      this.exampleButtonTarget.addEventListener('mouseenter', this.showExampleTooltip)
-      this.exampleButtonTarget.addEventListener('mouseleave', this.hideExampleTooltip)
-    }
-  }
 
-  removeExampleTooltip() {
-    if (this.hasExampleButtonTarget && this.hasExampleTooltipTarget) {
-      this.exampleButtonTarget.removeEventListener('mouseenter', this.showExampleTooltip)
-      this.exampleButtonTarget.removeEventListener('mouseleave', this.hideExampleTooltip)
-      this.hideExampleTooltip()
-    }
-  }
 
-  showExampleTooltip = () => {
-    if (this.hasExampleTooltipTarget) {
-      this.exampleTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideExampleTooltip = () => {
-    if (this.hasExampleTooltipTarget) {
-      this.exampleTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupCopyViewerTooltip() {
-    if (this.hasCopyViewerButtonTarget && this.hasCopyViewerTooltipTarget) {
-      this.copyViewerButtonTarget.addEventListener('mouseenter', this.showCopyViewerTooltip)
-      this.copyViewerButtonTarget.addEventListener('mouseleave', this.hideCopyViewerTooltip)
-    }
-  }
 
-  removeCopyViewerTooltip() {
-    if (this.hasCopyViewerButtonTarget && this.hasCopyViewerTooltipTarget) {
-      this.copyViewerButtonTarget.removeEventListener('mouseenter', this.showCopyViewerTooltip)
-      this.copyViewerButtonTarget.removeEventListener('mouseleave', this.hideCopyViewerTooltip)
-      this.hideCopyViewerTooltip()
-    }
-  }
 
-  showCopyViewerTooltip = () => {
-    if (this.hasCopyViewerTooltipTarget) {
-      this.copyViewerTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideCopyViewerTooltip = () => {
-    if (this.hasCopyViewerTooltipTarget) {
-      this.copyViewerTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupPrinterVerificationTooltip() {
-    if (this.hasPrinterVerificationTarget) {
-      this.printerVerificationTarget.addEventListener('mouseenter', this.showPrinterVerificationTooltip)
-      this.printerVerificationTarget.addEventListener('mouseleave', this.hidePrinterVerificationTooltip)
-    }
-  }
 
-  removePrinterVerificationTooltip() {
-    if (this.hasPrinterVerificationTarget) {
-      this.printerVerificationTarget.removeEventListener('mouseenter', this.showPrinterVerificationTooltip)
-      this.printerVerificationTarget.removeEventListener('mouseleave', this.hidePrinterVerificationTooltip)
-      this.hidePrinterVerificationTooltip()
-    }
-  }
 
-  showPrinterVerificationTooltip = () => {
-    if (!this.printerVerificationTooltipText) return
 
-    const existing = document.getElementById('printer-verification-tooltip')
-    if (existing) existing.remove()
 
-    const rect = this.printerVerificationTarget.getBoundingClientRect()
-
-    const tooltip = document.createElement('div')
-    tooltip.id = 'printer-verification-tooltip'
-    tooltip.className = 'fixed px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-[9999] pointer-events-none'
-    tooltip.textContent = this.printerVerificationTooltipText
-
-    tooltip.style.left = `${rect.left + (rect.width / 2)}px`
-    tooltip.style.top = `${rect.top - 8}px`
-    tooltip.style.transform = 'translate(-50%, -100%)'
-
-    document.body.appendChild(tooltip)
-  }
-
-  hidePrinterVerificationTooltip = () => {
-    const tooltip = document.getElementById('printer-verification-tooltip')
-    if (tooltip) tooltip.remove()
-  }
-
-  updatePrinterVerificationTooltip(text) {
-    this.printerVerificationTooltipText = text
-  }
 
   showShareSuccessMessage() {
     this.showTemporaryMessage("Copied Share URL to clipboard", "success")
