@@ -357,7 +357,9 @@ fn insert_pair(names: &mut BTreeSet<String>, stem: &str) {
 
 fn symbol_after(line: &str, keyword: &str) -> Option<String> {
   let rest = line.strip_prefix(keyword)?.trim_start();
-  let rest = rest.strip_prefix(':')?;
+
+  // Rails takes a string as readily as a symbol: `namespace "spotlight" do`.
+  let rest = rest.strip_prefix(':').or_else(|| rest.strip_prefix('"')).or_else(|| rest.strip_prefix('\''))?;
 
   let name: String = rest.chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '_').collect();
 
@@ -395,7 +397,15 @@ fn literal_path(line: &str) -> Option<String> {
     .then(|| segment.replace(['-', '/'], "_"))
 }
 
+const UNCOUNTABLE: [&str; 6] = ["series", "species", "news", "information", "equipment", "money"];
+
 fn singularize(word: &str) -> String {
+  // An uncountable noun is its own singular, which is what makes Rails add the `_index` suffix:
+  // `resources :series` gives `series_index_path`.
+  if UNCOUNTABLE.contains(&word) {
+    return word.to_string();
+  }
+
   if let Some(stem) = word.strip_suffix("ies") {
     return format!("{stem}y");
   }

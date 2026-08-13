@@ -274,12 +274,19 @@ module Herb
       def symbol_after(line, keyword)
         return nil if keyword.strip.empty?
 
-        rest = line[/\A#{Regexp.escape(keyword)}\s*:(\w+)/, 1]
+        # Rails takes a string as readily as a symbol: `namespace "spotlight" do`.
+        rest = line[/\A#{Regexp.escape(keyword)}\s*(?::|["'])(\w+)/, 1]
 
         rest
       end
 
+      UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
+
       def singularize(name)
+        # An uncountable noun is its own singular, which is what makes Rails add the `_index`
+        # suffix: `resources :series` gives `series_index_path`.
+        return name if UNCOUNTABLE.include?(name)
+
         return name.sub(/ies\z/, "y") if name.end_with?("ies")
         return name.chomp("es") if name.end_with?("sses", "ches", "shes", "xes", "ses", "zes")
         return name.chomp("s") if name.end_with?("s") && !name.end_with?("ss")
