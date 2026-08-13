@@ -524,6 +524,10 @@ module Herb
         puts "  #{label("Partials")} #{partial_parts.join(" | ")}"
       end
 
+      def component_template?(relative)
+        relative.start_with?("app/components/")
+      end
+
       # An undeclared local is a name a call site passes, so it is a signature gap rather than a
       # missing method. Counting them together with unknown calls hides that distinction.
       def print_warning_summary_line(warnings)
@@ -537,6 +541,7 @@ module Herb
         locals = files_for.call(:undeclared_local)
         uninferable = files_for.call(:uninferable_local)
         ivars = files_for.call(:ivar_in_partial)
+        ignored = files_for.call(:ignored_component)
 
         parts = [] #: Array[String]
         parts << stat(locals, "undeclared #{pluralize(locals, "local")}", :yellow) if locals.positive?
@@ -547,6 +552,10 @@ module Herb
         return if parts.empty?
 
         puts "  #{label("Warnings")} #{parts.join(" | ")}"
+
+        return unless ignored.positive?
+
+        puts "  #{label("Ignored")} #{dimmed("#{ignored} component #{pluralize(ignored, "template")} in app/components/")}"
       end
 
       private
@@ -753,6 +762,10 @@ module Herb
             result.unknown_calls.each do |call|
               type = if candidates.include?(call)
                        :undeclared_local
+                     elsif component_template?(relative)
+                       # A component's template calls methods on its own class, which this analyzer
+                       # does not read. Every one of them would be a false positive.
+                       :ignored_component
                      elsif uninferable
                        :uninferable_local
                      else

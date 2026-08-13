@@ -269,7 +269,7 @@ fn check(arguments: &[String]) -> i32 {
   );
 
   let passed_locals = collect_passed_locals(&templates, &mut index, &flow);
-  let (ivar_warnings, local_warnings, uninferable_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
+  let (ivar_warnings, local_warnings, uninferable_warnings, unknown_warnings, ignored_components) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
 
   println!();
 
@@ -400,6 +400,14 @@ fn check(arguments: &[String]) -> i32 {
     }
 
     println!("  {} {}", label("Warnings"), parts.join(&" | ".dimmed().to_string()));
+  }
+
+  if ignored_components > 0 {
+    println!(
+      "  {} {}",
+      label("Ignored"),
+      format!("{ignored_components} component {} in app/components/", plural(ignored_components, "template")).dimmed()
+    );
   }
 
   println!(
@@ -1276,11 +1284,12 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
   passed
 }
 
-fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize, usize, usize) {
+fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize, usize, usize, usize) {
   let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
   let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
   let mut uninferable: Vec<(String, Vec<String>)> = Vec::new();
+  let mut ignored_components = 0usize;
 
   for file in templates {
     let result = flow.analyze(file);
@@ -1308,7 +1317,11 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
       // With no call site resolving here there is no signature to learn from, so the leftovers are
       // locals Herb cannot infer rather than methods it cannot find.
       if !rest.is_empty() {
-        if partial && !declared && candidates.is_none() {
+        // A component's template calls methods on its own class, which this analyzer does not read,
+        // so every one of them would be a false positive.
+        if relative.starts_with("app/components/") {
+          ignored_components += 1;
+        } else if partial && !declared && candidates.is_none() {
           uninferable.push((relative, rest));
         } else {
           unknown.push((relative, rest));
@@ -1318,7 +1331,7 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
   }
 
   if ivars.is_empty() && unknown.is_empty() && likely_locals.is_empty() && uninferable.is_empty() {
-    return (0, 0, 0, 0);
+    return (0, 0, 0, 0, ignored_components);
   }
 
   println!();
@@ -1412,5 +1425,5 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
 
   println!();
 
-  (ivars.len(), likely_locals.len(), uninferable.len(), unknown.len())
+  (ivars.len(), likely_locals.len(), uninferable.len(), unknown.len(), ignored_components)
 }
