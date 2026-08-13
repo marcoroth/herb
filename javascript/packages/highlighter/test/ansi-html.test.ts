@@ -431,7 +431,7 @@ describe("ANSIConverter", () => {
       const stripped = source.replace(OSC_REGEX, "").replace(CSI_REGEX, "")
 
       const text = converter.toHTML(source)
-        .replace(/[<>]/g, "")
+        .replace(/<[^>]+>/g, "")
         .replaceAll("&lt;", "<")
         .replaceAll("&gt;", ">")
         .replaceAll("&quot;", '"')
