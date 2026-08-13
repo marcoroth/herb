@@ -20,6 +20,7 @@ jobs:
       (github.event.action != 'labeled' || github.event.label.name == 'release-preview')
     env:
       GH_TOKEN: ${{ github.token }}
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
     runs-on: ubicloud-standard-2
     timeout-minutes: 15
