@@ -806,8 +806,8 @@ module Herb
 
             if call[:collection]
               # `render collection:` names each item after the partial itself, and supplies a counter
-              # and an iteration alongside it.
-              item = File.basename(name)
+              # and an iteration alongside it. `as: :series` renames it.
+              item = call[:as_name].to_s.empty? ? File.basename(name) : call[:as_name]
 
               passed[target].add(item)
               passed[target].add("#{item}_counter")

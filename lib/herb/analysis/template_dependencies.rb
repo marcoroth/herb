@@ -173,6 +173,7 @@ module Herb
         depths = [] #: Array[Integer]
         resources = [] #: Array[Array[String]]
         resource_depths = [] #: Array[Integer]
+        collection_depths = [] #: Array[Integer]
 
         routes_file.each_line do |line|
           trimmed = line.strip
@@ -186,6 +187,8 @@ module Herb
                 resource_depths.pop
                 resources.pop
               end
+
+              collection_depths.pop if collection_depths.last == depth
             end
 
             next
@@ -204,7 +207,7 @@ module Herb
           # `scope "/states/:slug", as: :state do` prefixes every route inside it, the same way a
           # namespace does. Without pushing here, nested resources are named against the wrong parent.
           if trimmed.start_with?("scope ") && trimmed.end_with?(" do")
-            scope_name = trimmed[/as: :(\w+)/, 1]
+            scope_name = route_alias(trimmed)
 
             if scope_name
               namespaces.push(scope_name)
@@ -217,11 +220,64 @@ module Herb
             next
           end
 
-          if (scope = trimmed[/on: :(\w+)/, 1]) && (action = symbol_after(trimmed, trimmed[/\A(get|post|patch|put|delete) /, 1].to_s + " "))
+          # `member do` and `collection do` name their routes after the enclosing resource without
+          # adding anything to the prefix, but they still open a block that has to balance.
+          if trimmed == "member do" || trimmed == "collection do"
+            namespaces.push("")
+            depths.push(namespaces.size)
+            collection_depths.push(namespaces.size) if trimmed == "collection do"
+
+            next
+          end
+
+          # Inside a `collection do` block Rails names routes after the parent's *plural*, as a
+          # suffix: `as: :past` within `resources :events` gives `past_events_path`.
+          if collection_depths.last == namespaces.size && (owner = resources.last)
+            outer = named[0..-2].to_a
+            outer_prefix = outer.empty? ? "" : "#{outer.join("_")}_"
+
+            if (alias_name = route_alias(trimmed))
+              add_route_pair("#{alias_name}_#{outer_prefix}#{owner[1]}")
+
+              next
+            end
+
+            if (action = trimmed[/\A(?:get|post|patch|put|delete)\s+:(\w+)/, 1])
+              add_route_pair("#{action}_#{outer_prefix}#{owner[1]}")
+
+              next
+            end
+
+            # A `resources` nested straight into a collection block hangs off the collection path, so
+            # it keeps its own name rather than picking up the parent's.
+            if (name = symbol_after(trimmed, "resources "))
+              singular = singularize(name)
+
+              add_route_pair(name)
+              add_route_pair(singular)
+
+              if trimmed.end_with?(" do")
+                namespaces.push(singular)
+                depths.push(namespaces.size)
+                resources.push([singular, name])
+                resource_depths.push(namespaces.size)
+              end
+
+              next
+            end
+          end
+
+          if (scope = keyword_value(trimmed, "on")) && (action = symbol_after(trimmed, trimmed[/\A(get|post|patch|put|delete) /, 1].to_s + " ") || route_alias(trimmed))
             owner = resources.last
 
             if owner
-              stem = scope == "collection" ? "#{namespaces[0..-2].join("_")}#{namespaces.size > 1 ? "_" : ""}#{owner[1]}" : prefix.chomp("_")
+              stem = if scope == "collection"
+                       outer = named[0..-2].to_a
+                       "#{outer.empty? ? "" : "#{outer.join("_")}_"}#{owner[1]}"
+                     else
+                       prefix.chomp("_")
+                     end
+
               add_route_pair("#{action}_#{stem}")
             end
 
@@ -302,6 +358,17 @@ module Herb
       end
 
       UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
+
+      # `trimmed[/on: :(\w+)/]` also matches inside `action: :show`, so a keyword has to be read at a
+      # boundary: preceded by the start of the line, whitespace, a comma, or a paren.
+      def keyword_value(line, keyword)
+        line[/(?:\A|[\s,(])#{Regexp.escape(keyword)}: :(\w+)/, 1]
+      end
+
+      # Routes files mix `as: :past` with the hashrocket `:as => :past`.
+      def route_alias(line)
+        keyword_value(line, "as") || line[/:as\s*=>\s*:(\w+)/, 1]
+      end
 
       def singularize(name)
         # An uncountable noun is its own singular, which is what makes Rails add the `_index`

@@ -1275,8 +1275,11 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
       // `render collection:` names each item after the partial itself, and supplies a counter and an
       // iteration alongside it.
       if call.collection.is_some() {
-        if let Some(item) = name.rsplit('/').next() {
-          entry.insert(item.to_string());
+        // `as: :series` renames the item, so the partial's own basename is only the default.
+        let item = call.as_name.clone().or_else(|| name.rsplit('/').next().map(str::to_string));
+
+        if let Some(item) = item {
+          entry.insert(item.clone());
           entry.insert(format!("{item}_counter"));
           entry.insert(format!("{item}_iteration"));
         }

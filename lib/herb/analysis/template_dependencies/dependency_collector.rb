@@ -51,7 +51,8 @@ module Herb
             @render_calls << {
               partial: node.partial_path,
               locals: locals,
-              collection: node.keywords&.collection&.value
+              collection: node.keywords&.collection&.value,
+              as_name: node.keywords&.as_name&.value&.strip&.delete_prefix(":")&.delete_prefix('"')&.delete_suffix('"')
             }
           end
 

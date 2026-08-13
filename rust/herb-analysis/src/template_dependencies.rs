@@ -23,6 +23,8 @@ pub struct RenderCall {
   pub partial: Option<String>,
   pub locals: BTreeMap<String, String>,
   pub collection: Option<String>,
+  /// `as: :series` renames the local each collection item is bound to.
+  pub as_name: Option<String>,
   pub dynamic_prefix: Option<String>,
   pub dynamic: bool,
   pub layout: Option<String>,
@@ -212,6 +214,11 @@ impl<'a> Visitor for Collector<'a> {
 
       let raw = keywords.partial.as_ref().map(|token| token.value.clone()).filter(|value| !value.is_empty());
       let collection = keywords.collection.as_ref().map(|token| token.value.clone());
+      let as_name = keywords
+        .as_name
+        .as_ref()
+        .map(|token| token.value.trim().trim_start_matches(':').trim_matches('"').trim_matches('\'').to_string())
+        .filter(|value| !value.is_empty());
 
       // Only consult the prism tree when the parser could not name a partial. Searching it
       // unconditionally also finds interpolation inside a local's value, which would misread
@@ -233,6 +240,7 @@ impl<'a> Visitor for Collector<'a> {
         partial,
         locals,
         collection: collection.clone(),
+        as_name: as_name.clone(),
         dynamic_prefix,
         dynamic: interpolated,
         layout,
