@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::MarkersTest#test_0033_preserves surrounding whitespace"
+input: "{source: \"<div>\\n  <h1><%= @t %></h1>\\n</div>\", locals: {\"@t\" => \"T\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:e49b3050--><div>
+  <h1 data-herb-child="0">T</h1>
+</div><!--/herb-region:app/views/test.html.erb-->
