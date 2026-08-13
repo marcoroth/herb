@@ -6,6 +6,7 @@ use std::ffi::{CStr, CString};
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
   pub track_whitespace: bool,
+  pub track_locations: bool,
   pub analyze: bool,
   pub strict: bool,
   pub action_view_helpers: bool,
@@ -26,6 +27,7 @@ impl Default for ParserOptions {
   fn default() -> Self {
     Self {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,
@@ -113,6 +115,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
 
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
+      track_locations: options.track_locations,
       analyze: options.analyze,
       strict: options.strict,
       action_view_helpers: options.action_view_helpers,
@@ -361,6 +364,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       dot_notation_tags: false,
       transform_conditionals: false,
       html: true,
+      track_locations: true,
       start_line: 0,
       start_column: 0,
       timeout_ms: 1000,

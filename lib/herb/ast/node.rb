@@ -32,7 +32,7 @@ module Herb
       def to_hash
         {
           type: type,
-          location: location.to_hash,
+          location: location&.to_hash,
           errors: errors.map(&:to_hash),
         }
       end

@@ -68,6 +68,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: true,
+        track_locations: true,
         analyze: true,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -91,6 +92,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: true,
+        track_locations: true,
         analyze: true,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -114,6 +116,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: false,
+        track_locations: true,
         analyze: true,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -137,6 +140,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: true,
+        track_locations: true,
         analyze: false,
         prism_nodes: false,
         prism_nodes_deep: false,

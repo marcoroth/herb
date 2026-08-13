@@ -100,7 +100,7 @@ napi_value CreateRange(napi_env env, range_T range) {
   return result;
 }
 
-napi_value CreateToken(napi_env env, token_T* token) {
+napi_value CreateToken(napi_env env, token_T* token, const parser_options_T* options) {
   if (!token) {
     napi_value null_value;
     napi_get_null(env, &null_value);
@@ -111,9 +111,17 @@ napi_value CreateToken(napi_env env, token_T* token) {
   napi_create_object(env, &result);
 
   napi_value value = CreateStringFromHbString(env, token->value);
-  napi_value range = CreateRange(env, token->range);
-  napi_value location = CreateLocation(env, token->location);
   napi_value type = CreateStringFromHbString(env, token_type_to_string(token->type));
+
+  napi_value range, location;
+
+  if (options->track_locations) {
+    range = CreateRange(env, token->range);
+    location = CreateLocation(env, token->location);
+  } else {
+    napi_get_null(env, &range);
+    napi_get_null(env, &location);
+  }
 
   napi_set_named_property(env, result, "value", value);
   napi_set_named_property(env, result, "range", range);
@@ -136,7 +144,7 @@ napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source) 
       token_T* token = (token_T*)hb_array_get(tokens, i);
 
       if (token) {
-        napi_value token_obj = CreateToken(env, token);
+        napi_value token_obj = CreateToken(env, token, &HERB_DEFAULT_PARSER_OPTIONS);
         napi_set_element(env, tokens_array, i, token_obj);
       }
     }
@@ -160,7 +168,7 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_value ast_value;
 
   if (root) {
-    ast_value = NodeFromCStruct(env, (AST_NODE_T*)root);
+    ast_value = NodeFromCStruct(env, (AST_NODE_T*)root, options);
   } else {
     napi_get_null(env, &ast_value);
   }
@@ -173,10 +181,11 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_value options_object;
   napi_create_object(env, &options_object);
 
-  napi_value strict_value, track_whitespace_value, analyze_value, action_view_helpers_value, render_nodes_value, prism_program_value, prism_nodes_value, prism_nodes_deep_value;
+  napi_value strict_value, track_whitespace_value, track_locations_value, analyze_value, action_view_helpers_value, render_nodes_value, prism_program_value, prism_nodes_value, prism_nodes_deep_value;
 
   napi_get_boolean(env, options->strict, &strict_value);
   napi_get_boolean(env, options->track_whitespace, &track_whitespace_value);
+  napi_get_boolean(env, options->track_locations, &track_locations_value);
   napi_get_boolean(env, options->analyze, &analyze_value);
   napi_get_boolean(env, options->action_view_helpers, &action_view_helpers_value);
   napi_get_boolean(env, options->render_nodes, &render_nodes_value);
@@ -186,6 +195,7 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
 
   napi_set_named_property(env, options_object, "strict", strict_value);
   napi_set_named_property(env, options_object, "track_whitespace", track_whitespace_value);
+  napi_set_named_property(env, options_object, "track_locations", track_locations_value);
   napi_set_named_property(env, options_object, "analyze", analyze_value);
   napi_set_named_property(env, options_object, "action_view_helpers", action_view_helpers_value);
   napi_set_named_property(env, options_object, "render_nodes", render_nodes_value);

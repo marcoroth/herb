@@ -50,7 +50,7 @@ export abstract class Node implements BaseNodeProps {
   toJSON(): SerializedNode {
     return {
       type: this.type,
-      location: this.location.toJSON(),
+      location: this.location ? this.location.toJSON() : (null as unknown as SerializedLocation),
       errors: this.errors,
     }
   }
@@ -254,7 +254,7 @@ export class <%= node.name %> extends Node {
   static from(data: Serialized<%= node.name %>): <%= node.name %> {
     return new <%= node.name %>({
       type: data.type,
-      location: Location.from(data.location),
+      location: Location.fromOptional(data.location),
       errors: (data.errors || []).map(error => HerbError.from(error)),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
@@ -423,7 +423,7 @@ export class <%= node.name %> extends Node {
   treeInspect(): string {
     let output = "";
 
-    output += `@ <%= node.name %> ${this.location.treeInspectWithLabel()}\n`;
+    output += `@ <%= node.name %> ${this.location ? this.location.treeInspectWithLabel() : "(location: ∅)"}\n`;
     output += `├── errors: ${this.inspectArray(this.errors, "<%= node.fields.any? ? "│   " : "    " %>")}`;
     <%- node.field_visibilities.each do |visibility| -%>
     <%- field = visibility.field -%>

@@ -1,5 +1,9 @@
-import { Node, Visitor, Token, ParseResult, isToken, isParseResult } from "@herb-tools/core"
+import { Node, Visitor, Token, ParseResult } from "@herb-tools/core"
 import { PrintContext } from "./print-context.js"
+
+import { isToken, isParseResult } from "@herb-tools/core"
+
+import type { NotLocationless } from "@herb-tools/core"
 
 /**
  * Options for controlling the printing behavior
@@ -31,7 +35,7 @@ export abstract class Printer extends Visitor {
    * @returns The printed string representation of the input
    * @throws {Error} When node has parse errors and ignoreErrors is false
    */
-  static print(input: Token | Node | ParseResult | Node[] | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+  static print(input: (Token | Node | ParseResult | Node[]) & NotLocationless | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
     const printer = new (this as any)()
 
     return printer.print(input, options)
@@ -45,7 +49,7 @@ export abstract class Printer extends Visitor {
    * @returns The printed string representation of the input
    * @throws {Error} When node has parse errors and ignoreErrors is false
    */
-  print(input: Token | Node | ParseResult | Node[] | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+  print(input: (Token | Node | ParseResult | Node[]) & NotLocationless | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
     if (!input) return ""
 
     if (isToken(input)) {
@@ -59,6 +63,12 @@ export abstract class Printer extends Visitor {
     }
 
     const node: Node = isParseResult(input) ? input.value : input
+
+    const trackedLocations = isParseResult(input) ? input.options.track_locations : node.location !== null && node.location !== undefined
+
+    if (!trackedLocations) {
+      throw new Error(`Cannot print the node (${node.type}) since it was parsed with \`track_locations: false\`. The printer needs source locations, so re-parse the source with \`track_locations: true\`.`)
+    }
 
     if (options.ignoreErrors === false && node.recursiveErrors().length > 0) {
       throw new Error(`Cannot print the node (${node.type}) since it or any of its children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)

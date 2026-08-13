@@ -1,5 +1,6 @@
 export interface ParseOptions {
   track_whitespace?: boolean
+  track_locations?: boolean
   analyze?: boolean
   strict?: boolean
   action_view_helpers?: boolean
@@ -20,6 +21,7 @@ export type SerializedParserOptions = Required<ParseOptions>
 
 export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   track_whitespace: false,
+  track_locations: true,
   analyze: true,
   strict: true,
   action_view_helpers: false,
@@ -45,6 +47,9 @@ export class ParserOptions {
 
   /** Whether whitespace tracking was enabled during parsing. */
   readonly track_whitespace: boolean
+
+  /** Whether `location` and `range` were materialized during parsing. */
+  readonly track_locations: boolean
 
   /** Whether analysis was performed during parsing. */
   readonly analyze: boolean
@@ -90,6 +95,7 @@ export class ParserOptions {
   constructor(options: ParseOptions = {}) {
     this.strict = options.strict ?? DEFAULT_PARSER_OPTIONS.strict
     this.track_whitespace = options.track_whitespace ?? DEFAULT_PARSER_OPTIONS.track_whitespace
+    this.track_locations = options.track_locations ?? DEFAULT_PARSER_OPTIONS.track_locations
     this.analyze = options.analyze ?? DEFAULT_PARSER_OPTIONS.analyze
     this.action_view_helpers = options.action_view_helpers ?? DEFAULT_PARSER_OPTIONS.action_view_helpers
     this.transform_conditionals = options.transform_conditionals ?? DEFAULT_PARSER_OPTIONS.transform_conditionals

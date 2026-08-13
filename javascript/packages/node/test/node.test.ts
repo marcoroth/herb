@@ -138,6 +138,47 @@ describe("@herb-tools/node", () => {
     expect(result.value.inspect()).toContain('"   "')
   })
 
+  test("parse() tracks locations by default", () => {
+    const result = Herb.parse('<div class="example">content</div>')
+    const element = result.value.children[0] as any
+
+    expect(result.options.track_locations).toBe(true)
+    expect(result.value.location).not.toBeNull()
+    expect(element.location).not.toBeNull()
+    expect(element.open_tag.tag_name.location).not.toBeNull()
+    expect(element.open_tag.tag_name.range).not.toBeNull()
+  })
+
+  test("parse() with track_locations: false omits locations and ranges", () => {
+    const result = Herb.parse('<div class="example">content</div>', { track_locations: false })
+    const element = result.value.children[0] as any
+
+    expect(result.options.track_locations).toBe(false)
+    expect(result.value.location).toBeNull()
+    expect(element.location).toBeNull()
+    expect(element.open_tag.tag_name.location).toBeNull()
+    expect(element.open_tag.tag_name.range).toBeNull()
+  })
+
+  test("parse() with track_locations: false keeps the tree shape intact", () => {
+    const source = '<div class="example">content</div>'
+    const withLocations = Herb.parse(source)
+    const withoutLocations = Herb.parse(source, { track_locations: false })
+
+    expect(withoutLocations.value.type).toBe(withLocations.value.type)
+    expect(withoutLocations.value.children.map((node) => node.type)).toEqual(
+      withLocations.value.children.map((node) => node.type),
+    )
+    expect(withoutLocations.errors).toHaveLength(withLocations.errors.length)
+  })
+
+  test("lex() keeps token locations when parse locations are disabled", () => {
+    const result = Herb.lex('<div class="example">content</div>')
+
+    expect(result.value.tokens[0].location).not.toBeNull()
+    expect(result.value.tokens[0].range).not.toBeNull()
+  })
+
   test("parses then_keyword for when clause", () => {
     const content = dedent`
       <% case value %>

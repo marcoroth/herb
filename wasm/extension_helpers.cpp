@@ -68,7 +68,7 @@ val CreateRange(range_T range) {
   return result;
 }
 
-val CreateToken(token_T* token) {
+val CreateToken(token_T* token, const parser_options_T* options) {
   if (!token) {
     return val::null();
   }
@@ -78,8 +78,8 @@ val CreateToken(token_T* token) {
 
   result.set("value", CreateStringFromHbString(token->value));
   result.set("type", CreateStringFromHbString(token_type_to_string(token->type)));
-  result.set("range", CreateRange(token->range));
-  result.set("location", CreateLocation(token->location));
+  result.set("range", options->track_locations ? CreateRange(token->range) : val::null());
+  result.set("location", options->track_locations ? CreateLocation(token->location) : val::null());
 
   return result;
 }
@@ -97,7 +97,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
     for (size_t i = 0; i < hb_array_size(tokens); i++) {
       token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
-        tokensArray.call<void>("push", CreateToken(token));
+        tokensArray.call<void>("push", CreateToken(token, &HERB_DEFAULT_PARSER_OPTIONS));
       }
     }
   }
@@ -115,7 +115,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   val Array = val::global("Array");
 
   val result = Object.new_();
-  val value = NodeFromCStruct((AST_NODE_T*)root);
+  val value = NodeFromCStruct((AST_NODE_T*)root, options);
   val errorsArray = Array.new_();
   val warningsArray = Array.new_();
 
@@ -127,6 +127,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   val options_object = Object.new_();
   options_object.set("strict", val(options->strict));
   options_object.set("track_whitespace", val(options->track_whitespace));
+  options_object.set("track_locations", val(options->track_locations));
   options_object.set("analyze", val(options->analyze));
   options_object.set("action_view_helpers", val(options->action_view_helpers));
   options_object.set("transform_conditionals", val(options->transform_conditionals));
