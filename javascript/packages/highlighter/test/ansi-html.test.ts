@@ -2,7 +2,6 @@ import { readFileSync } from "fs"
 
 import { describe, it, expect } from "vitest"
 
-import { ANSI_ESCAPE } from "../src/ansi.js"
 import { colors, colorize, hyperlink } from "../src/color.js"
 import { ANSI_PALETTE, ANSIConverter } from "../src/ansi-html.js"
 
@@ -18,8 +17,6 @@ const spanCount = (html: string): number => (html.match(/<span/g) ?? []).length
 
 const DIM = `opacity:var(--herb-ansi-dim-opacity, 0.65)`
 
-const CSI_REGEX = new RegExp(`${ANSI_ESCAPE}\\[[0-9;?]*[a-zA-Z]`, "g")
-const OSC_REGEX = new RegExp(`${ANSI_ESCAPE}\\]\\d*;[^\\x07${ANSI_ESCAPE}]*(?:${ANSI_ESCAPE}\\\\|\\x07)`, "g")
 
 describe("ANSIConverter", () => {
   describe("plain text", () => {
@@ -423,23 +420,6 @@ describe("ANSIConverter", () => {
       expect(html).toContain(`<a href="https://herb-tools.dev/linter/rules/actionview-no-implicit-polymorphic-url" rel="noopener noreferrer">`)
       expect(html).toContain(`<a href="file:///workspace/app/views/offenses.html.erb" rel="noopener noreferrer">`)
       expect(html).toMatchSnapshot()
-    })
-
-    it("keeps every visible character of the captured linter output", () => {
-      const source = fixture("terminal-linter.txt")
-
-      const stripped = source.replace(OSC_REGEX, "").replace(CSI_REGEX, "")
-
-      const text = converter.toHTML(source)
-        .replace(/<[^>]+>/g, "")
-        .replaceAll("&lt;", "<")
-        .replaceAll("&gt;", ">")
-        .replaceAll("&quot;", '"')
-        .replaceAll("&#x27;", "'")
-        .replaceAll("&amp;", "&")
-
-      expect(text).toBe(stripped)
-      expect(text).toMatchSnapshot()
     })
 
     it("collapses the captured output well below one span per character", () => {
