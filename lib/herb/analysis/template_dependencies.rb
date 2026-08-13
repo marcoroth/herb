@@ -221,6 +221,9 @@ module Herb
 
           if (alias_name = trimmed[/as: :(\w+)/, 1])
             add_route_pair("#{prefix}#{alias_name}")
+          elsif (literal = trimmed[/\A(?:get|post|patch|put|delete)\s+["']([a-z0-9_\/-]+)["']/, 1])
+            # `get "about"` names the helper after the path itself.
+            add_route_pair("#{prefix}#{literal.tr("/-", "__")}")
           end
         end
 

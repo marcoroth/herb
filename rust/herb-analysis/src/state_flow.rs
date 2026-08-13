@@ -454,27 +454,18 @@ fn component_methods_for(template: &str) -> std::collections::BTreeSet<String> {
   methods
 }
 
+/// The sources the Ruby analyzer can also reach, so both `check` commands agree on what counts as a
+/// known helper. The deeper rubydex resolution (gem `*Helper` modules, `ActionView::Base`, ancestor
+/// walks) stays behind `herb-analysis helpers` and `audit`, which exist to report exactly that.
 fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   let Some(path) = project_path.to_str() else {
     return Vec::new();
   };
 
-  let mut analysis = crate::analysis::Analysis::index_paths(&[path.to_string()], &std::collections::HashSet::new());
-  analysis.resolve();
+  // `helper_method :foo` in the app's own controllers, and route helpers from `config/routes.rb`.
+  let mut names: Vec<String> =
+    crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name).collect();
 
-  let modules = analysis.helper_modules();
-  let mut roots: Vec<&str> = modules.iter().map(String::as_str).collect();
-
-  // Rails' own view helpers hang off ActionView::Base rather than a `*Helper` module.
-  roots.push("ActionView::Base");
-
-  let mut names: Vec<String> = analysis.view_visible_helpers(&roots).into_keys().collect();
-
-  // Gems and engines expose view helpers with `helper_method` in a controller, which is not a
-  // module inclusion and so never shows up in the ancestor walk.
-  names.extend(crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name));
-
-  // Route helpers are generated from `config/routes.rb`, so no module defines them.
   names.extend(crate::rails::route_helpers(project_path));
 
   names
