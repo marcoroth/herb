@@ -14,6 +14,12 @@ if ENV["FORK_TESTS"]
 else
   puts "TIP: If a segfault in the native C extension crashes the test runner, run with FORK_TESTS=true to isolate each test in a forked process and identify which test causes the crash."
 end
+
+require "herb/engine/validators"
+require "herb/engine/debug_visitor"
+require "herb/engine/optimize_visitor"
+require "herb/engine/report/middleware"
+
 require_relative "snapshot_utils"
 
 Minitest::Spec::DSL.send(:alias_method, :test, :it)

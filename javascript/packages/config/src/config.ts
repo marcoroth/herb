@@ -34,33 +34,13 @@ export type FilesConfig = {
   exclude?: string[]
 }
 
-export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
+import { resolveSeverity, ALL_RULES_KEY } from "./config-schema.js"
 
-export type LinterMode = "editor" | "cli"
+import type { SeverityConfig, LinterMode } from "./config-schema.js"
 
-export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
-  if (typeof severity === "string") {
-    return severity
-  }
+export { resolveSeverity, ALL_RULES_KEY }
 
-  return severity[mode]
-}
-
-/**
- * Pseudo rule name used inside `linter.rules` to set the default `enabled`
- * state for every rule that isn't explicitly configured.
- *
- * ```yaml
- * linter:
- *   rules:
- *     all:
- *       enabled: false
- *
- *     html-no-event-handlers:
- *       enabled: true
- * ```
- */
-export const ALL_RULES_KEY = "all"
+export type { SeverityConfig, LinterMode }
 
 export type RuleConfig = {
   enabled?: boolean
@@ -669,17 +649,8 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      if (!firstIndicatorMatch) {
-        for (const indicator of this.PROJECT_INDICATORS) {
-          try {
-            fsSync.accessSync(path.join(currentPath, indicator))
-
-            firstIndicatorMatch = currentPath
-            break
-          } catch {
-            // Indicator not found, continue checking
-          }
-        }
+      if (!firstIndicatorMatch && this.isProjectRootSync(currentPath)) {
+        firstIndicatorMatch = currentPath
       }
 
       const parentPath = path.dirname(currentPath)
@@ -1123,6 +1094,18 @@ export class Config {
    */
   private static async isProjectRoot(dirPath: string): Promise<boolean> {
     for (const indicator of this.PROJECT_INDICATORS) {
+      if (indicator.startsWith("*")) {
+        try {
+          const entries = await fs.readdir(dirPath)
+
+          if (entries.some(entry => entry.endsWith(indicator.slice(1)))) return true
+        } catch {
+          // Directory not readable, continue checking
+        }
+
+        continue
+      }
+
       try {
         await fs.access(path.join(dirPath, indicator))
 
@@ -1131,6 +1114,39 @@ export class Config {
         // Indicator not found, continue checking
       }
     }
+    return false
+  }
+
+  /**
+   * Synchronous twin of `isProjectRoot`. An indicator starting with `*` is a
+   * suffix pattern and is matched against the directory listing, where passing
+   * it to `access` would look for a file named `*.gemspec` literally.
+   */
+  private static isProjectRootSync(dirPath: string): boolean {
+    const fsSync = require('fs')
+
+    for (const indicator of this.PROJECT_INDICATORS) {
+      if (indicator.startsWith("*")) {
+        try {
+          const entries: string[] = fsSync.readdirSync(dirPath)
+
+          if (entries.some(entry => entry.endsWith(indicator.slice(1)))) return true
+        } catch {
+          // Directory not readable, continue checking
+        }
+
+        continue
+      }
+
+      try {
+        fsSync.accessSync(path.join(dirPath, indicator))
+
+        return true
+      } catch {
+        // Indicator not found, continue checking
+      }
+    }
+
     return false
   }
 

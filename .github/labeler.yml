@@ -172,6 +172,12 @@ language-service:
     - any-glob-to-any-file:
       - '**/javascript/packages/language-service/**/*'
 
+analysis:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/analysis/**/*'
+      - '**/lib/herb/analysis/**/*'
+
 printer:
   - changed-files:
     - any-glob-to-any-file:

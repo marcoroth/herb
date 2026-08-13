@@ -6,10 +6,50 @@ import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.j
 
 const IGNORED_PREFIX = "_"
 
+interface Scope {
+  readonly writes: PrismNodes.LocalVariableWriteNode[]
+  readonly referenced: Set<string>
+}
+
 class LocalVariableCollector extends PrismVisitor {
-  readonly writes: PrismNodes.LocalVariableWriteNode[] = []
-  readonly referenced = new Set<string>()
   readonly argumentWrites = new Set<PrismNodes.LocalVariableWriteNode>()
+
+  private readonly scopes: Scope[] = []
+  private readonly stack: Scope[] = []
+
+  get unusedWrites(): PrismNodes.LocalVariableWriteNode[] {
+    const unused = this.scopes.flatMap(scope => scope.writes.filter(write => !scope.referenced.has(write.name)))
+
+    return unused.sort((first, second) => first.nameLoc.startOffset - second.nameLoc.startOffset)
+  }
+
+  override visitProgramNode(node: PrismNodes.ProgramNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
+
+  override visitBlockNode(node: PrismNodes.BlockNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
+
+  override visitLambdaNode(node: PrismNodes.LambdaNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
+
+  override visitDefNode(node: PrismNodes.DefNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
+
+  override visitClassNode(node: PrismNodes.ClassNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
+
+  override visitModuleNode(node: PrismNodes.ModuleNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
+
+  override visitSingletonClassNode(node: PrismNodes.SingletonClassNode): void {
+    this.withScope(() => this.visitChildNodes(node))
+  }
 
   override visitCallNode(node: PrismNodes.CallNode): void {
     for (const argument of node.arguments_?.arguments_ ?? []) {
@@ -20,33 +60,52 @@ class LocalVariableCollector extends PrismVisitor {
   }
 
   override visitLocalVariableWriteNode(node: PrismNodes.LocalVariableWriteNode): void {
-    this.writes.push(node)
+    if (!node.name.startsWith(IGNORED_PREFIX)) this.scopeAt(node.depth)?.writes.push(node)
 
     this.visitChildNodes(node)
   }
 
   override visitLocalVariableReadNode(node: PrismNodes.LocalVariableReadNode): void {
-    this.referenced.add(node.name)
+    this.reference(node.name, node.depth)
 
     this.visitChildNodes(node)
   }
 
   override visitLocalVariableOperatorWriteNode(node: PrismNodes.LocalVariableOperatorWriteNode): void {
-    this.referenced.add(node.name)
+    this.reference(node.name, node.depth)
 
     this.visitChildNodes(node)
   }
 
   override visitLocalVariableAndWriteNode(node: PrismNodes.LocalVariableAndWriteNode): void {
-    this.referenced.add(node.name)
+    this.reference(node.name, node.depth)
 
     this.visitChildNodes(node)
   }
 
   override visitLocalVariableOrWriteNode(node: PrismNodes.LocalVariableOrWriteNode): void {
-    this.referenced.add(node.name)
+    this.reference(node.name, node.depth)
 
     this.visitChildNodes(node)
+  }
+
+  private withScope(visitChildren: () => void): void {
+    const scope: Scope = { writes: [], referenced: new Set<string>() }
+
+    this.scopes.push(scope)
+    this.stack.push(scope)
+
+    visitChildren()
+
+    this.stack.pop()
+  }
+
+  private reference(name: string, depth: number): void {
+    this.scopeAt(depth)?.referenced.add(name)
+  }
+
+  private scopeAt(depth: number): Scope | null {
+    return this.stack[this.stack.length - 1 - depth] ?? null
   }
 }
 
@@ -81,9 +140,7 @@ export class ERBNoUnusedLocalVariableRule extends ParserRule {
 
     collector.visit(program)
 
-    const unused = collector.writes.filter(write => !write.name.startsWith(IGNORED_PREFIX) && !collector.referenced.has(write.name))
-
-    return unused.map(write => {
+    return collector.unusedWrites.map(write => {
       const { startOffset, length } = write.nameLoc
 
       return this.createOffense(

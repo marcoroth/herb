@@ -6,34 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Type enum for all supported Action View tag helpers.
- */
-public enum HelperType {
-<%- helpers.each_with_index do |helper, index| -%>
-  <%= helper.constant_name %>("<%= helper.name %>")<%= index < helpers.size - 1 ? "," : ";" %>
-<%- end -%>
-
-  private final String name;
-
-  HelperType(String name) {
-    this.name = name;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public static HelperType fromName(String name) {
-    for (HelperType type : values()) {
-      if (type.name.equals(name)) {
-        return type;
-      }
-    }
-    return null;
-  }
-}
-
-/**
  * Argument metadata for a tag helper.
  */
 class HelperArgument {

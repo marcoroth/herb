@@ -2,7 +2,7 @@ import { Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/nod
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Config } from "@herb-tools/config"
 
-import { isConfigDocument, lintToDignosticSeverity } from "./utils"
+import { isConfigDocument, lintToDiagnosticSeverity } from "./utils"
 import { version } from "../package.json"
 
 /**
@@ -72,7 +72,7 @@ export class ConfigService {
 
       const path = error.path.join('.')
       const message = path ? `${path}: ${error.message}` : error.message
-      const severity = error.severity ? lintToDignosticSeverity(error.severity) : DiagnosticSeverity.Error
+      const severity = error.severity ? lintToDiagnosticSeverity(error.severity) : DiagnosticSeverity.Error
 
       diagnostics.push({
         severity,

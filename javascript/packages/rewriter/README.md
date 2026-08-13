@@ -272,6 +272,22 @@ function rewrite<T extends Node>(
 - `output`: The rewritten template string
 - `node`: The transformed AST node (preserves input type)
 
+> [!NOTE]
+> Rewriters transform the node in place, so `rewrite()` takes ownership of the node it is given. Pass a `cloneNode()` copy when the tree has to stay intact, for example when it comes from a shared or cached parse result.
+
+#### `cloneNode()`
+
+Deep-copy an AST node, so it can be handed to a rewriter without the rewrite reaching the original tree.
+
+```typescript
+function cloneNode<T extends Node>(node: T): T
+```
+
+**Parameters:**
+- `node`: The AST node to copy
+
+**Returns:** An independent copy of the node. Every reachable node is copied, while tokens and locations are shared with the original.
+
 #### `rewriteString()`
 
 Convenience wrapper around `rewrite()` that parses the template string first and returns just the output string.

@@ -24,6 +24,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/types/browser.d.ts",
+      "import": "./dist/browser.js",
+      "default": "./dist/browser.js"
     }
   },
   "scripts": {
@@ -36,7 +41,8 @@
   },
   "dependencies": {
     "@herb-tools/core": "0.10.3",
-    "@herb-tools/node-wasm": "0.10.3"
+    "@herb-tools/node-wasm": "0.10.3",
+    "ansi_up": "^6.0.6"
   },
   "files": [
     "package.json",

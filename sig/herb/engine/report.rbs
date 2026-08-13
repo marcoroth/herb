@@ -1,0 +1,68 @@
+# Generated from lib/herb/engine/report.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # The description of a page that the Herb dev tools read: what rendered, and what is wrong with
+    # it. The tools find it as a single inert JSON script tag in the document.
+    #
+    #     <script type="application/json" data-herb-diagnostics>
+    #       { "version": 1, "diagnostics": [] }
+    #     </script>
+    #
+    # A reader that does not recognize `version` ignores the whole payload, so it only moves when a
+    # change is one an older reader cannot survive. Adding a field is not one of those.
+    class Report
+      VERSION: Integer
+
+      MAX_DIAGNOSTICS: Integer
+
+      ATTRIBUTE: String
+
+      attr_reader sources: Hash[String, String]
+
+      attr_reader nodes: Hash[String, Hash[String, Hash[Symbol, untyped]]]
+
+      attr_reader render_tree: Array[Hash[Symbol, untyped]]
+
+      # : (?max_diagnostics: Integer) -> void
+      def initialize: (?max_diagnostics: Integer) -> void
+
+      # : (Herb::Diagnostic) -> Herb::Diagnostic
+      def add: (Herb::Diagnostic) -> Herb::Diagnostic
+
+      # : (untyped) -> Report
+      def concat: (untyped) -> Report
+
+      # : (String, String?) -> void
+      def source: (String, String?) -> void
+
+      # : (String, String?, String?, ?called_from: Array[untyped]?) -> void
+      def render: (String, String?, String?, ?called_from: Array[untyped]?) -> void
+
+      # : (String, Symbol, untyped, origin: String) -> void
+      def annotate: (String, Symbol, untyped, origin: String) -> void
+
+      # : () -> Array[Herb::Diagnostic]
+      def diagnostics: () -> Array[Herb::Diagnostic]
+
+      # : () -> bool
+      def empty?: () -> bool
+
+      # : () -> Hash[Symbol, untyped]
+      def to_h: () -> Hash[Symbol, untyped]
+
+      alias to_hash to_h
+
+      # : (?untyped) -> String
+      def to_json: (?untyped) -> String
+
+      # : () -> String
+      def to_html: () -> String
+
+      private
+
+      # : () -> String
+      def escaped_json: () -> String
+    end
+  end
+end

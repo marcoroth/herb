@@ -1,7 +1,7 @@
 import dedent from "dedent"
 
 import { describe, test } from "vitest"
-import { PartialCallerIndex } from "@herb-tools/core"
+import { RenderGraph } from "@herb-tools/analysis"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { HTMLBodyOnlyElementsRule } from "../../src/rules/html-body-only-elements.js"
 import { LAYOUT, renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
@@ -173,8 +173,9 @@ describe("html-body-only-elements", () => {
     test("passes when the chain never reaches a document root", () => {
       expectNoOffenses(`<div>Widget</div>`, {
         fileName: partial,
-        partialCallers: new PartialCallerIndex(
+        partialCallers: new RenderGraph(
           new Map([[partial, [{ caller: "app/views/posts/index.html.erb", locals: [], ancestors: ["span"] }]]]),
+          new Map(),
           new Set(),
           new Map(),
           new Set(),

@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { Config } = require('@herb-tools/config');
+const { defaultInlayHintOptions } = require('@herb-tools/language-service');
 
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -29,6 +30,14 @@ if (config['languageServerHerb.linter.enabled']) {
 
 if (config['languageServerHerb.linter.fixOnSave']) {
   config['languageServerHerb.linter.fixOnSave'].default = true;
+}
+
+if (config['languageServerHerb.inlayHints.minimumLines']) {
+  config['languageServerHerb.inlayHints.minimumLines'].default = defaultInlayHintOptions.minimumLines;
+}
+
+if (config['languageServerHerb.inlayHints.maximumClasses']) {
+  config['languageServerHerb.inlayHints.maximumClasses'].default = defaultInlayHintOptions.maximumClasses;
 }
 
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');

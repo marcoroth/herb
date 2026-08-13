@@ -7,7 +7,7 @@ import { HTMLToActionViewTagHelperRewriter } from "@herb-tools/rewriter"
 
 import type { Node } from "@herb-tools/core"
 
-function transform(input: string): string {
+function transform(input: string, options: { shallow?: boolean } = {}): string {
   const parseResult = Herb.parse(input, { track_whitespace: true })
 
   if (parseResult.failed) {
@@ -17,7 +17,7 @@ function transform(input: string): string {
   }
 
   const rewriter = new HTMLToActionViewTagHelperRewriter()
-  const node = rewriter.rewrite(parseResult.value as Node, { baseDir: process.cwd() })
+  const node = rewriter.rewrite(parseResult.value as Node, { baseDir: process.cwd(), ...options })
 
   return IdentityPrinter.print(node)
 }
@@ -204,6 +204,22 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
       `
 
       expect(transform(input)).toBe(expected)
+    })
+
+    test("shallow rewrites preserve nested elements", () => {
+      const input = dedent`
+        <div class="outer">
+          <span>Inner</span>
+        </div>
+      `
+
+      const expected = dedent`
+        <%= tag.div class: "outer" do %>
+          <span>Inner</span>
+        <% end %>
+      `
+
+      expect(transform(input, { shallow: true })).toBe(expected)
     })
   })
 
@@ -537,6 +553,74 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     test("single ERB expression becomes Ruby variable", () => {
       expect(transform('<div class="<%= class_name %>">Content</div>')).toBe(
         '<%= tag.div "Content", class: class_name %>'
+      )
+    })
+
+    test("a call with parentheses is used as written", () => {
+      expect(transform('<div class="<%= merge("a", "b") %>">Content</div>')).toBe(
+        '<%= tag.div "Content", class: merge("a", "b") %>'
+      )
+    })
+
+    test("an index is used as written", () => {
+      expect(transform('<div class="<%= styles[:card] %>">Content</div>')).toBe(
+        '<%= tag.div "Content", class: styles[:card] %>'
+      )
+    })
+
+    test("a call without parentheses is parenthesized so it cannot swallow the next option", () => {
+      expect(transform('<div class="<%= merge "a", b: 1 %>" id="card">Content</div>')).toBe(
+        '<%= tag.div "Content", class: (merge "a", b: 1), id: "card" %>'
+      )
+    })
+  })
+
+  describe("attributes that cannot be represented faithfully", () => {
+    test("escapes a double quote in a value", () => {
+      expect(transform(`<div title='He said "hi"'>Content</div>`)).toBe(
+        '<%= tag.div "Content", title: "He said \\"hi\\"" %>'
+      )
+    })
+
+    test("escapes interpolation so literal text stays literal", () => {
+      expect(transform('<div title="Cost: #{price}">Content</div>')).toBe(
+        '<%= tag.div "Content", title: "Cost: \\#{price}" %>'
+      )
+    })
+
+    test("leaves an element with an entity reference alone", () => {
+      expect(transform('<div title="a &amp; b">Content</div>')).toBe(
+        '<div title="a &amp; b">Content</div>'
+      )
+    })
+
+    test("converts a valueless attribute Rails treats as boolean", () => {
+      expect(transform('<input type="checkbox" checked>')).toBe(
+        '<%= tag.input type: "checkbox", checked: true %>'
+      )
+    })
+
+    test("leaves an element with a valueless non-boolean attribute alone", () => {
+      expect(transform('<a href="/files/report.pdf" download>Report</a>')).toBe(
+        '<a href="/files/report.pdf" download>Report</a>'
+      )
+    })
+
+    test("leaves an element with a name that is not a Ruby key alone", () => {
+      expect(transform('<div @click="go()">Content</div>')).toBe(
+        '<div @click="go()">Content</div>'
+      )
+    })
+
+    test("leaves an element with a dynamic attribute name alone", () => {
+      expect(transform('<div data-<%= key %>="value">Content</div>')).toBe(
+        '<div data-<%= key %>="value">Content</div>'
+      )
+    })
+
+    test("leaves an element with a repeated attribute alone", () => {
+      expect(transform('<div title="first" title="second">Content</div>')).toBe(
+        '<div title="first" title="second">Content</div>'
       )
     })
   })

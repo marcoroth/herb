@@ -1,0 +1,66 @@
+# Generated from lib/herb/analysis/partial_index.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class PartialIndex
+      APPLICATION_DIRECTORY: String
+
+      attr_reader view_root: Pathname
+
+      attr_reader templates: Array[String]
+
+      # : (String | Pathname, ?templates: Array[String]?) -> PartialIndex
+      def self.build: (String | Pathname, ?templates: Array[String]?) -> PartialIndex
+
+      # : (String | Pathname) -> Pathname
+      def self.resolve_view_root: (String | Pathname) -> Pathname
+
+      # : (String | Pathname, Array[String]) -> void
+      def initialize: (String | Pathname, Array[String]) -> void
+
+      # : (String?) -> Array[String]
+      def files_for: (String?) -> Array[String]
+
+      # : (String?, String?) -> Array[String]
+      def resolve: (String?, String?) -> Array[String]
+
+      # : (String, String | Pathname) -> String?
+      def self.partial_name_for: (String, String | Pathname) -> String?
+
+      # : (String) -> String?
+      def partial_name_for: (String) -> String?
+
+      # : () -> Array[String]
+      def names: () -> Array[String]
+
+      # : (String?, String?) -> PartialDeclaration?
+      def lookup: (String?, String?) -> PartialDeclaration?
+
+      # : (String) -> PartialDeclaration?
+      def declaration_for_file: (String) -> PartialDeclaration?
+
+      # : (String) -> String?
+      def update: (String) -> String?
+
+      # : (String) -> String?
+      def remove: (String) -> String?
+
+      # : () -> Integer
+      def size: () -> Integer
+
+      # : () -> Hash[String, untyped]
+      def to_h: () -> Hash[String, untyped]
+
+      private
+
+      # : (String) -> String?
+      def source_directory_for: (String) -> String?
+
+      # : (String) -> PartialDeclaration?
+      def build_declaration: (String) -> PartialDeclaration?
+
+      # : (Array[String]) -> Hash[String, Array[String]]
+      def build_index: (Array[String]) -> Hash[String, Array[String]]
+    end
+  end
+end

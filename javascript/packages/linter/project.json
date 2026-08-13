@@ -11,9 +11,10 @@
         "script": "build"
       },
       "dependsOn": [
+        "@herb-tools/analysis:build",
+        "@herb-tools/browser:build",
         "@herb-tools/config:build",
         "@herb-tools/core:build",
-        "@herb-tools/browser:build",
         "@herb-tools/highlighter:build",
         "@herb-tools/node-wasm:build",
         "@herb-tools/printer:build",

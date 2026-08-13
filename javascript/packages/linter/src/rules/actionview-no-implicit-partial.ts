@@ -1,8 +1,9 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
-import { constructsObject, isOutputRender, isStaticPartialPath, renderPartialExpression, rootReceiver } from "./prism-rule-utils.js"
+import { constructsObject, isStaticPartialPath, rootReceiver } from "./prism-rule-utils.js"
+import { renderPartialExpression } from "@herb-tools/analysis"
 
-import { isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
+import { isERBOutputNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { ERBRenderNode, ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
@@ -19,7 +20,7 @@ class ActionViewNoImplicitPartialVisitor extends BaseRuleVisitor {
     const source = node.source
 
     if (!call || !source) return
-    if (!isOutputRender(node)) return
+    if (!isERBOutputNode(node)) return
 
     const expression = renderPartialExpression(call)
 
@@ -32,7 +33,7 @@ class ActionViewNoImplicitPartialVisitor extends BaseRuleVisitor {
     const object = node.keywords?.object?.value
 
     this.addOffense(
-      `Rails derives the partial from \`to_partial_path\`${object ? ` on \`${object}\`` : ""} when the template renders, so the template this renders is not named in this \`<%= render %>\` call. Name it explicitly, with \`object:\` for a single record or \`collection:\` for many, and Herb can take you to it, check the locals you pass against its strict locals, and help you rename them.`,
+      `Rails derives the partial from \`to_partial_path\`${object ? ` on \`${object}\`` : ""} when the template renders, so the template this renders is not named in this \`<%= render %>\` call. Name it explicitly with \`<%= render partial: "...", object: @post %>\` for a single record or \`<%= render partial: "...", collection: @posts %>\` for many, and Herb can take you to it, check the locals you pass against its strict locals, and help you rename them.`,
       locationFromByteOffset(source, expression.node.location.startOffset, expression.node.location.length),
     )
   }

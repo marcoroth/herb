@@ -5,7 +5,8 @@ import { isKeyboardFocusableElement } from "./rule-utils.js"
 import { getStaticAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { AncestorChain, ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 
 // TODO: make these classes configurable once https://github.com/marcoroth/herb/issues/1204 lands
 const VISUALLY_HIDDEN_CLASSES = ["sr-only"]

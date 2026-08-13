@@ -61,7 +61,7 @@ module Engine
       template = '<div <%= "class=btn" %>>Test</div>'
 
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(template, filename: "app/views/test.erb")
+        Herb::Engine.new(template, filename: "app/views/test.erb", visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "app/views/test.erb"

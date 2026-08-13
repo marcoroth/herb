@@ -26,17 +26,20 @@ import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewPreferLinkToHelperRule } from "./rules/actionview-prefer-link-to-helper.js"
 import { ActionViewPreferPluralizeHelperRule } from "./rules/actionview-prefer-pluralize-helper.js"
 import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-prefer-qualified-partial-path.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js"
+import { ERBNoByteOrderMarkRule } from "./rules/erb-no-byte-order-mark.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoClassDefinitionsRule } from "./rules/erb-no-class-definitions.js"
 import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
-import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
+import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
@@ -46,10 +49,13 @@ import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-condit
 import { ERBNoInstanceVariablesInPartialsRule } from "./rules/erb-no-instance-variables-in-partials.js"
 import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
+import { ERBNoMethodDefinitionsRule } from "./rules/erb-no-method-definitions.js"
+import { ERBNoModuleDefinitionsRule } from "./rules/erb-no-module-definitions.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoReturnRule } from "./rules/erb-no-return.js"
 import { ERBNoShadowedBlockArgumentRule } from "./rules/erb-no-shadowed-block-argument.js"
 import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
@@ -113,6 +119,7 @@ import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoEventHandlerAttributesRule } from "./rules/html-no-event-handler-attributes.js"
 import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-elements.js"
+import { HTMLNoLiteralNBSPRule } from "./rules/html-no-literal-nbsp.js"
 import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
@@ -132,8 +139,8 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { SourceIndentationRule } from "./rules/source-indentation.js"
 
-import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 import { SVGNoDeprecatedTagsRule } from "./rules/svg-no-deprecated-tags.js"
+import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
@@ -170,19 +177,22 @@ export const rules: RuleClass[] = [
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
+  ActionViewPreferLinkToHelperRule,
   ActionViewPreferPluralizeHelperRule,
   ActionViewPreferQualifiedPartialPathRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
   ERBCommentSyntax,
+  ERBNoByteOrderMarkRule,
   ERBNoCaseNodeChildrenRule,
+  ERBNoClassDefinitionsRule,
   ERBNoCommentedOutOutputTagsRule,
-  ERBNoDebugOutputRule,
-  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
+  ERBNoDebugOutputRule,
   ERBNoDuplicateBranchElementsRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoEmptyTagsRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
@@ -190,16 +200,15 @@ export const rules: RuleClass[] = [
   ERBNoInstanceVariablesInPartialsRule,
   ERBNoInterpolatedClassNamesRule,
   ERBNoJavascriptTagHelperRule,
+  ERBNoMethodDefinitionsRule,
+  ERBNoModuleDefinitionsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoReturnRule,
   ERBNoShadowedBlockArgumentRule,
   ERBNoSilentStatementRule,
-  ERBNoUnusedBlockArgumentRule,
-  ERBNoUnusedExpressionsRule,
-  ERBNoUnusedLiteralsRule,
-  ERBNoUnusedLocalVariableRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoSleepRule,
   ERBNoStatementInScriptRule,
@@ -208,6 +217,10 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeJSAttributeRule,
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
+  ERBNoUnusedBlockArgumentRule,
+  ERBNoUnusedExpressionsRule,
+  ERBNoUnusedLiteralsRule,
+  ERBNoUnusedLocalVariableRule,
   ERBPreferDirectOutputRule,
   ERBPreferDoEndBlocksRule,
   ERBPreferEachOverMapRule,
@@ -257,6 +270,7 @@ export const rules: RuleClass[] = [
   HTMLNoEmptyHeadingsRule,
   HTMLNoEventHandlerAttributesRule,
   HTMLNoInlineScriptElementsRule,
+  HTMLNoLiteralNBSPRule,
   HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
@@ -276,8 +290,8 @@ export const rules: RuleClass[] = [
 
   SourceIndentationRule,
 
-  SVGTagNameCapitalizationRule,
   SVGNoDeprecatedTagsRule,
+  SVGTagNameCapitalizationRule,
 
   TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,

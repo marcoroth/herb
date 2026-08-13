@@ -7,7 +7,7 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectInfo, assertOffenses } = createLinterTest(ActionViewNoImplicitPartialRule)
 
 function message(object: string): string {
-  return `Rails derives the partial from \`to_partial_path\` on \`${object}\` when the template renders, so the template this renders is not named in this \`<%= render %>\` call. Name it explicitly, with \`object:\` for a single record or \`collection:\` for many, and Herb can take you to it, check the locals you pass against its strict locals, and help you rename them.`
+  return `Rails derives the partial from \`to_partial_path\` on \`${object}\` when the template renders, so the template this renders is not named in this \`<%= render %>\` call. Name it explicitly with \`<%= render partial: "...", object: @post %>\` for a single record or \`<%= render partial: "...", collection: @posts %>\` for many, and Herb can take you to it, check the locals you pass against its strict locals, and help you rename them.`
 }
 
 describe("actionview-no-implicit-partial", () => {
