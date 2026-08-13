@@ -463,8 +463,7 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   };
 
   // `helper_method :foo` in the app's own controllers, and route helpers from `config/routes.rb`.
-  let mut names: Vec<String> =
-    crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name).collect();
+  let mut names: Vec<String> = crate::rails::helper_methods(&[path.to_string()]).into_iter().map(|(name, _)| name).collect();
 
   names.extend(crate::rails::route_helpers(project_path));
 

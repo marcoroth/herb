@@ -183,11 +183,6 @@ fn gem_roots(app_root: &Path) -> Vec<PathBuf> {
   roots.into_iter().filter(|root| root.is_dir()).collect()
 }
 
-struct Resource {
-  singular: String,
-  plural: String,
-}
-
 pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
   let Ok(source) = fs::read_to_string(app_root.join("config/routes.rb")) else {
     return BTreeSet::new();
@@ -196,7 +191,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
   let mut names = BTreeSet::new();
   let mut namespaces: Vec<String> = Vec::new();
   let mut depth_stack: Vec<usize> = Vec::new();
-  let mut resources: Vec<Resource> = Vec::new();
+  let mut resources: Vec<String> = Vec::new();
   let mut resource_depth: Vec<usize> = Vec::new();
 
   for line in source.lines() {
@@ -254,7 +249,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
             let outer: String = namespaces[..namespaces.len().saturating_sub(1)].join("_");
             let outer = if outer.is_empty() { String::new() } else { format!("{outer}_") };
 
-            format!("{action}_{outer}{}", owner.plural)
+            format!("{action}_{outer}{owner}")
           } else {
             format!("{action}_{}", prefix.trim_end_matches('_'))
           };
@@ -285,7 +280,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       if trimmed.ends_with(" do") {
         namespaces.push(singular.clone());
         depth_stack.push(namespaces.len());
-        resources.push(Resource { singular, plural: name });
+        resources.push(name);
         resource_depth.push(namespaces.len());
       }
 
@@ -298,10 +293,7 @@ pub fn route_helpers(app_root: &Path) -> BTreeSet<String> {
       if trimmed.ends_with(" do") {
         namespaces.push(name.clone());
         depth_stack.push(namespaces.len());
-        resources.push(Resource {
-          singular: name.clone(),
-          plural: name,
-        });
+        resources.push(name);
         resource_depth.push(namespaces.len());
       }
 
