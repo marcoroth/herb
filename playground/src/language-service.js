@@ -175,6 +175,13 @@ class CachingParserService extends ParserService {
       () => super.parseDocument(textDocument),
     )
   }
+
+  parseContent(content, options) {
+    return this.#remember(
+      `content ${JSON.stringify(options ?? null)} ${content}`,
+      () => super.parseContent(content, options),
+    )
+  }
 }
 
 export function createLanguageService(herb) {
