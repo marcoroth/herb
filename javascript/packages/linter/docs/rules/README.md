@@ -43,6 +43,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### ERB
 
+- [`erb-closing-tag-indent`](./erb-closing-tag-indent.md) - Enforce consistent closing ERB tag indentation
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-byte-order-mark`](./erb-no-byte-order-mark.md) - Disallow a byte order mark at the start of a template
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes

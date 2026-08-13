@@ -38,6 +38,7 @@ export * from "./actionview-prefer-qualified-partial-path.js"
 export * from "./actionview-strict-locals-first-line.js"
 export * from "./actionview-strict-locals-partial-only.js"
 
+export * from "./erb-closing-tag-indent.js"
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-byte-order-mark.js"
 export * from "./erb-no-case-node-children.js"
