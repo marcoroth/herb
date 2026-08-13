@@ -19,6 +19,7 @@
         "@herb-tools/core:build",
         "@herb-tools/browser:build",
         "@herb-tools/formatter:build",
+        "@herb-tools/language-service:build",
         "@herb-tools/linter:build",
         "@herb-tools/printer:build",
         "@herb-tools/rewriter:build"
