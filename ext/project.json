@@ -7,8 +7,7 @@
     "build": {
       "outputs": [
         "{workspaceRoot}/lib/herb/herb.*",
-        "{workspaceRoot}/tmp",
-        "{workspaceRoot}/vendor/prism"
+        "{workspaceRoot}/tmp"
       ],
       "executor": "nx:run-commands",
       "options": {
