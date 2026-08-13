@@ -55,7 +55,7 @@ module Herb
         warnings = check_dependencies(erb_files, view_root)
         print_dependency_warnings(warnings) if warnings.any?
 
-        print_results(result, duration)
+        print_results(result, duration, warnings)
 
         result.issues?
       end
@@ -524,6 +524,31 @@ module Herb
         puts "  #{label("Partials")} #{partial_parts.join(" | ")}"
       end
 
+      # An undeclared local is a name a call site passes, so it is a signature gap rather than a
+      # missing method. Counting them together with unknown calls hides that distinction.
+      def print_warning_summary_line(warnings)
+        return if warnings.empty?
+
+        files_for = lambda do |type|
+          warnings.select { |warning| warning[:type] == type }.map { |warning| warning[:file] }.uniq.count
+        end
+
+        unknown = files_for.call(:unknown_call)
+        locals = files_for.call(:undeclared_local)
+        uninferable = files_for.call(:uninferable_local)
+        ivars = files_for.call(:ivar_in_partial)
+
+        parts = [] #: Array[String]
+        parts << stat(locals, "undeclared #{pluralize(locals, "local")}", :yellow) if locals.positive?
+        parts << stat(uninferable, "uninferable #{pluralize(uninferable, "local")}", :yellow) if uninferable.positive?
+        parts << stat(ivars, pluralize(ivars, "instance variable"), :yellow) if ivars.positive?
+        parts << stat(unknown, "unknown #{pluralize(unknown, "call")}", :yellow) if unknown.positive?
+
+        return if parts.empty?
+
+        puts "  #{label("Warnings")} #{parts.join(" | ")}"
+      end
+
       private
 
       def print_partial_tree(partial_names, render_graph, partial_files, view_root, reachable, indent: "", visited: Set.new)
@@ -660,7 +685,7 @@ module Herb
         chains
       end
 
-      def print_results(result, duration)
+      def print_results(result, duration, warnings = [])
         if result.issues?
           puts ""
           puts separator
@@ -687,6 +712,7 @@ module Herb
         puts "  #{label("Checked")} #{cyan("#{scanned_files} #{pluralize(scanned_files, "file")}")}"
 
         print_summary_line(result)
+        print_warning_summary_line(warnings)
 
         puts "  #{label("Duration")} #{cyan(format_duration(duration))}"
 
@@ -719,10 +745,19 @@ module Herb
           end
 
           if result.unknown_calls.any?
-            candidates = result.locals_declared.empty? ? (passed_locals[file] || Set.new) : Set.new
+            # Check before reading: `passed_locals` defaults new keys into existence.
+            call_sites_known = passed_locals.key?(file)
+            candidates = result.locals_declared.empty? ? passed_locals.fetch(file, Set.new) : Set.new
+            uninferable = is_partial && result.locals_declared.empty? && !call_sites_known
 
             result.unknown_calls.each do |call|
-              type = candidates.include?(call) ? :undeclared_local : :unknown_call
+              type = if candidates.include?(call)
+                       :undeclared_local
+                     elsif uninferable
+                       :uninferable_local
+                     else
+                       :unknown_call
+                     end
 
               warnings << { type: type, file: relative, call: call }
             end
@@ -748,6 +783,10 @@ module Herb
 
             target = resolve_partial(name, file, partial_files, view_root)
             next unless target
+
+            # Touch the entry even when the call passes nothing, so a missing key means "no call site
+            # resolved here" rather than "rendered without locals".
+            passed[target]
 
             call[:locals].each_key { |local| passed[target].add(local) }
 
@@ -775,6 +814,7 @@ module Herb
         ivar_warnings = warnings.select { |w| w[:type] == :ivar_in_partial }
         unknown_warnings = warnings.select { |w| w[:type] == :unknown_call }
         local_warnings = warnings.select { |w| w[:type] == :undeclared_local }
+        uninferable_warnings = warnings.select { |w| w[:type] == :uninferable_local }
 
         puts ""
         puts " #{bold("Dependency warnings:")}"
@@ -806,6 +846,20 @@ module Herb
             ivars = file_warnings.map { |w| w[:ivar] }.uniq.sort
             puts "    #{yellow(file)}"
             ivars.each { |ivar| puts "      #{dimmed(ivar)}" }
+            puts ""
+          end
+        end
+
+        if uninferable_warnings.any?
+          grouped = uninferable_warnings.group_by { |w| w[:file] }
+          puts "  #{yellow("Locals that cannot be inferred")} #{dimmed("(#{grouped.size} #{pluralize(grouped.size, "file")})")}"
+          puts "  #{dimmed("No render call resolves to these partials. Resolving the dynamic renders would let Herb infer their locals.")}"
+          puts ""
+
+          grouped.each do |file, file_warnings|
+            calls = file_warnings.map { |w| w[:call] }.uniq.sort
+            puts "    #{yellow(file)}"
+            calls.each { |call| puts "      #{dimmed(call)}" }
             puts ""
           end
         end
