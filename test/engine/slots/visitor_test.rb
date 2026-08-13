@@ -26,9 +26,10 @@ module Engine
         visitor
       end
 
-      # The Slot struct carries more than `schema` exposes, and the difference is what most of
-      # these tests are about, so the dump reads off the slots themselves and adds the two
-      # schema-level fields on top.
+      def types_for(template)
+        slots_for(template).slots.map { |slot| [slot.index, slot.type] }
+      end
+
       def format_slots(visitor)
         schema = visitor.schema
         lines = ["file: #{schema[:file]}", "version: #{schema[:version]}", ""]
@@ -324,6 +325,27 @@ module Engine
         end
       end
 
+      test "a template says who renders its branches" do
+        assert_equal :client, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots client %>\n<p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots server %>\n<p><%= @a %></p>")
+      end
+
+      # Being sent a branch that did not render is being sent something the request did not ask for.
+      test "asking for slots and nothing else means the server renders the branches" do
+        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots %>\n<p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%#- herb:slots -%><p><%= @a %></p>")
+      end
+
+      test "no directive is not a mode at all" do
+        assert_nil Herb::Engine::SlotVisitor.directive_mode("<p><%= @a %></p>")
+      end
+
+      test "refuses a mode it does not know" do
+        error = assert_raises(ArgumentError) { Herb::Engine::SlotVisitor.new(mode: :nonsense) }
+
+        assert_match(/unknown slot mode/, error.message)
+      end
+
       test "leaves other ERB comments alone" do
         ["<%# just a note %>", "<%# herb:key u.id %>", "<%# slots %>"].each do |comment|
           refute Herb::Engine::SlotVisitor.directive?("#{comment}<p><%= @a %></p>"), "expected no slots for: #{comment}"
@@ -335,6 +357,105 @@ module Engine
 
         refute_includes engine.src, "herb-slot"
         refute_includes engine.src, "herb-region"
+      end
+
+      test "a slot written on an element names the attribute it stands for" do
+        visitor = slots_for(%(<li class="<%= @c %>" data-x="<%= @d %>"><%= @n %></li>))
+
+        assert_equal ["class", "data-x", nil], visitor.slots.map(&:attribute)
+      end
+
+      test "names a template by its path unless asked otherwise" do
+        assert_equal "app/views/test.html.erb", slots_for("<p><%= @a %></p>").identifier
+      end
+
+      test "names a template by a digest of its path when asked" do
+        visitor = Herb::Engine::SlotVisitor.new(identifier: :digest)
+
+        Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_match(/\A[0-9a-f]{12}\z/, visitor.identifier)
+        refute_includes visitor.identifier, "views"
+      end
+
+      test "lets a caller name a template however it likes" do
+        visitor = Herb::Engine::SlotVisitor.new(identifier: ->(path) { "v1/#{path.length}" })
+
+        Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal "v1/23", visitor.identifier
+      end
+
+      test "keeps the real path for the server, whatever the markers say" do
+        visitor = Herb::Engine::SlotVisitor.new(identifier: :digest)
+
+        Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal "app/views/test.html.erb", visitor.schema[:file]
+        assert_equal visitor.identifier, visitor.schema[:identifier]
+      end
+
+      test "a conditional whose branches lay out the same is not a conditional at all" do
+        assert_equal(
+          [[0, :child]],
+          types_for("<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>")
+        )
+      end
+
+      test "the branches share the slots written on their elements too" do
+        assert_equal(
+          [[0, :attribute], [1, :child]],
+          types_for(%(<% if @c %><li class="<%= @a %>"><%= @x %></li><% else %><li class="<%= @b %>"><%= @y %></li><% end %>))
+        )
+      end
+
+      test "collapses an elsif chain when every arm lays out the same" do
+        assert_equal(
+          [[0, :child]],
+          types_for("<% if @a %><p><%= @x %></p><% elsif @b %><p><%= @y %></p><% else %><p><%= @z %></p><% end %>")
+        )
+      end
+
+      test "collapses the arms of a case" do
+        assert_equal(
+          [[0, :child]],
+          types_for("<% case @s %><% when 1 %><p><%= @x %></p><% else %><p><%= @y %></p><% end %>")
+        )
+      end
+
+      test "keeps a conditional that can render nothing" do
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child]],
+          types_for("<% if @a %><p><%= @x %></p><% elsif @b %><p><%= @y %></p><% end %>")
+        )
+
+        assert_equal([[0, :conditional], [1, :child]], types_for("<% if @a %><p><%= @x %></p><% end %>"))
+      end
+
+      test "keeps a conditional whose branches differ in what they write" do
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child]],
+          types_for("<% if @c %><h1>a<%= @x %></h1><% else %><h1>b<%= @y %></h1><% end %>")
+        )
+
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child]],
+          types_for("<% if @c %><h1><%= @x %></h1><% else %><h2><%= @y %></h2><% end %>")
+        )
+      end
+
+      test "keeps a conditional whose branches hold different numbers of slots" do
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child], [3, :child]],
+          types_for("<% if @c %><p><%= @x %></p><% else %><p><%= @y %><%= @z %></p><% end %>")
+        )
+      end
+
+      test "keeps a conditional that contains another one" do
+        assert_equal(
+          [[0, :conditional], [1, :conditional], [2, :child], [3, :conditional], [4, :child]],
+          types_for("<% if @c %><p><% if @d %><%= @x %><% end %></p><% else %><p><% if @e %><%= @y %><% end %></p><% end %>")
+        )
       end
     end
   end
