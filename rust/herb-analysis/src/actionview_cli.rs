@@ -328,7 +328,7 @@ fn check(arguments: &[String]) -> i32 {
   ];
 
   if dynamic_renders > 0 {
-    renders_line.push(format!("{dynamic_renders} dynamic").green().bold().to_string());
+    renders_line.push(format!("{dynamic_renders} dynamic").red().bold().to_string());
   }
 
   if other_renders > 0 {

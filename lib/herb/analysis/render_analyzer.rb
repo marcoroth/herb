@@ -511,7 +511,7 @@ module Herb
         partials_only = result.render_calls.count { |call| call[:partial] && !dynamic_partial?(call[:partial]) }
         render_parts << stat(result.render_calls.count, "total", :green)
         render_parts << stat(partials_only, "with partial", :green)
-        render_parts << stat(result.dynamic_calls.count, "dynamic", :yellow) if result.dynamic_calls.any?
+        render_parts << stat(result.dynamic_calls.count, "dynamic", :red) if result.dynamic_calls.any?
         other_count = result.render_calls.count - partials_only
         render_parts << stat(other_count, "other", :green) if other_count.positive?
 
