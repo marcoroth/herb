@@ -76,8 +76,12 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor<ERBNoOutputContr
       const tagClosing = controlBlock.tag_closing?.value ?? "%>"
       const suggestion = collapsedContent ? `<%${collapsedContent}${tagClosing}` : `<% ${keyword} ... ${tagClosing}`
 
+      const message = controlBlock.type === "AST_ERB_END_NODE"
+        ? `\`end\` should not be used with an output tag. Use \`${suggestion}\` instead.`
+        : `Control flow statements like \`${keyword}\` should not be used with output tags. Use \`${suggestion}\` instead.`
+
       this.addOffense(
-        `Control flow statements like \`${keyword}\` should not be used with output tags. Use \`${suggestion}\` instead.`,
+        message,
         openTag.location,
         { node: controlBlock as Mutable<OutputControlFlowNode> },
       )

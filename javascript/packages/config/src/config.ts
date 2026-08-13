@@ -34,33 +34,13 @@ export type FilesConfig = {
   exclude?: string[]
 }
 
-export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
+import { resolveSeverity, ALL_RULES_KEY } from "./config-schema.js"
 
-export type LinterMode = "editor" | "cli"
+import type { SeverityConfig, LinterMode } from "./config-schema.js"
 
-export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
-  if (typeof severity === "string") {
-    return severity
-  }
+export { resolveSeverity, ALL_RULES_KEY }
 
-  return severity[mode]
-}
-
-/**
- * Pseudo rule name used inside `linter.rules` to set the default `enabled`
- * state for every rule that isn't explicitly configured.
- *
- * ```yaml
- * linter:
- *   rules:
- *     all:
- *       enabled: false
- *
- *     html-no-event-handlers:
- *       enabled: true
- * ```
- */
-export const ALL_RULES_KEY = "all"
+export type { SeverityConfig, LinterMode }
 
 export type RuleConfig = {
   enabled?: boolean

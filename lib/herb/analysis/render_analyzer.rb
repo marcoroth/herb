@@ -55,7 +55,7 @@ module Herb
         warnings = check_dependencies(erb_files, view_root)
         print_dependency_warnings(warnings) if warnings.any?
 
-        print_results(result, duration)
+        print_results(result, duration, warnings)
 
         result.issues?
       end
@@ -149,7 +149,7 @@ module Herb
           end
 
           display = file_display_name(file_path, view_root)
-          status = reachable.include?(partial_name) ? green("\u2713") : yellow("~")
+          status = reachable.include?(partial_name) ? green("\u2713") : bold(yellow("~"))
 
           puts " #{status} #{bold(partial_name)} #{dimmed(display)}"
           puts ""
@@ -309,7 +309,7 @@ module Herb
 
           ruby_static_references.sort.each do |reference|
             resolved = partial_files[reference]
-            status = resolved ? green("\u2713") : red("\u2717")
+            status = resolved ? green("\u2713") : bold(red("\u2717"))
             puts ""
             puts "   #{status} #{bold(reference)}"
 
@@ -329,7 +329,7 @@ module Herb
 
         partial_files.keys.sort.each do |name|
           callers = reverse_graph[name]
-          status = reachable.include?(name) ? green("\u2713") : yellow("~")
+          status = reachable.include?(name) ? green("\u2713") : bold(yellow("~"))
 
           puts ""
           puts "   #{status} #{bold(name)}"
@@ -355,7 +355,7 @@ module Herb
             children = render_graph[file] || []
 
             puts ""
-            puts "   #{yellow("~")} #{bold(name)} #{dimmed(display)}"
+            puts "   #{bold(yellow("~"))} #{bold(name)} #{dimmed(display)}"
 
             if children.any?
               print_partial_tree(children, render_graph, partial_files, view_root, reachable, indent: "     ", visited: Set.new)
@@ -456,14 +456,28 @@ module Herb
             calls.each do |call|
               location = call[:location] ? dimmed("at #{call[:location]}") : nil
               expected = expected_file_path(call[:partial], result.view_root)
-              puts "   #{red("\u2717")} #{bold(call[:partial])} #{location} #{dimmed("-")} #{dimmed(expected)}"
+              puts "   #{bold(red("\u2717"))} #{bold(call[:partial])} #{location} #{dimmed("-")} #{dimmed(expected)}"
             end
+          end
+        end
+
+        if result.dynamic_calls.any?
+          puts "\n #{separator}" if result.unresolved.any?
+          puts "\n"
+          puts " #{bold("Dynamic render calls:")}"
+          puts " #{dimmed("The partial name is built at runtime, so it cannot be resolved statically.")}"
+          puts ""
+
+          result.dynamic_calls.each do |call|
+            shown = dynamic_call_display(call)
+
+            puts "   #{bold(red("\u2717"))} #{bold(red(shown))} #{dimmed("in #{relative_path(call[:file])}")}"
           end
         end
 
         return unless result.unused.any?
 
-        puts "\n #{separator}" if result.unresolved.any?
+        puts "\n #{separator}" if result.unresolved.any? || result.dynamic_calls.any?
         puts "\n"
         puts " #{bold("Unused partials:")}"
         puts " #{dimmed("These partial files are not referenced by any reachable render call.")}"
@@ -473,7 +487,7 @@ module Herb
 
           puts ""
           puts " #{cyan(relative)}:"
-          puts "   #{yellow("~")} #{bold(name)} #{dimmed("not referenced")}"
+          puts "   #{bold(yellow("~"))} #{bold(name)} #{dimmed("not referenced")}"
         end
       end
 
@@ -494,12 +508,12 @@ module Herb
       def print_summary_line(result)
         render_parts = [] #: Array[String]
 
-        partials_only = result.render_calls.count { |call| call[:partial] }
+        partials_only = result.render_calls.count { |call| call[:partial] && !dynamic_partial?(call[:partial]) }
         render_parts << stat(result.render_calls.count, "total", :green)
         render_parts << stat(partials_only, "with partial", :green)
-        render_parts << stat(result.dynamic_calls.count, "dynamic", :yellow) if result.dynamic_calls.any?
+        render_parts << stat(result.dynamic_calls.count, "dynamic", :red) if result.dynamic_calls.any?
         other_count = result.render_calls.count - partials_only
-        render_parts << stat(other_count, "other", :green) if other_count.positive?
+        render_parts << stat(other_count, "other", :yellow) if other_count.positive?
 
         partial_parts = [] #: Array[String]
         partial_parts << stat(result.partial_files.count, "on disk", :green)
@@ -508,6 +522,40 @@ module Herb
 
         puts "  #{label("Renders")} #{render_parts.join(" | ")}"
         puts "  #{label("Partials")} #{partial_parts.join(" | ")}"
+      end
+
+      #: (String) -> bool
+      def component_template?(relative)
+        relative.start_with?("app/components/")
+      end
+
+      #: (Array[Hash[Symbol, untyped]]) -> void
+      def print_warning_summary_line(warnings)
+        return if warnings.empty?
+
+        files_for = lambda do |type|
+          warnings.select { |warning| warning[:type] == type }.map { |warning| warning[:file] }.uniq.count
+        end
+
+        unknown = files_for.call(:unknown_call)
+        locals = files_for.call(:undeclared_local)
+        uninferable = files_for.call(:uninferable_local)
+        ivars = files_for.call(:ivar_in_partial)
+        ignored = files_for.call(:ignored_component)
+
+        parts = [] #: Array[String]
+        parts << stat(locals, "undeclared #{pluralize(locals, "local")}", :yellow) if locals.positive?
+        parts << stat(uninferable, "uninferable #{pluralize(uninferable, "local")}", :yellow) if uninferable.positive?
+        parts << stat(ivars, pluralize(ivars, "instance variable"), :yellow) if ivars.positive?
+        parts << stat(unknown, "unknown #{pluralize(unknown, "call")}", :yellow) if unknown.positive?
+
+        return if parts.empty?
+
+        puts "  #{label("Warnings")} #{parts.join(" | ")}"
+
+        return unless ignored.positive?
+
+        puts "  #{label("Ignored")} #{dimmed("#{ignored} component #{pluralize(ignored, "template")} in app/components/")}"
       end
 
       private
@@ -520,11 +568,11 @@ module Herb
 
           resolved_file = partial_files[name]
           status = if !resolved_file
-                     red("\u2717")
+                     bold(red("\u2717"))
                    elsif reachable.include?(name)
                      green("\u2713")
                    else
-                     yellow("~")
+                     bold(yellow("~"))
                    end
 
           puts "#{indent}#{connector} #{status} #{name}"
@@ -575,6 +623,13 @@ module Herb
           queue << resolved_file if resolved_file
         end
 
+        partial_files.each do |name, file|
+          next unless dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
+
+          reachable << name
+          queue << file if file
+        end
+
         visited_files = Set.new
 
         until queue.empty?
@@ -592,12 +647,6 @@ module Herb
 
             resolved_file = partial_files[partial_name]
             queue << resolved_file if resolved_file && render_graph.key?(resolved_file)
-          end
-        end
-
-        partial_files.each_key do |name|
-          if dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
-            reachable << name
           end
         end
 
@@ -641,7 +690,7 @@ module Herb
         chains
       end
 
-      def print_results(result, duration)
+      def print_results(result, duration, warnings = [])
         if result.issues?
           puts ""
           puts separator
@@ -668,6 +717,7 @@ module Herb
         puts "  #{label("Checked")} #{cyan("#{scanned_files} #{pluralize(scanned_files, "file")}")}"
 
         print_summary_line(result)
+        print_warning_summary_line(warnings)
 
         puts "  #{label("Duration")} #{cyan(format_duration(duration))}"
 
@@ -686,6 +736,7 @@ module Herb
         dep_analyzer.scan_helpers!
 
         warnings = [] #: Array[Hash[Symbol, untyped]]
+        passed_locals = collect_passed_locals(erb_files, dep_analyzer, view_root)
 
         erb_files.each do |file|
           result = dep_analyzer.analyze(file)
@@ -699,8 +750,22 @@ module Herb
           end
 
           if result.unknown_calls.any?
+            call_sites_known = passed_locals.fetch(file, Set.new).any?
+            candidates = result.locals_declared.empty? ? passed_locals.fetch(file, Set.new) : Set.new
+            uninferable = is_partial && result.locals_declared.empty? && !call_sites_known
+
             result.unknown_calls.each do |call|
-              warnings << { type: :unknown_call, file: relative, call: call }
+              type = if candidates.include?(call)
+                       :undeclared_local
+                     elsif component_template?(relative)
+                       :ignored_component
+                     elsif uninferable
+                       :uninferable_local
+                     else
+                       :unknown_call
+                     end
+
+              warnings << { type: type, file: relative, call: call }
             end
           end
         end
@@ -711,13 +776,75 @@ module Herb
         [] #: Array[Hash[Symbol, untyped]]
       end
 
+      #: (Array[String], untyped, Pathname) -> Hash[String, Set[String]]
+      def collect_passed_locals(erb_files, dep_analyzer, view_root)
+        partial_files = find_partial_files(view_root)
+        passed = Hash.new { |hash, key| hash[key] = Set.new } #: Hash[String, Set[String]]
+
+        erb_files.each do |file|
+          dep_analyzer.analyze(file).render_calls.each do |call|
+            name = call[:partial]
+            next unless name
+
+            target = resolve_partial(name, file, partial_files, view_root)
+            next unless target
+
+            passed[target]
+
+            call[:locals].each_key { |local| passed[target].add(local) }
+
+            if call[:collection]
+              item = call[:as_name].to_s.empty? ? File.basename(name) : call[:as_name]
+
+              passed[target].add(item)
+              passed[target].add("#{item}_counter")
+              passed[target].add("#{item}_iteration")
+            end
+          end
+        rescue StandardError
+          next
+        end
+
+        passed
+      end
+
+      #: (Hash[Symbol, untyped]) -> String
+      def dynamic_call_display(call)
+        prefix = call[:dynamic_prefix]
+
+        unless prefix
+          raw = call[:partial].to_s.sub(/\A["']/, "")
+          prefix = raw.split("\#{").first.to_s.chomp("/")
+        end
+
+        prefix.to_s.empty? ? "\#{...}" : "#{prefix}/\#{...}"
+      end
+
       def print_dependency_warnings(warnings)
         ivar_warnings = warnings.select { |w| w[:type] == :ivar_in_partial }
         unknown_warnings = warnings.select { |w| w[:type] == :unknown_call }
+        local_warnings = warnings.select { |w| w[:type] == :undeclared_local }
+        uninferable_warnings = warnings.select { |w| w[:type] == :uninferable_local }
 
         puts ""
         puts " #{bold("Dependency warnings:")}"
         puts ""
+
+        if local_warnings.any?
+          grouped = local_warnings.group_by { |w| w[:file] }
+          puts "  #{yellow("Undeclared locals")} #{dimmed("(#{grouped.size} #{pluralize(grouped.size, "file")})")}"
+          puts "  #{dimmed("Every call site passes these, so they are locals. Declare them with strict locals to be sure.")}"
+          puts ""
+
+          grouped.each do |file, file_warnings|
+            names = file_warnings.map { |w| w[:call] }.uniq.sort
+            declaration = names.map { |name| "#{name}:" }.join(", ")
+
+            puts "    #{yellow(file)}"
+            puts "      #{dimmed("<%# locals: (#{declaration}) %>")}"
+            puts ""
+          end
+        end
 
         if ivar_warnings.any?
           grouped = ivar_warnings.group_by { |w| w[:file] }
@@ -729,6 +856,20 @@ module Herb
             ivars = file_warnings.map { |w| w[:ivar] }.uniq.sort
             puts "    #{yellow(file)}"
             ivars.each { |ivar| puts "      #{dimmed(ivar)}" }
+            puts ""
+          end
+        end
+
+        if uninferable_warnings.any?
+          grouped = uninferable_warnings.group_by { |w| w[:file] }
+          puts "  #{yellow("Locals that cannot be inferred")} #{dimmed("(#{grouped.size} #{pluralize(grouped.size, "file")})")}"
+          puts "  #{dimmed("No render call resolves to these partials. Resolving the dynamic renders would let Herb infer their locals.")}"
+          puts ""
+
+          grouped.each do |file, file_warnings|
+            calls = file_warnings.map { |w| w[:call] }.uniq.sort
+            puts "    #{yellow(file)}"
+            calls.each { |call| puts "      #{dimmed(call)}" }
             puts ""
           end
         end
@@ -746,7 +887,27 @@ module Herb
             puts ""
           end
 
+          print_unknown_call_tally(unknown_warnings)
+
           puts ""
+        end
+      end
+
+      #: (Array[Hash[Symbol, untyped]]) -> void
+      def print_unknown_call_tally(warnings)
+        tally = Hash.new(0) #: Hash[String, Integer]
+
+        warnings.group_by { |warning| warning[:file] }.each_value do |file_warnings|
+          file_warnings.map { |warning| warning[:call] }.uniq.each { |call| tally[call] += 1 }
+        end
+
+        ranked = tally.sort_by { |call, count| [-count, call] }
+
+        puts "    #{bold("Most frequent")} #{dimmed("(#{ranked.size} distinct #{pluralize(ranked.size, "method")})")}"
+        puts ""
+
+        ranked.first(10).each do |call, count|
+          puts "      #{dimmed(count.to_s.rjust(3))}  #{yellow(call)}"
         end
       end
 
@@ -806,7 +967,7 @@ module Herb
       end
 
       def process_file_for_render_calls(file)
-        content = File.read(file)
+        content = File.read(file, encoding: "UTF-8")
         result = Herb.parse(content, render_nodes: true)
 
         visitor = RenderCallVisitor.new(file)
@@ -820,13 +981,20 @@ module Herb
 
         content.scan(%r{render[\s(]+(?:partial:\s*)?["']([a-z0-9_/]+)["']}) do |match|
           partial = match[0]
-          next if visitor_partials.include?(partial)
+          next unless visitor_partials.add?(partial)
 
           calls << { file: file, partial: partial }
         end
 
         content.scan(%r{render\s+(?:partial:\s*)?["']([a-z0-9_/]+)/\#\{}) do |match|
           dynamic_prefixes << match[0]
+
+          unmarked = calls.find { |call| call[:partial].nil? && !call[:interpolated] }
+
+          if unmarked
+            unmarked[:interpolated] = true
+            unmarked[:dynamic_prefix] = match[0]
+          end
         end
 
         content.scan(%r{render\s+layout:\s*["']([a-z0-9_/]+)["']}) do |match|
@@ -966,7 +1134,7 @@ module Herb
         dynamic = [] #: Array[Hash[Symbol, untyped]]
 
         render_calls.each do |call|
-          if call[:partial] && dynamic_partial?(call[:partial])
+          if call[:interpolated] || (call[:partial] && dynamic_partial?(call[:partial]))
             dynamic << call
           else
             static << call

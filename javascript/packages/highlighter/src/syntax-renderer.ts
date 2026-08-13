@@ -251,6 +251,6 @@ export class SyntaxRenderer {
     }
 
     const color = this.colors[token.type as keyof ColorScheme]
-    return color !== undefined ? color : null
+    return typeof color === "string" ? color : null
   }
 }

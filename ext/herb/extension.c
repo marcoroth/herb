@@ -454,8 +454,12 @@ static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
     rb_ary_push(path_array, UINT2NUM(operation->path.indices[index]));
   }
 
-  VALUE old_node = operation->old_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS) : Qnil;
-  VALUE new_node = operation->new_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS) : Qnil;
+  VALUE old_node = operation->old_node != NULL
+                   ? rb_node_from_c_struct((AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS)
+                   : Qnil;
+  VALUE new_node = operation->new_node != NULL
+                   ? rb_node_from_c_struct((AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS)
+                   : Qnil;
 
   return rb_funcall(
     cDiffOperation,

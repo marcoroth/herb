@@ -12,7 +12,7 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
-import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
+import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config/schema"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"

@@ -5,6 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/extension/libherb", "{projectRoot}/extension/prism"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
