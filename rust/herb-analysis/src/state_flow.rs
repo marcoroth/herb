@@ -462,10 +462,14 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
     return Vec::new();
   };
 
-  // rubydex indexes the app *and its gems*, so a helper reaching the view through a gem module, a
-  // concern, or an inherited module resolves here. The Ruby analyzer cannot see those, which is the
-  // one place the two `check` commands legitimately disagree.
-  let mut analysis = crate::analysis::Analysis::index_paths(&[path.to_string()], &std::collections::HashSet::new());
+  let mut helper_roots = vec![path.to_string()];
+  helper_roots.extend(crate::rails::gem_paths(project_path).paths);
+
+  let (helper_method_names, action_view_modules) = crate::rails::helper_sources(&helper_roots);
+
+  // Index the gem sources alongside the app. A helper reaching the view through a gem module, a
+  // concern, or an inherited module only resolves if rubydex was given those files to begin with.
+  let mut analysis = crate::analysis::Analysis::index_paths(&helper_roots, &std::collections::HashSet::new());
   analysis.resolve();
 
   let modules = analysis.helper_modules();
@@ -474,15 +478,15 @@ fn view_visible_helper_names(project_path: &Path) -> Vec<String> {
   // Rails' own view helpers hang off ActionView::Base rather than a `*Helper` module.
   roots.push("ActionView::Base");
 
+  // A gem mixes its helpers in at boot, so nothing in the module's name or location marks it as one.
+  roots.extend(action_view_modules.iter().map(String::as_str));
+
   let mut names: Vec<String> = analysis.view_visible_helpers(&roots).into_keys().collect();
 
   // `helper_method :foo` in a controller is not a module inclusion, so the ancestor walk misses it.
   // Gems do this too, inside `included do` blocks that no `*Helper` module covers: turbo-rails
-  // exposes `hotwire_native_app?` that way, so their sources have to be scanned alongside the app's.
-  let mut helper_roots = vec![path.to_string()];
-  helper_roots.extend(crate::rails::gem_paths(project_path).paths);
-
-  names.extend(crate::rails::helper_methods(&helper_roots).into_iter().map(|(name, _)| name));
+  // exposes `hotwire_native_app?` that way.
+  names.extend(helper_method_names.into_keys());
 
   // Route helpers are generated from `config/routes.rb`, so no module defines them.
   names.extend(crate::rails::route_helpers(project_path));

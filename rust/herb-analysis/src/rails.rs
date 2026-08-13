@@ -420,16 +420,57 @@ fn singularize(word: &str) -> String {
 }
 
 pub fn helper_methods(roots: &[String]) -> BTreeMap<String, PathBuf> {
-  let mut found = BTreeMap::new();
-
-  for root in roots {
-    collect_helper_methods(Path::new(root), &mut found);
-  }
-
-  found
+  helper_sources(roots).0
 }
 
-fn collect_helper_methods(path: &Path, found: &mut BTreeMap<String, PathBuf>) {
+/// Walks each root once, collecting both `helper_method` symbols and the modules a gem mixes into
+/// views through `ActiveSupport.on_load :action_view`. The two share a walk because these roots are
+/// every gem in the bundle, and traversing them twice doubles the cost of `check`.
+pub fn helper_sources(roots: &[String]) -> (BTreeMap<String, PathBuf>, Vec<String>) {
+  let mut found = BTreeMap::new();
+  let mut modules = Vec::new();
+
+  for root in roots {
+    collect_helper_sources(Path::new(root), &mut found, &mut modules);
+  }
+
+  modules.sort();
+  modules.dedup();
+
+  (found, modules)
+}
+
+/// `include MetaTags::ViewHelper` inside an `on_load :action_view` block makes every public method
+/// of that module a view helper, but nothing about the module's own name says so.
+fn collect_action_view_modules(source: &str, modules: &mut Vec<String>) {
+  let mut remaining = 0usize;
+
+  for line in source.lines() {
+    let trimmed = line.trim();
+
+    if trimmed.contains("on_load") && trimmed.contains("action_view") {
+      remaining = 12;
+
+      continue;
+    }
+
+    if remaining == 0 {
+      continue;
+    }
+
+    remaining -= 1;
+
+    if let Some(rest) = trimmed.strip_prefix("include ") {
+      let name: String = rest.chars().take_while(|c| c.is_alphanumeric() || *c == '_' || *c == ':').collect();
+
+      if name.chars().next().is_some_and(char::is_uppercase) {
+        modules.push(name);
+      }
+    }
+  }
+}
+
+fn collect_helper_sources(path: &Path, found: &mut BTreeMap<String, PathBuf>, modules: &mut Vec<String>) {
   let Ok(entries) = fs::read_dir(path) else {
     return;
   };
@@ -438,7 +479,7 @@ fn collect_helper_methods(path: &Path, found: &mut BTreeMap<String, PathBuf>) {
     let path = entry.path();
 
     if path.is_dir() {
-      collect_helper_methods(&path, found);
+      collect_helper_sources(&path, found, modules);
 
       continue;
     }
@@ -450,6 +491,10 @@ fn collect_helper_methods(path: &Path, found: &mut BTreeMap<String, PathBuf>) {
     let Ok(source) = fs::read_to_string(&path) else {
       continue;
     };
+
+    if source.contains("on_load") {
+      collect_action_view_modules(&source, modules);
+    }
 
     if !source.contains("helper_method") {
       continue;
@@ -493,4 +538,16 @@ fn symbols_in(line: &str) -> Vec<String> {
   }
 
   names
+}
+
+#[cfg(test)]
+mod on_load_tests {
+  #[test]
+  fn collects_modules_included_into_action_view() {
+    let source = "    initializer \"meta_tags.setup_action_view\" do\n      ActiveSupport.on_load :action_view do\n        include MetaTags::ViewHelper\n      end\n    end\n";
+    let mut modules = Vec::new();
+    super::collect_action_view_modules(source, &mut modules);
+
+    assert_eq!(modules, vec!["MetaTags::ViewHelper".to_string()]);
+  }
 }
