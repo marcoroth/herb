@@ -20,6 +20,36 @@ export type SerializedParseResult = {
   options: SerializedParserOptions
 }
 
+declare const locationless: unique symbol
+
+/**
+ * Marks a value that came out of a parse with `track_locations: false`, where
+ * `location` and `range` are absent on every node and token.
+ *
+ * APIs that need source locations declare their parameter as
+ * `T & NotLocationless` to reject these values at compile time.
+ */
+export type Locationless<T> = T & { readonly [locationless]: true }
+
+/** The counterpart of {@link Locationless}, for APIs that require locations. */
+export type NotLocationless = { readonly [locationless]?: never }
+
+/**
+ * The result of a parse with `track_locations: false`. Identical to
+ * `ParseResult` at runtime, but its `value` cannot be passed to APIs that
+ * require source locations, such as the printer and the rewriter.
+ */
+export interface LocationlessParseResult extends Omit<ParseResult, "value"> {
+  readonly value: Locationless<DocumentNode>
+  readonly [locationless]: true
+}
+
+/**
+ * Resolves to `LocationlessParseResult` when `track_locations: false` was
+ * passed literally, and to `ParseResult` otherwise.
+ */
+export type ParseResultFor<Options> = Options extends { track_locations: false } ? LocationlessParseResult : ParseResult
+
 /**
  * Represents the result of a parsing operation, extending the base `Result` class.
  * It contains the parsed document node, source code, warnings, and errors.

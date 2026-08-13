@@ -23,17 +23,28 @@ describe("Printer Options", () => {
     test("throws when printing a node parsed without locations", () => {
       const parseResult = Herb.parse(source, { track_whitespace: true, track_locations: false })
 
-      expect(() => {
-        new IdentityPrinter().print(parseResult.value!)
-      }).toThrow(message)
+      expect(() => { new IdentityPrinter().print(parseResult.value!) }).toThrow(message)
     })
 
     test("throws when printing a parse result produced without locations", () => {
       const parseResult = Herb.parse(source, { track_whitespace: true, track_locations: false })
 
-      expect(() => {
-        new IdentityPrinter().print(parseResult)
-      }).toThrow(message)
+      expect(() => { new IdentityPrinter().print(parseResult) }).toThrow(message)
+    })
+
+    test("rejects untracked input at compile time", () => {
+      const untracked = Herb.parse(source, { track_whitespace: true, track_locations: false })
+      const tracked = Herb.parse(source, { track_whitespace: true })
+      const printer = new IdentityPrinter()
+
+      printer.print(tracked)
+      printer.print(tracked.value)
+
+      // @ts-expect-error a tree parsed with `track_locations: false` is not printable
+      expect(() => printer.print(untracked.value)).toThrow(message)
+
+      // @ts-expect-error a parse result produced with `track_locations: false` is not printable
+      expect(() => printer.print(untracked)).toThrow(message)
     })
 
     test("prints normally when locations are tracked", () => {
