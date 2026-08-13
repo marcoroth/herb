@@ -65,6 +65,13 @@ function getCommitInfo() {
 export default defineConfig({
   define: {
     __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
+
+    // The highlighter writes for a terminal, so it asks Node what that terminal
+    // is. Standing in for the two things it reads keeps the CLI renderer usable
+    // here: leaving NO_COLOR unset keeps color on, and claiming a TTY is what
+    // makes it emit the same escape sequences it would in a real shell.
+    "process.env.NO_COLOR": "undefined",
+    "process.stdout": "({ isTTY: true, columns: 120 })",
   },
   resolve: {
     dedupe: ['@ruby/prism'],

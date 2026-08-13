@@ -46,4 +46,16 @@ export default [
     },
     external: isExternal,
   },
+
+  // Browser ANSI renderer (ESM)
+  {
+    input: "src/browser.ts",
+    output: {
+      file: "dist/browser.js",
+      format: "esm",
+      sourcemap: true,
+      comments: { legal: true, annotation: true, jsdoc: false },
+    },
+    external: isExternal,
+  },
 ]
