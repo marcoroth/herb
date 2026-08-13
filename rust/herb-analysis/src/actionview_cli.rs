@@ -269,7 +269,7 @@ fn check(arguments: &[String]) -> i32 {
   );
 
   let passed_locals = collect_passed_locals(&templates, &mut index, &flow);
-  let (ivar_warnings, local_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
+  let (ivar_warnings, local_warnings, uninferable_warnings, unknown_warnings) = print_dependency_warnings(&templates, &root, &flow, &passed_locals);
 
   println!();
 
@@ -360,12 +360,21 @@ fn check(arguments: &[String]) -> i32 {
     )
     .cyan()
   );
-  if ivar_warnings > 0 || local_warnings > 0 || unknown_warnings > 0 {
+  if ivar_warnings > 0 || local_warnings > 0 || uninferable_warnings > 0 || unknown_warnings > 0 {
     let mut parts = Vec::new();
 
     if local_warnings > 0 {
       parts.push(
         format!("{local_warnings} undeclared {}", plural(local_warnings, "local"))
+          .yellow()
+          .bold()
+          .to_string(),
+      );
+    }
+
+    if uninferable_warnings > 0 {
+      parts.push(
+        format!("{uninferable_warnings} uninferable {}", plural(uninferable_warnings, "local"))
           .yellow()
           .bold()
           .to_string(),
@@ -1267,16 +1276,18 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
   passed
 }
 
-fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize, usize) {
+fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow, passed_locals: &BTreeMap<String, BTreeSet<String>>) -> (usize, usize, usize, usize) {
   let mut ivars: Vec<(String, Vec<String>)> = Vec::new();
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
   let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
+  let mut uninferable: Vec<(String, Vec<String>)> = Vec::new();
 
   for file in templates {
     let result = flow.analyze(file);
     let relative = relative(file, root);
+    let partial = herb_analysis::partial_resolution::partial_path(file);
 
-    if herb_analysis::partial_resolution::partial_path(file) && !result.instance_variables.is_empty() {
+    if partial && !result.instance_variables.is_empty() {
       ivars.push((relative.clone(), result.instance_variables.clone()));
     }
 
@@ -1294,14 +1305,20 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
         likely_locals.push((relative.clone(), locals));
       }
 
+      // With no call site resolving here there is no signature to learn from, so the leftovers are
+      // locals Herb cannot infer rather than methods it cannot find.
       if !rest.is_empty() {
-        unknown.push((relative, rest));
+        if partial && !declared && candidates.is_none() {
+          uninferable.push((relative, rest));
+        } else {
+          unknown.push((relative, rest));
+        }
       }
     }
   }
 
-  if ivars.is_empty() && unknown.is_empty() && likely_locals.is_empty() {
-    return (0, 0, 0);
+  if ivars.is_empty() && unknown.is_empty() && likely_locals.is_empty() && uninferable.is_empty() {
+    return (0, 0, 0, 0);
   }
 
   println!();
@@ -1352,6 +1369,28 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
     }
   }
 
+  if !uninferable.is_empty() {
+    println!();
+    println!(
+      "  {} {}",
+      "Locals that cannot be inferred".bold(),
+      format!("({} {})", uninferable.len(), plural(uninferable.len(), "file")).dimmed()
+    );
+    println!(
+      "  {}",
+      "No render call resolves to these partials. Resolving the dynamic renders would let Herb infer their locals.".dimmed()
+    );
+
+    for (file, names) in &uninferable {
+      println!();
+      println!("    {file}");
+
+      for name in names {
+        println!("      {}", name.yellow());
+      }
+    }
+  }
+
   if !unknown.is_empty() {
     println!();
     println!(
@@ -1373,5 +1412,5 @@ fn print_dependency_warnings(templates: &[String], root: &Path, flow: &StateFlow
 
   println!();
 
-  (ivars.len(), likely_locals.len(), unknown.len())
+  (ivars.len(), likely_locals.len(), uninferable.len(), unknown.len())
 }
