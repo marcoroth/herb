@@ -590,7 +590,7 @@ fn reverse_graph(renders: &BTreeMap<String, Vec<String>>, index: &PartialIndex) 
 
   for (file, names) in renders {
     for name in names {
-      if index.resolve(name, None).first().is_some() {
+      if !index.resolve(name, None).is_empty() {
         callers.entry(name.clone()).or_default().push(file.clone());
       }
     }
