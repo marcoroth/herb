@@ -121,6 +121,12 @@ impl PartialIndex {
     self.by_name.keys().map(|name| name.as_str()).collect()
   }
 
+  pub fn names_under(&self, prefix: &str) -> Vec<&str> {
+    let prefix = format!("{}/", prefix.trim_end_matches('/'));
+
+    self.by_name.keys().filter(|name| name.starts_with(&prefix)).map(|name| name.as_str()).collect()
+  }
+
   pub fn to_h(&mut self) -> BTreeMap<String, PartialDeclaration> {
     let names: Vec<String> = self.names().iter().map(|name| name.to_string()).collect();
     let mut partials = BTreeMap::new();

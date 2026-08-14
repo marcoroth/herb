@@ -209,7 +209,7 @@ fn check(arguments: &[String]) -> i32 {
   let mut rendered: Vec<String> = Vec::new();
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
   let mut dynamic_renders = 0usize;
-  let mut dynamic_sites: Vec<(String, String)> = Vec::new();
+  let mut dynamic_sites: Vec<(String, String, Vec<String>)> = Vec::new();
   let mut branching_sites: Vec<(String, String, Vec<String>)> = Vec::new();
   let mut other_renders = 0usize;
   let mut with_partial_count = 0usize;
@@ -262,7 +262,13 @@ fn check(arguments: &[String]) -> i32 {
             .map(|prefix| format!("{prefix}/#{{...}}"))
             .unwrap_or_else(|| "#{...}".to_string());
 
-          dynamic_sites.push((relative(file, &root), shown));
+          let candidates = call
+            .dynamic_prefix
+            .as_ref()
+            .map(|prefix| index.names_under(prefix).iter().map(|name| (*name).to_string()).collect())
+            .unwrap_or_default();
+
+          dynamic_sites.push((relative(file, &root), shown, candidates));
         }
 
         continue;
@@ -404,11 +410,18 @@ fn check(arguments: &[String]) -> i32 {
 
   if !dynamic_sites.is_empty() {
     println!(" {}", "Dynamic render calls:".bold());
-    println!(" {}", "The partial name is built at runtime, so it cannot be resolved statically.".dimmed());
+    println!(
+      " {}",
+      "The partial name is built at runtime. Where the directory is known, every partial under it is listed.".dimmed()
+    );
     println!();
 
-    for (file, shown) in &dynamic_sites {
+    for (file, shown, candidates) in &dynamic_sites {
       println!("   {} {} {}", "\u{2717}".red().bold(), shown.red().bold(), format!("in {file}").dimmed());
+
+      for candidate in candidates {
+        println!("       {} {}", "\u{2192}".dimmed(), candidate.dimmed());
+      }
     }
 
     println!();

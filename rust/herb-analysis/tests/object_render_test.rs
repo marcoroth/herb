@@ -60,3 +60,29 @@ fn a_guessed_object_partial_that_exists_still_resolves() {
 
   assert!(!output.contains("posts/post"), "an existing guessed target should resolve:\n{output}");
 }
+
+#[test]
+fn a_dynamic_render_lists_the_partials_under_its_prefix() {
+  let root = scratch("dynamic-prefix");
+
+  write(&root, "app/views/admin/show.html.erb", "<%= render \"admin/parts/#{name}\" %>\n");
+  write(&root, "app/views/admin/parts/_alpha.html.erb", "<div></div>\n");
+  write(&root, "app/views/admin/parts/_beta.html.erb", "<div></div>\n");
+
+  let output = check(&root);
+
+  assert!(output.contains("admin/parts/alpha"), "candidates should be listed:\n{output}");
+  assert!(output.contains("admin/parts/beta"), "candidates should be listed:\n{output}");
+}
+
+#[test]
+fn a_dynamic_render_with_no_known_directory_lists_nothing() {
+  let root = scratch("dynamic-bare");
+
+  write(&root, "app/views/admin/show.html.erb", "<%= render \"#{name}\" %>\n");
+  write(&root, "app/views/admin/parts/_alpha.html.erb", "<div></div>\n");
+
+  let output = check(&root);
+
+  assert!(!output.contains("admin/parts/alpha"), "nothing should be claimed:\n{output}");
+}
