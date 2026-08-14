@@ -438,6 +438,19 @@ module Herb
       end
 
       def print_file_lists(result)
+        formatless = result.partial_files.values.select { |file| missing_format?(file) }.sort
+
+        if formatless.any?
+          puts "\n"
+          puts " #{bold("Templates without a format:")}"
+          puts " #{dimmed("Rails reads a template filename as `name.format.handler`. Without a format it matches every one.")}"
+          puts ""
+
+          formatless.each do |file|
+            puts "   #{bold(yellow("!"))} #{yellow(relative_path(file))}"
+          end
+        end
+
         return unless result.issues?
 
         if result.unresolved.any?
@@ -1168,7 +1181,7 @@ module Herb
 
           prefix = call[:partial].gsub(/\A["']|["']\z/, "")
           prefix = prefix.split("\#{").first&.chomp("/")
-          prefix unless prefix.nil? || prefix.empty?
+          prefix if prefix && !prefix.empty? && partial_path_segment?(prefix)
         }
 
         ruby_references.each do |reference|
@@ -1193,6 +1206,18 @@ module Herb
 
       def resolve_partial(partial_name, source_file, _partial_files, view_root)
         partial_index(view_root).resolve(partial_name, source_file).first
+      end
+
+      #: (String) -> bool
+      def missing_format?(file)
+        name = File.basename(file)
+
+        name.end_with?(".erb") && name.count(".") == 1
+      end
+
+      #: (String) -> bool
+      def partial_path_segment?(value)
+        value.match?(%r{\A[a-z0-9_/-]+\z})
       end
 
       #: (String) -> Array[String]

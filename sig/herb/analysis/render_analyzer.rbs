@@ -117,6 +117,12 @@ module Herb
 
       def resolve_partial: (untyped partial_name, untyped source_file, untyped _partial_files, untyped view_root) -> untyped
 
+      # : (String) -> bool
+      def missing_format?: (String) -> bool
+
+      # : (String) -> bool
+      def partial_path_segment?: (String) -> bool
+
       # : (String) -> Array[String]
       def static_branches: (String) -> Array[String]
 
