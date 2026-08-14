@@ -602,10 +602,14 @@ fn graph(arguments: &[String]) -> i32 {
 }
 
 fn view_relative(file: &str, index: &PartialIndex) -> String {
-  Path::new(file)
-    .strip_prefix(index.view_root())
+  let path = Path::new(file);
+
+  index
+    .view_roots()
+    .iter()
+    .find_map(|root| path.strip_prefix(root).ok())
     .map(|rest| rest.display().to_string())
-    .unwrap_or_else(|_| file.to_string())
+    .unwrap_or_else(|| file.to_string())
 }
 
 fn reverse_graph(renders: &BTreeMap<String, Vec<String>>, index: &PartialIndex) -> BTreeMap<String, Vec<String>> {
@@ -702,7 +706,7 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
   let mut renders: BTreeMap<String, Vec<String>> = BTreeMap::new();
   let mut prefixes: BTreeSet<String> = BTreeSet::new();
   let mut layouts: BTreeSet<String> = BTreeSet::new();
-  let flow = StateFlow::new(index.view_root());
+  let flow = StateFlow::new(index.view_roots().first().map(PathBuf::as_path).unwrap_or_else(|| Path::new(".")));
 
   for file in templates {
     let result = flow.analyze(file);

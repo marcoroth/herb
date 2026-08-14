@@ -109,10 +109,6 @@ impl PartialIndex {
     self.by_name = by_name;
   }
 
-  pub fn view_root(&self) -> &Path {
-    self.view_roots.first().map(PathBuf::as_path).unwrap_or_else(|| Path::new("."))
-  }
-
   pub fn view_roots(&self) -> &[PathBuf] {
     &self.view_roots
   }

@@ -167,6 +167,14 @@ pub fn template_name_for(file: &str, view_root: &str) -> Option<String> {
   }
 }
 
+pub fn layout_candidates_for_roots(template_file: &str, view_roots: &[String]) -> Vec<String> {
+  view_roots
+    .iter()
+    .map(|root| layout_candidates_for(template_file, root))
+    .find(|candidates| !candidates.is_empty())
+    .unwrap_or_default()
+}
+
 pub fn layout_candidates_for(template_file: &str, view_root: &str) -> Vec<String> {
   let Some(relative) = relative_to_view_root(template_file, view_root) else {
     return Vec::new();

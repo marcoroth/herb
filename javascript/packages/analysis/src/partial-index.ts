@@ -23,7 +23,7 @@ export interface PartialDeclaration {
 }
 
 export interface SerializedPartialIndex {
-  viewRoot: string
+  viewRoots: string[]
   partials: Record<string, PartialDeclaration>
 }
 
@@ -90,7 +90,6 @@ export function declarationFromDocument(document: DocumentNode, file: string): P
 }
 
 export class PartialIndex {
-  readonly viewRoot: string
   readonly viewRoots: string[]
 
   private readonly declarations: Map<string, PartialDeclaration>
@@ -98,12 +97,11 @@ export class PartialIndex {
   private readonly byFile: Map<string, PartialDeclaration>
 
   static from(data: SerializedPartialIndex): PartialIndex {
-    return new PartialIndex([data.viewRoot], new Map(Object.entries(data.partials)))
+    return new PartialIndex(data.viewRoots, new Map(Object.entries(data.partials)))
   }
 
   constructor(viewRoots: string[], declarations: Map<string, PartialDeclaration>) {
     this.viewRoots = viewRoots
-    this.viewRoot = this.viewRoots[0] ?? "."
     this.declarations = declarations
     this.files = new Map()
     this.byFile = new Map()
@@ -164,6 +162,6 @@ export class PartialIndex {
   }
 
   toJSON(): SerializedPartialIndex {
-    return { viewRoot: this.viewRoot, partials: Object.fromEntries(this.declarations) }
+    return { viewRoots: this.viewRoots, partials: Object.fromEntries(this.declarations) }
   }
 }

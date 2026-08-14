@@ -84,7 +84,7 @@ fn a_single_root_still_resolves() {
   write(&app.join("shared/_header.html.erb"), "<div></div>\n");
 
   let templates = vec![app.join("shared/_header.html.erb").to_str().unwrap().to_string()];
-  let index = PartialIndex::new(&[app.clone()], templates);
+  let index = PartialIndex::new(std::slice::from_ref(&app), templates);
 
   assert_eq!(vec!["shared/header"], index.names());
   assert_eq!(1, index.resolve("shared/header", None).len());

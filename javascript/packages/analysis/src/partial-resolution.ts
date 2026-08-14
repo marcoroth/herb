@@ -145,6 +145,16 @@ export function templateNameForFile(filePath: string, viewRoot: string): string 
   return directory === "." ? withoutExtension : `${directory}/${withoutExtension}`
 }
 
+export function layoutCandidatesForRoots(templateFile: string, viewRoots: string[]): string[] {
+  for (const root of viewRoots) {
+    const candidates = layoutCandidatesFor(templateFile, root)
+
+    if (candidates.length > 0) return candidates
+  }
+
+  return []
+}
+
 export function layoutCandidatesFor(templateFile: string, viewRoot: string): string[] {
   const relative = relativeToViewRoot(normalize(templateFile), viewRoot)
 

@@ -44,6 +44,9 @@ module Herb
       # : (String, String | Pathname) -> String?
       def self.template_name_for: (String, String | Pathname) -> String?
 
+      # : (String, Array[String | Pathname]) -> Array[String]
+      def self.layout_candidates_for_roots: (String, Array[String | Pathname]) -> Array[String]
+
       # : (String, String | Pathname) -> Array[String]
       def self.layout_candidates_for: (String, String | Pathname) -> Array[String]
 

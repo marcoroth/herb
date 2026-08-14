@@ -10,7 +10,6 @@ module Herb
     class PartialIndex
       APPLICATION_DIRECTORY = "application" #: String
 
-      attr_reader :view_root #: Pathname
 
       attr_reader :templates #: Array[String]
 
@@ -31,7 +30,6 @@ module Herb
       #: (Array[String | Pathname], Array[String]) -> void
       def initialize(view_roots, templates)
         @view_roots = view_roots.map { |root| Pathname.new(root) } #: Array[Pathname]
-        @view_root = @view_roots.first || Pathname.new(".")
         @templates = templates
         @by_name = build_index(templates)
         @declarations = {} #: Hash[String, PartialDeclaration?]

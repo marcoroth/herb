@@ -66,8 +66,8 @@ impl ProjectIndex {
     self.graph.as_ref()
   }
 
-  pub fn view_root(&self) -> Option<&Path> {
-    self.partials.as_ref().map(|partials| partials.view_root())
+  pub fn view_roots(&self) -> Option<&[PathBuf]> {
+    self.partials.as_ref().map(|partials| partials.view_roots())
   }
 
   pub fn handle_change(&mut self, path: &str, source: Option<&str>) -> bool {

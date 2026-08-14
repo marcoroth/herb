@@ -100,6 +100,11 @@ module Herb
           directory == "." ? name : "#{directory}/#{name}"
         end
 
+        #: (String, Array[String | Pathname]) -> Array[String]
+        def layout_candidates_for_roots(template_file, view_roots)
+          view_roots.lazy.map { |root| layout_candidates_for(template_file, root) }.find { |candidates| candidates.any? } || []
+        end
+
         #: (String, String | Pathname) -> Array[String]
         def layout_candidates_for(template_file, view_root)
           relative = relative_to_view_root(template_file, view_root)

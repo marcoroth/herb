@@ -22,7 +22,7 @@ module Herb
       def index_call_sites: () -> void
 
       # : () -> Pathname?
-      def view_root: () -> Pathname?
+      def view_roots: () -> Pathname?
 
       # : (String, ?String?) -> bool
       def handle_change: (String, ?String?) -> bool

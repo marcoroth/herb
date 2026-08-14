@@ -5,8 +5,6 @@ module Herb
     class PartialIndex
       APPLICATION_DIRECTORY: String
 
-      attr_reader view_root: Pathname
-
       attr_reader templates: Array[String]
 
       # : (String | Pathname, ?templates: Array[String]?) -> PartialIndex

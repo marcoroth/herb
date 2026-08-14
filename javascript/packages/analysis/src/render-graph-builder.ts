@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs"
 
 import { getTagLocalName, isERBCaseNode, isERBIfNode, isERBOutputNode, isERBRenderNode, isERBUnlessNode, isHTMLElementNode, isPrismNodeType, isRubyRenderLocalNode } from "@herb-tools/core"
 import { outranksTemplate } from "./partial-index"
-import { layoutCandidatesFor, templateNameForFile, isPartialPath } from "./partial-resolution"
+import { layoutCandidatesForRoots, templateNameForRoots, isPartialPath } from "./partial-resolution"
 import { renderPartialExpression } from "./render-expression"
 import { staticAncestorAttributes } from "./ancestor-attributes"
 
@@ -227,11 +227,11 @@ export function collectCallSites(herb: HerbBackend, partials: PartialIndex, file
   return { unresolved, isDocumentRoot, yields, roots: { ...roots, renders: rootRenders, resolved: rootsResolved } }
 }
 
-function addLayoutCallSites(files: string[], layoutYields: Map<string, YieldSite[]>, viewRoot: string, callSites: Map<string, PartialCallSite[]>): void {
+function addLayoutCallSites(files: string[], layoutYields: Map<string, YieldSite[]>, viewRoots: string[], callSites: Map<string, PartialCallSite[]>): void {
   const layouts = new Map<string, string>()
 
   for (const file of files) {
-    const name = templateNameForFile(file, viewRoot)
+    const name = templateNameForRoots(file, viewRoots)
 
     if (name === null || !layoutYields.has(file)) {
       continue
@@ -247,7 +247,7 @@ function addLayoutCallSites(files: string[], layoutYields: Map<string, YieldSite
   }
 
   for (const file of files) {
-    for (const candidate of layoutCandidatesFor(file, viewRoot)) {
+    for (const candidate of layoutCandidatesForRoots(file, viewRoots)) {
       const layout = layouts.get(candidate)
 
       if (!layout || layout === file) {
@@ -268,7 +268,7 @@ function addLayoutCallSites(files: string[], layoutYields: Map<string, YieldSite
 }
 
 export async function buildRenderGraph(herb: HerbBackend, projectPath: string, partials: PartialIndex, options: RenderGraphOptions = {}): Promise<RenderGraph> {
-  const files = await templatesIn(projectPath, partials.viewRoot, options.include ?? [])
+  const files = await templatesIn(projectPath, partials.viewRoots[0] ?? ".", options.include ?? [])
   const excluded = options.exclude?.length ? picomatch(options.exclude) : null
   const callSites = new Map<string, PartialCallSite[]>()
   const documentRoots = new Set<string>()
@@ -318,7 +318,7 @@ export async function buildRenderGraph(herb: HerbBackend, projectPath: string, p
   }
 
   if (options.resolveLayouts !== false) {
-    addLayoutCallSites(scanned, layoutYields, partials.viewRoot, callSites)
+    addLayoutCallSites(scanned, layoutYields, partials.viewRoots, callSites)
   }
 
   return new RenderGraph(callSites, roots, documentRoots, unresolvedRenders, skippedFiles)

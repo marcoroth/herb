@@ -1,5 +1,7 @@
 import { describe, test, expect } from "vitest"
 
+import { PartialIndex } from "../src/partial-index"
+
 import {
   partialNameForRoots,
   relativeToViewRoots,
@@ -68,5 +70,14 @@ describe("resolvePartial", () => {
     const index: PartialPaths = new Map([["shared/header", `${APP}/shared/_header.html.erb`]])
 
     expect(resolvePartial("shared/header", "", index, [APP])).toBe(`${APP}/shared/_header.html.erb`)
+  })
+})
+
+describe("serialization", () => {
+  test("round-trips every view root", () => {
+    const index = new PartialIndex(ROOTS, new Map())
+    const restored = PartialIndex.from(index.toJSON())
+
+    expect(restored.viewRoots).toEqual(ROOTS)
   })
 })

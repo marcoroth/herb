@@ -45,8 +45,8 @@ module Herb
       end
 
       #: () -> Pathname?
-      def view_root
-        @partials&.view_root
+      def view_roots
+        @partials&.view_roots
       end
 
       #: (String, ?String?) -> bool
