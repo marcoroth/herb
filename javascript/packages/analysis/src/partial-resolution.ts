@@ -105,9 +105,34 @@ export function formatOf(filePath: string): string | null {
 
   if (stripped === null) return null
 
-  const format = stripped.startsWith(".") ? stripped.slice(1) : stripped
+  const withVariant = stripped.startsWith(".") ? stripped.slice(1) : stripped
+  const format = withVariant.split("+")[0] ?? withVariant
 
   return format === "" ? null : format
+}
+
+export function variantOf(filePath: string): string | null {
+  const name = basename(normalize(filePath))
+  const dot = name.indexOf(".")
+
+  if (dot === -1) return null
+
+  const extension = name.slice(dot)
+  const stripped = extension.endsWith(".erb")
+    ? extension.slice(0, -".erb".length)
+    : extension.endsWith(".herb")
+      ? extension.slice(0, -".herb".length)
+      : null
+
+  if (stripped === null) return null
+
+  const plus = stripped.indexOf("+")
+
+  if (plus === -1) return null
+
+  const variant = stripped.slice(plus + 1)
+
+  return variant === "" ? null : variant
 }
 
 export function withoutTemplateExtension(partialName: string): string {

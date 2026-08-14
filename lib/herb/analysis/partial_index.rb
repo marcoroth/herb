@@ -55,13 +55,15 @@ module Herb
         candidates.sort_by do |file|
           candidate = PartialResolution.format_of(file)
 
-          if candidate == format
-            0
-          elsif candidate.nil?
-            1
-          else
-            2
-          end
+          matches = if candidate == format
+                      0
+                    elsif candidate.nil?
+                      1
+                    else
+                      2
+                    end
+
+          [matches, PartialResolution.variant_of(file) ? 1 : 0]
         end
       end
 

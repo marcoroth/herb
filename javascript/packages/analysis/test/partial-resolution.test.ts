@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest"
 
 import {
   formatOf,
+  variantOf,
   isPartialPath,
   partialNameForFile,
   resolvePartial,
@@ -180,5 +181,22 @@ describe("formatOf", () => {
   test("returns null when the filename carries no format", () => {
     expect(formatOf("app/views/posts/_row.erb")).toBeNull()
     expect(formatOf("app/views/posts/_row.herb")).toBeNull()
+  })
+})
+
+describe("variantOf", () => {
+  test("reads the variant out of a filename", () => {
+    expect(variantOf("app/views/posts/_row.html+mobile.erb")).toBe("mobile")
+    expect(variantOf("app/views/posts/_row.html+tablet.herb")).toBe("tablet")
+  })
+
+  test("returns null when the filename carries no variant", () => {
+    expect(variantOf("app/views/posts/_row.html.erb")).toBeNull()
+    expect(variantOf("app/views/posts/_row.erb")).toBeNull()
+  })
+
+  test("a variant keeps the format of its base template", () => {
+    expect(formatOf("app/views/posts/_row.html+mobile.erb")).toBe("html")
+    expect(formatOf("app/views/posts/_row.turbo_stream+mobile.erb")).toBe("turbo_stream")
   })
 })

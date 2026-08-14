@@ -31,6 +31,11 @@ module Herb
       # : (String) -> String?
       def self.format_of: (String) -> String?
 
+      # The variant a template is restricted to, if any. Rails renders `_row.html+mobile.erb` only
+      # when that variant is requested, and falls back to the plain template otherwise.
+      # : (String) -> String?
+      def self.variant_of: (String) -> String?
+
       # : (String) -> String
       def self.without_template_extension: (String) -> String
 

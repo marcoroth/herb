@@ -65,7 +65,21 @@ pub fn format_of(file: &str) -> Option<String> {
   let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
   let format = stripped.strip_prefix('.')?;
 
+  let format = format.split('+').next().unwrap_or(format);
+
   (!format.is_empty()).then(|| format.to_string())
+}
+
+pub fn variant_of(file: &str) -> Option<String> {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+  let dot = base.find('.')?;
+  let extension = &base[dot..];
+
+  let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
+  let (_, variant) = stripped.split_once('+')?;
+
+  (!variant.is_empty()).then(|| variant.to_string())
 }
 
 pub fn without_template_extension(partial_name: &str) -> &str {

@@ -24,6 +24,34 @@ module Analysis
       assert_nil Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.herb")
     end
 
+    test "reads the variant out of a filename" do
+      assert_equal "mobile", Herb::Analysis::PartialResolution.variant_of("app/views/posts/_row.html+mobile.erb")
+      assert_equal "tablet", Herb::Analysis::PartialResolution.variant_of("app/views/posts/_row.html+tablet.herb")
+      assert_nil Herb::Analysis::PartialResolution.variant_of("app/views/posts/_row.html.erb")
+      assert_nil Herb::Analysis::PartialResolution.variant_of("app/views/posts/_row.erb")
+    end
+
+    test "a variant keeps the format of its base template" do
+      assert_equal "html", Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.html+mobile.erb")
+      assert_equal "turbo_stream", Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.turbo_stream+mobile.erb")
+    end
+
+    test "the plain template is preferred over a variant" do
+      Dir.mktmpdir do |dir|
+        views = File.join(dir, "app", "views")
+
+        caller_file = write(views, "posts/index.html.erb")
+        variant = write(views, "posts/_row.html+mobile.erb")
+        plain = write(views, "posts/_row.html.erb")
+
+        index = Herb::Analysis::PartialIndex.new([views], [caller_file, variant, plain])
+        resolved = index.resolve("posts/row", caller_file)
+
+        assert_equal plain, resolved.first
+        assert_includes resolved, variant
+      end
+    end
+
     test "a caller reaches the partial matching its own format" do
       Dir.mktmpdir do |dir|
         views = File.join(dir, "app", "views")

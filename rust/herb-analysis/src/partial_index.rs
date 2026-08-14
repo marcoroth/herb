@@ -170,10 +170,14 @@ impl PartialIndex {
     };
 
     let mut ordered = candidates.to_vec();
-    ordered.sort_by_key(|file| match partial_resolution::format_of(file) {
-      Some(candidate) if candidate == format => 0,
-      None => 1,
-      Some(_) => 2,
+    ordered.sort_by_key(|file| {
+      let matches = match partial_resolution::format_of(file) {
+        Some(candidate) if candidate == format => 0,
+        None => 1,
+        Some(_) => 2,
+      };
+
+      (matches, usize::from(partial_resolution::variant_of(file).is_some()))
     });
 
     ordered

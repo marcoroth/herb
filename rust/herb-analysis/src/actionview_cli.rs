@@ -280,8 +280,20 @@ fn check(arguments: &[String]) -> i32 {
         eprintln!("{file}\t{name}");
       }
 
-      match index.resolve(name, Some(file)).first() {
-        Some(target) => rendered.push(target.clone()),
+      let resolved = index.resolve(name, Some(file));
+
+      match resolved.first() {
+        Some(target) => {
+          rendered.push(target.clone());
+
+          let format = herb_analysis::partial_resolution::format_of(target);
+
+          for candidate in resolved.iter().skip(1) {
+            if herb_analysis::partial_resolution::variant_of(candidate).is_some() && herb_analysis::partial_resolution::format_of(candidate) == format {
+              rendered.push(candidate.clone());
+            }
+          }
+        }
         None => {
           let branches = static_branches(name);
           let targets: Vec<String> = branches

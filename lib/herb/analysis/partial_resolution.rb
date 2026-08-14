@@ -54,9 +54,27 @@ module Herb
 
           return nil if stripped == extension
 
-          format = stripped.delete_prefix(".")
+          format = stripped.delete_prefix(".").split("+").first.to_s
 
           format.empty? ? nil : format
+        end
+
+        #: (String) -> String?
+        def variant_of(file)
+          base = File.basename(file)
+          dot = base.index(".")
+
+          return nil unless dot
+
+          extension = base[dot..].to_s
+          stripped = extension.delete_suffix(".erb")
+          stripped = stripped.delete_suffix(".herb") if stripped == extension
+
+          return nil if stripped == extension
+
+          _, variant = stripped.split("+", 2)
+
+          variant.to_s.empty? ? nil : variant
         end
 
         #: (String) -> String
