@@ -1,5 +1,5 @@
 import { isERBStrictLocalsNode, isRubyParameterNode } from "@herb-tools/core"
-import { PARTIAL_EXTENSIONS, partialNameForFile, resolvePartial } from "./partial-resolution"
+import { PARTIAL_EXTENSIONS, partialNameForRoots, resolvePartial } from "./partial-resolution"
 
 import type { DocumentNode } from "@herb-tools/core"
 import type { PartialPaths } from "./partial-resolution"
@@ -91,6 +91,7 @@ export function declarationFromDocument(document: DocumentNode, file: string): P
 
 export class PartialIndex {
   readonly viewRoot: string
+  readonly viewRoots: string[]
 
   private readonly declarations: Map<string, PartialDeclaration>
   private readonly files: PartialPaths
@@ -100,8 +101,9 @@ export class PartialIndex {
     return new PartialIndex(data.viewRoot, new Map(Object.entries(data.partials)))
   }
 
-  constructor(viewRoot: string, declarations: Map<string, PartialDeclaration>) {
-    this.viewRoot = viewRoot
+  constructor(viewRoot: string | string[], declarations: Map<string, PartialDeclaration>) {
+    this.viewRoots = Array.isArray(viewRoot) ? viewRoot : [viewRoot]
+    this.viewRoot = this.viewRoots[0] ?? "."
     this.declarations = declarations
     this.files = new Map()
     this.byFile = new Map()
@@ -117,7 +119,7 @@ export class PartialIndex {
   }
 
   lookup(partialName: string, sourceFile: string | undefined): PartialDeclaration | null {
-    const file = resolvePartial(partialName, sourceFile ?? "", this.files, this.viewRoot)
+    const file = resolvePartial(partialName, sourceFile ?? "", this.files, this.viewRoots)
 
     if (file === null) return null
 
@@ -125,7 +127,7 @@ export class PartialIndex {
   }
 
   update(declaration: PartialDeclaration): string | null {
-    const name = partialNameForFile(declaration.file, this.viewRoot)
+    const name = partialNameForRoots(declaration.file, this.viewRoots)
     if (name === null) return null
 
     const existing = this.declarations.get(name)
@@ -144,7 +146,7 @@ export class PartialIndex {
   }
 
   remove(file: string): string | null {
-    const name = partialNameForFile(file, this.viewRoot)
+    const name = partialNameForRoots(file, this.viewRoots)
     if (name === null) return null
 
     const existing = this.declarations.get(name)

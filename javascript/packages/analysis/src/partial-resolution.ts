@@ -50,6 +50,40 @@ function relativeToViewRoot(path: string, viewRoot: string): string | null {
   return normalizedPath.slice(normalizedRoot.length + 1)
 }
 
+export function relativeToViewRoots(path: string, viewRoots: string[]): [number, string] | null {
+  for (const [index, root] of viewRoots.entries()) {
+    const relative = relativeToViewRoot(path, root)
+
+    if (relative !== null) return [index, relative]
+  }
+
+  return null
+}
+
+export function partialNameForRoots(filePath: string, viewRoots: string[]): string | null {
+  for (const root of viewRoots) {
+    const name = partialNameForFile(filePath, root)
+
+    if (name !== null) return name
+  }
+
+  return null
+}
+
+export function templateNameForRoots(filePath: string, viewRoots: string[]): string | null {
+  for (const root of viewRoots) {
+    const name = templateNameForFile(filePath, root)
+
+    if (name !== null) return name
+  }
+
+  return null
+}
+
+export function rootIndexFor(filePath: string, viewRoots: string[]): number {
+  return relativeToViewRoots(filePath, viewRoots)?.[0] ?? viewRoots.length
+}
+
 export function projectRelativePath(filePath: string, projectPath: string | undefined): string {
   if (!projectPath) return normalize(filePath)
 
@@ -136,12 +170,18 @@ export function layoutCandidatesFor(templateFile: string, viewRoot: string): str
   return candidates
 }
 
-export function resolvePartial(partialName: string, sourceFile: string, index: PartialPaths, viewRoot: string): string | null {
+export function resolvePartial(
+  partialName: string,
+  sourceFile: string,
+  index: PartialPaths,
+  viewRoot: string | string[]
+): string | null {
+  const viewRoots = Array.isArray(viewRoot) ? viewRoot : [viewRoot]
   const exact = index.get(partialName)
 
   if (exact !== undefined) return exact
 
-  const sourceDirectory = relativeToViewRoot(dirname(normalize(sourceFile)), viewRoot)
+  const sourceDirectory = relativeToViewRoots(dirname(normalize(sourceFile)), viewRoots)?.[1] ?? null
 
   if (sourceDirectory !== null && sourceDirectory !== ".") {
     const relative = index.get(`${sourceDirectory}/${partialName}`)
