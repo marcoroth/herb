@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 use herb::herb::{parse_with_options, ParserOptions};
 
 use crate::partial_declaration::PartialDeclaration;
-use crate::partial_resolution::{self, by_precedence, partial_name_for, template_path, view_root_for, APPLICATION_DIRECTORY};
+use crate::partial_resolution::{self, by_precedence, partial_name_for_roots, root_index_for, template_path, view_root_for, APPLICATION_DIRECTORY};
 
 pub struct PartialIndex {
-  view_root: PathBuf,
+  view_roots: Vec<PathBuf>,
   templates: Vec<String>,
   by_name: BTreeMap<String, Vec<String>>,
   declarations: BTreeMap<String, PartialDeclaration>,
@@ -73,8 +73,12 @@ impl PartialIndex {
   }
 
   pub fn new(view_root: &Path, templates: Vec<String>) -> Self {
+    Self::with_view_roots(&[view_root.to_path_buf()], templates)
+  }
+
+  pub fn with_view_roots(view_roots: &[PathBuf], templates: Vec<String>) -> Self {
     let mut index = Self {
-      view_root: view_root.to_path_buf(),
+      view_roots: view_roots.to_vec(),
       templates,
       by_name: BTreeMap::new(),
       declarations: BTreeMap::new(),
@@ -82,6 +86,10 @@ impl PartialIndex {
 
     index.rebuild();
     index
+  }
+
+  fn root_strings(&self) -> Vec<String> {
+    self.view_roots.iter().filter_map(|root| root.to_str().map(str::to_string)).collect()
   }
 
   fn rebuild(&mut self) {
@@ -95,15 +103,22 @@ impl PartialIndex {
       by_name.entry(name).or_default().push(file.clone());
     }
 
+    let roots = self.root_strings();
+
     for files in by_name.values_mut() {
       by_precedence(files);
+      files.sort_by_key(|file| root_index_for(file, &roots));
     }
 
     self.by_name = by_name;
   }
 
   pub fn view_root(&self) -> &Path {
-    &self.view_root
+    self.view_roots.first().map(PathBuf::as_path).unwrap_or_else(|| Path::new("."))
+  }
+
+  pub fn view_roots(&self) -> &[PathBuf] {
+    &self.view_roots
   }
 
   pub fn templates(&self) -> &[String] {
@@ -138,7 +153,7 @@ impl PartialIndex {
   }
 
   pub fn partial_name_for(&self, file: &str) -> Option<String> {
-    partial_name_for(file, self.view_root.to_str()?)
+    partial_name_for_roots(file, &self.root_strings())
   }
 
   pub fn files_for(&self, partial_name: &str) -> &[String] {
@@ -147,9 +162,13 @@ impl PartialIndex {
 
   fn source_directory_for(&self, source_file: &str) -> Option<String> {
     let directory = Path::new(source_file).parent()?;
-    let relative = directory.strip_prefix(&self.view_root).ok()?;
 
-    Some(relative.to_str()?.to_string())
+    self
+      .view_roots
+      .iter()
+      .find_map(|root| directory.strip_prefix(root).ok())
+      .and_then(|relative| relative.to_str())
+      .map(str::to_string)
   }
 
   pub fn resolve(&self, partial_name: &str, source_file: Option<&str>) -> &[String] {

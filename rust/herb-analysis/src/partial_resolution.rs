@@ -70,6 +70,13 @@ pub fn partial_path(file: &str) -> bool {
   name.starts_with(PARTIAL_PREFIX) && EXTENSIONS.iter().any(|extension| name.ends_with(extension))
 }
 
+pub fn relative_to_view_roots(path: &str, view_roots: &[String]) -> Option<(usize, String)> {
+  view_roots
+    .iter()
+    .enumerate()
+    .find_map(|(index, root)| relative_to_view_root(path, root).map(|relative| (index, relative)))
+}
+
 fn relative_to_view_root(path: &str, view_root: &str) -> Option<String> {
   let normalized_path = normalize(path);
   let normalized_root = normalize(view_root);
@@ -92,6 +99,18 @@ fn without_extension(name: &str) -> &str {
     Some(index) => &name[..index],
     None => name,
   }
+}
+
+pub fn partial_name_for_roots(file: &str, view_roots: &[String]) -> Option<String> {
+  view_roots.iter().find_map(|root| partial_name_for(file, root))
+}
+
+pub fn template_name_for_roots(file: &str, view_roots: &[String]) -> Option<String> {
+  view_roots.iter().find_map(|root| template_name_for(file, root))
+}
+
+pub fn root_index_for(file: &str, view_roots: &[String]) -> usize {
+  relative_to_view_roots(file, view_roots).map(|(index, _)| index).unwrap_or(view_roots.len())
 }
 
 pub fn partial_name_for(file: &str, view_root: &str) -> Option<String> {
