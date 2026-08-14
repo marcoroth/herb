@@ -30,7 +30,7 @@ fn names_a_partial_from_a_secondary_view_root() {
     engine.join("billing/_invoice.html.erb").to_str().unwrap().to_string(),
   ];
 
-  let index = PartialIndex::with_view_roots(&[app.clone(), engine.clone()], templates);
+  let index = PartialIndex::new(&[app.clone(), engine.clone()], templates);
 
   assert_eq!(vec!["billing/invoice"], index.names());
 }
@@ -49,7 +49,7 @@ fn an_earlier_view_root_shadows_a_later_one() {
     app.join("billing/_invoice.html.erb").to_str().unwrap().to_string(),
   ];
 
-  let index = PartialIndex::with_view_roots(&[app.clone(), engine.clone()], templates);
+  let index = PartialIndex::new(&[app.clone(), engine.clone()], templates);
   let resolved = index.resolve("billing/invoice", None);
 
   assert_eq!(2, resolved.len());
@@ -70,21 +70,21 @@ fn resolves_a_sibling_within_the_root_that_owns_the_caller() {
     engine.join("billing/_row.html.erb").to_str().unwrap().to_string(),
   ];
 
-  let index = PartialIndex::with_view_roots(&[app, engine.clone()], templates);
+  let index = PartialIndex::new(&[app, engine.clone()], templates);
   let caller = engine.join("billing/index.html.erb").to_str().unwrap().to_string();
 
   assert_eq!(1, index.resolve("row", Some(&caller)).len());
 }
 
 #[test]
-fn a_single_root_behaves_as_before() {
+fn a_single_root_still_resolves() {
   let root = scratch("single");
   let app = root.join("app/views");
 
   write(&app.join("shared/_header.html.erb"), "<div></div>\n");
 
   let templates = vec![app.join("shared/_header.html.erb").to_str().unwrap().to_string()];
-  let index = PartialIndex::new(&app, templates);
+  let index = PartialIndex::new(&[app.clone()], templates);
 
   assert_eq!(vec!["shared/header"], index.names());
   assert_eq!(1, index.resolve("shared/header", None).len());

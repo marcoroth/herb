@@ -64,9 +64,9 @@ describe("resolvePartial", () => {
     expect(resolvePartial("row", caller, index, ROOTS)).toBe(`${ENGINE}/billing/_row.html.erb`)
   })
 
-  test("accepts a single root", () => {
+  test("resolves with a single root", () => {
     const index: PartialPaths = new Map([["shared/header", `${APP}/shared/_header.html.erb`]])
 
-    expect(resolvePartial("shared/header", "", index, APP)).toBe(`${APP}/shared/_header.html.erb`)
+    expect(resolvePartial("shared/header", "", index, [APP])).toBe(`${APP}/shared/_header.html.erb`)
   })
 })

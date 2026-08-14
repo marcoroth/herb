@@ -58,7 +58,7 @@ export async function buildPartialIndex(herb: HerbBackend, projectPath: string):
     if (declaration) declarations.set(name, declaration)
   }
 
-  return new PartialIndex(viewRoot, declarations)
+  return new PartialIndex([viewRoot], declarations)
 }
 
 export function partialIndexFrom(data: SerializedPartialIndex | undefined): PartialIndex | undefined {

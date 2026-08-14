@@ -60,12 +60,12 @@ module Analysis
       end
     end
 
-    test "a single root behaves as before" do
+    test "a single root still resolves" do
       Dir.mktmpdir do |dir|
         app = File.join(dir, "app", "views")
         header = write(app, "shared/_header.html.erb")
 
-        index = Herb::Analysis::PartialIndex.new(app, [header])
+        index = Herb::Analysis::PartialIndex.new([app], [header])
 
         assert_equal ["shared/header"], index.names
         assert_equal [header], index.resolve("shared/header", nil)

@@ -174,9 +174,8 @@ export function resolvePartial(
   partialName: string,
   sourceFile: string,
   index: PartialPaths,
-  viewRoot: string | string[]
+  viewRoots: string[]
 ): string | null {
-  const viewRoots = Array.isArray(viewRoot) ? viewRoot : [viewRoot]
   const exact = index.get(partialName)
 
   if (exact !== undefined) return exact

@@ -65,18 +65,14 @@ impl PartialIndex {
     collect_templates(&view_root, &mut templates);
     templates.sort();
 
-    Self::new(&view_root, templates)
+    Self::new(&[view_root], templates)
   }
 
   pub fn resolve_view_root(project_path: &Path) -> PathBuf {
     view_root_for(project_path)
   }
 
-  pub fn new(view_root: &Path, templates: Vec<String>) -> Self {
-    Self::with_view_roots(&[view_root.to_path_buf()], templates)
-  }
-
-  pub fn with_view_roots(view_roots: &[PathBuf], templates: Vec<String>) -> Self {
+  pub fn new(view_roots: &[PathBuf], templates: Vec<String>) -> Self {
     let mut index = Self {
       view_roots: view_roots.to_vec(),
       templates,

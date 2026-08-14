@@ -98,11 +98,11 @@ export class PartialIndex {
   private readonly byFile: Map<string, PartialDeclaration>
 
   static from(data: SerializedPartialIndex): PartialIndex {
-    return new PartialIndex(data.viewRoot, new Map(Object.entries(data.partials)))
+    return new PartialIndex([data.viewRoot], new Map(Object.entries(data.partials)))
   }
 
-  constructor(viewRoot: string | string[], declarations: Map<string, PartialDeclaration>) {
-    this.viewRoots = Array.isArray(viewRoot) ? viewRoot : [viewRoot]
+  constructor(viewRoots: string[], declarations: Map<string, PartialDeclaration>) {
+    this.viewRoots = viewRoots
     this.viewRoot = this.viewRoots[0] ?? "."
     this.declarations = declarations
     this.files = new Map()

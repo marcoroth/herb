@@ -376,7 +376,7 @@ module Herb
         return nil unless entry_result
         return nil unless entry_result.instance_variables.include?(state) || entry_result.constants.include?(state)
 
-        index = PartialIndex.new(@view_root, reachable)
+        index = PartialIndex.new([@view_root], reachable)
         affected = Set.new([entry_point]) #: Set[String]
 
         state_locals = {} #: Hash[String, Set[String]]

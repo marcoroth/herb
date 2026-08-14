@@ -126,45 +126,45 @@ describe("@herb-tools/core", () => {
     ])
 
     test("resolves a fully qualified name", () => {
-      expect(resolvePartial("users/card", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
 
     test("resolves a bare name against the rendering template's directory", () => {
-      expect(resolvePartial("avatar", "app/views/users/show.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_avatar.html.erb")
+      expect(resolvePartial("avatar", "app/views/users/show.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_avatar.html.erb")
     })
 
     test("falls back to the application directory for a bare name", () => {
-      expect(resolvePartial("flash", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBe("app/views/application/_flash.html.erb")
+      expect(resolvePartial("flash", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/application/_flash.html.erb")
     })
 
     test("prefers the exact name over the relative one", () => {
-      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
 
     test("resolves a qualified name relative to the rendering template's directory", () => {
       const nested = paths(["app/views/admin/users/_card.html.erb"])
 
-      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", nested, VIEW_ROOT)).toBe("app/views/admin/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", nested, [VIEW_ROOT])).toBe("app/views/admin/users/_card.html.erb")
     })
 
     test("does not fall back to the application directory for a qualified name", () => {
-      expect(resolvePartial("users/flash", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBeNull()
+      expect(resolvePartial("users/flash", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBeNull()
     })
 
     test("returns null for an unknown partial", () => {
-      expect(resolvePartial("users/missing", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBeNull()
+      expect(resolvePartial("users/missing", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBeNull()
     })
 
     test("resolves from a template at the view root", () => {
-      expect(resolvePartial("flash", "app/views/index.html.erb", index, VIEW_ROOT)).toBe("app/views/application/_flash.html.erb")
+      expect(resolvePartial("flash", "app/views/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/application/_flash.html.erb")
     })
 
     test("resolves from a source file outside the view root", () => {
-      expect(resolvePartial("users/card", "app/components/card_component.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/components/card_component.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
 
     test("resolves without a known source file", () => {
-      expect(resolvePartial("users/card", "", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
   })
 })

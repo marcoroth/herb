@@ -20,7 +20,7 @@ module Herb
         view_root = resolve_view_root(root)
         files = templates || Dir[view_root.join("**", PartialResolution::TEMPLATE_GLOB_PATTERN)].sort
 
-        new(view_root, files)
+        new([view_root], files)
       end
 
       #: (String | Pathname) -> Pathname
@@ -28,11 +28,9 @@ module Herb
         PartialResolution.view_root_for(project_path)
       end
 
-      #: (String | Pathname | Array[String | Pathname], Array[String]) -> void
-      def initialize(view_root, templates)
-        roots = view_root.is_a?(Array) ? view_root : [view_root]
-
-        @view_roots = roots.map { |root| Pathname.new(root) } #: Array[Pathname]
+      #: (Array[String | Pathname], Array[String]) -> void
+      def initialize(view_roots, templates)
+        @view_roots = view_roots.map { |root| Pathname.new(root) } #: Array[Pathname]
         @view_root = @view_roots.first || Pathname.new(".")
         @templates = templates
         @by_name = build_index(templates)
