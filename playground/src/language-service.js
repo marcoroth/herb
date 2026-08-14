@@ -10,6 +10,7 @@ import {
   FoldingRangeProvider,
   DocumentSymbolProvider,
   DocumentHighlightProvider,
+  SemanticTokensProvider,
   RewriteCodeActionProvider,
   TextDocument,
   CompletionItemKind,
@@ -193,6 +194,7 @@ export function createLanguageService(herb) {
     folding: new FoldingRangeProvider(parserService),
     symbols: new DocumentSymbolProvider(parserService),
     highlights: new DocumentHighlightProvider(parserService),
+    semanticTokens: new SemanticTokensProvider(parserService),
     rewriteCodeActions: new RewriteCodeActionProvider(parserService, BASE_DIR),
   }
 }
@@ -281,6 +283,20 @@ export function registerLanguageService(herb) {
           }
         }, { actions: [], dispose() {} })
       },
+    }),
+
+    languages.registerDocumentSemanticTokensProvider(LANGUAGE_ID, {
+      getLegend() {
+        return service.semanticTokens.legend
+      },
+
+      provideDocumentSemanticTokens(model) {
+        return safely(() => ({
+          data: new Uint32Array(service.semanticTokens.getSemanticTokens(documentFor(model)).data),
+        }), { data: new Uint32Array() })
+      },
+
+      releaseDocumentSemanticTokens() {},
     }),
 
     languages.registerDocumentHighlightProvider(LANGUAGE_ID, {

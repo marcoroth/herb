@@ -24,6 +24,9 @@ export interface PersonalHerbSettings {
     minimumLines?: number
     maximumClasses?: number
   }
+  semanticTokens?: {
+    enabled?: boolean
+  }
 }
 
 /**
@@ -46,6 +49,9 @@ export const defaultPersonalSettings: PersonalHerbSettings = {
     enabled: true,
     minimumLines: defaultInlayHintOptions.minimumLines,
     maximumClasses: defaultInlayHintOptions.maximumClasses
+  },
+  semanticTokens: {
+    enabled: true
   }
 }
 
@@ -121,6 +127,9 @@ export class UserSettings {
         enabled: resolved.inlayHints?.enabled ?? this.defaults.inlayHints!.enabled!,
         minimumLines: resolved.inlayHints?.minimumLines ?? this.defaults.inlayHints!.minimumLines!,
         maximumClasses: resolved.inlayHints?.maximumClasses ?? this.defaults.inlayHints!.maximumClasses!
+      },
+      semanticTokens: {
+        enabled: resolved.semanticTokens?.enabled ?? this.defaults.semanticTokens!.enabled!
       }
     }
   }

@@ -127,6 +127,13 @@
           "description": "How many of an element's classes to include in its hint. Past a couple the list is the element's styling rather than its name, so the rest are left off. Set to 0 to name elements by id alone.",
           "markdownDescription": "How many of an element's classes to include in its hint. Past a couple the list is the element's styling rather than its name, so the rest are left off, which keeps utility-class markup readable. Set to `0` to name elements by `id` alone."
         },
+        "languageServerHerb.semanticTokens.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Let Herb colour HTML+ERB from the parsed template rather than the TextMate grammar, which keeps tags, attributes and ERB delimiters right when they are nested inside each other. Action View helpers are marked as coming from the framework.",
+          "markdownDescription": "Let Herb colour HTML+ERB from the parsed template rather than the TextMate grammar, which keeps tags, attributes and ERB delimiters right when they are nested inside each other. Action View helpers are marked as coming from the framework.\n\n**Note**: VS Code's own `editor.semanticHighlighting.enabled` still applies on top, and a colour theme that does not opt into semantic highlighting ignores these tokens entirely."
+        },
         "languageServerHerb.trace.server": {
           "scope": "window",
           "type": "string",

@@ -156,6 +156,7 @@ Some preferences are yours alone rather than the team's, so they live with your 
 | `inlayHints.enabled`        | `true`    | Annotate closing tags with what they close                        |
 | `inlayHints.minimumLines`   | `10`      | How far below its opening tag a closing tag must be to get a hint |
 | `inlayHints.maximumClasses` | `2`       | How many of an element's classes to include in its hint           |
+| `semanticTokens.enabled`  | `true`    | Colour HTML+ERB from the parsed template rather than the grammar  |
 
 How you set them depends on the editor. VS Code and Cursor contribute them as `languageServerHerb.*` preferences, so you set them in your `settings.json` or through the settings UI:
 

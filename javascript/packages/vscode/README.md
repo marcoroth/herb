@@ -128,6 +128,12 @@ Only the first couple of classes make it into the name, since past that the list
 
 A tag close enough to read its opening line gets no hint. `languageServerHerb.inlayHints.minimumLines` sets how far apart the two have to be, defaulting to 10 so that only blocks you cannot take in at a glance are annotated, and `languageServerHerb.inlayHints.enabled` turns the feature off entirely. VS Code's own `editor.inlayHints.enabled` still applies on top, but it hides hints from every extension at once.
 
+#### Semantic Highlighting
+
+Colours come from the parsed template rather than a TextMate grammar, so a tag, an attribute name and an ERB delimiter stay right even when they are nested inside each other, which is where a regex-based grammar tends to give up. Action View helpers are marked as coming from the framework rather than from your own code.
+
+Ruby inside `<% %>` is deliberately left alone, since a Ruby language server describes it better. Turn the whole thing off with `languageServerHerb.semanticTokens.enabled`. VS Code's own `editor.semanticHighlighting.enabled` applies on top, and a colour theme that does not opt into semantic highlighting ignores these tokens entirely.
+
 #### Editing
 
 Folding ranges, matching tag highlighting, and HTML-aware comment toggling with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>/</kbd> that knows whether the cursor is in HTML or ERB.
@@ -153,6 +159,7 @@ If a `.herb.yml` exists in the project root, its configuration always takes prec
 | `languageServerHerb.inlayHints.enabled`        | `true`    | Annotate closing tags with what they close                        |
 | `languageServerHerb.inlayHints.minimumLines`   | `10`      | How far below its opening tag a closing tag must be to get a hint |
 | `languageServerHerb.inlayHints.maximumClasses` | `2`       | How many of an element's classes to include in its hint           |
+| `languageServerHerb.semanticTokens.enabled`   | `true`    | Colour HTML+ERB from the parsed template rather than the grammar |
 | `languageServerHerb.trace.server`              | `verbose` | Trace the communication with the language server (for debugging)  |
 
 `languageServerHerb.trace.server` is the exception: it is editor-only and is never read from `.herb.yml`.

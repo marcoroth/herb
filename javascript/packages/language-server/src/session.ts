@@ -9,7 +9,7 @@ import { Capabilities } from "./capabilities"
 import { WorkspaceFolders } from "./workspace_folders"
 import { Documents } from "./documents"
 import { DiagnosticsPublisher } from "./diagnostics_publisher"
-import { ParserService, FoldingRangeProvider, SelectionRangeProvider, DocumentHighlightProvider, InlayHintProvider, HoverProvider, RewriteCodeActionProvider, CommentProvider, DocumentSymbolProvider, ExtractCodeActionProvider, DefinitionProvider } from "@herb-tools/language-service"
+import { ParserService, FoldingRangeProvider, SelectionRangeProvider, DocumentHighlightProvider, InlayHintProvider, SemanticTokensProvider, HoverProvider, RewriteCodeActionProvider, CommentProvider, DocumentSymbolProvider, ExtractCodeActionProvider, DefinitionProvider } from "@herb-tools/language-service"
 import { ConfigService } from "./config_service"
 import { SaveOrchestrator } from "./save_orchestrator"
 
@@ -36,6 +36,7 @@ export class Session {
   selectionRangeProvider: SelectionRangeProvider
   documentHighlightProvider: DocumentHighlightProvider
   inlayHintProvider: InlayHintProvider
+  semanticTokensProvider: SemanticTokensProvider
   hoverProvider: HoverProvider
   rewriteCodeActionProvider: RewriteCodeActionProvider
   extractCodeActionProvider: ExtractCodeActionProvider
@@ -73,6 +74,7 @@ export class Session {
     this.selectionRangeProvider = new SelectionRangeProvider(this.parserService)
     this.documentHighlightProvider = new DocumentHighlightProvider(this.parserService)
     this.inlayHintProvider = new InlayHintProvider(this.parserService)
+    this.semanticTokensProvider = new SemanticTokensProvider(this.parserService)
     this.hoverProvider = new HoverProvider(this.parserService, process.cwd())
     this.rewriteCodeActionProvider = new RewriteCodeActionProvider(this.parserService, process.cwd())
     this.commentProvider = new CommentProvider(this.parserService)

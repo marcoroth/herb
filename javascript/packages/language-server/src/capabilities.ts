@@ -36,6 +36,10 @@ export class Capabilities {
     return this.client.workspace?.inlayHint?.refreshSupport === true
   }
 
+  get supportsSemanticTokensRefresh(): boolean {
+    return this.client.workspace?.semanticTokens?.refreshSupport === true
+  }
+
   get supportsDefinitionLinks(): boolean {
     return this.client.textDocument?.definition?.linkSupport === true
   }

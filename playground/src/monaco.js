@@ -34,6 +34,33 @@ function overflowWidgetsRoot() {
   return root
 }
 
+const SEMANTIC_RULES = [
+  { token: "type", foreground: "E06C75" },
+  { token: "property", foreground: "D19A66" },
+  { token: "macro", foreground: "BE5046" },
+  { token: "macro.output", foreground: "C678DD" },
+  { token: "function.defaultLibrary", foreground: "61AFEF" },
+  { token: "parameter", foreground: "E5C07B" },
+]
+
+export const HERB_DARK_THEME = "herb-dark"
+export const HERB_LIGHT_THEME = "herb-light"
+
+let themesDefined = false
+
+export function defineHerbThemes() {
+  if (themesDefined) return
+
+  MonacoEditor.defineTheme(HERB_DARK_THEME, { base: "vs-dark", inherit: true, colors: {}, rules: SEMANTIC_RULES })
+  MonacoEditor.defineTheme(HERB_LIGHT_THEME, { base: "vs", inherit: true, colors: {}, rules: SEMANTIC_RULES })
+
+  themesDefined = true
+}
+
+export function herbTheme(isDarkMode) {
+  return isDarkMode ? HERB_DARK_THEME : HERB_LIGHT_THEME
+}
+
 /**
  * Replaces a textarea with a Monaco editor instance
  *
@@ -76,10 +103,12 @@ export function replaceTextareaWithMonaco(textareaId, textareaElement = null, op
 
   textarea.style.display = "none"
 
+  defineHerbThemes()
+
   const defaultOptions = {
     value: textarea.value || "",
     language: "html",
-    theme: "vs-dark",
+    theme: HERB_DARK_THEME,
     automaticLayout: true,
     minimap: { enabled: true },
     lineNumbers: "on",
@@ -91,6 +120,7 @@ export function replaceTextareaWithMonaco(textareaId, textareaElement = null, op
     fontSize: 14,
     suggestFontSize: 14,
     lineHeight: 21,
+    "semanticHighlighting.enabled": true,
     fixedOverflowWidgets: true,
     overflowWidgetsDomNode: overflowWidgetsRoot(),
   }

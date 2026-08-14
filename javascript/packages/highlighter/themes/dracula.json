@@ -4,6 +4,7 @@
   "TOKEN_NEWLINE": null,
   "TOKEN_IDENTIFIER": "#f8f8f2",
   "RUBY_KEYWORD": "#ff79c6",
+  "HTML_ATTRIBUTE_NAME": "#ffb86c",
   "TOKEN_HTML_DOCTYPE": "#8be9fd",
   "TOKEN_HTML_TAG_START": "#50fa7b",
   "TOKEN_HTML_TAG_START_CLOSE": "#50fa7b",

@@ -37,6 +37,9 @@ Zed keeps language server settings under `lsp.<server>.initialization_options`, 
           "minimumLines": 10,
           "maximumClasses": 2
         },
+        "semanticTokens": {
+          "enabled": true
+        },
         "linter": {
           "enabled": true,
           "fixOnSave": true
@@ -48,6 +51,40 @@ Zed keeps language server settings under `lsp.<server>.initialization_options`, 
 ```
 
 These are the same options VS Code exposes as `languageServerHerb.*` settings, minus the `languageServerHerb` prefix. See the [language server documentation](/projects/language-server) for the full list.
+
+### Semantic highlighting
+
+Herb can colour HTML+ERB from the parsed template rather than from a Tree-sitter grammar, which keeps tags, attributes and ERB delimiters right where they nest inside each other. Zed requests semantic tokens only when you ask it to, so turn them on for HTML+ERB:
+
+```json [settings.json]
+{
+  "languages": {
+    "HTML+ERB": {
+      "semantic_tokens": "combined"
+    }
+  }
+}
+```
+
+`combined` layers the language server's tokens over Tree-sitter, which is what you want here, since Herb deliberately says nothing about the Ruby inside `<% %>` and leaves it to Tree-sitter and the Ruby language server. `full` would drop Tree-sitter entirely and leave that Ruby unstyled.
+
+Colours come from `semantic_token_rules`, matched by token type and modifier. Herb emits `type` for tag names, `property` for attribute names, `string` for values, `macro` for the `<%` and `%>` delimiters with an `output` modifier on `<%=` tags, `parameter` for the names in a `locals:` declaration, and `function` with the `defaultLibrary` modifier for Action View helpers:
+
+```json [settings.json]
+{
+  "global_lsp_settings": {
+    "semantic_token_rules": [
+      { "token_type": "function", "token_modifiers": ["defaultLibrary"], "foreground_color": "#61AFEF" },
+      { "token_type": "macro", "token_modifiers": ["output"], "foreground_color": "#C678DD" },
+      { "token_type": "macro", "foreground_color": "#BE5046" },
+      { "token_type": "property", "foreground_color": "#D19A66" },
+      { "token_type": "type", "foreground_color": "#E06C75" }
+    ]
+  }
+}
+```
+
+Set `semanticTokens.enabled` to `false` in the initialization options above to turn the feature off on Herb's side instead.
 
 ### Inlay hints
 

@@ -4,6 +4,7 @@
   "TOKEN_NEWLINE": null,
   "TOKEN_IDENTIFIER": "white",
   "RUBY_KEYWORD": "magenta",
+  "HTML_ATTRIBUTE_NAME": "yellow",
   "TOKEN_HTML_DOCTYPE": "blue",
   "TOKEN_HTML_TAG_START": "red",
   "TOKEN_HTML_TAG_START_CLOSE": "red",

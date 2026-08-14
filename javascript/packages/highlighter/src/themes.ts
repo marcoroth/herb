@@ -24,6 +24,7 @@ export interface ColorScheme {
 
   // Ruby syntax highlighting colors
   RUBY_KEYWORD: Color
+  HTML_ATTRIBUTE_NAME: Color
 
   // HTML DOCTYPE
   TOKEN_HTML_DOCTYPE: Color

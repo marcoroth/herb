@@ -16,6 +16,7 @@ import {
   DocumentHighlightParams,
   SelectionRangeParams,
   InlayHintParams,
+  SemanticTokensParams,
   DocumentSymbolParams,
   HoverParams,
   CompletionParams,
@@ -35,7 +36,7 @@ import { serverVersion } from "./build_info"
 
 import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "@herb-tools/language-service"
-import { DefinitionProvider, pathFromUri } from "@herb-tools/language-service"
+import { DefinitionProvider, pathFromUri, semanticTokensLegend } from "@herb-tools/language-service"
 
 export class Server {
   private session!: Session
@@ -80,6 +81,10 @@ export class Server {
           documentHighlightProvider: true,
           selectionRangeProvider: true,
           inlayHintProvider: true,
+          semanticTokensProvider: {
+            legend: semanticTokensLegend,
+            full: true,
+          },
           hoverProvider: true,
           completionProvider: {
             triggerCharacters: [".", ":", "<", "&", "\"", "'", "/", ",", " ", "@"],
@@ -148,6 +153,10 @@ export class Server {
 
       if (this.session.capabilities.supportsInlayHintRefresh) {
         await this.connection.languages.inlayHint.refresh()
+      }
+
+      if (this.session.capabilities.supportsSemanticTokensRefresh) {
+        await this.connection.languages.semanticTokens.refresh()
       }
 
       await this.session.refresh()
@@ -315,6 +324,18 @@ export class Server {
         minimumLines: settings.inlayHints.minimumLines,
         maximumClasses: settings.inlayHints.maximumClasses
       })
+    })
+
+    this.connection.languages.semanticTokens.on(async (params: SemanticTokensParams) => {
+      const document = this.session.documents.get(params.textDocument.uri)
+
+      if (!document) return { data: [] }
+
+      const settings = await this.session.userSettings.getDocumentSettings(params.textDocument.uri)
+
+      if (!settings.semanticTokens?.enabled) return { data: [] }
+
+      return this.session.semanticTokensProvider.getSemanticTokens(document)
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {

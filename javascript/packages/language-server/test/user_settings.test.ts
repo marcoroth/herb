@@ -73,7 +73,8 @@ describe("UserSettings", () => {
           indentStyle: "space",
           maxLineLength: 80
         },
-        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 }
+        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 },
+        semanticTokens: { enabled: true }
       })
 
       expect(mockConnection.workspace.getConfiguration).toHaveBeenCalledWith({
@@ -96,7 +97,8 @@ describe("UserSettings", () => {
           indentStyle: "space",
           maxLineLength: 80
         },
-        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 }
+        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 },
+        semanticTokens: { enabled: true }
       })
     })
 
@@ -131,6 +133,24 @@ describe("UserSettings", () => {
       const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
 
       expect(result.inlayHints).toEqual({ enabled: true, minimumLines: 5, maximumClasses: 2 })
+    })
+
+    test("keeps semantic tokens off when the user turns them off", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        semanticTokens: { enabled: false }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.semanticTokens).toEqual({ enabled: false })
+    })
+
+    test("defaults semantic tokens on", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({})
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.semanticTokens).toEqual({ enabled: true })
     })
 
     test("keeps fixOnSave when the user turns it off", async () => {

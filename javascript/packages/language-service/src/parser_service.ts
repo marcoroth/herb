@@ -2,7 +2,7 @@ import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/core"
 
-import type { HerbBackend, Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/core"
+import type { HerbBackend, Node, HerbError, DocumentNode, ParseResult, ParseOptions, Token } from "@herb-tools/core"
 
 import { lspRangeFromLocation } from "./range_utils"
 
@@ -60,5 +60,13 @@ export class ParserService {
 
   parseContent(content: string, options?: ParseOptions): ParseResult {
     return this.backend.parse(content, options)
+  }
+
+  lexDocument(textDocument: TextDocument): Token[] | null {
+    const result = this.backend.lex(textDocument.getText())
+
+    if (result.errors.length > 0) return null
+
+    return [...result.value]
   }
 }

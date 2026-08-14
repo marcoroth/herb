@@ -8,6 +8,7 @@ import dedent from "dedent"
 import Prism from "prismjs"
 
 import { Controller } from "@hotwired/stimulus"
+import { herbTheme } from "../monaco.js"
 import { replaceTextareaWithMonaco } from "../monaco"
 import { registerLanguageService } from "../language-service"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
@@ -210,7 +211,7 @@ export default class extends Controller {
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: this.isRubyMode ? "ruby" : "erb",
-      theme: this.isDarkMode ? 'vs-dark' : 'vs',
+      theme: herbTheme(this.isDarkMode),
       automaticLayout: true,
       minimap: { enabled: false },
     })

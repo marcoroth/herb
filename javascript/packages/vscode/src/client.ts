@@ -6,6 +6,7 @@ import { Config } from "@herb-tools/config"
 import { defaultPersonalSettings } from "@herb-tools/language-server"
 
 const inlayHintDefaults = defaultPersonalSettings.inlayHints!
+const semanticTokenDefaults = defaultPersonalSettings.semanticTokens!
 
 export class Client {
   private client!: LanguageClient
@@ -104,6 +105,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          semanticTokens: {
+            enabled: vscodeConfig.get('semanticTokens.enabled', semanticTokenDefaults.enabled),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
@@ -126,6 +130,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          semanticTokens: {
+            enabled: vscodeConfig.get('semanticTokens.enabled', semanticTokenDefaults.enabled),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
@@ -136,6 +143,7 @@ export class Client {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         inlayHints: { ...inlayHintDefaults },
+        semanticTokens: { ...semanticTokenDefaults },
         trace: { server: 'verbose' },
       }
     }
@@ -219,6 +227,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          semanticTokens: {
+            enabled: vscodeConfig.get('semanticTokens.enabled', semanticTokenDefaults.enabled),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
@@ -242,6 +253,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          semanticTokens: {
+            enabled: vscodeConfig.get('semanticTokens.enabled', semanticTokenDefaults.enabled),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
@@ -253,6 +267,7 @@ export class Client {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         inlayHints: { ...inlayHintDefaults },
+        semanticTokens: { ...semanticTokenDefaults },
         trace: { server: 'verbose' },
         experimental: this.experimentalCapabilities,
       }
