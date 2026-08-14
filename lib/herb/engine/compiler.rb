@@ -522,11 +522,11 @@ module Herb
       def trailing_whitespace?(token)
         return false unless token
 
-        token[0] == :whitespace || (token[0] == :text && token[1] =~ /\s\z/)
+        token[0] == :whitespace || (token[0] == :text && token[1].match?(/\s\z/))
       end
 
       def leading_whitespace?(token)
-        token && token[0] == :text && token[1] =~ /\A\s/
+        token && token[0] == :text && token[1].match?(/\A\s/)
       end
 
       def whitespace_before_code_sequence?(tokens, current_index)
@@ -592,7 +592,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value =~ WHITESPACE_ONLY && preceding_token_ends_with_newline?) || last_value =~ TRAILING_INDENTATION
+          last_value.empty? || last_value.end_with?("\n") || (last_value.match?(WHITESPACE_ONLY) && preceding_token_ends_with_newline?) || last_value.match?(TRAILING_INDENTATION)
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
