@@ -97,8 +97,12 @@ fn missing_format(file: &str) -> bool {
 }
 
 fn static_branches(expression: &str) -> Vec<String> {
-  let mut found = Vec::new();
-  let mut rest = expression;
+  let mut found: Vec<String> = Vec::new();
+
+  let mut rest = match expression.split_once('?') {
+    Some((_, branches)) => branches,
+    None => expression,
+  };
 
   while let Some(start) = rest.find(['"', '\'']) {
     let quote = rest.as_bytes()[start] as char;
@@ -110,7 +114,7 @@ fn static_branches(expression: &str) -> Vec<String> {
 
     let literal = &after[..end];
 
-    if !literal.is_empty() && !literal.contains("#{") {
+    if !literal.is_empty() && !literal.contains("#{") && !found.iter().any(|seen| seen == literal) {
       found.push(literal.to_string());
     }
 
