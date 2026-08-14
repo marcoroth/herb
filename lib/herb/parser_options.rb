@@ -16,6 +16,7 @@ module Herb
     attr_reader :prism_nodes_deep #: bool
     attr_reader :timeout #: Numeric
     attr_reader :max_errors #: Integer?
+    attr_reader :arena_stats #: bool
 
     DEFAULT_STRICT = true #: bool
     DEFAULT_TRACK_WHITESPACE = false #: bool
@@ -31,9 +32,10 @@ module Herb
     DEFAULT_PRISM_NODES_DEEP = false #: bool
     DEFAULT_TIMEOUT = 1 #: Numeric
     DEFAULT_MAX_ERRORS = 25 #: Integer
+    DEFAULT_CAPTURE_ARENA_STATS = false #: bool
 
     #: (?strict: bool, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
-    def initialize(strict: DEFAULT_STRICT, track_whitespace: DEFAULT_TRACK_WHITESPACE, track_locations: DEFAULT_TRACK_LOCATIONS, analyze: DEFAULT_ANALYZE, action_view_helpers: DEFAULT_ACTION_VIEW_HELPERS, transform_conditionals: DEFAULT_TRANSFORM_CONDITIONALS, render_nodes: DEFAULT_RENDER_NODES, strict_locals: DEFAULT_STRICT_LOCALS, iteration_nodes: DEFAULT_ITERATION_NODES, prism_nodes: DEFAULT_PRISM_NODES, prism_nodes_deep: DEFAULT_PRISM_NODES_DEEP, prism_program: DEFAULT_PRISM_PROGRAM, timeout: DEFAULT_TIMEOUT, max_errors: DEFAULT_MAX_ERRORS)
+    def initialize(strict: DEFAULT_STRICT, track_whitespace: DEFAULT_TRACK_WHITESPACE, track_locations: DEFAULT_TRACK_LOCATIONS, analyze: DEFAULT_ANALYZE, action_view_helpers: DEFAULT_ACTION_VIEW_HELPERS, transform_conditionals: DEFAULT_TRANSFORM_CONDITIONALS, render_nodes: DEFAULT_RENDER_NODES, strict_locals: DEFAULT_STRICT_LOCALS, iteration_nodes: DEFAULT_ITERATION_NODES, prism_nodes: DEFAULT_PRISM_NODES, prism_nodes_deep: DEFAULT_PRISM_NODES_DEEP, prism_program: DEFAULT_PRISM_PROGRAM, timeout: DEFAULT_TIMEOUT, max_errors: DEFAULT_MAX_ERRORS, arena_stats: DEFAULT_CAPTURE_ARENA_STATS)
       @strict = strict
       @track_whitespace = track_whitespace
       @track_locations = track_locations
@@ -48,6 +50,7 @@ module Herb
       @prism_program = prism_program
       @timeout = timeout
       @max_errors = max_errors
+      @arena_stats = arena_stats
     end
 
     #: () -> Hash[Symbol, (bool | Numeric | nil)]
@@ -67,6 +70,7 @@ module Herb
         prism_program: @prism_program,
         timeout: @timeout,
         max_errors: @max_errors,
+        arena_stats: @arena_stats,
       }
     end
 
@@ -86,7 +90,8 @@ module Herb
         "prism_nodes_deep=#{@prism_nodes_deep}\n  " \
         "prism_program=#{@prism_program}\n  " \
         "timeout=#{@timeout}\n  " \
-        "max_errors=#{@max_errors}>"
+        "max_errors=#{@max_errors}>\n  " \
+        "arena_stats=#{@arena_stats}>"
     end
   end
 end
