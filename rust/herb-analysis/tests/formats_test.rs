@@ -26,6 +26,7 @@ fn reads_the_format_out_of_a_filename() {
   assert_eq!(Some("html".to_string()), format_of("app/views/posts/_row.html.herb"));
   assert_eq!(None, format_of("app/views/posts/_row.erb"));
   assert_eq!(None, format_of("app/views/posts/_row.herb"));
+  assert_eq!(Some("html".to_string()), format_of("app/views/posts/_row.en.html.erb"));
 }
 
 #[test]

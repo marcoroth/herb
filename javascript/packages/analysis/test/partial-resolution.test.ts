@@ -176,6 +176,7 @@ describe("formatOf", () => {
     expect(formatOf("app/views/posts/_row.html.erb")).toBe("html")
     expect(formatOf("app/views/posts/_row.turbo_stream.erb")).toBe("turbo_stream")
     expect(formatOf("app/views/posts/_row.html.herb")).toBe("html")
+    expect(formatOf("app/views/posts/_row.en.html.erb")).toBe("html")
   })
 
   test("returns null when the filename carries no format", () => {

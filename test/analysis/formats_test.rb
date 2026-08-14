@@ -22,6 +22,7 @@ module Analysis
       assert_equal "html", Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.html.herb")
       assert_nil Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.erb")
       assert_nil Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.herb")
+      assert_equal "html", Herb::Analysis::PartialResolution.format_of("app/views/posts/_row.en.html.erb")
     end
 
     test "reads the variant out of a filename" do

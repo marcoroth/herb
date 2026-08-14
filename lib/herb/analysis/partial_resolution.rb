@@ -54,7 +54,7 @@ module Herb
 
           return nil if stripped == extension
 
-          format = stripped.delete_prefix(".").split("+").first.to_s
+          format = stripped.delete_prefix(".").split(".").last.to_s.split("+").first.to_s
 
           format.empty? ? nil : format
         end

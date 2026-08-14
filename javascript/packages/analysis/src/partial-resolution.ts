@@ -105,8 +105,9 @@ export function formatOf(filePath: string): string | null {
 
   if (stripped === null) return null
 
-  const withVariant = stripped.startsWith(".") ? stripped.slice(1) : stripped
-  const format = withVariant.split("+")[0] ?? withVariant
+  const segments = stripped.startsWith(".") ? stripped.slice(1) : stripped
+  const last = segments.split(".").pop() ?? segments
+  const format = last.split("+")[0] ?? last
 
   return format === "" ? null : format
 }

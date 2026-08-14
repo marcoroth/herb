@@ -63,8 +63,8 @@ pub fn format_of(file: &str) -> Option<String> {
   let extension = &base[dot..];
 
   let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
-  let format = stripped.strip_prefix('.')?;
-
+  let segments = stripped.strip_prefix('.')?;
+  let format = segments.rsplit('.').next().unwrap_or(segments);
   let format = format.split('+').next().unwrap_or(format);
 
   (!format.is_empty()).then(|| format.to_string())
@@ -77,7 +77,7 @@ pub fn variant_of(file: &str) -> Option<String> {
   let extension = &base[dot..];
 
   let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
-  let (_, variant) = stripped.split_once('+')?;
+  let (_, variant) = stripped.rsplit_once('+')?;
 
   (!variant.is_empty()).then(|| variant.to_string())
 }

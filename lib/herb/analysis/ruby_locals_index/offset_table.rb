@@ -5,6 +5,7 @@ module Herb
     class RubyLocalsIndex
       class OffsetTable
         # @rbs!
+        #   @line_starts: Array[Integer]
 
         #: (String) -> void
         def initialize(source)
