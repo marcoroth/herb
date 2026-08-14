@@ -15,7 +15,7 @@ export const PARTIAL_GLOB_PATTERN = `_${TEMPLATE_GLOB_PATTERN}`
 const PARTIAL_PREFIX = "_"
 const APPLICATION_DIRECTORY = "application"
 
-export type PartialPaths = Map<string, string>
+export type PartialPaths = Map<string, string | string[]>
 
 function normalize(path: string): string {
   const separated = path.replace(/\\/g, "/")
@@ -233,6 +233,26 @@ export function layoutCandidatesFor(templateFile: string, viewRoot: string): str
   return candidates
 }
 
+function pickForCaller(candidates: string | string[], sourceFile: string): string | null {
+  if (!Array.isArray(candidates)) return candidates
+  if (candidates.length === 0) return null
+
+  const format = formatOf(sourceFile)
+
+  if (format === null) return candidates[0] ?? null
+
+  const ranked = [...candidates].sort((a, b) => rankForFormat(a, format) - rankForFormat(b, format))
+
+  return ranked[0] ?? null
+}
+
+function rankForFormat(file: string, format: string): number {
+  const candidate = formatOf(file)
+  const matches = candidate === format ? 0 : candidate === null ? 1 : 2
+
+  return matches * 2 + (variantOf(file) === null ? 0 : 1)
+}
+
 export function resolvePartial(
   partialName: string,
   sourceFile: string,
@@ -243,20 +263,20 @@ export function resolvePartial(
 
   const exact = index.get(partialName)
 
-  if (exact !== undefined) return exact
+  if (exact !== undefined) return pickForCaller(exact, sourceFile)
 
   const sourceDirectory = relativeToViewRoots(dirname(normalize(sourceFile)), viewRoots)?.[1] ?? null
 
   if (sourceDirectory !== null && sourceDirectory !== ".") {
     const relative = index.get(`${sourceDirectory}/${partialName}`)
 
-    if (relative !== undefined) return relative
+    if (relative !== undefined) return pickForCaller(relative, sourceFile)
   }
 
   if (!partialName.includes("/")) {
     const application = index.get(`${APPLICATION_DIRECTORY}/${partialName}`)
 
-    if (application !== undefined) return application
+    if (application !== undefined) return pickForCaller(application, sourceFile)
   }
 
   return null

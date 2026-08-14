@@ -100,14 +100,14 @@ export class PartialIndex {
     return new PartialIndex(data.viewRoots, new Map(Object.entries(data.partials)))
   }
 
-  constructor(viewRoots: string[], declarations: Map<string, PartialDeclaration>) {
+  constructor(viewRoots: string[], declarations: Map<string, PartialDeclaration>, filesByName?: Map<string, string[]>) {
     this.viewRoots = viewRoots
     this.declarations = declarations
     this.files = new Map()
     this.byFile = new Map()
 
     for (const [name, declaration] of declarations) {
-      this.files.set(name, declaration.file)
+      this.files.set(name, filesByName?.get(name) ?? declaration.file)
       this.byFile.set(declaration.file, declaration)
     }
   }

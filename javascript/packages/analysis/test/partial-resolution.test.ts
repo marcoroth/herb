@@ -200,3 +200,45 @@ describe("variantOf", () => {
     expect(formatOf("app/views/posts/_row.turbo_stream+mobile.erb")).toBe("turbo_stream")
   })
 })
+
+describe("format-aware resolution", () => {
+  const HTML_CALLER = "app/views/posts/index.html.erb"
+  const TURBO_CALLER = "app/views/posts/index.turbo_stream.erb"
+
+  test("a caller reaches the partial matching its own format", () => {
+    const index: PartialPaths = new Map([
+      ["posts/row", ["app/views/posts/_row.html.erb", "app/views/posts/_row.turbo_stream.erb"]],
+    ])
+
+    expect(resolvePartial("posts/row", HTML_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.html.erb")
+    expect(resolvePartial("posts/row", TURBO_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.turbo_stream.erb")
+  })
+
+  test("a formatless partial serves any caller", () => {
+    const index: PartialPaths = new Map([["posts/row", ["app/views/posts/_row.erb"]]])
+
+    expect(resolvePartial("posts/row", TURBO_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.erb")
+  })
+
+  test("a formatless partial loses to an exact format match", () => {
+    const index: PartialPaths = new Map([
+      ["posts/row", ["app/views/posts/_row.erb", "app/views/posts/_row.turbo_stream.erb"]],
+    ])
+
+    expect(resolvePartial("posts/row", TURBO_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.turbo_stream.erb")
+  })
+
+  test("the plain template is preferred over a variant", () => {
+    const index: PartialPaths = new Map([
+      ["posts/row", ["app/views/posts/_row.html+mobile.erb", "app/views/posts/_row.html.erb"]],
+    ])
+
+    expect(resolvePartial("posts/row", HTML_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.html.erb")
+  })
+
+  test("a single file still resolves", () => {
+    const index: PartialPaths = new Map([["posts/row", "app/views/posts/_row.html.erb"]])
+
+    expect(resolvePartial("posts/row", HTML_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.html.erb")
+  })
+})
