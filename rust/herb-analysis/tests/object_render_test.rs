@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn binary() -> PathBuf {
@@ -14,14 +14,14 @@ fn scratch(name: &str) -> PathBuf {
   root
 }
 
-fn write(root: &PathBuf, relative: &str, body: &str) {
+fn write(root: &Path, relative: &str, body: &str) {
   let path = root.join(relative);
 
   fs::create_dir_all(path.parent().unwrap()).unwrap();
   fs::write(path, body).unwrap();
 }
 
-fn check(root: &PathBuf) -> String {
+fn check(root: &Path) -> String {
   let output = Command::new(binary()).args(["actionview", "check", root.to_str().unwrap()]).output().unwrap();
 
   String::from_utf8_lossy(&output.stdout).to_string()

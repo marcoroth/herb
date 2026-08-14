@@ -43,7 +43,7 @@ describe("PartialIndex", () => {
   test("round trips through its serialized form", () => {
     const restored = PartialIndex.from(index.toJSON())
 
-    expect(restored.viewRoot).toBe("app/views")
+    expect(restored.viewRoots).toEqual(["app/views"])
     expect(restored.size).toBe(2)
     expect(restored.lookup("users/card", "app/views/posts/index.html.erb")?.locals).toEqual([{ name: "user", required: true }])
   })
