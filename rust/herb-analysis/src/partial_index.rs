@@ -40,9 +40,16 @@ impl PartialIndex {
       let files = config.find_files_for_tool(herb_config::Tool::Linter, Some(project_path));
 
       if !files.is_empty() {
-        let templates: Vec<String> = files.into_iter().filter(|file| crate::partial_resolution::template_path(file)).collect();
+        let mut templates: Vec<String> = files.into_iter().filter(|file| crate::partial_resolution::template_path(file)).collect();
 
         if !templates.is_empty() {
+          let known: std::collections::BTreeSet<&String> = templates.iter().collect();
+          let extra: Vec<String> = index.templates.iter().filter(|file| !known.contains(file)).cloned().collect();
+
+          templates.extend(extra);
+          templates.sort();
+          templates.dedup();
+
           index.replace_templates(templates);
         }
       }

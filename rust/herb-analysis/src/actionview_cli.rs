@@ -90,6 +90,12 @@ fn header(title: &str) {
   println!();
 }
 
+fn missing_format(file: &str) -> bool {
+  let name = file.rsplit('/').next().unwrap_or(file);
+
+  name.ends_with(".erb") && name.matches('.').count() == 1
+}
+
 fn plural(count: usize, word: &str) -> String {
   if count == 1 {
     word.to_string()
@@ -230,6 +236,8 @@ fn check(arguments: &[String]) -> i32 {
     }
   }
 
+  let formatless: Vec<String> = templates.iter().filter(|file| missing_format(file)).map(|file| relative(file, &root)).collect();
+
   let partials: Vec<String> = templates
     .iter()
     .filter(|file| herb_analysis::partial_resolution::partial_path(file))
@@ -269,6 +277,21 @@ fn check(arguments: &[String]) -> i32 {
     print_dependency_warnings(&templates, &root, &flow, &passed_locals);
 
   println!();
+
+  if !formatless.is_empty() {
+    println!(" {}", "Templates without a format:".bold());
+    println!(
+      " {}",
+      "Rails reads a template filename as `name.format.handler`. Without a format it matches every one.".dimmed()
+    );
+    println!();
+
+    for file in &formatless {
+      println!("   {} {}", "!".yellow().bold(), file.yellow());
+    }
+
+    println!();
+  }
 
   if !unresolved.is_empty() {
     println!(" {}", "Unresolved render calls:".bold());
