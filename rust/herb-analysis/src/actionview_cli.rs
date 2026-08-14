@@ -874,7 +874,8 @@ fn reachable_partials(
       continue;
     }
 
-    let Some(file) = index.resolve(&name, None).first() else {
+    let resolved = index.resolve(&name, None);
+    let Some(file) = resolved.first() else {
       continue;
     };
 

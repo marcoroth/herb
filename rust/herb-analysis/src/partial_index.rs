@@ -163,7 +163,23 @@ impl PartialIndex {
       .map(str::to_string)
   }
 
-  pub fn resolve(&self, partial_name: &str, source_file: Option<&str>) -> &[String] {
+  pub fn resolve(&self, partial_name: &str, source_file: Option<&str>) -> Vec<String> {
+    let candidates = self.candidates(partial_name, source_file);
+    let Some(format) = source_file.and_then(partial_resolution::format_of) else {
+      return candidates.to_vec();
+    };
+
+    let mut ordered = candidates.to_vec();
+    ordered.sort_by_key(|file| match partial_resolution::format_of(file) {
+      Some(candidate) if candidate == format => 0,
+      None => 1,
+      Some(_) => 2,
+    });
+
+    ordered
+  }
+
+  fn candidates(&self, partial_name: &str, source_file: Option<&str>) -> &[String] {
     let partial_name = partial_resolution::without_template_extension(partial_name);
     let exact = self.files_for(partial_name);
 

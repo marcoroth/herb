@@ -56,6 +56,18 @@ fn normalize(path: &str) -> String {
   }
 }
 
+pub fn format_of(file: &str) -> Option<String> {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+  let dot = base.find('.')?;
+  let extension = &base[dot..];
+
+  let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
+  let format = stripped.strip_prefix('.')?;
+
+  (!format.is_empty()).then(|| format.to_string())
+}
+
 pub fn without_template_extension(partial_name: &str) -> &str {
   EXTENSIONS
     .iter()

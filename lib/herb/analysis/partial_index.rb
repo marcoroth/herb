@@ -10,7 +10,6 @@ module Herb
     class PartialIndex
       APPLICATION_DIRECTORY = "application" #: String
 
-
       attr_reader :templates #: Array[String]
 
       #: (String | Pathname, ?templates: Array[String]?) -> PartialIndex
@@ -46,7 +45,28 @@ module Herb
       end
 
       #: (String?, String?) -> Array[String]
+      #: (String?, String?) -> Array[String]
       def resolve(partial_name, source_file)
+        candidates = candidates_for(partial_name, source_file)
+        format = source_file ? PartialResolution.format_of(source_file) : nil
+
+        return candidates unless format
+
+        candidates.sort_by do |file|
+          candidate = PartialResolution.format_of(file)
+
+          if candidate == format
+            0
+          elsif candidate.nil?
+            1
+          else
+            2
+          end
+        end
+      end
+
+      #: (String?, String?) -> Array[String]
+      def candidates_for(partial_name, source_file)
         return [] unless partial_name
 
         partial_name = PartialResolution.without_template_extension(partial_name)

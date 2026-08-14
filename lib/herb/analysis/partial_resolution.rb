@@ -41,6 +41,24 @@ module Herb
           candidates.find(&:directory?) || root
         end
 
+        #: (String) -> String?
+        def format_of(file)
+          base = File.basename(file)
+          dot = base.index(".")
+
+          return nil unless dot
+
+          extension = base[dot..].to_s
+          stripped = extension.delete_suffix(".erb")
+          stripped = stripped.delete_suffix(".herb") if stripped == extension
+
+          return nil if stripped == extension
+
+          format = stripped.delete_prefix(".")
+
+          format.empty? ? nil : format
+        end
+
         #: (String) -> String
         def without_template_extension(partial_name)
           extension = EXTENSIONS.find { |candidate| partial_name.end_with?(candidate) }

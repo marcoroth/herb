@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest"
 
 import {
+  formatOf,
   isPartialPath,
   partialNameForFile,
   resolvePartial,
@@ -166,5 +167,18 @@ describe("@herb-tools/core", () => {
     test("resolves without a known source file", () => {
       expect(resolvePartial("users/card", "", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
+  })
+})
+
+describe("formatOf", () => {
+  test("reads the format out of a filename", () => {
+    expect(formatOf("app/views/posts/_row.html.erb")).toBe("html")
+    expect(formatOf("app/views/posts/_row.turbo_stream.erb")).toBe("turbo_stream")
+    expect(formatOf("app/views/posts/_row.html.herb")).toBe("html")
+  })
+
+  test("returns null when the filename carries no format", () => {
+    expect(formatOf("app/views/posts/_row.erb")).toBeNull()
+    expect(formatOf("app/views/posts/_row.herb")).toBeNull()
   })
 })

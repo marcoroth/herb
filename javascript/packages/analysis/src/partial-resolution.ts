@@ -90,6 +90,26 @@ export function projectRelativePath(filePath: string, projectPath: string | unde
   return relativeToViewRoot(filePath, projectPath) ?? normalize(filePath)
 }
 
+export function formatOf(filePath: string): string | null {
+  const name = basename(normalize(filePath))
+  const dot = name.indexOf(".")
+
+  if (dot === -1) return null
+
+  const extension = name.slice(dot)
+  const stripped = extension.endsWith(".erb")
+    ? extension.slice(0, -".erb".length)
+    : extension.endsWith(".herb")
+      ? extension.slice(0, -".herb".length)
+      : null
+
+  if (stripped === null) return null
+
+  const format = stripped.startsWith(".") ? stripped.slice(1) : stripped
+
+  return format === "" ? null : format
+}
+
 export function withoutTemplateExtension(partialName: string): string {
   for (const extension of PARTIAL_EXTENSIONS) {
     if (partialName.endsWith(extension)) return partialName.slice(0, -extension.length)

@@ -26,6 +26,11 @@ module Herb
       # : (String | Pathname) -> Pathname
       def self.view_root_for: (String | Pathname) -> Pathname
 
+      # The format segment of a template filename, if it carries one. `_row.html.erb` is `html`,
+      # `_row.erb` is none and therefore matches any format.
+      # : (String) -> String?
+      def self.format_of: (String) -> String?
+
       # : (String) -> String
       def self.without_template_extension: (String) -> String
 
