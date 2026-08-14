@@ -50,6 +50,18 @@ module Herb
       # : (String, String | Pathname) -> String?
       def self.partial_name_for: (String, String | Pathname) -> String?
 
+      # : (String, Array[String | Pathname]) -> [Integer, String]?
+      def self.relative_to_view_roots: (String, Array[String | Pathname]) -> [ Integer, String ]?
+
+      # : (String, Array[String | Pathname]) -> String?
+      def self.partial_name_for_roots: (String, Array[String | Pathname]) -> String?
+
+      # : (String, Array[String | Pathname]) -> String?
+      def self.template_name_for_roots: (String, Array[String | Pathname]) -> String?
+
+      # : (String, Array[String | Pathname]) -> Integer
+      def self.root_index_for: (String, Array[String | Pathname]) -> Integer
+
       # : (String, String | Pathname) -> String?
       private def self.relative_to_view_root: (String, String | Pathname) -> String?
     end

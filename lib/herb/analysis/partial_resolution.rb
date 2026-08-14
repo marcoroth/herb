@@ -142,6 +142,34 @@ module Herb
           directory == "." ? name : "#{directory}/#{name}"
         end
 
+        #: (String, Array[String | Pathname]) -> [Integer, String]?
+        def relative_to_view_roots(file, view_roots)
+          view_roots.each_with_index do |root, index|
+            relative = relative_to_view_root(file, root)
+
+            return [index, relative] if relative
+          end
+
+          nil
+        end
+
+        #: (String, Array[String | Pathname]) -> String?
+        def partial_name_for_roots(file, view_roots)
+          view_roots.filter_map { |root| partial_name_for(file, root) }.first
+        end
+
+        #: (String, Array[String | Pathname]) -> String?
+        def template_name_for_roots(file, view_roots)
+          view_roots.filter_map { |root| template_name_for(file, root) }.first
+        end
+
+        #: (String, Array[String | Pathname]) -> Integer
+        def root_index_for(file, view_roots)
+          found = relative_to_view_roots(file, view_roots)
+
+          found ? found[0] : view_roots.size
+        end
+
         private
 
         #: (String, String | Pathname) -> String?
