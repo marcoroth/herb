@@ -103,6 +103,16 @@ async function renderHighlighter(herb: HerbBackend, source: string, lintResult: 
   })
 }
 
+async function renderPrinterDiff(herb: HerbBackend, source: string, printed: string): Promise<string> {
+  const highlighter = await getHighlighter(herb)
+
+  return highlighter.highlightDiff(HIGHLIGHTER_PATH, source, printed, {
+    showLineNumbers: true,
+    contextLines: HIGHLIGHTER_CONTEXT_LINES,
+    wrapLines: false,
+  })
+}
+
 export async function analyze(herb: HerbBackend, source: string, options: Partial<ParserOptions> = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}, highlighterOptions: HighlighterOptions = {}, jobs: Iterable<AnalyzeJob> = ALL_ANALYZE_JOBS) {
   const startTime = performance.now()
   const requested = new Set(jobs)
@@ -166,6 +176,10 @@ export async function analyze(herb: HerbBackend, source: string, options: Partia
       )
     : undefined
 
+  const printedDiff = wants("printer") && typeof printed === "string" && printed !== source && !printed.startsWith("Error: Cannot print")
+    ? await safeExecute<string>(renderPrinterDiff(herb, source, printed))
+    : undefined
+
   let rewritten: string | null | undefined = undefined
 
   if (parsed && wants("rewrite")) {
@@ -219,6 +233,7 @@ export async function analyze(herb: HerbBackend, source: string, options: Partia
     html,
     formatted,
     printed,
+    printedDiff,
     rewritten,
     version,
     lintResult,
