@@ -451,6 +451,23 @@ module Herb
           end
         end
 
+        conditional = conditional_calls(result)
+
+        if conditional.any?
+          puts "\n"
+          puts " #{bold("Conditional render calls:")}"
+          puts " #{dimmed("The partial name is chosen at runtime, but every branch is a literal.")}"
+          puts ""
+
+          conditional.each do |call, targets|
+            puts "   #{bold(yellow("?"))} #{call[:partial]} #{dimmed("in #{relative_path(call[:file])}")}"
+
+            targets.each do |target|
+              puts "       #{dimmed("\u2192")} #{green(relative_path(target))}"
+            end
+          end
+        end
+
         return unless result.issues?
 
         if result.unresolved.any?
@@ -1131,6 +1148,13 @@ module Herb
           queue << resolved_file if resolved_file
         end
 
+        partial_files.each do |name, file|
+          next unless dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
+
+          reachable << name
+          queue << file if file
+        end
+
         visited_files = Set.new
 
         until queue.empty?
@@ -1210,6 +1234,19 @@ module Herb
 
       def resolve_partial(partial_name, source_file, _partial_files, view_root)
         partial_index(view_root).resolve(partial_name, source_file).first
+      end
+
+      #: (untyped) -> Array[[Hash[Symbol, untyped], Array[String]]]
+      def conditional_calls(result)
+        result.render_calls.filter_map do |call|
+          next unless call[:partial]
+          next if resolve_partial(call[:partial], call[:file], result.partial_files, result.view_root)
+
+          branches = static_branches(call[:partial])
+          targets = branches.filter_map { |branch| resolve_partial(branch, call[:file], result.partial_files, result.view_root) }
+
+          [call, targets] if branches.size > 1 && targets.size == branches.size
+        end
       end
 
       #: (Hash[Symbol, untyped], Hash[String, String]) -> Array[String]

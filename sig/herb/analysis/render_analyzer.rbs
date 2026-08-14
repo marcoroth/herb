@@ -117,6 +117,9 @@ module Herb
 
       def resolve_partial: (untyped partial_name, untyped source_file, untyped _partial_files, untyped view_root) -> untyped
 
+      # : (untyped) -> Array[[Hash[Symbol, untyped], Array[String]]]
+      def conditional_calls: (untyped) -> Array[[ Hash[Symbol, untyped], Array[String] ]]
+
       # : (Hash[Symbol, untyped], Hash[String, String]) -> Array[String]
       def names_under: (Hash[Symbol, untyped], Hash[String, String]) -> Array[String]
 
