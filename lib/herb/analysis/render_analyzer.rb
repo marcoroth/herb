@@ -481,13 +481,17 @@ module Herb
           puts "\n #{separator}" if result.unresolved.any?
           puts "\n"
           puts " #{bold("Dynamic render calls:")}"
-          puts " #{dimmed("The partial name is built at runtime, so it cannot be resolved statically.")}"
+          puts " #{dimmed("The partial name is built at runtime. Where the directory is known, every partial under it is listed.")}"
           puts ""
 
           result.dynamic_calls.each do |call|
             shown = dynamic_call_display(call)
 
             puts "   #{bold(red("\u2717"))} #{bold(red(shown))} #{dimmed("in #{relative_path(call[:file])}")}"
+
+            names_under(call, result.partial_files).each do |name|
+              puts "       #{dimmed("\u2192")} #{dimmed(name)}"
+            end
           end
         end
 
@@ -1206,6 +1210,20 @@ module Herb
 
       def resolve_partial(partial_name, source_file, _partial_files, view_root)
         partial_index(view_root).resolve(partial_name, source_file).first
+      end
+
+      #: (Hash[Symbol, untyped], Hash[String, String]) -> Array[String]
+      def names_under(call, partial_files)
+        prefix = call[:dynamic_prefix]
+
+        unless prefix
+          raw = call[:partial].to_s.sub(/\A["']/, "")
+          prefix = raw.split("\#{").first.to_s.chomp("/")
+        end
+
+        return [] if prefix.to_s.empty? || !partial_path_segment?(prefix)
+
+        partial_files.keys.select { |name| name.start_with?("#{prefix}/") }.sort
       end
 
       #: (String) -> bool
