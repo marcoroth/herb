@@ -44,7 +44,7 @@ module Herb
         @graph = graph_builder.build(partials.templates)
       end
 
-      #: () -> Pathname?
+      #: () -> Array[Pathname]?
       def view_roots
         @partials&.view_roots
       end
