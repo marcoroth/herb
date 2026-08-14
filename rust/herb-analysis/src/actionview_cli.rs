@@ -242,6 +242,8 @@ fn check(arguments: &[String]) -> i32 {
     for call in &result.render_calls {
       files_with_renders.insert(file.clone());
 
+      let guessed = call.partial.is_none() && call.layout.is_none();
+
       let target = call
         .partial
         .clone()
@@ -294,7 +296,7 @@ fn check(arguments: &[String]) -> i32 {
               name.clone(),
               targets.iter().map(|target| relative(target, &root)).collect(),
             ));
-          } else {
+          } else if !guessed {
             unresolved.push((relative(file, &root), name.clone()));
           }
         }
