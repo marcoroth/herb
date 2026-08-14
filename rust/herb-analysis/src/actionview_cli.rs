@@ -537,7 +537,11 @@ fn check(arguments: &[String]) -> i32 {
     println!(
       "  {} {}",
       label("Ignored"),
-      format!("{ignored_components} component {} in app/components/", plural(ignored_components, "template")).dimmed()
+      format!(
+        "{ignored_components} component {} under app/components/",
+        plural(ignored_components, "template")
+      )
+      .dimmed()
     );
   }
 
@@ -1454,7 +1458,7 @@ fn print_dependency_warnings(
       }
 
       if !rest.is_empty() {
-        if relative.starts_with("app/components/") {
+        if relative.starts_with("app/components/") || relative.contains("/app/components/") {
           ignored_components += 1;
         } else if partial && !declared && candidates.is_none_or(BTreeSet::is_empty) {
           uninferable.push((relative, rest));

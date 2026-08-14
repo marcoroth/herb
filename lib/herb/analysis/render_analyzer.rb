@@ -529,7 +529,7 @@ module Herb
 
       #: (String) -> bool
       def component_template?(relative)
-        relative.start_with?("app/components/")
+        relative.start_with?("app/components/") || relative.include?("/app/components/")
       end
 
       #: (Array[Hash[Symbol, untyped]]) -> void
@@ -558,7 +558,7 @@ module Herb
 
         return unless ignored.positive?
 
-        puts "  #{label("Ignored")} #{dimmed("#{ignored} component #{pluralize(ignored, "template")} in app/components/")}"
+        puts "  #{label("Ignored")} #{dimmed("#{ignored} component #{pluralize(ignored, "template")} under app/components/")}"
       end
 
       private
