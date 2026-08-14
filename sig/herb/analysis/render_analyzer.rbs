@@ -117,6 +117,9 @@ module Herb
 
       def resolve_partial: (untyped partial_name, untyped source_file, untyped _partial_files, untyped view_root) -> untyped
 
+      # : (String) -> Array[String]
+      def static_branches: (String) -> Array[String]
+
       # : (String) -> String?
       def render_name_kind: (String) -> String?
 

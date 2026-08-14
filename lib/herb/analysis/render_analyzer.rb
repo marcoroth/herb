@@ -1056,11 +1056,22 @@ module Herb
             next unless partial_reference
 
             resolved = resolve_partial(partial_reference, file, partial_files, view_root)
+
             if resolved
               resolved_name = partial_name_for_file(resolved, view_root)
               resolved_names << resolved_name if resolved_name
             else
-              resolved_names << partial_reference
+              branches = static_branches(partial_reference)
+              targets = branches.filter_map { |branch| resolve_partial(branch, file, partial_files, view_root) }
+
+              if branches.size > 1 && targets.size == branches.size
+                targets.each do |target|
+                  name = partial_name_for_file(target, view_root)
+                  resolved_names << name if name
+                end
+              else
+                resolved_names << partial_reference
+              end
             end
           end
 
@@ -1171,13 +1182,24 @@ module Herb
       def find_unresolved(render_calls, partial_files, view_root)
         render_calls.select do |call|
           next false unless call[:partial]
+          next false if resolve_partial(call[:partial], call[:file], partial_files, view_root)
 
-          !resolve_partial(call[:partial], call[:file], partial_files, view_root)
+          branches = static_branches(call[:partial])
+          targets = branches.filter_map { |branch| resolve_partial(branch, call[:file], partial_files, view_root) }
+
+          !(branches.size > 1 && targets.size == branches.size)
         end
       end
 
       def resolve_partial(partial_name, source_file, _partial_files, view_root)
         partial_index(view_root).resolve(partial_name, source_file).first
+      end
+
+      #: (String) -> Array[String]
+      def static_branches(expression)
+        branches = expression.split("?", 2).last.to_s
+
+        branches.scan(/["']([^"'\#]+)["']/).flatten.uniq
       end
 
       #: (String) -> String?

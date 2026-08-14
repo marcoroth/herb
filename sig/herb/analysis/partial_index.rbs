@@ -23,9 +23,6 @@ module Herb
       def files_for: (String?) -> Array[String]
 
       # : (String?, String?) -> Array[String]
-      #  Rails picks the candidate whose format matches the template doing the rendering, so a
-      #  `.turbo_stream.erb` caller reaches the turbo_stream partial even though `.html.erb` outranks
-      #  it everywhere else. A partial with no format of its own matches any caller.
       # : (String?, String?) -> Array[String]
       def resolve: (String?, String?) -> Array[String]
                  | (String?, String?) -> Array[String]
