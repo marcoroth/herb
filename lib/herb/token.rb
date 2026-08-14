@@ -48,7 +48,9 @@ module Herb
     def tree_inspect
       location_inspect = location ? location.tree_inspect : "∅"
 
-      "#{green("\"#{value.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location_inspect})")}"
+      # Token values may be shared/frozen (interned in the C extension), so
+      # coerce a copy for display instead of mutating the value in place.
+      "#{green("\"#{value.dup.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location_inspect})")}"
     end
 
     #: () -> String

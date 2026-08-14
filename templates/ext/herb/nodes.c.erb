@@ -32,7 +32,14 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
 
   AST_NODE_T* node = &<%= node.human %>->base;
 
-  VALUE type = rb_string_from_hb_string(ast_node_type_to_string(node));
+  /* Each builder handles a single node type, so its interned type name is
+     constant: intern once, pin as a GC root, then reuse by direct reference
+     instead of probing the fstring table on every node. */
+  static VALUE type = 0;
+  if (type == 0) {
+    type = rb_interned_string_from_hb_string(ast_node_type_to_string(node));
+    rb_gc_register_mark_object(type);
+  }
   VALUE location = options->track_locations ? rb_location_from_c_struct(node->location) : Qnil;
   VALUE errors = rb_errors_array_from_c_array(node->errors);
 
