@@ -20,6 +20,7 @@ export class Capabilities {
   readonly hasConfiguration: boolean
   readonly hasWorkspaceFolders: boolean
   readonly hasDiagnosticRelatedInformation: boolean
+  readonly hasApplyEdit: boolean
   readonly hasShowDocument: boolean
 
   constructor(params: InitializeParams) {
@@ -28,6 +29,7 @@ export class Capabilities {
 
     this.hasConfiguration = !!this.client.workspace?.configuration
     this.hasWorkspaceFolders = !!this.client.workspace?.workspaceFolders
+    this.hasApplyEdit = !!this.client.workspace?.applyEdit
     this.hasShowDocument = !!this.client.window?.showDocument
     this.hasDiagnosticRelatedInformation = !!this.client.textDocument?.publishDiagnostics?.relatedInformation
   }

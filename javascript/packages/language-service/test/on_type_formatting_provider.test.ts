@@ -30,9 +30,21 @@ describe("OnTypeFormattingProvider", () => {
           start: { line: 0, character: source.length },
           end: { line: 0, character: source.length },
         },
-        newText: "\n<% end %>",
+        newText: "\n  \n<% end %>",
       },
     ])
+  })
+
+  it("places the cursor on the indented block body line", () => {
+    const source = "<% if user.admin? %>"
+    const document = createDocument(source)
+
+    expect(
+      provider.getFormatting(document, Position.create(0, source.length), ">", {
+        tabSize: 2,
+        insertSpaces: true,
+      }).cursor,
+    ).toEqual({ line: 1, character: 2 })
   })
 
   it.each([
@@ -62,7 +74,27 @@ describe("OnTypeFormattingProvider", () => {
           start: { line: 0, character: source.length },
           end: { line: 0, character: source.length },
         },
-        newText: "\n    <% end %>",
+        newText: "\n      \n    <% end %>",
+      },
+    ])
+  })
+
+  it("uses the editor indentation options for the block body", () => {
+    const source = "\t<% if user.admin? %>"
+    const document = createDocument(source)
+
+    expect(
+      provider.getTextEdits(document, Position.create(0, source.length), ">", {
+        tabSize: 4,
+        insertSpaces: false,
+      }),
+    ).toEqual([
+      {
+        range: {
+          start: { line: 0, character: source.length },
+          end: { line: 0, character: source.length },
+        },
+        newText: "\n\t\t\n\t<% end %>",
       },
     ])
   })
@@ -77,7 +109,7 @@ describe("OnTypeFormattingProvider", () => {
         Position.create(1, openingTag.length),
         ">",
       )?.[0].newText,
-    ).toBe("\n  <% end %>")
+    ).toBe("\n    \n  <% end %>")
   })
 
   it.each([
@@ -157,7 +189,7 @@ describe("OnTypeFormattingProvider", () => {
           start: { line: 1, character: openingTag.length },
           end: { line: 1, character: openingTag.length },
         },
-        newText: "\n  <% end %>",
+        newText: "\n    \n  <% end %>",
       },
     ])
   })
@@ -190,7 +222,7 @@ describe("OnTypeFormattingProvider", () => {
           start: { line: 4, character: openingTag.length },
           end: { line: 4, character: openingTag.length },
         },
-        newText: "\n      <% end %>",
+        newText: "\n        \n      <% end %>",
       },
     ])
   })
