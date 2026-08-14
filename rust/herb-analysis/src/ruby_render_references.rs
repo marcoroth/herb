@@ -1,6 +1,6 @@
 use std::collections::{BTreeSet, HashSet};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use herb::herb::{parse_with_options, ParserOptions};
 use herb::prism::PrismNode;
@@ -44,7 +44,7 @@ pub fn collect(project_path: &Path) -> RubyRenderReferences {
     return RubyRenderReferences::default();
   }
 
-  let excluded: HashSet<PathBuf> = HashSet::new();
+  let excluded: HashSet<Box<str>> = HashSet::new();
   let (files, _) = listing::collect_file_paths(roots, &excluded);
 
   let mut references = RubyRenderReferences::default();

@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use rubydex::indexing::{self, IndexerBackend, LanguageId};
@@ -57,7 +56,7 @@ impl Analysis {
     }
   }
 
-  pub fn index_paths(paths: &[String], excluded: &HashSet<PathBuf>) -> Self {
+  pub fn index_paths(paths: &[String], excluded: &HashSet<Box<str>>) -> Self {
     let mut graph = Graph::new();
     let mut timings = Vec::new();
     let mut index_errors = Vec::new();
