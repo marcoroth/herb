@@ -96,6 +96,30 @@ fn missing_format(file: &str) -> bool {
   name.ends_with(".erb") && name.matches('.').count() == 1
 }
 
+fn static_branches(expression: &str) -> Vec<String> {
+  let mut found = Vec::new();
+  let mut rest = expression;
+
+  while let Some(start) = rest.find(['"', '\'']) {
+    let quote = rest.as_bytes()[start] as char;
+    let after = &rest[start + 1..];
+
+    let Some(end) = after.find(quote) else {
+      break;
+    };
+
+    let literal = &after[..end];
+
+    if !literal.is_empty() && !literal.contains("#{") {
+      found.push(literal.to_string());
+    }
+
+    rest = &after[end + 1..];
+  }
+
+  found
+}
+
 fn render_name_kind(name: &str) -> Option<&'static str> {
   if name.starts_with('@') {
     return Some("instance variable");
@@ -186,6 +210,7 @@ fn check(arguments: &[String]) -> i32 {
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
   let mut dynamic_renders = 0usize;
   let mut dynamic_sites: Vec<(String, String)> = Vec::new();
+  let mut branching_sites: Vec<(String, String, Vec<String>)> = Vec::new();
   let mut other_renders = 0usize;
   let mut with_partial_count = 0usize;
 
@@ -255,7 +280,24 @@ fn check(arguments: &[String]) -> i32 {
 
       match index.resolve(name, Some(file)).first() {
         Some(target) => rendered.push(target.clone()),
-        None => unresolved.push((relative(file, &root), name.clone())),
+        None => {
+          let branches = static_branches(name);
+          let targets: Vec<String> = branches
+            .iter()
+            .filter_map(|branch| index.resolve(branch, Some(file)).first().cloned())
+            .collect();
+
+          if branches.len() > 1 && targets.len() == branches.len() {
+            rendered.extend(targets.iter().cloned());
+            branching_sites.push((
+              relative(file, &root),
+              name.clone(),
+              targets.iter().map(|target| relative(target, &root)).collect(),
+            ));
+          } else {
+            unresolved.push((relative(file, &root), name.clone()));
+          }
+        }
       }
     }
   }
@@ -312,6 +354,22 @@ fn check(arguments: &[String]) -> i32 {
 
     for file in &formatless {
       println!("   {} {}", "!".yellow().bold(), file.yellow());
+    }
+
+    println!();
+  }
+
+  if !branching_sites.is_empty() {
+    println!(" {}", "Conditional render calls:".bold());
+    println!(" {}", "The partial name is chosen at runtime, but every branch is a literal.".dimmed());
+    println!();
+
+    for (file, expression, targets) in &branching_sites {
+      println!("   {} {} {}", "?".yellow().bold(), expression, format!("in {file}").dimmed());
+
+      for target in targets {
+        println!("       {} {}", "\u{2192}".dimmed(), target.green());
+      }
     }
 
     println!();
