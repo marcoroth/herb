@@ -456,7 +456,10 @@ module Herb
             calls.each do |call|
               location = call[:location] ? dimmed("at #{call[:location]}") : nil
               expected = expected_file_path(call[:partial], result.view_root)
-              puts "   #{bold(red("\u2717"))} #{bold(call[:partial])} #{location} #{dimmed("-")} #{dimmed(expected)}"
+              kind = render_name_kind(call[:partial])
+              label = kind ? " #{dimmed("(#{kind})")}" : ""
+
+              puts "   #{bold(red("\u2717"))} #{bold(call[:partial])}#{label} #{location} #{dimmed("-")} #{dimmed(expected)}"
             end
           end
         end
@@ -1175,6 +1178,17 @@ module Herb
 
       def resolve_partial(partial_name, source_file, _partial_files, view_root)
         partial_index(view_root).resolve(partial_name, source_file).first
+      end
+
+      #: (String) -> String?
+      def render_name_kind(name)
+        return "instance variable" if name.start_with?("@")
+        return "interpolated" if name.include?("\#{")
+        return "conditional" if name.include?("?") && name.include?(":")
+        return "method call" if name.include?("(") || name.include?(".")
+        return "expression" if name.include?(" ")
+
+        nil
       end
 
       def expected_file_path(partial_name, view_root)

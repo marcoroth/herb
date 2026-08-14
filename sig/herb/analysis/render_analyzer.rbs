@@ -117,6 +117,9 @@ module Herb
 
       def resolve_partial: (untyped partial_name, untyped source_file, untyped _partial_files, untyped view_root) -> untyped
 
+      # : (String) -> String?
+      def render_name_kind: (String) -> String?
+
       def expected_file_path: (untyped partial_name, untyped view_root) -> untyped
 
       def label: (untyped text, ?untyped width) -> untyped

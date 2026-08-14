@@ -56,6 +56,13 @@ fn normalize(path: &str) -> String {
   }
 }
 
+pub fn without_template_extension(partial_name: &str) -> &str {
+  EXTENSIONS
+    .iter()
+    .find_map(|extension| partial_name.strip_suffix(extension))
+    .unwrap_or(partial_name)
+}
+
 pub fn template_path(file: &str) -> bool {
   let normalized = normalize(file);
   let name = basename(&normalized);

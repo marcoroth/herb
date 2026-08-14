@@ -41,6 +41,13 @@ module Herb
           candidates.find(&:directory?) || root
         end
 
+        #: (String) -> String
+        def without_template_extension(partial_name)
+          extension = EXTENSIONS.find { |candidate| partial_name.end_with?(candidate) }
+
+          extension ? partial_name.delete_suffix(extension) : partial_name
+        end
+
         #: (String) -> bool
         def template_path?(file)
           name = File.basename(file)

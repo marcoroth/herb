@@ -90,6 +90,14 @@ export function projectRelativePath(filePath: string, projectPath: string | unde
   return relativeToViewRoot(filePath, projectPath) ?? normalize(filePath)
 }
 
+export function withoutTemplateExtension(partialName: string): string {
+  for (const extension of PARTIAL_EXTENSIONS) {
+    if (partialName.endsWith(extension)) return partialName.slice(0, -extension.length)
+  }
+
+  return partialName
+}
+
 export function isTemplatePath(filePath: string): boolean {
   const name = basename(normalize(filePath))
 
@@ -186,6 +194,8 @@ export function resolvePartial(
   index: PartialPaths,
   viewRoots: string[]
 ): string | null {
+  partialName = withoutTemplateExtension(partialName)
+
   const exact = index.get(partialName)
 
   if (exact !== undefined) return exact

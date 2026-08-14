@@ -96,6 +96,30 @@ fn missing_format(file: &str) -> bool {
   name.ends_with(".erb") && name.matches('.').count() == 1
 }
 
+fn render_name_kind(name: &str) -> Option<&'static str> {
+  if name.starts_with('@') {
+    return Some("instance variable");
+  }
+
+  if name.contains("#{") {
+    return Some("interpolated");
+  }
+
+  if name.contains('?') && name.contains(':') {
+    return Some("conditional");
+  }
+
+  if name.contains('(') || name.contains('.') {
+    return Some("method call");
+  }
+
+  if name.contains(' ') {
+    return Some("expression");
+  }
+
+  None
+}
+
 fn plural(count: usize, word: &str) -> String {
   if count == 1 {
     word.to_string()
@@ -298,7 +322,9 @@ fn check(arguments: &[String]) -> i32 {
     println!();
 
     for (file, name) in &unresolved {
-      println!("   {} {} {}", "\u{2717}".red().bold(), name, format!("in {file}").dimmed());
+      let kind = render_name_kind(name).map(|kind| format!(" ({kind})").dimmed().to_string()).unwrap_or_default();
+
+      println!("   {} {}{} {}", "\u{2717}".red().bold(), name, kind, format!("in {file}").dimmed());
     }
 
     println!();

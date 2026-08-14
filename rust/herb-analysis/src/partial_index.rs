@@ -164,6 +164,7 @@ impl PartialIndex {
   }
 
   pub fn resolve(&self, partial_name: &str, source_file: Option<&str>) -> &[String] {
+    let partial_name = partial_resolution::without_template_extension(partial_name);
     let exact = self.files_for(partial_name);
 
     if !exact.is_empty() {

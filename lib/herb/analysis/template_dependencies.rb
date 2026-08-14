@@ -100,7 +100,6 @@ module Herb
       end
 
       # @rbs!
-      #   KERNEL_METHODS: Array[String]
       KERNEL_METHODS = [
         "rand", "srand", "format", "sprintf", "raise", "loop", "sleep", "catch", "throw",
         "block_given?", "caller", "binding", "frozen?", "freeze", "dup", "clone", "tap", "then",
@@ -340,7 +339,6 @@ module Herb
       end
 
       # @rbs!
-      #   UNCOUNTABLE: Array[String]
       UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
 
       #: (String, String) -> String?

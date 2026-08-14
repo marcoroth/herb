@@ -3,8 +3,6 @@
 module Herb
   module Analysis
     class RubyLocalsIndex
-      # A name, with where it appears in the source as a byte offset and length,
-      # which is how Prism reports it.
       class NamedReference
         attr_reader :name #: String
         attr_reader :start_offset #: Integer

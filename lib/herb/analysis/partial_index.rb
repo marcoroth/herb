@@ -49,6 +49,7 @@ module Herb
       def resolve(partial_name, source_file)
         return [] unless partial_name
 
+        partial_name = PartialResolution.without_template_extension(partial_name)
         exact = files_for(partial_name)
 
         return exact if exact.any?

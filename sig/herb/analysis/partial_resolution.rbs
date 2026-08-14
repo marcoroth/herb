@@ -26,6 +26,9 @@ module Herb
       # : (String | Pathname) -> Pathname
       def self.view_root_for: (String | Pathname) -> Pathname
 
+      # : (String) -> String
+      def self.without_template_extension: (String) -> String
+
       # : (String) -> bool
       def self.template_path?: (String) -> bool
 
