@@ -29,6 +29,9 @@ module Herb
       # : (String) -> String?
       def self.format_of: (String) -> String?
 
+      # : (String) -> bool
+      def self.has_locale?: (String) -> bool
+
       # : (String) -> String?
       def self.variant_of: (String) -> String?
 

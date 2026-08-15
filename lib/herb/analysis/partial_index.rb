@@ -63,7 +63,7 @@ module Herb
                       2
                     end
 
-          [matches, PartialResolution.variant_of(file) ? 1 : 0]
+          [matches, PartialResolution.variant_of(file) ? 1 : 0, PartialResolution.has_locale?(file) ? 1 : 0]
         end
       end
 

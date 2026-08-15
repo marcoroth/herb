@@ -183,7 +183,11 @@ impl PartialIndex {
         Some(_) => 2,
       };
 
-      (matches, usize::from(partial_resolution::variant_of(file).is_some()))
+      (
+        matches,
+        usize::from(partial_resolution::variant_of(file).is_some()),
+        usize::from(partial_resolution::has_locale(file)),
+      )
     });
 
     ordered

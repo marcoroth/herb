@@ -70,6 +70,23 @@ pub fn format_of(file: &str) -> Option<String> {
   (!format.is_empty()).then(|| format.to_string())
 }
 
+pub fn has_locale(file: &str) -> bool {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+
+  let Some(dot) = base.find('.') else {
+    return false;
+  };
+
+  let extension = &base[dot..];
+
+  let Some(stripped) = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb")) else {
+    return false;
+  };
+
+  stripped.strip_prefix('.').is_some_and(|segments| segments.split('.').count() > 1)
+}
+
 pub fn variant_of(file: &str) -> Option<String> {
   let normalized = normalize(file);
   let base = basename(&normalized);

@@ -112,6 +112,26 @@ export function formatOf(filePath: string): string | null {
   return format === "" ? null : format
 }
 
+export function hasLocale(filePath: string): boolean {
+  const name = basename(normalize(filePath))
+  const dot = name.indexOf(".")
+
+  if (dot === -1) return false
+
+  const extension = name.slice(dot)
+  const stripped = extension.endsWith(".erb")
+    ? extension.slice(0, -".erb".length)
+    : extension.endsWith(".herb")
+      ? extension.slice(0, -".herb".length)
+      : null
+
+  if (stripped === null) return false
+
+  const segments = (stripped.startsWith(".") ? stripped.slice(1) : stripped).split(".")
+
+  return segments.length > 1
+}
+
 export function variantOf(filePath: string): string | null {
   const name = basename(normalize(filePath))
   const dot = name.indexOf(".")
@@ -251,7 +271,7 @@ function rankForFormat(file: string, format: string): number {
   const candidate = formatOf(file)
   const matches = candidate === format ? 0 : candidate === null ? 1 : 2
 
-  return matches * 2 + (variantOf(file) === null ? 0 : 1)
+  return matches * 4 + (variantOf(file) === null ? 0 : 2) + (hasLocale(file) ? 1 : 0)
 }
 
 export function resolvePartial(

@@ -59,6 +59,22 @@ module Herb
           format.empty? ? nil : format
         end
 
+        #: (String) -> bool
+        def has_locale?(file)
+          base = File.basename(file)
+          dot = base.index(".")
+
+          return false unless dot
+
+          extension = base[dot..].to_s
+          stripped = extension.delete_suffix(".erb")
+          stripped = stripped.delete_suffix(".herb") if stripped == extension
+
+          return false if stripped == extension
+
+          stripped.delete_prefix(".").split(".").size > 1
+        end
+
         #: (String) -> String?
         def variant_of(file)
           base = File.basename(file)
