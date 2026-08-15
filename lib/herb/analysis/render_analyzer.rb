@@ -1339,6 +1339,10 @@ module Herb
       end
 
       def relative_path(path)
+        relative = Pathname.new(path).relative_path_from(@project_path).to_s
+
+        return relative unless relative.start_with?("..")
+
         Pathname.new(path).relative_path_from(Pathname.pwd).to_s
       rescue ArgumentError
         path.to_s

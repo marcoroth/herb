@@ -9,7 +9,52 @@ use herb_analysis::render_graph::Verdict;
 use herb_analysis::ruby_render_references;
 use herb_analysis::state_flow::{FlowNode, StateFlow};
 
+fn actionview_configured(project_path: &Path) -> Result<(), String> {
+  let Ok(config) = herb_config::Config::load(project_path, None) else {
+    return Ok(());
+  };
+
+  match config.config.framework {
+    Some(herb_config::Framework::ActionView) => Ok(()),
+    Some(other) => Err(format!("{other:?}").to_lowercase()),
+    None => Err("ruby".to_string()),
+  }
+}
+
+fn report_missing_framework(project_path: &Path, framework: &str) -> i32 {
+  println!();
+  println!(
+    " {}",
+    "Herb also works outside of ActionView, but the `herb actionview` commands require the project to be explicitly configured for ActionView.".dimmed()
+  );
+  println!();
+  println!(
+    " The project at '{}' is not configured to use ActionView (current framework: '{framework}').",
+    project_path.display()
+  );
+  println!();
+  println!(" To enable ActionView support, add the following to your `.herb.yml`:");
+  println!();
+  println!("   {}", "framework: actionview".bold());
+  println!();
+
+  1
+}
+
 pub fn run(command: &str, arguments: &[String]) -> i32 {
+  if !matches!(command, "check" | "graph" | "dependencies" | "flow" | "context" | "signature") {
+    eprintln!("{}", format!("Unknown actionview subcommand: {command}").red());
+    print_usage();
+
+    return 1;
+  }
+
+  let root = project_root(arguments);
+
+  if let Err(framework) = actionview_configured(&root) {
+    return report_missing_framework(&root, &framework);
+  }
+
   match command {
     "check" => check(arguments),
     "graph" => graph(arguments),

@@ -21,6 +21,7 @@ fn write(root: &Path, relative: &str, body: &str) {
 
   fs::create_dir_all(path.parent().unwrap()).unwrap();
   fs::write(path, body).unwrap();
+  fs::write(root.join(".herb.yml"), "framework: actionview\n").unwrap();
 }
 
 fn check(root: &Path) -> String {
