@@ -3,6 +3,7 @@
 
 require_relative "../../herb"
 require_relative "../engine"
+require_relative "slot_visitor"
 
 module Herb
   class Engine
@@ -93,7 +94,9 @@ module Herb
         def initialize(engine, options = {})
           super
 
-          @slots = 0
+          @slot_visitor = engine.slot_visitor
+          @current_node = nil
+          @current_attribute = nil
           @block_depth = 0
 
           branch_counts = {} #: Hash[Integer, Integer]
@@ -101,6 +104,36 @@ module Herb
 
           @branch_counts = branch_counts
           @branch_owner = branch_owner.compare_by_identity
+        end
+
+        #: (untyped) -> void
+        def visit_html_attribute_node(node)
+          previous = @current_attribute
+          @current_attribute = node
+
+          super
+        ensure
+          @current_attribute = previous
+        end
+
+        #: (untyped) -> void
+        def visit_erb_content_node(node)
+          previous = @current_node
+          @current_node = node
+
+          super
+        ensure
+          @current_node = previous
+        end
+
+        #: (untyped) -> void
+        def visit_erb_yield_node(node)
+          previous = @current_node
+          @current_node = node
+
+          super
+        ensure
+          @current_node = previous
         end
 
         #: (untyped) { () -> void } -> void
@@ -143,7 +176,7 @@ module Herb
         def visit_erb_iteration_block_node(node)
           return visit_erb_block_node(node) if output_block?(node)
 
-          collection do |index|
+          collection(node) do |index|
             visit_erb_control_node(node) do
               row(index) do
                 visit_all(node.body)
@@ -182,7 +215,7 @@ module Herb
           check_for_escaped_erb_tag!(opening)
 
           should_escape = should_escape_output?(opening)
-          index = claim
+          index = claim(node)
 
           @tokens << [
             should_escape ? :expr_block_escaped : :expr_block,
@@ -226,25 +259,22 @@ module Herb
 
         private
 
-        #: () -> Integer?
-        def claim
+        #: (untyped) -> Integer?
+        def claim(node)
           return nil if @block_depth.positive?
 
-          index = @slots
-          @slots += 1
-
-          index
+          @slot_visitor.index_for(@current_attribute || node)
         end
 
         #: (String) -> void
         def add_expression(code)
-          @tokens << [:dynamic, code, current_context, [claim, false]]
+          @tokens << [:dynamic, code, current_context, [claim(@current_node), false]]
           @last_trim_consumed_newline = false
         end
 
         #: (String) -> void
         def add_expression_escaped(code)
-          @tokens << [:dynamic, code, current_context, [claim, true]]
+          @tokens << [:dynamic, code, current_context, [claim(@current_node), true]]
           @last_trim_consumed_newline = false
         end
 
@@ -270,7 +300,7 @@ module Herb
         def conditional(node)
           return yield if branch?(node)
 
-          index = claim
+          index = claim(node)
 
           return yield unless index
 
@@ -302,9 +332,9 @@ module Herb
           end
         end
 
-        #: () { (Integer?) -> void } -> void
-        def collection
-          index = claim
+        #: (untyped) { (Integer?) -> void } -> void
+        def collection(node)
+          index = claim(node)
 
           return yield(nil) unless index
 
@@ -319,16 +349,21 @@ module Herb
         def row(index)
           return yield unless index
 
-          @tokens << [:scope, "", nil, [:row_begin, index]]
+          @tokens << [:scope, "", nil, [:row_begin, index, row_key(index)]]
 
           yield
 
           @tokens << [:scope, "", nil, [:row_end, index]]
         end
 
+        #: (Integer) -> String?
+        def row_key(index)
+          @slot_visitor.slots[index]&.key_expression
+        end
+
         #: (untyped, Symbol) -> void
         def iteration(node, part)
-          collection do |index|
+          collection(node) do |index|
             visit_erb_control_node(node) do
               row(index) do
                 visit_all(node.send(part) || [])
@@ -339,14 +374,14 @@ module Herb
           end
         end
       end
+      attr_reader :slot_visitor #: SlotVisitor
 
       #: (String, ?Hash[Symbol, untyped]) -> void
       def initialize(input, properties = {})
         @block_depth = 0
         @scopes = [] #: Array[Integer]
-
-        given = properties[:parser_options] || {} #: Hash[Symbol, untyped]
-        parser_options = given.merge(iteration_nodes: true)
+        @slot_visitor = properties[:slot_visitor] || SlotVisitor.new(mode: :server, mark: false)
+        visitors = [@slot_visitor, *properties[:visitors]]
 
         super(
           input,
@@ -354,7 +389,7 @@ module Herb
             bufvar: BUFFER,
             bufval: "::Hash.new",
             postamble: "#{BUFFER}\n",
-            parser_options: parser_options
+            visitors: visitors
           )
         )
       end
@@ -381,6 +416,7 @@ module Herb
         value = dynamic_value(code, context, escaped)
 
         return add_block_dynamic(value) unless @block_depth.zero?
+        return if index.nil?
 
         @src << "; " << current_scope << "[" << index.to_s << "] = " << value << ";"
       end
@@ -448,9 +484,11 @@ module Herb
         @src << "; #{ROWS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
       end
 
-      #: (Integer) -> void
-      def scope_row_begin(index)
-        @src << "; #{KEY_BUFFER}#{index} += 1; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+      #: (Integer, ?String?) -> void
+      def scope_row_begin(index, key = nil)
+        advance = key ? "#{KEY_BUFFER}#{index} = (#{key}).to_s" : "#{KEY_BUFFER}#{index} += 1"
+
+        @src << "; #{advance}; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
 
         @scopes.push(index)
       end

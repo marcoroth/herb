@@ -72,25 +72,14 @@ module Herb
       # : (String) -> bool
       def self.directive?: (String) -> bool
 
-      # Who renders a branch of this template, which is the one thing a template has to say and
-      # the one thing that cannot be decided for it.
-      #
-      #     <%# herb:slots server %>   the server renders a branch and sends the markup
-      #     <%# herb:slots client %>   the client is sent every branch and renders them itself
-      #
-      # Saying neither means `server`. Being sent a branch that did not render is being sent
-      # something the request did not ask for, so it is asked for rather than assumed.
-      #
-      # Both are slot aware. The directive is `herb:slots`, so the client is told where this
-      # template's dynamic parts are either way, and these two only say who fills them.
       # : (String) -> Symbol?
       def self.directive_mode: (String) -> Symbol?
 
       # : () -> bool
       def self.reads_erb_source?: () -> bool
 
-      # : (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String)) -> void
-      def initialize: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String) -> void
+      # : (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
+      def initialize: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool) -> void
 
       # : () -> String
       def version: () -> String
@@ -105,6 +94,12 @@ module Herb
 
       # : () -> Array[Hash[Symbol, untyped]]
       def slot_entries: () -> Array[Hash[Symbol, untyped]]
+
+      # : (untyped) -> Integer?
+      def index_for: (untyped) -> Integer?
+
+      # : (untyped) -> Array[Integer]
+      def anchored_indices_for: (untyped) -> Array[Integer]
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -189,8 +184,6 @@ module Herb
       # : (untyped) -> Array[untyped]
       def collection_body: (untyped) -> Array[untyped]
 
-      # A tag helper is parsed as an element whose open tag is ERB, so an element carries its
-      # attributes the same way whether the template wrote `<li id="...">` or `tag.li id: ...`.
       # : (untyped) -> Array[untyped]
       def attributes_for: (untyped) -> Array[untyped]
 

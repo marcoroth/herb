@@ -87,6 +87,15 @@ module Herb
         # : (untyped, ?Hash[Symbol, untyped]) -> void
         def initialize: (untyped, ?Hash[Symbol, untyped]) -> void
 
+        # : (untyped) -> void
+        def visit_html_attribute_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_content_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_yield_node: (untyped) -> void
+
         # : (untyped) { () -> void } -> void
         def visit_erb_control_node: (untyped) { () -> void } -> void
 
@@ -122,8 +131,8 @@ module Herb
 
         private
 
-        # : () -> Integer?
-        def claim: () -> Integer?
+        # : (untyped) -> Integer?
+        def claim: (untyped) -> Integer?
 
         # : (String) -> void
         def add_expression: (String) -> void
@@ -146,15 +155,20 @@ module Herb
         # : (untyped, Integer) -> void
         def own_branches: (untyped, Integer) -> void
 
-        # : () { (Integer?) -> void } -> void
-        def collection: () { (Integer?) -> void } -> void
+        # : (untyped) { (Integer?) -> void } -> void
+        def collection: (untyped) { (Integer?) -> void } -> void
 
         # : (Integer?) { () -> void } -> void
         def row: (Integer?) { () -> void } -> void
 
+        # : (Integer) -> String?
+        def row_key: (Integer) -> String?
+
         # : (untyped, Symbol) -> void
         def iteration: (untyped, Symbol) -> void
       end
+
+      attr_reader slot_visitor: SlotVisitor
 
       # : (String, ?Hash[Symbol, untyped]) -> void
       def initialize: (String, ?Hash[Symbol, untyped]) -> void
@@ -197,8 +211,8 @@ module Herb
       # : (Integer) -> void
       def scope_open_collection: (Integer) -> void
 
-      # : (Integer) -> void
-      def scope_row_begin: (Integer) -> void
+      # : (Integer, ?String?) -> void
+      def scope_row_begin: (Integer, ?String?) -> void
 
       # : (Integer) -> void
       def scope_row_end: (Integer) -> void

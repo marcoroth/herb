@@ -30,11 +30,6 @@ module Herb
       include ContextAware
 
       recommended_parser_option iteration_nodes: true
-
-      # A helper that takes a block is one expression, not a block with markup in it. Parsed
-      # without this, `<%= link_to "/x" do %>` comes out as a block whose body is marked
-      # separately, which both loses the helper's own slot and puts markers inside something
-      # whose return value is used.
       required_parser_option action_view_helpers: true
 
       attr_reader :slots #: Array[Slot]
@@ -68,17 +63,6 @@ module Herb
         SLOTS_DIRECTIVE.match?(source)
       end
 
-      # Who renders a branch of this template, which is the one thing a template has to say and
-      # the one thing that cannot be decided for it.
-      #
-      #     <%# herb:slots server %>   the server renders a branch and sends the markup
-      #     <%# herb:slots client %>   the client is sent every branch and renders them itself
-      #
-      # Saying neither means `server`. Being sent a branch that did not render is being sent
-      # something the request did not ask for, so it is asked for rather than assumed.
-      #
-      # Both are slot aware. The directive is `herb:slots`, so the client is told where this
-      # template's dynamic parts are either way, and these two only say who fills them.
       #: (String) -> Symbol?
       def self.directive_mode(source)
         match = SLOTS_DIRECTIVE.match(source)
@@ -95,13 +79,14 @@ module Herb
         true
       end
 
-      #: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String)) -> void
-      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path)
+      #: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
+      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path, mark: true)
         super()
 
         raise ArgumentError, "unknown slot mode #{mode.inspect}, expected one of #{MODES.inspect}" unless MODES.include?(mode)
 
         @markers = markers
+        @mark = mark
         @mode = mode
         @statics = mode == :client ? {} : nil #: Hash[String, String]?
         @identify = identifier
@@ -113,10 +98,12 @@ module Herb
         pending = {} #: Hash[untyped, Integer]
         element_anchored = {} #: Hash[untyped, Array[Integer]]
         continuations = {} #: Hash[untyped, bool]
+        indices = {} #: Hash[untyped, Integer]
 
         @pending = pending.compare_by_identity
         @element_anchored = element_anchored.compare_by_identity
         @continuations = continuations.compare_by_identity
+        @indices = indices.compare_by_identity
 
         @in_attribute = false
         @in_open_tag = false
@@ -169,10 +156,23 @@ module Herb
         }
       end
 
+      #: (untyped) -> Integer?
+      def index_for(node)
+        @indices[node]
+      end
+
+      #: (untyped) -> Array[Integer]
+      def anchored_indices_for(open_tag)
+        @element_anchored[open_tag] || []
+      end
+
       def visit_document_node(node)
         visit_children_with_paths(node.children)
 
         collapse_invariant_conditionals
+
+        return unless @mark
+
         insert_markers(node)
         wrap_region(node)
         append_statics(node)
@@ -392,6 +392,15 @@ module Herb
         @element_anchored.each do |open_tag, indices|
           @element_anchored[open_tag] = indices.map { |index| resolve.call(index) }
         end
+
+        recorded = {} #: Hash[untyped, Integer]
+        lookup = recorded.compare_by_identity
+
+        @indices.each do |node, index|
+          lookup[node] = resolve.call(index) unless dropped[index]
+        end
+
+        @indices = lookup
       end
 
       #: (untyped, Symbol?) -> void
@@ -417,6 +426,7 @@ module Herb
         )
 
         @slots << slot
+        @indices[node] = slot.index
 
         if type == :collection && key_source == :index
           @warnings << Herb::Warnings::UnkeyedCollectionWarning.new(
@@ -532,7 +542,6 @@ module Herb
           when Herb::AST::LiteralNode
             [:literal, child.content.to_s]
           when Herb::AST::RubyLiteralNode
-            # What a helper's keyword argument holds, where a written attribute would hold ERB.
             expression = child.content.to_s.strip
             return nil if expression.empty?
 
@@ -555,8 +564,6 @@ module Herb
         }.flatten
       end
 
-      # A tag helper is parsed as an element whose open tag is ERB, so an element carries its
-      # attributes the same way whether the template wrote `<li id="...">` or `tag.li id: ...`.
       #: (untyped) -> Array[untyped]
       def attributes_for(element)
         open_tag = element.open_tag

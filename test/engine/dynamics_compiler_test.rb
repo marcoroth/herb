@@ -22,8 +22,7 @@ module Engine
         def label = "Name"
       end
     end
-
-    CONDITIONAL = "<% if @admin %><%= @secret %><% else %><%= @public %><% end %>"
+    CONDITIONAL = "<% if @admin %><b><%= @secret %></b><% else %><%= @public %><% end %>"
 
     def dynamics(source, **assigns)
       compiled = Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
@@ -84,6 +83,13 @@ module Engine
 
         refute_includes result[0][:slots].keys, 2
       end
+
+      test "reports a conditional whose branches lay out the same as one value" do
+        source = "<% if @admin %><%= @secret %><% else %><%= @public %><% end %>"
+
+        assert_equal({ 0 => "s" }, dynamics(source, admin: true, secret: "s", public: "p"))
+        assert_equal({ 0 => "p" }, dynamics(source, admin: false, secret: "s", public: "p"))
+      end
     end
 
     describe "collections" do
@@ -116,6 +122,21 @@ module Engine
         assert_equal({ 0 => { branch: 0, slots: { 1 => { rows: { 1 => { 2 => "a" }, 2 => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
       end
 
+      test "keys rows by the key the template declared" do
+        users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
+        source = %(<% @users.each do |u| %><li id="<%= u.firstname %>"><%= u.lastname %></li><% end %>)
+
+        assert_equal({ 0 => { rows: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } } } },
+                     dynamics(source, users: users))
+      end
+
+      test "keys rows by position when the template declares no key" do
+        source = %(<% @users.each do |u| %><%= u.firstname %><% end %>)
+        users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
+
+        assert_equal({ 0 => { rows: { 1 => { 1 => "Ada" }, 2 => { 1 => "Grace" } } } }, dynamics(source, users: users))
+      end
+
       test "treats a for loop as a collection" do
         assert_equal({ 0 => { rows: { 1 => { 1 => "a" }, 2 => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
       end
@@ -126,8 +147,8 @@ module Engine
         assert_equal({ 0 => "/a?b=1&amp;c=2" }, dynamics(%(<a href="<%= @url %>"></a>), url: "/a?b=1&c=2"))
       end
 
-      test "escapes script content as JavaScript" do
-        assert_equal({ 0 => "\\x3cb\\x3e" }, dynamics("<script>var x = <%= @raw %>;</script>", raw: "<b>"))
+      test "reports nothing for script content, which has no slot to address" do
+        assert_empty dynamics("<script>var x = <%= @raw %>;</script>", raw: "<b>")
       end
 
       test "leaves text content to the engine's own escaping" do
@@ -157,7 +178,7 @@ module Engine
       test "takes an index of its own so the tags after it keep theirs" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>)
 
-        assert_equal({ 0 => "<form>Name</form>", 1 => "A" }, dynamics(source, after: "A"))
+        assert_equal({ 0 => "<form>Name</form>", 2 => "A" }, dynamics(source, after: "A"))
       end
     end
 
