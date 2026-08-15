@@ -41,6 +41,7 @@ module Herb
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
+      OCCURRENCE = "_herb_occurrence" #: String
       BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
@@ -819,16 +820,24 @@ module Herb
         end
       end
 
+      # The number is counted where it is written, and read wherever else it is needed. A template
+      # can mark more than one place as belonging to the same rendering, and counting again in the
+      # second place would say it was a different one.
       def wrap_region(document_node)
-        name = identifier
-
         document_node.children.unshift(
-          text_node(@markers.region_open_prefix(name, version)),
-          erb_output_node(occurrence_expression),
-          text_node(@markers.region_open_suffix)
+          erb_code_node("#{OCCURRENCE} = #{occurrence_expression}"),
+          *region_open
         )
 
-        document_node.children.push(comment_node(@markers.region_close(name)))
+        document_node.children.push(comment_node(@markers.region_close(identifier)))
+      end
+
+      def region_open
+        [
+          text_node(@markers.region_open_prefix(identifier, version)),
+          erb_output_node(OCCURRENCE),
+          text_node(@markers.region_open_suffix)
+        ]
       end
 
       def text_node(content)
