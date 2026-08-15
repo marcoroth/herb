@@ -1,0 +1,505 @@
+# frozen_string_literal: true
+# typed: false
+
+require_relative "../../herb"
+require_relative "../engine"
+
+module Herb
+  class Engine
+    # Compiles a template into Ruby that returns its dynamic values rather than its HTML.
+    #
+    # `Herb::Engine` answers "what does this template render". This answers "what did the template
+    # evaluate to render it", which is the half that changes when state changes:
+    #
+    #     require "herb/engine/dynamics_compiler"
+    #
+    #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
+    #     view.instance_eval(source)
+    #     #=> { 0 => "Hello" }
+    #
+    # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
+    # and its `dynamic` values for the same reason. A template's statics never change between
+    # renders, so anything re-rendering on a state change only has to send the dynamics.
+    #
+    # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
+    # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
+    #
+    # ## The shape follows the template, not the render
+    #
+    # Every insertion point owns an index, decided while compiling and the same on every render.
+    # Control flow owns one too, because what it decided is itself a value that changes:
+    #
+    #     <% if admin? %><%= secret %><% else %><%= public %><% end %>
+    #     #=> { 0 => { branch: 0, slots: { 1 => "s" } } }   when admin?
+    #     #=> { 0 => { branch: 1, slots: { 2 => "p" } } }   otherwise
+    #
+    # Both branches keep their own indices, so a condition flipping changes which indices are
+    # present and never what an index means.
+    #
+    # ## Absent means it did not run
+    #
+    # A key is missing when the code that would have filled it never ran, which is the same thing
+    # the rendered markup says by not being there. Nothing has to be sent about a branch that was
+    # not taken, and nothing can be learned about one either.
+    #
+    # A conditional and a collection are always present, because both are evaluated on every render
+    # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
+    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
+    #
+    # ## Collections group by row
+    #
+    # A collection holds its rows in render order, each row carrying the slots inside it:
+    #
+    #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
+    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #
+    # Grouping the other way would give one list per slot and leave the client to zip them back
+    # together, which it cannot do once a row is inserted rather than appended.
+    #
+    # Rows are keyed by their position for now. Taking the key the template declares, through
+    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
+    # reordered, and it belongs to `SlotVisitor` rather than here.
+    #
+    # ## Escaping
+    #
+    # A value carries the escaping of the place it was written, because that is where it is going
+    # back to. The same expression is escaped differently in an attribute, in a `<script>`, and in
+    # text, so the tree is left intact and the compiler decides as it normally would.
+    #
+    # ## Blocks
+    #
+    # A tag that takes a block, such as `<%= form_with do |f| %>`, is one entry holding everything
+    # the block rendered. The helper decides where the block's output goes, so there is no position
+    # in the template to attribute the pieces to.
+    class DynamicsCompiler < Herb::Engine
+      BUFFER = "__herb_dynamics" #: String
+      BLOCK_BUFFER = "__herb_block" #: String
+      SLOT_BUFFER = "__herb_slot" #: String
+      SCOPE_BUFFER = "__herb_scope" #: String
+      ROWS_BUFFER = "__herb_rows" #: String
+      KEY_BUFFER = "__herb_key" #: String
+
+      BRANCHING_NODES = [
+        "AST_ERB_IF_NODE",
+        "AST_ERB_UNLESS_NODE",
+        "AST_ERB_ELSE_NODE",
+        "AST_ERB_WHEN_NODE",
+        "AST_ERB_IN_NODE"
+      ].freeze #: Array[String]
+
+      class Compiler < Herb::Engine::Compiler
+        #: (untyped, ?Hash[Symbol, untyped]) -> void
+        def initialize(engine, options = {})
+          super
+
+          @slots = 0
+          @block_depth = 0
+
+          branch_counts = {} #: Hash[Integer, Integer]
+          branch_owner = {} #: Hash[untyped, Integer]
+
+          @branch_counts = branch_counts
+          @branch_owner = branch_owner.compare_by_identity
+        end
+
+        #: (untyped) { () -> void } -> void
+        def visit_erb_control_node(node, &block)
+          return super unless block
+          return super unless branch?(node)
+
+          index = @branch_owner[node]
+
+          branched = lambda do
+            @tokens << [:scope, "", nil, [:branch, index, next_branch(index)]]
+
+            block.call
+          end
+
+          super(node, &branched)
+        end
+
+        #: (untyped) -> void
+        def visit_erb_if_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_unless_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_case_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_case_match_node(node)
+          conditional(node) { super }
+        end
+
+        #: (untyped) -> void
+        def visit_erb_iteration_block_node(node)
+          return visit_erb_block_node(node) if output_block?(node)
+
+          collection do |index|
+            visit_erb_control_node(node) do
+              row(index) do
+                visit_all(node.body)
+
+                visit(node.rescue_clause)
+                visit(node.else_clause)
+                visit(node.ensure_clause)
+              end
+
+              visit(node.end_node)
+            end
+          end
+        end
+
+        #: (untyped) -> void
+        def visit_erb_for_node(node)
+          iteration(node, :statements)
+        end
+
+        #: (untyped) -> void
+        def visit_erb_while_node(node)
+          iteration(node, :statements)
+        end
+
+        #: (untyped) -> void
+        def visit_erb_until_node(node)
+          iteration(node, :statements)
+        end
+
+        #: (untyped) -> void
+        def visit_erb_block_node(node)
+          return super unless output_block?(node)
+
+          opening = node.tag_opening.value
+
+          check_for_escaped_erb_tag!(opening)
+
+          should_escape = should_escape_output?(opening)
+          index = claim
+
+          @tokens << [
+            should_escape ? :expr_block_escaped : :expr_block,
+            node.content.value.strip,
+            current_context,
+            index
+          ]
+
+          @last_trim_consumed_newline = false
+          @trim_next_whitespace = true if right_trim?(node)
+
+          @block_depth += 1
+
+          begin
+            visit_all(node.body)
+          ensure
+            @block_depth -= 1
+          end
+
+          visit_erb_block_end_node(node.end_node, escaped: should_escape)
+        end
+
+        #: () -> void
+        def generate_output
+          optimize_tokens(@tokens).each do |type, value, context, extra|
+            case type
+            when :text then @engine.send(:add_text, value)
+            when :code then @engine.send(:add_code, value)
+            when :scope then @engine.send(:add_scope, *extra)
+            when :dynamic
+              index, escaped = extra
+
+              @engine.send(:add_dynamic, value, context, index, escaped)
+            when :expr_block, :expr_block_escaped
+              @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
+            when :expr_block_end
+              @engine.send(:add_expression_block_end, value, escaped: extra)
+            end
+          end
+        end
+
+        private
+
+        #: () -> Integer?
+        def claim
+          return nil if @block_depth.positive?
+
+          index = @slots
+          @slots += 1
+
+          index
+        end
+
+        #: (String) -> void
+        def add_expression(code)
+          @tokens << [:dynamic, code, current_context, [claim, false]]
+          @last_trim_consumed_newline = false
+        end
+
+        #: (String) -> void
+        def add_expression_escaped(code)
+          @tokens << [:dynamic, code, current_context, [claim, true]]
+          @last_trim_consumed_newline = false
+        end
+
+        #: (untyped) -> bool
+        def output_block?(node)
+          node.tag_opening.value.include?("=")
+        end
+
+        #: (untyped) -> bool
+        def branch?(node)
+          @branch_owner.key?(node)
+        end
+
+        #: (Integer) -> Integer
+        def next_branch(index)
+          count = @branch_counts[index] || 0
+          @branch_counts[index] = count + 1
+
+          count
+        end
+
+        #: (untyped) { () -> void } -> void
+        def conditional(node)
+          return yield if branch?(node)
+
+          index = claim
+
+          return yield unless index
+
+          own_branches(node, index)
+
+          @tokens << [:scope, "", nil, [:open_conditional, index]]
+
+          yield
+
+          @tokens << [:scope, "", nil, [:close_conditional, index]]
+        end
+
+        #: (untyped, Integer) -> void
+        def own_branches(node, index)
+          return unless node
+
+          @branch_owner[node] = index if BRANCHING_NODES.include?(node.type.to_s)
+
+          [:subsequent, :else_clause, :conditions].each do |property|
+            next unless node.respond_to?(property)
+
+            value = node.send(property)
+
+            case value
+            when Array then value.each { |child| own_branches(child, index) }
+            when nil then next
+            else own_branches(value, index)
+            end
+          end
+        end
+
+        #: () { (Integer?) -> void } -> void
+        def collection
+          index = claim
+
+          return yield(nil) unless index
+
+          @tokens << [:scope, "", nil, [:open_collection, index]]
+
+          yield(index)
+
+          @tokens << [:scope, "", nil, [:close_collection, index]]
+        end
+
+        #: (Integer?) { () -> void } -> void
+        def row(index)
+          return yield unless index
+
+          @tokens << [:scope, "", nil, [:row_begin, index]]
+
+          yield
+
+          @tokens << [:scope, "", nil, [:row_end, index]]
+        end
+
+        #: (untyped, Symbol) -> void
+        def iteration(node, part)
+          collection do |index|
+            visit_erb_control_node(node) do
+              row(index) do
+                visit_all(node.send(part) || [])
+              end
+
+              visit(node.end_node)
+            end
+          end
+        end
+      end
+
+      #: (String, ?Hash[Symbol, untyped]) -> void
+      def initialize(input, properties = {})
+        @block_depth = 0
+        @scopes = [] #: Array[Integer]
+
+        given = properties[:parser_options] || {} #: Hash[Symbol, untyped]
+        parser_options = given.merge(iteration_nodes: true)
+
+        super(
+          input,
+          properties.merge(
+            bufvar: BUFFER,
+            bufval: "::Hash.new",
+            postamble: "#{BUFFER}\n",
+            parser_options: parser_options
+          )
+        )
+      end
+
+      #: () -> untyped
+      def compiler_class
+        Compiler
+      end
+
+      #: (String) -> void
+      def add_text(text)
+        return if @block_depth.zero?
+
+        super
+      end
+
+      #: (Symbol, *untyped) -> void
+      def add_scope(kind, *)
+        send(:"scope_#{kind}", *)
+      end
+
+      #: (String, Symbol?, Integer?, bool) -> void
+      def add_dynamic(code, context, index, escaped)
+        value = dynamic_value(code, context, escaped)
+
+        return add_block_dynamic(value) unless @block_depth.zero?
+
+        @src << "; " << current_scope << "[" << index.to_s << "] = " << value << ";"
+      end
+
+      #: (String, Integer?, bool) -> void
+      def add_dynamic_block(code, index, escaped)
+        @_in_expression_block = true
+        @_expression_block_open_paren = true
+
+        opening = escaped ? "#{@escapefunc}((" : "("
+
+        @src << if @block_depth.zero?
+                  "; #{current_scope}[#{index}] = #{opening}#{code}"
+                else
+                  "; #{@bufvar} << #{opening}#{code}"
+                end
+
+        open_block
+      end
+
+      #: (String, ?escaped: bool) -> void
+      def add_expression_block_end(code, escaped: false)
+        @src << "; " << @bufvar
+
+        close_block
+
+        super
+      end
+
+      #: () -> String
+      def inspect
+        "#<#{self.class.name}>"
+      end
+
+      private
+
+      #: () -> String
+      def current_scope
+        @scopes.empty? ? BUFFER : "#{SCOPE_BUFFER}#{@scopes.last}"
+      end
+
+      #: (Integer) -> void
+      def scope_open_conditional(index)
+        @src << "; #{SLOT_BUFFER}#{index} = nil;"
+      end
+
+      #: (Integer, Integer) -> void
+      def scope_branch(index, branch)
+        leave_scope(index)
+
+        @src << "; #{SLOT_BUFFER}#{index} = { branch: #{branch}, slots: (#{SCOPE_BUFFER}#{index} = ::Hash.new) };"
+
+        @scopes.push(index)
+      end
+
+      #: (Integer) -> void
+      def scope_close_conditional(index)
+        leave_scope(index)
+
+        @src << "; #{current_scope}[#{index}] = (#{SLOT_BUFFER}#{index} || { branch: nil });"
+      end
+
+      #: (Integer) -> void
+      def scope_open_collection(index)
+        @src << "; #{ROWS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
+      end
+
+      #: (Integer) -> void
+      def scope_row_begin(index)
+        @src << "; #{KEY_BUFFER}#{index} += 1; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+
+        @scopes.push(index)
+      end
+
+      #: (Integer) -> void
+      def scope_row_end(index)
+        leave_scope(index)
+
+        @src << "; #{ROWS_BUFFER}#{index}[#{KEY_BUFFER}#{index}] = #{SCOPE_BUFFER}#{index};"
+      end
+
+      #: (Integer) -> void
+      def scope_close_collection(index)
+        @src << "; #{current_scope}[#{index}] = { rows: #{ROWS_BUFFER}#{index} };"
+      end
+
+      #: (Integer) -> void
+      def leave_scope(index)
+        @scopes.pop if @scopes.last == index
+      end
+
+      #: (String, Symbol?, bool) -> String
+      def dynamic_value(code, context, escaped)
+        escapefunc = context_escape_function(context)
+
+        return "#{escapefunc}((#{code}))" if escapefunc
+        return "#{@escapefunc}((#{code}))" if escaped
+
+        "(#{code}).to_s"
+      end
+
+      #: (String) -> void
+      def add_block_dynamic(value)
+        @src << "; " << @bufvar << " << " << value << ";"
+      end
+
+      #: () -> void
+      def open_block
+        @block_depth += 1
+        @bufvar = "#{BLOCK_BUFFER}#{@block_depth}"
+
+        @src << "; " << @bufvar << " = ::String.new;"
+      end
+
+      #: () -> void
+      def close_block
+        @block_depth -= 1
+        @bufvar = @block_depth.zero? ? BUFFER : "#{BLOCK_BUFFER}#{@block_depth}"
+      end
+    end
+  end
+end
