@@ -97,7 +97,7 @@ module Engine
         users = [View::User.new("Marco", "Roth"), View::User.new("Joe", "Doe")]
         source = "<% @users.each do |u| %><li><%= u.firstname %> <%= u.lastname %></li><% end %>"
 
-        assert_equal({ 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" }, 2 => { 1 => "Joe", 2 => "Doe" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { rows: { "1" => { 1 => "Marco", 2 => "Roth" }, "2" => { 1 => "Joe", 2 => "Doe" } } } }, dynamics(source, users: users))
       end
 
       test "reports a collection that rendered no rows" do
@@ -107,19 +107,19 @@ module Engine
       test "keeps the rows of a nested collection inside the row that produced them" do
         source = "<% @rows.each do |r| %><% r.each do |c| %><%= c %><% end %><% end %>"
 
-        assert_equal({ 0 => { rows: { 1 => { 1 => { rows: { 1 => { 2 => "1" }, 2 => { 2 => "2" } } } }, 2 => { 1 => { rows: { 1 => { 2 => "3" } } } } } } }, dynamics(source, rows: [[1, 2], [3]]))
+        assert_equal({ 0 => { rows: { "1" => { 1 => { rows: { "1" => { 2 => "1" }, "2" => { 2 => "2" } } } }, "2" => { 1 => { rows: { "1" => { 2 => "3" } } } } } } }, dynamics(source, rows: [[1, 2], [3]]))
       end
 
       test "nests a conditional inside the row it ran in" do
         source = "<% @xs.each do |x| %><% if x %><%= x %><% end %><% end %>"
 
-        assert_equal({ 0 => { rows: { 1 => { 1 => { branch: 0, slots: { 2 => "a" } } }, 2 => { 1 => { branch: nil } } } } }, dynamics(source, xs: ["a", nil]))
+        assert_equal({ 0 => { rows: { "1" => { 1 => { branch: 0, slots: { 2 => "a" } } }, "2" => { 1 => { branch: nil } } } } }, dynamics(source, xs: ["a", nil]))
       end
 
       test "nests a collection inside the branch it ran in" do
         source = "<% if @on %><% @xs.each do |x| %><%= x %><% end %><% end %>"
 
-        assert_equal({ 0 => { branch: 0, slots: { 1 => { rows: { 1 => { 2 => "a" }, 2 => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
+        assert_equal({ 0 => { branch: 0, slots: { 1 => { rows: { "1" => { 2 => "a" }, "2" => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
       end
 
       test "keys rows by the key the template declared" do
@@ -134,11 +134,11 @@ module Engine
         source = %(<% @users.each do |u| %><%= u.firstname %><% end %>)
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
 
-        assert_equal({ 0 => { rows: { 1 => { 1 => "Ada" }, 2 => { 1 => "Grace" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { rows: { "1" => { 1 => "Ada" }, "2" => { 1 => "Grace" } } } }, dynamics(source, users: users))
       end
 
       test "treats a for loop as a collection" do
-        assert_equal({ 0 => { rows: { 1 => { 1 => "a" }, 2 => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
+        assert_equal({ 0 => { rows: { "1" => { 1 => "a" }, "2" => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
       end
     end
 
@@ -160,25 +160,25 @@ module Engine
       test "collects the whole block as one value" do
         source = %(<div><%= form_with(model: @user) do |f| %><span><%= f.label %></span><% end %></div>)
 
-        assert_equal({ 0 => "<form><span>Name</span></form>" }, dynamics(source))
+        assert_equal({ 0 => "<form><span>Name</span></form>", 1 => "Name" }, dynamics(source))
       end
 
-      test "keeps the block's markup out of the values" do
+      test "reports what is inside it as well as the markup around it" do
         source = %(<div><%= form_with(model: @user) do |f| %><span><%= f.label %></span><% end %></div>)
 
-        refute_includes dynamics(source).values, "Name"
+        assert_equal "Name", dynamics(source)[1]
       end
 
       test "nests" do
         source = %(<%= wrapper do %>a<%= form_with(model: 1) do |f| %><%= f.label %><% end %><% end %>)
 
-        assert_equal({ 0 => "[a<form>Name</form>]" }, dynamics(source))
+        assert_equal({ 0 => "[a<form>Name</form>]", 2 => "Name" }, dynamics(source))
       end
 
       test "takes an index of its own so the tags after it keep theirs" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>)
 
-        assert_equal({ 0 => "<form>Name</form>", 2 => "A" }, dynamics(source, after: "A"))
+        assert_equal({ 0 => "<form>Name</form>", 1 => "Name", 2 => "A" }, dynamics(source, after: "A"))
       end
     end
 

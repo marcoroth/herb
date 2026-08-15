@@ -42,6 +42,8 @@ module Engine
         "an empty collection" => [%(<% @rows.each do |r| %><%= r %><% end %>), { rows: [] }],
         "a collection inside a branch" => [%(<% if @on %><% @rows.each do |r| %><%= r %><% end %><% end %>), { on: true, rows: ["a"] }],
         "a helper block building an element" => [%(<%= tag.li(id: 1) do %><%= @n %><% end %><%= @after %>), { n: "n", after: "A" }],
+        "an iteration whose value is output" => [%(<%= @rows.each do |r| %><%= r %><% end %>), { rows: [1, 2] }],
+        "a conditional inside a block" => [%(<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>), { on: true, x: "x" }],
         "nothing dynamic at all" => [%(<p>static</p>), {}],
       }.freeze
 
@@ -112,14 +114,26 @@ module Engine
         end
       end
 
-      test "a block's interior is uncovered without shifting what follows it" do
+      test "a block's interior is covered alongside the block itself" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>)
         compiler = compile(source)
 
         assert_equal([[0, :block], [1, :child], [2, :child]],
                      compiler.slot_visitor.slots.map { |slot| [slot.index, slot.type] })
 
-        assert_equal({ 0 => "<form>Name</form>", 2 => "A" }, evaluate(compiler, after: "A"))
+        assert_equal({ 0 => "<form>Name</form>", 1 => "Name", 2 => "A" }, evaluate(compiler, after: "A"))
+      end
+
+      test "an iteration is a collection whether or not its value is output" do
+        rows = { rows: { "1" => { 1 => "1" }, "2" => { 1 => "2" } } }
+
+        %(<% @rows.each do |r| %><%= r %><% end %>).then do |source|
+          assert_equal({ 0 => rows }, evaluate(compile(source), rows: [1, 2]))
+        end
+
+        %(<%= @rows.each do |r| %><%= r %><% end %>).then do |source|
+          assert_equal({ 0 => rows }, evaluate(compile(source), rows: [1, 2]))
+        end
       end
 
       test "a collapsed conditional reports one value rather than a branch" do

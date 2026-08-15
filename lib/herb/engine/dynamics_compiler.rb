@@ -58,9 +58,10 @@ module Herb
     # Grouping the other way would give one list per slot and leave the client to zip them back
     # together, which it cannot do once a row is inserted rather than appended.
     #
-    # Rows are keyed by their position for now. Taking the key the template declares, through
-    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
-    # reordered, and it belongs to `SlotVisitor` rather than here.
+    # A row is keyed by the key its template declares, through `herb-key` or `id` or a
+    # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
+    # decides what that key is and this evaluates it, so a row arrives under the same key the
+    # marker around it carries. A collection that declares none falls back to position.
     #
     # ## Escaping
     #
@@ -70,9 +71,20 @@ module Herb
     #
     # ## Blocks
     #
-    # A tag that takes a block, such as `<%= form_with do |f| %>`, is one entry holding everything
-    # the block rendered. The helper decides where the block's output goes, so there is no position
-    # in the template to attribute the pieces to.
+    # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding everything
+    # the block rendered, because the helper wraps that output in markup of its own that only the
+    # helper can produce. What the template wrote inside the block keeps its own indices alongside:
+    #
+    #     <%= form_with(model: @user) do |f| %><%= f.label %><% end %>
+    #     #=> { 0 => "<form>Name</form>", 1 => "Name" }
+    #
+    # So a caller that can address slot 1 sends a value, and one that cannot falls back to slot 0
+    # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
+    # for conditionals and collections.
+    #
+    # A block yielding more than once is the exception, since one index cannot stand for the several
+    # values its interior took. `each` and the other iterations are compiled as collections for that
+    # reason, and a helper that yields repeatedly reports the last value its interior took.
     class DynamicsCompiler < Herb::Engine
       BUFFER = "__herb_dynamics" #: String
       BLOCK_BUFFER = "__herb_block" #: String
@@ -174,8 +186,6 @@ module Herb
 
         #: (untyped) -> void
         def visit_erb_iteration_block_node(node)
-          return visit_erb_block_node(node) if output_block?(node)
-
           collection(node) do |index|
             visit_erb_control_node(node) do
               row(index) do
@@ -261,8 +271,6 @@ module Herb
 
         #: (untyped) -> Integer?
         def claim(node)
-          return nil if @block_depth.positive?
-
           @slot_visitor.index_for(@current_attribute || node)
         end
 
@@ -415,10 +423,10 @@ module Herb
       def add_dynamic(code, context, index, escaped)
         value = dynamic_value(code, context, escaped)
 
-        return add_block_dynamic(value) unless @block_depth.zero?
+        return add_block_dynamic(index ? assignment(index, value) : value) unless @block_depth.zero?
         return if index.nil?
 
-        @src << "; " << current_scope << "[" << index.to_s << "] = " << value << ";"
+        @src << "; " << assignment(index, value) << ";"
       end
 
       #: (String, Integer?, bool) -> void
@@ -497,7 +505,7 @@ module Herb
       def scope_row_end(index)
         leave_scope(index)
 
-        @src << "; #{ROWS_BUFFER}#{index}[#{KEY_BUFFER}#{index}] = #{SCOPE_BUFFER}#{index};"
+        @src << "; #{ROWS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
       end
 
       #: (Integer) -> void
@@ -520,9 +528,14 @@ module Herb
         "(#{code}).to_s"
       end
 
+      #: (Integer, String) -> String
+      def assignment(index, value)
+        "#{current_scope}[#{index}] = #{value}"
+      end
+
       #: (String) -> void
       def add_block_dynamic(value)
-        @src << "; " << @bufvar << " << " << value << ";"
+        @src << "; " << @bufvar << " << (" << value << ");"
       end
 
       #: () -> void
