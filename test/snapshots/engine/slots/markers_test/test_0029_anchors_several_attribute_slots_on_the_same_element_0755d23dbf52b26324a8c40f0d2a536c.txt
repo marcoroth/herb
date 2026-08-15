@@ -2,4 +2,4 @@
 source: "Engine::Slots::MarkersTest#test_0029_anchors several attribute slots on the same element"
 input: "{source: \"<div class=\\\"<%= @c %>\\\" id=\\\"<%= @i %>\\\"></div>\", locals: {\"@c\" => \"C\", \"@i\" => \"I\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
 ---
-<!--herb-region:app/views/test.html.erb:b5b81d11--><div class="C" id="I" data-herb-slot="0:attribute:class,1:attribute:id"></div><!--/herb-region:app/views/test.html.erb-->
+<!--herb-region:app/views/test.html.erb:b5b81d11:0--><div class="C" id="I" data-herb-slot="0:attribute:class,1:attribute:id"></div><!--/herb-region:app/views/test.html.erb-->

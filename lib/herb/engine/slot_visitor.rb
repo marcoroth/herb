@@ -40,6 +40,7 @@ module Herb
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
+      OCCURRENCES = "@_herb_region_occurrences" #: String
       BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
@@ -816,8 +817,17 @@ module Herb
       def wrap_region(document_node)
         name = identifier
 
-        document_node.children.unshift(comment_node(@markers.region_open(name, version)))
+        document_node.children.unshift(
+          text_node(@markers.region_open_prefix(name, version)),
+          erb_output_node(occurrence_expression(name)),
+          text_node(@markers.region_open_suffix)
+        )
+
         document_node.children.push(comment_node(@markers.region_close(name)))
+      end
+
+      def occurrence_expression(name)
+        "((#{OCCURRENCES} ||= ::Hash.new(0))[#{name.inspect}] += 1) - 1"
       end
 
       def text_node(content)

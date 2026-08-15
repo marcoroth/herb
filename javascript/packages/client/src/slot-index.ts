@@ -17,7 +17,7 @@
  * attaching slots to an already-indexed region when the new markup landed inside one.
  */
 
-const REGION_OPEN = /^herb-region:(.*):([0-9a-f]+)$/
+const REGION_OPEN = /^herb-region:(.*):([0-9a-f]+):(\d+)$/
 const REGION_CLOSE = /^\/herb-region:(.*)$/
 const SLOT_OPEN = /^herb-slot:(\d+)(?::([a-z_]+))?$/
 const SLOT_CLOSE = /^\/herb-slot:(\d+)$/
@@ -70,6 +70,7 @@ export interface Slot {
 export interface Region {
   file: string
   version: string
+  occurrence: number
   start: Comment | null
   end: Comment | null
   slots: Map<number, Slot>
@@ -174,8 +175,12 @@ export class SlotIndex {
     return this.regionsFor(file).map((region) => region.slots.get(index)).filter((slot): slot is Slot => slot !== undefined)
   }
 
+  region(file: string, occurrence = 0): Region | null {
+    return this.regionsFor(file).find((region) => region.occurrence === occurrence) ?? null
+  }
+
   slot(file: string, index: number, occurrence = 0): Slot | null {
-    return this.regionsFor(file)[occurrence]?.slots.get(index) ?? null
+    return this.region(file, occurrence)?.slots.get(index) ?? null
   }
 
   rowsFor(file: string, index: number, occurrence = 0): Map<string, Row> {
@@ -396,6 +401,7 @@ export class SlotIndex {
         const region: Region = {
           file: regionOpen[1],
           version: regionOpen[2],
+          occurrence: Number(regionOpen[3]),
           start: comment,
           end: null,
           slots: new Map(),
