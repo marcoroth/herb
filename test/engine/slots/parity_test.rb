@@ -52,7 +52,7 @@ module Engine
       end
 
       def evaluate(compiler, assigns)
-        View.new(**assigns).instance_eval(compiler.src)
+        View.new(**assigns).instance_eval(compiler.src).fetch(:slots)
       end
 
       def shapes(values, found = {})

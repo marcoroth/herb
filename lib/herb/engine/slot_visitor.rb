@@ -30,6 +30,7 @@ module Herb
       include ContextAware
 
       recommended_parser_option iteration_nodes: true
+      recommended_parser_option render_nodes: true
       required_parser_option action_view_helpers: true
 
       attr_reader :slots #: Array[Slot]
@@ -228,6 +229,12 @@ module Herb
       end
 
       def visit_erb_content_node(node)
+        record_slot(node, erb_output?(node.tag_opening&.value.to_s) ? :child : nil)
+
+        super
+      end
+
+      def visit_erb_render_node(node)
         record_slot(node, erb_output?(node.tag_opening&.value.to_s) ? :child : nil)
 
         super

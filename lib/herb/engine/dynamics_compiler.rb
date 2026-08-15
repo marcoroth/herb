@@ -16,7 +16,7 @@ module Herb
     #
     #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
     #     view.instance_eval(source)
-    #     #=> { 0 => "Hello" }
+    #     #=> { template: "app/views/posts/index.html.erb", version: "fd3dfd36", slots: { 0 => "Hello" } }
     #
     # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
     # and its `dynamic` values for the same reason. A template's statics never change between
@@ -24,6 +24,14 @@ module Herb
     #
     # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
     # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
+    #
+    # ## Values name the template they came from
+    #
+    # An index means nothing on its own, because it is a position in one template's numbering, and
+    # it means something else in the next template. So the values arrive wrapped in the identifier
+    # and version `SlotVisitor` gave the markers, which is the same pair the page carries in
+    # `<!--herb-region:ID:VERSION-->`. A client holding both can tell that they were compiled
+    # together, and a version that no longer matches says the indices cannot be trusted.
     #
     # ## The shape follows the template, not the render
     #
@@ -62,6 +70,19 @@ module Herb
     # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
     # decides what that key is and this evaluates it, so a row arrives under the same key the
     # marker around it carries. A collection that declares none falls back to position.
+    #
+    # ## A partial keeps its own values
+    #
+    # `<%= render "posts/card" %>` evaluates to that partial's own values, so the slot holding it
+    # holds a whole payload rather than a string:
+    #
+    #     { template: "index.html.erb", version: "a1b2c3d4",
+    #       slots: { 0 => { template: "_card.html.erb", version: "e5f6a7b8", slots: { 0 => "Marco" } } } }
+    #
+    # Nothing else would work, because the partial numbers its slots in its own template and the
+    # page marks them out as their own region. Coercing it to a string would flatten a partial's
+    # values into the markup they were meant to replace, and a partial rendering a partial is
+    # ordinary, so this nests as deeply as the template does.
     #
     # ## Escaping
     #
@@ -109,6 +130,7 @@ module Herb
           @slot_visitor = engine.slot_visitor
           @current_node = nil
           @current_attribute = nil
+          @rendering = false
           @block_depth = 0
 
           branch_counts = {} #: Hash[Integer, Integer]
@@ -146,6 +168,18 @@ module Herb
           super
         ensure
           @current_node = previous
+        end
+
+        #: (untyped) -> void
+        def visit_erb_render_node(node)
+          previous = @current_node
+          @current_node = node
+          @rendering = node.end_node.nil?
+
+          super
+        ensure
+          @current_node = previous
+          @rendering = false
         end
 
         #: (untyped) { () -> void } -> void
@@ -256,9 +290,9 @@ module Herb
             when :code then @engine.send(:add_code, value)
             when :scope then @engine.send(:add_scope, *extra)
             when :dynamic
-              index, escaped = extra
+              index, escaped, nested = extra
 
-              @engine.send(:add_dynamic, value, context, index, escaped)
+              @engine.send(:add_dynamic, value, context, index, escaped, nested: nested)
             when :expr_block, :expr_block_escaped
               @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
             when :expr_block_end
@@ -276,13 +310,13 @@ module Herb
 
         #: (String) -> void
         def add_expression(code)
-          @tokens << [:dynamic, code, current_context, [claim(@current_node), false]]
+          @tokens << [:dynamic, code, current_context, [claim(@current_node), false, @rendering]]
           @last_trim_consumed_newline = false
         end
 
         #: (String) -> void
         def add_expression_escaped(code)
-          @tokens << [:dynamic, code, current_context, [claim(@current_node), true]]
+          @tokens << [:dynamic, code, current_context, [claim(@current_node), true, @rendering]]
           @last_trim_consumed_newline = false
         end
 
@@ -419,9 +453,9 @@ module Herb
         send(:"scope_#{kind}", *)
       end
 
-      #: (String, Symbol?, Integer?, bool) -> void
-      def add_dynamic(code, context, index, escaped)
-        value = dynamic_value(code, context, escaped)
+      #: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
+      def add_dynamic(code, context, index, escaped, nested: false)
+        value = nested ? "(#{code})" : dynamic_value(code, context, escaped)
 
         return add_block_dynamic(index ? assignment(index, value) : value) unless @block_depth.zero?
         return if index.nil?
@@ -460,6 +494,13 @@ module Herb
       end
 
       private
+
+      #: (String) -> void
+      def add_postamble(_postamble)
+        super("{ template: #{@slot_visitor.identifier.inspect}, " \
+              "version: #{@slot_visitor.version.inspect}, " \
+              "slots: #{BUFFER} }\n")
+      end
 
       #: () -> String
       def current_scope

@@ -183,7 +183,7 @@ module Herb
       def add_scope: (Symbol, *untyped) -> void
 
       # : (String, Symbol?, Integer?, bool) -> void
-      def add_dynamic: (String, Symbol?, Integer?, bool) -> void
+      def add_dynamic: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
 
       # : (String, Integer?, bool) -> void
       def add_dynamic_block: (String, Integer?, bool) -> void
@@ -227,6 +227,8 @@ module Herb
       def dynamic_value: (String, Symbol?, bool) -> String
 
       # : (String) -> void
+      def assignment: (Integer, String) -> String
+
       def add_block_dynamic: (String) -> void
 
       # : () -> void

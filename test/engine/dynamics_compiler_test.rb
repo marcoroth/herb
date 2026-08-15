@@ -12,6 +12,12 @@ module Engine
 
       def form_with(**) = "<form>#{yield(Field.new)}</form>"
 
+      def render(*)
+        source = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
+
+        View.new(inner: "inner").instance_eval(source)
+      end
+
       def wrapper = "[#{yield}]"
 
       def helper_with_argument(value) = "helper(#{value})"
@@ -23,11 +29,16 @@ module Engine
       end
     end
     CONDITIONAL = "<% if @admin %><b><%= @secret %></b><% else %><%= @public %><% end %>"
+    PARTIAL_VERSION = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
 
-    def dynamics(source, **assigns)
+    def payload(source, **assigns)
       compiled = Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
 
       View.new(**assigns).instance_eval(compiled)
+    end
+
+    def dynamics(source, **assigns)
+      payload(source, **assigns)[:slots]
     end
 
     describe "what it collects" do
@@ -179,6 +190,34 @@ module Engine
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>)
 
         assert_equal({ 0 => "<form>Name</form>", 1 => "Name", 2 => "A" }, dynamics(source, after: "A"))
+      end
+    end
+
+    describe "the template it came from" do
+      test "names itself, since an index means nothing without the template numbering it" do
+        assert_equal "app/views/test.html.erb", payload("<p><%= @a %></p>")[:template]
+      end
+
+      test "carries the version the markers on the page were emitted with" do
+        assert_match(/\A[0-9a-f]{8}\z/, payload("<p><%= @a %></p>")[:version])
+      end
+
+      test "changes version when the slots move and not when they hold something else" do
+        moved = payload("<p><%= @a %></p><b><%= @b %></b>")[:version]
+
+        assert_equal payload("<p><%= @a %></p>", a: "x")[:version], payload("<p><%= @a %></p>", a: "y")[:version]
+        refute_equal payload("<p><%= @a %></p>")[:version], moved
+      end
+    end
+
+    describe "rendering another template" do
+      test "keeps the partial's own values rather than flattening them into a string" do
+        assert_equal({ template: "app/views/card.html.erb", version: PARTIAL_VERSION, slots: { 0 => "inner" } },
+                     dynamics(%(<div><%= render "card" %></div>))[0])
+      end
+
+      test "leaves the slots after it addressable" do
+        assert_equal "A", dynamics(%(<div><%= render "card" %><%= @after %></div>), after: "A")[1]
       end
     end
 
