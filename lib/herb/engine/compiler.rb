@@ -655,9 +655,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text =~ TRAILING_INDENTATION
+        if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
-        elsif text =~ WHITESPACE_ONLY
+        elsif text.match?(WHITESPACE_ONLY)
           text.replace("")
         end
 
@@ -702,10 +702,10 @@ module Herb
         text = token[1]
         removed = text[TRAILING_WHITESPACE] || ""
 
-        if text =~ TRAILING_INDENTATION
+        if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
           token[1] = text
-        elsif text =~ WHITESPACE_ONLY
+        elsif text.match?(WHITESPACE_ONLY)
           text.replace("")
           token[1] = text
         end
