@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
+import type { Row } from "../src/slot-index"
 import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/posts/index.html.erb"
@@ -380,7 +381,70 @@ describe("collection reconciliation", () => {
     expect(plan.removed).toEqual([])
     expect(plan.moved).toEqual(["2", "1"])
   })
+
+  test("reads the order the rows are in now, not the order they were first scanned in", () => {
+    const index = mounted(COLLECTION)
+    const slot = index.slot(FILE, 0)!
+    const [first, second] = [...slot.rows.values()]
+
+    move(second, first)
+    index.prune()
+
+    expect(index.reconcile(slot, ["2", "1"]).unchanged).toBe(true)
+    expect(index.reconcile(slot, ["1", "2"]).moved).toEqual(["1", "2"])
+  })
+
+  test("iterates its rows in the order the page has them", () => {
+    const index = mounted(COLLECTION)
+    const slot = index.slot(FILE, 0)!
+    const [first, second] = [...slot.rows.values()]
+
+    move(second, first)
+    index.prune()
+
+    expect([...index.rowsFor(FILE, 0).keys()]).toEqual(["2", "1"])
+  })
+
+  test("forgets a row whose markers have left the page", () => {
+    const index = mounted(COLLECTION)
+    const slot = index.slot(FILE, 0)!
+
+    remove(slot.rows.get("1")!)
+    index.prune()
+
+    expect([...slot.rows.keys()]).toEqual(["2"])
+    expect(index.slotInRow(FILE, 0, "1", 2)).toBeNull()
+  })
+
+  test("stops asking for a row already gone from the page to be removed", () => {
+    const index = mounted(COLLECTION)
+    const slot = index.slot(FILE, 0)!
+
+    remove(slot.rows.get("1")!)
+    index.prune()
+
+    expect(index.reconcile(slot, ["2"]).unchanged).toBe(true)
+  })
 })
+
+function rowNodes(row: Row): Node[] {
+  const range = document.createRange()
+
+  range.setStartBefore(row.start)
+  range.setEndAfter(row.end)
+
+  return [...range.extractContents().childNodes]
+}
+
+function move(row: Row, before: Row): void {
+  const nodes = rowNodes(row)
+
+  for (const node of nodes) before.start.parentNode!.insertBefore(node, before.start)
+}
+
+function remove(row: Row): void {
+  rowNodes(row)
+}
 
 describe("reflecting updates", () => {
   beforeEach(() => {

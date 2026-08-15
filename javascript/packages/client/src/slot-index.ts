@@ -81,6 +81,43 @@ export interface ScanResult {
   slots: Slot[]
 }
 
+export interface Payload {
+  template: string
+  version: string
+  occurrence: number
+  slots: PayloadSlots
+}
+
+export interface PayloadSlots {
+  [index: string]: PayloadValue
+}
+
+export interface Branched {
+  branch: number | null
+  slots?: PayloadSlots
+}
+
+export interface Collected {
+  rows: { [key: string]: PayloadSlots }
+}
+
+export type PayloadValue = string | Payload | Branched | Collected
+
+export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "rows"
+
+export interface Deferred {
+  file: string
+  occurrence: number
+  index: number | null
+  reason: DeferredReason
+  keys?: string[]
+}
+
+export interface ApplyReport {
+  applied: number
+  deferred: Deferred[]
+}
+
 export interface RowPlan {
   added: string[]
   removed: string[]
@@ -247,16 +284,122 @@ export class SlotIndex {
   }
 
   reconcile(slot: Slot, keys: string[]): RowPlan {
-    const present = [...slot.rows.keys()]
+    const present = this.#rowsInDocumentOrder(slot).map((row) => row.key)
     const wanted = new Set(keys)
 
     const removed = present.filter((key) => !wanted.has(key))
-    const added = keys.filter((key) => !slot.rows.has(key))
-    const kept = keys.filter((key) => slot.rows.has(key))
+    const added = keys.filter((key) => !present.includes(key))
+    const kept = keys.filter((key) => present.includes(key))
     const order = present.filter((key) => wanted.has(key))
     const moved = kept.filter((key, position) => order[position] !== key)
 
     return { added, removed, moved, kept, unchanged: added.length === 0 && removed.length === 0 && moved.length === 0 }
+  }
+
+  apply(payload: Payload): ApplyReport {
+    const report: ApplyReport = { applied: 0, deferred: [] }
+
+    this.#applyPayload(payload, report)
+
+    return report
+  }
+
+  #applyPayload(payload: Payload, report: ApplyReport): void {
+    const region = this.region(payload.template, payload.occurrence)
+
+    if (!region) return this.#defer(report, payload, null, "no-region")
+    if (region.version !== payload.version) return this.#defer(report, payload, null, "stale-version")
+
+    this.#applySlots(payload, region.slots, payload.slots, report)
+  }
+
+  #applySlots(payload: Payload, owner: Map<number, Slot>, values: PayloadSlots, report: ApplyReport): void {
+    for (const [key, value] of Object.entries(values)) {
+      if (isPayload(value)) {
+        this.#applyPayload(value, report)
+        continue
+      }
+
+      const index = Number(key)
+      const slot = owner.get(index)
+
+      if (!slot) {
+        this.#defer(report, payload, index, "no-slot")
+        continue
+      }
+
+      if (typeof value === "string") {
+        if (slot.attribute) this.setAttribute(slot, value)
+        else this.update(slot, value)
+
+        report.applied += 1
+        continue
+      }
+
+      if ("rows" in value) this.#applyRows(payload, slot, value, report)
+      else this.#applyBranch(payload, slot, value, report)
+    }
+  }
+
+  #applyBranch(payload: Payload, slot: Slot, value: Branched, report: ApplyReport): void {
+    if (value.branch === slot.branch) {
+      if (value.slots) this.#applySlots(payload, this.#owner(slot), value.slots, report)
+
+      return
+    }
+
+    if (value.branch === null) {
+      this.update(slot, "")
+      slot.branch = null
+      report.applied += 1
+
+      return
+    }
+
+    const built = this.materialize(payload.template, `${slot.index}:${value.branch}`, leaves(value.slots))
+
+    if (!built) return this.#defer(report, payload, slot.index, "branch")
+
+    this.#writeFragment(slot, built)
+
+    report.applied += 1
+  }
+
+  #applyRows(payload: Payload, slot: Slot, value: Collected, report: ApplyReport): void {
+    const keys = Object.keys(value.rows)
+    const plan = this.reconcile(slot, keys)
+
+    if (!plan.unchanged) this.#defer(report, payload, slot.index, "rows", [...plan.added, ...plan.removed, ...plan.moved])
+
+    for (const key of plan.kept) {
+      const row = slot.rows.get(key)
+
+      if (row) this.#applySlots(payload, row.slots, value.rows[key], report)
+    }
+  }
+
+  #writeFragment(slot: Slot, fragment: DocumentFragment): void {
+    for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
+
+    slot.children = []
+
+    const range = this.rangeFor(slot)
+
+    range.deleteContents()
+
+    const added = [...fragment.childNodes]
+
+    range.insertNode(fragment)
+
+    this.scan(added)
+  }
+
+  #owner(slot: Slot): Map<number, Slot> {
+    return this.#slotOwners.get(slot) ?? this.#slotRegions.get(slot)?.slots ?? new Map()
+  }
+
+  #defer(report: ApplyReport, payload: Payload, index: number | null, reason: DeferredReason, keys?: string[]): void {
+    report.deferred.push({ file: payload.template, occurrence: payload.occurrence, index, reason, ...(keys ? { keys } : {}) })
   }
 
   update(slot: Slot, html: string): ScanResult {
@@ -369,11 +512,37 @@ export class SlotIndex {
 
     for (const region of this.#regions) {
       for (const [index, slot] of region.slots) {
-        if (!this.#slotConnected(slot)) region.slots.delete(index)
+        if (this.#slotConnected(slot)) this.#pruneRows(slot)
+        else region.slots.delete(index)
       }
     }
 
     return before - this.#regions.length
+  }
+
+  #pruneRows(slot: Slot): void {
+    if (slot.rows.size === 0) return
+
+    const live = this.#rowsInDocumentOrder(slot)
+
+    slot.rows.clear()
+
+    for (const row of live) {
+      for (const [index, nested] of row.slots) {
+        if (!this.#slotConnected(nested)) row.slots.delete(index)
+        else this.#pruneRows(nested)
+      }
+
+      slot.rows.set(row.key, row)
+    }
+  }
+
+  #rowsInDocumentOrder(slot: Slot): Row[] {
+    return [...slot.rows.values()]
+      .filter((row) => row.start.isConnected)
+      .sort((left, right) =>
+        left.start.compareDocumentPosition(right.start) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+      )
   }
 
   clear(): void {
@@ -789,6 +958,20 @@ function fillSlots(fragment: DocumentFragment, dynamics: Record<number, string>)
     range.deleteContents()
     range.insertNode(range.createContextualFragment(value))
   }
+
+  for (const element of fragment.querySelectorAll("[data-herb-slot], [data-herb-child]")) {
+    for (const entry of element.getAttribute("data-herb-slot")?.split(",") ?? []) {
+      const [index, , ...name] = entry.split(":")
+      const value = dynamics[Number(index)]
+
+      if (value !== undefined && name.length > 0) element.setAttribute(name.join(":"), value)
+    }
+
+    const child = element.getAttribute("data-herb-child")
+    const value = child === null ? undefined : dynamics[Number(child)]
+
+    if (value !== undefined) element.innerHTML = value
+  }
 }
 
 function blankSlots(fragment: DocumentFragment): void {
@@ -897,6 +1080,20 @@ function link(parent: Slot | null, child: Slot): void {
   if (!parent.children.includes(child)) {
     parent.children.push(child)
   }
+}
+
+function isPayload(value: PayloadValue): value is Payload {
+  return typeof value === "object" && "template" in value
+}
+
+function leaves(values: PayloadSlots | undefined): Record<number, string> {
+  const filled: Record<number, string> = {}
+
+  for (const [key, value] of Object.entries(values ?? {})) {
+    if (typeof value === "string") filled[Number(key)] = value
+  }
+
+  return filled
 }
 
 function popMatching<T>(open: T[], matches: (candidate: T) => boolean): T | null {

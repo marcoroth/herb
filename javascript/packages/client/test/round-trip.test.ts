@@ -1,43 +1,11 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
 import { SlotIndex } from "../src/slot-index"
+import type { Payload } from "../src/slot-index"
 
 import fixture from "./fixtures/round-trip.json"
 
-type Values = { [index: string]: Value }
-type Value = string | { branch?: number | null; slots?: Values; rows?: { [key: string]: Values } }
-
-function applyValues(index: SlotIndex, file: string, values: Values, occurrence = 0): void {
-  for (const [key, value] of Object.entries(values)) {
-    const slotIndex = Number(key)
-
-    if (typeof value === "string") {
-      const slot = index.slot(file, slotIndex, occurrence)
-
-      if (!slot) continue
-      if (slot.attribute) index.setAttribute(slot, value)
-      else index.update(slot, value)
-
-      continue
-    }
-
-    if (value.rows) {
-      for (const [rowKey, rowValues] of Object.entries(value.rows)) {
-        for (const [innerKey, innerValue] of Object.entries(rowValues)) {
-          const slot = index.slotInRow(file, slotIndex, rowKey, Number(innerKey), occurrence)
-
-          if (!slot || typeof innerValue !== "string") continue
-          if (slot.attribute) index.setAttribute(slot, innerValue)
-          else index.update(slot, innerValue)
-        }
-      }
-
-      continue
-    }
-
-    if (value.slots) applyValues(index, file, value.slots, occurrence)
-  }
-}
+const values = fixture.values as Payload
 
 describe("a page given the values of a later render", () => {
   let host: HTMLElement
@@ -55,7 +23,7 @@ describe("a page given the values of a later render", () => {
   })
 
   test("becomes the page the server would have rendered from them", () => {
-    applyValues(index, fixture.file, fixture.values.slots as Values)
+    index.apply(values)
 
     expect(host.innerHTML).toBe(fixture.expected)
   })
@@ -64,16 +32,36 @@ describe("a page given the values of a later render", () => {
     expect(fixture.rendered).not.toBe(fixture.expected)
   })
 
-  test("names the version the markers on the page were compiled with", () => {
-    expect(index.region(fixture.file)?.version).toBe(fixture.values.version)
+  test("writes every value it was given and defers nothing", () => {
+    const report = index.apply(values)
+
+    expect(report.applied).toBe(7)
+    expect(report.deferred).toEqual([])
   })
 
   test("leaves every marker where it was, so the next update has the same page to work on", () => {
-    applyValues(index, fixture.file, fixture.values.slots as Values)
+    index.apply(values)
 
     const reindexed = new SlotIndex()
     reindexed.scan(host)
 
     expect(reindexed.size).toBe(index.size)
+  })
+
+  test("refuses a payload compiled from a version the page does not carry", () => {
+    const report = index.apply({ ...values, version: "deadbeef" })
+
+    expect(report.applied).toBe(0)
+    expect(report.deferred).toEqual([
+      { file: fixture.file, occurrence: 0, index: null, reason: "stale-version" },
+    ])
+    expect(host.innerHTML).toBe(fixture.rendered)
+  })
+
+  test("refuses a payload for a rendering that is not on the page", () => {
+    const report = index.apply({ ...values, occurrence: 3 })
+
+    expect(report.deferred[0].reason).toBe("no-region")
+    expect(host.innerHTML).toBe(fixture.rendered)
   })
 })

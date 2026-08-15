@@ -95,6 +95,30 @@ slots.rangeFor(slot)
 slots.rangeForRow(row)
 ```
 
+## Applying a whole payload
+
+The compiler's other half, `Herb::Engine::DynamicsCompiler`, answers what a template's slots evaluated to. Its output goes in as it comes:
+
+```typescript
+const report = slots.apply(payload)
+// { applied: 7, deferred: [] }
+```
+
+A payload names the template, the version and which rendering it is, so nothing has to be said about where it goes. A partial's values arrive nested inside the slot that rendered it and are handed to that partial's own region, so one call covers a page however many templates it was built from.
+
+Values alone cannot do everything, and the report is the difference. `applied` counts what was written and `deferred` says what was not, with enough to act on:
+
+```typescript
+// { file, occurrence, index, reason, keys? }
+```
+
+- `stale-version` and `no-region` mean nothing was applied at all. A version that does not match says the payload's indices were compiled against a different template, so the values would land in the wrong places, and there is no partial credit to take.
+- `branch` means the conditional took a branch whose markup the page never had and nothing was parked for it. Ask the server for that subtree.
+- `rows` means the collection's rows are not the ones the payload has, and `keys` lists which. The rows both sides agree on are still filled, so what is deferred is the adding, removing and moving.
+- `no-slot` means the payload named an index the page has no marker for, which is usually a region that was only partly scanned.
+
+A branch the server parked is built rather than deferred, so a template in client mode toggles a conditional with no round trip. That is the same `materialize` path, taken for you.
+
 ## Deciding what to update
 
 A slot inside a conditional or a collection is destroyed when that conditional or collection re-renders, so the runtime tracks what contains what. Everything an update to a slot would destroy:

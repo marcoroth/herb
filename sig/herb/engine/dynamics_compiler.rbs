@@ -81,6 +81,8 @@ module Herb
 
       KEY_BUFFER: String
 
+      OCCURRENCE_BUFFER: String
+
       BRANCHING_NODES: Array[String]
 
       class Compiler < Herb::Engine::Compiler
@@ -227,6 +229,8 @@ module Herb
       def dynamic_value: (String, Symbol?, bool) -> String
 
       # : (String) -> void
+      def capture_occurrence: () -> void
+
       def assignment: (Integer, String) -> String
 
       def add_block_dynamic: (String) -> void
