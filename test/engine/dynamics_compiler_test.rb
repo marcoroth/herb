@@ -211,7 +211,7 @@ module Engine
 
     describe "rendering another template" do
       test "keeps the partial's own values rather than flattening them into a string" do
-        assert_equal({ template: "app/views/card.html.erb", version: PARTIAL_VERSION, slots: { 0 => "inner" } },
+        assert_equal({ template: "app/views/card.html.erb", version: PARTIAL_VERSION, occurrence: 0, slots: { 0 => "inner" } },
                      dynamics(%(<div><%= render "card" %></div>))[0])
       end
 

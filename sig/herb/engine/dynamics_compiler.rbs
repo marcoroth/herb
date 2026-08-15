@@ -114,6 +114,8 @@ module Herb
 
       KEY_BUFFER: String
 
+      OCCURRENCE_BUFFER: String
+
       BRANCHING_NODES: Array[String]
 
       class Compiler < Herb::Engine::Compiler
@@ -234,6 +236,11 @@ module Herb
 
       # : (String) -> void
       def add_postamble: (String) -> void
+
+      # Counted where the region marker counts it, at the start of the rendering rather than the end,
+      # so a template rendering itself numbers its renderings the same way both compilers do.
+      # : () -> void
+      def capture_occurrence: () -> void
 
       # : () -> String
       def current_scope: () -> String

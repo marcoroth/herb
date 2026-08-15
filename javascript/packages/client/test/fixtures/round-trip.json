@@ -5,6 +5,7 @@
   "values": {
     "template": "app/views/greet.html.erb",
     "version": "bd48f9a6",
+    "occurrence": 0,
     "slots": {
       "0": "loud",
       "1": "Goodbye",
