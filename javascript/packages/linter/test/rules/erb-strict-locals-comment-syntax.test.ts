@@ -194,16 +194,12 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     expectNoOffenses(`<%# locals: (user:) %>`, { fileName: "_partial.html.erb" })
   })
 
-  test("warns when strict locals used in non-partial files", () => {
-    expectError("Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.")
-
-    assertOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/users/show.html.erb" })
+  test("leaves non-partial enforcement to the Action View rule", () => {
+    expectNoOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/users/show.html.erb" })
   })
 
-  test("warns when strict locals used in layout files", () => {
-    expectError("Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.")
-
-    assertOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/layouts/application.html.erb" })
+  test("leaves layout enforcement to the Action View rule", () => {
+    expectNoOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/layouts/application.html.erb" })
   })
 
   test("does not warn when filename is not provided (unknown context)", () => {

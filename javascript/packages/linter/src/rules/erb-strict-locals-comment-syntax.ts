@@ -2,7 +2,6 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isRubyParameterNode } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
 
 import type { BaseAutofixContext, Mutable, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"
@@ -290,15 +289,6 @@ function applyFix(node: Mutable<StrictLocalsCommentNode>, fix: StrictLocalsFix):
 
 class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocalsCommentSyntaxAutofixContext> {
   visitERBStrictLocalsNode(node: ERBStrictLocalsNode): void {
-    const isPartial = isPartialFile(this.context.fileName)
-
-    if (isPartial === false) {
-      this.addOffense(
-        "Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.",
-        node.location
-      )
-    }
-
     if (hasError(node, "STRICT_LOCALS_DUPLICATE_DECLARATION_ERROR")) {
       this.addOffense(
         "Duplicate strict locals declaration. Rails only uses the first `<%# locals: (...) %>` declaration in a partial.",
