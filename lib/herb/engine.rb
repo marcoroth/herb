@@ -98,7 +98,7 @@ module Herb
 
         report(input)
 
-        compiler = Compiler.new(self, properties)
+        compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
 
@@ -167,6 +167,11 @@ module Herb
     end
 
     protected
+
+    #: () -> untyped
+    def compiler_class
+      Compiler
+    end
 
     def add_text(text)
       return if text.empty?

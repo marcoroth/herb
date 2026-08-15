@@ -1,0 +1,225 @@
+# Generated from lib/herb/engine/dynamics_compiler.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Compiles a template into Ruby that returns its dynamic values rather than its HTML.
+    #
+    # `Herb::Engine` answers "what does this template render". This answers "what did the template
+    # evaluate to render it", which is the half that changes when state changes:
+    #
+    #     require "herb/engine/dynamics_compiler"
+    #
+    #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
+    #     view.instance_eval(source)
+    #     #=> { 0 => "Hello" }
+    #
+    # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
+    # and its `dynamic` values for the same reason. A template's statics never change between
+    # renders, so anything re-rendering on a state change only has to send the dynamics.
+    #
+    # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
+    # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
+    #
+    # ## The shape follows the template, not the render
+    #
+    # Every insertion point owns an index, decided while compiling and the same on every render.
+    # Control flow owns one too, because what it decided is itself a value that changes:
+    #
+    #     <% if admin? %><%= secret %><% else %><%= public %><% end %>
+    #     #=> { 0 => { branch: 0, slots: { 1 => "s" } } }   when admin?
+    #     #=> { 0 => { branch: 1, slots: { 2 => "p" } } }   otherwise
+    #
+    # Both branches keep their own indices, so a condition flipping changes which indices are
+    # present and never what an index means.
+    #
+    # ## Absent means it did not run
+    #
+    # A key is missing when the code that would have filled it never ran, which is the same thing
+    # the rendered markup says by not being there. Nothing has to be sent about a branch that was
+    # not taken, and nothing can be learned about one either.
+    #
+    # A conditional and a collection are always present, because both are evaluated on every render
+    # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
+    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
+    #
+    # ## Collections group by row
+    #
+    # A collection holds its rows in render order, each row carrying the slots inside it:
+    #
+    #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
+    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #
+    # Grouping the other way would give one list per slot and leave the client to zip them back
+    # together, which it cannot do once a row is inserted rather than appended.
+    #
+    # Rows are keyed by their position for now. Taking the key the template declares, through
+    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
+    # reordered, and it belongs to `SlotVisitor` rather than here.
+    #
+    # ## Escaping
+    #
+    # A value carries the escaping of the place it was written, because that is where it is going
+    # back to. The same expression is escaped differently in an attribute, in a `<script>`, and in
+    # text, so the tree is left intact and the compiler decides as it normally would.
+    #
+    # ## Blocks
+    #
+    # A tag that takes a block, such as `<%= form_with do |f| %>`, is one entry holding everything
+    # the block rendered. The helper decides where the block's output goes, so there is no position
+    # in the template to attribute the pieces to.
+    class DynamicsCompiler < Herb::Engine
+      BUFFER: String
+
+      BLOCK_BUFFER: String
+
+      SLOT_BUFFER: String
+
+      SCOPE_BUFFER: String
+
+      ROWS_BUFFER: String
+
+      KEY_BUFFER: String
+
+      BRANCHING_NODES: Array[String]
+
+      class Compiler < Herb::Engine::Compiler
+        # : (untyped, ?Hash[Symbol, untyped]) -> void
+        def initialize: (untyped, ?Hash[Symbol, untyped]) -> void
+
+        # : (untyped) { () -> void } -> void
+        def visit_erb_control_node: (untyped) { () -> void } -> void
+
+        # : (untyped) -> void
+        def visit_erb_if_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_unless_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_case_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_case_match_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_iteration_block_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_for_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_while_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_until_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_block_node: (untyped) -> void
+
+        # : () -> void
+        def generate_output: () -> void
+
+        private
+
+        # : () -> Integer?
+        def claim: () -> Integer?
+
+        # : (String) -> void
+        def add_expression: (String) -> void
+
+        # : (String) -> void
+        def add_expression_escaped: (String) -> void
+
+        # : (untyped) -> bool
+        def output_block?: (untyped) -> bool
+
+        # : (untyped) -> bool
+        def branch?: (untyped) -> bool
+
+        # : (Integer) -> Integer
+        def next_branch: (Integer) -> Integer
+
+        # : (untyped) { () -> void } -> void
+        def conditional: (untyped) { () -> void } -> void
+
+        # : (untyped, Integer) -> void
+        def own_branches: (untyped, Integer) -> void
+
+        # : () { (Integer?) -> void } -> void
+        def collection: () { (Integer?) -> void } -> void
+
+        # : (Integer?) { () -> void } -> void
+        def row: (Integer?) { () -> void } -> void
+
+        # : (untyped, Symbol) -> void
+        def iteration: (untyped, Symbol) -> void
+      end
+
+      # : (String, ?Hash[Symbol, untyped]) -> void
+      def initialize: (String, ?Hash[Symbol, untyped]) -> void
+
+      # : () -> untyped
+      def compiler_class: () -> untyped
+
+      # : (String) -> void
+      def add_text: (String) -> void
+
+      # : (Symbol, *untyped) -> void
+      def add_scope: (Symbol, *untyped) -> void
+
+      # : (String, Symbol?, Integer?, bool) -> void
+      def add_dynamic: (String, Symbol?, Integer?, bool) -> void
+
+      # : (String, Integer?, bool) -> void
+      def add_dynamic_block: (String, Integer?, bool) -> void
+
+      # : (String, ?escaped: bool) -> void
+      def add_expression_block_end: (String, ?escaped: bool) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      private
+
+      # : () -> String
+      def current_scope: () -> String
+
+      # : (Integer) -> void
+      def scope_open_conditional: (Integer) -> void
+
+      # : (Integer, Integer) -> void
+      def scope_branch: (Integer, Integer) -> void
+
+      # : (Integer) -> void
+      def scope_close_conditional: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_open_collection: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_row_begin: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_row_end: (Integer) -> void
+
+      # : (Integer) -> void
+      def scope_close_collection: (Integer) -> void
+
+      # : (Integer) -> void
+      def leave_scope: (Integer) -> void
+
+      # : (String, Symbol?, bool) -> String
+      def dynamic_value: (String, Symbol?, bool) -> String
+
+      # : (String) -> void
+      def add_block_dynamic: (String) -> void
+
+      # : () -> void
+      def open_block: () -> void
+
+      # : () -> void
+      def close_block: () -> void
+    end
+  end
+end
