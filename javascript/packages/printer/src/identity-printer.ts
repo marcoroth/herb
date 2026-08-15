@@ -52,19 +52,27 @@ export class IdentityPrinter extends Printer {
     // previous node's end position doesn't line up with the next node's start.
     //
     // WhitespaceNode children already print their own whitespace (including
-    // synthetic ones inserted by autofixers, whose location doesn't line up
-    // with the surrounding nodes), so they're skipped here to avoid writing a
-    // duplicate separating space in addition to the whitespace they print.
+    // synthetic ones inserted by autofixers/rewriters, whose location doesn't
+    // line up with the surrounding nodes), so the gap-fill check is skipped
+    // both for the WhitespaceNode itself and for whatever child follows it -
+    // otherwise the gap-fill logic would see the following child's position
+    // doesn't line up with `previousEnd` (which the WhitespaceNode leaves
+    // untouched) and write a second, duplicate separating space.
     let previousEnd = node.tag_name?.location.end ?? node.tag_opening?.location.end
+    let previousWasWhitespace = false
 
     node.children.forEach(child => {
-      if (previousEnd && !isWhitespaceNode(child) && !this.samePosition(previousEnd, child.location.start)) {
+      const childIsWhitespace = isWhitespaceNode(child)
+
+      if (previousEnd && !childIsWhitespace && !previousWasWhitespace && !this.samePosition(previousEnd, child.location.start)) {
         this.write(" ")
       }
 
       this.visit(child)
 
-      if (!isWhitespaceNode(child)) {
+      previousWasWhitespace = childIsWhitespace
+
+      if (!childIsWhitespace) {
         previousEnd = child.location.end
       }
     })
