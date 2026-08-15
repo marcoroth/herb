@@ -578,7 +578,7 @@ module Herb
         locals = files_for.call(:undeclared_local)
         uninferable = files_for.call(:uninferable_local)
         ivars = files_for.call(:ivar_in_partial)
-        ignored = files_for.call(:ignored_component)
+        ignored = find_erb_files.map { |file| relative_path(file) }.count { |file| component_template?(file) }
 
         parts = [] #: Array[String]
         parts << stat(locals, "undeclared #{pluralize(locals, "local")}", :yellow) if locals.positive?

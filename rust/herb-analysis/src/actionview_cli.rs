@@ -135,6 +135,10 @@ fn header(title: &str) {
   println!();
 }
 
+fn component_template(relative: &str) -> bool {
+  relative.starts_with("app/components/") || relative.contains("/app/components/")
+}
+
 fn missing_format(file: &str) -> bool {
   let name = file.rsplit('/').next().unwrap_or(file);
 
@@ -1481,7 +1485,11 @@ fn print_dependency_warnings(
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
   let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
   let mut uninferable: Vec<(String, Vec<String>)> = Vec::new();
-  let mut ignored_components = 0usize;
+  let ignored_components = templates
+    .iter()
+    .map(|file| relative(file, root))
+    .filter(|file| component_template(file))
+    .count();
 
   for file in templates {
     let result = flow.analyze(file);
@@ -1507,8 +1515,9 @@ fn print_dependency_warnings(
       }
 
       if !rest.is_empty() {
-        if relative.starts_with("app/components/") || relative.contains("/app/components/") {
-          ignored_components += 1;
+        if component_template(&relative) {
+          // Counted from the template list instead, so the total does not depend on how many
+          // helpers each binding happens to resolve.
         } else if partial && !declared && candidates.is_none_or(BTreeSet::is_empty) {
           uninferable.push((relative, rest));
         } else {
