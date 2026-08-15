@@ -472,44 +472,45 @@ module Herb
       def optimize_tokens(tokens)
         return tokens if tokens.empty?
 
-        compacted = compact_whitespace_tokens(tokens)
-
         optimized = [] #: Array[untyped]
-        current_text = ""
+        current_text = nil #: String?
         current_context = nil
 
-        compacted.each do |type, value, context, escaped|
+        tokens.each_with_index do |token, index|
+          type = token[0]
+
+          if type == :whitespace
+            next if adjacent_whitespace?(tokens, index)
+            next if whitespace_before_code_sequence?(tokens, index)
+
+            type = :text
+          end
+
           if type == :text
-            current_text += value
-            current_context ||= context
+            value = token[1]
+
+            if current_text
+              current_text << value
+              current_context ||= token[2]
+            else
+              current_text = value.dup
+              current_context = token[2]
+            end
           else
-            unless current_text.empty?
+            if current_text
               optimized << [:text, current_text, current_context]
 
-              current_text = ""
+              current_text = nil
               current_context = nil
             end
 
-            optimized << [type, value, context, escaped]
+            optimized << [type, token[1], token[2], token[3]]
           end
         end
 
-        optimized << [:text, current_text, current_context] unless current_text.empty?
+        optimized << [:text, current_text, current_context] if current_text
 
         optimized
-      end
-
-      def compact_whitespace_tokens(tokens)
-        return tokens if tokens.empty?
-
-        tokens.map.with_index { |token, index|
-          next token unless token[0] == :whitespace
-
-          next nil if adjacent_whitespace?(tokens, index)
-          next nil if whitespace_before_code_sequence?(tokens, index)
-
-          [:text, token[1], token[2]]
-        }.compact
       end
 
       def adjacent_whitespace?(tokens, index)
