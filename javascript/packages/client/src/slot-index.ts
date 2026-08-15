@@ -119,12 +119,6 @@ export class SlotIndex {
   #skeletons = new Map<string, Statics>()
   #observer: MutationObserver | null = null
 
-  /**
-   * Keeps the index current as the server sends markup. A record reports only the top of an
-   * added subtree, never its descendants, so what it names is scanned rather than read. The
-   * whole batch goes to one `scan` because a template's markers arrive as many sibling nodes
-   * of the same record.
-   */
   observe(root: Node = document.documentElement): ScanResult {
     this.#observer?.disconnect()
 
@@ -152,14 +146,6 @@ export class SlotIndex {
     this.#observer = null
   }
 
-  /**
-   * Reads every marker under `roots` and adds what it finds. Safe to call repeatedly on
-   * overlapping subtrees: a marker already indexed is skipped rather than duplicated.
-   *
-   * Takes a list because setting `innerHTML` adds a template's markers as many sibling nodes
-   * at once. A slot's opening marker and the rows inside it can land in different nodes of the
-   * same batch, so they are read as one sequence rather than one node at a time.
-   */
   scan(roots: Node | Node[]): ScanResult {
     const result: ScanResult = { regions: [], slots: [] }
     const state: ParseState = { openRegions: [], openSlots: [], openRows: [] }
@@ -172,7 +158,6 @@ export class SlotIndex {
     return result
   }
 
-  /** Every region for a template, in document order, one per time it was rendered. */
   regionsFor(file: string): Region[] {
     return this.#regions.filter((region) => region.file === file)
   }
@@ -256,11 +241,6 @@ export class SlotIndex {
     return this.#slotRegions.get(slot) ?? null
   }
 
-  /**
-   * What has to happen to the rows on the page for them to match `keys`. Keys the server sent
-   * are matched against the keys already rendered, so a reorder moves rows rather than
-   * rebuilding them, which is the whole point of keying a collection.
-   */
   reconcile(slot: Slot, keys: string[]): RowPlan {
     const present = [...slot.rows.keys()]
     const wanted = new Set(keys)
@@ -274,13 +254,6 @@ export class SlotIndex {
     return { added, removed, moved, kept, unchanged: added.length === 0 && removed.length === 0 && moved.length === 0 }
   }
 
-  /**
-   * Replaces what a slot covers with new markup and re-indexes it.
-   *
-   * The fragment is parsed against the range rather than through a detached element, because
-   * the parser needs the surrounding context: `<tr>` outside a table is dropped, and a
-   * collection's rows are exactly the case this gets used for.
-   */
   update(slot: Slot, html: string): ScanResult {
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
@@ -336,14 +309,6 @@ export class SlotIndex {
     return true
   }
 
-  /**
-   * Keeps what a branch rendered, as the markup for building it again.
-   *
-   * A branch that rendered is on the page rather than parked, because sending it twice would be
-   * sending it twice. That leaves nothing to build it from once it has been replaced, so this
-   * takes a copy of it first, with the values emptied out of it, and registers it exactly as a
-   * parked one. Call it before an update that replaces a branch, and no branch is ever lost.
-   */
   capture(slot: Slot): boolean {
     const region = this.#slotRegions.get(slot)
 
@@ -373,13 +338,6 @@ export class SlotIndex {
       .sort((a, b) => a - b)
   }
 
-  /**
-   * Where a part of a template can be rendered. The server decides this per template and may
-   * decide it per slot, so a file that sent statics for one conditional and left another to the
-   * server is answered `client` for the first and `server` for the second. `server` is what a
-   * page that sent no statics at all reports, which is also what an index that has not seen the
-   * template yet reports, so the caller asks the server either way.
-   */
   renderModeFor(file: string, slot?: number): RenderMode {
     if (slot === undefined) {
       return this.skeletonKeys(file).length > 0 ? "client" : "server"
@@ -388,11 +346,6 @@ export class SlotIndex {
     return this.branchesFor(file, slot).length > 0 ? "client" : "server"
   }
 
-  /**
-   * Builds the markup for something that has not rendered yet, from its parked skeleton and the
-   * values the server sent for it. Nothing is fetched: the statics were already on the page, so
-   * a branch appearing for the first time costs only its dynamics.
-   */
   materialize(file: string, key: string, dynamics: Record<number, string> = {}): DocumentFragment | null {
     const skeleton = this.skeletonFor(file, key)
     if (!skeleton) return null
@@ -404,14 +357,6 @@ export class SlotIndex {
     return copy
   }
 
-  /**
-   * Drops everything no longer in the document. Returns how many regions went.
-   *
-   * Parked statics stay. They are held as fragments rather than as nodes in the page, so they
-   * are not what a removal was about, and a template whose last rendering has left is the case
-   * where having kept them pays: the next one renders without asking the server for markup it
-   * has already sent.
-   */
   prune(): number {
     const before = this.#regions.length
 
@@ -554,21 +499,6 @@ export class SlotIndex {
     }
   }
 
-  /**
-   * Markup for parts of a template that did not render, parked in a `<template>` so the client
-   * has them without a round trip. A `<template>`'s content is a separate fragment, so nothing
-   * inside one is addressable until it is put into the document.
-   *
-   * How much a rendering parks is the server's call and can differ between two renderings of
-   * the same template, so what arrives is merged rather than treated as the whole set. A
-   * rendering of a version the index has not seen replaces what it held, because statics
-   * compiled from one version of a template say nothing about the next.
-   *
-   * Each one is taken out of the document once it has been read. One delivered inside its
-   * region sits inside the range of that region and of any slot spanning it, and an update over
-   * that span would otherwise copy it into the page or destroy it. A `<template>` keeps its
-   * content when it leaves the document, so what is registered survives the removal.
-   */
   #scanSkeletons(root: Node): void {
     for (const element of skeletonElements(root)) {
       const identity = this.#staticsIdentity(element)
@@ -582,10 +512,6 @@ export class SlotIndex {
     }
   }
 
-  /**
-   * Statics belong to the template, so a template rendered many times contributes one copy, and
-   * what the server sent is what a copy taken off the page defers to.
-   */
   #park(identity: { file: string; version: string }, key: string, fragment: DocumentFragment): boolean {
     const { file, version } = identity
     const held = this.#skeletons.get(file)
@@ -600,12 +526,6 @@ export class SlotIndex {
     return true
   }
 
-  /**
-   * Which template a parked `<template>` belongs to. Naming its own region frees it from where
-   * it sits, so a template rendered many times can park its statics once for the page rather
-   * than once per rendering, and the parser moving it is of no consequence. Saying nothing
-   * falls back to the region it was delivered in.
-   */
   #staticsIdentity(element: HTMLTemplateElement): { file: string; version: string } | null {
     const named = element.getAttribute("data-herb-region")
 
@@ -706,10 +626,6 @@ export class SlotIndex {
     result.slots.push(slot)
   }
 
-  /**
-   * Markup that arrives on its own carries no region marker, so the region it belongs to is
-   * whichever indexed one already surrounds it.
-   */
   #enclosingRegion(node: Node): Region | null {
     for (let i = this.#regions.length - 1; i >= 0; i--) {
       const region = this.#regions[i]
@@ -825,17 +741,6 @@ function skeletonElements(root: Node): HTMLTemplateElement[] {
   return found
 }
 
-/**
- * The branches a parked `<template>` carries, split out of one payload.
- *
- * Which branch is which is already written in the payload, because the branch marker is what
- * the rendered output carries too and what tells a slot which branch it is showing. Reading the
- * keys from there rather than from an attribute lets one `<template>` hold everything a
- * template parked, and keeps the two from disagreeing.
- *
- * A branch runs to the next branch marker among the payload's own children. A marker deeper in
- * the tree belongs to a conditional inside a branch, and stays with the branch containing it.
- */
 function parkedBranches(element: HTMLTemplateElement): Map<string, DocumentFragment> {
   const named = element.getAttribute("data-herb-statics")
 
@@ -880,14 +785,6 @@ function fillSlots(fragment: DocumentFragment, dynamics: Record<number, string>)
   }
 }
 
-/**
- * Empties every slot in a copy of something that rendered, leaving the markup around them.
- *
- * What separates a copy taken off the page from what the server would have parked is that the
- * page's copy has values in it. A value left behind is worse than an empty one: an empty slot
- * reads as missing, where a stale one reads as current. Attributes are the reason the marker
- * names them, since an attribute slot has no range to empty and nothing else says what it wrote.
- */
 function blankSlots(fragment: DocumentFragment): void {
   for (const open of slotOpeners(fragment)) {
     if (!fragment.contains(open)) continue

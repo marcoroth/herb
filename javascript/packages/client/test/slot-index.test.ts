@@ -4,8 +4,6 @@ import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/posts/index.html.erb"
 
-// Captured from `Herb::Engine` with a `SlotVisitor` in the stack, rather than written by hand,
-// so a change to what the compiler emits shows up here as a failure.
 const CHILD = `<!--herb-region:${FILE}:25c0946e--><p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->!</p><!--/herb-region:${FILE}-->`
 const ANCHORED = `<!--herb-region:${FILE}:fd3dfd36--><span class="n" data-herb-child="0">Marco</span><!--/herb-region:${FILE}-->`
 const COND_TRUE = `<!--herb-region:${FILE}:a6ef770d--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b>x</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
@@ -136,7 +134,6 @@ describe("SlotIndex", () => {
         [...element.childNodes].filter((node) => node.nodeType === Node.COMMENT_NODE),
       )
 
-      // guards the premise: if the parser stopped splitting these, this test proves nothing
       const parents = new Set(rowMarkers.map((marker) => marker.parentElement?.tagName))
       expect(parents.size).toBeGreaterThan(1)
 
@@ -181,7 +178,6 @@ describe("SlotIndex", () => {
       const result = index.scan(mount(COLLECTION))
 
       expect(result.regions).toHaveLength(1)
-      // one collection slot, plus the two row slots repeated per row
       expect(result.slots.map((slot) => slot.index).sort()).toEqual([0, 1, 1, 2, 2])
     })
   })
@@ -209,7 +205,6 @@ describe("SlotIndex", () => {
 
       index.observe(host)
 
-      // one added node, with every marker below it
       const wrapper = document.createElement("div")
       wrapper.innerHTML = CHILD
       host.appendChild(wrapper)
@@ -447,9 +442,6 @@ describe("markers that arrive as their own node", () => {
     document.body.innerHTML = ""
   })
 
-  // A TreeWalker never returns the node it is rooted at, so a marker appended on its own is
-  // invisible to a walk and has to be read directly. Left unhandled this fails silently: the
-  // slot is simply missing rather than erroring.
   test("indexes a marker appended as a bare comment", () => {
     const host = mount(`<!--herb-region:${FILE}:aaaaaaaa--><div id="host"></div><!--/herb-region:${FILE}-->`)
     const index = new SlotIndex()
@@ -495,8 +487,6 @@ describe("a template rendered more than once", () => {
     document.body.innerHTML = ""
   })
 
-  // Every row carries the same slot indices, so index 2 names one place per row. Each has to be
-  // its own entry pointing at its own element, rather than the rows overwriting each other.
   test("keeps a slot per row rather than one per template", () => {
     const index = mounted(COLLECTION)
 
@@ -523,9 +513,6 @@ describe("updating one row of a collection", () => {
     document.body.innerHTML = ""
   })
 
-  // The case row scoping exists for: both rows carry slot 2, and writing to one must leave the
-  // other alone. Before rows owned their slots, index 2 resolved to whichever row was scanned
-  // last and the first was unreachable.
   test("writes into one row's slot and leaves its sibling untouched", () => {
     const index = mounted(COLLECTION)
 

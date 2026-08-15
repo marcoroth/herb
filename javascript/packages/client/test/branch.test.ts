@@ -27,7 +27,6 @@ describe("a branch whose markup was never in the DOM", () => {
 
     const slot = index.slot(FILE, 0)!
 
-    // what the server has to send, because none of this was ever on the page
     index.update(slot, `<!--herb-branch:0:1--><b><!--herb-slot:3-->secret<!--/herb-slot:3--></b>`)
 
     expect(index.slot(FILE, 3)?.type).toBe("child")
