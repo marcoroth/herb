@@ -476,13 +476,6 @@ module Herb
         current_text = nil #: String?
         current_context = nil
 
-        # Single pass over the raw token stream. Whitespace tokens are resolved
-        # against their neighbours in the ORIGINAL stream (dropped, or turned
-        # into text) and consecutive text is merged into one buffer inline. This
-        # replaces the former two-pass approach (compact_whitespace_tokens built
-        # a whole intermediate array via map.with_index + compact, which this
-        # loop then re-scanned), saving an array allocation and a full pass per
-        # template.
         tokens.each_with_index do |token, index|
           type = token[0]
 
@@ -490,7 +483,6 @@ module Herb
             next if adjacent_whitespace?(tokens, index)
             next if whitespace_before_code_sequence?(tokens, index)
 
-            # Surviving whitespace becomes plain text and joins the text run.
             type = :text
           end
 
@@ -498,14 +490,9 @@ module Herb
             value = token[1]
 
             if current_text
-              # Mutate a single buffer instead of `current_text += value`, which
-              # reallocated and copied the whole accumulated string on every
-              # text token (quadratic for long runs of adjacent text).
               current_text << value
               current_context ||= token[2]
             else
-              # Start a fresh buffer; dup so we never mutate the token's own
-              # (possibly frozen) value string.
               current_text = value.dup
               current_context = token[2]
             end
