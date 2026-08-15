@@ -31,6 +31,12 @@ module Herb
 
       recommended_parser_option iteration_nodes: true
 
+      # A helper that takes a block is one expression, not a block with markup in it. Parsed
+      # without this, `<%= link_to "/x" do %>` comes out as a block whose body is marked
+      # separately, which both loses the helper's own slot and puts markers inside something
+      # whose return value is used.
+      required_parser_option action_view_helpers: true
+
       attr_reader :slots #: Array[Slot]
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
@@ -42,6 +48,7 @@ module Herb
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
       ELEMENT_ANCHORED_TYPES = [*ATTRIBUTE_TYPES, :boolean_attribute, :element, :raw_text].freeze #: Array[Symbol]
+      OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
       BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
       BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
@@ -524,6 +531,12 @@ module Herb
             [:expression, expression]
           when Herb::AST::LiteralNode
             [:literal, child.content.to_s]
+          when Herb::AST::RubyLiteralNode
+            # What a helper's keyword argument holds, where a written attribute would hold ERB.
+            expression = child.content.to_s.strip
+            return nil if expression.empty?
+
+            [:expression, expression]
           else
             return nil
           end
@@ -542,10 +555,12 @@ module Herb
         }.flatten
       end
 
+      # A tag helper is parsed as an element whose open tag is ERB, so an element carries its
+      # attributes the same way whether the template wrote `<li id="...">` or `tag.li id: ...`.
       #: (untyped) -> Array[untyped]
       def attributes_for(element)
         open_tag = element.open_tag
-        return [] unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode)
+        return [] unless OPEN_TAG_TYPES.any? { |type| open_tag.is_a?(type) }
 
         open_tag.children.grep(Herb::AST::HTMLAttributeNode)
       end

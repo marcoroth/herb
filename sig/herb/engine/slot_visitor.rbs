@@ -38,6 +38,8 @@ module Herb
 
       ELEMENT_ANCHORED_TYPES: Array[Symbol]
 
+      OPEN_TAG_TYPES: Array[untyped]
+
       BRANCH_BODY_PROPERTIES: Array[Symbol]
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
@@ -187,6 +189,8 @@ module Herb
       # : (untyped) -> Array[untyped]
       def collection_body: (untyped) -> Array[untyped]
 
+      # A tag helper is parsed as an element whose open tag is ERB, so an element carries its
+      # attributes the same way whether the template wrote `<li id="...">` or `tag.li id: ...`.
       # : (untyped) -> Array[untyped]
       def attributes_for: (untyped) -> Array[untyped]
 
