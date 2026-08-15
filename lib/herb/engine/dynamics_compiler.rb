@@ -426,7 +426,7 @@ module Herb
         @block_depth = 0
         @scopes = [] #: Array[Integer]
         @slot_visitor = properties[:slot_visitor] || SlotVisitor.new(mode: :server, mark: false)
-        visitors = [@slot_visitor, *properties[:visitors]]
+        visitors = [*properties[:visitors], @slot_visitor]
 
         super(
           input,
