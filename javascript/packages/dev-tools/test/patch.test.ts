@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { applyPatch } from "../src/patch"
-import type { PatchMessage } from "../src/types"
+import { applyPatch } from "../src/dev-server/patch"
+import type { PatchMessage } from "../src/dev-server/types"
 
 function createPatch(file: string, operations: PatchMessage["operations"]): PatchMessage {
   return { type: "patch", file, operations }

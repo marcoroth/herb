@@ -1,16 +1,32 @@
 import './styles.css';
 import { HerbOverlay, type HerbDevToolsOptions } from './herb-overlay.js';
+import { startDevServerClient } from './dev-server/dev-server.js';
 import { ErrorOverlay, type ValidationError, type ValidationData } from './error-overlay.js';
 
 export { HerbOverlay, ErrorOverlay };
+export { HerbClient, initHerbClient, getHerbClient, startDevServerClient } from './dev-server/dev-server.js';
+export { Connection } from './dev-server/connection.js';
+export { applyPatch } from './dev-server/patch.js';
+
 export type { HerbDevToolsOptions, ValidationError, ValidationData };
 
-export function initHerbDevTools(options: HerbDevToolsOptions = {}): HerbOverlay {
+/**
+ * Both halves of the development experience, either of which can be left out.
+ *
+ * They were separate packages, which meant a project chose between them by choosing what to
+ * install. Neither ships to production, so there was no bundle to keep lean by splitting them, and
+ * the overlay already draws the connection's state. An option is the cheaper seam.
+ */
+export function initHerbDevTools(options: HerbDevToolsOptions = {}): HerbOverlay | null {
+  if (options.devServer !== false) startDevServerClient();
+
   if (typeof window !== 'undefined') {
     const existingOverlay = (window as any).HerbDevTools?._overlay as HerbOverlay | undefined;
 
     existingOverlay?.destroy();
   }
+
+  if (options.overlay === false) return null;
 
   const overlay = new HerbOverlay(options);
 

@@ -46,18 +46,12 @@ export function getHerbClient(): HerbClient | null {
   return instance
 }
 
-function autoInitialize(): void {
+// Started by `initHerbDevTools` rather than on import, so a project can have the overlay without a
+// dev server connection, or the connection without the overlay.
+export function startDevServerClient(): void {
   const debugMeta = document.querySelector('meta[name="herb-debug-mode"]')
 
   if (!debugMeta || debugMeta.getAttribute("content") !== "true") return
 
   initHerbClient()
-}
-
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoInitialize)
-  } else {
-    autoInitialize()
-  }
 }

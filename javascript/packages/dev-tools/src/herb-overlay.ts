@@ -3,6 +3,12 @@ import { ErrorOverlay } from './error-overlay';
 export interface HerbDevToolsOptions {
   projectPath?: string;
   autoInit?: boolean;
+
+  /** Connect to the dev server and apply the patches it sends. Defaults to on. */
+  devServer?: boolean;
+
+  /** Show the panel, the outlines and the slot flash. Defaults to on. */
+  overlay?: boolean;
 }
 
 export class HerbOverlay {
