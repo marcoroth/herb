@@ -69,6 +69,30 @@ describe("saying what changed", () => {
     expect(seen).toEqual([])
   })
 
+  test("a row still exists when its removal is announced, so it can be pointed at", () => {
+    document.body.innerHTML = ROWS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen: Array<{ key: string | null; connected: boolean }> = []
+
+    document.addEventListener(SLOT_EVENT, (event) => {
+      const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+      if (detail.operation === "row-removed") seen.push({ key: detail.key, connected: detail.row!.start.isConnected })
+    })
+
+    index.apply({
+      template: FILE,
+      version: "bbbbbbbb",
+      occurrence: 0,
+      slots: { 0: { rows: {} } },
+    } as Payload)
+
+    expect(seen).toEqual([{ key: "a", connected: true }])
+  })
+
   test("hands over the slot rather than measuring it, since measuring costs a layout", () => {
     document.body.innerHTML = CHILD
 

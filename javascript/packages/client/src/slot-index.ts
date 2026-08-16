@@ -82,6 +82,7 @@ export interface SlotEventDetail {
   operation: SlotOperation
   key: string | null
   slot: Slot | null
+  row: Row | null
 }
 
 export const SLOT_EVENT = "herb:slot-update"
@@ -522,11 +523,15 @@ export class SlotIndex {
 
     this.scan(added)
 
-    this.#announce(slot, "row-added", slot.index, key)
+    this.#announce(slot, "row-added", slot.index, key, slot.rows.get(key) ?? null)
   }
 
   #dropRow(slot: Slot, row: Row): void {
     this.#keepRow(slot, row)
+
+    // Said before the row goes, because a row that has left the page cannot be pointed at, and
+    // pointing at what is being removed is the whole use of saying so.
+    this.#announce(slot, "row-removed", slot.index, row.key, row)
 
     const range = document.createRange()
 
@@ -535,8 +540,6 @@ export class SlotIndex {
     range.deleteContents()
 
     slot.rows.delete(row.key)
-
-    this.#announce(slot, "row-removed", slot.index, row.key)
   }
 
   // Moving each row to the end, in the order asked for, leaves them in that order. The collection's
@@ -614,7 +617,7 @@ export class SlotIndex {
     return this.#current(slot) === value
   }
 
-  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null): void {
+  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, row: Row | null = null): void {
     if (typeof document === "undefined") return
 
     const region = slot ? this.#slotRegions.get(slot) : null
@@ -628,6 +631,7 @@ export class SlotIndex {
           operation,
           key,
           slot,
+          row,
         },
       }),
     )
@@ -683,7 +687,7 @@ export class SlotIndex {
 
     const result = this.scan(added)
 
-    this.#announce(slot, "markup", slot.index, key)
+    this.#announce(slot, "markup", slot.index, key, slot.rows.get(key) ?? null)
 
     return result
   }

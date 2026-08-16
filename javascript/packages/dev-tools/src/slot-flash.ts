@@ -73,6 +73,17 @@ export class SlotFlash {
   // The runtime hands over the slot rather than a rectangle, because measuring costs a layout and
   // only something drawing a box actually wants one.
   private measure(detail: SlotEventDetail): DOMRect | null {
+    // A row is measured as a row, not as the collection holding it, which is the difference between
+    // pointing at what changed and pointing at everything around it.
+    if (detail.row) {
+      const range = document.createRange();
+
+      range.setStartBefore(detail.row.start);
+      range.setEndAfter(detail.row.end);
+
+      return this.biggest(range.getBoundingClientRect());
+    }
+
     const slot = detail.slot;
 
     if (!slot) return null;
