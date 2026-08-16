@@ -23,7 +23,7 @@ const SLOT_OPEN = /^herb-slot:(\d+)(?::([a-z_]+))?$/
 const SLOT_CLOSE = /^\/herb-slot:(\d+)$/
 const ROW_OPEN = /^herb-row:(\d+):([\s\S]*)$/
 const ROW_CLOSE = /^\/herb-row:(\d+)$/
-const BRANCH = /^herb-branch:(\d+):(\d+)$/
+const BRANCH = /^herb-branch:(\d+):(\w+)$/
 const MARKER = /^\/?herb-(region|slot|row|branch):/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
@@ -438,7 +438,13 @@ export class SlotIndex {
   #rowTemplate(slot: Slot): DocumentFragment | null {
     const [row] = this.#rowsInDocumentOrder(slot)
 
-    if (!row) return null
+    // A collection with no rows has nothing to copy, so it falls back to the one the server parked
+    // for exactly this case. A collection with rows parks nothing, because it is its own template.
+    if (!row) {
+      const region = this.#slotRegions.get(slot)
+
+      return region ? this.skeletonFor(region.file, `${slot.index}:row`) : null
+    }
 
     const fragment = document.createRange().createContextualFragment("")
     const range = document.createRange()
@@ -463,7 +469,7 @@ export class SlotIndex {
     }
 
     const added = [...copy.childNodes]
-    const anchor = this.#rowsInDocumentOrder(slot)[0]?.start ?? null
+    const anchor = this.#rowsInDocumentOrder(slot)[0]?.start ?? (slot.anchor.kind === "range" ? slot.anchor.end : null)
 
     if (anchor) anchor.parentNode?.insertBefore(copy, anchor)
     else return
@@ -608,7 +614,9 @@ export class SlotIndex {
 
     return this.skeletonKeys(file)
       .filter((key) => key.startsWith(prefix))
-      .map((key) => Number(key.slice(prefix.length)))
+      .map((key) => key.slice(prefix.length))
+      .filter((branch) => /^\d+$/.test(branch))
+      .map(Number)
       .sort((a, b) => a - b)
   }
 
@@ -813,7 +821,7 @@ export class SlotIndex {
         const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
         const slot = region?.slots.get(Number(branch[1]))
 
-        if (slot) slot.branch = Number(branch[2])
+        if (slot && /^\d+$/.test(branch[2])) slot.branch = Number(branch[2])
 
         this.#seen.add(comment)
       }

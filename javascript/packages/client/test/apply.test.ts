@@ -16,6 +16,10 @@ const NAMED_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:col
 
 const EMPTY_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
+const PARKED_ROW =
+  `<template data-herb-region="${FILE}:bbbbbbbb"><!--herb-branch:0:row-->` +
+  `<!--herb-row:0:--><li data-herb-child="1"></li><!--/herb-row:0--></template>`
+
 const NESTED =
   `<!--herb-region:${FILE}:cccccccc:0--><div><!--herb-slot:0-->` +
   `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-child="0">inner</p><!--/herb-region:${CARD}-->` +
@@ -165,8 +169,18 @@ describe("applying values to a collection", () => {
     expect(keys()).toEqual(["one", "two"])
   })
 
-  // Every row is a copy of another, so a collection with none has nothing to copy.
-  test("asks for a row it has no template for", () => {
+  test("builds into an empty collection from the row the server parked", () => {
+    const index = mounted(EMPTY_ROWS + PARKED_ROW)
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["one"])
+    expect(index.slotInRow(FILE, 0, "1", 1)).not.toBeNull()
+  })
+
+  // A collection with rows is its own template, so the server parks one only when it rendered none.
+  test("asks for a row when the collection is empty and nothing was parked", () => {
     const index = mounted(EMPTY_ROWS)
 
     const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))

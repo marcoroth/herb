@@ -32,6 +32,8 @@ module Herb
 
       COVERED: String
 
+      ROW_STATICS: String
+
       OCCURRENCES: String
 
       OCCURRENCE: String
@@ -231,6 +233,8 @@ module Herb
       def continuation_of: (untyped) -> untyped
 
       # : (untyped, Integer?) -> void
+      def park_row: (Integer slot_index, Array[untyped] body) -> void
+
       def wrap_rows: (untyped, Integer?) -> void
 
       def anchor_attributes: (untyped node) -> untyped

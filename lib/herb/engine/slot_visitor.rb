@@ -40,6 +40,7 @@ module Herb
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
+      ROW_STATICS = "row" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
       OCCURRENCE = "_herb_occurrence" #: String
 
@@ -776,6 +777,8 @@ module Herb
           body = node.send(property)
           next unless body.is_a?(Array) && !body.empty?
 
+          park_row(slot_index, body)
+
           body.unshift(
             text_node(@markers.row_open_prefix(slot_index)),
             erb_output_node(slot.key_expression),
@@ -784,6 +787,32 @@ module Herb
 
           body.push(text_node(@markers.row_close(slot_index)))
         end
+      end
+
+      # A collection that rendered nothing leaves the client with no row to copy, so the one row it
+      # would have rendered is parked instead. `COVERED` does the deciding, exactly as it does for a
+      # branch: a collection with rows on the page marks itself covered and parks nothing, because
+      # any row it has is already a template for the rest.
+      def park_row(slot_index, body)
+        statics = @statics
+        return unless statics
+
+        markup = SlotStatics.new(@pending).markup(body)
+        return unless markup
+
+        key = "#{slot_index}:#{ROW_STATICS}"
+
+        # The row's own key is an expression, which has no static form, so the parked copy carries an
+        # empty one. Whatever builds a row from this has to say which row it is building anyway.
+        statics[key] = [
+          @markers.branch(slot_index, ROW_STATICS),
+          @markers.row_open_prefix(slot_index),
+          @markers.row_open_suffix,
+          markup,
+          @markers.row_close(slot_index)
+        ].join
+
+        body.insert(0, erb_code_node(%(#{COVERED}["#{key}"] = true)))
       end
 
       def anchor_attributes(node)
