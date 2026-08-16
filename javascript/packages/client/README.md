@@ -116,7 +116,7 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 - `stale-version` and `no-region` mean nothing was applied at all. A version that does not match says the payload's indices were compiled against a different template, so the values would land in the wrong places, and there is no partial credit to take.
 - `branch` means the conditional took a branch whose markup the page never had and nothing was parked for it. Ask the server for that subtree.
-- `rows` means the collection's rows are not the ones the payload has, and `keys` lists which. The rows both sides agree on are still filled, so what is deferred is the adding, removing and moving.
+- `rows` means the collection had no row to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and a row the page has never had is built from one it has, because every row of a collection is the same shape by construction. Only a collection that is entirely empty has nothing to copy.
 - `no-slot` means the payload named an index the page has no marker for, which is usually a region that was only partly scanned.
 
 A branch the server parked is built rather than deferred, so a template in client mode toggles a conditional with no round trip. That is the same `materialize` path, taken for you.
@@ -135,12 +135,14 @@ And the chain out to the top of its region:
 slots.ancestorsOf(slot)
 ```
 
-For collections, `reconcile` says what has to happen to the rows on the page for them to match the keys the server sent. A reorder reports as moves rather than rebuilds, which is the reason to key a collection at all:
+For collections, `reconcile` says what has to happen to the rows on the page for them to match the keys the server sent. A reorder reports as moves rather than rebuilds, which is the reason to key a collection at all. `apply` carries the plan out for you; this is for deciding rather than doing:
 
 ```typescript
 slots.reconcile(collection, ["3", "1", "2"])
 // { added: [], removed: [], moved: ["3", "1"], kept: [...], unchanged: false }
 ```
+
+One limit worth knowing: JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. Ascending is what an append wants and what most collections already are, so it rarely shows, but a collection whose order the server decides has to be keyed by something that is not a number.
 
 ## Branches that never rendered
 

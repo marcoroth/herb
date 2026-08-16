@@ -12,6 +12,10 @@ const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:
 
 const ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:1--><li data-herb-child="1">one</li><!--/herb-row:0--><!--herb-row:0:2--><li data-herb-child="1">two</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
+const NAMED_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:ada--><li data-herb-child="1">Ada</li><!--/herb-row:0--><!--herb-row:0:grace--><li data-herb-child="1">Grace</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+const EMPTY_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
 const NESTED =
   `<!--herb-region:${FILE}:cccccccc:0--><div><!--herb-slot:0-->` +
   `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-child="0">inner</p><!--/herb-region:${CARD}-->` +
@@ -107,18 +111,69 @@ describe("applying values to a collection", () => {
     expect(document.querySelectorAll("li")[1].textContent).toBe("TWO")
   })
 
-  test("defers the rows it cannot build, and still fills the ones it can", () => {
+  const keys = () => [...document.querySelectorAll("li")].map((li) => li.textContent)
+
+  test("drops a row the payload no longer has", () => {
+    const index = mounted(ROWS)
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 2: { 1: "two" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["two"])
+  })
+
+  test("builds a row it has never seen from one it has", () => {
     const index = mounted(ROWS)
 
     const report = index.apply(
-      payload(FILE, { 0: { rows: { 2: { 1: "TWO" }, 3: { 1: "THREE" } } } }, "bbbbbbbb"),
+      payload(FILE, { 0: { rows: { 1: { 1: "one" }, 2: { 1: "two" }, 3: { 1: "three" } } } }, "bbbbbbbb"),
     )
 
-    expect(report.applied).toBe(1)
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["one", "two", "three"])
+    expect(index.slotInRow(FILE, 0, "3", 1)).not.toBeNull()
+  })
+
+  test("puts the rows in the order the payload asked for", () => {
+    const index = mounted(NAMED_ROWS)
+
+    index.apply(payload(FILE, { 0: { rows: { grace: { 1: "Grace" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"))
+
+    expect(keys()).toEqual(["Grace", "Ada"])
+  })
+
+  test("adds, removes and reorders in one go", () => {
+    const index = mounted(NAMED_ROWS)
+
+    const report = index.apply(
+      payload(FILE, { 0: { rows: { yuki: { 1: "Yukihiro" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"),
+    )
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["Yukihiro", "Ada"])
+  })
+
+  // JavaScript sorts integer-like object keys numerically, whatever order they were written in, so
+  // `JSON.parse` loses the order the server sent for a collection keyed by id. Ascending is what an
+  // append wants and what most collections already are, so this is a limit rather than a failure,
+  // and a collection whose order matters has to be keyed by something that is not a number.
+  test("cannot be told to reorder rows keyed by a number", () => {
+    const index = mounted(ROWS)
+
+    index.apply(payload(FILE, { 0: { rows: { 2: { 1: "two" }, 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(keys()).toEqual(["one", "two"])
+  })
+
+  // Every row is a copy of another, so a collection with none has nothing to copy.
+  test("asks for a row it has no template for", () => {
+    const index = mounted(EMPTY_ROWS)
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+
     expect(report.deferred).toEqual([
-      { file: FILE, occurrence: 0, index: 0, reason: "rows", keys: ["3", "1"] },
+      { file: FILE, occurrence: 0, index: 0, reason: "rows", keys: ["1"] },
     ])
-    expect(document.querySelectorAll("li")[1].textContent).toBe("TWO")
   })
 })
 

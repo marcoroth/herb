@@ -387,16 +387,121 @@ export class SlotIndex {
   }
 
   #applyRows(payload: Payload, slot: Slot, value: Collected, report: ApplyReport): void {
-    const keys = Object.keys(value.rows)
-    const plan = this.reconcile(slot, keys)
+    const wanted = Object.keys(value.rows)
+    const plan = this.reconcile(slot, wanted)
 
-    if (!plan.unchanged) this.#defer(report, payload, slot.index, "rows", [...plan.added, ...plan.removed, ...plan.moved])
+    if (!plan.unchanged) {
+      const unbuilt = this.#reconcileRows(slot, wanted, plan)
 
-    for (const key of plan.kept) {
+      if (unbuilt.length > 0) this.#defer(report, payload, slot.index, "rows", unbuilt)
+    }
+
+    for (const key of wanted) {
       const row = slot.rows.get(key)
 
       if (row) this.#applySlots(payload, row.slots, value.rows[key], report)
     }
+  }
+
+  /**
+   * Makes the rows on the page the rows the payload has, and answers with the keys it could not.
+   *
+   * Removing and moving need no markup, only the row's own range, so they are always possible. A row
+   * the page has never had is built from one it has, because every row of a collection is the same
+   * shape by construction, which makes any row a template for the rest. A collection with no rows at
+   * all has no template and nothing to copy, so that is the one case that has to be asked for.
+   */
+  #reconcileRows(slot: Slot, wanted: string[], plan: RowPlan): string[] {
+    for (const key of plan.removed) {
+      const row = slot.rows.get(key)
+
+      if (!row) continue
+
+      this.#dropRow(slot, row)
+    }
+
+    const template = plan.added.length > 0 ? this.#rowTemplate(slot) : null
+
+    if (!template) {
+      this.#order(slot, wanted.filter((key) => slot.rows.has(key)))
+
+      return plan.added
+    }
+
+    for (const key of plan.added) this.#buildRow(slot, key, template)
+
+    this.#order(slot, wanted)
+
+    return []
+  }
+
+  #rowTemplate(slot: Slot): DocumentFragment | null {
+    const [row] = this.#rowsInDocumentOrder(slot)
+
+    if (!row) return null
+
+    const fragment = document.createRange().createContextualFragment("")
+    const range = document.createRange()
+
+    range.setStartBefore(row.start)
+    range.setEndAfter(row.end)
+
+    fragment.append(range.cloneContents())
+
+    blankSlots(fragment)
+
+    return fragment
+  }
+
+  #buildRow(slot: Slot, key: string, template: DocumentFragment): void {
+    const copy = template.cloneNode(true) as DocumentFragment
+
+    for (const comment of this.#comments(copy)) {
+      const open = ROW_OPEN.exec(comment.data.trim())
+
+      if (open) comment.data = `herb-row:${slot.index}:${key}`
+    }
+
+    const added = [...copy.childNodes]
+    const anchor = this.#rowsInDocumentOrder(slot)[0]?.start ?? null
+
+    if (anchor) anchor.parentNode?.insertBefore(copy, anchor)
+    else return
+
+    this.scan(added)
+  }
+
+  #dropRow(slot: Slot, row: Row): void {
+    const range = document.createRange()
+
+    range.setStartBefore(row.start)
+    range.setEndAfter(row.end)
+    range.deleteContents()
+
+    slot.rows.delete(row.key)
+  }
+
+  // Moving each row to the end, in the order asked for, leaves them in that order. The collection's
+  // own closing marker is the one node to measure against that no row can be inside.
+  #order(slot: Slot, keys: string[]): void {
+    if (slot.anchor.kind !== "range") return
+
+    const end = slot.anchor.end
+
+    for (const key of keys) {
+      const row = slot.rows.get(key)
+
+      if (!row) continue
+
+      const range = document.createRange()
+
+      range.setStartBefore(row.start)
+      range.setEndAfter(row.end)
+
+      end.parentNode?.insertBefore(range.extractContents(), end)
+    }
+
+    this.#pruneRows(slot)
   }
 
   #writeFragment(slot: Slot, fragment: DocumentFragment): void {
