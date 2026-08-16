@@ -107,10 +107,13 @@ export class SlotFlash {
     return rect.width > 0 || rect.height > 0 ? rect : null;
   }
 
+  // An attribute slot says which attribute, since an element can carry several and they are the
+  // ones hardest to tell apart by looking at the page.
   private describe(detail: SlotEventDetail): string {
     const name = detail.file.split('/').pop() ?? detail.file;
-    const where = detail.key === null ? `#${detail.index}` : `#${detail.index}[${detail.key}]`;
+    const key = detail.key === null ? '' : ` (${detail.key})`;
+    const attribute = detail.slot?.attribute ? ` [${detail.slot.attribute}]` : '';
 
-    return `${detail.operation} ${name} ${where}`;
+    return `${detail.operation} ${name} #${detail.index}${key}${attribute}`;
   }
 }
