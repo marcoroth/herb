@@ -43,7 +43,7 @@ export class SlotFlash {
     const detail = (event as CustomEvent<SlotEventDetail>).detail;
     const rect = this.measure(detail);
 
-    if (!rect || (rect.width === 0 && rect.height === 0)) return;
+    if (!rect) return;
 
     const colour = COLOURS[detail.operation] ?? '#3b82f6';
     const overlay = document.createElement('div');
@@ -83,10 +83,28 @@ export class SlotFlash {
       range.setStartAfter(slot.anchor.start);
       range.setEndBefore(slot.anchor.end);
 
-      return range.getBoundingClientRect();
+      return this.biggest(range.getBoundingClientRect());
     }
 
-    return slot.anchor.element.getBoundingClientRect();
+    const element = slot.anchor.element;
+    const rect = this.biggest(element.getBoundingClientRect());
+
+    if (rect) return rect;
+
+    // An element with `display: contents` generates no box of its own, and the debug visitor wraps
+    // every ERB output in one, so the element a slot is anchored to very often has no rectangle.
+    // What it holds does.
+    const contents = document.createRange();
+
+    contents.selectNodeContents(element);
+
+    return this.biggest(contents.getBoundingClientRect()) ?? this.biggest(element.parentElement?.getBoundingClientRect());
+  }
+
+  private biggest(rect: DOMRect | undefined): DOMRect | null {
+    if (!rect) return null;
+
+    return rect.width > 0 || rect.height > 0 ? rect : null;
   }
 
   private describe(detail: SlotEventDetail): string {
