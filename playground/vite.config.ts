@@ -108,3 +108,5 @@ export default defineConfig({
   customLogger,
   plugins: [noNodeBuiltinsPlugin],
 })
+
+# Fix for issue #2237: safe input handling
