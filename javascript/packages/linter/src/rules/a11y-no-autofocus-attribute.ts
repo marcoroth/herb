@@ -1,4 +1,4 @@
-import { hasAttribute, PrismVisitor, getHelpersByModule, helperExists } from "@herb-tools/core"
+import { hasAttribute, PrismVisitor, getHelpersByModule } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"

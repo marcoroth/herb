@@ -1,13 +1,14 @@
 import { ParserRule } from "../types.js"
-import { Location, ERBStrictLocalsNode, RubyReferenceCollector, createLiteral, isProbableLocal } from "@herb-tools/core"
-import { strictLocalsDeclaration } from "@herb-tools/analysis"
 import { BaseRuleVisitor } from "./rule-utils.js"
+import { Location, ERBStrictLocalsNode, RubyReferenceCollector } from "@herb-tools/core"
 
 import { isPartialFile } from "./file-utils.js"
+import { strictLocalsDeclaration } from "@herb-tools/analysis"
+import { createLiteral, isProbableLocal } from "@herb-tools/core"
 
-import type { BaseAutofixContext, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, DocumentNode } from "@herb-tools/core"
 import type { InferredSignature, StrictLocal } from "@herb-tools/analysis"
+import type { BaseAutofixContext, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 const LOCAL_ASSIGNS = "local_assigns"
 

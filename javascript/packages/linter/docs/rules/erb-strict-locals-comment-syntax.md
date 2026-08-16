@@ -43,30 +43,43 @@ Required keyword argument:
 
 ```erb
 <%# locals: (user:) %>
+
+<%= user %>
 ```
 
 Keyword argument with default value:
 
 ```erb
 <%# locals: (user:, admin: false) %>
+
+<%= user %>
+<%= admin %>
 ```
 
 Complex default values:
 
 ```erb
 <%# locals: (items: [], config: {}) %>
+
+<%= items %>
+<%= config %>
 ```
 
 No locals (empty):
 
 ```erb
 <%# locals: () %>
+
+<p>Static content only</p>
 ```
 
 Double-splat for optional keyword arguments:
 
 ```erb
 <%# locals: (message: "Hello", **attributes) %>
+
+<%= message %>
+<%= attributes %>
 ```
 
 ### 🚫 Bad
@@ -107,12 +120,16 @@ Missing space after the colon:
 
 ```erb
 <%# locals:(user:) %>
+
+<%= user %>
 ```
 
 Unbalanced parentheses:
 
 ```erb
 <%# locals: (user: %>
+
+<%= user %>
 ```
 
 #### Wrong tag type (must use ERB comment tag)
@@ -167,7 +184,7 @@ Double comma:
 
 #### Duplicate declarations
 
-Only one `locals:` comment is allowed per partial:
+Only one `locals:` comment is allowed per file:
 
 ```erb
 <%# locals: (user:) %>
