@@ -26,6 +26,7 @@ const ROW_CLOSE = /^\/herb-row:(\d+)$/
 const BRANCH = /^herb-branch:(\d+):(\w+)$/
 const MARKER = /^\/?herb-(region|slot|row|branch):/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
+const ROW_STATICS = "row"
 const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
@@ -465,9 +466,13 @@ export class SlotIndex {
     if (!row) {
       const region = this.#slotRegions.get(slot)
 
-      return region ? this.skeletonFor(region.file, `${slot.index}:row`) : null
+      return region ? this.skeletonFor(region.file, `${slot.index}:${ROW_STATICS}`) : null
     }
 
+    return this.#rowFragment(row)
+  }
+
+  #rowFragment(row: Row): DocumentFragment {
     const fragment = document.createRange().createContextualFragment("")
     const range = document.createRange()
 
@@ -479,6 +484,25 @@ export class SlotIndex {
     blankSlots(fragment)
 
     return fragment
+  }
+
+  /**
+   * Keeps a copy of the last row a collection had, before it stops having one.
+   *
+   * The server parks a row only for a collection that rendered empty, since one that rendered rows
+   * is its own template. Emptying it on the page then leaves neither: nothing to copy and nothing
+   * parked, and the next row added has to come from the server after all. So the last one out
+   * leaves its shape behind. Parking keeps what it already has, so this never displaces the
+   * server's copy.
+   */
+  #keepRow(slot: Slot, row: Row): void {
+    if (slot.rows.size > 1) return
+
+    const region = this.#slotRegions.get(slot)
+
+    if (!region) return
+
+    this.#park(region, `${slot.index}:${ROW_STATICS}`, this.#rowFragment(row))
   }
 
   #buildRow(slot: Slot, key: string, template: DocumentFragment): void {
@@ -502,6 +526,8 @@ export class SlotIndex {
   }
 
   #dropRow(slot: Slot, row: Row): void {
+    this.#keepRow(slot, row)
+
     const range = document.createRange()
 
     range.setStartBefore(row.start)

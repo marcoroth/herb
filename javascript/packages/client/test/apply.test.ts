@@ -179,6 +179,21 @@ describe("applying values to a collection", () => {
     expect(index.slotInRow(FILE, 0, "1", 1)).not.toBeNull()
   })
 
+  // The page loaded with rows, so the server parked none. Emptying it and adding one is the shortest
+  // way to have neither a row to copy nor a parked one, and it is what a table does all day.
+  test("builds again after every row has been deleted", () => {
+    const index = mounted(ROWS)
+    const empty = payload(FILE, { 0: { rows: {} } }, "bbbbbbbb")
+
+    expect(index.apply(empty).deferred).toEqual([])
+    expect(keys()).toEqual([])
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 9: { 1: "again" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["again"])
+  })
+
   // A collection with rows is its own template, so the server parks one only when it rendered none.
   test("asks for a row when the collection is empty and nothing was parked", () => {
     const index = mounted(EMPTY_ROWS)
