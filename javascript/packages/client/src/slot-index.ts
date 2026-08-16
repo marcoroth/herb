@@ -364,6 +364,11 @@ export class SlotIndex {
       return
     }
 
+    // Nothing parks the branch that rendered, since it was already on the page, so replacing it is
+    // what loses it. A copy is kept first, which makes swapping back and forth free after the first
+    // swap and costs nothing where the server parked one already: `#park` keeps what it has.
+    this.capture(slot)
+
     if (value.branch === null) {
       this.update(slot, "")
       slot.branch = null

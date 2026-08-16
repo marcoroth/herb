@@ -65,6 +65,19 @@ describe("applying values to a conditional", () => {
     expect(index.rangeFor(index.slot(FILE, 2)!).toString()).toBe("built")
   })
 
+  test("can put back the branch it replaced, without the server parking it", () => {
+    const index = mounted(COND_TRUE + PARKED)
+
+    index.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "built" } } }))
+    expect(index.slot(FILE, 0)?.branch).toBe(1)
+
+    const report = index.apply(payload(FILE, { 0: { branch: 0, slots: { 1: "back" } } }))
+
+    expect(report.deferred).toEqual([])
+    expect(index.slot(FILE, 0)?.branch).toBe(0)
+    expect(index.rangeFor(index.slot(FILE, 1)!).toString()).toBe("back")
+  })
+
   test("defers a branch it has no markup for, rather than guessing", () => {
     const index = mounted(COND_FALSE)
 
