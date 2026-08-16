@@ -172,8 +172,8 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
   })
 
   test("flags Ruby comment syntax for strict locals in execution tags", () => {
-    expectError("Use `<%#` instead of `<% #` for strict locals comments. Only ERB comment syntax is recognized by Rails.")
-    expectError("Use `<%#` instead of `<%- #` for strict locals comments. Only ERB comment syntax is recognized by Rails.")
+    expectError("Use `<%#` instead of `<% #` for strict locals comments. Only ERB comment syntax is recognized.")
+    expectError("Use `<%#` instead of `<%- #` for strict locals comments. Only ERB comment syntax is recognized.")
 
     assertOffenses(dedent`
       <% # locals: (user:) %>

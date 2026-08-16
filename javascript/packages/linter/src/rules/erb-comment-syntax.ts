@@ -1,6 +1,8 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
+import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "./strict-locals-utils.js"
+
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
@@ -13,19 +15,23 @@ class ERBCommentSyntaxVisitor extends BaseRuleVisitor<ERBCommentSyntaxAutofixCon
     const content = node.content?.value || ""
 
     if (content.match(/^ +#/)) {
+      const rubyComment = extractRubyCommentContent(content)
+
+      if (rubyComment && looksLikeLocalsDeclaration(rubyComment)) return
+
       const openingTag = node.tag_opening?.value
 
       if (content.includes("herb:disable")) {
         this.addOffense(
           `Use \`<%#\` instead of \`${openingTag} #\` for \`herb:disable\` directives. Herb directives only work with ERB comment syntax (\`<%# ... %>\`).`,
           node.location,
-          { node }
+          { node },
         )
       } else {
         this.addOffense(
           `Use \`<%#\` instead of \`${openingTag} #\`. Ruby comments immediately after ERB tags can cause parsing issues.`,
           node.location,
-          { node }
+          { node },
         )
       }
     }
@@ -40,7 +46,7 @@ export class ERBCommentSyntax extends ParserRule<ERBCommentSyntaxAutofixContext>
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
     }
   }
 
