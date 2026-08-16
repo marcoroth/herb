@@ -134,7 +134,7 @@ export interface Collected {
 
 export type PayloadValue = string | Payload | Branched | Collected
 
-export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "rows"
+export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "rows" | "partial-attribute"
 
 export interface Deferred {
   file: string
@@ -367,8 +367,12 @@ export class SlotIndex {
       if (typeof value === "string") {
         if (this.#same(slot, value)) continue
 
-        if (slot.attribute) this.setAttribute(slot, value)
-        else this.update(slot, value)
+        if (slot.attribute && !this.setAttribute(slot, value)) {
+          this.#defer(report, payload, index, "partial-attribute")
+          continue
+        }
+
+        if (!slot.attribute) this.update(slot, value)
 
         report.applied += 1
         continue
@@ -406,6 +410,12 @@ export class SlotIndex {
     this.#writeFragment(slot, built)
 
     report.applied += 1
+
+    // The skeleton takes the values that are strings, and nothing else. A collection or a
+    // conditional inside the branch is a shape rather than a value, so it has to be applied to the
+    // markup once that markup exists. The strings are written twice and cost nothing the second
+    // time, since a value equal to the one already there is not written.
+    if (value.slots) this.#applySlots(payload, this.#owner(slot), value.slots, report)
   }
 
   #applyRows(payload: Payload, slot: Slot, value: Collected, report: ApplyReport): void {
@@ -610,6 +620,8 @@ export class SlotIndex {
   }
 
   #same(slot: Slot, value: string): boolean {
+    if (slot.type === "attribute_interpolation") return false
+
     if (slot.attribute && slot.anchor.kind !== "range") {
       return slot.anchor.element.getAttribute(slot.attribute) === value
     }
@@ -694,6 +706,12 @@ export class SlotIndex {
 
   setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
     if (slot.anchor.kind === "range" || name === null) return false
+
+    // `class="card <%= state %>"` marks only the interpolated part, and there is no way to write it:
+    // the marker says which attribute, not which stretch of it, so writing the value would drop
+    // everything the template wrote around it. Refusing is the only honest answer.
+    if (slot.type === "attribute_interpolation") return false
+
     if (slot.anchor.element.getAttribute(name) === value) return true
 
     if (value === null) {

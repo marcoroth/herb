@@ -235,6 +235,26 @@ describe("applying values that came from more than one template", () => {
   })
 })
 
+describe("an attribute a template only partly wrote", () => {
+  // `class="card <%= state %>"` marks the interpolated part, and the marker says which attribute
+  // rather than which stretch of it, so writing the value would drop the `card` the template wrote.
+  const PARTIAL = `<!--herb-region:${FILE}:aaaaaaaa:0--><div class="card active" data-herb-slot="0:attribute_interpolation:class"></div><!--/herb-region:${FILE}-->`
+
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("is refused rather than written over", () => {
+    const index = mounted(PARTIAL)
+
+    const report = index.apply(payload(FILE, { 0: "" }))
+
+    expect(report.applied).toBe(0)
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "partial-attribute" }])
+    expect(document.querySelector("div")?.getAttribute("class")).toBe("card active")
+  })
+})
+
 describe("applying values the page has no place for", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
