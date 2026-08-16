@@ -42,6 +42,12 @@ module Herb
       COVERED = "_herb_covered_branches" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
       OCCURRENCE = "_herb_occurrence" #: String
+
+      # A helper that captures its block writes that markup during one rendering and may emit it
+      # anywhere, or not at all. Matching by name only covers the helpers that can be named, and
+      # matching one that renders in place costs a marker pair that says something true, so this
+      # errs towards matching.
+      CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
       BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
@@ -110,6 +116,7 @@ module Herb
 
         @in_attribute = false
         @in_open_tag = false
+        @displaced = [] #: Array[untyped]
         @in_html_comment = false
         @in_html_doctype = false
         @raw_text_depth = 0
@@ -182,6 +189,7 @@ module Herb
         return unless @mark
 
         insert_markers(node)
+        wrap_displaced
         wrap_region(node)
         append_statics(node)
       end
@@ -273,6 +281,8 @@ module Herb
 
       def visit_erb_block_node(node)
         record_slot(node, :block)
+
+        @displaced << node if CAPTURING.match?(expression_for(node).to_s)
 
         visit_branching_node(node)
       end
@@ -830,6 +840,23 @@ module Herb
         )
 
         document_node.children.push(comment_node(@markers.region_close(identifier)))
+      end
+
+      # Markup a helper captured leaves with the rendering it came from written around it, so it
+      # says which rendering it belongs to wherever it is emitted. Reading the number rather than
+      # counting again is what makes it the same rendering rather than another one.
+      def wrap_displaced
+        @displaced.each do |node|
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            body = node.send(property)
+            next unless body.is_a?(Array) && !body.empty?
+
+            body.unshift(*region_open)
+            body.push(comment_node(@markers.region_close(identifier)))
+          end
+        end
       end
 
       def region_open

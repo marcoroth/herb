@@ -52,6 +52,8 @@ slots.slotsFor("app/views/posts/index.html.erb", 0)
 slots.regionsFor("app/views/posts/index.html.erb")
 ```
 
+A rendering is not always one stretch of the page. `content_for`, `provide` and `capture` run during a rendering and hand their markup to whoever wants it, which is usually somewhere else entirely, so the compiler writes the rendering's own marker around what they captured. Two markers naming the same template, version and occurrence are the same rendering, and the region holds a range for each. Nothing about addressing changes: a slot inside a `content_for` is `slots.slot(file, index)` like any other, however far from the rest of its template it ended up.
+
 The occurrence is the server's own count, carried in the region marker, rather than where the region sits on the page. Those are usually the same and sometimes not, because `content_for` renders its content at one point in the template and writes it out at another. A payload naming the second rendering of a template means the second one the server rendered, so reading the number is right where counting regions down the page would be off by exactly the templates that moved.
 
 Every row of a collection repeats the same slot indices, so a row's key is what says which one is meant. The rows of a collection:
