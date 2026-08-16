@@ -3,6 +3,8 @@ import { ErrorOverlay } from './error-overlay';
 export interface HerbDevToolsOptions {
   projectPath?: string;
   autoInit?: boolean;
+  devServer?: boolean;
+  overlay?: boolean;
 }
 
 export class HerbOverlay {

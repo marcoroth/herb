@@ -46,18 +46,10 @@ export function getHerbClient(): HerbClient | null {
   return instance
 }
 
-function autoInitialize(): void {
+export function startDevServerClient(): void {
   const debugMeta = document.querySelector('meta[name="herb-debug-mode"]')
 
   if (!debugMeta || debugMeta.getAttribute("content") !== "true") return
 
   initHerbClient()
-}
-
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoInitialize)
-  } else {
-    autoInitialize()
-  }
 }
