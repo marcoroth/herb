@@ -32,11 +32,19 @@ describe("a page given the values of a later render", () => {
     expect(fixture.rendered).not.toBe(fixture.expected)
   })
 
-  test("writes every value it was given and defers nothing", () => {
+  // Seven values arrive; two of them are the row ids, which are the same in both renderings, so
+  // five is the count of what actually had to change.
+  test("writes every value that differs and defers nothing", () => {
     const report = index.apply(values)
 
-    expect(report.applied).toBe(7)
+    expect(report.applied).toBe(5)
     expect(report.deferred).toEqual([])
+  })
+
+  test("applying the same values twice writes nothing the second time", () => {
+    index.apply(values)
+
+    expect(index.apply(values)).toEqual({ applied: 0, deferred: [] })
   })
 
   test("leaves every marker where it was, so the next update has the same page to work on", () => {

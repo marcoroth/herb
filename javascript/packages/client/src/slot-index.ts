@@ -363,6 +363,8 @@ export class SlotIndex {
       }
 
       if (typeof value === "string") {
+        if (this.#same(slot, value)) continue
+
         if (slot.attribute) this.setAttribute(slot, value)
         else this.update(slot, value)
 
@@ -560,6 +562,32 @@ export class SlotIndex {
     report.deferred.push({ file: payload.template, occurrence: payload.occurrence, index, reason, ...(keys ? { keys } : {}) })
   }
 
+  /**
+   * What a slot holds now, serialized the way the incoming markup is written.
+   *
+   * Comparison is exact, so the two can differ while meaning the same thing: an attribute quoted
+   * differently, an entity written another way. That direction is safe. It writes something it did
+   * not have to, which is what it would have done anyway.
+   */
+  #current(slot: Slot): string {
+    if (slot.anchor.kind === "content") return slot.anchor.element.innerHTML
+    if (slot.anchor.kind === "element") return slot.anchor.element.outerHTML
+
+    const holder = document.createElement("div")
+
+    holder.append(this.rangeFor(slot).cloneContents())
+
+    return holder.innerHTML
+  }
+
+  #same(slot: Slot, value: string): boolean {
+    if (slot.attribute && slot.anchor.kind !== "range") {
+      return slot.anchor.element.getAttribute(slot.attribute) === value
+    }
+
+    return this.#current(slot) === value
+  }
+
   #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null): void {
     if (typeof document === "undefined") return
 
@@ -580,6 +608,10 @@ export class SlotIndex {
   }
 
   update(slot: Slot, html: string): ScanResult {
+    // Writing what is already there costs a re-parse, destroys whatever the slot contained, and
+    // announces a change that did not happen. Nothing about it is free.
+    if (this.#current(slot) === html) return { regions: [], slots: [] }
+
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
     slot.children = []
@@ -632,6 +664,7 @@ export class SlotIndex {
 
   setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
     if (slot.anchor.kind === "range" || name === null) return false
+    if (slot.anchor.element.getAttribute(name) === value) return true
 
     if (value === null) {
       slot.anchor.element.removeAttribute(name)

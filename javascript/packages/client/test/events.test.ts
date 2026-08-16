@@ -56,6 +56,19 @@ describe("saying what changed", () => {
     ])
   })
 
+  test("says nothing when the value written is the value already there", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.update(index.slot(FILE, 0)!, "hi")
+
+    expect(seen).toEqual([])
+  })
+
   test("hands over the slot rather than measuring it, since measuring costs a layout", () => {
     document.body.innerHTML = CHILD
 
