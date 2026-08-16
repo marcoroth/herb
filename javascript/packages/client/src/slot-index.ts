@@ -67,6 +67,24 @@ export interface Slot {
   children: Slot[]
 }
 
+export type SlotOperation = "value" | "attribute" | "markup" | "branch" | "row-added" | "row-removed"
+
+/**
+ * Announced on `document` after every write, so anything watching can see what changed without the
+ * index knowing it is being watched. The slot is handed over rather than a rectangle, because
+ * measuring costs a layout and only a listener knows whether it wants one.
+ */
+export interface SlotEventDetail {
+  file: string
+  occurrence: number
+  index: number
+  operation: SlotOperation
+  key: string | null
+  slot: Slot | null
+}
+
+export const SLOT_EVENT = "herb:slot-update"
+
 export interface RegionRange {
   start: Comment
   end: Comment | null
@@ -412,6 +430,10 @@ export class SlotIndex {
    * all has no template and nothing to copy, so that is the one case that has to be asked for.
    */
   #reconcileRows(slot: Slot, wanted: string[], plan: RowPlan): string[] {
+    // Taken before anything is removed, because replacing every row at once would otherwise drop
+    // the last copy of the shape and leave nothing to build the new ones from.
+    const template = plan.added.length > 0 ? this.#rowTemplate(slot) : null
+
     for (const key of plan.removed) {
       const row = slot.rows.get(key)
 
@@ -419,8 +441,6 @@ export class SlotIndex {
 
       this.#dropRow(slot, row)
     }
-
-    const template = plan.added.length > 0 ? this.#rowTemplate(slot) : null
 
     if (!template) {
       this.#order(slot, wanted.filter((key) => slot.rows.has(key)))
@@ -475,6 +495,8 @@ export class SlotIndex {
     else return
 
     this.scan(added)
+
+    this.#announce(slot, "row-added", slot.index, key)
   }
 
   #dropRow(slot: Slot, row: Row): void {
@@ -485,6 +507,8 @@ export class SlotIndex {
     range.deleteContents()
 
     slot.rows.delete(row.key)
+
+    this.#announce(slot, "row-removed", slot.index, row.key)
   }
 
   // Moving each row to the end, in the order asked for, leaves them in that order. The collection's
@@ -524,6 +548,8 @@ export class SlotIndex {
     range.insertNode(fragment)
 
     this.scan(added)
+
+    this.#announce(slot, "branch", slot.index)
   }
 
   #owner(slot: Slot): Map<number, Slot> {
@@ -532,6 +558,25 @@ export class SlotIndex {
 
   #defer(report: ApplyReport, payload: Payload, index: number | null, reason: DeferredReason, keys?: string[]): void {
     report.deferred.push({ file: payload.template, occurrence: payload.occurrence, index, reason, ...(keys ? { keys } : {}) })
+  }
+
+  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null): void {
+    if (typeof document === "undefined") return
+
+    const region = slot ? this.#slotRegions.get(slot) : null
+
+    document.dispatchEvent(
+      new CustomEvent<SlotEventDetail>(SLOT_EVENT, {
+        detail: {
+          file: region?.file ?? "",
+          occurrence: region?.occurrence ?? 0,
+          index,
+          operation,
+          key,
+          slot,
+        },
+      }),
+    )
   }
 
   update(slot: Slot, html: string): ScanResult {
@@ -558,7 +603,11 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    return this.scan(added)
+    const result = this.scan(added)
+
+    this.#announce(slot, "value", slot.index)
+
+    return result
   }
 
   updateRow(slot: Slot, key: string, html: string): ScanResult | null {
@@ -574,7 +623,11 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    return this.scan(added)
+    const result = this.scan(added)
+
+    this.#announce(slot, "markup", slot.index, key)
+
+    return result
   }
 
   setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
@@ -585,6 +638,8 @@ export class SlotIndex {
     } else {
       slot.anchor.element.setAttribute(name, value)
     }
+
+    this.#announce(slot, "attribute", slot.index)
 
     return true
   }
