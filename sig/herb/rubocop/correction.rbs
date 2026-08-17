@@ -1,0 +1,20 @@
+# Generated from lib/herb/rubocop/correction.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Correction < Data
+      attr_reader begin_pos(): untyped
+
+      attr_reader end_pos(): untyped
+
+      attr_reader replacement(): untyped
+
+      def self.new: (untyped begin_pos, untyped end_pos, untyped replacement) -> instance
+                  | (begin_pos: untyped, end_pos: untyped, replacement: untyped) -> instance
+
+      def self.members: () -> [ :begin_pos, :end_pos, :replacement ]
+
+      def members: () -> [ :begin_pos, :end_pos, :replacement ]
+    end
+  end
+end

@@ -1,0 +1,29 @@
+# Generated from lib/herb/rubocop/configuration.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Configuration
+      attr_reader project_root: untyped
+
+      def initialize: (untyped herb_configuration) -> untyped
+
+      def enabled?: () -> untyped
+
+      def only: () -> untyped
+
+      def rubocop_config: () -> untyped
+
+      def config_file_path: () -> untyped
+
+      def load: () -> untyped
+
+      private
+
+      def load_config: () -> untyped
+
+      def config_from_hash: (untyped config) -> untyped
+
+      def require_rubocop!: () -> untyped
+    end
+  end
+end

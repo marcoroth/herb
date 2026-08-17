@@ -1,0 +1,17 @@
+# Generated from lib/herb/rubocop/result.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Result
+      attr_reader filename: untyped
+
+      attr_reader offenses: untyped
+
+      def initialize: (filename: untyped, offenses: untyped) -> untyped
+
+      def success?: () -> untyped
+
+      def to_hash: () -> untyped
+    end
+  end
+end

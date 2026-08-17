@@ -1,0 +1,31 @@
+# Generated from lib/herb/rubocop/inspector.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Inspector
+      def initialize: (untyped configuration, untyped rubocop_config) -> untyped
+
+      def inspect: (untyped fragment, untyped filename, untyped source_mapper, autocorrect: untyped, autocorrect_all: untyped) -> untyped
+
+      private
+
+      def processed_source: (untyped fragment, untyped filename) -> untyped
+
+      def build_team: (untyped autocorrect, untyped autocorrect_all) -> untyped
+
+      def cop_classes: () -> untyped
+
+      def offenses_from: (untyped report, untyped fragment, untyped source_mapper) -> untyped
+
+      def offense_from: (untyped rubocop_offense, untyped fragment, untyped source_mapper) -> untyped
+
+      def offense_message: (untyped offense) -> untyped
+
+      def corrections_from: (untyped report, untyped fragment) -> untyped
+
+      def corrections_for_offense: (untyped offense, untyped fragment) -> untyped
+
+      def correction_from: (untyped fragment, untyped range, untyped replacement) -> untyped
+    end
+  end
+end

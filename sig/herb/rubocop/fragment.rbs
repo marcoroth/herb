@@ -1,0 +1,20 @@
+# Generated from lib/herb/rubocop/fragment.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Fragment < Data
+      attr_reader content(): untyped
+
+      attr_reader range(): untyped
+
+      attr_reader column(): untyped
+
+      def self.new: (untyped content, untyped range, untyped column) -> instance
+                  | (content: untyped, range: untyped, column: untyped) -> instance
+
+      def self.members: () -> [ :content, :range, :column ]
+
+      def members: () -> [ :content, :range, :column ]
+    end
+  end
+end
