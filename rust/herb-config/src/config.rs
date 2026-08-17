@@ -84,6 +84,7 @@ impl Config {
       files: self.config.files.clone(),
       engine: None,
       linter: self.config.linter.clone(),
+      rubocop: self.config.rubocop.clone(),
       formatter: self.config.formatter.clone(),
     }
   }
