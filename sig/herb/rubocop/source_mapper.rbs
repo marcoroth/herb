@@ -1,0 +1,19 @@
+# Generated from lib/herb/rubocop/source_mapper.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class SourceMapper
+      def initialize: (untyped source, untyped project_root) -> untyped
+
+      def location: (untyped begin_pos, untyped end_pos) -> untyped
+
+      def canonical_filename: (untyped filename) -> untyped
+
+      private
+
+      def within_project?: (untyped filename) -> untyped
+
+      def position: (untyped offset) -> untyped
+    end
+  end
+end

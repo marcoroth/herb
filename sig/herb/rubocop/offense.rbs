@@ -1,0 +1,21 @@
+# Generated from lib/herb/rubocop/offense.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Offense
+      attr_reader cop_name: untyped
+
+      attr_reader message: untyped
+
+      attr_reader severity: untyped
+
+      attr_reader location: untyped
+
+      attr_reader correctable: untyped
+
+      def initialize: (cop_name: untyped, message: untyped, severity: untyped, location: untyped, ?correctable: untyped) -> untyped
+
+      def to_hash: () -> untyped
+    end
+  end
+end

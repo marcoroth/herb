@@ -124,6 +124,28 @@ pub type EngineConfig = serde_yaml::Mapping;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct RubocopConfig {
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub enabled: Option<bool>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub include: Option<Vec<String>>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub exclude: Option<Vec<String>>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub only: Option<Vec<String>>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub config_file_path: Option<String>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub rubocop_config: Option<serde_yaml::Mapping>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct HerbConfigOptions {
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub files: Option<FilesConfig>,
@@ -133,6 +155,9 @@ pub struct HerbConfigOptions {
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub linter: Option<LinterConfig>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub rubocop: Option<RubocopConfig>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub formatter: Option<FormatterConfig>,
@@ -158,6 +183,9 @@ pub struct HerbConfig {
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub linter: Option<LinterConfig>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub rubocop: Option<RubocopConfig>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub formatter: Option<FormatterConfig>,

@@ -1,0 +1,8 @@
+# Generated from lib/herb/rubocop.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Error < StandardError
+    end
+  end
+end

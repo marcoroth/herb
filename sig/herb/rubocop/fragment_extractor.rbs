@@ -1,0 +1,19 @@
+# Generated from lib/herb/rubocop/fragment_extractor.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class FragmentExtractor
+      SKIPPED_OPENINGS: untyped
+
+      def self.extract: (untyped source) -> untyped
+
+      def initialize: (untyped source) -> untyped
+
+      def extract: () -> untyped
+
+      private
+
+      def fragment_for: (untyped token, untyped opening) -> untyped
+    end
+  end
+end

@@ -118,6 +118,10 @@ module Herb
       @config["formatter"] || {}
     end
 
+    def rubocop
+      @config["rubocop"] || {}
+    end
+
     def include_patterns_for(tool)
       tool_config = send(tool.to_s)
       file_include_patterns + (tool_config["include"] || [])
@@ -144,6 +148,14 @@ module Herb
       exclude_patterns_for(:formatter)
     end
 
+    def rubocop_include_patterns
+      include_patterns_for(:rubocop)
+    end
+
+    def rubocop_exclude_patterns
+      exclude_patterns_for(:rubocop)
+    end
+
     def enabled_for_path?(path, tool)
       tool_config = send(tool.to_s)
       tool_include = tool_config["include"] || []
@@ -164,6 +176,10 @@ module Herb
 
     def formatter_enabled_for_path?(path)
       enabled_for_path?(path, :formatter)
+    end
+
+    def rubocop_enabled_for_path?(path)
+      enabled_for_path?(path, :rubocop)
     end
 
     def path_excluded?(path, patterns)
@@ -211,6 +227,10 @@ module Herb
 
     def find_files_for_formatter(search_path = nil)
       find_files_for_tool(:formatter, search_path)
+    end
+
+    def find_files_for_rubocop(search_path = nil)
+      find_files_for_tool(:rubocop, search_path)
     end
 
     class << self

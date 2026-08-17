@@ -61,6 +61,8 @@ module Herb
 
     def formatter: () -> untyped
 
+    def rubocop: () -> untyped
+
     def include_patterns_for: (untyped tool) -> untyped
 
     def exclude_patterns_for: (untyped tool) -> untyped
@@ -73,11 +75,17 @@ module Herb
 
     def formatter_exclude_patterns: () -> untyped
 
+    def rubocop_include_patterns: () -> untyped
+
+    def rubocop_exclude_patterns: () -> untyped
+
     def enabled_for_path?: (untyped path, untyped tool) -> untyped
 
     def linter_enabled_for_path?: (untyped path) -> untyped
 
     def formatter_enabled_for_path?: (untyped path) -> untyped
+
+    def rubocop_enabled_for_path?: (untyped path) -> untyped
 
     def path_excluded?: (untyped path, untyped patterns) -> untyped
 
@@ -90,6 +98,8 @@ module Herb
     def find_files_for_linter: (?untyped search_path) -> untyped
 
     def find_files_for_formatter: (?untyped search_path) -> untyped
+
+    def find_files_for_rubocop: (?untyped search_path) -> untyped
 
     def self.load: (?untyped project_path) -> untyped
 

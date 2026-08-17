@@ -29,6 +29,7 @@ require_relative "herb/diagnostic"
 
 require_relative "herb/project"
 require_relative "herb/configuration"
+require_relative "herb/rubocop"
 
 require_relative "herb/version"
 

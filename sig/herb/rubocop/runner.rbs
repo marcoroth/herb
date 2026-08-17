@@ -1,0 +1,23 @@
+# Generated from lib/herb/rubocop/runner.rb with RBS::Inline
+
+module Herb
+  module Rubocop
+    class Runner
+      MAX_AUTOCORRECT_PASSES: ::Integer
+
+      def initialize: (untyped configuration) -> untyped
+
+      def inspect_file: (untyped filename, ?autocorrect: untyped, ?autocorrect_all: untyped) -> untyped
+
+      def inspect_source: (untyped source, untyped filename, ?autocorrect: untyped, ?autocorrect_all: untyped) -> untyped
+
+      private
+
+      def autocorrect_source: (untyped source, untyped filename, untyped autocorrect_all) -> untyped
+
+      def apply_corrections: (untyped source, untyped corrections) -> untyped
+
+      def ensure_non_overlapping!: (untyped corrections) -> untyped
+    end
+  end
+end

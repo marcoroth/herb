@@ -11,7 +11,7 @@ require_relative "engine/slot_visitor"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout, :autocorrect, :autocorrect_all
 
   def initialize(args)
     @args = args
@@ -112,6 +112,7 @@ class Herb::CLI
         bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
         bundle exec herb actionview context [file]  Show what a partial is rendered inside of.
 
+        bundle exec herb rubocop [paths]            Run RuboCop against Ruby in ERB templates.
         bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
         bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
         bundle exec herb highlight [file]           Syntax highlight templates (delegates to @herb-tools/highlighter)
@@ -216,6 +217,8 @@ class Herb::CLI
                   run_actionview_command
                 when "diff"
                   diff_files
+                when "rubocop"
+                  run_rubocop_command
                 when "lint"
                   run_node_tool("herb-lint", "@herb-tools/linter")
                 when "format"
@@ -339,6 +342,15 @@ class Herb::CLI
 
       parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
         self.optimize = true
+      end
+
+      parser.on("-a", "--autocorrect", "Autocorrect safe RuboCop offenses (for rubocop command)") do
+        self.autocorrect = true
+      end
+
+      parser.on("-A", "--autocorrect-all", "Autocorrect safe and unsafe RuboCop offenses (for rubocop command)") do
+        self.autocorrect = true
+        self.autocorrect_all = true
       end
 
       parser.on("--slots", "Emit slot markers for reactive rendering (for compile/render commands) (default: false)") do
@@ -979,6 +991,89 @@ class Herb::CLI
     warn ""
 
     exec(*command_parts)
+  end
+
+  def run_rubocop_command
+    paths = @args.drop(1)
+    start_path = paths.find { |path| File.exist?(path) } || Dir.pwd
+    configuration = Herb::Configuration.new(start_path)
+    rubocop_configuration = Herb::Rubocop::Configuration.new(configuration)
+
+    unless rubocop_configuration.enabled?
+      warn "RuboCop is disabled. Enable it in .herb.yml:"
+      warn ""
+      warn "  rubocop:"
+      warn "    enabled: true"
+      exit(1)
+    end
+
+    files = rubocop_files(configuration, paths)
+    runner = Herb::Rubocop::Runner.new(rubocop_configuration)
+    results = files.map do |filename|
+      runner.inspect_file(
+        filename,
+        autocorrect: autocorrect || false,
+        autocorrect_all: autocorrect_all || false
+      )
+    end
+
+    if json
+      puts({ files: results.map(&:to_hash) }.to_json)
+    elsif !silent
+      results.each do |rubocop_result|
+        rubocop_result.offenses.each do |offense|
+          location = offense.location.start
+          puts "#{rubocop_result.filename}:#{location.line}:#{location.column + 1}: " \
+               "#{rubocop_severity_letter(offense.severity)}: #{offense.cop_name}: #{offense.message}"
+        end
+      end
+
+      offense_count = results.sum { |rubocop_result| rubocop_result.offenses.length }
+      file_label = files.one? ? "file" : "files"
+      offense_label = offense_count == 1 ? "offense" : "offenses"
+      puts
+      puts "#{files.length} #{file_label} inspected, #{offense_count} #{offense_label} detected"
+    end
+
+    exit(results.all?(&:success?) ? 0 : 1)
+  rescue LoadError => e
+    warn e.message
+    exit(2)
+  rescue Herb::Rubocop::Error, Errno::ENOENT, Errno::EACCES => e
+    warn "Error: #{e.message}"
+    exit(2)
+  end
+
+  def rubocop_files(configuration, paths)
+    paths = [configuration.project_root || Dir.pwd] if paths.empty?
+
+    files = paths.flat_map do |path|
+      expanded_path = File.expand_path(path)
+
+      if File.file?(expanded_path)
+        [expanded_path]
+      elsif File.directory?(expanded_path)
+        configuration.find_files_for_rubocop(expanded_path)
+      else
+        Dir.glob(expanded_path).select { |match| File.file?(match) }
+      end
+    end
+
+    project_root = File.expand_path(configuration.project_root || Dir.pwd)
+    files.uniq.select do |file|
+      relative_path = file.delete_prefix("#{project_root}/")
+      configuration.rubocop_enabled_for_path?(relative_path)
+    end.sort
+  end
+
+  def rubocop_severity_letter(severity)
+    {
+      refactor: "R",
+      convention: "C",
+      warning: "W",
+      error: "E",
+      fatal: "F",
+    }.fetch(severity.to_sym, "C")
   end
 
   def print_error_summary(errors)

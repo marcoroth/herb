@@ -202,6 +202,18 @@ mod config_from_object {
   }
 
   #[test]
+  fn preserves_rubocop_settings() {
+    let config = config_from_yaml(
+      "rubocop:\n  enabled: true\n  only:\n    - Layout/SpaceInsideHashLiteralBraces\n  rubocop_config:\n    AllCops:\n      DisabledByDefault: true\n",
+    );
+    let rubocop = config.config.rubocop.unwrap();
+
+    assert_eq!(rubocop.enabled, Some(true));
+    assert_eq!(rubocop.only, Some(vec!["Layout/SpaceInsideHashLiteralBraces".to_string()]));
+    assert!(rubocop.rubocop_config.is_some());
+  }
+
+  #[test]
   fn creates_config_with_indent_style_tab() {
     let config = config_from_yaml("formatter:\n  indentStyle: tab\n");
 
