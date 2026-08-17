@@ -200,11 +200,13 @@ export function createLanguageService(herb) {
 export function registerLanguageService(herb) {
   const service = createLanguageService(herb)
 
+  let framework = undefined
+
   const disposables = [
     languages.registerHoverProvider(LANGUAGE_ID, {
       provideHover(model, position) {
         return safely(() => {
-          const hover = service.hover.getHover(documentFor(model), lspPosition(position))
+          const hover = service.hover.getHover(documentFor(model), lspPosition(position), { framework })
 
           if (!hover) return null
 
@@ -261,7 +263,7 @@ export function registerLanguageService(herb) {
 
       provideDocumentSymbols(model) {
         return safely(() =>
-          service.symbols.getDocumentSymbols(documentFor(model)).map(documentSymbolFor), [])
+          service.symbols.getDocumentSymbols(documentFor(model), { framework }).map(documentSymbolFor), [])
       },
     }),
 
@@ -273,6 +275,7 @@ export function registerLanguageService(herb) {
           const actions = service.rewriteCodeActions.getCodeActions(
             documentFor(model),
             lspRange(range),
+            { framework },
           )
 
           return {
@@ -299,8 +302,9 @@ export function registerLanguageService(herb) {
   return {
     providers: service,
 
-    setFramework(framework) {
-      service.completion.setFramework(framework)
+    setFramework(value) {
+      framework = value
+      service.completion.setConfig({ framework: value })
     },
 
     dispose() {

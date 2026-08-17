@@ -1,4 +1,5 @@
 import { isPartialPath } from "@herb-tools/analysis"
+
 import { join } from "./posix_path"
 import { uriFromPath } from "./uri"
 
@@ -6,6 +7,7 @@ import { Location, Position, Range } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { DefinitionProvider } from "./definition_provider"
 
+import type { ProjectConfig } from "./types.js"
 import type { PartialReference } from "@herb-tools/language-service"
 import type { ProjectIndex } from "@herb-tools/analysis/node"
 
@@ -21,6 +23,7 @@ export class ReferencesProvider {
   private index: ProjectIndex
   private documents: OpenDocuments
   private read: (filePath: string) => string | null
+  private config?: ProjectConfig
 
   constructor(
     definitionProvider: DefinitionProvider,
@@ -34,7 +37,13 @@ export class ReferencesProvider {
     this.read = read
   }
 
+  setConfig(config?: ProjectConfig) {
+    this.config = config
+  }
+
   getReferences(document: TextDocument, position: Position, includeDeclaration: boolean): Location[] {
+    if (this.config?.framework !== "actionview") return []
+
     const callers = this.index.callers
     if (!callers) return []
 
