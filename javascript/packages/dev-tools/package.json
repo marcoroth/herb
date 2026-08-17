@@ -11,7 +11,7 @@
     "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/dev-tools"
   },
-  "main": "./dist/herb-dev-tools.umd.js",
+  "main": "./dist/herb-dev-tools.esm.js",
   "module": "./dist/herb-dev-tools.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
@@ -25,8 +25,7 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/herb-dev-tools.esm.js",
-      "default": "./dist/herb-dev-tools.umd.js"
+      "default": "./dist/herb-dev-tools.esm.js"
     }
   },
   "dependencies": {
