@@ -30,6 +30,15 @@ export const LinterConfigSchema = z.object({
   rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),
 }).strict().optional()
 
+export const RubocopConfigSchema = z.object({
+  enabled: z.boolean().optional().describe("Whether Ruby in ERB templates is inspected with RuboCop"),
+  include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults"),
+  exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from RuboCop inspection"),
+  only: z.array(z.string()).optional().describe("Only run the named RuboCop cops"),
+  config_file_path: z.string().optional().describe("Path to a RuboCop configuration file"),
+  rubocop_config: z.record(z.string(), z.unknown()).optional().describe("Inline RuboCop configuration"),
+}).strict().optional()
+
 const RewriterConfigSchema = z.object({
   pre: z.array(z.string()).optional().describe("Pre-format rewriters to run (in order) before formatting the AST"),
   post: z.array(z.string()).optional().describe("Post-format rewriters to run (in order) after formatting the document"),
@@ -76,6 +85,7 @@ export const HerbConfigSchema = z.object({
   files: FilesConfigSchema.describe("Top-level file configuration"),
   engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,
+  rubocop: RubocopConfigSchema,
   formatter: FormatterConfigSchema,
 }).strict()
 

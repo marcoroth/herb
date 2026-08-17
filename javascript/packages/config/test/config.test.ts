@@ -130,6 +130,24 @@ describe("@herb-tools/config", () => {
       expect(config.config.linter?.rules?.["html-tag-name-lowercase"]?.enabled).toBe(false)
     })
 
+    test("preserves Ruby-only RuboCop settings", () => {
+      const configOptions: HerbConfigOptions = {
+        rubocop: {
+          enabled: true,
+          only: ["GitHub/DoNotAllowLogin"],
+          rubocop_config: {
+            require: ["./test/rubocop/cop/github"],
+            AllCops: { DisabledByDefault: true }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.config.rubocop).toEqual(configOptions.rubocop)
+      expect(config.options.rubocop).toEqual(configOptions.rubocop)
+    })
+
     test("creates config with formatter settings", () => {
       const configOptions: HerbConfigOptions = {
         formatter: {

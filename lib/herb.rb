@@ -37,6 +37,7 @@ require_relative "herb/warnings"
 require_relative "herb/cli"
 require_relative "herb/project"
 require_relative "herb/configuration"
+require_relative "herb/rubocop"
 
 require_relative "herb/version"
 

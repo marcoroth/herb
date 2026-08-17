@@ -74,6 +74,17 @@ linter:
   #     exclude:
   #       - 'app/views/admin/**/*'
 
+# Run the project's RuboCop cops against Ruby inside ERB templates.
+# This is a Ruby-only integration invoked with `bundle exec herb rubocop`.
+rubocop:
+  enabled: false
+  # only:
+  #   - GitHub/DoNotAllowLogin
+  # config_file_path: .rubocop.yml
+  # rubocop_config:
+  #   AllCops:
+  #     DisabledByDefault: true
+
 formatter:
   enabled: false
   indentWidth: 2

@@ -125,6 +125,12 @@ Lint your HTML+ERB templates:
 npx @herb-tools/linter
 ```
 
+Run your project's RuboCop cops against Ruby inside ERB templates:
+
+```sh
+bundle exec herb rubocop
+```
+
 Format your HTML+ERB templates:
 
 ```sh

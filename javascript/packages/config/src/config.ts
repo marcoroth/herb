@@ -59,6 +59,15 @@ export type LinterConfig = {
   rules?: Record<string, RuleConfig>
 }
 
+export type RubocopConfig = {
+  enabled?: boolean
+  include?: string[]
+  exclude?: string[]
+  only?: string[]
+  config_file_path?: string
+  rubocop_config?: Record<string, unknown>
+}
+
 export type FormatterConfig = {
   enabled?: boolean
   include?: string[]
@@ -85,6 +94,7 @@ export type HerbConfigOptions = {
   files?: FilesConfig
   engine?: EngineConfig
   linter?: LinterConfig
+  rubocop?: RubocopConfig
   formatter?: FormatterConfig
 }
 
@@ -142,6 +152,7 @@ export class Config {
     return {
       files: this.config.files,
       linter: this.config.linter,
+      rubocop: this.config.rubocop,
       formatter: this.config.formatter
     }
   }

@@ -33,3 +33,6 @@ formatter:
   enabled: false
   indentWidth: 2
   maxLineLength: 80
+
+rubocop:
+  enabled: false

@@ -167,6 +167,48 @@ class ConfigurationTest < Minitest::Spec
     assert_includes config.formatter_exclude_patterns, "generated/**/*"
   end
 
+  test "loads ERB Lint-compatible RuboCop configuration" do
+    write_config(<<~YAML)
+      rubocop:
+        enabled: true
+        only:
+          - GitHub/DoNotAllowLogin
+        config_file_path: config/rubocop-erb.yml
+        rubocop_config:
+          require:
+            - "./test/rubocop/cop/github"
+          AllCops:
+            DisabledByDefault: true
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.rubocop["enabled"]
+    assert_equal ["GitHub/DoNotAllowLogin"], config.rubocop["only"]
+    assert_equal "config/rubocop-erb.yml", config.rubocop["config_file_path"]
+    assert_equal ["./test/rubocop/cop/github"], config.rubocop.dig("rubocop_config", "require")
+  end
+
+  test "rubocop patterns combine files and RuboCop patterns" do
+    write_config(<<~YAML)
+      files:
+        exclude:
+          - "public/**/*"
+      rubocop:
+        include:
+          - "**/*.xml.erb"
+        exclude:
+          - "legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_includes config.rubocop_include_patterns, "**/*.html.erb"
+    assert_includes config.rubocop_include_patterns, "**/*.xml.erb"
+    assert_includes config.rubocop_exclude_patterns, "public/**/*"
+    assert_includes config.rubocop_exclude_patterns, "legacy/**/*"
+  end
+
   test "linter_enabled_for_path? returns true for normal paths" do
     config = Herb::Configuration.load(@temp_dir)
 

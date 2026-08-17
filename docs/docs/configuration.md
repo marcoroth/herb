@@ -143,6 +143,27 @@ And excludes these patterns by default:
 
 Both `include` and `exclude` patterns are **additive**, they add to the defaults rather than replacing them.
 
+## RuboCop Configuration
+
+Herb runs RuboCop against Ruby inside ERB templates through the `herb rubocop` command.
+
+```yaml [.herb.yml]
+rubocop:
+  enabled: true
+  rubocop_config:
+    AllCops:
+      DisabledByDefault: true
+```
+
+The `rubocop_config` value accepts the same inline RuboCop configuration as ERB Lint. Herb also supports ERB Lint's `only` and `config_file_path` options. Relative paths are resolved from the project root.
+
+```bash
+bundle exec herb rubocop
+bundle exec herb rubocop app/views
+bundle exec herb rubocop --autocorrect
+bundle exec herb rubocop --autocorrect-all
+```
+
 ### Linter Options
 
 - **`enabled`**: `true` or `false` - Enable or disable the linter globally
