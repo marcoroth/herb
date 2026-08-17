@@ -172,6 +172,18 @@ module Engine
       assert_compiled_snapshot(template)
     end
 
+    test "handles XML processing instructions" do
+      template = '<?xml-stylesheet type="text/xsl" href="feed.xsl"?>'
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "handles XML processing instructions with ERB" do
+      template = '<?xml-stylesheet type="text/xsl" href="<%= path %>"?>'
+
+      assert_compiled_snapshot(template)
+    end
+
     test "handles empty escaped erb tag" do
       assert_evaluated_snapshot("<%%>", {}, enforce_erubi_equality: true)
     end

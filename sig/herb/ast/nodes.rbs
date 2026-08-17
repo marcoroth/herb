@@ -749,6 +749,48 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_xml_processing_instruction_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  target: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  tag_closing: Herb::Token?,
+    # | }
+    class XMLProcessingInstructionNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader target: Herb::Token?
+
+      attr_reader children: Array[Herb::AST::Node]
+
+      attr_reader tag_closing: Herb::Token?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+
+      # : (?tag_opening: Herb::Token?, ?target: Herb::Token?, ?children: Array[Herb::AST::Node], ?tag_closing: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> XMLProcessingInstructionNode
+      def self.build: (?tag_opening: Herb::Token?, ?target: Herb::Token?, ?children: Array[Herb::AST::Node], ?tag_closing: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> XMLProcessingInstructionNode
+
+      # : () -> serialized_xml_processing_instruction_node
+      def to_hash: () -> serialized_xml_processing_instruction_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     # : type serialized_cdata_node = {
     # |  tag_opening: Herb::Token?,
     # |  children: Array[Herb::AST::Node],
