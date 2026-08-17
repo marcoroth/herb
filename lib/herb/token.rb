@@ -11,7 +11,7 @@ module Herb
   class Token
     include Colors
 
-    attr_reader :value #: String
+    attr_accessor :value #: String
     attr_reader :range #: Range
     attr_reader :location #: Location
     attr_reader :type #: String

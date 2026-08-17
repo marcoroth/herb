@@ -194,7 +194,7 @@ module Herb
           rewritten = splice(rewritten, start_offset, end_offset, text)
         end
 
-        token.value.replace(rewritten)
+        token.value = rewritten
       end
 
       #: (Symbol, Prism::Location, Herb::Range) -> [Symbol, Integer, Integer]?
