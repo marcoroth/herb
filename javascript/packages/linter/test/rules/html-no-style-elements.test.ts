@@ -11,7 +11,7 @@ describe("html-no-style-elements", () => {
     test("fails with empty style tag", () => {
       expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
 
-      assertOffenses("<style></style>")
+      assertOffenses("<style></style>", { framework: "ruby" })
     })
 
     test("fails with style tag", () => {
@@ -21,7 +21,7 @@ describe("html-no-style-elements", () => {
         <style>
           .danger { color: red; }
         </style>
-      `)
+      `, { framework: "ruby" })
     })
 
     test("fails with style tag containing ERB comment", () => {
@@ -31,7 +31,7 @@ describe("html-no-style-elements", () => {
         <style>
           <%# preflight %>
         </style>
-      `)
+      `, { framework: "ruby" })
     })
 
     test("suggests an external stylesheet for a non-Action View framework", () => {

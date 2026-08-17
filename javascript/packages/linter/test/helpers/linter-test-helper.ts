@@ -80,7 +80,8 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride
   const declaredFrameworks = ruleInstance.defaultConfig?.frameworks
-  const defaultFramework = declaredFrameworks?.[0]
+  const wantsActionViewHelpers = ruleParserOptions.action_view_helpers === true
+  const defaultFramework = declaredFrameworks?.[0] ?? (wantsActionViewHelpers ? "actionview" : undefined)
 
   const resolveContext = (options?: any | TestOptions) => {
     const context = options?.context ?? options

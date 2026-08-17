@@ -84,3 +84,24 @@ describe("framework-scoped rules", () => {
     expect(lint({ framework: "ruby" }, config)).toHaveLength(1)
   })
 })
+
+describe("Action View helper parsing", () => {
+  beforeAll(async () => {
+    await Herb.load()
+  })
+
+  const TAG_PROXY = `<tr id="<%= tag.ubid %>"></tr>`
+
+  function rulesFor(context?: Record<string, any>) {
+    return new Linter(Herb).lint(TAG_PROXY, context).offenses.map(offense => offense.rule)
+  }
+
+  test("does not read `tag.*` as an element outside Action View", () => {
+    expect(rulesFor({ framework: "ruby" })).toEqual([])
+    expect(rulesFor({ framework: "sinatra" })).toEqual([])
+  })
+
+  test("reads `tag.*` as an element for an Action View project", () => {
+    expect(rulesFor({ framework: "actionview" })).toContain("html-no-unknown-tag")
+  })
+})
