@@ -1,14 +1,15 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 import type { MockInstance } from "vitest"
 
-import { HerbOverlay } from "../src/herb-overlay"
-import { initHerbDevTools } from "../src/index"
+import { HerbOverlay } from "../src/overlay/overlay"
+import { HerbDevTools } from "../src/index"
 
 const DOCUMENT_EVENTS = ["click", "turbo:load", "turbo:render", "turbo:visit"]
 
 let addSpy: MockInstance
 let removeSpy: MockInstance
 let overlays: HerbOverlay[]
+let devTools: HerbDevTools[]
 
 function callCountFor(spy: MockInstance, type: string) {
   return spy.mock.calls.filter(call => call[0] === type).length
@@ -28,6 +29,14 @@ function createOverlay() {
   return overlay
 }
 
+function startDevTools(options = {}) {
+  const instance = HerbDevTools.start({ devServer: false, ...options })!
+
+  devTools.push(instance)
+
+  return instance
+}
+
 function navigate() {
   document.querySelector(".herb-floating-menu")?.remove()
   document.dispatchEvent(new Event("turbo:load"))
@@ -38,13 +47,14 @@ beforeEach(() => {
   document.body.innerHTML = ""
 
   overlays = []
+  devTools = []
   addSpy = vi.spyOn(document, "addEventListener")
   removeSpy = vi.spyOn(document, "removeEventListener")
 })
 
 afterEach(() => {
+  devTools.forEach(instance => instance.stop())
   overlays.forEach(overlay => overlay.destroy())
-  ;((window as any).HerbDevTools?._overlay as HerbOverlay | undefined)?.destroy()
 
   vi.restoreAllMocks()
 
@@ -150,27 +160,107 @@ describe("HerbOverlay", () => {
   })
 })
 
-describe("initHerbDevTools", () => {
-  test("leaves exactly one live overlay when called repeatedly", () => {
-    overlays.push(initHerbDevTools())
+describe("HerbDevTools", () => {
+  test("does nothing until start() is called", () => {
+    expect(HerbDevTools.instance).toBeNull()
 
-    const afterFirstInit = netDocumentListeners()
+    expect(netDocumentListeners()).toEqual({
+      "click": 0,
+      "turbo:load": 0,
+      "turbo:render": 0,
+      "turbo:visit": 0,
+    })
+
+    expect(document.querySelector(".herb-floating-menu")).toBeNull()
+    expect(document.querySelector("style[data-herb-dev-tools]")).toBeNull()
+    expect(window.HerbDevTools).toBeUndefined()
+  })
+
+  test("assigns the instance to the global on start()", () => {
+    const instance = startDevTools()
+
+    expect(window.HerbDevTools).toBe(instance)
+  })
+
+  test("injects the stylesheet on start() and removes it on stop()", () => {
+    const instance = startDevTools()
+
+    expect(document.querySelector("style[data-herb-dev-tools]")).not.toBeNull()
+
+    instance.stop()
+
+    expect(document.querySelector("style[data-herb-dev-tools]")).toBeNull()
+  })
+
+  test("ignores repeated start() calls", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const instance = startDevTools()
+
+    const afterFirstStart = netDocumentListeners()
 
     for (let index = 0; index < 5; index++) {
-      overlays.push(initHerbDevTools())
+      expect(HerbDevTools.start({ devServer: false })).toBeNull()
     }
 
-    expect(netDocumentListeners()).toEqual(afterFirstInit)
+    expect(HerbDevTools.instance).toBe(instance)
+    expect(netDocumentListeners()).toEqual(afterFirstStart)
+    expect(document.querySelectorAll(".herb-floating-menu")).toHaveLength(1)
+    expect(document.querySelectorAll("style[data-herb-dev-tools]")).toHaveLength(1)
+    expect(warn).toHaveBeenCalledTimes(5)
+  })
+
+  test("stop() tears down the overlay and releases the global", () => {
+    const instance = startDevTools()
+
+    instance.stop()
+
+    expect(netDocumentListeners()).toEqual({
+      "click": 0,
+      "turbo:load": 0,
+      "turbo:render": 0,
+      "turbo:visit": 0,
+    })
+
+    expect(document.querySelector(".herb-floating-menu")).toBeNull()
+    expect(window.HerbDevTools).toBeUndefined()
+    expect(HerbDevTools.instance).toBeNull()
+  })
+
+  test("can be started again after stop()", () => {
+    startDevTools().stop()
+
+    const restarted = startDevTools()
+
+    expect(HerbDevTools.instance).toBe(restarted)
     expect(document.querySelectorAll(".herb-floating-menu")).toHaveLength(1)
   })
 
-  test("exposes the most recent overlay on the global", () => {
-    initHerbDevTools()
+  test("a stale instance cannot stop the running one", () => {
+    const stale = startDevTools()
 
-    const overlay = initHerbDevTools()
+    stale.stop()
 
-    overlays.push(overlay)
+    const running = startDevTools()
 
-    expect((window as any).HerbDevTools._overlay).toBe(overlay)
+    stale.stop()
+
+    expect(HerbDevTools.instance).toBe(running)
+    expect(document.querySelectorAll(".herb-floating-menu")).toHaveLength(1)
+  })
+
+  test("skips the overlay when it is disabled", () => {
+    const instance = startDevTools({ overlay: false })
+
+    expect(document.querySelector(".herb-floating-menu")).toBeNull()
+    expect(instance.overlay).toBeNull()
+    expect(window.HerbDevTools).toBe(instance)
+  })
+
+  test("exposes the overlay and the client on the global", () => {
+    const instance = startDevTools()
+
+    expect(window.HerbDevTools?.overlay).toBe(instance.overlay)
+    expect(window.HerbDevTools?.overlay).toBeInstanceOf(HerbOverlay)
+    expect(window.HerbDevTools?.client).toBeNull()
   })
 })
