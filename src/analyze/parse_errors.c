@@ -68,7 +68,7 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, h
       allocator
     );
 
-    hb_array_append(erb_node->errors, parse_error);
+    hb_array_append_lazy(&erb_node->errors, parse_error, allocator);
   }
 
   pm_node_destroy(&parser, root);
@@ -116,7 +116,7 @@ void herb_analyze_parse_errors(
 
     RUBY_PARSE_ERROR_T* parse_error =
       ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser, allocator);
-    hb_array_append(document->base.errors, parse_error);
+    hb_array_append_lazy(&document->base.errors, parse_error, allocator);
   }
 
   pm_node_destroy(&parser, root);

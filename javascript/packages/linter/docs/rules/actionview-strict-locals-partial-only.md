@@ -32,6 +32,14 @@ A `<%# locals: (...) %>` comment in a non-partial file (such as a view or layout
 </div>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [Action View - Strict Locals](https://guides.rubyonrails.org/action_view_overview.html#strict-locals)

@@ -90,6 +90,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   }
 }
 
+// TODO: This rule is already scoped to Action View, so it belongs under the `actionview-` prefix. The rename waits on a rule-alias mechanism, since it breaks every `.herb.yml` and `herb:disable` comment naming it.
 export class ERBPreferImageTagHelperRule extends ParserRule {
   static ruleName = "erb-prefer-image-tag-helper"
   static introducedIn = this.version("0.4.3")
@@ -97,7 +98,8 @@ export class ERBPreferImageTagHelperRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

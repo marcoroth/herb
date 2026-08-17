@@ -17,6 +17,9 @@ module Herb
       # : (String, Location?, String) -> void
       def initialize: (String, Location?, String) -> void
 
+      # : (template: String, ?origin: String) -> Herb::Diagnostic
+      def to_diagnostic: (template: String, ?origin: String) -> Herb::Diagnostic
+
       # : () -> serialized_error
       def to_hash: () -> serialized_error
 
@@ -422,6 +425,26 @@ module Herb
 
       # : () -> serialized_unclosed_erb_tag_error
       def to_hash: () -> serialized_unclosed_erb_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class MalformedERBClosingTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token?
+
+      attr_reader closing_tag: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_malformed_erb_closing_tag_error
+      def to_hash: () -> serialized_malformed_erb_closing_tag_error
 
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String

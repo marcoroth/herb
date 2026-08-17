@@ -1,4 +1,5 @@
 #include "include/errors.h"
+#include "include/parser/parser.h"
 #include "include/location/location.h"
 #include "include/location/position.h"
 #include "include/ast/pretty_print.h"
@@ -90,8 +91,12 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   return <%= error.human %>;
 }
 
-void append_<%= error.human %>(<%= (arguments + ["hb_array_T* errors"]).join(", ") %>) {
-  hb_array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+void append_<%= error.human %>(<%= (arguments + ["hb_array_T** errors", "const struct PARSER_OPTIONS_STRUCT* options"]).join(", ") %>) {
+  if (parser_options_errors_exceeded(options)) { return; }
+
+  hb_array_append_lazy(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>), allocator);
+
+  parser_options_increment_error_count(options);
 }
 <%- end -%>
 

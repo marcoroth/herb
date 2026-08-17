@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0035_a nested dot notation tag becomes a nested partial path"
+input: "{source: \"<Admin.Users.Card />\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render "admin/users/card").to_s;
+_buf.to_s

@@ -7,11 +7,13 @@ module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode
     attr_reader :options #: Herb::ParserOptions
+    attr_reader :error_count #: Integer?
 
-    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
-    def initialize(value, source, warnings, errors, options)
+    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions, ?Integer?) -> void
+    def initialize(value, source, warnings, errors, options, error_count = nil)
       @value = value
       @options = options
+      @error_count = error_count
       super(source, warnings, errors)
 
       if options.prism_nodes || options.prism_nodes_deep
@@ -24,6 +26,8 @@ module Herb
 
     #: () -> Array[Herb::Errors::Error]
     def errors
+      return super if error_count&.zero?
+
       super + value.recursive_errors
     end
 

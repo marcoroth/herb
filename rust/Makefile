@@ -27,6 +27,7 @@ cli: build
 
 test: build
 	NO_COLOR=1 cargo +stable test --verbose --workspace
+	NO_COLOR=1 cargo +stable test --verbose --workspace --all-features
 
 format:
 	cargo +nightly fmt --all

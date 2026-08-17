@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("HTML comment", () => {
@@ -200,6 +204,88 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
+  test("nested multi-line HTML comment keeps its indentation", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <div>
+          <div>
+            <!--
+              <p>deep</p>
+            -->
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("nested multi-line HTML comment preserves relative indentation", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <!--
+          <ul>
+            <li>one</li>
+          </ul>
+        -->
+      </div>
+    `)
+  })
+
+  test("nested multi-line HTML comment gets re-indented", () => {
+    const source = dedent`
+      <div>
+        <!--
+      Comment
+          on
+      multiple
+      lines
+        -->
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <!--
+          Comment
+              on
+          multiple
+          lines
+        -->
+      </div>
+    `)
+  })
+
+  test("nested HTML comment with content on the opening line", () => {
+    const source = dedent`
+      <div>
+        <!-- Status: <%= status %> |
+             Updated: <%= updated_at %> -->
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <!--
+          Status: <%= status %> |
+          Updated: <%= updated_at %>
+        -->
+      </div>
+    `)
+  })
+
+  test("HTML comment with content on the opening line aligns the closing tag", () => {
+    const source = dedent`
+      <!-- line1
+      line2 -->
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <!--
+        line1
+        line2
+      -->
+    `)
+  })
+
   describe("Mixed content with comments", () => {
     test("div with comment and another element stays multiline", () => {
       const source = dedent`
@@ -267,7 +353,6 @@ describe("@herb-tools/formatter", () => {
 
           <!-- Body comment -->
           <p>Content</p>
-
           <!-- Footer comment -->
         </div>
       `)
@@ -326,7 +411,7 @@ describe("@herb-tools/formatter", () => {
       `)
     })
 
-    test("span with only a comment becomes inline (acceptable for inline elements)", () => {
+    test("span with only a comment keeps the author's newlines", () => {
       const source = dedent`
         <span>
           <!-- Even in inline elements -->
@@ -334,7 +419,87 @@ describe("@herb-tools/formatter", () => {
       `
       const result = formatter.format(source)
       expect(result).toEqual(dedent`
+        <span>
+          <!-- Even in inline elements -->
+        </span>
+      `)
+    })
+
+    test("span with a comment glued to the open tag still collapses", () => {
+      const source = dedent`
+        <span><!-- Even in inline elements -->
+        </span>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
         <span><!-- Even in inline elements --></span>
+      `)
+    })
+  })
+
+  describe("Trailing comments", () => {
+    test("does not insert a blank line before a closing comment", () => {
+      expectFormattedToMatch(dedent`
+        <!-- opening container -->
+        <div class="container">
+          blah blah blah
+        </div>
+        <!-- closing container -->
+      `)
+    })
+
+    test("does not insert a blank line before a closing ERB comment", () => {
+      expectFormattedToMatch(dedent`
+        <div class="container">
+          blah blah blah
+        </div>
+        <%# closing container %>
+      `)
+    })
+
+    test("does not insert a blank line before a closing comment inside an element", () => {
+      expectFormattedToMatch(dedent`
+        <section>
+          <div class="container">
+            blah blah blah
+          </div>
+          <!-- closing container -->
+        </section>
+      `)
+    })
+
+    test("keeps a blank line the author put before a closing comment", () => {
+      expectFormattedToMatch(dedent`
+        <div class="container">
+          blah blah blah
+        </div>
+
+        <!-- closing container -->
+      `)
+    })
+
+    test("still spaces a comment that introduces a following element", () => {
+      const source = dedent`
+        <div class="a">
+          one
+        </div>
+        <!-- section two -->
+        <div class="b">
+          two
+        </div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        <div class="a">
+          one
+        </div>
+
+        <!-- section two -->
+        <div class="b">
+          two
+        </div>
       `)
     })
   })

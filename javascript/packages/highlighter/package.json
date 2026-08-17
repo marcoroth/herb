@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/highlighter",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "Syntax highlighter and diagnostic renderer for HTML+ERB templates.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -20,23 +20,36 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "browser": {
+        "types": "./dist/types/browser.d.ts",
+        "default": "./dist/browser.js"
+      },
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "default": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
-    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build": "tsc -b && rolldown -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "dependencies": {
-    "@herb-tools/core": "0.10.2",
-    "@herb-tools/node-wasm": "0.10.2"
+    "@herb-tools/core": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.3",
+    "ansi_up": "^6.0.6"
   },
   "files": [
     "package.json",

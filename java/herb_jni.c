@@ -44,6 +44,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       }
     }
 
+    jmethodID getTrackLocations =
+        (*env)->GetMethodID(env, optionsClass, "isTrackLocations", "()Z");
+
+    if (getTrackLocations != NULL) {
+      jboolean trackLocations = (*env)->CallBooleanMethod(env, options, getTrackLocations);
+      parser_options.track_locations = (trackLocations == JNI_TRUE);
+    }
+
     jmethodID getAnalyze =
         (*env)->GetMethodID(env, optionsClass, "isAnalyze", "()Z");
 
@@ -93,6 +101,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     if (getStrictLocals != NULL) {
       jboolean strictLocals = (*env)->CallBooleanMethod(env, options, getStrictLocals);
       parser_options.strict_locals = (strictLocals == JNI_TRUE);
+    }
+
+    jmethodID getIterationNodes =
+        (*env)->GetMethodID(env, optionsClass, "isIterationNodes", "()Z");
+
+    if (getIterationNodes != NULL) {
+      jboolean iterationNodes = (*env)->CallBooleanMethod(env, options, getIterationNodes);
+      parser_options.iteration_nodes = (iterationNodes == JNI_TRUE);
     }
 
     jmethodID getPrismNodes =
@@ -165,9 +181,12 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     return NULL;
   }
 
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
+
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, &allocator);
 
-  jobject result = CreateParseResult(env, ast, source);
+  jobject result = CreateParseResult(env, ast, source, &parser_options);
 
   ast_node_free((AST_NODE_T*) ast, &allocator);
   hb_allocator_destroy(&allocator);
@@ -280,9 +299,25 @@ Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source) {
+Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source, jobject options) {
   const char* old_src = (*env)->GetStringUTFChars(env, old_source, 0);
   const char* new_src = (*env)->GetStringUTFChars(env, new_source, 0);
+
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+
+  if (options != NULL) {
+    jclass optionsClass = (*env)->GetObjectClass(env, options);
+    jmethodID getDetectWhitespaceChanges =
+        (*env)->GetMethodID(env, optionsClass, "isTrackWhitespaceChanges", "()Z");
+
+    if (getDetectWhitespaceChanges != NULL) {
+      jboolean trackWhitespaceChanges = (*env)->CallBooleanMethod(env, options, getDetectWhitespaceChanges);
+
+      if (trackWhitespaceChanges == JNI_TRUE) {
+        diff_options.track_whitespace_changes = true;
+      }
+    }
+  }
 
   hb_allocator_T old_allocator;
   hb_allocator_T new_allocator;
@@ -332,7 +367,7 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
     return NULL;
   }
 
-  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_options, &diff_allocator);
 
   jclass diff_result_class = (*env)->FindClass(env, "org/herb/DiffResult");
   jclass diff_operation_class = (*env)->FindClass(env, "org/herb/DiffOperation");
@@ -360,8 +395,8 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
 
     (*env)->ReleaseIntArrayElements(env, path_array, path_elements, 0);
 
-    jobject old_node = operation->old_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->old_node) : NULL;
-    jobject new_node = operation->new_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->new_node) : NULL;
+    jobject old_node = operation->old_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS) : NULL;
+    jobject new_node = operation->new_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS) : NULL;
 
     jobject diff_operation = (*env)->NewObject(
       env, diff_operation_class, diff_operation_constructor,

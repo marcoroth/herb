@@ -4,6 +4,14 @@ import * as path from "path"
 import { Config } from "@herb-tools/config"
 import { HerbConfigProvider } from "./config-provider"
 
+function warnAboutAliasedTargets(targets: string[]) {
+  if (targets.length === 0) return
+
+  vscode.window.showWarningMessage(
+    `This also changed every key aliasing ${targets.join(', ')} in your Herb configuration.`
+  )
+}
+
 /**
  * Commands to modify .herb.yml settings directly through VS Code
  */
@@ -17,6 +25,7 @@ export class HerbSettingsCommands {
       vscode.commands.registerCommand('herb.toggleLinter', () => this.toggleLinter()),
       vscode.commands.registerCommand('herb.toggleFormatter', () => this.toggleFormatter()),
       vscode.commands.registerCommand('herb.setIndentWidth', () => this.setIndentWidth()),
+      vscode.commands.registerCommand('herb.setIndentStyle', () => this.setIndentStyle()),
       vscode.commands.registerCommand('herb.setMaxLineLength', () => this.setMaxLineLength()),
     )
   }
@@ -78,13 +87,15 @@ export class HerbSettingsCommands {
     if (choice === undefined) {return}
 
     try {
-      await Config.mutateConfigFile(configPath, {
+      const aliasedTargets = await Config.mutateConfigFile(configPath, {
         linter: { enabled: choice.value }
       })
 
       vscode.window.showInformationMessage(
         `Herb Linter ${choice.value ? 'enabled' : 'disabled'} in Herb configuration`
       )
+
+      warnAboutAliasedTargets(aliasedTargets)
 
       vscode.commands.executeCommand('herb.refreshLanguageServer')
       if (this.configProvider) {
@@ -124,13 +135,15 @@ export class HerbSettingsCommands {
     if (choice === undefined) {return}
 
     try {
-      await Config.mutateConfigFile(configPath, {
+      const aliasedTargets = await Config.mutateConfigFile(configPath, {
         formatter: { enabled: choice.value }
       })
 
       vscode.window.showInformationMessage(
         `Herb Formatter ${choice.value ? 'enabled' : 'disabled'} in Herb configuration`
       )
+
+      warnAboutAliasedTargets(aliasedTargets)
 
       vscode.commands.executeCommand('herb.refreshLanguageServer')
       if (this.configProvider) {
@@ -169,13 +182,62 @@ export class HerbSettingsCommands {
     const indentWidth = parseInt(input)
 
     try {
-      await Config.mutateConfigFile(configPath, {
+      const aliasedTargets = await Config.mutateConfigFile(configPath, {
         formatter: { indentWidth }
       })
 
       vscode.window.showInformationMessage(
         `Herb formatter indent width set to ${indentWidth} spaces`
       )
+
+      warnAboutAliasedTargets(aliasedTargets)
+
+      vscode.commands.executeCommand('herb.refreshLanguageServer')
+
+      if (this.configProvider) {
+        await this.configProvider.refresh()
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to update Herb config: ${error}`)
+    }
+  }
+
+  private async setIndentStyle() {
+    const config = await this.getOrCreateConfig()
+    if (!config) {return}
+
+    const configPath = await this.getConfigPath()
+    if (!configPath) {return}
+
+    const currentType = config.config.formatter?.indentStyle ?? "space"
+
+    const choice = await vscode.window.showQuickPick([
+      {
+        label: 'Spaces',
+        description: currentType === 'space' ? '(current)' : '',
+        value: 'space' as const
+      },
+      {
+        label: 'Tabs',
+        description: currentType === 'tab' ? '(current)' : '',
+        value: 'tab' as const
+      }
+    ], {
+      placeHolder: 'Select indentation character for Herb formatter'
+    })
+
+    if (choice === undefined) {return}
+
+    try {
+      const aliasedTargets = await Config.mutateConfigFile(configPath, {
+        formatter: { indentStyle: choice.value }
+      })
+
+      vscode.window.showInformationMessage(
+        `Herb formatter indent style set to ${choice.value}`
+      )
+
+      warnAboutAliasedTargets(aliasedTargets)
 
       vscode.commands.executeCommand('herb.refreshLanguageServer')
 
@@ -213,13 +275,15 @@ export class HerbSettingsCommands {
     const maxLineLength = parseInt(input)
 
     try {
-      await Config.mutateConfigFile(configPath, {
+      const aliasedTargets = await Config.mutateConfigFile(configPath, {
         formatter: { maxLineLength }
       })
 
       vscode.window.showInformationMessage(
         `Herb formatter max line length set to ${maxLineLength} characters`
       )
+
+      warnAboutAliasedTargets(aliasedTargets)
 
       vscode.commands.executeCommand('herb.refreshLanguageServer')
 

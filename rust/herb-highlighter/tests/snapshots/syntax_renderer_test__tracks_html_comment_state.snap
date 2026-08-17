@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/syntax_renderer_test.rs
+expression: "comment_renderer.highlight(\"<!-- comment -->\")"
+---
+[38;2;92;99;112m<!--[0m[38;2;92;99;112m commen[0m[38;2;92;99;112mt -[0m->

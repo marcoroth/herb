@@ -23,9 +23,19 @@ module Herb
       new(line, column)
     end
 
+    #: () -> Position
+    def self.zero
+      new(0, 0)
+    end
+
     #: () -> serialized_position
     def to_hash
       { line: line, column: column } #: Herb::serialized_position
+    end
+
+    #: () -> serialized_position
+    def to_one_based
+      { line: [line, 1].max, column: column + 1 } #: Herb::serialized_position
     end
 
     #: (?untyped) -> String

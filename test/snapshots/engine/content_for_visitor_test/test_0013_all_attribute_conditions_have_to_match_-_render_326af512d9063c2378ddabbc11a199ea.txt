@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0013_all attribute conditions have to match - render"
+input: "{source: \"<main id=\\\"content\\\" data-role=\\\"page\\\">One</main><main id=\\\"content\\\">Two</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"content\", \"data-role\" => \"page\"} content=\"<p>Appended</p>\">]}}"
+---
+<main id="content" data-role="page">One<p>Appended</p></main><main id="content">Two</main>

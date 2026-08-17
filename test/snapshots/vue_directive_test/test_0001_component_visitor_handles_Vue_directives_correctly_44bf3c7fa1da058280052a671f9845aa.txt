@@ -1,0 +1,6 @@
+---
+source: "VueDirectiveTest#test_0001_component visitor handles Vue directives correctly"
+input: "{source: \"<MyComponent name=\\\"hello\\\" :count=\\\"@count\\\" :user=\\\"current_user\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "hello", count: @count, user: current_user)).to_s;
+_buf.to_s

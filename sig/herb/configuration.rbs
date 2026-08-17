@@ -10,9 +10,11 @@ module Herb
 
     VALID_TEMPLATE_ENGINES: Array[String]
 
-    CONFIG_FILENAMES: untyped
+    CONFIG_FILENAMES: Array[String]
 
-    PROJECT_INDICATORS: untyped
+    MISNAMED_CONFIG_FILENAMES: Array[String]
+
+    PROJECT_INDICATORS: Array[String]
 
     DEFAULTS_PATH: untyped
 
@@ -25,6 +27,8 @@ module Herb
     attr_reader config_path: untyped
 
     attr_reader project_root: untyped
+
+    attr_reader misnamed_config_paths: untyped
 
     def initialize: (?untyped project_path) -> untyped
 
@@ -98,6 +102,10 @@ module Herb
     private
 
     def find_config_file: () -> untyped
+
+    def find_misnamed_config_paths: () -> untyped
+
+    def warn_about_misnamed_config_files: () -> untyped
 
     def project_root?: (untyped path) -> untyped
 

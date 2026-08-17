@@ -1,0 +1,10 @@
+---
+source: "Engine::InstrumentationVisitorTest::what it emits#test_0004_opens and closes around a statement"
+input: "{source: \"<% total = 1 %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
+ ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0); begin
+total = 1
+ensure; ::Herb::Engine::Report::Session.leave; end 
+ ensure; ::Herb::Engine::Report::Session.leave_render; end 
+_buf.to_s

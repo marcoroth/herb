@@ -4,15 +4,17 @@ module Herb
   class Engine
     module Validators
       class RenderValidator < Validator
-        def initialize: (?enabled: untyped, ?filename: untyped, ?project_path: untyped) -> untyped
-
         def visit_erb_render_node: (untyped node) -> untyped
 
         private
 
         def validate_partial_exists: (untyped node) -> untyped
 
-        def find_view_root: () -> untyped
+        def view_root: () -> untyped
+
+        def filename: () -> untyped
+
+        def project_path: () -> untyped
 
         def relative_to_project: (untyped path) -> untyped
       end

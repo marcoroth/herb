@@ -27,6 +27,12 @@ This rule encourages partials to be explicit about what they expect. Partials th
 
 ## Configuration
 
+Strict locals is an Action View feature, so this rule only applies to Action View projects and needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 This rule is disabled by default. To enable it, add to your [`.herb.yml`](/configuration):
 
 ```yaml [.herb.yml]
@@ -38,15 +44,23 @@ linter:
 
 ## Autofix
 
-This rule supports **unsafe autofix** via `--fix-unsafely`. When applied, it inserts an empty strict locals declaration at the top of the file:
+This rule supports **unsafe autofix** via `--fix-unsafely`. It inserts a declaration at the top of the file, inferred from two sources: the locals every `render` call site passes to the partial, and the locals the partial's own body reads.
 
 ```erb
-<%# locals: () %>
+<%# locals: (footer: nil, title: nil, **) %>
 ```
+
+Every inferred local is optional, and `**` is added whenever the set of callers cannot be trusted to be complete. Both follow from how Action View behaves.
+
+A declaration binds only the locals it names. `<%# locals: (**) %>` accepts any local but binds none of them, so a body reading `title` raises `NameError` even when the caller passed it. Naming the locals is the point; `**` only covers locals a caller passes that the body never reads.
+
+Locals are optional rather than required because a required local raises when a caller omits it, and the caller set is never guaranteed complete. Renders from controllers and mailers live in Ruby files the linter does not read, computed partial names cannot be resolved, and files excluded from linting are not scanned. `**` is added whenever any of those apply, or when the partial reads `local_assigns`.
+
+Locals read by the body but passed by no visible caller are still named, since that is the only way to recover a local passed from a caller Herb cannot see. Herb cannot always tell such a local from an application-defined helper, because both parse the same way inside a template, so review what the fix produces.
 
 This is considered "unsafe" because:
 - It changes the partial's behavior (strict mode will now error on undeclared locals)
-- You may need to manually add the actual local variables your partial uses
+- The inferred signature is only as complete as the call sites Herb can see
 
 To apply the autofix:
 
@@ -54,7 +68,7 @@ To apply the autofix:
 herb-lint --fix-unsafely _partial.html.erb
 ```
 
-After the autofix runs, review the file and update the locals declaration to include any variables your partial expects.
+After the autofix runs, review the declaration, tighten locals from `nil` defaults to required where every caller passes them, and remove `**` once you are confident the list is complete.
 
 ## Examples
 

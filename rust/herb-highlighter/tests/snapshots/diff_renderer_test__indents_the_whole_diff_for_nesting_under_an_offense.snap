@@ -1,0 +1,9 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+        -   2 │   <span class='card'>
+        +     │   <span class="card">
+              │ ⋮
+        -   5 │   <img src="a.png">
+        +     │   <img src="a.png" alt="">

@@ -1,6 +1,3 @@
-import { readFileSync } from "fs"
-import { resolve } from "path"
-
 import type { Color } from "./color.js"
 
 import onedarkTheme from "../themes/onedark.json" with { type: "json" }
@@ -10,7 +7,7 @@ import tokyoNightTheme from "../themes/tokyo-night.json" with { type: "json" }
 import simpleTheme from "../themes/simple.json" with { type: "json" }
 
 export type Theme = "onedark" | "github-light" | "dracula" | "tokyo-night" | "simple"
-export type ThemeInput = Theme | string
+export type ThemeInput = Theme | string | ColorScheme
 
 export const THEME_NAMES = ["onedark", "github-light", "dracula", "tokyo-night", "simple"] as const
 export const DEFAULT_THEME: Theme = "onedark"
@@ -60,9 +57,34 @@ export interface ColorScheme {
   TOKEN_CHARACTER: Color
   TOKEN_ERROR: Color
   TOKEN_EOF: Color | null
+
+  // Surface the output is meant to be read on
+  BACKGROUND?: Color
+  FOREGROUND?: Color
+
+  // What a terminal renders the sixteen base ANSI colors as
+  ANSI_PALETTE?: Record<string, Color>
+
+  // Diff backgrounds
+  DIFF_REMOVED_LINE_BACKGROUND?: Color
+  DIFF_ADDED_LINE_BACKGROUND?: Color
+  DIFF_REMOVED_BACKGROUND?: Color
+  DIFF_ADDED_BACKGROUND?: Color
 }
 
-// Built-in themes are now bundled directly
+/**
+ * Keys a custom theme may leave out. Everything else in `ColorScheme` is required.
+ */
+export const OPTIONAL_COLOR_SCHEME_KEYS: readonly (keyof ColorScheme)[] = [
+  "BACKGROUND",
+  "FOREGROUND",
+  "ANSI_PALETTE",
+  "DIFF_REMOVED_LINE_BACKGROUND",
+  "DIFF_ADDED_LINE_BACKGROUND",
+  "DIFF_REMOVED_BACKGROUND",
+  "DIFF_ADDED_BACKGROUND",
+]
+
 export const themes: Record<Theme, ColorScheme> = {
   onedark: onedarkTheme as ColorScheme,
   "github-light": githubLightTheme as ColorScheme,
@@ -87,39 +109,32 @@ export function getDefaultTheme(): Theme {
   return DEFAULT_THEME
 }
 
-export function loadCustomTheme(themePath: string): ColorScheme {
-  try {
-    const absolutePath = resolve(themePath)
-    const themeContent = readFileSync(absolutePath, 'utf-8')
-    const customTheme = JSON.parse(themeContent) as ColorScheme
+export function assertColorScheme(customTheme: ColorScheme): ColorScheme {
+  const requiredKeys = (Object.keys(themes.onedark) as (keyof ColorScheme)[])
+    .filter(key => !OPTIONAL_COLOR_SCHEME_KEYS.includes(key))
+  const customKeys = Object.keys(customTheme) as (keyof ColorScheme)[]
 
-    const requiredKeys = Object.keys(themes.onedark) as (keyof ColorScheme)[]
-    const customKeys = Object.keys(customTheme) as (keyof ColorScheme)[]
+  const missingKeys = requiredKeys.filter(key => !customKeys.includes(key))
 
-    const missingKeys = requiredKeys.filter(key => !customKeys.includes(key))
-
-    if (missingKeys.length > 0) {
-      throw new Error(`Custom theme is missing required properties: ${missingKeys.join(', ')}`)
-    }
-
-    return customTheme
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to load custom theme from ${themePath}: ${error.message}`)
-    }
-
-    throw new Error(`Failed to load custom theme from ${themePath}`)
+  if (missingKeys.length > 0) {
+    throw new Error(`Custom theme is missing required properties: ${missingKeys.join(', ')}`)
   }
+
+  return customTheme
 }
 
 export function resolveTheme(themeInput: ThemeInput): ColorScheme {
+  if (typeof themeInput !== "string") {
+    return themeInput
+  }
+
   if (isValidTheme(themeInput)) {
     return getTheme(themeInput)
   }
 
-  return loadCustomTheme(themeInput)
+  throw new Error(`Unknown theme "${themeInput}". The built-in themes are ${THEME_NAMES.join(", ")}. To use a theme file, load it with loadCustomTheme() from @herb-tools/highlighter and pass the result.`)
 }
 
 export function isCustomTheme(themeInput: ThemeInput): boolean {
-  return !isValidTheme(themeInput)
+  return typeof themeInput !== "string" || !isValidTheme(themeInput)
 }

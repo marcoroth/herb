@@ -63,6 +63,9 @@ module Herb
 
       # : () -> Array[Herb::Errors::Error]
       def recursive_errors: () -> Array[Herb::Errors::Error]
+
+      # : (Array[Herb::Errors::Error] accumulator) -> void
+      def collect_errors: (Array[Herb::Errors::Error] accumulator) -> void
     end
   end
 end

@@ -1,0 +1,12 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+  <div id="gems">
+-   <span class='card'>
++   <span class="card">
+      <%= render partial: "gem_card" %>
+    </span>
+-   <img src="a.png">
++   <img src="a.png" alt="">
+  </div>

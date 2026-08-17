@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 
-import { colors, ANSI_ESCAPE, ANSI_REGEX, ANSI_REGEX_START, ANSI_REGEX_CAPTURE, colorize } from "../src/color.js"
-import { applyDimToStyledText } from "../src/util.js"
+import { colors, colorize } from "../src/color.js"
+import { ANSI_ESCAPE, ANSI_REGEX, ANSI_REGEX_START, ANSI_REGEX_CAPTURE } from "../src/ansi.js"
+import { dimStyledText } from "../src/util.js"
 import { TextFormatter } from "../src/text-formatter.js"
 import { LineWrapper } from "../src/line-wrapper.js"
 import { stripAnsiColors } from "./util.js"
@@ -74,7 +75,7 @@ describe("stripAnsiColors", () => {
   })
 })
 
-describe("applyDimToStyledText", () => {
+describe("dimStyledText", () => {
   let originalNoColor: string | undefined
 
   beforeEach(() => {
@@ -92,14 +93,14 @@ describe("applyDimToStyledText", () => {
 
   it("adds dim modifier to color codes and wraps text segments with dim", () => {
     const input = `${colors.red}hello${colors.reset}`
-    const result = applyDimToStyledText(input)
+    const result = dimStyledText(input)
 
     expect(result).toBe("\x1b[2;31m\x1b[2mhello\x1b[22m\x1b[0m")
   })
 
   it("wraps plain text segments with dim", () => {
     const input = `${colors.red}colored${colors.reset} plain`
-    const result = applyDimToStyledText(input)
+    const result = dimStyledText(input)
 
     expect(result).toBe("\x1b[2;31m\x1b[2mcolored\x1b[22m\x1b[0m\x1b[2m plain\x1b[22m")
   })
@@ -107,29 +108,29 @@ describe("applyDimToStyledText", () => {
   it("returns text unchanged when NO_COLOR is set", () => {
     process.env.NO_COLOR = "1"
     const input = `${colors.red}hello${colors.reset}`
-    expect(applyDimToStyledText(input)).toBe(input)
+    expect(dimStyledText(input)).toBe(input)
   })
 
   it("handles text with no ANSI codes", () => {
-    const result = applyDimToStyledText("plain text")
+    const result = dimStyledText("plain text")
 
     expect(result).toBe("\x1b[2mplain text\x1b[22m")
   })
 
   it("handles empty string", () => {
-    expect(applyDimToStyledText("")).toBe("")
+    expect(dimStyledText("")).toBe("")
   })
 
   it("handles multiple color codes", () => {
     const input = `${colors.red}red${colors.reset}${colors.blue}blue${colors.reset}`
-    const result = applyDimToStyledText(input)
+    const result = dimStyledText(input)
 
     expect(result).toBe("\x1b[2;31m\x1b[2mred\x1b[22m\x1b[0m\x1b[2;34m\x1b[2mblue\x1b[22m\x1b[0m")
   })
 })
 
 describe("TextFormatter", () => {
-  describe("applyDimToStyledText", () => {
+  describe("dimStyledText", () => {
     let originalNoColor: string | undefined
 
     beforeEach(() => {
@@ -147,14 +148,14 @@ describe("TextFormatter", () => {
 
     it("converts color codes to dim versions", () => {
       const input = `${colors.red}hello${colors.reset}`
-      const result = TextFormatter.applyDimToStyledText(input)
+      const result = TextFormatter.dimAnsiCodes(input)
 
       expect(result).toBe("\x1b[2;31mhello\x1b[0m")
     })
 
     it("preserves reset codes", () => {
       const input = `${colors.red}hello${colors.reset}`
-      const result = TextFormatter.applyDimToStyledText(input)
+      const result = TextFormatter.dimAnsiCodes(input)
 
       expect(result).toBe("\x1b[2;31mhello\x1b[0m")
     })
@@ -162,11 +163,11 @@ describe("TextFormatter", () => {
     it("returns text unchanged when NO_COLOR is set", () => {
       process.env.NO_COLOR = "1"
       const input = `${colors.red}hello${colors.reset}`
-      expect(TextFormatter.applyDimToStyledText(input)).toBe(input)
+      expect(TextFormatter.dimAnsiCodes(input)).toBe(input)
     })
 
     it("handles text with no ANSI codes", () => {
-      expect(TextFormatter.applyDimToStyledText("plain text")).toBe("plain text")
+      expect(TextFormatter.dimAnsiCodes("plain text")).toBe("plain text")
     })
   })
 

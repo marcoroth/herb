@@ -1,5 +1,6 @@
 #include "../include/analyze/helpers.h"
 #include "../include/errors.h"
+#include "../include/parser/parser.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_string.h"
 
@@ -9,7 +10,7 @@
   end
 -%>
 
-void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator) {
+void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator, const parser_options_T* options) {
   switch (node->type) {
     <%- nodes_with_end_node.each do |node| -%>
     <%- keyword = node.name.gsub(/^ERB/, '').gsub(/Match|Node$/, '').downcase -%>
@@ -18,7 +19,7 @@ void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allo
 
       if (<%= node.human %>->end_node == NULL) {
         <%= "append_#{errors.find { |e| e.name == 'MissingERBEndTagError' }.human}" %>(
-        <%- if keyword == "block" -%>
+        <%- if keyword.end_with?("block") -%>
           hb_string("ERB block"),
         <%- else -%>
           hb_string("`<" "%" " <%= keyword %> " "%" ">`"),
@@ -26,7 +27,8 @@ void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allo
           <%= node.human %>->tag_opening->location.start,
           <%= node.human %>->tag_closing->location.end,
           allocator,
-          node->errors
+          &((AST_NODE_T*) node)->errors,
+          options
         );
       }
 

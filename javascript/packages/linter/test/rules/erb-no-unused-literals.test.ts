@@ -389,6 +389,85 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("passes for literal `when` conditions", () => {
+    expectNoOffenses(dedent`
+      <% case value
+         when "a"
+           result = 1
+         when 1, :two, /three/
+           result = 2
+         end %>
+    `)
+  })
+
+  test("passes for literal `in` patterns", () => {
+    expectNoOffenses(dedent`
+      <% case value
+         in "a"
+           result = 1
+         in [1, 2]
+           result = 2
+         in { key: "value" }
+           result = 3
+         end %>
+    `)
+  })
+
+  test("passes for a literal `case` subject", () => {
+    expectNoOffenses(dedent`
+      <% case "a"
+         when value
+           result = 1
+         end %>
+    `)
+  })
+
+  test("passes for a literal `case`/`in` subject", () => {
+    expectNoOffenses(dedent`
+      <% case "a"
+         in String
+           result = 1
+         end %>
+    `)
+  })
+
+  test("fails for unused literals in a `when` body", () => {
+    expectError('Avoid using silent ERB tags for literals. `"dead"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% case value
+         when "a"
+           "dead"
+           result = 1
+         end %>
+    `)
+  })
+
+  test("fails for unused literals in an `in` body", () => {
+    expectError('Avoid using silent ERB tags for literals. `"dead"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% case value
+         in String
+           "dead"
+           result = 1
+         end %>
+    `)
+  })
+
+  test("fails for unused literals in a `case` `else` branch", () => {
+    expectError('Avoid using silent ERB tags for literals. `"dead"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% case value
+         when "a"
+           result = 1
+         else
+           "dead"
+         end %>
+    `)
+  })
+
   test("fails for literals in conditional statements", () => {
     expectError('Avoid using silent ERB tags for literals. `"success"` is evaluated but never used or output.')
 
@@ -418,6 +497,18 @@ describe("ERBNoUnusedLiteralsRule", () => {
     expectError('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
+      <% "hello".freeze %>
+    `)
+  })
+
+  test("reports the correct message and location when preceded by a multi-byte character", () => {
+    expectError(
+      'Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.',
+      [2, 3],
+    )
+
+    assertOffenses(dedent`
+      <%# é %>
       <% "hello".freeze %>
     `)
   })

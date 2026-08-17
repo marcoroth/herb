@@ -3,12 +3,14 @@ import { DiagnosticRenderer } from "./diagnostic-renderer.js"
 import { FileRenderer } from "./file-renderer.js"
 import { InitializationManager } from "./initialization-manager.js"
 import { InlineDiagnosticRenderer } from "./inline-diagnostic-renderer.js"
-import { FileReader } from "./file-reader.js"
+import { DiffRenderer } from "./diff-renderer.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
 import type { ThemeInput } from "./themes.js"
+import type { DiffRenderOptions } from "./diff-renderer.js"
+import type { DiffHunk } from "./diff-computer.js"
 
 export interface HighlightOptions {
   diagnostics?: Diagnostic[]
@@ -43,16 +45,16 @@ export class Highlighter {
   private fileRenderer: FileRenderer
   private initManager: InitializationManager
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
-  private fileReader: FileReader
+  private diffRenderer: DiffRenderer
 
-  constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
+  constructor(theme: ThemeInput, herb: HerbBackend) {
     const colors = resolveTheme(theme)
     this.syntaxRenderer = new SyntaxRenderer(colors, herb)
     this.diagnosticRenderer = new DiagnosticRenderer(this.syntaxRenderer)
     this.fileRenderer = new FileRenderer(this.syntaxRenderer)
     this.initManager = new InitializationManager(herb)
     this.inlineDiagnosticRenderer = new InlineDiagnosticRenderer(this.syntaxRenderer)
-    this.fileReader = new FileReader(this)
+    this.diffRenderer = new DiffRenderer(this.syntaxRenderer, colors)
   }
 
   /**
@@ -151,7 +153,6 @@ export class Highlighter {
         path,
         content,
         diagnostics,
-        contextLines,
         showLineNumbers,
         wrapLines,
         maxWidth,
@@ -206,67 +207,40 @@ export class Highlighter {
     )
   }
 
-  // File reading wrapper functions
-
   /**
-   * Convenience method that reads a file and highlights it
-   * @param filePath - Path to the file to read and highlight
-   * @param options - Configuration options
-   * @returns The highlighted file content with optional diagnostics
-   */
-  highlightFileFromPath(
-    filePath: string,
-    options: HighlightOptions = {},
-  ): string {
-    return this.fileReader.highlightFromPath(filePath, options)
-  }
-
-  /**
-   * Convenience method that reads a file and renders a diagnostic
-   * @param filePath - Path to the file to read
-   * @param diagnostic - The diagnostic message to render
+   * Render the change between two sources as a syntax-highlighted diff
+   * @param path - File path shown above the diff (display only)
+   * @param original - The source before the change
+   * @param modified - The source after the change
    * @param options - Optional configuration
-   * @returns The highlighted diagnostic output
+   * @returns The rendered diff, or an empty string when the sources are identical
    */
-  highlightDiagnosticFromPath(
-    filePath: string,
-    diagnostic: Diagnostic,
-    options: HighlightDiagnosticOptions = {},
+  highlightDiff(
+    path: string,
+    original: string,
+    modified: string,
+    options: DiffRenderOptions = {},
   ): string {
-    return this.fileReader.highlightDiagnosticFromPath(filePath, diagnostic, options)
+    this.requireInitialized()
+
+    return this.diffRenderer.render(path, original, modified, options)
   }
-}
 
-/**
- * Convenience function to highlight content with a specific theme
- * @param content - The content to highlight
- * @param theme - The theme to use (defaults to "onedark")
- * @param options - Additional highlighting options
- * @returns The highlighted content
- */
-export async function highlightContent(
-  content: string,
-  theme: ThemeInput = "onedark",
-  options: HighlightOptions = {}
-): Promise<string> {
-  const highlighter = new Highlighter(theme)
-  await highlighter.initialize()
-  return highlighter.highlight("", content, options)
-}
+  /**
+   * Render pre-computed diff hunks
+   * @param path - File path shown above the diff (display only)
+   * @param hunks - The hunks to render
+   * @param options - Optional configuration
+   * @returns The rendered diff, or an empty string when there are no hunks
+   */
+  highlightDiffHunks(
+    path: string,
+    hunks: DiffHunk[],
+    options: DiffRenderOptions = {},
+  ): string {
+    this.requireInitialized()
 
-/**
- * Convenience function to highlight a file with a specific theme
- * @param filePath - The path to the file to highlight
- * @param theme - The theme to use (defaults to "onedark")
- * @param options - Additional highlighting options
- * @returns The highlighted file content
- */
-export async function highlightFile(
-  filePath: string,
-  theme: ThemeInput = "onedark",
-  options: HighlightOptions = {}
-): Promise<string> {
-  const highlighter = new Highlighter(theme)
-  await highlighter.initialize()
-  return highlighter.highlightFileFromPath(filePath, options)
+    return this.diffRenderer.renderFromHunks(path, hunks, options)
+  }
+
 }

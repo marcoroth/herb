@@ -371,18 +371,23 @@ describe("TextFlowAnalyzer", () => {
       expect(erbUnits[2].unit.content).toBe("<%= c %>")
     })
 
-    test("two adjacent inline elements produce two separate inline units", () => {
+    test("two adjacent inline elements fuse into one atomic unit", () => {
       const analyzer = new TextFlowAnalyzer(createMockAnalyzerDelegate())
       const body = parseBody("<p><em>a</em><strong>b</strong></p>")
       const units = analyzer.buildContentUnits(body)
 
-      expect(units).toHaveLength(2)
+      expect(units).toHaveLength(1)
       expect(units[0].unit).toEqual({
-        type: "inline", content: "<em>a</em>", isAtomic: true, breaksFlow: false,
+        type: "inline", content: "<em>a</em><strong>b</strong>", isAtomic: true, breaksFlow: false,
       })
-      expect(units[1].unit).toEqual({
-        type: "inline", content: "<strong>b</strong>", isAtomic: true, breaksFlow: false,
-      })
+    })
+
+    test("two inline elements separated by whitespace stay separate units", () => {
+      const analyzer = new TextFlowAnalyzer(createMockAnalyzerDelegate())
+      const body = parseBody("<p><em>a</em> <strong>b</strong></p>")
+      const units = analyzer.buildContentUnits(body)
+
+      expect(units.filter(({ unit }) => unit.type === "inline")).toHaveLength(2)
     })
   })
 

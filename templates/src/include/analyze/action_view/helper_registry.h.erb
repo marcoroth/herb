@@ -34,10 +34,25 @@ typedef struct {
 
 typedef struct {
   const char* name;
+  const char* type;
+  bool optional;
+  const char* description;
+} helper_block_argument_T;
+
+typedef struct {
+  const char* name;
   const char* source;
   const char* source_with_block;
   const char* wrapper;
 } helper_implicit_attribute_T;
+
+typedef struct {
+  const char* source;
+  int arg_position;
+  bool skip_if_hash;
+  bool to_s_suffix_when_single;
+  int positional_arguments_with_block;
+} helper_content_T;
 
 typedef enum {
   HELPER_OUTPUT_HTML,
@@ -56,6 +71,7 @@ typedef struct {
   const char* gem;
   helper_output_T output;
   const char* visibility;
+  const char* receiver;
   const char* tag_name;
   bool is_void;
   bool supports_block;
@@ -66,10 +82,13 @@ typedef struct {
   const char* signature;
   const char* documentation_url;
   const helper_implicit_attribute_T* implicit_attribute;
+  const helper_content_T* content;
   const helper_argument_T* arguments;
   size_t arguments_count;
   const helper_option_T* options;
   size_t options_count;
+  const helper_block_argument_T* block_arguments;
+  size_t block_arguments_count;
 } helper_registry_entry_T;
 
 const helper_registry_entry_T* helper_registry_get(helper_type_T type);

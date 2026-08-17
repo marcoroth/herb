@@ -10,6 +10,7 @@
 #include "../../src/include/lexer/token.h"
 #include "../../src/include/lib/hb_array.h"
 #include "../../src/include/lib/hb_string.h"
+#include "../../src/include/parser/parser.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,9 +20,9 @@ jstring CreateStringFromHbString(JNIEnv* env, hb_string_T string);
 jobject CreatePosition(JNIEnv* env, position_T position);
 jobject CreateLocation(JNIEnv* env, location_T location);
 jobject CreateRange(JNIEnv* env, range_T range);
-jobject CreateToken(JNIEnv* env, token_T* token);
+jobject CreateToken(JNIEnv* env, token_T* token, const parser_options_T* options);
 jobject CreateLexResult(JNIEnv* env, hb_array_T* tokens, jstring source);
-jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source);
+jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source, const parser_options_T* options);
 
 #ifdef __cplusplus
 }

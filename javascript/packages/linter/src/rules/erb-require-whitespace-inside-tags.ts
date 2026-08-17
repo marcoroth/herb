@@ -1,5 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
+import { isERBEscapedNode } from "@herb-tools/core"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -27,6 +28,8 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
 
     if (openTag.value === "<%#") {
       this.checkCommentTagWhitespace(node, openTag, closeTag, value)
+    } else if (isERBEscapedNode(node) && value.startsWith("#")) {
+      this.checkCloseTagWhitespace(node, openTag, closeTag, value)
     } else {
       this.checkOpenTagWhitespace(node, openTag, closeTag, value)
       this.checkCloseTagWhitespace(node, openTag, closeTag, value)

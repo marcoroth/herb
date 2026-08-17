@@ -38,8 +38,8 @@ export function getBuiltinRewriterNames(): string[] {
 }
 
 export { ActionViewTagHelperToHTMLRewriter } from "./action-view-tag-helper-to-html.js"
-export { ERBStringToDirectOutputRewriter } from "./erb-string-to-direct-output.js"
+export { ERBStringToDirectOutputRewriter, isSafeToInline } from "./erb-string-to-direct-output.js"
 export { HTMLToActionViewTagHelperRewriter } from "./html-to-action-view-tag-helper.js"
 export { TailwindClassSorterRewriter } from "./tailwind-class-sorter.js"
 
-export type { TextPart, ExpressionPart, ReplacementPart } from "./erb-string-to-direct-output.js"
+export type { TextPart, ExpressionPart, ReplacementPart, InlineSafetyOptions } from "./erb-string-to-direct-output.js"

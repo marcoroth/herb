@@ -5,6 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
@@ -20,12 +21,6 @@
       "executor": "nx:run-script",
       "options": {
         "script": "dev"
-      }
-    },
-    "format": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "format"
       }
     },
     "clean": {

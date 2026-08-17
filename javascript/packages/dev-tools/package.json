@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/dev-tools",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "Development tools for visual debugging in HTML+ERB templates",
   "type": "module",
   "license": "MIT",
@@ -11,26 +11,25 @@
     "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/dev-tools"
   },
-  "main": "./dist/herb-dev-tools.umd.js",
+  "main": "./dist/herb-dev-tools.esm.js",
   "module": "./dist/herb-dev-tools.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && rollup -c",
-    "dev": "rollup -c -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist",
-    "test": "echo 'TODO: add tests'",
+    "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/herb-dev-tools.esm.js",
-      "default": "./dist/herb-dev-tools.umd.js"
+      "default": "./dist/herb-dev-tools.esm.js"
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.10.2"
+    "@herb-tools/core": "0.10.3"
   },
   "files": [
     "package.json",

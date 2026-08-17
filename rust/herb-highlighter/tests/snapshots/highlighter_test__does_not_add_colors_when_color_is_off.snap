@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: result
+---
+<% if true %>

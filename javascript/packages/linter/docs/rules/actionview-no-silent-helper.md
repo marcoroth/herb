@@ -32,6 +32,22 @@ Action View helpers generate HTML that needs to be rendered into the template. W
 <%= content_tag :div, "Hello", class: "greeting" %>
 ```
 
+A silent tag is fine when the helper's return value is used instead of being discarded, for example by an assignment, a `capture`, or another method call:
+
+```erb
+<% link = link_to "Home", root_path %>
+
+<%= link %>
+```
+
+```erb
+<% actions = capture { render "profiles/actions", user: user } %>
+
+<% if actions.strip.present? %>
+  <%= actions %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -50,6 +66,14 @@ Action View helpers generate HTML that needs to be rendered into the template. W
 
 ```erb
 <% content_tag :div, "Hello", class: "greeting" %>
+```
+
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
 ```
 
 ## References

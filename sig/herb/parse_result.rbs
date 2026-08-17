@@ -6,8 +6,10 @@ module Herb
 
     attr_reader options: Herb::ParserOptions
 
-    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
-    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
+    attr_reader error_count: Integer?
+
+    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions, ?Integer?) -> void
+    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions, ?Integer?) -> void
 
     # : () -> Array[Herb::Errors::Error]
     def errors: () -> Array[Herb::Errors::Error]

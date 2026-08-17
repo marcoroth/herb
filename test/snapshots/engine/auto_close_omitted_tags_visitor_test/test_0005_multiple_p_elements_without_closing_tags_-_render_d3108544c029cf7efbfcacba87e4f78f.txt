@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0005_multiple p elements without closing tags - render"
+input: "{source: \"<p>First<p>Second<p>Third\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<p>First</p><p>Second</p><p>Third</p>

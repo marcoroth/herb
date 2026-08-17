@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/herb/action_view/render_analyzer"
+require_relative "../lib/herb/analysis/render_analyzer"
 require "tmpdir"
 require "fileutils"
 
@@ -22,7 +22,7 @@ class RenderAnalyzerTest < Minitest::Spec
   end
 
   def check(directory)
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
     analyzer.analyze
   end
 
@@ -353,7 +353,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/shared/_logo.html.erb" => "<img src='logo.png'>"
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     assert analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end
@@ -364,7 +364,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/shared/_header.html.erb" => '<%= render "shared/missing" %>'
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     refute analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end
@@ -374,7 +374,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/pages/index.html.erb" => "<%= render @product %>"
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     refute analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end
@@ -384,7 +384,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/pages/index.html.erb" => '<%= render "cards/#{card_type}" %>'
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     refute analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end
@@ -394,7 +394,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/pages/index.html.erb" => "<p>Hello</p>"
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     assert analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end
@@ -408,7 +408,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/shared/_d.html.erb" => "<p>Leaf</p>"
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     assert analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end
@@ -421,7 +421,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/shared/_c.html.erb" => '<%= render "shared/missing" %>'
     )
 
-    analyzer = Herb::ActionView::RenderAnalyzer.new(directory)
+    analyzer = Herb::Analysis::RenderAnalyzer.new(directory)
 
     refute analyzer.fully_resolvable?("app/views/pages/index.html.erb")
   end

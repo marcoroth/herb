@@ -25,7 +25,8 @@ export class ActionViewNoSilentRenderRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

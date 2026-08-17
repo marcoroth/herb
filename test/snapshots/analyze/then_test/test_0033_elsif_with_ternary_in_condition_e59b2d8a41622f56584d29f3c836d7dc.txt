@@ -1,0 +1,42 @@
+---
+source: "Analyze::ThenTest#test_0033_elsif with ternary in condition"
+input: |2-
+<% if a %>
+  A
+<% elsif b ? c : d %>
+  B
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if a " (location: (1:2)-(1:8))
+    │   ├── tag_closing: "%>" (location: (1:8)-(1:10))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:10)-(3:0))
+    │   │       └── content: "\n  A\n"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBIfNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " elsif b ? c : d " (location: (3:2)-(3:19))
+    │   │       ├── tag_closing: "%>" (location: (3:19)-(3:21))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (3:21)-(5:0))
+    │   │       │       └── content: "\n  B\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node: ∅
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

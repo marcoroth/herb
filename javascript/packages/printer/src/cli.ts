@@ -21,6 +21,7 @@ interface CLIOptions {
   help?: boolean
   glob?: boolean
   force?: boolean
+  verbose?: boolean
 }
 
 export class CLI {
@@ -53,6 +54,9 @@ export class CLI {
           break
         case '--force':
           options.force = true
+          break
+        case '--verbose':
+          options.verbose = true
           break
         case '-h':
         case '--help':
@@ -88,6 +92,7 @@ export class CLI {
         --stats                      Show parsing and printing statistics
         --glob                       Treat input as glob pattern
         --force                      Process files even if excluded by configuration
+        --verbose                    Print a line for every file, not just failures
         -h, --help                   Show this help message
 
       Examples:
@@ -165,12 +170,14 @@ export class CLI {
 
             if (options.verify) {
               if (input === output) {
-                console.log(`\x1b[32m✓\x1b[0m \x1b[1m${file}\x1b[0m: \x1b[32mPerfect match\x1b[0m`)
+                if (options.verbose) {
+                  console.log(`\x1b[32m✓\x1b[0m \x1b[1m${file}\x1b[0m: \x1b[32mPerfect match\x1b[0m`)
+                }
               } else {
                 console.error(`\x1b[31m✗\x1b[0m \x1b[1m${file}\x1b[0m: \x1b[1m\x1b[31mVerification failed\x1b[0m - differences detected`)
                 verificationFailures++
               }
-            } else {
+            } else if (options.verbose) {
               console.log(`\x1b[32m✓\x1b[0m \x1b[1m${file}\x1b[0m: \x1b[32mProcessed\x1b[0m`)
             }
 

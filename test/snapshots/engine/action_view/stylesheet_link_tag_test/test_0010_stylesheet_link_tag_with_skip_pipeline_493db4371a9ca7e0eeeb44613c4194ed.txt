@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0010_stylesheet_link_tag with skip_pipeline"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", skip_pipeline: true %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" />

@@ -5,6 +5,7 @@
   "projectType": "application",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
@@ -13,6 +14,7 @@
         "@herb-tools/config:build",
         "@herb-tools/formatter:build",
         "@herb-tools/language-server:build",
+        "@herb-tools/language-service:build",
         "@herb-tools/linter:build",
         "@herb-tools/node-wasm:build"
       ]

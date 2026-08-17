@@ -9,35 +9,35 @@
 
 #include <stdlib.h>
 
-jobject NodeFromCStruct(JNIEnv* env, AST_NODE_T* node);
-jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array);
+jobject NodeFromCStruct(JNIEnv* env, AST_NODE_T* node, const parser_options_T* options);
+jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array, const parser_options_T* options);
 
 <%- nodes.each do |node| -%>
-jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>) {
+jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>, const parser_options_T* options) {
   if (!<%= node.human %>) { return NULL; }
 
   jclass nodeClass = (*env)->FindClass(env, "org/herb/ast/<%= node.name %>");
   if (!nodeClass) { return NULL; }
 
   jstring type = (*env)->NewStringUTF(env, "<%= node.name %>");
-  jobject location = CreateLocation(env, <%= node.human %>->base.location);
+  jobject location = options->track_locations ? CreateLocation(env, <%= node.human %>->base.location) : NULL;
   jobject errors = ErrorsArrayFromCArray(env, <%= node.human %>->base.errors);
 
   <%- node.fields.each do |field| -%>
   <%- if field.is_a?(Herb::Template::StringField) -%>
   jstring <%= field.name %> = CreateStringFromHbString(env, <%= node.human %>-><%= field.name %>);
   <%- elsif field.is_a?(Herb::Template::TokenField) -%>
-  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateToken(env, <%= node.human %>-><%= field.name %>) : NULL;
+  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateToken(env, <%= node.human %>-><%= field.name %>, options) : NULL;
   <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
   jboolean <%= field.name %> = <%= node.human %>-><%= field.name %> ? JNI_TRUE : JNI_FALSE;
   <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
-  jobject <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>);
+  jobject <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>, options);
   <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
-  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>) : NULL;
+  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>, options) : NULL;
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
   jstring <%= field.name %> = <%= node.human %>-><%= field.name %>.data ? (*env)->NewStringUTF(env, <%= node.human %>-><%= field.name %>.data) : NULL;
   <%- elsif field.is_a?(Herb::Template::LocationField) -%>
-  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateLocation(env, *<%= node.human %>-><%= field.name %>) : NULL;
+  jobject <%= field.name %> = (options->track_locations && <%= node.human %>-><%= field.name %>) ? CreateLocation(env, *<%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::PrismSerializedField) -%>
   jbyteArray <%= field.name %>;
   if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
@@ -77,20 +77,20 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
 
 <%- end -%>
 
-jobject NodeFromCStruct(JNIEnv* env, AST_NODE_T* node) {
+jobject NodeFromCStruct(JNIEnv* env, AST_NODE_T* node, const parser_options_T* options) {
   if (!node) { return NULL; }
 
   switch (node->type) {
   <%- nodes.each do |node| -%>
   case <%= node.type %>:
-    return <%= node.name %>FromCStruct(env, (<%= node.struct_type %>*) node);
+    return <%= node.name %>FromCStruct(env, (<%= node.struct_type %>*) node, options);
   <%- end -%>
   default:
     return NULL;
   }
 }
 
-jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array) {
+jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array, const parser_options_T* options) {
   jclass arrayListClass = (*env)->FindClass(env, "java/util/ArrayList");
   jmethodID arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "(I)V");
   jmethodID addMethod = (*env)->GetMethodID(env, arrayListClass, "add", "(Ljava/lang/Object;)Z");
@@ -105,7 +105,7 @@ jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array) {
     AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {
-      jobject nodeObj = NodeFromCStruct(env, child_node);
+      jobject nodeObj = NodeFromCStruct(env, child_node, options);
       (*env)->CallBooleanMethod(env, javaList, addMethod, nodeObj);
     }
   }
@@ -113,9 +113,13 @@ jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array) {
   return javaList;
 }
 
+jobject CreateASTNode(JNIEnv* env, AST_NODE_T* node, const parser_options_T* options) {
+  return NodeFromCStruct(env, node, options);
+}
+
 <%- nodes.each do |node| -%>
-jobject Create<%= node.name %>(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>) {
-  return <%= node.name %>FromCStruct(env, <%= node.human %>);
+jobject Create<%= node.name %>(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>, const parser_options_T* options) {
+  return <%= node.name %>FromCStruct(env, <%= node.human %>, options);
 }
 
 <%- end -%>

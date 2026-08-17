@@ -159,6 +159,7 @@ void herb_diff_children(
   const herb_diff_path_T parent_path,
   const herb_hash_map_T* old_hashes,
   const herb_hash_map_T* new_hashes,
+  const bool preserve_whitespace,
   herb_diff_result_T* result
 ) {
   if (old_children == NULL && new_children == NULL) { return; }
@@ -428,7 +429,7 @@ void herb_diff_children(
       const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, entry->new_index);
 
       herb_diff_path_T child_path = herb_diff_path_append(parent_path, (uint32_t) entry->new_index);
-      herb_diff_node(old_child, new_child, child_path, old_hashes, new_hashes, result);
+      herb_diff_node(old_child, new_child, child_path, old_hashes, new_hashes, preserve_whitespace, result);
     } else if (entry->type == EDIT_INSERT) {
       const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, entry->new_index);
 
@@ -468,7 +469,7 @@ void herb_diff_children(
       );
 
       herb_diff_path_T child_path = herb_diff_path_append(parent_path, (uint32_t) entry->new_index);
-      herb_diff_node(old_child, new_child, child_path, old_hashes, new_hashes, result);
+      herb_diff_node(old_child, new_child, child_path, old_hashes, new_hashes, preserve_whitespace, result);
     } else if (entry->type == EDIT_COALESCED_KEEP) {
       const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_children, entry->old_index);
       const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, entry->new_index);
@@ -486,7 +487,7 @@ void herb_diff_children(
         );
       }
 
-      herb_diff_node(old_child, new_child, child_path, old_hashes, new_hashes, result);
+      herb_diff_node(old_child, new_child, child_path, old_hashes, new_hashes, preserve_whitespace, result);
     } else if (entry->type == EDIT_WRAP) {
       const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_children, entry->old_index);
       const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, entry->new_index);
