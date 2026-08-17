@@ -26,6 +26,10 @@ export class Location {
     }
   }
 
+  static fromOptional(location: SerializedLocation | null): Location {
+    return (location ? Location.from(location) : null) as unknown as Location
+  }
+
   static get zero() {
     return new Location(Position.zero, Position.zero)
   }

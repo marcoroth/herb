@@ -1,0 +1,21 @@
+---
+source: "CLI::ActionViewTest#test_0002_flow traces state through two renames"
+input: "two renames: <%= render \"posts/byline\", author: @post.user %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/show.html.erb
+
+ State flow for @post
+
+ app/views/posts/show.html.erb [@post]
+ · render render "posts/byline", author: @post.user (1:0)
+ │
+ └── app/views/posts/_byline.html.erb [author] ← author: @post.user
+     · render render "posts/avatar", user: author (1:0)
+     │
+     └── app/views/posts/_avatar.html.erb [user] ← user: author
+         · attribute_value user.avatar (1:10)
+

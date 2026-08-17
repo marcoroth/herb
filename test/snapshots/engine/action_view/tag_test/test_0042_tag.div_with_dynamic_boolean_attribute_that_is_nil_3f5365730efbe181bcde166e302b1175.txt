@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0042_tag.div with dynamic boolean attribute that is nil"
+input: "{source: \"<%= tag.div hidden: maybe %>\", locals: {maybe: nil}, options: {action_view_helpers: true}}"
+---
+<div></div>

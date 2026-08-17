@@ -1,31 +1,11 @@
-import {
-  Visitor,
-  Location,
-  Position,
-  hasERBOutput,
-  isEffectivelyStatic,
-  getValidatableStaticContent,
-  getAttributeName,
-  getStaticAttributeValue,
-  hasDynamicAttributeName,
-  getCombinedAttributeNameString,
-  getAttributeValueNodes,
-  getAttributeValue,
-  getTagLocalName,
-  forEachAttribute,
-} from "@herb-tools/core"
+import { Visitor, Location, hasDynamicOutput, getValidatableStaticContent, getAttributeName, getStaticAttributeValue, hasDynamicAttributeName, getCombinedAttributeNameString, getAttributeValueNodes, getAttributeValue, getTagLocalName, forEachAttribute, getAttribute, findAttributeByName, hasAttribute, isERBOpenTagNode, isRubyLiteralNode } from "@herb-tools/core"
+import { ancestorVerdict, closestAncestor, EMPTY_CHAIN, projectRelativePath } from "@herb-tools/analysis"
 
-import type {
-  HTMLAttributeNameNode,
-  HTMLAttributeNode,
-  HTMLElementNode,
-  HTMLOpenTagNode,
-  LexResult,
-  Token,
-  Node
-} from "@herb-tools/core"
+import type { ERBOpenTagNode, HTMLAttributeNameNode, HTMLAttributeNode, HTMLElementNode, HTMLOpenTagNode, LexResult, Token, Node } from "@herb-tools/core"
+import type { AncestorChain, PartialDeclaration, Verdict, PartialContext, StaticAttributeMap } from "@herb-tools/analysis"
 
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
+import { staticAncestorAttributes } from "@herb-tools/analysis"
 
 import type * as Nodes from "@herb-tools/core"
 import type { DiagnosticTag } from "@herb-tools/core"
@@ -34,6 +14,59 @@ import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext 
 export enum ControlFlowType {
   CONDITIONAL,
   LOOP
+}
+
+const DETACHED_BLOCK_HELPERS = new Set(["content_for", "javascript_tag"])
+
+
+const NATIVELY_KEYBOARD_FOCUSABLE_ELEMENTS = new Set([
+  "button",
+  "input",
+  "select",
+  "summary",
+  "textarea",
+])
+
+const DISABLEABLE_ELEMENTS = new Set(["button", "input", "select", "textarea"])
+
+/**
+ * Whether an HTML element can be reached through sequential keyboard navigation.
+ *
+ * This deliberately excludes elements with a negative `tabindex`, even though
+ * scripts can still focus them, because callers use it to detect keyboard-focus
+ * accessibility problems.
+ */
+export function isKeyboardFocusableElement(node: HTMLElementNode | HTMLOpenTagNode): boolean {
+  const tagName = getTagLocalName(node)
+  if (!tagName) return false
+
+  if (DISABLEABLE_ELEMENTS.has(tagName) && hasAttribute(node, "disabled")) return false
+  if (tagName === "input" && getStaticAttributeValue(node, "type")?.toLowerCase() === "hidden") return false
+
+  const tabindexAttribute = getAttribute(node, "tabindex")
+  const tabindexValue = getStaticAttributeValue(tabindexAttribute)
+  const tabindex = tabindexValue === null || tabindexValue.trim() === "" ? null : Number.parseInt(tabindexValue, 10)
+
+  if (tabindexAttribute && tabindex !== null && !Number.isNaN(tabindex)) {
+    return tabindex >= 0
+  }
+
+  if (tagName === "a") return hasAttribute(node, "href")
+
+  return NATIVELY_KEYBOARD_FOCUSABLE_ELEMENTS.has(tagName)
+}
+
+/**
+ * Whether an ERB block opens with a call to one of the given helpers.
+ *
+ * A block node's content is its opening statement, so the helper being called
+ * is the leading identifier. Anchoring there keeps `my_content_for` and
+ * `helper.content_for` out without needing to guard the boundaries.
+ */
+function blockOpensWith(node: Nodes.ERBBlockNode, helpers: Set<string>): boolean {
+  const [call] = (node.content?.value ?? "").trim().split(/[\s(]/, 1)
+
+  return helpers.has(call)
 }
 
 /**
@@ -73,6 +106,46 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
    */
   protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
     this.offenses.push(this.createOffense(message, location, autofixContext, severity, tags))
+  }
+
+  /**
+   * Like `addOffense`, but records the frames that explain the offense, so a
+   * formatter can show why it applies. A chain with no frames is dropped, since
+   * there would be nothing to render.
+   */
+  protected addOffenseWithChain(message: string, location: Location, chain: AncestorChain | null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    const offense = this.createOffense(message, location, autofixContext, severity, tags)
+
+    this.offenses.push(chain && chain.frames.length > 0 ? { ...offense, renderedFrom: chain } : offense)
+  }
+
+  /**
+   * A single frame pointing at a partial's `locals:` declaration, for offenses
+   * that are an argument about a declaration in another file.
+   */
+  protected declarationChain(declaration: PartialDeclaration): AncestorChain | null {
+    if (!declaration.location) return null
+
+    return {
+      tags: [],
+      occurrences: 1,
+      frames: [{ file: declaration.file, ancestors: [], via: "declaration", location: declaration.location }],
+    }
+  }
+
+  /**
+   * The file being linted, as the project-relative path the partial indexes are
+   * keyed by.
+   *
+   * The CLI passes absolute file names, which resolve against neither index and
+   * silently defeat relative partial name resolution, so anything looking a file
+   * up in an index wants this rather than `context.fileName`.
+   */
+  protected get sourceFile(): string | undefined {
+    const fileName = this.context.fileName
+    if (!fileName) return undefined
+
+    return projectRelativePath(fileName, this.context.projectPath)
   }
 }
 
@@ -152,6 +225,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBIterationBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }
@@ -179,11 +256,21 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
  */
 export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
   private elementStack: HTMLElementNode[] = []
+  private detachedBlockDepth = 0
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     this.elementStack.push(node)
     super.visitHTMLElementNode(node)
     this.elementStack.pop()
+  }
+
+  visitERBBlockNode(node: Nodes.ERBBlockNode): void {
+    const isDetached = blockOpensWith(node, DETACHED_BLOCK_HELPERS)
+    if (isDetached) this.detachedBlockDepth++
+
+    super.visitERBBlockNode(node)
+
+    if (isDetached) this.detachedBlockDepth--
   }
 
   /**
@@ -227,10 +314,148 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
   }
 
   /**
+   * Whether the current position sits inside a block whose contents render
+   * somewhere else, such as `content_for`. The surrounding markup says nothing
+   * about where these nodes end up.
+   */
+  protected get isInsideDetachedBlock(): boolean {
+    return this.detachedBlockDepth > 0
+  }
+
+  /**
    * All ancestor HTML elements, from outermost to innermost.
    */
   protected get ancestors(): readonly HTMLElementNode[] {
     return this.elementStack
+  }
+
+  /**
+   * The tag names of all ancestor HTML elements, from outermost to innermost.
+   */
+  protected get ancestorTagNames(): string[] {
+    return this.elementStack.map(element => getTagLocalName(element)).filter((name): name is string => name !== null)
+  }
+
+  /**
+   * Selected static attributes for each local ancestor, aligned with `ancestorTagNames`.
+   */
+  protected get ancestorAttributes(): StaticAttributeMap[] {
+    return this.elementStack.flatMap(element => {
+      if (getTagLocalName(element) === null) return []
+      return [staticAncestorAttributes(element)]
+    })
+  }
+
+  /**
+   * Like `isInsideElement`, but also considers the ancestors this file renders
+   * into at every call site, so a partial can be judged by the context its
+   * callers place it in.
+   *
+   * Returns `mixed` when the call sites disagree and `unknown` when there is
+   * not enough information to tell, both of which rules should stay silent on.
+   */
+  protected isInsideElementAcrossCallers(...tagNames: string[]): Verdict {
+    return ancestorVerdict(this.renderedContext, this.ancestorTagNames, ...tagNames)
+  }
+
+  /**
+   * Like `isInsideElementAcrossCallers`, but ignores the local element stack.
+   *
+   * For rules that already check the current file themselves, so the two
+   * checks don't report the same nesting twice.
+   */
+  protected isRenderedInsideElement(...tagNames: string[]): Verdict {
+    return ancestorVerdict(this.renderedContext, [], ...tagNames)
+  }
+
+  /**
+   * The innermost ancestor matching one of the given tags, across the local
+   * element stack and the ancestors this file renders into.
+   */
+  protected closestElementAcrossCallers(...tagNames: string[]): string | null {
+    return closestAncestor(this.renderedContext, this.ancestorTagNames, ...tagNames)
+  }
+
+  /**
+   * The innermost matching ancestor from the callers alone, ignoring the local
+   * element stack.
+   */
+  protected closestRenderedElement(...tagNames: string[]): string | null {
+    return closestAncestor(this.renderedContext, [], ...tagNames)
+  }
+
+  /**
+   * The first resolved chain that nests this file inside one of the given tags.
+   *
+   * Useful for a `mixed` verdict, where only some call sites are at fault and
+   * the report needs to name one of them.
+   */
+  protected renderedChainInside(...tagNames: string[]): AncestorChain | null {
+    return this.renderedContext.chains.find(chain => chain.tags.some(tag => tagNames.includes(tag))) ?? null
+  }
+
+  /**
+   * Judges every resolved chain with a predicate over the full ancestor list,
+   * for rules whose question is more than "inside this tag".
+   *
+   * `isInsideElementAcrossCallers` answers one tag at a time, which cannot
+   * express a condition like "inside `<body>` but not inside `<head>`" once the
+   * call sites disagree, because each half comes back `mixed` on its own even
+   * though individual chains give a clear answer.
+   *
+   * Returns an offending chain alongside the verdict, so a `mixed` report can
+   * point at a call site that is actually at fault.
+   */
+  protected placementAcrossCallers(misplaced: (ancestors: string[], attributes: StaticAttributeMap[]) => boolean): { verdict: Verdict, chain: AncestorChain | null } {
+    const { chains } = this.renderedContext
+    const local = this.ancestorTagNames
+
+    if (chains.length === 0) return { verdict: "unknown", chain: null }
+
+    const localAttributes = this.ancestorAttributes
+    const offending = chains.filter(chain => misplaced(
+      [...chain.tags, ...local],
+      [...(chain.attributes ?? chain.tags.map(() => ({}))), ...localAttributes],
+    ))
+
+    if (offending.length === chains.length) return { verdict: "always", chain: offending[0] }
+    if (offending.length > 0) return { verdict: "mixed", chain: offending[0] }
+
+    return { verdict: "never", chain: null }
+  }
+
+  /**
+   * Like `addOffense`, but records the call chain that put this file where it
+   * is, so a formatter can show why the offense applies.
+   *
+   * Defaults to the first resolved chain. Pass one explicitly when only some
+   * call sites are at fault, so the report points at one that is.
+   *
+   * Nothing is recorded for a file judged on its own contents, which is what a
+   * whole document and a `content_for` body both are.
+   */
+  protected addOffenseWithCallChain(message: string, location: Location, chain: AncestorChain | null = this.renderedContext.chains[0] ?? null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    this.addOffenseWithChain(message, location, chain, autofixContext, severity, tags)
+  }
+
+  /**
+   * The ancestors this file renders into.
+   *
+   * A file that already contains its own `<html>`, `<head>` or `<body>` is a
+   * whole document, so its own element stack is the entire truth and no caller
+   * lookup is needed.
+   */
+  private get renderedContext(): PartialContext {
+    if (this.isInsideElement("html", "head", "body")) return { chains: [EMPTY_CHAIN], resolved: true }
+
+    if (this.detachedBlockDepth > 0) return { chains: [], resolved: false }
+
+    const callers = this.context.partialCallers
+    const fileName = this.sourceFile
+
+    if (!callers || !fileName) return { chains: [], resolved: false }
+
+    return callers.contextOf(fileName)
   }
 
   /**
@@ -258,45 +483,8 @@ export const HTML_BLOCK_ELEMENTS = new Set([
   "ol", "p", "pre", "section", "table", "tfoot", "ul", "video"
 ])
 
-export const HTML_VOID_ELEMENTS = new Set([
-  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
-  "param", "source", "track", "wbr",
-])
-
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
-
-export const HTML_KNOWN_ELEMENTS = new Set([
-  "html", "head", "body",
-  "base", "link", "meta", "style", "title",
-  "script", "noscript", "template", "slot", "selectedcontent",
-  "address", "article", "aside", "footer", "header", "hgroup",
-  "main", "nav", "section", "search",
-  "h1", "h2", "h3", "h4", "h5", "h6",
-  "blockquote", "dd", "details", "dialog", "div", "dl", "dt",
-  "figcaption", "figure", "hr", "li", "menu", "ol", "p", "pre",
-  "summary", "ul",
-  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data",
-  "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "ruby",
-  "s", "samp", "small", "span", "strong", "sub", "sup", "time",
-  "u", "var", "wbr",
-  "del", "ins",
-  "area", "audio", "canvas", "embed", "iframe", "img", "map",
-  "math", "object", "param", "picture", "source", "svg", "track", "video",
-  "caption", "col", "colgroup", "table", "tbody", "td", "tfoot",
-  "th", "thead", "tr",
-  "button", "datalist", "fieldset", "form", "input", "label",
-  "legend", "meter", "optgroup", "option", "output", "progress",
-  "select", "textarea",
-  "acronym", "big", "tt",
-])
-
-export function isKnownHTMLElement(tagName: string): boolean {
-  return HTML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
-}
-
-export function isCustomElement(tagName: string): boolean {
-  return tagName.includes("-")
-}
+export { HTML_ELEMENTS, HTML_ELEMENT_NAMES, HTML_VOID_ELEMENTS, isKnownHTMLElement, isVoidElement, isCustomElement } from "@herb-tools/core"
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
@@ -421,7 +609,7 @@ export interface StaticAttributeStaticValueParams {
   attributeValue: string
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
 }
 
 export interface StaticAttributeDynamicValueParams {
@@ -429,7 +617,7 @@ export interface StaticAttributeDynamicValueParams {
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedValue?: string | null
 }
 
@@ -437,7 +625,7 @@ export interface DynamicAttributeStaticValueParams {
   nameNodes: Node[]
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
 }
 
@@ -445,7 +633,7 @@ export interface DynamicAttributeDynamicValueParams {
   nameNodes: Node[]
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
   combinedValue?: string | null
 }
@@ -530,13 +718,6 @@ export function isBlockElement(tagName: string): boolean {
 }
 
 /**
- * Checks if an element is a void element
- */
-export function isVoidElement(tagName: string): boolean {
-  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
-}
-
-/**
  * Attribute visitor that provides granular processing based on both
  * attribute name type (static/dynamic) and value type (static/dynamic)
  *
@@ -556,15 +737,20 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkAttributesOnNode(node)
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkAttributesOnNode(node: HTMLOpenTagNode | ERBOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
       const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
-      const hasOutputERB = hasERBOutput(valueNodes)
-      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
+      const hasOutputERB = hasDynamicOutput(valueNodes)
+      const isEffectivelyStaticValue = !hasDynamicOutput(valueNodes)
 
       if (staticAttributeName && staticAttributeValue !== null) {
         this.checkStaticAttributeStaticValue({
@@ -963,40 +1149,8 @@ export function isHeadTag(tagName: string): boolean {
 }
 
 /**
- * Converts a character offset in a source string to a Position (line, column).
- * Lines are 1-based, columns are 0-based.
- */
-export function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
-}
-
-/**
- * Creates a Location from a source string, a start offset, and a length.
- */
-export function locationFromOffset(source: string, startOffset: number, length: number): Location {
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, startOffset + length)
-  return Location.from(start.line, start.column, end.line, end.column)
-}
-
-/**
  * Creates a Location from a known start line/column and a character offset within content.
- * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * Unlike `locationFromByteOffset`, this does not require the full source string, it computes
  * the position relative to a node's start position.
  */
 export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {
@@ -1100,4 +1254,56 @@ export function findNodeAtPosition(root: Node, line: number, column: number, pre
   search(root)
 
   return bestMatch
+}
+
+export function findElementAttribute(node: HTMLElementNode, name: string): HTMLAttributeNode | null {
+  if (isERBOpenTagNode(node.open_tag)) {
+    return findAttributeByName(node.open_tag.children, name)
+  }
+
+  return getAttribute(node, name)
+}
+
+const NESTED_ATTRIBUTE_VALUE_PREFIX = "::Herb::Engine.nested_attribute_value("
+
+/**
+ * Whether an Action View helper option resolves to `nil`. Action View drops
+ * these attributes when it renders the element, so rules that require an
+ * attribute to be present should treat them as absent.
+ */
+export function isNilAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  const value = attributeNode.value
+
+  if (!value) return false
+  if (value.children.length !== 1) return false
+
+  const child = value.children[0]
+
+  if (!isRubyLiteralNode(child)) return false
+
+  let content = child.content.trim()
+
+  if (content.startsWith(NESTED_ATTRIBUTE_VALUE_PREFIX) && content.endsWith(")")) {
+    content = content.slice(NESTED_ATTRIBUTE_VALUE_PREFIX.length, -1).trim()
+  }
+
+  return content === "nil"
+}
+
+const NON_JS_SCRIPT_TYPES = new Set([
+  "application/json",
+  "application/ld+json",
+  "text/template",
+  "text/html",
+  "text/x-template",
+])
+
+export function isJavaScriptTagElement(node: HTMLElementNode): boolean {
+  const typeAttribute = findElementAttribute(node, "type")
+  if (!typeAttribute) return true
+
+  const typeValue = getStaticAttributeValue(typeAttribute)
+  if (typeValue === null) return true
+
+  return !NON_JS_SCRIPT_TYPES.has(typeValue.toLowerCase())
 }

@@ -1,8 +1,11 @@
 import * as path from "path"
 
 import { workspace, ExtensionContext, Disposable, window } from "vscode"
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, WorkspaceEdit } from "vscode-languageclient/node"
 import { Config } from "@herb-tools/config"
+import { defaultPersonalSettings } from "@herb-tools/language-server"
+
+const inlayHintDefaults = defaultPersonalSettings.inlayHints!
 
 export class Client {
   private client!: LanguageClient
@@ -69,6 +72,12 @@ export class Client {
     return await this.client.sendRequest(method, params)
   }
 
+  async applyWorkspaceEdit(edit: WorkspaceEdit): Promise<boolean> {
+    const workspaceEdit = await this.client.protocol2CodeConverter.asWorkspaceEdit(edit)
+
+    return await workspace.applyEdit(workspaceEdit)
+  }
+
   async updateConfiguration() {
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
     let settings: any
@@ -85,9 +94,15 @@ export class Client {
           formatter: {
             enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
+            indentStyle: projectConfig.formatter?.indentStyle ?? 'space',
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
             rewriter: projectConfig.formatter?.rewriter,
+          },
+          inlayHints: {
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
@@ -103,7 +118,13 @@ export class Client {
           formatter: {
             enabled: vscodeConfig.get('formatter.enabled', false),
             indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
+            indentStyle: vscodeConfig.get('formatter.indentStyle', 'space'),
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
+          },
+          inlayHints: {
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
@@ -113,7 +134,8 @@ export class Client {
     } else {
       settings = {
         linter: { enabled: true },
-        formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
+        formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
+        inlayHints: { ...inlayHintDefaults },
         trace: { server: 'verbose' },
       }
     }
@@ -152,7 +174,10 @@ export class Client {
       documentSelector: [
         { scheme: "file", language: "erb" },
         { scheme: "file", language: "html" },
-        { scheme: "file", language: "yaml", pattern: "**/.herb.yml" },
+        { scheme: "file", language: "yaml", pattern: `**/${Config.configPath}` },
+        ...Config.misnamedConfigPaths.map(misnamedPath => ({
+          scheme: "file", language: "yaml", pattern: `**/${misnamedPath}`
+        })),
       ],
       synchronize: {
         fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
@@ -160,6 +185,12 @@ export class Client {
       },
       initializationOptions: await this.getInitializationOptions(),
       outputChannel: this.outputChannel,
+    }
+  }
+
+  private get experimentalCapabilities() {
+    return {
+      extractToPartialCommand: true,
     }
   }
 
@@ -178,13 +209,20 @@ export class Client {
           formatter: {
             enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
+            indentStyle: projectConfig.formatter?.indentStyle ?? 'space',
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
             rewriter: projectConfig.formatter?.rewriter,
           },
+          inlayHints: {
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
+          experimental: this.experimentalCapabilities,
         }
       } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
@@ -196,18 +234,27 @@ export class Client {
           formatter: {
             enabled: vscodeConfig.get('formatter.enabled', false),
             indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
+            indentStyle: vscodeConfig.get('formatter.indentStyle', 'space'),
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
+          },
+          inlayHints: {
+            enabled: vscodeConfig.get('inlayHints.enabled', inlayHintDefaults.enabled),
+            minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
+            maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
+          experimental: this.experimentalCapabilities,
         }
       }
     } else {
       return {
         linter: { enabled: true },
-        formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
+        formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
+        inlayHints: { ...inlayHintDefaults },
         trace: { server: 'verbose' },
+        experimental: this.experimentalCapabilities,
       }
     }
   }

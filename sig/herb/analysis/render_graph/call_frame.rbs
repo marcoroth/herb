@@ -1,0 +1,26 @@
+# Generated from lib/herb/analysis/render_graph/call_frame.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class CallFrame < Data
+        attr_reader file(): untyped
+
+        attr_reader ancestors(): untyped
+
+        attr_reader ancestor_attributes(): untyped
+
+        attr_reader via(): untyped
+
+        attr_reader location(): untyped
+
+        def self.new: (untyped file, untyped ancestors, untyped ancestor_attributes, untyped via, untyped location) -> instance
+                    | (file: untyped, ancestors: untyped, ancestor_attributes: untyped, via: untyped, location: untyped) -> instance
+
+        def self.members: () -> [ :file, :ancestors, :ancestor_attributes, :via, :location ]
+
+        def members: () -> [ :file, :ancestors, :ancestor_attributes, :via, :location ]
+      end
+    end
+  end
+end

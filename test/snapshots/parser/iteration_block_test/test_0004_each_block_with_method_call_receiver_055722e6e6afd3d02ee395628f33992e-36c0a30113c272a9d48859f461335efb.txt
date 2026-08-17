@@ -1,0 +1,52 @@
+---
+source: "Parser::IterationBlockTest#test_0004_each block with method call receiver"
+input: |2-
+<% current_user.posts.each do |post| %>
+  <%= post.title %>
+<% end %>
+options: {iteration_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBIterationBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " current_user.posts.each do |post| " (location: (1:2)-(1:37))
+    │   ├── tag_closing: "%>" (location: (1:37)-(1:39))
+    │   ├── receiver: "current_user.posts" (location: (1:3)-(1:21))
+    │   ├── call_operator: "." (location: (1:21)-(1:22))
+    │   ├── message: "each" (location: (1:22)-(1:26))
+    │   ├── arguments: []
+    │   ├── block_opening: "do" (location: (1:27)-(1:29))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:39)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:19))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " post.title " (location: (2:5)-(2:17))
+    │   │   │   ├── tag_closing: "%>" (location: (2:17)-(2:19))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:19)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:31)-(1:35))
+    │   │       ├── name: "post" (location: (1:31)-(1:35))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

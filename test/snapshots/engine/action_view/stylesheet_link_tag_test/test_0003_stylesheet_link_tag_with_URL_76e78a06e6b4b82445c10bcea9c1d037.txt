@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0003_stylesheet_link_tag with URL"
+input: "{source: \"<%= stylesheet_link_tag \\\"http://www.example.com/style.css\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="http://www.example.com/style.css" />

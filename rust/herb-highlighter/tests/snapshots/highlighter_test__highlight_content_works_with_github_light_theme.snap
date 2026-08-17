@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: "highlight_content(\"<% true %>\", \"github-light\",\n&HighlightOptions::default()).expect(\"the content is highlighted\")"
+---
+[36m[0m
+
+    [90m  1[0m [90m│[0m [38;2;227;98;9m<%[0m [38;2;215;58;73mtrue[0m [38;2;227;98;9m%>[0m

@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0015_an attribute without a value becomes true"
+input: "{source: \"<MyComponent disabled />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(disabled: true)).to_s;
+_buf.to_s

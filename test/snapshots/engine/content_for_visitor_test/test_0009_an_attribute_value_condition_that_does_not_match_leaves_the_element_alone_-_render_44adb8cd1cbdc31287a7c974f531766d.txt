@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0009_an attribute value condition that does not match leaves the element alone - render"
+input: "{source: \"<main id=\\\"other\\\">Content</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"content\"} content=\"<p>Appended</p>\">]}}"
+---
+<main id="other">Content</main>

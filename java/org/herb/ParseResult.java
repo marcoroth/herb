@@ -7,20 +7,31 @@ import java.util.Collections;
 import java.util.List;
 
 public class ParseResult {
-  public final Node value;
   private final List<Node> errors;
+
+  public final Node value;
   public final String source;
+  public final Integer errorCount;
 
   public ParseResult(Node value, List<Node> errors, String source) {
+    this(value, errors, source, null);
+  }
+
+  public ParseResult(Node value, List<Node> errors, String source, Integer errorCount) {
     this.value = value;
     this.errors = Collections.unmodifiableList(errors);
     this.source = source;
+    this.errorCount = errorCount;
   }
 
   public List<Node> recursiveErrors() {
     List<Node> result = new ArrayList<>();
 
     result.addAll(errors);
+
+    if (errorCount != null && errorCount == 0) {
+      return result;
+    }
 
     if (value != null) {
       result.addAll(value.recursiveErrors());

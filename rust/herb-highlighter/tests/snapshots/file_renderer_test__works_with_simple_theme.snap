@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/file_renderer_test.rs
+expression: "renderer.render_plain(\"<span>test</span>\", width(), false, false)"
+---
+[31m<[0m[31mspan[0m[31m>[0m[37mtest[0m[31m</[0m[31mspan[0m[31m>[0m

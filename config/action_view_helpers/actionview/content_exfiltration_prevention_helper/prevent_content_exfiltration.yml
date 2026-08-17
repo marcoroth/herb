@@ -1,16 +1,19 @@
 ---
-name: prevent_content_exfiltration
+name: "prevent_content_exfiltration"
 source: "ActionView::Helpers::ContentExfiltrationPreventionHelper#prevent_content_exfiltration"
-gem: actionview
-output: html
-visibility: internal
+gem: "actionview"
+output: "html"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Prepends security markup to HTML output to prevent content exfiltration via dangling markup injection attacks.
 signature: "prevent_content_exfiltration(html)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/ContentExfiltrationPreventionHelper.html#method-i-prevent_content_exfiltration"
+
+description: |-
+  Prepends security markup to HTML output to prevent content exfiltration via dangling markup injection attacks.
+
 tag: null
 arguments: []
 options: []
+block_arguments: []
 special_behaviors: []

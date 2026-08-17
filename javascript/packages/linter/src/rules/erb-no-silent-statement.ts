@@ -1,5 +1,5 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { isAssignmentNode } from "./prism-rule-utils.js"
+import { isAssignmentNode, isControlFlowNode, isSideEffectCall, unwrapModifierStatement } from "./prism-rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isERBOutputNode } from "@herb-tools/core"
@@ -15,6 +15,11 @@ class ERBNoSilentStatementVisitor extends BaseRuleVisitor {
     if (!prismNode) return
 
     if (isAssignmentNode(prismNode)) return
+
+    const statement = unwrapModifierStatement(prismNode)
+
+    if (isControlFlowNode(statement)) return
+    if (isSideEffectCall(statement)) return
 
     const content = node.content?.value?.trim()
     if (!content) return

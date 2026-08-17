@@ -14,6 +14,10 @@ export class Range {
     }
   }
 
+  static fromOptional(range: SerializedRange | null): Range {
+    return (range ? Range.from(range) : null) as unknown as Range
+  }
+
   static get zero() {
     return new Range(0, 0)
   }

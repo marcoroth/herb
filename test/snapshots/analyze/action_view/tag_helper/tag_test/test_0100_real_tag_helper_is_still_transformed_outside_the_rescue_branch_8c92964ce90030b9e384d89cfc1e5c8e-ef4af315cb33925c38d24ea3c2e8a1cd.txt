@@ -1,0 +1,60 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0100_real tag helper is still transformed outside the rescue branch"
+input: |2-
+<% begin %>
+  <%= tag.hr %>
+<% rescue => tag %>
+  rescued
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBBeginNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " begin " (location: (1:2)-(1:9))
+    │   ├── tag_closing: "%>" (location: (1:9)-(1:11))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:11)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:15))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ ERBOpenTagNode (location: (2:2)-(2:15))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   │       ├── content: " tag.hr " (location: (2:5)-(2:13))
+    │   │   │   │       ├── tag_closing: "%>" (location: (2:13)-(2:15))
+    │   │   │   │       ├── tag_name: "hr" (location: (2:10)-(2:12))
+    │   │   │   │       └── children: []
+    │   │   │   │
+    │   │   │   ├── tag_name: "hr" (location: (2:10)-(2:12))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag: ∅
+    │   │   │   ├── is_void: true
+    │   │   │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:15)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── rescue_clause:
+    │   │   └── @ ERBRescueNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " rescue => tag " (location: (3:2)-(3:17))
+    │   │       ├── tag_closing: "%>" (location: (3:17)-(3:19))
+    │   │       ├── statements: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (3:19)-(5:0))
+    │   │       │       └── content: "\n  rescued\n"
+    │   │       │
+    │   │       └── subsequent: ∅
+    │   │
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

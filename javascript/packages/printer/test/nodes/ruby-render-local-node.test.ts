@@ -15,7 +15,7 @@ describe("RubyRenderLocalNode", () => {
       type: "AST_RUBY_RENDER_LOCAL_NODE",
       location: createLocation(),
       errors: [],
-      name: createToken("TOKEN_IDENTIFIER", "title"),
+      name: createToken("TOKEN_IDENTIFIER", "title").toJSON(),
       value: {
         type: "AST_RUBY_LITERAL_NODE",
         location: createLocation(),
@@ -31,17 +31,10 @@ describe("RubyRenderLocalNode", () => {
   })
 
   test("prints nothing (metadata node)", () => {
-    const node = RubyRenderLocalNode.from({
-      type: "AST_RUBY_RENDER_LOCAL_NODE",
+    const node = RubyRenderLocalNode.build({
       location: createLocation(),
-      errors: [],
       name: createToken("TOKEN_IDENTIFIER", "title"),
-      value: {
-        type: "AST_RUBY_LITERAL_NODE",
-        location: createLocation(),
-        errors: [],
-        content: "@title"
-      }
+      value: RubyLiteralNode.build({ location: createLocation(), content: "@title" })
     })
 
     expectNodeToPrint(node, "")

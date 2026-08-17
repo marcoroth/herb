@@ -45,12 +45,30 @@ pub struct HelperOption {
 }
 
 #[derive(Debug, Clone)]
+pub struct HelperBlockArgument {
+  pub name: &'static str,
+  pub position: usize,
+  pub argument_type: &'static str,
+  pub optional: bool,
+  pub description: &'static str,
+}
+
+#[derive(Debug, Clone)]
 pub struct HelperImplicitAttribute {
   pub name: &'static str,
   pub source: &'static str,
   pub source_with_block: Option<&'static str>,
   pub wrapper: &'static str,
   pub skip_wrapping_for: &'static [&'static str],
+}
+
+#[derive(Debug, Clone)]
+pub struct HelperContent {
+  pub source: &'static str,
+  pub arg_position: Option<usize>,
+  pub skip_if_hash: bool,
+  pub to_s_suffix_when_single: bool,
+  pub positional_arguments_with_block: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +79,7 @@ pub struct HelperEntry {
   pub gem: &'static str,
   pub output: &'static str,
   pub visibility: &'static str,
+  pub receiver: &'static str,
   pub tag_name: Option<&'static str>,
   pub is_void: bool,
   pub supports_block: bool,
@@ -71,8 +90,10 @@ pub struct HelperEntry {
   pub signature: &'static str,
   pub documentation_url: &'static str,
   pub implicit_attribute: Option<&'static HelperImplicitAttribute>,
+  pub content: Option<&'static HelperContent>,
   pub arguments: &'static [HelperArgument],
   pub options: &'static [HelperOption],
+  pub block_arguments: &'static [HelperBlockArgument],
   pub special_behaviors: &'static [&'static str],
   pub aliases: &'static [&'static str],
 }
@@ -88,6 +109,16 @@ static <%= helper.constant_name %>_IMPLICIT_ATTR: HelperImplicitAttribute = Help
 };
 
 <%- end -%>
+<%- if helper.content? -%>
+static <%= helper.constant_name %>_CONTENT: HelperContent = HelperContent {
+  source: "<%= helper.content.source %>",
+  arg_position: <%= helper.content.arg_position ? "Some(#{helper.content.arg_position})" : "None" %>,
+  skip_if_hash: <%= helper.content.skip_if_hash %>,
+  to_s_suffix_when_single: <%= helper.content.to_s_suffix_when_single %>,
+  positional_arguments_with_block: <%= helper.content.positional_arguments_with_block ? "Some(#{helper.content.positional_arguments_with_block})" : "None" %>,
+};
+
+<%- end -%>
 <%- end -%>
 
 static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
@@ -99,6 +130,7 @@ static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
     gem: "<%= helper.gem %>",
     output: "<%= helper.output %>",
     visibility: "<%= helper.visibility %>",
+    receiver: "<%= helper.receiver %>",
     tag_name: <%= helper.tag_name ? "Some(\"#{helper.tag_name}\")" : "None" %>,
     is_void: <%= helper.void? %>,
     supports_block: <%= helper.supports_block %>,
@@ -109,6 +141,7 @@ static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
     signature: "<%= helper.escaped_signature %>",
     documentation_url: "<%= helper.documentation_url %>",
     implicit_attribute: <%= helper.implicit_attribute? ? "Some(&#{helper.constant_name}_IMPLICIT_ATTR)" : "None" %>,
+    content: <%= helper.content? ? "Some(&#{helper.constant_name}_CONTENT)" : "None" %>,
     arguments: &[
     <%- helper.arguments.each do |arg| -%>
       HelperArgument { name: "<%= arg.name %>", position: <%= arg.position %>, argument_type: "<%= arg.type_display %>", optional: <%= arg.optional %>, default: <%= arg.default ? "Some(\"#{arg.escaped_default}\")" : "None" %>, splat: <%= arg.splat %>, description: "<%= arg.escaped_description %>" },
@@ -117,6 +150,11 @@ static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
     options: &[
     <%- helper.options.each do |opt| -%>
       HelperOption { name: "<%= opt.name %>", option_type: "<%= opt.type_display %>", maps_to: <%= opt.maps_to ? "Some(\"#{opt.maps_to}\")" : "None" %>, description: "<%= opt.escaped_description %>" },
+    <%- end -%>
+    ],
+    block_arguments: &[
+    <%- helper.block_arguments.each do |arg| -%>
+      HelperBlockArgument { name: "<%= arg.name %>", position: <%= arg.position %>, argument_type: "<%= arg.type_display %>", optional: <%= arg.optional %>, description: "<%= arg.escaped_description %>" },
     <%- end -%>
     ],
     special_behaviors: &[<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>],

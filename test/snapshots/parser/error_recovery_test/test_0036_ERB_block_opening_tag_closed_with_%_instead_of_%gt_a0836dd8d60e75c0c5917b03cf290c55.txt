@@ -1,0 +1,73 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0036_ERB block opening tag closed with % instead of %>"
+input: |2-
+<% @users.each do |user| %
+  <p><%= user %></p>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ MalformedERBClosingTagError (location: (1:0)-(1:26))
+    │   │       ├── message: "ERB tag `<%` at (1:0) is closed with `%` at (1:25) instead of `%>`."
+    │   │       ├── opening_tag: "<%" (location: (1:0)-(1:2))
+    │   │       └── closing_tag: "%" (location: (1:25)-(1:26))
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @users.each do |user| " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%" (location: (1:25)-(1:26))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:26)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:20))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ ERBContentNode (location: (2:5)-(2:16))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:5)-(2:8))
+    │   │   │   │       ├── content: " user " (location: (2:8)-(2:14))
+    │   │   │   │       ├── tag_closing: "%>" (location: (2:14)-(2:16))
+    │   │   │   │       ├── parsed: true
+    │   │   │   │       └── valid: true
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:16)-(2:20))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:16)-(2:18))
+    │   │   │   │       ├── tag_name: "p" (location: (2:18)-(2:19))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:19)-(2:20))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:20)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:19)-(1:23))
+    │   │       ├── name: "user" (location: (1:19)-(1:23))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

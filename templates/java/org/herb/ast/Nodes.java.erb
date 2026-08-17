@@ -162,7 +162,7 @@ class <%= node.name %> extends BaseNode {
   public String inspect(String source) {
     StringBuilder output = new StringBuilder();
 
-    output.append("@ <%= node.name %> ").append(location != null ? "(location: " + location.toString() + ")" : "no-location").append("\n");
+    output.append("@ <%= node.name %> ").append("(location: " + (location != null ? location.toString() : "∅") + ")").append("\n");
     <%- if node.fields.any? -%>
     output.append(inspectErrors("│   "));
     <%- else -%>
@@ -250,10 +250,16 @@ class <%= node.name %> extends BaseNode {
 
   @Override
   public List<Node> recursiveErrors() {
-    List<Node> result = new ArrayList<>();
+    List<Node> accumulator = new ArrayList<>();
+    collectErrors(accumulator);
 
+    return accumulator;
+  }
+
+  @Override
+  protected void collectErrors(List<Node> accumulator) {
     if (errors != null) {
-      result.addAll(errors);
+      accumulator.addAll(errors);
     }
 
     <%- if node.fields.any? -%>
@@ -263,21 +269,19 @@ class <%= node.name %> extends BaseNode {
     if (<%= field.name %> != null) {
       for (Node child : <%= field.name %>) {
         if (child != null) {
-          result.addAll(child.recursiveErrors());
+          ((BaseNode) child).collectErrors(accumulator);
         }
       }
     }
 
     <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
     if (<%= field.name %> != null) {
-      result.addAll(<%= field.name %>.recursiveErrors());
+      ((BaseNode) <%= field.name %>).collectErrors(accumulator);
     }
 
     <%- end -%>
     <%- end -%>
     <%- end -%>
-
-    return result;
   }
 
   @Override

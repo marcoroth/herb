@@ -11,10 +11,8 @@ describe("RubyLiteralNode Printing", () => {
   })
 
   test("can print integer content", () => {
-    const node = RubyLiteralNode.from({
-      type: "AST_RUBY_LITERAL_NODE",
+    const node = RubyLiteralNode.build({
       location,
-      errors: [],
       content: "123"
     })
 
@@ -22,10 +20,8 @@ describe("RubyLiteralNode Printing", () => {
   })
 
   test("can print string content", () => {
-    const node = RubyLiteralNode.from({
-      type: "AST_RUBY_LITERAL_NODE",
+    const node = RubyLiteralNode.build({
       location,
-      errors: [],
       content: "hello"
     })
 
@@ -33,10 +29,8 @@ describe("RubyLiteralNode Printing", () => {
   })
 
   test("can print boolean content", () => {
-    const node = RubyLiteralNode.from({
-      type: "AST_RUBY_LITERAL_NODE",
+    const node = RubyLiteralNode.build({
       location,
-      errors: [],
       content: "true"
     })
 
@@ -44,10 +38,8 @@ describe("RubyLiteralNode Printing", () => {
   })
 
   test("can print method call content", () => {
-    const node = RubyLiteralNode.from({
-      type: "AST_RUBY_LITERAL_NODE",
+    const node = RubyLiteralNode.build({
       location,
-      errors: [],
       content: "@user.name"
     })
 
@@ -55,10 +47,8 @@ describe("RubyLiteralNode Printing", () => {
   })
 
   test("can print empty content", () => {
-    const node = RubyLiteralNode.from({
-      type: "AST_RUBY_LITERAL_NODE",
+    const node = RubyLiteralNode.build({
       location,
-      errors: [],
       content: ""
     })
 

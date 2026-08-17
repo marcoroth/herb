@@ -1,0 +1,22 @@
+# Generated from lib/herb/analysis/ruby_locals_index/offset_table.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RubyLocalsIndex
+      # Prism reports byte offsets into the whole template while the Herb AST
+      # reports lines and columns, so one of them has to be translated.
+      class OffsetTable
+        @line_starts: Array[Integer]
+
+        # : (String) -> void
+        def initialize: (String) -> void
+
+        # : (NamedReference) -> Herb::Location
+        def location_for: (NamedReference) -> Herb::Location
+
+        # : (Integer) -> [Integer, Integer]
+        def position_at: (Integer) -> [ Integer, Integer ]
+      end
+    end
+  end
+end

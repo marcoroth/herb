@@ -1,0 +1,5 @@
+---
+source: "Engine::HTMLSafeAssertionsVisitorTest#test_0016_value that is already html safe is not checked - render"
+input: "{source: \"<div><%= bio.html_safe %></div>\", locals: {bio: \"<script>alert(1)</script>\"}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+<div><script>alert(1)</script></div>

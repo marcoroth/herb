@@ -1,0 +1,6 @@
+---
+source: "VueDirectiveTest#test_0002_component visitor treats colon attributes as Ruby code"
+input: "{source: \"<Button :disabled=\\\"form.invalid?\\\" :loading=\\\"@submitting\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render Button.new(disabled: form.invalid?, loading: @submitting)).to_s;
+_buf.to_s

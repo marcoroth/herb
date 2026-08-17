@@ -287,5 +287,58 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "if with ternary in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if v2 = (@smart_values[k] || {})[v.nil? ? v : v.to_s] %>
+          <div class="text-muted"><%= v2 %></div>
+        <% end %>
+      HTML
+    end
+
+    test "unless with ternary in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% unless (admin? ? user.active? : user.confirmed?) %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "elsif with ternary in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if a %>
+          A
+        <% elsif b ? c : d %>
+          B
+        <% end %>
+      HTML
+    end
+
+    test "if with ternary in condition and then keyword" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if a ? b : c then %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "elsif with ternary in condition and then keyword" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if a %>
+          A
+        <% elsif b ? c : d then %>
+          B
+        <% end %>
+      HTML
+    end
+
+    test "when with ternary containing then in a string" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case value %>
+        <% when a == "then" ? 1 : 2 %>
+          content
+        <% end %>
+      HTML
+    end
   end
 end

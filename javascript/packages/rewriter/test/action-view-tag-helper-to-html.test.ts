@@ -119,6 +119,24 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
+    test("tag.div with a dynamic boolean attribute becomes a conditional attribute", () => {
+      expect(transform('<%= tag.div hidden: a != b %>')).toBe(
+        '<div <% if (a != b) %>hidden<% end %>></div>'
+      )
+    })
+
+    test("tag.div with a shorthand boolean attribute becomes a conditional attribute", () => {
+      expect(transform('<%= tag.div(hidden:) %>')).toBe(
+        '<div <% if (hidden) %>hidden<% end %>></div>'
+      )
+    })
+
+    test("tag.div with a dynamic boolean attribute inside a data hash keeps its value", () => {
+      expect(transform('<%= tag.div data: { hidden: a != b } %>')).toBe(
+        '<div data-hidden="<%= ::Herb::Engine.nested_attribute_value(a != b) %>"></div>'
+      )
+    })
+
     test("tag.div with variable attribute value wraps in ERB", () => {
       const input = dedent`
         <%= tag.div class: class_name do %>
@@ -896,6 +914,128 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     })
   })
 
+  describe("stylesheet_link_tag helpers", () => {
+    test("stylesheet_link_tag with source", () => {
+      expect(transform('<%= stylesheet_link_tag "style" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with source including extension", () => {
+      expect(transform('<%= stylesheet_link_tag "style.css" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style.css") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with URL", () => {
+      expect(transform('<%= stylesheet_link_tag "http://www.example.com/style.css" %>')).toBe(
+        '<link rel="stylesheet" href="http://www.example.com/style.css" />'
+      )
+    })
+
+    test("stylesheet_link_tag with extname false, skip_pipeline and rel", () => {
+      expect(transform('<%= stylesheet_link_tag "style.less", extname: false, skip_pipeline: true, rel: "stylesheet/less" %>')).toBe(
+        '<link rel="stylesheet/less" href="<%= stylesheet_path("style.less", extname: false, skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with media all", () => {
+      expect(transform('<%= stylesheet_link_tag "style", media: "all" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style") %>" media="all" />'
+      )
+    })
+
+    test("stylesheet_link_tag with media print", () => {
+      expect(transform('<%= stylesheet_link_tag "style", media: "print" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style") %>" media="print" />'
+      )
+    })
+
+    test("stylesheet_link_tag with multiple sources", () => {
+      expect(transform('<%= stylesheet_link_tag "random.styles", "/css/stylish" %>')).toBe(
+        dedent`
+          <link rel="stylesheet" href="<%= stylesheet_path("random.styles") %>" />
+          <link rel="stylesheet" href="<%= stylesheet_path("/css/stylish") %>" />
+        `
+      )
+    })
+
+    test("stylesheet_link_tag with protocol-relative URL", () => {
+      expect(transform('<%= stylesheet_link_tag "//cdn.example.com/style.css" %>')).toBe(
+        '<link rel="stylesheet" href="//cdn.example.com/style.css" />'
+      )
+    })
+
+    test("stylesheet_link_tag with host and protocol forwards to stylesheet_path", () => {
+      expect(transform('<%= stylesheet_link_tag "style", host: "localhost", protocol: "https" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style", host: "localhost", protocol: "https") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with skip_pipeline forwards to stylesheet_path", () => {
+      expect(transform('<%= stylesheet_link_tag "application", skip_pipeline: true %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application", skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with rel keeps the explicit value in the leading position", () => {
+      expect(transform('<%= stylesheet_link_tag "application", rel: "preload" %>')).toBe(
+        '<link rel="preload" href="<%= stylesheet_path("application") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with nonce true resolves to content_security_policy_nonce", () => {
+      expect(transform('<%= stylesheet_link_tag "application", nonce: true %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" nonce="<%= content_security_policy_nonce %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with nonce false omits nonce attribute", () => {
+      expect(transform('<%= stylesheet_link_tag "application", nonce: false %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with interpolated nonce", () => {
+      expect(transform('<%= stylesheet_link_tag "application", nonce: "static-#{dynamic}" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" nonce="static-<%= dynamic %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with data attributes", () => {
+      expect(transform('<%= stylesheet_link_tag "application", data: { turbo_track: "reload" } %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" data-turbo-track="reload" />'
+      )
+    })
+
+    test("stylesheet_link_tag with asset_path source passes through", () => {
+      expect(transform('<%= stylesheet_link_tag asset_path("application.css") %>')).toBe(
+        '<link rel="stylesheet" href="<%= asset_path("application.css") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with ruby expression source wraps in stylesheet_path", () => {
+      expect(transform('<%= stylesheet_link_tag stylesheet %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path(stylesheet) %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with splat attributes", () => {
+      expect(transform('<%= stylesheet_link_tag "application", **attributes %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" <%= tag.attributes(**attributes) %> />'
+      )
+    })
+
+    test("stylesheet_link_tag with multiple sources and media", () => {
+      expect(transform('<%= stylesheet_link_tag "application", "admin", media: "all" %>')).toBe(
+        dedent`
+          <link rel="stylesheet" href="<%= stylesheet_path("application") %>" media="all" />
+          <link rel="stylesheet" href="<%= stylesheet_path("admin") %>" media="all" />
+        `
+      )
+    })
+  })
+
   describe("class attribute handling", () => {
     test("tag.div with conditional class hash wraps in token_list", () => {
       expect(transform('<%= tag.div class: { active: true, hidden: false } %>')).toBe(
@@ -970,6 +1110,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("tag.attributes with attributes before", () => {
       expect(transform('<button class="primary" <%= tag.attributes(id: "cta") %>>Click</button>')).toBe(
         '<button class="primary" id="cta">Click</button>'
+      )
+    })
+
+    test("tag.attributes with a dynamic boolean attribute", () => {
+      expect(transform('<option <%= tag.attributes(selected: option == current) %>>One</option>')).toBe(
+        '<option <% if (option == current) %>selected<% end %>>One</option>'
       )
     })
 

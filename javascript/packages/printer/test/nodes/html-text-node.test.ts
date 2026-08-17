@@ -11,10 +11,8 @@ describe("HTMLTextNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = HTMLTextNode.from({
-      type: "AST_HTML_TEXT_NODE",
+    const node = HTMLTextNode.build({
       location,
-      errors: [],
       content: "example_content"
     })
 

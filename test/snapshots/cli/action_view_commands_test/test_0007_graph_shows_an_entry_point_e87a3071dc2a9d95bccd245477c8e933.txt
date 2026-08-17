@@ -1,0 +1,15 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0007_graph shows an entry point"
+input: "entry point graph"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ Building render graph...
+
+ posts/index.html.erb (entry point)
+
+ Renders:
+   └── ✓ posts/row
+
