@@ -61,6 +61,7 @@ module Engine
 
       assert_equal 0, context_class.derivations
       assert_equal "app/x.erb", subject.relative_file_path
+      assert_equal "app/x.erb", subject.relative_file_path
       assert_equal 1, context_class.derivations
     end
 
