@@ -1,8 +1,9 @@
 import { ErrorOverlay } from './error-overlay';
 
-export interface HerbDevToolsOptions {
+export interface HerbOverlayOptions {
   projectPath?: string;
   autoInit?: boolean;
+  devServerClient?: { applyConnectionDot(): void } | null;
 }
 
 export class HerbOverlay {
@@ -18,7 +19,7 @@ export class HerbOverlay {
   private preferredEditor = 'auto';
   private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
-  private errorOverlay: ErrorOverlay | null = null;
+  public errorOverlay: ErrorOverlay | null = null;
   private destroyed = false;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
@@ -41,17 +42,14 @@ export class HerbOverlay {
     { value: 'zed', label: 'Zed' },
   ];
 
-  constructor(private options: HerbDevToolsOptions = {}) {
+  constructor(private options: HerbOverlayOptions = {}) {
     if (options.autoInit !== false) {
       this.init();
     }
   }
 
   private syncConnectionDot() {
-    const herbClient = (window as any).__herbClient;
-    if (herbClient) {
-      herbClient.applyConnectionDot();
-    }
+    this.options.devServerClient?.applyConnectionDot();
   }
 
   private init() {

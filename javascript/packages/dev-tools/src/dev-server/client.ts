@@ -6,6 +6,7 @@ import { MismatchAlert } from "./mismatch-alert"
 import { applyPatch } from "./patch"
 
 import type {
+  ErrorOverlayHandle,
   HerbClientOptions,
   HerbMessage,
   WelcomeMessage,
@@ -180,10 +181,8 @@ export class HerbClient {
     this.connectionDot.apply()
   }
 
-  private getErrorOverlay(): { showErrors: Function; clearErrors: Function } | null {
-    const devTools = (window as any).HerbDevTools
-
-    return devTools?._errorOverlay ?? devTools?._overlay?.errorOverlay ?? null
+  private getErrorOverlay(): ErrorOverlayHandle | null {
+    return this.options.errorOverlay?.() ?? null
   }
 
   private detectPort(): number | null {
