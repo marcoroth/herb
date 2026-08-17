@@ -535,6 +535,8 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
 }
 
 __attribute__((__visibility__("default"))) void Init_herb(void) {
+  rb_ext_ractor_safe(true);
+
   mHerb = rb_define_module("Herb");
   cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
   cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);
