@@ -31,7 +31,6 @@ module Herb
 
       attr_reader :file_path #: Pathname?
       attr_reader :project_path #: Pathname
-      attr_reader :relative_file_path #: String
       attr_reader :options #: Hash[Symbol, untyped]
       attr_reader :data #: Hash[Symbol, untyped]
 
@@ -39,11 +38,15 @@ module Herb
       def initialize(file_path: nil, project_path: nil, options: {}, **data)
         @file_path = self.class.coerce_file_path(file_path)
         @project_path = self.class.coerce_project_path(project_path)
-        @relative_file_path = self.class.derive_relative_file_path(@file_path, @project_path)
         @options = options.dup.freeze
         @data = data.tap { |values| values[:origin] ||= Origin.new }.freeze
 
         freeze
+      end
+
+      #: () -> String
+      def relative_file_path
+        self.class.derive_relative_file_path(file_path, project_path)
       end
 
       #: () -> Herb::Engine::Origin

@@ -27,14 +27,15 @@ module Herb
 
       attr_reader project_path: Pathname
 
-      attr_reader relative_file_path: String
-
       attr_reader options: Hash[Symbol, untyped]
 
       attr_reader data: Hash[Symbol, untyped]
 
       # : (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
       def initialize: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
+
+      # : () -> String
+      def relative_file_path: () -> String
 
       # : () -> Herb::Engine::Origin
       def origin: () -> Herb::Engine::Origin
