@@ -37,6 +37,9 @@ module Herb
 
     def self.heredoc?: (untyped code) -> untyped
 
+    # : () -> untyped
+    def compiler_class: () -> untyped
+
     def add_text: (untyped text) -> untyped
 
     def add_code: (untyped code) -> untyped

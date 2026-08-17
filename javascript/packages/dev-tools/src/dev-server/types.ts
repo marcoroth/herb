@@ -73,9 +73,15 @@ export interface ConnectionOptions {
   onReconnecting?: (attempt: number, maxAttempts: number, delay: number) => void
 }
 
+export interface ErrorOverlayHandle {
+  showErrors(errors: unknown[], filename: string): void
+  clearErrors(): void
+}
+
 export interface HerbClientOptions {
   port?: number
   host?: string
+  errorOverlay?: () => ErrorOverlayHandle | null
   onPatch?: (message: PatchMessage) => void
   onReload?: (message: ReloadMessage) => void
   onError?: (message: ErrorMessage) => void

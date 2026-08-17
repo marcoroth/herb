@@ -10,6 +10,7 @@ import * as path from "./posix_path"
 import { getTagName, isERBStrictLocalsNode, isHTMLElementNode, isPureWhitespaceNode } from "@herb-tools/core"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
+import type { FrameworkOptions } from "./types.js"
 import type { DocumentNode, ERBRenderNode, Node } from "@herb-tools/core"
 
 const VIEWS_DIRECTORY = "/app/views/"
@@ -50,7 +51,9 @@ export class DefinitionProvider {
     this.viewRootFor = viewRootFor
   }
 
-  getDefinition(document: TextDocument, position: Position): LocationLink[] {
+  getDefinition(document: TextDocument, position: Position, options?: FrameworkOptions): LocationLink[] {
+    if (options?.framework !== "actionview") return []
+
     const reference = this.referenceAt(document, position)
 
     if (!reference || !this.isStatic(reference)) return []
@@ -65,7 +68,9 @@ export class DefinitionProvider {
     }))
   }
 
-  getHover(document: TextDocument, position: Position): Hover | null {
+  getHover(document: TextDocument, position: Position, options?: FrameworkOptions): Hover | null {
+    if (options?.framework !== "actionview") return null
+
     const reference = this.referenceAt(document, position)
 
     if (!reference) return null

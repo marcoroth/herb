@@ -44,6 +44,27 @@ module Engine
       assert_equal "/abs/x.erb", context(file_path: "/abs/x.erb", project_path: "relative").relative_file_path
     end
 
+    test "the relative file path is derived lazily" do
+      context_class = Class.new(Herb::Engine::VisitorContext) do
+        class << self
+          attr_accessor :derivations
+
+          def derive_relative_file_path(...)
+            self.derivations += 1
+            super
+          end
+        end
+      end
+      context_class.derivations = 0
+
+      subject = context_class.new(file_path: "app/x.erb", project_path: "/proj")
+
+      assert_equal 0, context_class.derivations
+      assert_equal "app/x.erb", subject.relative_file_path
+      assert_equal "app/x.erb", subject.relative_file_path
+      assert_equal 1, context_class.derivations
+    end
+
     test "the file path is not absolutized" do
       assert_equal "test.erb", context(file_path: "test.erb").file_path.to_s
     end

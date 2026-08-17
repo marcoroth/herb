@@ -261,7 +261,9 @@ export class Server {
 
       if (!document) return null
 
-      return this.session.hoverProvider.getHover(document, params.position) ?? this.session.definitionProvider.getHover(document, params.position)
+      const framework = this.session.projects.get(params.textDocument.uri)?.framework
+
+      return this.session.hoverProvider.getHover(document, params.position, { framework }) ?? this.session.definitionProvider.getHover(document, params.position, { framework })
     })
 
     this.connection.onCompletion((params: CompletionParams) => {
@@ -293,8 +295,8 @@ export class Server {
       )
 
       const autofixCodeActions = await project.codeActionProvider.autofixCodeActions(params, document)
-      const rewriteCodeActions = this.session.rewriteCodeActionProvider.getCodeActions(document, params.range)
-      const extractCodeActions = this.session.extractCodeActionProvider.getCodeActions(document, params.range)
+      const rewriteCodeActions = this.session.rewriteCodeActionProvider.getCodeActions(document, params.range, { framework: project.framework })
+      const extractCodeActions = this.session.extractCodeActionProvider.getCodeActions(document, params.range, { framework: project.framework })
 
       return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions).concat(extractCodeActions)
     })
@@ -312,7 +314,8 @@ export class Server {
 
       if (!document) return []
 
-      const links = this.session.definitionProvider.getDefinition(document, params.position)
+      const framework = this.session.projects.get(params.textDocument.uri)?.framework
+      const links = this.session.definitionProvider.getDefinition(document, params.position, { framework })
 
       if (this.session.capabilities.supportsDefinitionLinks) return links
 
@@ -332,7 +335,9 @@ export class Server {
 
       if (!document) return []
 
-      return this.session.documentSymbolProvider.getDocumentSymbols(document)
+      const framework = this.session.projects.get(params.textDocument.uri)?.framework
+
+      return this.session.documentSymbolProvider.getDocumentSymbols(document, { framework })
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {

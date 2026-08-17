@@ -1,4 +1,5 @@
 import { Config } from "@herb-tools/config"
+
 import { Herb, HerbBackend } from "@herb-tools/node-wasm"
 import { ProjectIndex } from "@herb-tools/analysis/node"
 
@@ -12,6 +13,7 @@ import { CompletionProvider, ReferencesProvider } from "@herb-tools/language-ser
 
 import { version } from "../package.json"
 
+import type { Framework } from "@herb-tools/config"
 import type { Connection } from "vscode-languageserver/node"
 import type { UserSettings, PersonalHerbSettings } from "./user_settings"
 import type { Capabilities } from "./capabilities"
@@ -86,13 +88,19 @@ export class Project {
     await this.index.indexAll()
   }
 
+  get framework(): Framework | undefined {
+    return this.config?.config?.framework
+  }
+
   async loadConfig() {
     this.config = await this.readConfig()
 
     this.codeActionProvider.setConfig(this.config)
     this.autofixService.setConfig(this.config)
     this.linterService.setConfig(this.config)
-    this.completionProvider.setFramework(this.config?.config?.framework)
+    this.completionProvider.setConfig(this.config)
+    this.referencesProvider.setConfig(this.config)
+
     this.linterService.rebuildLinter()
   }
 

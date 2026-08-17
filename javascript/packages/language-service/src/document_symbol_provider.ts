@@ -7,12 +7,14 @@ import { getAttributeName } from "@herb-tools/core"
 import { elementName, erbLabel } from "./node_labels"
 
 import type { NodeLabelOptions } from "./node_labels"
+import type { FrameworkOptions } from "./types.js"
 
 import type { Range } from "vscode-languageserver-types"
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { DocumentNode, ERBContentNode, ERBNode, ERBRenderNode, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
 
 const PARSER_OPTIONS = { render_nodes: true, action_view_helpers: true } as const
+const PLAIN_PARSER_OPTIONS = { render_nodes: true } as const
 const QUOTE = /^["']|["']$/g
 
 const LABEL_OPTIONS: NodeLabelOptions = {
@@ -146,8 +148,9 @@ export class DocumentSymbolProvider {
     this.parserService = parserService
   }
 
-  getDocumentSymbols(document: TextDocument, options: NodeLabelOptions = {}): DocumentSymbol[] {
-    const result = this.parserService.parseContent(document.getText(), PARSER_OPTIONS)
+  getDocumentSymbols(document: TextDocument, options: NodeLabelOptions & FrameworkOptions = {}): DocumentSymbol[] {
+    const parserOptions = options.framework === "actionview" ? PARSER_OPTIONS : PLAIN_PARSER_OPTIONS
+    const result = this.parserService.parseContent(document.getText(), parserOptions)
     const collector = new DocumentSymbolCollector({ ...LABEL_OPTIONS, ...options })
 
     collector.visit(result.value as DocumentNode)

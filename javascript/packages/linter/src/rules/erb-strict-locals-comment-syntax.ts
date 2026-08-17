@@ -2,10 +2,10 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isRubyParameterNode } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
+import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "./strict-locals-utils.js"
 
 import type { BaseAutofixContext, Mutable, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"
+import type {ParseResult, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"
 
 const LOCALS_PREFIX = "locals:"
 
@@ -19,7 +19,7 @@ type StrictLocalsFix =
   | { type: "wrap-parameters" }
   | { type: "close-parameters" }
   | { type: "remove-extra-commas" }
-  | { type: "keyword-argument", name: string }
+  | { type: "keyword-argument"; name: string }
 
 interface ERBStrictLocalsCommentSyntaxAutofixContext extends BaseAutofixContext {
   node: Mutable<StrictLocalsCommentNode>
@@ -41,16 +41,6 @@ function extractERBCommentContent(content: string): string {
   return content.trim()
 }
 
-function extractRubyCommentContent(content: string): string | null {
-  const match = content.match(/^\s*#\s*(.*)$/)
-
-  return match ? match[1].trim() : null
-}
-
-function looksLikeLocalsDeclaration(content: string): boolean {
-  return /^locals?\b/.test(content) && /[(:)]/.test(content)
-}
-
 function detectLocalsWithoutColon(content: string): boolean {
   return /^locals?\(/.test(content)
 }
@@ -64,7 +54,7 @@ function detectMissingColonBeforeParens(content: string): boolean {
 }
 
 function hasError(node: { errors: HerbError[] }, type: string): boolean {
-  return node.errors.some(error => error.type === type)
+  return node.errors.some((error) => error.type === type)
 }
 
 function skipStringLiteral(content: string, index: number): number {
@@ -130,7 +120,10 @@ function segmentsOf(parameters: Parameters): Segment[] {
 
   const boundaries = [parameters.open, ...parameters.commas, parameters.close]
 
-  return boundaries.slice(0, -1).map((boundary, index) => ({ start: boundary + 1, end: boundaries[index + 1] }))
+  return boundaries.slice(0, -1).map((boundary, index) => ({
+    start: boundary + 1,
+    end: boundaries[index + 1],
+  }))
 }
 
 function isBareIdentifier(text: string): boolean {
@@ -290,19 +283,10 @@ function applyFix(node: Mutable<StrictLocalsCommentNode>, fix: StrictLocalsFix):
 
 class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocalsCommentSyntaxAutofixContext> {
   visitERBStrictLocalsNode(node: ERBStrictLocalsNode): void {
-    const isPartial = isPartialFile(this.context.fileName)
-
-    if (isPartial === false) {
-      this.addOffense(
-        "Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.",
-        node.location
-      )
-    }
-
     if (hasError(node, "STRICT_LOCALS_DUPLICATE_DECLARATION_ERROR")) {
       this.addOffense(
         "Duplicate strict locals declaration. Rails only uses the first `<%# locals: (...) %>` declaration in a partial.",
-        node.location
+        node.location,
       )
     }
 
@@ -313,7 +297,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       this.addOffense(
         "Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.",
         node.location,
-        this.contextFor(node, { type: "space-after-colon" })
+        this.contextFor(node, { type: "space-after-colon" }),
       )
     }
 
@@ -325,7 +309,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
           ? "Strict locals declarations always need parentheses. Use `<%# locals: () %>` for a partial without locals."
           : `Strict locals parameters must be wrapped in parentheses. Use \`<%# locals: ${suggestedParameters(parameters)} %>\`.`,
         node.location,
-        this.contextFor(node, { type: "wrap-parameters" })
+        this.contextFor(node, { type: "wrap-parameters" }),
       )
 
       return
@@ -347,9 +331,9 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
 
       if (rubyComment && looksLikeLocalsDeclaration(rubyComment)) {
         this.addOffense(
-          `Use \`<%#\` instead of \`${openingTag} #\` for strict locals comments. Only ERB comment syntax is recognized by Rails.`,
+          `Use \`<%#\` instead of \`${openingTag} #\` for strict locals comments. Only ERB comment syntax is recognized.`,
           node.location,
-          this.contextFor(node, { type: "erb-comment-tag" })
+          this.contextFor(node, { type: "erb-comment-tag" }),
         )
       }
 
@@ -367,7 +351,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       this.addOffense(
         "Use `locals:` (plural), not `local:`.",
         node.location,
-        this.contextFor(node, { type: "plural-locals" })
+        this.contextFor(node, { type: "plural-locals" }),
       )
 
       return
@@ -377,7 +361,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       this.addOffense(
         "Use `locals:` with a colon, not `locals()`. Correct format: `<%# locals: (...) %>`.",
         node.location,
-        this.contextFor(node, { type: "colon-after-locals" })
+        this.contextFor(node, { type: "colon-after-locals" }),
       )
 
       return
@@ -387,7 +371,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       this.addOffense(
         "Use `locals:` with a colon before the parentheses, not `locals (`.",
         node.location,
-        this.contextFor(node, { type: "colon-after-locals" })
+        this.contextFor(node, { type: "colon-after-locals" }),
       )
 
       return
@@ -404,7 +388,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       this.addOffense(
         "Unbalanced parentheses in the strict locals declaration. Add the missing closing `)`.",
         node.location,
-        this.contextFor(node, { type: "close-parameters" })
+        this.contextFor(node, { type: "close-parameters" }),
       )
 
       return true
@@ -414,7 +398,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       this.addOffense(
         "Remove the extra comma from the strict locals parameters.",
         node.location,
-        this.contextFor(node, { type: "remove-extra-commas" })
+        this.contextFor(node, { type: "remove-extra-commas" }),
       )
 
       return true
@@ -422,7 +406,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
 
     this.addOffense(
       `Invalid Ruby syntax in the strict locals declaration: ${syntaxErrors[0].error_message}.`,
-      node.location
+      node.location,
     )
 
     return true
@@ -439,17 +423,17 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
           this.addOffense(
             `Strict locals only support keyword arguments. Use \`${name}:\` instead of the positional argument \`${name}\`.`,
             local.location,
-            this.contextFor(node, { type: "keyword-argument", name })
+            this.contextFor(node, { type: "keyword-argument", name }),
           )
         } else if (error.type === "STRICT_LOCALS_SPLAT_ARGUMENT_ERROR") {
           this.addOffense(
             `Strict locals only support keyword arguments. The splat argument \`*${name}\` is not supported. Use \`**${name}\` to accept arbitrary keyword arguments.`,
-            local.location
+            local.location,
           )
         } else if (error.type === "STRICT_LOCALS_BLOCK_ARGUMENT_ERROR") {
           this.addOffense(
             `Strict locals only support keyword arguments. The block argument \`&${name}\` is not supported.`,
-            local.location
+            local.location,
           )
         }
       }
@@ -460,7 +444,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
     return {
       node: node as Mutable<StrictLocalsCommentNode>,
       nodeType: "AST_ERB_CONTENT_NODE",
-      fix
+      fix,
     }
   }
 }
@@ -475,7 +459,7 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocals
 
   get parserOptions() {
     return {
-      strict_locals: true
+      strict_locals: true,
     }
   }
 
@@ -487,15 +471,24 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocals
     }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBStrictLocalsCommentSyntaxAutofixContext>[] {
-    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.ruleName, context)
+  check(
+    result: ParseResult,
+    context?: Partial<LintContext>,
+  ): UnboundLintOffense<ERBStrictLocalsCommentSyntaxAutofixContext>[] {
+    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(
+      this.ruleName,
+      context,
+    )
 
     visitor.visit(result.value)
 
     return visitor.offenses
   }
 
-  autofix(offense: LintOffense<ERBStrictLocalsCommentSyntaxAutofixContext>, result: ParseResult): ParseResult | null {
+  autofix(
+    offense: LintOffense<ERBStrictLocalsCommentSyntaxAutofixContext>,
+    result: ParseResult,
+  ): ParseResult | null {
     if (!offense.autofixContext) return null
 
     const { node, fix } = offense.autofixContext

@@ -31,12 +31,13 @@
   },
   "dependencies": {
     "@herb-tools/analysis": "0.10.3",
+    "@herb-tools/config": "0.10.3",
     "@herb-tools/core": "0.10.3",
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver-textdocument": "^1.0.12",
-    "vscode-languageserver-types": "^3.17.5"
+    "vscode-languageserver-types": "^3.18.0"
   },
   "devDependencies": {
     "@herb-tools/linter": "0.10.3",

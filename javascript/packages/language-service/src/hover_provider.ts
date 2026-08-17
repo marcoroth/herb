@@ -9,6 +9,7 @@ import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation } from "./range_utils"
 
 import type { Node, HTMLElementNode, ERBOpenTagNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
+import type { FrameworkOptions } from "./types.js"
 
 class ActionViewElementCollector extends Visitor {
   public elements: { node: HTMLElementNode; openTag: ERBOpenTagNode; range: Range }[] = []
@@ -133,7 +134,11 @@ export class HoverProvider {
     this.baseDir = baseDir
   }
 
-  getHover(textDocument: TextDocument, position: Position): Hover | null {
+  getHover(textDocument: TextDocument, position: Position, options?: FrameworkOptions): Hover | null {
+    if (options?.framework !== "actionview") {
+      return this.getEntityHover(textDocument, position)
+    }
+
     const parseResult = this.parserService.parseContent(textDocument.getText(), {
       action_view_helpers: true,
       track_whitespace: true,

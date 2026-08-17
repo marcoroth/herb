@@ -7,7 +7,8 @@ import { getLanguageService as getUpstreamLanguageService } from "vscode-html-la
 import { TOKEN_LIST_ATTRIBUTES, getHelper } from "@herb-tools/core"
 
 import type { ParseOptions } from "@herb-tools/core"
-import type { LanguageServiceOptions } from "./types.js"
+import type { LanguageServiceOptions, ProjectConfig } from "./types.js"
+import type { Framework } from "@herb-tools/config"
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { Position, Range, CompletionList, CompletionItem, Hover, TextEdit, DocumentHighlight, DocumentLink, SymbolInformation, DocumentSymbol, FoldingRange, SelectionRange, WorkspaceEdit, IHTMLDataProvider } from "vscode-html-languageservice"
 import type { LanguageService, HTMLDocument, HTMLFormatConfiguration, CompletionConfiguration, HoverSettings, DocumentContext } from "vscode-html-languageservice"
@@ -174,7 +175,7 @@ function currentERBTag(source: string, offset: number): string | null {
   return source.slice(opening, offset)
 }
 
-export function getBlockArgumentCompletions(document: TextDocument, position: Position, options?: { framework?: string }): CompletionList | null {
+export function getBlockArgumentCompletions(document: TextDocument, position: Position, config?: ProjectConfig): CompletionList | null {
   const source = document.getText()
   const offset = document.offsetAt(position)
   const tag = currentERBTag(source, offset)
@@ -186,7 +187,7 @@ export function getBlockArgumentCompletions(document: TextDocument, position: Po
 
   const typed = block[1] !== undefined
   const closed = typed && hasClosingPipe(source, offset)
-  const suggestions = helperSuggestions(tag, options?.framework) ?? iterationSuggestions(tag)
+  const suggestions = helperSuggestions(tag, config?.framework) ?? iterationSuggestions(tag)
 
   if (!suggestions) return null
 
@@ -221,7 +222,7 @@ interface BlockArgumentSuggestion {
   documentation?: string
 }
 
-function helperSuggestions(tag: string, framework?: string): BlockArgumentSuggestion[] | null {
+function helperSuggestions(tag: string, framework?: Framework): BlockArgumentSuggestion[] | null {
   if (framework !== "actionview") return null
 
   const call = tag.match(/^<%=?-?\s*([a-z_][A-Za-z0-9_]*)/)

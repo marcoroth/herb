@@ -17,24 +17,7 @@ export default [
     moduleTypes: { ".css": "js" },
     plugins: [
       postcss({
-        inject: true,
-        minimize: true,
-      }),
-    ],
-  },
-  {
-    input: "src/index.ts",
-    output: {
-      file: "dist/herb-dev-tools.umd.js",
-      format: "umd",
-      name: "HerbDevTools",
-      sourcemap: true,
-    },
-    platform: "browser",
-    moduleTypes: { ".css": "js" },
-    plugins: [
-      postcss({
-        inject: true,
+        inject: false,
         minimize: true,
       }),
     ],

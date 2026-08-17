@@ -205,10 +205,10 @@ vscode:
     - any-glob-to-any-file:
       - '**/javascript/packages/vscode/**/*'
 
-dev-client:
+dev-server-client:
   - changed-files:
     - any-glob-to-any-file:
-      - '**/javascript/packages/client/**/*'
+      - '**/javascript/packages/dev-tools/src/dev-server/**/*'
 
 dev-server:
   - changed-files:
