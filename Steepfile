@@ -21,4 +21,6 @@ target :lib do
   ignore "lib/herb/dev/server.rb"
   ignore "lib/herb/dev/server_entry.rb"
   ignore "lib/herb/dev/runner.rb"
+  ignore "lib/herb/rubocop.rb"
+  ignore "lib/herb/rubocop/**/*.rb"
 end
