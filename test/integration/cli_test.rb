@@ -185,6 +185,83 @@ module Engine
       end
     end
 
+    test "render with slots emits markers around the rendered output" do
+      template = "<div><%= 1 + 1 %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots"]).call
+        end
+
+        assert_includes captured_output, "herb-region:"
+        assert_includes captured_output, %(data-herb-child="0")
+      end
+    end
+
+    test "render without slots emits no markers" do
+      template = "<div><%= 1 + 1 %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path]).call
+        end
+
+        refute_includes captured_output, "herb-"
+      end
+    end
+
+    test "render in client mode parks the branch that did not run" do
+      template = "<div><% if false %><b>secret</b><% else %><i>guest</i><% end %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots", "client"]).call
+        end
+
+        assert_includes captured_output, "<template data-herb-region="
+        assert_includes captured_output, "<!--herb-branch:0:0--><b>secret</b>"
+      end
+    end
+
+    test "render in server mode parks nothing" do
+      template = "<div><% if false %><b>secret</b><% else %><i>guest</i><% end %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots", "server"]).call
+        end
+
+        assert_includes captured_output, "herb-slot:0:conditional"
+        refute_includes captured_output, "<template"
+        refute_includes captured_output, "secret"
+      end
+    end
+
+    test "render picks up a herb:slots directive without the flag" do
+      template = "<%# herb:slots client %>\n<div><% if false %>a<% else %>b<% end %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path]).call
+        end
+
+        assert_includes captured_output, "<template data-herb-region="
+      end
+    end
+
+    test "an unknown slots mode is rejected before anything is compiled" do
+      template = "<div><%= 1 + 1 %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots", "nonsense"]).call
+        end
+
+        assert_includes captured_output, "Unknown --slots mode: nonsense"
+        assert_includes captured_output, "Expected one of: server, client"
+      end
+    end
+
     test "compile picks up a herb:slots directive without the flag" do
       template = "<%# herb:slots %>\n<% users.each do |user| %><li><%= user.name %></li><% end %>"
 
