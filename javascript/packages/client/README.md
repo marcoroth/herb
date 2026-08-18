@@ -124,6 +124,65 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 A branch the server parked is built for you, so a template in client mode toggles a conditional with no round trip. That is the same `materialize` path, taken for you.
 
+## Setting state
+
+`apply` answers what to do with values once you have them. `state` is how a page asks for them.
+
+```typescript
+const { state } = HerbRuntime.start()
+
+await state.set({ query: "ruby", page: 1 })
+state.set("query", "")
+state.get("query")
+```
+
+By default the query string is where the state lives, so the address bar keeps matching the page and back, forward and bookmarking all keep working without the server holding a session. `set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
+
+That default fits a view's inputs, which is what a search box, a filter and a page number are. It does not fit everything. A form about to save a row is a mutation and not a view, a long value runs into what a URL can hold, and anything private has no business in a server log or a `Referer` header. Those pages keep their state in memory:
+
+```typescript
+HerbRuntime.start({ state: { persist: "none" } })
+```
+
+A page that keeps state in memory never reads the query string and never writes to it, and everything else is unchanged. It still sends the whole state, and it still writes the slots it can.
+
+A page that has told the client which slots read which state can write some of them itself. The compiler marks each slot with where its next value comes from:
+
+- `identity` is a slot whose expression is the state itself, as in `<%= query %>` or `value="<%= query %>"`. The client writes it by copying. A value goes in as text, so markup inside it stays text, which is what `<%= %>` would have produced.
+- `structural` is a conditional or a collection, which the client builds only from markup the server parked.
+- `derived` is an expression that has to be evaluated, and evaluating it means running Ruby.
+
+So a search box updates as fast as it is typed in, while the result count it sits above waits for the answer. The reply reconciles either way, and confirming what was already written costs nothing, because a value equal to the one on the page is not written:
+
+```typescript
+const report = await state.set("query", "ruby")
+// { applied, deferred, written, restored, stale, failed }
+```
+
+`written` counts the optimistic writes. `applied` counts what the reply changed on top of them, so a reply that agrees reports `0`. A request that fails puts back every value it wrote and the state it wrote them for, reporting `restored`. A reply that arrives after a newer write has already gone out is dropped and reports `stale`, since applying it would undo something newer.
+
+The map is delivered the way parked statics are, and is taken out of the document once read:
+
+```html
+<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0,"mode":"identity"}]},"params":{"query":"@query"}}</template>
+```
+
+A partial knows the state under whatever name its caller passed it, so the map names every slot under the name the page uses. `Herb::Engine::SlotDependencies` builds it.
+
+A template reads `@query` and a request carries `query`, and what joins them is a line in a controller that no template sees. So the map says which request name feeds which state, and `set` takes the request name. A name the map says nothing about is tried as the state's own name, so `state.set("@query", …)` reaches it too.
+
+Nothing about the transport is assumed. The default asks the same URL for the `slots` format, which is what `ReActionView` serves, and any other protocol is a function:
+
+```typescript
+HerbRuntime.start({
+  state: {
+    transport: async (request, signal) => fetch(build(request), { signal }).then((response) => response.json()),
+    debounce: 150,
+    persist: "none",
+  },
+})
+```
+
 ## Deciding what to update
 
 A slot inside a conditional or a collection is destroyed when that conditional or collection re-renders, so the runtime tracks what contains what. Everything an update to a slot would destroy:
