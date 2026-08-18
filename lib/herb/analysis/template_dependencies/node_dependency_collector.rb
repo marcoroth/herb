@@ -11,13 +11,15 @@ module Herb
 
         attr_reader :affected
 
-        def initialize(state, helper_registry, custom_helpers)
+        def initialize(state, helper_registry, custom_helpers, conditions_only: false)
           super()
 
           @state = state
+          @conditions_only = conditions_only
           @helper_registry = helper_registry
           @custom_helpers = custom_helpers
           @affected = [] #: Array[Hash[Symbol, untyped]]
+          @aliases = Set[state] #: Set[String]
           @path = [] #: Array[Integer]
           @child_index = [] #: Array[Integer]
         end
@@ -105,7 +107,7 @@ module Herb
         end
 
         def check_block_for_state(node, type)
-          all_content = collect_all_expressions(node)
+          all_content = @conditions_only ? Array(own_expression(node)) : collect_all_expressions(node)
 
           if all_content.any? { |code| references_state?(code) }
             location = node.location
@@ -123,6 +125,9 @@ module Herb
         end
 
         def visit_branching_node(node)
+          bound = bindings_for(node)
+          @aliases.merge(bound)
+
           BRANCH_BODY_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
 
@@ -137,6 +142,42 @@ module Herb
 
             visit(child)
           end
+        ensure
+          @aliases.subtract(bound) if bound
+        end
+
+        def bindings_for(node)
+          code = node.respond_to?(:content) ? node.content&.value&.strip : nil
+
+          return [] unless code
+          return [] unless references_state?(code)
+
+          block_parameters(code) - @aliases.to_a
+        end
+
+        def block_parameters(code)
+          result = Prism.parse("#{code}\nend")
+
+          return [] if result.errors.any?
+
+          names = [] #: Array[String]
+          collect_parameters(result.value, names)
+
+          names
+        end
+
+        def collect_parameters(node, names)
+          names << node.name.to_s if node.is_a?(Prism::RequiredParameterNode) || node.is_a?(Prism::BlockParameterNode)
+
+          node.child_nodes.compact.each { |child| collect_parameters(child, names) }
+        end
+
+        def own_expression(node)
+          return nil unless node.respond_to?(:content)
+
+          value = node.content&.value&.strip
+
+          value unless value.nil? || value.empty?
         end
 
         def collect_all_expressions(node)
@@ -206,13 +247,19 @@ module Herb
         end
 
         def references_state?(code)
-          if @state.start_with?("@")
-            code.include?(@state)
-          elsif @state.include?(".")
-            constant = @state.split(".").first
+          return false unless code
+
+          @aliases.any? { |name| references_name?(code, name) }
+        end
+
+        def references_name?(code, name)
+          if name.start_with?("@")
+            code.match?(/#{Regexp.escape(name)}\b/)
+          elsif name.include?(".")
+            constant = name.split(".").first
             code.include?(constant.to_s)
           else
-            code.match?(/\b#{Regexp.escape(@state)}\b/)
+            code.match?(/\b#{Regexp.escape(name)}\b/)
           end
         end
       end

@@ -73,13 +73,17 @@ module Herb
         flow_node(trace, trace[:entry_point], nil, Set.new)
       end
 
-      def affected_nodes(file_path, state)
+      def affected_nodes(file_path, state, conditions_only: false)
         file_path = @project_path.join(file_path).to_s unless Pathname.new(file_path).absolute?
         source = File.read(file_path)
 
         ast = ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, track_whitespace: true).value
 
-        collector = NodeDependencyCollector.new(state, @helper_registry, @custom_helpers)
+        nodes_in(ast, state, conditions_only: conditions_only)
+      end
+
+      def nodes_in(ast, state, conditions_only: false)
+        collector = NodeDependencyCollector.new(state, @helper_registry, @custom_helpers, conditions_only: conditions_only)
         ast.accept(collector)
 
         collector.affected

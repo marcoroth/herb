@@ -265,16 +265,13 @@ impl StateFlow {
 }
 
 fn expression_references(expression: &str, name: &str) -> bool {
-  if name.starts_with('@') {
-    return expression.contains(name);
-  }
-
+  let sigil = name.starts_with('@');
   let bytes = expression.as_bytes();
   let mut start = 0;
 
   while let Some(offset) = expression[start..].find(name) {
     let index = start + offset;
-    let before = index == 0 || !is_word_byte(bytes[index - 1]);
+    let before = sigil || index == 0 || !is_word_byte(bytes[index - 1]);
     let after_index = index + name.len();
     let after = after_index >= bytes.len() || !is_word_byte(bytes[after_index]);
 

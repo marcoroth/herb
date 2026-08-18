@@ -15,6 +15,12 @@ describe("dependencyIndex", () => {
     return dependencyIndex(Herb, FILE, source)
   }
 
+  test("does not confuse a state name with a longer one", () => {
+    const nodes = affectedNodes(Herb, `<div><%= @post.title %></div><div><%= @posts.count %></div>`, "@post")
+
+    expect(nodes.map(node => node.expression)).toEqual(["@post.title"])
+  })
+
   test("numbers a node the way SlotVisitor and SubtreeCompiler number it", () => {
     expect(affectedNodes(Herb, `<div><h1><%= @title %></h1></div>`, "@title")[0].nodePath).toEqual([0, 0, 0])
   })

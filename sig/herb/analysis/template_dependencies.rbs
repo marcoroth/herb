@@ -55,7 +55,9 @@ module Herb
 
       def state_flow: (untyped entry_point, untyped state) -> untyped
 
-      def affected_nodes: (untyped file_path, untyped state) -> untyped
+      def affected_nodes: (untyped file_path, untyped state, ?conditions_only: untyped) -> untyped
+
+      def nodes_in: (untyped ast, untyped state, ?conditions_only: untyped) -> untyped
 
       def dependency_index: (untyped file_path) -> untyped
 

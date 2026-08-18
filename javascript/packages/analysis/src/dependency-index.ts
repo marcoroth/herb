@@ -20,14 +20,18 @@ export function referencesState(code: string | undefined, state: string): boolea
   if (!code || !state) return false
 
   if (state.startsWith("@")) {
-    return code.includes(state)
+    return new RegExp(`${escapeForPattern(state)}\\b`).test(code)
   }
 
   if (state.includes(".")) {
     return code.includes(state.split(".")[0])
   }
 
-  return new RegExp(`\\b${state.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(code)
+  return new RegExp(`\\b${escapeForPattern(state)}\\b`).test(code)
+}
+
+function escapeForPattern(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 function childrenOf(node: Node): Node[] {

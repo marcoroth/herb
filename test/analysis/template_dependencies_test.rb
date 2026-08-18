@@ -423,6 +423,50 @@ class TemplateDependenciesTest < Minitest::Spec
     assert_equal "class", attr_node[:attribute]
   end
 
+  test "affected_nodes follows state through a block parameter" do
+    path = write_template("posts/index.html.erb", "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>")
+
+    nodes = analyzer.affected_nodes(path, "@items")
+    expressions = nodes.map { |node| node[:expression] }
+
+    assert_includes expressions, "item.name"
+  end
+
+  test "affected_nodes follows state through every parameter a block binds" do
+    path = write_template("posts/index.html.erb", "<ul><% @rows.each_with_index do |row, i| %><li><%= i %>: <%= row.title %></li><% end %></ul>")
+
+    expressions = analyzer.affected_nodes(path, "@rows").map { |node| node[:expression] }
+
+    assert_includes expressions, "i"
+    assert_includes expressions, "row.title"
+  end
+
+  test "affected_nodes leaves an expression a block parameter does not reach" do
+    path = write_template("posts/index.html.erb", "<div><% @items.each do |item| %><%= other %><% end %></div>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    refute_includes expressions, "other"
+  end
+
+  test "affected_nodes stops a block parameter at the end of its block" do
+    path = write_template("posts/index.html.erb", "<div><% @items.each do |item| %><%= item.name %><% end %><%= item %></div>")
+
+    nodes = analyzer.affected_nodes(path, "@items")
+
+    assert_equal(1, nodes.count { |node| node[:expression] == "item.name" })
+    assert_equal(0, nodes.count { |node| node[:expression] == "item" })
+  end
+
+  test "affected_nodes does not confuse a state name with a longer one" do
+    path = write_template("posts/show.html.erb", "<div><%= @post.title %></div><div><%= @posts.count %></div>")
+
+    expressions = analyzer.affected_nodes(path, "@post").map { |node| node[:expression] }
+
+    assert_includes expressions, "@post.title"
+    refute_includes expressions, "@posts.count"
+  end
+
   test "dependency_index marks if-blocks containing state as conditional" do
     path = write_template("posts/show.html.erb", "<div><% if @admin %><%= @post.name %><% end %></div>")
 
