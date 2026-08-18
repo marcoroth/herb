@@ -144,6 +144,8 @@ At [**Rails World 2025**](https://www.rubyevents.org/events/rails-world-2025) in
 
 At [**San Francisco Ruby Conference 2025**](https://www.rubyevents.org/events/sfruby-2025) in November 2025, the keynote [*Herb to ReActionView: A New Foundation for the View Layer*](https://www.rubyevents.org/talks/keynote-herb-to-reactionview-a-new-foundation-for-the-view-layer) gave an overview of how Herb came to be, what Herb can do for you today, and how it could enable the next generation of the Rails view layer with ReActionView.
 
+At [**RubyKaigi 2026**](https://rubykaigi.org/2026/presentations/marcoroth.html) in April 2026, the talk [*HTML-Aware ERB: The Path to Reactive Rendering*](https://www.rubyevents.org/talks/html-aware-erb-the-path-to-reactive-rendering) walked through the engineering path from structural understanding to reactive rendering, and shipped Herb v0.10 with the syntax tree diff engine, the dev server, Action View render graph analysis, and compile-time optimizations.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on [GitHub](https://github.com/marcoroth/herb). Please see the [CONTRIBUTING.md](https://github.com/marcoroth/herb/blob/main/CONTRIBUTING.md) document for guidelines on how to set up Herb for local development and how to contribute to **Herb**.
