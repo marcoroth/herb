@@ -7,7 +7,7 @@
   "runtime-require|lib/herb/analysis/render_analyzer.rb": 1,
   "runtime-require|lib/herb/analysis/template_dependencies.rb": 1,
   "runtime-require|lib/herb/ast/erb_content_node.rb": 1,
-  "runtime-require|lib/herb/ast/nodes.rb": 13,
+  "runtime-require|lib/herb/ast/nodes.rb": 14,
   "runtime-require|lib/herb/bootstrap.rb": 1,
   "runtime-require|lib/herb/cli.rb": 13,
   "runtime-require|lib/herb/dev/runner.rb": 4,

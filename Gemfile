@@ -7,7 +7,6 @@ gemspec
 gem "prism", github: "ruby/prism", tag: "v1.9.0"
 
 gem "actionview", "~> 8.1", require: "action_view"
-gem "audition", "~> 0.2.2", require: false
 gem "benchmark"
 gem "charm"
 gem "cruise"
