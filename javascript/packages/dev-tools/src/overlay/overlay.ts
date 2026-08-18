@@ -1,3 +1,4 @@
+import { SlotFlash } from '../slots/flash';
 import { ErrorOverlay } from './error-overlay';
 
 export interface HerbOverlayOptions {
@@ -23,6 +24,8 @@ export class HerbOverlay {
   private destroyed = false;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
+  private slotFlash = new SlotFlash();
+  private showingSlotUpdates = false;
   private static readonly EDITOR_OPTIONS = [
     { value: 'auto', label: 'Auto (from server via RAILS_EDITOR or EDITOR)' },
     { value: 'atom', label: 'Atom' },
@@ -124,6 +127,7 @@ export class HerbOverlay {
         this.showingViewOutlines = settings.showingViewOutlines || false;
         this.showingPartialOutlines = settings.showingPartialOutlines || false;
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
+        this.showingSlotUpdates = settings.showingSlotUpdates || false;
         this.menuOpen = settings.menuOpen || false;
         if (settings.preferredEditor) {
           this.preferredEditor = settings.preferredEditor;
@@ -143,6 +147,7 @@ export class HerbOverlay {
       showingViewOutlines: this.showingViewOutlines,
       showingPartialOutlines: this.showingPartialOutlines,
       showingComponentOutlines: this.showingComponentOutlines,
+      showingSlotUpdates: this.showingSlotUpdates,
       menuOpen: this.menuOpen,
       preferredEditor: this.preferredEditor
     };
@@ -243,6 +248,14 @@ export class HerbOverlay {
             </label>
           </div>
 
+          <div class="herb-toggle-item">
+            <label class="herb-toggle-label">
+              <input type="checkbox" id="herbToggleSlotUpdates" class="herb-toggle-input">
+              <span class="herb-toggle-switch"></span>
+              <span class="herb-toggle-text">Flash Slot Updates</span>
+            </label>
+          </div>
+
           <div class="herb-editor-section">
             <label class="herb-editor-label">
               <span class="herb-editor-text">Editor</span>
@@ -270,6 +283,7 @@ export class HerbOverlay {
     this.toggleComponentOutlines(this.showingComponentOutlines);
     this.toggleERBTags(this.showingERB);
     this.toggleERBOutlines(this.showingERBOutlines);
+    this.toggleSlotUpdates(this.showingSlotUpdates);
 
     const menuTrigger = document.getElementById('herbMenuTrigger');
     const menuPanel = document.getElementById('herbMenuPanel');
@@ -382,6 +396,15 @@ export class HerbOverlay {
           this.toggleERBOutlines(false);
         }
         this.toggleERBTags(toggleERBSwitch.checked);
+      });
+    }
+
+    const toggleSlotUpdatesSwitch = document.getElementById('herbToggleSlotUpdates') as HTMLInputElement;
+
+    if (toggleSlotUpdatesSwitch) {
+      toggleSlotUpdatesSwitch.checked = this.showingSlotUpdates;
+      toggleSlotUpdatesSwitch.addEventListener('change', () => {
+        this.toggleSlotUpdates(toggleSlotUpdatesSwitch.checked);
       });
     }
 
@@ -672,6 +695,15 @@ export class HerbOverlay {
         this.removeHoverTooltip(element);
       }
     });
+
+    this.saveSettings();
+  }
+
+  private toggleSlotUpdates(show?: boolean) {
+    this.showingSlotUpdates = show !== undefined ? show : !this.showingSlotUpdates;
+
+    if (this.showingSlotUpdates) this.slotFlash.start();
+    else this.slotFlash.stop();
 
     this.saveSettings();
   }

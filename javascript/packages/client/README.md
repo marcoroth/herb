@@ -106,6 +106,8 @@ const report = slots.apply(payload)
 // { applied: 7, deferred: [] }
 ```
 
+`applied` counts what was written, not what arrived. A value equal to the one already there is not written, since writing it would cost a re-parse, destroy whatever the slot contained, and announce a change that did not happen, so a payload matching the page reports `{ applied: 0, deferred: [] }` and touches nothing.
+
 A payload names the template, the version and which rendering it is, so nothing has to be said about where it goes. A partial's values arrive nested inside the slot that rendered it and are handed to that partial's own region, so one call covers a page however many templates it was built from.
 
 Values alone cannot do everything, and the report is the difference. `applied` counts what was written and `deferred` says what was not, with enough to act on:
@@ -116,7 +118,8 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 - `stale-version` and `no-region` mean nothing was applied at all. A version that does not match says the payload's indices were compiled against a different template, so the values would land in the wrong places, and there is no partial credit to take.
 - `branch` means the conditional took a branch whose markup the page never had and nothing was parked for it. Ask the server for that subtree.
-- `rows` means the collection had no row to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and a row the page has never had is built from one it has, because every row of a collection is the same shape by construction. A collection that rendered nothing has no row to copy, which is why a template in client mode parks one for exactly that case, and why this is only reached when neither exists.
+- `rows` means the collection had no row to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and a row the page has never had is built from one it has, because every row of a collection is the same shape by construction. A collection that rendered nothing has no row to copy, which is why a template in client mode parks one for exactly that case. Emptying a collection on the page reaches the same state, so the last row out leaves its shape behind, and this is only reached when neither exists.
+- `partial-attribute` means the slot is a word interpolated into an attribute, as in `class="card <%= state %>"`. A marker says which attribute a slot is and not which stretch of it, so writing the value would drop what the template wrote around it, and refusing is the only honest answer.
 - `no-slot` means the payload named an index the page has no marker for, which is usually a region that was only partly scanned.
 
 A branch the server parked is built for you, so a template in client mode toggles a conditional with no round trip. That is the same `materialize` path, taken for you.

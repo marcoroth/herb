@@ -1,0 +1,108 @@
+import { describe, test, expect, beforeEach } from "vitest"
+
+import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
+import type { Payload, SlotEventDetail } from "../src/slot-index"
+
+const FILE = "app/views/posts/index.html.erb"
+const ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:a--><li data-herb-child="1">one</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const CHILD = `<!--herb-region:${FILE}:aaaaaaaa:0--><p><!--herb-slot:0-->hi<!--/herb-slot:0--></p><!--/herb-region:${FILE}-->`
+
+function watch(): SlotEventDetail[] {
+  const seen: SlotEventDetail[] = []
+
+  document.addEventListener(SLOT_EVENT, (event) => seen.push((event as CustomEvent<SlotEventDetail>).detail))
+
+  return seen
+}
+
+describe("saying what changed", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("announces a value, naming the template it belongs to", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.update(index.slot(FILE, 0)!, "there")
+
+    expect(seen).toHaveLength(1)
+    expect(seen[0]).toMatchObject({ file: FILE, occurrence: 0, index: 0, operation: "value" })
+  })
+
+  test("announces a row it built and a row it dropped, with the key", () => {
+    document.body.innerHTML = ROWS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.apply({
+      template: FILE,
+      version: "bbbbbbbb",
+      occurrence: 0,
+      slots: { 0: { rows: { b: { 1: "two" } } } },
+    } as Payload)
+
+    expect(seen.map((detail) => [detail.operation, detail.key])).toEqual([
+      ["row-removed", "a"],
+      ["row-added", "b"],
+      ["value", null],
+    ])
+  })
+
+  test("says nothing when the value written is the value already there", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.update(index.slot(FILE, 0)!, "hi")
+
+    expect(seen).toEqual([])
+  })
+
+  test("a row still exists when its removal is announced, so it can be pointed at", () => {
+    document.body.innerHTML = ROWS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen: Array<{ key: string | null; connected: boolean }> = []
+
+    document.addEventListener(SLOT_EVENT, (event) => {
+      const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+      if (detail.operation === "row-removed") seen.push({ key: detail.key, connected: detail.row!.start.isConnected })
+    })
+
+    index.apply({
+      template: FILE,
+      version: "bbbbbbbb",
+      occurrence: 0,
+      slots: { 0: { rows: {} } },
+    } as Payload)
+
+    expect(seen).toEqual([{ key: "a", connected: true }])
+  })
+
+  test("hands over the slot rather than measuring it, since measuring costs a layout", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.update(index.slot(FILE, 0)!, "there")
+
+    expect(index.rangeFor(seen[0].slot!).toString()).toBe("there")
+  })
+})

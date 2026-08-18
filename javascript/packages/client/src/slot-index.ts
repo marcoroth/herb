@@ -26,6 +26,7 @@ const ROW_CLOSE = /^\/herb-row:(\d+)$/
 const BRANCH = /^herb-branch:(\d+):(\w+)$/
 const MARKER = /^\/?herb-(region|slot|row|branch):/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
+const ROW_STATICS = "row"
 const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
@@ -77,6 +78,20 @@ export interface Slot {
   children: Slot[]
 }
 
+export type SlotOperation = "value" | "attribute" | "markup" | "branch" | "row-added" | "row-removed"
+
+export interface SlotEventDetail {
+  file: string
+  occurrence: number
+  index: number
+  operation: SlotOperation
+  key: string | null
+  slot: Slot | null
+  row: Row | null
+}
+
+export const SLOT_EVENT = "herb:slot-update"
+
 export interface RegionRange {
   start: Comment
   end: Comment | null
@@ -119,7 +134,7 @@ export interface Collected {
 
 export type PayloadValue = string | Payload | Branched | Collected
 
-export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "rows"
+export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "rows" | "partial-attribute"
 
 export interface Deferred {
   file: string
@@ -349,8 +364,14 @@ export class SlotIndex {
       }
 
       if (typeof value === "string") {
-        if (slot.attribute) this.setAttribute(slot, value)
-        else this.update(slot, value)
+        if (this.#same(slot, value)) continue
+
+        if (slot.attribute && !this.setAttribute(slot, value)) {
+          this.#defer(report, payload, index, "partial-attribute")
+          continue
+        }
+
+        if (!slot.attribute) this.update(slot, value)
 
         report.applied += 1
         continue
@@ -385,6 +406,10 @@ export class SlotIndex {
     this.#writeFragment(slot, built)
 
     report.applied += 1
+
+    if (value.slots) {
+      this.#applySlots(payload, this.#owner(slot), value.slots, report)
+    }
   }
 
   #applyRows(payload: Payload, slot: Slot, value: Collected, report: ApplyReport): void {
@@ -394,17 +419,23 @@ export class SlotIndex {
     if (!plan.unchanged) {
       const unbuilt = this.#reconcileRows(slot, wanted, plan)
 
-      if (unbuilt.length > 0) this.#defer(report, payload, slot.index, "rows", unbuilt)
+      if (unbuilt.length > 0) {
+        this.#defer(report, payload, slot.index, "rows", unbuilt)
+      }
     }
 
     for (const key of wanted) {
       const row = slot.rows.get(key)
 
-      if (row) this.#applySlots(payload, row.slots, value.rows[key], report)
+      if (row) {
+        this.#applySlots(payload, row.slots, value.rows[key], report)
+      }
     }
   }
 
   #reconcileRows(slot: Slot, wanted: string[], plan: RowPlan): string[] {
+    const template = plan.added.length > 0 ? this.#rowTemplate(slot) : null
+
     for (const key of plan.removed) {
       const row = slot.rows.get(key)
 
@@ -412,8 +443,6 @@ export class SlotIndex {
 
       this.#dropRow(slot, row)
     }
-
-    const template = plan.added.length > 0 ? this.#rowTemplate(slot) : null
 
     if (!template) {
       this.#order(slot, wanted.filter((key) => slot.rows.has(key)))
@@ -434,9 +463,13 @@ export class SlotIndex {
     if (!row) {
       const region = this.#slotRegions.get(slot)
 
-      return region ? this.skeletonFor(region.file, `${slot.index}:row`) : null
+      return region ? this.skeletonFor(region.file, `${slot.index}:${ROW_STATICS}`) : null
     }
 
+    return this.#rowFragment(row)
+  }
+
+  #rowFragment(row: Row): DocumentFragment {
     const fragment = document.createRange().createContextualFragment("")
     const range = document.createRange()
 
@@ -448,6 +481,16 @@ export class SlotIndex {
     blankSlots(fragment)
 
     return fragment
+  }
+
+  #keepRow(slot: Slot, row: Row): void {
+    if (slot.rows.size > 1) return
+
+    const region = this.#slotRegions.get(slot)
+
+    if (!region) return
+
+    this.#park(region, `${slot.index}:${ROW_STATICS}`, this.#rowFragment(row))
   }
 
   #buildRow(slot: Slot, key: string, template: DocumentFragment): void {
@@ -469,9 +512,14 @@ export class SlotIndex {
     else return
 
     this.scan(added)
+
+    this.#announce(slot, "row-added", slot.index, key, slot.rows.get(key) ?? null)
   }
 
   #dropRow(slot: Slot, row: Row): void {
+    this.#keepRow(slot, row)
+    this.#announce(slot, "row-removed", slot.index, row.key, row)
+
     const range = document.createRange()
 
     range.setStartBefore(row.start)
@@ -516,6 +564,8 @@ export class SlotIndex {
     range.insertNode(fragment)
 
     this.scan(added)
+
+    this.#announce(slot, "branch", slot.index)
   }
 
   #owner(slot: Slot): SlotMap {
@@ -526,7 +576,52 @@ export class SlotIndex {
     report.deferred.push({ file: payload.template, occurrence: payload.occurrence, index, reason, ...(keys ? { keys } : {}) })
   }
 
+  #current(slot: Slot): string {
+    if (slot.anchor.kind === "content") return slot.anchor.element.innerHTML
+    if (slot.anchor.kind === "element") return slot.anchor.element.outerHTML
+
+    const holder = document.createElement("div")
+
+    holder.append(this.rangeFor(slot).cloneContents())
+
+    return holder.innerHTML
+  }
+
+  #same(slot: Slot, value: string): boolean {
+    if (slot.type === "attribute_interpolation") return false
+
+    if (slot.attribute && slot.anchor.kind !== "range") {
+      return slot.anchor.element.getAttribute(slot.attribute) === value
+    }
+
+    return this.#current(slot) === value
+  }
+
+  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, row: Row | null = null): void {
+    if (typeof document === "undefined") return
+
+    const region = slot ? this.#slotRegions.get(slot) : null
+
+    document.dispatchEvent(
+      new CustomEvent<SlotEventDetail>(SLOT_EVENT, {
+        detail: {
+          file: region?.file ?? "",
+          occurrence: region?.occurrence ?? 0,
+          index,
+          operation,
+          key,
+          slot,
+          row,
+        },
+      }),
+    )
+  }
+
   update(slot: Slot, html: string): ScanResult {
+    if (this.#current(slot) === html) {
+      return { regions: [], slots: [] }
+    }
+
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
     slot.children = []
@@ -550,7 +645,11 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    return this.scan(added)
+    const result = this.scan(added)
+
+    this.#announce(slot, "value", slot.index)
+
+    return result
   }
 
   updateRow(slot: Slot, key: string, html: string): ScanResult | null {
@@ -566,17 +665,25 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    return this.scan(added)
+    const result = this.scan(added)
+
+    this.#announce(slot, "markup", slot.index, key, slot.rows.get(key) ?? null)
+
+    return result
   }
 
   setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
     if (slot.anchor.kind === "range" || name === null) return false
+    if (slot.type === "attribute_interpolation") return false
+    if (slot.anchor.element.getAttribute(name) === value) return true
 
     if (value === null) {
       slot.anchor.element.removeAttribute(name)
     } else {
       slot.anchor.element.setAttribute(name, value)
     }
+
+    this.#announce(slot, "attribute", slot.index)
 
     return true
   }
