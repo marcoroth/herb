@@ -100,6 +100,9 @@ module Herb
       # : (untyped) -> Integer?
       def index_for: (untyped) -> Integer?
 
+      # : () -> String
+      def occurrence_expression: () -> String
+
       # : (untyped) -> Array[Integer]
       def anchored_indices_for: (untyped) -> Array[Integer]
 
@@ -238,8 +241,6 @@ module Herb
       def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
 
       def wrap_region: (untyped document_node) -> untyped
-
-      def occurrence_expression: (untyped name) -> untyped
 
       def text_node: (untyped content) -> untyped
 

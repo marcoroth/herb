@@ -113,6 +113,7 @@ module Herb
       SCOPE_BUFFER = "__herb_scope" #: String
       ROWS_BUFFER = "__herb_rows" #: String
       KEY_BUFFER = "__herb_key" #: String
+      OCCURRENCE_BUFFER = "__herb_occurrence" #: String
 
       BRANCHING_NODES = [
         "AST_ERB_IF_NODE",
@@ -284,6 +285,8 @@ module Herb
 
         #: () -> void
         def generate_output
+          @engine.send(:capture_occurrence)
+
           optimize_tokens(@tokens).each do |type, value, context, extra|
             case type
             when :text then @engine.send(:add_text, value)
@@ -423,7 +426,7 @@ module Herb
         @block_depth = 0
         @scopes = [] #: Array[Integer]
         @slot_visitor = properties[:slot_visitor] || SlotVisitor.new(mode: :server, mark: false)
-        visitors = [@slot_visitor, *properties[:visitors]]
+        visitors = [*properties[:visitors], @slot_visitor]
 
         super(
           input,
@@ -499,7 +502,15 @@ module Herb
       def add_postamble(_postamble)
         super("{ template: #{@slot_visitor.identifier.inspect}, " \
               "version: #{@slot_visitor.version.inspect}, " \
+              "occurrence: #{OCCURRENCE_BUFFER}, " \
               "slots: #{BUFFER} }\n")
+      end
+
+      # Counted where the region marker counts it, at the start of the rendering rather than the end,
+      # so a template rendering itself numbers its renderings the same way both compilers do.
+      #: () -> void
+      def capture_occurrence
+        @src << "; #{OCCURRENCE_BUFFER} = #{@slot_visitor.occurrence_expression};"
       end
 
       #: () -> String

@@ -163,6 +163,11 @@ module Herb
         @indices[node]
       end
 
+      #: () -> String
+      def occurrence_expression
+        "((#{OCCURRENCES} ||= ::Hash.new(0))[#{identifier.inspect}] += 1) - 1"
+      end
+
       #: (untyped) -> Array[Integer]
       def anchored_indices_for(open_tag)
         @element_anchored[open_tag] || []
@@ -819,15 +824,11 @@ module Herb
 
         document_node.children.unshift(
           text_node(@markers.region_open_prefix(name, version)),
-          erb_output_node(occurrence_expression(name)),
+          erb_output_node(occurrence_expression),
           text_node(@markers.region_open_suffix)
         )
 
         document_node.children.push(comment_node(@markers.region_close(name)))
-      end
-
-      def occurrence_expression(name)
-        "((#{OCCURRENCES} ||= ::Hash.new(0))[#{name.inspect}] += 1) - 1"
       end
 
       def text_node(content)
