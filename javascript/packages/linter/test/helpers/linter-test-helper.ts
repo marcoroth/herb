@@ -11,6 +11,8 @@ import type { RuleClass } from "../../src/types.js"
 interface ExpectedLocation {
   line?: number
   column?: number
+  endLine?: number
+  endColumn?: number
 }
 
 type LocationInput = ExpectedLocation | [number, number] | [number]
@@ -345,6 +347,14 @@ function matchOffenses(
       }
 
       if (exp.location?.column !== undefined && exp.location.column !== actualOffense.location.start.column) {
+        return false
+      }
+
+      if (exp.location?.endLine !== undefined && exp.location.endLine !== actualOffense.location.end.line) {
+        return false
+      }
+
+      if (exp.location?.endColumn !== undefined && exp.location.endColumn !== actualOffense.location.end.column) {
         return false
       }
 
