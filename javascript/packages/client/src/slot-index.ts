@@ -585,6 +585,46 @@ export class SlotIndex {
     report.deferred.push({ file: payload.template, occurrence: payload.occurrence, index, reason, ...(keys ? { keys } : {}) })
   }
 
+  currentValue(slot: Slot): string {
+    if (slot.anchor.kind !== "range" && slot.attribute) {
+      return slot.anchor.element.getAttribute(slot.attribute) ?? ""
+    }
+
+    return this.#current(slot)
+  }
+
+  currentText(slot: Slot): string {
+    if (slot.anchor.kind !== "range" && slot.attribute) {
+      return slot.anchor.element.getAttribute(slot.attribute) ?? ""
+    }
+
+    if (slot.anchor.kind !== "range") return slot.anchor.element.textContent ?? ""
+
+    return this.rangeFor(slot).toString()
+  }
+
+  setText(slot: Slot, text: string): boolean {
+    if (slot.anchor.kind === "element") return false
+    if (this.currentText(slot) === text) return false
+
+    for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
+
+    slot.children = []
+
+    if (slot.anchor.kind === "content") {
+      slot.anchor.element.textContent = text
+    } else {
+      const range = this.rangeFor(slot)
+
+      range.deleteContents()
+      range.insertNode(document.createTextNode(text))
+    }
+
+    this.#announce(slot, "value", slot.index)
+
+    return true
+  }
+
   #current(slot: Slot): string {
     if (slot.anchor.kind === "content") return slot.anchor.element.innerHTML
     if (slot.anchor.kind === "element") return slot.anchor.element.outerHTML
