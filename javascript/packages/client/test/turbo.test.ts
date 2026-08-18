@@ -4,7 +4,7 @@ import { SlotIndex } from "../src/slot-index"
 const FILE = "app/views/posts/index.html.erb"
 const PARTIAL = "app/views/posts/_row.html.erb"
 
-const region = (file: string, body: string) => `<!--herb-region:${file}:aaaaaaaa-->${body}<!--/herb-region:${file}-->`
+const region = (file: string, body: string) => `<!--herb-region:${file}:aaaaaaaa:0-->${body}<!--/herb-region:${file}-->`
 const page = (name: string) => region(FILE, `<p><!--herb-slot:0-->${name}<!--/herb-slot:0--></p>`)
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 

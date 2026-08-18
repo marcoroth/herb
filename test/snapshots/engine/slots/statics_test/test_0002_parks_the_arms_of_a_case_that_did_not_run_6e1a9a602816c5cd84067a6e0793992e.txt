@@ -2,4 +2,4 @@
 source: "Engine::Slots::StaticsTest#test_0002_parks the arms of a case that did not run"
 input: "{source: \"<div><% case @s %><% when 1 %>one<% when 2 %>two<% else %>other<% end %></div>\", locals: {\"@s\" => 3}, options: {visitors: [#<Herb::Engine::SlotVisitor client>], filename: \"app/views/test.html.erb\"}}"
 ---
-<!--herb-region:app/views/test.html.erb:a6ef770d--><div><!--herb-slot:0:conditional--><!--herb-branch:0:2-->other<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:a6ef770d"><!--herb-branch:0:0-->one<!--herb-branch:0:1-->two</template>
+<!--herb-region:app/views/test.html.erb:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:2-->other<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:a6ef770d"><!--herb-branch:0:0-->one<!--herb-branch:0:1-->two</template>

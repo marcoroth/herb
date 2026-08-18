@@ -49,8 +49,13 @@ module Herb
       end
 
       #: (String, String) -> String
-      def region_open(file, version)
-        "<!--herb-region:#{file}:#{version}-->"
+      def region_open_prefix(file, version)
+        "<!--herb-region:#{file}:#{version}:"
+      end
+
+      #: () -> String
+      def region_open_suffix
+        "-->"
       end
 
       #: (String) -> String

@@ -4,13 +4,17 @@ import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/posts/index.html.erb"
 
-const CHILD = `<!--herb-region:${FILE}:25c0946e--><p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->!</p><!--/herb-region:${FILE}-->`
-const ANCHORED = `<!--herb-region:${FILE}:fd3dfd36--><span class="n" data-herb-child="0">Marco</span><!--/herb-region:${FILE}-->`
-const COND_TRUE = `<!--herb-region:${FILE}:a6ef770d--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b>x</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const COND_FALSE = `<!--herb-region:${FILE}:a6ef770d--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const COLLECTION = `<!--herb-region:${FILE}:64652ac4--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute" data-herb-child="2">1</li><!--/herb-row:0--><!--herb-row:0:2--><li id="2" data-herb-slot="1:attribute" data-herb-child="2">2</li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
-const TABLE = `<!--herb-region:${FILE}:c4a38ea8--><table><!--herb-slot:0:collection--><!--herb-row:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-child="2">1</td></tr><!--/herb-row:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
-const ATTR = `<!--herb-region:${FILE}:55167514--><div class="card" id="1" data-herb-slot="0:attribute,1:element">x</div><!--/herb-region:${FILE}-->`
+const CHILD = `<!--herb-region:${FILE}:25c0946e:0--><p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->!</p><!--/herb-region:${FILE}-->`
+const ANCHORED = `<!--herb-region:${FILE}:fd3dfd36:0--><span class="n" data-herb-child="0">Marco</span><!--/herb-region:${FILE}-->`
+const COND_TRUE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b>x</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+const COND_FALSE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+const COLLECTION = `<!--herb-region:${FILE}:64652ac4:0--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute" data-herb-child="2">1</li><!--/herb-row:0--><!--herb-row:0:2--><li id="2" data-herb-slot="1:attribute" data-herb-child="2">2</li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
+const TABLE = `<!--herb-region:${FILE}:c4a38ea8:0--><table><!--herb-slot:0:collection--><!--herb-row:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-child="2">1</td></tr><!--/herb-row:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
+const ATTR = `<!--herb-region:${FILE}:55167514:0--><div class="card" id="1" data-herb-slot="0:attribute,1:element">x</div><!--/herb-region:${FILE}-->`
+
+function occurrence(html: string, nth: number): string {
+  return html.replace(/(<!--herb-region:[^>]*?:[0-9a-f]{8}):\d+-->/, `$1:${nth}-->`)
+}
 
 function mount(html: string): HTMLElement {
   const host = document.createElement("div")
@@ -47,12 +51,28 @@ describe("SlotIndex", () => {
     })
 
     test("keeps the slots of repeated regions apart", () => {
-      index.scan(mount(CHILD + CHILD))
+      index.scan(mount(CHILD + occurrence(CHILD, 1)))
 
       const slots = index.slotsFor(FILE, 0)
 
       expect(slots).toHaveLength(2)
       expect(slots[0]).not.toBe(slots[1])
+    })
+
+    test("takes the occurrence the server numbered it, not the order it sits in", () => {
+      index.scan(mount(occurrence(CHILD, 1) + CHILD))
+
+      const [first, second] = index.regionsFor(FILE)
+
+      expect(index.region(FILE, 0)).toBe(second)
+      expect(index.region(FILE, 1)).toBe(first)
+    })
+
+    test("separates the slots of two renderings by their occurrence", () => {
+      index.scan(mount(CHILD + occurrence(CHILD, 1)))
+
+      expect(index.slot(FILE, 0, 0)).not.toBe(index.slot(FILE, 0, 1))
+      expect(index.slot(FILE, 0, 2)).toBeNull()
     })
   })
 
@@ -159,7 +179,7 @@ describe("SlotIndex", () => {
     })
 
     test("attaches markup that arrives without a region marker to the region around it", () => {
-      const host = mount(`<!--herb-region:${FILE}:aaaaaaaa--><div id="host"></div><!--/herb-region:${FILE}-->`)
+      const host = mount(`<!--herb-region:${FILE}:aaaaaaaa:0--><div id="host"></div><!--/herb-region:${FILE}-->`)
 
       index.scan(host)
       expect(index.slot(FILE, 5)).toBeNull()
@@ -289,8 +309,8 @@ describe("SlotIndex", () => {
   })
 })
 
-const NESTED = `<!--herb-region:${"app/views/posts/index.html.erb"}:8318a878--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-child="1">Marco</span><!--/herb-slot:0--></div><!--/herb-region:app/views/posts/index.html.erb-->`
-const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-child="3">1</b><!--/herb-slot:2--></li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
+const NESTED = `<!--herb-region:${"app/views/posts/index.html.erb"}:8318a878:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-child="1">Marco</span><!--/herb-slot:0--></div><!--/herb-region:app/views/posts/index.html.erb-->`
+const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b:0--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-child="3">1</b><!--/herb-slot:2--></li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
 
 function mounted(html: string): SlotIndex {
   const host = document.createElement("div")
@@ -443,7 +463,7 @@ describe("markers that arrive as their own node", () => {
   })
 
   test("indexes a marker appended as a bare comment", () => {
-    const host = mount(`<!--herb-region:${FILE}:aaaaaaaa--><div id="host"></div><!--/herb-region:${FILE}-->`)
+    const host = mount(`<!--herb-region:${FILE}:aaaaaaaa:0--><div id="host"></div><!--/herb-region:${FILE}-->`)
     const index = new SlotIndex()
 
     index.scan(host)
@@ -471,7 +491,7 @@ describe("markers that arrive as their own node", () => {
 
   test("walks past comments that are not markers", () => {
     const host = mount(
-      `<!--herb-region:${FILE}:bbbbbbbb--><!-- a note --><!--herb-slot:0-->x<!--/herb-slot:0--><!-- another --><!--/herb-region:${FILE}-->`,
+      `<!--herb-region:${FILE}:bbbbbbbb:0--><!-- a note --><!--herb-slot:0-->x<!--/herb-slot:0--><!-- another --><!--/herb-region:${FILE}-->`,
     )
     const index = new SlotIndex()
 

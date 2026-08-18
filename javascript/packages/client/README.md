@@ -52,6 +52,8 @@ slots.slotsFor("app/views/posts/index.html.erb", 0)
 slots.regionsFor("app/views/posts/index.html.erb")
 ```
 
+The occurrence is the server's own count, carried in the region marker. That count and the order regions sit in are usually the same and sometimes not, because `content_for` renders its content at one point in the template and writes it out at another. A payload naming the second rendering of a template means the second one the server rendered, so reading the number is right where counting regions down the page would be off by exactly the templates that moved.
+
 Every row of a collection repeats the same slot indices, so a row's key is what says which one is meant. The rows of a collection:
 
 ```typescript
@@ -195,7 +197,7 @@ Every marker names the template it came from, and by default that name is the pa
 Herb::Engine::SlotVisitor.new(identifier: :digest)
 ```
 
-Then the page carries `<!--herb-region:bf0ebc682928:fd3dfd36-->` and nothing else changes. The runtime treats the name as opaque, so `slots.slot(name, 0)` works the same either way. A callable decides for itself, and the visitor keeps the real path in `schema[:file]` for the server, which is the side that holds the mapping back.
+Then the page carries `<!--herb-region:bf0ebc682928:fd3dfd36:0-->` and nothing else changes. The runtime treats the name as opaque, so `slots.slot(name, 0)` works the same either way. A callable decides for itself, and the visitor keeps the real path in `schema[:file]` for the server, which is the side that holds the mapping back.
 
 ## Keeping the index current
 
