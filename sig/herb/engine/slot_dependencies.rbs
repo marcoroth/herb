@@ -1,0 +1,51 @@
+# Generated from lib/herb/engine/slot_dependencies.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Says which state each of a template's slots reads, and where that slot's next value can come
+    # from:
+    #
+    #     Herb::Engine::SlotDependencies.new(project_path).for("app/views/posts/index.html.erb")
+    #     #=> { 0 => { state: ["@items"], mode: :structural },
+    #           1 => { state: ["@items"], mode: :derived } }
+    #
+    # `SlotVisitor` records a `node_path` for every slot and `TemplateDependencies` reports one for
+    # every node a state reaches, so the two are joined on that path.
+    #
+    # A mode says who can produce the next value. `identity` is a slot whose expression is the
+    # state itself, so a client writes it by copying what it was given. `structural` is a
+    # conditional or a collection, which a client can only rebuild from markup the server parked.
+    # `derived` is an expression that has to be evaluated, and evaluating it means running Ruby.
+    #
+    # A conditional is reported against its own condition rather than everything inside it. What
+    # the branches read belongs to the slots in them, which carry their own state.
+    class SlotDependencies
+      STRUCTURAL_TYPES: Array[Symbol]
+
+      PARTIAL_TYPES: Array[Symbol]
+
+      # : (String | Pathname) -> void
+      def initialize: (String | Pathname) -> void
+
+      # : (String) -> Hash[Integer, Hash[Symbol, untyped]]
+      def for: (String) -> Hash[Integer, Hash[Symbol, untyped]]
+
+      private
+
+      # : (String) -> String
+      def absolute: (String) -> String
+
+      # : (String, String) -> Array[untyped]
+      def slots_for: (String, String) -> Array[untyped]
+
+      # : (String, untyped) -> Hash[String, Hash[Array[Integer], Array[String?]]]
+      def reached_paths: (String, untyped) -> Hash[String, Hash[Array[Integer], Array[String?]]]
+
+      # : (untyped) -> Array[String]
+      def state_names: (untyped) -> Array[String]
+
+      # : (untyped, Array[String], Array[String?], Set[String]) -> Symbol
+      def mode_for: (untyped, Array[String], Array[String?], Set[String]) -> Symbol
+    end
+  end
+end

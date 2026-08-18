@@ -226,3 +226,18 @@ fn gives_a_nested_attribute_the_path_of_its_own_element() {
 
   assert_eq!(paths, vec![vec![0, 0]]);
 }
+
+#[test]
+fn does_not_confuse_a_state_name_with_a_longer_one() {
+  let project = Project::new("prefix");
+  let entry = project.write("app/views/posts/show.html.erb", "<div><%= @post.title %></div><div><%= @posts.count %></div>");
+
+  let expressions: Vec<String> = project
+    .flow()
+    .affected_nodes(&entry, "@post")
+    .into_iter()
+    .filter_map(|node| node.expression)
+    .collect();
+
+  assert_eq!(expressions, vec!["@post.title".to_string()]);
+}
