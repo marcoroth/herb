@@ -330,7 +330,6 @@ module Engine
         assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots server %>\n<p><%= @a %></p>")
       end
 
-      # Being sent a branch that did not render is being sent something the request did not ask for.
       test "asking for slots and nothing else means the server renders the branches" do
         assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots %>\n<p><%= @a %></p>")
         assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%#- herb:slots -%><p><%= @a %></p>")

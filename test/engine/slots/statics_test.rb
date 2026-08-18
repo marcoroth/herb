@@ -74,7 +74,7 @@ module Engine
 
       test "names the version the region marker names" do
         output = render("<div><% if @a %>x<% end %></div>", { "@a" => false })
-        version = output[/<!--herb-region:[^:]+:([0-9a-f]+)-->/, 1]
+        version = output[/<!--herb-region:[^:]+:([0-9a-f]+):\d+-->/, 1]
 
         assert_includes output, %(<template data-herb-region="app/views/test.html.erb:#{version}">)
       end
@@ -120,8 +120,6 @@ module Engine
         refute_includes output, "_herb_covered_branches"
       end
 
-      # Nothing about parking survives into a server-rendered template: no `<template>`, and none
-      # of the bookkeeping that decides what goes in one.
       test "parks nothing at all in server mode, and counts nothing either" do
         compiled = Herb::Engine.new(
           "<div><% if @a %>x<% else %>y<% end %></div>",

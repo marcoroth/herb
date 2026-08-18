@@ -29,8 +29,7 @@ module Herb
     class SlotVisitor < Herb::Visitor
       include ContextAware
 
-      recommended_parser_option iteration_nodes: true
-
+      recommended_parser_option iteration_nodes: true, render_nodes: true
       required_parser_option action_view_helpers: true
 
       attr_reader :slots #: Array[Slot]
@@ -40,6 +39,7 @@ module Herb
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
+      OCCURRENCES = "@_herb_region_occurrences" #: String
       BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
@@ -81,13 +81,14 @@ module Herb
         true
       end
 
-      #: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String)) -> void
-      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path)
+      #: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
+      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path, mark: true)
         super()
 
         raise ArgumentError, "unknown slot mode #{mode.inspect}, expected one of #{MODES.inspect}" unless MODES.include?(mode)
 
         @markers = markers
+        @mark = mark
         @mode = mode
         @statics = mode == :client ? {} : nil #: Hash[String, String]?
         @identify = identifier
@@ -99,10 +100,12 @@ module Herb
         pending = {} #: Hash[untyped, Integer]
         element_anchored = {} #: Hash[untyped, Array[Integer]]
         continuations = {} #: Hash[untyped, bool]
+        indices = {} #: Hash[untyped, Integer]
 
         @pending = pending.compare_by_identity
         @element_anchored = element_anchored.compare_by_identity
         @continuations = continuations.compare_by_identity
+        @indices = indices.compare_by_identity
 
         @in_attribute = false
         @in_open_tag = false
@@ -155,10 +158,23 @@ module Herb
         }
       end
 
+      #: (untyped) -> Integer?
+      def index_for(node)
+        @indices[node]
+      end
+
+      #: (untyped) -> Array[Integer]
+      def anchored_indices_for(open_tag)
+        @element_anchored[open_tag] || []
+      end
+
       def visit_document_node(node)
         visit_children_with_paths(node.children)
 
         collapse_invariant_conditionals
+
+        return unless @mark
+
         insert_markers(node)
         wrap_region(node)
         append_statics(node)
@@ -214,6 +230,12 @@ module Herb
       end
 
       def visit_erb_content_node(node)
+        record_slot(node, erb_output?(node.tag_opening&.value.to_s) ? :child : nil)
+
+        super
+      end
+
+      def visit_erb_render_node(node)
         record_slot(node, erb_output?(node.tag_opening&.value.to_s) ? :child : nil)
 
         super
@@ -378,6 +400,15 @@ module Herb
         @element_anchored.each do |open_tag, indices|
           @element_anchored[open_tag] = indices.map { |index| resolve.call(index) }
         end
+
+        recorded = {} #: Hash[untyped, Integer]
+        lookup = recorded.compare_by_identity
+
+        @indices.each do |node, index|
+          lookup[node] = resolve.call(index) unless dropped[index]
+        end
+
+        @indices = lookup
       end
 
       #: (untyped, Symbol?) -> void
@@ -403,6 +434,7 @@ module Herb
         )
 
         @slots << slot
+        @indices[node] = slot.index
 
         if type == :collection && key_source == :index
           @warnings << Herb::Warnings::UnkeyedCollectionWarning.new(
@@ -785,8 +817,17 @@ module Herb
       def wrap_region(document_node)
         name = identifier
 
-        document_node.children.unshift(comment_node(@markers.region_open(name, version)))
+        document_node.children.unshift(
+          text_node(@markers.region_open_prefix(name, version)),
+          erb_output_node(occurrence_expression(name)),
+          text_node(@markers.region_open_suffix)
+        )
+
         document_node.children.push(comment_node(@markers.region_close(name)))
+      end
+
+      def occurrence_expression(name)
+        "((#{OCCURRENCES} ||= ::Hash.new(0))[#{name.inspect}] += 1) - 1"
       end
 
       def text_node(content)

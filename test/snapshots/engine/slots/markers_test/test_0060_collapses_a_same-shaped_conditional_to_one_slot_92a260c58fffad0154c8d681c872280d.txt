@@ -2,4 +2,4 @@
 source: "Engine::Slots::MarkersTest#test_0060_collapses a same-shaped conditional to one slot"
 input: "{source: \"<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>\", locals: {\"@c\" => false, \"@today\" => \"Mon\", \"@tomorrow\" => \"Tue\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
 ---
-<!--herb-region:app/views/test.html.erb:9d410987--><h1 data-herb-child="0">Tue</h1><!--/herb-region:app/views/test.html.erb-->
+<!--herb-region:app/views/test.html.erb:9d410987:0--><h1 data-herb-child="0">Tue</h1><!--/herb-region:app/views/test.html.erb-->
