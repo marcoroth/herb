@@ -68,8 +68,9 @@ module Herb
         return nil unless match
 
         named = MODE_OPTION.match(match[:mode])
+        mode = named && named[1]
 
-        named ? named[1].to_sym : :server
+        mode ? mode.to_sym : :server
       end
 
       #: () -> bool
@@ -338,8 +339,8 @@ module Herb
 
       #: (untyped) -> bool
       def exhaustive?(node)
-        last = nil #: untyped
         current = continuation_of(node) #: untyped
+        last = current #: untyped
 
         while current
           last = current
