@@ -38,6 +38,8 @@ module Herb
 
       ELEMENT_ANCHORED_TYPES: Array[Symbol]
 
+      OPEN_TAG_TYPES: Array[Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode]
+
       BRANCH_BODY_PROPERTIES: Array[Symbol]
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
@@ -176,8 +178,8 @@ module Herb
       # : (untyped) -> Array[untyped]
       def collection_body: (untyped) -> Array[untyped]
 
-      # : (untyped) -> Array[untyped]
-      def attributes_for: (untyped) -> Array[untyped]
+      # : (untyped) -> Array[Herb::AST::HTMLAttributeNode]
+      def attributes_for: (untyped) -> Array[Herb::AST::HTMLAttributeNode]
 
       # : (untyped) -> String?
       def attribute_name_for: (untyped) -> String?
