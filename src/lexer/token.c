@@ -53,6 +53,7 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("TOKEN_HTML_DOCTYPE");
     case TOKEN_XML_DECLARATION: return hb_string("TOKEN_XML_DECLARATION");
     case TOKEN_XML_DECLARATION_END: return hb_string("TOKEN_XML_DECLARATION_END");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("TOKEN_XML_PROCESSING_INSTRUCTION_START");
     case TOKEN_CDATA_START: return hb_string("TOKEN_CDATA_START");
     case TOKEN_CDATA_END: return hb_string("TOKEN_CDATA_END");
     case TOKEN_HTML_TAG_START: return hb_string("TOKEN_HTML_TAG_START");
@@ -94,6 +95,7 @@ hb_string_T token_type_to_friendly_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("`<!DOCTYPE`");
     case TOKEN_XML_DECLARATION: return hb_string("`<?xml`");
     case TOKEN_XML_DECLARATION_END: return hb_string("`?>`");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("`<?`");
     case TOKEN_CDATA_START: return hb_string("`<![CDATA[`");
     case TOKEN_CDATA_END: return hb_string("`]]>`");
     case TOKEN_HTML_TAG_START: return hb_string("`<`");

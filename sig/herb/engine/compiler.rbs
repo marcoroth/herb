@@ -57,6 +57,8 @@ module Herb
 
       def visit_xml_declaration_node: (untyped node) -> untyped
 
+      def visit_xml_processing_instruction_node: (untyped node) -> untyped
+
       def visit_cdata_node: (untyped node) -> untyped
 
       def visit_erb_content_node: (untyped node) -> untyped

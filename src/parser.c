@@ -269,6 +269,58 @@ static AST_XML_DECLARATION_NODE_T* parser_parse_xml_declaration(parser_T* parser
   return xml_declaration;
 }
 
+static AST_XML_PROCESSING_INSTRUCTION_NODE_T* parser_parse_xml_processing_instruction(parser_T* parser) {
+  hb_array_T* errors = NULL;
+  hb_array_T* children = hb_array_init(8, parser->allocator);
+  hb_buffer_T content;
+  hb_buffer_init(&content, 64, parser->allocator);
+
+  token_T* tag_opening = parser_consume_expected(parser, TOKEN_XML_PROCESSING_INSTRUCTION_START, &errors);
+  token_T* target = parser_consume_expected(parser, TOKEN_IDENTIFIER, &errors);
+
+  position_T start = parser->current_token->location.start;
+
+  while (token_is_none_of(parser, TOKEN_XML_DECLARATION_END, TOKEN_HTML_TAG_END, TOKEN_EOF)) {
+    if (token_is(parser, TOKEN_ERB_START)) {
+      parser_append_literal_node_from_buffer(parser, &content, children, start);
+
+      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      hb_array_append(children, erb_node);
+
+      start = parser->current_token->location.start;
+
+      continue;
+    }
+
+    token_T* token = parser_advance(parser);
+    hb_buffer_append_string(&content, token->value);
+    token_free(token, parser->allocator);
+  }
+
+  parser_append_literal_node_from_buffer(parser, &content, children, start);
+
+  token_type_T closing_type = token_is(parser, TOKEN_HTML_TAG_END) ? TOKEN_HTML_TAG_END : TOKEN_XML_DECLARATION_END;
+  token_T* tag_closing = parser_consume_expected(parser, closing_type, &errors);
+
+  AST_XML_PROCESSING_INSTRUCTION_NODE_T* processing_instruction = ast_xml_processing_instruction_node_init(
+    tag_opening,
+    target,
+    children,
+    tag_closing,
+    tag_opening->location.start,
+    tag_closing->location.end,
+    errors,
+    parser->allocator
+  );
+
+  token_free(tag_opening, parser->allocator);
+  token_free(target, parser->allocator);
+  token_free(tag_closing, parser->allocator);
+  hb_buffer_free(&content);
+
+  return processing_instruction;
+}
+
 static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_array_T** document_errors) {
   position_T start = parser->current_token->location.start;
 
@@ -281,6 +333,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
     TOKEN_HTML_TAG_START_CLOSE,
     TOKEN_HTML_DOCTYPE,
     TOKEN_HTML_COMMENT_START,
+    TOKEN_XML_PROCESSING_INSTRUCTION_START,
     TOKEN_ERB_START,
     TOKEN_EOF
   )) {
@@ -1556,6 +1609,12 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
 
     if (token_is(parser, TOKEN_XML_DECLARATION)) {
       hb_array_append(children, parser_parse_xml_declaration(parser));
+      parser->consecutive_error_count = 0;
+      continue;
+    }
+
+    if (token_is(parser, TOKEN_XML_PROCESSING_INSTRUCTION_START)) {
+      hb_array_append(children, parser_parse_xml_processing_instruction(parser));
       parser->consecutive_error_count = 0;
       continue;
     }

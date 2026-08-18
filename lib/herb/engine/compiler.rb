@@ -196,6 +196,13 @@ module Herb
         add_text(node.tag_closing.value)
       end
 
+      def visit_xml_processing_instruction_node(node)
+        add_text(node.tag_opening.value)
+        add_text(node.target.value)
+        visit_all(node.children)
+        add_text(node.tag_closing.value)
+      end
+
       def visit_cdata_node(node)
         add_text(node.tag_opening.value)
         visit_all(node.children)

@@ -80,6 +80,9 @@ module Herb
     # : (Herb::AST::XMLDeclarationNode) -> void
     def visit_xml_declaration_node: (Herb::AST::XMLDeclarationNode) -> void
 
+    # : (Herb::AST::XMLProcessingInstructionNode) -> void
+    def visit_xml_processing_instruction_node: (Herb::AST::XMLProcessingInstructionNode) -> void
+
     # : (Herb::AST::CDATANode) -> void
     def visit_cdata_node: (Herb::AST::CDATANode) -> void
 
