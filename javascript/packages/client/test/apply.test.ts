@@ -12,6 +12,14 @@ const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:
 
 const ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:1--><li data-herb-child="1">one</li><!--/herb-row:0--><!--herb-row:0:2--><li data-herb-child="1">two</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
+const NAMED_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:ada--><li data-herb-child="1">Ada</li><!--/herb-row:0--><!--herb-row:0:grace--><li data-herb-child="1">Grace</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+const EMPTY_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+const PARKED_ROW =
+  `<template data-herb-region="${FILE}:bbbbbbbb"><!--herb-branch:0:row-->` +
+  `<!--herb-row:0:--><li data-herb-child="1"></li><!--/herb-row:0--></template>`
+
 const NESTED =
   `<!--herb-region:${FILE}:cccccccc:0--><div><!--herb-slot:0-->` +
   `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-child="0">inner</p><!--/herb-region:${CARD}-->` +
@@ -65,6 +73,19 @@ describe("applying values to a conditional", () => {
     expect(index.rangeFor(index.slot(FILE, 2)!).toString()).toBe("built")
   })
 
+  test("can put back the branch it replaced, without the server parking it", () => {
+    const index = mounted(COND_TRUE + PARKED)
+
+    index.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "built" } } }))
+    expect(index.slot(FILE, 0)?.branch).toBe(1)
+
+    const report = index.apply(payload(FILE, { 0: { branch: 0, slots: { 1: "back" } } }))
+
+    expect(report.deferred).toEqual([])
+    expect(index.slot(FILE, 0)?.branch).toBe(0)
+    expect(index.rangeFor(index.slot(FILE, 1)!).toString()).toBe("back")
+  })
+
   test("defers a branch it has no markup for, rather than guessing", () => {
     const index = mounted(COND_FALSE)
 
@@ -94,18 +115,74 @@ describe("applying values to a collection", () => {
     expect(document.querySelectorAll("li")[1].textContent).toBe("TWO")
   })
 
-  test("defers the rows it cannot build, and still fills the ones it can", () => {
+  const keys = () => [...document.querySelectorAll("li")].map((li) => li.textContent)
+
+  test("drops a row the payload no longer has", () => {
+    const index = mounted(ROWS)
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 2: { 1: "two" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["two"])
+  })
+
+  test("builds a row it has never seen from one it has", () => {
     const index = mounted(ROWS)
 
     const report = index.apply(
-      payload(FILE, { 0: { rows: { 2: { 1: "TWO" }, 3: { 1: "THREE" } } } }, "bbbbbbbb"),
+      payload(FILE, { 0: { rows: { 1: { 1: "one" }, 2: { 1: "two" }, 3: { 1: "three" } } } }, "bbbbbbbb"),
     )
 
-    expect(report.applied).toBe(1)
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["one", "two", "three"])
+    expect(index.slotInRow(FILE, 0, "3", 1)).not.toBeNull()
+  })
+
+  test("puts the rows in the order the payload asked for", () => {
+    const index = mounted(NAMED_ROWS)
+
+    index.apply(payload(FILE, { 0: { rows: { grace: { 1: "Grace" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"))
+
+    expect(keys()).toEqual(["Grace", "Ada"])
+  })
+
+  test("adds, removes and reorders in one go", () => {
+    const index = mounted(NAMED_ROWS)
+
+    const report = index.apply(
+      payload(FILE, { 0: { rows: { yuki: { 1: "Yukihiro" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"),
+    )
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["Yukihiro", "Ada"])
+  })
+
+  test("cannot be told to reorder rows keyed by a number", () => {
+    const index = mounted(ROWS)
+
+    index.apply(payload(FILE, { 0: { rows: { 2: { 1: "two" }, 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(keys()).toEqual(["one", "two"])
+  })
+
+  test("builds into an empty collection from the row the server parked", () => {
+    const index = mounted(EMPTY_ROWS + PARKED_ROW)
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["one"])
+    expect(index.slotInRow(FILE, 0, "1", 1)).not.toBeNull()
+  })
+
+  test("asks for a row when the collection is empty and nothing was parked", () => {
+    const index = mounted(EMPTY_ROWS)
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+
     expect(report.deferred).toEqual([
-      { file: FILE, occurrence: 0, index: 0, reason: "rows", keys: ["3", "1"] },
+      { file: FILE, occurrence: 0, index: 0, reason: "rows", keys: ["1"] },
     ])
-    expect(document.querySelectorAll("li")[1].textContent).toBe("TWO")
   })
 })
 
