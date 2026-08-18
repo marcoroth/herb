@@ -15,6 +15,26 @@ describe("dependencyIndex", () => {
     return dependencyIndex(Herb, FILE, source)
   }
 
+  test("numbers a node the way SlotVisitor and SubtreeCompiler number it", () => {
+    expect(affectedNodes(Herb, `<div><h1><%= @title %></h1></div>`, "@title")[0].nodePath).toEqual([0, 0, 0])
+  })
+
+  test("numbers a conditional by the element body it sits in", () => {
+    expect(affectedNodes(Herb, `<div><% if @admin %><%= @name %><% end %></div>`, "@admin")[0].nodePath).toEqual([0, 0])
+  })
+
+  test("numbers a block by the element body it sits in", () => {
+    expect(affectedNodes(Herb, `<ul><% @items.each do |item| %><li>x</li><% end %></ul>`, "@items")[0].nodePath).toEqual([0, 0])
+  })
+
+  test("gives an attribute the path of the element that carries it", () => {
+    expect(affectedNodes(Herb, `<div class="<%= @klass %>"></div>`, "@klass")[0].nodePath).toEqual([0])
+  })
+
+  test("gives a nested attribute the path of its own element", () => {
+    expect(affectedNodes(Herb, `<div><a href="<%= @url %>">x</a></div>`, "@url")[0].nodePath).toEqual([0, 0])
+  })
+
   test("maps state to the nodes that read it", () => {
     const index = indexOf(`<div><h1><%= @post.title %></h1><p><%= @post.body %></p></div>`)
 

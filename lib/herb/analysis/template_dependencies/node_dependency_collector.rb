@@ -6,6 +6,9 @@ module Herb
   module Analysis
     class TemplateDependencies
       class NodeDependencyCollector < ::Herb::Visitor
+        BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
+        BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
+
         attr_reader :affected
 
         def initialize(state, helper_registry, custom_helpers)
@@ -20,18 +23,18 @@ module Herb
         end
 
         def visit_document_node(node)
-          visit_children_with_paths(node.child_nodes)
+          visit_children_with_paths(node.children)
         end
 
         def visit_html_element_node(node)
-          visit_children_with_paths(node.child_nodes)
+          visit(node.open_tag) if node.open_tag
+
+          visit_children_with_paths(node.body)
         end
 
         def visit_html_open_tag_node(node)
-          node.child_nodes.each_with_index do |child, i|
-            if child.is_a?(Herb::AST::HTMLAttributeNode)
-              check_attribute(child, @path + [i])
-            end
+          node.child_nodes.each do |child|
+            check_attribute(child, @path.dup) if child.is_a?(Herb::AST::HTMLAttributeNode)
           end
         end
 
@@ -59,10 +62,40 @@ module Herb
           check_erb_expression(node, :render)
         end
 
+        def visit_erb_block_node(node)
+          check_erb_expression(node, :expression)
+
+          visit_branching_node(node)
+        end
+
+        def visit_erb_iteration_block_node(node)
+          check_erb_expression(node, :expression)
+
+          visit_branching_node(node)
+        end
+
+        def visit_erb_while_node(node)
+          check_erb_expression(node, :expression)
+
+          visit_branching_node(node)
+        end
+
+        def visit_erb_until_node(node)
+          check_erb_expression(node, :expression)
+
+          visit_branching_node(node)
+        end
+
+        def visit_erb_for_node(node)
+          check_erb_expression(node, :expression)
+
+          visit_branching_node(node)
+        end
+
         private
 
         def visit_children_with_paths(children)
-          return unless children
+          return unless children.is_a?(Array)
 
           children.each_with_index do |child, index|
             @path.push(index)
@@ -86,7 +119,24 @@ module Herb
             }
           end
 
-          visit_children_with_paths(node.child_nodes)
+          visit_branching_node(node)
+        end
+
+        def visit_branching_node(node)
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            visit_children_with_paths(node.send(property))
+          end
+
+          BRANCH_CONTINUATION_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            child = node.send(property)
+            next unless child
+
+            visit(child)
+          end
         end
 
         def collect_all_expressions(node)

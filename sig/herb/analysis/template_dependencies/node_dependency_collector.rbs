@@ -4,6 +4,10 @@ module Herb
   module Analysis
     class TemplateDependencies
       class NodeDependencyCollector < ::Herb::Visitor
+        BRANCH_BODY_PROPERTIES: Array[Symbol]
+
+        BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
+
         attr_reader affected: untyped
 
         def initialize: (untyped state, untyped helper_registry, untyped custom_helpers) -> untyped
@@ -26,11 +30,23 @@ module Herb
 
         def visit_erb_render_node: (untyped node) -> untyped
 
+        def visit_erb_block_node: (untyped node) -> untyped
+
+        def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+        def visit_erb_while_node: (untyped node) -> untyped
+
+        def visit_erb_until_node: (untyped node) -> untyped
+
+        def visit_erb_for_node: (untyped node) -> untyped
+
         private
 
         def visit_children_with_paths: (untyped children) -> untyped
 
         def check_block_for_state: (untyped node, untyped type) -> untyped
+
+        def visit_branching_node: (untyped node) -> untyped
 
         def collect_all_expressions: (untyped node) -> untyped
 

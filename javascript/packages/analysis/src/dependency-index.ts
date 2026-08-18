@@ -1,12 +1,12 @@
 import { collectTemplateDependencies } from "./template-dependencies"
-import { isERBCaseNode, isERBContentNode, isERBIfNode, isERBRenderNode, isERBUnlessNode, isHTMLAttributeNode, isLiteralNode } from "@herb-tools/core"
+import { isERBBlockNode, isERBCaseNode, isERBContentNode, isERBIfNode, isERBRenderNode, isERBUnlessNode, isHTMLAttributeNode, isHTMLElementNode, isLiteralNode } from "@herb-tools/core"
 
 const PARSER_OPTIONS = { render_nodes: true, strict_locals: true, prism_nodes: true, prism_program: true, track_whitespace: true }
 
 import type { DependencyOptions } from "./template-dependencies"
 import type { DocumentNode, HTMLAttributeNode, HerbBackend, Node, Token } from "@herb-tools/core"
 
-export type AffectedNodeKind = "text_content" | "conditional" | "render" | "attribute_value"
+export type AffectedNodeKind = "text_content" | "conditional" | "render" | "attribute_value" | "expression"
 
 export interface AffectedNode {
   nodePath: number[]
@@ -31,7 +31,21 @@ export function referencesState(code: string | undefined, state: string): boolea
 }
 
 function childrenOf(node: Node): Node[] {
-  return node.childNodes().filter((child): child is Node => child !== null)
+  const indexed = isHTMLElementNode(node)
+    ? node.body
+    : isERBIfNode(node) || isERBUnlessNode(node)
+      ? node.statements
+      : isERBBlockNode(node)
+        ? node.body
+        : node.childNodes()
+
+  return indexed.filter((child): child is Node => child !== null)
+}
+
+function attributesOf(node: Node): HTMLAttributeNode[] {
+  if (!isHTMLElementNode(node) || !node.open_tag) return []
+
+  return node.open_tag.childNodes().filter((child): child is HTMLAttributeNode => child !== null && isHTMLAttributeNode(child))
 }
 
 function locationOf(node: Node): string | undefined {
@@ -101,6 +115,8 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
       return
     }
 
+    for (const attribute of attributesOf(node)) inspectAttribute(attribute)
+
     if (isERBIfNode(node) || isERBUnlessNode(node) || isERBCaseNode(node)) {
       if (expressionsWithin(node).some(code => referencesState(code, state))) {
         record(node, "conditional", expressionOf(node))
@@ -109,6 +125,8 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
       record(node, "text_content", expressionOf(node))
     } else if (isERBRenderNode(node) && referencesState(expressionOf(node), state)) {
       record(node, "render", expressionOf(node))
+    } else if (isERBBlockNode(node) && referencesState(expressionOf(node), state)) {
+      record(node, "expression", expressionOf(node))
     }
 
     for (const [index, child] of childrenOf(node).entries()) {
