@@ -211,6 +211,44 @@ module Engine
         assert_equal subject.payload(entry), JSON.parse(json)
       end
 
+      test "follows state into a partial rendered inside an each block" do
+        write("_card.html.erb", "<div><%= card.title %></div>")
+        entry = write("index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+        files = subject.across(entry)["@posts"].map { |slot| File.basename(slot[:file]) }
+
+        assert_includes files, "_card.html.erb"
+      end
+
+      test "leaves an item template reached through an each block to the server" do
+        write("_card.html.erb", "<div><%= card %></div>")
+        entry = write("index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+        card = subject.across(entry)["@posts"].find { |slot| File.basename(slot[:file]) == "_card.html.erb" }
+
+        assert_equal :derived, card[:mode]
+      end
+
+      test "leaves everything an each block's item template renders to the server" do
+        write("_name.html.erb", "<span><%= card %></span>")
+        write("_card.html.erb", %(<div><%= render "posts/name", card: card %></div>))
+        entry = write("index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+        modes = subject.across(entry)["@posts"].reject { |slot| File.basename(slot[:file]) == "index.html.erb" }.map { |slot| slot[:mode] }
+
+        refute_empty modes
+        assert_equal [:derived], modes.uniq
+      end
+
+      test "keeps writing a partial rendered inside a block that runs once" do
+        write("_field.html.erb", "<div><%= card %></div>")
+        entry = write("index.html.erb", %(<% form_with model: @post do |f| %><%= render "posts/field", card: @post %><% end %>))
+
+        field = subject.across(entry)["@post"].find { |slot| File.basename(slot[:file]) == "_field.html.erb" }
+
+        assert_equal :identity, field[:mode]
+      end
+
       test "leaves a collection's item template to the server" do
         write("_card.html.erb", "<div><%= card %></div>")
         entry = write("index.html.erb", %(<%= render partial: "posts/card", collection: @posts %>))

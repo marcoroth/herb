@@ -35,7 +35,7 @@ module Herb
         file_path = @project_path.join(file_path).to_s unless Pathname.new(file_path).absolute?
         source = File.read(file_path)
 
-        ast = ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, prism_program: true, track_whitespace: true).value
+        ast = ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, prism_program: true, track_whitespace: true, iteration_nodes: true).value
 
         known_helpers = @custom_helpers.dup
         component_methods_for(file_path).each { |m| known_helpers.add(m) }
@@ -404,8 +404,12 @@ module Herb
           result.render_calls.each do |call|
             flowing_locals = {} #: Hash[String, String]
 
+            iterated = iterated_names(call, carrying)
+
             call[:locals].each do |local_name, value_expr|
-              flowing_locals[local_name] = value_expr if carrying.any? { |name| expression_references?(value_expr, name) }
+              next flowing_locals[local_name] = value_expr if carrying.any? { |name| expression_references?(value_expr, name) }
+
+              flowing_locals[local_name] = value_expr if iterated.any? { |name| expression_references?(value_expr, name) }
             end
 
             collection_flows = call[:collection] && carrying.any? { |name| expression_references?(call[:collection], name) }
@@ -498,6 +502,17 @@ module Herb
 
       def partial_index
         @partial_index ||= PartialIndex.build(@project_path)
+      end
+
+      def iterated_names(call, carrying)
+        blocks = call[:within] || [] #: Array[Hash[Symbol, untyped]]
+
+        blocks.flat_map { |enclosing|
+          next [] unless enclosing[:iterating]
+          next [] unless carrying.any? { |name| expression_references?(enclosing[:expression].to_s, name) }
+
+          enclosing[:parameters] || []
+        }
       end
 
       def expression_references?(expression, name)

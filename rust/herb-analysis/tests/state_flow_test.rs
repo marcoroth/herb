@@ -241,3 +241,110 @@ fn does_not_confuse_a_state_name_with_a_longer_one() {
 
   assert_eq!(expressions, vec!["@post.title".to_string()]);
 }
+
+#[test]
+fn follows_state_through_a_block_parameter() {
+  let project = Project::new("alias_param");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>",
+  );
+
+  let expressions: Vec<String> = project
+    .flow()
+    .affected_nodes(&entry, "@items")
+    .into_iter()
+    .filter_map(|node| node.expression)
+    .collect();
+
+  assert!(expressions.iter().any(|code| code == "item.name"), "got {expressions:?}");
+}
+
+#[test]
+fn follows_state_through_every_parameter_a_block_binds() {
+  let project = Project::new("alias_params");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<ul><% @rows.each_with_index do |row, i| %><li><%= i %>: <%= row.title %></li><% end %></ul>",
+  );
+
+  let expressions: Vec<String> = project
+    .flow()
+    .affected_nodes(&entry, "@rows")
+    .into_iter()
+    .filter_map(|node| node.expression)
+    .collect();
+
+  assert!(expressions.iter().any(|code| code == "row.title"), "got {expressions:?}");
+  assert!(expressions.iter().any(|code| code == "i"), "got {expressions:?}");
+}
+
+#[test]
+fn leaves_an_expression_a_block_parameter_does_not_reach() {
+  let project = Project::new("alias_unrelated");
+  let entry = project.write("app/views/posts/index.html.erb", "<div><% @items.each do |item| %><%= other %><% end %></div>");
+
+  let expressions: Vec<String> = project
+    .flow()
+    .affected_nodes(&entry, "@items")
+    .into_iter()
+    .filter_map(|node| node.expression)
+    .collect();
+
+  assert!(!expressions.iter().any(|code| code == "other"), "got {expressions:?}");
+}
+
+#[test]
+fn stops_a_block_parameter_at_the_end_of_its_block() {
+  let project = Project::new("alias_scope");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<div><% @items.each do |item| %><%= item.name %><% end %><%= item %></div>",
+  );
+
+  let expressions: Vec<String> = project
+    .flow()
+    .affected_nodes(&entry, "@items")
+    .into_iter()
+    .filter_map(|node| node.expression)
+    .collect();
+
+  assert_eq!(1, expressions.iter().filter(|code| *code == "item.name").count(), "got {expressions:?}");
+  assert_eq!(0, expressions.iter().filter(|code| *code == "item").count(), "got {expressions:?}");
+}
+
+#[test]
+fn records_a_block_the_way_ruby_does() {
+  let project = Project::new("alias_block");
+  let entry = project.write("app/views/posts/index.html.erb", "<ul><% @items.each do |item| %><li>x</li><% end %></ul>");
+
+  let nodes = project.flow().affected_nodes(&entry, "@items");
+  let block = nodes.iter().find(|node| node.kind == "expression");
+
+  assert!(block.is_some(), "got {nodes:?}");
+  assert_eq!(vec![0, 0], block.unwrap().node_path);
+}
+
+#[test]
+fn reports_what_the_ruby_collector_reports() {
+  let project = Project::new("alias_parity");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>",
+  );
+
+  let reported: Vec<(String, Vec<usize>, Option<String>)> = project
+    .flow()
+    .affected_nodes(&entry, "@items")
+    .into_iter()
+    .map(|node| (node.kind, node.node_path, node.expression))
+    .collect();
+
+  assert_eq!(
+    vec![
+      ("expression".to_string(), vec![0, 0], Some("@items.each do |item|".to_string())),
+      ("text_content".to_string(), vec![0, 0, 0, 0], Some("item.name".to_string())),
+    ],
+    reported
+  );
+}

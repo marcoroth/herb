@@ -1,5 +1,5 @@
 import { collectTemplateDependencies } from "./template-dependencies"
-import { isERBBlockNode, isERBCaseNode, isERBContentNode, isERBIfNode, isERBRenderNode, isERBUnlessNode, isHTMLAttributeNode, isHTMLElementNode, isLiteralNode } from "@herb-tools/core"
+import { isERBBlockNode, isERBCaseNode, isERBContentNode, isERBIfNode, isERBRenderNode, isERBUnlessNode, isHTMLAttributeNode, isHTMLElementNode, isLiteralNode, isRubyParameterNode } from "@herb-tools/core"
 
 const PARSER_OPTIONS = { render_nodes: true, strict_locals: true, prism_nodes: true, prism_program: true, track_whitespace: true }
 
@@ -32,6 +32,35 @@ export function referencesState(code: string | undefined, state: string): boolea
 
 function escapeForPattern(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function referencesAny(code: string | undefined, aliases: string[]): boolean {
+  return aliases.some(alias => referencesState(code, alias))
+}
+
+function blockBindings(node: Node, aliases: string[]): string[] {
+  if (!isERBBlockNode(node)) return []
+  if (!referencesAny(expressionOf(node), aliases)) return []
+
+  const names: string[] = []
+
+  const walk = (candidate: Node) => {
+    if (isRubyParameterNode(candidate)) {
+      const name = candidate.name?.value?.trim()
+
+      if (name && !names.includes(name)) names.push(name)
+    }
+
+    for (const child of candidate.childNodes()) {
+      if (child) walk(child)
+    }
+  }
+
+  for (const argument of node.block_arguments) {
+    if (argument) walk(argument)
+  }
+
+  return names.filter(name => !aliases.includes(name))
 }
 
 function childrenOf(node: Node): Node[] {
@@ -94,13 +123,15 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
     })
   }
 
+  const aliases = [state]
+
   const inspectAttribute = (node: HTMLAttributeNode) => {
     const attribute = attributeNameOf(node)
 
     for (const value of node.value?.children ?? []) {
       const expression = expressionOf(value)
 
-      if (!referencesState(expression, state)) continue
+      if (!referencesAny(expression, aliases)) continue
 
       affected.push({
         nodePath: [...path],
@@ -122,22 +153,28 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
     for (const attribute of attributesOf(node)) inspectAttribute(attribute)
 
     if (isERBIfNode(node) || isERBUnlessNode(node) || isERBCaseNode(node)) {
-      if (expressionsWithin(node).some(code => referencesState(code, state))) {
+      if (expressionsWithin(node).some(code => referencesAny(code, aliases))) {
         record(node, "conditional", expressionOf(node))
       }
-    } else if (isERBContentNode(node) && referencesState(expressionOf(node), state)) {
+    } else if (isERBContentNode(node) && referencesAny(expressionOf(node), aliases)) {
       record(node, "text_content", expressionOf(node))
-    } else if (isERBRenderNode(node) && referencesState(expressionOf(node), state)) {
+    } else if (isERBRenderNode(node) && referencesAny(expressionOf(node), aliases)) {
       record(node, "render", expressionOf(node))
-    } else if (isERBBlockNode(node) && referencesState(expressionOf(node), state)) {
+    } else if (isERBBlockNode(node) && referencesAny(expressionOf(node), aliases)) {
       record(node, "expression", expressionOf(node))
     }
+
+    const bound = blockBindings(node, aliases)
+
+    aliases.push(...bound)
 
     for (const [index, child] of childrenOf(node).entries()) {
       path.push(index)
       walk(child)
       path.pop()
     }
+
+    for (const name of bound) aliases.splice(aliases.indexOf(name), 1)
   }
 
   for (const [index, child] of childrenOf(document).entries()) {

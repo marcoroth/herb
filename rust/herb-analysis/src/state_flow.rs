@@ -100,9 +100,11 @@ impl StateFlow {
     let mut affected = Vec::new();
     let mut path = Vec::new();
 
+    let mut aliases = vec![state.to_string()];
+
     for (index, child) in result.value.children.iter().enumerate() {
       path.push(index);
-      collect_affected(child, state, &mut path, &mut affected);
+      collect_affected(child, &mut aliases, &mut path, &mut affected);
       path.pop();
     }
 
@@ -293,20 +295,22 @@ fn is_word_byte(byte: u8) -> bool {
   byte.is_ascii_alphanumeric() || byte == b'_'
 }
 
-fn collect_affected(node: &AnyNode, state: &str, path: &mut Vec<usize>, affected: &mut Vec<AffectedNode>) {
+fn collect_affected(node: &AnyNode, aliases: &mut Vec<String>, path: &mut Vec<usize>, affected: &mut Vec<AffectedNode>) {
   let kind = match node {
     AnyNode::ERBContentNode(_) => Some("text_content"),
     AnyNode::ERBIfNode(_) => Some("conditional"),
     AnyNode::ERBUnlessNode(_) => Some("conditional"),
     AnyNode::ERBCaseNode(_) => Some("conditional"),
     AnyNode::ERBRenderNode(_) => Some("render"),
+    AnyNode::ERBBlockNode(_) => Some("expression"),
+    AnyNode::ERBIterationBlockNode(_) => Some("expression"),
     _ => None,
   };
 
   if let Some(kind) = kind {
-    let expressions = collect_expressions(node);
+    let expressions = if is_block(node) { own_expression(node) } else { collect_expressions(node) };
 
-    if expressions.iter().any(|code| references_state(code, state)) {
+    if expressions.iter().any(|code| references_any(code, aliases)) {
       let location = node.location();
 
       affected.push(AffectedNode {
@@ -319,17 +323,76 @@ fn collect_affected(node: &AnyNode, state: &str, path: &mut Vec<usize>, affected
   }
 
   if let AnyNode::HTMLElementNode(element) = node {
-    collect_attributes(element, state, path, affected);
+    collect_attributes(element, aliases, path, affected);
   }
+
+  let bound = block_bindings(node, aliases);
+
+  aliases.extend(bound.iter().cloned());
 
   for (index, child) in any_children(node).into_iter().enumerate() {
     path.push(index);
-    collect_affected(child, state, path, affected);
+    collect_affected(child, aliases, path, affected);
     path.pop();
+  }
+
+  aliases.retain(|name| !bound.contains(name));
+}
+
+fn is_block(node: &AnyNode) -> bool {
+  matches!(node, AnyNode::ERBBlockNode(_) | AnyNode::ERBIterationBlockNode(_))
+}
+
+fn own_expression(node: &AnyNode) -> Vec<String> {
+  content_of(node)
+    .map(|content| content.trim().to_string())
+    .filter(|content| !content.is_empty())
+    .into_iter()
+    .collect()
+}
+
+fn block_bindings(node: &AnyNode, aliases: &[String]) -> Vec<String> {
+  let arguments = match node {
+    AnyNode::ERBBlockNode(inner) => &inner.block_arguments,
+    AnyNode::ERBIterationBlockNode(inner) => &inner.block_arguments,
+    _ => return Vec::new(),
+  };
+
+  if !own_expression(node).iter().any(|code| references_any(code, aliases)) {
+    return Vec::new();
+  }
+
+  let mut names = Vec::new();
+
+  for argument in arguments {
+    collect_parameter_names(argument, &mut names);
+  }
+
+  names.retain(|name| !aliases.contains(name));
+  names
+}
+
+fn collect_parameter_names(node: &AnyNode, names: &mut Vec<String>) {
+  if let AnyNode::RubyParameterNode(inner) = node {
+    if let Some(token) = inner.name.as_ref() {
+      let name = token.value.trim().to_string();
+
+      if !name.is_empty() && !names.contains(&name) {
+        names.push(name);
+      }
+    }
+  }
+
+  for child in any_children(node) {
+    collect_parameter_names(child, names);
   }
 }
 
-fn collect_attributes(element: &herb::nodes::HTMLElementNode, state: &str, path: &[usize], affected: &mut Vec<AffectedNode>) {
+fn references_any(code: &str, aliases: &[String]) -> bool {
+  aliases.iter().any(|name| expression_references(code, name))
+}
+
+fn collect_attributes(element: &herb::nodes::HTMLElementNode, aliases: &[String], path: &[usize], affected: &mut Vec<AffectedNode>) {
   let Some(open_tag) = element.open_tag.as_ref() else {
     return;
   };
@@ -355,7 +418,7 @@ fn collect_attributes(element: &herb::nodes::HTMLElementNode, state: &str, path:
 
       let trimmed = code.trim();
 
-      if trimmed.is_empty() || !references_state(trimmed, state) {
+      if trimmed.is_empty() || !references_any(trimmed, aliases) {
         continue;
       }
 
@@ -410,12 +473,10 @@ fn content_of(node: &AnyNode) -> Option<String> {
     AnyNode::ERBUnlessNode(inner) => inner.content.as_ref().map(|token| token.value.clone()),
     AnyNode::ERBCaseNode(inner) => inner.content.as_ref().map(|token| token.value.clone()),
     AnyNode::ERBRenderNode(inner) => inner.content.as_ref().map(|token| token.value.clone()),
+    AnyNode::ERBBlockNode(inner) => inner.content.as_ref().map(|token| token.value.clone()),
+    AnyNode::ERBIterationBlockNode(inner) => inner.content.as_ref().map(|token| token.value.clone()),
     _ => None,
   }
-}
-
-fn references_state(code: &str, state: &str) -> bool {
-  expression_references(code, state)
 }
 
 fn component_methods_for(template: &str) -> std::collections::BTreeSet<String> {
