@@ -57,6 +57,13 @@ module Herb
         index
       end
 
+      #: (String, Array[String]) -> Array[Hash[Symbol, untyped]]
+      def subtree_slots(entry_point, changed)
+        reached = across(entry_point).filter_map { |name, slots| slots if changed.include?(name) }
+
+        reached.flatten.select { |slot| slot[:mode] == :structural }.uniq { |slot| [slot[:file], slot[:index]] }
+      end
+
       #: (String, ?params: Hash[String, String]) -> Hash[String, untyped]
       def payload(entry_point, params: {})
         state = across(entry_point).transform_values { |slots|

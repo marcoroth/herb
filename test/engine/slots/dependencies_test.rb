@@ -240,6 +240,32 @@ module Engine
         assert_equal [:derived], modes.uniq
       end
 
+      test "asks for markup only where values cannot answer" do
+        entry = write("index.html.erb", "<div><% if @admin %><b><%= @name %></b><% end %></div>")
+
+        assert_equal([0], subject.subtree_slots(entry, ["@admin"]).map { |slot| slot[:index] })
+      end
+
+      test "leaves a value change to the values" do
+        entry = write("index.html.erb", "<div><% if @admin %><b><%= @name %></b><% end %></div>")
+
+        assert_empty subject.subtree_slots(entry, ["@name"])
+      end
+
+      test "asks for a collection that changed" do
+        entry = write("index.html.erb", "<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>")
+
+        slots = subject.subtree_slots(entry, ["@items"])
+
+        assert_equal [:structural], slots.map { |slot| slot[:mode] }.uniq
+      end
+
+      test "says nothing about state the page does not read" do
+        entry = write("index.html.erb", "<div><% if @admin %><b>x</b><% end %></div>")
+
+        assert_empty subject.subtree_slots(entry, ["@nothing"])
+      end
+
       test "leaves a template that reaches nothing out of the map" do
         entry = write("index.html.erb", "<div>static</div>")
 
