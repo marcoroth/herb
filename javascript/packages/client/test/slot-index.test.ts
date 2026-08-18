@@ -167,7 +167,7 @@ describe("SlotIndex", () => {
       expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["1", "2"])
     })
 
-    test("gives a item a range covering just that item", () => {
+    test("gives an item a range covering just that item", () => {
       index.scan(mount(COLLECTION))
 
       const item = index.itemsFor(FILE, 0).get("2")!
@@ -434,7 +434,7 @@ describe("collection reconciliation", () => {
     expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["2", "1"])
   })
 
-  test("forgets a item whose markers have left the page", () => {
+  test("forgets an item whose markers have left the page", () => {
     const index = mounted(COLLECTION)
     const slot = index.slot(FILE, 0)!
 
@@ -445,7 +445,7 @@ describe("collection reconciliation", () => {
     expect(index.slotInItem(FILE, 0, "1", 2)).toBeNull()
   })
 
-  test("stops asking for a item already gone from the page to be removed", () => {
+  test("stops asking for an item already gone from the page to be removed", () => {
     const index = mounted(COLLECTION)
     const slot = index.slot(FILE, 0)!
 

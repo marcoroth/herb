@@ -8,7 +8,7 @@
  *     Element-anchored slots are attributes and use the cheap selector path.
  *   - A marker pair is not necessarily a pair of siblings. The HTML parser inserts a `<tbody>`
  *     into a `<table>` and moves the items into it, leaving the markers that preceded them
- *     behind, so a item's opening and closing marker can sit at different depths. Pairing is by
+ *     behind, so an item's opening and closing marker can sit at different depths. Pairing is by
  *     index on a stack, never by walking siblings.
  *   - One template can be on the page many times, so a file maps to a list of regions rather
  *     than to one.

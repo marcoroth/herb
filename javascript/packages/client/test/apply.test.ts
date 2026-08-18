@@ -117,7 +117,7 @@ describe("applying values to a collection", () => {
 
   const keys = () => [...document.querySelectorAll("li")].map((li) => li.textContent)
 
-  test("drops a item the payload no longer has", () => {
+  test("drops an item the payload no longer has", () => {
     const index = mounted(ITEMS)
 
     const report = index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" } } } }, "bbbbbbbb"))
@@ -126,7 +126,7 @@ describe("applying values to a collection", () => {
     expect(keys()).toEqual(["two"])
   })
 
-  test("builds a item it has never seen from one it has", () => {
+  test("builds an item it has never seen from one it has", () => {
     const index = mounted(ITEMS)
 
     const report = index.apply(
@@ -188,7 +188,7 @@ describe("applying values to a collection", () => {
     expect(keys()).toEqual(["again"])
   })
 
-  test("asks for a item when the collection is empty and nothing was parked", () => {
+  test("asks for an item when the collection is empty and nothing was parked", () => {
     const index = mounted(EMPTY_ITEMS)
 
     const report = index.apply(payload(FILE, { 0: { items: { 1: { 1: "one" } } } }, "bbbbbbbb"))

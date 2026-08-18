@@ -59,11 +59,11 @@ module Herb
     #                           2 => { 1 => "Joe",   2 => "Doe" } } } }
     #
     # Grouping the other way would give one list per slot and leave the client to zip them back
-    # together, which it cannot do once a item is inserted rather than appended.
+    # together, which it cannot do once an item is inserted rather than appended.
     #
-    # A item is keyed by the key its template declares, through `herb-key` or `id` or a
+    # An item is keyed by the key its template declares, through `herb-key` or `id` or a
     # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
-    # decides what that key is and this evaluates it, so a item arrives under the same key the
+    # decides what that key is and this evaluates it, so an item arrives under the same key the
     # marker around it carries. A collection that declares none falls back to position.
     #
     # ## A partial keeps its own values

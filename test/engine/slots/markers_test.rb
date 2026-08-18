@@ -391,7 +391,7 @@ module Engine
         assert_equal [["herb-item:0:1", "table"], ["/herb-item:0", "tbody"]], item_marker_parents(document)
       end
 
-      test "an explicit tbody keeps a item's markers under one parent" do
+      test "an explicit tbody keeps an item's markers under one parent" do
         document = parse_slotted(
           %(<table><tbody><% @items.each do |item| %><tr id="<%= item %>"><td>x</td></tr><% end %></tbody></table>),
           { "@items" => [1] }

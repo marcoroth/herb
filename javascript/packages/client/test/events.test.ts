@@ -34,7 +34,7 @@ describe("saying what changed", () => {
     expect(seen[0]).toMatchObject({ file: FILE, occurrence: 0, index: 0, operation: "value" })
   })
 
-  test("announces a item it built and a item it dropped, with the key", () => {
+  test("announces an item it built and an item it dropped, with the key", () => {
     document.body.innerHTML = ITEMS
 
     const index = new SlotIndex()
@@ -69,7 +69,7 @@ describe("saying what changed", () => {
     expect(seen).toEqual([])
   })
 
-  test("a item still exists when its removal is announced, so it can be pointed at", () => {
+  test("an item still exists when its removal is announced, so it can be pointed at", () => {
     document.body.innerHTML = ITEMS
 
     const index = new SlotIndex()
