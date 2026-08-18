@@ -11,6 +11,9 @@ const COND_TRUE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:con
 const COND_FALSE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 const COLLECTION = `<!--herb-region:${FILE}:64652ac4:0--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute" data-herb-child="2">1</li><!--/herb-row:0--><!--herb-row:0:2--><li id="2" data-herb-slot="1:attribute" data-herb-child="2">2</li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
 const TABLE = `<!--herb-region:${FILE}:c4a38ea8:0--><table><!--herb-slot:0:collection--><!--herb-row:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-child="2">1</td></tr><!--/herb-row:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
+const DISPLACED =
+  `<!--herb-region:${FILE}:25c0946e:0--><h1 data-herb-child="5">Title</h1><!--/herb-region:${FILE}-->` +
+  `<!--herb-region:${FILE}:25c0946e:0--><p data-herb-child="0">body</p><!--/herb-region:${FILE}-->`
 const ATTR = `<!--herb-region:${FILE}:55167514:0--><div class="card" id="1" data-herb-slot="0:attribute,1:element">x</div><!--/herb-region:${FILE}-->`
 
 function occurrence(html: string, nth: number): string {
@@ -45,7 +48,7 @@ describe("SlotIndex", () => {
     })
 
     test("keeps one region per time a template was rendered", () => {
-      index.scan(mount(CHILD + CHILD + CHILD))
+      index.scan(mount(CHILD + occurrence(CHILD, 1) + occurrence(CHILD, 2)))
 
       expect(index.regionsFor(FILE)).toHaveLength(3)
       expect(index.files()).toEqual([FILE])
@@ -67,6 +70,32 @@ describe("SlotIndex", () => {
 
       expect(index.region(FILE, 0)).toBe(second)
       expect(index.region(FILE, 1)).toBe(first)
+    })
+
+    test("takes two markers naming the same rendering as one region", () => {
+      index.scan(mount(DISPLACED))
+
+      expect(index.regionsFor(FILE)).toHaveLength(1)
+      expect(index.region(FILE, 0)?.ranges).toHaveLength(2)
+    })
+
+    test("attributes a slot to the rendering its markers name, not the one they sit in", () => {
+      index.scan(mount(DISPLACED))
+
+      expect(index.rangeFor(index.slot(FILE, 5)!).toString()).toBe("Title")
+      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("body")
+    })
+
+    test("keeps a rendering while any part of it is still on the page", () => {
+      const host = mount(DISPLACED)
+
+      index.scan(host)
+      host.querySelector("h1")!.previousSibling!.remove()
+
+      index.prune()
+
+      expect(index.regionsFor(FILE)).toHaveLength(1)
+      expect(index.slot(FILE, 0)).not.toBeNull()
     })
 
     test("separates the slots of two renderings by their occurrence", () => {
@@ -238,7 +267,7 @@ describe("SlotIndex", () => {
     })
 
     test("drops a partial that was removed", async () => {
-      const host = mount(CHILD + CHILD)
+      const host = mount(CHILD + occurrence(CHILD, 1))
 
       index.observe(host)
       expect(index.regionsFor(FILE)).toHaveLength(2)
@@ -268,7 +297,7 @@ describe("SlotIndex", () => {
   describe("pruning", () => {
     test("drops regions whose markup left the document", () => {
       const first = mount(CHILD)
-      mount(CHILD)
+      mount(occurrence(CHILD, 1))
 
       index.scan(document.body)
       expect(index.regionsFor(FILE)).toHaveLength(2)

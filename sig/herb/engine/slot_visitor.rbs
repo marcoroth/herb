@@ -34,6 +34,10 @@ module Herb
 
       OCCURRENCES: String
 
+      OCCURRENCE: String
+
+      CAPTURING: Regexp
+
       BRANCHING_TYPES: Array[Symbol]
 
       ATTRIBUTE_TYPES: Array[Symbol]
@@ -241,6 +245,10 @@ module Herb
       def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
 
       def wrap_region: (untyped document_node) -> untyped
+
+      def wrap_displaced: () -> untyped
+
+      def region_open: () -> untyped
 
       def text_node: (untyped content) -> untyped
 

@@ -1,6 +1,10 @@
 import { describe, test, expect, beforeEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
 
+function nth(html: string, occurrence: number): string {
+  return html.replace(/(<!--herb-region:[^>]*?:[0-9a-f]{8}):\d+-->/g, `$1:${occurrence}-->`)
+}
+
 const FILE = "app/views/posts/index.html.erb"
 const EMPTY_COND = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 
@@ -163,7 +167,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
 
   test("keeps one copy of a skeleton however many times the template rendered", () => {
     const index = new SlotIndex()
-    document.body.innerHTML = page + page + page
+    document.body.innerHTML = page + nth(page, 1) + nth(page, 2)
     index.scan(document.body)
 
     expect(index.regionsFor(FILE)).toHaveLength(3)
@@ -309,7 +313,7 @@ describe("statics parked once for the page", () => {
 
   test("belongs to the template it names rather than to where it sits", () => {
     const index = new SlotIndex()
-    document.body.innerHTML = rendering + rendering + rendering + bundle
+    document.body.innerHTML = rendering + nth(rendering, 1) + nth(rendering, 2) + bundle
     index.scan(document.body)
 
     expect(index.regionsFor(FILE)).toHaveLength(3)
