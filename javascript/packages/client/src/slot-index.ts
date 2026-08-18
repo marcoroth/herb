@@ -77,10 +77,16 @@ export interface Slot {
   children: Slot[]
 }
 
+export interface RegionRange {
+  start: Comment
+  end: Comment | null
+}
+
 export interface Region {
   file: string
   version: string
   occurrence: number
+  ranges: RegionRange[]
   start: Comment | null
   end: Comment | null
   slots: SlotMap
@@ -152,8 +158,13 @@ interface OpenRow {
   row: Row
 }
 
+interface OpenRegion {
+  region: Region
+  range: RegionRange
+}
+
 interface ParseState {
-  openRegions: Region[]
+  openRegions: OpenRegion[]
   openSlots: OpenSlot[]
   openRows: OpenRow[]
 }
@@ -584,18 +595,34 @@ export class SlotIndex {
       const regionOpen = REGION_OPEN.exec(data)
 
       if (regionOpen) {
-        const region: Region = {
-          file: regionOpen[1],
-          version: regionOpen[2],
-          occurrence: Number(regionOpen[3]),
-          start: comment,
-          end: null,
-          slots: new Map(),
+        const file = regionOpen[1]
+        const version = regionOpen[2]
+        const occurrence = Number(regionOpen[3])
+        const range: RegionRange = { start: comment, end: null }
+
+        const existing = this.#regions.find(
+          (candidate) => candidate.file === file && candidate.occurrence === occurrence && candidate.version === version,
+        )
+
+        if (existing) {
+          existing.ranges.push(range)
+          openRegions.push({ region: existing, range })
+        } else {
+          const region: Region = {
+            file,
+            version,
+            occurrence,
+            ranges: [range],
+            start: comment,
+            end: null,
+            slots: new Map(),
+          }
+
+          openRegions.push({ region, range })
+          this.#regions.push(region)
+          result.regions.push(region)
         }
 
-        openRegions.push(region)
-        this.#regions.push(region)
-        result.regions.push(region)
         this.#seen.add(comment)
 
         continue
@@ -604,9 +631,13 @@ export class SlotIndex {
       const regionClose = REGION_CLOSE.exec(data)
 
       if (regionClose) {
-        const region = popMatching(openRegions, (candidate) => candidate.file === regionClose[1])
+        const open = popMatching(openRegions, (candidate) => candidate.region.file === regionClose[1])
 
-        if (region) region.end = comment
+        if (open) {
+          open.range.end = comment
+
+          if (open.range === open.region.ranges[0]) open.region.end = comment
+        }
 
         this.#seen.add(comment)
 
@@ -616,7 +647,7 @@ export class SlotIndex {
       const slotOpen = SLOT_OPEN.exec(data)
 
       if (slotOpen) {
-        const region = openRegions[openRegions.length - 1] ?? this.#enclosingRegion(comment)
+        const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
         const stacked = openSlots[openSlots.length - 1]?.slot ?? null
         const enclosing = stacked ?? (region ? this.#enclosingSlot(region, comment) : null)
 
@@ -655,7 +686,7 @@ export class SlotIndex {
 
       if (rowOpen) {
         const collectionIndex = Number(rowOpen[1])
-        const region = openRegions[openRegions.length - 1] ?? this.#enclosingRegion(comment)
+        const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
         const collection = region?.slots.get(collectionIndex)
         const row: Row = { key: rowOpen[2], start: comment, end: comment, slots: new Map() }
 
@@ -681,7 +712,7 @@ export class SlotIndex {
       const branch = BRANCH.exec(data)
 
       if (branch) {
-        const region = openRegions[openRegions.length - 1] ?? this.#enclosingRegion(comment)
+        const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
         const slot = region?.slots.get(Number(branch[1]))
 
         if (slot) slot.branch = Number(branch[2])
@@ -737,7 +768,7 @@ export class SlotIndex {
 
     this.#anchored.add(element)
 
-    const walked = state.openRegions[state.openRegions.length - 1] ?? null
+    const walked = state.openRegions[state.openRegions.length - 1]?.region ?? null
     const region = walked ?? this.#enclosingRegion(element)
 
     if (!region) return
@@ -825,7 +856,7 @@ export class SlotIndex {
     for (let i = this.#regions.length - 1; i >= 0; i--) {
       const region = this.#regions[i]
 
-      if (region.start && contains(region, node)) return region
+      if (contains(region, node)) return region
     }
 
     return null
@@ -891,7 +922,12 @@ export class SlotIndex {
   }
 
   #regionConnected(region: Region): boolean {
-    return region.start ? region.start.isConnected : false
+    region.ranges = region.ranges.filter((range) => range.start.isConnected)
+
+    region.start = region.ranges[0]?.start ?? null
+    region.end = region.ranges[0]?.end ?? null
+
+    return region.ranges.length > 0
   }
 
   #slotConnected(slot: Slot): boolean {
@@ -1066,14 +1102,16 @@ function anchored(element: Element): boolean {
 }
 
 function contains(region: Region, node: Node): boolean {
-  if (!region.start) return false
+  return region.ranges.some((range) => withinRegionRange(range, node))
+}
 
-  const after = region.start.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
+function withinRegionRange(range: RegionRange, node: Node): boolean {
+  const after = range.start.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
   if (!after) return false
 
-  if (!region.end) return true
+  if (!range.end) return true
 
-  return Boolean(region.end.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)
+  return Boolean(range.end.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)
 }
 
 function withinRange(anchor: { start: Comment; end: Comment }, node: Node): boolean {

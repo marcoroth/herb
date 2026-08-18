@@ -40,6 +40,9 @@ module Herb
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
+      OCCURRENCE = "_herb_occurrence" #: String
+
+      CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
       BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
@@ -109,6 +112,7 @@ module Herb
 
         @in_attribute = false
         @in_open_tag = false
+        @displaced = [] #: Array[untyped]
         @in_html_comment = false
         @in_html_doctype = false
         @raw_text_depth = 0
@@ -181,6 +185,7 @@ module Herb
         return unless @mark
 
         insert_markers(node)
+        wrap_displaced
         wrap_region(node)
         append_statics(node)
       end
@@ -272,6 +277,8 @@ module Herb
 
       def visit_erb_block_node(node)
         record_slot(node, :block)
+
+        @displaced << node if CAPTURING.match?(expression_for(node).to_s)
 
         visit_branching_node(node)
       end
@@ -820,15 +827,34 @@ module Herb
       end
 
       def wrap_region(document_node)
-        name = identifier
-
         document_node.children.unshift(
-          text_node(@markers.region_open_prefix(name, version)),
-          erb_output_node(occurrence_expression),
-          text_node(@markers.region_open_suffix)
+          erb_code_node("#{OCCURRENCE} = #{occurrence_expression}"),
+          *region_open
         )
 
-        document_node.children.push(comment_node(@markers.region_close(name)))
+        document_node.children.push(comment_node(@markers.region_close(identifier)))
+      end
+
+      def wrap_displaced
+        @displaced.each do |node|
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            body = node.send(property)
+            next unless body.is_a?(Array) && !body.empty?
+
+            body.unshift(*region_open)
+            body.push(comment_node(@markers.region_close(identifier)))
+          end
+        end
+      end
+
+      def region_open
+        [
+          text_node(@markers.region_open_prefix(identifier, version)),
+          erb_output_node(OCCURRENCE),
+          text_node(@markers.region_open_suffix)
+        ]
       end
 
       def text_node(content)
