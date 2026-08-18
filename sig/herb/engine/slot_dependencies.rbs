@@ -32,6 +32,9 @@ module Herb
       # : (String) -> Hash[String, Array[Hash[Symbol, untyped]]]
       def across: (String) -> Hash[String, Array[Hash[Symbol, untyped]]]
 
+      # : (String, Array[String]) -> Array[Hash[Symbol, untyped]]
+      def subtree_slots: (String, Array[String]) -> Array[Hash[Symbol, untyped]]
+
       # : (String, ?params: Hash[String, String]) -> Hash[String, untyped]
       def payload: (String, ?params: Hash[String, String]) -> Hash[String, untyped]
 
