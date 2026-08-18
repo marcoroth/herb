@@ -341,19 +341,14 @@ describe("Document-level formatting", () => {
     `)
   })
 
-  test("formats regular HTML elements in multiline when attributes > 3", () => {
+  test("keeps opening tag inline when attributes fit within maxLineLength", () => {
     const source = dedent`
       <div id="element" class="bg-gray-300" another="attribute" final="one">Content</div>
     `
 
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div
-        id="element"
-        class="bg-gray-300"
-        another="attribute"
-        final="one"
-      >
+      <div id="element" class="bg-gray-300" another="attribute" final="one">
         Content
       </div>
     `)
@@ -965,5 +960,68 @@ describe("Document-level formatting", () => {
       More text with    multiple    spaces
       </pre>
     `)
+  })
+
+  describe("text-flow run on a line after a block sibling", () => {
+    test("keeps an inline element glued to text after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and<span>z</span>
+      `)
+    })
+
+    test("keeps an inline element glued inside punctuation after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y (<span>z</span>) done
+      `)
+    })
+
+    test("keeps an inline element glued after a control-flow block sibling", () => {
+      expectFormattedToMatch(dedent`
+        <% if @a %>
+          <div>x</div>
+        <% end %>
+        y and<span>z</span>
+      `)
+    })
+
+    test("keeps a short line with a trailing word intact", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%= @z %> tail
+      `)
+    })
+
+    test("keeps a short line with multiple output tags intact", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%= @z %> plus <%= @w %>
+      `)
+    })
+
+    test("keeps a line starting with an output tag intact", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        <%= @z %> trailing text
+      `)
+    })
+
+    test("keeps a blank line between the block element and the run", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+
+        y and <%= @z %> tail
+      `)
+    })
+
+    test("lays out runs between block siblings independently", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and<span>z</span>
+        <div>w</div>
+        a<% if @b %>c<% end %>d
+      `)
+    })
   })
 })

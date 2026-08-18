@@ -23,7 +23,7 @@ module Herb
         end
 
         def add_validation_error(type, location, message)
-          error(message, location, code: type, source: "AccessibilityValidator")
+          error(message, location, code: type)
         end
       end
     end

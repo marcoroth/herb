@@ -1,11 +1,13 @@
 export interface ParseOptions {
   track_whitespace?: boolean
+  track_locations?: boolean
   analyze?: boolean
   strict?: boolean
   action_view_helpers?: boolean
   transform_conditionals?: boolean
   render_nodes?: boolean
   strict_locals?: boolean
+  iteration_nodes?: boolean
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
   prism_program?: boolean
@@ -19,12 +21,14 @@ export type SerializedParserOptions = Required<ParseOptions>
 
 export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   track_whitespace: false,
+  track_locations: true,
   analyze: true,
   strict: true,
   action_view_helpers: false,
   transform_conditionals: false,
   render_nodes: false,
   strict_locals: false,
+  iteration_nodes: false,
   prism_nodes: false,
   prism_nodes_deep: false,
   prism_program: false,
@@ -44,6 +48,9 @@ export class ParserOptions {
   /** Whether whitespace tracking was enabled during parsing. */
   readonly track_whitespace: boolean
 
+  /** Whether `location` and `range` were materialized during parsing. */
+  readonly track_locations: boolean
+
   /** Whether analysis was performed during parsing. */
   readonly analyze: boolean
 
@@ -58,6 +65,7 @@ export class ParserOptions {
 
   /** Whether strict locals analysis was enabled during parsing. */
   readonly strict_locals: boolean
+  readonly iteration_nodes: boolean
 
   /** Whether Prism node serialization was enabled during parsing. */
   readonly prism_nodes: boolean
@@ -87,11 +95,13 @@ export class ParserOptions {
   constructor(options: ParseOptions = {}) {
     this.strict = options.strict ?? DEFAULT_PARSER_OPTIONS.strict
     this.track_whitespace = options.track_whitespace ?? DEFAULT_PARSER_OPTIONS.track_whitespace
+    this.track_locations = options.track_locations ?? DEFAULT_PARSER_OPTIONS.track_locations
     this.analyze = options.analyze ?? DEFAULT_PARSER_OPTIONS.analyze
     this.action_view_helpers = options.action_view_helpers ?? DEFAULT_PARSER_OPTIONS.action_view_helpers
     this.transform_conditionals = options.transform_conditionals ?? DEFAULT_PARSER_OPTIONS.transform_conditionals
     this.render_nodes = options.render_nodes ?? DEFAULT_PARSER_OPTIONS.render_nodes
     this.strict_locals = options.strict_locals ?? DEFAULT_PARSER_OPTIONS.strict_locals
+    this.iteration_nodes = options.iteration_nodes ?? DEFAULT_PARSER_OPTIONS.iteration_nodes
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program

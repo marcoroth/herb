@@ -50,7 +50,7 @@ export abstract class Node implements BaseNodeProps {
   toJSON(): SerializedNode {
     return {
       type: this.type,
-      location: this.location.toJSON(),
+      location: this.location ? this.location.toJSON() : (null as unknown as SerializedLocation),
       errors: this.errors,
     }
   }
@@ -72,7 +72,13 @@ export abstract class Node implements BaseNodeProps {
   }
 
   abstract treeInspect(indent?: number): string
-  abstract recursiveErrors(): HerbError[]
+  recursiveErrors(): HerbError[] {
+    const accumulator: HerbError[] = []
+    this.collectErrors(accumulator)
+    return accumulator
+  }
+
+  abstract collectErrors(accumulator: HerbError[]): void
   abstract accept(visitor: Visitor): void
   abstract childNodes(): (Node | null | undefined)[]
   abstract compactChildNodes(): Node[]
@@ -254,7 +260,7 @@ export class <%= node.name %> extends Node {
   static from(data: Serialized<%= node.name %>): <%= node.name %> {
     return new <%= node.name %>({
       type: data.type,
-      location: Location.from(data.location),
+      location: Location.fromOptional(data.location),
       errors: (data.errors || []).map(error => HerbError.from(error)),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
@@ -286,6 +292,31 @@ export class <%= node.name %> extends Node {
       <% raise "Unhandled class #{field.class}" %>
       <%- end -%>
       <%- end -%>
+    })
+  }
+
+  static build(props: Partial<Omit<<%= node.name %>Props, "type">> = {}): <%= node.name %> {
+    return new <%= node.name %>({
+      type: "<%= node.type %>",
+      location: Location.zero,
+      errors: [],
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+      <%= field.name %>: "",
+      <%- when Herb::Template::BooleanField -%>
+      <%= field.name %>: false,
+      <%- when Herb::Template::ArrayField -%>
+      <%= field.name %>: [],
+      <%- when Herb::Template::TokenField, Herb::Template::LocationField, Herb::Template::NodeField, Herb::Template::BorrowedNodeField, Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+      <%= field.name %>: null,
+      <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
+      // no-op for <%= field.name %>
+      <%- else -%>
+      <% raise "Unhandled class #{field.class}" %>
+      <%- end -%>
+      <%- end -%>
+      ...props,
     })
   }
 
@@ -350,18 +381,16 @@ export class <%= node.name %> extends Node {
   }
   <%- end -%>
 
-  recursiveErrors(): HerbError[] {
-    return [
-      ...this.errors,
-      <%- node.fields.each do |field| -%>
-      <%- case field -%>
-      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
-      this.<%= field.name %> ? this.<%= field.name %>.recursiveErrors() : [],
-      <%- when Herb::Template::ArrayField -%>
-      ...this.<%= field.name %>.map(node => node.recursiveErrors()),
-      <%- end -%>
-      <%- end -%>
-    ].flat();
+  collectErrors(accumulator: HerbError[]): void {
+    if (this.errors.length > 0) accumulator.push(...this.errors);
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+    this.<%= field.name %>?.collectErrors(accumulator);
+    <%- when Herb::Template::ArrayField -%>
+    for (const node of this.<%= field.name %>) node.collectErrors(accumulator);
+    <%- end -%>
+    <%- end -%>
   }
 
   toJSON(): Serialized<%= node.name %> {
@@ -398,7 +427,7 @@ export class <%= node.name %> extends Node {
   treeInspect(): string {
     let output = "";
 
-    output += `@ <%= node.name %> ${this.location.treeInspectWithLabel()}\n`;
+    output += `@ <%= node.name %> ${this.location ? this.location.treeInspectWithLabel() : "(location: ∅)"}\n`;
     output += `├── errors: ${this.inspectArray(this.errors, "<%= node.fields.any? ? "│   " : "    " %>")}`;
     <%- node.field_visibilities.each do |visibility| -%>
     <%- field = visibility.field -%>

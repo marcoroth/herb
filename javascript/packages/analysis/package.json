@@ -1,0 +1,55 @@
+{
+  "name": "@herb-tools/analysis",
+  "version": "0.10.3",
+  "description": "Project analysis for Herb: template indexes, render call sites and partial resolution",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/analysis%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/analysis"
+  },
+  "main": "./dist/herb-analysis.cjs",
+  "module": "./dist/herb-analysis.esm.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/herb-analysis.esm.js",
+      "require": "./dist/herb-analysis.cjs",
+      "default": "./dist/herb-analysis.esm.js"
+    },
+    "./node": {
+      "types": "./dist/types/node.d.ts",
+      "import": "./dist/herb-analysis-node.esm.js",
+      "require": "./dist/herb-analysis-node.cjs",
+      "default": "./dist/herb-analysis-node.esm.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.10.3",
+    "picomatch": "^4.0.5",
+    "tinyglobby": "^0.2.15"
+  },
+  "devDependencies": {
+    "@herb-tools/node-wasm": "0.10.3"
+  },
+  "peerDependencies": {
+    "@herb-tools/core": "0.10.3"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "dist/",
+    "src/"
+  ]
+}

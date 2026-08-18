@@ -57,6 +57,8 @@ module Herb
 
       def visit_xml_declaration_node: (untyped node) -> untyped
 
+      def visit_xml_processing_instruction_node: (untyped node) -> untyped
+
       def visit_cdata_node: (untyped node) -> untyped
 
       def visit_erb_content_node: (untyped node) -> untyped
@@ -95,6 +97,10 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+      def visit_erb_render_node: (untyped node) -> untyped
+
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
@@ -125,8 +131,6 @@ module Herb
       def add_expression_escaped: (untyped code) -> untyped
 
       def optimize_tokens: (untyped tokens) -> untyped
-
-      def compact_whitespace_tokens: (untyped tokens) -> untyped
 
       def adjacent_whitespace?: (untyped tokens, untyped index) -> untyped
 

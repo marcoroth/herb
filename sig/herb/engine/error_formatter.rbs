@@ -33,6 +33,7 @@ module Herb
 
       def run_highlighter_with_diagnostics: (untyped file_path, ?untyped context_lines) -> untyped
 
+      # TODO: deduplicate this conversion logic
       def herb_error_to_diagnostic: (untyped error) -> untyped
 
       def format_error_header: (untyped error, untyped number) -> untyped
@@ -41,6 +42,7 @@ module Herb
 
       def format_source_context_basic: (untyped error) -> untyped
 
+      # TODO: move to config.yml definition
       def get_error_suggestion: (untyped error) -> untyped
     end
   end

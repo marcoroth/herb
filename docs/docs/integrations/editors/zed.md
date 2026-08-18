@@ -21,6 +21,52 @@ The Herb Language Server comes pre-installed with the official **Ruby extension 
 
 No additional configuration needed - the Ruby extension handles everything automatically.
 
+Anything the whole team should agree on belongs in a [`.herb.yml`](/configuration) file in your project root, which every Herb tool reads. The settings below are the ones that are yours alone.
+
+### Personal settings
+
+Zed keeps language server settings under `lsp.<server>.initialization_options`, so Herb's editor preferences go in your `settings.json`:
+
+```json [settings.json]
+{
+  "lsp": {
+    "herb": {
+      "initialization_options": {
+        "inlayHints": {
+          "enabled": true,
+          "minimumLines": 10,
+          "maximumClasses": 2
+        },
+        "linter": {
+          "enabled": true,
+          "fixOnSave": true
+        }
+      }
+    }
+  }
+}
+```
+
+These are the same options VS Code exposes as `languageServerHerb.*` settings, minus the `languageServerHerb` prefix. See the [language server documentation](/projects/language-server) for the full list.
+
+### Inlay hints
+
+Herb annotates the closing tag of longer blocks with what it closes. Zed turns inlay hints off by default, so you need to enable them for HTML+ERB as well as configuring them on the Herb side:
+
+```json [settings.json]
+{
+  "languages": {
+    "HTML+ERB": {
+      "inlay_hints": {
+        "enabled": true
+      }
+    }
+  }
+}
+```
+
+Herb emits its hints as parameter hints, so leave Zed's `show_parameter_hints` at its default of `true`.
+
 ## Other editors
 
 If you are looking to use Herb in another editor, check out the instructions on the [editor integrations page](/integrations/editors).

@@ -21,6 +21,7 @@ cpp:
 rust:
   - changed-files:
     - any-glob-to-any-file:
+      - 'rust/**/*'
       - '**/*.rs'
       - '**/*.rs.erb'
       - '**/Cargo.toml'
@@ -104,6 +105,19 @@ lexer:
       - 'src/include/lexer_*.h'
       - 'test/lexer/**/*'
 
+diff:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/diff/**/*'
+      - 'src/include/diff/**/*'
+      - 'templates/src/diff/**/*'
+      - 'test/diff/**/*'
+      - 'test/c/test_diff.c'
+      - 'lib/herb/diff_*.rb'
+      - 'sig/herb/diff_*.rbs'
+      - 'java/org/herb/Diff*.java'
+      - '**/javascript/packages/core/src/diff-result.ts'
+
 engine:
   - changed-files:
     - any-glob-to-any-file:
@@ -158,15 +172,23 @@ language-service:
     - any-glob-to-any-file:
       - '**/javascript/packages/language-service/**/*'
 
+analysis:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/analysis/**/*'
+      - '**/lib/herb/analysis/**/*'
+
 printer:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/printer/**/*'
+      - '**/rust/herb-printer/**/*'
 
 highlighter:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/highlighter/**/*'
+      - '**/rust/herb-highlighter/**/*'
 
 node:
   - changed-files:
@@ -183,10 +205,10 @@ vscode:
     - any-glob-to-any-file:
       - '**/javascript/packages/vscode/**/*'
 
-dev-client:
+dev-server-client:
   - changed-files:
     - any-glob-to-any-file:
-      - '**/javascript/packages/client/**/*'
+      - '**/javascript/packages/dev-tools/src/dev-server/**/*'
 
 dev-server:
   - changed-files:
@@ -198,10 +220,16 @@ dev-tools:
     - any-glob-to-any-file:
       - '**/javascript/packages/dev-tools/**/*'
 
+client-runtime:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/client/**/*'
+
 config:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/config/**/*'
+      - '**/rust/herb-config/**/*'
 
 tailwind-class-sorter:
   - changed-files:

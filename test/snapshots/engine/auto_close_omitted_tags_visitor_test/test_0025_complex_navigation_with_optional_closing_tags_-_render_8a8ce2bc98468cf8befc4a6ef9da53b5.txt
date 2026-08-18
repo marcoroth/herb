@@ -1,0 +1,11 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0025_complex navigation with optional closing tags - render"
+input: "{source: \"<nav>\\n  <ul>\\n    <% items.each do |item| %>\\n      <li><a href=\\\"<%= item[:url] %>\\\"><%= item[:name] %></a>\\n    <% end %>\\n  </ul>\\n</nav>\\n\", locals: {items: [{name: \"Home\", url: \"/\"}, {name: \"About\", url: \"/about\"}]}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<nav>
+  <ul>
+      <li><a href="/">Home</a>
+    </li>      <li><a href="/about">About</a>
+    </li>
+  </ul>
+</nav>

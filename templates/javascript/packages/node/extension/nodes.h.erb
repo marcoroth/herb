@@ -7,11 +7,11 @@ extern "C" {
 #include "../extension/libherb/include/herb.h"
 }
 
-napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node);
-napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array);
+napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node, const parser_options_T* options);
+napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array, const parser_options_T* options);
 
 <%- nodes.each do |node| -%>
-napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>);
+napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>, const parser_options_T* options);
 <%- end -%>
 
 #endif

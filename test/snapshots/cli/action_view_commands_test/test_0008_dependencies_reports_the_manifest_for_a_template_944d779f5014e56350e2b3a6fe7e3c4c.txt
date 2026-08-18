@@ -1,0 +1,26 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0008_dependencies reports the manifest for a template"
+input: "<h1><%= @post.title %></h1><%= link_to \"Home\", \"/\" %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/show.html.erb (entry point)
+
+ Instance variables (state)
+   @post
+
+ Helper calls (known)
+   link_to
+
+ State flow (which templates are affected by each state change)
+
+   @post (1 template)
+     app/views/posts/show.html.erb
+
+ Node index (which DOM nodes are affected by each state change)
+
+   @post (1 node)
+     └── [0,0] text_content @post.title
+

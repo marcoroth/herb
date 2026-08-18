@@ -1,4 +1,5 @@
-import { Highlighter } from "@herb-tools/highlighter"
+import { Herb } from "@herb-tools/node-wasm"
+import { Highlighter, DEFAULT_THEME } from "@herb-tools/highlighter"
 
 import { BaseFormatter } from "./base-formatter.js"
 import { name, version } from "../../../package.json"
@@ -12,11 +13,12 @@ export class GitHubActionsFormatter extends BaseFormatter {
   private wrapLines: boolean
   private truncateLines: boolean
 
-  constructor(wrapLines: boolean = true, truncateLines: boolean = false) {
-    super()
+  constructor(wrapLines: boolean = true, truncateLines: boolean = false, projectPath?: string) {
+    super(projectPath)
+
     this.wrapLines = wrapLines
     this.truncateLines = truncateLines
-    this.highlighter = new Highlighter()
+    this.highlighter = new Highlighter(DEFAULT_THEME, Herb)
   }
 
   private static readonly MESSAGE_ESCAPE_MAP: Record<string, string> = {
@@ -44,11 +46,15 @@ export class GitHubActionsFormatter extends BaseFormatter {
       await this.highlighter.initialize()
     }
 
-    for (const { filename, offense, content } of allDiagnostics) {
+    for (const processedFile of allDiagnostics) {
+      const { filename, offense } = processedFile
+      const content = this.contentFor(processedFile)
       const originalNoColor = process.env.NO_COLOR
+
       process.env.NO_COLOR = "1"
 
       let plainCodePreview = ""
+
       try {
         const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,

@@ -9,10 +9,12 @@ import {
   afterEach,
   afterAll,
 } from "vitest"
+import dedent from "dedent"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { ANSI_REGEX } from "../src/color.js"
-import { Highlighter, highlightContent, highlightFile } from "../src/highlighter.js"
+import { ANSI_REGEX } from "../src/ansi.js"
+import { Highlighter } from "../src/highlighter.js"
+import { highlightContent, highlightFile, highlightFileFromPath } from "../src/index.js"
 
 describe("Highlighter", () => {
   let highlighter: Highlighter
@@ -22,7 +24,7 @@ describe("Highlighter", () => {
   })
 
   beforeEach(async () => {
-    highlighter = new Highlighter("onedark")
+    highlighter = new Highlighter("onedark", Herb)
     await highlighter.initialize()
   })
 
@@ -32,8 +34,7 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m")  // red "<"
-    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m") // red "h1"
+    expect(result).toMatchSnapshot()
   })
 
   test("should highlight ERB blocks with Ruby syntax", () => {
@@ -42,10 +43,7 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m")   // purple "if"
-    expect(result).toContain("\x1b[38;2;198;120;221mtrue\x1b[0m") // purple "true"
-
-    expect(result).not.toContain("[38;2;209;154;102m38") // corrupted pattern
+    expect(result).toMatchSnapshot()
   })
 
   test("should highlight complex ERB with if/elsif/else/end", () => {
@@ -61,12 +59,7 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m")
-    expect(result).toContain("\x1b[38;2;198;120;221melsif\x1b[0m")
-    expect(result).toContain("\x1b[38;2;198;120;221melse\x1b[0m")
-    expect(result).toContain("\x1b[38;2;198;120;221mend\x1b[0m")
-
-    expect(result).not.toMatch(/\[38;2;\d+;\d+;\d+m\d+/)
+    expect(result).toMatchSnapshot()
   })
 
   test("should highlight HTML attributes", () => {
@@ -75,9 +68,7 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    expect(result).toContain("\x1b[38;2;209;154;102mclass\x1b[0m")   // orange attribute name
-    expect(result).toContain("\x1b[38;2;152;195;121mexample\x1b[0m") // green string content
-    expect(result).toContain("\x1b[38;2;152;195;121mtest\x1b[0m")    // green string content
+    expect(result).toMatchSnapshot()
   })
 
   test("should handle ERB output tags", () => {
@@ -86,13 +77,12 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    expect(result).toContain("\x1b[38;2;190;80;70m<%=\x1b[0m") // ERB start
-    expect(result).toContain("\x1b[38;2;190;80;70m%>\x1b[0m")  // ERB end
+    expect(result).toMatchSnapshot()
   })
 
   test("should not add colors when NO_COLOR is set", async () => {
     process.env.NO_COLOR = "1"
-    const disabledHighlighter = new Highlighter("onedark")
+    const disabledHighlighter = new Highlighter("onedark", Herb)
     await disabledHighlighter.initialize()
 
     const input = "<% if true %>"
@@ -101,7 +91,7 @@ describe("Highlighter", () => {
     })
 
     expect(result).toBe(input)
-    expect(result).not.toContain("\x1b[")
+    expect(result).toMatchSnapshot()
 
     delete process.env.NO_COLOR
   })
@@ -112,9 +102,7 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m")    // HTML tag
-    expect(result).toContain("\x1b[38;2;190;80;70m<%=\x1b[0m")     // ERB start
-    expect(result).toContain("\x1b[38;2;171;178;191mTitle\x1b[0m") // Text content
+    expect(result).toMatchSnapshot()
   })
 
   test("should handle all Ruby keywords correctly", () => {
@@ -154,16 +142,13 @@ describe("Highlighter", () => {
       "not",
     ]
 
-    for (const keyword of keywords) {
-      const input = `<% ${keyword} %>`
-      const result = highlighter.highlight("test.erb", input, {
+    const highlighted = keywords.map((keyword) =>
+      highlighter.highlight("test.erb", `<% ${keyword} %>`, {
         showLineNumbers: false,
-      })
+      }),
+    )
 
-      // Each keyword should be properly colored without corruption
-      expect(result).toContain(`\x1b[38;2;198;120;221m${keyword}\x1b[0m`)
-      expect(result).not.toContain("[38;2;209;154;102m38") // No corruption
-    }
+    expect(highlighted).toMatchSnapshot()
   })
 
   describe("highlightFile method", () => {
@@ -189,16 +174,14 @@ describe("Highlighter", () => {
     })
 
     test("should highlight a file", () => {
-      const result = highlighter.highlightFileFromPath(testFile)
+      const result = highlightFileFromPath(highlighter, testFile)
 
-      expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m")  // HTML tags
-      expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m") // Ruby keywords
-      expect(result).toContain("\x1b[38;2;190;80;70m<%\x1b[0m")   // ERB tags
+      expect(result.replaceAll(__dirname, "<test-dir>")).toMatchSnapshot()
     })
 
     test("should throw error for non-existent file", () => {
       expect(() =>
-        highlighter.highlightFileFromPath("non-existent-file.erb"),
+        highlightFileFromPath(highlighter, "non-existent-file.erb"),
       ).toThrow("Failed to read file")
     })
   })
@@ -230,48 +213,47 @@ describe("Standalone utility functions", () => {
 
   test("highlightContent should work with default theme", async () => {
     const content = `<% def hello %><span>Hi</span><% end %>`
-    const result = await highlightContent(content)
+    const result = await highlightContent(content, Herb)
 
-    expect(result).toContain("\x1b[38;2;198;120;221mdef\x1b[0m")  // Ruby keyword
-    expect(result).toContain("\x1b[38;2;224;108;117mspan\x1b[0m") // HTML tag
+    expect(result).toMatchSnapshot()
   })
 
   test("highlightContent should work with github-light theme", async () => {
     const content = "<% true %>"
-    const result = await highlightContent(content, "github-light")
+    const result = await highlightContent(content, Herb, "github-light")
 
-    expect(result).toContain("true") // Should contain the keyword
+    expect(result).toMatchSnapshot()
   })
 
   test("highlightFile should work with default theme", async () => {
-    const result = await highlightFile(testFile)
+    const result = await highlightFile(testFile, Herb)
 
-    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m")     // HTML tag
-    expect(result).toContain("\x1b[38;2;198;120;221munless\x1b[0m") // Ruby keyword
+    expect(result.replaceAll(testFile, "<test-file>")).toMatchSnapshot()
   })
 
   test("highlightFile should work with simple theme", async () => {
-    const result = await highlightFile(testFile, "simple")
+    const result = await highlightFile(testFile, Herb, "simple")
 
-    expect(result).toContain("h1")     // Should contain the HTML tag
-    expect(result).toContain("unless") // Should contain the Ruby keyword
+    expect(result.replaceAll(testFile, "<test-file>")).toMatchSnapshot()
   })
 
   test("highlightFile should throw error for non-existent file", async () => {
-    await expect(highlightFile("non-existent-file.erb")).rejects.toThrow(
+    await expect(highlightFile("non-existent-file.erb", Herb)).rejects.toThrow(
       "Failed to read file",
     )
   })
 
   test("should support focusLine with contextLines", async () => {
-    const content = `<h1>Title</h1>
-<div class="container">
-  <% if user %>
-    <span>Welcome</span>
-  <% end %>
-</div>`
+    const content = dedent`
+      <h1>Title</h1>
+      <div class="container">
+        <% if user %>
+          <span>Welcome</span>
+        <% end %>
+      </div>
+    `
 
-    const highlighter = new Highlighter("onedark")
+    const highlighter = new Highlighter("onedark", Herb)
     await highlighter.initialize()
 
     const result = highlighter.highlight("test.erb", content, {
@@ -279,21 +261,16 @@ describe("Standalone utility functions", () => {
       contextLines: 1,
     })
 
-    expect(result).toContain("  → ")
-    expect(result).toContain("\x1b[1m  3") // Bold line number for focus line
-
-    expect(result).toContain("\x1b[2;") // Dim ANSI code added to existing colors
-
-    const lines = result.split("\n")
-    const lineNumberCount = lines.filter((line) => line.includes("│")).length
-    expect(lineNumberCount).toBe(3) // Lines 2, 3, 4 only
+    expect(result).toMatchSnapshot()
   })
 
   test("should support truncateLines option", async () => {
-    const longLineContent = `<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-exceeds-maximum-width">Content</div>
-<span>Short line</span>`
+    const longLineContent = dedent`
+      <div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-exceeds-maximum-width">Content</div>
+      <span>Short line</span>
+    `
 
-    const highlighter = new Highlighter("onedark")
+    const highlighter = new Highlighter("onedark", Herb)
     await highlighter.initialize()
 
     const result = highlighter.highlight("test.erb", longLineContent, {
@@ -302,10 +279,6 @@ describe("Standalone utility functions", () => {
       maxWidth: 60,
     })
 
-    expect(result).toContain("…")
-    expect(result).not.toContain("maximum-width")
-
-    const strippedResult = result.replace(ANSI_REGEX, "")
-    expect(strippedResult).toContain("Short line")
+    expect(result.replace(ANSI_REGEX, "")).toMatchSnapshot()
   })
 })

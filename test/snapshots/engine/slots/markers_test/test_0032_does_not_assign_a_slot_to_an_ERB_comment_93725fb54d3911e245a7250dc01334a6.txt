@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0032_does not assign a slot to an ERB comment"
+input: "{source: \"<p><%# skip %><%= @a %></p>\", locals: {\"@a\" => \"A\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:25c0946e:0--><p><!--herb-slot:0-->A<!--/herb-slot:0--></p><!--/herb-region:app/views/test.html.erb-->

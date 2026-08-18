@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: result
+---
+[[1m[91merror[0m[0m] Middle issue (middle-content)
+
+[36m/test/file.erb[0m:[36m1:30[0m
+
+[91m  → [0m[1m  1[0m [90m│[0m [2m…[0maaaaaaaaa-MIDDLE_TARGET-bbbbbbbbbb[2m…[0m
+        [90m│[0m             [91m~~~~~~~~~~~~~~[0m

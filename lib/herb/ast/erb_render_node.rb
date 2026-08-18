@@ -2,11 +2,11 @@
 
 require "did_you_mean"
 
+require_relative "../analysis/partial_resolution"
+
 module Herb
   module AST
     class ERBRenderNode < Node
-      PARTIAL_EXTENSIONS = Herb::PARTIAL_EXTENSIONS
-
       def static_partial?
         keywords&.partial && !keywords&.partial&.value&.empty?
       end
@@ -53,7 +53,7 @@ module Herb
         base = name.include?("/") ? File.basename(name) : name
         source_directory = Pathname.new(source_directory) if source_directory && !source_directory.is_a?(Pathname)
 
-        PARTIAL_EXTENSIONS.flat_map do |extension|
+        Analysis::PartialResolution::EXTENSIONS.flat_map do |extension|
           paths = [] #: Array[Pathname]
 
           if directory
@@ -78,9 +78,8 @@ module Herb
           view_root = Pathname.new(view_root) unless view_root.is_a?(Pathname)
 
           if view_root.directory?
-            all_partials = Dir[File.join(view_root, "**", Herb::PARTIAL_GLOB_PATTERN)].map do |file|
-              relative = Pathname.new(file).relative_path_from(view_root).to_s
-              relative.sub(%r{(^|/)_}, '\1').sub(/\..*\z/, "")
+            all_partials = Dir[File.join(view_root, "**", Analysis::PartialResolution::PARTIAL_GLOB_PATTERN)].filter_map do |file|
+              Analysis::PartialResolution.partial_name_for(file, view_root)
             end
 
             spell_checker = DidYouMean::SpellChecker.new(dictionary: all_partials)
@@ -90,8 +89,8 @@ module Herb
           source_directory = Pathname.new(source_directory) unless source_directory.is_a?(Pathname)
 
           if source_directory.directory?
-            local_partials = Dir[File.join(source_directory, Herb::PARTIAL_GLOB_PATTERN)].map do |file|
-              File.basename(file).sub(/\A_/, "").sub(/\..*\z/, "")
+            local_partials = Dir[File.join(source_directory, Analysis::PartialResolution::PARTIAL_GLOB_PATTERN)].filter_map do |file|
+              Analysis::PartialResolution.partial_name_for(file, source_directory)
             end
 
             unless local_partials.empty?
@@ -115,7 +114,7 @@ module Herb
 
         matches = [] #: Array[String]
 
-        PARTIAL_EXTENSIONS.each do |extension|
+        Analysis::PartialResolution::EXTENSIONS.each do |extension|
           if name.include?("/")
             next unless view_root
 

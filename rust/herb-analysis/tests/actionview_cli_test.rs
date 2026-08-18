@@ -1,0 +1,380 @@
+#![cfg(feature = "cli")]
+
+use std::fs;
+use std::path::PathBuf;
+use std::process::Command;
+
+struct Project {
+  root: PathBuf,
+}
+
+impl Project {
+  fn new(name: &str) -> Self {
+    let root = std::env::temp_dir().join(format!("herb_actionview_cli_{}_{}", name, std::process::id()));
+
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(root.join("app/views/posts")).expect("create project");
+    fs::create_dir_all(root.join("app/views/layouts")).expect("create layouts");
+
+    Self { root }
+  }
+
+  fn write(&self, path: &str, source: &str) -> String {
+    let full = self.root.join(path);
+
+    fs::create_dir_all(full.parent().expect("parent")).expect("create dir");
+    fs::write(&full, source).expect("write");
+
+    full.to_str().expect("utf8").to_string()
+  }
+
+  fn run(&self, arguments: &[&str]) -> (String, i32) {
+    let binary = PathBuf::from(env!("CARGO_BIN_EXE_herb-analysis"));
+
+    let output = Command::new(binary)
+      .arg("actionview")
+      .args(arguments)
+      .env("NO_COLOR", "1")
+      .output()
+      .expect("run herb-analysis");
+
+    let mut text = String::from_utf8_lossy(&output.stdout).to_string();
+    text.push_str(&String::from_utf8_lossy(&output.stderr));
+
+    (text, output.status.code().unwrap_or(-1))
+  }
+}
+
+impl Drop for Project {
+  fn drop(&mut self) {
+    let _ = fs::remove_dir_all(&self.root);
+  }
+}
+
+fn project_with_layout(name: &str) -> Project {
+  let project = Project::new(name);
+
+  project.write("app/views/layouts/application.html.erb", "<html><body><main><%= yield %></main></body></html>");
+  project.write(
+    "app/views/posts/index.html.erb",
+    "<h1><%= @post.title %></h1>\n<table><%= render \"posts/row\", post: @post %></table>\n",
+  );
+  project.write("app/views/posts/_row.html.erb", "<%# locals: (post:) %>\n<tr><td><%= post.title %></td></tr>\n");
+
+  project
+}
+
+#[test]
+fn check_reports_a_project_where_every_render_resolves() {
+  let project = project_with_layout("check_clean");
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("All render calls resolve"), "{output}");
+}
+
+#[test]
+fn check_reports_a_render_that_cannot_be_resolved() {
+  let project = Project::new("check_unresolved");
+  project.write("app/views/posts/index.html.erb", "<%= render \"posts/missing\" %>");
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 1);
+  assert!(output.contains("Unresolved render calls"), "{output}");
+  assert!(output.contains("posts/missing"), "{output}");
+}
+
+#[test]
+fn check_reports_a_partial_nothing_renders() {
+  let project = Project::new("check_unused");
+  project.write("app/views/posts/index.html.erb", "<p>hello</p>");
+  project.write("app/views/posts/_orphan.html.erb", "<tr></tr>");
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 1);
+  assert!(output.contains("Unused partials"), "{output}");
+}
+
+#[test]
+fn graph_shows_the_call_sites_of_each_partial() {
+  let project = project_with_layout("graph");
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("posts/row"), "{output}");
+  assert!(output.contains("index.html.erb"), "{output}");
+}
+
+#[test]
+fn graph_descends_recursively_from_an_entry_point() {
+  let project = Project::new("graph_recursive");
+  project.write("app/views/posts/index.html.erb", "<html><%= render \"posts/row\" %></html>");
+  project.write("app/views/posts/_row.html.erb", "<tr><%= render \"posts/cell\" %></tr>");
+  project.write("app/views/posts/_cell.html.erb", "<td>x</td>");
+
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Entry points:"), "{output}");
+
+  let row = output.lines().find(|line| line.contains("posts/row")).expect("row line");
+  let cell = output.lines().find(|line| line.contains("posts/cell")).expect("cell line");
+
+  let indent = |line: &str| line.len() - line.trim_start().len();
+
+  assert!(indent(cell) > indent(row), "row: {row:?} cell: {cell:?}");
+}
+
+#[test]
+fn graph_reports_partial_usage_and_a_summary() {
+  let project = Project::new("graph_sections");
+  project.write("app/views/posts/index.html.erb", "<html><%= render \"posts/row\" %></html>");
+  project.write("app/views/posts/_row.html.erb", "<tr></tr>");
+  project.write("app/views/posts/_orphan.html.erb", "<p>x</p>");
+
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Partial usage:"), "{output}");
+  assert!(output.contains("rendered by posts/index.html.erb"), "{output}");
+  assert!(output.contains("Unreachable partials:"), "{output}");
+  assert!(output.contains("posts/orphan"), "{output}");
+  assert!(output.contains("Summary:"), "{output}");
+  assert!(output.contains("Entry points"), "{output}");
+}
+
+#[test]
+fn graph_uses_distinct_connectors_for_siblings() {
+  let project = Project::new("graph_connectors");
+  project.write(
+    "app/views/posts/index.html.erb",
+    "<html><%= render \"posts/row\" %><%= render \"posts/footer\" %></html>",
+  );
+  project.write("app/views/posts/_row.html.erb", "<tr></tr>");
+  project.write("app/views/posts/_footer.html.erb", "<footer></footer>");
+
+  let (output, status) = project.run(&["graph", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("\u{251c}\u{2500}\u{2500}"), "{output}");
+  assert!(output.contains("\u{2514}\u{2500}\u{2500}"), "{output}");
+}
+
+#[test]
+fn dependencies_reports_the_manifest_for_a_template() {
+  let project = project_with_layout("dependencies");
+  let entry = project.root.join("app/views/posts/index.html.erb");
+  let (output, status) = project.run(&["dependencies", entry.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("@post"), "{output}");
+  assert!(output.contains("Locals received"), "{output}");
+  assert!(output.contains("State flow"), "{output}");
+  assert!(output.contains("Node index"), "{output}");
+}
+
+#[test]
+fn flow_traces_state_into_a_partial() {
+  let project = project_with_layout("flow");
+  let entry = project.root.join("app/views/posts/index.html.erb");
+  let (output, status) = project.run(&["flow", entry.to_str().expect("utf8"), "@post"]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("State flow"), "{output}");
+  assert!(output.contains("_row.html.erb"), "{output}");
+  assert!(output.contains("post: @post"), "{output}");
+}
+
+#[test]
+fn flow_lists_the_available_state_when_none_is_given() {
+  let project = project_with_layout("flow_available");
+  let entry = project.root.join("app/views/posts/index.html.erb");
+  let (output, status) = project.run(&["flow", entry.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Available state"), "{output}");
+  assert!(output.contains("@post"), "{output}");
+}
+
+#[test]
+fn flow_reports_an_unknown_state_with_a_failure() {
+  let project = project_with_layout("flow_unknown");
+  let entry = project.root.join("app/views/posts/index.html.erb");
+  let (output, status) = project.run(&["flow", entry.to_str().expect("utf8"), "@missing"]);
+
+  assert_eq!(status, 1);
+  assert!(output.contains("is not read by this template"), "{output}");
+}
+
+#[test]
+fn context_reaches_the_document_root_through_a_layout() {
+  let project = project_with_layout("context");
+  let row = project.root.join("app/views/posts/_row.html.erb");
+  let (output, status) = project.run(&["context", row.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("html"), "{output}");
+  assert!(output.contains("table always"), "{output}");
+}
+
+#[test]
+fn context_reports_a_partial_nothing_renders() {
+  let project = Project::new("context_orphan");
+  let orphan = project.write("app/views/posts/_orphan.html.erb", "<tr></tr>");
+  let (output, status) = project.run(&["context", &orphan]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Not rendered by any template"), "{output}");
+}
+
+#[test]
+fn signature_infers_and_diffs_strict_locals() {
+  let project = project_with_layout("signature");
+  let row = project.root.join("app/views/posts/_row.html.erb");
+  let (output, status) = project.run(&["signature", row.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Inferred"), "{output}");
+  assert!(output.contains("Declared"), "{output}");
+  assert!(output.contains("required post"), "{output}");
+}
+
+#[test]
+fn signature_flags_a_local_that_is_passed_but_not_declared() {
+  let project = Project::new("signature_undeclared");
+  project.write("app/views/posts/index.html.erb", "<%= render \"posts/row\", post: post, extra: extra %>");
+  let row = project.write("app/views/posts/_row.html.erb", "<%# locals: (post:) %>\n<tr></tr>");
+
+  let (output, status) = project.run(&["signature", &row]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Passed but not declared"), "{output}");
+  assert!(output.contains("extra"), "{output}");
+}
+
+#[test]
+fn an_unknown_subcommand_exits_with_a_failure() {
+  let project = Project::new("unknown");
+  let (output, status) = project.run(&["nonsense"]);
+
+  assert_eq!(status, 1);
+  assert!(output.contains("Unknown actionview subcommand"), "{output}");
+}
+
+#[test]
+fn no_subcommand_prints_the_usage() {
+  let project = Project::new("usage");
+  let (output, status) = project.run(&[]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Herb ActionView Commands"), "{output}");
+  assert!(output.contains("signature <partial>"), "{output}");
+}
+
+#[test]
+fn flow_keeps_a_multi_line_render_on_one_line() {
+  let project = Project::new("flow_multiline");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<%= render partial: \"posts/card\",\n  locals: {\n    talk: talk,\n    ids: @ids\n  } %>\n",
+  );
+  project.write("app/views/posts/_card.html.erb", "<p>card</p>");
+
+  let (output, status) = project.run(&["flow", &entry, "@ids"]);
+
+  assert_eq!(status, 0);
+
+  for line in output.lines().filter(|line| line.contains("\u{00b7} render")) {
+    assert!(!line.contains('\n'), "{line}");
+    assert!(line.chars().count() < 120, "{line}");
+  }
+
+  assert!(output.contains("locals: { talk: talk"), "{output}");
+}
+
+#[test]
+fn flow_indents_a_node_nested_inside_a_conditional() {
+  let project = Project::new("flow_nesting");
+  let entry = project.write(
+    "app/views/posts/index.html.erb",
+    "<% if admin? %>\n  <p><%= @post.title %></p>\n<% end %>\n<% if @post.draft? %>\n  <p>draft</p>\n<% end %>\n",
+  );
+
+  let (output, status) = project.run(&["flow", &entry, "@post"]);
+
+  assert_eq!(status, 0);
+
+  let nested = output.lines().find(|line| line.contains("@post.title")).expect("nested line");
+  let sibling = output.lines().find(|line| line.contains("if @post.draft?")).expect("sibling line");
+
+  let indent = |line: &str| line.len() - line.trim_start().len();
+
+  assert!(indent(nested) > indent(sibling), "nested: {nested:?} sibling: {sibling:?}");
+}
+
+#[test]
+fn check_does_not_flag_a_partial_rendered_from_ruby() {
+  let project = Project::new("check_ruby_reference");
+  project.write("app/views/posts/index.html.erb", "<p>hello</p>");
+  project.write("app/views/posts/_ruby_only.html.erb", "<p>from ruby</p>");
+  project.write("app/views/posts/_orphan.html.erb", "<p>unused</p>");
+  project.write(
+    "app/controllers/posts_controller.rb",
+    "class PostsController\n  def show\n    render \"posts/ruby_only\"\n  end\nend\n",
+  );
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 1);
+  assert!(!output.contains("_ruby_only"), "{output}");
+  assert!(output.contains("_orphan"), "{output}");
+}
+
+#[test]
+fn check_covers_a_partial_behind_an_interpolated_ruby_render() {
+  let project = Project::new("check_ruby_prefix");
+  project.write("app/views/widgets/_alpha.html.erb", "<p>a</p>");
+  project.write(
+    "app/controllers/widgets_controller.rb",
+    "class WidgetsController\n  def show\n    render \"widgets/#{kind}\"\n  end\nend\n",
+  );
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(!output.contains("_alpha"), "{output}");
+}
+
+#[test]
+fn check_does_not_flag_a_partial_assigned_without_the_word_render() {
+  let project = Project::new("check_partial_assignment");
+  project.write("app/views/posts/index.html.erb", "<p>hello</p>");
+  project.write("app/views/posts/_assigned.html.erb", "<p>x</p>");
+  project.write("app/views/posts/_orphan.html.erb", "<p>y</p>");
+  project.write(
+    "app/models/post_component.rb",
+    "class PostComponent\n  def initialize\n    self.partial = \"posts/assigned\"\n  end\nend\n",
+  );
+
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 1);
+  assert!(!output.contains("_assigned"), "{output}");
+  assert!(output.contains("_orphan"), "{output}");
+}
+
+#[test]
+fn check_ends_with_a_summary() {
+  let project = project_with_layout("check_summary");
+  let (output, status) = project.run(&["check", project.root.to_str().expect("utf8")]);
+
+  assert_eq!(status, 0);
+  assert!(output.contains("Summary:"), "{output}");
+  assert!(output.contains("Version"), "{output}");
+  assert!(output.contains("Renders"), "{output}");
+  assert!(output.contains("Partials"), "{output}");
+  assert!(output.contains("Ruby"), "{output}");
+  assert!(output.contains("Duration"), "{output}");
+}

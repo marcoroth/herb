@@ -1,0 +1,18 @@
+---
+source: "CLI::ActionViewTest#test_0001_flow traces state into a partial"
+input: "<%= render \"posts/byline\", author: @post.user %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/show.html.erb
+
+ State flow for @post
+
+ app/views/posts/show.html.erb [@post]
+ · render render "posts/byline", author: @post.user (1:0)
+ │
+ └── app/views/posts/_byline.html.erb [author] ← author: @post.user
+     · text_content author.name (1:6)
+

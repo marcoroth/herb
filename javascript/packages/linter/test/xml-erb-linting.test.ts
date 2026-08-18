@@ -28,7 +28,7 @@ describe("XML+ERB Linting", () => {
       </rss>
     ` + '\n'
 
-    const result = linter.lint(source, { fileName: "test.xml.erb" })
+    const result = linter.lint(source, { fileName: "test.xml.erb", framework: "ruby" })
     expect(result.offenses).toHaveLength(0)
   })
 
@@ -71,7 +71,7 @@ describe("XML+ERB Linting", () => {
     expect(selfClosingErrors.length).toBeGreaterThanOrEqual(1)
   })
 
-  test.todo("should handle XML with CDATA sections", () => {
+  test("should handle XML with CDATA sections", () => {
     const source = dedent`
       <?xml version="1.0" encoding="UTF-8"?>
       <document>
@@ -85,8 +85,12 @@ describe("XML+ERB Linting", () => {
       </document>
     ` + '\n'
 
-    const result = linter.lint(source, { fileName: "document.xml.erb" })
-    expect(result.offenses).toEqual(expect.any(Array))
+    const result = linter.lint(source, { fileName: "document.xml.erb", framework: "ruby" })
+
+    const statementErrors = result.offenses.filter(offense =>
+      offense.code === "erb-no-statement-in-script"
+    )
+    expect(statementErrors).toHaveLength(1)
   })
 
   test("should handle self-closing XML tags appropriately", () => {

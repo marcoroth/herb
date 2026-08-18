@@ -12,10 +12,8 @@ describe("HTMLAttributeNameNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = HTMLAttributeNameNode.from({
-      type: "AST_HTML_ATTRIBUTE_NAME_NODE",
+    const node = HTMLAttributeNameNode.build({
       location,
-      errors: [],
       children: [createLiteralNode("class")]
     })
 

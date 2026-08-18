@@ -84,6 +84,36 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         }
       }
 
+      napi_value max_errors_prop;
+      bool has_max_errors_prop;
+      napi_has_named_property(env, args[1], "max_errors", &has_max_errors_prop);
+
+      if (has_max_errors_prop) {
+        napi_get_named_property(env, args[1], "max_errors", &max_errors_prop);
+
+        napi_valuetype max_errors_type;
+        napi_typeof(env, max_errors_prop, &max_errors_type);
+
+        if (max_errors_type == napi_number) {
+          uint32_t max_errors_value;
+          napi_get_value_uint32(env, max_errors_prop, &max_errors_value);
+          parser_options.max_errors = max_errors_value;
+        } else {
+          parser_options.max_errors = 0;
+        }
+      }
+
+      napi_value track_locations_prop;
+      bool has_track_locations_prop;
+      napi_has_named_property(env, args[1], "track_locations", &has_track_locations_prop);
+
+      if (has_track_locations_prop) {
+        napi_get_named_property(env, args[1], "track_locations", &track_locations_prop);
+        bool track_locations_value;
+        napi_get_value_bool(env, track_locations_prop, &track_locations_value);
+        parser_options.track_locations = track_locations_value;
+      }
+
       napi_value analyze_prop;
       bool has_analyze_prop;
       napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
@@ -131,6 +161,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         parser_options.render_nodes = render_nodes_value;
       }
 
+      napi_value iteration_nodes_prop;
+      bool has_iteration_nodes_prop;
+      napi_has_named_property(env, args[1], "iteration_nodes", &has_iteration_nodes_prop);
+
+      if (has_iteration_nodes_prop) {
+        napi_get_named_property(env, args[1], "iteration_nodes", &iteration_nodes_prop);
+        bool iteration_nodes_value;
+        napi_get_value_bool(env, iteration_nodes_prop, &iteration_nodes_value);
+        parser_options.iteration_nodes = iteration_nodes_value;
+      }
+
       napi_value strict_locals_prop;
       bool has_strict_locals_prop;
       napi_has_named_property(env, args[1], "strict_locals", &has_strict_locals_prop);
@@ -176,6 +217,9 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
       }
     }
   }
+
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
@@ -359,8 +403,8 @@ napi_value Herb_version(napi_env env, napi_callback_info info) {
 }
 
 napi_value Herb_diff(napi_env env, napi_callback_info info) {
-  size_t argc = 2;
-  napi_value args[2];
+  size_t argc = 3;
+  napi_value args[3];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 2) {
@@ -383,6 +427,28 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
   if (!hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) { free(old_string); free(new_string); hb_allocator_destroy(&old_allocator); hb_allocator_destroy(&new_allocator); return nullptr; }
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+
+  if (argc >= 3) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[2], &valuetype);
+
+    if (valuetype == napi_object) {
+      napi_value track_whitespace_changes_prop;
+      bool has_track_whitespace_changes_prop;
+      napi_has_named_property(env, args[2], "track_whitespace_changes", &has_track_whitespace_changes_prop);
+
+      if (has_track_whitespace_changes_prop) {
+        napi_get_named_property(env, args[2], "track_whitespace_changes", &track_whitespace_changes_prop);
+        bool track_whitespace_changes_value;
+        napi_get_value_bool(env, track_whitespace_changes_prop, &track_whitespace_changes_value);
+
+        if (track_whitespace_changes_value) {
+          diff_options.track_whitespace_changes = true;
+        }
+      }
+    }
+  }
 
   AST_DOCUMENT_NODE_T* old_root = herb_parse(old_string, &parser_options, &old_allocator);
   AST_DOCUMENT_NODE_T* new_root = herb_parse(new_string, &parser_options, &new_allocator);
@@ -403,7 +469,7 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_options, &diff_allocator);
 
   napi_value result;
   napi_create_object(env, &result);
@@ -438,7 +504,7 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
     napi_set_named_property(env, operation_object, "path", path);
 
     if (operation->old_node != NULL) {
-      napi_set_named_property(env, operation_object, "oldNode", NodeFromCStruct(env, (AST_NODE_T*) operation->old_node));
+      napi_set_named_property(env, operation_object, "oldNode", NodeFromCStruct(env, (AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       napi_value null_val;
       napi_get_null(env, &null_val);
@@ -446,7 +512,7 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
     }
 
     if (operation->new_node != NULL) {
-      napi_set_named_property(env, operation_object, "newNode", NodeFromCStruct(env, (AST_NODE_T*) operation->new_node));
+      napi_set_named_property(env, operation_object, "newNode", NodeFromCStruct(env, (AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       napi_value null_val;
       napi_get_null(env, &null_val);

@@ -16,6 +16,9 @@ module Herb
     # : (Integer, Integer) -> Range
     def self.from: (Integer, Integer) -> Range
 
+    # : () -> Range
+    def self.zero: () -> Range
+
     # : () -> serialized_range
     def to_a: () -> serialized_range
 

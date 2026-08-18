@@ -1,0 +1,49 @@
+# Generated from lib/herb/engine/slot_subtree.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Compiles the markup behind one slot, for the cases a client cannot answer for itself.
+    #
+    #     subtree = Herb::Engine::SlotSubtree.new(source, filename: "app/views/posts/index.html.erb")
+    #     view.instance_eval(subtree.source_for(0))
+    #     #=> "<li>one</li><li>two</li>"
+    #
+    # Values carry a page most of the way. What they cannot carry is markup the page never had:
+    # a conditional taking a branch that did not render, or a collection gaining its first item.
+    # Both come back from `SlotIndex#apply` as a deferred entry naming the slot, and this is what
+    # answers one.
+    #
+    # A slot is addressed by its index, which is what the payload and the deferred entry both use.
+    # `SlotVisitor` records the `node_path` of each slot and `SubtreeCompiler` renders the node at
+    # a path, so the index is resolved through the schema.
+    #
+    # An attribute is not addressable. A path indexes an element's body and does not descend into
+    # its open tag, so the path of an attribute slot names the element holding it, and compiling
+    # that would return the whole element where the caller asked for one attribute. Those slots
+    # are values, and values is how they come back.
+    class SlotSubtree
+      ATTRIBUTE_TYPES: Array[Symbol]
+
+      attr_reader slots: Array[untyped]
+
+      attr_reader version: Array[untyped]
+
+      # : (String, ?filename: String?) -> void
+      def initialize: (String, ?filename: String?) -> void
+
+      # : (Integer) -> Array[Integer]?
+      def node_path_for: (Integer) -> Array[Integer]?
+
+      # : (Integer) -> bool
+      def addressable?: (Integer) -> bool
+
+      # : (Integer) -> String?
+      def source_for: (Integer) -> String?
+
+      private
+
+      # : (Integer) -> untyped
+      def slot_for: (Integer) -> untyped
+    end
+  end
+end

@@ -18,6 +18,20 @@ module Herb
         <%- end -%>
       end
 
+      #: (template: String, ?origin: String) -> Herb::Diagnostic
+      def to_diagnostic(template:, origin: "Herb Parser")
+        Herb::Diagnostic.new(
+          template: template,
+          message: message,
+          severity: :error,
+          origin: origin,
+          code: Herb::Diagnostic.code_for(type),
+          location: location,
+          phase: :compile,
+          data: { type: type }
+        )
+      end
+
       #: () -> serialized_error
       def to_hash
         {
@@ -91,7 +105,7 @@ module Herb
       def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         output = +""
 
-        output += white("@ #{bold(red(error_name))} #{dimmed("(location: #{location&.tree_inspect})\n")}")
+        output += white("@ #{bold(red(error_name))} #{dimmed("(location: #{location&.tree_inspect || "∅"})\n")}")
         <%- symbol = error.fields.none? ? "└──" : "├──" -%>
         output += white("<%= symbol %> message: #{green(message.inspect)}\n")
         <%- error.fields.each do |field| -%>

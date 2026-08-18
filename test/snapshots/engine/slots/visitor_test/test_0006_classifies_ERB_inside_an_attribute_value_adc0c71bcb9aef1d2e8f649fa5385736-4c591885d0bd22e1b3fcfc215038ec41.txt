@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0006_classifies ERB inside an attribute value"
+input: "<div class=\"<%= @klass %>\"></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 1028a42b
+
+slots:
+  index=0  type=attribute  node_path=[0]  location=1:5  attribute="class"

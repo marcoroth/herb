@@ -1,0 +1,10 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0028_GitHub issue #965 - inline-block li elements - closing tag position preserves no-whitespace behavior - compilation"
+input: "{source: \"<ul>\\n  <li style=\\\"display: inline-block\\\">Foo\\n  <li style=\\\"display: inline-block\\\">Bar\\n</ul>\\n\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<ul>
+  <li style="display: inline-block">Foo
+  </li><li style="display: inline-block">Bar
+</li></ul>
+'.freeze;
+_buf.to_s

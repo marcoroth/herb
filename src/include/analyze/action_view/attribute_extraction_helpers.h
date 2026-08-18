@@ -7,7 +7,7 @@
 
 #include <prism.h>
 
-AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
+AST_NODE_T* extract_html_attribute_from_assoc(
   pm_assoc_node_t* assoc,
   const uint8_t* source,
   const char* original_source,

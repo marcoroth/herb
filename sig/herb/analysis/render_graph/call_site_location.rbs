@@ -1,0 +1,28 @@
+# Generated from lib/herb/analysis/render_graph/call_site_location.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class CallSiteLocation < Data
+        attr_reader line(): untyped
+
+        attr_reader column(): untyped
+
+        def self.new: (untyped line, untyped column) -> instance
+                    | (line: untyped, column: untyped) -> instance
+
+        def self.members: () -> [ :line, :column ]
+
+        def members: () -> [ :line, :column ]
+      end
+
+      class CallSiteLocation
+        # : (Hash[String, untyped]?) -> CallSiteLocation?
+        def self.from: (Hash[String, untyped]?) -> CallSiteLocation?
+
+        # : () -> Hash[String, Integer]
+        def to_h: () -> Hash[String, Integer]
+      end
+    end
+  end
+end

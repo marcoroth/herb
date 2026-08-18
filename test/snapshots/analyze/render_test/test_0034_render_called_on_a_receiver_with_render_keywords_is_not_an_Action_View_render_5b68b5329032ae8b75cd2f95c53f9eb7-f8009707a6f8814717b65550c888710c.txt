@@ -1,0 +1,17 @@
+---
+source: "Analyze::RenderTest#test_0034_render called on a receiver with render keywords is not an Action View render"
+input: |2-
+<%= element.render partial: "card", template: "card" %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:55))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " element.render partial: "card", template: "card" " (location: (1:3)-(1:53))
+    │   ├── tag_closing: "%>" (location: (1:53)-(1:55))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:55)-(2:0))
+        └── content: "\n"

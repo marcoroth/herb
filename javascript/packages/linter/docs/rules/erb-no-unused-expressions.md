@@ -46,6 +46,16 @@ These expressions are evaluated but unused, they don't produce output (not `<%= 
 <% end %>
 ```
 
+ViewComponent slot setters are intentional side effects and are not flagged, including on builder objects yielded by nested slots:
+
+```erb
+<%= render ListComponent.new do |list| %>
+  <% list.with_item do |item| %>
+    <% item.with_icon("home") %>
+  <% end %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb

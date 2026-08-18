@@ -18,7 +18,7 @@ describe("@herb-tools/node", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node@0.10.2, @herb-tools/core@0.10.2, libprism@1.9.0, libherb@0.10.2 (Node.js C++ native extension)")
+    expect(version).toBe("@herb-tools/node@0.10.3, @herb-tools/core@0.10.3, libprism@1.9.0, libherb@0.10.3 (Node.js C++ native extension)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -136,6 +136,75 @@ describe("@herb-tools/node", () => {
     expect(result.errors).toHaveLength(0)
     expect(result.value.inspect()).toContain("@ WhitespaceNode")
     expect(result.value.inspect()).toContain('"   "')
+  })
+
+  test("parse() reports the total error count", () => {
+    expect(Herb.parse('<div class="example">content</div>').errorCount).toBe(0)
+    expect(Herb.parse("<div>").errorCount).toBe(1)
+    expect(Herb.parse("<% if condition without end %>").errorCount).toBe(1)
+  })
+
+  test("the error count matches the errors attached to the tree", () => {
+    for (const source of ["<div>", "<div><span>hello</div>", "<% if x %>", "</div>".repeat(30)]) {
+      const result = Herb.parse(source)
+
+      expect(result.errorCount).toBe(result.value.recursiveErrors().length)
+      expect(result.errorCount).toBe(result.recursiveErrors().length)
+    }
+  })
+
+  test("a zero error count skips the recursive walk without losing errors", () => {
+    const result = Herb.parse("<div>ok</div>")
+
+    expect(result.errorCount).toBe(0)
+    expect(result.recursiveErrors()).toHaveLength(0)
+    expect(result.failed).toBe(false)
+  })
+
+  test("the error count respects max_errors", () => {
+    expect(Herb.parse("<div>".repeat(1000)).errorCount).toBe(25)
+    expect(Herb.parse("<div>".repeat(1000), { max_errors: 5 }).errorCount).toBe(5)
+  })
+
+  test("parse() tracks locations by default", () => {
+    const result = Herb.parse('<div class="example">content</div>')
+    const element = result.value.children[0] as any
+
+    expect(result.options.track_locations).toBe(true)
+    expect(result.value.location).not.toBeNull()
+    expect(element.location).not.toBeNull()
+    expect(element.open_tag.tag_name.location).not.toBeNull()
+    expect(element.open_tag.tag_name.range).not.toBeNull()
+  })
+
+  test("parse() with track_locations: false omits locations and ranges", () => {
+    const result = Herb.parse('<div class="example">content</div>', { track_locations: false })
+    const element = result.value.children[0] as any
+
+    expect(result.options.track_locations).toBe(false)
+    expect(result.value.location).toBeNull()
+    expect(element.location).toBeNull()
+    expect(element.open_tag.tag_name.location).toBeNull()
+    expect(element.open_tag.tag_name.range).toBeNull()
+  })
+
+  test("parse() with track_locations: false keeps the tree shape intact", () => {
+    const source = '<div class="example">content</div>'
+    const withLocations = Herb.parse(source)
+    const withoutLocations = Herb.parse(source, { track_locations: false })
+
+    expect(withoutLocations.value.type).toBe(withLocations.value.type)
+    expect(withoutLocations.value.children.map((node) => node.type)).toEqual(
+      withLocations.value.children.map((node) => node.type),
+    )
+    expect(withoutLocations.errors).toHaveLength(withLocations.errors.length)
+  })
+
+  test("lex() keeps token locations when parse locations are disabled", () => {
+    const result = Herb.lex('<div class="example">content</div>')
+
+    expect(result.value.tokens[0].location).not.toBeNull()
+    expect(result.value.tokens[0].range).not.toBeNull()
   })
 
   test("parses then_keyword for when clause", () => {

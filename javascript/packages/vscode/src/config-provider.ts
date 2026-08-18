@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { Config } from "@herb-tools/config"
+import { Config, ALL_RULES_KEY } from "@herb-tools/config"
 
 export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<ConfigItem | undefined | null | void> = new vscode.EventEmitter<ConfigItem | undefined | null | void>()
@@ -69,6 +69,14 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     }
 
     if (element) {
+      if (element.contextValue === 'formatterSetting') {
+        return Promise.resolve(this.getFormatterSettingItems())
+      }
+
+      if (element.contextValue === 'personalFormatterSetting') {
+        return Promise.resolve(this.getPersonalFormatterSettingItems())
+      }
+
       return Promise.resolve([])
     } else {
       return Promise.resolve(this.getConfigItems())
@@ -139,14 +147,18 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
 
       const linterEnabled = this.config.isLinterEnabled
       const disabledRulesCount = this.config.linter?.rules
-        ? Object.values(this.config.linter.rules).filter(r => r.enabled === false).length
+        ? Object.entries(this.config.linter.rules).filter(([name, rule]) => name !== ALL_RULES_KEY && rule.enabled === false).length
         : 0
+
+      const rulesDisabledByDefault = this.config.defaultRuleEnabled === false
 
       const linterItem = new ConfigItem(
         `Herb Linter: ${linterEnabled ? 'Enabled' : 'Disabled'}`,
-        disabledRulesCount
-          ? `${disabledRulesCount} rules disabled`
-          : "All rules enabled",
+        rulesDisabledByDefault
+          ? "All rules disabled by default"
+          : disabledRulesCount
+            ? `${disabledRulesCount} rules disabled`
+            : "All rules enabled",
         vscode.TreeItemCollapsibleState.None,
         'linterSetting'
       )
@@ -161,22 +173,20 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       items.push(linterItem)
 
       const formatterEnabled = this.config.isFormatterEnabled
+      const formatterIndentDetail = this.config.formatter?.indentStyle === 'tab'
+        ? 'tabs'
+        : `${this.config.formatter?.indentWidth ?? 2} spaces`
       const formatterItem = new ConfigItem(
         `Herb Formatter: ${formatterEnabled ? 'Enabled' : 'Disabled'}`,
         formatterEnabled
-          ? `Indent: ${this.config.formatter?.indentWidth ?? 2}, Max length: ${this.config.formatter?.maxLineLength ?? 80}`
+          ? `Indent: ${formatterIndentDetail}, Max length: ${this.config.formatter?.maxLineLength ?? 80}`
           : "Experimental feature",
-        vscode.TreeItemCollapsibleState.None,
+        vscode.TreeItemCollapsibleState.Expanded,
         'formatterSetting'
       )
       formatterItem.iconPath = formatterEnabled
         ? new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
         : new vscode.ThemeIcon('x', new vscode.ThemeColor('charts.red'))
-      formatterItem.command = {
-        command: 'herb.toggleFormatter',
-        title: 'Toggle Formatter',
-        arguments: []
-      }
       items.push(formatterItem)
     } else if (this.configError) {
       const errorItem = new ConfigItem(
@@ -239,17 +249,12 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       const formatterItem = new ConfigItem(
         `Herb Formatter: ${formatterEnabled ? 'Enabled' : 'Disabled'}`,
         "From VS Code settings",
-        vscode.TreeItemCollapsibleState.None,
+        vscode.TreeItemCollapsibleState.Expanded,
         'personalFormatterSetting'
       )
       formatterItem.iconPath = formatterEnabled
         ? new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
         : new vscode.ThemeIcon('x', new vscode.ThemeColor('charts.red'))
-      formatterItem.command = {
-        command: 'workbench.action.openSettings',
-        title: 'Open Formatter Settings',
-        arguments: ['languageServerHerb.formatter']
-      }
       items.push(formatterItem)
 
       const createConfigItem = new ConfigItem(
@@ -268,6 +273,98 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     }
 
     return items
+  }
+
+  private getFormatterSettingItems(): ConfigItem[] {
+    const indentStyle = this.config?.formatter?.indentStyle ?? 'space'
+    const indentWidth = this.config?.formatter?.indentWidth ?? 2
+    const maxLineLength = this.config?.formatter?.maxLineLength ?? 80
+
+    const indentStyleItem = new ConfigItem(
+      "Indent Style",
+      indentStyle,
+      vscode.TreeItemCollapsibleState.None,
+      'formatterIndentStyle'
+    )
+    indentStyleItem.iconPath = new vscode.ThemeIcon('symbol-enum')
+    indentStyleItem.command = {
+      command: 'herb.setIndentStyle',
+      title: 'Set Indent Style',
+      arguments: []
+    }
+
+    const indentWidthItem = new ConfigItem(
+      "Indent Width",
+      `${indentWidth}`,
+      vscode.TreeItemCollapsibleState.None,
+      'formatterIndentWidth'
+    )
+    indentWidthItem.iconPath = new vscode.ThemeIcon('symbol-numeric')
+    indentWidthItem.command = {
+      command: 'herb.setIndentWidth',
+      title: 'Set Indent Width',
+      arguments: []
+    }
+
+    const maxLineLengthItem = new ConfigItem(
+      "Max Line Length",
+      `${maxLineLength}`,
+      vscode.TreeItemCollapsibleState.None,
+      'formatterMaxLineLength'
+    )
+    maxLineLengthItem.iconPath = new vscode.ThemeIcon('symbol-numeric')
+    maxLineLengthItem.command = {
+      command: 'herb.setMaxLineLength',
+      title: 'Set Max Line Length',
+      arguments: []
+    }
+
+    return [indentStyleItem, indentWidthItem, maxLineLengthItem]
+  }
+
+  private getPersonalFormatterSettingItems(): ConfigItem[] {
+    const vscodeConfig = vscode.workspace.getConfiguration('languageServerHerb')
+
+    const indentStyleItem = new ConfigItem(
+      "Indent Style",
+      vscodeConfig.get('formatter.indentStyle', 'space'),
+      vscode.TreeItemCollapsibleState.None,
+      'personalFormatterIndentStyle'
+    )
+    indentStyleItem.iconPath = new vscode.ThemeIcon('symbol-enum')
+    indentStyleItem.command = {
+      command: 'workbench.action.openSettings',
+      title: 'Open Indent Style Setting',
+      arguments: ['languageServerHerb.formatter.indentStyle']
+    }
+
+    const indentWidthItem = new ConfigItem(
+      "Indent Width",
+      `${vscodeConfig.get('formatter.indentWidth', 2)}`,
+      vscode.TreeItemCollapsibleState.None,
+      'personalFormatterIndentWidth'
+    )
+    indentWidthItem.iconPath = new vscode.ThemeIcon('symbol-numeric')
+    indentWidthItem.command = {
+      command: 'workbench.action.openSettings',
+      title: 'Open Indent Width Setting',
+      arguments: ['languageServerHerb.formatter.indentWidth']
+    }
+
+    const maxLineLengthItem = new ConfigItem(
+      "Max Line Length",
+      `${vscodeConfig.get('formatter.maxLineLength', 80)}`,
+      vscode.TreeItemCollapsibleState.None,
+      'personalFormatterMaxLineLength'
+    )
+    maxLineLengthItem.iconPath = new vscode.ThemeIcon('symbol-numeric')
+    maxLineLengthItem.command = {
+      command: 'workbench.action.openSettings',
+      title: 'Open Max Line Length Setting',
+      arguments: ['languageServerHerb.formatter.maxLineLength']
+    }
+
+    return [indentStyleItem, indentWidthItem, maxLineLengthItem]
   }
 
   async createConfig(): Promise<void> {

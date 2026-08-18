@@ -1,0 +1,7 @@
+---
+source: "Engine::InstrumentationVisitorTest::what it emits#test_0005_leaves a comment alone"
+input: "{source: \"<%# nothing to see %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
+ ensure; ::Herb::Engine::Report::Session.leave_render; end 
+_buf.to_s

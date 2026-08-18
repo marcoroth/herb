@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/file_renderer_test.rs
+expression: "renderer.render_with_line_numbers(\"/test/file.erb\", \"<div>Hello</div>\", false,\nwidth(), false)"
+---
+[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m[38;2;171;178;191mHello[0m[38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m

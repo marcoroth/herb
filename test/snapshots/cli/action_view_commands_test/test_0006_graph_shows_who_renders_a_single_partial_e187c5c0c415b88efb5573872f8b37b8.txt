@@ -1,0 +1,18 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0006_graph shows who renders a single partial"
+input: "single partial graph"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ Building render graph...
+
+ ✓ posts/row posts/_row.html.erb
+
+ Rendered by:
+   └── posts/index.html.erb (entry point)
+
+ Reachable from:
+   └── posts/index.html.erb → posts/row
+

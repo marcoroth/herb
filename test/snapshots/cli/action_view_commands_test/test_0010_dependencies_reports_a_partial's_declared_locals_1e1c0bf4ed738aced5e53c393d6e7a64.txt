@@ -1,0 +1,13 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0010_dependencies reports a partial's declared locals"
+input: "partial manifest"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_row.html.erb (partial)
+
+ Locals declared (strict locals)
+   post
+

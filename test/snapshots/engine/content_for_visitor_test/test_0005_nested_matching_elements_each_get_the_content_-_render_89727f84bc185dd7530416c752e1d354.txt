@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0005_nested matching elements each get the content - render"
+input: "{source: \"<div><div>Inner</div></div>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"div\" attributes={} content=\"<p>Appended</p>\">]}}"
+---
+<div><div>Inner<p>Appended</p></div><p>Appended</p></div>

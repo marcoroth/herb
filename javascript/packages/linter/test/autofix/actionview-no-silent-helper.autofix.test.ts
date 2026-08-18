@@ -12,20 +12,20 @@ describe("actionview-no-silent-helper autofix", () => {
     await Herb.load()
   })
 
-  test.skip("output tag is not modified", () => {
+  test("output tag is not modified", () => {
     const input = dedent`
       <%= link_to "Home", root_path %>
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes silent tag to output tag for link_to", () => {
+  test("fixes silent tag to output tag for link_to", () => {
     const input = dedent`
       <% link_to "Home", root_path %>
     `
@@ -35,14 +35,14 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes silent tag to output tag for content_tag", () => {
+  test("fixes silent tag to output tag for content_tag", () => {
     const input = dedent`
       <% content_tag :div, "Hello", class: "greeting" %>
     `
@@ -52,14 +52,14 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes trimmed silent tag to output tag", () => {
+  test("fixes trimmed silent tag to output tag", () => {
     const input = dedent`
       <%- link_to "Home", root_path %>
     `
@@ -69,14 +69,14 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes silent tag for turbo_frame_tag", () => {
+  test("fixes silent tag for turbo_frame_tag", () => {
     const input = dedent`
       <% turbo_frame_tag "test" %>
     `
@@ -86,7 +86,7 @@ describe("actionview-no-silent-helper autofix", () => {
     `
 
     const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: "test.html.erb", framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

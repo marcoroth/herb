@@ -53,6 +53,7 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("TOKEN_HTML_DOCTYPE");
     case TOKEN_XML_DECLARATION: return hb_string("TOKEN_XML_DECLARATION");
     case TOKEN_XML_DECLARATION_END: return hb_string("TOKEN_XML_DECLARATION_END");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("TOKEN_XML_PROCESSING_INSTRUCTION_START");
     case TOKEN_CDATA_START: return hb_string("TOKEN_CDATA_START");
     case TOKEN_CDATA_END: return hb_string("TOKEN_CDATA_END");
     case TOKEN_HTML_TAG_START: return hb_string("TOKEN_HTML_TAG_START");
@@ -94,6 +95,7 @@ hb_string_T token_type_to_friendly_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("`<!DOCTYPE`");
     case TOKEN_XML_DECLARATION: return hb_string("`<?xml`");
     case TOKEN_XML_DECLARATION_END: return hb_string("`?>`");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("`<?`");
     case TOKEN_CDATA_START: return hb_string("`<![CDATA[`");
     case TOKEN_CDATA_END: return hb_string("`]]>`");
     case TOKEN_HTML_TAG_START: return hb_string("`<`");
@@ -226,6 +228,12 @@ token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
 
 bool token_value_empty(const token_T* token) {
   return token == NULL || hb_string_is_empty(token->value);
+}
+
+bool token_is_escaped_erb_tag_opening(const token_T* token) {
+  if (token_value_empty(token)) { return false; }
+
+  return hb_string_starts_with(token->value, hb_string("<%%"));
 }
 
 void token_free(token_T* token, hb_allocator_T* allocator) {

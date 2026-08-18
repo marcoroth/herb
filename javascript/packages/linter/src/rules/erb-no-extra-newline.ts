@@ -1,6 +1,7 @@
 import { type Node, Location } from "@herb-tools/core"
 
-import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
+import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { positionFromOffset } from "@herb-tools/core"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
@@ -47,7 +48,10 @@ export class ERBNoExtraNewLineRule extends SourceRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
     }
   }
 

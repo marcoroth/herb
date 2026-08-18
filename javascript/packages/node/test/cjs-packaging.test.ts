@@ -2,6 +2,7 @@ import fs from "fs"
 import path from "path"
 import { execSync } from "child_process"
 import { createRequire } from "module"
+import { pathToFileURL } from "url"
 import { describe, test, expect, beforeAll, afterAll } from "vitest"
 
 const require = createRequire(import.meta.url)
@@ -26,10 +27,6 @@ describe("CJS build output", () => {
     expect(content.includes("require('./node-backend")).toBe(false)
   })
 
-  test("bundles HerbBackendNode class inline", () => {
-    expect(content.includes("class HerbBackendNode")).toBe(true)
-  })
-
   test("uses promise factory pattern, not raw promise", () => {
     expect(content.includes("() => new Promise")).toBe(true)
     expect(/new HerbBackendNode\(new Promise/.test(content)).toBe(false)
@@ -47,10 +44,6 @@ describe("ESM build output", () => {
     expect(fs.existsSync(esmPath)).toBe(true)
   })
 
-  test("bundles HerbBackendNode class inline", () => {
-    expect(content.includes("class HerbBackendNode")).toBe(true)
-  })
-
   test("does not contain unresolved local import for node-backend", () => {
     expect(/from\s+['"]\.\/node-backend/.test(content)).toBe(false)
   })
@@ -61,11 +54,15 @@ describe("ESM build output", () => {
   })
 
   test("exports Herb and HerbBackendNode in export statement", () => {
-    expect(/export\s*\{[^}]*Herb[^}]*HerbBackendNode[^}]*\}/.test(content)).toBe(true)
+    expect(
+      /export\s*\{[^}]*Herb[^}]*HerbBackendNode[^}]*\}/.test(content),
+    ).toBe(true)
   })
 
   test("re-exports @herb-tools/core with export *", () => {
-    expect(/export\s+\*\s+from\s+['"]@herb-tools\/core['"]/.test(content)).toBe(true)
+    expect(/export\s+\*\s+from\s+['"]@herb-tools\/core['"]/.test(content)).toBe(
+      true,
+    )
   })
 })
 
@@ -76,11 +73,6 @@ describe("CJS and ESM parity", () => {
   test("both use promise factory pattern", () => {
     expect(cjsContent.includes("() => new Promise")).toBe(true)
     expect(esmContent.includes("() => new Promise")).toBe(true)
-  })
-
-  test("both bundle HerbBackendNode inline", () => {
-    expect(cjsContent.includes("class HerbBackendNode")).toBe(true)
-    expect(esmContent.includes("class HerbBackendNode")).toBe(true)
   })
 
   test("neither has unresolved node-backend reference", () => {
@@ -239,6 +231,61 @@ describe("CJS runtime require", () => {
   })
 })
 
+describe("ESM runtime import", () => {
+  let esmModule: Record<string, unknown>
+
+  beforeAll(async () => {
+    esmModule = await import(pathToFileURL(esmPath).href)
+    await (esmModule.Herb as any).load()
+  })
+
+  test("can be imported without errors", () => {
+    expect(esmModule).toBeDefined()
+  })
+
+  test("exports Herb as an instance of HerbBackendNode", () => {
+    expect(esmModule.Herb).toBeDefined()
+    expect(esmModule.Herb).toBeInstanceOf(esmModule.HerbBackendNode as any)
+  })
+
+  test("exports HerbBackendNode as a class", () => {
+    expect(typeof esmModule.HerbBackendNode).toBe("function")
+  })
+
+  test("HerbBackendNode extends HerbBackend", () => {
+    const node = esmModule.HerbBackendNode as any
+    const backend = esmModule.HerbBackend as any
+
+    expect(new node(() => Promise.resolve({})) instanceof backend).toBe(true)
+  })
+
+  test("re-exports @herb-tools/core", () => {
+    expect(typeof esmModule.HerbBackend).toBe("function")
+    expect(typeof esmModule.Visitor).toBe("function")
+    expect(typeof esmModule.ParseResult).toBe("function")
+    expect(typeof esmModule.Node).toBe("function")
+  })
+
+  test("Herb.parse works on a simple template", () => {
+    const result = (esmModule.Herb as any).parse("<div>hello</div>")
+
+    expect(result).toBeDefined()
+    expect(result.errors).toEqual([])
+  })
+
+  test("Herb.extractRuby works on a simple template", () => {
+    expect((esmModule.Herb as any).extractRuby('<%= "hello" %>')).toBe(
+      '    "hello"  ;',
+    )
+  })
+
+  test("Herb.extractHTML works on a simple template", () => {
+    expect(
+      (esmModule.Herb as any).extractHTML('<div><%= "hello" %></div>'),
+    ).toBe("<div>              </div>")
+  })
+})
+
 describe("CJS project integration", () => {
   const projectDir = path.resolve(__dirname, "../tmp/test-cjs-project")
   const packageRoot = path.resolve(__dirname, "..")
@@ -251,14 +298,27 @@ describe("CJS project integration", () => {
       JSON.stringify({ name: "test-cjs-project", private: true }, null, 2),
     )
 
-    fs.mkdirSync(path.join(projectDir, "node_modules/@herb-tools"), { recursive: true })
-    fs.symlinkSync(packageRoot, path.join(projectDir, "node_modules/@herb-tools/node"))
+    fs.mkdirSync(path.join(projectDir, "node_modules/@herb-tools"), {
+      recursive: true,
+    })
+    fs.symlinkSync(
+      packageRoot,
+      path.join(projectDir, "node_modules/@herb-tools/node"),
+    )
 
-    const corePackagePath = path.resolve(packageRoot, "node_modules/@herb-tools/core")
-    fs.symlinkSync(corePackagePath, path.join(projectDir, "node_modules/@herb-tools/core"))
+    const corePackagePath = path.resolve(
+      packageRoot,
+      "node_modules/@herb-tools/core",
+    )
+    fs.symlinkSync(
+      corePackagePath,
+      path.join(projectDir, "node_modules/@herb-tools/core"),
+    )
 
     const nodePregypPath = path.resolve(packageRoot, "node_modules/@mapbox")
-    fs.mkdirSync(path.join(projectDir, "node_modules/@mapbox"), { recursive: true })
+    fs.mkdirSync(path.join(projectDir, "node_modules/@mapbox"), {
+      recursive: true,
+    })
     fs.symlinkSync(
       path.join(nodePregypPath, "node-pre-gyp"),
       path.join(projectDir, "node_modules/@mapbox/node-pre-gyp"),

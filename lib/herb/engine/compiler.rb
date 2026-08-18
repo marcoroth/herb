@@ -157,13 +157,6 @@ module Herb
       end
 
       def visit_html_close_tag_node(node)
-        tag_name = node.tag_name&.value&.downcase
-
-        if @engine.content_for_head && tag_name == "head"
-          escaped_html = @engine.content_for_head.gsub("'", "\\\\'")
-          @tokens << [:expr, "'#{escaped_html}'.html_safe", current_context]
-        end
-
         add_text(node.tag_opening&.value)
         add_text(node.tag_name&.value)
         add_text(node.tag_closing&.value)
@@ -199,6 +192,13 @@ module Herb
 
       def visit_xml_declaration_node(node)
         add_text(node.tag_opening.value)
+        visit_all(node.children)
+        add_text(node.tag_closing.value)
+      end
+
+      def visit_xml_processing_instruction_node(node)
+        add_text(node.tag_opening.value)
+        add_text(node.target.value)
         visit_all(node.children)
         add_text(node.tag_closing.value)
       end
@@ -322,6 +322,16 @@ module Herb
             visit(node.end_node)
           end
         end
+      end
+
+      def visit_erb_iteration_block_node(node)
+        visit_erb_block_node(node)
+      end
+
+      def visit_erb_render_node(node)
+        return process_erb_tag(node) unless node.end_node
+
+        visit_erb_block_node(node)
       end
 
       def visit_erb_block_end_node(node, escaped: false)
@@ -469,44 +479,45 @@ module Herb
       def optimize_tokens(tokens)
         return tokens if tokens.empty?
 
-        compacted = compact_whitespace_tokens(tokens)
-
         optimized = [] #: Array[untyped]
-        current_text = ""
+        current_text = nil #: String?
         current_context = nil
 
-        compacted.each do |type, value, context, escaped|
+        tokens.each_with_index do |token, index|
+          type = token[0]
+
+          if type == :whitespace
+            next if adjacent_whitespace?(tokens, index)
+            next if whitespace_before_code_sequence?(tokens, index)
+
+            type = :text
+          end
+
           if type == :text
-            current_text += value
-            current_context ||= context
+            value = token[1]
+
+            if current_text
+              current_text << value
+              current_context ||= token[2]
+            else
+              current_text = value.dup
+              current_context = token[2]
+            end
           else
-            unless current_text.empty?
+            if current_text
               optimized << [:text, current_text, current_context]
 
-              current_text = ""
+              current_text = nil
               current_context = nil
             end
 
-            optimized << [type, value, context, escaped]
+            optimized << [type, token[1], token[2], token[3]]
           end
         end
 
-        optimized << [:text, current_text, current_context] unless current_text.empty?
+        optimized << [:text, current_text, current_context] if current_text
 
         optimized
-      end
-
-      def compact_whitespace_tokens(tokens)
-        return tokens if tokens.empty?
-
-        tokens.map.with_index { |token, index|
-          next token unless token[0] == :whitespace
-
-          next nil if adjacent_whitespace?(tokens, index)
-          next nil if whitespace_before_code_sequence?(tokens, index)
-
-          [:text, token[1], token[2]]
-        }.compact
       end
 
       def adjacent_whitespace?(tokens, index)
@@ -519,11 +530,11 @@ module Herb
       def trailing_whitespace?(token)
         return false unless token
 
-        token[0] == :whitespace || (token[0] == :text && token[1] =~ /\s\z/)
+        token[0] == :whitespace || (token[0] == :text && token[1].match?(/\s\z/))
       end
 
       def leading_whitespace?(token)
-        token && token[0] == :text && token[1] =~ /\A\s/
+        token && token[0] == :text && token[1].match?(/\A\s/)
       end
 
       def whitespace_before_code_sequence?(tokens, current_index)
@@ -589,7 +600,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value =~ WHITESPACE_ONLY && preceding_token_ends_with_newline?) || last_value =~ TRAILING_INDENTATION
+          last_value.empty? || last_value.end_with?("\n") || (last_value.match?(WHITESPACE_ONLY) && preceding_token_ends_with_newline?) || last_value.match?(TRAILING_INDENTATION)
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
@@ -651,9 +662,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text =~ TRAILING_INDENTATION
+        if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
-        elsif text =~ WHITESPACE_ONLY
+        elsif text.match?(WHITESPACE_ONLY)
           text.replace("")
         end
 
@@ -698,10 +709,10 @@ module Herb
         text = token[1]
         removed = text[TRAILING_WHITESPACE] || ""
 
-        if text =~ TRAILING_INDENTATION
+        if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
           token[1] = text
-        elsif text =~ WHITESPACE_ONLY
+        elsif text.match?(WHITESPACE_ONLY)
           text.replace("")
           token[1] = text
         end

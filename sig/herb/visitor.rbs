@@ -4,6 +4,10 @@ module Herb
   class Visitor
     include AST::Helpers
 
+    include ParserOptionRequirements
+
+    extend Herb::Visitor::ParserOptionRequirements::ClassMethods
+
     # : (Herb::AST::Node?) -> void
     def visit: (Herb::AST::Node?) -> void
 
@@ -76,6 +80,9 @@ module Herb
     # : (Herb::AST::XMLDeclarationNode) -> void
     def visit_xml_declaration_node: (Herb::AST::XMLDeclarationNode) -> void
 
+    # : (Herb::AST::XMLProcessingInstructionNode) -> void
+    def visit_xml_processing_instruction_node: (Herb::AST::XMLProcessingInstructionNode) -> void
+
     # : (Herb::AST::CDATANode) -> void
     def visit_cdata_node: (Herb::AST::CDATANode) -> void
 
@@ -96,6 +103,9 @@ module Herb
 
     # : (Herb::AST::ERBBlockNode) -> void
     def visit_erb_block_node: (Herb::AST::ERBBlockNode) -> void
+
+    # : (Herb::AST::ERBIterationBlockNode) -> void
+    def visit_erb_iteration_block_node: (Herb::AST::ERBIterationBlockNode) -> void
 
     # : (Herb::AST::ERBWhenNode) -> void
     def visit_erb_when_node: (Herb::AST::ERBWhenNode) -> void

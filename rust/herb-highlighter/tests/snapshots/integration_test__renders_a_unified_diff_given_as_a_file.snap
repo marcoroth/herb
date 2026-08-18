@@ -1,0 +1,11 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+app/views/gems/index.html.erb
+
+      1 │ <div id="gems">
+  -   2 │   <span class='card'>x</span>
+  +     │   <span class="card">x</span>
+      3 │ </div>
+      4 │
