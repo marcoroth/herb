@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened, labeled, closed]
+    types: [opened, synchronize, reopened, closed]
   release:
     types: [published]
 
@@ -15,9 +15,7 @@ permissions:
 
 jobs:
   main:
-    if: |
-      github.event.action != 'closed' &&
-      (github.event.action != 'labeled' || github.event.label.name == 'release-preview')
+    if: github.event.action != 'closed'
     env:
       GH_TOKEN: ${{ github.token }}
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -198,10 +196,8 @@ jobs:
 
   preview-check:
     if: |
-      (github.event.action != 'labeled' || github.event.label.name == 'release-preview') && (
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main'))
+      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     runs-on: ubuntu-latest
     outputs:
