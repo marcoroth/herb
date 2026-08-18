@@ -78,7 +78,14 @@ export interface Slot {
   children: Slot[]
 }
 
-export type SlotOperation = "value" | "attribute" | "markup" | "branch" | "item-added" | "item-removed"
+export type SlotOperation =
+  | "value"
+  | "attribute"
+  | "markup"
+  | "branch"
+  | "item-added"
+  | "item-removed"
+  | "item-updated"
 
 export interface SlotEventDetail {
   file: string
@@ -667,7 +674,7 @@ export class SlotIndex {
 
     const result = this.scan(added)
 
-    this.#announce(slot, "markup", slot.index, key, slot.items.get(key) ?? null)
+    this.#announce(slot, "item-updated", slot.index, key, slot.items.get(key) ?? null)
 
     return result
   }

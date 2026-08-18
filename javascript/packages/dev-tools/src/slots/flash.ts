@@ -7,7 +7,8 @@ const COLORS: Record<SlotOperation, string> = {
   attribute: '#a855f7',
   branch: '#f59e0b',
   'item-added': '#10b981',
-  'item-removed': '#ef4444'
+  'item-removed': '#ef4444',
+  'item-updated': '#0ea5e9'
 }
 
 export class SlotFlash {

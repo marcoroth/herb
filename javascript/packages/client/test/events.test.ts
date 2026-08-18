@@ -56,6 +56,19 @@ describe("saying what changed", () => {
     ])
   })
 
+  test("announces rewriting one item as an update, not as bare markup", () => {
+    document.body.innerHTML = ITEMS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.updateItem(index.slot(FILE, 0)!, "a", `<li data-herb-child="1">ONE</li>`)
+
+    expect(seen.map((detail) => [detail.operation, detail.key])).toEqual([["item-updated", "a"]])
+  })
+
   test("says nothing when the value written is the value already there", () => {
     document.body.innerHTML = CHILD
 
