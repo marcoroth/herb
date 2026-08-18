@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
-import type { Row } from "../src/slot-index"
+import type { Item } from "../src/slot-index"
 import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/posts/index.html.erb"
@@ -9,8 +9,8 @@ const CHILD = `<!--herb-region:${FILE}:25c0946e:0--><p>Hi <!--herb-slot:0-->Marc
 const ANCHORED = `<!--herb-region:${FILE}:fd3dfd36:0--><span class="n" data-herb-child="0">Marco</span><!--/herb-region:${FILE}-->`
 const COND_TRUE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b>x</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 const COND_FALSE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const COLLECTION = `<!--herb-region:${FILE}:64652ac4:0--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute" data-herb-child="2">1</li><!--/herb-row:0--><!--herb-row:0:2--><li id="2" data-herb-slot="1:attribute" data-herb-child="2">2</li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
-const TABLE = `<!--herb-region:${FILE}:c4a38ea8:0--><table><!--herb-slot:0:collection--><!--herb-row:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-child="2">1</td></tr><!--/herb-row:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
+const COLLECTION = `<!--herb-region:${FILE}:64652ac4:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute" data-herb-child="2">1</li><!--/herb-item:0--><!--herb-item:0:2--><li id="2" data-herb-slot="1:attribute" data-herb-child="2">2</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
+const TABLE = `<!--herb-region:${FILE}:c4a38ea8:0--><table><!--herb-slot:0:collection--><!--herb-item:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-child="2">1</td></tr><!--/herb-item:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
 const DISPLACED =
   `<!--herb-region:${FILE}:25c0946e:0--><h1 data-herb-child="5">Title</h1><!--/herb-region:${FILE}-->` +
   `<!--herb-region:${FILE}:25c0946e:0--><p data-herb-child="0">body</p><!--/herb-region:${FILE}-->`
@@ -138,8 +138,8 @@ describe("SlotIndex", () => {
     test("reads both roles when one element carries an attribute and its content", () => {
       index.scan(mount(COLLECTION))
 
-      expect(index.slotInRow(FILE, 0, "1", 1)?.anchor.kind).toBe("element")
-      expect(index.slotInRow(FILE, 0, "1", 2)?.anchor.kind).toBe("content")
+      expect(index.slotInItem(FILE, 0, "1", 1)?.anchor.kind).toBe("element")
+      expect(index.slotInItem(FILE, 0, "1", 2)?.anchor.kind).toBe("content")
     })
   })
 
@@ -161,23 +161,23 @@ describe("SlotIndex", () => {
   })
 
   describe("collections", () => {
-    test("keys each row", () => {
+    test("keys each item", () => {
       index.scan(mount(COLLECTION))
 
-      expect([...index.rowsFor(FILE, 0).keys()]).toEqual(["1", "2"])
+      expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["1", "2"])
     })
 
-    test("gives a row a range covering just that row", () => {
+    test("gives a item a range covering just that item", () => {
       index.scan(mount(COLLECTION))
 
-      const row = index.rowsFor(FILE, 0).get("2")!
+      const item = index.itemsFor(FILE, 0).get("2")!
 
-      expect(index.rangeForRow(row).toString()).toBe("2")
+      expect(index.rangeForItem(item).toString()).toBe("2")
     })
   })
 
   describe("tables, where a marker pair is not a pair of siblings", () => {
-    test("still pairs row markers the parser split across table and tbody", () => {
+    test("still pairs item markers the parser split across table and tbody", () => {
       const host = mount(TABLE)
 
       const rowMarkers = [...host.querySelectorAll("table, tbody")].flatMap((element) =>
@@ -189,9 +189,9 @@ describe("SlotIndex", () => {
 
       index.scan(host)
 
-      expect([...index.rowsFor(FILE, 0).keys()]).toEqual(["1"])
+      expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["1"])
       expect(index.slot(FILE, 0)?.type).toBe("collection")
-      expect(index.slotInRow(FILE, 0, "1", 2)?.anchor.kind).toBe("content")
+      expect(index.slotInItem(FILE, 0, "1", 2)?.anchor.kind).toBe("content")
     })
   })
 
@@ -245,7 +245,7 @@ describe("SlotIndex", () => {
       await settle()
 
       expect(index.regionsFor(FILE)).toHaveLength(1)
-      expect([...index.rowsFor(FILE, 0).keys()]).toEqual(["1", "2"])
+      expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["1", "2"])
 
       index.disconnect()
     })
@@ -340,7 +340,7 @@ describe("SlotIndex", () => {
 })
 
 const NESTED = `<!--herb-region:${"app/views/posts/index.html.erb"}:8318a878:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-child="1">Marco</span><!--/herb-slot:0--></div><!--/herb-region:app/views/posts/index.html.erb-->`
-const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b:0--><!--herb-slot:0:collection--><!--herb-row:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-child="3">1</b><!--/herb-slot:2--></li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
+const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-child="3">1</b><!--/herb-slot:2--></li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
 
 function mounted(html: string): SlotIndex {
   const host = document.createElement("div")
@@ -371,7 +371,7 @@ describe("dependent slots", () => {
     const collection = index.slot(FILE, 0)!
 
     expect(index.descendantsOf(collection).map((slot) => slot.index).sort()).toEqual([1, 2, 3])
-    expect(index.ancestorsOf(index.slotInRow(FILE, 0, "1", 3)!).map((slot) => slot.index)).toEqual([2, 0])
+    expect(index.ancestorsOf(index.slotInItem(FILE, 0, "1", 3)!).map((slot) => slot.index)).toEqual([2, 0])
   })
 
   test("a top-level slot depends on nothing", () => {
@@ -393,7 +393,7 @@ describe("collection reconciliation", () => {
     expect(index.reconcile(index.slot(FILE, 0)!, ["1", "2"]).unchanged).toBe(true)
   })
 
-  test("separates added, removed and moved rows", () => {
+  test("separates added, removed and moved items", () => {
     const index = mounted(COLLECTION)
     const plan = index.reconcile(index.slot(FILE, 0)!, ["2", "3"])
 
@@ -411,10 +411,10 @@ describe("collection reconciliation", () => {
     expect(plan.moved).toEqual(["2", "1"])
   })
 
-  test("reads the order the rows are in now, not the order they were first scanned in", () => {
+  test("reads the order the items are in now, not the order they were first scanned in", () => {
     const index = mounted(COLLECTION)
     const slot = index.slot(FILE, 0)!
-    const [first, second] = [...slot.rows.values()]
+    const [first, second] = [...slot.items.values()]
 
     move(second, first)
     index.prune()
@@ -423,56 +423,56 @@ describe("collection reconciliation", () => {
     expect(index.reconcile(slot, ["1", "2"]).moved).toEqual(["1", "2"])
   })
 
-  test("iterates its rows in the order the page has them", () => {
+  test("iterates its items in the order the page has them", () => {
     const index = mounted(COLLECTION)
     const slot = index.slot(FILE, 0)!
-    const [first, second] = [...slot.rows.values()]
+    const [first, second] = [...slot.items.values()]
 
     move(second, first)
     index.prune()
 
-    expect([...index.rowsFor(FILE, 0).keys()]).toEqual(["2", "1"])
+    expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["2", "1"])
   })
 
-  test("forgets a row whose markers have left the page", () => {
+  test("forgets a item whose markers have left the page", () => {
     const index = mounted(COLLECTION)
     const slot = index.slot(FILE, 0)!
 
-    remove(slot.rows.get("1")!)
+    remove(slot.items.get("1")!)
     index.prune()
 
-    expect([...slot.rows.keys()]).toEqual(["2"])
-    expect(index.slotInRow(FILE, 0, "1", 2)).toBeNull()
+    expect([...slot.items.keys()]).toEqual(["2"])
+    expect(index.slotInItem(FILE, 0, "1", 2)).toBeNull()
   })
 
-  test("stops asking for a row already gone from the page to be removed", () => {
+  test("stops asking for a item already gone from the page to be removed", () => {
     const index = mounted(COLLECTION)
     const slot = index.slot(FILE, 0)!
 
-    remove(slot.rows.get("1")!)
+    remove(slot.items.get("1")!)
     index.prune()
 
     expect(index.reconcile(slot, ["2"]).unchanged).toBe(true)
   })
 })
 
-function rowNodes(row: Row): Node[] {
+function rowNodes(item: Item): Node[] {
   const range = document.createRange()
 
-  range.setStartBefore(row.start)
-  range.setEndAfter(row.end)
+  range.setStartBefore(item.start)
+  range.setEndAfter(item.end)
 
   return [...range.extractContents().childNodes]
 }
 
-function move(row: Row, before: Row): void {
-  const nodes = rowNodes(row)
+function move(item: Item, before: Item): void {
+  const nodes = rowNodes(item)
 
   for (const node of nodes) before.start.parentNode!.insertBefore(node, before.start)
 }
 
-function remove(row: Row): void {
-  rowNodes(row)
+function remove(item: Item): void {
+  rowNodes(item)
 }
 
 describe("reflecting updates", () => {
@@ -518,19 +518,19 @@ describe("reflecting updates", () => {
     expect(index.slot(FILE, 7)?.parent).toBe(index.slot(FILE, 0))
   })
 
-  test("replaces one row and leaves its siblings alone", () => {
+  test("replaces one item and leaves its siblings alone", () => {
     const index = mounted(COLLECTION)
 
-    index.updateRow(index.slot(FILE, 0)!, "2", `<li id="2">changed</li>`)
+    index.updateItem(index.slot(FILE, 0)!, "2", `<li id="2">changed</li>`)
 
     expect(document.body.textContent).toContain("changed")
-    expect(index.rangeForRow(index.rowsFor(FILE, 0).get("1")!).toString()).toBe("1")
+    expect(index.rangeForItem(index.itemsFor(FILE, 0).get("1")!).toString()).toBe("1")
   })
 
-  test("parses a replacement row in table context, where a bare <tr> would be dropped", () => {
+  test("parses a replacement item in table context, where a bare <tr> would be dropped", () => {
     const index = mounted(TABLE)
 
-    index.updateRow(index.slot(FILE, 0)!, "1", `<tr id="1"><td>changed</td></tr>`)
+    index.updateItem(index.slot(FILE, 0)!, "1", `<tr id="1"><td>changed</td></tr>`)
 
     expect(document.querySelectorAll("tbody tr")).toHaveLength(1)
     expect(document.querySelector("tbody tr td")?.textContent).toBe("changed")
@@ -600,20 +600,20 @@ describe("a template rendered more than once", () => {
     document.body.innerHTML = ""
   })
 
-  test("keeps a slot per row rather than one per template", () => {
+  test("keeps a slot per item rather than one per template", () => {
     const index = mounted(COLLECTION)
 
-    expect(index.rowsFor(FILE, 0).size).toBe(2)
+    expect(index.itemsFor(FILE, 0).size).toBe(2)
 
-    const first = index.slotInRow(FILE, 0, "1", 2)!
-    const second = index.slotInRow(FILE, 0, "2", 2)!
+    const first = index.slotInItem(FILE, 0, "1", 2)!
+    const second = index.slotInItem(FILE, 0, "2", 2)!
 
     expect(first).not.toBe(second)
     expect(index.rangeFor(first).toString()).toBe("1")
     expect(index.rangeFor(second).toString()).toBe("2")
   })
 
-  test("a collection's descendants include every row's slots", () => {
+  test("a collection's descendants include every item's slots", () => {
     const index = mounted(COLLECTION)
     const collection = index.slot(FILE, 0)!
 
@@ -621,25 +621,25 @@ describe("a template rendered more than once", () => {
   })
 })
 
-describe("updating one row of a collection", () => {
+describe("updating one item of a collection", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
   })
 
-  test("writes into one row's slot and leaves its sibling untouched", () => {
+  test("writes into one item's slot and leaves its sibling untouched", () => {
     const index = mounted(COLLECTION)
 
-    index.update(index.slotInRow(FILE, 0, "1", 2)!, "changed")
+    index.update(index.slotInItem(FILE, 0, "1", 2)!, "changed")
 
-    expect(index.rangeFor(index.slotInRow(FILE, 0, "1", 2)!).toString()).toBe("changed")
-    expect(index.rangeFor(index.slotInRow(FILE, 0, "2", 2)!).toString()).toBe("2")
+    expect(index.rangeFor(index.slotInItem(FILE, 0, "1", 2)!).toString()).toBe("changed")
+    expect(index.rangeFor(index.slotInItem(FILE, 0, "2", 2)!).toString()).toBe("2")
   })
 
-  test("each row's attribute slot points at that row's element", () => {
+  test("each item's attribute slot points at that item's element", () => {
     const index = mounted(COLLECTION)
 
-    const first = index.slotInRow(FILE, 0, "1", 1)!
-    const second = index.slotInRow(FILE, 0, "2", 1)!
+    const first = index.slotInItem(FILE, 0, "1", 1)!
+    const second = index.slotInItem(FILE, 0, "2", 1)!
 
     index.setAttribute(first, "active", "class")
 

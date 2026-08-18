@@ -48,22 +48,22 @@ module Herb
     #
     # A conditional and a collection are always present, because both are evaluated on every render
     # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
-    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
+    # an empty collection is `{ items: {} }`, both of which the client has to be told.
     #
-    # ## Collections group by row
+    # ## Collections group by item
     #
-    # A collection holds its rows in render order, each row carrying the slots inside it:
+    # A collection holds its items in render order, each item carrying the slots inside it:
     #
     #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
-    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
-    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #     #=> { 0 => { items: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                           2 => { 1 => "Joe",   2 => "Doe" } } } }
     #
     # Grouping the other way would give one list per slot and leave the client to zip them back
-    # together, which it cannot do once a row is inserted rather than appended.
+    # together, which it cannot do once a item is inserted rather than appended.
     #
-    # A row is keyed by the key its template declares, through `herb-key` or `id` or a
+    # A item is keyed by the key its template declares, through `herb-key` or `id` or a
     # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
-    # decides what that key is and this evaluates it, so a row arrives under the same key the
+    # decides what that key is and this evaluates it, so a item arrives under the same key the
     # marker around it carries. A collection that declares none falls back to position.
     #
     # ## A partial keeps its own values
@@ -110,7 +110,7 @@ module Herb
 
       SCOPE_BUFFER: String
 
-      ROWS_BUFFER: String
+      ITEMS_BUFFER: String
 
       KEY_BUFFER: String
 
@@ -197,10 +197,10 @@ module Herb
         def collection: (untyped) { (Integer?) -> void } -> void
 
         # : (Integer?) { () -> void } -> void
-        def row: (Integer?) { () -> void } -> void
+        def item: (Integer?) { () -> void } -> void
 
         # : (Integer) -> String?
-        def row_key: (Integer) -> String?
+        def item_key: (Integer) -> String?
 
         # : (untyped, Symbol) -> void
         def iteration: (untyped, Symbol) -> void
@@ -258,10 +258,10 @@ module Herb
       def scope_open_collection: (Integer) -> void
 
       # : (Integer, ?String?) -> void
-      def scope_row_begin: (Integer, ?String?) -> void
+      def scope_item_begin: (Integer, ?String?) -> void
 
       # : (Integer) -> void
-      def scope_row_end: (Integer) -> void
+      def scope_item_end: (Integer) -> void
 
       # : (Integer) -> void
       def scope_close_collection: (Integer) -> void

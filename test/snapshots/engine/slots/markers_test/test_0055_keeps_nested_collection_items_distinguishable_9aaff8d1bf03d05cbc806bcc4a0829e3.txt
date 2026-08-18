@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0055_keeps nested collection items distinguishable"
+input: "{source: \"<% @items.each do |item| %><tr id=\\\"<%= item[:id] %>\\\"><% item[:cells].each do |cell| %><td id=\\\"<%= cell %>\\\"><%= cell %></td><% end %></tr><% end %>\", locals: {\"@items\" => [{id: 1, cells: [11, 12]}]}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:bc6621bb:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><tr id="1" data-herb-slot="1:attribute:id"><!--herb-slot:2:collection--><!--herb-item:2:11--><td id="11" data-herb-slot="3:attribute:id" data-herb-child="4">11</td><!--/herb-item:2--><!--herb-item:2:12--><td id="12" data-herb-slot="3:attribute:id" data-herb-child="4">12</td><!--/herb-item:2--><!--/herb-slot:2--></tr><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

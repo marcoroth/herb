@@ -34,18 +34,18 @@ module Herb
       end
 
       #: (Integer) -> String
-      def row_open_prefix(slot_index)
-        "<!--herb-row:#{slot_index}:"
+      def item_open_prefix(slot_index)
+        "<!--herb-item:#{slot_index}:"
       end
 
       #: () -> String
-      def row_open_suffix
+      def item_open_suffix
         "-->"
       end
 
       #: (Integer) -> String
-      def row_close(slot_index)
-        "<!--/herb-row:#{slot_index}-->"
+      def item_close(slot_index)
+        "<!--/herb-item:#{slot_index}-->"
       end
 
       #: (String, String) -> String

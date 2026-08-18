@@ -104,51 +104,51 @@ module Engine
     end
 
     describe "collections" do
-      test "groups by row rather than by slot" do
+      test "groups by item rather than by slot" do
         users = [View::User.new("Marco", "Roth"), View::User.new("Joe", "Doe")]
         source = "<% @users.each do |u| %><li><%= u.firstname %> <%= u.lastname %></li><% end %>"
 
-        assert_equal({ 0 => { rows: { "1" => { 1 => "Marco", 2 => "Roth" }, "2" => { 1 => "Joe", 2 => "Doe" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "1" => { 1 => "Marco", 2 => "Roth" }, "2" => { 1 => "Joe", 2 => "Doe" } } } }, dynamics(source, users: users))
       end
 
-      test "reports a collection that rendered no rows" do
-        assert_equal({ 0 => { rows: {} } }, dynamics("<% @users.each do |u| %><%= u %><% end %>", users: []))
+      test "reports a collection that rendered no items" do
+        assert_equal({ 0 => { items: {} } }, dynamics("<% @users.each do |u| %><%= u %><% end %>", users: []))
       end
 
-      test "keeps the rows of a nested collection inside the row that produced them" do
-        source = "<% @rows.each do |r| %><% r.each do |c| %><%= c %><% end %><% end %>"
+      test "keeps the items of a nested collection inside the item that produced them" do
+        source = "<% @items.each do |r| %><% r.each do |c| %><%= c %><% end %><% end %>"
 
-        assert_equal({ 0 => { rows: { "1" => { 1 => { rows: { "1" => { 2 => "1" }, "2" => { 2 => "2" } } } }, "2" => { 1 => { rows: { "1" => { 2 => "3" } } } } } } }, dynamics(source, rows: [[1, 2], [3]]))
+        assert_equal({ 0 => { items: { "1" => { 1 => { items: { "1" => { 2 => "1" }, "2" => { 2 => "2" } } } }, "2" => { 1 => { items: { "1" => { 2 => "3" } } } } } } }, dynamics(source, items: [[1, 2], [3]]))
       end
 
-      test "nests a conditional inside the row it ran in" do
+      test "nests a conditional inside the item it ran in" do
         source = "<% @xs.each do |x| %><% if x %><%= x %><% end %><% end %>"
 
-        assert_equal({ 0 => { rows: { "1" => { 1 => { branch: 0, slots: { 2 => "a" } } }, "2" => { 1 => { branch: nil } } } } }, dynamics(source, xs: ["a", nil]))
+        assert_equal({ 0 => { items: { "1" => { 1 => { branch: 0, slots: { 2 => "a" } } }, "2" => { 1 => { branch: nil } } } } }, dynamics(source, xs: ["a", nil]))
       end
 
       test "nests a collection inside the branch it ran in" do
         source = "<% if @on %><% @xs.each do |x| %><%= x %><% end %><% end %>"
 
-        assert_equal({ 0 => { branch: 0, slots: { 1 => { rows: { "1" => { 2 => "a" }, "2" => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
+        assert_equal({ 0 => { branch: 0, slots: { 1 => { items: { "1" => { 2 => "a" }, "2" => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
       end
 
-      test "keys rows by the key the template declared" do
+      test "keys items by the key the template declared" do
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
         source = %(<% @users.each do |u| %><li id="<%= u.firstname %>"><%= u.lastname %></li><% end %>)
 
-        assert_equal({ 0 => { rows: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } } } }, dynamics(source, users: users))
       end
 
-      test "keys rows by position when the template declares no key" do
+      test "keys items by position when the template declares no key" do
         source = %(<% @users.each do |u| %><%= u.firstname %><% end %>)
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
 
-        assert_equal({ 0 => { rows: { "1" => { 1 => "Ada" }, "2" => { 1 => "Grace" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "1" => { 1 => "Ada" }, "2" => { 1 => "Grace" } } } }, dynamics(source, users: users))
       end
 
       test "treats a for loop as a collection" do
-        assert_equal({ 0 => { rows: { "1" => { 1 => "a" }, "2" => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
+        assert_equal({ 0 => { items: { "1" => { 1 => "a" }, "2" => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
       end
     end
 

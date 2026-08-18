@@ -20,11 +20,11 @@ module Engine
         Nokogiri::HTML5.fragment(evaluate_herb_source(Herb::Engine.new(template, **options).src, locals))
       end
 
-      def row_marker_parents(document)
+      def item_marker_parents(document)
         parents = []
 
         document.traverse do |node|
-          parents << [node.text, node.parent.name] if node.comment? && node.text.include?("herb-row")
+          parents << [node.text, node.parent.name] if node.comment? && node.text.include?("herb-item")
         end
 
         parents
@@ -49,7 +49,7 @@ module Engine
       test "distinguishes an element's attribute slot from its content slot" do
         assert_evaluated_snapshot(
           %(<li class="<%= @c %>"><%= @name %></li>),
-          { "@c" => "row", "@name" => "Marco" },
+          { "@c" => "item", "@name" => "Marco" },
           options
         )
       end
@@ -184,8 +184,8 @@ module Engine
 
       test "delimits nested collections" do
         assert_evaluated_snapshot(
-          "<% @rows.each do |row| %><% row.each do |cell| %><%= cell %><% end %><% end %>",
-          { "@rows" => [[1, 2]] },
+          "<% @items.each do |item| %><% item.each do |cell| %><%= cell %><% end %><% end %>",
+          { "@items" => [[1, 2]] },
           options
         )
       end
@@ -300,7 +300,7 @@ module Engine
         )
       end
 
-      test "delimits each row of a keyed collection" do
+      test "delimits each item of a keyed collection" do
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><li herb-key="<%= user[:id] %>"><%= user[:name] %></li><% end %>),
           { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
@@ -308,7 +308,7 @@ module Engine
         )
       end
 
-      test "does not delimit rows of an unkeyed collection" do
+      test "does not delimit items of an unkeyed collection" do
         assert_evaluated_snapshot(
           "<% @users.each do |user| %><li><%= user[:name] %></li><% end %>",
           { "@users" => [{ id: 1, name: "Marco" }] },
@@ -316,7 +316,7 @@ module Engine
         )
       end
 
-      test "delimits rows of a body with several roots via the herb:key directive" do
+      test "delimits items of a body with several roots via the herb:key directive" do
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><%# herb:key user[:id] %><dt><%= user[:name] %></dt><dd><%= user[:email] %></dd><% end %>),
           { "@users" => [{ id: 1, name: "Marco", email: "marco@example.com" }] },
@@ -324,7 +324,7 @@ module Engine
         )
       end
 
-      test "delimits rows of a body with no element at all" do
+      test "delimits items of a body with no element at all" do
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><%# herb:key user[:id] %><%= user[:name] %><% end %>),
           { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
@@ -360,10 +360,10 @@ module Engine
         assert_evaluated_snapshot("<% if @a %>A<% end %>", { "@a" => false }, options)
       end
 
-      test "keeps nested collection rows distinguishable" do
+      test "keeps nested collection items distinguishable" do
         assert_evaluated_snapshot(
-          %(<% @rows.each do |row| %><tr id="<%= row[:id] %>"><% row[:cells].each do |cell| %><td id="<%= cell %>"><%= cell %></td><% end %></tr><% end %>),
-          { "@rows" => [{ id: 1, cells: [11, 12] }] },
+          %(<% @items.each do |item| %><tr id="<%= item[:id] %>"><% item[:cells].each do |cell| %><td id="<%= cell %>"><%= cell %></td><% end %></tr><% end %>),
+          { "@items" => [{ id: 1, cells: [11, 12] }] },
           options
         )
       end
@@ -376,28 +376,28 @@ module Engine
         plain = evaluate_herb_source(Herb::Engine.new(template).src, locals)
 
         unmarked = slotted
-                   .gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")
+                   .gsub(%r{<!--/?herb-(slot|region|item|branch)[^>]*-->}, "")
                    .gsub(/ data-herb-(child|slot)="[^"]*"/, "")
 
         assert_equal plain, unmarked
       end
 
-      test "a table collection has its row markers split across table and tbody" do
+      test "a table collection has its item markers split across table and tbody" do
         document = parse_slotted(
-          %(<table><% @rows.each do |row| %><tr id="<%= row %>"><td>x</td></tr><% end %></table>),
-          { "@rows" => [1] }
+          %(<table><% @items.each do |item| %><tr id="<%= item %>"><td>x</td></tr><% end %></table>),
+          { "@items" => [1] }
         )
 
-        assert_equal [["herb-row:0:1", "table"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
+        assert_equal [["herb-item:0:1", "table"], ["/herb-item:0", "tbody"]], item_marker_parents(document)
       end
 
-      test "an explicit tbody keeps a row's markers under one parent" do
+      test "an explicit tbody keeps a item's markers under one parent" do
         document = parse_slotted(
-          %(<table><tbody><% @rows.each do |row| %><tr id="<%= row %>"><td>x</td></tr><% end %></tbody></table>),
-          { "@rows" => [1] }
+          %(<table><tbody><% @items.each do |item| %><tr id="<%= item %>"><td>x</td></tr><% end %></tbody></table>),
+          { "@items" => [1] }
         )
 
-        assert_equal [["herb-row:0:1", "tbody"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
+        assert_equal [["herb-item:0:1", "tbody"], ["/herb-item:0", "tbody"]], item_marker_parents(document)
       end
 
       def rendered(template, locals)

@@ -53,22 +53,22 @@ module Herb
     #
     # A conditional and a collection are always present, because both are evaluated on every render
     # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
-    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
+    # an empty collection is `{ items: {} }`, both of which the client has to be told.
     #
-    # ## Collections group by row
+    # ## Collections group by item
     #
-    # A collection holds its rows in render order, each row carrying the slots inside it:
+    # A collection holds its items in render order, each item carrying the slots inside it:
     #
     #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
-    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
-    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #     #=> { 0 => { items: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                           2 => { 1 => "Joe",   2 => "Doe" } } } }
     #
     # Grouping the other way would give one list per slot and leave the client to zip them back
-    # together, which it cannot do once a row is inserted rather than appended.
+    # together, which it cannot do once a item is inserted rather than appended.
     #
-    # A row is keyed by the key its template declares, through `herb-key` or `id` or a
+    # A item is keyed by the key its template declares, through `herb-key` or `id` or a
     # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
-    # decides what that key is and this evaluates it, so a row arrives under the same key the
+    # decides what that key is and this evaluates it, so a item arrives under the same key the
     # marker around it carries. A collection that declares none falls back to position.
     #
     # ## A partial keeps its own values
@@ -111,7 +111,7 @@ module Herb
       BLOCK_BUFFER = "__herb_block" #: String
       SLOT_BUFFER = "__herb_slot" #: String
       SCOPE_BUFFER = "__herb_scope" #: String
-      ROWS_BUFFER = "__herb_rows" #: String
+      ITEMS_BUFFER = "__herb_items" #: String
       KEY_BUFFER = "__herb_key" #: String
       OCCURRENCE_BUFFER = "__herb_occurrence" #: String
 
@@ -223,7 +223,7 @@ module Herb
         def visit_erb_iteration_block_node(node)
           collection(node) do |index|
             visit_erb_control_node(node) do
-              row(index) do
+              item(index) do
                 visit_all(node.body)
 
                 visit(node.rescue_clause)
@@ -391,18 +391,18 @@ module Herb
         end
 
         #: (Integer?) { () -> void } -> void
-        def row(index)
+        def item(index)
           return yield unless index
 
-          @tokens << [:scope, "", nil, [:row_begin, index, row_key(index)]]
+          @tokens << [:scope, "", nil, [:item_begin, index, item_key(index)]]
 
           yield
 
-          @tokens << [:scope, "", nil, [:row_end, index]]
+          @tokens << [:scope, "", nil, [:item_end, index]]
         end
 
         #: (Integer) -> String?
-        def row_key(index)
+        def item_key(index)
           @slot_visitor.slots[index]&.key_expression
         end
 
@@ -410,7 +410,7 @@ module Herb
         def iteration(node, part)
           collection(node) do |index|
             visit_erb_control_node(node) do
-              row(index) do
+              item(index) do
                 visit_all(node.send(part) || [])
               end
 
@@ -541,11 +541,11 @@ module Herb
 
       #: (Integer) -> void
       def scope_open_collection(index)
-        @src << "; #{ROWS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
+        @src << "; #{ITEMS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
       end
 
       #: (Integer, ?String?) -> void
-      def scope_row_begin(index, key = nil)
+      def scope_item_begin(index, key = nil)
         advance = key ? "#{KEY_BUFFER}#{index} = (#{key}).to_s" : "#{KEY_BUFFER}#{index} += 1"
 
         @src << "; #{advance}; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
@@ -554,15 +554,15 @@ module Herb
       end
 
       #: (Integer) -> void
-      def scope_row_end(index)
+      def scope_item_end(index)
         leave_scope(index)
 
-        @src << "; #{ROWS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
+        @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
       end
 
       #: (Integer) -> void
       def scope_close_collection(index)
-        @src << "; #{current_scope}[#{index}] = { rows: #{ROWS_BUFFER}#{index} };"
+        @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index} };"
       end
 
       #: (Integer) -> void
