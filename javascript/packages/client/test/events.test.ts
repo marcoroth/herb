@@ -4,7 +4,7 @@ import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
 import type { Payload, SlotEventDetail } from "../src/slot-index"
 
 const FILE = "app/views/posts/index.html.erb"
-const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li data-herb-child="1">one</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li data-herb-slot="1:child">one</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 const CHILD = `<!--herb-region:${FILE}:aaaaaaaa:0--><p><!--herb-slot:0-->hi<!--/herb-slot:0--></p><!--/herb-region:${FILE}-->`
 
 function watch(): SlotEventDetail[] {
@@ -64,7 +64,7 @@ describe("saying what changed", () => {
 
     const seen = watch()
 
-    index.updateItem(index.slot(FILE, 0)!, "a", `<li data-herb-child="1">ONE</li>`)
+    index.updateItem(index.slot(FILE, 0)!, "a", `<li data-herb-slot="1:child">ONE</li>`)
 
     expect(seen.map((detail) => [detail.operation, detail.key])).toEqual([["item-updated", "a"]])
   })

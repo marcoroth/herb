@@ -129,7 +129,7 @@ module Engine
         end
 
         assert_includes captured_output, "herb-region:"
-        assert_includes captured_output, %(data-herb-child="0")
+        assert_includes captured_output, %(data-herb-slot="0:child")
         assert_empty captured_error
       end
     end
@@ -194,7 +194,7 @@ module Engine
         end
 
         assert_includes captured_output, "herb-region:"
-        assert_includes captured_output, %(data-herb-child="0")
+        assert_includes captured_output, %(data-herb-slot="0:child")
       end
     end
 

@@ -263,13 +263,17 @@ Most slots are a pair of comments around what they render:
 A slot that is the whole content of one element is marked on the element instead, which costs no extra nodes:
 
 ```html
-<td class="name" data-herb-child="0">Marco</td>
+<td class="name" data-herb-slot="0:child">Marco</td>
 ```
 
-Slots that cannot take comments at all are named on the element with their type. That covers attributes, whole-element expressions, and the content of `<title>` and `<textarea>`:
+Slots that cannot take comments at all are named on the element with their type. That covers attributes, whole-element expressions, and the content of `<title>` and `<textarea>`. One element can carry several, written as a space-separated list, so `~=` finds a slot without parsing the attribute:
 
 ```html
-<li id="1" data-herb-slot="1:attribute" data-herb-child="2">Marco</li>
+<li id="1" data-herb-slot="1:attribute:id 2:child">Marco</li>
+```
+
+```javascript
+document.querySelectorAll('[data-herb-slot~="2:child"]')
 ```
 
 Comments are kept where an element cannot carry the slot: mid-text, spanning siblings, or anywhere the slot might render nothing. An untaken conditional still leaves an empty pair, so the position stays addressable:

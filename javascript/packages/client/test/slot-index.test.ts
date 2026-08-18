@@ -6,15 +6,15 @@ import { HerbRuntime } from "../src/runtime"
 const FILE = "app/views/posts/index.html.erb"
 
 const CHILD = `<!--herb-region:${FILE}:25c0946e:0--><p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->!</p><!--/herb-region:${FILE}-->`
-const ANCHORED = `<!--herb-region:${FILE}:fd3dfd36:0--><span class="n" data-herb-child="0">Marco</span><!--/herb-region:${FILE}-->`
+const ANCHORED = `<!--herb-region:${FILE}:fd3dfd36:0--><span class="n" data-herb-slot="0:child">Marco</span><!--/herb-region:${FILE}-->`
 const COND_TRUE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b>x</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 const COND_FALSE = `<!--herb-region:${FILE}:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const COLLECTION = `<!--herb-region:${FILE}:64652ac4:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute" data-herb-child="2">1</li><!--/herb-item:0--><!--herb-item:0:2--><li id="2" data-herb-slot="1:attribute" data-herb-child="2">2</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
-const TABLE = `<!--herb-region:${FILE}:c4a38ea8:0--><table><!--herb-slot:0:collection--><!--herb-item:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-child="2">1</td></tr><!--/herb-item:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
+const COLLECTION = `<!--herb-region:${FILE}:64652ac4:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute 2:child">1</li><!--/herb-item:0--><!--herb-item:0:2--><li id="2" data-herb-slot="1:attribute 2:child">2</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
+const TABLE = `<!--herb-region:${FILE}:c4a38ea8:0--><table><!--herb-slot:0:collection--><!--herb-item:0:1--><tr id="1" data-herb-slot="1:attribute"><td data-herb-slot="2:child">1</td></tr><!--/herb-item:0--><!--/herb-slot:0--></table><!--/herb-region:${FILE}-->`
 const DISPLACED =
-  `<!--herb-region:${FILE}:25c0946e:0--><h1 data-herb-child="5">Title</h1><!--/herb-region:${FILE}-->` +
-  `<!--herb-region:${FILE}:25c0946e:0--><p data-herb-child="0">body</p><!--/herb-region:${FILE}-->`
-const ATTR = `<!--herb-region:${FILE}:55167514:0--><div class="card" id="1" data-herb-slot="0:attribute,1:element">x</div><!--/herb-region:${FILE}-->`
+  `<!--herb-region:${FILE}:25c0946e:0--><h1 data-herb-slot="5:child">Title</h1><!--/herb-region:${FILE}-->` +
+  `<!--herb-region:${FILE}:25c0946e:0--><p data-herb-slot="0:child">body</p><!--/herb-region:${FILE}-->`
+const ATTR = `<!--herb-region:${FILE}:55167514:0--><div class="card" id="1" data-herb-slot="0:attribute 1:element">x</div><!--/herb-region:${FILE}-->`
 
 function occurrence(html: string, nth: number): string {
   return html.replace(/(<!--herb-region:[^>]*?:[0-9a-f]{8}):\d+-->/, `$1:${nth}-->`)
@@ -339,8 +339,8 @@ describe("SlotIndex", () => {
   })
 })
 
-const NESTED = `<!--herb-region:${"app/views/posts/index.html.erb"}:8318a878:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-child="1">Marco</span><!--/herb-slot:0--></div><!--/herb-region:app/views/posts/index.html.erb-->`
-const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-child="3">1</b><!--/herb-slot:2--></li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
+const NESTED = `<!--herb-region:${"app/views/posts/index.html.erb"}:8318a878:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-slot="1:child">Marco</span><!--/herb-slot:0--></div><!--/herb-region:app/views/posts/index.html.erb-->`
+const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-slot="3:child">1</b><!--/herb-slot:2--></li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
 
 function mounted(html: string): SlotIndex {
   const host = document.createElement("div")

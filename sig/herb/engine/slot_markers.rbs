@@ -12,9 +12,6 @@ module Herb
       def element_anchors: (Array[[ Integer, Symbol, String? ]]) -> String
 
       # : (Integer) -> String
-      def child_anchor: (Integer) -> String
-
-      # : (Integer) -> String
       def slot_close: (Integer) -> String
 
       # : (Integer, Integer) -> String

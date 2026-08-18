@@ -15,12 +15,7 @@ module Herb
 
       #: (Array[[Integer, Symbol, String?]]) -> String
       def element_anchors(anchors)
-        anchors.map { |index, type, name| name ? "#{index}:#{type}:#{name}" : "#{index}:#{type}" }.join(",")
-      end
-
-      #: (Integer) -> String
-      def child_anchor(index)
-        index.to_s
+        anchors.map { |index, type, name| name ? "#{index}:#{type}:#{name}" : "#{index}:#{type}" }.join(" ")
       end
 
       #: (Integer) -> String

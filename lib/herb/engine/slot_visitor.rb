@@ -633,7 +633,7 @@ module Herb
       end
 
       def insert_markers(node)
-        anchored = child_anchor_index(node)
+        anchored = content_anchor_index(node)
 
         each_child_array(node) do |array|
           index = 0
@@ -657,12 +657,11 @@ module Herb
           end
         end
 
-        anchor_attributes(node)
-        anchor_child(node, anchored)
+        anchor_attributes(node, anchored)
       end
 
       #: (untyped) -> Integer?
-      def child_anchor_index(node)
+      def content_anchor_index(node)
         return nil unless node.is_a?(Herb::AST::HTMLElementNode)
 
         body = node.body
@@ -673,16 +672,6 @@ module Herb
         return nil unless @slots[slot_index].type == :child
 
         slot_index
-      end
-
-      #: (untyped, Integer?) -> void
-      def anchor_child(node, slot_index)
-        return unless slot_index
-
-        open_tag = node.open_tag
-        return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode)
-
-        open_tag.children << attribute_node("data-herb-child", @markers.child_anchor(slot_index))
       end
 
       #: (untyped, Integer?) -> void
@@ -805,20 +794,21 @@ module Herb
         body.insert(0, erb_code_node(%(#{COVERED}["#{key}"] = true)))
       end
 
-      def anchor_attributes(node)
+      def anchor_attributes(node, content_index = nil)
         return unless node.is_a?(Herb::AST::HTMLElementNode)
 
         open_tag = node.open_tag
         return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode)
 
-        indices = @element_anchored[open_tag]
-        return if indices.nil? || indices.empty?
-
-        anchors = indices.map { |index|
+        anchors = (@element_anchored[open_tag] || []).map { |index|
           slot = @slots[index]
 
           [index, slot.type, anchor_name_for(slot)]
         }
+
+        anchors << [content_index, :child, nil] if content_index
+
+        return if anchors.empty?
 
         open_tag.children << attribute_node("data-herb-slot", @markers.element_anchors(anchors))
       end

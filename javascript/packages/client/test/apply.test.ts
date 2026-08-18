@@ -7,22 +7,22 @@ const FILE = "app/views/posts/index.html.erb"
 const CARD = "app/views/posts/_card.html.erb"
 
 const COND_FALSE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const COND_TRUE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-child="1">yes</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><i data-herb-child="2">no</i></template>`
+const COND_TRUE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot="1:child">yes</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><i data-herb-slot="2:child">no</i></template>`
 
-const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:1--><li data-herb-child="1">one</li><!--/herb-item:0--><!--herb-item:0:2--><li data-herb-child="1">two</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:1--><li data-herb-slot="1:child">one</li><!--/herb-item:0--><!--herb-item:0:2--><li data-herb-slot="1:child">two</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
-const NAMED_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:ada--><li data-herb-child="1">Ada</li><!--/herb-item:0--><!--herb-item:0:grace--><li data-herb-child="1">Grace</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const NAMED_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:ada--><li data-herb-slot="1:child">Ada</li><!--/herb-item:0--><!--herb-item:0:grace--><li data-herb-slot="1:child">Grace</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
 const EMPTY_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
 const PARKED_ITEM =
   `<template data-herb-region="${FILE}:bbbbbbbb"><!--herb-branch:0:item-->` +
-  `<!--herb-item:0:--><li data-herb-child="1"></li><!--/herb-item:0--></template>`
+  `<!--herb-item:0:--><li data-herb-slot="1:child"></li><!--/herb-item:0--></template>`
 
 const NESTED =
   `<!--herb-region:${FILE}:cccccccc:0--><div><!--herb-slot:0-->` +
-  `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-child="0">inner</p><!--/herb-region:${CARD}-->` +
+  `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-slot="0:child">inner</p><!--/herb-region:${CARD}-->` +
   `<!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 
 function mounted(html: string): SlotIndex {

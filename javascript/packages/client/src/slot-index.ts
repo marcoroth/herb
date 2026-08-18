@@ -28,6 +28,8 @@ const MARKER = /^\/?herb-(region|slot|item|branch):/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
 const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
+const ANCHOR_ATTRIBUTE = "data-herb-slot"
+const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
 
@@ -999,9 +1001,10 @@ export class SlotIndex {
     const enclosing =
       stacked && stacked.region === region ? stacked.slot : walked ? null : this.#enclosingSlot(region, element)
     const item = opened ?? (walked ? null : this.#enclosingItem(region, element))
-    const anchors = element.getAttribute("data-herb-slot")
-    for (const entry of anchors?.split(",") ?? []) {
+
+    for (const entry of anchorEntries(element)) {
       const [index, type, ...name] = entry.split(":")
+      const kind = (type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE ? ("content" as const) : ("element" as const)
 
       this.#attach(
         region,
@@ -1009,28 +1012,7 @@ export class SlotIndex {
           index: Number(index),
           type: (type as SlotType) ?? DEFAULT_SLOT_TYPE,
           attribute: name.length > 0 ? name.join(":") : null,
-          anchor: { kind: "element", element },
-          items: new Map(),
-          branch: null,
-          parent: null,
-          children: [],
-        },
-        result,
-        enclosing,
-        item,
-      )
-    }
-
-    const child = element.getAttribute("data-herb-child")
-
-    if (child !== null) {
-      this.#attach(
-        region,
-        {
-          index: Number(child),
-          type: DEFAULT_SLOT_TYPE,
-          attribute: null,
-          anchor: { kind: "content", element },
+          anchor: { kind, element },
           items: new Map(),
           branch: null,
           parent: null,
@@ -1241,18 +1223,16 @@ function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
     range.insertNode(range.createContextualFragment(value))
   }
 
-  for (const element of fragment.querySelectorAll("[data-herb-slot], [data-herb-child]")) {
-    for (const entry of element.getAttribute("data-herb-slot")?.split(",") ?? []) {
-      const [index, , ...name] = entry.split(":")
+  for (const element of fragment.querySelectorAll(ANCHOR_SELECTOR)) {
+    for (const entry of anchorEntries(element)) {
+      const [index, type, ...name] = entry.split(":")
       const value = dynamics[Number(index)]
 
-      if (value !== undefined && name.length > 0) element.setAttribute(name.join(":"), value)
+      if (value === undefined) continue
+
+      if (name.length > 0) element.setAttribute(name.join(":"), value)
+      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.innerHTML = value
     }
-
-    const child = element.getAttribute("data-herb-child")
-    const value = child === null ? undefined : dynamics[Number(child)]
-
-    if (value !== undefined) element.innerHTML = value
   }
 }
 
@@ -1270,16 +1250,13 @@ function blankSlots(fragment: DocumentFragment): void {
     range.deleteContents()
   }
 
-  for (const element of fragment.querySelectorAll("[data-herb-slot], [data-herb-child]")) {
-    for (const entry of element.getAttribute("data-herb-slot")?.split(",") ?? []) {
-      const [, , ...name] = entry.split(":")
+  for (const element of fragment.querySelectorAll(ANCHOR_SELECTOR)) {
+    for (const entry of anchorEntries(element)) {
+      const [, type, ...name] = entry.split(":")
 
-      if (name.length > 0) {
-        element.setAttribute(name.join(":"), "")
-      }
+      if (name.length > 0) element.setAttribute(name.join(":"), "")
+      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.replaceChildren()
     }
-
-    if (element.hasAttribute("data-herb-child")) element.replaceChildren()
   }
 }
 
@@ -1317,8 +1294,12 @@ function closingFor(open: Comment, index: number): Comment | null {
   return null
 }
 
+function anchorEntries(element: Element): string[] {
+  return element.getAttribute(ANCHOR_ATTRIBUTE)?.split(/\s+/).filter(Boolean) ?? []
+}
+
 function anchored(element: Element): boolean {
-  return element.hasAttribute("data-herb-slot") || element.hasAttribute("data-herb-child")
+  return element.hasAttribute(ANCHOR_ATTRIBUTE)
 }
 
 function contains(region: Region, node: Node): boolean {
