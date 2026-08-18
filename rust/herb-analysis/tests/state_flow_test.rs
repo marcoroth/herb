@@ -186,3 +186,43 @@ fn names_erb_output_in_text_the_same_way_ruby_does() {
 
   assert!(nodes.iter().any(|node| node.kind == "text_content"));
 }
+
+#[test]
+fn numbers_a_node_the_way_the_slot_visitor_does() {
+  let project = Project::new("path_nested");
+  let entry = project.write("app/views/posts/show.html.erb", "<div><h1><%= @title %></h1></div>");
+
+  let paths: Vec<Vec<usize>> = project.flow().affected_nodes(&entry, "@title").into_iter().map(|node| node.node_path).collect();
+
+  assert_eq!(paths, vec![vec![0, 0, 0]]);
+}
+
+#[test]
+fn numbers_a_conditional_by_the_element_body_it_sits_in() {
+  let project = Project::new("path_conditional");
+  let entry = project.write("app/views/posts/show.html.erb", "<div><% if @admin %><%= @name %><% end %></div>");
+
+  let paths: Vec<Vec<usize>> = project.flow().affected_nodes(&entry, "@admin").into_iter().map(|node| node.node_path).collect();
+
+  assert_eq!(paths, vec![vec![0, 0]]);
+}
+
+#[test]
+fn gives_an_attribute_the_path_of_the_element_that_carries_it() {
+  let project = Project::new("path_attribute");
+  let entry = project.write("app/views/posts/show.html.erb", "<div class=\"<%= @klass %>\"></div>");
+
+  let paths: Vec<Vec<usize>> = project.flow().affected_nodes(&entry, "@klass").into_iter().map(|node| node.node_path).collect();
+
+  assert_eq!(paths, vec![vec![0]]);
+}
+
+#[test]
+fn gives_a_nested_attribute_the_path_of_its_own_element() {
+  let project = Project::new("path_nested_attribute");
+  let entry = project.write("app/views/posts/show.html.erb", "<div><a href=\"<%= @url %>\">x</a></div>");
+
+  let paths: Vec<Vec<usize>> = project.flow().affected_nodes(&entry, "@url").into_iter().map(|node| node.node_path).collect();
+
+  assert_eq!(paths, vec![vec![0, 0]]);
+}

@@ -325,19 +325,10 @@ fn collect_affected(node: &AnyNode, state: &str, path: &mut Vec<usize>, affected
     collect_attributes(element, state, path, affected);
   }
 
-  let offset = child_index_offset(node);
-
   for (index, child) in any_children(node).into_iter().enumerate() {
-    path.push(index + offset);
+    path.push(index);
     collect_affected(child, state, path, affected);
     path.pop();
-  }
-}
-
-fn child_index_offset(node: &AnyNode) -> usize {
-  match node {
-    AnyNode::HTMLElementNode(element) => usize::from(element.open_tag.is_some()),
-    _ => 0,
   }
 }
 

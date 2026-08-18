@@ -4,6 +4,10 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/analysis/template_dependencies"
+
+require "tmpdir"
+require "fileutils"
 
 module Engine
   module Slots
@@ -24,6 +28,23 @@ module Engine
         assert_snapshot_matches(format_slots(visitor), template, { filename: file_path })
 
         visitor
+      end
+
+      def node_paths_for(template, state)
+        Dir.mktmpdir do |root|
+          file_path = File.join(root, "app", "views", "test.html.erb")
+
+          FileUtils.mkdir_p(File.dirname(file_path))
+          File.write(file_path, template)
+
+          visitor = slots_for(template, file_path: file_path)
+          dependencies = Herb::Analysis::TemplateDependencies.new(root)
+
+          [
+            dependencies.affected_nodes(file_path, state).map { |node| node[:node_path] },
+            visitor.slots.map(&:node_path)
+          ]
+        end
       end
 
       def types_for(template)
@@ -77,8 +98,22 @@ module Engine
         assert_slots_snapshot("<p><%= @a %></p><p><%= @b %></p><p><%= @c %></p>")
       end
 
-      test "records the node_path that TemplateDependencies reports" do
-        assert_slots_snapshot("<div><h1><%= @title %></h1></div>")
+      test "records a node_path for every node TemplateDependencies reports" do
+        {
+          "<div><h1><%= @title %></h1></div>" => "@title",
+          "<div><% if @admin %><%= @name %><% end %></div>" => "@admin",
+          "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>" => "@items",
+          %(<div class="<%= @klass %>"></div>) => "@klass",
+          %(<div><a href="<%= @url %>">x</a></div>) => "@url",
+        }.each do |template, state|
+          reported, recorded = node_paths_for(template, state)
+
+          refute_empty reported, template
+
+          reported.each do |node_path|
+            assert_includes recorded, node_path, template
+          end
+        end
       end
 
       test "records source location" do
