@@ -73,7 +73,7 @@ module Engine
 
         assert_equal "loud", changed[0]
         assert_equal "Goodbye", changed[1]
-        assert_equal "ONE", changed[2][:rows]["1"][4]
+        assert_equal "ONE", changed[2][:items]["1"][4]
         assert_equal "shown", changed[5]
       end
 

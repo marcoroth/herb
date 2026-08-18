@@ -429,7 +429,7 @@ describe("output the compiler actually emits", () => {
   test("an attribute slot and a child slot inside a parked branch", () => {
     const index = new SlotIndex()
 
-    document.body.innerHTML = `<!--herb-region:${VIEW}:cf7db90d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:cf7db90d"><!--herb-branch:0:0--><span class="" data-herb-slot="1:attribute:class" data-herb-child="2"></span></template>`
+    document.body.innerHTML = `<!--herb-region:${VIEW}:cf7db90d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:cf7db90d"><!--herb-branch:0:0--><span class="" data-herb-slot="1:attribute:class 2:child"></span></template>`
 
     index.scan(document.body)
     index.rangeFor(index.slot(VIEW, 0)!).insertNode(index.materialize(VIEW, "0:0")!)
@@ -481,7 +481,7 @@ describe("keeping a branch that rendered", () => {
   test("takes the values out of the copy, so nothing stale can come back", () => {
     const index = new SlotIndex()
 
-    document.body.innerHTML = `<!--herb-region:${VIEW}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><span class="on" data-herb-slot="1:attribute:class" data-herb-child="2">Marco</span><!--/herb-slot:0--></div><!--/herb-region:${VIEW}-->`
+    document.body.innerHTML = `<!--herb-region:${VIEW}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><span class="on" data-herb-slot="1:attribute:class 2:child">Marco</span><!--/herb-slot:0--></div><!--/herb-region:${VIEW}-->`
     index.scan(document.body)
     index.capture(index.slot(VIEW, 0)!)
 

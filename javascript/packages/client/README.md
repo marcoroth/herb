@@ -56,16 +56,16 @@ A rendering is not always one stretch of the page. `content_for`, `provide` and 
 
 The occurrence is the server's own count, carried in the region marker. That count and the order regions sit in are usually the same and sometimes not, because `content_for` renders its content at one point in the template and writes it out at another. A payload naming the second rendering of a template means the second one the server rendered, so reading the number is right where counting regions down the page would be off by exactly the templates that moved.
 
-Every row of a collection repeats the same slot indices, so a row's key is what says which one is meant. The rows of a collection:
+Every item of a collection repeats the same slot indices, so an item's key is what says which one is meant. The items of a collection:
 
 ```typescript
-slots.rowsFor(file, 0) // Map<key, Row>
+slots.itemsFor(file, 0) // Map<key, Item>
 ```
 
-And one slot inside one of those rows:
+And one slot inside one of those items:
 
 ```typescript
-slots.slotInRow(file, 0, "42", 2)
+slots.slotInItem(file, 0, "42", 2)
 ```
 
 ## Updating
@@ -76,10 +76,10 @@ Replace what a slot covers:
 slots.update(slot, "<b>new</b>")
 ```
 
-Replace a single row of a collection, leaving its siblings alone:
+Replace a single item of a collection, leaving its siblings alone:
 
 ```typescript
-slots.updateRow(collection, "42", html)
+slots.updateItem(collection, "42", html)
 ```
 
 Write an attribute, for slots anchored to an element with no comments around the value. The slot knows which attribute it stands for, so saying it is only for the case where the marker did not:
@@ -94,7 +94,7 @@ Markup is parsed against the range it is going into, so a replacement `<tr>` lan
 
 ```typescript
 slots.rangeFor(slot)
-slots.rangeForRow(row)
+slots.rangeForItem(item)
 ```
 
 ## Applying a whole payload
@@ -118,7 +118,7 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 - `stale-version` and `no-region` mean nothing was applied at all. A version that does not match says the payload's indices were compiled against a different template, so the values would land in the wrong places, and there is no partial credit to take.
 - `branch` means the conditional took a branch whose markup the page never had and nothing was parked for it. Ask the server for that subtree.
-- `rows` means the collection had no row to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and a row the page has never had is built from one it has, because every row of a collection is the same shape by construction. A collection that rendered nothing has no row to copy, which is why a template in client mode parks one for exactly that case. Emptying a collection on the page reaches the same state, so the last row out leaves its shape behind, and this is only reached when neither exists.
+- `items` means the collection had no item to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and an item the page has never had is built from one it has, because every item of a collection is the same shape by construction. A collection that rendered nothing has no item to copy, which is why a template in client mode parks one for exactly that case. Emptying a collection on the page reaches the same state, so the last item out leaves its shape behind, and this is only reached when neither exists.
 - `partial-attribute` means the slot is a word interpolated into an attribute, as in `class="card <%= state %>"`. A marker says which attribute a slot is and not which stretch of it, so writing the value would drop what the template wrote around it, and refusing is the only honest answer.
 - `no-slot` means the payload named an index the page has no marker for, which is usually a region that was only partly scanned.
 
@@ -138,7 +138,7 @@ And the chain out to the top of its region:
 slots.ancestorsOf(slot)
 ```
 
-For collections, `reconcile` says what has to happen to the rows on the page for them to match the keys the server sent. A reorder reports as moves, not rebuilds, which is the reason to key a collection at all. `apply` carries the plan out for you; this is for deciding, not doing:
+For collections, `reconcile` says what has to happen to the items on the page for them to match the keys the server sent. A reorder reports as moves, not rebuilds, which is the reason to key a collection at all. `apply` carries the plan out for you; this is for deciding, not doing:
 
 ```typescript
 slots.reconcile(collection, ["3", "1", "2"])
@@ -263,13 +263,17 @@ Most slots are a pair of comments around what they render:
 A slot that is the whole content of one element is marked on the element instead, which costs no extra nodes:
 
 ```html
-<td class="name" data-herb-child="0">Marco</td>
+<td class="name" data-herb-slot="0:child">Marco</td>
 ```
 
-Slots that cannot take comments at all are named on the element with their type. That covers attributes, whole-element expressions, and the content of `<title>` and `<textarea>`:
+Slots that cannot take comments at all are named on the element with their type. That covers attributes, whole-element expressions, and the content of `<title>` and `<textarea>`. One element can carry several, written as a space-separated list, so `~=` finds a slot without parsing the attribute:
 
 ```html
-<li id="1" data-herb-slot="1:attribute" data-herb-child="2">Marco</li>
+<li id="1" data-herb-slot="1:attribute:id 2:child">Marco</li>
+```
+
+```javascript
+document.querySelectorAll('[data-herb-slot~="2:child"]')
 ```
 
 Comments are kept where an element cannot carry the slot: mid-text, spanning siblings, or anywhere the slot might render nothing. An untaken conditional still leaves an empty pair, so the position stays addressable:

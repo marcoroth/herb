@@ -146,7 +146,7 @@ module Engine
         assert_slots_snapshot(%(<% @u.each do |u| %><li id="a" herb-key="<%= u.id %>">x</li><% end %>))
       end
 
-      test "falls back to index and names the row to key when a collection row carries no key" do
+      test "falls back to index and names the item to key when a collection item carries no key" do
         assert_slots_snapshot("<% @u.each do |u| %><li>x</li><% end %>")
       end
 
@@ -239,7 +239,7 @@ module Engine
       end
 
       test "reads an interpolated herb-key" do
-        assert_slots_snapshot(%(<% @u.each do |u| %><li herb-key="row-<%= u.id %>">x</li><% end %>))
+        assert_slots_snapshot(%(<% @u.each do |u| %><li herb-key="item-<%= u.id %>">x</li><% end %>))
       end
 
       test "keeps a literal key part from being read as Ruby" do

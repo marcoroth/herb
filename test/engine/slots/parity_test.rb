@@ -25,17 +25,17 @@ module Engine
 
       TEMPLATES = {
         "expressions in order" => [%(<%= @a %><p><%= @b %></p><%= @c %>), { a: "a", b: "b", c: "c" }],
-        "an attribute and a child" => [%(<li class="<%= @c %>"><%= @n %></li>), { c: "row", n: "Marco" }],
+        "an attribute and a child" => [%(<li class="<%= @c %>"><%= @n %></li>), { c: "item", n: "Marco" }],
         "two attributes on one element" => [%(<div class="<%= @c %>" id="<%= @i %>"></div>), { c: "c", i: "i" }],
         "a block, and what follows it" => [%(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>), { after: "A" }],
         "a conditional that branches" => [%(<% if @on %><b><%= @x %></b><% else %><%= @y %><% end %><%= @z %>), { on: true, x: "x", y: "y", z: "z" }],
         "a conditional that collapses" => [%(<% if @on %><h1><%= @x %></h1><% else %><h1><%= @y %></h1><% end %>), { on: false, x: "x", y: "y" }],
         "a conditional matching nothing" => [%(<% if @on %><%= @x %><% end %>), { on: false, x: "x" }],
-        "a keyed collection" => [%(<% @rows.each do |r| %><li id="<%= r %>"><%= r %></li><% end %>), { rows: [1, 2] }],
-        "an empty collection" => [%(<% @rows.each do |r| %><%= r %><% end %>), { rows: [] }],
-        "a collection inside a branch" => [%(<% if @on %><% @rows.each do |r| %><%= r %><% end %><% end %>), { on: true, rows: ["a"] }],
+        "a keyed collection" => [%(<% @items.each do |r| %><li id="<%= r %>"><%= r %></li><% end %>), { items: [1, 2] }],
+        "an empty collection" => [%(<% @items.each do |r| %><%= r %><% end %>), { items: [] }],
+        "a collection inside a branch" => [%(<% if @on %><% @items.each do |r| %><%= r %><% end %><% end %>), { on: true, items: ["a"] }],
         "a helper block building an element" => [%(<%= tag.li(id: 1) do %><%= @n %><% end %><%= @after %>), { n: "n", after: "A" }],
-        "an iteration whose value is output" => [%(<%= @rows.each do |r| %><%= r %><% end %>), { rows: [1, 2] }],
+        "an iteration whose value is output" => [%(<%= @items.each do |r| %><%= r %><% end %>), { items: [1, 2] }],
         "a conditional inside a block" => [%(<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>), { on: true, x: "x" }],
         "nothing dynamic at all" => [%(<p>static</p>), {}],
       }.freeze
@@ -55,9 +55,9 @@ module Engine
             if value.key?(:branch)
               found[index] = :conditional
               shapes(value[:slots] || {}, found)
-            elsif value.key?(:rows)
+            elsif value.key?(:items)
               found[index] = :collection
-              value[:rows].each_value { |row| shapes(row, found) }
+              value[:items].each_value { |item| shapes(item, found) }
             else
               found[index] = :value
             end
@@ -115,14 +115,14 @@ module Engine
       end
 
       test "an iteration is a collection whether or not its value is output" do
-        rows = { rows: { "1" => { 1 => "1" }, "2" => { 1 => "2" } } }
+        items = { items: { "1" => { 1 => "1" }, "2" => { 1 => "2" } } }
 
-        %(<% @rows.each do |r| %><%= r %><% end %>).then do |source|
-          assert_equal({ 0 => rows }, evaluate(compile(source), rows: [1, 2]))
+        %(<% @items.each do |r| %><%= r %><% end %>).then do |source|
+          assert_equal({ 0 => items }, evaluate(compile(source), items: [1, 2]))
         end
 
-        %(<%= @rows.each do |r| %><%= r %><% end %>).then do |source|
-          assert_equal({ 0 => rows }, evaluate(compile(source), rows: [1, 2]))
+        %(<%= @items.each do |r| %><%= r %><% end %>).then do |source|
+          assert_equal({ 0 => items }, evaluate(compile(source), items: [1, 2]))
         end
       end
 

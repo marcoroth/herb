@@ -57,8 +57,8 @@ module Engine
       test "the slots inside it keep the numbering of the template that wrote them" do
         markup = render("<% content_for :title do %><h1><%= @title %></h1><% end %><p><%= @body %></p>", title: "T", body: "B")
 
-        assert_includes markup, %(<h1 data-herb-child="1">)
-        assert_includes markup, %(<p data-herb-child="2">)
+        assert_includes markup, %(<h1 data-herb-slot="1:child">)
+        assert_includes markup, %(<p data-herb-slot="2:child">)
       end
 
       test "capture is wrapped too, being the same displacement by another name" do

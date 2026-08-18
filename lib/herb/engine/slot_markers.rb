@@ -15,12 +15,7 @@ module Herb
 
       #: (Array[[Integer, Symbol, String?]]) -> String
       def element_anchors(anchors)
-        anchors.map { |index, type, name| name ? "#{index}:#{type}:#{name}" : "#{index}:#{type}" }.join(",")
-      end
-
-      #: (Integer) -> String
-      def child_anchor(index)
-        index.to_s
+        anchors.map { |index, type, name| name ? "#{index}:#{type}:#{name}" : "#{index}:#{type}" }.join(" ")
       end
 
       #: (Integer) -> String
@@ -34,18 +29,18 @@ module Herb
       end
 
       #: (Integer) -> String
-      def row_open_prefix(slot_index)
-        "<!--herb-row:#{slot_index}:"
+      def item_open_prefix(slot_index)
+        "<!--herb-item:#{slot_index}:"
       end
 
       #: () -> String
-      def row_open_suffix
+      def item_open_suffix
         "-->"
       end
 
       #: (Integer) -> String
-      def row_close(slot_index)
-        "<!--/herb-row:#{slot_index}-->"
+      def item_close(slot_index)
+        "<!--/herb-item:#{slot_index}-->"
       end
 
       #: (String, String) -> String

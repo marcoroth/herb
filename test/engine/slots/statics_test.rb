@@ -57,7 +57,7 @@ module Engine
       test "keeps the markers of the slots inside a branch, so the client can fill them" do
         assert_evaluated_snapshot(
           %(<div><% if @a %><span class="<%= @c %>"><%= @name %></span><% end %></div>),
-          { "@a" => false, "@c" => "row", "@name" => "Marco" },
+          { "@a" => false, "@c" => "item", "@name" => "Marco" },
           options
         )
       end
@@ -101,7 +101,7 @@ module Engine
         refute_includes output, "<template"
       end
 
-      test "parks nothing when a collection covered every branch between its rows" do
+      test "parks nothing when a collection covered every branch between its items" do
         template = "<ul><% @items.each do |i| %><li><% if i.odd? %>odd<% else %>even<% end %></li><% end %></ul>"
 
         refute_includes render(template, { "@items" => [1, 2] }), "<template"

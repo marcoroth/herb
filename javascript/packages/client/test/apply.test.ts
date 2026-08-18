@@ -7,22 +7,22 @@ const FILE = "app/views/posts/index.html.erb"
 const CARD = "app/views/posts/_card.html.erb"
 
 const COND_FALSE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const COND_TRUE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-child="1">yes</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
-const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><i data-herb-child="2">no</i></template>`
+const COND_TRUE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot="1:child">yes</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><i data-herb-slot="2:child">no</i></template>`
 
-const ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:1--><li data-herb-child="1">one</li><!--/herb-row:0--><!--herb-row:0:2--><li data-herb-child="1">two</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:1--><li data-herb-slot="1:child">one</li><!--/herb-item:0--><!--herb-item:0:2--><li data-herb-slot="1:child">two</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
-const NAMED_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:ada--><li data-herb-child="1">Ada</li><!--/herb-row:0--><!--herb-row:0:grace--><li data-herb-child="1">Grace</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const NAMED_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:ada--><li data-herb-slot="1:child">Ada</li><!--/herb-item:0--><!--herb-item:0:grace--><li data-herb-slot="1:child">Grace</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
-const EMPTY_ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const EMPTY_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 
-const PARKED_ROW =
-  `<template data-herb-region="${FILE}:bbbbbbbb"><!--herb-branch:0:row-->` +
-  `<!--herb-row:0:--><li data-herb-child="1"></li><!--/herb-row:0--></template>`
+const PARKED_ITEM =
+  `<template data-herb-region="${FILE}:bbbbbbbb"><!--herb-branch:0:item-->` +
+  `<!--herb-item:0:--><li data-herb-slot="1:child"></li><!--/herb-item:0--></template>`
 
 const NESTED =
   `<!--herb-region:${FILE}:cccccccc:0--><div><!--herb-slot:0-->` +
-  `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-child="0">inner</p><!--/herb-region:${CARD}-->` +
+  `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-slot="0:child">inner</p><!--/herb-region:${CARD}-->` +
   `<!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 
 function mounted(html: string): SlotIndex {
@@ -102,11 +102,11 @@ describe("applying values to a collection", () => {
     document.body.innerHTML = ""
   })
 
-  test("writes into the rows the page already has", () => {
-    const index = mounted(ROWS)
+  test("writes into the items the page already has", () => {
+    const index = mounted(ITEMS)
 
     const report = index.apply(
-      payload(FILE, { 0: { rows: { 1: { 1: "ONE" }, 2: { 1: "TWO" } } } }, "bbbbbbbb"),
+      payload(FILE, { 0: { items: { 1: { 1: "ONE" }, 2: { 1: "TWO" } } } }, "bbbbbbbb"),
     )
 
     expect(report.applied).toBe(2)
@@ -117,84 +117,84 @@ describe("applying values to a collection", () => {
 
   const keys = () => [...document.querySelectorAll("li")].map((li) => li.textContent)
 
-  test("drops a row the payload no longer has", () => {
-    const index = mounted(ROWS)
+  test("drops an item the payload no longer has", () => {
+    const index = mounted(ITEMS)
 
-    const report = index.apply(payload(FILE, { 0: { rows: { 2: { 1: "two" } } } }, "bbbbbbbb"))
+    const report = index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" } } } }, "bbbbbbbb"))
 
     expect(report.deferred).toEqual([])
     expect(keys()).toEqual(["two"])
   })
 
-  test("builds a row it has never seen from one it has", () => {
-    const index = mounted(ROWS)
+  test("builds an item it has never seen from one it has", () => {
+    const index = mounted(ITEMS)
 
     const report = index.apply(
-      payload(FILE, { 0: { rows: { 1: { 1: "one" }, 2: { 1: "two" }, 3: { 1: "three" } } } }, "bbbbbbbb"),
+      payload(FILE, { 0: { items: { 1: { 1: "one" }, 2: { 1: "two" }, 3: { 1: "three" } } } }, "bbbbbbbb"),
     )
 
     expect(report.deferred).toEqual([])
     expect(keys()).toEqual(["one", "two", "three"])
-    expect(index.slotInRow(FILE, 0, "3", 1)).not.toBeNull()
+    expect(index.slotInItem(FILE, 0, "3", 1)).not.toBeNull()
   })
 
-  test("puts the rows in the order the payload asked for", () => {
-    const index = mounted(NAMED_ROWS)
+  test("puts the items in the order the payload asked for", () => {
+    const index = mounted(NAMED_ITEMS)
 
-    index.apply(payload(FILE, { 0: { rows: { grace: { 1: "Grace" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"))
+    index.apply(payload(FILE, { 0: { items: { grace: { 1: "Grace" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"))
 
     expect(keys()).toEqual(["Grace", "Ada"])
   })
 
   test("adds, removes and reorders in one go", () => {
-    const index = mounted(NAMED_ROWS)
+    const index = mounted(NAMED_ITEMS)
 
     const report = index.apply(
-      payload(FILE, { 0: { rows: { yuki: { 1: "Yukihiro" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"),
+      payload(FILE, { 0: { items: { yuki: { 1: "Yukihiro" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"),
     )
 
     expect(report.deferred).toEqual([])
     expect(keys()).toEqual(["Yukihiro", "Ada"])
   })
 
-  test("cannot be told to reorder rows keyed by a number", () => {
-    const index = mounted(ROWS)
+  test("cannot be told to reorder items keyed by a number", () => {
+    const index = mounted(ITEMS)
 
-    index.apply(payload(FILE, { 0: { rows: { 2: { 1: "two" }, 1: { 1: "one" } } } }, "bbbbbbbb"))
+    index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" }, 1: { 1: "one" } } } }, "bbbbbbbb"))
 
     expect(keys()).toEqual(["one", "two"])
   })
 
-  test("builds into an empty collection from the row the server parked", () => {
-    const index = mounted(EMPTY_ROWS + PARKED_ROW)
+  test("builds into an empty collection from the item the server parked", () => {
+    const index = mounted(EMPTY_ITEMS + PARKED_ITEM)
 
-    const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+    const report = index.apply(payload(FILE, { 0: { items: { 1: { 1: "one" } } } }, "bbbbbbbb"))
 
     expect(report.deferred).toEqual([])
     expect(keys()).toEqual(["one"])
-    expect(index.slotInRow(FILE, 0, "1", 1)).not.toBeNull()
+    expect(index.slotInItem(FILE, 0, "1", 1)).not.toBeNull()
   })
 
-  test("builds again after every row has been deleted", () => {
-    const index = mounted(ROWS)
-    const empty = payload(FILE, { 0: { rows: {} } }, "bbbbbbbb")
+  test("builds again after every item has been deleted", () => {
+    const index = mounted(ITEMS)
+    const empty = payload(FILE, { 0: { items: {} } }, "bbbbbbbb")
 
     expect(index.apply(empty).deferred).toEqual([])
     expect(keys()).toEqual([])
 
-    const report = index.apply(payload(FILE, { 0: { rows: { 9: { 1: "again" } } } }, "bbbbbbbb"))
+    const report = index.apply(payload(FILE, { 0: { items: { 9: { 1: "again" } } } }, "bbbbbbbb"))
 
     expect(report.deferred).toEqual([])
     expect(keys()).toEqual(["again"])
   })
 
-  test("asks for a row when the collection is empty and nothing was parked", () => {
-    const index = mounted(EMPTY_ROWS)
+  test("asks for an item when the collection is empty and nothing was parked", () => {
+    const index = mounted(EMPTY_ITEMS)
 
-    const report = index.apply(payload(FILE, { 0: { rows: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+    const report = index.apply(payload(FILE, { 0: { items: { 1: { 1: "one" } } } }, "bbbbbbbb"))
 
     expect(report.deferred).toEqual([
-      { file: FILE, occurrence: 0, index: 0, reason: "rows", keys: ["1"] },
+      { file: FILE, occurrence: 0, index: 0, reason: "items", keys: ["1"] },
     ])
   })
 })

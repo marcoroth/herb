@@ -1,7 +1,7 @@
 {
   "file": "app/views/greet.html.erb",
   "template": "<div class=\"<%= @tone %>\"><h1><%= @title %></h1><ul><% @items.each do |item| %><li id=\"<%= item[:id] %>\"><%= item[:label] %></li><% end %></ul><% if @admin %><b><%= @secret %></b><% else %><b><%= @public %></b><% end %></div>",
-  "rendered": "<!--herb-region:app/views/greet.html.erb:bd48f9a6:0--><div class=\"calm\" data-herb-slot=\"0:attribute:class\"><h1 data-herb-child=\"1\">Hello</h1><ul><!--herb-slot:2:collection--><!--herb-row:2:1--><li id=\"1\" data-herb-slot=\"3:attribute:id\" data-herb-child=\"4\">one</li><!--/herb-row:2--><!--herb-row:2:2--><li id=\"2\" data-herb-slot=\"3:attribute:id\" data-herb-child=\"4\">two</li><!--/herb-row:2--><!--/herb-slot:2--></ul><b data-herb-child=\"5\">kept</b></div><!--/herb-region:app/views/greet.html.erb-->",
+  "rendered": "<!--herb-region:app/views/greet.html.erb:bd48f9a6:0--><div class=\"calm\" data-herb-slot=\"0:attribute:class\"><h1 data-herb-slot=\"1:child\">Hello</h1><ul><!--herb-slot:2:collection--><!--herb-item:2:1--><li id=\"1\" data-herb-slot=\"3:attribute:id 4:child\">one</li><!--/herb-item:2--><!--herb-item:2:2--><li id=\"2\" data-herb-slot=\"3:attribute:id 4:child\">two</li><!--/herb-item:2--><!--/herb-slot:2--></ul><b data-herb-slot=\"5:child\">kept</b></div><!--/herb-region:app/views/greet.html.erb-->",
   "values": {
     "template": "app/views/greet.html.erb",
     "version": "bd48f9a6",
@@ -10,7 +10,7 @@
       "0": "loud",
       "1": "Goodbye",
       "2": {
-        "rows": {
+        "items": {
           "1": {
             "3": "1",
             "4": "ONE"
@@ -24,5 +24,5 @@
       "5": "shown"
     }
   },
-  "expected": "<!--herb-region:app/views/greet.html.erb:bd48f9a6:0--><div class=\"loud\" data-herb-slot=\"0:attribute:class\"><h1 data-herb-child=\"1\">Goodbye</h1><ul><!--herb-slot:2:collection--><!--herb-row:2:1--><li id=\"1\" data-herb-slot=\"3:attribute:id\" data-herb-child=\"4\">ONE</li><!--/herb-row:2--><!--herb-row:2:2--><li id=\"2\" data-herb-slot=\"3:attribute:id\" data-herb-child=\"4\">TWO</li><!--/herb-row:2--><!--/herb-slot:2--></ul><b data-herb-child=\"5\">shown</b></div><!--/herb-region:app/views/greet.html.erb-->"
+  "expected": "<!--herb-region:app/views/greet.html.erb:bd48f9a6:0--><div class=\"loud\" data-herb-slot=\"0:attribute:class\"><h1 data-herb-slot=\"1:child\">Goodbye</h1><ul><!--herb-slot:2:collection--><!--herb-item:2:1--><li id=\"1\" data-herb-slot=\"3:attribute:id 4:child\">ONE</li><!--/herb-item:2--><!--herb-item:2:2--><li id=\"2\" data-herb-slot=\"3:attribute:id 4:child\">TWO</li><!--/herb-item:2--><!--/herb-slot:2--></ul><b data-herb-slot=\"5:child\">shown</b></div><!--/herb-region:app/views/greet.html.erb-->"
 }

@@ -6,8 +6,9 @@ const COLORS: Record<SlotOperation, string> = {
   markup: '#3b82f6',
   attribute: '#a855f7',
   branch: '#f59e0b',
-  'row-added': '#10b981',
-  'row-removed': '#ef4444'
+  'item-added': '#10b981',
+  'item-removed': '#ef4444',
+  'item-updated': '#0ea5e9'
 }
 
 export class SlotFlash {
@@ -61,11 +62,11 @@ export class SlotFlash {
   }
 
   private measure(detail: SlotEventDetail): DOMRect | null {
-    if (detail.row) {
+    if (detail.item) {
       const range = document.createRange()
 
-      range.setStartBefore(detail.row.start)
-      range.setEndAfter(detail.row.end)
+      range.setStartBefore(detail.item.start)
+      range.setEndAfter(detail.item.end)
 
       return this.biggest(range.getBoundingClientRect())
     }

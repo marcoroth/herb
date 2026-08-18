@@ -4,7 +4,7 @@ import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
 import type { Payload, SlotEventDetail } from "../src/slot-index"
 
 const FILE = "app/views/posts/index.html.erb"
-const ROWS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-row:0:a--><li data-herb-child="1">one</li><!--/herb-row:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li data-herb-slot="1:child">one</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
 const CHILD = `<!--herb-region:${FILE}:aaaaaaaa:0--><p><!--herb-slot:0-->hi<!--/herb-slot:0--></p><!--/herb-region:${FILE}-->`
 
 function watch(): SlotEventDetail[] {
@@ -34,8 +34,8 @@ describe("saying what changed", () => {
     expect(seen[0]).toMatchObject({ file: FILE, occurrence: 0, index: 0, operation: "value" })
   })
 
-  test("announces a row it built and a row it dropped, with the key", () => {
-    document.body.innerHTML = ROWS
+  test("announces an item it built and an item it dropped, with the key", () => {
+    document.body.innerHTML = ITEMS
 
     const index = new SlotIndex()
     index.scan(document.body)
@@ -46,14 +46,27 @@ describe("saying what changed", () => {
       template: FILE,
       version: "bbbbbbbb",
       occurrence: 0,
-      slots: { 0: { rows: { b: { 1: "two" } } } },
+      slots: { 0: { items: { b: { 1: "two" } } } },
     } as Payload)
 
     expect(seen.map((detail) => [detail.operation, detail.key])).toEqual([
-      ["row-removed", "a"],
-      ["row-added", "b"],
+      ["item-removed", "a"],
+      ["item-added", "b"],
       ["value", null],
     ])
+  })
+
+  test("announces rewriting one item as an update, not as bare markup", () => {
+    document.body.innerHTML = ITEMS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.updateItem(index.slot(FILE, 0)!, "a", `<li data-herb-slot="1:child">ONE</li>`)
+
+    expect(seen.map((detail) => [detail.operation, detail.key])).toEqual([["item-updated", "a"]])
   })
 
   test("says nothing when the value written is the value already there", () => {
@@ -69,8 +82,8 @@ describe("saying what changed", () => {
     expect(seen).toEqual([])
   })
 
-  test("a row still exists when its removal is announced, so it can be pointed at", () => {
-    document.body.innerHTML = ROWS
+  test("an item still exists when its removal is announced, so it can be pointed at", () => {
+    document.body.innerHTML = ITEMS
 
     const index = new SlotIndex()
     index.scan(document.body)
@@ -80,14 +93,14 @@ describe("saying what changed", () => {
     document.addEventListener(SLOT_EVENT, (event) => {
       const detail = (event as CustomEvent<SlotEventDetail>).detail
 
-      if (detail.operation === "row-removed") seen.push({ key: detail.key, connected: detail.row!.start.isConnected })
+      if (detail.operation === "item-removed") seen.push({ key: detail.key, connected: detail.item!.start.isConnected })
     })
 
     index.apply({
       template: FILE,
       version: "bbbbbbbb",
       occurrence: 0,
-      slots: { 0: { rows: {} } },
+      slots: { 0: { items: {} } },
     } as Payload)
 
     expect(seen).toEqual([{ key: "a", connected: true }])

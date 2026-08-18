@@ -32,7 +32,7 @@ module Herb
 
       COVERED: String
 
-      ROW_STATICS: String
+      ITEM_STATICS: String
 
       OCCURRENCES: String
 
@@ -215,10 +215,7 @@ module Herb
       def insert_markers: (untyped node) -> untyped
 
       # : (untyped) -> Integer?
-      def child_anchor_index: (untyped) -> Integer?
-
-      # : (untyped, Integer?) -> void
-      def anchor_child: (untyped, Integer?) -> void
+      def content_anchor_index: (untyped) -> Integer?
 
       # : (untyped, Integer?) -> void
       def mark_branches: (untyped, Integer?) -> void
@@ -236,11 +233,11 @@ module Herb
       def continuation_of: (untyped) -> untyped
 
       # : (untyped, Integer?) -> void
-      def wrap_rows: (untyped, Integer?) -> void
+      def wrap_items: (untyped, Integer?) -> void
 
-      def park_row: (untyped slot_index, untyped body) -> untyped
+      def park_item: (untyped slot_index, untyped body) -> untyped
 
-      def anchor_attributes: (untyped node) -> untyped
+      def anchor_attributes: (untyped node, ?untyped content_index) -> untyped
 
       # : (Slot) -> String?
       def anchor_name_for: (Slot) -> String?

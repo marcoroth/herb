@@ -1,5 +1,5 @@
 ---
-source: "Engine::Slots::VisitorTest#test_0020_falls back to index and names the row to key when a collection row carries no key"
+source: "Engine::Slots::VisitorTest#test_0020_falls back to index and names the item to key when a collection item carries no key"
 input: "<% @u.each do |u| %><li>x</li><% end %>"
 options: {filename: "app/views/test.html.erb"}
 ---
