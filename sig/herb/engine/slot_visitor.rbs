@@ -70,17 +70,6 @@ module Herb
       # : (String) -> bool
       def self.directive?: (String) -> bool
 
-      # Who renders a branch of this template, which is the one thing a template has to say and
-      # the one thing that cannot be decided for it.
-      #
-      #     <%# herb:slots server %>   the server renders a branch and sends the markup
-      #     <%# herb:slots client %>   the client is sent every branch and renders them itself
-      #
-      # Saying neither means `server`. Being sent a branch that did not render is being sent
-      # something the request did not ask for, so it is asked for rather than assumed.
-      #
-      # Both are slot aware. The directive is `herb:slots`, so the client is told where this
-      # template's dynamic parts are either way, and these two only say who fills them.
       # : (String) -> Symbol?
       def self.directive_mode: (String) -> Symbol?
 
