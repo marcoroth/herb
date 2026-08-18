@@ -175,6 +175,19 @@ describe("applying values to a collection", () => {
     expect(index.slotInRow(FILE, 0, "1", 1)).not.toBeNull()
   })
 
+  test("builds again after every row has been deleted", () => {
+    const index = mounted(ROWS)
+    const empty = payload(FILE, { 0: { rows: {} } }, "bbbbbbbb")
+
+    expect(index.apply(empty).deferred).toEqual([])
+    expect(keys()).toEqual([])
+
+    const report = index.apply(payload(FILE, { 0: { rows: { 9: { 1: "again" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["again"])
+  })
+
   test("asks for a row when the collection is empty and nothing was parked", () => {
     const index = mounted(EMPTY_ROWS)
 
@@ -212,6 +225,24 @@ describe("applying values that came from more than one template", () => {
     expect(report.applied).toBe(0)
     expect(report.deferred).toEqual([{ file: CARD, occurrence: 0, index: null, reason: "stale-version" }])
     expect(index.rangeFor(index.slot(CARD, 0)!).toString()).toBe("inner")
+  })
+})
+
+describe("an attribute a template only partly wrote", () => {
+  const PARTIAL = `<!--herb-region:${FILE}:aaaaaaaa:0--><div class="card active" data-herb-slot="0:attribute_interpolation:class"></div><!--/herb-region:${FILE}-->`
+
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("is refused rather than written over", () => {
+    const index = mounted(PARTIAL)
+
+    const report = index.apply(payload(FILE, { 0: "" }))
+
+    expect(report.applied).toBe(0)
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "partial-attribute" }])
+    expect(document.querySelector("div")?.getAttribute("class")).toBe("card active")
   })
 })
 
