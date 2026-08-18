@@ -44,7 +44,7 @@ module Herb
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
       ELEMENT_ANCHORED_TYPES = [*ATTRIBUTE_TYPES, :boolean_attribute, :element, :raw_text].freeze #: Array[Symbol]
-      OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
+      OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[Herb::AST::HTMLOpenTagNode|Herb::AST::ERBOpenTagNode]
       BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
       BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
@@ -540,7 +540,7 @@ module Herb
         }.flatten
       end
 
-      #: (untyped) -> Array[untyped]
+      #: (untyped) -> Array[Herb::AST::HTMLAttributeNode]
       def attributes_for(element)
         open_tag = element.open_tag
         return [] unless OPEN_TAG_TYPES.any? { |type| open_tag.is_a?(type) }
