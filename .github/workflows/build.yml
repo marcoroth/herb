@@ -44,6 +44,9 @@ jobs:
       - name: Render Templates
         run: bundle exec rake templates
 
+      - name: Audition
+        run: bundle exec audition . --static-only --format github
+
       - name: RuboCop
         run: bundle exec rubocop
 

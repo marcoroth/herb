@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "English"
+require "open3"
 require "tempfile"
 
 module Herb
@@ -268,11 +268,14 @@ module Herb
       def run_highlighter(file_path, line_num, context_lines)
         return nil unless @highlighter_path && can_use_highlighter?
 
-        cmd = "#{@highlighter_path} --focus #{line_num} --context-lines #{context_lines} \"#{file_path}\""
-
         begin
-          output = `#{cmd} 2>/dev/null`
-          status = $CHILD_STATUS
+          output, status = Open3.capture2(
+            @highlighter_path,
+            "--focus", line_num.to_s,
+            "--context-lines", context_lines.to_s,
+            file_path,
+            err: File::NULL
+          )
           return output.gsub(file_path, @filename) if status&.success? && !output.strip.empty?
         rescue StandardError
           # Silently fall back to basic formatting if highlighter fails
@@ -286,18 +289,22 @@ module Herb
 
         diagnostics = @errors.map { |error| herb_error_to_diagnostic(error) }
 
+        # Load JSON only when highlighter diagnostics are requested.
+        require "json" # audition:disable runtime-require
         require "tempfile"
-        require "json"
-
         diagnostics_file = Tempfile.new(["herb_diagnostics", ".json"])
         diagnostics_file.write(JSON.pretty_generate(diagnostics))
         diagnostics_file.close
 
         begin
-          cmd = "#{@highlighter_path} --diagnostics \"#{diagnostics_file.path}\" --split-diagnostics --context-lines #{context_lines} \"#{file_path}\""
-
-          output = `#{cmd} 2>/dev/null`
-          status = $CHILD_STATUS
+          output, status = Open3.capture2(
+            @highlighter_path,
+            "--diagnostics", diagnostics_file.path,
+            "--split-diagnostics",
+            "--context-lines", context_lines.to_s,
+            file_path,
+            err: File::NULL
+          )
 
           return output.gsub(file_path, @filename) if status&.success? && !output.strip.empty?
         rescue StandardError

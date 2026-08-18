@@ -5,11 +5,11 @@ module Herb
     class ValidationErrorOverlay
       CONTEXT_LINES = 2
 
-      VALIDATOR_BADGES = {
+      VALIDATOR_BADGES = Ractor.make_shareable({
         "SecurityValidator" => { label: "Security", color: "#dc2626" },
         "NestingValidator" => { label: "Nesting", color: "#f59e0b" },
         "AccessibilityValidator" => { label: "A11y", color: "#3b82f6" },
-      }.freeze
+      })
 
       SEVERITY_COLORS = {
         "error" => "#dc2626",

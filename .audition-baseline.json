@@ -1,0 +1,15 @@
+{
+  "class-level-state|lib/herb.rb": 3,
+  "class-level-state|lib/herb/configuration.rb": 1,
+  "class-level-state|lib/herb/engine.rb": 1,
+  "global-variables|lib/herb/cli.rb": 2,
+  "runtime-require|lib/herb.rb": 3,
+  "runtime-require|lib/herb/ast/erb_content_node.rb": 1,
+  "runtime-require|lib/herb/ast/nodes.rb": 13,
+  "runtime-require|lib/herb/bootstrap.rb": 1,
+  "runtime-require|lib/herb/cli.rb": 10,
+  "runtime-require|lib/herb/dev/runner.rb": 5,
+  "runtime-require|lib/herb/engine.rb": 2,
+  "runtime-require|lib/herb/prism_inspect.rb": 1,
+  "unsafe-calls|lib/herb/project.rb": 1
+}

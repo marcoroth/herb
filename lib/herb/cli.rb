@@ -640,7 +640,8 @@ class Herb::CLI
     diff_result = Herb.diff(old_content, new_content)
 
     if json
-      require "json"
+      # Load JSON only when the caller requests JSON output.
+      require "json" # audition:disable runtime-require
       puts JSON.pretty_generate(diff_result.to_hash)
     elsif diff_result.identical?
       puts "Trees are identical."
