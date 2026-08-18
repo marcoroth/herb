@@ -6,6 +6,7 @@ require "digest"
 require_relative "../visitor"
 require_relative "context_aware"
 require_relative "slot_markers"
+require_relative "slot_statics"
 
 module Herb
   class Engine
@@ -18,35 +19,31 @@ module Herb
     #
     #     visitor.slots
     #
-    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive. Deciding what
-    # that means belongs to whoever builds the stack, so the directive is only recognised here:
+    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive, and say who
+    # renders their branches with `<%# herb:slots client %>`. Deciding what that means belongs to
+    # whoever builds the stack, so the directive is only read here:
     #
-    #     visitors = Herb::Engine::SlotVisitor.directive?(source) ? [Herb::Engine::SlotVisitor.new] : []
+    #     mode = Herb::Engine::SlotVisitor.directive_mode(source)
+    #     visitors = mode ? [Herb::Engine::SlotVisitor.new(mode: mode)] : []
     #
     class SlotVisitor < Herb::Visitor
       include ContextAware
 
       recommended_parser_option iteration_nodes: true
 
-      SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\s*-?%>/ #: Regexp
+      attr_reader :slots #: Array[Slot]
+      attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
-      #: (String) -> bool
-      def self.directive?(source)
-        SLOTS_DIRECTIVE.match?(source)
-      end
-
-      #: () -> bool
-      def self.reads_erb_source?
-        true
-      end
+      SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
+      MODE_OPTION = /\b(server|client)\b/ #: Regexp
+      MODES = [:server, :client].freeze #: Array[Symbol]
+      COVERED = "_herb_covered_branches" #: String
+      BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
 
       ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
       ELEMENT_ANCHORED_TYPES = [*ATTRIBUTE_TYPES, :boolean_attribute, :element, :raw_text].freeze #: Array[Symbol]
       BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
       BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
-
-      attr_reader :slots #: Array[Slot]
-      attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
       Slot = Data.define(
         :index,      #: Integer
@@ -59,11 +56,38 @@ module Herb
         :key_expression #: String?
       )
 
-      #: (?markers: SlotMarkers) -> void
-      def initialize(markers: SlotMarkers.new)
+      #: (String) -> bool
+      def self.directive?(source)
+        SLOTS_DIRECTIVE.match?(source)
+      end
+
+      #: (String) -> Symbol?
+      def self.directive_mode(source)
+        match = SLOTS_DIRECTIVE.match(source)
+
+        return nil unless match
+
+        named = MODE_OPTION.match(match[:mode])
+        mode = named && named[1]
+
+        mode ? mode.to_sym : :server
+      end
+
+      #: () -> bool
+      def self.reads_erb_source?
+        true
+      end
+
+      #: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String)) -> void
+      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path)
         super()
 
+        raise ArgumentError, "unknown slot mode #{mode.inspect}, expected one of #{MODES.inspect}" unless MODES.include?(mode)
+
         @markers = markers
+        @mode = mode
+        @statics = mode == :client ? {} : nil #: Hash[String, String]?
+        @identify = identifier
 
         @slots = [] #: Array[Slot]
         @warnings = [] #: Array[Herb::Warnings::Warning]
@@ -92,13 +116,27 @@ module Herb
       end
 
       def inspect
-        "#<#{self.class.name}>"
+        parts = [self.class.name, @mode.to_s] #: Array[String]
+
+        parts << "#{@identify} ids" unless @identify == :path
+
+        "#<#{parts.join(" ")}>"
+      end
+
+      #: () -> String
+      def identifier
+        @identifier ||= case @identify
+                        when :path then context.relative_file_path
+                        when :digest then Digest::SHA256.hexdigest(context.relative_file_path).slice(0, 12).to_s
+                        else @identify.call(context.relative_file_path)
+                        end
       end
 
       #: () -> Hash[Symbol, untyped]
       def schema
         {
           file: context.relative_file_path,
+          identifier: identifier,
           version: version,
           slots: slot_entries,
         }
@@ -117,8 +155,10 @@ module Herb
       def visit_document_node(node)
         visit_children_with_paths(node.children)
 
+        collapse_invariant_conditionals
         insert_markers(node)
         wrap_region(node)
+        append_statics(node)
       end
 
       def visit_html_element_node(node)
@@ -263,6 +303,78 @@ module Herb
       #: (untyped) -> bool
       def continuation?(node)
         @continuations.key?(node)
+      end
+
+      #: () -> void
+      def collapse_invariant_conditionals
+        merged = {} #: Hash[Integer, Integer]
+        dropped = {} #: Hash[Integer, bool]
+
+        @pending.each do |node, index|
+          next unless @slots[index].type == :conditional
+          next unless exhaustive?(node)
+
+          bodies = branch_bodies(node)
+          next unless bodies.size > 1
+
+          signatures = bodies.filter_map { |body| SlotStatics.new(@pending, @slots, @element_anchored).signature(body) }
+          next unless signatures.size == bodies.size
+
+          shapes = signatures.map { |shape, _| shape }
+          next unless shapes.uniq.one?
+          next if branching_shape?(shapes.fetch(0))
+
+          positions = signatures.map { |_, indices| indices }
+          shared = positions.fetch(0)
+
+          dropped[index] = true
+
+          positions.drop(1).each do |indices|
+            indices.each_with_index { |old, position| merged[old] = shared.fetch(position) }
+          end
+        end
+
+        renumber(merged, dropped) unless dropped.empty?
+      end
+
+      #: (untyped) -> bool
+      def exhaustive?(node)
+        current = continuation_of(node) #: untyped
+        last = current #: untyped
+
+        while current
+          last = current
+          current = continuation_of(current)
+        end
+
+        last.is_a?(Herb::AST::ERBElseNode)
+      end
+
+      #: (String) -> bool
+      def branching_shape?(shape)
+        BRANCHING_TYPES.any? { |type| shape.include?("\u0000#{type}\u0000") }
+      end
+
+      #: (Hash[Integer, Integer], Hash[Integer, bool]) -> void
+      def renumber(merged, dropped)
+        survivors = (0...@slots.size).reject { |index| dropped[index] || merged.key?(index) }
+        moved = survivors.each_with_index.to_h #: Hash[Integer, Integer]
+        resolve = ->(index) { moved.fetch(merged.fetch(index, index)) }
+
+        @slots = survivors.each_with_index.map { |old, index| @slots[old].with(index: index) }
+
+        renumbered = {} #: Hash[untyped, Integer]
+        pending = renumbered.compare_by_identity
+
+        @pending.each do |node, index|
+          pending[node] = resolve.call(index) unless dropped[index]
+        end
+
+        @pending = pending
+
+        @element_anchored.each do |open_tag, indices|
+          @element_anchored[open_tag] = indices.map { |index| resolve.call(index) }
+        end
       end
 
       #: (untyped, Symbol?) -> void
@@ -527,7 +639,44 @@ module Herb
 
         branch_bodies(node).each_with_index do |body, branch_index|
           body.unshift(text_node(@markers.branch(slot_index, branch_index)))
+
+          park_branch("#{slot_index}:#{branch_index}", body)
         end
+      end
+
+      #: (String, Array[untyped]) -> void
+      def park_branch(key, body)
+        statics = @statics
+        return unless statics
+
+        markup = SlotStatics.new(@pending).markup(body)
+        return unless markup
+
+        statics[key] = markup
+
+        body.insert(1, erb_code_node(%(#{COVERED}["#{key}"] = true)))
+      end
+
+      #: (untyped) -> void
+      def append_statics(document_node)
+        statics = @statics
+        return if statics.nil? || statics.empty?
+
+        branches = statics.sort_by { |key, _| key.split(":").map(&:to_i) }
+
+        nodes = [
+          erb_code_node("if #{COVERED}.size < #{branches.size}"),
+          text_node(@markers.statics_open(identifier, version))
+        ] #: Array[untyped]
+
+        branches.each do |key, markup|
+          nodes.push(erb_code_node(%(unless #{COVERED}["#{key}"])), text_node(markup), erb_code_node("end"))
+        end
+
+        nodes.push(text_node(@markers.statics_close), erb_code_node("end"))
+
+        document_node.children.unshift(erb_code_node("#{COVERED} = {}"))
+        document_node.children.concat(nodes)
       end
 
       #: (untyped) -> Array[Array[untyped]]
@@ -590,9 +739,22 @@ module Herb
         indices = @element_anchored[open_tag]
         return if indices.nil? || indices.empty?
 
-        types = indices.map { |index| @slots[index].type }
+        anchors = indices.map { |index|
+          slot = @slots[index]
 
-        open_tag.children << attribute_node("data-herb-slot", @markers.element_anchors(indices, types))
+          [index, slot.type, anchor_name_for(slot)]
+        }
+
+        open_tag.children << attribute_node("data-herb-slot", @markers.element_anchors(anchors))
+      end
+
+      #: (Slot) -> String?
+      def anchor_name_for(slot)
+        name = slot.attribute
+
+        return nil if name.nil? || name.include?(",")
+
+        name
       end
 
       #: (untyped) { (Array[untyped]) -> void } -> void
@@ -613,15 +775,23 @@ module Herb
       end
 
       def wrap_region(document_node)
-        relative_file_path = context.relative_file_path
+        name = identifier
 
-        document_node.children.unshift(comment_node(@markers.region_open(relative_file_path, version)))
-
-        document_node.children.push(comment_node(@markers.region_close(relative_file_path)))
+        document_node.children.unshift(comment_node(@markers.region_open(name, version)))
+        document_node.children.push(comment_node(@markers.region_close(name)))
       end
 
       def text_node(content)
         Herb::AST::HTMLTextNode.new("HTMLTextNode", Herb::Location.zero, [], content.dup)
+      end
+
+      def erb_code_node(code)
+        Herb::AST::ERBContentNode.new(
+          "ERBContentNode", Herb::Location.zero, [],
+          token(:erb_start, "<%"), token(:erb_content, " #{code} "), token(:erb_end, "%>"),
+          nil, false, true,
+          nil
+        )
       end
 
       def erb_output_node(code)

@@ -11,20 +11,28 @@ module Herb
     #
     #     visitor.slots
     #
-    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive. Deciding what
-    # that means belongs to whoever builds the stack, so the directive is only recognised here:
+    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive, and say who
+    # renders their branches with `<%# herb:slots client %>`. Deciding what that means belongs to
+    # whoever builds the stack, so the directive is only read here:
     #
-    #     visitors = Herb::Engine::SlotVisitor.directive?(source) ? [Herb::Engine::SlotVisitor.new] : []
+    #     mode = Herb::Engine::SlotVisitor.directive_mode(source)
+    #     visitors = mode ? [Herb::Engine::SlotVisitor.new(mode: mode)] : []
     class SlotVisitor < Herb::Visitor
       include ContextAware
 
+      attr_reader slots: Array[Slot]
+
+      attr_reader warnings: Array[Herb::Warnings::Warning]
+
       SLOTS_DIRECTIVE: Regexp
 
-      # : (String) -> bool
-      def self.directive?: (String) -> bool
+      MODE_OPTION: Regexp
 
-      # : () -> bool
-      def self.reads_erb_source?: () -> bool
+      MODES: Array[Symbol]
+
+      COVERED: String
+
+      BRANCHING_TYPES: Array[Symbol]
 
       ATTRIBUTE_TYPES: Array[Symbol]
 
@@ -33,10 +41,6 @@ module Herb
       BRANCH_BODY_PROPERTIES: Array[Symbol]
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
-
-      attr_reader slots: Array[Slot]
-
-      attr_reader warnings: Array[Herb::Warnings::Warning]
 
       class Slot < Data
         attr_reader index(): Integer
@@ -63,13 +67,25 @@ module Herb
         def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
       end
 
-      # : (?markers: SlotMarkers) -> void
-      def initialize: (?markers: SlotMarkers) -> void
+      # : (String) -> bool
+      def self.directive?: (String) -> bool
+
+      # : (String) -> Symbol?
+      def self.directive_mode: (String) -> Symbol?
+
+      # : () -> bool
+      def self.reads_erb_source?: () -> bool
+
+      # : (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String)) -> void
+      def initialize: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String) -> void
 
       # : () -> String
       def version: () -> String
 
       def inspect: () -> untyped
+
+      # : () -> String
+      def identifier: () -> String
 
       # : () -> Hash[Symbol, untyped]
       def schema: () -> Hash[Symbol, untyped]
@@ -117,6 +133,18 @@ module Herb
 
       # : (untyped) -> bool
       def continuation?: (untyped) -> bool
+
+      # : () -> void
+      def collapse_invariant_conditionals: () -> void
+
+      # : (untyped) -> bool
+      def exhaustive?: (untyped) -> bool
+
+      # : (String) -> bool
+      def branching_shape?: (String) -> bool
+
+      # : (Hash[Integer, Integer], Hash[Integer, bool]) -> void
+      def renumber: (Hash[Integer, Integer], Hash[Integer, bool]) -> void
 
       # : (untyped, Symbol?) -> void
       def record_slot: (untyped, Symbol?) -> void
@@ -174,6 +202,12 @@ module Herb
       # : (untyped, Integer?) -> void
       def mark_branches: (untyped, Integer?) -> void
 
+      # : (String, Array[untyped]) -> void
+      def park_branch: (String, Array[untyped]) -> void
+
+      # : (untyped) -> void
+      def append_statics: (untyped) -> void
+
       # : (untyped) -> Array[Array[untyped]]
       def branch_bodies: (untyped) -> Array[Array[untyped]]
 
@@ -185,12 +219,17 @@ module Herb
 
       def anchor_attributes: (untyped node) -> untyped
 
+      # : (Slot) -> String?
+      def anchor_name_for: (Slot) -> String?
+
       # : (untyped) { (Array[untyped]) -> void } -> void
       def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
 
       def wrap_region: (untyped document_node) -> untyped
 
       def text_node: (untyped content) -> untyped
+
+      def erb_code_node: (untyped code) -> untyped
 
       def erb_output_node: (untyped code) -> untyped
 

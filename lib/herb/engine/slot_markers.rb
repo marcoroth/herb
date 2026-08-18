@@ -13,9 +13,9 @@ module Herb
         "<!--herb-slot:#{index}:#{type}-->"
       end
 
-      #: (Array[Integer], Array[Symbol]) -> String
-      def element_anchors(indices, types)
-        indices.zip(types).map { |index, type| "#{index}:#{type}" }.join(",")
+      #: (Array[[Integer, Symbol, String?]]) -> String
+      def element_anchors(anchors)
+        anchors.map { |index, type, name| name ? "#{index}:#{type}:#{name}" : "#{index}:#{type}" }.join(",")
       end
 
       #: (Integer) -> String
@@ -56,6 +56,16 @@ module Herb
       #: (String) -> String
       def region_close(file)
         "<!--/herb-region:#{file}-->"
+      end
+
+      #: (String, String) -> String
+      def statics_open(file, version)
+        %(<template data-herb-region="#{file}:#{version}">)
+      end
+
+      #: () -> String
+      def statics_close
+        "</template>"
       end
     end
   end
