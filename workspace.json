@@ -23,6 +23,7 @@
     "prism": "./prism",
     "ruby-gem": "./ext",
     "templates": "./templates",
-    "wasm": "./wasm"
+    "wasm": "./wasm",
+    "@herb-tools/client": "javascript/packages/client"
   }
 }
