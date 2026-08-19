@@ -308,6 +308,112 @@ describe("reconciling with the server", () => {
   })
 })
 
+describe("keeping commands out of the address bar", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+    window.history.replaceState({}, "", "/posts")
+  })
+
+  test("persists a key the map names", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+
+    state.adopt()
+
+    await state.set("name", "Ada")
+
+    expect(window.location.search).toBe("?name=Ada")
+  })
+
+  test("leaves out a key the map says nothing about", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+
+    state.adopt()
+
+    await state.set({ name: "Ada", remove: "3" })
+
+    expect(window.location.search).toBe("?name=Ada")
+    expect(state.get("name")).toBe("Ada")
+  })
+
+  test("forgets a command that arrived in the address bar, once it has been sent", async () => {
+    window.history.replaceState({}, "", "/posts?name=Marco&reset=1")
+
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const seen: StateRequest[] = []
+    const state = new SlotState(slots, {
+      persist: "known",
+      transport: async (request) => {
+        seen.push(request)
+
+        return null
+      },
+    })
+
+    state.adopt()
+
+    await state.set("name", "Ada")
+    await state.set("name", "Grace")
+
+    expect(seen[0].state).toEqual({ name: "Ada", reset: "1" })
+    expect(seen[1].state).toEqual({ name: "Grace" })
+    expect(state.get("reset")).toBeUndefined()
+    expect(window.location.search).toBe("?name=Grace")
+  })
+
+  test("forgets a command once it has been sent, so the next ask does not repeat it", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const seen: StateRequest[] = []
+    const state = new SlotState(slots, {
+      persist: "known",
+      transport: async (request) => {
+        seen.push(request)
+
+        return null
+      },
+    })
+
+    state.adopt()
+
+    await state.set({ add: "1" })
+    await state.set("name", "Ada")
+
+    expect(seen[0].state).toEqual({ add: "1" })
+    expect(seen[1].state).toEqual({ name: "Ada" })
+    expect(state.get("add")).toBeUndefined()
+  })
+
+  test("still sends what it leaves out", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const seen: StateRequest[] = []
+    const state = new SlotState(slots, {
+      persist: "known",
+      transport: async (request) => {
+        seen.push(request)
+
+        return null
+      },
+    })
+
+    state.adopt()
+
+    await state.set({ add: "1" })
+
+    expect(seen[0].state).toEqual({ add: "1" })
+    expect(window.location.search).toBe("")
+  })
+
+  test("writes nothing to the address bar when the page has no map", async () => {
+    const slots = mounted(PAGE)
+    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+
+    await state.set("name", "Ada")
+
+    expect(window.location.search).toBe("")
+  })
+})
+
 describe("state that has no business in a URL", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
