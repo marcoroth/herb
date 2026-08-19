@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
+#include "../include/analyze/helpers.h"
 #include "../include/analyze/ternary_conditionals.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/lib/hb_allocator.h"
@@ -83,18 +84,19 @@ static body_info_T extract_statements_body_info(
   return info;
 }
 
+static pm_statements_node_t* conditional_statements(pm_node_t* conditional_node) {
+  if (conditional_node->type == PM_IF_NODE) { return ((pm_if_node_t*) conditional_node)->statements; }
+  if (conditional_node->type == PM_UNLESS_NODE) { return ((pm_unless_node_t*) conditional_node)->statements; }
+
+  return NULL;
+}
+
 static body_info_T extract_body_info(
   pm_node_t* conditional_node,
   analyzed_ruby_T* analyzed,
   hb_allocator_T* allocator
 ) {
-  pm_statements_node_t* statements = NULL;
-
-  if (conditional_node->type == PM_IF_NODE) {
-    statements = ((pm_if_node_t*) conditional_node)->statements;
-  } else if (conditional_node->type == PM_UNLESS_NODE) {
-    statements = ((pm_unless_node_t*) conditional_node)->statements;
-  }
+  pm_statements_node_t* statements = conditional_statements(conditional_node);
 
   body_info_T info = extract_statements_body_info(statements, analyzed, allocator);
 
@@ -131,13 +133,7 @@ static const char* condition_keyword(pm_node_t* conditional_node) {
 }
 
 static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
-  pm_statements_node_t* statements = NULL;
-
-  if (conditional_node->type == PM_IF_NODE) {
-    statements = ((pm_if_node_t*) conditional_node)->statements;
-  } else if (conditional_node->type == PM_UNLESS_NODE) {
-    statements = ((pm_unless_node_t*) conditional_node)->statements;
-  }
+  pm_statements_node_t* statements = conditional_statements(conditional_node);
 
   if (!statements || statements->body.size != 1) { return NULL; }
 
@@ -167,6 +163,7 @@ static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
 static AST_NODE_T* transform_conditional(
   AST_ERB_CONTENT_NODE_T* erb_node,
   pm_node_t* conditional_node,
+  static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
   body_info_T body_info = extract_body_info(conditional_node, erb_node->analyzed_ruby, allocator);
@@ -209,14 +206,31 @@ static AST_NODE_T* transform_conditional(
   if (!body_erb_node) { return NULL; }
 
   hb_array_T* statements = hb_array_init(1, allocator);
-  hb_array_append(statements, (AST_NODE_T*) body_erb_node);
 
   pm_if_node_t* nested_ternary = find_nested_ternary(conditional_node);
 
   if (nested_ternary) {
-    AST_NODE_T* ternary_replacement = transform_ternary_expression(erb_node, nested_ternary, allocator);
+    AST_NODE_T* ternary_replacement =
+      transform_ternary_expression(erb_node, nested_ternary, static_node_type, allocator);
 
-    if (ternary_replacement) { hb_array_set(statements, 0, ternary_replacement); }
+    hb_array_append(statements, ternary_replacement ? ternary_replacement : (AST_NODE_T*) body_erb_node);
+  } else {
+    AST_NODE_T* static_node = NULL;
+
+    bool is_static = build_static_output_node(
+      conditional_statements(conditional_node),
+      erb_node->analyzed_ruby,
+      content_start,
+      static_node_type,
+      allocator,
+      &static_node
+    );
+
+    if (!is_static) {
+      hb_array_append(statements, (AST_NODE_T*) body_erb_node);
+    } else if (static_node) {
+      hb_array_append(statements, static_node);
+    }
   }
 
   hb_buffer_T condition_buffer;
@@ -279,7 +293,11 @@ static AST_NODE_T* transform_conditional(
   }
 }
 
-static void transform_conditional_array(hb_array_T* array, analyze_ruby_context_T* context) {
+static void transform_conditional_array(
+  hb_array_T* array,
+  analyze_ruby_context_T* context,
+  static_output_node_type_T static_node_type
+) {
   if (!array || !context) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
@@ -294,7 +312,7 @@ static void transform_conditional_array(hb_array_T* array, analyze_ruby_context_
     pm_node_t* conditional_node = find_postfix_conditional_statement(erb_node->analyzed_ruby);
     if (!conditional_node) { continue; }
 
-    AST_NODE_T* replacement = transform_conditional(erb_node, conditional_node, context->allocator);
+    AST_NODE_T* replacement = transform_conditional(erb_node, conditional_node, static_node_type, context->allocator);
     if (replacement) { hb_array_set(array, i, replacement); }
   }
 }
@@ -303,13 +321,24 @@ static void transform_conditional_blocks(const AST_NODE_T* node, analyze_ruby_co
   if (!node || !context) { return; }
 
   switch (node->type) {
-    case AST_DOCUMENT_NODE: transform_conditional_array(((AST_DOCUMENT_NODE_T*) node)->children, context); break;
-    case AST_HTML_ELEMENT_NODE: transform_conditional_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context); break;
-    case AST_HTML_OPEN_TAG_NODE:
-      transform_conditional_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context);
+    case AST_DOCUMENT_NODE:
+      transform_conditional_array(((AST_DOCUMENT_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_HTML_TEXT);
       break;
+
+    case AST_HTML_ELEMENT_NODE:
+      transform_conditional_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context, STATIC_OUTPUT_NODE_HTML_TEXT);
+      break;
+
+    case AST_HTML_OPEN_TAG_NODE:
+      transform_conditional_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_NONE);
+      break;
+
     case AST_HTML_ATTRIBUTE_VALUE_NODE:
-      transform_conditional_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
+      transform_conditional_array(
+        ((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children,
+        context,
+        STATIC_OUTPUT_NODE_LITERAL
+      );
       break;
     default: break;
   }

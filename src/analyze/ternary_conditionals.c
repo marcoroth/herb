@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
+#include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
@@ -100,9 +101,37 @@ static char* extract_condition_source(pm_if_node_t* if_node, hb_allocator_T* all
   return hb_allocator_strndup(allocator, (const char*) predicate->location.start, length);
 }
 
+static void append_branch_statement(
+  hb_array_T* statements,
+  const pm_statements_node_t* branch,
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  AST_ERB_CONTENT_NODE_T* branch_erb_node,
+  static_output_node_type_T static_node_type,
+  hb_allocator_T* allocator
+) {
+  AST_NODE_T* static_node = NULL;
+
+  bool is_static = build_static_output_node(
+    branch,
+    erb_node->analyzed_ruby,
+    erb_node->content->location.start,
+    static_node_type,
+    allocator,
+    &static_node
+  );
+
+  if (!is_static) {
+    hb_array_append(statements, (AST_NODE_T*) branch_erb_node);
+    return;
+  }
+
+  if (static_node) { hb_array_append(statements, static_node); }
+}
+
 AST_NODE_T* transform_ternary_expression(
   AST_ERB_CONTENT_NODE_T* erb_node,
   pm_if_node_t* if_node,
+  static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
   body_info_T true_info = extract_statements_body_info(if_node->statements, erb_node->analyzed_ruby, allocator);
@@ -176,8 +205,16 @@ AST_NODE_T* transform_ternary_expression(
   hb_array_T* true_statements = hb_array_init(1, allocator);
   hb_array_T* false_statements = hb_array_init(1, allocator);
 
-  hb_array_append(true_statements, (AST_NODE_T*) true_erb_node);
-  hb_array_append(false_statements, (AST_NODE_T*) false_erb_node);
+  append_branch_statement(true_statements, if_node->statements, erb_node, true_erb_node, static_node_type, allocator);
+
+  append_branch_statement(
+    false_statements,
+    else_node->statements,
+    erb_node,
+    false_erb_node,
+    static_node_type,
+    allocator
+  );
 
   token_T* else_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
   token_T* else_content_token = create_synthetic_token(allocator, " else ", TOKEN_ERB_CONTENT, end, end);
@@ -233,7 +270,11 @@ AST_NODE_T* transform_ternary_expression(
   return (AST_NODE_T*) result_if_node;
 }
 
-static void transform_ternary_array(hb_array_T* array, analyze_ruby_context_T* context) {
+static void transform_ternary_array(
+  hb_array_T* array,
+  analyze_ruby_context_T* context,
+  static_output_node_type_T static_node_type
+) {
   if (!array || !context) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
@@ -248,7 +289,8 @@ static void transform_ternary_array(hb_array_T* array, analyze_ruby_context_T* c
     pm_node_t* ternary_node = find_ternary_statement(erb_node->analyzed_ruby);
     if (!ternary_node) { continue; }
 
-    AST_NODE_T* replacement = transform_ternary_expression(erb_node, (pm_if_node_t*) ternary_node, context->allocator);
+    AST_NODE_T* replacement =
+      transform_ternary_expression(erb_node, (pm_if_node_t*) ternary_node, static_node_type, context->allocator);
     if (replacement) { hb_array_set(array, i, replacement); }
   }
 }
@@ -257,11 +299,20 @@ static void transform_ternary_blocks(const AST_NODE_T* node, analyze_ruby_contex
   if (!node || !context) { return; }
 
   switch (node->type) {
-    case AST_DOCUMENT_NODE: transform_ternary_array(((AST_DOCUMENT_NODE_T*) node)->children, context); break;
-    case AST_HTML_ELEMENT_NODE: transform_ternary_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context); break;
-    case AST_HTML_OPEN_TAG_NODE: transform_ternary_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context); break;
+    case AST_DOCUMENT_NODE:
+      transform_ternary_array(((AST_DOCUMENT_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_HTML_TEXT);
+      break;
+
+    case AST_HTML_ELEMENT_NODE:
+      transform_ternary_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context, STATIC_OUTPUT_NODE_HTML_TEXT);
+      break;
+
+    case AST_HTML_OPEN_TAG_NODE:
+      transform_ternary_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_NONE);
+      break;
+
     case AST_HTML_ATTRIBUTE_VALUE_NODE:
-      transform_ternary_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
+      transform_ternary_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_LITERAL);
       break;
     default: break;
   }

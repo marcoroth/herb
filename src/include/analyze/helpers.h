@@ -74,6 +74,21 @@ hb_array_T* extract_parameters_from_prism(
   hb_allocator_T* allocator
 );
 
+typedef enum {
+  STATIC_OUTPUT_NODE_NONE,
+  STATIC_OUTPUT_NODE_HTML_TEXT,
+  STATIC_OUTPUT_NODE_LITERAL,
+} static_output_node_type_T;
+
+bool build_static_output_node(
+  const pm_statements_node_t* statements,
+  const analyzed_ruby_T* analyzed,
+  position_T content_start,
+  static_output_node_type_T node_type,
+  hb_allocator_T* allocator,
+  AST_NODE_T** node
+);
+
 hb_array_T* extract_block_arguments_from_erb_node(
   const AST_ERB_CONTENT_NODE_T* erb_node,
   const char* source,

@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0007_string literal that would be HTML-escaped with postfix if condition"
+input: "{source: \"<%= \\\"5 > 3\\\" if condition %>\", options: {escape: true, visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; if condition 
+ _buf << __herb.h(("5 > 3")); end;
+_buf.to_s
