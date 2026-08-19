@@ -32,6 +32,19 @@ export class SlotFlash {
 
   private draw = (event: Event) => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+    if (detail.operation === 'item-removed') {
+      this.paint(detail)
+
+      return
+    }
+
+    setTimeout(() => this.paint(detail), 0)
+  }
+
+  private paint(detail: SlotEventDetail): void {
+    if (!this.enabled) return
+
     const rect = this.measure(detail)
 
     if (!rect) return
