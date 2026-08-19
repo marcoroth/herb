@@ -8,7 +8,7 @@ export const DEPENDENCIES_ATTRIBUTE = "data-herb-dependencies"
 export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
 
 export type StateMode = "identity" | "structural" | "derived"
-export type StatePersistence = "url" | "none"
+export type StatePersistence = "url" | "known" | "none"
 
 export interface StateSlot {
   file: string
@@ -79,7 +79,19 @@ export class SlotState {
   }
 
   #persisted(): boolean {
-    return this.#options.persist === "url"
+    return this.#options.persist !== "none"
+  }
+
+  #known(name: string): boolean {
+    return this.#params.has(name) || this.#dependencies.has(name)
+  }
+
+  #transient(name: string): boolean {
+    return this.#options.persist === "known" && !this.#known(name)
+  }
+
+  #forget(names: string[]): void {
+    for (const name of names) this.#values.delete(name)
   }
 
   get(key: string): string | undefined {
@@ -193,6 +205,7 @@ export class SlotState {
 
     const changed = [...changes.keys()]
     const taken = new Map(changed.map((name) => [name, this.#sequence.get(name) ?? 0]))
+    const transient = [...this.#values.keys()].filter((name) => this.#transient(name))
 
     this.#controller?.abort()
     this.#controller = new AbortController()
@@ -202,6 +215,8 @@ export class SlotState {
     try {
       payload = await this.#options.transport({ state: this.all(), changed }, this.#controller.signal)
     } catch (error) {
+      this.#forget(transient)
+
       if (this.#superseded(taken)) return this.#settle({ ...IDLE, written: restores.length, stale: true })
 
       this.#restore(restores)
@@ -213,6 +228,8 @@ export class SlotState {
 
       return this.#settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true })
     }
+
+    this.#forget(transient)
 
     if (this.#superseded(taken)) return this.#settle({ ...IDLE, written: restores.length, stale: true })
 
@@ -324,7 +341,11 @@ export class SlotState {
 
     url.search = ""
 
-    for (const [name, value] of this.#values) url.searchParams.set(name, value)
+    for (const [name, value] of this.#values) {
+      if (this.#options.persist === "known" && !this.#known(name)) continue
+
+      url.searchParams.set(name, value)
+    }
 
     window.history.replaceState(window.history.state, "", url.toString())
   }
