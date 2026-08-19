@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
+import type { SlotEventDetail } from "../src/slot-index"
 
 function nth(html: string, occurrence: number): string {
   return html.replace(/(<!--herb-region:[^>]*?:[0-9a-f]{8}):\d+-->/g, `$1:${occurrence}-->`)
@@ -523,5 +524,67 @@ describe("keeping a branch that rendered", () => {
 
     expect(index.capture(index.slot(FILE, 0)!)).toBe(false)
     expect(index.skeletonKeys(FILE)).toEqual([])
+  })
+})
+
+describe("switching a branch from the client", () => {
+  beforeEach(() => { document.body.innerHTML = "" })
+
+  const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><b>under</b><!--/herb-slot:0--></div><template data-herb-statics="0:0"><!--herb-branch:0:0--><i>over</i></template><!--/herb-region:${FILE}-->`
+
+  function watch(): SlotEventDetail[] {
+    const seen: SlotEventDetail[] = []
+
+    document.addEventListener(SLOT_EVENT, (event) => seen.push((event as CustomEvent<SlotEventDetail>).detail))
+
+    return seen
+  }
+
+  test("builds the parked branch and says it was a branch that changed", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = page
+    index.scan(document.body)
+
+    const slot = index.slot(FILE, 0)!
+    const seen = watch()
+
+    expect(index.switchBranch(slot, 0)).toBe(true)
+
+    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("over")
+    expect(index.slot(FILE, 0)?.branch).toBe(0)
+    expect(seen).toHaveLength(1)
+    expect(seen[0]).toMatchObject({ file: FILE, index: 0, operation: "branch" })
+  })
+
+  test("parks what it replaces, so switching back needs nothing new", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = page
+    index.scan(document.body)
+
+    index.switchBranch(index.slot(FILE, 0)!, 0)
+
+    expect(index.branchesFor(FILE, 0).sort()).toEqual([0, 1])
+    expect(index.switchBranch(index.slot(FILE, 0)!, 1)).toBe(true)
+    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("under")
+  })
+
+  test("does nothing when the branch it is asked for is the one already shown", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = page
+    index.scan(document.body)
+
+    const seen = watch()
+
+    expect(index.switchBranch(index.slot(FILE, 0)!, 1)).toBe(false)
+    expect(seen).toHaveLength(0)
+  })
+
+  test("reports that it could not, when the branch was never parked", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = page
+    index.scan(document.body)
+
+    expect(index.switchBranch(index.slot(FILE, 0)!, 7)).toBe(false)
+    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("under")
   })
 })
