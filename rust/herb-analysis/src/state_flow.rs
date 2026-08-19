@@ -104,7 +104,7 @@ impl StateFlow {
 
     for (index, child) in result.value.children.iter().enumerate() {
       path.push(index);
-      collect_affected(child, &mut aliases, &mut path, &mut affected);
+      collect_affected(child, &source, &mut aliases, &mut path, &mut affected);
       path.pop();
     }
 
@@ -115,7 +115,12 @@ impl StateFlow {
     let result = self.analyze(file);
     let mut index = BTreeMap::new();
 
-    for state in result.instance_variables.iter().chain(result.constants.iter()) {
+    for state in result
+      .instance_variables
+      .iter()
+      .chain(result.constants.iter())
+      .chain(result.locals_declared.iter())
+    {
       let nodes = self.affected_nodes(file, state);
 
       if !nodes.is_empty() {
@@ -295,7 +300,7 @@ fn is_word_byte(byte: u8) -> bool {
   byte.is_ascii_alphanumeric() || byte == b'_'
 }
 
-fn collect_affected(node: &AnyNode, aliases: &mut Vec<String>, path: &mut Vec<usize>, affected: &mut Vec<AffectedNode>) {
+fn collect_affected(node: &AnyNode, source: &str, aliases: &mut Vec<String>, path: &mut Vec<usize>, affected: &mut Vec<AffectedNode>) {
   let kind = match node {
     AnyNode::ERBContentNode(_) => Some("text_content"),
     AnyNode::ERBIfNode(_) => Some("conditional"),
@@ -326,17 +331,25 @@ fn collect_affected(node: &AnyNode, aliases: &mut Vec<String>, path: &mut Vec<us
     collect_attributes(element, aliases, path, affected);
   }
 
-  let bound = block_bindings(node, aliases);
+  for name in assigned_names(node, source, aliases) {
+    if !aliases.contains(&name) {
+      aliases.push(name);
+    }
+  }
 
-  aliases.extend(bound.iter().cloned());
+  let outer = aliases.clone();
+
+  aliases.extend(block_bindings(node, aliases));
 
   for (index, child) in any_children(node).into_iter().enumerate() {
     path.push(index);
-    collect_affected(child, aliases, path, affected);
+    collect_affected(child, source, aliases, path, affected);
     path.pop();
   }
 
-  aliases.retain(|name| !bound.contains(name));
+  if aliases.len() != outer.len() {
+    *aliases = outer;
+  }
 }
 
 fn is_block(node: &AnyNode) -> bool {
@@ -390,6 +403,50 @@ fn collect_parameter_names(node: &AnyNode, names: &mut Vec<String>) {
 
 fn references_any(code: &str, aliases: &[String]) -> bool {
   aliases.iter().any(|name| expression_references(code, name))
+}
+
+const ASSIGNMENT_NODES: [&str; 4] = [
+  "LocalVariableWriteNode",
+  "LocalVariableOrWriteNode",
+  "LocalVariableAndWriteNode",
+  "LocalVariableOperatorWriteNode",
+];
+
+fn assigned_names(node: &AnyNode, source: &str, aliases: &[String]) -> Vec<String> {
+  let AnyNode::ERBContentNode(inner) = node else {
+    return Vec::new();
+  };
+
+  let Some(prism) = inner.prism() else {
+    return Vec::new();
+  };
+
+  let mut names = Vec::new();
+
+  collect_assignments(prism, source, aliases, &mut names);
+
+  names
+}
+
+fn collect_assignments(node: &herb::prism::PrismNode, source: &str, aliases: &[String], names: &mut Vec<String>) {
+  if ASSIGNMENT_NODES.contains(&node.node_type.as_str()) {
+    if let Some(name) = node.name.as_ref() {
+      let assigns = node.children.iter().any(|child| {
+        source
+          .get(child.start_offset..child.end_offset)
+          .map(|right| references_any(right, aliases))
+          .unwrap_or(false)
+      });
+
+      if assigns && !names.contains(name) {
+        names.push(name.clone());
+      }
+    }
+  }
+
+  for child in &node.children {
+    collect_assignments(child, source, aliases, names);
+  }
 }
 
 fn collect_attributes(element: &herb::nodes::HTMLElementNode, aliases: &[String], path: &[usize], affected: &mut Vec<AffectedNode>) {
