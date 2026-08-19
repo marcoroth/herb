@@ -304,6 +304,19 @@ module Engine
         assert_empty subject.subtree_slots(entry, ["@nothing"])
       end
 
+      test "never calls a constant an identity once the map travels" do
+        entry = write("index.html.erb", "<div><%= Post.count %></div>")
+
+        assert_equal([:derived], subject.across(entry)["Post.count"].map { |slot| slot[:mode] })
+        assert_equal(["derived"], subject.payload(entry)["state"]["Post.count"].map { |slot| slot["mode"] })
+      end
+
+      test "leaves a constant out of the names a request can set" do
+        entry = write("index.html.erb", "<div><%= Post.count %></div>")
+
+        assert_empty subject.payload(entry)["params"]
+      end
+
       test "leaves a template that reaches nothing out of the map" do
         entry = write("index.html.erb", "<div>static</div>")
 
