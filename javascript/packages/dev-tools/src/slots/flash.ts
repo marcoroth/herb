@@ -43,9 +43,9 @@ export class SlotFlash {
     overlay.className = 'herb-slot-flash'
     label.className = 'herb-slot-flash'
 
-    overlay.style.cssText = `position:absolutez-index:2147483000pointer-events:nonetop:${rect.top + scrollY}pxleft:${rect.left + scrollX}pxwidth:${rect.width}pxheight:${rect.height}pxbackground:${colour}opacity:0.22outline:1px solid ${colour}transition:opacity ${SlotFlash.DURATION}ms ease-out`
+    overlay.style.cssText = `position:absolute;z-index:2147483000;pointer-events:none;top:${rect.top + scrollY}px;left:${rect.left + scrollX}px;width:${rect.width}px;height:${rect.height}px;background:${colour};opacity:0.22;outline:1px solid ${colour};transition:opacity ${SlotFlash.DURATION}ms ease-out`
 
-    label.style.cssText = `position:absolutez-index:2147483001pointer-events:nonetop:${Math.max(0, rect.top + scrollY - 18)}pxleft:${rect.left + scrollX}pxbackground:${colour}color:#ffffont:600 10px/1.6 ui-monospace,monospacepadding:0 5pxborder-radius:3pxwhite-space:nowraptransition:opacity ${SlotFlash.DURATION}ms ease-out`
+    label.style.cssText = `position:absolute;z-index:2147483001;pointer-events:none;top:${Math.max(0, rect.top + scrollY - 18)}px;left:${rect.left + scrollX}px;background:${colour};color:#fff;font:600 10px/1.6 ui-monospace,monospace;padding:0 5px;border-radius:3px;white-space:nowrap;transition:opacity ${SlotFlash.DURATION}ms ease-out`
     label.textContent = this.describe(detail)
 
     document.body.append(overlay, label)
