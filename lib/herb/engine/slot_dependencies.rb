@@ -32,8 +32,9 @@ module Herb
       STRUCTURAL_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
       PARTIAL_TYPES = [:attribute_interpolation].freeze #: Array[Symbol]
 
-      #: (String | Pathname) -> void
-      def initialize(project_path)
+      #: (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
+      def initialize(project_path, compile: nil)
+        @compile = compile
         @project_path = Pathname.new(project_path)
         @dependencies = Herb::Analysis::TemplateDependencies.new(project_path)
         @templates = {} #: Hash[String, Hash[Symbol, untyped]]
@@ -102,9 +103,12 @@ module Herb
         source = File.read(path)
         analysis = @dependencies.analyze(path)
         visitor = visitor_for(source, path)
+
+        return { version: nil, slots: {} } unless visitor.respond_to?(:slots)
+
         slots = visitor.slots
         wanted = names || state_names(analysis)
-        reached = reached_paths(source, wanted)
+        reached = reached_paths(visitor, source, wanted)
         settable = (analysis.instance_variables + analysis.locals_declared + (names || [])).to_set - analysis.constants.to_set
 
         index = {} #: Hash[Integer, Hash[Symbol, untyped]]
@@ -191,16 +195,18 @@ module Herb
 
       #: (String, String) -> untyped
       def visitor_for(source, path)
-        visitor = Herb::Engine::SlotVisitor.new
+        return @compile.call(source, path) if @compile
+
+        visitor = Herb::Engine::SlotVisitor.new(mark: false)
 
         Herb::Engine.new(source, visitors: [visitor], filename: path)
 
         visitor
       end
 
-      #: (String, Array[String]) -> Hash[String, Hash[Array[Integer], Array[String?]]]
-      def reached_paths(source, names)
-        ast = ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, track_whitespace: true).value
+      #: (untyped, String, Array[String]) -> Hash[String, Hash[Array[Integer], Array[String?]]]
+      def reached_paths(visitor, source, names)
+        ast = visitor.document || ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, track_whitespace: true).value
 
         reached = {} #: Hash[String, Hash[Array[Integer], Array[String?]]]
 

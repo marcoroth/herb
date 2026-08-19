@@ -2,6 +2,7 @@
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine/slot_dependencies"
+require_relative "../../../lib/herb/engine/debug_visitor"
 
 require "tmpdir"
 require "fileutils"
@@ -43,6 +44,77 @@ module Engine
       def page_with_partial
         write("_search.html.erb", %(<input value="<%= term %>"><p><%= term.upcase %></p>))
         write("index.html.erb", %(<div><%= @query %></div><%= render "posts/search", term: @query %>))
+      end
+
+      test "leaves out a template the host does not compile slots for" do
+        write("_plain.html.erb", "<div><%= card %></div>")
+        entry = write("index.html.erb", %(<div><%= @name %></div><%= render "posts/plain", card: @name %>))
+
+        compile = lambda { |source, file|
+          next nil if File.basename(file).start_with?("_")
+
+          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          Herb::Engine.new(source, visitors: [visitor], filename: file)
+          visitor
+        }
+
+        reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
+        files = reached.map { |slot| File.basename(slot[:file]) }.uniq
+
+        assert_includes files, "index.html.erb"
+        refute_includes files, "_plain.html.erb"
+      end
+
+      test "says nothing at all when the host compiles no slots anywhere" do
+        entry = write("index.html.erb", "<div><%= @name %></div>")
+
+        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
+
+        assert_empty subject.across(entry)
+        assert_empty subject.for(entry)
+        assert_nil subject.version_for(entry)
+      end
+
+      test "finds the same state when a visitor rewrote the tree first" do
+        template = %(<div><span><%= @name.presence || "x" %></span><p><%= @name.length %></p></div>)
+        path = File.join(@view_root, "index.html.erb")
+
+        File.write(path, template)
+
+        compile = lambda { |source, file|
+          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
+          visitor
+        }
+
+        rewritten = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).for(path)
+        plain = Herb::Engine::SlotDependencies.new(@project_path).for(path)
+
+        assert_equal plain.keys.sort, rewritten.keys.sort
+        assert_equal(plain.values.map { |slot| slot[:state] }, rewritten.values.map { |slot| slot[:state] })
+        refute_empty(rewritten.values.flat_map { |slot| slot[:state] })
+      end
+
+      test "builds the map the way the host compiles, so the versions agree" do
+        template = "<div><%= @name %></div>"
+        path = File.join(@view_root, "index.html.erb")
+
+        File.write(path, template)
+
+        marker = Herb::Engine::SlotVisitor.new
+        Herb::Engine.new(template, visitors: [Herb::Engine::DebugVisitor.new, marker], filename: path)
+
+        compile = lambda { |source, file|
+          visitor = Herb::Engine::SlotVisitor.new
+          Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
+          visitor
+        }
+
+        matching = Herb::Engine::SlotDependencies.new(@project_path, compile: compile)
+        bare = Herb::Engine::SlotDependencies.new(@project_path)
+
+        assert_equal marker.schema[:version], matching.version_for(path)
+        refute_equal marker.schema[:version], bare.version_for(path)
       end
 
       test "names the state a slot reads" do
