@@ -83,6 +83,8 @@ export class HerbOverlay {
     document.removeEventListener('turbo:render', this.handleTurboNavigation);
     document.removeEventListener('turbo:visit', this.handleTurboNavigation);
 
+    this.slotFlash.stop();
+
     this.errorOverlay?.destroy();
     this.errorOverlay = null;
 
