@@ -69,14 +69,6 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install
 
-      - name: Restore nx build artifacts
-        uses: actions/cache/restore@v6
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-
-
       - name: Build tailwind-class-sorter package
         env:
           RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
