@@ -461,6 +461,52 @@ class TemplateDependenciesTest < Minitest::Spec
     refute_includes affected, File.join(@view_root, "posts/_field.html.erb")
   end
 
+  test "affected_nodes follows state into a local assigned from it" do
+    path = write_template("posts/index.html.erb", "<% total = @items.size %><p><%= total %></p>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    assert_equal ["total = @items.size", "total"], expressions
+  end
+
+  test "affected_nodes follows state through a chain of assignments" do
+    path = write_template("posts/index.html.erb", "<% a = @items.size %><% b = a * 2 %><p><%= b %></p>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    assert_equal ["a = @items.size", "b = a * 2", "b"], expressions
+  end
+
+  test "affected_nodes leaves a local assigned from something else" do
+    path = write_template("posts/index.html.erb", "<% other = 5 %><p><%= other %></p>")
+
+    assert_empty analyzer.affected_nodes(path, "@items")
+  end
+
+  test "affected_nodes does not take a comparison for an assignment" do
+    path = write_template("posts/index.html.erb", "<% if @items == other %><p><%= other %></p><% end %>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    assert_equal ["if @items == other"], expressions
+  end
+
+  test "affected_nodes stops a local assigned inside a block at the end of it" do
+    path = write_template("posts/index.html.erb", "<% @rows.each do |r| %><% inner = r.x %><%= inner %><% end %><%= inner %>")
+
+    expressions = analyzer.affected_nodes(path, "@rows").map { |node| node[:expression] }
+
+    assert_equal ["@rows.each do |r|", "inner = r.x", "inner"], expressions
+  end
+
+  test "dependency_index reports what a partial's declared locals reach" do
+    path = write_template("posts/_card.html.erb", "<%# locals: (query:, page: 1) %>\n<p><%= query %></p><span><%= page %></span>")
+
+    index = analyzer.dependency_index(path)
+
+    assert_equal ["page", "query"], index.keys.sort
+  end
+
   test "affected_nodes follows state through a block parameter" do
     path = write_template("posts/index.html.erb", "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>")
 

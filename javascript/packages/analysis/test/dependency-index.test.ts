@@ -15,6 +15,34 @@ describe("dependencyIndex", () => {
     return dependencyIndex(Herb, FILE, source)
   }
 
+  test("follows state into a local assigned from it", () => {
+    const nodes = affectedNodes(Herb, `<% total = @items.size %><p><%= total %></p>`, "@items")
+
+    expect(nodes.map(node => node.expression)).toEqual(["total = @items.size", "total"])
+  })
+
+  test("follows state through a chain of assignments", () => {
+    const nodes = affectedNodes(Herb, `<% a = @items.size %><% b = a * 2 %><p><%= b %></p>`, "@items")
+
+    expect(nodes.map(node => node.expression)).toEqual(["a = @items.size", "b = a * 2", "b"])
+  })
+
+  test("leaves a local assigned from something else", () => {
+    expect(affectedNodes(Herb, `<% other = 5 %><p><%= other %></p>`, "@items")).toEqual([])
+  })
+
+  test("does not take a comparison for an assignment", () => {
+    const nodes = affectedNodes(Herb, `<% if @items == other %><p><%= other %></p><% end %>`, "@items")
+
+    expect(nodes.map(node => node.expression)).toEqual(["if @items == other"])
+  })
+
+  test("stops a local assigned inside a block at the end of it", () => {
+    const nodes = affectedNodes(Herb, `<% @rows.each do |r| %><% inner = r.x %><%= inner %><% end %><%= inner %>`, "@rows")
+
+    expect(nodes.map(node => node.expression)).toEqual(["@rows.each do |r|", "inner = r.x", "inner"])
+  })
+
   test("follows state through a block parameter", () => {
     const nodes = affectedNodes(Herb, `<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>`, "@items")
 

@@ -95,7 +95,7 @@ module Herb
 
         index = {} #: Hash[String, Array[Hash[Symbol, untyped]]]
 
-        (result.instance_variables + result.constants).each do |state|
+        (result.instance_variables + result.constants + result.locals_declared).each do |state|
           nodes = affected_nodes(file_path, state)
           index[state] = nodes if nodes.any?
         end

@@ -348,3 +348,56 @@ fn reports_what_the_ruby_collector_reports() {
     reported
   );
 }
+
+fn expressions_for(name: &str, template: &str, state: &str) -> Vec<String> {
+  let project = Project::new(name);
+  let entry = project.write("app/views/posts/index.html.erb", template);
+
+  project
+    .flow()
+    .affected_nodes(&entry, state)
+    .into_iter()
+    .filter_map(|node| node.expression)
+    .collect()
+}
+
+#[test]
+fn follows_state_into_a_local_assigned_from_it() {
+  assert_eq!(
+    vec!["total = @items.size".to_string(), "total".to_string()],
+    expressions_for("assign_simple", "<% total = @items.size %><p><%= total %></p>", "@items")
+  );
+}
+
+#[test]
+fn follows_state_through_a_chain_of_assignments() {
+  assert_eq!(
+    vec!["a = @items.size".to_string(), "b = a * 2".to_string(), "b".to_string()],
+    expressions_for("assign_chain", "<% a = @items.size %><% b = a * 2 %><p><%= b %></p>", "@items")
+  );
+}
+
+#[test]
+fn leaves_a_local_assigned_from_something_else() {
+  assert!(expressions_for("assign_unrelated", "<% other = 5 %><p><%= other %></p>", "@items").is_empty());
+}
+
+#[test]
+fn does_not_take_a_comparison_for_an_assignment() {
+  assert_eq!(
+    vec!["if @items == other".to_string()],
+    expressions_for("assign_comparison", "<% if @items == other %><p><%= other %></p><% end %>", "@items")
+  );
+}
+
+#[test]
+fn stops_a_local_assigned_inside_a_block_at_the_end_of_it() {
+  assert_eq!(
+    vec!["@rows.each do |r|".to_string(), "inner = r.x".to_string(), "inner".to_string()],
+    expressions_for(
+      "assign_scope",
+      "<% @rows.each do |r| %><% inner = r.x %><%= inner %><% end %><%= inner %>",
+      "@rows"
+    )
+  );
+}

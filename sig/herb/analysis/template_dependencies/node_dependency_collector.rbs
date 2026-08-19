@@ -8,6 +8,8 @@ module Herb
 
         BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
+        ASSIGNMENT_NODES: Array[untyped]
+
         attr_reader affected: untyped
 
         def initialize: (untyped state, untyped helper_registry, untyped custom_helpers, ?conditions_only: untyped) -> untyped
@@ -47,6 +49,14 @@ module Herb
         def check_block_for_state: (untyped node, untyped type) -> untyped
 
         def visit_branching_node: (untyped node) -> untyped
+
+        def bind_assignments: (untyped node) -> untyped
+
+        def assigned_names: (untyped code) -> untyped
+
+        def collect_assignments: (untyped node, untyped names) -> untyped
+
+        def right_hand_side: (untyped node) -> untyped
 
         def bindings_for: (untyped node) -> untyped
 

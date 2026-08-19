@@ -38,6 +38,39 @@ function referencesAny(code: string | undefined, aliases: string[]): boolean {
   return aliases.some(alias => referencesState(code, alias))
 }
 
+const ASSIGNMENT_NODES = new Set([
+  "LocalVariableWriteNode",
+  "LocalVariableOrWriteNode",
+  "LocalVariableAndWriteNode",
+  "LocalVariableOperatorWriteNode",
+])
+
+function assignedNames(node: Node, source: string, aliases: string[]): string[] {
+  const prism = (node as { prismNode?: unknown }).prismNode as any
+
+  if (!prism) return []
+
+  const names: string[] = []
+
+  const walk = (candidate: any) => {
+    if (!candidate) return
+
+    if (ASSIGNMENT_NODES.has(candidate.constructor?.name) && candidate.value?.location) {
+      const { startOffset, length } = candidate.value.location
+      const right = source.slice(startOffset, startOffset + length)
+      const name = String(candidate.name)
+
+      if (referencesAny(right, aliases) && !names.includes(name)) names.push(name)
+    }
+
+    for (const child of candidate.compactChildNodes?.() ?? []) walk(child)
+  }
+
+  walk(prism)
+
+  return names
+}
+
 function blockBindings(node: Node, aliases: string[]): string[] {
   if (!isERBBlockNode(node)) return []
   if (!referencesAny(expressionOf(node), aliases)) return []
@@ -164,6 +197,13 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
       record(node, "expression", expressionOf(node))
     }
 
+    if (isERBContentNode(node)) {
+      for (const name of assignedNames(node, source, aliases)) {
+        if (!aliases.includes(name)) aliases.push(name)
+      }
+    }
+
+    const outer = [...aliases]
     const bound = blockBindings(node, aliases)
 
     aliases.push(...bound)
@@ -174,7 +214,7 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
       path.pop()
     }
 
-    for (const name of bound) aliases.splice(aliases.indexOf(name), 1)
+    if (bound.length > 0) aliases.splice(0, aliases.length, ...outer)
   }
 
   for (const [index, child] of childrenOf(document).entries()) {
@@ -190,7 +230,7 @@ export function dependencyIndex(backend: HerbBackend, file: string, source: stri
   const dependencies = collectTemplateDependencies(backend, file, source, options)
   const index: Record<string, AffectedNode[]> = {}
 
-  for (const state of [...dependencies.instanceVariables, ...dependencies.constants]) {
+  for (const state of [...dependencies.instanceVariables, ...dependencies.constants, ...dependencies.localsDeclared]) {
     const nodes = affectedNodes(backend, source, state)
 
     if (nodes.length > 0) index[state] = nodes

@@ -8,6 +8,12 @@ module Herb
       class NodeDependencyCollector < ::Herb::Visitor
         BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
         BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
+        ASSIGNMENT_NODES = [
+          Prism::LocalVariableWriteNode,
+          Prism::LocalVariableOrWriteNode,
+          Prism::LocalVariableAndWriteNode,
+          Prism::LocalVariableOperatorWriteNode,
+        ].freeze #: Array[untyped]
 
         attr_reader :affected
 
@@ -42,6 +48,8 @@ module Herb
 
         def visit_erb_content_node(node)
           check_erb_expression(node, :text_content)
+
+          bind_assignments(node)
         end
 
         def visit_erb_if_node(node)
@@ -125,8 +133,9 @@ module Herb
         end
 
         def visit_branching_node(node)
-          bound = bindings_for(node)
-          @aliases.merge(bound)
+          outer = @aliases.dup
+
+          @aliases.merge(bindings_for(node))
 
           BRANCH_BODY_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
@@ -143,7 +152,44 @@ module Herb
             visit(child)
           end
         ensure
-          @aliases.subtract(bound) if bound
+          @aliases.replace(outer) if outer
+        end
+
+        def bind_assignments(node)
+          code = node.content&.value&.strip
+
+          return unless code
+
+          assigned_names(code).each { |name| @aliases.add(name) }
+        end
+
+        def assigned_names(code)
+          result = Prism.parse(code)
+
+          return [] if result.errors.any?
+
+          names = [] #: Array[String]
+          collect_assignments(result.value, names)
+
+          names
+        end
+
+        def collect_assignments(node, names)
+          if ASSIGNMENT_NODES.any? { |type| node.is_a?(type) }
+            right = right_hand_side(node)
+
+            names << node.name.to_s if right && references_state?(right)
+          end
+
+          node.child_nodes.compact.each { |child| collect_assignments(child, names) }
+        end
+
+        def right_hand_side(node)
+          return nil unless node.respond_to?(:value)
+
+          value = node.value #: untyped
+
+          value&.slice
         end
 
         def bindings_for(node)
