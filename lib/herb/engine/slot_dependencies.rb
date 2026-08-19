@@ -105,7 +105,7 @@ module Herb
         slots = visitor.slots
         wanted = names || state_names(analysis)
         reached = reached_paths(source, wanted)
-        settable = (analysis.instance_variables + analysis.locals_declared + (names || [])).to_set
+        settable = (analysis.instance_variables + analysis.locals_declared + (names || [])).to_set - analysis.constants.to_set
 
         index = {} #: Hash[Integer, Hash[Symbol, untyped]]
 
