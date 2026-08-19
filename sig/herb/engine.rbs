@@ -19,6 +19,9 @@ module Herb
     # : () -> String
     def relative_file_path: () -> String
 
+    # : (String) -> String
+    def string_literal: (String) -> String
+
     ESCAPE_TABLE: untyped
 
     def initialize: (untyped input, ?untyped properties) -> untyped
@@ -73,6 +76,21 @@ module Herb
     def terminate_expression: () -> untyped
 
     private
+
+    # : (Hash[Symbol, untyped]) -> bool
+    def buffer_required?: (Hash[Symbol, untyped]) -> bool
+
+    # : (untyped) -> String?
+    def compile_static_body: (untyped) -> String?
+
+    # : () -> Array[Herb::Diagnostic]
+    def collected_diagnostics: () -> Array[Herb::Diagnostic]
+
+    # : (Hash[Symbol, untyped], String) -> void
+    def write_buffer_prelude: (Hash[Symbol, untyped], String) -> void
+
+    # : () -> void
+    def insert_herb_alias!: () -> void
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 

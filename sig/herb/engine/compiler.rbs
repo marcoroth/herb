@@ -19,6 +19,10 @@ module Herb
 
       def initialize: (untyped engine, ?untyped options) -> untyped
 
+      def optimized_tokens: () -> untyped
+
+      def static_template_text: () -> untyped
+
       def generate_output: () -> untyped
 
       def visit_document_node: (untyped node) -> untyped
