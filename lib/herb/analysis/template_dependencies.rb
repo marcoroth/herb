@@ -77,7 +77,7 @@ module Herb
         file_path = @project_path.join(file_path).to_s unless Pathname.new(file_path).absolute?
         source = File.read(file_path)
 
-        ast = ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, track_whitespace: true).value
+        ast = ::Herb.parse(source, render_nodes: true, strict_locals: true, prism_nodes: true, track_whitespace: true, iteration_nodes: true).value
 
         nodes_in(ast, state, conditions_only: conditions_only)
       end

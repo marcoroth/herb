@@ -461,6 +461,14 @@ class TemplateDependenciesTest < Minitest::Spec
     refute_includes affected, File.join(@view_root, "posts/_field.html.erb")
   end
 
+  test "affected_nodes tells a loop apart from a block that runs once" do
+    loop_path = write_template("posts/index.html.erb", "<ul><% @items.each do |i| %><li><%= i %></li><% end %></ul>")
+    form_path = write_template("posts/form.html.erb", "<% form_with model: @post do |f| %><%= f.label %><% end %>")
+
+    assert_equal :iteration, analyzer.affected_nodes(loop_path, "@items").first[:type]
+    assert_equal :expression, analyzer.affected_nodes(form_path, "@post").first[:type]
+  end
+
   test "affected_nodes follows state into a local assigned from it" do
     path = write_template("posts/index.html.erb", "<% total = @items.size %><p><%= total %></p>")
 

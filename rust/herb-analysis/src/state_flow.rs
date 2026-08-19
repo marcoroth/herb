@@ -90,6 +90,7 @@ impl StateFlow {
       strict_locals: true,
       prism_nodes: true,
       track_whitespace: true,
+      iteration_nodes: true,
       ..Default::default()
     };
 
@@ -308,7 +309,7 @@ fn collect_affected(node: &AnyNode, source: &str, aliases: &mut Vec<String>, pat
     AnyNode::ERBCaseNode(_) => Some("conditional"),
     AnyNode::ERBRenderNode(_) => Some("render"),
     AnyNode::ERBBlockNode(_) => Some("expression"),
-    AnyNode::ERBIterationBlockNode(_) => Some("expression"),
+    AnyNode::ERBIterationBlockNode(_) => Some("iteration"),
     _ => None,
   };
 
@@ -500,6 +501,7 @@ fn any_children(node: &AnyNode) -> Vec<&AnyNode> {
     AnyNode::ERBUnlessNode(inner) => inner.statements.iter().collect(),
     AnyNode::ERBCaseNode(inner) => inner.children.iter().collect(),
     AnyNode::ERBBlockNode(inner) => inner.body.iter().collect(),
+    AnyNode::ERBIterationBlockNode(inner) => inner.body.iter().collect(),
     AnyNode::ERBRenderNode(inner) => inner.body.iter().collect(),
     _ => Vec::new(),
   }

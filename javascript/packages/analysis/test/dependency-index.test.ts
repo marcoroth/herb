@@ -43,6 +43,14 @@ describe("dependencyIndex", () => {
     expect(nodes.map(node => node.expression)).toEqual(["@rows.each do |r|", "inner = r.x", "inner"])
   })
 
+  test("tells a loop apart from a block that runs once", () => {
+    const loops = affectedNodes(Herb, `<ul><% @items.each do |i| %><li><%= i %></li><% end %></ul>`, "@items")
+    const form = affectedNodes(Herb, `<% form_with model: @post do |f| %><%= f.label %><% end %>`, "@post")
+
+    expect(loops[0].kind).toBe("iteration")
+    expect(form[0].kind).toBe("expression")
+  })
+
   test("follows state through a block parameter", () => {
     const nodes = affectedNodes(Herb, `<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>`, "@items")
 
@@ -75,7 +83,7 @@ describe("dependencyIndex", () => {
     const nodes = affectedNodes(Herb, `<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>`, "@items")
 
     expect(nodes.map(node => [node.kind, node.nodePath, node.expression])).toEqual([
-      ["expression", [0, 0], "@items.each do |item|"],
+      ["iteration", [0, 0], "@items.each do |item|"],
       ["text_content", [0, 0, 0, 0], "item.name"],
     ])
   })

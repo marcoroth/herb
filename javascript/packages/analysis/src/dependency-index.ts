@@ -1,12 +1,12 @@
 import { collectTemplateDependencies } from "./template-dependencies"
-import { isERBBlockNode, isERBCaseNode, isERBContentNode, isERBIfNode, isERBRenderNode, isERBUnlessNode, isHTMLAttributeNode, isHTMLElementNode, isLiteralNode, isRubyParameterNode } from "@herb-tools/core"
+import { isERBBlockNode, isERBCaseNode, isERBContentNode, isERBIfNode, isERBIterationBlockNode, isERBRenderNode, isERBUnlessNode, isHTMLAttributeNode, isHTMLElementNode, isLiteralNode, isRubyParameterNode } from "@herb-tools/core"
 
-const PARSER_OPTIONS = { render_nodes: true, strict_locals: true, prism_nodes: true, prism_program: true, track_whitespace: true }
+const PARSER_OPTIONS = { render_nodes: true, strict_locals: true, prism_nodes: true, prism_program: true, track_whitespace: true, iteration_nodes: true }
 
 import type { DependencyOptions } from "./template-dependencies"
 import type { DocumentNode, HTMLAttributeNode, HerbBackend, Node, Token } from "@herb-tools/core"
 
-export type AffectedNodeKind = "text_content" | "conditional" | "render" | "attribute_value" | "expression"
+export type AffectedNodeKind = "text_content" | "conditional" | "render" | "attribute_value" | "expression" | "iteration"
 
 export interface AffectedNode {
   nodePath: number[]
@@ -72,7 +72,7 @@ function assignedNames(node: Node, source: string, aliases: string[]): string[] 
 }
 
 function blockBindings(node: Node, aliases: string[]): string[] {
-  if (!isERBBlockNode(node)) return []
+  if (!isERBBlockNode(node) && !isERBIterationBlockNode(node)) return []
   if (!referencesAny(expressionOf(node), aliases)) return []
 
   const names: string[] = []
@@ -101,7 +101,7 @@ function childrenOf(node: Node): Node[] {
     ? node.body
     : isERBIfNode(node) || isERBUnlessNode(node)
       ? node.statements
-      : isERBBlockNode(node)
+      : isERBBlockNode(node) || isERBIterationBlockNode(node)
         ? node.body
         : node.childNodes()
 
@@ -193,6 +193,8 @@ export function affectedNodes(backend: HerbBackend, source: string, state: strin
       record(node, "text_content", expressionOf(node))
     } else if (isERBRenderNode(node) && referencesAny(expressionOf(node), aliases)) {
       record(node, "render", expressionOf(node))
+    } else if (isERBIterationBlockNode(node) && referencesAny(expressionOf(node), aliases)) {
+      record(node, "iteration", expressionOf(node))
     } else if (isERBBlockNode(node) && referencesAny(expressionOf(node), aliases)) {
       record(node, "expression", expressionOf(node))
     }
