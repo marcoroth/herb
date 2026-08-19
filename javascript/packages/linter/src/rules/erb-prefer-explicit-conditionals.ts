@@ -2,14 +2,14 @@ import { ParserRule, BaseAutofixContext } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import { findParentArray, isERBContentNode, isERBIfNode } from "@herb-tools/core"
+import { findParentArray, isERBContentNode, isERBIfNode, isHTMLTextNode, isLiteralNode } from "@herb-tools/core"
 
 import type { Mutable } from "@herb-tools/rewriter"
 import type { ERBContentNode, ERBIfNode, ERBUnlessNode, Node, ParseResult, ParserOptions } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, LintOffense, UnboundLintOffense } from "../types.js"
 
 interface PreferExplicitConditionalsAutofixContext extends BaseAutofixContext {
-  node: Mutable<ERBContentNode>
+  node: Mutable<ERBIfNode> | Mutable<ERBUnlessNode>
   replacement: ERBIfNode | ERBUnlessNode
 }
 
@@ -30,15 +30,14 @@ function isInlineConditional(node: ERBIfNode | ERBUnlessNode): boolean {
   return true
 }
 
-function autofixableBody(node: ERBIfNode | ERBUnlessNode): ERBContentNode | null {
-  if (node.statements.length !== 1) return null
+function isAutofixable(node: ERBIfNode | ERBUnlessNode): boolean {
+  if (node.statements.length > 1) return false
 
   const [body] = node.statements
 
-  if (!isERBContentNode(body)) return null
-  if (body.tag_closing?.value !== "%>") return null
+  if (body === undefined) return true
 
-  return body
+  return isERBContentNode(body) || isLiteralNode(body) || isHTMLTextNode(body)
 }
 
 class PreferExplicitConditionalsVisitor extends BaseRuleVisitor<PreferExplicitConditionalsAutofixContext> {
@@ -58,10 +57,9 @@ class PreferExplicitConditionalsVisitor extends BaseRuleVisitor<PreferExplicitCo
     if (!isInlineConditional(node)) return
 
     const suggestion = IdentityPrinter.print(node).replace(/\s*\n\s*/g, " ")
-    const body = autofixableBody(node)
 
-    const autofixContext = body
-      ? { node: body as Mutable<ERBContentNode>, replacement: node }
+    const autofixContext = isAutofixable(node)
+      ? { node: node as Mutable<ERBIfNode | ERBUnlessNode>, nodeType: "AST_ERB_CONTENT_NODE", replacement: node }
       : undefined
 
     this.addOffense(
@@ -102,7 +100,12 @@ export class ERBPreferExplicitConditionalsRule extends ParserRule<PreferExplicit
     if (!offense.autofixContext) return null
 
     const { node, replacement } = offense.autofixContext
-    const parentInfo = findParentArray(result.value, node as unknown as ERBContentNode)
+    const original = node as unknown as ERBContentNode
+
+    if (!isERBContentNode(original)) return null
+    if (original.tag_closing?.value !== "%>") return null
+
+    const parentInfo = findParentArray(result.value, original)
 
     if (!parentInfo) return null
 
