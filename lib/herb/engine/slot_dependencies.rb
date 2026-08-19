@@ -145,7 +145,11 @@ module Herb
         name = File.basename(child.file).delete_prefix("_").split(".").first
 
         @dependencies.analyze(parent.file).render_calls.any? { |call|
-          call[:collection] && call[:partial] && File.basename(call[:partial].to_s) == name
+          next false unless call[:partial] && File.basename(call[:partial].to_s) == name
+
+          blocks = call[:within] || [] #: Array[Hash[Symbol, untyped]]
+
+          !!call[:collection] || blocks.any? { |enclosing| enclosing[:iterating] }
         }
       end
 

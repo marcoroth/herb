@@ -22,6 +22,15 @@ module Herb
           @unknown_calls = Set.new
           @known_locals = prescanned_locals.dup
           @render_calls = [] #: Array[Hash[Symbol, untyped]]
+          @blocks = [] #: Array[Hash[Symbol, untyped]]
+        end
+
+        def visit_erb_iteration_block_node(node)
+          within_block(node, iterating: true) { super }
+        end
+
+        def visit_erb_block_node(node)
+          within_block(node, iterating: false) { super }
         end
 
         def visit_erb_node(node)
@@ -51,7 +60,8 @@ module Herb
               partial: node.partial_path,
               locals: locals,
               collection: node.keywords&.collection&.value,
-              as_name: node.keywords&.as_name&.value&.strip&.delete_prefix(":")&.delete_prefix('"')&.delete_suffix('"')
+              as_name: node.keywords&.as_name&.value&.strip&.delete_prefix(":")&.delete_prefix('"')&.delete_suffix('"'),
+              within: @blocks.map(&:dup)
             }
           end
 
@@ -83,6 +93,36 @@ module Herb
           end
         rescue StandardError
           nil
+        end
+
+        #: (untyped, iterating: bool) { () -> void } -> void
+        def within_block(node, iterating:)
+          expression = node.content&.value&.strip
+
+          @blocks.push({ expression: expression, parameters: block_parameters(expression), iterating: iterating })
+
+          yield
+        ensure
+          @blocks.pop
+        end
+
+        def block_parameters(code)
+          return [] unless code
+
+          result = Prism.parse("#{code}\nend")
+
+          return [] if result.errors.any?
+
+          names = [] #: Array[String]
+          collect_parameters(result.value, names)
+
+          names
+        end
+
+        def collect_parameters(node, names)
+          names << node.name.to_s if node.is_a?(Prism::RequiredParameterNode) || node.is_a?(Prism::BlockParameterNode)
+
+          node.child_nodes.compact.each { |child| collect_parameters(child, names) }
         end
 
         def analyze_ruby_expression(code)

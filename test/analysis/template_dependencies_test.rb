@@ -423,6 +423,44 @@ class TemplateDependenciesTest < Minitest::Spec
     assert_equal "class", attr_node[:attribute]
   end
 
+  test "traces state into a partial rendered inside an each block" do
+    write_template("posts/_card.html.erb", "<div><%= card.title %></div>")
+    entry = write_template("posts/index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+    affected = analyzer.affected_templates(entry, "@posts")
+
+    assert_includes affected, File.join(@view_root, "posts/_card.html.erb")
+  end
+
+  test "names the local an each block's partial received the state as" do
+    write_template("posts/_card.html.erb", "<div><%= card.title %></div>")
+    entry = write_template("posts/index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+    flow = analyzer.state_flow(entry, "@posts")
+    child = flow.children.find { |node| File.basename(node.file) == "_card.html.erb" }
+
+    assert child
+    assert_includes child.names.to_a, "card"
+  end
+
+  test "does not trace a block parameter used after its block closed" do
+    write_template("posts/_card.html.erb", "<div><%= card.title %></div>")
+    entry = write_template("posts/index.html.erb", %(<% @posts.each do |post| %><% end %><%= render "posts/card", card: post %>))
+
+    affected = analyzer.affected_templates(entry, "@posts")
+
+    refute_includes affected, File.join(@view_root, "posts/_card.html.erb")
+  end
+
+  test "does not trace state through a block that runs once" do
+    write_template("posts/_field.html.erb", "<div><%= card %></div>")
+    entry = write_template("posts/index.html.erb", %(<% form_with model: @post do |f| %><%= render "posts/field", card: f %><% end %>))
+
+    affected = analyzer.affected_templates(entry, "@post")
+
+    refute_includes affected, File.join(@view_root, "posts/_field.html.erb")
+  end
+
   test "affected_nodes follows state through a block parameter" do
     path = write_template("posts/index.html.erb", "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>")
 

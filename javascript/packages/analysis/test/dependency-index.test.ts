@@ -15,6 +15,43 @@ describe("dependencyIndex", () => {
     return dependencyIndex(Herb, FILE, source)
   }
 
+  test("follows state through a block parameter", () => {
+    const nodes = affectedNodes(Herb, `<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>`, "@items")
+
+    expect(nodes.map(node => node.expression)).toContain("item.name")
+  })
+
+  test("follows state through every parameter a block binds", () => {
+    const nodes = affectedNodes(Herb, `<ul><% @rows.each_with_index do |row, i| %><li><%= i %>: <%= row.title %></li><% end %></ul>`, "@rows")
+    const expressions = nodes.map(node => node.expression)
+
+    expect(expressions).toContain("row.title")
+    expect(expressions).toContain("i")
+  })
+
+  test("leaves an expression a block parameter does not reach", () => {
+    const nodes = affectedNodes(Herb, `<div><% @items.each do |item| %><%= other %><% end %></div>`, "@items")
+
+    expect(nodes.map(node => node.expression)).not.toContain("other")
+  })
+
+  test("stops a block parameter at the end of its block", () => {
+    const nodes = affectedNodes(Herb, `<div><% @items.each do |item| %><%= item.name %><% end %><%= item %></div>`, "@items")
+    const expressions = nodes.map(node => node.expression)
+
+    expect(expressions.filter(code => code === "item.name")).toHaveLength(1)
+    expect(expressions.filter(code => code === "item")).toHaveLength(0)
+  })
+
+  test("reports what the Ruby collector reports", () => {
+    const nodes = affectedNodes(Herb, `<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>`, "@items")
+
+    expect(nodes.map(node => [node.kind, node.nodePath, node.expression])).toEqual([
+      ["expression", [0, 0], "@items.each do |item|"],
+      ["text_content", [0, 0, 0, 0], "item.name"],
+    ])
+  })
+
   test("does not confuse a state name with a longer one", () => {
     const nodes = affectedNodes(Herb, `<div><%= @post.title %></div><div><%= @posts.count %></div>`, "@post")
 

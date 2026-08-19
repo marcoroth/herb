@@ -109,6 +109,8 @@ module Herb
 
       def partial_index: () -> untyped
 
+      def iterated_names: (untyped call, untyped carrying) -> untyped
+
       def expression_references?: (untyped expression, untyped name) -> untyped
 
       def extract_helper_methods: (untyped file) -> untyped
