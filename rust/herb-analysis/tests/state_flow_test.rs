@@ -319,7 +319,7 @@ fn records_a_block_the_way_ruby_does() {
   let entry = project.write("app/views/posts/index.html.erb", "<ul><% @items.each do |item| %><li>x</li><% end %></ul>");
 
   let nodes = project.flow().affected_nodes(&entry, "@items");
-  let block = nodes.iter().find(|node| node.kind == "expression");
+  let block = nodes.iter().find(|node| node.kind == "iteration");
 
   assert!(block.is_some(), "got {nodes:?}");
   assert_eq!(vec![0, 0], block.unwrap().node_path);
@@ -342,7 +342,7 @@ fn reports_what_the_ruby_collector_reports() {
 
   assert_eq!(
     vec![
-      ("expression".to_string(), vec![0, 0], Some("@items.each do |item|".to_string())),
+      ("iteration".to_string(), vec![0, 0], Some("@items.each do |item|".to_string())),
       ("text_content".to_string(), vec![0, 0, 0, 0], Some("item.name".to_string())),
     ],
     reported
@@ -400,4 +400,14 @@ fn stops_a_local_assigned_inside_a_block_at_the_end_of_it() {
       "@rows"
     )
   );
+}
+
+#[test]
+fn tells_a_loop_apart_from_a_block_that_runs_once() {
+  let project = Project::new("iteration_kind");
+  let loops = project.write("app/views/posts/index.html.erb", "<ul><% @items.each do |i| %><li><%= i %></li><% end %></ul>");
+  let form = project.write("app/views/posts/form.html.erb", "<% form_with model: @post do |f| %><%= f.label %><% end %>");
+
+  assert_eq!("iteration", project.flow().affected_nodes(&loops, "@items")[0].kind);
+  assert_eq!("expression", project.flow().affected_nodes(&form, "@post")[0].kind);
 }

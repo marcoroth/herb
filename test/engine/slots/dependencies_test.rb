@@ -75,6 +75,35 @@ module Engine
         assert_nil subject.version_for(entry)
       end
 
+      test "leaves out a template the host does not compile slots for" do
+        write("_plain.html.erb", "<div><%= card %></div>")
+        entry = write("index.html.erb", %(<div><%= @name %></div><%= render "posts/plain", card: @name %>))
+
+        compile = lambda { |source, file|
+          next nil if File.basename(file).start_with?("_")
+
+          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          Herb::Engine.new(source, visitors: [visitor], filename: file)
+          visitor
+        }
+
+        reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
+        files = reached.map { |slot| File.basename(slot[:file]) }.uniq
+
+        assert_includes files, "index.html.erb"
+        refute_includes files, "_plain.html.erb"
+      end
+
+      test "says nothing at all when the host compiles no slots anywhere" do
+        entry = write("index.html.erb", "<div><%= @name %></div>")
+
+        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
+
+        assert_empty subject.across(entry)
+        assert_empty subject.for(entry)
+        assert_nil subject.version_for(entry)
+      end
+
       test "finds the same state when a visitor rewrote the tree first" do
         template = %(<div><span><%= @name.presence || "x" %></span><p><%= @name.length %></p></div>)
         path = File.join(@view_root, "index.html.erb")

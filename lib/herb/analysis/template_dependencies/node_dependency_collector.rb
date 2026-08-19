@@ -79,7 +79,7 @@ module Herb
         end
 
         def visit_erb_iteration_block_node(node)
-          check_erb_expression(node, :expression)
+          check_erb_expression(node, :iteration)
 
           visit_branching_node(node)
         end
