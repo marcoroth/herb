@@ -28,9 +28,17 @@ module Herb
         @current_element_source = nil
       end
 
-      def generate_output
-        optimized_tokens = optimize_tokens(@tokens)
+      def optimized_tokens
+        @optimized_tokens ||= optimize_tokens(@tokens)
+      end
 
+      def static_template_text
+        return unless optimized_tokens.all? { |token| token[0] == :text }
+
+        optimized_tokens.map { |token| token[1] }.join
+      end
+
+      def generate_output
         optimized_tokens.each do |type, value, context, escaped|
           case type
           when :text
