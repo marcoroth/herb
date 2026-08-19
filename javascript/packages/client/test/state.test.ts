@@ -175,6 +175,58 @@ describe("writing before the server answers", () => {
   })
 })
 
+describe("a page that waits for the server", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+    window.history.replaceState({}, "", "/posts")
+  })
+
+  test("writes what it can before the debounce, not after it", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, { debounce: 50, transport: async () => null })
+
+    state.adopt()
+
+    const pending = state.set("name", "Ada")
+
+    expect(text(0, slots)).toBe("Ada")
+
+    await pending
+  })
+
+  test("counts every write it made across a debounced burst" , async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, { debounce: 50, transport: async () => null })
+
+    state.adopt()
+
+    state.set("name", "A")
+    const report = await state.set("name", "Ada")
+
+    expect(text(0, slots)).toBe("Ada")
+    expect(report.written).toBeGreaterThan(0)
+  })
+
+  test("puts back the value the page had before the burst, not the one mid-burst", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, {
+      debounce: 20,
+      transport: async () => {
+        throw new Error("offline")
+      },
+    })
+
+    state.adopt()
+
+    state.set("name", "A")
+    const report = await state.set("name", "Ada")
+
+    expect(report.failed).toBe(true)
+    expect(text(0, slots)).toBe("Marco")
+    expect(state.get("name")).toBeUndefined()
+  })
+})
+
 describe("reconciling with the server", () => {
   beforeEach(() => {
     document.body.innerHTML = ""

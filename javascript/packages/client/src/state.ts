@@ -59,6 +59,8 @@ export class SlotState {
   readonly #options: Required<Omit<StateOptions, "transport">> & { transport: StateTransport }
 
   #pending = new Map<string, string>()
+  #restores: Restore[] = []
+  #previous = new Map<string, string | undefined>()
   #waiting: ((report: StateReport) => void)[] = []
   #timer: ReturnType<typeof setTimeout> | null = null
   #controller: AbortController | null = null
@@ -152,11 +154,18 @@ export class SlotState {
 
   set(key: string | Record<string, string>, value?: string): Promise<StateReport> {
     const changes = typeof key === "string" ? { [key]: value ?? "" } : key
+    const changed = Object.keys(changes)
 
     for (const [name, next] of Object.entries(changes)) {
       this.#pending.set(name, next)
       this.#sequence.set(name, (this.#sequence.get(name) ?? 0) + 1)
+
+      if (!this.#previous.has(name)) this.#previous.set(name, this.#values.get(name))
+
+      this.#values.set(name, next)
     }
+
+    this.#restores.push(...this.#optimistic(changed))
 
     if (this.#options.debounce <= 0) return this.#flush()
 
@@ -173,18 +182,17 @@ export class SlotState {
 
   async #flush(): Promise<StateReport> {
     const changes = this.#pending
+    const restores = this.#restores
+    const previous = this.#previous
 
     this.#pending = new Map()
+    this.#restores = []
+    this.#previous = new Map()
 
     if (changes.size === 0) return this.#settle(IDLE)
 
     const changed = [...changes.keys()]
     const taken = new Map(changed.map((name) => [name, this.#sequence.get(name) ?? 0]))
-    const previous = new Map(changed.map((name) => [name, this.#values.get(name)]))
-
-    for (const [name, next] of changes) this.#values.set(name, next)
-
-    const restores = this.#optimistic(changed)
 
     this.#controller?.abort()
     this.#controller = new AbortController()
