@@ -79,7 +79,7 @@ module Engine
         write("_plain.html.erb", "<div><%= card %></div>")
         entry = write("index.html.erb", %(<div><%= @name %></div><%= render "posts/plain", card: @name %>))
 
-        compile = ->(source, file) {
+        compile = lambda { |source, file|
           next nil if File.basename(file).start_with?("_")
 
           visitor = Herb::Engine::SlotVisitor.new(mark: false)
@@ -97,7 +97,7 @@ module Engine
       test "says nothing at all when the host compiles no slots anywhere" do
         entry = write("index.html.erb", "<div><%= @name %></div>")
 
-        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) { nil })
+        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
 
         assert_empty subject.across(entry)
         assert_empty subject.for(entry)
