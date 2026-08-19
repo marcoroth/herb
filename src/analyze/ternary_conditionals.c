@@ -14,14 +14,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-static bool is_erb_output_tag(AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (!erb_node || !erb_node->tag_opening) { return false; }
-
-  hb_string_T opening = erb_node->tag_opening->value;
-
-  return opening.length >= 3 && opening.data[0] == '<' && opening.data[1] == '%' && opening.data[2] == '=';
-}
-
 static pm_node_t* find_ternary_statement(analyzed_ruby_T* analyzed) {
   if (!analyzed || !analyzed->valid || !analyzed->root) { return NULL; }
 
@@ -101,31 +93,56 @@ static char* extract_condition_source(pm_if_node_t* if_node, hb_allocator_T* all
   return hb_allocator_strndup(allocator, (const char*) predicate->location.start, length);
 }
 
-static void append_branch_statement(
+static bool append_branch_statement(
   hb_array_T* statements,
-  const pm_statements_node_t* branch,
+  pm_statements_node_t* branch,
   AST_ERB_CONTENT_NODE_T* erb_node,
-  AST_ERB_CONTENT_NODE_T* branch_erb_node,
   static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
-  AST_NODE_T* static_node = NULL;
+  position_T content_start = erb_node->content->location.start;
 
-  bool is_static = build_static_output_node(
-    branch,
-    erb_node->analyzed_ruby,
-    erb_node->content->location.start,
-    static_node_type,
-    allocator,
-    &static_node
-  );
-
-  if (!is_static) {
-    hb_array_append(statements, (AST_NODE_T*) branch_erb_node);
-    return;
+  if (append_static_output_node(
+        statements,
+        branch,
+        erb_node->analyzed_ruby,
+        content_start,
+        static_node_type,
+        allocator
+      )) {
+    return true;
   }
 
-  if (static_node) { hb_array_append(statements, static_node); }
+  body_info_T info = extract_statements_body_info(branch, erb_node->analyzed_ruby, allocator);
+  if (!info.source) { return false; }
+
+  position_T branch_start = { .line = content_start.line,
+                              .column = content_start.column + (uint32_t) info.offset_in_content };
+
+  position_T branch_end = { .line = content_start.line,
+                            .column = content_start.column + (uint32_t) (info.offset_in_content + info.length) };
+
+  token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, branch_start, branch_end);
+
+  AST_ERB_CONTENT_NODE_T* branch_erb_node = ast_erb_content_node_init(
+    erb_node->tag_opening,
+    content,
+    erb_node->tag_closing,
+    NULL,
+    false,
+    true,
+    HERB_PRISM_NODE_EMPTY,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  if (!branch_erb_node) { return false; }
+
+  hb_array_append(statements, (AST_NODE_T*) branch_erb_node);
+
+  return true;
 }
 
 AST_NODE_T* transform_ternary_expression(
@@ -134,87 +151,25 @@ AST_NODE_T* transform_ternary_expression(
   static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
-  body_info_T true_info = extract_statements_body_info(if_node->statements, erb_node->analyzed_ruby, allocator);
-  if (!true_info.source) { return NULL; }
-
   pm_else_node_t* else_node = (pm_else_node_t*) if_node->subsequent;
   if (!else_node) { return NULL; }
-
-  body_info_T false_info = extract_statements_body_info(else_node->statements, erb_node->analyzed_ruby, allocator);
-  if (!false_info.source) { return NULL; }
 
   char* condition_source = extract_condition_source(if_node, allocator);
   if (!condition_source) { return NULL; }
 
   position_T start = erb_node->base.location.start;
   position_T end = erb_node->base.location.end;
-  position_T content_start = erb_node->content->location.start;
-
-  position_T true_content_start = { .line = content_start.line,
-                                    .column = content_start.column + (uint32_t) true_info.offset_in_content };
-
-  position_T true_content_end = { .line = content_start.line,
-                                  .column = content_start.column
-                                          + (uint32_t) (true_info.offset_in_content + true_info.length) };
-
-  token_T* true_content =
-    create_synthetic_token(allocator, true_info.source, TOKEN_ERB_CONTENT, true_content_start, true_content_end);
-
-  AST_ERB_CONTENT_NODE_T* true_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
-    true_content,
-    erb_node->tag_closing,
-    NULL,
-    false,
-    true,
-    HERB_PRISM_NODE_EMPTY,
-    start,
-    end,
-    hb_array_init(0, allocator),
-    allocator
-  );
-
-  if (!true_erb_node) { return NULL; }
-
-  position_T false_content_start = { .line = content_start.line,
-                                     .column = content_start.column + (uint32_t) false_info.offset_in_content };
-
-  position_T false_content_end = { .line = content_start.line,
-                                   .column = content_start.column
-                                           + (uint32_t) (false_info.offset_in_content + false_info.length) };
-
-  token_T* false_content =
-    create_synthetic_token(allocator, false_info.source, TOKEN_ERB_CONTENT, false_content_start, false_content_end);
-
-  AST_ERB_CONTENT_NODE_T* false_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
-    false_content,
-    erb_node->tag_closing,
-    NULL,
-    false,
-    true,
-    HERB_PRISM_NODE_EMPTY,
-    start,
-    end,
-    hb_array_init(0, allocator),
-    allocator
-  );
-
-  if (!false_erb_node) { return NULL; }
 
   hb_array_T* true_statements = hb_array_init(1, allocator);
   hb_array_T* false_statements = hb_array_init(1, allocator);
 
-  append_branch_statement(true_statements, if_node->statements, erb_node, true_erb_node, static_node_type, allocator);
+  if (!append_branch_statement(true_statements, if_node->statements, erb_node, static_node_type, allocator)) {
+    return NULL;
+  }
 
-  append_branch_statement(
-    false_statements,
-    else_node->statements,
-    erb_node,
-    false_erb_node,
-    static_node_type,
-    allocator
-  );
+  if (!append_branch_statement(false_statements, else_node->statements, erb_node, static_node_type, allocator)) {
+    return NULL;
+  }
 
   token_T* else_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
   token_T* else_content_token = create_synthetic_token(allocator, " else ", TOKEN_ERB_CONTENT, end, end);

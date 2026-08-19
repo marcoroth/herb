@@ -15,14 +15,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-static bool is_erb_output_tag(AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (!erb_node || !erb_node->tag_opening) { return false; }
-
-  hb_string_T opening = erb_node->tag_opening->value;
-
-  return opening.length >= 3 && opening.data[0] == '<' && opening.data[1] == '%' && opening.data[2] == '=';
-}
-
 static pm_node_t* find_postfix_conditional_statement(analyzed_ruby_T* analyzed) {
   if (!analyzed || !analyzed->valid || !analyzed->root) { return NULL; }
 
@@ -160,15 +152,64 @@ static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
   return NULL;
 }
 
+static bool append_body_statement(
+  hb_array_T* statements,
+  pm_node_t* conditional_node,
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  static_output_node_type_T static_node_type,
+  hb_allocator_T* allocator
+) {
+  position_T content_start = erb_node->content->location.start;
+
+  if (append_static_output_node(
+        statements,
+        conditional_statements(conditional_node),
+        erb_node->analyzed_ruby,
+        content_start,
+        static_node_type,
+        allocator
+      )) {
+    return true;
+  }
+
+  body_info_T info = extract_body_info(conditional_node, erb_node->analyzed_ruby, allocator);
+  if (!info.source) { return false; }
+
+  position_T body_start = { .line = content_start.line,
+                            .column = content_start.column + (uint32_t) info.offset_in_content };
+
+  position_T body_end = { .line = content_start.line,
+                          .column = content_start.column + (uint32_t) (info.offset_in_content + info.length) };
+
+  token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, body_start, body_end);
+
+  AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
+    erb_node->tag_opening,
+    content,
+    erb_node->tag_closing,
+    NULL,
+    false,
+    true,
+    HERB_PRISM_NODE_EMPTY,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  if (!body_erb_node) { return false; }
+
+  hb_array_append(statements, (AST_NODE_T*) body_erb_node);
+
+  return true;
+}
+
 static AST_NODE_T* transform_conditional(
   AST_ERB_CONTENT_NODE_T* erb_node,
   pm_node_t* conditional_node,
   static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
-  body_info_T body_info = extract_body_info(conditional_node, erb_node->analyzed_ruby, allocator);
-  if (!body_info.source) { return NULL; }
-
   char* condition_source = extract_condition_source(conditional_node, allocator);
   if (!condition_source) { return NULL; }
 
@@ -177,60 +218,18 @@ static AST_NODE_T* transform_conditional(
 
   position_T start = erb_node->base.location.start;
   position_T end = erb_node->base.location.end;
-  position_T content_start = erb_node->content->location.start;
-
-  position_T body_content_start = { .line = content_start.line,
-                                    .column = content_start.column + (uint32_t) body_info.offset_in_content };
-
-  position_T body_content_end = { .line = content_start.line,
-                                  .column = content_start.column
-                                          + (uint32_t) (body_info.offset_in_content + body_info.length) };
-
-  token_T* body_content =
-    create_synthetic_token(allocator, body_info.source, TOKEN_ERB_CONTENT, body_content_start, body_content_end);
-
-  AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
-    body_content,
-    erb_node->tag_closing,
-    NULL,
-    false,
-    true,
-    HERB_PRISM_NODE_EMPTY,
-    start,
-    end,
-    hb_array_init(0, allocator),
-    allocator
-  );
-
-  if (!body_erb_node) { return NULL; }
 
   hb_array_T* statements = hb_array_init(1, allocator);
 
   pm_if_node_t* nested_ternary = find_nested_ternary(conditional_node);
 
-  if (nested_ternary) {
-    AST_NODE_T* ternary_replacement =
-      transform_ternary_expression(erb_node, nested_ternary, static_node_type, allocator);
+  AST_NODE_T* ternary_replacement =
+    nested_ternary ? transform_ternary_expression(erb_node, nested_ternary, static_node_type, allocator) : NULL;
 
-    hb_array_append(statements, ternary_replacement ? ternary_replacement : (AST_NODE_T*) body_erb_node);
-  } else {
-    AST_NODE_T* static_node = NULL;
-
-    bool is_static = build_static_output_node(
-      conditional_statements(conditional_node),
-      erb_node->analyzed_ruby,
-      content_start,
-      static_node_type,
-      allocator,
-      &static_node
-    );
-
-    if (!is_static) {
-      hb_array_append(statements, (AST_NODE_T*) body_erb_node);
-    } else if (static_node) {
-      hb_array_append(statements, static_node);
-    }
+  if (ternary_replacement) {
+    hb_array_append(statements, ternary_replacement);
+  } else if (!append_body_statement(statements, conditional_node, erb_node, static_node_type, allocator)) {
+    return NULL;
   }
 
   hb_buffer_T condition_buffer;

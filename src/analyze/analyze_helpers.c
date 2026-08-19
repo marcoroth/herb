@@ -1076,6 +1076,14 @@ hb_array_T* extract_block_arguments_from_erb_node(
   );
 }
 
+bool is_erb_output_tag(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (!erb_node || !erb_node->tag_opening) { return false; }
+
+  hb_string_T opening = erb_node->tag_opening->value;
+
+  return opening.length >= 3 && opening.data[0] == '<' && opening.data[1] == '%' && opening.data[2] == '=';
+}
+
 static bool is_escape_neutral(hb_string_T content) {
   for (uint32_t index = 0; index < content.length; index++) {
     switch (content.data[index]) {
@@ -1165,19 +1173,19 @@ static AST_NODE_T* create_static_output_node(
   }
 }
 
-bool build_static_output_node(
-  const pm_statements_node_t* statements,
+bool append_static_output_node(
+  hb_array_T* statements,
+  const pm_statements_node_t* body,
   const analyzed_ruby_T* analyzed,
   position_T content_start,
   static_output_node_type_T node_type,
-  hb_allocator_T* allocator,
-  AST_NODE_T** node
+  hb_allocator_T* allocator
 ) {
-  if (!statements || !analyzed || !node) { return false; }
+  if (!statements || !body || !analyzed) { return false; }
   if (node_type == STATIC_OUTPUT_NODE_NONE) { return false; }
-  if (statements->body.size != 1) { return false; }
+  if (body->body.size != 1) { return false; }
 
-  const pm_node_t* literal = statements->body.nodes[0];
+  const pm_node_t* literal = body->body.nodes[0];
   const uint8_t* parser_start = analyzed->parser.start;
 
   if (literal->location.start < parser_start || literal->location.end > analyzed->parser.end) { return false; }
@@ -1185,9 +1193,6 @@ bool build_static_output_node(
   hb_string_T content;
 
   if (!prism_node_static_output(literal, &content)) { return false; }
-
-  *node = NULL;
-
   if (content.length == 0) { return true; }
 
   size_t offset = (size_t) (literal->location.start - parser_start);
@@ -1197,7 +1202,11 @@ bool build_static_output_node(
   position_T end_position = { .line = content_start.line,
                               .column = content_start.column + (uint32_t) (offset + length) };
 
-  *node = create_static_output_node(content, node_type, start_position, end_position, allocator);
+  AST_NODE_T* node = create_static_output_node(content, node_type, start_position, end_position, allocator);
 
-  return *node != NULL;
+  if (!node) { return false; }
+
+  hb_array_append(statements, node);
+
+  return true;
 }
