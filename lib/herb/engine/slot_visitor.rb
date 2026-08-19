@@ -33,6 +33,7 @@ module Herb
       required_parser_option action_view_helpers: true
 
       attr_reader :slots #: Array[Slot]
+      attr_reader :document #: untyped
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
       SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
@@ -179,6 +180,8 @@ module Herb
       end
 
       def visit_document_node(node)
+        @document = node
+
         visit_children_with_paths(node.children)
 
         collapse_invariant_conditionals

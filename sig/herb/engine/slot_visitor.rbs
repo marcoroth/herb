@@ -22,6 +22,8 @@ module Herb
 
       attr_reader slots: Array[Slot]
 
+      attr_reader document: untyped
+
       attr_reader warnings: Array[Herb::Warnings::Warning]
 
       SLOTS_DIRECTIVE: Regexp

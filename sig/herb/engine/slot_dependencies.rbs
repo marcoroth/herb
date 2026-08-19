@@ -26,8 +26,8 @@ module Herb
 
       PARTIAL_TYPES: Array[Symbol]
 
-      # : (String | Pathname) -> void
-      def initialize: (String | Pathname) -> void
+      # : (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
+      def initialize: (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
 
       # : (String) -> Hash[String, Array[Hash[Symbol, untyped]]]
       def across: (String) -> Hash[String, Array[Hash[Symbol, untyped]]]
@@ -76,8 +76,8 @@ module Herb
       # : (String, String) -> untyped
       def visitor_for: (String, String) -> untyped
 
-      # : (String, Array[String]) -> Hash[String, Hash[Array[Integer], Array[String?]]]
-      def reached_paths: (String, Array[String]) -> Hash[String, Hash[Array[Integer], Array[String?]]]
+      # : (untyped, String, Array[String]) -> Hash[String, Hash[Array[Integer], Array[String?]]]
+      def reached_paths: (untyped, String, Array[String]) -> Hash[String, Hash[Array[Integer], Array[String?]]]
 
       # : (untyped) -> Array[String]
       def state_names: (untyped) -> Array[String]
