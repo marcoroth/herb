@@ -1,5 +1,5 @@
 import { SLOT_EVENT } from '@herb-tools/client'
-import type { SlotEventDetail, SlotOperation } from '@herb-tools/client'
+import type { Slot, SlotEventDetail, SlotOperation } from '@herb-tools/client'
 
 const COLORS: Record<SlotOperation, string> = {
   value: '#3b82f6',
@@ -63,15 +63,22 @@ export class SlotFlash {
 
     document.body.append(overlay, label)
 
-    requestAnimationFrame(() => {
-      overlay.style.opacity = '0'
-      label.style.opacity = '0'
-    })
+    const drawn = [overlay, label]
+    const around = detail.item ? this.measureSlot(detail.slot) : null
 
-    setTimeout(() => {
-      overlay.remove()
-      label.remove()
-    }, SlotFlash.DURATION)
+    if (around) {
+      const box = document.createElement('div')
+
+      box.className = 'herb-slot-flash herb-slot-flash-collection'
+      box.style.cssText = `position:absolute;z-index:2147482999;pointer-events:none;top:${around.top + scrollY}px;left:${around.left + scrollX}px;width:${around.width}px;height:${around.height}px;background:transparent;outline:2px dashed ${colour};outline-offset:3px;transition:opacity ${SlotFlash.DURATION}ms ease-out`
+
+      document.body.append(box)
+      drawn.push(box)
+    }
+
+    requestAnimationFrame(() => drawn.forEach((node) => (node.style.opacity = '0')))
+
+    setTimeout(() => drawn.forEach((node) => node.remove()), SlotFlash.DURATION)
   }
 
   private measure(detail: SlotEventDetail): DOMRect | null {
@@ -84,7 +91,10 @@ export class SlotFlash {
       return this.biggest(range.getBoundingClientRect())
     }
 
-    const slot = detail.slot
+    return this.measureSlot(detail.slot)
+  }
+
+  private measureSlot(slot: Slot | null): DOMRect | null {
     if (!slot) return null
 
     if (slot.anchor.kind === 'range') {

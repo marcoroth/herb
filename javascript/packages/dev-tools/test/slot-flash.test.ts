@@ -140,6 +140,47 @@ describe("an item the index moves after announcing it", () => {
     expect(Math.round(parseFloat(overlay.style.top))).toBe(Math.round(final + scrollY))
   })
 
+  test("outlines the collection it belongs to, without filling it", async () => {
+    const one = item("one")
+    const two = item("two")
+
+    list.append(...one.nodes, ...two.nodes)
+
+    dispatch({ operation: "item-added", key: "two", item: two, slot: { index: 0, attribute: null, anchor: { kind: "range", start: list.firstChild, end: list.lastChild } } })
+
+    await settle()
+
+    const box = document.querySelector<HTMLElement>(".herb-slot-flash-collection")!
+    const styles = getComputedStyle(box)
+
+    expect(box).not.toBeNull()
+    expect(styles.outlineStyle).toBe("dashed")
+    expect(styles.outlineColor).toBe("rgb(16, 185, 129)")
+    expect(styles.backgroundColor).toBe("rgba(0, 0, 0, 0)")
+    expect(drawn()).toHaveLength(3)
+  })
+
+  test("outlines the collection in the colour of the operation, so a removal reads as one", async () => {
+    const leaving = item("leaving")
+
+    list.append(...leaving.nodes)
+
+    dispatch({ operation: "item-removed", key: "leaving", item: leaving, slot: { index: 0, attribute: null, anchor: { kind: "range", start: list.firstChild, end: list.lastChild } } })
+
+    const box = document.querySelector<HTMLElement>(".herb-slot-flash-collection")!
+
+    expect(getComputedStyle(box).outlineColor).toBe("rgb(239, 68, 68)")
+    expect(getComputedStyle(box).outlineStyle).toBe("dashed")
+  })
+
+  test("leaves a slot that is not part of a collection with no outline around it", async () => {
+    announce()
+    await settle()
+
+    expect(document.querySelector(".herb-slot-flash-collection")).toBeNull()
+    expect(drawn()).toHaveLength(2)
+  })
+
   test("still draws an item that is on its way out, before it goes", async () => {
     const leaving = item("leaving")
 
@@ -151,8 +192,10 @@ describe("an item the index moves after announcing it", () => {
 
     leaving.nodes.forEach(node => node.remove())
 
-    expect(drawn()).toHaveLength(2)
-    expect(Math.round(parseFloat(drawn()[0].style.top))).toBe(Math.round(where + scrollY))
+    const overlay = drawn().find(node => !node.textContent && !node.classList.contains("herb-slot-flash-collection"))!
+
+    expect(drawn()).toHaveLength(3)
+    expect(Math.round(parseFloat(overlay.style.top))).toBe(Math.round(where + scrollY))
   })
 })
 
