@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
 
 import { SlotFlash } from "../src/slots/flash"
+import { HerbOverlay } from "../src/overlay/overlay"
 
 const SLOT_EVENT = "herb:slot-update"
 
@@ -88,5 +89,48 @@ describe("SlotFlash", () => {
     announce()
 
     expect(drawn()).toHaveLength(0)
+  })
+})
+
+describe("an overlay that goes away", () => {
+  let overlays: HerbOverlay[]
+
+  beforeEach(() => {
+    flash.stop()
+
+    overlays = []
+    localStorage.setItem("herb-dev-tools-settings", JSON.stringify({ showingSlotUpdates: true }))
+  })
+
+  afterEach(() => {
+    overlays.forEach(overlay => overlay.destroy())
+    localStorage.clear()
+    document.querySelectorAll(".herb-slot-flash").forEach(node => node.remove())
+  })
+
+  function overlay() {
+    const created = new HerbOverlay()
+
+    overlays.push(created)
+
+    return created
+  }
+
+  test("takes its flash with it, so a destroyed overlay draws nothing", () => {
+    overlay().destroy()
+
+    announce()
+
+    expect(drawn()).toHaveLength(0)
+  })
+
+  test("leaves one overlay drawing once, however many came before it", () => {
+    overlay().destroy()
+    overlay().destroy()
+    overlay()
+
+    announce()
+
+    expect(drawn()).toHaveLength(2)
   })
 })

@@ -787,6 +787,31 @@ export class SlotIndex {
     return copy
   }
 
+  switchBranch(slot: Slot, branch: number | null, dynamics: SlotValues = {}): boolean {
+    if (branch === slot.branch) return false
+
+    const region = this.regionOf(slot)
+
+    if (!region) return false
+
+    this.capture(slot)
+
+    if (branch === null) {
+      this.update(slot, "")
+      slot.branch = null
+
+      return true
+    }
+
+    const built = this.materialize(region.file, `${slot.index}:${branch}`, dynamics)
+
+    if (!built) return false
+
+    this.#writeFragment(slot, built)
+
+    return true
+  }
+
   prune(): number {
     const before = this.#regions.length
 
