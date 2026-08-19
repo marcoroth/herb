@@ -12,8 +12,8 @@
   "devDependencies": {
     "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.4.2",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "@vitest/browser-playwright": "^4.1.8",
-    "@vitest/ui": "^4.1.8",
+    "@vitest/browser-playwright": "^5.0.0-rc.2",
+    "@vitest/ui": "^5.0.0-rc.2",
     "concurrently": "^10.0.4",
     "dedent": "^1.7.2",
     "esbuild-plugin-copy": "^2.1.1",
@@ -27,7 +27,8 @@
     "rollup-plugin-postcss": "^4.0.2",
     "tsx": "^4.23.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vitest": "^4.1.8",
+    "vite": "^8.2.0",
+    "vitest": "^5.0.0-rc.2",
     "yaml": "^2.9.0"
   },
   "scripts": {
