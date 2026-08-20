@@ -56,6 +56,56 @@ fn normalize(path: &str) -> String {
   }
 }
 
+pub fn format_of(file: &str) -> Option<String> {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+  let dot = base.find('.')?;
+  let extension = &base[dot..];
+
+  let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
+  let segments = stripped.strip_prefix('.')?;
+  let format = segments.rsplit('.').next().unwrap_or(segments);
+  let format = format.split('+').next().unwrap_or(format);
+
+  (!format.is_empty()).then(|| format.to_string())
+}
+
+pub fn has_locale(file: &str) -> bool {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+
+  let Some(dot) = base.find('.') else {
+    return false;
+  };
+
+  let extension = &base[dot..];
+
+  let Some(stripped) = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb")) else {
+    return false;
+  };
+
+  stripped.strip_prefix('.').is_some_and(|segments| segments.split('.').count() > 1)
+}
+
+pub fn variant_of(file: &str) -> Option<String> {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+  let dot = base.find('.')?;
+  let extension = &base[dot..];
+
+  let stripped = extension.strip_suffix(".erb").or_else(|| extension.strip_suffix(".herb"))?;
+  let (_, variant) = stripped.rsplit_once('+')?;
+
+  (!variant.is_empty()).then(|| variant.to_string())
+}
+
+pub fn without_template_extension(partial_name: &str) -> &str {
+  EXTENSIONS
+    .iter()
+    .find_map(|extension| partial_name.strip_suffix(extension))
+    .unwrap_or(partial_name)
+}
+
 pub fn template_path(file: &str) -> bool {
   let normalized = normalize(file);
   let name = basename(&normalized);
@@ -68,6 +118,13 @@ pub fn partial_path(file: &str) -> bool {
   let name = basename(&normalized);
 
   name.starts_with(PARTIAL_PREFIX) && EXTENSIONS.iter().any(|extension| name.ends_with(extension))
+}
+
+pub fn relative_to_view_roots(path: &str, view_roots: &[String]) -> Option<(usize, String)> {
+  view_roots
+    .iter()
+    .enumerate()
+    .find_map(|(index, root)| relative_to_view_root(path, root).map(|relative| (index, relative)))
 }
 
 fn relative_to_view_root(path: &str, view_root: &str) -> Option<String> {
@@ -92,6 +149,18 @@ fn without_extension(name: &str) -> &str {
     Some(index) => &name[..index],
     None => name,
   }
+}
+
+pub fn partial_name_for_roots(file: &str, view_roots: &[String]) -> Option<String> {
+  view_roots.iter().find_map(|root| partial_name_for(file, root))
+}
+
+pub fn template_name_for_roots(file: &str, view_roots: &[String]) -> Option<String> {
+  view_roots.iter().find_map(|root| template_name_for(file, root))
+}
+
+pub fn root_index_for(file: &str, view_roots: &[String]) -> usize {
+  relative_to_view_roots(file, view_roots).map(|(index, _)| index).unwrap_or(view_roots.len())
 }
 
 pub fn partial_name_for(file: &str, view_root: &str) -> Option<String> {
@@ -146,6 +215,14 @@ pub fn template_name_for(file: &str, view_root: &str) -> Option<String> {
   } else {
     Some(format!("{}/{}", directory, without))
   }
+}
+
+pub fn layout_candidates_for_roots(template_file: &str, view_roots: &[String]) -> Vec<String> {
+  view_roots
+    .iter()
+    .map(|root| layout_candidates_for(template_file, root))
+    .find(|candidates| !candidates.is_empty())
+    .unwrap_or_default()
 }
 
 pub fn layout_candidates_for(template_file: &str, view_root: &str) -> Vec<String> {

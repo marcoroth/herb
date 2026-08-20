@@ -1,5 +1,5 @@
 import { isERBStrictLocalsNode, isRubyParameterNode } from "@herb-tools/core"
-import { PARTIAL_EXTENSIONS, partialNameForFile, resolvePartial } from "./partial-resolution"
+import { PARTIAL_EXTENSIONS, partialNameForRoots, resolvePartial } from "./partial-resolution"
 
 import type { DocumentNode } from "@herb-tools/core"
 import type { PartialPaths } from "./partial-resolution"
@@ -23,7 +23,7 @@ export interface PartialDeclaration {
 }
 
 export interface SerializedPartialIndex {
-  viewRoot: string
+  viewRoots: string[]
   partials: Record<string, PartialDeclaration>
 }
 
@@ -90,24 +90,24 @@ export function declarationFromDocument(document: DocumentNode, file: string): P
 }
 
 export class PartialIndex {
-  readonly viewRoot: string
+  readonly viewRoots: string[]
 
   private readonly declarations: Map<string, PartialDeclaration>
   private readonly files: PartialPaths
   private readonly byFile: Map<string, PartialDeclaration>
 
   static from(data: SerializedPartialIndex): PartialIndex {
-    return new PartialIndex(data.viewRoot, new Map(Object.entries(data.partials)))
+    return new PartialIndex(data.viewRoots, new Map(Object.entries(data.partials)))
   }
 
-  constructor(viewRoot: string, declarations: Map<string, PartialDeclaration>) {
-    this.viewRoot = viewRoot
+  constructor(viewRoots: string[], declarations: Map<string, PartialDeclaration>, filesByName?: Map<string, string[]>) {
+    this.viewRoots = viewRoots
     this.declarations = declarations
     this.files = new Map()
     this.byFile = new Map()
 
     for (const [name, declaration] of declarations) {
-      this.files.set(name, declaration.file)
+      this.files.set(name, filesByName?.get(name) ?? declaration.file)
       this.byFile.set(declaration.file, declaration)
     }
   }
@@ -117,7 +117,7 @@ export class PartialIndex {
   }
 
   lookup(partialName: string, sourceFile: string | undefined): PartialDeclaration | null {
-    const file = resolvePartial(partialName, sourceFile ?? "", this.files, this.viewRoot)
+    const file = resolvePartial(partialName, sourceFile ?? "", this.files, this.viewRoots)
 
     if (file === null) return null
 
@@ -125,7 +125,7 @@ export class PartialIndex {
   }
 
   update(declaration: PartialDeclaration): string | null {
-    const name = partialNameForFile(declaration.file, this.viewRoot)
+    const name = partialNameForRoots(declaration.file, this.viewRoots)
     if (name === null) return null
 
     const existing = this.declarations.get(name)
@@ -144,7 +144,7 @@ export class PartialIndex {
   }
 
   remove(file: string): string | null {
-    const name = partialNameForFile(file, this.viewRoot)
+    const name = partialNameForRoots(file, this.viewRoots)
     if (name === null) return null
 
     const existing = this.declarations.get(name)
@@ -162,6 +162,6 @@ export class PartialIndex {
   }
 
   toJSON(): SerializedPartialIndex {
-    return { viewRoot: this.viewRoot, partials: Object.fromEntries(this.declarations) }
+    return { viewRoots: this.viewRoots, partials: Object.fromEntries(this.declarations) }
   }
 }

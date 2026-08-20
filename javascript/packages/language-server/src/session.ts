@@ -105,7 +105,7 @@ export class Session {
 
   private viewRootFor(documentPath: string): string | null {
     const project = this.projects.containing(documentPath)
-    const viewRoot = project?.index.viewRoot
+    const viewRoot = project?.index.viewRoots?.[0]
 
     if (!project || viewRoot === undefined) return null
 

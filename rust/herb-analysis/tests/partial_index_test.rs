@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use herb_analysis::partial_index::PartialIndex;
 
@@ -51,7 +51,7 @@ fn resolves_the_view_root_to_app_views_when_it_is_there() {
   let project = Project::new("view_root");
   project.write("app/views/posts/index.html.erb");
 
-  assert_eq!(project.index().view_root(), project.root.join("app/views"));
+  assert_eq!(project.index().view_roots(), [project.root.join("app/views")]);
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn falls_back_to_the_project_root_when_there_is_no_app_views() {
   let project = Project::new("flat_root");
   project.write("posts/index.html.erb");
 
-  assert_eq!(project.index().view_root(), Path::new(&project.root));
+  assert_eq!(project.index().view_roots(), [project.root.as_path()].map(PathBuf::from));
 }
 
 #[test]

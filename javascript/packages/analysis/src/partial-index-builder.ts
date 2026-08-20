@@ -45,10 +45,13 @@ export async function buildPartialIndex(herb: HerbBackend, projectPath: string):
   const viewRoot = await findViewRoot(projectPath)
   const files = await partialsIn(projectPath, viewRoot)
   const declarations = new Map<string, PartialDeclaration>()
+  const filesByName = new Map<string, string[]>()
 
   for (const file of files.sort()) {
     const name = partialNameForFile(file, viewRoot)
     if (name === null) continue
+
+    filesByName.set(name, [...(filesByName.get(name) ?? []), file])
 
     const existing = declarations.get(name)
     if (existing && !outranksTemplate(file, existing.file)) continue
@@ -58,7 +61,7 @@ export async function buildPartialIndex(herb: HerbBackend, projectPath: string):
     if (declaration) declarations.set(name, declaration)
   }
 
-  return new PartialIndex(viewRoot, declarations)
+  return new PartialIndex([viewRoot], declarations, filesByName)
 }
 
 export function partialIndexFrom(data: SerializedPartialIndex | undefined): PartialIndex | undefined {

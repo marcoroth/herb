@@ -10,8 +10,6 @@ module Herb
     class PartialIndex
       APPLICATION_DIRECTORY = "application" #: String
 
-      attr_reader :view_root #: Pathname
-
       attr_reader :templates #: Array[String]
 
       #: (String | Pathname, ?templates: Array[String]?) -> PartialIndex
@@ -20,7 +18,7 @@ module Herb
         view_root = resolve_view_root(root)
         files = templates || Dir[view_root.join("**", PartialResolution::TEMPLATE_GLOB_PATTERN)].sort
 
-        new(view_root, files)
+        new([view_root], files)
       end
 
       #: (String | Pathname) -> Pathname
@@ -28,13 +26,16 @@ module Herb
         PartialResolution.view_root_for(project_path)
       end
 
-      #: (String | Pathname, Array[String]) -> void
-      def initialize(view_root, templates)
-        @view_root = Pathname.new(view_root)
+      #: (Array[String | Pathname], Array[String]) -> void
+      def initialize(view_roots, templates)
+        @view_roots = view_roots.map { |root| Pathname.new(root) } #: Array[Pathname]
         @templates = templates
         @by_name = build_index(templates)
         @declarations = {} #: Hash[String, PartialDeclaration?]
       end
+
+      #: () -> Array[Pathname]
+      attr_reader :view_roots
 
       #: (String?) -> Array[String]
       def files_for(partial_name)
@@ -44,9 +45,33 @@ module Herb
       end
 
       #: (String?, String?) -> Array[String]
+      #: (String?, String?) -> Array[String]
       def resolve(partial_name, source_file)
+        candidates = candidates_for(partial_name, source_file)
+        format = source_file ? PartialResolution.format_of(source_file) : nil
+
+        return candidates unless format
+
+        candidates.sort_by do |file|
+          candidate = PartialResolution.format_of(file)
+
+          matches = if candidate == format
+                      0
+                    elsif candidate.nil?
+                      1
+                    else
+                      2
+                    end
+
+          [matches, PartialResolution.variant_of(file) ? 1 : 0, PartialResolution.has_locale?(file) ? 1 : 0]
+        end
+      end
+
+      #: (String?, String?) -> Array[String]
+      def candidates_for(partial_name, source_file)
         return [] unless partial_name
 
+        partial_name = PartialResolution.without_template_extension(partial_name)
         exact = files_for(partial_name)
 
         return exact if exact.any?
@@ -73,7 +98,7 @@ module Herb
 
       #: (String) -> String?
       def partial_name_for(file)
-        self.class.partial_name_for(file, @view_root)
+        PartialResolution.partial_name_for_roots(file, @view_roots)
       end
 
       #: () -> Array[String]
@@ -105,7 +130,9 @@ module Herb
         @templates = (@templates | [file]).sort
 
         files = (@by_name[name] || []) | [file]
-        @by_name[name] = PartialResolution.by_precedence(files)
+        ordered = PartialResolution.by_precedence(files)
+
+        @by_name[name] = ordered.sort_by { |candidate| PartialResolution.root_index_for(candidate, @view_roots) }
 
         name
       end
@@ -152,7 +179,10 @@ module Herb
 
       #: (String) -> String?
       def source_directory_for(source_file)
-        Pathname.new(File.dirname(source_file)).relative_path_from(@view_root).to_s
+        directory = Pathname.new(File.dirname(source_file))
+        root = @view_roots.find { |candidate| directory.to_s.start_with?(candidate.to_s) } || @view_root
+
+        directory.relative_path_from(root).to_s
       rescue ArgumentError
         nil
       end
@@ -181,7 +211,11 @@ module Herb
           (map[name] ||= []) << file
         end
 
-        map.each_value { |files| files.replace(PartialResolution.by_precedence(files)) }
+        map.each_value do |candidates|
+          ordered = PartialResolution.by_precedence(candidates)
+          candidates.replace(ordered.sort_by { |file| PartialResolution.root_index_for(file, @view_roots) })
+        end
+
         map
       end
     end

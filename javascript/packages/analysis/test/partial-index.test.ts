@@ -15,7 +15,7 @@ beforeAll(async () => {
 })
 
 describe("PartialIndex", () => {
-  const index = new PartialIndex("app/views", new Map([
+  const index = new PartialIndex(["app/views"], new Map([
     ["users/card", declaration("app/views/users/_card.html.erb", [{ name: "user", required: true }])],
     ["application/flash", declaration("app/views/application/_flash.html.erb", [{ name: "message", required: true }])],
   ]))
@@ -43,7 +43,7 @@ describe("PartialIndex", () => {
   test("round trips through its serialized form", () => {
     const restored = PartialIndex.from(index.toJSON())
 
-    expect(restored.viewRoot).toBe("app/views")
+    expect(restored.viewRoots).toEqual(["app/views"])
     expect(restored.size).toBe(2)
     expect(restored.lookup("users/card", "app/views/posts/index.html.erb")?.locals).toEqual([{ name: "user", required: true }])
   })
@@ -57,7 +57,7 @@ describe("PartialIndex", () => {
 
 describe("PartialIndex updates", () => {
   function index(): PartialIndex {
-    return new PartialIndex("app/views", new Map([
+    return new PartialIndex(["app/views"], new Map([
       ["users/card", declaration("app/views/users/_card.html.erb", [{ name: "user", required: true }])],
     ]))
   }
@@ -120,7 +120,7 @@ describe("PartialIndex updates", () => {
   })
 
   test("lets the base template take over from a variant", () => {
-    const partials = new PartialIndex("app/views", new Map([
+    const partials = new PartialIndex(["app/views"], new Map([
       ["users/card", declaration("app/views/users/_card.en.html.erb", [{ name: "user", required: true }])],
     ]))
 
@@ -130,7 +130,7 @@ describe("PartialIndex updates", () => {
   })
 
   test("forgets the displaced variant when the base template takes over", () => {
-    const partials = new PartialIndex("app/views", new Map([
+    const partials = new PartialIndex(["app/views"], new Map([
       ["users/card", declaration("app/views/users/_card.html+phone.erb", [])],
     ]))
 

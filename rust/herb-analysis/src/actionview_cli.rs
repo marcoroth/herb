@@ -9,7 +9,52 @@ use herb_analysis::render_graph::Verdict;
 use herb_analysis::ruby_render_references;
 use herb_analysis::state_flow::{FlowNode, StateFlow};
 
+fn actionview_configured(project_path: &Path) -> Result<(), String> {
+  let Ok(config) = herb_config::Config::load(project_path, None) else {
+    return Ok(());
+  };
+
+  match config.config.framework {
+    Some(herb_config::Framework::ActionView) => Ok(()),
+    Some(other) => Err(format!("{other:?}").to_lowercase()),
+    None => Err("ruby".to_string()),
+  }
+}
+
+fn report_missing_framework(project_path: &Path, framework: &str) -> i32 {
+  println!();
+  println!(
+    " {}",
+    "Herb also works outside of ActionView, but the `herb actionview` commands require the project to be explicitly configured for ActionView.".dimmed()
+  );
+  println!();
+  println!(
+    " The project at '{}' is not configured to use ActionView (current framework: '{framework}').",
+    project_path.display()
+  );
+  println!();
+  println!(" To enable ActionView support, add the following to your `.herb.yml`:");
+  println!();
+  println!("   {}", "framework: actionview".bold());
+  println!();
+
+  1
+}
+
 pub fn run(command: &str, arguments: &[String]) -> i32 {
+  if !matches!(command, "check" | "graph" | "dependencies" | "flow" | "context" | "signature") {
+    eprintln!("{}", format!("Unknown actionview subcommand: {command}").red());
+    print_usage();
+
+    return 1;
+  }
+
+  let root = project_root(arguments);
+
+  if let Err(framework) = actionview_configured(&root) {
+    return report_missing_framework(&root, &framework);
+  }
+
   match command {
     "check" => check(arguments),
     "graph" => graph(arguments),
@@ -90,6 +135,68 @@ fn header(title: &str) {
   println!();
 }
 
+fn component_template(relative: &str) -> bool {
+  relative.starts_with("app/components/") || relative.contains("/app/components/")
+}
+
+fn missing_format(file: &str) -> bool {
+  let name = file.rsplit('/').next().unwrap_or(file);
+
+  name.ends_with(".erb") && name.matches('.').count() == 1
+}
+
+fn static_branches(expression: &str) -> Vec<String> {
+  let mut found: Vec<String> = Vec::new();
+
+  let mut rest = match expression.split_once('?') {
+    Some((_, branches)) => branches,
+    None => expression,
+  };
+
+  while let Some(start) = rest.find(['"', '\'']) {
+    let quote = rest.as_bytes()[start] as char;
+    let after = &rest[start + 1..];
+
+    let Some(end) = after.find(quote) else {
+      break;
+    };
+
+    let literal = &after[..end];
+
+    if !literal.is_empty() && !literal.contains("#{") && !found.iter().any(|seen| seen == literal) {
+      found.push(literal.to_string());
+    }
+
+    rest = &after[end + 1..];
+  }
+
+  found
+}
+
+fn render_name_kind(name: &str) -> Option<&'static str> {
+  if name.starts_with('@') {
+    return Some("instance variable");
+  }
+
+  if name.contains("#{") {
+    return Some("interpolated");
+  }
+
+  if name.contains('?') && name.contains(':') {
+    return Some("conditional");
+  }
+
+  if name.contains('(') || name.contains('.') {
+    return Some("method call");
+  }
+
+  if name.contains(' ') {
+    return Some("expression");
+  }
+
+  None
+}
+
 fn plural(count: usize, word: &str) -> String {
   if count == 1 {
     word.to_string()
@@ -155,7 +262,8 @@ fn check(arguments: &[String]) -> i32 {
   let mut rendered: Vec<String> = Vec::new();
   let mut files_with_renders: BTreeSet<String> = BTreeSet::new();
   let mut dynamic_renders = 0usize;
-  let mut dynamic_sites: Vec<(String, String)> = Vec::new();
+  let mut dynamic_sites: Vec<(String, String, Vec<String>)> = Vec::new();
+  let mut branching_sites: Vec<(String, String, Vec<String>)> = Vec::new();
   let mut other_renders = 0usize;
   let mut with_partial_count = 0usize;
 
@@ -187,6 +295,8 @@ fn check(arguments: &[String]) -> i32 {
     for call in &result.render_calls {
       files_with_renders.insert(file.clone());
 
+      let guessed = call.partial.is_none() && call.layout.is_none();
+
       let target = call
         .partial
         .clone()
@@ -205,7 +315,13 @@ fn check(arguments: &[String]) -> i32 {
             .map(|prefix| format!("{prefix}/#{{...}}"))
             .unwrap_or_else(|| "#{...}".to_string());
 
-          dynamic_sites.push((relative(file, &root), shown));
+          let candidates = call
+            .dynamic_prefix
+            .as_ref()
+            .map(|prefix| index.names_under(prefix).iter().map(|name| (*name).to_string()).collect())
+            .unwrap_or_default();
+
+          dynamic_sites.push((relative(file, &root), shown, candidates));
         }
 
         continue;
@@ -223,12 +339,43 @@ fn check(arguments: &[String]) -> i32 {
         eprintln!("{file}\t{name}");
       }
 
-      match index.resolve(name, Some(file)).first() {
-        Some(target) => rendered.push(target.clone()),
-        None => unresolved.push((relative(file, &root), name.clone())),
+      let resolved = index.resolve(name, Some(file));
+
+      match resolved.first() {
+        Some(target) => {
+          rendered.push(target.clone());
+
+          let format = herb_analysis::partial_resolution::format_of(target);
+
+          for candidate in resolved.iter().skip(1) {
+            if herb_analysis::partial_resolution::variant_of(candidate).is_some() && herb_analysis::partial_resolution::format_of(candidate) == format {
+              rendered.push(candidate.clone());
+            }
+          }
+        }
+        None => {
+          let branches = static_branches(name);
+          let targets: Vec<String> = branches
+            .iter()
+            .filter_map(|branch| index.resolve(branch, Some(file)).first().cloned())
+            .collect();
+
+          if branches.len() > 1 && targets.len() == branches.len() {
+            rendered.extend(targets.iter().cloned());
+            branching_sites.push((
+              relative(file, &root),
+              name.clone(),
+              targets.iter().map(|target| relative(target, &root)).collect(),
+            ));
+          } else if !guessed {
+            unresolved.push((relative(file, &root), name.clone()));
+          }
+        }
       }
     }
   }
+
+  let formatless: Vec<String> = templates.iter().filter(|file| missing_format(file)).map(|file| relative(file, &root)).collect();
 
   let partials: Vec<String> = templates
     .iter()
@@ -270,12 +417,45 @@ fn check(arguments: &[String]) -> i32 {
 
   println!();
 
+  if !formatless.is_empty() {
+    println!(" {}", "Templates without a format:".bold());
+    println!(
+      " {}",
+      "Rails reads a template filename as `name.format.handler`. Without a format it matches every one.".dimmed()
+    );
+    println!();
+
+    for file in &formatless {
+      println!("   {} {}", "!".yellow().bold(), file.yellow());
+    }
+
+    println!();
+  }
+
+  if !branching_sites.is_empty() {
+    println!(" {}", "Conditional render calls:".bold());
+    println!(" {}", "The partial name is chosen at runtime, but every branch is a literal.".dimmed());
+    println!();
+
+    for (file, expression, targets) in &branching_sites {
+      println!("   {} {} {}", "?".yellow().bold(), expression, format!("in {file}").dimmed());
+
+      for target in targets {
+        println!("       {} {}", "\u{2192}".dimmed(), target.green());
+      }
+    }
+
+    println!();
+  }
+
   if !unresolved.is_empty() {
     println!(" {}", "Unresolved render calls:".bold());
     println!();
 
     for (file, name) in &unresolved {
-      println!("   {} {} {}", "\u{2717}".red().bold(), name, format!("in {file}").dimmed());
+      let kind = render_name_kind(name).map(|kind| format!(" ({kind})").dimmed().to_string()).unwrap_or_default();
+
+      println!("   {} {}{} {}", "\u{2717}".red().bold(), name, kind, format!("in {file}").dimmed());
     }
 
     println!();
@@ -283,11 +463,18 @@ fn check(arguments: &[String]) -> i32 {
 
   if !dynamic_sites.is_empty() {
     println!(" {}", "Dynamic render calls:".bold());
-    println!(" {}", "The partial name is built at runtime, so it cannot be resolved statically.".dimmed());
+    println!(
+      " {}",
+      "The partial name is built at runtime. Where the directory is known, every partial under it is listed.".dimmed()
+    );
     println!();
 
-    for (file, shown) in &dynamic_sites {
+    for (file, shown, candidates) in &dynamic_sites {
       println!("   {} {} {}", "\u{2717}".red().bold(), shown.red().bold(), format!("in {file}").dimmed());
+
+      for candidate in candidates {
+        println!("       {} {}", "\u{2192}".dimmed(), candidate.dimmed());
+      }
     }
 
     println!();
@@ -403,7 +590,11 @@ fn check(arguments: &[String]) -> i32 {
     println!(
       "  {} {}",
       label("Ignored"),
-      format!("{ignored_components} component {} in app/components/", plural(ignored_components, "template")).dimmed()
+      format!(
+        "{ignored_components} component {} under app/components/",
+        plural(ignored_components, "template")
+      )
+      .dimmed()
     );
   }
 
@@ -579,10 +770,14 @@ fn graph(arguments: &[String]) -> i32 {
 }
 
 fn view_relative(file: &str, index: &PartialIndex) -> String {
-  Path::new(file)
-    .strip_prefix(index.view_root())
+  let path = Path::new(file);
+
+  index
+    .view_roots()
+    .iter()
+    .find_map(|root| path.strip_prefix(root).ok())
     .map(|rest| rest.display().to_string())
-    .unwrap_or_else(|_| file.to_string())
+    .unwrap_or_else(|| file.to_string())
 }
 
 fn reverse_graph(renders: &BTreeMap<String, Vec<String>>, index: &PartialIndex) -> BTreeMap<String, Vec<String>> {
@@ -679,7 +874,7 @@ fn collect_renders(index: &mut PartialIndex, templates: &[String]) -> (BTreeMap<
   let mut renders: BTreeMap<String, Vec<String>> = BTreeMap::new();
   let mut prefixes: BTreeSet<String> = BTreeSet::new();
   let mut layouts: BTreeSet<String> = BTreeSet::new();
-  let flow = StateFlow::new(index.view_root());
+  let flow = StateFlow::new(index.view_roots().first().map(PathBuf::as_path).unwrap_or_else(|| Path::new(".")));
 
   for file in templates {
     let result = flow.analyze(file);
@@ -763,7 +958,8 @@ fn reachable_partials(
       continue;
     }
 
-    let Some(file) = index.resolve(&name, None).first() else {
+    let resolved = index.resolve(&name, None);
+    let Some(file) = resolved.first() else {
       continue;
     };
 
@@ -1289,7 +1485,11 @@ fn print_dependency_warnings(
   let mut unknown: Vec<(String, Vec<String>)> = Vec::new();
   let mut likely_locals: Vec<(String, Vec<String>)> = Vec::new();
   let mut uninferable: Vec<(String, Vec<String>)> = Vec::new();
-  let mut ignored_components = 0usize;
+  let ignored_components = templates
+    .iter()
+    .map(|file| relative(file, root))
+    .filter(|file| component_template(file))
+    .count();
 
   for file in templates {
     let result = flow.analyze(file);
@@ -1315,8 +1515,9 @@ fn print_dependency_warnings(
       }
 
       if !rest.is_empty() {
-        if relative.starts_with("app/components/") {
-          ignored_components += 1;
+        if component_template(&relative) {
+          // Counted from the template list instead, so the total does not depend on how many
+          // helpers each binding happens to resolve.
         } else if partial && !declared && candidates.is_none_or(BTreeSet::is_empty) {
           uninferable.push((relative, rest));
         } else {

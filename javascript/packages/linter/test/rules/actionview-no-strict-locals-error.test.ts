@@ -15,7 +15,7 @@ function declaration(file: string, locals: PartialDeclaration["locals"], overrid
   return { file, hasDeclaration: true, hasKeywordRest: false, locals, ...overrides }
 }
 
-const partials = new PartialIndex("app/views", new Map([
+const partials = new PartialIndex(["app/views"], new Map([
   ["users/card", declaration("app/views/users/_card.html.erb", [
     { name: "user", required: true },
     { name: "size", required: false },
@@ -230,7 +230,7 @@ describe("actionview-no-strict-locals-error", () => {
   })
 
   describe("declaration frames", () => {
-    const located = new PartialIndex("app/views", new Map([
+    const located = new PartialIndex(["app/views"], new Map([
       ["users/card", { ...declaration("app/views/users/_card.html.erb", [{ name: "user", required: true }]), location: { line: 1, column: 0 } }],
       ["users/plain", declaration("app/views/users/_plain.html.erb", [{ name: "user", required: true }])],
     ]))

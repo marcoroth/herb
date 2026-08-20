@@ -438,6 +438,36 @@ module Herb
       end
 
       def print_file_lists(result)
+        formatless = result.partial_files.values.select { |file| missing_format?(file) }.sort
+
+        if formatless.any?
+          puts "\n"
+          puts " #{bold("Templates without a format:")}"
+          puts " #{dimmed("Rails reads a template filename as `name.format.handler`. Without a format it matches every one.")}"
+          puts ""
+
+          formatless.each do |file|
+            puts "   #{bold(yellow("!"))} #{yellow(relative_path(file))}"
+          end
+        end
+
+        conditional = conditional_calls(result)
+
+        if conditional.any?
+          puts "\n"
+          puts " #{bold("Conditional render calls:")}"
+          puts " #{dimmed("The partial name is chosen at runtime, but every branch is a literal.")}"
+          puts ""
+
+          conditional.each do |call, targets|
+            puts "   #{bold(yellow("?"))} #{call[:partial]} #{dimmed("in #{relative_path(call[:file])}")}"
+
+            targets.each do |target|
+              puts "       #{dimmed("\u2192")} #{green(relative_path(target))}"
+            end
+          end
+        end
+
         return unless result.issues?
 
         if result.unresolved.any?
@@ -456,7 +486,10 @@ module Herb
             calls.each do |call|
               location = call[:location] ? dimmed("at #{call[:location]}") : nil
               expected = expected_file_path(call[:partial], result.view_root)
-              puts "   #{bold(red("\u2717"))} #{bold(call[:partial])} #{location} #{dimmed("-")} #{dimmed(expected)}"
+              kind = render_name_kind(call[:partial])
+              label = kind ? " #{dimmed("(#{kind})")}" : ""
+
+              puts "   #{bold(red("\u2717"))} #{bold(call[:partial])}#{label} #{location} #{dimmed("-")} #{dimmed(expected)}"
             end
           end
         end
@@ -465,13 +498,17 @@ module Herb
           puts "\n #{separator}" if result.unresolved.any?
           puts "\n"
           puts " #{bold("Dynamic render calls:")}"
-          puts " #{dimmed("The partial name is built at runtime, so it cannot be resolved statically.")}"
+          puts " #{dimmed("The partial name is built at runtime. Where the directory is known, every partial under it is listed.")}"
           puts ""
 
           result.dynamic_calls.each do |call|
             shown = dynamic_call_display(call)
 
             puts "   #{bold(red("\u2717"))} #{bold(red(shown))} #{dimmed("in #{relative_path(call[:file])}")}"
+
+            names_under(call, result.partial_files).each do |name|
+              puts "       #{dimmed("\u2192")} #{dimmed(name)}"
+            end
           end
         end
 
@@ -526,7 +563,7 @@ module Herb
 
       #: (String) -> bool
       def component_template?(relative)
-        relative.start_with?("app/components/")
+        relative.start_with?("app/components/") || relative.include?("/app/components/")
       end
 
       #: (Array[Hash[Symbol, untyped]]) -> void
@@ -541,7 +578,7 @@ module Herb
         locals = files_for.call(:undeclared_local)
         uninferable = files_for.call(:uninferable_local)
         ivars = files_for.call(:ivar_in_partial)
-        ignored = files_for.call(:ignored_component)
+        ignored = find_erb_files.map { |file| relative_path(file) }.count { |file| component_template?(file) }
 
         parts = [] #: Array[String]
         parts << stat(locals, "undeclared #{pluralize(locals, "local")}", :yellow) if locals.positive?
@@ -555,7 +592,7 @@ module Herb
 
         return unless ignored.positive?
 
-        puts "  #{label("Ignored")} #{dimmed("#{ignored} component #{pluralize(ignored, "template")} in app/components/")}"
+        puts "  #{label("Ignored")} #{dimmed("#{ignored} component #{pluralize(ignored, "template")} under app/components/")}"
       end
 
       private
@@ -1053,11 +1090,22 @@ module Herb
             next unless partial_reference
 
             resolved = resolve_partial(partial_reference, file, partial_files, view_root)
+
             if resolved
               resolved_name = partial_name_for_file(resolved, view_root)
               resolved_names << resolved_name if resolved_name
             else
-              resolved_names << partial_reference
+              branches = static_branches(partial_reference)
+              targets = branches.filter_map { |branch| resolve_partial(branch, file, partial_files, view_root) }
+
+              if branches.size > 1 && targets.size == branches.size
+                targets.each do |target|
+                  name = partial_name_for_file(target, view_root)
+                  resolved_names << name if name
+                end
+              else
+                resolved_names << partial_reference
+              end
             end
           end
 
@@ -1098,6 +1146,13 @@ module Herb
           reachable << layout_name
           resolved_file = partial_files[layout_name]
           queue << resolved_file if resolved_file
+        end
+
+        partial_files.each do |name, file|
+          next unless dynamic_prefixes.any? { |prefix| name.start_with?("#{prefix}/") }
+
+          reachable << name
+          queue << file if file
         end
 
         visited_files = Set.new
@@ -1154,7 +1209,7 @@ module Herb
 
           prefix = call[:partial].gsub(/\A["']|["']\z/, "")
           prefix = prefix.split("\#{").first&.chomp("/")
-          prefix unless prefix.nil? || prefix.empty?
+          prefix if prefix && !prefix.empty? && partial_path_segment?(prefix)
         }
 
         ruby_references.each do |reference|
@@ -1168,13 +1223,74 @@ module Herb
       def find_unresolved(render_calls, partial_files, view_root)
         render_calls.select do |call|
           next false unless call[:partial]
+          next false if resolve_partial(call[:partial], call[:file], partial_files, view_root)
 
-          !resolve_partial(call[:partial], call[:file], partial_files, view_root)
+          branches = static_branches(call[:partial])
+          targets = branches.filter_map { |branch| resolve_partial(branch, call[:file], partial_files, view_root) }
+
+          !(branches.size > 1 && targets.size == branches.size)
         end
       end
 
       def resolve_partial(partial_name, source_file, _partial_files, view_root)
         partial_index(view_root).resolve(partial_name, source_file).first
+      end
+
+      #: (untyped) -> Array[[Hash[Symbol, untyped], Array[String]]]
+      def conditional_calls(result)
+        result.render_calls.filter_map do |call|
+          next unless call[:partial]
+          next if resolve_partial(call[:partial], call[:file], result.partial_files, result.view_root)
+
+          branches = static_branches(call[:partial])
+          targets = branches.filter_map { |branch| resolve_partial(branch, call[:file], result.partial_files, result.view_root) }
+
+          [call, targets] if branches.size > 1 && targets.size == branches.size
+        end
+      end
+
+      #: (Hash[Symbol, untyped], Hash[String, String]) -> Array[String]
+      def names_under(call, partial_files)
+        prefix = call[:dynamic_prefix]
+
+        unless prefix
+          raw = call[:partial].to_s.sub(/\A["']/, "")
+          prefix = raw.split("\#{").first.to_s.chomp("/")
+        end
+
+        return [] if prefix.to_s.empty? || !partial_path_segment?(prefix)
+
+        partial_files.keys.select { |name| name.start_with?("#{prefix}/") }.sort
+      end
+
+      #: (String) -> bool
+      def missing_format?(file)
+        name = File.basename(file)
+
+        name.end_with?(".erb") && name.count(".") == 1
+      end
+
+      #: (String) -> bool
+      def partial_path_segment?(value)
+        value.match?(%r{\A[a-z0-9_/-]+\z})
+      end
+
+      #: (String) -> Array[String]
+      def static_branches(expression)
+        branches = expression.split("?", 2).last.to_s
+
+        branches.scan(/["']([^"'\#]+)["']/).flatten.uniq
+      end
+
+      #: (String) -> String?
+      def render_name_kind(name)
+        return "instance variable" if name.start_with?("@")
+        return "interpolated" if name.include?("\#{")
+        return "conditional" if name.include?("?") && name.include?(":")
+        return "method call" if name.include?("(") || name.include?(".")
+        return "expression" if name.include?(" ")
+
+        nil
       end
 
       def expected_file_path(partial_name, view_root)
@@ -1223,6 +1339,10 @@ module Herb
       end
 
       def relative_path(path)
+        relative = Pathname.new(path).relative_path_from(@project_path).to_s
+
+        return relative unless relative.start_with?("..")
+
         Pathname.new(path).relative_path_from(Pathname.pwd).to_s
       rescue ArgumentError
         path.to_s

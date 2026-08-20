@@ -26,6 +26,18 @@ module Herb
       # : (String | Pathname) -> Pathname
       def self.view_root_for: (String | Pathname) -> Pathname
 
+      # : (String) -> String?
+      def self.format_of: (String) -> String?
+
+      # : (String) -> bool
+      def self.has_locale?: (String) -> bool
+
+      # : (String) -> String?
+      def self.variant_of: (String) -> String?
+
+      # : (String) -> String
+      def self.without_template_extension: (String) -> String
+
       # : (String) -> bool
       def self.template_path?: (String) -> bool
 
@@ -44,11 +56,26 @@ module Herb
       # : (String, String | Pathname) -> String?
       def self.template_name_for: (String, String | Pathname) -> String?
 
+      # : (String, Array[String | Pathname]) -> Array[String]
+      def self.layout_candidates_for_roots: (String, Array[String | Pathname]) -> Array[String]
+
       # : (String, String | Pathname) -> Array[String]
       def self.layout_candidates_for: (String, String | Pathname) -> Array[String]
 
       # : (String, String | Pathname) -> String?
       def self.partial_name_for: (String, String | Pathname) -> String?
+
+      # : (String, Array[String | Pathname]) -> [Integer, String]?
+      def self.relative_to_view_roots: (String, Array[String | Pathname]) -> [ Integer, String ]?
+
+      # : (String, Array[String | Pathname]) -> String?
+      def self.partial_name_for_roots: (String, Array[String | Pathname]) -> String?
+
+      # : (String, Array[String | Pathname]) -> String?
+      def self.template_name_for_roots: (String, Array[String | Pathname]) -> String?
+
+      # : (String, Array[String | Pathname]) -> Integer
+      def self.root_index_for: (String, Array[String | Pathname]) -> Integer
 
       # : (String, String | Pathname) -> String?
       private def self.relative_to_view_root: (String, String | Pathname) -> String?

@@ -156,11 +156,11 @@ module Herb
 
         #: (Array[String], Hash[String, Array[YieldSite]], Hash[String, Array[PartialCallSite]]) -> void
         def add_layout_call_sites(files, layout_yields, call_sites)
-          view_root = @partials.view_root
+          view_roots = @partials.view_roots
           layouts = {} #: Hash[String, String]
 
           files.each do |file|
-            name = PartialResolution.template_name_for(file, view_root)
+            name = PartialResolution.template_name_for_roots(file, view_roots)
 
             next unless name && layout_yields.key?(file)
 
@@ -172,7 +172,7 @@ module Herb
           end
 
           files.each do |file|
-            PartialResolution.layout_candidates_for(file, view_root).each do |candidate|
+            PartialResolution.layout_candidates_for_roots(file, view_roots).each do |candidate|
               layout = layouts[candidate]
 
               next if layout.nil? || layout == file

@@ -15,7 +15,7 @@ export const PARTIAL_GLOB_PATTERN = `_${TEMPLATE_GLOB_PATTERN}`
 const PARTIAL_PREFIX = "_"
 const APPLICATION_DIRECTORY = "application"
 
-export type PartialPaths = Map<string, string>
+export type PartialPaths = Map<string, string | string[]>
 
 function normalize(path: string): string {
   const separated = path.replace(/\\/g, "/")
@@ -50,10 +50,118 @@ function relativeToViewRoot(path: string, viewRoot: string): string | null {
   return normalizedPath.slice(normalizedRoot.length + 1)
 }
 
+export function relativeToViewRoots(path: string, viewRoots: string[]): [number, string] | null {
+  for (const [index, root] of viewRoots.entries()) {
+    const relative = relativeToViewRoot(path, root)
+
+    if (relative !== null) return [index, relative]
+  }
+
+  return null
+}
+
+export function partialNameForRoots(filePath: string, viewRoots: string[]): string | null {
+  for (const root of viewRoots) {
+    const name = partialNameForFile(filePath, root)
+
+    if (name !== null) return name
+  }
+
+  return null
+}
+
+export function templateNameForRoots(filePath: string, viewRoots: string[]): string | null {
+  for (const root of viewRoots) {
+    const name = templateNameForFile(filePath, root)
+
+    if (name !== null) return name
+  }
+
+  return null
+}
+
+export function rootIndexFor(filePath: string, viewRoots: string[]): number {
+  return relativeToViewRoots(filePath, viewRoots)?.[0] ?? viewRoots.length
+}
+
 export function projectRelativePath(filePath: string, projectPath: string | undefined): string {
   if (!projectPath) return normalize(filePath)
 
   return relativeToViewRoot(filePath, projectPath) ?? normalize(filePath)
+}
+
+export function formatOf(filePath: string): string | null {
+  const name = basename(normalize(filePath))
+  const dot = name.indexOf(".")
+
+  if (dot === -1) return null
+
+  const extension = name.slice(dot)
+  const stripped = extension.endsWith(".erb")
+    ? extension.slice(0, -".erb".length)
+    : extension.endsWith(".herb")
+      ? extension.slice(0, -".herb".length)
+      : null
+
+  if (stripped === null) return null
+
+  const segments = stripped.startsWith(".") ? stripped.slice(1) : stripped
+  const last = segments.split(".").pop() ?? segments
+  const format = last.split("+")[0] ?? last
+
+  return format === "" ? null : format
+}
+
+export function hasLocale(filePath: string): boolean {
+  const name = basename(normalize(filePath))
+  const dot = name.indexOf(".")
+
+  if (dot === -1) return false
+
+  const extension = name.slice(dot)
+  const stripped = extension.endsWith(".erb")
+    ? extension.slice(0, -".erb".length)
+    : extension.endsWith(".herb")
+      ? extension.slice(0, -".herb".length)
+      : null
+
+  if (stripped === null) return false
+
+  const segments = (stripped.startsWith(".") ? stripped.slice(1) : stripped).split(".")
+
+  return segments.length > 1
+}
+
+export function variantOf(filePath: string): string | null {
+  const name = basename(normalize(filePath))
+  const dot = name.indexOf(".")
+
+  if (dot === -1) return null
+
+  const extension = name.slice(dot)
+  const stripped = extension.endsWith(".erb")
+    ? extension.slice(0, -".erb".length)
+    : extension.endsWith(".herb")
+      ? extension.slice(0, -".herb".length)
+      : null
+
+  if (stripped === null) return null
+
+  const plus = stripped.indexOf("+")
+
+  if (plus === -1) return null
+
+  const variant = stripped.slice(plus + 1)
+
+  return variant === "" ? null : variant
+}
+
+export function withoutTemplateExtension(partialName: string): string {
+  for (const extension of PARTIAL_EXTENSIONS) {
+    if (partialName.endsWith(extension)) return partialName.slice(0, -extension.length)
+  }
+
+  return partialName
 }
 
 export function isTemplatePath(filePath: string): boolean {
@@ -111,6 +219,16 @@ export function templateNameForFile(filePath: string, viewRoot: string): string 
   return directory === "." ? withoutExtension : `${directory}/${withoutExtension}`
 }
 
+export function layoutCandidatesForRoots(templateFile: string, viewRoots: string[]): string[] {
+  for (const root of viewRoots) {
+    const candidates = layoutCandidatesFor(templateFile, root)
+
+    if (candidates.length > 0) return candidates
+  }
+
+  return []
+}
+
 export function layoutCandidatesFor(templateFile: string, viewRoot: string): string[] {
   const relative = relativeToViewRoot(normalize(templateFile), viewRoot)
 
@@ -136,23 +254,50 @@ export function layoutCandidatesFor(templateFile: string, viewRoot: string): str
   return candidates
 }
 
-export function resolvePartial(partialName: string, sourceFile: string, index: PartialPaths, viewRoot: string): string | null {
+function pickForCaller(candidates: string | string[], sourceFile: string): string | null {
+  if (!Array.isArray(candidates)) return candidates
+  if (candidates.length === 0) return null
+
+  const format = formatOf(sourceFile)
+
+  if (format === null) return candidates[0] ?? null
+
+  const ranked = [...candidates].sort((a, b) => rankForFormat(a, format) - rankForFormat(b, format))
+
+  return ranked[0] ?? null
+}
+
+function rankForFormat(file: string, format: string): number {
+  const candidate = formatOf(file)
+  const matches = candidate === format ? 0 : candidate === null ? 1 : 2
+
+  return matches * 4 + (variantOf(file) === null ? 0 : 2) + (hasLocale(file) ? 1 : 0)
+}
+
+export function resolvePartial(
+  partialName: string,
+  sourceFile: string,
+  index: PartialPaths,
+  viewRoots: string[]
+): string | null {
+  partialName = withoutTemplateExtension(partialName)
+
   const exact = index.get(partialName)
 
-  if (exact !== undefined) return exact
+  if (exact !== undefined) return pickForCaller(exact, sourceFile)
 
-  const sourceDirectory = relativeToViewRoot(dirname(normalize(sourceFile)), viewRoot)
+  const sourceDirectory = relativeToViewRoots(dirname(normalize(sourceFile)), viewRoots)?.[1] ?? null
 
   if (sourceDirectory !== null && sourceDirectory !== ".") {
     const relative = index.get(`${sourceDirectory}/${partialName}`)
 
-    if (relative !== undefined) return relative
+    if (relative !== undefined) return pickForCaller(relative, sourceFile)
   }
 
   if (!partialName.includes("/")) {
     const application = index.get(`${APPLICATION_DIRECTORY}/${partialName}`)
 
-    if (application !== undefined) return application
+    if (application !== undefined) return pickForCaller(application, sourceFile)
   }
 
   return null

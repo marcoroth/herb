@@ -62,7 +62,6 @@ module Herb
       def dependency_index: (untyped file_path) -> untyped
 
       # @rbs!
-      #   KERNEL_METHODS: Array[String]
       KERNEL_METHODS: untyped
 
       def scan_helpers!: () -> untyped
@@ -85,7 +84,6 @@ module Herb
       def symbol_after: (String, String) -> String?
 
       # @rbs!
-      #   UNCOUNTABLE: Array[String]
       UNCOUNTABLE: untyped
 
       # : (String, String) -> String?

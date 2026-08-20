@@ -64,13 +64,13 @@ describe("ProjectIndex", () => {
     test("reports the view root it found", async () => {
       const index = await analyzerFor()
 
-      expect(index.viewRoot).toBe("app/views")
+      expect(index.viewRoots).toEqual(["app/views"])
     })
 
     test("falls back to the project root when there is no app/views", async () => {
       const index = await analyzerFor({ "templates/_card.html.erb": `<article></article>\n` })
 
-      expect(index.viewRoot).toBe(".")
+      expect(index.viewRoots).toEqual(["."])
     })
   })
 

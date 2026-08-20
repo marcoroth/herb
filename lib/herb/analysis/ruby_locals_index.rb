@@ -59,7 +59,6 @@ module Herb
         @locals.find { |local| local.name == name }
       end
 
-      # Every name the template binds, regardless of where.
       #: () -> Set[String]
       def names
         @locals.to_set(&:name)

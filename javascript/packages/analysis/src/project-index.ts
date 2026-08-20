@@ -58,8 +58,8 @@ export class ProjectIndex {
     return this.callerIndex
   }
 
-  get viewRoot(): string | undefined {
-    return this.partialIndex?.viewRoot
+  get viewRoots(): string[] | undefined {
+    return this.partialIndex?.viewRoots
   }
 
   async indexAll(): Promise<void> {
@@ -71,7 +71,7 @@ export class ProjectIndex {
     try {
       this.partialIndex = await buildPartialIndex(this.backend, this.root)
 
-      this.logger?.log(`[Partials] Indexed ${this.partialIndex.size} partials under ${this.partialIndex.viewRoot}`)
+      this.logger?.log(`[Partials] Indexed ${this.partialIndex.size} partials under ${this.partialIndex.viewRoots.join(", ")}`)
     } catch (error) {
       this.logger?.warn(`[Partials] Failed to index partials: ${this.messageFor(error)}`)
     }

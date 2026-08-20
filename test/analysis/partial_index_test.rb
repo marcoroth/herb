@@ -25,13 +25,13 @@ class PartialIndexTest < Minitest::Spec
   test "resolves the view root to app/views when it is there" do
     write("app/views/posts/index.html.erb")
 
-    assert_equal File.join(@project_path, "app", "views"), Herb::Analysis::PartialIndex.build(@project_path).view_root.to_s
+    assert_equal [File.join(@project_path, "app", "views")], Herb::Analysis::PartialIndex.build(@project_path).view_roots.map(&:to_s)
   end
 
   test "falls back to the project root when there is no app/views" do
     write("posts/index.html.erb")
 
-    assert_equal @project_path, Herb::Analysis::PartialIndex.build(@project_path).view_root.to_s
+    assert_equal [@project_path], Herb::Analysis::PartialIndex.build(@project_path).view_roots.map(&:to_s)
   end
 
   test "maps a qualified partial name to its file" do

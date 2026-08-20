@@ -74,12 +74,19 @@ pub fn collect_from_source(source: &str, references: &mut RubyRenderReferences) 
   let wrapped = format!("<% {} %>", source);
   let options = ParserOptions {
     prism_nodes: true,
+    prism_program: true,
     ..Default::default()
   };
 
   let Ok(result) = parse_with_options(&wrapped, &options) else {
     return;
   };
+
+  if let Some(program) = result.value.prism() {
+    walk(program, references);
+
+    return;
+  }
 
   for child in &result.value.children {
     if let herb::nodes::AnyNode::ERBContentNode(node) = child {

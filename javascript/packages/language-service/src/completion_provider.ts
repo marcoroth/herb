@@ -458,7 +458,7 @@ export class CompletionProvider {
     if (!partials) return null
 
     const file = this.relativePathFor(document.uri)
-    const directory = file === null ? null : this.directoryOf(file, partials.viewRoot)
+    const directory = file === null ? null : this.directoryOf(file, partials.viewRoots[0] ?? ".")
     const lowercasePrefix = prefix.toLowerCase()
 
     const nameRange = Range.create(document.positionAt(document.offsetAt(position) - prefix.length), position)

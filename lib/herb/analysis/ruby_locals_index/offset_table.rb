@@ -3,8 +3,6 @@
 module Herb
   module Analysis
     class RubyLocalsIndex
-      # Prism reports byte offsets into the whole template while the Herb AST
-      # reports lines and columns, so one of them has to be translated.
       class OffsetTable
         # @rbs!
         #   @line_starts: Array[Integer]
