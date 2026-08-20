@@ -30,7 +30,7 @@ module Herb
       include ContextAware
 
       recommended_parser_option iteration_nodes: true, render_nodes: true
-      required_parser_option action_view_helpers: true
+      required_parser_option action_view_helpers: true, track_locations: true
 
       attr_reader :slots #: Array[Slot]
       attr_reader :document #: untyped

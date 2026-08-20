@@ -40,6 +40,8 @@ module Herb
     class HTMLSafeAssertionsVisitor < Herb::Visitor
       include ContextAware
 
+      required_parser_option track_locations: true
+
       RUNTIME = "::Herb::Engine::HTMLSafeAssertions"
 
       MAX_SOURCE_LENGTH = 120

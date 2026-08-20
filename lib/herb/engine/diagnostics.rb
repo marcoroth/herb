@@ -26,6 +26,13 @@ module Herb
     module Diagnostics
       include Kernel
 
+      #: (untyped) -> void
+      def self.included(base)
+        super
+
+        base.required_parser_option(track_locations: true) if base.respond_to?(:required_parser_option)
+      end
+
       #: () -> Array[Herb::Diagnostic]
       def diagnostics
         @diagnostics ||= [] #: Array[Herb::Diagnostic]

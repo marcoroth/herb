@@ -52,6 +52,9 @@ module Herb
       # : (?verify: bool) -> void
       def initialize: (?verify: bool) -> void
 
+      # : () -> Hash[Symbol, untyped]
+      def required_parser_options: () -> Hash[Symbol, untyped]
+
       # : (Herb::AST::DocumentNode) -> void
       def visit_document_node: (Herb::AST::DocumentNode) -> void
 

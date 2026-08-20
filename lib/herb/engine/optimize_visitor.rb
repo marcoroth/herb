@@ -74,6 +74,13 @@ module Herb
         warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
       end
 
+      #: () -> Hash[Symbol, untyped]
+      def required_parser_options
+        return super unless @verify
+
+        super.merge(track_locations: true)
+      end
+
       #: (Herb::AST::DocumentNode) -> void
       def visit_document_node(node)
         @sources = {} #: Hash[String, Herb::Location?]
