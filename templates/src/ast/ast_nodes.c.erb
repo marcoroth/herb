@@ -118,7 +118,7 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     hb_array_free(&<%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::StringField -%>
-  if (<%= node.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
+  if (!hb_string_is_empty(<%= node.human %>-><%= field.name %>)) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
   <%- when Herb::Template::PrismNodeField -%>
   /* prism_node is a borrowed reference into the prism context, not freed here */
   <%- when Herb::Template::AnalyzedRubyField -%>
