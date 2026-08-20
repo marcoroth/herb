@@ -1058,6 +1058,31 @@ static AST_NODE_T* create_javascript_include_tag_element(
   );
 }
 
+static hb_array_T* build_asset_tag_attributes(
+  pm_call_node_t* call_node,
+  tag_helper_parse_context_T* parse_context,
+  hb_allocator_T* allocator
+) {
+  hb_array_T* attributes = extract_html_attributes_from_call_node(
+    call_node,
+    parse_context->prism_source,
+    parse_context->original_source,
+    parse_context->erb_content_offset,
+    allocator
+  );
+
+  if (!attributes) { attributes = hb_array_init(0, allocator); }
+
+  resolve_nonce_attribute(attributes, allocator);
+
+  remove_attribute_by_name(attributes, "extname");
+  remove_attribute_by_name(attributes, "host");
+  remove_attribute_by_name(attributes, "protocol");
+  remove_attribute_by_name(attributes, "skip-pipeline");
+
+  return attributes;
+}
+
 static hb_array_T* transform_javascript_include_tag_multi_source(
   AST_ERB_CONTENT_NODE_T* erb_node,
   analyze_ruby_context_T* context,
@@ -1069,36 +1094,18 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
 
   if (source_count == 0) { return NULL; }
 
-  hb_array_T* shared_attributes = extract_html_attributes_from_call_node(
-    call_node,
-    parse_context->prism_source,
-    parse_context->original_source,
-    parse_context->erb_content_offset,
-    allocator
-  );
-  if (!shared_attributes) { shared_attributes = hb_array_init(0, allocator); }
-
-  resolve_nonce_attribute(shared_attributes, allocator);
-
   char* path_options =
     extract_path_options_from_keyword_hash(call_node, JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS, allocator);
-  remove_attribute_by_name(shared_attributes, "extname");
-  remove_attribute_by_name(shared_attributes, "host");
-  remove_attribute_by_name(shared_attributes, "protocol");
-  remove_attribute_by_name(shared_attributes, "skip-pipeline");
-
   hb_array_T* elements = hb_array_init(source_count * 2, allocator);
 
   for (size_t i = 0; i < source_count; i++) {
     pm_node_t* source_arg = call_node->arguments->arguments.nodes[i];
-    AST_NODE_T* element = create_javascript_include_tag_element(
-      erb_node,
-      parse_context,
-      source_arg,
-      shared_attributes,
-      path_options,
-      allocator
-    );
+    hb_array_T* attributes = build_asset_tag_attributes(call_node, parse_context, allocator);
+
+    AST_NODE_T* element =
+      create_javascript_include_tag_element(erb_node, parse_context, source_arg, attributes, path_options, allocator);
+
+    hb_array_free(&attributes);
 
     if (element) {
       if (hb_array_size(elements) > 0) {
@@ -1185,35 +1192,17 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
 
   if (source_count == 0) { return NULL; }
 
-  hb_array_T* shared_attributes = extract_html_attributes_from_call_node(
-    call_node,
-    parse_context->prism_source,
-    parse_context->original_source,
-    parse_context->erb_content_offset,
-    allocator
-  );
-  if (!shared_attributes) { shared_attributes = hb_array_init(0, allocator); }
-
-  resolve_nonce_attribute(shared_attributes, allocator);
-
   char* path_options = extract_path_options_from_keyword_hash(call_node, STYLESHEET_LINK_TAG_PATH_OPTIONS, allocator);
-  remove_attribute_by_name(shared_attributes, "extname");
-  remove_attribute_by_name(shared_attributes, "host");
-  remove_attribute_by_name(shared_attributes, "protocol");
-  remove_attribute_by_name(shared_attributes, "skip-pipeline");
-
   hb_array_T* elements = hb_array_init(source_count * 2, allocator);
 
   for (size_t i = 0; i < source_count; i++) {
     pm_node_t* source_arg = call_node->arguments->arguments.nodes[i];
-    AST_NODE_T* element = create_stylesheet_link_tag_element(
-      erb_node,
-      parse_context,
-      source_arg,
-      shared_attributes,
-      path_options,
-      allocator
-    );
+    hb_array_T* attributes = build_asset_tag_attributes(call_node, parse_context, allocator);
+
+    AST_NODE_T* element =
+      create_stylesheet_link_tag_element(erb_node, parse_context, source_arg, attributes, path_options, allocator);
+
+    hb_array_free(&attributes);
 
     if (element) {
       if (hb_array_size(elements) > 0) {
