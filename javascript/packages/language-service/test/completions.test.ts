@@ -3,6 +3,8 @@ import { describe, test, expect } from "vitest"
 import { Position } from "../src/index.js"
 import { setupHerb, createService, createDocument } from "./helpers.js"
 
+import type { Framework } from "@herb-tools/core"
+
 describe("doComplete", () => {
   setupHerb()
 
@@ -195,7 +197,7 @@ describe("block argument completions", () => {
 describe("iteration block argument completions", () => {
   setupHerb()
 
-  function labelsFor(source: string, options?: { framework?: string }) {
+  function labelsFor(source: string, options?: { framework?: Framework }) {
     const service = createService(options)
     const document = createDocument(source)
 

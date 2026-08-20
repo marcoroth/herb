@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
+#include "../include/analyze/helpers.h"
 #include "../include/analyze/ternary_conditionals.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/lib/hb_allocator.h"
@@ -13,14 +14,6 @@
 #include <prism.h>
 #include <stdbool.h>
 #include <string.h>
-
-static bool is_erb_output_tag(AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (!erb_node || !erb_node->tag_opening) { return false; }
-
-  hb_string_T opening = erb_node->tag_opening->value;
-
-  return opening.length >= 3 && opening.data[0] == '<' && opening.data[1] == '%' && opening.data[2] == '=';
-}
 
 static pm_node_t* find_postfix_conditional_statement(analyzed_ruby_T* analyzed) {
   if (!analyzed || !analyzed->valid || !analyzed->root) { return NULL; }
@@ -83,24 +76,28 @@ static body_info_T extract_statements_body_info(
   return info;
 }
 
+static pm_statements_node_t* conditional_statements(pm_node_t* conditional_node) {
+  if (conditional_node->type == PM_IF_NODE) { return ((pm_if_node_t*) conditional_node)->statements; }
+  if (conditional_node->type == PM_UNLESS_NODE) { return ((pm_unless_node_t*) conditional_node)->statements; }
+
+  return NULL;
+}
+
 static body_info_T extract_body_info(
   pm_node_t* conditional_node,
   analyzed_ruby_T* analyzed,
   hb_allocator_T* allocator
 ) {
-  pm_statements_node_t* statements = NULL;
-
-  if (conditional_node->type == PM_IF_NODE) {
-    statements = ((pm_if_node_t*) conditional_node)->statements;
-  } else if (conditional_node->type == PM_UNLESS_NODE) {
-    statements = ((pm_unless_node_t*) conditional_node)->statements;
-  }
+  pm_statements_node_t* statements = conditional_statements(conditional_node);
 
   body_info_T info = extract_statements_body_info(statements, analyzed, allocator);
 
   if (info.source) {
     info.length = info.offset_in_content + info.length;
     info.offset_in_content = 0;
+
+    hb_allocator_dealloc(allocator, (void*) info.source);
+
     info.source = hb_allocator_strndup(allocator, (const char*) analyzed->parser.start, info.length);
   }
 
@@ -131,13 +128,7 @@ static const char* condition_keyword(pm_node_t* conditional_node) {
 }
 
 static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
-  pm_statements_node_t* statements = NULL;
-
-  if (conditional_node->type == PM_IF_NODE) {
-    statements = ((pm_if_node_t*) conditional_node)->statements;
-  } else if (conditional_node->type == PM_UNLESS_NODE) {
-    statements = ((pm_unless_node_t*) conditional_node)->statements;
-  }
+  pm_statements_node_t* statements = conditional_statements(conditional_node);
 
   if (!statements || statements->body.size != 1) { return NULL; }
 
@@ -164,14 +155,66 @@ static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
   return NULL;
 }
 
+static bool append_body_statement(
+  hb_array_T* statements,
+  pm_node_t* conditional_node,
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  static_output_node_type_T static_node_type,
+  hb_allocator_T* allocator
+) {
+  position_T content_start = erb_node->content->location.start;
+
+  if (append_static_output_node(
+        statements,
+        conditional_statements(conditional_node),
+        erb_node->analyzed_ruby,
+        content_start,
+        static_node_type,
+        allocator
+      )) {
+    return true;
+  }
+
+  body_info_T info = extract_body_info(conditional_node, erb_node->analyzed_ruby, allocator);
+  if (!info.source) { return false; }
+
+  position_T body_start = { .line = content_start.line,
+                            .column = content_start.column + (uint32_t) info.offset_in_content };
+
+  position_T body_end = { .line = content_start.line,
+                          .column = content_start.column + (uint32_t) (info.offset_in_content + info.length) };
+
+  token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, body_start, body_end);
+
+  hb_allocator_dealloc(allocator, (void*) info.source);
+
+  AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
+    token_copy(erb_node->tag_opening, allocator),
+    content,
+    token_copy(erb_node->tag_closing, allocator),
+    NULL,
+    false,
+    true,
+    HERB_PRISM_NODE_EMPTY,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  if (!body_erb_node) { return false; }
+
+  hb_array_append(statements, (AST_NODE_T*) body_erb_node);
+
+  return true;
+}
+
 static AST_NODE_T* transform_conditional(
   AST_ERB_CONTENT_NODE_T* erb_node,
   pm_node_t* conditional_node,
+  static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
-  body_info_T body_info = extract_body_info(conditional_node, erb_node->analyzed_ruby, allocator);
-  if (!body_info.source) { return NULL; }
-
   char* condition_source = extract_condition_source(conditional_node, allocator);
   if (!condition_source) { return NULL; }
 
@@ -180,43 +223,18 @@ static AST_NODE_T* transform_conditional(
 
   position_T start = erb_node->base.location.start;
   position_T end = erb_node->base.location.end;
-  position_T content_start = erb_node->content->location.start;
-
-  position_T body_content_start = { .line = content_start.line,
-                                    .column = content_start.column + (uint32_t) body_info.offset_in_content };
-
-  position_T body_content_end = { .line = content_start.line,
-                                  .column = content_start.column
-                                          + (uint32_t) (body_info.offset_in_content + body_info.length) };
-
-  token_T* body_content =
-    create_synthetic_token(allocator, body_info.source, TOKEN_ERB_CONTENT, body_content_start, body_content_end);
-
-  AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
-    body_content,
-    erb_node->tag_closing,
-    NULL,
-    false,
-    true,
-    HERB_PRISM_NODE_EMPTY,
-    start,
-    end,
-    hb_array_init(0, allocator),
-    allocator
-  );
-
-  if (!body_erb_node) { return NULL; }
 
   hb_array_T* statements = hb_array_init(1, allocator);
-  hb_array_append(statements, (AST_NODE_T*) body_erb_node);
 
   pm_if_node_t* nested_ternary = find_nested_ternary(conditional_node);
 
-  if (nested_ternary) {
-    AST_NODE_T* ternary_replacement = transform_ternary_expression(erb_node, nested_ternary, allocator);
+  AST_NODE_T* ternary_replacement =
+    nested_ternary ? transform_ternary_expression(erb_node, nested_ternary, static_node_type, allocator) : NULL;
 
-    if (ternary_replacement) { hb_array_set(statements, 0, ternary_replacement); }
+  if (ternary_replacement) {
+    hb_array_append(statements, ternary_replacement);
+  } else if (!append_body_statement(statements, conditional_node, erb_node, static_node_type, allocator)) {
+    return NULL;
   }
 
   hb_buffer_T condition_buffer;
@@ -231,6 +249,9 @@ static AST_NODE_T* transform_conditional(
 
   token_T* tag_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
   token_T* content_token = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
+
+  hb_buffer_free(&condition_buffer);
+  hb_allocator_dealloc(allocator, condition_source);
   token_T* tag_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
 
   token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
@@ -243,7 +264,7 @@ static AST_NODE_T* transform_conditional(
   herb_prism_node_T empty_prism_node = HERB_PRISM_NODE_EMPTY;
 
   if (conditional_node->type == PM_IF_NODE) {
-    AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
+    return (AST_NODE_T*) ast_erb_if_node_init(
       tag_opening,
       content_token,
       tag_closing,
@@ -257,10 +278,8 @@ static AST_NODE_T* transform_conditional(
       hb_array_init(0, allocator),
       allocator
     );
-
-    return (AST_NODE_T*) if_node;
   } else {
-    AST_ERB_UNLESS_NODE_T* unless_node = ast_erb_unless_node_init(
+    return (AST_NODE_T*) ast_erb_unless_node_init(
       tag_opening,
       content_token,
       tag_closing,
@@ -274,12 +293,14 @@ static AST_NODE_T* transform_conditional(
       hb_array_init(0, allocator),
       allocator
     );
-
-    return (AST_NODE_T*) unless_node;
   }
 }
 
-static void transform_conditional_array(hb_array_T* array, analyze_ruby_context_T* context) {
+static void transform_conditional_array(
+  hb_array_T* array,
+  analyze_ruby_context_T* context,
+  static_output_node_type_T static_node_type
+) {
   if (!array || !context) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
@@ -294,8 +315,11 @@ static void transform_conditional_array(hb_array_T* array, analyze_ruby_context_
     pm_node_t* conditional_node = find_postfix_conditional_statement(erb_node->analyzed_ruby);
     if (!conditional_node) { continue; }
 
-    AST_NODE_T* replacement = transform_conditional(erb_node, conditional_node, context->allocator);
-    if (replacement) { hb_array_set(array, i, replacement); }
+    AST_NODE_T* replacement = transform_conditional(erb_node, conditional_node, static_node_type, context->allocator);
+    if (replacement) {
+      hb_array_set(array, i, replacement);
+      ast_node_free(child, context->allocator);
+    }
   }
 }
 
@@ -303,13 +327,24 @@ static void transform_conditional_blocks(const AST_NODE_T* node, analyze_ruby_co
   if (!node || !context) { return; }
 
   switch (node->type) {
-    case AST_DOCUMENT_NODE: transform_conditional_array(((AST_DOCUMENT_NODE_T*) node)->children, context); break;
-    case AST_HTML_ELEMENT_NODE: transform_conditional_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context); break;
-    case AST_HTML_OPEN_TAG_NODE:
-      transform_conditional_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context);
+    case AST_DOCUMENT_NODE:
+      transform_conditional_array(((AST_DOCUMENT_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_HTML_TEXT);
       break;
+
+    case AST_HTML_ELEMENT_NODE:
+      transform_conditional_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context, STATIC_OUTPUT_NODE_HTML_TEXT);
+      break;
+
+    case AST_HTML_OPEN_TAG_NODE:
+      transform_conditional_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_NONE);
+      break;
+
     case AST_HTML_ATTRIBUTE_VALUE_NODE:
-      transform_conditional_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
+      transform_conditional_array(
+        ((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children,
+        context,
+        STATIC_OUTPUT_NODE_LITERAL
+      );
       break;
     default: break;
   }

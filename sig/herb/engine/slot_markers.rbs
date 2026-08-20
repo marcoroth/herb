@@ -8,11 +8,8 @@ module Herb
       # : (Integer, Symbol) -> String
       def slot_open: (Integer, Symbol) -> String
 
-      # : (Array[Integer], Array[Symbol]) -> String
-      def element_anchors: (Array[Integer], Array[Symbol]) -> String
-
-      # : (Integer) -> String
-      def child_anchor: (Integer) -> String
+      # : (Array[[Integer, Symbol, String?]]) -> String
+      def element_anchors: (Array[[ Integer, Symbol, String? ]]) -> String
 
       # : (Integer) -> String
       def slot_close: (Integer) -> String
@@ -21,19 +18,28 @@ module Herb
       def branch: (Integer, Integer) -> String
 
       # : (Integer) -> String
-      def row_open_prefix: (Integer) -> String
+      def item_open_prefix: (Integer) -> String
 
       # : () -> String
-      def row_open_suffix: () -> String
+      def item_open_suffix: () -> String
 
       # : (Integer) -> String
-      def row_close: (Integer) -> String
+      def item_close: (Integer) -> String
 
       # : (String, String) -> String
-      def region_open: (String, String) -> String
+      def region_open_prefix: (String, String) -> String
+
+      # : () -> String
+      def region_open_suffix: () -> String
 
       # : (String) -> String
       def region_close: (String) -> String
+
+      # : (String, String) -> String
+      def statics_open: (String, String) -> String
+
+      # : () -> String
+      def statics_close: () -> String
     end
   end
 end

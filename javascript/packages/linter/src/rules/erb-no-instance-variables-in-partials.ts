@@ -1,7 +1,7 @@
 import { PrismVisitor, PrismNodes , locationFromByteOffset } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 
 import type { ParseResult, ParserOptions, PrismLocation } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

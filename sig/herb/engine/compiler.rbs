@@ -15,9 +15,15 @@ module Herb
 
       WHITESPACE_ONLY_CAPTURE: ::Regexp
 
+      RAW_TEXT_ELEMENTS: untyped
+
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped
+
+      def optimized_tokens: () -> untyped
+
+      def static_template_text: () -> untyped
 
       def generate_output: () -> untyped
 
@@ -56,6 +62,8 @@ module Herb
       def visit_html_doctype_node: (untyped node) -> untyped
 
       def visit_xml_declaration_node: (untyped node) -> untyped
+
+      def visit_xml_processing_instruction_node: (untyped node) -> untyped
 
       def visit_cdata_node: (untyped node) -> untyped
 
@@ -113,14 +121,12 @@ module Herb
 
       def pop_context: () -> untyped
 
-      # : (untyped node) { () -> untyped } -> untyped
-      def with_element_context: (untyped node) { () -> untyped } -> untyped
+      # : (untyped node) { (String?) -> untyped } -> untyped
+      def with_element_context: (untyped node) { (String?) -> untyped } -> untyped
 
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
-
-      def add_whitespace: (untyped whitespace) -> untyped
 
       def add_code: (untyped code) -> untyped
 
@@ -129,16 +135,6 @@ module Herb
       def add_expression_escaped: (untyped code) -> untyped
 
       def optimize_tokens: (untyped tokens) -> untyped
-
-      def adjacent_whitespace?: (untyped tokens, untyped index) -> untyped
-
-      def trailing_whitespace?: (untyped token) -> untyped
-
-      def leading_whitespace?: (untyped token) -> untyped
-
-      def whitespace_before_code_sequence?: (untyped tokens, untyped current_index) -> untyped
-
-      def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
 
       def process_erb_output: (untyped node, untyped opening, untyped code) -> untyped
 
@@ -158,11 +154,17 @@ module Herb
 
       def right_trim?: (untyped node) -> untyped
 
+      def preceded_by_whitespace?: () -> untyped
+
+      def emits_nothing?: (untyped token) -> untyped
+
       def last_text_token: () -> untyped
 
       def extract_leading_space: () -> untyped
 
       def leading_space_follows_newline?: () -> untyped
+
+      def preceding_text_ends_with_newline?: () -> untyped
 
       def extract_and_remove_leading_space!: () -> untyped
 

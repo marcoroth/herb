@@ -41,7 +41,7 @@ const PROJECT = {
 
 let parserService: ParserService
 
-function project(files: Record<string, string>): Project {
+function project(files: Record<string, string>) {
   const root = mkdtempSync(join(tmpdir(), "herb-lsp-references-"))
 
   roots.push(root)
@@ -80,6 +80,7 @@ async function serviceFor(files: Record<string, string>, buffers: Record<string,
   } as OpenDocuments
 
   const service = new ReferencesProvider(new DefinitionProvider(parserService, existsSync, readFile), index, documents, readFile)
+  service.setConfig({ framework: "actionview" })
 
   return { service, index, project: created, buffers }
 }
@@ -264,6 +265,15 @@ describe("ReferencesProvider", () => {
       "app/views/posts/_card.html.erb": `<article></article>\n`,
       "app/views/posts/index.html.erb": `<div></div>\n`,
     })
+
+    expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([])
+  })
+  test("finds nothing when the framework is not Action View", async () => {
+    const services = await serviceFor(PROJECT)
+
+    expect(referencesAt(services, "app/views/posts/_card.html.erb").length).toBeGreaterThan(0)
+
+    services.service.setConfig({ framework: "sinatra" })
 
     expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([])
   })

@@ -4,7 +4,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DefinitionProvider } from "../src/definition_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
+
+import type { FrameworkOptions } from "../src/types"
 const VIEW_URI = "file:///project/app/views/events/show.html.erb"
 
 describe("DefinitionProvider", () => {
@@ -29,11 +31,11 @@ describe("DefinitionProvider", () => {
     )
   }
 
-  function definitions(service: DefinitionProvider, content: string, target: string, uri = VIEW_URI) {
+  function definitions(service: DefinitionProvider, content: string, target: string, uri = VIEW_URI, options: FrameworkOptions = { framework: "actionview" }) {
     const document = TextDocument.create(uri, "erb", 1, content)
     const position = document.positionAt(content.indexOf(target) + 1)
 
-    return service.getDefinition(document, position)
+    return service.getDefinition(document, position, options)
   }
 
   function uris(service: DefinitionProvider, content: string, target: string, uri = VIEW_URI) {
@@ -183,7 +185,7 @@ describe("DefinitionProvider", () => {
     function hover(service: DefinitionProvider, content: string, target: string, uri = VIEW_URI) {
       const document = TextDocument.create(uri, "erb", 1, content)
       const position = document.positionAt(content.indexOf(target) + 1)
-      const result = service.getHover(document, position)
+      const result = service.getHover(document, position, { framework: "actionview" })
 
       return result ? (result.contents as { value: string }).value : null
     }
@@ -205,7 +207,7 @@ describe("DefinitionProvider", () => {
       const message = hover(service, `<%= render partial: "events/card" %>`, "events/card")
 
       expect(message).toContain(`<%# locals: (event:, size: "sm") %>\n\n<div><%= event.name %></div>`)
-      expect(message.match(/```erb/g)).toHaveLength(1)
+      expect(message!.match(/```erb/g)).toHaveLength(1)
     })
 
     it("shows a snippet when the partial has no strict locals", () => {
@@ -390,14 +392,34 @@ describe("DefinitionProvider", () => {
       const content = `<div>text</div>\n<%= render partial: "events/featured_home" %>`
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
 
-      expect(service.getHover(document, document.positionAt(2))).toBeNull()
+      expect(service.getHover(document, document.positionAt(2), { framework: "actionview" })).toBeNull()
+    })
+
+    it("does not resolve a definition when the framework is not Action View", () => {
+      const service = createService("/project/app/views/events/_featured_home.html.erb")
+      const content = `<%= render partial: "events/featured_home" %>`
+
+      expect(definitions(service, content, "events/featured_home").length).toBeGreaterThan(0)
+      expect(definitions(service, content, "events/featured_home", VIEW_URI, { framework: "sinatra" })).toEqual([])
+      expect(definitions(service, content, "events/featured_home", VIEW_URI, {})).toEqual([])
+    })
+
+    it("returns nothing when the framework is not Action View", () => {
+      const service = createService("/project/app/views/events/_featured_home.html.erb")
+      const content = `<%= render partial: "events/featured_home" %>`
+      const document = TextDocument.create(VIEW_URI, "erb", 1, content)
+      const position = document.positionAt(content.indexOf("events/featured_home") + 1)
+
+      expect(service.getHover(document, position, { framework: "actionview" })).not.toBeNull()
+      expect(service.getHover(document, position, { framework: "sinatra" })).toBeNull()
+      expect(service.getHover(document, position, {})).toBeNull()
     })
   })
 
   describe("object and collection rendering", () => {
     function hoverText(service: DefinitionProvider, content: string, target: string) {
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const result = service.getHover(document, document.positionAt(content.indexOf(target) + 1))
+      const result = service.getHover(document, document.positionAt(content.indexOf(target) + 1), { framework: "actionview" })
 
       return result ? (result.contents as { value: string }).value : null
     }
@@ -423,7 +445,7 @@ describe("DefinitionProvider", () => {
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
 
       for (const target of ["<%= render", "render talks", "talks %>"]) {
-        const hover = service.getHover(document, document.positionAt(content.indexOf(target) + 1))
+        const hover = service.getHover(document, document.positionAt(content.indexOf(target) + 1), { framework: "actionview" })
 
         expect(document.getText(hover!.range)).toBe("<%= render talks %>")
       }
@@ -433,7 +455,7 @@ describe("DefinitionProvider", () => {
       const service = createService("/project/app/views/events/_card.html.erb")
       const content = `<%= render partial: "events/card" %>`
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const hover = service.getHover(document, document.positionAt(content.indexOf("events/card") + 1))
+      const hover = service.getHover(document, document.positionAt(content.indexOf("events/card") + 1), { framework: "actionview" })
 
       expect(document.getText(hover!.range)).toBe("events/card")
     })
@@ -467,7 +489,7 @@ describe("DefinitionProvider", () => {
   describe("interpolated partial names", () => {
     function hoverText(service: DefinitionProvider, content: string, target: string) {
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const result = service.getHover(document, document.positionAt(content.indexOf(target) + 1))
+      const result = service.getHover(document, document.positionAt(content.indexOf(target) + 1), { framework: "actionview" })
 
       return result ? (result.contents as { value: string }).value : null
     }
@@ -490,7 +512,7 @@ describe("DefinitionProvider", () => {
       const service = createService()
       const content = `<%= render "talks/#{scope}/card" %>`
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const message = (service.getHover(document, document.positionAt(6))!.contents as { value: string }).value
+      const message = (service.getHover(document, document.positionAt(6), { framework: "actionview" })!.contents as { value: string }).value
 
       expect(message).toContain("The name is interpolated")
       expect(message).not.toContain("to_partial_path")
@@ -501,7 +523,7 @@ describe("DefinitionProvider", () => {
       const service = createService()
       const content = `<%= render partial: "talks/#{scope}/card" %>`
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const message = (service.getHover(document, document.positionAt(6))!.contents as { value: string }).value
+      const message = (service.getHover(document, document.positionAt(6), { framework: "actionview" })!.contents as { value: string }).value
 
       expect(message).toContain("The name is interpolated")
       expect(message).not.toContain("to_partial_path")
@@ -556,7 +578,7 @@ describe("DefinitionProvider", () => {
       const service = createService("/project/app/views/events/_separator.html.erb")
       const content = `<%= render partial: "events/card", spacer_template: "events/separator" %>`
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const result = service.getHover(document, document.positionAt(content.indexOf("events/separator") + 1))
+      const result = service.getHover(document, document.positionAt(content.indexOf("events/separator") + 1), { framework: "actionview" })
 
       expect((result!.contents as { value: string }).value).toBe(
         "[app/views/events/_separator.html.erb](file:///project/app/views/events/_separator.html.erb)"
@@ -618,7 +640,7 @@ describe("DefinitionProvider", () => {
       const service = createService()
       const content = `<div>\n  <%= render partial: some_variable %>\n`
       const document = TextDocument.create(VIEW_URI, "erb", 1, content)
-      const hover = service.getHover(document, document.positionAt(content.indexOf("some_variable") + 1))
+      const hover = service.getHover(document, document.positionAt(content.indexOf("some_variable") + 1), { framework: "actionview" })
 
       expect((hover!.contents as { value: string }).value).toContain("can't resolve this partial statically")
     })

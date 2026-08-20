@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { isWhitespaceNode, isLiteralNode, isHTMLTextNode, isCommentNode, isERBNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"

@@ -11,32 +11,48 @@ module Herb
     #
     #     visitor.slots
     #
-    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive. Deciding what
-    # that means belongs to whoever builds the stack, so the directive is only recognised here:
+    # Templates can also ask for this themselves with a `<%# herb:slots %>` directive, and say who
+    # renders their branches with `<%# herb:slots client %>`. Deciding what that means belongs to
+    # whoever builds the stack, so the directive is only read here:
     #
-    #     visitors = Herb::Engine::SlotVisitor.directive?(source) ? [Herb::Engine::SlotVisitor.new] : []
+    #     mode = Herb::Engine::SlotVisitor.directive_mode(source)
+    #     visitors = mode ? [Herb::Engine::SlotVisitor.new(mode: mode)] : []
     class SlotVisitor < Herb::Visitor
       include ContextAware
 
+      attr_reader slots: Array[Slot]
+
+      attr_reader document: untyped
+
+      attr_reader warnings: Array[Herb::Warnings::Warning]
+
       SLOTS_DIRECTIVE: Regexp
 
-      # : (String) -> bool
-      def self.directive?: (String) -> bool
+      MODE_OPTION: Regexp
 
-      # : () -> bool
-      def self.reads_erb_source?: () -> bool
+      MODES: Array[Symbol]
+
+      COVERED: String
+
+      ITEM_STATICS: String
+
+      OCCURRENCES: String
+
+      OCCURRENCE: String
+
+      CAPTURING: Regexp
+
+      BRANCHING_TYPES: Array[Symbol]
 
       ATTRIBUTE_TYPES: Array[Symbol]
 
       ELEMENT_ANCHORED_TYPES: Array[Symbol]
 
+      OPEN_TAG_TYPES: Array[Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode]
+
       BRANCH_BODY_PROPERTIES: Array[Symbol]
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
-
-      attr_reader slots: Array[Slot]
-
-      attr_reader warnings: Array[Herb::Warnings::Warning]
 
       class Slot < Data
         attr_reader index(): Integer
@@ -63,19 +79,40 @@ module Herb
         def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
       end
 
-      # : (?markers: SlotMarkers) -> void
-      def initialize: (?markers: SlotMarkers) -> void
+      # : (String) -> bool
+      def self.directive?: (String) -> bool
+
+      # : (String) -> Symbol?
+      def self.directive_mode: (String) -> Symbol?
+
+      # : () -> bool
+      def self.reads_erb_source?: () -> bool
+
+      # : (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
+      def initialize: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool) -> void
 
       # : () -> String
       def version: () -> String
 
       def inspect: () -> untyped
 
+      # : () -> String
+      def identifier: () -> String
+
       # : () -> Hash[Symbol, untyped]
       def schema: () -> Hash[Symbol, untyped]
 
       # : () -> Array[Hash[Symbol, untyped]]
       def slot_entries: () -> Array[Hash[Symbol, untyped]]
+
+      # : (untyped) -> Integer?
+      def index_for: (untyped) -> Integer?
+
+      # : () -> String
+      def occurrence_expression: () -> String
+
+      # : (untyped) -> Array[Integer]
+      def anchored_indices_for: (untyped) -> Array[Integer]
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -90,6 +127,8 @@ module Herb
       def visit_html_doctype_node: (untyped node) -> untyped
 
       def visit_erb_content_node: (untyped node) -> untyped
+
+      def visit_erb_render_node: (untyped node) -> untyped
 
       def visit_erb_yield_node: (untyped node) -> untyped
 
@@ -117,6 +156,18 @@ module Herb
 
       # : (untyped) -> bool
       def continuation?: (untyped) -> bool
+
+      # : () -> void
+      def collapse_invariant_conditionals: () -> void
+
+      # : (untyped) -> bool
+      def exhaustive?: (untyped) -> bool
+
+      # : (String) -> bool
+      def branching_shape?: (String) -> bool
+
+      # : (Hash[Integer, Integer], Hash[Integer, bool]) -> void
+      def renumber: (Hash[Integer, Integer], Hash[Integer, bool]) -> void
 
       # : (untyped, Symbol?) -> void
       def record_slot: (untyped, Symbol?) -> void
@@ -148,8 +199,8 @@ module Herb
       # : (untyped) -> Array[untyped]
       def collection_body: (untyped) -> Array[untyped]
 
-      # : (untyped) -> Array[untyped]
-      def attributes_for: (untyped) -> Array[untyped]
+      # : (untyped) -> Array[Herb::AST::HTMLAttributeNode]
+      def attributes_for: (untyped) -> Array[Herb::AST::HTMLAttributeNode]
 
       # : (untyped) -> String?
       def attribute_name_for: (untyped) -> String?
@@ -166,13 +217,16 @@ module Herb
       def insert_markers: (untyped node) -> untyped
 
       # : (untyped) -> Integer?
-      def child_anchor_index: (untyped) -> Integer?
-
-      # : (untyped, Integer?) -> void
-      def anchor_child: (untyped, Integer?) -> void
+      def content_anchor_index: (untyped) -> Integer?
 
       # : (untyped, Integer?) -> void
       def mark_branches: (untyped, Integer?) -> void
+
+      # : (String, Array[untyped]) -> void
+      def park_branch: (String, Array[untyped]) -> void
+
+      # : (untyped) -> void
+      def append_statics: (untyped) -> void
 
       # : (untyped) -> Array[Array[untyped]]
       def branch_bodies: (untyped) -> Array[Array[untyped]]
@@ -181,16 +235,27 @@ module Herb
       def continuation_of: (untyped) -> untyped
 
       # : (untyped, Integer?) -> void
-      def wrap_rows: (untyped, Integer?) -> void
+      def wrap_items: (untyped, Integer?) -> void
 
-      def anchor_attributes: (untyped node) -> untyped
+      def park_item: (untyped slot_index, untyped body) -> untyped
+
+      def anchor_attributes: (untyped node, ?untyped content_index) -> untyped
+
+      # : (Slot) -> String?
+      def anchor_name_for: (Slot) -> String?
 
       # : (untyped) { (Array[untyped]) -> void } -> void
       def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
 
       def wrap_region: (untyped document_node) -> untyped
 
+      def wrap_displaced: () -> untyped
+
+      def region_open: () -> untyped
+
       def text_node: (untyped content) -> untyped
+
+      def erb_code_node: (untyped code) -> untyped
 
       def erb_output_node: (untyped code) -> untyped
 

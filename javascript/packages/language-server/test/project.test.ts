@@ -15,6 +15,14 @@ import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
 import type { SharedServices } from "../src/project"
 
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
+  }
+}
+
 describe("Project", () => {
   let root: string
 
@@ -48,13 +56,58 @@ describe("Project", () => {
     const shared: SharedServices = {
       documents: { documents: {}, get: () => undefined } as unknown as Documents,
       parserService,
-      definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
+      definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
       userSettings: userSettings ?? new UserSettings(connection, capabilities),
       capabilities,
+      readFile,
     }
 
     return new Project(connection, root, shared)
   }
+
+  describe("framework", () => {
+    test("exposes the framework a checked-in config sets", async () => {
+      writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBe("actionview")
+    })
+
+    test("is undefined when the project has no config file", async () => {
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBeUndefined()
+    })
+
+    test("picks up a framework that is added to the config while the server runs", async () => {
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBeUndefined()
+
+      writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")
+      await project.refreshConfig()
+
+      expect(project.framework).toBe("actionview")
+    })
+
+    test("picks up a framework that changes while the server runs", async () => {
+      writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBe("actionview")
+
+      writeFileSync(join(root, ".herb.yml"), "framework: sinatra\n")
+      await project.refreshConfig()
+
+      expect(project.framework).toBe("sinatra")
+    })
+  })
 
   describe("settingsFor", () => {
     test("lets a checked-in config turn the formatter on when the user never opted in", async () => {

@@ -1,24 +1,18 @@
-import {
-  Command,
-  CompletionItem,
-  CompletionItemKind,
-  CompletionList,
-  InsertTextFormat,
-  MarkupKind,
-  Position,
-  Range,
-  TextEdit,
-} from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
-
-import { Visitor, RubyReferenceCollector, isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, isValidLocalName, getHelperEntries, HELPER_REGISTRY, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
-import { partialNameForFile, strictLocalsDeclaration, templateNameForFile } from "@herb-tools/analysis"
 import { ParserService } from "./parser_service"
+import { Visitor, RubyReferenceCollector } from "@herb-tools/core"
+import { Command, CompletionItem, CompletionItemKind, CompletionList, InsertTextFormat, MarkupKind, Position, Range, TextEdit } from "vscode-languageserver-types"
+
 import { getBlockArgumentCompletions } from "./language-service"
 import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
+import { partialNameForFile, strictLocalsDeclaration, templateNameForFile } from "@herb-tools/analysis"
+import { isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, isValidLocalName, getHelperEntries } from "@herb-tools/core"
 
+import type { ProjectConfig } from "./types.js"
 import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry, HelperOption, RubyReference } from "@herb-tools/core"
 import type { PartialIndex, PartialDeclaration } from "@herb-tools/analysis"
+
+import { HELPER_REGISTRY, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
 
 const HTML_OPEN_TAG_PATTERN = /<(\w*)$/
 const CHARACTER_REFERENCE_PATTERN = /&([a-zA-Z]*)$/
@@ -150,7 +144,7 @@ export class CompletionProvider {
   private parserService: ParserService
   private partials?: PartialIndex
   private relativePathFor: (uri: string) => string | null
-  private framework?: string
+  private config?: ProjectConfig
 
   constructor(
     parserService: ParserService,
@@ -162,8 +156,8 @@ export class CompletionProvider {
     this.relativePathFor = relativePathFor
   }
 
-  setFramework(framework?: string) {
-    this.framework = framework
+  setConfig(config?: ProjectConfig) {
+    this.config = config
   }
 
   getCompletions(document: TextDocument, position: Position): CompletionList | null {
@@ -228,6 +222,7 @@ export class CompletionProvider {
   }
 
   private getERBCompletions(node: ERBContentNode, position: Position, textAfterCursor: string, document: TextDocument): CompletionList | null {
+    if (this.config?.framework !== "actionview") return null
     if (!node.content) return null
 
     const contentText = node.content.value
@@ -261,8 +256,7 @@ export class CompletionProvider {
         : this.getRenderKeywordCompletions(argument, position, document)
     }
 
-    const blockArguments = getBlockArgumentCompletions(document, position, { framework: this.framework })
-
+    const blockArguments = getBlockArgumentCompletions(document, position, this.config)
     if (blockArguments) return blockArguments
 
     const tagDotMatch = textBeforeCursor.match(TAG_DOT_PATTERN)

@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0042_reads an interpolated herb-key"
+input: "<% @u.each do |u| %><li herb-key=\"item-<%= u.id %>\">x</li><% end %>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 3e1464a0
+
+slots:
+  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  location=1:0  key_source=herb_key  key_expression="\"item-\#{u.id}\""
+  index=1  type=attribute_interpolation  node_path=[0, 0]  location=1:24  attribute="herb-key"

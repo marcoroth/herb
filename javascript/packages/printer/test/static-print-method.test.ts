@@ -3,7 +3,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "../src/index.js"
-import { Range } from "@herb-tools/core"
+import { Token } from "@herb-tools/core"
 import type { HTMLTextNode } from "@herb-tools/core"
 
 class UppercasePrinter extends IdentityPrinter {
@@ -130,13 +130,7 @@ describe("Static print method", () => {
 
   describe("Token and ParseResult handling", () => {
     test("can print Token objects", () => {
-      const token = {
-        constructor: { name: "Token" },
-        value: "hello",
-        range: new Range(0, 5),
-        location: null,
-        type: "TEXT"
-      }
+      const token = Token.from("TEXT", "hello")
 
       const output = IdentityPrinter.print(token)
       expect(output).toBe("hello")
@@ -160,13 +154,7 @@ describe("Static print method", () => {
       const parseResultOutput = printer.print(parseResult)
       expect(parseResultOutput).toBe(input)
 
-      const token = {
-        constructor: { name: "Token" },
-        value: "test",
-        range: new Range(0, 4),
-        location: null,
-        type: "TEXT"
-      }
+      const token = Token.from("TEXT", "test")
 
       const tokenOutput = printer.print(token)
       expect(tokenOutput).toBe("test")
@@ -179,13 +167,7 @@ describe("Static print method", () => {
       const uppercaseOutput = UppercasePrinter.print(parseResult)
       expect(uppercaseOutput).toBe(`<div>HELLO WORLD</div>`)
 
-      const token = {
-        constructor: { name: "Token" },
-        value: "hello",
-        range: new Range(0, 5),
-        location: null,
-        type: "TEXT"
-      }
+      const token = Token.from("TEXT", "hello")
 
       const tokenOutput = UppercasePrinter.print(token)
       expect(tokenOutput).toBe("hello")

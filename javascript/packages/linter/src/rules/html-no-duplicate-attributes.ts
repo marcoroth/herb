@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext } from "../types.js"
-import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils.js"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { getAttributeName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

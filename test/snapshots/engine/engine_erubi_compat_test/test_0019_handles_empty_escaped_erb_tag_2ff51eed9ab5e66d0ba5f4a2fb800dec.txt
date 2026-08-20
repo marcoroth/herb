@@ -1,4 +1,0 @@
----
-source: "Engine::EngineErubiCompatTest#test_0019_handles empty escaped erb tag"
-input: "{source: \"<%%>\", locals: {}, options: {}}"
----

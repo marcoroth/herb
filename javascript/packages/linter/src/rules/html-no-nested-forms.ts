@@ -1,4 +1,4 @@
-import { ElementStackVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "../utils/rule-utils.js"
 import { getHelpersForTag, getTagLocalName, isERBOutputNode, isHTMLOpenTagNode, PrismVisitor } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 

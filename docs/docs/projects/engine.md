@@ -21,6 +21,12 @@ engine = Herb::Engine.new(source,
 
 ## Erubi Compatibility
 
+`Herb::Engine` targets [`Erubi::Engine`](https://github.com/jeremyevans/erubi) running with its default options. It does not target Ruby's standard-library `ERB`, which uses a different set of trim modes and produces different output for the same template. A template that compiles under Erubi is expected to render the same under Herb. The [Erubi compatibility suite](https://github.com/marcoroth/herb/blob/main/test/engine/engine_erubi_compat_test.rb) holds the cases where the compiled Ruby matches byte for byte, and the [divergence suite](https://github.com/marcoroth/herb/blob/main/test/engine/engine_erubi_divergence_test.rb) pins the cases where it does not.
+
+Rails is not part of that contract. `Herb::Engine` is a plain Ruby class with no Rails dependency, so it works anywhere you can hand a framework its own ERB engine. The Rails-specific pieces (Action View helpers, `content_for`, partial rendering) live in [visitors](#transform-visitors) you opt into, and in [ReActionView](#reactionview-integration).
+
+If a framework renders `.erb` files through the standard-library `ERB` by default, neither Erubi nor Herb applies until it is configured to use the engine. That configuration is the framework's, not Herb's.
+
 `Herb::Engine` accepts all the same options as `Erubi::Engine`:
 
 - `bufvar` / `outvar` — Buffer variable name
@@ -34,6 +40,104 @@ engine = Herb::Engine.new(source,
 - `chain_appends` — Chain `<<` calls for performance
 - `ensure` — Wrap in begin/ensure block
 - `src` — Initial source string
+
+### Whitespace trimming
+
+Erubi's `trim` behavior is always on and is not configurable. A `<% %>` tag that stands alone on its line drops the newline that follows it, and `-%>` drops it wherever the tag sits. `<%-` is accepted and leaves the whitespace in front of the tag alone, which is what Erubi does with it too. Trimming is what makes a `case` written across several tags compile:
+
+```erb
+<% case status %>
+<% when :active %>
+  <span class="badge">Active</span>
+<% when :archived %>
+  <em>Archived</em>
+<% else %>
+  Unknown
+<% end %>
+```
+
+The newline after `<% case status %>` is trimmed, so nothing lands between `case` and its first `when`, and the compiled Ruby is valid. Herb and Erubi emit byte-identical output here. Passing `trim: false` has no effect, whereas Erubi would honor it and emit a buffer append between the two tags.
+
+### Known differences from Erubi
+
+Three things that `Erubi::Engine` accepts are handled differently by `Herb::Engine` on its default settings. Each one is deliberate.
+
+A `case` with its first `when`/`in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). The AST that pattern produces cannot be formatted or compiled reliably. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the same thing.
+
+Escaped tags such as `<%% %>` and `<%%= %>` raise `Herb::Engine::GeneratorTemplateError`. A template that emits literal ERB is a generator template, not a template to render.
+
+`trim: false` is ignored and trimming stays on. Herb's whitespace handling is tied to the parsed AST, not to a scanner mode.
+
+One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
+
+```erb
+<input name="<%= field_name %>">
+```
+
+```ruby
+_buf << ::Herb::Engine.attr((field_name));
+```
+
+Erubi compiles that same tag to `( field_name ).to_s`, so a value carrying `a" onload="alert(1)` escapes out of the attribute under Erubi and does not under Herb. A tag inside `<script>` gets `::Herb::Engine.js` and one inside `<style>` gets `::Herb::Engine.css` for the same reason. The three come from the `attrfunc`, `jsfunc`, and `cssfunc` options, which take the same shape as Erubi's `escapefunc`.
+
+The rest are formatting differences in output that renders identically. Herb writes `(title)` where Erubi writes `( title )`, escapes through `::Herb::Engine` instead of `::Erubi` and leaves that constant out when no tag in the template escapes, drops the blank line Erubi leaves where an ERB comment was, and inserts the `;` after a `preamble` that does not end in one, which Erubi leaves as a syntax error. Each of those is a test in the divergence suite.
+
+The `case` guard is the one worth knowing about outside Rails, because writing the whole statement in one tag is a common way to sidestep the untrimmed-newline problem in engines that do not trim:
+
+```erb
+<% case status
+when :active %>
+  <span class="badge">Active</span>
+<% end %>
+```
+
+Turning strict parsing off compiles it, byte-identically to Erubi:
+
+```ruby
+Herb::Engine.new(source, parser_options: { strict: false })
+```
+
+Since Herb trims, the conventional form with `case` and `when` in separate tags already works, and it is the form the formatter and the linter are built around.
+
+The linter is configured separately from the engine. Set [`framework`](/configuration#framework-configuration) in `.herb.yml` so rules that assume Action View stay quiet in a project that is not running it.
+
+### Blocks
+
+`<%= %>` with a block compiles so that the block body writes into the buffer directly:
+
+```erb
+<%= wrapper do %>
+  <p>hi</p>
+<% end %>
+```
+
+```ruby
+_buf = ::String.new; _buf << (wrapper do; _buf << '
+  <p>hi</p>
+'.freeze; end )
+_buf.to_s
+```
+
+Plain `Erubi::Engine` compiles this template to invalid Ruby, since it closes the append before the block body. [`Erubi::CaptureBlockEngine`](https://github.com/jeremyevans/erubi#capturing) is the engine that handles it, and Herb generates the same structure it does. The two differ only in the append operator, `<<=` where Herb writes `<<`, and those are equivalent here because `<<=` expands to `buffer = buffer << value` and the buffer returns itself.
+
+What `Erubi::CaptureBlockEngine` really contributes is its buffer. `Erubi::CaptureBlockEngine::Buffer` is a `String` subclass with a `capture` method, which empties the buffer, runs the block, and returns what the block wrote. A helper calls it to get the block's content:
+
+```ruby
+def upcase_form(&block)
+  "<form>#{@bufvar.capture(&block).upcase}</form>"
+end
+```
+
+Herb's default `bufval` is `::String.new`, which has no `capture`. Point it at a capture-aware buffer and helpers written for `Erubi::CaptureBlockEngine` work unchanged:
+
+```ruby
+Herb::Engine.new(source,
+  bufvar: "@bufvar",
+  bufval: "::Erubi::CaptureBlockEngine::Buffer.new",
+)
+```
+
+Rendering then matches `Erubi::CaptureBlockEngine` for nested blocks, escaping tags inside a block, and text around one. Action View supplies its own capture-aware buffer, which is why block helpers work there without any of this. A helper that only calls `yield` and interpolates the result renders the block's content twice, once from the direct write and once from the value it returns.
 
 ## Herb-Specific Options
 
@@ -580,6 +684,8 @@ Herb::Engine.new(source, visitors: [Herb::Engine::OptimizeVisitor.new])
 ```
 
 `<%= tag.div do %>Content<% end %>` compiles to `<div>Content</div>` with no helper call left at all. Only the helpers the registry marks supported are resolved.
+
+Its presence also collapses a template that carries no Ruby into the single string literal it renders, with none of the buffer the compiler would otherwise build up. `<div>Static</div>` compiles to `'<div>Static</div>'`. A template written as HTML qualifies on its own, and one left fully static once its helpers resolved to markup qualifies too, so `<%= tag.br %>` compiles to `'<br>'`. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 
 Replacing a helper call with its markup is the same thing as calling it only while the helper is the one it was resolved against. An application that defines its own `content_tag` gets the stock markup everywhere instead of its own, with nothing at the call site to say so. `verify` compiles a check into the template that reports a helper that has since been overwritten:
 

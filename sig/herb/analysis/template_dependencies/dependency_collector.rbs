@@ -20,6 +20,10 @@ module Herb
 
         def initialize: (untyped helper_registry, untyped custom_helpers, ?untyped prescanned_locals) -> untyped
 
+        def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+        def visit_erb_block_node: (untyped node) -> untyped
+
         def visit_erb_node: (untyped node) -> untyped
 
         def visit_erb_render_node: (untyped node) -> untyped
@@ -29,6 +33,13 @@ module Herb
         private
 
         def analyze_erb_node: (untyped erb_node) -> untyped
+
+        # : (untyped, iterating: bool) { () -> void } -> void
+        def within_block: (untyped, iterating: bool) { () -> void } -> void
+
+        def block_parameters: (untyped code) -> untyped
+
+        def collect_parameters: (untyped node, untyped names) -> untyped
 
         def analyze_ruby_expression: (untyped code) -> untyped
 

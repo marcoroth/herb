@@ -1,11 +1,11 @@
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "../utils/rule-utils.js"
 
 import { isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 
 import type { Node } from "@herb-tools/core"
-import type { StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import type { StaticAttributeDynamicValueParams } from "../utils/rule-utils.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult } from "@herb-tools/core"
 

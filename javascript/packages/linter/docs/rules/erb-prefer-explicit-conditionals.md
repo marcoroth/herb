@@ -34,6 +34,18 @@ This rule provides a safe autofix that replaces the tag with the explicit form t
 
 The fix stays on one line; run the formatter afterwards to break it up.
 
+An output that is a string, symbol, or number literal loses its output tag and becomes static text:
+
+```erb
+<%= "Saved" if notice? %>
+```
+
+```erb
+<% if notice? %>Saved<% end %>
+```
+
+A literal that HTML escaping would change keeps its output tag, so the rendered output stays the same. That covers any literal containing `&`, `<`, `>`, `"`, or `'`.
+
 Two cases are reported but not fixed:
 
 - A trimming tag closing (`<%= value if condition -%>`), because the `-%>` would end up mid-line, where it no longer trims the same whitespace.

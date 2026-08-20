@@ -105,13 +105,57 @@ describe("erb-prefer-explicit-conditionals autofix", () => {
 
   test("fixes an inline `if` inside an attribute value", () => {
     const input = `<div class="<%= "active" if selected %>"></div>`
-    const expected = `<div class="<% if selected %><%= "active" %><% end %>"></div>`
+    const expected = `<div class="<% if selected %>active<% end %>"></div>`
 
     const linter = new Linter(Herb, [ERBPreferExplicitConditionalsRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
+  })
+
+  test("inlines a string literal as static text", () => {
+    const input = `<%= "Saved" if notice? %>`
+    const expected = `<% if notice? %>Saved<% end %>`
+
+    const linter = new Linter(Herb, [ERBPreferExplicitConditionalsRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("keeps the output tag when the string is interpolated", () => {
+    const input = '<%= "Hello #{name}" if greeting? %>'
+    const expected = '<% if greeting? %><%= "Hello #{name}" %><% end %>'
+
+    const linter = new Linter(Herb, [ERBPreferExplicitConditionalsRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("keeps the output tag when the literal would be HTML-escaped", () => {
+    const input = `<%= "5 > 3" if comparison? %>`
+    const expected = `<% if comparison? %><%= "5 > 3" %><% end %>`
+
+    const linter = new Linter(Herb, [ERBPreferExplicitConditionalsRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("leaves a trimming tag closing around a literal unfixed", () => {
+    const input = `<%= "Saved" if notice? -%>`
+
+    const linter = new Linter(Herb, [ERBPreferExplicitConditionalsRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
   })
 
   test("fixes an inline `if` in attribute position", () => {

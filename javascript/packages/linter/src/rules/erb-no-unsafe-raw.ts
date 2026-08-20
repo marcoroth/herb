@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "../utils/rule-utils.js"
 import { PrismVisitor, isERBOutputNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

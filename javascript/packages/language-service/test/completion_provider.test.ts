@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { CompletionProvider } from "../src/completion_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 import { buildPartialIndex } from "@herb-tools/analysis/node"
 import { relative } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -22,6 +22,7 @@ describe("CompletionProvider", () => {
     await Herb.load()
     const parserService = new ParserService(Herb)
     service = new CompletionProvider(parserService)
+    service.setConfig({ framework: "actionview" })
   })
 
   function createDocument(content: string): TextDocument {
@@ -633,6 +634,8 @@ describe("CompletionProvider", () => {
 
         return path.startsWith("..") ? null : path
       })
+
+      partialService.setConfig({ framework: "actionview" })
     })
 
     afterAll(() => {
@@ -1335,7 +1338,7 @@ describe("CompletionProvider", () => {
 
     beforeAll(() => {
       actionViewService = new CompletionProvider(new ParserService(Herb))
-      actionViewService.setFramework("actionview")
+      actionViewService.setConfig({ framework: "actionview" })
     })
 
     function labelsFor(content: string): string[] {
@@ -1358,10 +1361,37 @@ describe("CompletionProvider", () => {
     })
 
     it("stays quiet when the project isn't an Action View project", () => {
+      const plainService = new CompletionProvider(new ParserService(Herb))
       const document = createDocument("<%= form_with model: @user do ")
-      const result = service.getCompletions(document, Position.create(0, 29))
+      const result = plainService.getCompletions(document, Position.create(0, 29))
 
       expect(result ? result.items.map(item => item.label) : []).not.toContain("|form|")
+    })
+  })
+  describe("framework scoping", () => {
+    function labelsFrom(provider: CompletionProvider, content: string): string[] {
+      const document = createDocument(content)
+      const result = provider.getCompletions(document, Position.create(0, content.length))
+
+      return result ? result.items.map(item => item.label) : []
+    }
+
+    it("offers helper completions for an Action View project", () => {
+      expect(labelsFrom(service, "<%= link").length).toBeGreaterThan(0)
+    })
+
+    it("offers no helper completions when the framework is not Action View", () => {
+      const provider = new CompletionProvider(new ParserService(Herb))
+      provider.setConfig({ framework: "sinatra" })
+
+      expect(labelsFrom(provider, "<%= link")).toEqual([])
+    })
+
+    it("still completes HTML elements when the framework is not Action View", () => {
+      const provider = new CompletionProvider(new ParserService(Herb))
+      provider.setConfig({ framework: "sinatra" })
+
+      expect(labelsFrom(provider, "<di").length).toBeGreaterThan(0)
     })
   })
 })

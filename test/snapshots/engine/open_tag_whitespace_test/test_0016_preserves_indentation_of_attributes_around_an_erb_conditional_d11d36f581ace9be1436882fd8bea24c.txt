@@ -1,0 +1,11 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0016_preserves indentation of attributes around an erb conditional"
+input: "{source: \"<div\\n  class=\\\"foo\\\"\\n  <% if active %>\\n    data-active=\\\"true\\\"\\n  <% end %>\\n  id=\\\"fooDlg\\\"\\n>\\n  Content\\n</div>\\n\", locals: {active: true}, options: {}}"
+---
+<div
+  class="foo"
+    data-active="true"
+  id="fooDlg"
+>
+  Content
+</div>

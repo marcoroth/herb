@@ -238,6 +238,8 @@ static void* tracking_realloc(hb_allocator_T* self, void* pointer, size_t _old_s
 }
 
 static void tracking_dealloc(hb_allocator_T* self, void* pointer) {
+  if (!pointer) { return; }
+
   hb_allocator_tracking_stats_T* stats = (hb_allocator_tracking_stats_T*) self->context;
   tracking_unrecord(stats, pointer);
   free(pointer);

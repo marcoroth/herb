@@ -49,6 +49,11 @@
         "^build"
       ]
     },
+    "typecheck": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
     "clean": {
       "cache": false,
       "executor": "nx:run-commands",

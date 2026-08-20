@@ -153,6 +153,20 @@ size_t hb_array_capacity(const hb_array_T* array) {
   return array->capacity;
 }
 
+void hb_array_replace_contents(hb_array_T* array, hb_array_T** source) {
+  if (!array || !source || !*source) { return; }
+
+  hb_allocator_dealloc(array->allocator, array->items);
+
+  array->items = (*source)->items;
+  array->size = (*source)->size;
+  array->capacity = (*source)->capacity;
+
+  hb_allocator_dealloc((*source)->allocator, *source);
+
+  *source = NULL;
+}
+
 void hb_array_free(hb_array_T** array) {
   if (!array || !*array) { return; }
 

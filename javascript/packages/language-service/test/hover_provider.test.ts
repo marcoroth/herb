@@ -5,6 +5,8 @@ import { Position, MarkupKind, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { HoverProvider } from "../src/hover_provider"
+
+import type { FrameworkOptions } from "../src/types"
 import { ParserService } from "../src/parser_service"
 import { Herb } from "@herb-tools/node-wasm"
 
@@ -24,10 +26,10 @@ describe("HoverProvider", () => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
 
-  function getHover(content: string, line: number, character: number) {
+  function getHover(content: string, line: number, character: number, options: FrameworkOptions = { framework: "actionview" }) {
     const document = createDocument(content)
 
-    return service.getHover(document, Position.create(line, character))
+    return service.getHover(document, Position.create(line, character), options)
   }
 
   function hoverValue(content: string, line: number, character: number): string {
@@ -496,6 +498,26 @@ describe("HoverProvider", () => {
     })
   })
 
+  describe("non-ActionView frameworks", () => {
+    it("returns null for a tag helper when the framework is not Action View", () => {
+      expect(getHover(`<%= tag.div class: "x" %>`, 0, 8, { framework: "sinatra" })).toBeNull()
+    })
+
+    it("returns null for a tag helper when no framework is configured", () => {
+      expect(getHover(`<%= tag.div class: "x" %>`, 0, 8, {})).toBeNull()
+    })
+
+    it("returns null for an ERB helper call when the framework is not Action View", () => {
+      expect(getHover(`<%= link_to "Home", root_path %>`, 0, 6, { framework: "hanami" })).toBeNull()
+    })
+
+    it("still hovers character references when the framework is not Action View", () => {
+      const hover = getHover("<p>&amp;</p>", 0, 5, { framework: "sinatra" })
+
+      expect((hover!.contents as { value: string }).value).toContain("Named character reference")
+    })
+  })
+
   describe("character references", () => {
     describe("named character references", () => {
       it("shows hover for &lt;", () => {
@@ -725,8 +747,8 @@ describe("HoverProvider", () => {
       const document = createDocument(content)
       const position = Position.create(2, 9)
 
-      const first = provider.getHover(document, position)
-      const second = provider.getHover(document, position)
+      const first = provider.getHover(document, position, { framework: "actionview" })
+      const second = provider.getHover(document, position, { framework: "actionview" })
 
       expect(first).not.toBeNull()
       expect(second).toEqual(first)
@@ -743,8 +765,8 @@ describe("HoverProvider", () => {
       const document = createDocument(content)
       const position = Position.create(0, 5)
 
-      const first = provider.getHover(document, position)
-      const second = provider.getHover(document, position)
+      const first = provider.getHover(document, position, { framework: "actionview" })
+      const second = provider.getHover(document, position, { framework: "actionview" })
 
       expect(first).not.toBeNull()
       expect(second).toEqual(first)

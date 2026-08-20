@@ -13,6 +13,8 @@ module Herb
       ARRAY_PROPERTIES = [:children, :body, :statements].freeze
       NODE_PROPERTIES = [:subsequent, :else_clause, :end_node, :rescue_clause, :ensure_clause].freeze
 
+      required_parser_option track_locations: true
+
       # @rbs!
       #   def self.experimental_warning_issued: () -> bool
       #   def self.experimental_warning_issued=: (bool) -> bool

@@ -31,4 +31,5 @@ These specialized libraries provide additional functionality for working with HT
 * [Printer](/projects/printer)
 * [Rewriter](/projects/rewriter)
 * [Config](/projects/config)
+* [Client Runtime](/projects/client)
 * [Core](/projects/core)

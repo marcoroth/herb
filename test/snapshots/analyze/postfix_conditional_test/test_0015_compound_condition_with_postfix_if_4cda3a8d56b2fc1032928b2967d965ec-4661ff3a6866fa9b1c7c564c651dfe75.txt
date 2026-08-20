@@ -12,12 +12,8 @@ options: {transform_conditionals: true}
     │   ├── tag_closing: "%>" (location: (1:45)-(1:45))
     │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
-    │   │   └── @ ERBContentNode (location: (1:0)-(1:45))
-    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   │       ├── content: " 'admin' " (location: (1:3)-(1:12))
-    │   │       ├── tag_closing: "%>" (location: (1:43)-(1:45))
-    │   │       ├── parsed: false
-    │   │       └── valid: true
+    │   │   └── @ HTMLTextNode (location: (1:4)-(1:11))
+    │   │       └── content: "admin"
     │   │
     │   ├── subsequent: ∅
     │   └── end_node:

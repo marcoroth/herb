@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
 import { ASTRewriter } from "@herb-tools/rewriter"
 
-import type { ParseResult } from "@herb-tools/core"
+import type { Node } from "@herb-tools/core"
 import type { RewriteContext } from "@herb-tools/rewriter"
 
 describe("ASTRewriter", () => {
@@ -10,8 +10,8 @@ describe("ASTRewriter", () => {
       get name() { return "test-pre" }
       get description() { return "Test pre-format rewriter" }
 
-      rewrite(result: ParseResult, _context: RewriteContext): ParseResult {
-        return result
+      rewrite<T extends Node>(node: T, _context: RewriteContext): T {
+        return node
       }
     }
 
@@ -26,8 +26,8 @@ describe("ASTRewriter", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult): ParseResult {
-        return result
+      rewrite<T extends Node>(node: T): T {
+        return node
       }
     }
 
@@ -41,8 +41,8 @@ describe("ASTRewriter", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult): ParseResult {
-        return result
+      rewrite<T extends Node>(node: T): T {
+        return node
       }
     }
 
@@ -56,17 +56,17 @@ describe("ASTRewriter", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult, context: RewriteContext): ParseResult {
+      rewrite<T extends Node>(node: T, context: RewriteContext): T {
         expect(context).toBeDefined()
         expect(context.baseDir).toBeDefined()
-        return result
+        return node
       }
     }
 
     const rewriter = new TestPreRewriter()
-    const mockResult = { failed: false, value: {} } as ParseResult
+    const mockNode = {} as Node
     const context = { baseDir: "/test" }
 
-    rewriter.rewrite(mockResult, context)
+    rewriter.rewrite(mockNode, context)
   })
 })

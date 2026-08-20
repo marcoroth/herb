@@ -1,0 +1,14 @@
+---
+source: "Parser::XMLProcessingInstructionTest#test_0004_processing instruction with dashed target"
+input: "<?xml-stylesheet type=\"text/xsl\" href=\"style.xsl\"?>"
+---
+@ DocumentNode (location: (1:0)-(1:51))
+└── children: (1 item)
+    └── @ XMLProcessingInstructionNode (location: (1:0)-(1:51))
+        ├── tag_opening: "<?" (location: (1:0)-(1:2))
+        ├── target: "xml-stylesheet" (location: (1:2)-(1:16))
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:16)-(1:49))
+        │       └── content: " type=\"text/xsl\" href=\"style.xsl\""
+        │
+        └── tag_closing: "?>" (location: (1:49)-(1:51))

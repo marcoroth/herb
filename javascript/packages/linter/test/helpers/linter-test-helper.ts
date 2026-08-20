@@ -11,6 +11,8 @@ import type { RuleClass } from "../../src/types.js"
 interface ExpectedLocation {
   line?: number
   column?: number
+  endLine?: number
+  endColumn?: number
 }
 
 type LocationInput = ExpectedLocation | [number, number] | [number]
@@ -80,7 +82,8 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride
   const declaredFrameworks = ruleInstance.defaultConfig?.frameworks
-  const defaultFramework = declaredFrameworks?.[0]
+  const wantsActionViewHelpers = ruleParserOptions.action_view_helpers === true
+  const defaultFramework = declaredFrameworks?.[0] ?? (wantsActionViewHelpers ? "actionview" : undefined)
 
   const resolveContext = (options?: any | TestOptions) => {
     const context = options?.context ?? options
@@ -344,6 +347,14 @@ function matchOffenses(
       }
 
       if (exp.location?.column !== undefined && exp.location.column !== actualOffense.location.start.column) {
+        return false
+      }
+
+      if (exp.location?.endLine !== undefined && exp.location.endLine !== actualOffense.location.end.line) {
+        return false
+      }
+
+      if (exp.location?.endColumn !== undefined && exp.location.endColumn !== actualOffense.location.end.column) {
         return false
       }
 

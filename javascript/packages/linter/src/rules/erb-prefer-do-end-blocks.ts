@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor, locationFromContentOffset } from "./rule-utils.js"
-import { isAssignmentNode } from "./prism-rule-utils.js"
+import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.js"
+import { isAssignmentNode } from "../utils/prism-rule-utils.js"
 
 import { isPrismNodeType } from "@herb-tools/core"
 

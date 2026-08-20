@@ -6,8 +6,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DocumentSymbolProvider } from "../src/document_symbol_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 import type { DocumentSymbol } from "vscode-languageserver/node"
+import type { Framework } from "@herb-tools/core"
 
 describe("DocumentSymbolProvider", () => {
   let service: DocumentSymbolProvider
@@ -19,7 +20,7 @@ describe("DocumentSymbolProvider", () => {
   })
 
   function symbols(content: string): DocumentSymbol[] {
-    return service.getDocumentSymbols(TextDocument.create("file:///test.html.erb", "erb", 1, content))
+    return service.getDocumentSymbols(TextDocument.create("file:///test.html.erb", "erb", 1, content), { framework: "actionview" })
   }
 
   function outline(content: string): string[] {
@@ -300,5 +301,23 @@ describe("DocumentSymbolProvider", () => {
     const content = `<% posts.each do |post| %>\n  <%= render "posts/card", post: post %>\n<% end %>`
 
     expect(outline(content)).toEqual(["posts.each do |post|", "  render posts/card"])
+  })
+  describe("framework scoping", () => {
+    const content = '<%= tag.div class: "x" %>'
+
+    function symbolsFor(framework?: Framework) {
+      const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+
+      return service.getDocumentSymbols(document, { framework })
+    }
+
+    it("labels a tag helper as its rendered element for an Action View project", () => {
+      expect(JSON.stringify(symbolsFor("actionview"))).toContain("div")
+    })
+
+    it("does not treat a tag helper as an element when the framework is not Action View", () => {
+      expect(JSON.stringify(symbolsFor("sinatra"))).not.toContain("div")
+      expect(JSON.stringify(symbolsFor(undefined))).not.toContain("div")
+    })
   })
 })

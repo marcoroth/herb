@@ -1,7 +1,7 @@
 import { UJSAttributeVisitor } from "./ujs-base.js"
 import { ParserRule } from "../types.js"
 
-import { helperNamesForTags } from "./action-view-utils.js"
+import { helperNamesForTags } from "../utils/action-view-utils.js"
 
 import type { UJSAttributeDescriptor } from "./ujs-base.js"
 import type { ParseResult, ParserOptions } from "@herb-tools/core"

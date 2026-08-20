@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0006_string literal with postfix if condition"
+input: "{source: \"<%= \\\"Notice\\\" if condition %>\", locals: {condition: true}, options: {action_view_helpers: true}}"
+---
+Notice

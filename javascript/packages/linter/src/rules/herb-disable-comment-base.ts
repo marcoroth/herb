@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ERBContentNode, Location } from "@herb-tools/core"
 
 import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"

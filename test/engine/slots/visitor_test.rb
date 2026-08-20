@@ -4,6 +4,10 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/analysis/template_dependencies"
+
+require "tmpdir"
+require "fileutils"
 
 module Engine
   module Slots
@@ -26,9 +30,27 @@ module Engine
         visitor
       end
 
-      # The Slot struct carries more than `schema` exposes, and the difference is what most of
-      # these tests are about, so the dump reads off the slots themselves and adds the two
-      # schema-level fields on top.
+      def node_paths_for(template, state)
+        Dir.mktmpdir do |root|
+          file_path = File.join(root, "app", "views", "test.html.erb")
+
+          FileUtils.mkdir_p(File.dirname(file_path))
+          File.write(file_path, template)
+
+          visitor = slots_for(template, file_path: file_path)
+          dependencies = Herb::Analysis::TemplateDependencies.new(root)
+
+          [
+            dependencies.affected_nodes(file_path, state).map { |node| node[:node_path] },
+            visitor.slots.map(&:node_path)
+          ]
+        end
+      end
+
+      def types_for(template)
+        slots_for(template).slots.map { |slot| [slot.index, slot.type] }
+      end
+
       def format_slots(visitor)
         schema = visitor.schema
         lines = ["file: #{schema[:file]}", "version: #{schema[:version]}", ""]
@@ -76,8 +98,22 @@ module Engine
         assert_slots_snapshot("<p><%= @a %></p><p><%= @b %></p><p><%= @c %></p>")
       end
 
-      test "records the node_path that TemplateDependencies reports" do
-        assert_slots_snapshot("<div><h1><%= @title %></h1></div>")
+      test "records a node_path for every node TemplateDependencies reports" do
+        {
+          "<div><h1><%= @title %></h1></div>" => "@title",
+          "<div><% if @admin %><%= @name %><% end %></div>" => "@admin",
+          "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>" => "@items",
+          %(<div class="<%= @klass %>"></div>) => "@klass",
+          %(<div><a href="<%= @url %>">x</a></div>) => "@url",
+        }.each do |template, state|
+          reported, recorded = node_paths_for(template, state)
+
+          refute_empty reported, template
+
+          reported.each do |node_path|
+            assert_includes recorded, node_path, template
+          end
+        end
       end
 
       test "records source location" do
@@ -145,7 +181,7 @@ module Engine
         assert_slots_snapshot(%(<% @u.each do |u| %><li id="a" herb-key="<%= u.id %>">x</li><% end %>))
       end
 
-      test "falls back to index and names the row to key when a collection row carries no key" do
+      test "falls back to index and names the item to key when a collection item carries no key" do
         assert_slots_snapshot("<% @u.each do |u| %><li>x</li><% end %>")
       end
 
@@ -238,7 +274,7 @@ module Engine
       end
 
       test "reads an interpolated herb-key" do
-        assert_slots_snapshot(%(<% @u.each do |u| %><li herb-key="row-<%= u.id %>">x</li><% end %>))
+        assert_slots_snapshot(%(<% @u.each do |u| %><li herb-key="item-<%= u.id %>">x</li><% end %>))
       end
 
       test "keeps a literal key part from being read as Ruby" do
@@ -324,6 +360,26 @@ module Engine
         end
       end
 
+      test "a template says who renders its branches" do
+        assert_equal :client, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots client %>\n<p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots server %>\n<p><%= @a %></p>")
+      end
+
+      test "asking for slots and nothing else means the server renders the branches" do
+        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots %>\n<p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%#- herb:slots -%><p><%= @a %></p>")
+      end
+
+      test "no directive is not a mode at all" do
+        assert_nil Herb::Engine::SlotVisitor.directive_mode("<p><%= @a %></p>")
+      end
+
+      test "refuses a mode it does not know" do
+        error = assert_raises(ArgumentError) { Herb::Engine::SlotVisitor.new(mode: :nonsense) }
+
+        assert_match(/unknown slot mode/, error.message)
+      end
+
       test "leaves other ERB comments alone" do
         ["<%# just a note %>", "<%# herb:key u.id %>", "<%# slots %>"].each do |comment|
           refute Herb::Engine::SlotVisitor.directive?("#{comment}<p><%= @a %></p>"), "expected no slots for: #{comment}"
@@ -335,6 +391,105 @@ module Engine
 
         refute_includes engine.src, "herb-slot"
         refute_includes engine.src, "herb-region"
+      end
+
+      test "a slot written on an element names the attribute it stands for" do
+        visitor = slots_for(%(<li class="<%= @c %>" data-x="<%= @d %>"><%= @n %></li>))
+
+        assert_equal ["class", "data-x", nil], visitor.slots.map(&:attribute)
+      end
+
+      test "names a template by its path unless asked otherwise" do
+        assert_equal "app/views/test.html.erb", slots_for("<p><%= @a %></p>").identifier
+      end
+
+      test "names a template by a digest of its path when asked" do
+        visitor = Herb::Engine::SlotVisitor.new(identifier: :digest)
+
+        Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_match(/\A[0-9a-f]{12}\z/, visitor.identifier)
+        refute_includes visitor.identifier, "views"
+      end
+
+      test "lets a caller name a template however it likes" do
+        visitor = Herb::Engine::SlotVisitor.new(identifier: ->(path) { "v1/#{path.length}" })
+
+        Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal "v1/23", visitor.identifier
+      end
+
+      test "keeps the real path for the server, whatever the markers say" do
+        visitor = Herb::Engine::SlotVisitor.new(identifier: :digest)
+
+        Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal "app/views/test.html.erb", visitor.schema[:file]
+        assert_equal visitor.identifier, visitor.schema[:identifier]
+      end
+
+      test "a conditional whose branches lay out the same is not a conditional at all" do
+        assert_equal(
+          [[0, :child]],
+          types_for("<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>")
+        )
+      end
+
+      test "the branches share the slots written on their elements too" do
+        assert_equal(
+          [[0, :attribute], [1, :child]],
+          types_for(%(<% if @c %><li class="<%= @a %>"><%= @x %></li><% else %><li class="<%= @b %>"><%= @y %></li><% end %>))
+        )
+      end
+
+      test "collapses an elsif chain when every arm lays out the same" do
+        assert_equal(
+          [[0, :child]],
+          types_for("<% if @a %><p><%= @x %></p><% elsif @b %><p><%= @y %></p><% else %><p><%= @z %></p><% end %>")
+        )
+      end
+
+      test "collapses the arms of a case" do
+        assert_equal(
+          [[0, :child]],
+          types_for("<% case @s %><% when 1 %><p><%= @x %></p><% else %><p><%= @y %></p><% end %>")
+        )
+      end
+
+      test "keeps a conditional that can render nothing" do
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child]],
+          types_for("<% if @a %><p><%= @x %></p><% elsif @b %><p><%= @y %></p><% end %>")
+        )
+
+        assert_equal([[0, :conditional], [1, :child]], types_for("<% if @a %><p><%= @x %></p><% end %>"))
+      end
+
+      test "keeps a conditional whose branches differ in what they write" do
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child]],
+          types_for("<% if @c %><h1>a<%= @x %></h1><% else %><h1>b<%= @y %></h1><% end %>")
+        )
+
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child]],
+          types_for("<% if @c %><h1><%= @x %></h1><% else %><h2><%= @y %></h2><% end %>")
+        )
+      end
+
+      test "keeps a conditional whose branches hold different numbers of slots" do
+        assert_equal(
+          [[0, :conditional], [1, :child], [2, :child], [3, :child]],
+          types_for("<% if @c %><p><%= @x %></p><% else %><p><%= @y %><%= @z %></p><% end %>")
+        )
+      end
+
+      test "keeps a conditional that contains another one" do
+        assert_equal(
+          [[0, :conditional], [1, :conditional], [2, :child], [3, :conditional], [4, :child]],
+          types_for("<% if @c %><p><% if @d %><%= @x %><% end %></p><% else %><p><% if @e %><%= @y %><% end %></p><% end %>")
+        )
       end
     end
   end

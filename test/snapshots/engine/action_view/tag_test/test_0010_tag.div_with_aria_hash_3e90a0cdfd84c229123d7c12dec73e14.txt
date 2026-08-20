@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0010_tag.div with aria hash"
 input: "{source: \"<%= tag.div aria: { label: \\\"hello\\\", hidden: true } %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<div aria-label="hello" aria-hidden="true"></div>'.freeze;
-_buf.to_s
+'<div aria-label="hello" aria-hidden="true"></div>'.freeze
