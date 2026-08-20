@@ -223,11 +223,14 @@ bool search_tag_helper_node(const pm_node_t* node, void* data) {
         search_data->found = true;
 
         if (search_data->info) {
+          hb_allocator_T* info_allocator = search_data->info->allocator;
+
+          hb_allocator_dealloc(info_allocator, search_data->info->tag_name);
+          hb_allocator_dealloc(info_allocator, search_data->info->content);
+
           search_data->info->call_node = call_node;
-          search_data->info->tag_name =
-            handlers[i]->extract_tag_name(call_node, search_data->parser, search_data->info->allocator);
-          search_data->info->content =
-            handlers[i]->extract_content(call_node, search_data->parser, search_data->info->allocator);
+          search_data->info->tag_name = handlers[i]->extract_tag_name(call_node, search_data->parser, info_allocator);
+          search_data->info->content = handlers[i]->extract_content(call_node, search_data->parser, info_allocator);
           search_data->info->has_block = handlers[i]->supports_block();
         }
 
@@ -1458,9 +1461,16 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       body_options.start_column = body_start.column;
 
       AST_DOCUMENT_NODE_T* body_document = herb_parse(raw_copy, &body_options, allocator);
+
       body = body_document->children;
+      body_document->children = NULL;
+
+      ast_node_free((AST_NODE_T*) body_document, allocator);
     }
   }
+
+  if (body == block_node->body) { block_node->body = NULL; }
+  if (!is_void && close_tag == (AST_NODE_T*) block_node->end_node) { block_node->end_node = NULL; }
 
   AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
@@ -1708,6 +1718,17 @@ static AST_NODE_T* transform_link_to_helper(
   );
 }
 
+static void adopt_array_contents(hb_array_T* array, hb_array_T* new_array, hb_allocator_T* allocator) {
+  void* old_items = array->items;
+
+  array->items = new_array->items;
+  array->size = new_array->size;
+  array->capacity = new_array->capacity;
+
+  hb_allocator_dealloc(allocator, old_items);
+  hb_allocator_dealloc(allocator, new_array);
+}
+
 void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* context) {
   if (!array || !context) { return; }
 
@@ -1799,9 +1820,9 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                 }
               }
 
-              array->items = new_array->items;
-              array->size = new_array->size;
-              array->capacity = new_array->capacity;
+              adopt_array_contents(array, new_array, context->allocator);
+              hb_array_free(&multi);
+              ast_node_free(child, context->allocator);
 
               i += multi_size - 1;
             }
@@ -1836,9 +1857,9 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                 }
               }
 
-              array->items = new_array->items;
-              array->size = new_array->size;
-              array->capacity = new_array->capacity;
+              adopt_array_contents(array, new_array, context->allocator);
+              hb_array_free(&attributes);
+              ast_node_free(child, context->allocator);
 
               i += attributes_size - 1;
             }
@@ -1902,9 +1923,9 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                   }
                 }
 
-                array->items = new_array->items;
-                array->size = new_array->size;
-                array->capacity = new_array->capacity;
+                adopt_array_contents(array, new_array, context->allocator);
+                hb_array_free(&attributes);
+                ast_node_free(child, context->allocator);
 
                 i += attributes_size - 1;
               }
@@ -1982,9 +2003,9 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
               }
             }
 
-            array->items = new_array->items;
-            array->size = new_array->size;
-            array->capacity = new_array->capacity;
+            adopt_array_contents(array, new_array, context->allocator);
+            ast_node_free(child, context->allocator);
+
             i++;
             continue;
           }
@@ -1992,6 +2013,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
       }
 
       hb_array_set(array, i, replacement);
+      ast_node_free(child, context->allocator);
     }
   }
 }
