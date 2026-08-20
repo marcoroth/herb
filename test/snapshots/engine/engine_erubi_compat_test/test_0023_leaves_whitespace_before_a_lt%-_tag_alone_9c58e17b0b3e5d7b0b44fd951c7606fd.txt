@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0023_leaves whitespace before a <%- tag alone"
+input: "{source: \"text\\n  <%- a = 1 %>\\nafter\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << 'text
+'.freeze;   a = 1 
+ _buf << 'after
+'.freeze;
+_buf.to_s
