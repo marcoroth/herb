@@ -80,26 +80,12 @@ VALUE rb_string_from_hb_string(hb_string_T string) {
   return rb_utf8_str_new(string.data, string.length);
 }
 
-/*
- * Returns a shared, frozen, deduplicated String for the given hb_string.
- *
- * Backed by Ruby's global fstring table, so identical bytes always map to the
- * same object without allocating a new String. This is ideal for type names,
- * which are drawn from a small, fixed vocabulary and recur on every token/node.
- */
 VALUE rb_interned_string_from_hb_string(hb_string_T string) {
   if (hb_string_is_null(string)) { return Qnil; }
 
   return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
 }
 
-/*
- * Token *type* names come from a fixed enum, so cache the interned String for
- * each type keyed by its enum value. Every type name is interned once and then
- * returned by an O(1) array lookup, avoiding a global fstring-table probe on
- * every token. The lazy fill is race-free because token/node builders always
- * run with the GVL held, and each cached String is pinned as a GC root.
- */
 static VALUE token_type_value_cache[TOKEN_EOF + 1] = { 0 };
 
 static VALUE rb_token_type_value(token_type_T type) {
