@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
 import { ASTRewriter } from "@herb-tools/rewriter"
 
-import type { ParseResult } from "@herb-tools/core"
+import type { Node } from "@herb-tools/core"
 import type { RewriteContext } from "@herb-tools/rewriter"
 
 describe("RewriteContext", () => {
@@ -10,7 +10,7 @@ describe("RewriteContext", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult, context: RewriteContext): ParseResult {
+      rewrite<T extends Node>(node: T, context: RewriteContext): T {
         expect(context.baseDir).toBeDefined()
 
         const customContext = {
@@ -19,14 +19,14 @@ describe("RewriteContext", () => {
         }
 
         expect(customContext.customProp).toBe("value")
-        return result
+        return node
       }
     }
 
     const rewriter = new TestPreRewriter()
-    const mockResult = { failed: false, value: {} } as ParseResult
+    const mockNode = {} as Node
 
-    rewriter.rewrite(mockResult, { baseDir: "/test" })
+    rewriter.rewrite(mockNode, { baseDir: "/test" })
   })
 
   test("filePath is optional", () => {
@@ -34,16 +34,16 @@ describe("RewriteContext", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult, context: RewriteContext): ParseResult {
+      rewrite<T extends Node>(node: T, context: RewriteContext): T {
         expect(context.filePath === undefined || typeof context.filePath === "string").toBe(true)
-        return result
+        return node
       }
     }
 
     const rewriter = new TestPreRewriter()
-    const mockResult = { failed: false, value: {} } as ParseResult
+    const mockNode = {} as Node
 
-    rewriter.rewrite(mockResult, { baseDir: "/test" })
-    rewriter.rewrite(mockResult, { baseDir: "/test", filePath: "/test/file.html.erb" })
+    rewriter.rewrite(mockNode, { baseDir: "/test" })
+    rewriter.rewrite(mockNode, { baseDir: "/test", filePath: "/test/file.html.erb" })
   })
 })

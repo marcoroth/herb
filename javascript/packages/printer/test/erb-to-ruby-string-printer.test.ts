@@ -2,6 +2,8 @@ import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { ERBToRubyStringPrinter } from "../src/erb-to-ruby-string-printer.js"
 
+import type { HTMLElementNode, HTMLOpenTagNode, HTMLAttributeNode, HTMLAttributeValueNode } from "@herb-tools/core"
+
 describe("ERBToRubyStringPrinter", () => {
   beforeAll(async () => {
     await Herb.load()
@@ -219,12 +221,13 @@ describe("ERBToRubyStringPrinter", () => {
     const erb = `<img src="<%= root_url %>/banner.jpg" />`
     const parseResult = Herb.parse(erb)
 
-    const imgElement = parseResult.value.children[0]
-    const srcAttr = imgElement.open_tag.children.find(child =>
+    const imgElement = parseResult.value.children[0] as HTMLElementNode
+    const openTag = imgElement.open_tag as HTMLOpenTagNode
+    const srcAttr = openTag.children.find(child =>
       child.type === "AST_HTML_ATTRIBUTE_NODE"
-    )
+    ) as HTMLAttributeNode
 
-    const result = ERBToRubyStringPrinter.print(srcAttr.value)
+    const result = ERBToRubyStringPrinter.print(srcAttr.value as HTMLAttributeValueNode)
     expect(result).toBe(`"#{root_url}/banner.jpg"`)
   })
 

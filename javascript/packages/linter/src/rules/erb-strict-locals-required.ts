@@ -1,8 +1,8 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { Location, ERBStrictLocalsNode, RubyReferenceCollector } from "@herb-tools/core"
 
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 import { strictLocalsDeclaration } from "@herb-tools/analysis"
 import { createLiteral, isProbableLocal } from "@herb-tools/core"
 

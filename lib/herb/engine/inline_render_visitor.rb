@@ -42,6 +42,7 @@ module Herb
         :LocalVariableAndWriteNode
       ].freeze #: Array[Symbol]
 
+      required_parser_option track_locations: true
       recommended_parser_option render_nodes: true
 
       #: () -> bool

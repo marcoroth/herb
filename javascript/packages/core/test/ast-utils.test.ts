@@ -392,17 +392,16 @@ describe("ast-utils", () => {
 
     test("handles ERB without content", () => {
       const erbNode = createERBContentNode("<%", "")
-      erbNode.content = undefined
       const nodes = [createLiteralNode("test"), erbNode]
 
       expect(getCombinedStringFromNodes(nodes)).toBe("test<%%>")
     })
 
     test("handles unknown node types", () => {
-      const unknownNode: Node = {
-        type: "UNKNOWN_NODE" as any,
+      const unknownNode = {
+        type: "UNKNOWN_NODE",
         location: Location.from(1, 1, 1, 1)
-      }
+      } as unknown as Node
 
       const nodes = [createLiteralNode("test"), unknownNode]
 
@@ -431,7 +430,7 @@ describe("ast-utils", () => {
 
     test("returns false for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(hasStaticAttributeName(attributeNode)).toBe(false)
     })
@@ -458,7 +457,7 @@ describe("ast-utils", () => {
 
     test("returns false for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(hasDynamicAttributeNameNode(attributeNode)).toBe(false)
     })
@@ -485,7 +484,7 @@ describe("ast-utils", () => {
 
     test("returns null for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(getStaticAttributeName(attributeNode)).toBe(null)
     })
@@ -513,7 +512,7 @@ describe("ast-utils", () => {
 
     test("returns empty string for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(getCombinedAttributeName(attributeNode)).toBe("")
     })
@@ -563,7 +562,7 @@ describe("ast-utils", () => {
       const result = findParentArray(document, target)
 
       expect(result?.index).toBe(1)
-      expect(result?.array).toBe(element.open_tag.children)
+      expect(result?.array).toBe((element.open_tag as HTMLOpenTagNode).children)
     })
 
     test("finds a node inside an attribute value", () => {
@@ -575,7 +574,7 @@ describe("ast-utils", () => {
       const result = findParentArray(document, target)
 
       expect(result?.index).toBe(0)
-      expect(result?.array).toBe(attribute.value.children)
+      expect(result?.array).toBe((attribute.value as HTMLAttributeValueNode).children)
     })
 
     test("finds a node in a linked else branch", () => {

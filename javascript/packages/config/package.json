@@ -18,6 +18,7 @@
     "build": "yarn clean && tsc -b && rolldown -c",
     "dev": "tsc -b -w",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {

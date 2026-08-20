@@ -399,6 +399,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with_next(lexer, strlen("<?xml"), TOKEN_XML_DECLARATION);
       }
 
+      if (lexer_peek_for_xml_processing_instruction(lexer, 0)) {
+        return lexer_advance_with(lexer, hb_string("<?"), TOKEN_XML_PROCESSING_INSTRUCTION_START);
+      }
+
       if (lexer_peek_for_cdata_start(lexer, 0)) {
         return lexer_advance_with_next(lexer, strlen("<![CDATA["), TOKEN_CDATA_START);
       }

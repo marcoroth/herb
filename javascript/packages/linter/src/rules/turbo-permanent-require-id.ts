@@ -1,4 +1,4 @@
-import { BaseRuleVisitor, isNilAttributeValue } from "./rule-utils.js"
+import { BaseRuleVisitor, isNilAttributeValue } from "../utils/rule-utils.js"
 import { getAttribute } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"

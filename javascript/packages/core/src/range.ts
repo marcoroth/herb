@@ -1,16 +1,16 @@
 export type SerializedRange = [number, number]
 
 export class Range {
-  readonly start: number
-  readonly end: number
+  readonly from: number
+  readonly to: number
 
   static from(range: SerializedRange): Range
-  static from(start: number, end: number): Range
-  static from(rangeOrStart: SerializedRange | number, end?: number): Range {
-    if (typeof rangeOrStart === "number") {
-      return new Range(rangeOrStart, end!)
+  static from(from: number, to: number): Range
+  static from(rangeOrFrom: SerializedRange | number, to?: number): Range {
+    if (typeof rangeOrFrom === "number") {
+      return new Range(rangeOrFrom, to!)
     } else {
-      return new Range(rangeOrStart[0], rangeOrStart[1])
+      return new Range(rangeOrFrom[0], rangeOrFrom[1])
     }
   }
 
@@ -22,13 +22,13 @@ export class Range {
     return new Range(0, 0)
   }
 
-  constructor(start: number, end: number) {
-    this.start = start
-    this.end = end
+  constructor(from: number, to: number) {
+    this.from = from
+    this.to = to
   }
 
   toArray(): SerializedRange {
-    return [this.start, this.end]
+    return [this.from, this.to]
   }
 
   toJSON(): SerializedRange {
@@ -36,7 +36,7 @@ export class Range {
   }
 
   treeInspect(): string {
-    return `[${this.start}, ${this.end}]`
+    return `[${this.from}, ${this.to}]`
   }
 
   inspect(): string {

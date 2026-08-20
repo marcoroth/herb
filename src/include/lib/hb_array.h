@@ -23,6 +23,7 @@ bool hb_array_append(hb_array_T* array, void* item);
 bool hb_array_append_lazy(hb_array_T** array, void* item, struct hb_allocator* allocator);
 void hb_array_set(const hb_array_T* array, size_t index, void* item);
 void hb_array_free(hb_array_T** array);
+void hb_array_replace_contents(hb_array_T* array, hb_array_T** source);
 void hb_array_remove(hb_array_T* array, size_t index);
 
 size_t hb_array_index_of(hb_array_T* array, void* item);

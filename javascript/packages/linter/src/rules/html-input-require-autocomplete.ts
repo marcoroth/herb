@@ -1,5 +1,5 @@
 import { getTagLocalName, getStaticAttributeValue, getAttribute, getAttributeValue, hasAttribute } from "@herb-tools/core"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

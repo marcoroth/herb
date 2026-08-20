@@ -318,6 +318,17 @@ pub trait Printer: Visitor + Default {
     self.write_token(&closing);
   }
 
+  fn emit_xml_processing_instruction(&mut self, node: &XMLProcessingInstructionNode) {
+    let opening = node.tag_opening.clone();
+    let target = node.target.clone();
+    let closing = node.tag_closing.clone();
+
+    self.write_token(&opening);
+    self.write_token(&target);
+    self.visit_all(&node.children);
+    self.write_token(&closing);
+  }
+
   fn emit_cdata(&mut self, node: &CDATANode) {
     let opening = node.tag_opening.clone();
     let closing = node.tag_closing.clone();

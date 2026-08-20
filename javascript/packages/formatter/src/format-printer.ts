@@ -103,6 +103,7 @@ import {
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
   XMLDeclarationNode,
+  XMLProcessingInstructionNode,
   CDATANode,
   Token
 } from "@herb-tools/core"
@@ -1063,6 +1064,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitXMLDeclarationNode(node: XMLDeclarationNode) {
+    this.pushWithIndent(IdentityPrinter.print(node))
+  }
+
+  visitXMLProcessingInstructionNode(node: XMLProcessingInstructionNode) {
     this.pushWithIndent(IdentityPrinter.print(node))
   }
 

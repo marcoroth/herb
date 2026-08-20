@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType, substringFromByteOffset, getHelper } from "@herb-tools/core"
 

@@ -50,7 +50,7 @@ describe("RubyRenderLocalNode", () => {
       expect(renderNode.keywords?.locals).toHaveLength(1)
       expect(isRubyRenderLocalNode(renderNode.keywords?.locals[0])).toBe(true)
 
-      const local = renderNode.keywords?.locals[0]
+      const local = renderNode.keywords?.locals[0] as RubyRenderLocalNode
       expect(local.name?.value).toBe("title")
       expect(local.value?.content).toBe("@title")
     }
@@ -63,11 +63,11 @@ describe("RubyRenderLocalNode", () => {
     if (isERBRenderNode(renderNode)) {
       expect(renderNode.keywords?.locals).toHaveLength(2)
 
-      const first = renderNode.keywords?.locals[0]
+      const first = renderNode.keywords?.locals[0] as RubyRenderLocalNode
       expect(first.name?.value).toBe("title")
       expect(first.value?.content).toBe("@title")
 
-      const second = renderNode.keywords?.locals[1]
+      const second = renderNode.keywords?.locals[1] as RubyRenderLocalNode
       expect(second.name?.value).toBe("body")
     }
   })

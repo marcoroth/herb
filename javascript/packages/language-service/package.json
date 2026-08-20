@@ -18,6 +18,7 @@
     "dev": "rolldown -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {

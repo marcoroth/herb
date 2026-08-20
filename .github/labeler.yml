@@ -220,6 +220,11 @@ dev-tools:
     - any-glob-to-any-file:
       - '**/javascript/packages/dev-tools/**/*'
 
+client-runtime:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/client/**/*'
+
 config:
   - changed-files:
     - any-glob-to-any-file:

@@ -6,8 +6,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DocumentSymbolProvider } from "../src/document_symbol_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 import type { DocumentSymbol } from "vscode-languageserver/node"
+import type { Framework } from "@herb-tools/core"
 
 describe("DocumentSymbolProvider", () => {
   let service: DocumentSymbolProvider
@@ -304,7 +305,7 @@ describe("DocumentSymbolProvider", () => {
   describe("framework scoping", () => {
     const content = '<%= tag.div class: "x" %>'
 
-    function symbolsFor(framework?: string) {
+    function symbolsFor(framework?: Framework) {
       const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
 
       return service.getDocumentSymbols(document, { framework })
