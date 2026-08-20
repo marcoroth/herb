@@ -191,9 +191,9 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
     hb_allocator_dealloc(allocator, rest);
 
     return ast_erb_strict_locals_node_init(
-      erb_node->tag_opening,
-      erb_node->content,
-      erb_node->tag_closing,
+      token_copy(erb_node->tag_opening, allocator),
+      token_copy(erb_node->content, allocator),
+      token_copy(erb_node->tag_closing, allocator),
       erb_node->analyzed_ruby,
       erb_node->prism_node,
       locals,
@@ -279,9 +279,9 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   hb_buffer_free(&synthetic_buffer);
 
   return ast_erb_strict_locals_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     erb_node->analyzed_ruby,
     erb_node->prism_node,
     locals,

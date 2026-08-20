@@ -615,8 +615,6 @@ static void append_parameter(
       allocator
     )
   );
-
-  token_free(name_token, allocator);
 }
 
 static void append_required_positional(

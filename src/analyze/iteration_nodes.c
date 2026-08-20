@@ -235,9 +235,9 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
   block_node->base.errors = NULL;
 
   AST_ERB_ITERATION_BLOCK_NODE_T* iteration_block_node = ast_erb_iteration_block_node_init(
-    block_node->tag_opening,
-    block_node->content,
-    block_node->tag_closing,
+    token_copy(block_node->tag_opening, allocator),
+    token_copy(block_node->content, allocator),
+    token_copy(block_node->tag_closing, allocator),
     block_node->prism_node,
     receiver,
     call_operator,

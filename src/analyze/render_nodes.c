@@ -771,9 +771,9 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   );
 
   AST_ERB_RENDER_NODE_T* render_node = ast_erb_render_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     erb_node->analyzed_ruby,
     prism_node,
     keywords_node,
