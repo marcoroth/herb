@@ -227,6 +227,9 @@ jobs:
       - name: Render Templates
         run: bundle exec rake templates
 
+      - name: Compile Herb
+        run: bundle exec rake make
+
       - name: Build the allocation benchmark
         run: make bench_allocs
 
