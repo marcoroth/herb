@@ -62,7 +62,7 @@ The package ships a demo page under `demo/`, a stand-in Rails posts page carryin
 
 A card at the top wires up buttons for `report()`, batching, deduplication, `dismiss()`, both forms of `clear()`, `show()`, and the expand toggle, so every part of the API is exercisable without the console.
 
-`yarn dev` inside `javascript/packages/dev-tools` serves it on [http://localhost:5212](http://localhost:5212) straight from `src/`, so edits hot reload with no build step.
+`yarn dev` inside `javascript/packages/dev-tools` serves it on `http://localhost:5212` straight from `src/`, so edits hot reload with no build step.
 
 ```bash
 yarn dev
