@@ -156,14 +156,18 @@ module Herb
                        declared[:items].flat_map { |index, list| list.map { |declaration| declaration.transform_keys(&:to_s).merge("scope" => index) } }
 
         reads = {} #: Hash[String, Array[Integer]]
+        bound = {} #: Hash[String, Array[Integer]]
 
         visitor.slots.each do |slot|
-          next unless [:child, :attribute, :element].include?(slot.type)
+          next unless [:child, :attribute, :element, :raw_text].include?(slot.type)
 
           expression = slot.expression.to_s.strip
           name = expression.delete_suffix("?")
 
-          (reads[name] ||= []) << slot.index if names.include?(name)
+          next unless names.include?(name)
+
+          (reads[name] ||= []) << slot.index
+          (bound[name] ||= []) << slot.index if bound_slot?(slot)
         end
 
         conditionals = visitor.state_conditional_entries.to_h { |index, info|
@@ -174,8 +178,22 @@ module Herb
           "version" => visitor.schema[:version],
           "declarations" => declarations,
           "reads" => reads,
+          "bound" => bound,
           "conditionals" => conditionals,
         }
+      end
+
+      #: (untyped) -> bool
+      def bound_slot?(slot)
+        return false unless slot.respond_to?(:tag)
+
+        tag = slot.tag.to_s
+
+        if slot.attribute
+          ["value", "checked", "selected"].include?(slot.attribute) && ["input", "textarea", "select", "option"].include?(tag)
+        else
+          tag == "textarea"
+        end
       end
 
       #: (untyped, ?Array[Hash[Symbol, untyped]], ?per_item: bool) -> Array[Hash[Symbol, untyped]]

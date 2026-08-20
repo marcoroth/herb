@@ -79,12 +79,14 @@ module Herb
 
         attr_reader name(): String?
 
-        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name) -> instance
-                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?) -> instance
+        attr_reader tag(): String?
 
-        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name ]
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name, String? tag) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?, tag: String?) -> instance
 
-        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name ]
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag ]
       end
 
       # : (String) -> bool
@@ -301,6 +303,9 @@ module Herb
       def dynamic?: (untyped) -> bool
 
       def expression_for: (untyped node) -> untyped
+
+      # : (untyped) -> String?
+      def attribute_expression_for: (untyped) -> String?
 
       def location_for: (untyped node) -> untyped
 

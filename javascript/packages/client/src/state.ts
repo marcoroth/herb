@@ -24,6 +24,7 @@ export interface StateManifest {
   version: string
   declarations: DeclaredState[]
   reads: Record<string, number[]>
+  bound?: Record<string, number[]>
   conditionals: Record<string, { arms: [string, string | null, number][]; else: number | null }>
 }
 
@@ -172,6 +173,8 @@ export class SlotState {
 
     document.addEventListener(SLOT_EVENT, this.#syncProperty)
     document.addEventListener(SLOT_EVENT, this.#migrateItemState)
+    document.addEventListener("input", this.#onBoundInput)
+    document.addEventListener("change", this.#onBoundInput)
 
     if (typeof window !== "undefined" && this.#persisted()) {
       window.addEventListener("popstate", this.#onPopState)
@@ -202,6 +205,8 @@ export class SlotState {
 
     document.removeEventListener(SLOT_EVENT, this.#syncProperty)
     document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
+    document.removeEventListener("input", this.#onBoundInput)
+    document.removeEventListener("change", this.#onBoundInput)
 
     if (typeof window !== "undefined") {
       window.removeEventListener("popstate", this.#onPopState)
@@ -733,6 +738,35 @@ export class SlotState {
     window.history.replaceState(window.history.state, "", url.toString())
   }
 
+  #onBoundInput = (event: Event): void => {
+    const element = event.target
+
+    if (!(element instanceof Element) || !VALUE_ELEMENTS.includes(element.tagName)) return
+
+    const scope = this.scopeFor(element)
+
+    if (!scope) return
+
+    const manifest = this.manifestFor(scope.region)
+
+    if (!manifest) return
+
+    for (const [name, indices] of Object.entries(manifest.bound ?? {})) {
+      for (const index of indices) {
+        for (const slot of this.#scopedSlots(scope, index)) {
+          if (slot.anchor.kind === "range" || slot.anchor.element !== element) continue
+
+          const declaration = this.#declaration(manifest, scope, name)
+          const value = boundValue(element, declaration?.kind ?? "string")
+
+          this.setState({ [name]: value }, { scope })
+
+          return
+        }
+      }
+    }
+  }
+
   #onPopState = (): void => {
     this.#readLocation()
   }
@@ -894,6 +928,14 @@ function coerce(text: string, kind: StateKind): StateValue {
   if (kind === "nil") return text === "" ? null : text
 
   return text
+}
+
+function boundValue(element: Element, kind: StateKind): StateValue {
+  if (element instanceof HTMLInputElement && element.type === "checkbox") return element.checked
+
+  const raw = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
+
+  return coerce(raw, kind)
 }
 
 function rubyTruthy(value: StateValue): boolean {
