@@ -44,6 +44,7 @@
     "build": "tsc -b && rolldown -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "dependencies": {

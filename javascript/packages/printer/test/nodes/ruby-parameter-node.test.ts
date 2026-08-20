@@ -16,11 +16,8 @@ describe("RubyParameterNode Printing", () => {
       location: createLocation(),
       name: createToken("TOKEN_IDENTIFIER", "user"),
       default_value: null,
-      required: true,
-      keyword: false,
-      splat: false,
-      double_splat: false,
-      block: false
+      kind: "positional",
+      required: true
     })
 
     expectNodeToPrint(node, "")

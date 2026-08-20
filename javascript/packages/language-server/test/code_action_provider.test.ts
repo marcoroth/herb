@@ -11,7 +11,7 @@ import { Config } from "@herb-tools/config"
 import { CodeActionProvider } from "../src/code_action_provider"
 import { Project } from "../src/project"
 
-import type { TextDocumentEdit } from "vscode-languageserver/node"
+import type { TextDocumentEdit, TextEdit } from "vscode-languageserver/node"
 import type { PersonalHerbSettings } from "../src/user_settings"
 
 const RULE = "herb-config-framework-option"
@@ -76,7 +76,7 @@ describe("CodeActionProvider", () => {
 
     const documentChanges = action.edit?.documentChanges as TextDocumentEdit[]
 
-    return documentChanges[documentChanges.length - 1].edits[0].newText
+    return (documentChanges[documentChanges.length - 1].edits[0] as TextEdit).newText
   }
 
   it("offers the suggested framework when the offense names one", async () => {

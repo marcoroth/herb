@@ -17,7 +17,6 @@ describe("ERBStrictLocalsNode Printing", () => {
       tag_opening: createToken(),
       content: createToken(),
       tag_closing: createToken(),
-      analyzed_ruby: null,
       prism_node: null,
       locals: []
     })

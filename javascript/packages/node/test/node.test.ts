@@ -1,6 +1,6 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb, HerbBackend } from "../src/index.ts"
+import { Herb, HerbBackend } from "../src/index.js"
 
 describe("@herb-tools/node", () => {
   beforeAll(async () => {

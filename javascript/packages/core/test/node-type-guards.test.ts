@@ -9,6 +9,8 @@ import {
 
 } from '../src/nodes.js'
 
+import type { Node } from '../src/nodes.js'
+
 import {
   isDocumentNode,
   isLiteralNode,
@@ -31,7 +33,8 @@ describe('Node Type Guards', () => {
     type: 'AST_DOCUMENT_NODE',
     location: Location.zero,
     errors: [],
-    children: []
+    children: [],
+    prism_node: null
   })
 
   const literalNode = new LiteralNode({
@@ -56,7 +59,8 @@ describe('Node Type Guards', () => {
     content: null,
     tag_closing: null,
     parsed: false,
-    valid: true
+    valid: true,
+    prism_node: null
   })
 
   describe('Individual Type Guards', () => {
@@ -322,7 +326,7 @@ describe('Node Type Guards', () => {
       })
 
       it('should handle large arrays', () => {
-        const manyLiterals = Array.from({ length: 100 }).fill(literalNode)
+        const manyLiterals = Array.from({ length: 100 }, () => literalNode)
         expect(areAllOfType(manyLiterals, LiteralNode)).toBe(true)
         expect(areAllOfType(manyLiterals, HTMLTextNode)).toBe(false)
       })

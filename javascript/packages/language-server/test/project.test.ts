@@ -15,6 +15,14 @@ import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
 import type { SharedServices } from "../src/project"
 
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
+  }
+}
+
 describe("Project", () => {
   let root: string
 
@@ -48,9 +56,10 @@ describe("Project", () => {
     const shared: SharedServices = {
       documents: { documents: {}, get: () => undefined } as unknown as Documents,
       parserService,
-      definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
+      definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
       userSettings: userSettings ?? new UserSettings(connection, capabilities),
       capabilities,
+      readFile,
     }
 
     return new Project(connection, root, shared)

@@ -7,7 +7,7 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { ExtractCodeActionProvider, isExtractToPartialFailure } from "../src/extract_code_action_provider"
 import { ParserService } from "../src/parser_service"
-import type { TextDocumentEdit, CreateFile } from "vscode-languageserver-types"
+import type { TextDocumentEdit, CreateFile, TextEdit } from "vscode-languageserver-types"
 import type { ExtractToPartialSuccess } from "../src/extract_code_action_provider"
 
 const URI = "file:///project/app/views/users/show.html.erb"
@@ -53,14 +53,14 @@ describe("ExtractCodeActionProvider", () => {
     const documentChanges = result.edit.documentChanges as (CreateFile | TextDocumentEdit)[]
     const edit = documentChanges[1] as TextDocumentEdit
 
-    return edit.edits[0].newText
+    return (edit.edits[0] as TextEdit).newText
   }
 
   function renderCall(result: ExtractToPartialSuccess): string {
     const documentChanges = result.edit.documentChanges as (CreateFile | TextDocumentEdit)[]
     const edit = documentChanges[2] as TextDocumentEdit
 
-    return edit.edits[0].newText
+    return (edit.edits[0] as TextEdit).newText
   }
 
   describe("code actions", () => {

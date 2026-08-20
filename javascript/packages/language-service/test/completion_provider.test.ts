@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { CompletionProvider } from "../src/completion_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 import { buildPartialIndex } from "@herb-tools/analysis/node"
 import { relative } from "node:path"
 import { fileURLToPath } from "node:url"

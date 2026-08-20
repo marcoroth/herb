@@ -7,7 +7,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 
-import type { ParseResult } from "@herb-tools/core"
+import type { Node } from "@herb-tools/core"
 import type { RewriteContext } from "@herb-tools/rewriter"
 
 describe("CustomRewriterLoader", () => {
@@ -160,8 +160,8 @@ describe("CustomRewriterLoader", () => {
     class MockBuiltinRewriter extends ASTRewriter {
       get name() { return "mock-builtin" }
       get description() { return "Mock builtin rewriter" }
-      rewrite(result: ParseResult, _context: RewriteContext): ParseResult {
-        return result
+      rewrite<T extends Node>(node: T, _context: RewriteContext): T {
+        return node
       }
     }
 

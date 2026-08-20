@@ -220,9 +220,9 @@ describe("@herb-tools/node-wasm", () => {
     const caseNode = result.value.children[0] as ERBCaseNode
     const whenNode = caseNode.conditions[0] as ERBWhenNode
 
-    expect(whenNode.then_keyword.start.line).toBe(2)
-    expect(whenNode.then_keyword.start.column).toBe(15)
-    expect(whenNode.then_keyword.end.line).toBe(2)
-    expect(whenNode.then_keyword.end.column).toBe(19)
+    expect(whenNode.then_keyword?.start.line).toBe(2)
+    expect(whenNode.then_keyword?.start.column).toBe(15)
+    expect(whenNode.then_keyword?.end.line).toBe(2)
+    expect(whenNode.then_keyword?.end.column).toBe(19)
   })
 })

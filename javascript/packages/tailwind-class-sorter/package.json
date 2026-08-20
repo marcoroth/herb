@@ -36,6 +36,7 @@
     "pretest": "yarn setup-fixtures",
     "test": "vitest run",
     "test:watch": "vitest --watch",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "dependencies": {

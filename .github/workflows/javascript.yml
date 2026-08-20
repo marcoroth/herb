@@ -81,6 +81,9 @@ jobs:
           GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: yarn build
 
+      - name: Run `typecheck` for all NX packages
+        run: yarn typecheck
+
       - name: Run `test` for all NX packages
         run: yarn test
 
