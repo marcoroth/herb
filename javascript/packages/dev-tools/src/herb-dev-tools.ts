@@ -1,15 +1,22 @@
-import styles from './styles.css'
+import baseStyles from './base.css'
 
+import { injectStyle } from './styles.js'
 import { HerbClient } from './dev-server/client.js'
 import { HerbOverlay } from './overlay/overlay.js'
+import { RuntimePanel } from './runtime/panel.js'
 
 import type { HerbClientOptions } from './dev-server/types.js'
 import type { ErrorOverlay } from './overlay/error-overlay.js'
+import type { RuntimeReportHandle } from './runtime/panel.js'
+import type { RuntimeDiagnostic } from './runtime/report.js'
+
+const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
 
 export interface HerbDevToolsOptions {
   projectPath?: string
   devServer?: boolean | HerbClientOptions
   overlay?: boolean
+  runtimePanel?: boolean
 }
 
 declare global {
@@ -44,6 +51,7 @@ export class HerbDevTools {
 
   private devServerClient: HerbClient | null = null
   private devToolsOverlay: HerbOverlay | null = null
+  private panel: RuntimePanel | null = null
   private styleElement: HTMLStyleElement | null = null
 
   private constructor(private options: HerbDevToolsOptions) {}
@@ -58,6 +66,9 @@ export class HerbDevTools {
 
     this.devToolsOverlay?.destroy()
     this.devToolsOverlay = null
+
+    this.panel?.destroy()
+    this.panel = null
 
     this.styleElement?.remove()
     this.styleElement = null
@@ -79,8 +90,26 @@ export class HerbDevTools {
     return this.devToolsOverlay?.errorOverlay ?? null
   }
 
+  get runtimePanel(): RuntimePanel | null {
+    return this.panel
+  }
+
+  report(input: RuntimeDiagnostic | RuntimeDiagnostic[]): RuntimeReportHandle {
+    return this.panel?.report(input) ?? NOOP_HANDLE
+  }
+
+  clear(origin?: string): void {
+    this.panel?.clear(origin)
+  }
+
+  show(options: { open?: boolean } = {}): void {
+    this.panel?.show(options)
+  }
+
   private setup(): void {
     this.injectStyles()
+
+    const runtimePanelEnabled = this.options.runtimePanel !== false
 
     if (this.options.devServer !== false) {
       const clientOptions = typeof this.options.devServer === 'object' ? this.options.devServer : {}
@@ -93,18 +122,26 @@ export class HerbDevTools {
       this.devToolsOverlay = new HerbOverlay({
         projectPath: this.options.projectPath,
         devServerClient: this.devServerClient,
+        onMenuOpen: () => this.panel?.close(),
+        onReinitialize: () => this.panel?.refresh(),
+        isRuntimePanelVisible: runtimePanelEnabled ? () => this.panel === null || !this.panel.dismissed : undefined,
+        onRuntimePanelToggle: runtimePanelEnabled
+          ? visible => (visible ? this.panel?.show() : this.panel?.dismiss())
+          : undefined,
       })
+    }
+
+    if (runtimePanelEnabled) {
+      this.panel = new RuntimePanel({
+        onOpenFile: (file, line, column) => this.devToolsOverlay?.openFileInEditor(file, line, column),
+        onOpen: () => this.devToolsOverlay?.closeMenu(),
+      })
+
+      this.devToolsOverlay?.syncRuntimePanelToggle()
     }
   }
 
   private injectStyles(): void {
-    const element = document.createElement('style')
-
-    element.setAttribute('data-herb-dev-tools', '')
-    element.textContent = styles
-
-    document.head.appendChild(element)
-
-    this.styleElement = element
+    this.styleElement = injectStyle('base', baseStyles)
   }
 }

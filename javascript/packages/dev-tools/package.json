@@ -16,7 +16,7 @@
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
-    "dev": "rolldown -c -w",
+    "dev": "vite",
     "clean": "rimraf dist",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.test.json",
@@ -30,8 +30,10 @@
     }
   },
   "dependencies": {
+    "@herb-tools/browser": "0.10.3",
+    "@herb-tools/client": "0.10.3",
     "@herb-tools/core": "0.10.3",
-    "@herb-tools/client": "0.10.3"
+    "@herb-tools/highlighter": "0.10.3"
   },
   "files": [
     "package.json",
