@@ -1,0 +1,6 @@
+#!/bin/bash
+
+valgrind \
+  --error-exitcode=1 \
+  --leak-check=no \
+  ./bench_allocs examples/*.html.erb
