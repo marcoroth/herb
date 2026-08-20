@@ -54,6 +54,10 @@ module Herb
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
+      NAME_ATTRIBUTE: String
+
+      NAMEABLE_TYPES: Array[Symbol]
+
       class Slot < Data
         attr_reader index(): Integer
 
@@ -71,12 +75,14 @@ module Herb
 
         attr_reader key_expression(): String?
 
-        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression) -> instance
-                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?) -> instance
+        attr_reader name(): String?
 
-        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?) -> instance
 
-        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name ]
       end
 
       # : (String) -> bool
@@ -177,6 +183,27 @@ module Herb
 
       # : (untyped) -> Symbol
       def attribute_type_for: (untyped) -> Symbol
+
+      # : (untyped, untyped, Integer, untyped, Integer) -> void
+      def record_named_element: (untyped, untyped, Integer, untyped, Integer) -> void
+
+      # : (untyped) -> String?
+      def static_attribute_value: (untyped) -> String?
+
+      # : () -> void
+      def apply_names: () -> void
+
+      # : (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+      def bind_name: (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+
+      # : (Hash[Symbol, untyped]) -> Integer
+      def resolve_named_slot: (Hash[Symbol, untyped]) -> Integer
+
+      # : (String, Integer, untyped) -> bool
+      def attribute_conflict?: (String, Integer, untyped) -> bool
+
+      # : (Hash[Symbol, untyped], Integer) -> void
+      def rewrite_name_attribute: (Hash[Symbol, untyped], Integer) -> void
 
       # : (untyped) -> [Symbol, String?]
       def key_for: (untyped) -> [ Symbol, String? ]
