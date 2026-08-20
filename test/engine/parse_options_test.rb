@@ -81,8 +81,11 @@ module Engine
         Herb::Engine.new("<div><span></div>")
       end
 
-      assert_match(/\d+ \|/, error.message)
-      assert error.diagnostics.any?
+      location = error.diagnostics.first&.location
+
+      refute_nil location
+      assert_equal 1, location.start.line
+      assert_equal 5, location.start.column
     end
   end
 end
