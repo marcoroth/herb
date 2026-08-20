@@ -187,7 +187,7 @@ describe("FileRenderer", () => {
 
       expect(hyperlinks(result)).toEqual([
         { url: "file:///test/file.erb", text: "/test/file.erb" },
-        { url: "file:///test/file.erb", text: "  2" },
+        { url: "file:///test/file.erb", text: "2" },
       ])
     })
 
