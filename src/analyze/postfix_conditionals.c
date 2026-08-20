@@ -183,6 +183,8 @@ static bool append_body_statement(
 
   token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, body_start, body_end);
 
+  hb_allocator_dealloc(allocator, (void*) info.source);
+
   AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
     token_copy(erb_node->tag_opening, allocator),
     content,

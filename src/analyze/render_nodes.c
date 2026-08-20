@@ -692,9 +692,6 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   AST_ERB_ENSURE_NODE_T* render_ensure_clause = block_fields ? block_fields->ensure_clause : NULL;
   AST_ERB_END_NODE_T* render_end_node = block_fields ? block_fields->end_node : NULL;
 
-  if (!render_block_body) { render_block_body = hb_array_init(0, allocator); }
-  if (!render_block_arguments) { render_block_arguments = hb_array_init(0, allocator); }
-
   if (!block_fields) {
     pm_block_node_t* inline_block = find_block_on_render_call(call_node);
 
@@ -703,6 +700,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
       if (inline_block->parameters && inline_block->parameters->type == PM_BLOCK_PARAMETERS_NODE) {
         pm_block_parameters_node_t* block_parameters = (pm_block_parameters_node_t*) inline_block->parameters;
+
+        hb_array_free(&render_block_arguments);
 
         render_block_arguments = extract_parameters_from_prism(
           block_parameters->parameters,
@@ -737,6 +736,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
           allocator
         );
 
+        hb_array_free(&render_block_body);
+
         render_block_body = hb_array_init(1, allocator);
         hb_array_append(render_block_body, body_node);
 
@@ -769,6 +770,9 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     hb_array_init(0, allocator),
     allocator
   );
+
+  if (!render_block_body) { render_block_body = hb_array_init(0, allocator); }
+  if (!render_block_arguments) { render_block_arguments = hb_array_init(0, allocator); }
 
   return ast_erb_render_node_init(
     token_copy(erb_node->tag_opening, allocator),
