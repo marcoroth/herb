@@ -822,6 +822,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
 
       char* arena_copy = hb_allocator_strndup(parser->allocator, equals_buffer.value, equals_buffer.length);
       equals_with_whitespace->value = hb_string_from_data(arena_copy, equals_buffer.length);
+      equals_with_whitespace->owns_value = true;
 
       hb_buffer_free(&equals_buffer);
 

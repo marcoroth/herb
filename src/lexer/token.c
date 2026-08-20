@@ -25,6 +25,7 @@ token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) 
   }
 
   token->value = value;
+  token->owns_value = false;
 
   token->type = type;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
@@ -217,7 +218,8 @@ token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
 
   if (!new_token) { return NULL; }
 
-  new_token->value = token->value;
+  new_token->value = token->owns_value ? hb_string_copy(token->value, allocator) : token->value;
+  new_token->owns_value = token->owns_value;
 
   new_token->type = token->type;
   new_token->range = token->range;
@@ -238,6 +240,8 @@ bool token_is_escaped_erb_tag_opening(const token_T* token) {
 
 void token_free(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return; }
+
+  if (token->owns_value) { hb_allocator_dealloc(allocator, (void*) token->value.data); }
 
   hb_allocator_dealloc(allocator, token);
 }

@@ -61,6 +61,7 @@ typedef struct TOKEN_STRUCT {
   range_T range;
   location_T location;
   token_type_T type;
+  bool owns_value;
 } token_T;
 
 #endif
