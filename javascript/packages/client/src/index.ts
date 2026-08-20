@@ -1,9 +1,19 @@
-export { HerbRuntime, stateFor } from "./runtime"
-export { SlotIndex, SLOT_EVENT } from "./slot-index"
-export { SlotState, DEPENDENCIES_ATTRIBUTE, DEPENDENCIES_SELECTOR, STATE_EVENT } from "./state"
+export { HerbRuntime } from "./runtime"
+export { SlotIndex } from "./slot-index"
+export { SlotState } from "./state"
 export { SlotMutations } from "./mutations"
-export { report, clearOnNavigation, RUNTIME_ORIGIN } from "./report"
+export { SlotActions } from "./actions"
+
+export { stateFor } from "./runtime"
+export { report, clearOnNavigation } from "./report"
+
+export { SLOT_EVENT } from "./slot-index"
+export { RUNTIME_ORIGIN } from "./report"
+export { DEPENDENCIES_ATTRIBUTE, DEPENDENCIES_SELECTOR, STATE_EVENT } from "./state"
+export { HERB_ATTRIBUTES, ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR } from "./attributes"
+
 export type { RuntimeDiagnostic } from "./report"
+export type { HerbAttribute, ActionName, ActionSchema } from "./attributes"
 export type { MutationTarget, SubmitOptions, MutationStatus, MutationResult, MutationRequest, MutationTransport, MutationsOptions } from "./mutations"
 
 export type { RuntimeOptions, ScopedState } from "./runtime"

@@ -17,6 +17,8 @@
  * attaching slots to an already-indexed region when the new markup landed inside one.
  */
 
+import { HERB_ATTRIBUTES } from "./attributes"
+
 const REGION_OPEN = /^herb-region:(.*):([0-9a-f]+):(\d+)$/
 const REGION_CLOSE = /^\/herb-region:(.*)$/
 const SLOT_OPEN = /^herb-slot:(\d+)(?::([a-z_]+))?$/
@@ -27,12 +29,12 @@ const BRANCH = /^herb-branch:(\d+):(\w+)$/
 const MARKER = /^\/?herb-(region|slot|item|branch):/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
-const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
+const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
 const MAX_JOURNAL = 50
 
-const ANCHOR_ATTRIBUTE = "data-herb-slot"
+const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
-const NAME_ATTRIBUTE = "data-herb-name"
+const NAME_ATTRIBUTE = HERB_ATTRIBUTES.name
 const NAME_ENTRY = /^(\d+):(.+)$/
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
@@ -109,10 +111,10 @@ export interface Slot {
 export type SlotOperation =
   | "value"
   | "attribute"
-  | "item-rekeyed"
   | "markup"
   | "branch"
   | "item-added"
+  | "item-rekeyed"
   | "item-removed"
   | "item-updated"
 
@@ -1416,7 +1418,7 @@ export class SlotIndex {
   }
 
   #staticsIdentity(element: HTMLTemplateElement): StaticsIdentity | null {
-    const named = element.getAttribute("data-herb-region")
+    const named = element.getAttribute(HERB_ATTRIBUTES.region)
 
     if (named !== null) {
       const match = STATICS_REGION.exec(named)
@@ -1641,7 +1643,7 @@ function skeletonElements(root: Node): HTMLTemplateElement[] {
 }
 
 function parkedBranches(element: HTMLTemplateElement): FragmentMap {
-  const named = element.getAttribute("data-herb-statics")
+  const named = element.getAttribute(HERB_ATTRIBUTES.statics)
 
   if (named !== null) return new Map([[named, element.content]])
 

@@ -138,6 +138,37 @@ describe("runtime diagnostics", () => {
     stop()
   })
 
+  test("falls back to the console while the panel is absent in debug mode", async () => {
+    const { vi } = await import("vitest")
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    document.head.innerHTML = `<meta name="herb-debug-mode" content="true">`
+    state.setState({ missing: true })
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0][0])).toContain("[herb]")
+
+    const devTools = installDevTools()
+
+    state.setState({ also_missing: true })
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(devTools.entries).toHaveLength(2)
+
+    warn.mockRestore()
+  })
+
+  test("production logs nothing to the console", async () => {
+    const { vi } = await import("vitest")
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    state.setState({ missing: true })
+
+    expect(warn).not.toHaveBeenCalled()
+
+    warn.mockRestore()
+  })
+
   test("without the debug signal nothing is retained", () => {
     state.setState({ missing: true })
 

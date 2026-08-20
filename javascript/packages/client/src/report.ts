@@ -34,6 +34,8 @@ export function report(diagnostic: RuntimeDiagnostic): void {
 
   if (!debugging()) return
 
+  console.warn(`[herb] ${entry.message}${entry.suggestion ? `. ${entry.suggestion}` : ""}`, entry)
+
   queued.push(entry)
 
   if (queued.length > MAX_QUEUED) queued.shift()
