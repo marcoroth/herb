@@ -489,7 +489,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       };
 
       for (size_t index = 0; index < sizeof(keyword_fields) / sizeof(keyword_fields[0]); index++) {
-        *keyword_fields[index].target = extract_keyword_token(
+        token_T* keyword_token = extract_keyword_token(
           keyword_hash,
           keyword_fields[index].name,
           source,
@@ -497,6 +497,11 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
           erb_content_source,
           allocator
         );
+
+        if (keyword_token) {
+          token_free(*keyword_fields[index].target, allocator);
+          *keyword_fields[index].target = keyword_token;
+        }
       }
 
       if (partial) { has_keyword_partial = true; }

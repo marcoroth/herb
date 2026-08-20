@@ -423,6 +423,8 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
         hb_array_append(consumed_indices, index);
       }
     }
+
+    i = close_index;
   }
 
   if (hb_array_size(consumed_indices) > 0) {

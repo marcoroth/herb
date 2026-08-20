@@ -823,6 +823,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   token_T* tag_name_token =
     tag_name ? create_synthetic_token(allocator, tag_name, TOKEN_IDENTIFIER, tag_name_start, tag_name_end) : NULL;
 
+  hb_allocator_dealloc(allocator, path_options);
+
   hb_array_T* open_tag_children = attributes ? attributes : hb_array_init(0, allocator);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
@@ -887,6 +889,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         &element_errors,
         context->options
       );
+
+      hb_buffer_free(&helper_name_buffer);
     }
 
     if (string_equals(handler->name, "javascript_tag")) {
@@ -1133,6 +1137,8 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
     }
   }
 
+  hb_allocator_dealloc(allocator, path_options);
+
   return elements;
 }
 
@@ -1229,6 +1235,8 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
       hb_array_append(elements, element);
     }
   }
+
+  hb_allocator_dealloc(allocator, path_options);
 
   return elements;
 }
@@ -1472,6 +1480,12 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       body_document->children = NULL;
 
       ast_node_free((AST_NODE_T*) body_document, allocator);
+
+      for (size_t index = 0; index < hb_array_size(body); index++) {
+        ast_node_rebase_tokens(hb_array_get(body, index), raw_copy, context->source + start_offset, content_length);
+      }
+
+      hb_allocator_dealloc(allocator, raw_copy);
     }
   }
 

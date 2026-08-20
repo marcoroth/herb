@@ -95,6 +95,9 @@ static body_info_T extract_body_info(
   if (info.source) {
     info.length = info.offset_in_content + info.length;
     info.offset_in_content = 0;
+
+    hb_allocator_dealloc(allocator, (void*) info.source);
+
     info.source = hb_allocator_strndup(allocator, (const char*) analyzed->parser.start, info.length);
   }
 

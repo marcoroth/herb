@@ -238,6 +238,8 @@ static char* join_static_string_array(pm_array_node_t* array, hb_allocator_T* al
 
   char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
 
+  hb_buffer_free(&buffer);
+
   return result;
 }
 
@@ -389,10 +391,12 @@ void resolve_nonce_attribute(hb_array_T* attributes, hb_allocator_T* allocator) 
         allocator
       );
 
-      hb_array_T* new_children = hb_array_init(1, allocator);
-      hb_array_append(new_children, (AST_NODE_T*) ruby_node);
+      for (size_t child = 0; child < hb_array_size(attribute->value->children); child++) {
+        ast_node_free(hb_array_get(attribute->value->children, child), allocator);
+      }
 
-      attribute->value->children = new_children;
+      attribute->value->children->size = 0;
+      hb_array_append(attribute->value->children, (AST_NODE_T*) ruby_node);
 
       return;
     }
