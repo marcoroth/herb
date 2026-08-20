@@ -1,28 +1,9 @@
-import {
-  getTagLocalName,
-  getStaticAttributeValue,
-  hasAttributeValue,
-  HELPER_REGISTRY,
-  HELPER_BY_SOURCE,
-} from "@herb-tools/core"
-import type {
-  ParseResult,
-  ParserOptions,
-  HTMLElementNode,
-  HTMLAttributeNode,
-} from "@herb-tools/core"
+import { getTagLocalName, getStaticAttributeValue, hasAttributeValue, HELPER_REGISTRY, HELPER_BY_SOURCE } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
-import {
-  BaseRuleVisitor,
-  findElementAttribute,
-  isJavaScriptTagElement,
-} from "./rule-utils.js"
+import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
-import type {
-  UnboundLintOffense,
-  LintContext,
-  FullRuleConfig,
-} from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 const HELPERS_WITH_CSP_NONCE_SUPPORT = [
   HELPER_REGISTRY["javascript_include_tag"].source,
@@ -61,11 +42,7 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
     return "Missing a `nonce` attribute on `<script>` tag. Use a dynamically generated nonce."
   }
 
-  private checkLiteralNonceOnTagHelper(
-    node: HTMLElementNode,
-    nonceAttribute: HTMLAttributeNode,
-  ): void {
-    if (this.context.framework !== "actionview") return
+  private checkLiteralNonceOnTagHelper(node: HTMLElementNode, nonceAttribute: HTMLAttributeNode): void {
     if (!node.element_source) return
     if (HELPERS_WITH_CSP_NONCE_SUPPORT.includes(node.element_source)) return
 
@@ -103,7 +80,7 @@ export class HTMLRequireScriptNonceRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error",
+      severity: "error"
     }
   }
 
@@ -113,10 +90,7 @@ export class HTMLRequireScriptNonceRule extends ParserRule {
     }
   }
 
-  check(
-    result: ParseResult,
-    context?: Partial<LintContext>,
-  ): UnboundLintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new RequireScriptNonceVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
