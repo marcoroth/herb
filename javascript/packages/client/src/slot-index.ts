@@ -65,6 +65,10 @@ export interface AddItemOptions {
   before?: string
 }
 
+export interface ApplyOptions {
+  items?: "replace" | "merge"
+}
+
 export interface StaticsIdentity {
   file: string
   version: string
@@ -379,27 +383,27 @@ export class SlotIndex {
     return { added, removed, moved, kept, unchanged: added.length === 0 && removed.length === 0 && moved.length === 0 }
   }
 
-  apply(payload: Payload): ApplyReport {
+  apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
     const report: ApplyReport = { applied: 0, deferred: [] }
 
-    this.#applyPayload(payload, report)
+    this.#applyPayload(payload, report, options.items ?? "replace")
 
     return report
   }
 
-  #applyPayload(payload: Payload, report: ApplyReport): void {
+  #applyPayload(payload: Payload, report: ApplyReport, mode: "replace" | "merge"): void {
     const region = this.region(payload.template, payload.occurrence)
 
     if (!region) return this.#defer(report, payload, null, "no-region")
     if (region.version !== payload.version) return this.#defer(report, payload, null, "stale-version")
 
-    this.#applySlots(payload, region.slots, payload.slots, report)
+    this.#applySlots(payload, region.slots, payload.slots, report, mode)
   }
 
-  #applySlots(payload: Payload, owner: SlotMap, values: PayloadSlots, report: ApplyReport): void {
+  #applySlots(payload: Payload, owner: SlotMap, values: PayloadSlots, report: ApplyReport, mode: "replace" | "merge"): void {
     for (const [key, value] of Object.entries(values)) {
       if (isPayload(value)) {
-        this.#applyPayload(value, report)
+        this.#applyPayload(value, report, mode)
         continue
       }
 
@@ -425,14 +429,14 @@ export class SlotIndex {
         continue
       }
 
-      if ("items" in value) this.#applyItems(payload, slot, value, report)
-      else this.#applyBranch(payload, slot, value, report)
+      if ("items" in value) this.#applyItems(payload, slot, value, report, mode)
+      else this.#applyBranch(payload, slot, value, report, mode)
     }
   }
 
-  #applyBranch(payload: Payload, slot: Slot, value: Branched, report: ApplyReport): void {
+  #applyBranch(payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: "replace" | "merge"): void {
     if (value.branch === slot.branch) {
-      if (value.slots) this.#applySlots(payload, this.#owner(slot), value.slots, report)
+      if (value.slots) this.#applySlots(payload, this.#owner(slot), value.slots, report, mode)
 
       return
     }
@@ -456,19 +460,24 @@ export class SlotIndex {
     report.applied += 1
 
     if (value.slots) {
-      this.#applySlots(payload, this.#owner(slot), value.slots, report)
+      this.#applySlots(payload, this.#owner(slot), value.slots, report, mode)
     }
   }
 
-  #applyItems(payload: Payload, slot: Slot, value: Collected, report: ApplyReport): void {
+  #applyItems(payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: "replace" | "merge"): void {
     const wanted = Object.keys(value.items)
-    const plan = this.reconcile(slot, wanted)
 
-    if (!plan.unchanged) {
-      const unbuilt = this.#reconcileItems(slot, wanted, plan)
+    if (mode === "merge") {
+      this.#mergeItems(payload, slot, wanted, report)
+    } else {
+      const plan = this.reconcile(slot, wanted)
 
-      if (unbuilt.length > 0) {
-        this.#defer(report, payload, slot.index, "items", unbuilt)
+      if (!plan.unchanged) {
+        const unbuilt = this.#reconcileItems(slot, wanted, plan)
+
+        if (unbuilt.length > 0) {
+          this.#defer(report, payload, slot.index, "items", unbuilt)
+        }
       }
     }
 
@@ -476,9 +485,26 @@ export class SlotIndex {
       const item = slot.items.get(key)
 
       if (item) {
-        this.#applySlots(payload, item.slots, value.items[key], report)
+        this.#applySlots(payload, item.slots, value.items[key], report, mode)
       }
     }
+  }
+
+  #mergeItems(payload: Payload, slot: Slot, wanted: string[], report: ApplyReport): void {
+    const added = wanted.filter((key) => !slot.items.has(key))
+
+    if (added.length === 0) return
+
+    const template = this.#rowTemplate(slot)
+    const anchor = slot.anchor.kind === "range" ? slot.anchor.end : null
+
+    if (!template || !anchor) {
+      this.#defer(report, payload, slot.index, "items", added)
+
+      return
+    }
+
+    for (const key of added) this.#buildItem(slot, key, template, anchor)
   }
 
   #reconcileItems(slot: Slot, wanted: string[], plan: ItemPlan): string[] {
