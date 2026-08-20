@@ -1793,6 +1793,17 @@ static hb_array_T* collect_close_tag_names(hb_array_T* nodes, hb_allocator_T* al
   return close_tag_names;
 }
 
+static void free_close_tag_names(hb_array_T** close_tag_names, hb_allocator_T* allocator) {
+  if (close_tag_names == NULL || *close_tag_names == NULL) { return; }
+
+  for (size_t i = 0; i < hb_array_size(*close_tag_names); i++) {
+    hb_string_T* name = (hb_string_T*) hb_array_get(*close_tag_names, i);
+    if (name != NULL) { hb_allocator_dealloc(allocator, name); }
+  }
+
+  hb_array_free(close_tag_names);
+}
+
 static hb_array_T* parser_build_elements_from_tags(
   hb_array_T* nodes,
   hb_array_T* errors,
@@ -1938,6 +1949,8 @@ static hb_array_T* parser_build_elements_from_tags(
       hb_array_append(result, node);
     }
   }
+
+  free_close_tag_names(&close_tag_names, allocator);
 
   return result;
 }
