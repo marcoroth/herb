@@ -28,6 +28,8 @@ const MARKER = /^\/?herb-(region|slot|item|branch):/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
 const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
+const MAX_JOURNAL = 50
+
 const ANCHOR_ATTRIBUTE = "data-herb-slot"
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
 const NAME_ATTRIBUTE = "data-herb-name"
@@ -68,6 +70,17 @@ export interface AddItemOptions {
 export interface ApplyOptions {
   items?: "replace" | "merge"
 }
+
+export type RevertToken = number
+
+interface SlotAddress {
+  region: Region | null
+  collection: number | null
+  key: string | null
+  index: number
+}
+
+type Inverse = () => void
 
 export interface StaticsIdentity {
   file: string
@@ -171,6 +184,7 @@ export interface Deferred {
 export interface ApplyReport {
   applied: number
   deferred: Deferred[]
+  token?: RevertToken
 }
 
 export interface ItemPlan {
@@ -213,6 +227,9 @@ export class SlotIndex {
   #seen = new WeakSet<Comment>()
   #anchored = new WeakSet<Element>()
   #named = new WeakSet<Element>()
+  #journal = new Map<RevertToken, Inverse[]>()
+  #recording: Inverse[] | null = null
+  #nextToken = 1
   #slotRegions = new WeakMap<Slot, Region>()
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
@@ -386,9 +403,95 @@ export class SlotIndex {
   apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
     const report: ApplyReport = { applied: 0, deferred: [] }
 
-    this.#applyPayload(payload, report, options.items ?? "replace")
+    const { token } = this.transaction(() => {
+      this.#applyPayload(payload, report, options.items ?? "replace")
+    })
+
+    if (token !== null) report.token = token
 
     return report
+  }
+
+  transaction<T>(work: () => T): { token: RevertToken | null; result: T } {
+    if (this.#recording) return { token: null, result: work() }
+
+    const inverses: Inverse[] = []
+
+    this.#recording = inverses
+
+    let result: T
+
+    try {
+      result = work()
+    } finally {
+      this.#recording = null
+    }
+
+    if (inverses.length === 0) return { token: null, result }
+
+    const token = this.#nextToken++
+
+    this.#journal.set(token, inverses)
+
+    if (this.#journal.size > MAX_JOURNAL) {
+      const oldest = this.#journal.keys().next().value
+
+      if (oldest !== undefined) this.#journal.delete(oldest)
+    }
+
+    return { token, result }
+  }
+
+  revert(token: RevertToken): boolean {
+    const inverses = this.#journal.get(token)
+
+    if (!inverses) return false
+
+    this.#journal.delete(token)
+
+    for (let position = inverses.length - 1; position >= 0; position -= 1) inverses[position]()
+
+    return true
+  }
+
+  #record(make: () => Inverse): void {
+    if (!this.#recording) return
+
+    this.#recording.push(make())
+  }
+
+  #addressOf(slot: Slot): SlotAddress {
+    const region = this.#slotRegions.get(slot) ?? null
+    const owner = this.#owner(slot)
+    let collection: number | null = null
+    let key: string | null = null
+
+    if (region && owner !== region.slots) {
+      for (const candidate of region.slots.values()) {
+        if (candidate.type !== "collection") continue
+
+        for (const item of candidate.items.values()) {
+          if (item.slots === owner) {
+            collection = candidate.index
+            key = item.key
+            break
+          }
+        }
+
+        if (key !== null) break
+      }
+    }
+
+    return { region, collection, key, index: slot.index }
+  }
+
+  #slotAt(address: SlotAddress): Slot | null {
+    const { region, collection, key, index } = address
+
+    if (!region) return null
+    if (collection === null || key === null) return region.slots.get(index) ?? null
+
+    return region.slots.get(collection)?.items.get(key)?.slots.get(index) ?? null
   }
 
   #applyPayload(payload: Payload, report: ApplyReport, mode: "replace" | "merge"): void {
@@ -454,6 +557,21 @@ export class SlotIndex {
     const built = this.materialize(payload.template, `${slot.index}:${value.branch}`, leaves(value.slots))
 
     if (!built) return this.#defer(report, payload, slot.index, "branch")
+
+    this.#record(() => {
+      const before = this.#current(slot)
+      const beforeBranch = slot.branch
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (!live) return
+
+        this.update(live, before)
+        live.branch = beforeBranch
+      }
+    })
 
     this.#writeFragment(slot, built)
 
@@ -597,10 +715,47 @@ export class SlotIndex {
 
     this.scan(added)
 
+    this.#record(() => {
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+        const built = live?.items.get(key)
+
+        if (live && built) this.#dropItem(live, built)
+      }
+    })
+
     this.#announce(slot, "item-added", slot.index, key, slot.items.get(key) ?? null)
   }
 
   #dropItem(slot: Slot, item: Item): void {
+    this.#record(() => {
+      const keep = document.createRange()
+
+      keep.setStartBefore(item.start)
+      keep.setEndAfter(item.end)
+
+      const fragment = keep.cloneContents()
+      const address = this.#addressOf(slot)
+      const following = this.#itemsInDocumentOrder(slot)
+      const nextKey = following[following.indexOf(item) + 1]?.key ?? null
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (!live || live.anchor.kind !== "range" || live.items.has(item.key)) return
+
+        const target = (nextKey !== null ? live.items.get(nextKey)?.start : null) ?? live.anchor.end
+        const copy = fragment.cloneNode(true) as DocumentFragment
+        const added = [...copy.childNodes]
+
+        target.parentNode?.insertBefore(copy, target)
+        this.scan(added)
+        this.#announce(live, "item-added", live.index, item.key, live.items.get(item.key) ?? null)
+      }
+    })
+
     this.#keepItem(slot, item)
     this.#announce(slot, "item-removed", slot.index, item.key, item)
 
@@ -615,6 +770,17 @@ export class SlotIndex {
 
   #order(slot: Slot, keys: string[]): void {
     if (slot.anchor.kind !== "range") return
+
+    this.#record(() => {
+      const before = this.#itemsInDocumentOrder(slot).map((item) => item.key)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.#order(live, before)
+      }
+    })
 
     const end = slot.anchor.end
 
@@ -682,6 +848,17 @@ export class SlotIndex {
     if (slot.anchor.kind === "element") return false
     if (this.currentText(slot) === text) return false
 
+    this.#record(() => {
+      const before = this.#current(slot)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.update(live, before)
+      }
+    })
+
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
     slot.children = []
@@ -747,6 +924,17 @@ export class SlotIndex {
       return { regions: [], slots: [] }
     }
 
+    this.#record(() => {
+      const before = this.#current(slot)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.update(live, before)
+      }
+    })
+
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
     slot.children = []
@@ -754,11 +942,12 @@ export class SlotIndex {
     if (slot.anchor.kind === "element") {
       const replacement = this.rangeFor(slot).createContextualFragment(html)
       const element = slot.anchor.element
+      const parent = element.parentNode
 
       element.replaceWith(replacement)
       this.#forget(slot)
 
-      return this.scan([...(element.parentNode?.childNodes ?? [])])
+      return this.scan(parent ? [...parent.childNodes] : [])
     }
 
     const range = this.rangeFor(slot)
@@ -780,6 +969,21 @@ export class SlotIndex {
   updateItem(slot: Slot, key: string, html: string): ScanResult | null {
     const item = slot.items.get(key)
     if (!item) return null
+
+    this.#record(() => {
+      const holder = document.createElement("div")
+
+      holder.append(this.rangeForItem(item).cloneContents())
+
+      const before = holder.innerHTML
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.updateItem(live, key, before)
+      }
+    })
 
     const range = this.rangeForItem(item)
 
@@ -835,6 +1039,16 @@ export class SlotIndex {
     slot.items.delete(from)
     slot.items.set(to, item)
 
+    this.#record(() => {
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.rekeyItem(live, to, from)
+      }
+    })
+
     this.#announce(slot, "item-rekeyed", slot.index, to, item, from)
 
     return true
@@ -864,6 +1078,17 @@ export class SlotIndex {
     if (slot.anchor.kind === "range" || name === null) return false
     if (slot.type === "attribute_interpolation") return false
     if (slot.anchor.element.getAttribute(name) === value) return true
+
+    this.#record(() => {
+      const before = slot.anchor.kind === "range" ? null : slot.anchor.element.getAttribute(name)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.setAttribute(live, before, name)
+      }
+    })
 
     if (value === null) {
       slot.anchor.element.removeAttribute(name)
@@ -932,6 +1157,17 @@ export class SlotIndex {
     const region = this.regionOf(slot)
 
     if (!region) return false
+
+    this.#record(() => {
+      const before = slot.branch
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.switchBranch(live, before)
+      }
+    })
 
     this.capture(slot)
 
