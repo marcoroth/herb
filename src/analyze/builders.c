@@ -33,9 +33,9 @@ location_T* compute_then_keyword(
   }
 
   token_T* content = erb_node->content;
-  const char* source = (content && !hb_string_is_empty(content->value))
-                       ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
-                       : NULL;
+  char* source = (content && !hb_string_is_empty(content->value))
+                 ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
+                 : NULL;
   location_T* then_keyword = NULL;
 
   if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {
@@ -58,6 +58,8 @@ location_T* compute_then_keyword(
     then_keyword->end.line = content_start.line + then_keyword->end.line - 1;
     then_keyword->end.column = content_start.column + then_keyword->end.column;
   }
+
+  hb_allocator_dealloc(allocator, source);
 
   return then_keyword;
 }
