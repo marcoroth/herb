@@ -1718,17 +1718,6 @@ static AST_NODE_T* transform_link_to_helper(
   );
 }
 
-static void adopt_array_contents(hb_array_T* array, hb_array_T* new_array, hb_allocator_T* allocator) {
-  void* old_items = array->items;
-
-  array->items = new_array->items;
-  array->size = new_array->size;
-  array->capacity = new_array->capacity;
-
-  hb_allocator_dealloc(allocator, old_items);
-  hb_allocator_dealloc(allocator, new_array);
-}
-
 void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* context) {
   if (!array || !context) { return; }
 
@@ -1820,7 +1809,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                 }
               }
 
-              adopt_array_contents(array, new_array, context->allocator);
+              hb_array_replace_contents(array, &new_array);
               hb_array_free(&multi);
               ast_node_free(child, context->allocator);
 
@@ -1857,7 +1846,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                 }
               }
 
-              adopt_array_contents(array, new_array, context->allocator);
+              hb_array_replace_contents(array, &new_array);
               hb_array_free(&attributes);
               ast_node_free(child, context->allocator);
 
@@ -1923,7 +1912,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                   }
                 }
 
-                adopt_array_contents(array, new_array, context->allocator);
+                hb_array_replace_contents(array, &new_array);
                 hb_array_free(&attributes);
                 ast_node_free(child, context->allocator);
 
@@ -2003,7 +1992,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
               }
             }
 
-            adopt_array_contents(array, new_array, context->allocator);
+            hb_array_replace_contents(array, &new_array);
             ast_node_free(child, context->allocator);
 
             i++;
