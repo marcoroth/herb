@@ -1,6 +1,8 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute } from "../utils/rule-utils.js"
-import { hasAttributeValue } from "@herb-tools/core"
+import { StateScopeMap } from "../utils/state-directives-utils.js"
+import { bareReadName } from "@herb-tools/client/directives"
+import { hasAttributeValue, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -11,12 +13,30 @@ interface BooleanAttributeAutofixContext extends BaseAutofixContext {
 }
 
 class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttributeAutofixContext> {
+  public states: string[] = []
+
   protected checkStaticAttributeStaticValue({ originalAttributeName, attributeNode }: StaticAttributeStaticValueParams) {
     this.checkAttribute(originalAttributeName, attributeNode)
   }
 
   protected checkStaticAttributeDynamicValue({ originalAttributeName, attributeNode }: StaticAttributeDynamicValueParams) {
+    if (this.bindsDeclaredState(attributeNode)) return
+
     this.checkAttribute(originalAttributeName, attributeNode)
+  }
+
+  private bindsDeclaredState(attributeNode: HTMLAttributeNode): boolean {
+    if (this.states.length === 0) return false
+
+    const outputs = getAttributeValueNodes(attributeNode).filter((child) =>
+      isERBContentNode(child) && (child.tag_opening?.value === "<%=" || child.tag_opening?.value === "<%=="),
+    )
+
+    if (outputs.length !== 1 || getAttributeValueNodes(attributeNode).length !== 1) return false
+
+    const name = bareReadName((outputs[0] as { content?: { value: string } | null }).content?.value ?? "")
+
+    return name !== null && this.states.includes(name)
   }
 
   private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {
@@ -48,6 +68,7 @@ export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttribut
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<BooleanAttributeAutofixContext>[] {
     const visitor = new BooleanAttributesNoValueVisitor(this.ruleName, context)
 
+    visitor.states = StateScopeMap.collect(result.value).allNames()
     visitor.visit(result.value)
 
     return visitor.offenses

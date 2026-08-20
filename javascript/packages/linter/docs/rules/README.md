@@ -102,6 +102,13 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
+- [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md) - Require client mode for `herb:state`.
+- [`herb-state-valid-actions`](./herb-state-valid-actions.md) - Validate `data-herb-*` action attributes.
+- [`herb-state-valid-bindings`](./herb-state-valid-bindings.md) - Validate the kind a bound form control holds.
+- [`herb-state-valid-declaration`](./herb-state-valid-declaration.md) - Validate `herb:state` declarations.
+- [`herb-state-valid-reads`](./herb-state-valid-reads.md) - Validate how declared states are read.
+- [`herb-valid-slot-names`](./herb-valid-slot-names.md) - Validate `data-herb-name` slot names.
 
 
 #### HTML
