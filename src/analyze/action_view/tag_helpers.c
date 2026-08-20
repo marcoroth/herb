@@ -656,6 +656,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
           }
         }
       }
+
+      ast_node_free(size_node, allocator);
     }
   }
 
