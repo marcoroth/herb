@@ -39,7 +39,7 @@ module Herb
     class OptimizeVisitor < Herb::Visitor
       include ContextAware
 
-      required_parser_option action_view_helpers: true, transform_conditionals: true, track_locations: true
+      required_parser_option action_view_helpers: true, transform_conditionals: true
 
       SESSION = "::Herb::Engine::Report::Session" #: String
       CODE = "overwritten-helper" #: String
@@ -72,6 +72,13 @@ module Herb
         self.class.experimental_warning_issued = true
 
         warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
+      end
+
+      #: () -> Hash[Symbol, untyped]
+      def required_parser_options
+        return super unless @verify
+
+        super.merge(track_locations: true)
       end
 
       #: (Herb::AST::DocumentNode) -> void
