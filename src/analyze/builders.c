@@ -160,9 +160,9 @@ AST_NODE_T* create_control_node(
 
 static AST_NODE_T* build_if_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_if_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     HERB_PRISM_NODE_EMPTY,
     context->children,
@@ -177,9 +177,9 @@ static AST_NODE_T* build_if_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_else_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_else_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->children,
     context->start_position,
     context->end_position,
@@ -190,9 +190,9 @@ static AST_NODE_T* build_else_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_when_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_when_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     context->children,
     context->start_position,
@@ -204,9 +204,9 @@ static AST_NODE_T* build_when_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_in_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_in_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     context->children,
     context->start_position,
@@ -224,9 +224,9 @@ static AST_NODE_T* build_rescue_node(control_builder_context_T* context) {
   }
 
   return (AST_NODE_T*) ast_erb_rescue_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->children,
     rescue_node,
     context->start_position,
@@ -238,9 +238,9 @@ static AST_NODE_T* build_rescue_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_ensure_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_ensure_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->children,
     context->start_position,
     context->end_position,
@@ -257,9 +257,9 @@ static AST_NODE_T* build_unless_node(control_builder_context_T* context) {
   }
 
   return (AST_NODE_T*) ast_erb_unless_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     HERB_PRISM_NODE_EMPTY,
     context->children,
@@ -274,9 +274,9 @@ static AST_NODE_T* build_unless_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_while_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_while_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
@@ -289,9 +289,9 @@ static AST_NODE_T* build_while_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_until_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_until_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
@@ -304,9 +304,9 @@ static AST_NODE_T* build_until_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_for_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_for_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
@@ -319,9 +319,9 @@ static AST_NODE_T* build_for_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_block_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_block_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     hb_array_init(0, context->allocator),
@@ -338,9 +338,9 @@ static AST_NODE_T* build_block_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_yield_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_yield_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->start_position,
     context->end_position,
     context->errors,

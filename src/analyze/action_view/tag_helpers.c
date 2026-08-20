@@ -817,9 +817,9 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   hb_array_T* open_tag_children = attributes ? attributes : hb_array_init(0, allocator);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     tag_name_token,
     open_tag_children,
     erb_node->base.location.start,
@@ -918,7 +918,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
 
   if (!is_void) {
     AST_HTML_VIRTUAL_CLOSE_TAG_NODE_T* virtual_close = ast_html_virtual_close_tag_node_init(
-      tag_name_token,
+      token_copy(tag_name_token, allocator),
       erb_node->base.location.end,
       erb_node->base.location.end,
       hb_array_init(0, allocator),
@@ -929,7 +929,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
 
   AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     body,
     close_tag,
     is_void,
@@ -1025,9 +1025,9 @@ static AST_NODE_T* create_javascript_include_tag_element(
   hb_allocator_dealloc(allocator, source_value);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     tag_name_token,
     attributes,
     erb_node->base.location.start,
@@ -1037,7 +1037,7 @@ static AST_NODE_T* create_javascript_include_tag_element(
   );
 
   AST_HTML_VIRTUAL_CLOSE_TAG_NODE_T* virtual_close = ast_html_virtual_close_tag_node_init(
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     erb_node->base.location.end,
     erb_node->base.location.end,
     hb_array_init(0, allocator),
@@ -1046,7 +1046,7 @@ static AST_NODE_T* create_javascript_include_tag_element(
 
   return (AST_NODE_T*) ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     hb_array_init(0, allocator),
     (AST_NODE_T*) virtual_close,
     false,
@@ -1149,9 +1149,9 @@ static AST_NODE_T* create_stylesheet_link_tag_element(
     prepend_stylesheet_link_tag_attributes(attributes, parse_context, source_argument, path_options, allocator);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     tag_name_token,
     attributes,
     erb_node->base.location.start,
@@ -1162,7 +1162,7 @@ static AST_NODE_T* create_stylesheet_link_tag_element(
 
   return (AST_NODE_T*) ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     hb_array_init(0, allocator),
     NULL,
     true,
@@ -1378,9 +1378,9 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
   hb_array_T* open_tag_children = attributes ? attributes : hb_array_init(0, allocator);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
-    block_node->tag_opening,
-    block_node->content,
-    block_node->tag_closing,
+    token_copy(block_node->tag_opening, allocator),
+    token_copy(block_node->content, allocator),
+    token_copy(block_node->tag_closing, allocator),
     tag_name_token,
     open_tag_children,
     block_node->tag_opening->location.start,
@@ -1441,9 +1441,9 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
         end_offset = swallowed_end->tag_opening->range.from;
 
         AST_ERB_END_NODE_T* end_node = ast_erb_end_node_init(
-          swallowed_end->tag_opening,
-          swallowed_end->content,
-          swallowed_end->tag_closing,
+          token_copy(swallowed_end->tag_opening, allocator),
+          token_copy(swallowed_end->content, allocator),
+          token_copy(swallowed_end->tag_closing, allocator),
           swallowed_end->base.location.start,
           swallowed_end->base.location.end,
           hb_array_init(0, allocator),
@@ -1475,7 +1475,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
 
   AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     body,
     is_void ? NULL : close_tag,
     is_void,
@@ -1645,9 +1645,9 @@ static AST_NODE_T* transform_link_to_helper(
   token_T* tag_name_token = create_synthetic_token(allocator, "a", TOKEN_IDENTIFIER, tag_name_start, tag_name_end);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     tag_name_token,
     attributes,
     erb_node->base.location.start,
@@ -1698,16 +1698,16 @@ static AST_NODE_T* transform_link_to_helper(
   }
 
   AST_HTML_VIRTUAL_CLOSE_TAG_NODE_T* virtual_close = ast_html_virtual_close_tag_node_init(
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     erb_node->base.location.end,
     erb_node->base.location.end,
     hb_array_init(0, allocator),
     allocator
   );
 
-  AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
+  return (AST_NODE_T*) ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
-    tag_name_token,
+    token_copy(tag_name_token, allocator),
     body,
     (AST_NODE_T*) virtual_close,
     false,
@@ -1717,8 +1717,6 @@ static AST_NODE_T* transform_link_to_helper(
     hb_array_init(0, allocator),
     allocator
   );
-
-  return (AST_NODE_T*) element;
 }
 
 void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* context) {

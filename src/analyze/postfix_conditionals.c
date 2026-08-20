@@ -184,9 +184,9 @@ static bool append_body_statement(
   token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, body_start, body_end);
 
   AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
+    token_copy(erb_node->tag_opening, allocator),
     content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_closing, allocator),
     NULL,
     false,
     true,
@@ -256,7 +256,7 @@ static AST_NODE_T* transform_conditional(
   herb_prism_node_T empty_prism_node = HERB_PRISM_NODE_EMPTY;
 
   if (conditional_node->type == PM_IF_NODE) {
-    AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
+    return (AST_NODE_T*) ast_erb_if_node_init(
       tag_opening,
       content_token,
       tag_closing,
@@ -270,10 +270,8 @@ static AST_NODE_T* transform_conditional(
       hb_array_init(0, allocator),
       allocator
     );
-
-    return (AST_NODE_T*) if_node;
   } else {
-    AST_ERB_UNLESS_NODE_T* unless_node = ast_erb_unless_node_init(
+    return (AST_NODE_T*) ast_erb_unless_node_init(
       tag_opening,
       content_token,
       tag_closing,
@@ -287,8 +285,6 @@ static AST_NODE_T* transform_conditional(
       hb_array_init(0, allocator),
       allocator
     );
-
-    return (AST_NODE_T*) unless_node;
   }
 }
 
