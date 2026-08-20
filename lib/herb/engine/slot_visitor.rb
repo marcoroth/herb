@@ -793,8 +793,6 @@ module Herb
           markup,
           @markers.item_close(slot_index)
         ].join
-
-        body.insert(0, erb_code_node(%(#{COVERED}["#{key}"] = true)))
       end
 
       def anchor_attributes(node, content_index = nil)
