@@ -293,7 +293,7 @@ describe("ANSIConverter", () => {
       const html = converter.toHTML(linePrefix(12, true, "brightRed", "file:///app/views/page.html.erb"))
 
       expect(html).toContain(
-        `<a href="file:///app/views/page.html.erb" rel="noopener noreferrer"><span style="font-weight:700"> 12</span></a>`,
+        `<a href="file:///app/views/page.html.erb" rel="noopener noreferrer"><span style="font-weight:700">12</span></a>`,
       )
     })
 

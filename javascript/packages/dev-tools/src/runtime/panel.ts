@@ -21,6 +21,12 @@ export interface RuntimePanelOptions {
   onOpen?: () => void
 }
 
+interface OpenTarget {
+  file: string
+  line: number
+  column: number
+}
+
 interface PanelEntry {
   key: string
   diagnostic: NormalizedDiagnostic
@@ -92,8 +98,20 @@ function frameLabel(frame: RenderStackFrame): string {
   return `${frame.template}:${frame.line}:${frame.column ?? 1}`
 }
 
-function ansiHTML(ansi: string, className: string): string {
-  return `<herb-ansi class="${className}">${escapeHTML(ansi)}</herb-ansi>`
+function templateUrl(template: string): string {
+  return `file:///${template.replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/')}`
+}
+
+function openTargetAttributes(target: OpenTarget | null): string {
+  if (target === null) {
+    return ''
+  }
+
+  return ` data-herb-dev-tools-file="${escapeHTML(target.file)}" data-herb-dev-tools-line="${target.line}" data-herb-dev-tools-column="${target.column}"`
+}
+
+function ansiHTML(ansi: string, className: string, target: OpenTarget | null = null): string {
+  return `<herb-ansi class="${className}"${openTargetAttributes(target)}>${escapeHTML(ansi)}</herb-ansi>`
 }
 
 function mergeDiagnostics(existing: NormalizedDiagnostic, incoming: NormalizedDiagnostic): NormalizedDiagnostic {
@@ -741,13 +759,17 @@ export class RuntimePanel {
       return `<div class="herb-dev-tools-excerpt" data-herb-dev-tools-excerpt-pending></div>`
     }
 
-    const rendered = this.highlighting.excerpt(source, diagnostic)
+    const target = this.onOpenFile === null
+      ? null
+      : { file: diagnostic.template, line: diagnostic.location.start.line, column: diagnostic.location.start.column }
+
+    const rendered = this.highlighting.excerpt(source, diagnostic, target === null ? undefined : templateUrl(target.file))
 
     if (rendered === null) {
       return ''
     }
 
-    return `<div class="herb-dev-tools-excerpt">${ansiHTML(rendered, 'herb-dev-tools-ansi')}</div>`
+    return `<div class="herb-dev-tools-excerpt">${ansiHTML(rendered, 'herb-dev-tools-ansi', target)}</div>`
   }
 
   private fixHTML(diagnostic: NormalizedDiagnostic): string {
@@ -866,16 +888,35 @@ export class RuntimePanel {
           this.saveState()
           this.render()
         } else if (action === 'open') {
-          const file = element.getAttribute('data-herb-dev-tools-file')
-
-          if (file !== null && this.onOpenFile !== null) {
-            const line = Number(element.getAttribute('data-herb-dev-tools-line') ?? '1')
-            const column = Number(element.getAttribute('data-herb-dev-tools-column') ?? '1')
-
-            this.onOpenFile(file, Number.isFinite(line) ? line : 1, Number.isFinite(column) ? column : 1)
-          }
+          this.openFrom(element)
         }
       })
     })
+
+    root.querySelectorAll<HTMLElement>('herb-ansi[data-herb-dev-tools-file]').forEach((element) => {
+      element.addEventListener('click', (event) => {
+        if (!event.composedPath().some((node) => node instanceof HTMLAnchorElement)) {
+          return
+        }
+
+        event.preventDefault()
+        event.stopPropagation()
+
+        this.openFrom(element)
+      })
+    })
+  }
+
+  private openFrom(element: HTMLElement) {
+    const file = element.getAttribute('data-herb-dev-tools-file')
+
+    if (file === null || this.onOpenFile === null) {
+      return
+    }
+
+    const line = Number(element.getAttribute('data-herb-dev-tools-line') ?? '1')
+    const column = Number(element.getAttribute('data-herb-dev-tools-column') ?? '1')
+
+    this.onOpenFile(file, Number.isFinite(line) ? line : 1, Number.isFinite(column) ? column : 1)
   }
 }

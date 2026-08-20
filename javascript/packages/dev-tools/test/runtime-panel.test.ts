@@ -745,6 +745,70 @@ describe("excerpts", () => {
   })
 })
 
+describe("excerpt line numbers", () => {
+  function embedMarked() {
+    embed({
+      version: 1,
+      sources: { "app/views/posts/_actions.html.erb": FIXABLE_SOURCE },
+      diagnostics: [{
+        template: "app/views/posts/_actions.html.erb",
+        message: "Nested `<form>` elements are not allowed.",
+        code: "html-no-nested-forms",
+        severity: "error",
+        origin: "Herb Linter",
+        location: { start: { line: 2, column: 3 }, end: { line: 4, column: 10 } },
+      }],
+    })
+  }
+
+  test("links the marked line number when a handler is provided", async () => {
+    embedMarked()
+
+    createPanel({ onOpenFile: () => {} }).open()
+
+    const element = await waitForExcerpt()
+    const link = element.shadowRoot!.querySelector("a")
+
+    expect(link).not.toBeNull()
+    expect(link!.textContent).toBe("2")
+    expect(link!.getAttribute("href")).toBe("file:///app/views/posts/_actions.html.erb")
+  })
+
+  test("opens the template in the editor when the marked line number is clicked", async () => {
+    embedMarked()
+
+    const opened: Array<[string, number, number]> = []
+
+    createPanel({ onOpenFile: (file, line, column) => opened.push([file, line, column]) }).open()
+
+    const element = await waitForExcerpt()
+
+    element.shadowRoot!.querySelector("a")!.click()
+
+    expect(opened).toEqual([["app/views/posts/_actions.html.erb", 2, 3]])
+  })
+
+  test("leaves the line number unlinked without a handler", async () => {
+    embedMarked()
+
+    createPanel().open()
+
+    const element = await waitForExcerpt()
+
+    expect(element.shadowRoot!.querySelector("a")).toBeNull()
+  })
+
+  test("keeps the file header out of the excerpt either way", async () => {
+    embedMarked()
+
+    createPanel({ onOpenFile: () => {} }).open()
+
+    const element = await waitForExcerpt()
+
+    expect(element.shadowRoot!.textContent).not.toContain("app/views/posts/_actions.html.erb")
+  })
+})
+
 describe("fix diffs", () => {
   test("renders a safe fix as a collapsed diff that says it was not applied", async () => {
     embed(fixPayload({ kind: "safe", source: FIXED_SOURCE }))

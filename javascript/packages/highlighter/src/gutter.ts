@@ -14,9 +14,14 @@ export const MIN_CONTENT_WIDTH = 40;
 export const separator = (): string => colorize("│", "gray")
 
 export const lineNumber = (number: number, emphasized: boolean, url?: string): string => {
-  const label = colorize(number.toString().padStart(3, " "), emphasized ? "bold" : "gray")
+  const text = number.toString()
+  const color = emphasized ? "bold" : "gray"
 
-  return url ? hyperlink(label, url) : label
+  if (url === undefined) {
+    return colorize(text.padStart(3, " "), color)
+  }
+
+  return `${" ".repeat(Math.max(0, 3 - text.length))}${hyperlink(colorize(text, color), url)}`
 }
 
 export const markerPrefix = (marker?: Color): string => marker ? colorize("  → ", marker) : "    "

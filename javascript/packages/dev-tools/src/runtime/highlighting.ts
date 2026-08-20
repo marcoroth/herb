@@ -14,7 +14,7 @@ export const MAX_WIDTH = 120
 const BLOCK_SEPARATOR = '\n\n'
 
 export interface RuntimeHighlighting {
-  excerpt(source: string, diagnostic: NormalizedDiagnostic): string | null
+  excerpt(source: string, diagnostic: NormalizedDiagnostic, fileUrl?: string): string | null
   diff(path: string, source: string, fix: NormalizedFix): string | null
 }
 
@@ -50,7 +50,7 @@ async function build(): Promise<RuntimeHighlighting> {
   const diffRenderer = new DiffRenderer(syntaxRenderer, colors)
 
   return {
-    excerpt(source, diagnostic) {
+    excerpt(source, diagnostic, fileUrl) {
       if (diagnostic.location === null) {
         return null
       }
@@ -60,7 +60,7 @@ async function build(): Promise<RuntimeHighlighting> {
           const focusLine = clampLine(diagnostic.location.start.line, source)
 
           return dropLeadingBlocks(
-            fileRenderer.renderWithFocusLine(diagnostic.template, source, focusLine, CONTEXT_LINES, true, MAX_WIDTH),
+            fileRenderer.renderWithFocusLine(diagnostic.template, source, focusLine, CONTEXT_LINES, true, MAX_WIDTH, false, false, fileUrl),
             1,
           )
         }
@@ -72,6 +72,7 @@ async function build(): Promise<RuntimeHighlighting> {
             wrapLines: false,
             truncateLines: false,
             maxWidth: MAX_WIDTH,
+            ...(fileUrl === undefined ? {} : { fileUrl }),
           }),
           2,
         )
