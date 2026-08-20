@@ -37,6 +37,8 @@
     "build:affected": "nx affected -t build --exclude=herb-language-server",
     "test": "nx run-many -t test --all --parallel --exclude=herb-language-server",
     "test:affected": "nx affected -t test --exclude=herb-language-server",
+    "typecheck": "nx run-many -t typecheck --all --parallel --exclude=herb-language-server",
+    "typecheck:affected": "nx affected -t typecheck --exclude=herb-language-server",
     "clean": "nx run-many -t clean --all --parallel && nx reset",
     "playground": "nx run playground:dev",
     "docs": "nx dev docs",

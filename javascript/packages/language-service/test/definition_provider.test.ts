@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DefinitionProvider } from "../src/definition_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 
 import type { FrameworkOptions } from "../src/types"
 const VIEW_URI = "file:///project/app/views/events/show.html.erb"
@@ -207,7 +207,7 @@ describe("DefinitionProvider", () => {
       const message = hover(service, `<%= render partial: "events/card" %>`, "events/card")
 
       expect(message).toContain(`<%# locals: (event:, size: "sm") %>\n\n<div><%= event.name %></div>`)
-      expect(message.match(/```erb/g)).toHaveLength(1)
+      expect(message!.match(/```erb/g)).toHaveLength(1)
     })
 
     it("shows a snippet when the partial has no strict locals", () => {

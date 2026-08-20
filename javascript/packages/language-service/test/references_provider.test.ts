@@ -41,7 +41,7 @@ const PROJECT = {
 
 let parserService: ParserService
 
-function project(files: Record<string, string>): Project {
+function project(files: Record<string, string>) {
   const root = mkdtempSync(join(tmpdir(), "herb-lsp-references-"))
 
   roots.push(root)
