@@ -1,3 +1,4 @@
+import { report } from "./report"
 import { SLOT_EVENT } from "./slot-index"
 
 import type { ApplyReport, Item, Payload, Region, Slot, SlotEventDetail, SlotIndex } from "./slot-index"
@@ -18,6 +19,8 @@ export interface DeclaredState {
   kind: StateKind
   default: string
   scope: "region" | number
+  line?: number | null
+  column?: number | null
 }
 
 export interface StateManifest {
@@ -437,16 +440,34 @@ export class SlotState {
 
     const resolved = this.#scope(options.scope, names[0])
 
-    if (!resolved) return false
+    if (!resolved) {
+      this.#reportUnknown(names[0], null)
+
+      return false
+    }
 
     const manifest = this.manifestFor(resolved.region)
 
-    if (!manifest) return false
+    if (!manifest) {
+      report({
+        template: resolved.region.file,
+        message: `the page was rendered by a different version of \`${resolved.region.file}\`, so its states cannot be resolved`,
+        code: "herb-stale-version",
+        severity: "warning",
+        suggestion: "reload the page",
+      })
+
+      return false
+    }
 
     const previous = new Map<string, StateValue>()
 
     for (const name of names) {
-      if (this.#declaration(manifest, resolved, name) === null) return false
+      if (this.#declaration(manifest, resolved, name) === null) {
+        this.#reportUnknown(name, resolved)
+
+        return false
+      }
 
       previous.set(name, this.#valueOf(name, resolved))
     }
@@ -519,6 +540,19 @@ export class SlotState {
     return () => document.removeEventListener(STATE_EVENT, handler)
   }
 
+  #reportUnknown(name: string, scope: StateScope | null): void {
+    const known = scope ? this.declaredStates(scope).map((declaration) => declaration.name) : []
+    const listed = known.length > 0 ? `the states in scope are ${known.join(", ")}` : "no scope on this page declares it"
+
+    report({
+      template: scope?.region.file ?? "",
+      message: `nothing here declares the state \`${name}\`; ${listed}`,
+      code: "herb-unknown-state",
+      severity: "error",
+      value: name,
+    })
+  }
+
   #scope(scope: StateScope | Element | undefined, name: string): StateScope | null {
     if (scope) return this.scopeFor(scope, name)
 
@@ -526,6 +560,10 @@ export class SlotState {
       const manifest = this.manifestFor(region)
 
       if (manifest && declared(manifest, name, null) !== null) return { region, item: null }
+    }
+
+    for (const region of this.#slots.regions()) {
+      if (this.#declared.has(region.file) && !this.manifestFor(region)) return { region, item: null }
     }
 
     return null
@@ -546,6 +584,19 @@ export class SlotState {
     const declaration = manifest ? this.#declaration(manifest, resolved, name) : null
 
     if (declaration && declaration.kind !== kind && declaration.kind !== "seeded") {
+      const spot = declaration.line !== undefined && declaration.line !== null
+        ? { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
+        : {}
+
+      report({
+        template: resolved.region.file,
+        message: `${operation} on \`${name}\` did nothing, because \`${name}\` is a ${declaration.kind} and ${operation} needs a ${kind}`,
+        code: "herb-state-type",
+        severity: "error",
+        value: name,
+        suggestion: kind === "boolean" ? `set a value instead, or declare a boolean flag` : `use set with a ${kind} value`,
+        ...spot,
+      })
       throw new TypeError(`${operation} needs a ${kind} state, and \`${name}\` is declared as ${declaration.kind}`)
     }
   }
@@ -654,7 +705,15 @@ export class SlotState {
       const target = this.#targetBranch(conditional, scope)
 
       for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
-        this.#slots.switchBranch(slot, target)
+        if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
+          report({
+            template: scope.region.file,
+            message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
+            code: "herb-no-parked-branch",
+            severity: "warning",
+            suggestion: "the template renders in server mode; compile it with `herb:slots client`",
+          })
+        }
       }
     }
   }

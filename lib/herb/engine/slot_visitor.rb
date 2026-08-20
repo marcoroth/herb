@@ -637,6 +637,12 @@ module Herb
         empty = {} #: Hash[String, StateDirectives::Declaration]
         bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
+        location = node.location&.start
+
+        declared = declared.map { |declaration|
+          declaration.with(line: location&.line, column: location&.column)
+        }
+
         declared.each do |declaration|
           if @strict_locals.key?(declaration.name)
             raise Herb::Engine::CompilationError,

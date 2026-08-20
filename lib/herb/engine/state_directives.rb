@@ -23,7 +23,9 @@ module Herb
       Declaration = Data.define(
         :name,    #: String
         :kind,    #: Symbol
-        :default  #: String
+        :default, #: String
+        :line,    #: Integer?
+        :column   #: Integer?
       )
 
       Read = Data.define(
@@ -115,7 +117,7 @@ module Herb
           value = keyword.value
           kind = KINDS[value.class.name]
 
-          return Declaration.new(name: name, kind: kind, default: value.slice) if kind
+          return Declaration.new(name: name, kind: kind, default: value.slice, line: nil, column: nil) if kind
 
           case value
           when Prism::FloatNode
@@ -130,7 +132,7 @@ module Herb
           when Prism::CallNode
             bare_default(name, value, locals)
           else
-            Declaration.new(name: name, kind: :seeded, default: value.slice)
+            Declaration.new(name: name, kind: :seeded, default: value.slice, line: nil, column: nil)
           end
         end
 
@@ -139,7 +141,7 @@ module Herb
           identifier = value.name.to_s
 
           unless value.receiver.nil? && value.arguments.nil? && value.block.nil? && BARE.match?(identifier)
-            return Declaration.new(name: name, kind: :seeded, default: value.slice)
+            return Declaration.new(name: name, kind: :seeded, default: value.slice, line: nil, column: nil)
           end
 
           kind = locals[identifier]
@@ -150,7 +152,7 @@ module Herb
                   "a bare name that was never passed raises at render, so it has to be declared"
           end
 
-          Declaration.new(name: name, kind: kind, default: identifier)
+          Declaration.new(name: name, kind: kind, default: identifier, line: nil, column: nil)
         end
 
         #: (String) -> untyped
