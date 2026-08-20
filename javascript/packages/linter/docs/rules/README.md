@@ -149,7 +149,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
 - [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-require-closing-tags`](./html-require-closing-tags.md) - Require closing tags for non-void HTML elements
-- [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
+- [`html-require-script-nonce`](./html-require-script-nonce.md) - Require a `nonce` attribute on inline scripts
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 
 
