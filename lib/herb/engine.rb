@@ -81,7 +81,7 @@ module Herb
 
       @src << "# frozen_string_literal: true\n" if @freeze
 
-      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
+      parse_result = ::Herb.parse(input, **parse_options, track_whitespace: true)
       parser_errors = parse_result.errors
 
       if parser_errors.any?
@@ -430,6 +430,14 @@ module Herb
 
     def context_options(properties)
       properties.except(:visitors, :src, :context)
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def parse_options
+      return @parser_options unless @visitors.empty?
+      return @parser_options if @parser_options.key?(:track_locations)
+
+      @parser_options.merge(track_locations: false)
     end
 
     #: () -> Hash[Symbol, untyped]
