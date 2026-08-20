@@ -1,5 +1,5 @@
 import { ParserRule } from "../types"
-import { ElementStackVisitor, isHeadOnlyTag, isBodyOnlyTag } from "./rule-utils"
+import { ElementStackVisitor, isHeadOnlyTag, isBodyOnlyTag } from "../utils/rule-utils"
 import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import type { ParseResult, HTMLElementNode, ParserOptions } from "@herb-tools/core"

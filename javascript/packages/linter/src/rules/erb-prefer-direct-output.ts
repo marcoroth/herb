@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 import { ERBStringToDirectOutputRewriter, isSafeToInline } from "@herb-tools/rewriter"
 

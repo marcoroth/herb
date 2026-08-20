@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { getTagLocalName, getStaticAttributeValue, hasAttribute, getAttribute } from "@herb-tools/core"
 

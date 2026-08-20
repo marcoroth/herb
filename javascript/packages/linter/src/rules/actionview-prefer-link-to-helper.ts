@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { ERBEndNode, ERBOpenTagNode, HTMLVirtualCloseTagNode, Token, getAttribute, getAttributeName, getTagLocalName, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, isPrismNodeType, isWhitespaceNode } from "@herb-tools/core"
 
