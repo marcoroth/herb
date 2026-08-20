@@ -11,7 +11,7 @@ module Herb
   class Token
     include Colors
 
-    attr_reader :value #: String
+    attr_accessor :value #: String
     attr_reader :range #: Range
     attr_reader :location #: Location
     attr_reader :type #: String
@@ -48,7 +48,7 @@ module Herb
     def tree_inspect
       location_inspect = location ? location.tree_inspect : "∅"
 
-      "#{green("\"#{value.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location_inspect})")}"
+      "#{green("\"#{value.dup.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location_inspect})")}"
     end
 
     #: () -> String
