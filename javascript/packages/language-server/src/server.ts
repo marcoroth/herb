@@ -24,6 +24,7 @@ import {
   TextDocumentIdentifier,
   Range,
   FileChangeType,
+  ExecuteCommandParams,
 } from "vscode-languageserver/node"
 
 import { Session } from "./session"
@@ -31,6 +32,7 @@ import { PersonalHerbSettings } from "./user_settings"
 import { Config } from "@herb-tools/config"
 import { isPartialPath } from "@herb-tools/analysis"
 import { isConfigDocument, isPathInside } from "./utils"
+import { OPEN_DOCUMENT_COMMAND, SERVER_COMMANDS } from "./commands"
 import { serverVersion } from "./build_info"
 
 import type { FileEvent } from "vscode-languageserver/node"
@@ -75,6 +77,9 @@ export class Server {
           documentRangeFormattingProvider: true,
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
+          },
+          executeCommandProvider: {
+            commands: SERVER_COMMANDS
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
@@ -250,6 +255,22 @@ export class Server {
       const extractCodeActions = this.session.extractCodeActionProvider.getCodeActions(document, params.range, { framework: project.framework })
 
       return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions).concat(extractCodeActions)
+    })
+
+    this.connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
+      if (params.command !== OPEN_DOCUMENT_COMMAND) return
+
+      const [uri] = params.arguments ?? []
+
+      if (typeof uri !== "string") return
+
+      const shown = this.session.capabilities.hasShowDocument
+        ? await this.connection.window.showDocument({ uri, takeFocus: true })
+        : undefined
+
+      if (shown?.success) return
+
+      this.connection.window.showInformationMessage(`Herb updated ${pathFromUri(uri)}`)
     })
 
     this.connection.onRequest<ExtractToPartialResult, void>('herb/extractToPartial', (params: { textDocument: TextDocumentIdentifier, range: Range, name: string }) => {
