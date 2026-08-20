@@ -2,5 +2,5 @@
 
 valgrind \
   --error-exitcode=1 \
-  --leak-check=no \
+  --leak-check=full \
   ./bench_allocs examples/*.html.erb
