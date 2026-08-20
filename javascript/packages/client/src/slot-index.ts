@@ -58,6 +58,12 @@ export type SlotMap = Map<number, Slot>
 export type ItemMap = Map<string, Item>
 export type FragmentMap = Map<string, DocumentFragment>
 export type SlotValues = Record<number, string>
+export type ItemValues = Record<number | string, string>
+
+export interface AddItemOptions {
+  values?: ItemValues
+  before?: string
+}
 
 export interface StaticsIdentity {
   file: string
@@ -85,6 +91,7 @@ export interface Slot {
 export type SlotOperation =
   | "value"
   | "attribute"
+  | "item-rekeyed"
   | "markup"
   | "branch"
   | "item-added"
@@ -97,6 +104,7 @@ export interface SlotEventDetail {
   index: number
   operation: SlotOperation
   key: string | null
+  previousKey: string | null
   slot: Slot | null
   item: Item | null
 }
@@ -497,16 +505,15 @@ export class SlotIndex {
     return []
   }
 
-  #rowTemplate(slot: Slot): DocumentFragment | null {
+  #rowTemplate(slot: Slot, prefer: "live" | "skeleton" = "live"): DocumentFragment | null {
+    const region = this.#slotRegions.get(slot)
+    const skeleton = region ? this.skeletonFor(region.file, `${slot.index}:${ITEM_STATICS}`) : null
+
+    if (prefer === "skeleton" && skeleton) return skeleton
+
     const [item] = this.#itemsInDocumentOrder(slot)
 
-    if (!item) {
-      const region = this.#slotRegions.get(slot)
-
-      return region ? this.skeletonFor(region.file, `${slot.index}:${ITEM_STATICS}`) : null
-    }
-
-    return this.#rowFragment(item)
+    return item ? this.#rowFragment(item) : skeleton
   }
 
   #rowFragment(item: Item): DocumentFragment {
@@ -533,7 +540,7 @@ export class SlotIndex {
     this.#park(region, `${slot.index}:${ITEM_STATICS}`, this.#rowFragment(item))
   }
 
-  #buildItem(slot: Slot, key: string, template: DocumentFragment): void {
+  #buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}): void {
     const copy = template.cloneNode(true) as DocumentFragment
 
     for (const marker of this.#markers(copy)) {
@@ -545,10 +552,21 @@ export class SlotIndex {
       if (open) comment.data = `herb-item:${slot.index}:${key}`
     }
 
-    const added = [...copy.childNodes]
-    const anchor = this.#itemsInDocumentOrder(slot)[0]?.start ?? (slot.anchor.kind === "range" ? slot.anchor.end : null)
+    for (const node of [...copy.childNodes]) {
+      if (node.nodeType !== Node.COMMENT_NODE) continue
 
-    if (anchor) anchor.parentNode?.insertBefore(copy, anchor)
+      const branch = BRANCH.exec((node as Comment).data.trim())
+
+      if (branch && branch[2] === ITEM_STATICS) node.remove()
+    }
+
+    fillSlots(copy, values)
+
+    const added = [...copy.childNodes]
+    const target =
+      anchor ?? this.#itemsInDocumentOrder(slot)[0]?.start ?? (slot.anchor.kind === "range" ? slot.anchor.end : null)
+
+    if (target) target.parentNode?.insertBefore(copy, target)
     else return
 
     this.scan(added)
@@ -677,7 +695,7 @@ export class SlotIndex {
     return this.#current(slot) === value
   }
 
-  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, item: Item | null = null): void {
+  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, item: Item | null = null, previousKey: string | null = null): void {
     if (typeof document === "undefined") return
 
     const region = slot ? this.#slotRegions.get(slot) : null
@@ -690,6 +708,7 @@ export class SlotIndex {
           index,
           operation,
           key,
+          previousKey,
           slot,
           item,
         },
@@ -750,6 +769,69 @@ export class SlotIndex {
     this.#announce(slot, "item-updated", slot.index, key, slot.items.get(key) ?? null)
 
     return result
+  }
+
+  addItem(slot: Slot, key: string, options: AddItemOptions = {}): Item | null {
+    if (slot.type !== "collection" || slot.anchor.kind !== "range") return null
+    if (slot.items.has(key)) return null
+
+    const template = this.#rowTemplate(slot, "skeleton")
+
+    if (!template) return null
+
+    const anchor =
+      options.before !== undefined ? (slot.items.get(options.before)?.start ?? slot.anchor.end) : slot.anchor.end
+
+    this.#buildItem(slot, key, template, anchor, this.#itemValues(slot, template, options.values ?? {}))
+
+    return slot.items.get(key) ?? null
+  }
+
+  removeItem(slot: Slot, key: string): boolean {
+    const item = slot.items.get(key)
+
+    if (!item) return false
+
+    this.#dropItem(slot, item)
+
+    return true
+  }
+
+  rekeyItem(slot: Slot, from: string, to: string): boolean {
+    if (from === to || slot.items.has(to)) return false
+
+    const item = slot.items.get(from)
+
+    if (!item) return false
+
+    item.start.data = `herb-item:${slot.index}:${to}`
+    item.key = to
+    slot.items.delete(from)
+    slot.items.set(to, item)
+
+    this.#announce(slot, "item-rekeyed", slot.index, to, item, from)
+
+    return true
+  }
+
+  #itemValues(slot: Slot, template: DocumentFragment, values: ItemValues): SlotValues {
+    const region = this.#slotRegions.get(slot)
+    const names = templateNames(template)
+    const resolved: SlotValues = {}
+
+    for (const [given, value] of Object.entries(values)) {
+      if (/^\d+$/.test(given)) {
+        resolved[Number(given)] = value
+
+        continue
+      }
+
+      const index = names.get(given) ?? region?.names.get(given)
+
+      if (index !== undefined) resolved[index] = value
+    }
+
+    return resolved
   }
 
   setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
@@ -1318,6 +1400,26 @@ function parkedBranches(element: HTMLTemplateElement): FragmentMap {
   }
 
   return branches
+}
+
+function templateNames(template: DocumentFragment): Map<string, number> {
+  const names = new Map<string, number>()
+
+  for (const element of template.querySelectorAll(ANCHOR_SELECTOR)) {
+    for (const entry of anchorEntries(element)) {
+      const [index, , ...name] = entry.split(":")
+
+      if (name.length > 0) names.set(name.join(":"), Number(index))
+    }
+  }
+
+  for (const element of template.querySelectorAll(`[${NAME_ATTRIBUTE}]`)) {
+    const entry = NAME_ENTRY.exec(element.getAttribute(NAME_ATTRIBUTE) ?? "")
+
+    if (entry) names.set(entry[2], Number(entry[1]))
+  }
+
+  return names
 }
 
 function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
