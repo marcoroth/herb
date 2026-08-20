@@ -1,7 +1,7 @@
 import { Token, WhitespaceNode, createWhitespaceNode } from "@herb-tools/core"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 
-import { findParent, BaseRuleVisitor } from "./rule-utils.js"
+import { findParent, BaseRuleVisitor } from "../utils/rule-utils.js"
 import { filterWhitespaceNodes, isWhitespaceNode, isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { ParseResult, Node, HTMLCloseTagNode, HTMLOpenTagNode } from "@herb-tools/core"

@@ -4,7 +4,7 @@ import { DEFAULT_FRAMEWORK, Location, semverGreaterThan } from "@herb-tools/core
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
-import { findNodeByLocation } from "./rules/rule-utils.js"
+import { findNodeByLocation } from "./utils/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"

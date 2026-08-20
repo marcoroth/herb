@@ -1,7 +1,7 @@
 import { getTagLocalName, getStaticAttributeValue, hasAttributeValue, HELPER_REGISTRY, HELPER_BY_SOURCE } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
-import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "./rule-utils.js"
+import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 

@@ -1,6 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
-import { isTagAttributesCall, isConditionalTagAttributesCall } from "./action-view-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { isTagAttributesCall, isConditionalTagAttributesCall } from "../utils/action-view-utils.js"
 import { isERBNode, isERBOutputNode, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

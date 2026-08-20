@@ -1,7 +1,7 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+import { BaseRuleVisitor, findParent } from "../utils/rule-utils.js"
 
-import { isTagAttributesCall } from "./action-view-utils.js"
+import { isTagAttributesCall } from "../utils/action-view-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isWhitespaceNode, isHTMLElementNode, createERBOutputNode, createERBSilentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"

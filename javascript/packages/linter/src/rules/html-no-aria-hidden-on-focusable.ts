@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, isKeyboardFocusableElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isKeyboardFocusableElement } from "../utils/rule-utils.js"
 import { getAttributeValue, findAttributeByName, getAttributes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

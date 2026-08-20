@@ -1,8 +1,8 @@
-import { BaseRuleVisitor, locationFromContentOffset } from "./rule-utils.js"
+import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isRubyParameterNode, Location } from "@herb-tools/core"
-import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "./strict-locals-utils.js"
+import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "../utils/strict-locals-utils.js"
 
 import type { BaseAutofixContext, Mutable, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"

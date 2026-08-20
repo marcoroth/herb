@@ -1,4 +1,4 @@
-import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isInlineElement, isBlockElement } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { isHTMLOpenTagNode } from "@herb-tools/core"
 

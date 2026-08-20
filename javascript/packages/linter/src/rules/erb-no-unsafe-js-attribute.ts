@@ -1,10 +1,10 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "../utils/rule-utils.js"
 import { isERBNode, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, Node } from "@herb-tools/core"
-import type { StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import type { StaticAttributeDynamicValueParams } from "../utils/rule-utils.js"
 
 const JS_ATTRIBUTE_PATTERN = /^on/i
 const SAFE_PATTERN = /\.to_json\s*$|\bj\s*[\s(]|\bescape_javascript\s*[\s(]/
