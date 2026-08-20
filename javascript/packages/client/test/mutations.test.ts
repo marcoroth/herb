@@ -1,0 +1,226 @@
+import { describe, test, expect, beforeEach } from "vitest"
+import { SlotIndex } from "../src/slot-index"
+import { SlotMutations } from "../src/mutations"
+import { SlotState } from "../src/state"
+
+import type { Payload } from "../src/slot-index"
+import type { MutationRequest } from "../src/mutations"
+
+const FILE = "app/views/conversations/show.html.erb"
+
+const PAGE =
+  `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+  `<ul data-herb-name="0:messages"><!--herb-slot:0:collection-->` +
+  `<!--herb-item:0:message_1--><li id="message_1" data-herb-slot="1:attribute:id">` +
+  `<span data-herb-name="2:body" data-herb-slot="2:child">hello</span>` +
+  `<em><!--herb-slot:3:conditional--><!--herb-branch:3:2-->Sent<!--/herb-slot:3--></em></li><!--/herb-item:0-->` +
+  `<!--/herb-slot:0--></ul>` +
+  `<template data-herb-region="${FILE}:aaaaaaaa">` +
+  `<!--herb-branch:3:0-->Sending…<!--herb-branch:3:1-->Not sent<!--herb-branch:3:2-->Sent` +
+  `</template>` +
+  `<!--/herb-region:${FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [FILE]: {
+        version: "aaaaaaaa",
+        declarations: [
+          { name: "pending", kind: "boolean", default: "false", scope: 0 },
+          { name: "failed", kind: "boolean", default: "false", scope: 0 },
+        ],
+        reads: {},
+        conditionals: { 3: { arms: [["pending", null, 0], ["failed", null, 1]], else: 2 } },
+      },
+    },
+  })}</template>`
+
+function confirmPayload(key: string, body: string): Payload {
+  return {
+    template: FILE,
+    version: "aaaaaaaa",
+    occurrence: 0,
+    slots: { 0: { items: { [key]: { 1: key, 2: body } } }, 9: "unrelated" },
+  }
+}
+
+let slots: SlotIndex
+let state: SlotState
+
+function build(transport: (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>): SlotMutations {
+  return new SlotMutations(slots, state, { transport })
+}
+
+beforeEach(() => {
+  document.body.innerHTML = PAGE
+
+  slots = new SlotIndex()
+  slots.scan(document.body)
+
+  state = new SlotState(slots, { persist: "none" })
+  state.adopt()
+})
+
+describe("SlotMutations", () => {
+  test("the row appears pending before the request resolves, and the node survives the confirm", async () => {
+    let release!: (payload: Payload) => void
+    const mutations = build(() => new Promise((resolve) => (release = resolve)))
+
+    const result = mutations.submit({
+      url: "/messages",
+      body: { body: "typed" },
+      into: { file: FILE, name: "messages" },
+      values: { body: "typed" },
+    })
+
+    await Promise.resolve()
+
+    const pendingRow = document.querySelectorAll("li")[1]
+
+    expect(pendingRow.textContent).toContain("typed")
+    expect(pendingRow.textContent).toContain("Sending…")
+
+    release(confirmPayload("message_42", "stored"))
+
+    const outcome = await result
+
+    expect(outcome.status).toBe("confirmed")
+    expect(outcome.key).toBe("message_42")
+    expect(document.querySelector("#message_42")).toBe(pendingRow)
+    expect(pendingRow.textContent).toContain("stored")
+    expect(pendingRow.textContent).toContain("Sent")
+    expect(document.querySelectorAll("li")).toHaveLength(2)
+  })
+
+  test("two rapid sends both land, in order, with neither aborted", async () => {
+    const seen: string[] = []
+    const mutations = build((request) => {
+      const body = (request.body as Record<string, string>).body
+
+      seen.push(body)
+
+      return Promise.resolve(confirmPayload(`message_${body}`, body))
+    })
+
+    const first = mutations.submit({ url: "/messages", body: { body: "one" }, into: { file: FILE, name: "messages" }, values: { body: "one" } })
+    const second = mutations.submit({ url: "/messages", body: { body: "two" }, into: { file: FILE, name: "messages" }, values: { body: "two" } })
+
+    const outcomes = await Promise.all([first, second])
+
+    expect(outcomes.map((outcome) => outcome.status)).toEqual(["confirmed", "confirmed"])
+    expect(seen).toEqual(["one", "two"])
+    expect(document.querySelectorAll("li")).toHaveLength(3)
+  })
+
+  test("a failed send keeps the row, marks it, and retry recovers it", async () => {
+    let attempts = 0
+    const mutations = build(() => {
+      attempts += 1
+
+      if (attempts === 1) return Promise.reject(new Error("boom"))
+
+      return Promise.resolve(confirmPayload("message_9", "recovered"))
+    })
+
+    const failed = await mutations.submit({
+      url: "/messages",
+      body: { body: "flaky" },
+      into: { file: FILE, name: "messages" },
+      values: { body: "flaky" },
+    })
+
+    expect(failed.status).toBe("failed")
+
+    const rows = document.querySelectorAll("li")
+
+    expect(rows).toHaveLength(2)
+    expect(rows[1].textContent).toContain("Not sent")
+
+    const retried = await mutations.retry(failed.key)!
+
+    expect(retried.status).toBe("confirmed")
+    expect(document.querySelector("#message_9")?.textContent).toContain("Sent")
+  })
+
+  test("discard reverts the optimistic row", async () => {
+    const mutations = build(() => Promise.reject(new Error("down")))
+    const failed = await mutations.submit({
+      url: "/messages",
+      body: {},
+      into: { file: FILE, name: "messages" },
+      values: { body: "gone" },
+    })
+
+    expect(mutations.discard(failed.key)).toBe(true)
+    expect(document.querySelectorAll("li")).toHaveLength(1)
+  })
+
+  test("the confirm is narrowed to the collection", async () => {
+    const mutations = build(() => Promise.resolve(confirmPayload("message_5", "narrow")))
+
+    const outcome = await mutations.submit({
+      url: "/messages",
+      body: {},
+      into: { file: FILE, name: "messages" },
+      values: { body: "narrow" },
+    })
+
+    expect(outcome.report?.deferred).toEqual([])
+  })
+
+  test("a stale version surfaces as its own status", async () => {
+    const stale: Payload = { ...confirmPayload("message_6", "old"), version: "bbbbbbbb" }
+    const mutations = build(() => Promise.resolve(stale))
+
+    const outcome = await mutations.submit({
+      url: "/messages",
+      body: {},
+      into: { file: FILE, name: "messages" },
+      values: { body: "old" },
+    })
+
+    expect(outcome.status).toBe("stale")
+    expect(document.querySelectorAll("li")[1]?.textContent).not.toContain("Sending…")
+  })
+
+  test("an optimistic value renders as text, never as markup", async () => {
+    const mutations = build(() => Promise.resolve(null))
+
+    await mutations.submit({
+      url: "/messages",
+      body: {},
+      into: { file: FILE, name: "messages" },
+      values: { body: '<img src="x" onerror="window.__pwned = true">' },
+    })
+
+    const fresh = document.querySelectorAll("li")[1]
+
+    expect(fresh.querySelector("img")).toBeNull()
+    expect(fresh.textContent).toContain('<img src="x"')
+  })
+
+  test("a submit with no reachable collection is detached but still sends", async () => {
+    const mutations = build(() => Promise.resolve(null))
+
+    const outcome = await mutations.submit({ url: "/messages", body: {}, into: { file: "missing.html.erb", index: 0 } })
+
+    expect(outcome.status).toBe("detached")
+    expect(document.querySelectorAll("li")).toHaveLength(1)
+  })
+
+  test("the request carries the verb, the accept header, and the csrf token", async () => {
+    document.head.innerHTML = `<meta name="csrf-token" content="tok123">`
+
+    let captured: MutationRequest | null = null
+    const mutations = build((request) => {
+      captured = request
+
+      return Promise.resolve(null)
+    })
+
+    await mutations.submit({ url: "/messages", body: {}, into: { file: FILE, name: "messages" } })
+
+    expect(captured!.method).toBe("POST")
+    expect(captured!.headers.Accept).toBe("application/vnd.herb.slots+json")
+    expect(captured!.headers["X-CSRF-Token"]).toBe("tok123")
+  })
+})

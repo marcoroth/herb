@@ -1,6 +1,8 @@
 export { HerbRuntime, stateFor } from "./runtime"
 export { SlotIndex, SLOT_EVENT } from "./slot-index"
 export { SlotState, DEPENDENCIES_ATTRIBUTE, DEPENDENCIES_SELECTOR, STATE_EVENT } from "./state"
+export { SlotMutations } from "./mutations"
+export type { MutationTarget, SubmitOptions, MutationStatus, MutationResult, MutationRequest, MutationTransport, MutationsOptions } from "./mutations"
 
 export type { RuntimeOptions, ScopedState } from "./runtime"
 export type { Slot, SlotType, SlotAnchor, Region, Item, ScanResult, ItemPlan, RenderMode, ItemValues, AddItemOptions, ApplyOptions, RevertToken } from "./slot-index"

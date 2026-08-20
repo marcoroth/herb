@@ -1,6 +1,8 @@
 import { SlotIndex } from "./slot-index"
+import { SlotMutations } from "./mutations"
 import { SlotState } from "./state"
 
+import type { MutationsOptions } from "./mutations"
 import type { ScopedSetOptions, StateOptions, StateScope, StateValue } from "./state"
 
 const CONSTRUCT = Symbol("HerbRuntime.start")
@@ -9,11 +11,13 @@ let instance: HerbRuntime | null = null
 
 export interface RuntimeOptions {
   state?: StateOptions
+  mutations?: MutationsOptions
 }
 
 export class HerbRuntime {
   public readonly slots: SlotIndex
   public readonly state: SlotState
+  public readonly mutations: SlotMutations
 
   private constructor(token?: symbol, options: RuntimeOptions = {}) {
     if (token !== CONSTRUCT) {
@@ -22,6 +26,7 @@ export class HerbRuntime {
 
     this.slots = new SlotIndex()
     this.state = new SlotState(this.slots, options.state)
+    this.mutations = new SlotMutations(this.slots, this.state, options.mutations)
   }
 
   static start(options: RuntimeOptions = {}): HerbRuntime {
@@ -46,6 +51,7 @@ export class HerbRuntime {
   stop(): void {
     this.slots.disconnect()
     this.state.disconnect()
+    this.mutations.abort()
 
     if (instance === this) {
       instance = null

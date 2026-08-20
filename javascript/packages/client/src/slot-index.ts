@@ -65,6 +65,7 @@ export type ItemValues = Record<number | string, string>
 export interface AddItemOptions {
   values?: ItemValues
   before?: string
+  text?: boolean
 }
 
 export interface ApplyOptions {
@@ -684,7 +685,7 @@ export class SlotIndex {
     this.#park(region, `${slot.index}:${ITEM_STATICS}`, this.#rowFragment(item))
   }
 
-  #buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}): void {
+  #buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}, text = false): void {
     const copy = template.cloneNode(true) as DocumentFragment
 
     for (const marker of this.#markers(copy)) {
@@ -704,7 +705,7 @@ export class SlotIndex {
       if (branch && branch[2] === ITEM_STATICS) node.remove()
     }
 
-    fillSlots(copy, values)
+    fillSlots(copy, values, text)
 
     const added = [...copy.childNodes]
     const target =
@@ -1012,7 +1013,7 @@ export class SlotIndex {
     const anchor =
       options.before !== undefined ? (slot.items.get(options.before)?.start ?? slot.anchor.end) : slot.anchor.end
 
-    this.#buildItem(slot, key, template, anchor, this.#itemValues(slot, template, options.values ?? {}))
+    this.#buildItem(slot, key, template, anchor, this.#itemValues(slot, template, options.values ?? {}), options.text === true)
 
     return slot.items.get(key) ?? null
   }
@@ -1684,7 +1685,7 @@ function templateNames(template: DocumentFragment): Map<string, number> {
   return names
 }
 
-function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
+function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = false): void {
   for (const open of slotOpeners(fragment)) {
     const index = Number(SLOT_OPEN.exec(open.data.trim())?.[1])
     const value = dynamics[index]
@@ -1699,7 +1700,7 @@ function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
     range.setStartAfter(open)
     range.setEndBefore(close)
     range.deleteContents()
-    range.insertNode(range.createContextualFragment(value))
+    range.insertNode(range.createContextualFragment(text ? escapeText(value) : value))
   }
 
   for (const element of fragment.querySelectorAll(ANCHOR_SELECTOR)) {
@@ -1710,9 +1711,13 @@ function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
       if (value === undefined) continue
 
       if (name.length > 0) element.setAttribute(name.join(":"), value)
-      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.innerHTML = value
+      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.innerHTML = text ? escapeText(value) : value
     }
   }
+}
+
+function escapeText(value: string): string {
+  return value.replace(/[&<>]/g, (match) => (match === "&" ? "&amp;" : match === "<" ? "&lt;" : "&gt;"))
 }
 
 function blankSlots(fragment: DocumentFragment): void {
