@@ -160,6 +160,66 @@ describe("DiagnosticRenderer", () => {
     })
   })
 
+  describe("fileUrl", () => {
+    const content = dedent`
+      line 1
+      line <error> content
+      line 3
+    `
+
+    const hyperlinks = (output: string) => {
+      return [...output.matchAll(/\x1b\]8;;(.*?)\x1b\\(.*?)\x1b\]8;;\x1b\\/g)].map(([, url, text]) => ({
+        url,
+        text: stripAnsiColors(text),
+      }))
+    }
+
+    it("links the marked line number to the file", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+      })
+
+      expect(hyperlinks(result)).toEqual([
+        { url: "file:///test/file.erb", text: "/test/file.erb:2:5" },
+        { url: "file:///test/file.erb", text: "  2" },
+      ])
+    })
+
+    it("does not link the line numbers of context lines", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+        contextLines: 1,
+      })
+
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("  1")
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("  3")
+    })
+
+    it("links the line number of every marked line of a multi-line diagnostic", () => {
+      const diagnostic = createDiagnostic({ location: Location.from(1, 1, 3, 7) })
+      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, {
+        fileUrl: "file:///test/file.erb",
+      })
+
+      expect(hyperlinks(result).map(({ text }) => text)).toEqual(["/test/file.erb:1:1", "  1", "  2", "  3"])
+    })
+
+    it("leaves the line numbers unlinked without a fileUrl", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content)
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+
+    it("leaves the line numbers unlinked when line numbers are hidden", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+        showLineNumbers: false,
+      })
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+  })
+
   describe("error handling", () => {
     it("should handle invalid line numbers gracefully", () => {
       const diagnostic = createDiagnostic({

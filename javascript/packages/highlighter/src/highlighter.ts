@@ -24,6 +24,7 @@ export interface HighlightOptions {
   truncateLines?: boolean
   codeUrlBuilder?: (code: string) => string
   fileUrlBuilder?: (path: string, diagnostic: Diagnostic) => string
+  fileUrl?: string
   suffixBuilder?: (diagnostic: Diagnostic) => string | undefined
 }
 
@@ -87,6 +88,7 @@ export class Highlighter {
    *   - contextLines: Number of context lines around focus/diagnostics
    *   - focusLine: Line number to focus on (shows only that line with dimmed context)
    *   - showLineNumbers: Whether to show line numbers (default: true)
+   *   - fileUrl: URL that the file path and the focused line number link to
    * @returns The highlighted content with optional diagnostics or focused view
    */
   highlight(
@@ -107,6 +109,7 @@ export class Highlighter {
       truncateLines = false,
       codeUrlBuilder,
       fileUrlBuilder,
+      fileUrl: fileUrlOption,
       suffixBuilder,
     } = options
 
@@ -172,6 +175,7 @@ export class Highlighter {
         maxWidth,
         wrapLines,
         truncateLines,
+        fileUrlOption,
       )
     }
 
