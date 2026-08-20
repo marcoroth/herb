@@ -1,6 +1,9 @@
 #include "../src/include/herb.h"
 #include "../src/include/lib/hb_allocator.h"
+#include "../src/include/parser/parser.h"
+#include "../src/include/util/io.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -128,7 +131,20 @@ typedef struct {
   const char* source;
 } test_case_T;
 
-static void run_lex_benchmark(const char* name, const char* source) {
+static bool no_untracked_deallocations(const char* phase, const char* name, hb_allocator_tracking_stats_T* stats) {
+  if (stats->untracked_deallocation_count == 0) { return true; }
+
+  printf(
+    "  %-5s %-9s  FAILED: %zu deallocation(s) of untracked pointers\n",
+    phase,
+    name,
+    stats->untracked_deallocation_count
+  );
+
+  return false;
+}
+
+static bool run_lex_benchmark(const char* name, const char* source) {
   hb_allocator_T allocator = hb_allocator_with_tracking();
 
   hb_array_T* tokens = herb_lex(source, &allocator);
@@ -139,10 +155,15 @@ static void run_lex_benchmark(const char* name, const char* source) {
     name, stats->allocation_count, stats->deallocation_count, stats->bytes_allocated, tokens->size);
 
   herb_free_tokens(&tokens, &allocator);
+
+  bool ok = no_untracked_deallocations("lex", name, stats);
+
   hb_allocator_destroy(&allocator);
+
+  return ok;
 }
 
-static void run_parse_benchmark(const char* name, const char* source) {
+static bool run_parse_benchmark(const char* name, const char* source) {
   hb_allocator_T allocator = hb_allocator_with_tracking();
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, &allocator);
@@ -153,10 +174,80 @@ static void run_parse_benchmark(const char* name, const char* source) {
     name, stats->allocation_count, stats->deallocation_count, stats->bytes_allocated);
 
   ast_node_free((AST_NODE_T*) root, &allocator);
+
+  bool ok = no_untracked_deallocations("parse", name, stats);
+
   hb_allocator_destroy(&allocator);
+
+  return ok;
 }
 
-int main(void) {
+static bool run_source_check(
+  const char* path,
+  const char* label,
+  const char* source,
+  const parser_options_T* options
+) {
+  hb_allocator_T allocator = hb_allocator_with_tracking();
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(source, options, &allocator);
+
+  ast_node_free((AST_NODE_T*) root, &allocator);
+
+  hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
+
+  printf("  %-44s  %-10s  allocs: %-6zu  deallocs: %-6zu  bytes_alloc: %-8zu\n",
+    path, label, stats->allocation_count, stats->deallocation_count, stats->bytes_allocated);
+
+  bool ok = no_untracked_deallocations(label, path, stats);
+
+  hb_allocator_destroy(&allocator);
+
+  return ok;
+}
+
+static bool run_file_check(const char* path) {
+  hb_allocator_T file_allocator = hb_allocator_with_malloc();
+  char* source = herb_read_file(path, &file_allocator);
+
+  if (!source) {
+    printf("  %-44s  FAILED: could not read file\n", path);
+
+    return false;
+  }
+
+  parser_options_T transforms = HERB_DEFAULT_PARSER_OPTIONS;
+  transforms.action_view_helpers = true;
+  transforms.transform_conditionals = true;
+  transforms.render_nodes = true;
+  transforms.iteration_nodes = true;
+  transforms.strict_locals = true;
+
+  bool ok = run_source_check(path, "default", source, NULL);
+  ok = run_source_check(path, "transforms", source, &transforms) && ok;
+
+  hb_allocator_dealloc(&file_allocator, source);
+
+  return ok;
+}
+
+static int run_file_checks(int count, char** paths) {
+  printf("=== Allocation Check ===\n\n");
+
+  bool ok = true;
+
+  for (int i = 0; i < count; i++) { ok = run_file_check(paths[i]) && ok; }
+
+  printf("\n");
+
+  if (!ok) { return 1; }
+
+  return 0;
+}
+
+int main(int argc, char** argv) {
+  if (argc > 1) { return run_file_checks(argc - 1, argv + 1); }
+
   test_case_T cases[] = {
     { "small",  SMALL_INPUT },
     { "medium", MEDIUM_INPUT },
@@ -167,12 +258,16 @@ int main(void) {
 
   printf("=== Allocation Benchmark ===\n\n");
 
+  bool ok = true;
+
   for (size_t i = 0; i < num_cases; i++) {
     printf("[%s] (%zu bytes input)\n", cases[i].name, strlen(cases[i].source));
-    run_lex_benchmark(cases[i].name, cases[i].source);
-    run_parse_benchmark(cases[i].name, cases[i].source);
+    ok = run_lex_benchmark(cases[i].name, cases[i].source) && ok;
+    ok = run_parse_benchmark(cases[i].name, cases[i].source) && ok;
     printf("\n");
   }
+
+  if (!ok) { return 1; }
 
   return 0;
 }

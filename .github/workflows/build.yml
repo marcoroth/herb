@@ -93,3 +93,6 @@ jobs:
 
       - name: Run valgrind on examples/
         run: ./bin/valgrind_check_examples
+
+      - name: Run valgrind on examples/ with the tracking allocator
+        run: ./bin/valgrind_check_allocations
