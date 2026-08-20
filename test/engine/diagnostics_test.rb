@@ -18,10 +18,10 @@ module Engine
         if node.open_tag&.tag_name&.value == "marquee"
           warning("The `<marquee>` element is obsolete.", node.location, code: "ObsoleteElement", suggestion: "Use CSS animations instead.")
 
-          node.open_tag.tag_name.value = "div"
+          node.open_tag.tag_name.value.replace("div")
 
-          close_tag_name = node.close_tag&.tag_name
-          close_tag_name.value = "div" if close_tag_name
+          close_tag_name = node.close_tag&.tag_name&.value
+          close_tag_name&.replace("div")
         end
 
         super

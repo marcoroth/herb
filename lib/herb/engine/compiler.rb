@@ -653,10 +653,7 @@ module Herb
         leading_space = extract_leading_space
         return leading_space if leading_space.empty?
 
-        # Token values may be shared/frozen (interned in the C extension), so
-        # take a mutable copy before trimming in place. +@ is a no-op for the
-        # already-mutable case and only allocates when the value is frozen.
-        text = +@tokens.last[1]
+        text = @tokens.last[1]
 
         if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
@@ -702,10 +699,7 @@ module Herb
         token = last_text_token
         return "" unless token
 
-        # Token values may be shared/frozen (interned in the C extension), so
-        # take a mutable copy before trimming in place. +@ is a no-op for the
-        # already-mutable case and only allocates when the value is frozen.
-        text = +token[1]
+        text = token[1]
         removed = text[TRAILING_WHITESPACE] || ""
 
         if text.match?(TRAILING_INDENTATION)

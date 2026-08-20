@@ -14,14 +14,6 @@
 #include "../../src/include/location/location.h"
 #include "../../src/include/location/position.h"
 
-/*
- * Token values at or below this byte length are interned (see
- * rb_token_value_from_hb_string). This comfortably covers newlines, HTML/ERB
- * punctuation and the vast majority of tag/attribute names while excluding
- * long, effectively-unique ERB code and text runs.
- */
-#define HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH 16
-
 const char* check_string(VALUE value) {
   if (NIL_P(value)) { return NULL; }
 
@@ -92,9 +84,8 @@ VALUE rb_string_from_hb_string(hb_string_T string) {
  * Returns a shared, frozen, deduplicated String for the given hb_string.
  *
  * Backed by Ruby's global fstring table, so identical bytes always map to the
- * same object without allocating a new String. This is ideal for values drawn
- * from a small, fixed vocabulary that recur on essentially every token/node,
- * e.g. token and node type names ("TOKEN_NEWLINE", "AST_HTML_TEXT_NODE").
+ * same object without allocating a new String. This is ideal for type names,
+ * which are drawn from a small, fixed vocabulary and recur on every token/node.
  */
 VALUE rb_interned_string_from_hb_string(hb_string_T string) {
   if (hb_string_is_null(string)) { return Qnil; }
@@ -127,34 +118,13 @@ static VALUE rb_token_type_value(token_type_T type) {
   return cached;
 }
 
-/*
- * Returns a String for a token value, interning short values and allocating
- * longer ones fresh.
- *
- * The overwhelming majority of token values are short, structural literals
- * drawn from a tiny vocabulary ("\n", "<", ">", "%>", "=", quotes, tag names,
- * ...) that repeat across most tokens; interning collapses those onto shared
- * frozen instances. Longer values (ERB code, prose text runs) are effectively
- * unique, so interning them would only bloat the fstring table -- those keep
- * allocating a fresh, mutable String as before.
- */
-VALUE rb_token_value_from_hb_string(hb_string_T string) {
-  if (hb_string_is_null(string)) { return Qnil; }
-
-  if (string.length <= HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH) {
-    return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
-  }
-
-  return rb_utf8_str_new(string.data, string.length);
-}
-
 VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   if (!token) { return Qnil; }
 
   init_ast_value_ivar_ids();
 
   VALUE object = rb_obj_alloc(cToken);
-  rb_ivar_set(object, id_value, rb_token_value_from_hb_string(token->value));
+  rb_ivar_set(object, id_value, rb_string_from_hb_string(token->value));
   rb_ivar_set(object, id_range, options->track_locations ? rb_range_from_c_struct(token->range) : Qnil);
   rb_ivar_set(object, id_location, options->track_locations ? rb_location_from_c_struct(token->location) : Qnil);
   rb_ivar_set(object, id_type, rb_token_type_value(token->type));
