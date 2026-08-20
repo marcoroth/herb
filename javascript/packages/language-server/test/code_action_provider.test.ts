@@ -55,6 +55,16 @@ describe("CodeActionProvider", () => {
     }
   }
 
+  function disableDiagnostic(rule: string): Diagnostic {
+    return {
+      range: Range.create(0, 0, 0, 0),
+      message: `Offense from ${rule}.`,
+      severity: DiagnosticSeverity.Error,
+      source: "Herb Linter ",
+      data: { rule }
+    }
+  }
+
   function setFrameworkActions(actions: Awaited<ReturnType<CodeActionProvider["createCodeActions"]>>) {
     return actions.filter(action => action.title.includes("Set `framework"))
   }
@@ -132,6 +142,22 @@ describe("CodeActionProvider", () => {
     const actions = setFrameworkActions(service.createCodeActions(URI, [diagnostic], "<%= image_tag %>"))
 
     expect(actions).toHaveLength(0)
+  })
+
+  it("asks the client to open the config with a server command", async () => {
+    writeConfig("version: 0.10.3\n")
+
+    const service = await createService()
+    const diagnostic = disableDiagnostic("html-tag-name-lowercase")
+
+    const actions = service.createCodeActions(URI, [diagnostic], "<DIV></DIV>")
+    const action = actions.find(action => action.title.includes("in `.herb.yml`"))
+
+    expect(action?.command).toEqual({
+      title: "Open .herb.yml",
+      command: "herb.openDocument",
+      arguments: [`file://${join(projectPath, ".herb.yml")}`]
+    })
   })
 
   it("fixes indentation to the style the diagnostics were reported against", async () => {
