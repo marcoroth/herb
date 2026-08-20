@@ -95,6 +95,9 @@ static body_info_T extract_body_info(
   if (info.source) {
     info.length = info.offset_in_content + info.length;
     info.offset_in_content = 0;
+
+    hb_allocator_dealloc(allocator, (void*) info.source);
+
     info.source = hb_allocator_strndup(allocator, (const char*) analyzed->parser.start, info.length);
   }
 
@@ -183,6 +186,8 @@ static bool append_body_statement(
 
   token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, body_start, body_end);
 
+  hb_allocator_dealloc(allocator, (void*) info.source);
+
   AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
     token_copy(erb_node->tag_opening, allocator),
     content,
@@ -244,6 +249,9 @@ static AST_NODE_T* transform_conditional(
 
   token_T* tag_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
   token_T* content_token = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
+
+  hb_buffer_free(&condition_buffer);
+  hb_allocator_dealloc(allocator, condition_source);
   token_T* tag_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
 
   token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
@@ -308,7 +316,10 @@ static void transform_conditional_array(
     if (!conditional_node) { continue; }
 
     AST_NODE_T* replacement = transform_conditional(erb_node, conditional_node, static_node_type, context->allocator);
-    if (replacement) { hb_array_set(array, i, replacement); }
+    if (replacement) {
+      hb_array_set(array, i, replacement);
+      ast_node_free(child, context->allocator);
+    }
   }
 }
 

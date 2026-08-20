@@ -436,6 +436,10 @@ static AST_NODE_T* remove_attribute_by_name(hb_array_T* attributes, const char* 
   return NULL;
 }
 
+static void discard_attribute_by_name(hb_array_T* attributes, const char* name, hb_allocator_T* allocator) {
+  ast_node_free(remove_attribute_by_name(attributes, name), allocator);
+}
+
 static hb_array_T* prepend_stylesheet_link_tag_attributes(
   hb_array_T* attributes,
   tag_helper_parse_context_T* parse_context,
@@ -546,10 +550,10 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       allocator
     );
 
-    remove_attribute_by_name(attributes, "extname");
-    remove_attribute_by_name(attributes, "host");
-    remove_attribute_by_name(attributes, "protocol");
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    discard_attribute_by_name(attributes, "extname", allocator);
+    discard_attribute_by_name(attributes, "host", allocator);
+    discard_attribute_by_name(attributes, "protocol", allocator);
+    discard_attribute_by_name(attributes, "skip-pipeline", allocator);
   }
 
   if (attributes && handler->name && strcmp(handler->name, "stylesheet_link_tag") == 0) {
@@ -559,16 +563,16 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       allocator
     );
 
-    remove_attribute_by_name(attributes, "extname");
-    remove_attribute_by_name(attributes, "host");
-    remove_attribute_by_name(attributes, "protocol");
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    discard_attribute_by_name(attributes, "extname", allocator);
+    discard_attribute_by_name(attributes, "host", allocator);
+    discard_attribute_by_name(attributes, "protocol", allocator);
+    discard_attribute_by_name(attributes, "skip-pipeline", allocator);
   }
 
   if (attributes && handler->name && strcmp(handler->name, "image_tag") == 0) {
     path_options =
       extract_path_options_from_keyword_hash(parse_context->info->call_node, IMAGE_TAG_PATH_OPTIONS, allocator);
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    discard_attribute_by_name(attributes, "skip-pipeline", allocator);
 
     AST_NODE_T* size_node = remove_attribute_by_name(attributes, "size");
 
@@ -652,6 +656,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
           }
         }
       }
+
+      ast_node_free(size_node, allocator);
     }
   }
 
@@ -817,6 +823,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   token_T* tag_name_token =
     tag_name ? create_synthetic_token(allocator, tag_name, TOKEN_IDENTIFIER, tag_name_start, tag_name_end) : NULL;
 
+  hb_allocator_dealloc(allocator, path_options);
+
   hb_array_T* open_tag_children = attributes ? attributes : hb_array_init(0, allocator);
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
@@ -881,6 +889,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         &element_errors,
         context->options
       );
+
+      hb_buffer_free(&helper_name_buffer);
     }
 
     if (string_equals(handler->name, "javascript_tag")) {
@@ -1078,10 +1088,10 @@ static hb_array_T* build_asset_tag_attributes(
 
   resolve_nonce_attribute(attributes, allocator);
 
-  remove_attribute_by_name(attributes, "extname");
-  remove_attribute_by_name(attributes, "host");
-  remove_attribute_by_name(attributes, "protocol");
-  remove_attribute_by_name(attributes, "skip-pipeline");
+  discard_attribute_by_name(attributes, "extname", allocator);
+  discard_attribute_by_name(attributes, "host", allocator);
+  discard_attribute_by_name(attributes, "protocol", allocator);
+  discard_attribute_by_name(attributes, "skip-pipeline", allocator);
 
   return attributes;
 }
@@ -1126,6 +1136,8 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
       hb_array_append(elements, element);
     }
   }
+
+  hb_allocator_dealloc(allocator, path_options);
 
   return elements;
 }
@@ -1223,6 +1235,8 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
       hb_array_append(elements, element);
     }
   }
+
+  hb_allocator_dealloc(allocator, path_options);
 
   return elements;
 }
@@ -1466,6 +1480,12 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       body_document->children = NULL;
 
       ast_node_free((AST_NODE_T*) body_document, allocator);
+
+      for (size_t index = 0; index < hb_array_size(body); index++) {
+        ast_node_rebase_tokens(hb_array_get(body, index), raw_copy, context->source + start_offset, content_length);
+      }
+
+      hb_allocator_dealloc(allocator, raw_copy);
     }
   }
 

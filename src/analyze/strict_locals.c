@@ -320,6 +320,10 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
 
     context->found_strict_locals = true;
     hb_array_set(array, index, strict_locals_node);
+
+    if (strict_locals_node->analyzed_ruby == erb_node->analyzed_ruby) { erb_node->analyzed_ruby = NULL; }
+
+    ast_node_free(child, context->allocator);
   }
 }
 
