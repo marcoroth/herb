@@ -15,6 +15,8 @@ module Herb
     #     Herb::Engine.new(source, visitors: [Herb::Engine::AutoCloseOmittedTagsVisitor.new])
     #
     class AutoCloseOmittedTagsVisitor < Herb::Visitor
+      required_parser_option track_locations: true
+
       #: (Herb::AST::HTMLElementNode) -> void
       def visit_html_element_node(node)
         omitted = omitted_close_tag(node)

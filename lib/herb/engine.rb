@@ -434,7 +434,6 @@ module Herb
 
     #: () -> Hash[Symbol, untyped]
     def parse_options
-      return @parser_options unless @visitors.empty?
       return @parser_options if @parser_options.key?(:track_locations)
 
       @parser_options.merge(track_locations: false)

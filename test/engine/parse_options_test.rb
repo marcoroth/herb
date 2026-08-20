@@ -6,6 +6,8 @@ require_relative "../../lib/herb/engine"
 module Engine
   class ParseOptionsTest < Minitest::Spec
     class LocationSpy < Herb::Visitor
+      required_parser_option track_locations: true
+
       attr_reader :elements, :missing_locations
 
       def initialize
@@ -31,10 +33,26 @@ module Engine
       assert_equal false, parse_options_for("<div></div>")[:track_locations]
     end
 
-    test "location tracking is left alone when a visitor is present" do
+    test "a visitor that needs locations turns tracking back on" do
       options = parse_options_for("<div></div>", visitors: [LocationSpy.new])
 
-      assert_nil options[:track_locations]
+      assert_equal true, options[:track_locations]
+    end
+
+    test "a visitor that never reads a location leaves tracking off" do
+      options = parse_options_for("<div></div>", visitors: [Class.new(Herb::Visitor).new])
+
+      assert_equal false, options[:track_locations]
+    end
+
+    test "reporting diagnostics is enough to need locations" do
+      reporter = Class.new(Herb::Visitor) do
+        include Herb::Engine::Diagnostics
+      end
+
+      options = parse_options_for("<div></div>", visitors: [reporter.new])
+
+      assert_equal true, options[:track_locations]
     end
 
     test "an explicitly requested track_locations is honoured" do
@@ -43,14 +61,14 @@ module Engine
       assert_equal true, options[:track_locations]
     end
 
-    test "an explicitly disabled track_locations is honoured with a visitor present" do
-      options = parse_options_for(
-        "<div></div>",
-        visitors: [LocationSpy.new],
-        parser_options: { track_locations: false }
-      )
-
-      assert_equal false, options[:track_locations]
+    test "a visitor requiring locations conflicts with disabling them" do
+      assert_raises(ArgumentError) do
+        parse_options_for(
+          "<div></div>",
+          visitors: [LocationSpy.new],
+          parser_options: { track_locations: false }
+        )
+      end
     end
 
     test "a visitor still receives node locations" do

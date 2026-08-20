@@ -39,7 +39,7 @@ module Herb
     class OptimizeVisitor < Herb::Visitor
       include ContextAware
 
-      required_parser_option action_view_helpers: true, transform_conditionals: true
+      required_parser_option action_view_helpers: true, transform_conditionals: true, track_locations: true
 
       SESSION = "::Herb::Engine::Report::Session" #: String
       CODE = "overwritten-helper" #: String
