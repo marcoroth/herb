@@ -2,6 +2,8 @@ import { describe, test, expect, beforeEach, afterEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
 import { SlotState } from "../src/state"
 
+import { clearOnNavigation } from "../src/report"
+
 import type { RuntimeDiagnostic } from "../src/report"
 
 const FILE = "app/views/page/chat.html.erb"
@@ -87,7 +89,7 @@ describe("runtime diagnostics", () => {
   })
 
   test("a version mismatch reports and declines", () => {
-    document.body.innerHTML = PAGE.replaceAll(`${FILE}:aaaaaaaa:0`, `${FILE}:bbbbbbbb:0`).replace(
+    document.body.innerHTML = PAGE.split(`${FILE}:aaaaaaaa:0`).join(`${FILE}:bbbbbbbb:0`).replace(
       `data-herb-region="${FILE}:aaaaaaaa"`,
       `data-herb-region="${FILE}:bbbbbbbb"`,
     )
@@ -112,6 +114,28 @@ describe("runtime diagnostics", () => {
     state.setState({ also_missing: true })
 
     expect(devTools.entries.map((entry) => entry.code)).toEqual(["herb-unknown-state", "herb-unknown-state"])
+  })
+
+  test("a navigation clears the runtime's own findings and the queue", () => {
+    document.head.innerHTML = `<meta name="herb-debug-mode" content="true">`
+
+    const stop = clearOnNavigation()
+
+    state.setState({ missing: true })
+    document.dispatchEvent(new Event("turbo:load"))
+
+    const devTools = installDevTools()
+    const cleared: (string | undefined)[] = []
+
+    ;(devTools as unknown as { clear(origin?: string): void }).clear = (origin) => cleared.push(origin)
+
+    state.setState({ also_missing: true })
+    expect(devTools.entries.map((entry) => entry.value)).toEqual(["also_missing"])
+
+    document.dispatchEvent(new Event("turbo:load"))
+    expect(cleared).toEqual(["Herb Client Runtime"])
+
+    stop()
   })
 
   test("without the debug signal nothing is retained", () => {

@@ -11,6 +11,7 @@ export interface RuntimeDiagnostic {
 
 interface DevToolsGlobal {
   report?(input: RuntimeDiagnostic | RuntimeDiagnostic[]): unknown
+  clear?(origin?: string): void
 }
 
 export const RUNTIME_ORIGIN = "Herb Client Runtime"
@@ -36,6 +37,22 @@ export function report(diagnostic: RuntimeDiagnostic): void {
   queued.push(entry)
 
   if (queued.length > MAX_QUEUED) queued.shift()
+}
+
+export function clearOnNavigation(): () => void {
+  if (typeof document === "undefined") return () => {}
+
+  const clear = (): void => {
+    queued.length = 0
+
+    const devTools = globalThis.window && (window as { HerbDevTools?: DevToolsGlobal }).HerbDevTools
+
+    devTools?.clear?.(RUNTIME_ORIGIN)
+  }
+
+  document.addEventListener("turbo:load", clear)
+
+  return () => document.removeEventListener("turbo:load", clear)
 }
 
 function debugging(): boolean {

@@ -2,7 +2,7 @@ export { HerbRuntime, stateFor } from "./runtime"
 export { SlotIndex, SLOT_EVENT } from "./slot-index"
 export { SlotState, DEPENDENCIES_ATTRIBUTE, DEPENDENCIES_SELECTOR, STATE_EVENT } from "./state"
 export { SlotMutations } from "./mutations"
-export { report, RUNTIME_ORIGIN } from "./report"
+export { report, clearOnNavigation, RUNTIME_ORIGIN } from "./report"
 export type { RuntimeDiagnostic } from "./report"
 export type { MutationTarget, SubmitOptions, MutationStatus, MutationResult, MutationRequest, MutationTransport, MutationsOptions } from "./mutations"
 
