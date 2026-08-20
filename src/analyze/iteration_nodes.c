@@ -32,7 +32,11 @@ static token_T* create_token_from_prism_location(
   position_T start = byte_offset_to_position(source, total_start);
   position_T end = byte_offset_to_position(source, total_end);
 
-  return create_synthetic_token(allocator, value, type, start, end);
+  token_T* token = create_synthetic_token(allocator, value, type, start, end);
+
+  hb_allocator_dealloc(allocator, value);
+
+  return token;
 }
 
 /**
@@ -262,6 +266,17 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
   return iteration_block_node;
 }
 
+static void free_transformed_block_node(AST_ERB_BLOCK_NODE_T* block_node, hb_allocator_T* allocator) {
+  block_node->body = NULL;
+  block_node->block_arguments = NULL;
+  block_node->rescue_clause = NULL;
+  block_node->else_clause = NULL;
+  block_node->ensure_clause = NULL;
+  block_node->end_node = NULL;
+
+  ast_node_free((AST_NODE_T*) block_node, allocator);
+}
+
 static void transform_iteration_nodes_in_array(hb_array_T* array, analyze_ruby_context_T* context) {
   if (!array) { return; }
 
@@ -273,7 +288,10 @@ static void transform_iteration_nodes_in_array(hb_array_T* array, analyze_ruby_c
     AST_ERB_ITERATION_BLOCK_NODE_T* iteration_block_node =
       try_transform_block_node((AST_ERB_BLOCK_NODE_T*) child, context);
 
-    if (iteration_block_node) { hb_array_set(array, index, iteration_block_node); }
+    if (iteration_block_node) {
+      hb_array_set(array, index, iteration_block_node);
+      free_transformed_block_node((AST_ERB_BLOCK_NODE_T*) child, context->allocator);
+    }
   }
 }
 
