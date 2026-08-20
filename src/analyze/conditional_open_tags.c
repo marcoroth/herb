@@ -390,7 +390,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
     AST_HTML_CONDITIONAL_OPEN_TAG_NODE_T* conditional_open_tag = ast_html_conditional_open_tag_node_init(
       conditional_node,
-      tag_name_token,
+      token_copy(tag_name_token, allocator),
       false,
       conditional_node->location.start,
       conditional_node->location.end,
@@ -402,7 +402,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
     AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
       (AST_NODE_T*) conditional_open_tag,
-      tag_name_token,
+      token_copy(tag_name_token, allocator),
       body,
       (AST_NODE_T*) close_tag,
       false,
@@ -423,6 +423,8 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
         hb_array_append(consumed_indices, index);
       }
     }
+
+    i = close_index;
   }
 
   if (hb_array_size(consumed_indices) > 0) {

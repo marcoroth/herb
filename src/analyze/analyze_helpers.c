@@ -7,6 +7,7 @@
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
+#include "../include/lexer/token.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/string.h"
 #include "../include/prism/prism_helpers.h"
