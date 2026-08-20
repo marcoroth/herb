@@ -33,17 +33,7 @@
 static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
 
-  pm_visit_node(analyzed->root, search_if_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_block_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_case_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_case_match_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_while_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_for_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_until_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_begin_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_unless_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_when_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_in_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_nodes, analyzed);
 
   search_unexpected_elsif_nodes(analyzed);
   search_unexpected_else_nodes(analyzed);
@@ -53,8 +43,6 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
 
   search_unexpected_rescue_nodes(analyzed);
   search_unexpected_ensure_nodes(analyzed);
-  search_yield_nodes(analyzed->root, analyzed);
-  search_then_keywords(analyzed->root, analyzed);
   search_unexpected_block_closing_nodes(analyzed);
 
   if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
