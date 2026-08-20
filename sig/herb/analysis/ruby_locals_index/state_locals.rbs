@@ -1,0 +1,19 @@
+# Generated from lib/herb/analysis/ruby_locals_index/state_locals.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RubyLocalsIndex
+      # Finds `herb:state` declarations so a state read indexes like a local instead of an
+      # unknown name.
+      module StateLocals
+        def self?.locals: (untyped document, untyped references, untyped offsets, untyped declared) -> untyped
+
+        def self?.directives: (untyped document) -> untyped
+
+        def self?.declarations_in: (untyped signature, untyped known) -> untyped
+
+        def self?.usages: (untyped name, untyped references, untyped offsets) -> untyped
+      end
+    end
+  end
+end
