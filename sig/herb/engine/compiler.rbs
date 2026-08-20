@@ -15,7 +15,7 @@ module Herb
 
       WHITESPACE_ONLY_CAPTURE: ::Regexp
 
-      RAW_TEXT_ELEMENTS: Array[String]
+      RAW_TEXT_ELEMENTS: untyped
 
       attr_reader tokens: untyped
 
@@ -121,7 +121,7 @@ module Herb
 
       def pop_context: () -> untyped
 
-      # : (untyped node) { () -> untyped } -> untyped
+      # : (untyped node) { (String?) -> untyped } -> untyped
       def with_element_context: (untyped node) { (String?) -> untyped } -> untyped
 
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped

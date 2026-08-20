@@ -108,7 +108,8 @@ module Herb
     # : () -> Hash[Symbol, untyped]
     def parse_options: () -> Hash[Symbol, untyped]
 
-  def default_parser_options: () -> Hash[Symbol, untyped]
+    # : () -> Hash[Symbol, untyped]
+    def default_parser_options: () -> Hash[Symbol, untyped]
 
     def ensure_valid_ruby!: (untyped source) -> untyped
   end
