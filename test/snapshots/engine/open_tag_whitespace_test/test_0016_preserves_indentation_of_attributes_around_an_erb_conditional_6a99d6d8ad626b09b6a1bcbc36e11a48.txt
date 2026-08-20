@@ -1,0 +1,15 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0016_preserves indentation of attributes around an erb conditional"
+input: "{source: \"<div\\n  class=\\\"foo\\\"\\n  <% if active %>\\n    data-active=\\\"true\\\"\\n  <% end %>\\n  id=\\\"fooDlg\\\"\\n>\\n  Content\\n</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div
+  class="foo"
+'.freeze;   if active 
+ _buf << '    data-active="true"
+'.freeze;   end 
+ _buf << '  id="fooDlg"
+>
+  Content
+</div>
+'.freeze;
+_buf.to_s

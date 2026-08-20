@@ -1,0 +1,8 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0006_preserves indentation of attributes on a void element"
+input: "{source: \"<input\\n  type=\\\"text\\\"\\n  name=\\\"title\\\"\\n>\\n\", locals: {}, options: {}}"
+---
+<input
+  type="text"
+  name="title"
+>

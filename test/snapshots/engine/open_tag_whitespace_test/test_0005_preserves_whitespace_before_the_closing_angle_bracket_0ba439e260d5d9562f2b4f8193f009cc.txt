@@ -1,0 +1,7 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0005_preserves whitespace before the closing angle bracket"
+input: "{source: \"<div class=\\\"foo\\\" >Content</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div class="foo" >Content</div>
+'.freeze;
+_buf.to_s
