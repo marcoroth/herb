@@ -1705,7 +1705,7 @@ static AST_NODE_T* transform_link_to_helper(
     allocator
   );
 
-  AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
+  return (AST_NODE_T*) ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
     token_copy(tag_name_token, allocator),
     body,
@@ -1717,8 +1717,6 @@ static AST_NODE_T* transform_link_to_helper(
     hb_array_init(0, allocator),
     allocator
   );
-
-  return (AST_NODE_T*) element;
 }
 
 void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* context) {

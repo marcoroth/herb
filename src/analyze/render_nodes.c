@@ -770,7 +770,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     allocator
   );
 
-  AST_ERB_RENDER_NODE_T* render_node = ast_erb_render_node_init(
+  return ast_erb_render_node_init(
     token_copy(erb_node->tag_opening, allocator),
     token_copy(erb_node->content, allocator),
     token_copy(erb_node->tag_closing, allocator),
@@ -788,8 +788,6 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     errors,
     allocator
   );
-
-  return render_node;
 }
 
 static size_t calculate_byte_offset_from_pos(const char* source, position_T position) {

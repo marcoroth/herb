@@ -207,7 +207,7 @@ AST_NODE_T* transform_ternary_expression(
 
   herb_prism_node_T empty_prism_node = HERB_PRISM_NODE_EMPTY;
 
-  AST_ERB_IF_NODE_T* result_if_node = ast_erb_if_node_init(
+  return (AST_NODE_T*) ast_erb_if_node_init(
     if_opening,
     if_content,
     if_closing,
@@ -221,8 +221,6 @@ AST_NODE_T* transform_ternary_expression(
     hb_array_init(0, allocator),
     allocator
   );
-
-  return (AST_NODE_T*) result_if_node;
 }
 
 static void transform_ternary_array(
