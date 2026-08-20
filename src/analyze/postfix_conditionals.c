@@ -244,6 +244,9 @@ static AST_NODE_T* transform_conditional(
 
   token_T* tag_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
   token_T* content_token = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
+
+  hb_buffer_free(&condition_buffer);
+  hb_allocator_dealloc(allocator, condition_source);
   token_T* tag_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
 
   token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
@@ -308,7 +311,10 @@ static void transform_conditional_array(
     if (!conditional_node) { continue; }
 
     AST_NODE_T* replacement = transform_conditional(erb_node, conditional_node, static_node_type, context->allocator);
-    if (replacement) { hb_array_set(array, i, replacement); }
+    if (replacement) {
+      hb_array_set(array, i, replacement);
+      ast_node_free(child, context->allocator);
+    }
   }
 }
 

@@ -436,6 +436,10 @@ static AST_NODE_T* remove_attribute_by_name(hb_array_T* attributes, const char* 
   return NULL;
 }
 
+static void discard_attribute_by_name(hb_array_T* attributes, const char* name, hb_allocator_T* allocator) {
+  ast_node_free(remove_attribute_by_name(attributes, name), allocator);
+}
+
 static hb_array_T* prepend_stylesheet_link_tag_attributes(
   hb_array_T* attributes,
   tag_helper_parse_context_T* parse_context,
@@ -546,10 +550,10 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       allocator
     );
 
-    remove_attribute_by_name(attributes, "extname");
-    remove_attribute_by_name(attributes, "host");
-    remove_attribute_by_name(attributes, "protocol");
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    discard_attribute_by_name(attributes, "extname", allocator);
+    discard_attribute_by_name(attributes, "host", allocator);
+    discard_attribute_by_name(attributes, "protocol", allocator);
+    discard_attribute_by_name(attributes, "skip-pipeline", allocator);
   }
 
   if (attributes && handler->name && strcmp(handler->name, "stylesheet_link_tag") == 0) {
@@ -559,16 +563,16 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       allocator
     );
 
-    remove_attribute_by_name(attributes, "extname");
-    remove_attribute_by_name(attributes, "host");
-    remove_attribute_by_name(attributes, "protocol");
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    discard_attribute_by_name(attributes, "extname", allocator);
+    discard_attribute_by_name(attributes, "host", allocator);
+    discard_attribute_by_name(attributes, "protocol", allocator);
+    discard_attribute_by_name(attributes, "skip-pipeline", allocator);
   }
 
   if (attributes && handler->name && strcmp(handler->name, "image_tag") == 0) {
     path_options =
       extract_path_options_from_keyword_hash(parse_context->info->call_node, IMAGE_TAG_PATH_OPTIONS, allocator);
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    discard_attribute_by_name(attributes, "skip-pipeline", allocator);
 
     AST_NODE_T* size_node = remove_attribute_by_name(attributes, "size");
 
@@ -1078,10 +1082,10 @@ static hb_array_T* build_asset_tag_attributes(
 
   resolve_nonce_attribute(attributes, allocator);
 
-  remove_attribute_by_name(attributes, "extname");
-  remove_attribute_by_name(attributes, "host");
-  remove_attribute_by_name(attributes, "protocol");
-  remove_attribute_by_name(attributes, "skip-pipeline");
+  discard_attribute_by_name(attributes, "extname", allocator);
+  discard_attribute_by_name(attributes, "host", allocator);
+  discard_attribute_by_name(attributes, "protocol", allocator);
+  discard_attribute_by_name(attributes, "skip-pipeline", allocator);
 
   return attributes;
 }

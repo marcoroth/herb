@@ -920,6 +920,25 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
   return render_node;
 }
 
+static void release_replaced_node(AST_NODE_T* child, AST_ERB_RENDER_NODE_T* render_node, hb_allocator_T* allocator) {
+  if (child->type == AST_ERB_CONTENT_NODE) {
+    AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
+
+    if (render_node->analyzed_ruby == erb_node->analyzed_ruby) { erb_node->analyzed_ruby = NULL; }
+  } else if (child->type == AST_ERB_BLOCK_NODE) {
+    AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) child;
+
+    if (render_node->body == block_node->body) { block_node->body = NULL; }
+    if (render_node->block_arguments == block_node->block_arguments) { block_node->block_arguments = NULL; }
+    if (render_node->rescue_clause == block_node->rescue_clause) { block_node->rescue_clause = NULL; }
+    if (render_node->else_clause == block_node->else_clause) { block_node->else_clause = NULL; }
+    if (render_node->ensure_clause == block_node->ensure_clause) { block_node->ensure_clause = NULL; }
+    if (render_node->end_node == block_node->end_node) { block_node->end_node = NULL; }
+  }
+
+  ast_node_free(child, allocator);
+}
+
 static void transform_render_nodes_in_array(hb_array_T* array, analyze_ruby_context_T* context) {
   if (!array) { return; }
 
@@ -935,7 +954,10 @@ static void transform_render_nodes_in_array(hb_array_T* array, analyze_ruby_cont
       render_node = try_transform_block_node((AST_ERB_BLOCK_NODE_T*) child, context);
     }
 
-    if (render_node) { hb_array_set(array, index, render_node); }
+    if (render_node) {
+      hb_array_set(array, index, render_node);
+      release_replaced_node(child, render_node, context->allocator);
+    }
   }
 }
 

@@ -4,6 +4,7 @@
 #include "../src/include/util/io.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -206,6 +207,30 @@ static bool run_source_check(
   return ok;
 }
 
+typedef struct {
+  const char* label;
+  size_t offset;
+} option_toggle_T;
+
+static const option_toggle_T OPTION_TOGGLES[] = {
+  {          "whitespace",     offsetof(parser_options_T, track_whitespace) },
+  {         "action-view",  offsetof(parser_options_T, action_view_helpers) },
+  {        "conditionals", offsetof(parser_options_T, transform_conditionals) },
+  {        "render-nodes",          offsetof(parser_options_T, render_nodes) },
+  {       "strict-locals",         offsetof(parser_options_T, strict_locals) },
+  {     "iteration-nodes",       offsetof(parser_options_T, iteration_nodes) },
+  {         "prism-nodes",           offsetof(parser_options_T, prism_nodes) },
+  {    "prism-nodes-deep",      offsetof(parser_options_T, prism_nodes_deep) },
+  {       "prism-program",         offsetof(parser_options_T, prism_program) },
+  {   "dot-notation-tags",     offsetof(parser_options_T, dot_notation_tags) },
+};
+
+static const size_t OPTION_TOGGLES_COUNT = sizeof(OPTION_TOGGLES) / sizeof(OPTION_TOGGLES[0]);
+
+static void set_toggle(parser_options_T* options, size_t offset) {
+  *(bool*) ((char*) options + offset) = true;
+}
+
 static bool run_file_check(const char* path) {
   hb_allocator_T file_allocator = hb_allocator_with_malloc();
   char* source = herb_read_file(path, &file_allocator);
@@ -216,15 +241,22 @@ static bool run_file_check(const char* path) {
     return false;
   }
 
-  parser_options_T transforms = HERB_DEFAULT_PARSER_OPTIONS;
-  transforms.action_view_helpers = true;
-  transforms.transform_conditionals = true;
-  transforms.render_nodes = true;
-  transforms.iteration_nodes = true;
-  transforms.strict_locals = true;
-
   bool ok = run_source_check(path, "default", source, NULL);
-  ok = run_source_check(path, "transforms", source, &transforms) && ok;
+
+  for (size_t i = 0; i < OPTION_TOGGLES_COUNT; i++) {
+    parser_options_T options = HERB_DEFAULT_PARSER_OPTIONS;
+    set_toggle(&options, OPTION_TOGGLES[i].offset);
+
+    ok = run_source_check(path, OPTION_TOGGLES[i].label, source, &options) && ok;
+  }
+
+  parser_options_T everything = HERB_DEFAULT_PARSER_OPTIONS;
+
+  for (size_t i = 0; i < OPTION_TOGGLES_COUNT; i++) {
+    set_toggle(&everything, OPTION_TOGGLES[i].offset);
+  }
+
+  ok = run_source_check(path, "all", source, &everything) && ok;
 
   hb_allocator_dealloc(&file_allocator, source);
 

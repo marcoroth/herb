@@ -124,6 +124,8 @@ static bool append_branch_statement(
 
   token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, branch_start, branch_end);
 
+  hb_allocator_dealloc(allocator, (void*) info.source);
+
   AST_ERB_CONTENT_NODE_T* branch_erb_node = ast_erb_content_node_init(
     token_copy(erb_node->tag_opening, allocator),
     content,
@@ -196,6 +198,9 @@ AST_NODE_T* transform_ternary_expression(
 
   token_T* if_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
   token_T* if_content = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
+
+  hb_buffer_free(&condition_buffer);
+  hb_allocator_dealloc(allocator, condition_source);
   token_T* if_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
 
   token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
@@ -244,7 +249,10 @@ static void transform_ternary_array(
 
     AST_NODE_T* replacement =
       transform_ternary_expression(erb_node, (pm_if_node_t*) ternary_node, static_node_type, context->allocator);
-    if (replacement) { hb_array_set(array, i, replacement); }
+    if (replacement) {
+      hb_array_set(array, i, replacement);
+      ast_node_free(child, context->allocator);
+    }
   }
 }
 
