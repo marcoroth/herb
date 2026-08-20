@@ -3,6 +3,7 @@ import { readFileSync } from "fs"
 import { describe, it, expect } from "vitest"
 
 import { colors, colorize, hyperlink } from "../src/color.js"
+import { linePrefix } from "../src/gutter.js"
 import { ANSI_PALETTE, ANSIConverter } from "../src/ansi-html.js"
 
 import type { ANSIColorName } from "../src/ansi-html.js"
@@ -286,6 +287,51 @@ describe("ANSIConverter", () => {
       expect(converter.toHTML(hyperlink("rule", "https://herb-tools.dev/linter/rules/erb-no-empty-tags"))).toBe(
         `<a href="https://herb-tools.dev/linter/rules/erb-no-empty-tags" rel="noopener noreferrer">rule</a>`,
       )
+    })
+
+    it("renders a linked gutter line number as an anchor", () => {
+      const html = converter.toHTML(linePrefix(12, true, "brightRed", "file:///app/views/page.html.erb"))
+
+      expect(html).toContain(
+        `<a href="file:///app/views/page.html.erb" rel="noopener noreferrer"><span style="font-weight:700"> 12</span></a>`,
+      )
+    })
+
+    it("rewrites the target through a link resolver", () => {
+      const resolver = new ANSIConverter({
+        linkResolver: url => url.replace("file:///workspace/", "https://github.com/marcoroth/herb/blob/main/"),
+      })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///workspace/app/views/page.html.erb"))).toBe(
+        `<a href="https://github.com/marcoroth/herb/blob/main/app/views/page.html.erb" rel="noopener noreferrer">page.html.erb</a>`,
+      )
+    })
+
+    it("passes the original target to the link resolver", () => {
+      const targets: string[] = []
+      const resolver = new ANSIConverter({ linkResolver: url => { targets.push(url); return url } })
+
+      resolver.toHTML(`${hyperlink("file", "file:///app/page.html.erb")}${hyperlink("rule", "https://herb-tools.dev")}`)
+
+      expect(targets).toEqual(["file:///app/page.html.erb", "https://herb-tools.dev"])
+    })
+
+    it("drops the link when the resolver returns null", () => {
+      const resolver = new ANSIConverter({ linkResolver: () => null })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///app/views/page.html.erb"))).toBe("page.html.erb")
+    })
+
+    it("still rejects an unsafe target returned by the resolver", () => {
+      const resolver = new ANSIConverter({ linkResolver: () => "javascript:alert(1)" })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///app/views/page.html.erb"))).toBe("page.html.erb")
+    })
+
+    it("ignores the resolver when links are disabled", () => {
+      const resolver = new ANSIConverter({ links: false, linkResolver: () => "https://herb-tools.dev" })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///app/views/page.html.erb"))).toBe("page.html.erb")
     })
 
     it("accepts a BEL terminator as well as ST", () => {
