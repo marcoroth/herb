@@ -11,6 +11,8 @@ module Herb
       WHITESPACE_ONLY = /\A[ \t]+\z/
       WHITESPACE_ONLY_CAPTURE = /\A([ \t]+)\z/
 
+      RAW_TEXT_ELEMENTS = ["script", "style"].freeze
+
       attr_reader :tokens
 
       def initialize(engine, options = {})
@@ -66,11 +68,9 @@ module Herb
       end
 
       def visit_html_element_node(node)
-        with_element_context(node) do
+        with_element_context(node) do |tag_name|
           visit(node.open_tag)
           visit_all(node.body)
-
-          tag_name = node.tag_name&.value&.downcase
 
           if node.open_tag.is_a?(Herb::AST::ERBOpenTagNode) && tag_name && node.close_tag
             if node.close_tag.is_a?(Herb::AST::ERBEndNode)
@@ -397,7 +397,7 @@ module Herb
         @context_stack.pop
       end
 
-      #: (untyped node) { () -> untyped } -> untyped
+      #: (untyped node) { (String?) -> untyped } -> untyped
       def with_element_context(node)
         tag_name = node.tag_name&.value&.downcase
         previous_element_source = @current_element_source
@@ -411,9 +411,9 @@ module Herb
           push_context(:style_content)
         end
 
-        yield
+        yield(tag_name)
 
-        pop_context if ["script", "style"].include?(tag_name)
+        pop_context if RAW_TEXT_ELEMENTS.include?(tag_name)
 
         @element_stack.pop if tag_name
         @current_element_source = previous_element_source
