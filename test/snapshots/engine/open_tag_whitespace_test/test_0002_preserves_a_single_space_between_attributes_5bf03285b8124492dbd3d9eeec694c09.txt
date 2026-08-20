@@ -1,0 +1,7 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0002_preserves a single space between attributes"
+input: "{source: \"<div class=\\\"foo\\\" id=\\\"bar\\\">Content</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div class="foo" id="bar">Content</div>
+'.freeze;
+_buf.to_s
