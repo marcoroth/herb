@@ -155,7 +155,6 @@ module Engine
         refuse("<ul><% @items.each do |item| %><%# herb:state (open: false) %><li id=\"<%= item %>\"><%= open %></li><% end %></ul>" \
                "<%# herb:state (open: false) %>", /declared in both an item and its region/)
         refuse("<%# herb:state (attempts: 0) %><p><%= attempts + 1 %></p>", /computes with a state/)
-        refuse("<%# herb:state (attempts: 0) %><div><% if attempts > 3 %>a<% else %>b<% end %></div>", /computes with a state/)
         refuse("<%# herb:state (sort: \"name\") %><div><% if sort == 3 %>a<% end %></div>", /String state `sort` against a Integer/)
         refuse("<%# herb:state (attempts: 0) %><div><% if attempts? %>a<% end %></div>", /only a boolean state/)
         refuse("<%# herb:state (sort: \"name\") %><div><% case sort %><% when SORTS %>a<% end %></div>", /not a literal/)
@@ -240,6 +239,64 @@ module Engine
         assert_match(/mixes other dynamic parts/, error.message)
       end
 
+      test "an ordered comparison compiles with its operator in the arm" do
+        visitor, = compile(%(<%# herb:state (attempts: 0) %><div><% if attempts > 3 %>Many<% else %>Few<% end %></div>))
+
+        assert_equal({ arms: [["attempts", "3", 0, ">"]], else: 1 }, visitor.state_conditional_entries.fetch(0))
+      end
+
+      test "a reversed ordered comparison mirrors its operator" do
+        visitor, = compile(%(<%# herb:state (attempts: 0) %><div><% if 3 < attempts %>Many<% end %></div>))
+
+        assert_equal({ arms: [["attempts", "3", 0, ">"]], else: nil }, visitor.state_conditional_entries.fetch(0))
+      end
+
+      test "an ordered presence carries its operator" do
+        visitor, = compile(%(<%# herb:state (attempts: 0) %><video muted="<%= attempts >= 2 %>"></video>))
+        read = visitor.state_presence.fetch(0)
+
+        assert_equal ">=", read.operator
+
+        rendered = render(%(<%# herb:state (attempts: 5) %><video muted="<%= attempts >= 2 %>"></video>))
+
+        assert_includes rendered, "<video muted"
+      end
+
+      test "a negated equality compiles for any kind" do
+        visitor, = compile(%(<%# herb:state (sort: "name") %><div><% if sort != "date" %>Named<% end %></div>))
+
+        assert_equal({ arms: [["sort", "\"date\"", 0, "!="]], else: nil }, visitor.state_conditional_entries.fetch(0))
+
+        refuse("<%# herb:state (sort: \"name\") %><div><% if sort != 3 %>x<% end %></div>", /against a Integer literal/)
+      end
+
+      test "a state compares against another state" do
+        template = %(<%# herb:state (counter1: 0, counter2: 5) %><div><% if counter1 > counter2 %>Ahead<% else %>Behind<% end %></div>)
+        visitor, = compile(template)
+
+        assert_equal({ arms: [["counter1", { "state" => "counter2" }, 0, ">"]], else: 1 }, visitor.state_conditional_entries.fetch(0))
+
+        rendered = render(template)
+
+        assert_includes rendered, "Behind"
+      end
+
+      test "a state pair keeps its kinds compatible" do
+        refuse("<%# herb:state (sort: \"name\", attempts: 0) %><div><% if sort == attempts %>x<% end %></div>", /can never match/)
+        refuse("<%# herb:state (sort: \"name\", other: \"x\") %><div><% if sort > other %>x<% end %></div>", /both have to be Integer states/)
+      end
+
+      test "a boolean attribute compares two states" do
+        rendered = render(%(<%# herb:state (counter1: 1, counter2: 1) %><video muted="<%= counter1 == counter2 %>"></video>))
+
+        assert_includes rendered, "<video muted"
+      end
+
+      test "ordering refuses non-integer states and comparands" do
+        refuse("<%# herb:state (sort: \"name\") %><div><% if sort > \"a\" %>x<% end %></div>", /orders the String state/)
+        refuse("<%# herb:state (attempts: 0) %><div><% if attempts > \"a\" %>x<% end %></div>", /against a String literal/)
+      end
+
       test "an unless reads a state with its arms inverted" do
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)
@@ -269,7 +326,7 @@ module Engine
 
       test "a computed unless still raises" do
         error = assert_raises(Herb::Engine::CompilationError) do
-          compile(%(<%# herb:state (attempts: 0) %><div><% unless attempts > 3 %>Idle<% end %></div>))
+          compile(%(<%# herb:state (attempts: 0) %><div><% unless attempts * 2 > 3 %>Idle<% end %></div>))
         end
 
         assert_match(/computes with a state/, error.message)

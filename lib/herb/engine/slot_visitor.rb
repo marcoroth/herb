@@ -756,7 +756,7 @@ module Herb
         else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
         conditions = else_position ? chain.take(else_position) : chain
 
-        arms = [] #: Array[[String, String?, Integer]]
+        arms = [] #: Array[untyped]
 
         conditions.each_with_index do |arm, branch|
           expression = condition_expression(arm)
@@ -777,12 +777,21 @@ module Herb
           end
 
           rewrite_predicate(arm, read.name)
-          arms << [read.name, read.comparand, branch]
+          rewrite_predicate(arm, read.against) if read.against
+
+          arms << arm_entry(read, branch)
         end
 
         return nil if arms.empty?
 
         { arms: arms, else: else_position }
+      end
+
+      #: (StateDirectives::Read, Integer?) -> Array[untyped]
+      def arm_entry(read, branch)
+        comparand = read.against ? { "state" => read.against } : read.comparand
+
+        read.operator ? [read.name, comparand, branch, read.operator] : [read.name, comparand, branch]
       end
 
       #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
@@ -805,7 +814,9 @@ module Herb
         chain = conditional_chain(node)
         else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
 
-        { arms: [[read.name, read.comparand, else_position]], else: 0 }
+        rewrite_predicate(node, read.against) if read.against
+
+        { arms: [arm_entry(read, else_position)], else: 0 }
       end
 
       #: (untyped) -> Array[untyped]
@@ -836,7 +847,7 @@ module Herb
         rewrite_predicate(node, read.name)
 
         declaration = states.fetch(read.name)
-        arms = [] #: Array[[String, String?, Integer]]
+        arms = [] #: Array[untyped]
 
         node.conditions.each_with_index do |arm, branch|
           list = condition_expression(arm)
@@ -959,7 +970,7 @@ module Herb
 
         return nil unless read.is_a?(StateDirectives::Read)
 
-        if read.comparand.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
+        if read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
           raise Herb::Engine::CompilationError,
                 "`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` " \
                 "as a presence; only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. " \
@@ -972,7 +983,13 @@ module Herb
 
         return nil unless position
 
-        condition = read.comparand ? "#{read.name} == #{read.comparand}" : read.name
+        condition = if read.against
+                      "#{read.name} #{read.operator || "=="} #{read.against}"
+                    elsif read.comparand
+                      "#{read.name} #{read.operator || "=="} #{read.comparand}"
+                    else
+                      read.name
+                    end
         replacement = erb_output_node(%[("#{slot.attribute}" if #{condition})])
 
         children[position] = replacement

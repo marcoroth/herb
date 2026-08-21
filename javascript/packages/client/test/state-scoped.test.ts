@@ -9,6 +9,10 @@ function regionMarkup(occurrence: number): string {
     `<!--herb-region:${FILE}:aaaaaaaa:${occurrence}-->` +
     `<div><!--herb-slot:0:conditional--><!--herb-branch:0:2-->Sent<!--/herb-slot:0--></div>` +
     `<aside><!--herb-slot:7:conditional--><!--herb-branch:7:0-->Idle<!--/herb-slot:7--></aside>` +
+    `<footer><!--herb-slot:8:conditional--><!--herb-branch:8:1-->Few<!--/herb-slot:8--></footer>` +
+    `<video data-herb-slot="9:boolean_attribute:muted"></video>` +
+    `<b><!--herb-slot:10:conditional--><!--herb-branch:10:0-->Named<!--/herb-slot:10--></b>` +
+    `<i><!--herb-slot:11:conditional--><!--herb-branch:11:1-->Behind<!--/herb-slot:11--></i>` +
     `<p><!--herb-slot:1-->0<!--/herb-slot:1--></p>` +
     `<ul><!--herb-slot:2:collection-->` +
     `<!--herb-item:2:a--><li id="a" data-herb-slot="3:attribute:id"><span data-herb-slot="4:conditional"><!--herb-branch:4:1-->plain</span></li><!--/herb-item:2-->` +
@@ -17,6 +21,9 @@ function regionMarkup(occurrence: number): string {
     `<template data-herb-region="${FILE}:aaaaaaaa">` +
     `<!--herb-branch:0:0-->Sending…<!--herb-branch:0:1-->Not sent<!--herb-branch:0:2-->Sent` +
     `<!--herb-branch:7:1-->Busy` +
+    `<!--herb-branch:8:0-->Many` +
+    `<!--herb-branch:10:1-->Dated` +
+    `<!--herb-branch:11:0-->Ahead` +
     `<!--herb-branch:4:0-->starred<!--herb-branch:4:1-->plain` +
     `</template>` +
     `<!--/herb-region:${FILE}-->`
@@ -33,13 +40,20 @@ const MANIFEST = {
         { name: "failed", kind: "boolean", default: "false", scope: "region" },
         { name: "attempts", kind: "integer", default: "0", scope: "region" },
         { name: "starred", kind: "boolean", default: "false", scope: 2 },
+        { name: "sort", kind: "string", default: '"name"', scope: "region" },
+        { name: "counter1", kind: "integer", default: "0", scope: "region" },
+        { name: "counter2", kind: "integer", default: "5", scope: "region" },
       ],
       reads: { attempts: [1] },
       conditionals: {
         0: { arms: [["pending", null, 0], ["failed", null, 1]], else: 2 },
         4: { arms: [["starred", null, 0]], else: 1 },
         7: { arms: [["pending", null, 1]], else: 0 },
+        8: { arms: [["attempts", "3", 0, ">"]], else: 1 },
+        10: { arms: [["sort", '"date"', 0, "!="]], else: 1 },
+        11: { arms: [["counter1", { state: "counter2" }, 0, ">"]], else: 1 },
       },
+      presence: { 9: ["attempts", "2", ">="] },
     },
   },
 }
@@ -182,6 +196,38 @@ describe("declared state", () => {
     for (let step = 0; step < 60; step += 1) state.setState({ attempts: step })
 
     expect(slots.revert(report.token!)).toBe(true)
+  })
+
+  test("a state compares against another state, from either side", () => {
+    expect(document.querySelector("i")?.textContent).toContain("Behind")
+
+    state.setState({ counter1: 9 })
+    expect(document.querySelector("i")?.textContent).toContain("Ahead")
+
+    state.setState({ counter2: 12 })
+    expect(document.querySelector("i")?.textContent).toContain("Behind")
+  })
+
+  test("a negated equality arm matches everything but its literal", () => {
+    expect(document.querySelector("b")?.textContent).toContain("Named")
+
+    state.setState({ sort: "date" })
+    expect(document.querySelector("b")?.textContent).toContain("Dated")
+
+    state.setState({ sort: "title" })
+    expect(document.querySelector("b")?.textContent).toContain("Named")
+  })
+
+  test("an ordered arm flips at its boundary", () => {
+    expect(document.querySelector("footer")?.textContent).toContain("Few")
+
+    state.setState({ attempts: 4 })
+    expect(document.querySelector("footer")?.textContent).toContain("Many")
+    expect(document.querySelector("video")?.hasAttribute("muted")).toBe(true)
+
+    state.setState({ attempts: 1 })
+    expect(document.querySelector("footer")?.textContent).toContain("Few")
+    expect(document.querySelector("video")?.hasAttribute("muted")).toBe(false)
   })
 
   test("an unless conditional flips through its inverted arms", () => {
