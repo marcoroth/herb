@@ -2,6 +2,8 @@ import { Hover, Location, LocationLink, MarkupKind, Position, Range } from "vsco
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserService } from "./parser_service"
 import { isPositionInRange, lspRangeFromLocation } from "./range_utils"
+import { RubyLocalsIndex } from "./ruby_locals_index"
+import { slotNameGroupAt } from "./herb_attribute_links"
 import { pathFromUri, uriFromPath } from "./uri"
 import { RenderCollector } from "./render_collector"
 
@@ -52,6 +54,10 @@ export class DefinitionProvider {
   }
 
   getDefinition(document: TextDocument, position: Position, options?: FrameworkOptions): LocationLink[] {
+    const herb = this.getHerbDefinition(document, position)
+
+    if (herb.length > 0) return herb
+
     if (options?.framework !== "actionview") return []
 
     const reference = this.referenceAt(document, position)
@@ -65,6 +71,37 @@ export class DefinitionProvider {
       targetUri: uriFromPath(filePath),
       targetRange,
       targetSelectionRange: targetRange,
+    }))
+  }
+
+  private getHerbDefinition(document: TextDocument, position: Position): LocationLink[] {
+    const index = RubyLocalsIndex.build(this.parserService, document)
+    const local = index.at(position)
+
+    if (local) {
+      const onDefault = local.defaultValue !== undefined && isPositionInRange(position, local.defaultValue)
+      const origin = local.usages.find(usage => isPositionInRange(position, usage))
+        ?? (onDefault ? local.defaultValue : local.declaration)
+
+      return [{
+        originSelectionRange: origin,
+        targetUri: document.uri,
+        targetRange: local.declaration,
+        targetSelectionRange: local.declaration,
+      }]
+    }
+
+    const group = slotNameGroupAt(index.herbAttributes, position, isPositionInRange)
+
+    if (!group || group.declarations.length === 0) return []
+
+    const origin = group.usages.find(usage => isPositionInRange(position, usage)) ?? group.declarations[0]
+
+    return group.declarations.map(declaration => ({
+      originSelectionRange: origin,
+      targetUri: document.uri,
+      targetRange: declaration,
+      targetSelectionRange: declaration,
     }))
   }
 
