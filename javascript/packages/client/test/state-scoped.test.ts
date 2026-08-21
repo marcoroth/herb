@@ -65,6 +65,53 @@ function boot(markup: string): void {
 
 beforeEach(() => boot(regionMarkup(0)))
 
+describe("a state read in an interpolated attribute", () => {
+  const ROW_FILE = "app/views/page/rows.html.erb"
+
+  const ROW_PAGE =
+    `<!--herb-region:${ROW_FILE}:dddddddd:0-->` +
+    `<div class="row-" data-herb-slot="0:attribute_interpolation:class">x</div>` +
+    `<template data-herb-region="${ROW_FILE}:dddddddd">` +
+    `<!--herb-branch:0:parts-->row-<!--herb-part-->` +
+    `</template>` +
+    `<!--/herb-region:${ROW_FILE}-->`
+
+  const ROW_MANIFEST = {
+    state: {},
+    states: {
+      [ROW_FILE]: {
+        version: "dddddddd",
+        declarations: [{ name: "status", kind: "string", default: '""', scope: "region" }],
+        reads: { status: [0] },
+        conditionals: {},
+      },
+    },
+  }
+
+  test("a state write rebuilds the whole attribute from its parts", () => {
+    document.body.innerHTML = ROW_PAGE + `<template data-herb-dependencies>${JSON.stringify(ROW_MANIFEST)}</template>`
+
+    const rowSlots = new SlotIndex()
+
+    rowSlots.scan(document.body)
+
+    const rowState = new SlotState(rowSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    rowState.adopt()
+
+    expect(rowState.setState({ status: "busy" })).toBe(true)
+    expect(document.querySelector("div")?.className).toBe("row-busy")
+
+    expect(rowState.setState({ status: "" })).toBe(true)
+    expect(document.querySelector("div")?.className).toBe("row-")
+  })
+})
+
 describe("sibling collections sharing a state name", () => {
   const TWIN_FILE = "app/views/page/twins.html.erb"
 

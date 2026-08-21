@@ -477,6 +477,15 @@ module Engine
         refute_includes manifest["bound"]["draft"], manifest["reads"]["draft"].last
       end
 
+      test "counts a state read in an interpolated attribute" do
+        path = write("index.html.erb", %(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [0], manifest["reads"]["status"]
+        assert_empty manifest["bound"]
+      end
+
       test "carries the states of a partial no server state reaches" do
         write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
         path = write("index.html.erb", %(<div><%= render "menu" %></div>))
