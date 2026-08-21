@@ -85,6 +85,10 @@ describe("html-boolean-attributes-no-value", () => {
     `)
   })
 
+  test("allows a boolean attribute comparing a declared state to a literal", () => {
+    expectNoOffenses('<%# herb:state (draft: "") %>\n<p><%= draft %></p>\n<button disabled="<%= draft == \'\' %>">Send</button>')
+  })
+
   test("fails for an ERB value that is not a declared state", () => {
     expectError('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="<%= agreed %>"`.')
 

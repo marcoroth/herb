@@ -423,6 +423,20 @@ module Engine
 
         assert_empty subject.across(entry)
       end
+      test "carries the presence a boolean attribute compares" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (draft: "", sending: false) %>
+          <p><%= draft %></p>
+          <button disabled="<%= draft == "" %>">Send</button>
+          <video muted="<%= sending %>"></video>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [["draft", %("")], ["sending", nil]], manifest["presence"].values
+        assert_equal manifest["presence"].keys.map(&:to_i).sort, (manifest["reads"]["draft"] + manifest["reads"]["sending"]).sort - manifest["reads"]["draft"].take(1)
+      end
+
       test "carries the states a template declares" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (pending: false, attempts: 0) %>

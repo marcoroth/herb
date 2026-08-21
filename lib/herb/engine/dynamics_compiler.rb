@@ -458,12 +458,31 @@ module Herb
 
       #: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
       def add_dynamic(code, context, index, escaped, nested: false)
-        value = nested ? "(#{code})" : dynamic_value(code, context, escaped)
+        value = if index && boolean_presence?(index)
+                  "!!(#{code})"
+                elsif nested
+                  "(#{code})"
+                else
+                  dynamic_value(code, context, escaped)
+                end
 
-        return add_block_dynamic(index ? assignment(index, value) : value) unless @block_depth.zero?
+        unless @block_depth.zero?
+          if index && boolean_presence?(index)
+            attribute = @slot_visitor.slots[index].attribute.to_s.inspect
+
+            return add_block_dynamic("(#{assignment(index, value)}) ? #{attribute} : \"\"")
+          end
+
+          return add_block_dynamic(index ? assignment(index, value) : value)
+        end
         return if index.nil?
 
         @src << "; " << assignment(index, value) << ";"
+      end
+
+      #: (Integer) -> bool
+      def boolean_presence?(index)
+        @slot_visitor.slots[index]&.type == :boolean_attribute
       end
 
       #: (String, Integer?, bool) -> void

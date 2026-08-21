@@ -3,10 +3,11 @@ import { ParserRule } from "../types.js"
 import { StateScopeMap, declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
 import { bareReadName, mentionsAnyState } from "@herb-tools/client/directives"
 
-import { locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
+import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
+import { getAttributeName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 const LITERAL_KINDS: Record<string, string> = {
@@ -55,6 +56,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   private states: StateScopeMap
   private source: string
   private stack: (ERBBlockNode | null)[] = [null]
+  private booleanAttribute = false
 
   constructor(ruleName: string, states: StateScopeMap, source: string, context?: Partial<LintContext>) {
     super(ruleName, context)
@@ -71,6 +73,17 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     this.stack.pop()
   }
 
+  visitHTMLAttributeNode(node: HTMLAttributeNode): void {
+    const name = getAttributeName(node)
+    const previous = this.booleanAttribute
+
+    this.booleanAttribute = name !== null && isBooleanAttribute(name)
+
+    super.visitHTMLAttributeNode(node)
+
+    this.booleanAttribute = previous
+  }
+
   visitERBContentNode(node: ERBContentNode): void {
     if (node.tag_opening?.value !== "<%=" && node.tag_opening?.value !== "<%==") return
 
@@ -81,6 +94,14 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     const expression = node.content?.value.trim() ?? ""
 
     if (expression === "" || !mentionsAnyState(expression, names)) return
+
+    if (this.booleanAttribute) {
+      const prism = node.prismNode
+
+      if (prism) this.classifyPredicate(prism, names)
+
+      return
+    }
 
     const bare = bareReadName(expression)
 

@@ -170,6 +170,14 @@ module Herb
           (bound[name] ||= []) << slot.index if bound_slot?(slot)
         end
 
+        presence = {} #: Hash[String, [String, String?]]
+
+        visitor.state_presence.each do |index, read|
+          presence[index.to_s] = [read.name, read.comparand]
+          (reads[read.name] ||= []) << index
+          (bound[read.name] ||= []) << index if read.comparand.nil? && bound_slot?(visitor.slots[index])
+        end
+
         conditionals = visitor.state_conditional_entries.to_h { |index, info|
           [index.to_s, { "arms" => info[:arms], "else" => info[:else] }]
         }
@@ -180,6 +188,7 @@ module Herb
           "reads" => reads,
           "bound" => bound,
           "conditionals" => conditionals,
+          "presence" => presence,
         }
       end
 
