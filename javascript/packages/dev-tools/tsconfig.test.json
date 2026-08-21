@@ -1,10 +1,24 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "noEmit": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "paths": {
+      "@herb-tools/dev-tools": [
+        "./src/index.ts"
+      ]
+    }
   },
-  "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "demo/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

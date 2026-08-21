@@ -161,6 +161,39 @@ describe("HerbANSIElement in a browser", () => {
     })
   })
 
+  describe("linkResolver", () => {
+    it("rewrites a file target into a linkable one", () => {
+      const element = mount(`\x1b]8;;file:///workspace/app/views/page.html.erb\x1b\\page.html.erb\x1b]8;;\x1b\\`)
+
+      element.linkResolver = url => url.replace("file:///workspace/", "https://herb-tools.dev/")
+
+      const anchor = shadowOf(element).querySelector("a") as HTMLAnchorElement
+
+      expect(anchor.href).toBe("https://herb-tools.dev/app/views/page.html.erb")
+    })
+
+    it("restores the original target when the resolver is removed", () => {
+      const element = mount(`\x1b]8;;https://herb-tools.dev\x1b\\docs\x1b]8;;\x1b\\`)
+
+      element.linkResolver = () => "https://example.com"
+
+      expect((shadowOf(element).querySelector("a") as HTMLAnchorElement).href).toBe("https://example.com/")
+
+      element.linkResolver = null
+
+      expect((shadowOf(element).querySelector("a") as HTMLAnchorElement).href).toBe("https://herb-tools.dev/")
+    })
+
+    it("drops the anchor when the resolver returns null", () => {
+      const element = mount(`\x1b]8;;https://herb-tools.dev\x1b\\docs\x1b]8;;\x1b\\`)
+
+      element.linkResolver = () => null
+
+      expect(shadowOf(element).querySelector("a")).toBe(null)
+      expect(shadowOf(element).textContent).toBe("docs")
+    })
+  })
+
   describe("reacting to content", () => {
     it("re-renders when the text changes", async () => {
       const element = mount("\x1b[31mfirst\x1b[0m")

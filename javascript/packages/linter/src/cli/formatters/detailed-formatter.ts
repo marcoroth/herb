@@ -82,6 +82,7 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
         contextLines: 0,
         wrapLines: this.wrapLines,
         truncateLines: this.truncateLines,
+        fileUrl: fileUrl(this.absolutePath(frame.file)),
       })
 
       const gutterLines = rendered.split("\n").filter(line => line.includes("│"))

@@ -1,4 +1,4 @@
-import { colorize } from "./color.js"
+import { colorize, hyperlink } from "./color.js"
 import { dimStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
 import * as gutter from "./gutter.js"
@@ -51,6 +51,7 @@ export class FileRenderer {
     maxWidth = LineWrapper.getTerminalWidth(),
     wrapLines = false,
     truncateLines = false,
+    fileUrl?: string,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
     const lines = highlightedContent.split("\n")
@@ -58,14 +59,16 @@ export class FileRenderer {
     const startLine = Math.max(1, focusLine - contextLines)
     const endLine = Math.min(lines.length, focusLine + contextLines)
 
-    let output = showLineNumbers ? `${colorize(path, "cyan")}\n\n` : ""
+    const header = fileUrl ? hyperlink(colorize(path, "cyan"), fileUrl) : colorize(path, "cyan")
+
+    let output = showLineNumbers ? `${header}\n\n` : ""
 
     for (let i = startLine; i <= endLine; i++) {
       const line = lines[i - 1] || ""
       const isFocusLine = i === focusLine
 
       if (showLineNumbers) {
-        const prefix = gutter.linePrefix(i, isFocusLine, isFocusLine ? "cyan" : undefined)
+        const prefix = gutter.linePrefix(i, isFocusLine, isFocusLine ? "cyan" : undefined, isFocusLine ? fileUrl : undefined)
 
         let displayLine = line
 

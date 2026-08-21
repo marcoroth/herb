@@ -24,6 +24,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object
 - [`actionview-no-implicit-polymorphic-url`](./actionview-no-implicit-polymorphic-url.md) - Prefer explicit route helpers over implicit polymorphic URLs
+- [`actionview-no-mistyped-locals`](./actionview-no-mistyped-locals.md) - Disallow literal `render` arguments that contradict a strict local's declared default type
 - [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) - Disallow `local_assigns` reads that the strict locals declaration already answers
 - [`actionview-no-render-option-shadowing`](./actionview-no-render-option-shadowing.md) - Disallow locals that shadow a `render` option name
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
@@ -102,6 +103,14 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
+- [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
+- [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md) - Require client mode for `herb:state`.
+- [`herb-state-valid-actions`](./herb-state-valid-actions.md) - Validate `data-herb-*` action attributes.
+- [`herb-state-valid-bindings`](./herb-state-valid-bindings.md) - Validate the kind a bound form control holds.
+- [`herb-state-valid-declaration`](./herb-state-valid-declaration.md) - Validate `herb:state` declarations.
+- [`herb-state-valid-reads`](./herb-state-valid-reads.md) - Validate how declared states are read.
+- [`herb-valid-slot-names`](./herb-valid-slot-names.md) - Validate `data-herb-name` slot names.
 
 
 #### HTML

@@ -21,6 +21,12 @@ function netDocumentListeners() {
   )
 }
 
+function injectedStyleNames() {
+  return Array.from(document.querySelectorAll("style[data-herb-dev-tools]")).map(
+    node => node.getAttribute("data-herb-dev-tools")
+  )
+}
+
 function createOverlay() {
   const overlay = new HerbOverlay()
 
@@ -44,6 +50,7 @@ function navigate() {
 
 beforeEach(() => {
   localStorage.clear()
+  sessionStorage.clear()
   document.body.innerHTML = ""
 
   overlays = []
@@ -60,6 +67,7 @@ afterEach(() => {
 
   document.body.innerHTML = ""
   localStorage.clear()
+  sessionStorage.clear()
 })
 
 describe("HerbOverlay", () => {
@@ -182,14 +190,22 @@ describe("HerbDevTools", () => {
     expect(window.HerbDevTools).toBe(instance)
   })
 
-  test("injects the stylesheet on start() and removes it on stop()", () => {
+  test("injects one stylesheet per module on start() and removes them on stop()", () => {
     const instance = startDevTools()
 
-    expect(document.querySelector("style[data-herb-dev-tools]")).not.toBeNull()
+    expect(injectedStyleNames()).toEqual(["base", "overlay", "error-overlay", "runtime-panel"])
 
     instance.stop()
 
-    expect(document.querySelector("style[data-herb-dev-tools]")).toBeNull()
+    expect(injectedStyleNames()).toEqual([])
+  })
+
+  test("leaves the runtime panel stylesheet out when the panel is off", () => {
+    const instance = HerbDevTools.start({ devServer: false, runtimePanel: false })!
+
+    expect(injectedStyleNames()).toEqual(["base", "overlay", "error-overlay"])
+
+    instance.stop()
   })
 
   test("ignores repeated start() calls", () => {
@@ -205,7 +221,7 @@ describe("HerbDevTools", () => {
     expect(HerbDevTools.instance).toBe(instance)
     expect(netDocumentListeners()).toEqual(afterFirstStart)
     expect(document.querySelectorAll(".herb-floating-menu")).toHaveLength(1)
-    expect(document.querySelectorAll("style[data-herb-dev-tools]")).toHaveLength(1)
+    expect(injectedStyleNames()).toEqual(["base", "overlay", "error-overlay", "runtime-panel"])
     expect(warn).toHaveBeenCalledTimes(5)
   })
 
@@ -262,5 +278,123 @@ describe("HerbDevTools", () => {
     expect(window.HerbDevTools?.overlay).toBe(instance.overlay)
     expect(window.HerbDevTools?.overlay).toBeInstanceOf(HerbOverlay)
     expect(window.HerbDevTools?.client).toBeNull()
+  })
+})
+
+describe("runtime diagnostics menu toggle", () => {
+  function toggle() {
+    return document.getElementById("herbToggleRuntimePanel") as HTMLInputElement | null
+  }
+
+  function openMenu() {
+    ;(document.getElementById("herbMenuTrigger") as HTMLElement).click()
+  }
+
+  function badge() {
+    return document.querySelector(".herb-dev-tools-badge")
+  }
+
+  function report(instance: HerbDevTools) {
+    instance.report({ template: "app/views/posts/_post.html.erb", message: "Nested `<form>` elements are not allowed." })
+  }
+
+  test("rides along with the other menu toggles", () => {
+    startDevTools()
+
+    expect(toggle()).not.toBeNull()
+    expect(toggle()!.closest(".herb-toggle-item")).not.toBeNull()
+    expect(toggle()!.parentElement!.querySelector(".herb-toggle-text")!.textContent).toBe("Runtime Diagnostics")
+    expect(toggle()!.checked).toBe(true)
+  })
+
+  test("stays out of the menu when the panel is switched off", () => {
+    startDevTools({ runtimePanel: false })
+
+    expect(toggle()).toBeNull()
+  })
+
+  test("reflects a dismissal made from the panel header", () => {
+    const instance = startDevTools()
+
+    report(instance)
+
+    expect(badge()).not.toBeNull()
+
+    instance.runtimePanel!.dismiss()
+
+    expect(badge()).toBeNull()
+    expect(toggle()!.checked).toBe(true)
+
+    openMenu()
+
+    expect(toggle()!.checked).toBe(false)
+  })
+
+  test("brings the badge back when switched on", () => {
+    const instance = startDevTools()
+
+    report(instance)
+    instance.runtimePanel!.dismiss()
+    openMenu()
+
+    toggle()!.checked = true
+    toggle()!.dispatchEvent(new Event("change"))
+
+    expect(instance.runtimePanel!.dismissed).toBe(false)
+    expect(badge()).not.toBeNull()
+  })
+
+  test("hides the badge when switched off", () => {
+    const instance = startDevTools()
+
+    report(instance)
+    openMenu()
+
+    toggle()!.checked = false
+    toggle()!.dispatchEvent(new Event("change"))
+
+    expect(instance.runtimePanel!.dismissed).toBe(true)
+    expect(badge()).toBeNull()
+  })
+
+  test("carries the dismissal across a restart", () => {
+    const first = startDevTools()
+
+    report(first)
+    openMenu()
+
+    toggle()!.checked = false
+    toggle()!.dispatchEvent(new Event("change"))
+
+    first.stop()
+
+    const second = startDevTools()
+
+    report(second)
+
+    expect(second.runtimePanel!.dismissed).toBe(true)
+    expect(badge()).toBeNull()
+    expect(toggle()!.checked).toBe(false)
+  })
+
+  test("never disagrees with the panel about the stored state", () => {
+    const instance = startDevTools()
+    const stored = () => JSON.parse(sessionStorage.getItem("herb-dev-tools-runtime-panel") ?? "{}").dismissed
+
+    report(instance)
+    openMenu()
+
+    toggle()!.checked = false
+    toggle()!.dispatchEvent(new Event("change"))
+
+    expect(stored()).toBe(true)
+    expect(instance.runtimePanel!.dismissed).toBe(true)
+
+    instance.show()
+    openMenu()
+    openMenu()
+
+    expect(stored()).toBe(false)
+    expect(toggle()!.checked).toBe(true)
   })
 })

@@ -1,5 +1,7 @@
 import { ANSI_VARIABLE_PREFIX, ANSIConverter } from "./ansi-html.js"
 
+import type { LinkResolver } from "./ansi-html.js"
+
 import { BACKGROUND, FOREGROUND } from "../themes/onedark.json" with { type: "json" }
 
 export const HERB_ANSI_TAG_NAME = "herb-ansi"
@@ -62,6 +64,7 @@ export class HerbANSIElement extends HTMLElementBase {
   private output: HTMLElement
   private observer: MutationObserver | null = null
   private converter = new ANSIConverter()
+  private resolver: LinkResolver | null = null
 
   static define(tagName: string = HerbANSIElement.tagName): boolean {
     if (globals.customElements === undefined || globals.HTMLElement === undefined) return false
@@ -97,6 +100,17 @@ export class HerbANSIElement extends HTMLElementBase {
   disconnectedCallback(): void {
     this.observer?.disconnect()
     this.observer = null
+  }
+
+  get linkResolver(): LinkResolver | null {
+    return this.resolver
+  }
+
+  set linkResolver(resolver: LinkResolver | null) {
+    this.resolver = resolver
+    this.converter = new ANSIConverter(resolver === null ? {} : { linkResolver: resolver })
+
+    this.render()
   }
 
   render(): void {

@@ -1,0 +1,296 @@
+import { describe, test, expect, beforeEach, afterEach } from "vitest"
+import { SlotActions } from "../src/actions"
+import { SlotIndex } from "../src/slot-index"
+import { SlotState, STATE_EVENT } from "../src/state"
+
+const FILE = "app/views/page/panel.html.erb"
+
+const PAGE =
+  `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+  `<section>` +
+  `<button id="toggle" data-herb-toggle="open">Details</button>` +
+  `<button id="both" data-herb-set="pending=false,failed=true">Fail</button>` +
+  `<button id="bump" data-herb-increment="attempts" data-herb-by="2">More</button>` +
+  `<button id="tab-a" data-herb-set="sort=name">A</button>` +
+  `<button id="quoted" data-herb-set="sort='hello, world'">Q</button>` +
+  `<form id="form" data-herb-set="pending=true"><input id="draft-input" data-herb-reset="blur->sort"></form>` +
+  `<input id="typer" data-herb-set="sort=$value">` +
+  `<select id="chooser" data-herb-set="sort=$value"><option value="date">date</option></select>` +
+  `<div id="menu" data-herb-set="mouseenter->open=true mouseleave->open=false">hover</div>` +
+  `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->closed<!--/herb-slot:0--></div>` +
+  `<p><!--herb-slot:1-->0<!--/herb-slot:1--></p>` +
+  `<ul><!--herb-slot:2:collection-->` +
+  `<!--herb-item:2:a--><li id="a" data-herb-slot="3:attribute:id"><button class="star" data-herb-toggle="starred">s</button>` +
+  `<em><!--herb-slot:4:conditional--><!--herb-branch:4:1-->plain<!--/herb-slot:4--></em></li><!--/herb-item:2-->` +
+  `<!--herb-item:2:b--><li id="b" data-herb-slot="3:attribute:id"><button class="star" data-herb-toggle="starred">s</button>` +
+  `<em><!--herb-slot:4:conditional--><!--herb-branch:4:1-->plain<!--/herb-slot:4--></em></li><!--/herb-item:2-->` +
+  `<!--/herb-slot:2--></ul>` +
+  `</section>` +
+  `<template data-herb-region="${FILE}:aaaaaaaa">` +
+  `<!--herb-branch:0:0-->opened<!--herb-branch:0:1-->closed` +
+  `<!--herb-branch:4:0-->starred<!--herb-branch:4:1-->plain` +
+  `</template>` +
+  `<!--/herb-region:${FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [FILE]: {
+        version: "aaaaaaaa",
+        declarations: [
+          { name: "open", kind: "boolean", default: "false", scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+          { name: "sort", kind: "string", default: '"name"', scope: "region" },
+          { name: "starred", kind: "boolean", default: "false", scope: 2 },
+        ],
+        reads: { attempts: [1] },
+        conditionals: {
+          0: { arms: [["open", null, 0]], else: 1 },
+          4: { arms: [["starred", null, 0]], else: 1 },
+        },
+      },
+    },
+  })}</template>`
+
+let slots: SlotIndex
+let state: SlotState
+let actions: SlotActions
+
+function click(selector: string): void {
+  document.querySelector<HTMLElement>(selector)!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+}
+
+beforeEach(() => {
+  document.body.innerHTML = PAGE
+
+  slots = new SlotIndex()
+  slots.scan(document.body)
+
+  state = new SlotState(slots, { persist: "none" })
+  state.adopt()
+
+  actions = new SlotActions(state)
+  actions.start(document.body)
+})
+
+afterEach(() => actions.stop())
+
+describe("declarative actions", () => {
+  test("a click toggles a boolean and flips its branch", () => {
+    click("#toggle")
+
+    expect(state.getState("open")).toBe(true)
+    expect(document.querySelector("div:not([id])")?.textContent).toContain("opened")
+
+    click("#toggle")
+
+    expect(state.getState("open")).toBe(false)
+  })
+
+  test("a comma pair lands as one transition", () => {
+    const order: string[] = []
+    const handler = (event: Event): void => {
+      order.push((event as CustomEvent<{ name: string }>).detail.name)
+    }
+
+    document.addEventListener(STATE_EVENT, handler)
+    click("#both")
+    document.removeEventListener(STATE_EVENT, handler)
+
+    expect(state.getState("pending")).toBe(false)
+    expect(state.getState("failed")).toBe(true)
+    expect(order).toEqual(["pending", "failed"])
+  })
+
+  test("increment honours data-herb-by", () => {
+    click("#bump")
+    click("#bump")
+
+    expect(state.getState("attempts")).toBe(4)
+    expect(document.querySelector("p")?.textContent).toContain("4")
+  })
+
+  test("a step that does not parse falls back to one", () => {
+    const bump = document.querySelector("#bump")!
+
+    bump.setAttribute("data-herb-by", "two")
+    click("#bump")
+
+    expect(state.getState("attempts")).toBe(1)
+  })
+
+  test("a stopped runtime detaches its hover listeners", () => {
+    const menu = document.querySelector("#menu")!
+
+    menu.dispatchEvent(new Event("mouseenter"))
+    expect(state.getState("open")).toBe(true)
+
+    actions.stop()
+
+    menu.dispatchEvent(new Event("mouseleave"))
+    expect(state.getState("open")).toBe(true)
+
+    actions = new SlotActions(state)
+    actions.start(document.body)
+  })
+
+  test("a string set is typed by the declaration", () => {
+    click("#tab-a")
+
+    expect(state.getState("sort")).toBe("name")
+  })
+
+  test("single quotes protect separators", () => {
+    click("#quoted")
+
+    expect(state.getState("sort")).toBe("hello, world")
+  })
+
+  test("a form defaults to submit, not click", () => {
+    expect(state.getState("pending")).toBe(false)
+
+    const form = document.querySelector("#form")!
+
+    form.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    expect(state.getState("pending")).toBe(false)
+
+    form.dispatchEvent(new Event("submit", { bubbles: true }))
+    expect(state.getState("pending")).toBe(true)
+  })
+
+  test("a select defaults to change and $value reads the target", () => {
+    const select = document.querySelector<HTMLSelectElement>("#chooser")!
+
+    select.value = "date"
+    select.dispatchEvent(new Event("change", { bubbles: true }))
+
+    expect(state.getState("sort")).toBe("date")
+  })
+
+  test("an input defaults to input", () => {
+    const input = document.querySelector<HTMLInputElement>("#typer")!
+
+    input.value = "typed"
+    input.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    expect(state.getState("sort")).toBe("name")
+
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+    expect(state.getState("sort")).toBe("typed")
+  })
+
+  test("an explicit event overrides the element default", () => {
+    const input = document.querySelector<HTMLInputElement>("#draft-input")!
+
+    state.setState({ sort: "changed" })
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+    expect(state.getState("sort")).toBe("changed")
+
+    input.dispatchEvent(new FocusEvent("blur"))
+    expect(state.getState("sort")).toBe("name")
+  })
+
+  test("mouseenter and mouseleave drive a dropdown without bubbling", () => {
+    const menu = document.querySelector("#menu")!
+
+    menu.dispatchEvent(new MouseEvent("mouseenter"))
+    expect(state.getState("open")).toBe(true)
+
+    menu.dispatchEvent(new MouseEvent("mouseleave"))
+    expect(state.getState("open")).toBe(false)
+  })
+
+  test("a button inside a row toggles that row's state and no other", () => {
+    document.querySelector("#a .star")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+    expect(document.querySelector("#b em")?.textContent).toContain("plain")
+  })
+
+  test("a dynamically added element works through delegation", () => {
+    const late = document.createElement("button")
+
+    late.id = "late"
+    late.setAttribute("data-herb-toggle", "open")
+    document.querySelector("section")!.append(late)
+
+    click("#late")
+
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("invalid syntax is reported at scan, before any event", async () => {
+    const entries: { code: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const section = document.querySelector("section")!
+    const bad = document.createElement("button")
+
+    bad.setAttribute("data-herb-set", "pending")
+    section.append(bad)
+
+    const unquoted = document.createElement("button")
+
+    unquoted.setAttribute("data-herb-set", "sort='oops")
+    section.append(unquoted)
+
+    const unknown = document.createElement("button")
+
+    unknown.setAttribute("data-herb-toggle", "missing")
+    section.append(unknown)
+
+    const mistyped = document.createElement("button")
+
+    mistyped.setAttribute("data-herb-increment", "sort")
+    section.append(mistyped)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(entries.map((entry) => entry.code)).toEqual([
+      "herb-invalid-action",
+      "herb-invalid-action",
+      "herb-unknown-state",
+      "herb-state-type",
+    ])
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("a valid page reports nothing at scan", () => {
+    const entries: unknown[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input),
+    }
+
+    actions.stop()
+    actions = new SlotActions(state)
+    actions.start(document.body)
+
+    expect(entries).toEqual([])
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("toggle on a non-boolean reports and does nothing", () => {
+    const entries: unknown[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input),
+    }
+
+    const rogue = document.createElement("button")
+
+    rogue.setAttribute("data-herb-toggle", "sort,open")
+    document.querySelector("section")!.append(rogue)
+    rogue.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(state.getState("open")).toBe(false)
+    expect((entries[0] as { code: string }).code).toBe("herb-state-type")
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+})

@@ -4,6 +4,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/dynamics_compiler"
 
 module Engine
   module Slots
@@ -108,6 +109,28 @@ module Engine
         assert_equal "<!--herb-branch:1:1-->even", parked(template, { "@items" => [1, 3] })
       end
 
+      test "parks a keyed collection's item template even when the collection rendered rows" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+
+        assert_includes parked(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+        assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
+      end
+
+      test "parks the item template with its values blanked" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+        markup = parked(template, { "@items" => ["a", "b"] })
+
+        assert_includes markup, %(<li id="")
+        refute_includes markup, ">a<"
+        refute_includes markup, ">b<"
+      end
+
+      test "parks no item template for an unkeyed collection, which has no addressable items" do
+        template = "<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>"
+
+        refute_includes render(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+      end
+
       test "parks the branches of one conditional and not of another" do
         markup = parked("<% if @a %>a<% end %><% if @b %>b<% end %>", { "@a" => true, "@b" => false })
 
@@ -130,6 +153,28 @@ module Engine
         refute_includes compiled, "_herb_covered_branches"
         refute_includes compiled, "<template"
         assert_includes evaluate_herb_source(compiled, { "@a" => false }), "herb-slot:0:conditional"
+      end
+
+      test "parks an interpolated attribute's static segments" do
+        template = %(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>)
+        markup = parked(template, { "@id" => 7, "@kind" => "a", "@size" => "b" })
+
+        assert_includes markup, "<!--herb-branch:0:parts-->message_<!--herb-part-->"
+        assert_includes markup, "<!--herb-branch:1:parts-->row-<!--herb-part-->-of-<!--herb-part-->"
+      end
+
+      test "the values payload carries an interpolated attribute as its dynamic parts" do
+        template = %(<div class="row-<%= @kind %>-of-<%= @size %>">x</div>)
+        source = Herb::Engine::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src
+        payload = evaluate_herb_source(source, { "@kind" => "a", "@size" => "b" })
+
+        assert_equal ["a", "b"], payload[:slots][0]
+      end
+
+      test "parks no segments for an attribute holding more than outputs" do
+        rendered = render(%(<div class="x<% if @a %>y<% end %>z">c</div>), { "@a" => true })
+
+        refute_includes rendered, ":parts-->"
       end
 
       test "parks nothing at all unless the mode asks for it" do
