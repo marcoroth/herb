@@ -38,6 +38,7 @@ describe("the client runtime reporting into the panel", () => {
     const instance = HerbDevTools.start({ devServer: false })!
     devTools = instance
     stopClearing = clearOnNavigation()
+    document.dispatchEvent(new Event("turbo:load"))
 
     report({ template: "app/views/a.html.erb", message: "from the runtime" })
     instance.report({ template: "app/views/a.html.erb", message: "from the linter", origin: "Herb Linter" })

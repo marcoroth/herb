@@ -97,6 +97,7 @@ export class SlotState {
   readonly #dependencies = new Map<string, StateSlot[]>()
   readonly #params = new Map<string, string>()
   readonly #declared = new Map<string, StateManifest>()
+  readonly #writtenParams = new Set<string>()
   readonly #scoped = new Map<Region, Map<string, Map<string, StateValue>>>()
   readonly #seeds = new Map<Region, Map<string, Map<string, StateValue>>>()
   readonly #sequence = new Map<string, number>()
@@ -138,7 +139,10 @@ export class SlotState {
   }
 
   #forget(names: string[]): void {
-    for (const name of names) this.#values.delete(name)
+    for (const name of names) {
+      this.#values.delete(name)
+      this.#writtenParams.add(name)
+    }
   }
 
   get(key: string): string | undefined {
@@ -823,12 +827,15 @@ export class SlotState {
 
     const url = new URL(window.location.href)
 
-    url.search = ""
+    for (const name of this.#writtenParams) url.searchParams.delete(name)
+
+    this.#writtenParams.clear()
 
     for (const [name, value] of this.#values) {
       if (this.#options.persist === "known" && !this.#known(name)) continue
 
       url.searchParams.set(name, value)
+      this.#writtenParams.add(name)
     }
 
     window.history.replaceState(window.history.state, "", url.toString())
@@ -941,8 +948,6 @@ export class SlotState {
 
   async #fetch(request: StateRequest, signal: AbortSignal): Promise<Payload | null> {
     const url = new URL(window.location.href)
-
-    url.search = ""
 
     for (const [name, value] of Object.entries(request.state)) url.searchParams.set(name, value)
 

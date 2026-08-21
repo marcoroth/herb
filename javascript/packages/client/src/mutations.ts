@@ -297,6 +297,16 @@ export class SlotMutations {
       const keys = Object.keys((value as Collected).items).filter((key) => key !== temp)
 
       if (keys.length === 1) return keys[0]
+
+      if (keys.length > 1) {
+        report({
+          template: payload.template,
+          message: `A confirm carried ${keys.length} rows, so the optimistic row cannot tell which one it became and keeps its temporary key.`,
+          code: "herb-ambiguous-confirm",
+          severity: "warning",
+          suggestion: `render only the created row in the confirm response, or pass \`confirmKey\` to \`submit\``,
+        })
+      }
     }
 
     return null
