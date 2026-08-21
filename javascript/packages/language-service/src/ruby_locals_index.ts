@@ -14,7 +14,7 @@ import type { ParserService } from "./parser_service"
 import type { DocumentNode, Node, RubyReference, ERBContentNode } from "@herb-tools/core"
 import type { StateSignature } from "@herb-tools/client/directives"
 
-const PARSER_OPTIONS = { prism_program: true, strict_locals: true } as const
+const PARSER_OPTIONS = { prism_program: true, strict_locals: true, action_view_helpers: true } as const
 
 export interface RubyLocal {
   name: string
