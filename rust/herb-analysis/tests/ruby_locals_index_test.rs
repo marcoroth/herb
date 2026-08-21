@@ -133,3 +133,37 @@ fn counts_columns_in_bytes_so_multibyte_content_does_not_shift_a_location() {
   assert_eq!(3, local.usages[0].start.line);
   assert_eq!("title", text_at(source, &local.declaration));
 }
+
+#[test]
+fn indexes_a_state_declaration_like_a_local() {
+  let source = "<%# herb:state (pending: false, attempts: 0) %>\n<p><%= pending? %></p>\n<p><%= attempts %></p>\n";
+  let index = index_for(source);
+
+  assert_eq!(vec![1, 2], lines_of(index.find("pending").expect("pending")));
+  assert_eq!(vec![1, 3], lines_of(index.find("attempts").expect("attempts")));
+}
+
+#[test]
+fn indexes_a_state_declared_inside_a_loop() {
+  let source = "<% @items.each do |item| %>\n  <%# herb:state (locked: true) %>\n  <p><%= locked %></p>\n<% end %>\n";
+  let index = index_for(source);
+
+  assert_eq!(vec![2, 3], lines_of(index.find("locked").expect("locked")));
+}
+
+#[test]
+fn ignores_a_plain_comment_that_is_not_a_state_directive() {
+  let index = index_for("<%# locked drives the row %>\n<p>static</p>\n");
+
+  assert!(index.find("locked").is_none());
+}
+
+#[test]
+fn keeps_a_quoted_comma_inside_one_state_default() {
+  let source = "<%# herb:state (draft: \"a,b\", open: false) %>\n<p><%= draft %></p>\n";
+  let index = index_for(source);
+
+  assert!(index.find("draft").is_some());
+  assert!(index.find("open").is_some());
+  assert!(index.find("b\"").is_none());
+}
