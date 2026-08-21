@@ -1514,6 +1514,33 @@ describe("herb attribute completions", () => {
     expect(offered).not.toContain("click->")
   })
 
+  it("completes herb keys inside a tag helper's data hash", () => {
+    const content = '<%= tag.button "x", data: { herb_t } %>'
+    const offered = labels(content, 0, content.indexOf("herb_t") + 6)
+
+    expect(offered).toEqual(["herb_toggle:"])
+  })
+
+  it("offers every herb key at an empty data hash", () => {
+    const content = '<%= tag.button "x", data: {  } %>'
+    const offered = labels(content, 0, content.indexOf("{ ") + 2)
+
+    expect(offered).toContain("herb_set:")
+    expect(offered).toContain("herb_into:")
+  })
+
+  it("completes a state inside a data hash value", () => {
+    const content = STATES + '<%= tag.button "x", data: { herb_toggle: "" } %>'
+
+    expect(labels(content, ...insideValue(content, 'herb_toggle: "'))).toEqual(["open"])
+  })
+
+  it("runs the set grammar inside a data hash value", () => {
+    const content = STATES + '<%= tag.button "x", data: { herb_set: "open=" } %>'
+
+    expect(labels(content, ...insideValue(content, 'herb_set: "open='))).toEqual(["true", "false"])
+  })
+
   it("offers an item state only inside its loop", () => {
     const content =
       '<%# herb:state (open: false) %>\n' +
