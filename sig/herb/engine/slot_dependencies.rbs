@@ -38,6 +38,9 @@ module Herb
       # : (String, ?params: Hash[String, String]) -> Hash[String, untyped]
       def payload: (String, ?params: Hash[String, String]) -> Hash[String, untyped]
 
+      # : (String, Hash[String, untyped]) -> Hash[String, untyped]
+      def declared_states: (String, Hash[String, untyped]) -> Hash[String, untyped]
+
       # : (String, ?params: Hash[String, String]) -> String
       def element: (String, ?params: Hash[String, String]) -> String
 
@@ -54,6 +57,12 @@ module Herb
 
       # : (String, Array[String]?) -> Hash[Symbol, untyped]
       def build: (String, Array[String]?) -> Hash[Symbol, untyped]
+
+      # : (untyped) -> Hash[String, untyped]?
+      def states_manifest: (untyped) -> Hash[String, untyped]?
+
+      # : (untyped) -> bool
+      def bound_slot?: (untyped) -> bool
 
       # : (untyped, ?Array[Hash[Symbol, untyped]], ?per_item: bool) -> Array[Hash[Symbol, untyped]]
       def reached_slots: (untyped, ?Array[Hash[Symbol, untyped]], ?per_item: bool) -> Array[Hash[Symbol, untyped]]

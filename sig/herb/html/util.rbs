@@ -10,6 +10,9 @@ module Herb
 
       RAW_TEXT_ELEMENTS: Array[String]
 
+      # https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+      BOOLEAN_ATTRIBUTES: Array[String]
+
       # : (String) -> bool
       def self.void_element?: (String) -> bool
 
@@ -18,6 +21,9 @@ module Herb
 
       # : (String) -> bool
       def self.raw_text_element?: (String) -> bool
+
+      # : (String) -> bool
+      def self.boolean_attribute?: (String) -> bool
     end
   end
 end
