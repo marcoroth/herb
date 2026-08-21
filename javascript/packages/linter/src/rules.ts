@@ -16,6 +16,7 @@ import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynami
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
+import { ActionViewNoMistypedLocalsRule } from "./rules/actionview-no-mistyped-locals.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
@@ -174,6 +175,7 @@ export const rules: RuleClass[] = [
   ActionViewNoHelperShadowingRule,
   ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
+  ActionViewNoMistypedLocalsRule,
   ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoRenderOptionShadowingRule,
   ActionViewNoSilentHelperRule,
