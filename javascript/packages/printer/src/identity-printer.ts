@@ -1,5 +1,5 @@
 import { Printer } from "./printer.js"
-import { getNodesBeforePosition, getNodesAfterPosition } from "@herb-tools/core"
+import { getNodesBeforePosition, getNodesAfterPosition, isWhitespaceNode } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
 
@@ -44,11 +44,46 @@ export class IdentityPrinter extends Printer {
       this.write(node.tag_name.value)
     }
 
-    this.visitChildNodes(node)
+    // Without `track_whitespace: true` the parser doesn't emit a node for the
+    // whitespace that separates the tag name from the first attribute, or the
+    // whitespace between attributes, so reconstructing children back-to-back
+    // would merge them together (e.g. `<span class="x">` becoming
+    // `<spanclass="x">`). Restore a single separating space wherever the
+    // previous node's end position doesn't line up with the next node's start.
+    //
+    // WhitespaceNode children already print their own whitespace (including
+    // synthetic ones inserted by autofixers/rewriters, whose location doesn't
+    // line up with the surrounding nodes), so the gap-fill check is skipped
+    // both for the WhitespaceNode itself and for whatever child follows it -
+    // otherwise the gap-fill logic would see the following child's position
+    // doesn't line up with `previousEnd` (which the WhitespaceNode leaves
+    // untouched) and write a second, duplicate separating space.
+    let previousEnd = node.tag_name?.location.end ?? node.tag_opening?.location.end
+    let previousWasWhitespace = false
+
+    node.children.forEach(child => {
+      const childIsWhitespace = isWhitespaceNode(child)
+
+      if (previousEnd && !childIsWhitespace && !previousWasWhitespace && !this.samePosition(previousEnd, child.location.start)) {
+        this.write(" ")
+      }
+
+      this.visit(child)
+
+      previousWasWhitespace = childIsWhitespace
+
+      if (!childIsWhitespace) {
+        previousEnd = child.location.end
+      }
+    })
 
     if (node.tag_closing) {
       this.write(node.tag_closing.value)
     }
+  }
+
+  private samePosition(a: Nodes.Position, b: Nodes.Position): boolean {
+    return a.line === b.line && a.column === b.column
   }
 
   visitHTMLCloseTagNode(node: Nodes.HTMLCloseTagNode): void {
