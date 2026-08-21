@@ -114,7 +114,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     const expression = node.content?.value.trim() ?? ""
 
-    if (expression === "" || !mentionsAnyState(expression, names)) return
+    if (expression === "" || !mentionsAnyState(withoutActionHashValues(expression), names)) return
 
     if (this.booleanAttribute) {
       const prism = node.prismNode
@@ -368,6 +368,12 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   private locationOf(node: PrismNode): Location {
     return locationFromByteOffset(this.source, node.location.startOffset, node.location.length)
   }
+}
+
+const ACTION_HASH_VALUE = /\bherb_(?:set|toggle|increment|decrement|reset|into|name|by)(?::|\s*=>)\s*(["'])(?:(?!\1).)*\1/g
+
+function withoutActionHashValues(expression: string): string {
+  return expression.replace(ACTION_HASH_VALUE, "")
 }
 
 function capitalize(word: string): string {
