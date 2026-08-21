@@ -54,6 +54,8 @@ module Herb
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
+      STATE_KEYWORDS: Hash[String, Symbol]
+
       NAME_ATTRIBUTE: String
 
       NAMEABLE_TYPES: Array[Symbol]
@@ -100,6 +102,15 @@ module Herb
       # : () -> String
       def version: () -> String
 
+      # : () -> Hash[Symbol, untyped]
+      def state_declarations: () -> Hash[Symbol, untyped]
+
+      # : () -> Array[Hash[Symbol, untyped]]
+      def state_entries: () -> Array[Hash[Symbol, untyped]]
+
+      # : () -> Hash[Integer, Hash[Symbol, untyped]]
+      def state_conditional_entries: () -> Hash[Integer, Hash[Symbol, untyped]]
+
       def inspect: () -> untyped
 
       # : () -> String
@@ -124,6 +135,8 @@ module Herb
 
       def visit_html_element_node: (untyped node) -> untyped
 
+      def visit_erb_strict_locals_node: (untyped node) -> untyped
+
       def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
@@ -141,6 +154,13 @@ module Herb
       def visit_erb_if_node: (untyped node) -> untyped
 
       def visit_erb_unless_node: (untyped node) -> untyped
+
+      def visit_erb_else_node: (untyped node) -> untyped
+
+      def visit_erb_when_node: (untyped node) -> untyped
+
+      # : (untyped) -> void
+      def register_branch_directives: (untyped) -> void
 
       def visit_erb_case_node: (untyped node) -> untyped
 
@@ -183,6 +203,51 @@ module Herb
 
       # : (untyped) -> Symbol
       def attribute_type_for: (untyped) -> Symbol
+
+      # : (untyped, Array[untyped]) -> void
+      def register_state_directive: (untyped, Array[untyped]) -> void
+
+      # : (String?) -> Symbol
+      def local_kind: (String?) -> Symbol
+
+      # : (untyped) -> Hash[String, StateDirectives::Declaration]
+      def states_for: (untyped) -> Hash[String, StateDirectives::Declaration]
+
+      # : () -> void
+      def apply_states: () -> void
+
+      # : (StateDirectives::Declaration) -> String
+      def state_assignment: (StateDirectives::Declaration) -> String
+
+      # : () -> void
+      def classify_state_conditionals: () -> void
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
+      def refuse_state_unless: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+
+      # : (untyped) -> Array[untyped]
+      def conditional_chain: (untyped) -> Array[untyped]
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_case_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+      # : (untyped) -> String
+      def condition_expression: (untyped) -> String
+
+      # : (untyped, String) -> void
+      def rewrite_predicate: (untyped, String) -> void
+
+      # : (untyped) -> untyped
+      def predicate_token_for: (untyped) -> untyped
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
+      def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+
+      # : () -> void
+      def check_state_value_reads: () -> void
 
       # : (untyped, untyped, Integer, untyped, Integer) -> void
       def record_named_element: (untyped, untyped, Integer, untyped, Integer) -> void
@@ -250,7 +315,9 @@ module Herb
       def mark_branches: (untyped, Integer?) -> void
 
       # : (String, Array[untyped]) -> void
+      # : (String, Array[untyped], ?always: bool) -> void
       def park_branch: (String, Array[untyped]) -> void
+                     | (String, Array[untyped], ?always: bool) -> void
 
       # : (untyped) -> void
       def append_statics: (untyped) -> void

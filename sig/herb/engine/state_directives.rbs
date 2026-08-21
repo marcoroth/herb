@@ -1,0 +1,75 @@
+# Generated from lib/herb/engine/state_directives.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Parses `<%# herb:state (name: default, …) %>` directives and classifies how the body
+    # reads the states they declare.
+    class StateDirectives
+      PATTERN: Regexp
+
+      BARE: Regexp
+
+      KINDS: Hash[String, Symbol]
+
+      class Declaration < Data
+        attr_reader name(): String
+
+        attr_reader kind(): Symbol
+
+        attr_reader default(): String
+
+        def self.new: (String name, Symbol kind, String default) -> instance
+                    | (name: String, kind: Symbol, default: String) -> instance
+
+        def self.members: () -> [ :name, :kind, :default ]
+
+        def members: () -> [ :name, :kind, :default ]
+      end
+
+      class Read < Data
+        attr_reader name(): String
+
+        attr_reader comparand(): String?
+
+        attr_reader kind(): Symbol?
+
+        def self.new: (String name, String? comparand, Symbol? kind) -> instance
+                    | (name: String, comparand: String?, kind: Symbol?) -> instance
+
+        def self.members: () -> [ :name, :comparand, :kind ]
+
+        def members: () -> [ :name, :comparand, :kind ]
+      end
+
+      # : (untyped) -> String?
+      def self.signature_of: (untyped) -> String?
+
+      # : (String, Hash[String, Symbol]) -> Array[Declaration]
+      def self.parse: (String, Hash[String, Symbol]) -> Array[Declaration]
+
+      # : (String, Hash[String, Declaration]) -> (Read | Symbol)?
+      def self.condition_read: (String, Hash[String, Declaration]) -> (Read | Symbol)?
+
+      # : (String, Declaration) -> (Array[String] | Symbol)
+      def self.when_comparands: (String, Declaration) -> (Array[String] | Symbol)
+
+      # : (String, Hash[String, Declaration]) -> bool
+      def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
+
+      # : (untyped, Hash[String, Symbol]) -> Declaration
+      private def self.declaration_for: (untyped, Hash[String, Symbol]) -> Declaration
+
+      # : (String, untyped, Hash[String, Symbol]) -> Declaration
+      private def self.bare_default: (String, untyped, Hash[String, Symbol]) -> Declaration
+
+      # : (String) -> untyped
+      private def self.expression_node: (String) -> untyped
+
+      # : (untyped, Hash[String, Declaration]) -> Read?
+      private def self.bare_read: (untyped, Hash[String, Declaration]) -> Read?
+
+      # : (untyped, Hash[String, Declaration]) -> Read?
+      private def self.equality_read: (untyped, Hash[String, Declaration]) -> Read?
+    end
+  end
+end
