@@ -16,7 +16,6 @@ files:
     - "node_modules/**/*"
     - "storage/**/*"
     - "tmp/**/*"
-    - "vendor/**/*"
 
 engine:
   validators:
