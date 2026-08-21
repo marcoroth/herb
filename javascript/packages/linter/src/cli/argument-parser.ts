@@ -67,8 +67,8 @@ export class ArgumentParser {
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
       --ignore-counter-comments     report offenses even when counter-suppressed with <%# herb:counter %> comments
-      --update-counters             lint, then rewrite/insert/delete <%# herb:counter %> comments so every
-                                    rule with counter: true has a comment whose count matches reality
+      --update-counters             lint, then rewrite/delete every existing <%# herb:counter %>
+                                    comment so its declared count matches reality
                                     (analogue of erb_lint -a; do not fold into --fix)
       --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
       --log-level <severity>        only report diagnostics of this severity or higher (error|warning|info|hint) [default: hint]

@@ -296,12 +296,6 @@ export interface LintContext {
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
   /**
-   * Rules for which `counter: true` is set in config. Only these rules
-   * honor `<%# herb:counter %>`; a comment naming any other rule is a
-   * `herb-counter-comment-valid-rule-name` offense.
-   */
-  counterEnabledRules: Set<string> | undefined
-  /**
    * Per-rule drift map built during the main rule loop and consumed by the
    * `herb-counter-comment-out-of-date` and `herb-counter-comment-unnecessary`
    * meta-rules.
@@ -326,7 +320,6 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
-  counterEnabledRules: undefined,
   counterDriftByRule: undefined,
   ignoreCounterComments: undefined,
   indentWidth: undefined,

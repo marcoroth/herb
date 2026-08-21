@@ -403,16 +403,7 @@ export class CLI {
 
       const loadedConfig = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
 
-      const counterRules = Object.entries(loadedConfig.options?.linter?.rules ?? {})
-        .filter(([, ruleConfig]) => (ruleConfig as { counter?: boolean } | undefined)?.counter === true)
-        .map(([name]) => name)
-
-      if (counterRules.length === 0) {
-        console.error(`\n✗ No rules have \`counter: true\` in ${colorize(".herb.yml", "cyan")}. Add \`counter: true\` under \`linter.rules.<RuleName>\` first.\n`)
-        process.exit(1)
-      }
-
-      console.log(`\n${colorize("↻", "cyan")} Reconciling <%# herb:counter %> comments for ${counterRules.length} ${counterRules.length === 1 ? "rule" : "rules"}...`)
+      console.log(`\n${colorize("↻", "cyan")} Reconciling <%# herb:counter %> comments...`)
 
       await Herb.load()
 
@@ -423,7 +414,6 @@ export class CLI {
       const { resolve } = await import("node:path")
 
       let filesTouched = 0
-      let totalInserted = 0
       let totalRewritten = 0
       let totalDeleted = 0
 
@@ -431,7 +421,7 @@ export class CLI {
         const filePath = resolve(this.projectPath, filename)
         const content = readFileSync(filePath, "utf-8")
 
-        const { source: updated, inserted, rewritten, deleted } = linter.updateCounters(content, {
+        const { source: updated, rewritten, deleted } = linter.updateCounters(content, {
           fileName: filename,
           projectPath: this.projectPath,
         })
@@ -439,14 +429,12 @@ export class CLI {
         if (updated !== content) {
           writeFileSync(filePath, updated, "utf-8")
           filesTouched++
-          totalInserted += inserted
           totalRewritten += rewritten
           totalDeleted += deleted
         }
       }
 
       const parts: string[] = []
-      if (totalInserted > 0) parts.push(`${totalInserted} inserted`)
       if (totalRewritten > 0) parts.push(`${totalRewritten} updated`)
       if (totalDeleted > 0) parts.push(`${totalDeleted} removed`)
 

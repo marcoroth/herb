@@ -509,15 +509,10 @@ export class Linter {
     offenses: LintOffense[],
     ruleName: string,
     herbCounterCache: Map<string, HerbCounterCacheEntry>,
-    counterEnabledRules: Set<string>,
     counterDriftByRule: Map<string, HerbCounterDrift>,
     ignoreCounterComments?: boolean,
   ): { kept: LintOffense[], suppressed: LintOffense[] } {
     if (this.nonExcludableRules.includes(ruleName)) {
-      return { kept: offenses, suppressed: [] }
-    }
-
-    if (!counterEnabledRules.has(ruleName)) {
       return { kept: offenses, suppressed: [] }
     }
 
@@ -583,12 +578,6 @@ export class Linter {
     const herbCounterCache = new Map<string, HerbCounterCacheEntry>()
     const counterDriftByRule = new Map<string, HerbCounterDrift>()
 
-    const counterEnabledRules = new Set<string>()
-
-    for (const [ruleName, ruleConfig] of Object.entries(this.config?.linter?.rules ?? {})) {
-      if (ruleConfig?.counter === true) counterEnabledRules.add(ruleName)
-    }
-
     let counterSuppressedCount = 0
 
     if (hasParserErrors) {
@@ -636,7 +625,6 @@ export class Linter {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine,
-      counterEnabledRules,
       counterDriftByRule,
       ignoreCounterComments: context?.ignoreCounterComments,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
@@ -682,7 +670,6 @@ export class Linter {
         kept,
         ruleClass.ruleName,
         herbCounterCache,
-        counterEnabledRules,
         counterDriftByRule,
         context?.ignoreCounterComments,
       )
@@ -950,30 +937,10 @@ export class Linter {
    * were inserted, rewritten, or deleted.
    */
   updateCounters(source: string, context?: Partial<LintContext>): { source: string, inserted: number, rewritten: number, deleted: number } {
-    const counterEnabledRules = new Set<string>()
-
-    for (const [ruleName, ruleConfig] of Object.entries(this.config?.linter?.rules ?? {})) {
-      if (ruleConfig?.counter === true) counterEnabledRules.add(ruleName)
-    }
-
-    if (counterEnabledRules.size === 0) {
-      return { source, inserted: 0, rewritten: 0, deleted: 0 }
-    }
-
-    const result = this.lint(source, { ...context, ignoreCounterComments: true })
-
-    const actualByRule = new Map<string, number>()
-
-    for (const ruleName of counterEnabledRules) actualByRule.set(ruleName, 0)
-
-    for (const offense of result.offenses) {
-      if (!counterEnabledRules.has(offense.rule)) continue
-      actualByRule.set(offense.rule, (actualByRule.get(offense.rule) || 0) + 1)
-    }
+    const lines = source.split("\n")
 
     // Locate existing comments per rule.
     const existing = new Map<string, { line: number, raw: string, count: number }>()
-    const lines = source.split("\n")
 
     for (let i = 0; i < lines.length; i++) {
       const parsed = parseHerbCounterLine(lines[i])
@@ -987,23 +954,30 @@ export class Linter {
       })
     }
 
-    let inserted = 0
+    if (existing.size === 0) {
+      return { source, inserted: 0, rewritten: 0, deleted: 0 }
+    }
+
+    const result = this.lint(source, { ...context, ignoreCounterComments: true })
+
+    const actualByRule = new Map<string, number>()
+
+    for (const ruleName of existing.keys()) actualByRule.set(ruleName, 0)
+
+    for (const offense of result.offenses) {
+      if (!existing.has(offense.rule)) continue
+      actualByRule.set(offense.rule, (actualByRule.get(offense.rule) || 0) + 1)
+    }
+
     let rewritten = 0
     let deleted = 0
 
     // Process from bottom to top so line numbers stay valid for deletions.
     const rewriteOps: Array<{ line: number, oldRaw: string, newRaw: string }> = []
     const deleteOps: number[] = []
-    const insertNames: string[] = []
 
-    for (const ruleName of counterEnabledRules) {
+    for (const [ruleName, current] of existing) {
       const actual = actualByRule.get(ruleName) || 0
-      const current = existing.get(ruleName)
-
-      if (!current) {
-        if (actual > 0) insertNames.push(ruleName)
-        continue
-      }
 
       if (actual === 0) {
         deleteOps.push(current.line)
@@ -1041,16 +1015,6 @@ export class Linter {
       }
     }
 
-    // Insert new counter comments at the top of the file, sorted by rule name
-    // for deterministic output.
-    insertNames.sort()
-
-    for (const ruleName of [...insertNames].reverse()) {
-      const actual = actualByRule.get(ruleName) || 0
-      lines.unshift(`<%# herb:counter ${ruleName} ${actual} %>`)
-      inserted++
-    }
-
-    return { source: lines.join("\n"), inserted, rewritten, deleted }
+    return { source: lines.join("\n"), inserted: 0, rewritten, deleted }
   }
 }
