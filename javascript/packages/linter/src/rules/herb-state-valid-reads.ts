@@ -128,8 +128,10 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (bare && this.resolve(bare)) return
 
+    const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
+
     this.addOffense(
-      `\`${expression}\` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.`,
+      `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`,
       node.location,
     )
   }
@@ -269,8 +271,10 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
 
     if (mentionsAnyState(this.sliceOf(predicate), names)) {
+      const name = names.find(candidate => mentionsAnyState(this.sliceOf(predicate), [candidate])) ?? names[0]
+
       this.addOffense(
-        `\`${this.sliceOf(predicate)}\` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.`,
+        `\`${this.sliceOf(predicate)}\` computes with the state \`${name}\`, and the client cannot run Ruby to pick the branch. ${this.conditionAdvice(name)}`,
         this.locationOf(predicate),
       )
 
@@ -336,6 +340,21 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
         }
       }
     }
+  }
+
+  private conditionAdvice(name: string): string {
+    const declaration = this.resolve(name)
+    const kind = declaration ? declaredKind(declaration) : "seeded"
+
+    if (kind === "boolean") {
+      return `Read it bare, \`<% if ${name} %>\`, or as \`${name}?\`.`
+    }
+
+    if ((kind === "string" || kind === "integer" || kind === "symbol") && declaration) {
+      return `Read it bare, \`<% if ${name} %>\`, or compare it to a literal, \`${name} == ${declaration.defaultSource}\`.`
+    }
+
+    return `Read it bare, \`<% if ${name} %>\`, or compare it to a literal.`
   }
 
   private resolve(name: string): StateDeclaration | undefined {

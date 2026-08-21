@@ -28,7 +28,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed value read", () => {
-    expectError("`attempts + 1` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.")
+    expectError("`attempts + 1` computes with the state `attempts`, and the client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -53,7 +53,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a negated condition the way it flags not", () => {
-    expectError("`!open` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+    expectError("`!open` computes with the state `open`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if open %>`, or as `open?`.")
 
     assertOffenses(dedent`
       <%# herb:state (open: false) %>
@@ -62,7 +62,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed condition", () => {
-    expectError("`attempts > 3` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+    expectError("`attempts > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -199,7 +199,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed read in a boolean attribute", () => {
-    expectError("`draft.empty?` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+    expectError('`draft.empty?` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == ""`.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -209,7 +209,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("still flags equality in an attribute that is not boolean", () => {
-    expectError("`draft == \"\"` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.")
+    expectError('`draft == ""` computes with the state `draft`, and the client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
