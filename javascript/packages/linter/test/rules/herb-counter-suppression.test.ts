@@ -43,7 +43,7 @@ describe("counter suppression semantics", () => {
 
   test("N == E suppresses every offense and reports no drift", () => {
     const source = dedent`
-      <%# herb:counter html-tag-name-lowercase 2 %>
+      <%# herb:counter html-tag-name-lowercase 4 %>
       <DIV></DIV>
       <SPAN></SPAN>
     `
@@ -51,29 +51,29 @@ describe("counter suppression semantics", () => {
     expect(offensesFor(source, target)).toHaveLength(0)
     expect(offensesFor(source, "herb-counter-comment-out-of-date")).toHaveLength(0)
     expect(offensesFor(source, "herb-counter-comment-unnecessary")).toHaveLength(0)
-    expect(lintWith(source).counterSuppressed).toBe(2)
+    expect(lintWith(source).counterSuppressed).toBe(4)
   })
 
   test("N > E reports every offense AND emits herb-counter-comment-out-of-date", () => {
     const source = dedent`
-      <%# herb:counter html-tag-name-lowercase 1 %>
+      <%# herb:counter html-tag-name-lowercase 8 %>
       <DIV></DIV>
       <SPAN></SPAN>
       <SECTION></SECTION>
     `
 
-    expect(offensesFor(source, target)).toHaveLength(3)
+    expect(offensesFor(source, target)).toHaveLength(6)
 
     const drift = offensesFor(source, "herb-counter-comment-out-of-date")
     expect(drift).toHaveLength(1)
-    expect(drift[0].message).toContain("expects 1 offense")
-    expect(drift[0].message).toContain("found 3")
+    expect(drift[0].message).toContain("expects 8 offenses")
+    expect(drift[0].message).toContain("found 6")
     expect(lintWith(source).counterSuppressed).toBe(0)
   })
 
   test("0 < N < E suppresses the offenses and emits herb-counter-comment-out-of-date", () => {
     const source = dedent`
-      <%# herb:counter html-tag-name-lowercase 5 %>
+      <%# herb:counter html-tag-name-lowercase 1 %>
       <DIV></DIV>
     `
 
@@ -81,8 +81,8 @@ describe("counter suppression semantics", () => {
 
     const drift = offensesFor(source, "herb-counter-comment-out-of-date")
     expect(drift).toHaveLength(1)
-    expect(drift[0].message).toContain("expects 5 offenses")
-    expect(drift[0].message).toContain("found 1")
+    expect(drift[0].message).toContain("expects 1 offense")
+    expect(drift[0].message).toContain("found 2")
     expect(lintWith(source).counterSuppressed).toBe(1)
   })
 
@@ -111,16 +111,16 @@ describe("counter suppression semantics", () => {
 
   test("herb:disable filtering runs before counter, so disabled offenses do not count toward N", () => {
     const source = dedent`
-      <%# herb:counter html-tag-name-lowercase 1 %>
+      <%# herb:counter html-tag-name-lowercase 2 %>
       <DIV></DIV> <%# herb:disable html-tag-name-lowercase %>
       <SPAN></SPAN>
     `
 
-    // The DIV is disabled; only the SPAN reaches counter. N=1 == E=1.
+    // The DIV line is disabled; only the SPAN's 2 offenses reach counter. N=2 == E=2.
     expect(offensesFor(source, target)).toHaveLength(0)
     expect(offensesFor(source, "herb-counter-comment-out-of-date")).toHaveLength(0)
     expect(offensesFor(source, "herb-counter-comment-unnecessary")).toHaveLength(0)
-    expect(lintWith(source).counterSuppressed).toBe(1)
+    expect(lintWith(source).counterSuppressed).toBe(2)
   })
 
   test("--ignore-counter-comments reports every underlying offense and no drift", () => {
@@ -131,7 +131,7 @@ describe("counter suppression semantics", () => {
     `
 
     const offenses = offensesFor(source, target, { ignoreCounterComments: true })
-    expect(offenses).toHaveLength(2)
+    expect(offenses).toHaveLength(4)
 
     // Drift/unnecessary meta-rules are also silenced under --ignore-counter-comments.
     expect(offensesFor(source, "herb-counter-comment-out-of-date", { ignoreCounterComments: true })).toHaveLength(1)

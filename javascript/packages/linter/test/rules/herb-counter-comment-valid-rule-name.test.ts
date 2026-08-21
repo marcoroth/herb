@@ -19,7 +19,7 @@ describe("HerbCounterCommentValidRuleNameRule", () => {
   })
 
   test("warns on an unknown rule", () => {
-    expectWarning("Unknown rule `no-such-rule` in `herb:counter` comment.")
+    expectWarning("Unknown rule `no-such-rule` in `herb:counter` comment. Did you mean `html-tag-name-lowercase`?")
 
     assertOffenses(dedent`
       <%# herb:counter no-such-rule 1 %>
