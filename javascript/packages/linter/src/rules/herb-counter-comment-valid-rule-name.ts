@@ -37,7 +37,7 @@ class HerbCounterCommentValidRuleNameVisitor extends HerbCounterCommentParsedVis
 
 export class HerbCounterCommentValidRuleNameRule extends ParserRule {
   static ruleName = "herb-counter-comment-valid-rule-name"
-  static introducedIn = this.version("0.10.0")
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

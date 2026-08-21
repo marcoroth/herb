@@ -53,7 +53,7 @@ class HerbCounterCommentMalformedVisitor extends HerbCounterCommentBaseVisitor {
 
 export class HerbCounterCommentMalformedRule extends ParserRule {
   static ruleName = "herb-counter-comment-malformed"
-  static introducedIn = this.version("0.10.0")
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

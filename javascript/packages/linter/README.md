@@ -536,6 +536,62 @@ You can disable linting for an entire file by adding the `ignore` directive anyw
 The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
 :::
 
+### Counter-Based Suppression <Badge type="info" text="v0.10.4+" />
+
+For files with many pre-existing offenses that you plan to fix over time, `herb:counter` comments let you baseline the current count of a single rule without silencing new offenses of the same rule elsewhere in the file.
+
+```erb
+<%# herb:counter html-tag-name-lowercase 3 %>
+
+<DIV></DIV>
+<DIV></DIV>
+<DIV></DIV>
+```
+
+The first three `html-tag-name-lowercase` offenses in this file are suppressed. If a fourth is introduced, it will be reported and the linter will also raise `herb-counter-comment-out-of-date`, so the counter and the file stay in sync as you fix offenses.
+
+#### Semantics
+
+Given `N` = the count in the `herb:counter` comment and `E` = the number of offenses of that rule found in the file:
+
+| Case              | Behavior                                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `N == E`          | All `E` offenses are suppressed.                                                                      |
+| `N > E`           | No offenses are suppressed; `herb-counter-comment-out-of-date` reports the drift (autofix updates `N`).|
+| `0 < N < E`       | No offenses are suppressed; `herb-counter-comment-out-of-date` reports the drift (autofix updates `N`).|
+| `N == 0`, `E > 0` | No offenses are suppressed; `herb-counter-comment-unnecessary` fires (autofix removes the counter).   |
+| `N == 0`, `E == 0`| `herb-counter-comment-unnecessary` fires (autofix removes the counter).                               |
+
+Counter comments must reference a known rule name and can only appear once per rule per file. Malformed counters, unknown rule names, and duplicate rules are reported by dedicated meta-rules:
+
+- `herb-counter-comment-malformed`
+- `herb-counter-comment-valid-rule-name`
+- `herb-counter-comment-no-duplicate-rules`
+- `herb-counter-comment-out-of-date`
+- `herb-counter-comment-unnecessary`
+
+#### Updating counters
+
+To bulk-refresh counters after a large refactor, run the linter with `--update-counters`. This applies the `herb-counter-comment-out-of-date` autofix across your project, updating each counter to match the current offense count:
+
+```bash
+npx @herb-tools/linter --update-counters
+```
+
+#### Ignoring counters
+
+To report all offenses regardless of any `herb:counter` comments, pass `--ignore-counter-comments`:
+
+```bash
+npx @herb-tools/linter --ignore-counter-comments
+```
+
+Drift (out-of-date counters) is still reported when this flag is set, but nothing is suppressed.
+
+::: tip
+Prefer inline `herb:disable` comments when you have a small number of intentional exceptions you want to keep. Use `herb:counter` when you want to baseline a large number of offenses in a file and drive the count down over time without silencing new offenses.
+:::
+
 ## Configuration
 
 Create a `.herb.yml` file in your project root to configure the linter:

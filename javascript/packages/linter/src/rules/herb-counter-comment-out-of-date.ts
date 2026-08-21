@@ -27,7 +27,7 @@ interface HerbCounterOutOfDateAutofixContext extends BaseAutofixContext {
  */
 export class HerbCounterCommentOutOfDateRule extends SourceRule<HerbCounterOutOfDateAutofixContext> {
   static ruleName = "herb-counter-comment-out-of-date"
-  static introducedIn = this.version("0.10.0")
+  static introducedIn = this.version("unreleased")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

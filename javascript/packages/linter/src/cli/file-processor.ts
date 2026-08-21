@@ -68,6 +68,7 @@ export interface ProcessingResult {
   totalHints: number
   totalIgnored: number
   totalWouldBeIgnored?: number
+  totalCounterSuppressed?: number
   filesWithOffenses: number
   filesFixed: number
   ruleCount: number
@@ -323,6 +324,7 @@ export class FileProcessor {
     let totalHints = 0
     let totalIgnored = 0
     let totalWouldBeIgnored = 0
+    let totalCounterSuppressed = 0
     let filesWithOffenses = 0
     let filesFixed = 0
     let ruleCount = 0
@@ -425,6 +427,9 @@ export class FileProcessor {
       if (lintResult.wouldBeIgnored) {
         totalWouldBeIgnored += lintResult.wouldBeIgnored
       }
+      if (lintResult.counterSuppressed) {
+        totalCounterSuppressed += lintResult.counterSuppressed
+      }
     }
 
     const result: ProcessingResult = {
@@ -446,6 +451,10 @@ export class FileProcessor {
 
     if (totalWouldBeIgnored > 0) {
       result.totalWouldBeIgnored = totalWouldBeIgnored
+    }
+
+    if (totalCounterSuppressed > 0) {
+      result.totalCounterSuppressed = totalCounterSuppressed
     }
 
     await this.attachFixPreviews(allOffenses, formatOption, context)
@@ -542,6 +551,7 @@ export class FileProcessor {
     let totalHints = 0
     let totalIgnored = 0
     let totalWouldBeIgnored = 0
+    let totalCounterSuppressed = 0
     let filesWithOffenses = 0
     let filesFixed = 0
     let ruleCount = 0
@@ -556,6 +566,7 @@ export class FileProcessor {
       totalHints += result.totalHints
       totalIgnored += result.totalIgnored
       totalWouldBeIgnored += result.totalWouldBeIgnored
+      totalCounterSuppressed += result.totalCounterSuppressed
       filesWithOffenses += result.filesWithOffenses
       filesFixed += result.filesFixed
 
@@ -612,6 +623,10 @@ export class FileProcessor {
 
     if (totalWouldBeIgnored > 0) {
       processingResult.totalWouldBeIgnored = totalWouldBeIgnored
+    }
+
+    if (totalCounterSuppressed > 0) {
+      processingResult.totalCounterSuppressed = totalCounterSuppressed
     }
 
     return processingResult

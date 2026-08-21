@@ -30,7 +30,7 @@ class HerbCounterCommentNoDuplicateRulesVisitor extends HerbCounterCommentParsed
 
 export class HerbCounterCommentNoDuplicateRulesRule extends ParserRule {
   static ruleName = "herb-counter-comment-no-duplicate-rules"
-  static introducedIn = this.version("0.10.0")
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

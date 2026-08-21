@@ -110,7 +110,7 @@ export class OutputManager {
   }
 
   private summaryData(results: LintResults, options: OutputOptions): SummaryData {
-    const { allOffenses, files, totalErrors, totalWarnings, totalInfo, totalHints, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, ruleOffenses, rulesSkippedByVersion, context } = results
+    const { allOffenses, files, totalErrors, totalWarnings, totalInfo, totalHints, totalIgnored, totalWouldBeIgnored, totalCounterSuppressed, filesWithOffenses, ruleCount, ruleOffenses, rulesSkippedByVersion, context } = results
 
     const failLevel = options.failLevel ?? "error"
     const logLevel = options.logLevel ?? "hint"
@@ -134,6 +134,7 @@ export class OutputManager {
       totalHints,
       totalIgnored,
       totalWouldBeIgnored,
+      totalCounterSuppressed,
       filesWithOffenses,
       filesFailing: failingFiles.size,
       filesNotFailing: notFailingFiles.size,

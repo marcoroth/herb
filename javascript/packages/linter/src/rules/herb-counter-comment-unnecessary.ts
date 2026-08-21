@@ -20,7 +20,7 @@ interface HerbCounterUnnecessaryAutofixContext extends BaseAutofixContext {
  */
 export class HerbCounterCommentUnnecessaryRule extends SourceRule<HerbCounterUnnecessaryAutofixContext> {
   static ruleName = "herb-counter-comment-unnecessary"
-  static introducedIn = this.version("0.10.0")
+  static introducedIn = this.version("unreleased")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {
