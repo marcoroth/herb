@@ -6,8 +6,7 @@ import { StrictLocalsCollector } from "./strict_locals_collector"
 
 import { lspPosition, isPositionInRange, nodeToRange } from "./range_utils"
 import { stringIndexFromByteOffset, isERBBlockNode, isERBIterationBlockNode, isERBContentNode } from "@herb-tools/core"
-import { parseStateDirective } from "@herb-tools/client/directives"
-import { collectHerbAttributes } from "./herb_attribute_links"
+import { collectHerbAttributes, collectStateDirectives } from "./herb_attribute_links"
 
 import type { HerbAttributeLinks, AttributeStateUsage } from "./herb_attribute_links"
 
@@ -97,11 +96,7 @@ function blockLocals(document: DocumentNode, references: RubyReferenceCollector,
 }
 
 function stateLocals(document: DocumentNode, references: RubyReferenceCollector, toRange: (reference: RubyReference) => Range, attributeUsages: AttributeStateUsage[]): RubyLocal[] {
-  const collector = new StateDirectiveCollector()
-
-  collector.visit(document)
-
-  return collector.entries.flatMap(({ node, signature }) =>
+  return collectStateDirectives(document).flatMap(({ node, signature }) =>
     signature.declarations.map(declaration => ({
       name: declaration.name,
       declaration: contentRange(node, declaration.nameOffset, declaration.name.length),
@@ -128,20 +123,6 @@ function contentRange(node: ERBContentNode, offset: number, length: number): Ran
   const from = lspPosition({ line, column })
 
   return Range.create(from, Position.create(from.line, from.character + length))
-}
-
-class StateDirectiveCollector extends Visitor {
-  readonly entries: { node: ERBContentNode, signature: StateSignature }[] = []
-
-  visitChildNodes(node: Node): void {
-    if (isERBContentNode(node) && node.tag_opening?.value === "<%#") {
-      const signature = parseStateDirective(node.content?.value ?? "")
-
-      if (signature && !signature.malformed) this.entries.push({ node, signature })
-    }
-
-    super.visitChildNodes(node)
-  }
 }
 
 function blockRanges(document: DocumentNode): Range[] {
