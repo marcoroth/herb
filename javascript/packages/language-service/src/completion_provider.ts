@@ -257,6 +257,22 @@ export class CompletionProvider {
       return this.getHerbValueCompletions(valueMatch[1], valueMatch[2], position, root)
     }
 
+    const rubyValueMatch = lineText.match(/\bherb_([a-z]+):\s*["']([^"']*)$/)
+
+    if (rubyValueMatch) {
+      const attribute = (HERB_ATTRIBUTES as Record<string, string>)[rubyValueMatch[1]]
+
+      if (attribute && HERB_VALUE_ATTRIBUTES.has(attribute)) {
+        return this.getHerbValueCompletions(attribute, rubyValueMatch[2], position, root)
+      }
+    }
+
+    const rubyKeyMatch = lineText.match(/\bdata:\s*\{[^{}]*?([a-z_]*)$/)
+
+    if (rubyKeyMatch) {
+      return this.getHerbHashKeyCompletions(rubyKeyMatch[1], position)
+    }
+
     const nameMatch = lineText.match(/<[a-zA-Z][^<>]*\s(data-[\w-]*)$/)
 
     if (nameMatch) {
@@ -264,6 +280,26 @@ export class CompletionProvider {
     }
 
     return null
+  }
+
+  private getHerbHashKeyCompletions(prefix: string, position: Position): CompletionList | null {
+    const keys = AUTHORED_HERB_ATTRIBUTES.map(attribute => attribute.replace("data-", "").replace(/-/g, "_"))
+    const matching = keys.filter(key => key.startsWith(prefix))
+
+    if (matching.length === 0) return null
+
+    const replaced = Range.create(Position.create(position.line, position.character - prefix.length), position)
+
+    const items = matching.map(key => ({
+      label: `${key}:`,
+      kind: CompletionItemKind.Property,
+      insertTextFormat: InsertTextFormat.Snippet,
+      textEdit: TextEdit.replace(replaced, `${key}: "$1"`),
+      detail: "Herb",
+      command: HERB_VALUE_ATTRIBUTES.has(`data-${key.replace(/_/g, "-")}`) ? TRIGGER_SUGGEST : undefined,
+    }))
+
+    return { isIncomplete: false, items }
   }
 
   private getHerbNameCompletions(prefix: string, position: Position): CompletionList | null {
