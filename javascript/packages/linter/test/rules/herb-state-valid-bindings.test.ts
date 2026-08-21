@@ -86,4 +86,21 @@ describe("HerbStateValidBindingsRule", () => {
       <% end %>
     `)
   })
+  test("flags a control bound to a derived state", () => {
+    expectError("`checked` binds the derived state `busy`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <input type="checkbox" checked="<%= busy %>">
+    `)
+  })
+
+  test("flags a textarea bound to a derived state", () => {
+    expectError("`<textarea>` binds the derived state `copy`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "", copy: draft) %>
+      <textarea><%= copy %></textarea>
+    `)
+  })
 })

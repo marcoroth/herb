@@ -22,6 +22,7 @@ export interface DeclaredState {
   name: string
   kind: StateKind
   default: string
+  derived?: StateCondition | null
   scope: "region" | number
   line?: number | null
   column?: number | null
@@ -512,9 +513,22 @@ export class SlotState {
 
     for (const name of names) {
       const target = this.scopeFor(resolved, name) ?? resolved
+      const declaration = this.#declaration(manifest, target, name)
 
-      if (this.#declaration(manifest, target, name) === null) {
+      if (declaration === null) {
         this.#reportUnknown(name, resolved)
+
+        return false
+      }
+
+      if (declaration.derived) {
+        report({
+          template: resolved.region.file,
+          message: `\`${name}\` is derived from \`${declaration.default}\`, so it cannot be written. Write the states it reads.`,
+          code: "herb-state-derived",
+          severity: "error",
+          value: name,
+        })
 
         return false
       }
@@ -526,6 +540,12 @@ export class SlotState {
       previous.set(name, this.#valueOf(name, shared))
     }
 
+    const dependents = new Map<StateScope, { name: string; previous: StateValue }[]>()
+
+    for (const [scope, grouped] of groups) {
+      dependents.set(scope, this.#derivedDependents(manifest, scope, grouped).map((name) => ({ name, previous: this.#valueOf(name, scope) })))
+    }
+
     this.#slots.transaction(() => {
       for (const [name, value] of Object.entries(values)) {
         const target = scopes.get(name) ?? resolved
@@ -535,13 +555,34 @@ export class SlotState {
       }
 
       for (const [scope, grouped] of groups) {
-        this.#writeConditionals(manifest, scope, grouped)
-        this.#writePresence(manifest, scope, grouped)
+        const recomputed: string[] = []
+
+        for (const dependent of dependents.get(scope) ?? []) {
+          const value = this.#valueOf(dependent.name, scope)
+
+          if (value === dependent.previous) continue
+
+          recomputed.push(dependent.name)
+          this.#writeValueSlots(manifest, scope, dependent.name, value)
+        }
+
+        const changed = [...grouped, ...recomputed]
+
+        this.#writeConditionals(manifest, scope, changed)
+        this.#writePresence(manifest, scope, changed)
       }
     }, { retain: false })
 
     for (const [name, value] of Object.entries(values)) {
       this.#announceState(scopes.get(name) ?? resolved, name, value, previous.get(name) ?? null)
+    }
+
+    for (const [scope, list] of dependents) {
+      for (const dependent of list) {
+        const value = this.#valueOf(dependent.name, scope)
+
+        if (value !== dependent.previous) this.#announceState(scope, dependent.name, value, dependent.previous)
+      }
     }
 
     return true
@@ -659,6 +700,11 @@ export class SlotState {
   }
 
   #valueOf(name: string, scope: StateScope): StateValue {
+    const manifest = this.manifestFor(scope.region)
+    const declaration = manifest ? this.#declaration(manifest, scope, name) : null
+
+    if (declaration?.derived) return this.#deriveValue(declaration, scope)
+
     const stored = this.#scoped.get(scope.region)?.get(scope.item?.key ?? "")?.get(name)
 
     if (stored !== undefined) return stored
@@ -666,6 +712,38 @@ export class SlotState {
     const seeded = this.#seed(name, scope)
 
     return seeded !== undefined ? seeded : this.#defaultOf(name, scope)
+  }
+
+  #deriveValue(declaration: DeclaredState, scope: StateScope): StateValue {
+    const entry = declaration.derived
+
+    if (entry === undefined || entry === null) return null
+
+    if (declaration.kind !== "boolean" && Array.isArray(entry) && entry.length === 2 && entry[1] === null) {
+      return this.#valueOf(entry[0], scope)
+    }
+
+    return conditionMatches(entry, (name) => this.#valueOf(name, scope))
+  }
+
+  #derivedDependents(manifest: StateManifest, scope: StateScope, written: string[]): string[] {
+    const collection = scope.item ? collectionOf(scope.region, scope.item) : null
+    const changed = new Set(written)
+    const dependents: string[] = []
+
+    for (const declaration of manifest.declarations) {
+      if (!declaration.derived) continue
+
+      const matches = collection !== null ? declaration.scope === collection : declaration.scope === "region"
+
+      if (!matches) continue
+      if (!conditionMentions(declaration.derived, [...changed])) continue
+
+      dependents.push(declaration.name)
+      changed.add(declaration.name)
+    }
+
+    return dependents
   }
 
   #defaultOf(name: string, scope: StateScope): StateValue {

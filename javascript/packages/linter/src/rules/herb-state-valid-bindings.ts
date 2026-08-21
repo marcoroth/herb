@@ -1,6 +1,6 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { StateScopeMap, declaredKind } from "../utils/state-directives-utils.js"
+import { StateScopeMap, declaredKind, isDerived } from "../utils/state-directives-utils.js"
 import { bareReadName } from "@herb-tools/client/directives"
 
 import { forEachAttribute, getAttributeName, getAttributeValueNodes, getTagLocalName, isERBContentNode, isHTMLElementNode } from "@herb-tools/core"
@@ -56,6 +56,16 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
       if (!read) return
 
       const [name, declaration] = read
+
+      if (isDerived(declaration)) {
+        this.addOffense(
+          `\`${attributeName}\` binds the derived state \`${name}\`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.`,
+          attribute.location,
+        )
+
+        return
+      }
+
       const kind = declaredKind(declaration)
 
       if (BOOLEAN_ATTRIBUTES.includes(attributeName!)) {
@@ -84,6 +94,16 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
     if (!read) return
 
     const [name, declaration] = read
+
+    if (isDerived(declaration)) {
+      this.addOffense(
+        `\`<textarea>\` binds the derived state \`${name}\`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.`,
+        node.location,
+      )
+
+      return
+    }
+
     const kind = declaredKind(declaration)
 
     if (!TEXT_KINDS.includes(kind)) {

@@ -4,7 +4,7 @@
 
 ## Description
 
-Validates two-way bindings between form controls and declared states. A `checked` or `selected` attribute reading a state binds a boolean, so the state must be declared as one. A `value` attribute or a `<textarea>`'s content holds text, so the state must be a String, or an Integer for numeric inputs.
+Validates two-way bindings between form controls and declared states. A `checked` or `selected` attribute reading a state binds a boolean, so the state must be declared as one. A `value` attribute or a `<textarea>`'s content holds text, so the state must be a String, or an Integer for numeric inputs. A derived state cannot be bound at all, since a binding writes back what the user changes and a derived value follows from its sources.
 
 ## Rationale
 

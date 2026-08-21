@@ -379,6 +379,75 @@ module Engine
         assert_includes on, "<input disabled"
       end
 
+      test "a pure-state default declares a derived state" do
+        visitor, = compile(<<~ERB)
+          <%# herb:state (pending: false, failed: false, attempts: 0, sort: "name", busy: pending || failed, many: attempts > 2, named: sort == "name", total: attempts) %>
+          <div><% if busy %>B<% end %></div>
+        ERB
+
+        entries = visitor.state_entries.to_h { |entry| [entry[:name], entry] }
+
+        assert_equal :boolean, entries.fetch("busy")[:kind]
+        assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, entries.fetch("busy")[:derived])
+        assert_equal ["attempts", "2", ">"], entries.fetch("many")[:derived]
+        assert_equal ["sort", %("name")], entries.fetch("named")[:derived]
+        assert_equal :integer, entries.fetch("total")[:kind]
+        assert_equal ["attempts", nil], entries.fetch("total")[:derived]
+        assert_nil entries.fetch("pending")[:derived]
+      end
+
+      test "the server renders a derived state from its sources" do
+        rendered = render(<<~ERB)
+          <%# herb:state (pending: true, failed: false, busy: pending? || failed?) %>
+          <div><% if busy %>Busy<% else %>Idle<% end %></div>
+        ERB
+
+        assert_includes rendered, "Busy"
+      end
+
+      test "a derived default mixing states with other Ruby raises" do
+        refuse(
+          %(<%# herb:state (pending: false, busy: pending || current_user.admin?) %><p><%= pending %></p>),
+          /mixes state reads with other Ruby/
+        )
+
+        refuse(
+          %(<%# herb:state (attempts: 0, doubled: attempts + 1) %><p><%= attempts %></p>),
+          /mixes state reads with other Ruby/
+        )
+      end
+
+      test "a derived state cannot read forward" do
+        refuse(
+          %(<%# herb:state (busy: pending || failed, pending: false, failed: false) %><p><%= pending %></p>),
+          /declared after it/
+        )
+      end
+
+      test "an item state cannot derive from the region" do
+        template = <<~ERB
+          <%# herb:state (open: false) %>
+          <ul>
+            <% @rows.each do |row| %>
+              <%# herb:key row.id %>
+              <%# herb:state (mirror: open) %>
+              <li id="<%= row.id %>"><%= row.name %></li>
+            <% end %>
+          </ul>
+          <% if open? %>O<% end %>
+        ERB
+
+        refuse(template, /from an enclosing scope/)
+      end
+
+      test "a seed reading no state still compiles" do
+        visitor, = compile(%(<%# herb:state (pending: false, hue: current_user.hue) %><p><%= pending %></p>))
+        entries = visitor.state_entries.to_h { |entry| [entry[:name], entry] }
+
+        assert_equal :seeded, entries.fetch("hue")[:kind]
+        assert_nil entries.fetch("hue")[:derived]
+      end
+
       test "an unless reads a state with its arms inverted" do
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)

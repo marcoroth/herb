@@ -167,4 +167,24 @@ describe("HerbStateValidActionsRule", () => {
       <button data-herb-set="draft=">Empty</button>
     `)
   })
+  test("flags every action on a derived state", () => {
+    expectError("`data-herb-toggle` on `busy` can never work, because `busy` is derived from `pending || failed`. Write the states it reads instead.")
+    expectError("`busy=false` can never work, because `busy` is derived from `pending || failed`. Write the states it reads instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <button data-herb-toggle="busy">Toggle</button>
+      <button data-herb-set="busy=false">Clear</button>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
+
+  test("allows actions on a derived state's sources", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <button data-herb-toggle="pending">Toggle</button>
+      <button data-herb-set="failed=true">Fail</button>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
 })

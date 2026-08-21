@@ -1,6 +1,6 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, declaredKind, isActionAttribute, kindWithArticle } from "../utils/state-directives-utils.js"
+import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, declaredKind, isActionAttribute, isDerived, kindWithArticle } from "../utils/state-directives-utils.js"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "@herb-tools/client/directives"
 
 import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes } from "@herb-tools/core"
@@ -85,7 +85,18 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     for (const stateName of names(clause.rest)) {
       const declaration = this.declarationOf(attribute, stateName)
 
-      if (!declaration || !schema.needs) continue
+      if (!declaration) continue
+
+      if (isDerived(declaration)) {
+        this.addOffense(
+          `\`${name}\` on \`${stateName}\` can never work, because \`${stateName}\` is derived from \`${declaration.defaultSource}\`. Write the states it reads instead.`,
+          attribute.location,
+        )
+
+        continue
+      }
+
+      if (!schema.needs) continue
 
       const kind = declaredKind(declaration)
 
@@ -127,7 +138,18 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     const raw = unquote(assignment.slice(separator + 1).trim())
     const declaration = this.declarationOf(attribute, name)
 
-    if (!declaration || raw === "$value") return
+    if (!declaration) return
+
+    if (isDerived(declaration)) {
+      this.addOffense(
+        `\`${name}=${raw}\` can never work, because \`${name}\` is derived from \`${declaration.defaultSource}\`. Write the states it reads instead.`,
+        attribute.location,
+      )
+
+      return
+    }
+
+    if (raw === "$value") return
 
     const kind = declaredKind(declaration)
 

@@ -24,6 +24,7 @@ module Herb
         :name,    #: String
         :kind,    #: Symbol
         :default, #: String
+        :derived, #: untyped
         :line,    #: Integer?
         :column   #: Integer?
       )
@@ -53,8 +54,8 @@ module Herb
           PATTERN.match(node.content&.value.to_s.strip)&.[](:signature)
         end
 
-        #: (String, Hash[String, Symbol]) -> Array[Declaration]
-        def parse(signature, locals)
+        #: (String, Hash[String, Symbol], ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+        def parse(signature, locals, enclosing: {})
           result = Prism.parse("def __herb_states#{signature}; end")
 
           raise Herb::Engine::CompilationError, "`herb:state #{signature}` does not parse as a keyword signature" if result.failure?
@@ -69,7 +70,15 @@ module Herb
                   "`herb:state #{signature}` must declare keyword parameters with defaults, like `(pending: false)`"
           end
 
-          parameters.keywords.map { |keyword| declaration_for(keyword, locals) }
+          names = parameters.keywords.map { |keyword| keyword.name.to_s }
+          declared = {} #: Hash[String, Declaration]
+
+          parameters.keywords.map { |keyword|
+            declaration = declaration_for(keyword, locals, declared, names, enclosing)
+            declared[declaration.name] = declaration
+
+            declaration
+          }
         end
 
         #: (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
@@ -139,6 +148,17 @@ module Herb
           read.parts.flat_map { |part| read_names(part) }
         end
 
+        #: (untyped) -> Array[String]
+        def condition_names(entry)
+          return entry.values.flat_map { |parts| parts.flat_map { |part| condition_names(part) } } if entry.is_a?(Hash) && !entry.key?("state")
+          return [entry["state"]] if entry.is_a?(Hash)
+
+          names = [entry[0]] #: Array[String]
+          names += condition_names(entry[1]) if entry[1].is_a?(Hash)
+
+          names.uniq
+        end
+
         #: (Read | Combo) -> untyped
         def condition_entry(read)
           return { read.op => read.parts.map { |part| condition_entry(part) } } if read.is_a?(Combo)
@@ -188,8 +208,8 @@ module Herb
 
         private
 
-        #: (untyped, Hash[String, Symbol]) -> Declaration
-        def declaration_for(keyword, locals)
+        #: (untyped, Hash[String, Symbol], Hash[String, Declaration], Array[String], Hash[String, Declaration]) -> Declaration
+        def declaration_for(keyword, locals, declared, names, enclosing)
           name = keyword.name.to_s
 
           unless keyword.is_a?(Prism::OptionalKeywordParameterNode)
@@ -200,7 +220,7 @@ module Herb
           value = keyword.value
           kind = KINDS[value.class.name]
 
-          return Declaration.new(name: name, kind: kind, default: value.slice, line: nil, column: nil) if kind
+          return Declaration.new(name: name, kind: kind, default: value.slice, derived: nil, line: nil, column: nil) if kind
 
           case value
           when Prism::FloatNode
@@ -213,18 +233,64 @@ module Herb
             raise Herb::Engine::CompilationError,
                   "the state `#{name}` has a Hash default; declare each leaf as its own state, like `#{name}_title`"
           when Prism::CallNode
-            bare_default(name, value, locals)
+            derived_default(name, value, declared, names) || bare_default(name, value, locals, enclosing)
           else
-            Declaration.new(name: name, kind: :seeded, default: value.slice, line: nil, column: nil)
+            derived_default(name, value, declared, names) ||
+              Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)
           end
         end
 
-        #: (String, untyped, Hash[String, Symbol]) -> Declaration
-        def bare_default(name, value, locals)
+        #: (String, untyped, Hash[String, Declaration], Array[String]) -> Declaration?
+        def derived_default(name, value, declared, names)
+          read = tree_read(value, declared) #: untyped
+
+          if read == :computed
+            raise Herb::Engine::CompilationError,
+                  "the state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby; " \
+                  "a derived state reads only other states, and a seed reads none, so split the two apart"
+          end
+
+          if read.nil?
+            later = {} #: Hash[String, untyped]
+            (names - declared.keys - [name]).each { |candidate| later[candidate] = true }
+
+            if mentions_any?(value.slice, later)
+              raise Herb::Engine::CompilationError,
+                    "the state `#{name}` reads a state that is declared after it; a derived state reads only " \
+                    "states declared before it, so reorder the signature"
+            end
+
+            if mentions_any?(value.slice, declared)
+              raise Herb::Engine::CompilationError,
+                    "the state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby; " \
+                    "a derived state reads only other states, and a seed reads none, so split the two apart"
+            end
+
+            return nil
+          end
+
+          Declaration.new(name: name, kind: derived_kind(read), default: value.slice, derived: condition_entry(read), line: nil, column: nil)
+        end
+
+        #: (Read | Combo) -> Symbol
+        def derived_kind(read)
+          return read.kind || :seeded if read.is_a?(Read) && read.comparand.nil? && read.against.nil?
+
+          :boolean
+        end
+
+        #: (String, untyped, Hash[String, Symbol], Hash[String, Declaration]) -> Declaration
+        def bare_default(name, value, locals, enclosing)
           identifier = value.name.to_s
 
           unless value.receiver.nil? && value.arguments.nil? && value.block.nil? && BARE.match?(identifier)
-            return Declaration.new(name: name, kind: :seeded, default: value.slice, line: nil, column: nil)
+            return Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)
+          end
+
+          if enclosing.key?(identifier)
+            raise Herb::Engine::CompilationError,
+                  "the state `#{name}` reads `#{identifier}` from an enclosing scope; a derived state reads " \
+                  "states declared in its own signature, so declare it beside its sources"
           end
 
           kind = locals[identifier]
@@ -235,7 +301,7 @@ module Herb
                   "a bare name that was never passed raises at render, so it has to be declared"
           end
 
-          Declaration.new(name: name, kind: kind, default: identifier, line: nil, column: nil)
+          Declaration.new(name: name, kind: kind, default: identifier, derived: nil, line: nil, column: nil)
         end
 
         #: (String) -> untyped
@@ -251,6 +317,14 @@ module Herb
 
         #: (untyped, Hash[String, Declaration]) -> Read?
         def bare_read(node, states)
+          if node.is_a?(Prism::LocalVariableReadNode)
+            declaration = states[node.name.to_s]
+
+            return nil unless declaration
+
+            return Read.new(name: node.name.to_s, comparand: nil, kind: declaration.kind, operator: nil, against: nil)
+          end
+
           return nil unless node.is_a?(Prism::CallNode) && node.receiver.nil? && node.arguments.nil? && node.block.nil?
 
           spelled = node.name.to_s

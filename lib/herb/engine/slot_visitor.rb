@@ -644,7 +644,7 @@ module Herb
         return unless signature
 
         scope = @collection_nodes.last
-        declared = StateDirectives.parse(signature, @strict_locals)
+        declared = StateDirectives.parse(signature, @strict_locals, enclosing: scope ? @region_states : {})
         empty = {} #: Hash[String, StateDirectives::Declaration]
         bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
@@ -722,9 +722,17 @@ module Herb
 
       #: (StateDirectives::Declaration) -> String
       def state_assignment(declaration)
-        return "#{declaration.name} = !!(#{declaration.default})" if declaration.kind == :boolean
+        source = declaration.default
 
-        "#{declaration.name} = #{declaration.default}"
+        if declaration.derived
+          StateDirectives.condition_names(declaration.derived).each do |name|
+            source = source.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+          end
+        end
+
+        return "#{declaration.name} = !!(#{source})" if declaration.kind == :boolean
+
+        "#{declaration.name} = #{source}"
       end
 
       #: () -> void
