@@ -181,7 +181,7 @@ describe("DiagnosticRenderer", () => {
 
       expect(hyperlinks(result)).toEqual([
         { url: "file:///test/file.erb", text: "/test/file.erb:2:5" },
-        { url: "file:///test/file.erb", text: "  2" },
+        { url: "file:///test/file.erb", text: "2" },
       ])
     })
 
@@ -191,8 +191,8 @@ describe("DiagnosticRenderer", () => {
         contextLines: 1,
       })
 
-      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("  1")
-      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("  3")
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("1")
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("3")
     })
 
     it("links the line number of every marked line of a multi-line diagnostic", () => {
@@ -201,7 +201,7 @@ describe("DiagnosticRenderer", () => {
         fileUrl: "file:///test/file.erb",
       })
 
-      expect(hyperlinks(result).map(({ text }) => text)).toEqual(["/test/file.erb:1:1", "  1", "  2", "  3"])
+      expect(hyperlinks(result).map(({ text }) => text)).toEqual(["/test/file.erb:1:1", "1", "2", "3"])
     })
 
     it("leaves the line numbers unlinked without a fileUrl", () => {

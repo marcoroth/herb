@@ -82,14 +82,38 @@ VALUE rb_string_from_hb_string(hb_string_T string) {
   return rb_utf8_str_new(string.data, string.length);
 }
 
+VALUE rb_interned_string_from_hb_string(hb_string_T string) {
+  if (hb_string_is_null(string)) { return Qnil; }
+
+  return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
+}
+
 static VALUE rb_token_value_from_hb_string(hb_string_T string) {
   if (hb_string_is_null(string)) { return Qnil; }
 
   if (string.length <= HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH) {
-    return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
+    return rb_interned_string_from_hb_string(string);
   }
 
   return rb_utf8_str_new(string.data, string.length);
+}
+
+static VALUE token_type_value_cache[TOKEN_EOF + 1] = { 0 };
+
+static VALUE rb_token_type_value(token_type_T type) {
+  if ((unsigned int) type > (unsigned int) TOKEN_EOF) {
+    return rb_interned_string_from_hb_string(token_type_to_string(type));
+  }
+
+  VALUE cached = token_type_value_cache[type];
+
+  if (cached == 0) {
+    cached = rb_interned_string_from_hb_string(token_type_to_string(type));
+    rb_gc_register_mark_object(cached);
+    token_type_value_cache[type] = cached;
+  }
+
+  return cached;
 }
 
 VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
@@ -101,7 +125,7 @@ VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   rb_ivar_set(object, id_value, rb_token_value_from_hb_string(token->value));
   rb_ivar_set(object, id_range, options->track_locations ? rb_range_from_c_struct(token->range) : Qnil);
   rb_ivar_set(object, id_location, options->track_locations ? rb_location_from_c_struct(token->location) : Qnil);
-  rb_ivar_set(object, id_type, rb_string_from_hb_string(token_type_to_string(token->type)));
+  rb_ivar_set(object, id_type, rb_token_type_value(token->type));
 
   return object;
 }
