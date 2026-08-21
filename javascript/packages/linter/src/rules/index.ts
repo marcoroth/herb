@@ -99,6 +99,12 @@ export * from "./herb-state-valid-declaration.js"
 export * from "./herb-state-valid-reads.js"
 export * from "./herb-valid-slot-names.js"
 
+export * from "./herb-counter-comment-malformed.js"
+export * from "./herb-counter-comment-no-duplicate-rules.js"
+export * from "./herb-counter-comment-out-of-date.js"
+export * from "./herb-counter-comment-unnecessary.js"
+export * from "./herb-counter-comment-valid-rule-name.js"
+
 export * from "./html-allowed-script-type.js"
 export * from "./html-anchor-require-href.js"
 export * from "./html-aria-attribute-must-be-valid.js"

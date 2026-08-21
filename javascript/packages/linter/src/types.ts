@@ -73,6 +73,12 @@ export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAut
   hints: number
   ignored: number
   wouldBeIgnored?: number
+  /**
+   * Number of offenses suppressed by a matching `<%# herb:counter RULE N %>`
+   * comment (i.e. E === N, or E > N > 0). Kept separate from `ignored`
+   * (which is herb:disable-only).
+   */
+  counterSuppressed?: number
 }
 
 /**
@@ -251,6 +257,36 @@ export interface LexerRuleConstructor {
 }
 
 /**
+ * A single herb:counter comment observed in the source, indexed by rule name
+ * and reported to the meta-rules via LintContext.
+ */
+export interface HerbCounterCacheEntry {
+  ruleName: string
+  count: number
+  line: number
+  column: number
+  raw: string
+}
+
+/**
+ * Per-rule reconciliation between a herb:counter comment (E) and the actual
+ * offense count for the file (N), placed on LintContext so the
+ * out-of-date and unnecessary meta-rules can read it after the main rule
+ * loop has run.
+ */
+export interface HerbCounterDrift {
+  ruleName: string
+  /** Declared expected count (E) */
+  expected: number
+  /** Actual offense count (N) after herb:disable filtering */
+  actual: number
+  /** Location metadata of the herb:counter comment */
+  line: number
+  column: number
+  raw: string
+}
+
+/**
  * Complete lint context with all properties defined.
  * Use Partial<LintContext> when passing context to rules.
  */
@@ -259,6 +295,14 @@ export interface LintContext {
   validRuleNames: string[] | undefined
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
+  /**
+   * Per-rule drift map built during the main rule loop and consumed by the
+   * `herb-counter-comment-out-of-date` and `herb-counter-comment-unnecessary`
+   * meta-rules.
+   */
+  counterDriftByRule: Map<string, HerbCounterDrift> | undefined
+  /** Report offenses even when counter-suppressed (mirrors ignoreDisableComments). */
+  ignoreCounterComments: boolean | undefined
   indentWidth: number | undefined
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
@@ -276,6 +320,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
+  counterDriftByRule: undefined,
+  ignoreCounterComments: undefined,
   indentWidth: undefined,
   indentStyle: undefined,
   framework: undefined,
