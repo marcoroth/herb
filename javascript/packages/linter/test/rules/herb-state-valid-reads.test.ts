@@ -27,6 +27,22 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows a state named in a tag helper's action attribute", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <%= tag.button "More", data: { herb_increment: "count" } %>
+    `)
+  })
+
+  test("still flags a state read beside an action attribute", () => {
+    expectError("`tag.button \"More\", data: { herb_increment: \"count\" }, title: count.to_s` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <%= tag.button "More", data: { herb_increment: "count" }, title: count.to_s %>
+    `)
+  })
+
   test("flags a computed value read", () => {
     expectError("`attempts + 1` computes with the state `attempts`, and the client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
 
