@@ -64,6 +64,66 @@ describe("DocumentHighlightProvider", () => {
     })
   })
 
+  describe("herb action attributes", () => {
+    const template = dedent`
+      <%# herb:state (open: false, attempts: 0) %>
+
+      <button data-herb-toggle="open">Details</button>
+      <button data-herb-set="click->open=false,attempts=0">Reset</button>
+      <button data-herb-increment="attempts" data-herb-by="2">More</button>
+      <% if open %><nav>menu</nav><% end %>
+    `
+
+    function texts(highlights: ReturnType<typeof getHighlights>) {
+      const lines = template.split("\n")
+
+      return highlights.map(highlight => lines[highlight.range.start.line].slice(highlight.range.start.character, highlight.range.end.character))
+    }
+
+    it("counts an action attribute as a read of the state", () => {
+      expect(texts(getHighlights(template, 5, 7))).toEqual(["open", "open", "open", "open", "false"])
+    })
+
+    it("resolves the state from inside the attribute value", () => {
+      expect(texts(getHighlights(template, 2, 28))).toEqual(["open", "open", "open", "open", "false"])
+    })
+
+    it("collects a name from every attribute that writes it", () => {
+      const highlights = getHighlights(template, 4, 29)
+
+      expect(texts(highlights)).toEqual(["attempts", "attempts", "attempts", "0"])
+    })
+  })
+
+  describe("slot names", () => {
+    const template = dedent`
+      <ul data-herb-name="messages">
+        <% @messages.each do |message| %>
+          <li id="<%= dom_id(message) %>"><%= message.body %></li>
+        <% end %>
+      </ul>
+      <form data-herb-into="messages"><input name="body"></form>
+    `
+
+    function texts(highlights: ReturnType<typeof getHighlights>) {
+      const lines = template.split("\n")
+
+      return highlights.map(highlight => lines[highlight.range.start.line].slice(highlight.range.start.character, highlight.range.end.character))
+    }
+
+    it("links a send target to the collection it names", () => {
+      expect(texts(getHighlights(template, 5, 25))).toEqual(["messages", 'data-herb-into="messages"'])
+    })
+
+    it("resolves from the attribute name as well as its value", () => {
+      expect(texts(getHighlights(template, 5, 10))).toEqual(["messages", 'data-herb-into="messages"'])
+    })
+
+    it("links the collection name to the sends naming it", () => {
+      expect(texts(getHighlights(template, 0, 22))).toEqual(["messages", 'data-herb-into="messages"'])
+    })
+  })
+
   describe("strict locals", () => {
     const partial = dedent`
       <%# locals: (title:, count: 0) %>

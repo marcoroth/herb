@@ -7,6 +7,9 @@ import { StrictLocalsCollector } from "./strict_locals_collector"
 import { lspPosition, isPositionInRange, nodeToRange } from "./range_utils"
 import { stringIndexFromByteOffset, isERBBlockNode, isERBIterationBlockNode, isERBContentNode } from "@herb-tools/core"
 import { parseStateDirective } from "@herb-tools/client/directives"
+import { collectHerbAttributes } from "./herb_attribute_links"
+
+import type { HerbAttributeLinks, AttributeStateUsage } from "./herb_attribute_links"
 
 import type { ParserService } from "./parser_service"
 import type { DocumentNode, Node, RubyReference, ERBContentNode } from "@herb-tools/core"
@@ -23,31 +26,36 @@ export interface RubyLocal {
 
 export class RubyLocalsIndex {
   readonly locals: RubyLocal[]
+  readonly herbAttributes: HerbAttributeLinks
 
-  private constructor(locals: RubyLocal[]) {
+  private constructor(locals: RubyLocal[], herbAttributes: HerbAttributeLinks) {
     this.locals = locals
+    this.herbAttributes = herbAttributes
   }
 
   static build(parserService: ParserService, textDocument: TextDocument): RubyLocalsIndex {
     const text = textDocument.getText()
 
+    const empty = { stateUsages: [], slotNames: [] }
+
     const result = parserService.parseContent(text, PARSER_OPTIONS)
-    if (result.failed) return new RubyLocalsIndex([])
+    if (result.failed) return new RubyLocalsIndex([], empty)
 
     const document = result.value as DocumentNode
-    if (!document.prismNode) return new RubyLocalsIndex([])
+    if (!document.prismNode) return new RubyLocalsIndex([], empty)
 
     const references = new RubyReferenceCollector()
 
     references.visit(document.prismNode)
 
     const toRange = (reference: RubyReference) => referenceRange(reference, textDocument, text)
+    const herbAttributes = collectHerbAttributes(document)
 
     return new RubyLocalsIndex([
       ...strictLocals(document, references, toRange),
       ...blockLocals(document, references, toRange),
-      ...stateLocals(document, references, toRange)
-    ])
+      ...stateLocals(document, references, toRange, herbAttributes.stateUsages)
+    ], herbAttributes)
   }
 
   at(position: Position): RubyLocal | null {
@@ -88,7 +96,7 @@ function blockLocals(document: DocumentNode, references: RubyReferenceCollector,
   })
 }
 
-function stateLocals(document: DocumentNode, references: RubyReferenceCollector, toRange: (reference: RubyReference) => Range): RubyLocal[] {
+function stateLocals(document: DocumentNode, references: RubyReferenceCollector, toRange: (reference: RubyReference) => Range, attributeUsages: AttributeStateUsage[]): RubyLocal[] {
   const collector = new StateDirectiveCollector()
 
   collector.visit(document)
@@ -97,9 +105,12 @@ function stateLocals(document: DocumentNode, references: RubyReferenceCollector,
     signature.declarations.map(declaration => ({
       name: declaration.name,
       declaration: contentRange(node, declaration.nameOffset, declaration.name.length),
-      usages: references.bareCalls
-        .filter(call => call.name === declaration.name || call.name === `${declaration.name}?`)
-        .map(toRange),
+      usages: [
+        ...references.bareCalls
+          .filter(call => call.name === declaration.name || call.name === `${declaration.name}?`)
+          .map(toRange),
+        ...attributeUsages.filter(usage => usage.name === declaration.name).map(usage => usage.range)
+      ],
       defaultValue: declaration.defaultSource === "" ? undefined : contentRange(node, declaration.defaultOffset, declaration.defaultSource.length)
     }))
   )
