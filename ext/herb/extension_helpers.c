@@ -91,9 +91,7 @@ VALUE rb_interned_string_from_hb_string(hb_string_T string) {
 static VALUE rb_token_value_from_hb_string(hb_string_T string) {
   if (hb_string_is_null(string)) { return Qnil; }
 
-  if (string.length <= HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH) {
-    return rb_interned_string_from_hb_string(string);
-  }
+  if (string.length <= HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH) { return rb_interned_string_from_hb_string(string); }
 
   return rb_utf8_str_new(string.data, string.length);
 }
