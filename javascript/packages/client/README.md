@@ -9,7 +9,7 @@ Browser runtime for HTML+ERB templates compiled with slot markers. It reads the 
 
 A template compiled with `Herb::Engine::SlotVisitor` marks every expression, conditional, collection and dynamic attribute in its output. Those markers survive rendering, so the browser can still find each part afterwards and replace just that part when its data changes. Scroll position, focus, form state and playing media all survive an update that would otherwise have replaced the page.
 
-This package is the browser half. It does not fetch anything and it does not decide when to update. It answers where a slot is, and applies the markup it is given.
+This package is the browser half. The index at its core stays passive. It answers where a slot is and applies the markup it is given. On top of it sit a state layer, a send queue and an action layer, and those do talk to the server and do decide when to write, always through a transport you can replace.
 
 > [!NOTE]
 > This ships to production. The development tools and the dev server client are separate packages, so nothing dev-only is in this bundle.
@@ -21,7 +21,7 @@ Nothing starts on its own. A page that has not asked for the runtime does not ge
 ```typescript
 import { HerbRuntime } from "@herb-tools/client"
 
-const { slots } = HerbRuntime.start()
+const { slots, state, mutations, actions } = HerbRuntime.start()
 ```
 
 `start` is idempotent and returns the same runtime every time, so anything that needs the runtime can ask for it and get the one already running:
@@ -182,6 +182,107 @@ HerbRuntime.start({
   },
 })
 ```
+
+## Declared state
+
+Server state answers to the server. A template can also declare state the client owns outright, with the same strict-locals signature `locals:` uses, placed where it should scope. At the top of a template it is one value per rendering, inside a keyed collection body it is one value per row:
+
+```erb
+<%# herb:state (pending: false, draft: "") %>
+
+<% if pending %>Sending…<% else %>Sent<% end %>
+<input value="<%= draft %>">
+```
+
+The server renders every state as its default, and the client owns it from there. A write never reaches the transport, every slot reading the state updates in place, and a conditional flips between parked branches with no request:
+
+```typescript
+state.setState({ pending: true })
+state.getState("draft")
+state.toggle("pending")
+state.increment("attempts")
+state.reset("draft")
+```
+
+A scoped write names the row it belongs to, resolved from any element inside it:
+
+```typescript
+const scope = state.scopeFor(button, "pending")
+
+state.setState({ pending: true }, { scope })
+```
+
+A form control whose `value`, `checked` or `selected` reads a state is bound both ways. Typing writes the state, and the fan-out writes every other read of it. A boolean state read by a boolean attribute renders as presence, so `disabled="<%= draft == "" %>"` toggles the attribute instead of writing text into it.
+
+`stateFor(element)` returns the same API bound to whatever scope encloses the element, and the `/stimulus` entry wires a controller in one line:
+
+```typescript
+import { useState } from "@herb-tools/client/stimulus"
+
+export default class extends Controller {
+  connect() {
+    useState(this)
+  }
+
+  pendingChanged(value, previous) {}
+}
+```
+
+`useState` assigns `this.state`, `this.mutations` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
+
+## Actions in markup
+
+A button that only writes a state does not need a controller. Four attributes cover the typed operations, and each accepts a comma-separated list so one interaction stays one write:
+
+```erb
+<button data-herb-toggle="expanded">Details</button>
+<button data-herb-set="pending=false,failed=true">Retry</button>
+<button data-herb-increment="attempts" data-herb-by="2">More</button>
+<button data-herb-reset="draft">Clear</button>
+```
+
+`data-herb-decrement` is the twin of increment. The event defaults to `click` and is otherwise named inline, Stimulus-style, with space-separated clauses for several events on one element:
+
+```erb
+<select data-herb-set="change->sort=$value">
+<div data-herb-set="mouseenter->menu=true mouseleave->menu=false">
+```
+
+`$value` stands for the event target's value and is the only interpolation. A value is read as whatever the state was declared to hold, so `pending=true` sets a boolean where `draft=true` sets a four-letter string.
+
+## Sending
+
+A mutation is a send that must not lose what the user did. `mutations` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
+
+```typescript
+mutations.submit({
+  url: form.action,
+  body: new FormData(form),
+  into: { file: "app/views/chat/show.html.erb", name: "messages" },
+  values: { body: input.value },
+})
+```
+
+`into` names a keyed collection by the `data-herb-name` on the element around its loop. The row is built from the empty item markup the template parked, filled with the optimistic values as text, and keyed temporarily. The confirm rekeys it in place, so the node the user is looking at survives, and applies the server's values in merge mode, which never deletes the siblings the payload does not mention. A failed send flags the row instead of dropping it, and `retry` and `discard` take the row's key or any element inside it.
+
+A form does not need any of that written out. A form carrying `data-herb-into` is intercepted at capture phase, and everything else is derived from the form itself:
+
+```erb
+<form action="/chat/messages" method="post" data-herb-into="messages">
+  <input name="message[body]" value="<%= draft %>">
+  <button disabled="<%= draft == "" %>">Send</button>
+</form>
+```
+
+The optimistic values come from the form's fields, with Rails model names stripped to their last bracketed segment, so `message[body]` fills the item slot named `body`.
+
+## Reporting
+
+The runtime declines quietly in production, and every decline carries a diagnostic. With `@herb-tools/dev-tools` running, the diagnostics land in its panel. Before it starts they queue, bounded, and flush when it attaches, so opening the panel after the fact still shows what happened. Without the dev tools nothing is retained past navigation and nothing reaches the console unless the page opts into debug mode.
+
+## Entry points
+
+The root export is the runtime. `/stimulus` holds the controller wiring and imports nothing from Stimulus, so the root stays framework-free. `/directives` is the static grammar of the directives and action attributes, consumed by the linter and the language service, and never loaded by an application.
 
 ## Deciding what to update
 
