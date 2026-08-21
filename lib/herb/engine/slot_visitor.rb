@@ -1015,6 +1015,12 @@ module Herb
                 "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
         end
 
+        if (existing = @slots[index].name)
+          raise Herb::Engine::CompilationError,
+                "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`; " \
+                "both elements hold the same slot, so keep one name or wrap what each should address"
+        end
+
         if attribute_conflict?(name, index, named[:scope])
           raise Herb::Engine::CompilationError,
                 "the name `#{name}` collides with the `#{name}` attribute slot in the same scope; " \
