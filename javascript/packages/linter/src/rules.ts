@@ -88,6 +88,13 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
+import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
+import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
+import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
+import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
+import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
+import { HerbValidSlotNamesRule } from "./rules/herb-valid-slot-names.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
@@ -239,6 +246,13 @@ export const rules: RuleClass[] = [
   HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
+  HerbStateNoUnusedStatesRule,
+  HerbStateRequiresClientModeRule,
+  HerbStateValidActionsRule,
+  HerbStateValidBindingsRule,
+  HerbStateValidDeclarationRule,
+  HerbStateValidReadsRule,
+  HerbValidSlotNamesRule,
 
   HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,

@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HTMLBooleanAttributesNoValueRule } from "../../src/rules/html-boolean-attributes-no-value.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -74,5 +75,23 @@ describe("html-boolean-attributes-no-value", () => {
     expectError('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="<%= disabled? %>"`.')
 
     assertOffenses('<button disabled="<%= disabled? %>">Submit</button>')
+  })
+
+  test("allows a boolean attribute bound to a declared herb:state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (agreed: false) %>
+
+      <input type="checkbox" checked="<%= agreed %>">
+    `)
+  })
+
+  test("fails for an ERB value that is not a declared state", () => {
+    expectError('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="<%= agreed %>"`.')
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+
+      <input type="checkbox" checked="<%= agreed %>">
+    `)
   })
 })

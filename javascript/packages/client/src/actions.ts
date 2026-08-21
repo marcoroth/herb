@@ -1,8 +1,10 @@
 import { ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "./attributes"
+import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "./parsing"
 import { report } from "./report"
 import { boundValue, coerceState } from "./state"
 
 import type { ActionName, ActionSchema } from "./attributes"
+import type { Clause } from "./parsing"
 import type { DeclaredState, SlotState, StateScope, StateValue } from "./state"
 
 const DIRECT_EVENTS = ["mouseenter", "mouseleave"]
@@ -13,11 +15,6 @@ const DEFAULT_EVENTS: Record<string, string> = {
   textarea: "input",
   select: "change",
   details: "toggle",
-}
-
-interface Clause {
-  event: string | null
-  rest: string
 }
 
 function defaultEventFor(element: Element): string {
@@ -438,70 +435,3 @@ export class SlotActions {
   }
 }
 
-function clauses(value: string): Clause[] {
-  return splitOutsideQuotes(value.trim(), " ")
-    .filter((part) => part.length > 0)
-    .map((part) => {
-      const arrow = part.indexOf("->")
-
-      if (arrow === -1) {
-        return { event: null, rest: part }
-      }
-
-      return { event: part.slice(0, arrow), rest: part.slice(arrow + 2) }
-    })
-}
-
-function names(rest: string): string[] {
-  return splitOutsideQuotes(rest, ",").map((name) => name.trim()).filter((name) => name.length > 0)
-}
-
-function balancedQuotes(source: string): boolean {
-  let quoted = false
-
-  for (let position = 0; position < source.length; position += 1) {
-    if (source[position] === "'" && source[position - 1] !== "\\") {
-      quoted = !quoted
-    }
-  }
-
-  return !quoted
-}
-
-function splitOutsideQuotes(source: string, separator: string): string[] {
-  const parts: string[] = []
-  let current = ""
-  let quoted = false
-
-  for (let position = 0; position < source.length; position += 1) {
-    const character = source[position]
-
-    if (character === "'" && source[position - 1] !== "\\") {
-      quoted = !quoted
-      current += character
-
-      continue
-    }
-
-    if (character === separator && !quoted) {
-      parts.push(current)
-      current = ""
-
-      continue
-    }
-
-    current += character
-  }
-
-  parts.push(current)
-
-  return parts
-}
-
-function unquote(raw: string): string {
-  if (raw.length >= 2 && raw.startsWith("'") && raw.endsWith("'")) {
-    return raw.slice(1, -1).replace(/\\'/g, "'")
-  }
-
-  return raw
-}

@@ -33,6 +33,12 @@
       "types": "./dist/types/stimulus.d.ts",
       "import": "./dist/herb-client-stimulus.esm.js",
       "default": "./dist/herb-client-stimulus.esm.js"
+    },
+    "./directives": {
+      "types": "./dist/types/directives.d.ts",
+      "import": "./dist/herb-client-directives.esm.js",
+      "require": "./dist/herb-client-directives.cjs",
+      "default": "./dist/herb-client-directives.esm.js"
     }
   },
   "dependencies": {},
