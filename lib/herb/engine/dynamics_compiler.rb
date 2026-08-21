@@ -473,6 +473,10 @@ module Herb
             return add_block_dynamic("(#{assignment(index, value)}) ? #{attribute} : \"\"")
           end
 
+          if index && interpolated?(index)
+            return add_block_dynamic("(#{assignment(index, value)}).fetch(-1)")
+          end
+
           return add_block_dynamic(index ? assignment(index, value) : value)
         end
         return if index.nil?
@@ -601,7 +605,16 @@ module Herb
 
       #: (Integer, String) -> String
       def assignment(index, value)
-        "#{current_scope}[#{index}] = #{value}"
+        if interpolated?(index)
+          "(#{current_scope}[#{index}] ||= []) << #{value}"
+        else
+          "#{current_scope}[#{index}] = #{value}"
+        end
+      end
+
+      #: (Integer) -> bool
+      def interpolated?(index)
+        @slot_visitor.slots[index]&.type == :attribute_interpolation
       end
 
       #: (String) -> void

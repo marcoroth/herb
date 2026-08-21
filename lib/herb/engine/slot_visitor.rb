@@ -39,6 +39,7 @@ module Herb
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
       SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
+      PART_MARKER = "<!--herb-part-->" #: String
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
@@ -132,6 +133,7 @@ module Herb
         attribute_open_tags = {} #: Hash[untyped, untyped]
         @attribute_open_tags = attribute_open_tags.compare_by_identity
         @state_presence = {} #: Hash[Integer, StateDirectives::Read]
+        @interpolated_attributes = [] #: Array[untyped]
         @strict_locals = {} #: Hash[String, Symbol]
         @region_states = {} #: Hash[String, StateDirectives::Declaration]
         item_states = {} #: Hash[untyped, Hash[String, StateDirectives::Declaration]]
@@ -266,6 +268,7 @@ module Herb
 
         return unless @mark
 
+        park_attribute_parts
         insert_markers(node)
         wrap_displaced
         wrap_region(node)
@@ -323,6 +326,7 @@ module Herb
         if dynamic?(node)
           record_slot(node, attribute_type_for(node))
           @attribute_open_tags[node] = @current_open_tag
+          @interpolated_attributes << node if attribute_type_for(node) == :attribute_interpolation
         end
 
         @in_attribute = true
@@ -1361,6 +1365,42 @@ module Herb
 
           body.push(text_node(@markers.item_close(slot_index)))
         end
+      end
+
+      #: () -> void
+      def park_attribute_parts
+        statics = @statics
+        return unless statics
+
+        @interpolated_attributes.each do |node|
+          index = @indices[node]
+          next unless index
+
+          segments = attribute_segments(node)
+          next unless segments
+
+          statics["#{index}:parts"] = @markers.branch(index, "parts") + segments.join(PART_MARKER)
+        end
+      end
+
+      #: (untyped) -> Array[String]?
+      def attribute_segments(node)
+        segments = [+""]
+
+        (node.value&.children || []).each do |child|
+          case child
+          when Herb::AST::LiteralNode
+            segments.last << child.content.to_s
+          when Herb::AST::ERBContentNode
+            return nil unless erb_output?(child.tag_opening&.value.to_s)
+
+            segments << +""
+          else
+            return nil
+          end
+        end
+
+        segments.size > 1 ? segments : nil
       end
 
       def park_item(slot_index, body)

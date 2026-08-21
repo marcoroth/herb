@@ -31,6 +31,7 @@ const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
 const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
 const MAX_JOURNAL = 50
+const PART_MARKER = "herb-part"
 
 const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
@@ -61,8 +62,8 @@ export type SlotAnchor =
 export type SlotMap = Map<number, Slot>
 export type ItemMap = Map<string, Item>
 export type FragmentMap = Map<string, DocumentFragment>
-export type SlotValues = Record<number, string>
-export type ItemValues = Record<number | string, string>
+export type SlotValues = Record<number, string | string[]>
+export type ItemValues = Record<number | string, string | string[]>
 
 export interface AddItemOptions {
   values?: ItemValues
@@ -172,7 +173,7 @@ export interface Collected {
   items: { [key: string]: PayloadSlots }
 }
 
-export type PayloadValue = string | boolean | Payload | Branched | Collected
+export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected
 
 export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "items" | "partial-attribute"
 
@@ -528,7 +529,7 @@ export class SlotIndex {
         continue
       }
 
-      if (typeof value === "string") {
+      if (typeof value === "string" || Array.isArray(value)) {
         if (this.#same(slot, value)) continue
 
         if (slot.attribute && !this.setAttribute(slot, value)) {
@@ -536,7 +537,14 @@ export class SlotIndex {
           continue
         }
 
-        if (!slot.attribute) this.update(slot, value)
+        if (!slot.attribute) {
+          if (Array.isArray(value)) {
+            this.#defer(report, payload, index, "partial-attribute")
+            continue
+          }
+
+          this.update(slot, value)
+        }
 
         report.applied += 1
         continue
@@ -714,7 +722,9 @@ export class SlotIndex {
       if (branch && branch[2] === ITEM_STATICS) node.remove()
     }
 
-    fillSlots(copy, values, text)
+    const region = this.#slotRegions.get(slot)
+
+    fillSlots(copy, values, text, region ? (index) => this.#partsFor(region.file, index) : undefined)
 
     const added = [...copy.childNodes]
     const target =
@@ -898,8 +908,16 @@ export class SlotIndex {
     return holder.innerHTML
   }
 
-  #same(slot: Slot, value: string): boolean {
-    if (slot.type === "attribute_interpolation") return false
+  #same(slot: Slot, value: string | string[]): boolean {
+    if (slot.type === "attribute_interpolation") {
+      const whole = this.#interpolate(slot, value)
+
+      if (whole === null || slot.anchor.kind === "range" || !slot.attribute) return false
+
+      return slot.anchor.element.getAttribute(slot.attribute) === whole
+    }
+
+    if (Array.isArray(value)) return false
 
     if (slot.attribute && slot.anchor.kind !== "range") {
       return slot.anchor.element.getAttribute(slot.attribute) === value
@@ -1084,9 +1102,24 @@ export class SlotIndex {
     return resolved
   }
 
-  setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
+  setAttribute(slot: Slot, value: string | string[] | null, name = slot.attribute): boolean {
     if (slot.anchor.kind === "range" || name === null) return false
-    if (slot.type === "attribute_interpolation") return false
+
+    if (slot.type === "attribute_interpolation") {
+      const whole = this.#interpolate(slot, value)
+
+      if (whole === null) return false
+
+      value = whole
+    }
+
+    if (Array.isArray(value)) return false
+
+    return this.#writeAttribute(slot, value, name)
+  }
+
+  #writeAttribute(slot: Slot, value: string | null, name: string): boolean {
+    if (slot.anchor.kind === "range") return false
     if (slot.anchor.element.getAttribute(name) === value) return true
 
     this.#record(() => {
@@ -1096,7 +1129,7 @@ export class SlotIndex {
       return () => {
         const live = this.#slotAt(address)
 
-        if (live) this.setAttribute(live, before, name)
+        if (live) this.#writeAttribute(live, before, name)
       }
     })
 
@@ -1139,6 +1172,19 @@ export class SlotIndex {
     this.#announce(slot, "attribute", slot.index)
 
     return true
+  }
+
+  #interpolate(slot: Slot, value: string | string[] | null): string | null {
+    if (value === null) return null
+
+    const region = this.#slotRegions.get(slot)
+    if (!region) return null
+
+    return interpolateParts(this.#partsFor(region.file, slot.index), value)
+  }
+
+  #partsFor(file: string, index: number): string[] | null {
+    return attributeParts(this.skeletonFor(file, `${index}:parts`))
   }
 
   capture(slot: Slot): boolean {
@@ -1186,7 +1232,7 @@ export class SlotIndex {
 
     const copy = skeleton.cloneNode(true) as DocumentFragment
 
-    fillSlots(copy, dynamics)
+    fillSlots(copy, dynamics, false, (index) => this.#partsFor(file, index))
 
     return copy
   }
@@ -1679,6 +1725,24 @@ function skeletonElements(root: Node): HTMLTemplateElement[] {
   return found
 }
 
+function attributeParts(fragment: DocumentFragment | null): string[] | null {
+  if (!fragment) return null
+
+  const segments: string[] = [""]
+
+  for (const node of fragment.childNodes) {
+    if (node.nodeType === Node.COMMENT_NODE) {
+      if ((node as Comment).data.trim() === PART_MARKER) segments.push("")
+
+      continue
+    }
+
+    segments[segments.length - 1] += node.textContent ?? ""
+  }
+
+  return segments.length > 1 ? segments : null
+}
+
 function parkedBranches(element: HTMLTemplateElement): FragmentMap {
   const named = element.getAttribute(HERB_ATTRIBUTES.statics)
 
@@ -1724,12 +1788,14 @@ function templateNames(template: DocumentFragment): Map<string, number> {
   return names
 }
 
-function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = false): void {
+function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = false, parts?: (index: number) => string[] | null): void {
   for (const open of slotOpeners(fragment)) {
     const index = Number(SLOT_OPEN.exec(open.data.trim())?.[1])
     const value = dynamics[index]
 
     if (value === undefined) continue
+
+    if (Array.isArray(value)) continue
 
     const close = closingFor(open, index)
     if (!close) continue
@@ -1749,14 +1815,31 @@ function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = fals
 
       if (value === undefined) continue
 
-      if (name.length > 0) element.setAttribute(name.join(":"), value)
-      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.innerHTML = text ? escapeText(value) : value
+      if (name.length > 0) {
+        const whole = type === "attribute_interpolation"
+          ? interpolateParts(parts?.(Number(index)) ?? null, value)
+          : Array.isArray(value) ? null : value
+
+        if (whole !== null) element.setAttribute(name.join(":"), whole)
+      } else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE && !Array.isArray(value)) {
+        element.innerHTML = text ? escapeText(value) : value
+      }
     }
   }
 }
 
 function escapeText(value: string): string {
   return value.replace(/[&<>]/g, (match) => (match === "&" ? "&amp;" : match === "<" ? "&lt;" : "&gt;"))
+}
+
+function interpolateParts(parts: string[] | null, value: string | string[]): string | null {
+  if (!parts) return null
+
+  const dynamics = Array.isArray(value) ? value : [value]
+
+  if (dynamics.length !== parts.length - 1) return null
+
+  return parts.reduce((whole, segment, position) => (position === 0 ? segment : `${whole}${dynamics[position - 1]}${segment}`), "")
 }
 
 function blankSlots(fragment: DocumentFragment): void {
