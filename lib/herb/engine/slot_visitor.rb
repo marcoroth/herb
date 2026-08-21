@@ -874,54 +874,49 @@ module Herb
       end
 
       def text_node(content)
-        Herb::AST::HTMLTextNode.new("HTMLTextNode", Herb::Location.zero, [], content.dup)
+        Herb::AST::HTMLTextNode.build(content: content.dup)
       end
 
       def erb_code_node(code)
-        Herb::AST::ERBContentNode.new(
-          "ERBContentNode", Herb::Location.zero, [],
-          token(:erb_start, "<%"), token(:erb_content, " #{code} "), token(:erb_end, "%>"),
-          nil, false, true,
-          nil
+        Herb::AST::ERBContentNode.build(
+          tag_opening: token(:erb_start, "<%"),
+          content: token(:erb_content, " #{code} "),
+          tag_closing: token(:erb_end, "%>"),
+          valid: true
         )
       end
 
       def erb_output_node(code)
-        Herb::AST::ERBContentNode.new(
-          "ERBContentNode", Herb::Location.zero, [],
-          token(:erb_start, "<%="), token(:erb_content, " #{code} "), token(:erb_end, "%>"),
-          nil, false, true,
-          nil
+        Herb::AST::ERBContentNode.build(
+          tag_opening: token(:erb_start, "<%="),
+          content: token(:erb_content, " #{code} "),
+          tag_closing: token(:erb_end, "%>"),
+          valid: true
         )
       end
 
       def comment_node(text)
-        Herb::AST::HTMLCommentNode.new(
-          "HTMLCommentNode",
-          Herb::Location.zero,
-          [],
-          token(:html_comment_start, text),
-          [],
-          token(:html_comment_end, "")
+        Herb::AST::HTMLCommentNode.build(
+          comment_start: token(:html_comment_start, text),
+          comment_end: token(:html_comment_end, "")
         )
       end
 
       def attribute_node(name, value)
-        name_node = Herb::AST::HTMLAttributeNameNode.new(
-          "HTMLAttributeNameNode", Herb::Location.zero, [], [literal(name)]
+        name_node = Herb::AST::HTMLAttributeNameNode.build(children: [literal(name)])
+
+        value_node = Herb::AST::HTMLAttributeValueNode.build(
+          open_quote: token(:quote, '"'),
+          children: [literal(value)],
+          close_quote: token(:quote, '"'),
+          quoted: true
         )
 
-        value_node = Herb::AST::HTMLAttributeValueNode.new(
-          "HTMLAttributeValueNode", Herb::Location.zero, [], token(:quote, '"'), [literal(value)], token(:quote, '"'), true
-        )
-
-        Herb::AST::HTMLAttributeNode.new(
-          "HTMLAttributeNode", Herb::Location.zero, [], name_node, token(:equals, "="), value_node
-        )
+        Herb::AST::HTMLAttributeNode.build(name: name_node, equals: token(:equals, "="), value: value_node)
       end
 
       def literal(content)
-        Herb::AST::LiteralNode.new("LiteralNode", Herb::Location.zero, [], content.dup)
+        Herb::AST::LiteralNode.build(content: content.dup)
       end
 
       def token(type, value)
