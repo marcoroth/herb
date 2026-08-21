@@ -119,6 +119,14 @@ module Engine
         assert_equal :child, named.type
       end
 
+      test "two named elements cannot claim one slot" do
+        error = assert_raises(Herb::Engine::CompilationError) do
+          compile(%(<div data-herb-name="outer"><span data-herb-name="inner"><%= @x %></span></div>))
+        end
+
+        assert_match(/claims the slot already named/, error.message)
+      end
+
       test "a nested container's slots do not confuse the count" do
         template = %(<div data-herb-name="status"><% if @ok %><b><%= @yes %></b><% else %><%= @no %><% end %></div>)
         named = slots(template).find { |slot| slot.name == "status" }
