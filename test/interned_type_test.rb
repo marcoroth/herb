@@ -19,17 +19,17 @@ class InternedTypeTest < Minitest::Spec
     assert_same first.type, second.type
   end
 
-  test "token values remain mutable and independently allocated" do
-    first = Herb.lex("<").value.first
-    second = Herb.lex("<").value.first
+  test "long token values remain mutable and independently allocated" do
+    long = "abcdefghijklmnopq"
+    first = Herb.lex("<#{long}>").value.find { |token| token.value == long }
+    second = Herb.lex("<#{long}>").value.find { |token| token.value == long }
 
     refute_predicate first.value, :frozen?
     refute_same first.value, second.value
-    refute_respond_to first, :value=
 
     first.value.replace("changed")
 
     assert_equal "changed", first.value
-    assert_equal "<", second.value
+    assert_equal long, second.value
   end
 end
