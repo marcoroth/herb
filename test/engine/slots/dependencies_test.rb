@@ -447,6 +447,22 @@ module Engine
         assert_equal subject.version_for(path), manifest["version"]
       end
 
+      test "marks a state read into a form control as bound" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (draft: "", agreed: false) %>
+          <input value="<%= draft %>">
+          <input type="checkbox" checked="<%= agreed %>">
+          <p><%= draft %></p>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal 2, manifest["reads"]["draft"].size
+        assert_equal 1, manifest["bound"]["draft"].size
+        assert_equal 1, manifest["bound"]["agreed"].size
+        refute_includes manifest["bound"]["draft"], manifest["reads"]["draft"].last
+      end
+
       test "carries no states section entry for a template that declares none" do
         path = write("index.html.erb", "<div><%= @query %></div>")
 

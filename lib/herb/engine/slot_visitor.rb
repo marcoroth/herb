@@ -70,7 +70,8 @@ module Herb
         :attribute,  #: String?
         :key_source, #: Symbol?
         :key_expression, #: String?
-        :name #: String?
+        :name, #: String?
+        :tag #: String?
       )
 
       #: (String) -> bool
@@ -123,6 +124,7 @@ module Herb
 
         slot_nodes = [] #: Array[untyped]
         @slot_nodes = slot_nodes
+        @tag_stack = [] #: Array[String]
         slot_scopes = {} #: Hash[untyped, untyped]
         @slot_scopes = slot_scopes.compare_by_identity
         @named_elements = [] #: Array[Hash[Symbol, untyped]]
@@ -276,6 +278,7 @@ module Herb
 
         previous_open_tag = @current_open_tag
         @current_open_tag = node.open_tag
+        @tag_stack.push(tag_name)
 
         name_attribute = attributes_for(node).find { |attribute| attribute_name_for(attribute)&.downcase == NAME_ATTRIBUTE }
         base = @slot_nodes.size
@@ -288,6 +291,7 @@ module Herb
 
         record_named_element(node, name_attribute, base, base_scope, base_depth) if name_attribute
 
+        @tag_stack.pop
         @current_open_tag = previous_open_tag
 
         @rcdata_depth -= 1 if rcdata
@@ -574,7 +578,8 @@ module Herb
           attribute: attribute_name_for(node),
           key_source: key_source,
           key_expression: key_expression,
-          name: nil
+          name: nil,
+          tag: @tag_stack.last
         )
 
         @slots << slot
@@ -1140,12 +1145,26 @@ module Herb
       end
 
       def expression_for(node)
+        return attribute_expression_for(node) if node.is_a?(Herb::AST::HTMLAttributeNode)
         return nil unless node.respond_to?(:content)
 
         content = node.content
         value = content.respond_to?(:value) ? content.value : content
 
         value&.to_s&.strip
+      end
+
+      #: (untyped) -> String?
+      def attribute_expression_for(node)
+        children = node.value&.children || []
+
+        return nil unless children.one?
+
+        child = children.first
+
+        return nil unless child.is_a?(Herb::AST::ERBContentNode)
+
+        child.content&.value&.strip
       end
 
       def location_for(node)
