@@ -1,3 +1,4 @@
+import { clearOnNavigation } from "./report"
 import { SlotIndex } from "./slot-index"
 import { SlotMutations } from "./mutations"
 import { SlotState } from "./state"
@@ -19,6 +20,8 @@ export class HerbRuntime {
   public readonly state: SlotState
   public readonly mutations: SlotMutations
 
+  private stopClearing: (() => void) | null = null
+
   private constructor(token?: symbol, options: RuntimeOptions = {}) {
     if (token !== CONSTRUCT) {
       throw new TypeError("HerbRuntime is created by HerbRuntime.start()")
@@ -38,6 +41,7 @@ export class HerbRuntime {
     runtime.slots.observe()
     runtime.state.adopt()
     runtime.state.observe()
+    runtime.stopClearing = clearOnNavigation()
 
     instance = runtime
 
@@ -52,6 +56,8 @@ export class HerbRuntime {
     this.slots.disconnect()
     this.state.disconnect()
     this.mutations.abort()
+    this.stopClearing?.()
+    this.stopClearing = null
 
     if (instance === this) {
       instance = null

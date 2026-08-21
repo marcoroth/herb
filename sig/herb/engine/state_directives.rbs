@@ -18,12 +18,16 @@ module Herb
 
         attr_reader default(): String
 
-        def self.new: (String name, Symbol kind, String default) -> instance
-                    | (name: String, kind: Symbol, default: String) -> instance
+        attr_reader line(): Integer?
 
-        def self.members: () -> [ :name, :kind, :default ]
+        attr_reader column(): Integer?
 
-        def members: () -> [ :name, :kind, :default ]
+        def self.new: (String name, Symbol kind, String default, Integer? line, Integer? column) -> instance
+                    | (name: String, kind: Symbol, default: String, line: Integer?, column: Integer?) -> instance
+
+        def self.members: () -> [ :name, :kind, :default, :line, :column ]
+
+        def members: () -> [ :name, :kind, :default, :line, :column ]
       end
 
       class Read < Data
