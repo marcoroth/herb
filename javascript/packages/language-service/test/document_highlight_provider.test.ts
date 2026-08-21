@@ -27,6 +27,43 @@ describe("DocumentHighlightProvider", () => {
     return service.getDocumentHighlights(document, Position.create(line, character))
   }
 
+  describe("declared states", () => {
+    const template = dedent`
+      <%# herb:state (pending: false, failed: false) %>
+
+      <p><%= pending? %></p>
+      <% if failed %>
+        <span>not sent</span>
+      <% end %>
+    `
+
+    function texts(highlights: ReturnType<typeof getHighlights>) {
+      const lines = template.split("\n")
+
+      return highlights.map(highlight => lines[highlight.range.start.line].slice(highlight.range.start.character, highlight.range.end.character))
+    }
+
+    it("highlights every read of a state from one of them", () => {
+      expect(texts(getHighlights(template, 2, 9))).toEqual(["pending", "pending?", "false"])
+    })
+
+    it("anchors the declaration to the name inside the directive", () => {
+      expect(texts(getHighlights(template, 0, 17))).toEqual(["pending", "pending?", "false"])
+    })
+
+    it("resolves the group from the default value too", () => {
+      expect(texts(getHighlights(template, 0, 26))).toEqual(["pending", "pending?", "false"])
+      expect(texts(getHighlights(template, 0, 42))).toEqual(["failed", "failed", "false"])
+    })
+
+    it("resolves each declaration in a shared directive on its own", () => {
+      const highlights = getHighlights(template, 0, 33)
+
+      expect(texts(highlights)).toEqual(["failed", "failed", "false"])
+      expect(highlights[2].range.start.character).toBe(40)
+    })
+  })
+
   describe("strict locals", () => {
     const partial = dedent`
       <%# locals: (title:, count: 0) %>
