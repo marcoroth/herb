@@ -14,6 +14,8 @@
 #include "../../src/include/location/location.h"
 #include "../../src/include/location/position.h"
 
+#define HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH 16
+
 const char* check_string(VALUE value) {
   if (NIL_P(value)) { return NULL; }
 
@@ -86,6 +88,14 @@ VALUE rb_interned_string_from_hb_string(hb_string_T string) {
   return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
 }
 
+static VALUE rb_token_value_from_hb_string(hb_string_T string) {
+  if (hb_string_is_null(string)) { return Qnil; }
+
+  if (string.length <= HERB_MAX_INTERNED_TOKEN_VALUE_LENGTH) { return rb_interned_string_from_hb_string(string); }
+
+  return rb_utf8_str_new(string.data, string.length);
+}
+
 static VALUE token_type_value_cache[TOKEN_EOF + 1] = { 0 };
 
 static VALUE rb_token_type_value(token_type_T type) {
@@ -110,7 +120,7 @@ VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   init_ast_value_ivar_ids();
 
   VALUE object = rb_obj_alloc(cToken);
-  rb_ivar_set(object, id_value, rb_string_from_hb_string(token->value));
+  rb_ivar_set(object, id_value, rb_token_value_from_hb_string(token->value));
   rb_ivar_set(object, id_range, options->track_locations ? rb_range_from_c_struct(token->range) : Qnil);
   rb_ivar_set(object, id_location, options->track_locations ? rb_location_from_c_struct(token->location) : Qnil);
   rb_ivar_set(object, id_type, rb_token_type_value(token->type));
