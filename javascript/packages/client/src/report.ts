@@ -32,19 +32,31 @@ export function report(diagnostic: RuntimeDiagnostic): void {
     return
   }
 
-  if (!debugging()) return
-
-  console.warn(`[herb] ${entry.message}${entry.suggestion ? `. ${entry.suggestion}` : ""}`, entry)
+  if (debugging()) {
+    console.warn(`[herb] ${entry.message}${entry.suggestion ? `. ${entry.suggestion}` : ""}`, entry)
+  }
 
   queued.push(entry)
 
   if (queued.length > MAX_QUEUED) queued.shift()
 }
 
+export function resetReport(): void {
+  queued.length = 0
+}
+
 export function clearOnNavigation(): () => void {
   if (typeof document === "undefined") return () => {}
 
+  let landed = false
+
   const clear = (): void => {
+    if (!landed) {
+      landed = true
+
+      return
+    }
+
     queued.length = 0
 
     const devTools = globalThis.window && (window as { HerbDevTools?: DevToolsGlobal }).HerbDevTools
