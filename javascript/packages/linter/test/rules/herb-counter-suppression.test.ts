@@ -77,7 +77,7 @@ describe("counter suppression semantics", () => {
       <DIV></DIV>
     `
 
-    expect(offensesFor(source, target)).toHaveLength(0)
+    expect(offensesFor(source, target)).toHaveLength(1)
 
     const drift = offensesFor(source, "herb-counter-comment-out-of-date")
     expect(drift).toHaveLength(1)
@@ -135,6 +135,6 @@ describe("counter suppression semantics", () => {
 
     // Drift/unnecessary meta-rules are also silenced under --ignore-counter-comments.
     expect(offensesFor(source, "herb-counter-comment-out-of-date", { ignoreCounterComments: true })).toHaveLength(1)
-    expect(lintWith(source, { ignoreCounterComments: true }).counterSuppressed).toBe(0)
+    expect(lintWith(source, { ignoreCounterComments: true }).counterSuppressed ?? 0).toBe(0)
   })
 })

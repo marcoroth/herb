@@ -538,10 +538,23 @@ export class Linter {
     }
 
     if (actual === 0) return { kept: [], suppressed: [] }
-    if (actual > expected) return { kept: offenses, suppressed: [] }
+    if (expected === 0) return { kept: offenses, suppressed: [] }
 
-    // actual <= expected and actual > 0: suppress everything.
-    return { kept: [], suppressed: offenses }
+    if (expected > actual) {
+      // N > E: report every underlying offense; drift meta-rule reports the mismatch.
+      return { kept: offenses, suppressed: [] }
+    }
+
+    if (expected === actual) {
+      // N == E: suppress everything.
+      return { kept: [], suppressed: offenses }
+    }
+
+    // 0 < expected < actual: suppress the first N offenses, keep the rest.
+    return {
+      kept: offenses.slice(expected),
+      suppressed: offenses.slice(0, expected),
+    }
   }
 
 
