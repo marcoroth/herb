@@ -416,8 +416,8 @@ export class SlotIndex {
     return report
   }
 
-  transaction<T>(work: () => T): { token: RevertToken | null; result: T } {
-    if (this.#recording) return { token: null, result: work() }
+  transaction<T>(work: () => T, options: { retain?: boolean } = {}): { token: RevertToken | null; result: T } {
+    if (this.#recording || options.retain === false) return { token: null, result: work() }
 
     const inverses: Inverse[] = []
 
@@ -1245,13 +1245,17 @@ export class SlotIndex {
     if (!region) return false
 
     this.#record(() => {
-      const before = slot.branch
+      const before = this.#current(slot)
+      const beforeBranch = slot.branch
       const address = this.#addressOf(slot)
 
       return () => {
         const live = this.#slotAt(address)
 
-        if (live) this.switchBranch(live, before)
+        if (!live) return
+
+        this.update(live, before)
+        live.branch = beforeBranch
       }
     })
 

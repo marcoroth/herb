@@ -66,6 +66,14 @@ function boot(markup: string): void {
 beforeEach(() => boot(regionMarkup(0)))
 
 describe("declared state", () => {
+  test("a burst of state writes does not evict held revert tokens", () => {
+    const report = slots.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 1: "9" } })
+
+    for (let step = 0; step < 60; step += 1) state.setState({ attempts: step })
+
+    expect(slots.revert(report.token!)).toBe(true)
+  })
+
   test("a rekeyed item keeps its scoped state", () => {
     const first = document.querySelector("#a")!
     const scope = state.scopeFor(first, "starred")!
