@@ -1,4 +1,5 @@
 import { clearOnNavigation } from "./report"
+import { SlotActions } from "./actions"
 import { SlotIndex } from "./slot-index"
 import { SlotMutations } from "./mutations"
 import { SlotState } from "./state"
@@ -19,6 +20,7 @@ export class HerbRuntime {
   public readonly slots: SlotIndex
   public readonly state: SlotState
   public readonly mutations: SlotMutations
+  public readonly actions: SlotActions
 
   private stopClearing: (() => void) | null = null
 
@@ -30,6 +32,7 @@ export class HerbRuntime {
     this.slots = new SlotIndex()
     this.state = new SlotState(this.slots, options.state)
     this.mutations = new SlotMutations(this.slots, this.state, options.mutations)
+    this.actions = new SlotActions(this.state)
   }
 
   static start(options: RuntimeOptions = {}): HerbRuntime {
@@ -41,6 +44,7 @@ export class HerbRuntime {
     runtime.slots.observe()
     runtime.state.adopt()
     runtime.state.observe()
+    runtime.actions.start()
     runtime.stopClearing = clearOnNavigation()
 
     instance = runtime
@@ -56,6 +60,7 @@ export class HerbRuntime {
     this.slots.disconnect()
     this.state.disconnect()
     this.mutations.abort()
+    this.actions.stop()
     this.stopClearing?.()
     this.stopClearing = null
 

@@ -1,18 +1,22 @@
 import { report } from "./report"
+
+import { HERB_ATTRIBUTES } from "./attributes"
 import { SLOT_EVENT } from "./slot-index"
 
 import type { ApplyReport, Item, Payload, Region, Slot, SlotEventDetail, SlotIndex } from "./slot-index"
 
 const VALUE_ELEMENTS = ["INPUT", "TEXTAREA", "SELECT"]
-
-export const DEPENDENCIES_ATTRIBUTE = "data-herb-dependencies"
-export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
+const IDLE: StateReport = { applied: 0, deferred: [], written: 0, restored: 0, stale: false, failed: false }
 
 export const STATE_EVENT = "herb:state-change"
+export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
+export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
 
 export type StateMode = "identity" | "structural" | "derived"
 export type StateKind = "boolean" | "integer" | "string" | "symbol" | "nil" | "seeded"
 export type StateValue = string | number | boolean | null
+export type StatePersistence = "url" | "known" | "none"
+export type StateTransport = (request: StateRequest, signal: AbortSignal) => Promise<Payload | null>
 
 export interface DeclaredState {
   name: string
@@ -48,7 +52,6 @@ export interface StateChangeDetail {
 export interface ScopedSetOptions {
   scope?: StateScope | Element
 }
-export type StatePersistence = "url" | "known" | "none"
 
 export interface StateSlot {
   file: string
@@ -68,8 +71,6 @@ export interface StateRequest {
   changed: string[]
 }
 
-export type StateTransport = (request: StateRequest, signal: AbortSignal) => Promise<Payload | null>
-
 export interface StateOptions {
   transport?: StateTransport
   debounce?: number
@@ -88,8 +89,6 @@ interface Restore {
   slot: Slot
   value: string
 }
-
-const IDLE: StateReport = { applied: 0, deferred: [], written: 0, restored: 0, stale: false, failed: false }
 
 export class SlotState {
   readonly #slots: SlotIndex
@@ -112,6 +111,7 @@ export class SlotState {
 
   constructor(slots: SlotIndex, options: StateOptions = {}) {
     this.#slots = slots
+
     this.#options = {
       transport: options.transport ?? this.#fetch.bind(this),
       debounce: options.debounce ?? 0,
@@ -119,7 +119,9 @@ export class SlotState {
       format: options.format ?? "slots",
     }
 
-    if (this.#persisted()) this.#readLocation()
+    if (this.#persisted()) {
+      this.#readLocation()
+    }
   }
 
   #persisted(): boolean {
@@ -224,7 +226,9 @@ export class SlotState {
       this.#pending.set(name, next)
       this.#sequence.set(name, (this.#sequence.get(name) ?? 0) + 1)
 
-      if (!this.#previous.has(name)) this.#previous.set(name, this.#values.get(name))
+      if (!this.#previous.has(name)) {
+        this.#previous.set(name, this.#values.get(name))
+      }
 
       this.#values.set(name, next)
     }
@@ -253,7 +257,9 @@ export class SlotState {
     this.#restores = []
     this.#previous = new Map()
 
-    if (changes.size === 0) return this.#settle(IDLE)
+    if (changes.size === 0) {
+      return this.#settle(IDLE)
+    }
 
     const changed = [...changes.keys()]
     const taken = new Map(changed.map((name) => [name, this.#sequence.get(name) ?? 0]))
@@ -286,11 +292,15 @@ export class SlotState {
 
     this.#forget(transient)
 
-    if (this.#superseded(taken)) return this.#settle({ ...IDLE, written: restores.length, stale: true })
+    if (this.#superseded(taken)) {
+      return this.#settle({ ...IDLE, written: restores.length, stale: true })
+    }
 
     const report = payload ? this.#slots.apply(payload) : { applied: 0, deferred: [] }
 
-    if (this.#persisted()) this.#writeLocation()
+    if (this.#persisted()) {
+      this.#writeLocation()
+    }
 
     return this.#settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false })
   }
@@ -300,7 +310,9 @@ export class SlotState {
 
     this.#waiting = []
 
-    for (const resolve of waiting) resolve(report)
+    for (const resolve of waiting) {
+      resolve(report)
+    }
 
     return report
   }
@@ -334,7 +346,9 @@ export class SlotState {
   }
 
   #restore(restores: Restore[]): void {
-    for (const restore of [...restores].reverse()) this.#write(restore.slot, restore.value)
+    for (const restore of [...restores].reverse()) {
+      this.#write(restore.slot, restore.value)
+    }
   }
 
   #write(slot: Slot, value: string): boolean {
@@ -398,7 +412,6 @@ export class SlotState {
       if (!containsNode(region, target)) continue
 
       const manifest = this.manifestFor(region)
-
       if (!manifest) continue
 
       const item = enclosingItem(region, target)
@@ -415,7 +428,6 @@ export class SlotState {
 
   declaredStates(scope: StateScope): DeclaredState[] {
     const manifest = this.manifestFor(scope.region)
-
     if (!manifest) return []
 
     const collection = scope.item ? collectionOf(scope.region, scope.item) : null
@@ -427,7 +439,6 @@ export class SlotState {
 
   getState(name: string, options: ScopedSetOptions = {}): StateValue {
     const resolved = this.#scope(options.scope, name)
-
     if (!resolved) return null
 
     return this.#valueOf(name, resolved)
@@ -435,7 +446,6 @@ export class SlotState {
 
   setState(values: Record<string, StateValue>, options: ScopedSetOptions = {}): boolean {
     const names = Object.keys(values)
-
     if (names.length === 0) return false
 
     const resolved = this.#scope(options.scope, names[0])
@@ -511,7 +521,6 @@ export class SlotState {
 
   reset(name: string, options: ScopedSetOptions = {}): boolean {
     const resolved = this.#scope(options.scope, name)
-
     if (!resolved) return false
 
     const seeded = this.#seeds.get(resolved.region)?.get(resolved.item?.key ?? "")?.get(name)
@@ -524,7 +533,6 @@ export class SlotState {
 
     const handler = (event: Event): void => {
       const detail = (event as CustomEvent<StateChangeDetail>).detail
-
       if (detail.name !== name) return
 
       if (scope) {
@@ -625,10 +633,11 @@ export class SlotState {
   #seed(name: string, scope: StateScope): StateValue | undefined {
     const bucket = scoped(this.#seeds, scope)
 
-    if (bucket.has(name)) return bucket.get(name)
+    if (bucket.has(name)) {
+      return bucket.get(name)
+    }
 
     const manifest = this.manifestFor(scope.region)
-
     if (!manifest) return undefined
 
     let value = this.#seedFromValueSlot(manifest, scope, name)
@@ -655,7 +664,7 @@ export class SlotState {
           ? (slot.anchor.element.getAttribute(slot.attribute) ?? "")
           : this.#slots.currentText(slot)
 
-        return coerce(text, declaration?.kind ?? "string")
+        return coerceState(text, declaration?.kind ?? "string")
       }
     }
 
@@ -685,6 +694,7 @@ export class SlotState {
 
   #store(scope: StateScope, name: string, value: StateValue): void {
     this.#seed(name, scope)
+
     scoped(this.#scoped, scope).set(name, value)
   }
 
@@ -692,14 +702,15 @@ export class SlotState {
     const text = printValue(value)
 
     for (const index of manifest.reads[name] ?? []) {
-      for (const slot of this.#scopedSlots(scope, index)) this.#write(slot, text)
+      for (const slot of this.#scopedSlots(scope, index)) {
+        this.#write(slot, text)
+      }
     }
   }
 
   #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[]): void {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
       const mentions = conditional.arms.some(([name]) => changed.includes(name))
-
       if (!mentions) continue
 
       const target = this.#targetBranch(conditional, scope)
@@ -736,7 +747,6 @@ export class SlotState {
     }
 
     const region = scope.region.slots.get(index)
-
     if (region) return [region]
 
     const found: Slot[] = []
@@ -803,11 +813,9 @@ export class SlotState {
     if (!(element instanceof Element) || !VALUE_ELEMENTS.includes(element.tagName)) return
 
     const scope = this.scopeFor(element)
-
     if (!scope) return
 
     const manifest = this.manifestFor(scope.region)
-
     if (!manifest) return
 
     for (const [name, indices] of Object.entries(manifest.bound ?? {})) {
@@ -888,10 +896,7 @@ export class SlotState {
 }
 
 
-function scoped(
-  store: Map<Region, Map<string, Map<string, StateValue>>>,
-  scope: StateScope,
-): Map<string, StateValue> {
+function scoped(store: Map<Region, Map<string, Map<string, StateValue>>>, scope: StateScope): Map<string, StateValue> {
   let regionStore = store.get(scope.region)
 
   if (!regionStore) {
@@ -981,7 +986,7 @@ function printValue(value: StateValue): string {
   return String(value)
 }
 
-function coerce(text: string, kind: StateKind): StateValue {
+export function coerceState(text: string, kind: StateKind): StateValue {
   if (kind === "boolean") return text === "true"
   if (kind === "integer") return /^-?\d+$/.test(text.trim()) ? Number(text.trim()) : 0
   if (kind === "nil") return text === "" ? null : text
@@ -989,12 +994,12 @@ function coerce(text: string, kind: StateKind): StateValue {
   return text
 }
 
-function boundValue(element: Element, kind: StateKind): StateValue {
+export function boundValue(element: Element, kind: StateKind): StateValue {
   if (element instanceof HTMLInputElement && element.type === "checkbox") return element.checked
 
   const raw = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
 
-  return coerce(raw, kind)
+  return coerceState(raw, kind)
 }
 
 function rubyTruthy(value: StateValue): boolean {
