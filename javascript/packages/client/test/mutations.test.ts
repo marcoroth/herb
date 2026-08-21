@@ -61,6 +61,136 @@ beforeEach(() => {
 })
 
 describe("SlotMutations", () => {
+  function insertForm(into: string): HTMLFormElement {
+    const form = document.createElement("form")
+
+    form.action = "/messages"
+    form.method = "post"
+    form.setAttribute("data-herb-into", into)
+    form.innerHTML = `<input name="message[body]" value="from the form"><input name="authenticity_token" value="tok">`
+
+    document.querySelector("ul")!.after(form)
+
+    return form
+  }
+
+  test("a submitted form derives the whole send from itself", async () => {
+    let seen: MutationRequest | null = null
+    const mutations = build((request) => {
+      seen = request
+
+      return Promise.resolve(confirmPayload("message_9", "from the server"))
+    })
+
+    mutations.observe(document)
+
+    const form = insertForm("messages")
+
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+
+    const rows = document.querySelectorAll("li")
+
+    expect(rows).toHaveLength(2)
+    expect(rows[1].textContent).toContain("from the form")
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(seen!.url).toBe("/messages")
+    expect(seen!.method).toBe("POST")
+    expect(document.querySelector("#message_9")?.textContent).toContain("from the server")
+
+    mutations.unobserve()
+  })
+
+  test("a submitted form returns its bound states to what the server rendered", async () => {
+    document.body.innerHTML = PAGE.replace(
+      "</ul>",
+      '</ul><input value="" data-herb-slot="5:attribute:value">',
+    ).replace('"reads":{}', '"reads":{"draft":[5]}').replace(
+      '"conditionals"',
+      '"bound":{"draft":[5]},"conditionals"',
+    ).replace('"declarations":[', '"declarations":[{"name":"draft","kind":"string","default":"\\"\\"","scope":"region"},')
+    slots = new SlotIndex()
+    slots.scan(document.body)
+    state = new SlotState(slots, { persist: "none" })
+    state.adopt()
+    state.observe()
+
+    const input = document.querySelector<HTMLInputElement>("input[data-herb-slot]")!
+
+    input.value = "typed"
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+
+    expect(state.getState("draft")).toBe("typed")
+
+    const mutations = build(() => Promise.resolve(confirmPayload("message_9", "sent")))
+
+    mutations.observe(document)
+
+    const form = insertForm("messages")
+
+    form.append(input)
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+
+    expect(state.getState("draft")).toBe("")
+    expect(input.value).toBe("")
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    mutations.unobserve()
+    state.disconnect()
+  })
+
+  test("a form naming no collection reports and sends nothing", () => {
+    const entries: { code: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const mutations = build(() => Promise.reject(new Error("must not be called")))
+
+    mutations.observe(document)
+
+    const form = insertForm("missing")
+
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+
+    expect(document.querySelectorAll("li")).toHaveLength(1)
+    expect(entries.map((entry) => entry.code)).toEqual(["herb-unknown-collection"])
+
+    mutations.unobserve()
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("a form naming a slot that is not a collection reports it", () => {
+    document.body.innerHTML = PAGE.replace("</ul>", '</ul><p data-herb-name="4:note"><!--herb-slot:4-->x<!--/herb-slot:4--></p>')
+    slots = new SlotIndex()
+    slots.scan(document.body)
+    state = new SlotState(slots, { persist: "none" })
+    state.adopt()
+
+    const entries: { code: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const mutations = build(() => Promise.reject(new Error("must not be called")))
+
+    mutations.observe(document)
+
+    const form = insertForm("note")
+
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+
+    expect(entries).toHaveLength(1)
+    expect((entries[0] as { message?: string }).message).toContain("a send needs a collection")
+
+    mutations.unobserve()
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
   test("the row appears pending before the request resolves, and the node survives the confirm", async () => {
     let release!: (payload: Payload) => void
     const mutations = build(() => new Promise((resolve) => (release = resolve)))
@@ -139,6 +269,40 @@ describe("SlotMutations", () => {
 
     expect(retried.status).toBe("confirmed")
     expect(document.querySelector("#message_9")?.textContent).toContain("Sent")
+  })
+
+  test("retry and discard accept the element inside the row", async () => {
+    let attempts = 0
+    const mutations = build(() => {
+      attempts += 1
+
+      if (attempts === 1) return Promise.reject(new Error("boom"))
+
+      return Promise.resolve(confirmPayload("message_9", "recovered"))
+    })
+
+    const failed = await mutations.submit({
+      url: "/messages",
+      body: { body: "flaky" },
+      into: { file: FILE, name: "messages" },
+      values: { body: "flaky" },
+    })
+
+    const row = document.querySelectorAll("li")[1]!
+    const retried = await mutations.retry(row)!
+
+    expect(failed.status).toBe("failed")
+    expect(retried.status).toBe("confirmed")
+
+    const second = await mutations.submit({
+      url: "/messages",
+      body: {},
+      into: { file: FILE, name: "messages" },
+      values: { body: "oops" },
+    })
+
+    expect(second.status).toBe("confirmed")
+    expect(mutations.discard(document.querySelector("section")!)).toBe(false)
   })
 
   test("discard reverts the optimistic row", async () => {

@@ -2,10 +2,14 @@ import { HerbRuntime, stateFor } from "./runtime"
 
 import type { ScopedState } from "./runtime"
 import type { StateScope } from "./state"
+import type { SlotMutations } from "./mutations"
+import type { SlotIndex } from "./slot-index"
 
 export interface StateHost {
   element: Element
   state?: ScopedState
+  mutations?: SlotMutations
+  slots?: SlotIndex
   disconnect?(): void
 }
 
@@ -14,6 +18,8 @@ export function useState(host: StateHost): ScopedState {
   const unsubscribes: (() => void)[] = []
 
   host.state = state
+  host.mutations = HerbRuntime.get()?.mutations
+  host.slots = HerbRuntime.get()?.slots
 
   const scope = state.scope
 

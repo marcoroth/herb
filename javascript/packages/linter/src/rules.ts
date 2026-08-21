@@ -89,6 +89,7 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
 import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
 import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
@@ -248,6 +249,7 @@ export const rules: RuleClass[] = [
   HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
+  HerbIntoRequiresCollectionRule,
   HerbStateNoUnusedStatesRule,
   HerbStateRequiresClientModeRule,
   HerbStateValidActionsRule,

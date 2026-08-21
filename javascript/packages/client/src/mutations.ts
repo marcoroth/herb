@@ -1,5 +1,11 @@
+import { HERB_ATTRIBUTES } from "./attributes"
+import { report } from "./report"
+
 import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot, SlotIndex } from "./slot-index"
 import type { SlotState, StateScope } from "./state"
+
+export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
+export type MutationTransport = (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>
 
 export interface MutationTarget {
   file: string
@@ -19,8 +25,6 @@ export interface SubmitOptions {
   scope?: "collection" | "payload"
 }
 
-export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
-
 export interface MutationResult {
   status: MutationStatus
   key: string
@@ -34,8 +38,6 @@ export interface MutationRequest {
   body: FormData | Record<string, string> | undefined
   headers: Record<string, string>
 }
-
-export type MutationTransport = (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>
 
 export interface MutationsOptions {
   transport?: MutationTransport
@@ -52,9 +54,11 @@ interface Sending {
 export class SlotMutations {
   readonly #slots: SlotIndex
   readonly #state: SlotState
+
   readonly #options: MutationsOptions
   readonly #records = new Map<string, Sending>()
 
+  #observed: Document | Element | null = null
   #queue: Promise<unknown> = Promise.resolve()
   #controller = new AbortController()
   #minted = 0
@@ -79,7 +83,11 @@ export class SlotMutations {
     return this.#enqueue(record)
   }
 
-  retry(key: string): Promise<MutationResult> | null {
+  retry(target: string | Element): Promise<MutationResult> | null {
+    const key = this.#keyOf(target)
+
+    if (key === null) return null
+
     const record = this.#records.get(key)
 
     if (!record) return null
@@ -91,16 +99,96 @@ export class SlotMutations {
     return this.#enqueue(record)
   }
 
-  discard(key: string): boolean {
-    const record = this.#records.get(key)
+  discard(target: string | Element): boolean {
+    const key = this.#keyOf(target)
+    if (key === null) return false
 
+    const record = this.#records.get(key)
     if (!record) return false
 
     this.#records.delete(key)
 
-    if (record.slot) return this.#slots.removeItem(record.slot, key)
+    if (record.slot) {
+      return this.#slots.removeItem(record.slot, key)
+    }
 
     return true
+  }
+
+  observe(root: Document | Element = document): void {
+    if (typeof document === "undefined") return
+
+    this.#observed?.removeEventListener("submit", this.#onSubmit, true)
+    this.#observed = root
+
+    root.addEventListener("submit", this.#onSubmit, true)
+  }
+
+  unobserve(): void {
+    this.#observed?.removeEventListener("submit", this.#onSubmit, true)
+    this.#observed = null
+  }
+
+  submitForm(form: HTMLFormElement): Promise<MutationResult> | null {
+    const name = form.getAttribute(HERB_ATTRIBUTES.into)
+    const region = this.#state.scopeFor(form)?.region
+
+    if (name === null || name === "" || !region) return null
+
+    const collection = this.#slots.slot(region.file, name, region.occurrence)
+
+    if (!collection || collection.type !== "collection") {
+      report({
+        template: region.file,
+        message: collection
+          ? `\`${HERB_ATTRIBUTES.into}="${name}"\` names a ${collection.type} slot, and a send needs a collection.`
+          : `\`${HERB_ATTRIBUTES.into}="${name}"\` names nothing in this template.`,
+        code: "herb-unknown-collection",
+        severity: "error",
+        suggestion: `name a keyed collection, the element carrying \`data-herb-name\` around the loop`,
+        value: name,
+      })
+
+      return null
+    }
+
+    const body = new FormData(form)
+    const values: Record<string, string> = {}
+
+    for (const [key, value] of body.entries()) {
+      if (typeof value === "string") values[valueName(key)] = value
+    }
+
+    const result = this.submit({
+      url: form.getAttribute("action") ?? form.action,
+      method: (form.getAttribute("method") ?? "post").toUpperCase(),
+      body,
+      into: { file: region.file, name, occurrence: region.occurrence },
+      values,
+    })
+
+    form.reset()
+    this.#state.resetBound(form)
+
+    return result
+  }
+
+  #onSubmit = (event: Event): void => {
+    const form = event.target
+
+    if (!(form instanceof HTMLFormElement)) return
+    if (!form.hasAttribute(HERB_ATTRIBUTES.into)) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    this.submitForm(form)
+  }
+
+  #keyOf(target: string | Element): string | null {
+    if (typeof target === "string") return target
+
+    return this.#state.scopeFor(target)?.item?.key ?? null
   }
 
   abort(): void {
@@ -265,4 +353,10 @@ function defaultTransport(format: string): MutationTransport {
 
     return (await response.json()) as Payload
   }
+}
+
+function valueName(key: string): string {
+  const segments = [...key.matchAll(/\[([^\[\]]+)\]/g)]
+
+  return segments.length > 0 ? segments[segments.length - 1][1] : key
 }

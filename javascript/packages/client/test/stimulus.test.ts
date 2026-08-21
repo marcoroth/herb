@@ -61,4 +61,19 @@ describe("stateFor and useState", () => {
     state.set({ expanded: false })
     expect(seen).toEqual([[true, false]])
   })
+
+  test("useState also hands the host the mutations", () => {
+    const host = {
+      element: document.querySelector("#go")!,
+      mutations: undefined,
+      slots: undefined,
+      disconnect() {},
+    }
+
+    const state = useState(host)
+
+    expect(host.mutations).toBe(runtime.mutations)
+    expect(host.slots).toBe(runtime.slots)
+    expect(state.get("expanded")).toBe(false)
+  })
 })
