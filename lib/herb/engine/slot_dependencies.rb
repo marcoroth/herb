@@ -81,7 +81,7 @@ module Herb
 
       #: (String, Hash[String, untyped]) -> Hash[String, untyped]
       def declared_states(entry_point, reached)
-        files = ([absolute(entry_point)] + reached.values.flatten.map { |slot| slot[:file] }).uniq
+        files = ([absolute(entry_point)] + reached.values.flatten.map { |slot| slot[:file] } + rendered_files(entry_point)).uniq
         manifests = {} #: Hash[String, untyped]
 
         files.each do |file|
@@ -257,6 +257,39 @@ module Herb
         }
 
         defaults.reject { |_, name| declared.value?(name) }.merge(declared)
+      end
+
+      #: (String) -> Array[String]
+      def rendered_files(entry_point)
+        partials = partial_paths
+        seen = [absolute(entry_point)]
+        queue = seen.dup
+
+        until queue.empty?
+          file = queue.shift
+
+          @dependencies.analyze(file).render_calls.each do |call|
+            next unless call[:partial]
+
+            name = File.basename(call[:partial].to_s)
+
+            (partials[name] || []).each do |candidate|
+              next if seen.include?(candidate)
+
+              seen << candidate
+              queue << candidate
+            end
+          end
+        end
+
+        seen
+      end
+
+      #: () -> Hash[String, Array[String]]
+      def partial_paths
+        @partial_paths ||= Dir.glob(@project_path.join("app/views/**/_*.erb").to_s).group_by { |path|
+          File.basename(path).delete_prefix("_").split(".").first.to_s
+        }
       end
 
       #: (String) -> String

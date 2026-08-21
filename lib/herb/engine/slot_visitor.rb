@@ -947,6 +947,13 @@ module Herb
 
         return nil unless read.is_a?(StateDirectives::Read)
 
+        if read.comparand.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
+          raise Herb::Engine::CompilationError,
+                "`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` " \
+                "as a presence; only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. " \
+                "Compare the state to a literal, or declare it as a boolean"
+        end
+
         open_tag = @attribute_open_tags[node]
         children = open_tag&.children
         position = children&.find_index { |child| child.equal?(node) }

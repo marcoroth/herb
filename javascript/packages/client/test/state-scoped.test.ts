@@ -65,6 +65,66 @@ function boot(markup: string): void {
 
 beforeEach(() => boot(regionMarkup(0)))
 
+describe("sibling collections sharing a state name", () => {
+  const TWIN_FILE = "app/views/page/twins.html.erb"
+
+  const TWIN_PAGE =
+    `<!--herb-region:${TWIN_FILE}:cccccccc:0-->` +
+    `<ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><li id="left-a"><span data-herb-slot="1:conditional"><!--herb-branch:1:1-->plain</span></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<ul><!--herb-slot:5:collection-->` +
+    `<!--herb-item:5:a--><li id="right-a"><span data-herb-slot="6:conditional"><!--herb-branch:6:1-->plain</span></li><!--/herb-item:5-->` +
+    `<!--/herb-slot:5--></ul>` +
+    `<template data-herb-region="${TWIN_FILE}:cccccccc">` +
+    `<!--herb-branch:1:0-->starred<!--herb-branch:1:1-->plain` +
+    `<!--herb-branch:6:0-->starred<!--herb-branch:6:1-->plain` +
+    `</template>` +
+    `<!--/herb-region:${TWIN_FILE}-->`
+
+  const TWIN_MANIFEST = {
+    state: {},
+    states: {
+      [TWIN_FILE]: {
+        version: "cccccccc",
+        declarations: [
+          { name: "starred", kind: "boolean", default: "false", scope: 0 },
+          { name: "starred", kind: "boolean", default: "false", scope: 5 },
+        ],
+        reads: {},
+        conditionals: {
+          1: { arms: [["starred", null, 0]], else: 1 },
+          6: { arms: [["starred", null, 0]], else: 1 },
+        },
+      },
+    },
+  }
+
+  test("a write in one collection leaves the other alone", () => {
+    document.body.innerHTML = TWIN_PAGE + `<template data-herb-dependencies>${JSON.stringify(TWIN_MANIFEST)}</template>`
+
+    const twinSlots = new SlotIndex()
+
+    twinSlots.scan(document.body)
+
+    const twinState = new SlotState(twinSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    twinState.adopt()
+
+    const scope = twinState.scopeFor(document.querySelector("#left-a")!, "starred")!
+
+    expect(twinState.setState({ starred: true }, { scope })).toBe(true)
+
+    expect(document.querySelector("#left-a")?.textContent).toContain("starred")
+    expect(document.querySelector("#right-a")?.textContent).toBe("plain")
+  })
+})
+
 describe("declared state", () => {
   test("a burst of state writes does not evict held revert tokens", () => {
     const report = slots.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 1: "9" } })

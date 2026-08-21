@@ -477,6 +477,15 @@ module Engine
         refute_includes manifest["bound"]["draft"], manifest["reads"]["draft"].last
       end
 
+      test "carries the states of a partial no server state reaches" do
+        write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
+        path = write("index.html.erb", %(<div><%= render "menu" %></div>))
+
+        manifests = subject.payload(path)["states"]
+
+        assert_equal ["open"], manifests.values.compact.flat_map { |manifest| manifest["declarations"].map { |declaration| declaration["name"] } }
+      end
+
       test "carries no states section entry for a template that declares none" do
         path = write("index.html.erb", "<div><%= @query %></div>")
 

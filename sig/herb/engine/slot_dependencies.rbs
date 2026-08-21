@@ -76,6 +76,12 @@ module Herb
       # : (String, Array[String], Hash[String, String]) -> Hash[String, String]
       def request_names: (String, Array[String], Hash[String, String]) -> Hash[String, String]
 
+      # : (String) -> Array[String]
+      def rendered_files: (String) -> Array[String]
+
+      # : () -> Hash[String, Array[String]]
+      def partial_paths: () -> Hash[String, Array[String]]
+
       # : (String) -> String
       def identifier_for: (String) -> String
 
