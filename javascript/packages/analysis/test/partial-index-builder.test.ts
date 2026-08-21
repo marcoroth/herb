@@ -91,7 +91,7 @@ describe("buildPartialIndex", () => {
       file: "app/views/users/_card.html.erb",
       hasDeclaration: true,
       hasKeywordRest: false,
-      locals: [{ name: "user", required: true }, { name: "size", required: false }],
+      locals: [{ name: "user", required: true }, { name: "size", required: false, defaultSource: '"large"' }],
       location: { line: 1, column: 0 },
     })
   })

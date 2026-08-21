@@ -223,6 +223,9 @@ module Herb
       # : (String, Symbol?, Integer?, bool, ?nested: bool) -> void
       def add_dynamic: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
 
+      # : (Integer) -> bool
+      def boolean_presence?: (Integer) -> bool
+
       # : (String, Integer?, bool) -> void
       def add_dynamic_block: (String, Integer?, bool) -> void
 
@@ -274,6 +277,9 @@ module Herb
 
       # : (Integer, String) -> String
       def assignment: (Integer, String) -> String
+
+      # : (Integer) -> bool
+      def interpolated?: (Integer) -> bool
 
       # : (String) -> void
       def add_block_dynamic: (String) -> void

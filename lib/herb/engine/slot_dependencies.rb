@@ -67,11 +67,30 @@ module Herb
 
       #: (String, ?params: Hash[String, String]) -> Hash[String, untyped]
       def payload(entry_point, params: {})
-        state = across(entry_point).transform_values { |slots|
+        reached = across(entry_point)
+        state = reached.transform_values { |slots|
           slots.map { |slot| { "file" => identifier_for(slot[:file]), "version" => slot[:version], "index" => slot[:index], "mode" => slot[:mode].to_s } }
         }
 
-        { "state" => state, "params" => request_names(entry_point, state.keys, params) }
+        {
+          "state" => state,
+          "params" => request_names(entry_point, state.keys, params),
+          "states" => declared_states(entry_point, reached),
+        }
+      end
+
+      #: (String, Hash[String, untyped]) -> Hash[String, untyped]
+      def declared_states(entry_point, reached)
+        files = ([absolute(entry_point)] + reached.values.flatten.map { |slot| slot[:file] }).uniq
+        manifests = {} #: Hash[String, untyped]
+
+        files.each do |file|
+          manifest = template(file)[:states]
+
+          manifests[identifier_for(file)] = manifest if manifest
+        end
+
+        manifests
       end
 
       #: (String, ?params: Hash[String, String]) -> String
@@ -120,7 +139,70 @@ module Herb
           index[slot.index] = { state: state, mode: mode_for(slot, state, expressions, settable) }
         end
 
-        { version: visitor.schema[:version], slots: index }
+        { version: visitor.schema[:version], slots: index, states: states_manifest(visitor) }
+      end
+
+      #: (untyped) -> Hash[String, untyped]?
+      def states_manifest(visitor)
+        return nil unless visitor.respond_to?(:state_declarations)
+
+        declared = visitor.state_declarations
+        names = declared[:region].map { |declaration| declaration[:name] } +
+                declared[:items].values.flatten.map { |declaration| declaration[:name] }
+
+        return nil if names.empty?
+
+        declarations = declared[:region].map { |declaration| declaration.transform_keys(&:to_s).merge("scope" => "region") } +
+                       declared[:items].flat_map { |index, list| list.map { |declaration| declaration.transform_keys(&:to_s).merge("scope" => index) } }
+
+        reads = {} #: Hash[String, Array[Integer]]
+        bound = {} #: Hash[String, Array[Integer]]
+
+        visitor.slots.each do |slot|
+          next unless [:child, :attribute, :element, :raw_text].include?(slot.type)
+
+          expression = slot.expression.to_s.strip
+          name = expression.delete_suffix("?")
+
+          next unless names.include?(name)
+
+          (reads[name] ||= []) << slot.index
+          (bound[name] ||= []) << slot.index if bound_slot?(slot)
+        end
+
+        presence = {} #: Hash[String, [String, String?]]
+
+        visitor.state_presence.each do |index, read|
+          presence[index.to_s] = [read.name, read.comparand]
+          (reads[read.name] ||= []) << index
+          (bound[read.name] ||= []) << index if read.comparand.nil? && bound_slot?(visitor.slots[index])
+        end
+
+        conditionals = visitor.state_conditional_entries.to_h { |index, info|
+          [index.to_s, { "arms" => info[:arms], "else" => info[:else] }]
+        }
+
+        {
+          "version" => visitor.schema[:version],
+          "declarations" => declarations,
+          "reads" => reads,
+          "bound" => bound,
+          "conditionals" => conditionals,
+          "presence" => presence,
+        }
+      end
+
+      #: (untyped) -> bool
+      def bound_slot?(slot)
+        return false unless slot.respond_to?(:tag)
+
+        tag = slot.tag.to_s
+
+        if slot.attribute
+          ["value", "checked", "selected"].include?(slot.attribute) && ["input", "textarea", "select", "option"].include?(tag)
+        else
+          tag == "textarea"
+        end
       end
 
       #: (untyped, ?Array[Hash[Symbol, untyped]], ?per_item: bool) -> Array[Hash[Symbol, untyped]]
