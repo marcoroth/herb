@@ -30,6 +30,8 @@ module Herb
 
       SLOTS_DIRECTIVE: Regexp
 
+      PART_MARKER: String
+
       MODE_OPTION: Regexp
 
       MODES: Array[Symbol]
@@ -340,6 +342,12 @@ module Herb
 
       # : (untyped, Integer?) -> void
       def wrap_items: (untyped, Integer?) -> void
+
+      # : () -> void
+      def park_attribute_parts: () -> void
+
+      # : (untyped) -> Array[String]?
+      def attribute_segments: (untyped) -> Array[String]?
 
       def park_item: (untyped slot_index, untyped body) -> untyped
 

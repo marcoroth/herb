@@ -38,6 +38,7 @@ module Engine
         "an iteration whose value is output" => [%(<%= @items.each do |r| %><%= r %><% end %>), { items: [1, 2] }],
         "a conditional inside a block" => [%(<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>), { on: true, x: "x" }],
         "a boolean attribute inside a block" => [%(<%# herb:state (sending: false) %><%= form_with(model: 1) do |f| %><video muted="<%= sending %>"></video><% end %>), {}],
+        "an interpolated attribute inside a block" => [%(<%= form_with(model: 1) do |f| %><li id="row_<%= @r %>">x</li><% end %>), { r: 7 }],
         "nothing dynamic at all" => [%(<p>static</p>), {}],
       }.freeze
 
@@ -104,6 +105,17 @@ module Engine
             assert_equal known[index], shape, "slot #{index} was recorded as #{known[index]} and its value arrived as #{shape}"
           end
         end
+      end
+
+      test "an interpolated attribute inside a block records its parts and renders text" do
+        source = %(<%= form_with(model: 1) do |f| %><li id="row_<%= @r %>">x</li><% end %>)
+        compiler = compile(source)
+        values = evaluate(compiler, { r: 7 })
+
+        interpolated = compiler.slot_visitor.slots.find { |slot| slot.type == :attribute_interpolation }
+
+        assert_equal ["7"], values.fetch(interpolated.index)
+        assert_includes values.values.grep(String).join, 'id="row_7"'
       end
 
       test "a boolean attribute inside a block records presence and renders text" do

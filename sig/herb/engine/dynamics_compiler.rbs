@@ -278,6 +278,9 @@ module Herb
       # : (Integer, String) -> String
       def assignment: (Integer, String) -> String
 
+      # : (Integer) -> bool
+      def interpolated?: (Integer) -> bool
+
       # : (String) -> void
       def add_block_dynamic: (String) -> void
 
