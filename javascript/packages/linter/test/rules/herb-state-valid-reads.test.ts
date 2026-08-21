@@ -162,6 +162,46 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows state reads in a boolean attribute", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", sending: false) %>
+      <p><%= draft %></p>
+      <button disabled="<%= draft == "" %>">Send</button>
+      <video muted="<%= sending %>"></video>
+      <audio loop="<%= sending? %>"></audio>
+    `)
+  })
+
+  test("flags a mismatched comparand in a boolean attribute", () => {
+    expectError("`draft == 3` compares the String state `draft` against an Integer literal, so it can never match. Compare against a String, or redeclare the state.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft %></p>
+      <button disabled="<%= draft == 3 %>">Send</button>
+    `)
+  })
+
+  test("flags a computed read in a boolean attribute", () => {
+    expectError("`draft.empty?` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft %></p>
+      <button disabled="<%= draft.empty? %>">Send</button>
+    `)
+  })
+
+  test("still flags equality in an attribute that is not boolean", () => {
+    expectError("`draft == \"\"` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft %></p>
+      <button title="<%= draft == "" %>">Send</button>
+    `)
+  })
+
   test("scopes item states to their loop", () => {
     expectNoOffenses(dedent`
       <% @rows.each do |row| %>

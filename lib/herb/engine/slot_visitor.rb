@@ -34,6 +34,7 @@ module Herb
       required_parser_option action_view_helpers: true, track_locations: true
 
       attr_reader :slots #: Array[Slot]
+      attr_reader :state_presence #: Hash[Integer, StateDirectives::Read]
       attr_reader :document #: untyped
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
@@ -128,6 +129,9 @@ module Herb
         slot_scopes = {} #: Hash[untyped, untyped]
         @slot_scopes = slot_scopes.compare_by_identity
         @named_elements = [] #: Array[Hash[Symbol, untyped]]
+        attribute_open_tags = {} #: Hash[untyped, untyped]
+        @attribute_open_tags = attribute_open_tags.compare_by_identity
+        @state_presence = {} #: Hash[Integer, StateDirectives::Read]
         @strict_locals = {} #: Hash[String, Symbol]
         @region_states = {} #: Hash[String, StateDirectives::Declaration]
         item_states = {} #: Hash[untyped, Hash[String, StateDirectives::Declaration]]
@@ -316,7 +320,10 @@ module Herb
       end
 
       def visit_html_attribute_node(node)
-        record_slot(node, attribute_type_for(node)) if dynamic?(node)
+        if dynamic?(node)
+          record_slot(node, attribute_type_for(node))
+          @attribute_open_tags[node] = @current_open_tag
+        end
 
         @in_attribute = true
         super
@@ -913,16 +920,43 @@ module Herb
           next if expression.empty?
           next unless StateDirectives.mentions_any?(expression, states)
 
+          next if convert_boolean_attribute(node, index, slot, expression, states)
+
           bare = states.key?(expression) || states.key?(expression.delete_suffix("?"))
 
           unless bare
             raise Herb::Engine::CompilationError,
-                  "`#{expression}` computes with a state; the client cannot evaluate Ruby, so a state is read bare " \
-                  "or compared to a literal inside a conditional"
+                  "`#{expression}` computes with a state; the client cannot evaluate Ruby, so a state is read bare, " \
+                  "compared to a literal inside a conditional, or compared to a literal in a boolean attribute"
           end
 
           rewrite_predicate(node, expression.delete_suffix("?")) if expression.end_with?("?")
         end
+      end
+
+      #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+      def convert_boolean_attribute(node, index, slot, expression, states)
+        return nil unless slot.type == :attribute
+        return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
+
+        read = StateDirectives.condition_read(expression, states)
+
+        return nil unless read.is_a?(StateDirectives::Read)
+
+        open_tag = @attribute_open_tags[node]
+        children = open_tag&.children
+        position = children&.find_index { |child| child.equal?(node) }
+
+        return nil unless position
+
+        condition = read.comparand ? "#{read.name} == #{read.comparand}" : read.name
+        replacement = erb_output_node(%[("#{slot.attribute}" if #{condition})])
+
+        children[position] = replacement
+
+        @slots[index] = slot.with(type: :boolean_attribute)
+        @indices[replacement] = index
+        @state_presence[index] = read
       end
 
       #: (untyped, untyped, Integer, untyped, Integer) -> void

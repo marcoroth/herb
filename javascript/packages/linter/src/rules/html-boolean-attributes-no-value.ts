@@ -1,7 +1,7 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute } from "../utils/rule-utils.js"
 import { StateScopeMap } from "../utils/state-directives-utils.js"
-import { bareReadName } from "@herb-tools/client/directives"
+import { bareReadName, classifyDefault } from "@herb-tools/client/directives"
 import { hasAttributeValue, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
@@ -34,9 +34,27 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
 
     if (outputs.length !== 1 || getAttributeValueNodes(attributeNode).length !== 1) return false
 
-    const name = bareReadName((outputs[0] as { content?: { value: string } | null }).content?.value ?? "")
+    const expression = (outputs[0] as { content?: { value: string } | null }).content?.value?.trim() ?? ""
+    const name = bareReadName(expression)
 
-    return name !== null && this.states.includes(name)
+    if (name !== null) return this.states.includes(name)
+
+    return this.comparesDeclaredState(expression)
+  }
+
+  private comparesDeclaredState(expression: string): boolean {
+    const separator = expression.indexOf("==")
+
+    if (separator < 1 || expression[separator + 2] === "=") return false
+
+    const sides = [expression.slice(0, separator).trim(), expression.slice(separator + 2).trim()]
+    const read = sides.map((side) => bareReadName(side)).find((side) => side !== null && this.states.includes(side))
+
+    if (!read) return false
+
+    const comparand = sides.find((side) => bareReadName(side) !== read)
+
+    return comparand !== undefined && ["boolean", "integer", "string", "symbol", "nil"].includes(classifyDefault(comparand))
   }
 
   private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {

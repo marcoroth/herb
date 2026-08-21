@@ -4,7 +4,7 @@
 
 ## Description
 
-Validates every read of a declared state. A state is read bare (`<%= attempts %>`, `<% if pending %>`), as a predicate on a boolean (`pending?`), compared to a literal of its own type (`sort == "name"`), or switched over with literal `when` arms. Anything else, a computed expression, an `unless`, a predicate on a non-boolean, or a comparison against a non-literal or a mismatched literal, is flagged.
+Validates every read of a declared state. A state is read bare (`<%= attempts %>`, `<% if pending %>`), as a predicate on a boolean (`pending?`), compared to a literal of its own type (`sort == "name"`), or switched over with literal `when` arms. A boolean attribute accepts the same read shapes, since its presence is a two-arm conditional (`disabled="<%= draft == "" %>"`). Anything else, a computed expression, an `unless`, a predicate on a non-boolean, or a comparison against a non-literal or a mismatched literal, is flagged.
 
 ## Rationale
 
@@ -30,6 +30,14 @@ The engine raises all of these as compile errors when the template renders. This
 <% when "name" %>By name
 <% when "date" %>By date
 <% end %>
+```
+
+```erb
+<%# herb:slots client %>
+<%# herb:state (draft: "") %>
+
+<input value="<%= draft %>" autocomplete="off">
+<button disabled="<%= draft == "" %>">Send</button>
 ```
 
 ### 🚫 Bad

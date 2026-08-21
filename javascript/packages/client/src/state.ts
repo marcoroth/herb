@@ -33,6 +33,7 @@ export interface StateManifest {
   reads: Record<string, number[]>
   bound?: Record<string, number[]>
   conditionals: Record<string, { arms: [string, string | null, number][]; else: number | null }>
+  presence?: Record<string, [string, string | null]>
 }
 
 export interface StateScope {
@@ -489,6 +490,7 @@ export class SlotState {
       }
 
       this.#writeConditionals(manifest, resolved, names)
+      this.#writePresence(manifest, resolved, names)
     })
 
     for (const [name, value] of Object.entries(values)) {
@@ -660,6 +662,14 @@ export class SlotState {
 
     for (const index of manifest.reads[name] ?? []) {
       for (const slot of this.#scopedSlots(scope, index)) {
+        if (slot.type === "boolean_attribute") {
+          const entry = manifest.presence?.[String(index)]
+
+          if (!entry || entry[1] !== null || slot.anchor.kind === "range" || !slot.attribute) continue
+
+          return slot.anchor.element.hasAttribute(slot.attribute)
+        }
+
         const text = slot.attribute && slot.anchor.kind !== "range"
           ? (slot.anchor.element.getAttribute(slot.attribute) ?? "")
           : this.#slots.currentText(slot)
@@ -703,7 +713,22 @@ export class SlotState {
 
     for (const index of manifest.reads[name] ?? []) {
       for (const slot of this.#scopedSlots(scope, index)) {
+        if (slot.type === "boolean_attribute") continue
+
         this.#write(slot, text)
+      }
+    }
+  }
+
+  #writePresence(manifest: StateManifest, scope: StateScope, changed: string[]): void {
+    for (const [indexKey, [name, comparand]] of Object.entries(manifest.presence ?? {})) {
+      if (!changed.includes(name)) continue
+
+      const value = this.#valueOf(name, scope)
+      const present = comparand === null ? rubyTruthy(value) : value === parseLiteral(comparand)
+
+      for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
+        this.#slots.setBooleanAttribute(slot, present)
       }
     }
   }

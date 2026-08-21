@@ -37,6 +37,7 @@ module Engine
         "a helper block building an element" => [%(<%= tag.li(id: 1) do %><%= @n %><% end %><%= @after %>), { n: "n", after: "A" }],
         "an iteration whose value is output" => [%(<%= @items.each do |r| %><%= r %><% end %>), { items: [1, 2] }],
         "a conditional inside a block" => [%(<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>), { on: true, x: "x" }],
+        "a boolean attribute inside a block" => [%(<%# herb:state (sending: false) %><%= form_with(model: 1) do |f| %><video muted="<%= sending %>"></video><% end %>), {}],
         "nothing dynamic at all" => [%(<p>static</p>), {}],
       }.freeze
 
@@ -103,6 +104,17 @@ module Engine
             assert_equal known[index], shape, "slot #{index} was recorded as #{known[index]} and its value arrived as #{shape}"
           end
         end
+      end
+
+      test "a boolean attribute inside a block records presence and renders text" do
+        source = %(<%# herb:state (sending: true) %><%= form_with(model: 1) do |f| %><video muted="<%= sending %>"></video><% end %>)
+        compiler = compile(source)
+        values = evaluate(compiler, {})
+
+        presence = compiler.slot_visitor.slots.find { |slot| slot.type == :boolean_attribute }
+
+        assert_equal true, values.fetch(presence.index)
+        assert_includes values.values.grep(String).join, "muted"
       end
 
       test "a block's interior is covered alongside the block itself" do

@@ -4,6 +4,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/dynamics_compiler"
 
 module Engine
   module Slots
@@ -243,6 +244,79 @@ module Engine
 
         assert_includes parked(template, { "@items" => ["a"] }), "herb-branch:0:item"
         assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
+      end
+
+      BOOLEAN_ATTRIBUTES = <<~ERB
+        <%# herb:state (draft: "", sending: false) %>
+        <button disabled="<%= draft == "" %>">Send</button>
+        <video muted="<%= sending %>"></video>
+        <audio loop="<%= sending? %>"></audio>
+      ERB
+
+      test "a boolean attribute reading a state renders presence" do
+        rendered = render(BOOLEAN_ATTRIBUTES)
+
+        assert_includes rendered, "<button disabled "
+        refute_includes rendered, 'disabled="'
+        refute_includes rendered, "<video muted"
+        refute_includes rendered, "<audio loop"
+      end
+
+      test "a boolean attribute reading a state is retyped for the client" do
+        rendered = render(BOOLEAN_ATTRIBUTES)
+
+        assert_includes rendered, "0:boolean_attribute:disabled"
+        assert_includes rendered, "1:boolean_attribute:muted"
+        assert_includes rendered, "2:boolean_attribute:loop"
+      end
+
+      test "the visitor records what each presence compares" do
+        visitor, = compile(BOOLEAN_ATTRIBUTES)
+
+        assert_equal ["draft", %("")], [visitor.state_presence[0].name, visitor.state_presence[0].comparand]
+        assert_equal ["sending", nil], [visitor.state_presence[1].name, visitor.state_presence[1].comparand]
+        assert_equal ["sending", nil], [visitor.state_presence[2].name, visitor.state_presence[2].comparand]
+      end
+
+      test "the values payload carries presence as a boolean" do
+        source = Herb::Engine::DynamicsCompiler.new(BOOLEAN_ATTRIBUTES, filename: "app/views/test.html.erb").src
+        payload = evaluate_herb_source(source, {})
+
+        assert_equal true, payload[:slots][0]
+        assert_equal false, payload[:slots][1]
+        assert_equal false, payload[:slots][2]
+      end
+
+      test "a boolean attribute reading no state keeps its value" do
+        rendered = render(<<~ERB, "@locked": false)
+          <%# herb:state (draft: "") %>
+          <p><%= draft %></p>
+          <button disabled="<%= @locked %>">Send</button>
+        ERB
+
+        assert_includes rendered, 'disabled="false"'
+      end
+
+      test "a computed read in a boolean attribute still raises" do
+        error = assert_raises(Herb::Engine::CompilationError) do
+          compile(<<~ERB)
+            <%# herb:state (draft: "") %>
+            <button disabled="<%= draft.empty? %>">Send</button>
+          ERB
+        end
+
+        assert_includes error.message, "computes with a state"
+      end
+
+      test "a mismatched comparand in a boolean attribute still raises" do
+        error = assert_raises(Herb::Engine::CompilationError) do
+          compile(<<~ERB)
+            <%# herb:state (draft: "") %>
+            <button disabled="<%= draft == 3 %>">Send</button>
+          ERB
+        end
+
+        assert_includes error.message, "Integer literal"
       end
     end
   end

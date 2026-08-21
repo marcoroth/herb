@@ -172,7 +172,7 @@ export interface Collected {
   items: { [key: string]: PayloadSlots }
 }
 
-export type PayloadValue = string | Payload | Branched | Collected
+export type PayloadValue = string | boolean | Payload | Branched | Collected
 
 export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "items" | "partial-attribute"
 
@@ -518,6 +518,13 @@ export class SlotIndex {
 
       if (!slot) {
         this.#defer(report, payload, index, "no-slot")
+        continue
+      }
+
+      if (typeof value === "boolean") {
+        if (this.setBooleanAttribute(slot, value)) report.applied += 1
+        else this.#defer(report, payload, index, "partial-attribute")
+
         continue
       }
 
@@ -1097,6 +1104,36 @@ export class SlotIndex {
       slot.anchor.element.removeAttribute(name)
     } else {
       slot.anchor.element.setAttribute(name, value)
+    }
+
+    this.#announce(slot, "attribute", slot.index)
+
+    return true
+  }
+
+  setBooleanAttribute(slot: Slot, present: boolean, name = slot.attribute): boolean {
+    if (slot.anchor.kind === "range" || name === null) return false
+    if (slot.type !== "boolean_attribute") return false
+
+    const element = slot.anchor.element
+
+    if (element.hasAttribute(name) === present) return true
+
+    this.#record(() => {
+      const before = element.hasAttribute(name)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.setBooleanAttribute(live, before, name)
+      }
+    })
+
+    element.toggleAttribute(name, present)
+
+    if (name in element) {
+      ;(element as unknown as Record<string, unknown>)[name] = present
     }
 
     this.#announce(slot, "attribute", slot.index)
@@ -1740,8 +1777,12 @@ function blankSlots(fragment: DocumentFragment): void {
     for (const entry of anchorEntries(element)) {
       const [, type, ...name] = entry.split(":")
 
-      if (name.length > 0) element.setAttribute(name.join(":"), "")
-      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.replaceChildren()
+      if (name.length > 0) {
+        if (type === "boolean_attribute") element.removeAttribute(name.join(":"))
+        else element.setAttribute(name.join(":"), "")
+      } else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) {
+        element.replaceChildren()
+      }
     }
   }
 }
