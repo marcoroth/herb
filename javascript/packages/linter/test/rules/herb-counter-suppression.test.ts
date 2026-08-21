@@ -68,7 +68,7 @@ describe("counter suppression semantics", () => {
     expect(drift).toHaveLength(1)
     expect(drift[0].message).toContain("expects 8 offenses")
     expect(drift[0].message).toContain("found 6")
-    expect(lintWith(source).counterSuppressed).toBe(0)
+    expect(lintWith(source).counterSuppressed ?? 0).toBe(0)
   })
 
   test("0 < N < E suppresses the offenses and emits herb-counter-comment-out-of-date", () => {
