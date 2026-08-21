@@ -158,7 +158,6 @@ module Engine
         refuse("<%# herb:state (attempts: 0) %><div><% if attempts > 3 %>a<% else %>b<% end %></div>", /computes with a state/)
         refuse("<%# herb:state (sort: \"name\") %><div><% if sort == 3 %>a<% end %></div>", /String state `sort` against a Integer/)
         refuse("<%# herb:state (attempts: 0) %><div><% if attempts? %>a<% end %></div>", /only a boolean state/)
-        refuse("<%# herb:state (open: false) %><div><% unless open? %>a<% end %></div>", /unless/)
         refuse("<%# herb:state (sort: \"name\") %><div><% case sort %><% when SORTS %>a<% end %></div>", /not a literal/)
       end
 
@@ -239,6 +238,41 @@ module Engine
         end
 
         assert_match(/mixes other dynamic parts/, error.message)
+      end
+
+      test "an unless reads a state with its arms inverted" do
+        template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
+        visitor, = compile(template)
+
+        assert_equal({ arms: [["pending", nil, 1]], else: 0 }, visitor.state_conditional_entries.fetch(0))
+
+        rendered = render(template)
+
+        assert_includes rendered, "Idle"
+
+        markup = parked(template)
+
+        assert_includes markup, "Busy"
+      end
+
+      test "an unless with no else points its truthy arm at nothing" do
+        visitor, = compile(%(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% end %></div>))
+
+        assert_equal({ arms: [["pending", nil, nil]], else: 0 }, visitor.state_conditional_entries.fetch(0))
+      end
+
+      test "a predicate unless rewrites for the server" do
+        rendered = render(%(<%# herb:state (pending: false) %><div><% unless pending? %>Idle<% end %></div>))
+
+        assert_includes rendered, "Idle"
+      end
+
+      test "a computed unless still raises" do
+        error = assert_raises(Herb::Engine::CompilationError) do
+          compile(%(<%# herb:state (attempts: 0) %><div><% unless attempts > 3 %>Idle<% end %></div>))
+        end
+
+        assert_match(/computes with a state/, error.message)
       end
 
       test "a negated state read in a conditional is refused" do

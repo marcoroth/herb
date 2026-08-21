@@ -748,8 +748,7 @@ module Herb
       #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_conditional_for(node, states)
         return state_case_for(node, states) if node.is_a?(Herb::AST::ERBCaseNode)
-
-        refuse_state_unless(node, states) if node.is_a?(Herb::AST::ERBUnlessNode)
+        return state_unless_for(node, states) if node.is_a?(Herb::AST::ERBUnlessNode)
 
         return nil unless node.is_a?(Herb::AST::ERBIfNode)
 
@@ -786,15 +785,27 @@ module Herb
         { arms: arms, else: else_position }
       end
 
-      #: (untyped, Hash[String, StateDirectives::Declaration]) -> void
-      def refuse_state_unless(node, states)
+      #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_unless_for(node, states)
         expression = condition_expression(node)
         read = StateDirectives.condition_read(expression, states)
 
-        return if read.nil?
+        return nil if read.nil?
 
-        raise Herb::Engine::CompilationError,
-              "`unless #{expression}` reads a state; spell it as an `if` so the arms map to branches the client can name"
+        if read == :computed
+          raise Herb::Engine::CompilationError,
+                "`unless #{expression}` computes with a state; the client cannot evaluate Ruby, so a state is read " \
+                "bare, as a predicate, or compared to a literal"
+        end
+
+        return nil unless read.is_a?(StateDirectives::Read)
+
+        rewrite_predicate(node, read.name)
+
+        chain = conditional_chain(node)
+        else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
+
+        { arms: [[read.name, read.comparand, else_position]], else: 0 }
       end
 
       #: (untyped) -> Array[untyped]

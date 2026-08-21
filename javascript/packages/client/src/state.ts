@@ -32,7 +32,7 @@ export interface StateManifest {
   declarations: DeclaredState[]
   reads: Record<string, number[]>
   bound?: Record<string, number[]>
-  conditionals: Record<string, { arms: [string, string | null, number][]; else: number | null }>
+  conditionals: Record<string, { arms: [string, string | null, number | null][]; else: number | null }>
   presence?: Record<string, [string, string | null]>
 }
 
