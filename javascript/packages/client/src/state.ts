@@ -181,6 +181,7 @@ export class SlotState {
     document.addEventListener(SLOT_EVENT, this.#migrateItemState)
     document.addEventListener("input", this.#onBoundInput)
     document.addEventListener("change", this.#onBoundInput)
+    document.addEventListener("reset", this.#onFormReset)
 
     if (typeof window !== "undefined" && this.#persisted()) {
       window.addEventListener("popstate", this.#onPopState)
@@ -213,6 +214,7 @@ export class SlotState {
     document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
     document.removeEventListener("input", this.#onBoundInput)
     document.removeEventListener("change", this.#onBoundInput)
+    document.removeEventListener("reset", this.#onFormReset)
 
     if (typeof window !== "undefined") {
       window.removeEventListener("popstate", this.#onPopState)
@@ -835,28 +837,62 @@ export class SlotState {
   #onBoundInput = (event: Event): void => {
     const element = event.target
 
-    if (!(element instanceof Element) || !VALUE_ELEMENTS.includes(element.tagName)) return
+    if (!(element instanceof Element)) return
+
+    this.#syncBound(element)
+  }
+
+  #onFormReset = (event: Event): void => {
+    const form = event.target
+
+    if (!(form instanceof HTMLFormElement)) return
+
+    setTimeout(() => {
+      for (const element of form.elements) {
+        this.#syncBound(element)
+      }
+    }, 0)
+  }
+
+  #syncBound(element: Element): void {
+    const found = this.#boundNameOf(element)
+
+    if (!found) return
+
+    const declaration = this.#declaration(found.manifest, found.scope, found.name)
+    const value = boundValue(element, declaration?.kind ?? "string")
+
+    this.setState({ [found.name]: value }, { scope: found.scope })
+  }
+
+  resetBound(form: HTMLFormElement): void {
+    for (const element of form.elements) {
+      const found = this.#boundNameOf(element)
+
+      if (found) this.reset(found.name, { scope: found.scope })
+    }
+  }
+
+  #boundNameOf(element: Element): { name: string, scope: StateScope, manifest: StateManifest } | null {
+    if (!VALUE_ELEMENTS.includes(element.tagName)) return null
 
     const scope = this.scopeFor(element)
-    if (!scope) return
+    if (!scope) return null
 
     const manifest = this.manifestFor(scope.region)
-    if (!manifest) return
+    if (!manifest) return null
 
     for (const [name, indices] of Object.entries(manifest.bound ?? {})) {
       for (const index of indices) {
         for (const slot of this.#scopedSlots(scope, index)) {
           if (slot.anchor.kind === "range" || slot.anchor.element !== element) continue
 
-          const declaration = this.#declaration(manifest, scope, name)
-          const value = boundValue(element, declaration?.kind ?? "string")
-
-          this.setState({ [name]: value }, { scope })
-
-          return
+          return { name, scope, manifest }
         }
       }
     }
+
+    return null
   }
 
   #onPopState = (): void => {
@@ -914,7 +950,9 @@ export class SlotState {
 
     const response = await fetch(url.toString(), { signal, headers: { Accept: "application/json" } })
 
-    if (!response.ok) throw new Error(`Herb state request failed with ${response.status}`)
+    if (!response.ok) {
+      throw new Error(`Herb state request failed with ${response.status}`)
+    }
 
     return (await response.json()) as Payload
   }

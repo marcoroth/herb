@@ -45,6 +45,7 @@ export class HerbRuntime {
     runtime.state.adopt()
     runtime.state.observe()
     runtime.actions.start()
+    runtime.mutations.observe()
     runtime.stopClearing = clearOnNavigation()
 
     instance = runtime
@@ -59,6 +60,7 @@ export class HerbRuntime {
   stop(): void {
     this.slots.disconnect()
     this.state.disconnect()
+    this.mutations.unobserve()
     this.mutations.abort()
     this.actions.stop()
     this.stopClearing?.()

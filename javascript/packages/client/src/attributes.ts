@@ -14,6 +14,7 @@ export const HERB_ATTRIBUTES = {
   region: "data-herb-region",
   statics: "data-herb-statics",
   dependencies: "data-herb-dependencies",
+  into: "data-herb-into",
   set: "data-herb-set",
   toggle: "data-herb-toggle",
   increment: "data-herb-increment",

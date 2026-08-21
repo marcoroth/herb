@@ -103,6 +103,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
 - [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
 - [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md) - Require client mode for `herb:state`.
 - [`herb-state-valid-actions`](./herb-state-valid-actions.md) - Validate `data-herb-*` action attributes.
