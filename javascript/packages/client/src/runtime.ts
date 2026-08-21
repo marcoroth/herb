@@ -1,7 +1,7 @@
 import { SlotIndex } from "./slot-index"
 import { SlotState } from "./state"
 
-import type { StateOptions } from "./state"
+import type { ScopedSetOptions, StateOptions, StateScope, StateValue } from "./state"
 
 const CONSTRUCT = Symbol("HerbRuntime.start")
 
@@ -50,5 +50,44 @@ export class HerbRuntime {
     if (instance === this) {
       instance = null
     }
+  }
+}
+
+
+export interface ScopedState {
+  scope: StateScope | null
+  get(name: string): StateValue
+  set(values: Record<string, StateValue>): boolean
+  toggle(name: string): boolean
+  increment(name: string, by?: number): boolean
+  decrement(name: string, by?: number): boolean
+  reset(name: string): boolean
+  on(name: string, listener: (value: StateValue, previous: StateValue) => void): () => void
+}
+
+export function stateFor(element: Element): ScopedState {
+  const runtime = HerbRuntime.get()
+
+  const resolve = (name: string): ScopedSetOptions => {
+    const scope = runtime?.state.scopeFor(element, name)
+
+    return scope ? { scope } : {}
+  }
+
+  return {
+    get scope() {
+      return runtime?.state.scopeFor(element) ?? null
+    },
+    get: (name) => runtime?.state.getState(name, resolve(name)) ?? null,
+    set: (values) => {
+      const first = Object.keys(values)[0]
+
+      return first ? (runtime?.state.setState(values, resolve(first)) ?? false) : false
+    },
+    toggle: (name) => runtime?.state.toggle(name, resolve(name)) ?? false,
+    increment: (name, by) => runtime?.state.increment(name, { ...resolve(name), by }) ?? false,
+    decrement: (name, by) => runtime?.state.decrement(name, { ...resolve(name), by }) ?? false,
+    reset: (name) => runtime?.state.reset(name, resolve(name)) ?? false,
+    on: (name, listener) => runtime?.state.on(name, listener, resolve(name)) ?? (() => {}),
   }
 }

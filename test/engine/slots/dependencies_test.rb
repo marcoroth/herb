@@ -423,6 +423,35 @@ module Engine
 
         assert_empty subject.across(entry)
       end
+      test "carries the states a template declares" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending: false, attempts: 0) %>
+          <div><%= @query %></div>
+          <p><%= attempts %></p>
+          <span><% if pending? %>wait<% else %>done<% end %></span>
+        ERB
+
+        payload = subject.payload(path)
+        manifest = payload["states"].values.first
+
+        names = manifest["declarations"].map { |declaration| declaration["name"] }
+
+        assert_equal ["pending", "attempts"], names
+        assert_equal ["region"], manifest["declarations"].map { |declaration| declaration["scope"] }.uniq
+        assert_equal 1, manifest["reads"]["attempts"].size
+
+        conditional = manifest["conditionals"].values.first
+
+        assert_equal [["pending", nil, 0]], conditional["arms"]
+        assert_equal 1, conditional["else"]
+        assert_equal subject.version_for(path), manifest["version"]
+      end
+
+      test "carries no states section entry for a template that declares none" do
+        path = write("index.html.erb", "<div><%= @query %></div>")
+
+        assert_empty subject.payload(path)["states"]
+      end
     end
   end
 end

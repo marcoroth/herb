@@ -28,6 +28,11 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/herb-client.esm.js",
       "default": "./dist/herb-client.esm.js"
+    },
+    "./stimulus": {
+      "types": "./dist/types/stimulus.d.ts",
+      "import": "./dist/herb-client-stimulus.esm.js",
+      "default": "./dist/herb-client-stimulus.esm.js"
     }
   },
   "dependencies": {},

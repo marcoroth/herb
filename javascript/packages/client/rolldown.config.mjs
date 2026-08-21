@@ -1,11 +1,14 @@
-export default [
-  {
-    input: "src/index.ts",
-    output: {
-      file: "dist/herb-client.esm.js",
-      format: "esm",
-      minify: true,
-    },
-    platform: "browser",
-  }
-]
+export default {
+  input: {
+    "herb-client": "src/index.ts",
+    "herb-client-stimulus": "src/stimulus.ts",
+  },
+  output: {
+    dir: "dist",
+    format: "esm",
+    entryFileNames: "[name].esm.js",
+    chunkFileNames: "herb-client-shared-[hash].esm.js",
+    minify: true,
+  },
+  platform: "browser",
+}
