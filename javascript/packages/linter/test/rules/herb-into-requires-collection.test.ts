@@ -6,6 +6,34 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HerbIntoRequiresCollectionRule)
 
 describe("HerbIntoRequiresCollectionRule", () => {
+  test("a bare herb:key directive does not make the loop keyed", () => {
+    expectError('`data-herb-into="messages"` names a slot that is not a keyed collection. A send inserts an item, so name the element around a keyed loop.')
+
+    assertOffenses(dedent`
+      <ul data-herb-name="messages">
+        <% @messages.each do |message| %>
+          <%# herb:key %>
+          <li><%= message.body %></li>
+        <% end %>
+      </ul>
+      <form data-herb-into="messages"><input name="body"></form>
+    `)
+  })
+
+  test("a loop with two root elements is not keyed", () => {
+    expectError('`data-herb-into="messages"` names a slot that is not a keyed collection. A send inserts an item, so name the element around a keyed loop.')
+
+    assertOffenses(dedent`
+      <ul data-herb-name="messages">
+        <% @messages.each do |message| %>
+          <li id="<%= message.id %>"><%= message.body %></li>
+          <li>spacer</li>
+        <% end %>
+      </ul>
+      <form data-herb-into="messages"><input name="body"></form>
+    `)
+  })
+
   test("allows a form naming a keyed collection", () => {
     expectNoOffenses(dedent`
       <ul data-herb-name="messages">

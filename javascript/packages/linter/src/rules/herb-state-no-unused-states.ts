@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { BY_ATTRIBUTE, isActionAttribute, isStateDirective, stateSignatureOf } from "../utils/state-directives-utils.js"
+import { BY_ATTRIBUTE, isActionAttribute, isERBComment, isStateDirective, stateSignatureOf } from "../utils/state-directives-utils.js"
 import { mentionsAnyState } from "@herb-tools/client/directives"
 
 import { Location, forEachAttribute, getAttributeName, getStaticAttributeValueContent } from "@herb-tools/core"
@@ -74,6 +74,8 @@ class UnusedStatesVisitor extends BaseRuleVisitor {
 
       return
     }
+
+    if (isERBComment(node)) return
 
     this.markUses(node.content?.value ?? "")
   }

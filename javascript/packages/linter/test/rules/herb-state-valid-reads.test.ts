@@ -36,6 +36,22 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows a state as an interpolated attribute's only output", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (status: "") %>
+      <div class="row-<%= status %>">x</div>
+    `)
+  })
+
+  test("flags a state mixed with other dynamics in an interpolated attribute", () => {
+    expectError("`status` reads a state inside an interpolated attribute that mixes other dynamic parts. Give the state its own attribute or its own output, since a state write cannot supply the other values.")
+
+    assertOffenses(dedent`
+      <%# herb:state (status: "") %>
+      <div class="row-<%= status %>-<%= @kind %>">x</div>
+    `)
+  })
+
   test("flags a negated condition the way it flags not", () => {
     expectError("`!open` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
 

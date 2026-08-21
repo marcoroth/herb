@@ -6,6 +6,15 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HerbStateValidActionsRule)
 
 describe("HerbStateValidActionsRule", () => {
+  test("a trailing comma reads as an empty clause", () => {
+    expectError("`data-herb-set` has an empty clause. Remove the stray comma or space, since every clause has to be a `state=value` pair.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="open=true,">x</button>
+    `)
+  })
+
   test("allows well-formed actions against declared states", () => {
     expectNoOffenses(dedent`
       <%# herb:state (open: false, attempts: 0, sort: "name", draft: "") %>
