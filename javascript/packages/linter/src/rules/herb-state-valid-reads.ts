@@ -4,7 +4,7 @@ import { StateScopeMap, declaredKind, kindWithArticle } from "../utils/state-dir
 import { bareReadName, mentionsAnyState } from "@herb-tools/client/directives"
 
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
-import { getAttributeName } from "@herb-tools/core"
+import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode } from "@herb-tools/core"
@@ -79,9 +79,30 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     this.booleanAttribute = name !== null && isBooleanAttribute(name)
 
+    this.checkMixedInterpolation(node)
+
     super.visitHTMLAttributeNode(node)
 
     this.booleanAttribute = previous
+  }
+
+  private checkMixedInterpolation(node: HTMLAttributeNode): void {
+    const outputs = getAttributeValueNodes(node).filter((child) =>
+      isERBContentNode(child) && (child.tag_opening?.value === "<%=" || child.tag_opening?.value === "<%=="),
+    ) as ERBContentNode[]
+
+    if (outputs.length < 2) return
+
+    const names = this.states.namesIn(this.stack)
+    if (names.length === 0) return
+
+    const read = outputs.map((output) => output.content?.value.trim() ?? "").find((expression) => expression !== "" && mentionsAnyState(expression, names))
+    if (!read) return
+
+    this.addOffense(
+      `\`${read}\` reads a state inside an interpolated attribute that mixes other dynamic parts. Give the state its own attribute or its own output, since a state write cannot supply the other values.`,
+      node.location,
+    )
   }
 
   visitERBContentNode(node: ERBContentNode): void {
