@@ -53,6 +53,9 @@ module Herb
       BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
       BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
+      NAME_ATTRIBUTE = "data-herb-name" #: String
+      NAMEABLE_TYPES = [:child, :collection, :conditional, :block].freeze #: Array[Symbol]
+
       Slot = Data.define(
         :index,      #: Integer
         :type,       #: Symbol
@@ -61,7 +64,8 @@ module Herb
         :location,   #: String?
         :attribute,  #: String?
         :key_source, #: Symbol?
-        :key_expression #: String?
+        :key_expression, #: String?
+        :name #: String?
       )
 
       #: (String) -> bool
@@ -112,6 +116,14 @@ module Herb
         @continuations = continuations.compare_by_identity
         @indices = indices.compare_by_identity
 
+        slot_nodes = [] #: Array[untyped]
+        @slot_nodes = slot_nodes
+        slot_scopes = {} #: Hash[untyped, untyped]
+        @slot_scopes = slot_scopes.compare_by_identity
+        @named_elements = [] #: Array[Hash[Symbol, untyped]]
+        @collection_nodes = [] #: Array[untyped]
+        @container_depth = 0
+
         @in_attribute = false
         @in_open_tag = false
         @displaced = [] #: Array[untyped]
@@ -160,6 +172,7 @@ module Herb
           entry = { index: slot.index, type: slot.type, node_path: slot.node_path }
           entry = entry.merge(attribute: slot.attribute) if slot.attribute
           entry = entry.merge(key_source: slot.key_source) if slot.key_source
+          entry = entry.merge(name: slot.name) if slot.name
           entry
         }
       end
@@ -185,6 +198,7 @@ module Herb
         visit_children_with_paths(node.children)
 
         collapse_invariant_conditionals
+        apply_names
 
         return unless @mark
 
@@ -205,9 +219,16 @@ module Herb
         previous_open_tag = @current_open_tag
         @current_open_tag = node.open_tag
 
+        name_attribute = attributes_for(node).find { |attribute| attribute_name_for(attribute)&.downcase == NAME_ATTRIBUTE }
+        base = @slot_nodes.size
+        base_scope = @collection_nodes.last
+        base_depth = @container_depth
+
         visit(node.open_tag) if node.open_tag
         visit_children_with_paths(node.body)
         visit(node.close_tag) if node.close_tag
+
+        record_named_element(node, name_attribute, base, base_scope, base_depth) if name_attribute
 
         @current_open_tag = previous_open_tag
 
@@ -290,25 +311,33 @@ module Herb
       def visit_erb_iteration_block_node(node)
         record_slot(node, :collection)
 
+        @collection_nodes.push(node)
         visit_branching_node(node)
+        @collection_nodes.pop
       end
 
       def visit_erb_while_node(node)
         record_slot(node, :collection)
 
+        @collection_nodes.push(node)
         visit_branching_node(node)
+        @collection_nodes.pop
       end
 
       def visit_erb_until_node(node)
         record_slot(node, :collection)
 
+        @collection_nodes.push(node)
         visit_branching_node(node)
+        @collection_nodes.pop
       end
 
       def visit_erb_for_node(node)
         record_slot(node, :collection)
 
+        @collection_nodes.push(node)
         visit_branching_node(node)
+        @collection_nodes.pop
       end
 
       private
@@ -324,6 +353,8 @@ module Herb
       end
 
       def visit_branching_node(node)
+        @container_depth += 1
+
         BRANCH_BODY_PROPERTIES.each do |property|
           next unless node.respond_to?(property)
 
@@ -339,6 +370,8 @@ module Herb
           @continuations[child] = true
           visit(child)
         end
+
+        @container_depth -= 1
       end
 
       #: (untyped) -> bool
@@ -403,6 +436,7 @@ module Herb
         resolve = ->(index) { moved.fetch(merged.fetch(index, index)) }
 
         @slots = survivors.each_with_index.map { |old, index| @slots[old].with(index: index) }
+        @slot_nodes = survivors.map { |old| @slot_nodes.fetch(old) }
 
         renumbered = {} #: Hash[untyped, Integer]
         pending = renumbered.compare_by_identity
@@ -446,10 +480,13 @@ module Herb
           location: location_for(node),
           attribute: attribute_name_for(node),
           key_source: key_source,
-          key_expression: key_expression
+          key_expression: key_expression,
+          name: nil
         )
 
         @slots << slot
+        @slot_nodes << node
+        @slot_scopes[node] = [@collection_nodes.last, @container_depth]
         @indices[node] = slot.index
 
         if type == :collection && key_source == :index
@@ -489,6 +526,107 @@ module Herb
         children = node.value&.children || []
 
         children.one? ? :attribute : :attribute_interpolation
+      end
+
+      #: (untyped, untyped, Integer, untyped, Integer) -> void
+      def record_named_element(node, name_attribute, base, base_scope, base_depth)
+        name = static_attribute_value(name_attribute)
+
+        unless name && !name.empty?
+          raise Herb::Engine::CompilationError,
+                "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` must be a static, non-empty value; " \
+                "a slot name is an address, so it cannot be computed"
+        end
+
+        candidates = @slot_nodes[base..].to_a.select { |slot_node|
+          scope, depth = @slot_scopes[slot_node]
+          scope.equal?(base_scope) && depth == base_depth &&
+            NAMEABLE_TYPES.include?(@slots[@indices[slot_node]].type)
+        }
+
+        @named_elements << {
+          node: node,
+          open_tag: node.open_tag,
+          attribute: name_attribute,
+          name: name,
+          candidates: candidates,
+          scope: base_scope,
+        }
+      end
+
+      #: (untyped) -> String?
+      def static_attribute_value(attribute)
+        children = attribute.value&.children || []
+
+        return nil unless children.all?(Herb::AST::LiteralNode)
+
+        children.map { |child| child.content.to_s }.join.strip
+      end
+
+      #: () -> void
+      def apply_names
+        taken = {} #: Hash[untyped, Hash[String, Integer]]
+
+        @named_elements.each { |named| bind_name(named, taken[named[:scope]] ||= {}) }
+      end
+
+      #: (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+      def bind_name(named, scope_names)
+        name = named[:name] #: String
+        index = resolve_named_slot(named)
+
+        if scope_names.key?(name)
+          raise Herb::Engine::CompilationError,
+                "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
+        end
+
+        if attribute_conflict?(name, index, named[:scope])
+          raise Herb::Engine::CompilationError,
+                "the name `#{name}` collides with the `#{name}` attribute slot in the same scope; " \
+                "an attribute slot is already addressable by its attribute"
+        end
+
+        scope_names[name] = index
+        @slots[index] = @slots[index].with(name: name)
+
+        rewrite_name_attribute(named, index) if @mark
+      end
+
+      #: (Hash[Symbol, untyped]) -> Integer
+      def resolve_named_slot(named)
+        name = named[:name]
+        tag = named[:node].tag_name&.value
+        candidates = named[:candidates].map { |slot_node| @indices[slot_node] }.compact.uniq
+
+        if candidates.empty?
+          raise Herb::Engine::CompilationError,
+                "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot; the element holds nothing dynamic"
+        end
+
+        unless candidates.one?
+          raise Herb::Engine::CompilationError,
+                "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots; " \
+                "wrap the one it should name in its own element"
+        end
+
+        candidates.fetch(0)
+      end
+
+      #: (String, Integer, untyped) -> bool
+      def attribute_conflict?(name, index, scope)
+        @slots.each_with_index.any? { |slot, slot_index|
+          slot.attribute == name && slot_index != index &&
+            @slot_scopes[@slot_nodes[slot_index]]&.fetch(0).equal?(scope)
+        }
+      end
+
+      #: (Hash[Symbol, untyped], Integer) -> void
+      def rewrite_name_attribute(named, index)
+        open_tag = named[:open_tag]
+        return unless open_tag.respond_to?(:children)
+
+        open_tag.children.delete(named[:attribute])
+        open_tag.children << attribute_node(NAME_ATTRIBUTE, "#{index}:#{named[:name]}")
       end
 
       #: (untyped) -> [Symbol, String?]

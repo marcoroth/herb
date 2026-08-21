@@ -30,6 +30,8 @@ const ITEM_STATICS = "item"
 const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
 const ANCHOR_ATTRIBUTE = "data-herb-slot"
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
+const NAME_ATTRIBUTE = "data-herb-name"
+const NAME_ENTRY = /^(\d+):(.+)$/
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
 
@@ -114,6 +116,7 @@ export interface Region {
   start: Comment | null
   end: Comment | null
   slots: SlotMap
+  names: Map<string, number>
 }
 
 export interface ScanResult {
@@ -197,6 +200,7 @@ export class SlotIndex {
   #regions: Region[] = []
   #seen = new WeakSet<Comment>()
   #anchored = new WeakSet<Element>()
+  #named = new WeakSet<Element>()
   #slotRegions = new WeakMap<Slot, Region>()
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
@@ -260,16 +264,43 @@ export class SlotIndex {
     return this.regionsFor(file).find((region) => region.occurrence === occurrence) ?? null
   }
 
-  slot(file: string, index: number, occurrence = 0): Slot | null {
-    return this.region(file, occurrence)?.slots.get(index) ?? null
+  slot(file: string, index: number | string, occurrence = 0): Slot | null {
+    const region = this.region(file, occurrence)
+
+    if (!region) return null
+
+    const resolved = this.#slotIndex(region, index, null)
+
+    return resolved === null ? null : (region.slots.get(resolved) ?? null)
   }
 
-  itemsFor(file: string, index: number, occurrence = 0): ItemMap {
+  itemsFor(file: string, index: number | string, occurrence = 0): ItemMap {
     return this.slot(file, index, occurrence)?.items ?? new Map()
   }
 
-  slotInItem(file: string, collection: number, key: string, index: number, occurrence = 0): Slot | null {
-    return this.itemsFor(file, collection, occurrence).get(key)?.slots.get(index) ?? null
+  slotInItem(file: string, collection: number | string, key: string, index: number | string, occurrence = 0): Slot | null {
+    const region = this.region(file, occurrence)
+    const item = this.itemsFor(file, collection, occurrence).get(key)
+
+    if (!region || !item) return null
+
+    const resolved = this.#slotIndex(region, index, item)
+
+    return resolved === null ? null : (item.slots.get(resolved) ?? null)
+  }
+
+  #slotIndex(region: Region, index: number | string, item: Item | null): number | null {
+    if (typeof index === "number") return index
+
+    const name = region.names.get(index)
+
+    if (name !== undefined) return name
+
+    for (const slot of (item?.slots ?? region.slots).values()) {
+      if (slot.attribute === index) return slot.index
+    }
+
+    return null
   }
 
   rangeFor(slot: Slot): Range {
@@ -856,6 +887,7 @@ export class SlotIndex {
     this.#regions = []
     this.#seen = new WeakSet()
     this.#anchored = new WeakSet()
+    this.#named = new WeakSet()
     this.#skeletons = new Map()
   }
 
@@ -869,6 +901,7 @@ export class SlotIndex {
     for (const marker of this.#markers(root)) {
       if (marker.nodeType === Node.ELEMENT_NODE) {
         this.#anchorSlots(marker as Element, result, state)
+        this.#nameSlot(marker as Element, state)
 
         continue
       }
@@ -903,6 +936,7 @@ export class SlotIndex {
             start: comment,
             end: null,
             slots: new Map(),
+            names: new Map(),
           }
 
           openRegions.push({ region, range })
@@ -1048,6 +1082,20 @@ export class SlotIndex {
     const region = this.#enclosingRegion(element)
 
     return region ? { file: region.file, version: region.version } : null
+  }
+
+  #nameSlot(element: Element, state: ParseState): void {
+    if (this.#named.has(element)) return
+
+    const entry = NAME_ENTRY.exec(element.getAttribute(NAME_ATTRIBUTE) ?? "")
+
+    if (!entry) return
+
+    this.#named.add(element)
+
+    const region = state.openRegions[state.openRegions.length - 1]?.region ?? this.#enclosingRegion(element)
+
+    region?.names.set(entry[2], Number(entry[1]))
   }
 
   #anchorSlots(element: Element, result: ScanResult, state: ParseState): void {
@@ -1210,13 +1258,15 @@ export class SlotIndex {
       return
     }
 
-    if (root.nodeType === Node.ELEMENT_NODE && anchored(root as Element)) {
+    if (root.nodeType === Node.ELEMENT_NODE && (anchored(root as Element) || named(root as Element))) {
       yield root as Element
     }
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_ELEMENT, {
       acceptNode: (node) =>
-        (node.nodeType === Node.COMMENT_NODE ? MARKER.test((node as Comment).data.trim()) : anchored(node as Element))
+        (node.nodeType === Node.COMMENT_NODE
+          ? MARKER.test((node as Comment).data.trim())
+          : anchored(node as Element) || named(node as Element))
           ? NodeFilter.FILTER_ACCEPT
           : NodeFilter.FILTER_SKIP,
     })
@@ -1361,6 +1411,10 @@ function closingFor(open: Comment, index: number): Comment | null {
 
 function anchorEntries(element: Element): string[] {
   return element.getAttribute(ANCHOR_ATTRIBUTE)?.split(/\s+/).filter(Boolean) ?? []
+}
+
+function named(element: Element): boolean {
+  return element.hasAttribute(NAME_ATTRIBUTE)
 }
 
 function anchored(element: Element): boolean {
