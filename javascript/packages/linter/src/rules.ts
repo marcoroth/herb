@@ -16,6 +16,7 @@ import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynami
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
+import { ActionViewNoMistypedLocalsRule } from "./rules/actionview-no-mistyped-locals.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
@@ -88,6 +89,14 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
+import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
+import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
+import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
+import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
+import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
+import { HerbValidSlotNamesRule } from "./rules/herb-valid-slot-names.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
@@ -167,6 +176,7 @@ export const rules: RuleClass[] = [
   ActionViewNoHelperShadowingRule,
   ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
+  ActionViewNoMistypedLocalsRule,
   ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoRenderOptionShadowingRule,
   ActionViewNoSilentHelperRule,
@@ -239,6 +249,14 @@ export const rules: RuleClass[] = [
   HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
+  HerbIntoRequiresCollectionRule,
+  HerbStateNoUnusedStatesRule,
+  HerbStateRequiresClientModeRule,
+  HerbStateValidActionsRule,
+  HerbStateValidBindingsRule,
+  HerbStateValidDeclarationRule,
+  HerbStateValidReadsRule,
+  HerbValidSlotNamesRule,
 
   HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,

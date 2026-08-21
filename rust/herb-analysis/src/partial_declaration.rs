@@ -7,6 +7,7 @@ pub const KEYWORD_REST_KIND: &str = "keyword_rest";
 pub struct StrictLocal {
   pub name: String,
   pub required: bool,
+  pub default_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -71,6 +72,7 @@ impl PartialDeclaration {
           declaration.locals.push(StrictLocal {
             name: name.value.clone(),
             required: parameter.required,
+            default_source: parameter.default_value.as_ref().map(|value| value.content.clone()),
           });
         }
       }

@@ -22,11 +22,15 @@ module Herb
 
       attr_reader slots: Array[Slot]
 
+      attr_reader state_presence: Hash[Integer, StateDirectives::Read]
+
       attr_reader document: untyped
 
       attr_reader warnings: Array[Herb::Warnings::Warning]
 
       SLOTS_DIRECTIVE: Regexp
+
+      PART_MARKER: String
 
       MODE_OPTION: Regexp
 
@@ -54,6 +58,12 @@ module Herb
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
+      STATE_KEYWORDS: Hash[String, Symbol]
+
+      NAME_ATTRIBUTE: String
+
+      NAMEABLE_TYPES: Array[Symbol]
+
       class Slot < Data
         attr_reader index(): Integer
 
@@ -71,12 +81,16 @@ module Herb
 
         attr_reader key_expression(): String?
 
-        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression) -> instance
-                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?) -> instance
+        attr_reader name(): String?
 
-        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+        attr_reader tag(): String?
 
-        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name, String? tag) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?, tag: String?) -> instance
+
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag ]
       end
 
       # : (String) -> bool
@@ -93,6 +107,15 @@ module Herb
 
       # : () -> String
       def version: () -> String
+
+      # : () -> Hash[Symbol, untyped]
+      def state_declarations: () -> Hash[Symbol, untyped]
+
+      # : () -> Array[Hash[Symbol, untyped]]
+      def state_entries: () -> Array[Hash[Symbol, untyped]]
+
+      # : () -> Hash[Integer, Hash[Symbol, untyped]]
+      def state_conditional_entries: () -> Hash[Integer, Hash[Symbol, untyped]]
 
       def inspect: () -> untyped
 
@@ -118,6 +141,8 @@ module Herb
 
       def visit_html_element_node: (untyped node) -> untyped
 
+      def visit_erb_strict_locals_node: (untyped node) -> untyped
+
       def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
@@ -135,6 +160,13 @@ module Herb
       def visit_erb_if_node: (untyped node) -> untyped
 
       def visit_erb_unless_node: (untyped node) -> untyped
+
+      def visit_erb_else_node: (untyped node) -> untyped
+
+      def visit_erb_when_node: (untyped node) -> untyped
+
+      # : (untyped) -> void
+      def register_branch_directives: (untyped) -> void
 
       def visit_erb_case_node: (untyped node) -> untyped
 
@@ -178,6 +210,75 @@ module Herb
       # : (untyped) -> Symbol
       def attribute_type_for: (untyped) -> Symbol
 
+      # : (untyped, Array[untyped]) -> void
+      def register_state_directive: (untyped, Array[untyped]) -> void
+
+      # : (String?) -> Symbol
+      def local_kind: (String?) -> Symbol
+
+      # : (untyped) -> Hash[String, StateDirectives::Declaration]
+      def states_for: (untyped) -> Hash[String, StateDirectives::Declaration]
+
+      # : () -> void
+      def apply_states: () -> void
+
+      # : (StateDirectives::Declaration) -> String
+      def state_assignment: (StateDirectives::Declaration) -> String
+
+      # : () -> void
+      def classify_state_conditionals: () -> void
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
+      def refuse_state_unless: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+
+      # : (untyped) -> Array[untyped]
+      def conditional_chain: (untyped) -> Array[untyped]
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_case_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+      # : (untyped) -> String
+      def condition_expression: (untyped) -> String
+
+      # : (untyped, String) -> void
+      def rewrite_predicate: (untyped, String) -> void
+
+      # : (untyped) -> untyped
+      def predicate_token_for: (untyped) -> untyped
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
+      def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+
+      # : () -> void
+      def check_state_value_reads: () -> void
+
+      # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+      def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+
+      # : (untyped, untyped, Integer, untyped, Integer) -> void
+      def record_named_element: (untyped, untyped, Integer, untyped, Integer) -> void
+
+      # : (untyped) -> String?
+      def static_attribute_value: (untyped) -> String?
+
+      # : () -> void
+      def apply_names: () -> void
+
+      # : (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+      def bind_name: (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+
+      # : (Hash[Symbol, untyped]) -> Integer
+      def resolve_named_slot: (Hash[Symbol, untyped]) -> Integer
+
+      # : (String, Integer, untyped) -> bool
+      def attribute_conflict?: (String, Integer, untyped) -> bool
+
+      # : (Hash[Symbol, untyped], Integer) -> void
+      def rewrite_name_attribute: (Hash[Symbol, untyped], Integer) -> void
+
       # : (untyped) -> [Symbol, String?]
       def key_for: (untyped) -> [ Symbol, String? ]
 
@@ -210,6 +311,9 @@ module Herb
 
       def expression_for: (untyped node) -> untyped
 
+      # : (untyped) -> String?
+      def attribute_expression_for: (untyped) -> String?
+
       def location_for: (untyped node) -> untyped
 
       def erb_output?: (untyped opening) -> untyped
@@ -223,7 +327,9 @@ module Herb
       def mark_branches: (untyped, Integer?) -> void
 
       # : (String, Array[untyped]) -> void
+      # : (String, Array[untyped], ?always: bool) -> void
       def park_branch: (String, Array[untyped]) -> void
+                     | (String, Array[untyped], ?always: bool) -> void
 
       # : (untyped) -> void
       def append_statics: (untyped) -> void
@@ -236,6 +342,12 @@ module Herb
 
       # : (untyped, Integer?) -> void
       def wrap_items: (untyped, Integer?) -> void
+
+      # : () -> void
+      def park_attribute_parts: () -> void
+
+      # : (untyped) -> Array[String]?
+      def attribute_segments: (untyped) -> Array[String]?
 
       def park_item: (untyped slot_index, untyped body) -> untyped
 
