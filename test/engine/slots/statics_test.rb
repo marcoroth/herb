@@ -108,6 +108,28 @@ module Engine
         assert_equal "<!--herb-branch:1:1-->even", parked(template, { "@items" => [1, 3] })
       end
 
+      test "parks a keyed collection's item template even when the collection rendered rows" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+
+        assert_includes parked(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+        assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
+      end
+
+      test "parks the item template with its values blanked" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+        markup = parked(template, { "@items" => ["a", "b"] })
+
+        assert_includes markup, %(<li id="")
+        refute_includes markup, ">a<"
+        refute_includes markup, ">b<"
+      end
+
+      test "parks no item template for an unkeyed collection, which has no addressable items" do
+        template = "<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>"
+
+        refute_includes render(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+      end
+
       test "parks the branches of one conditional and not of another" do
         markup = parked("<% if @a %>a<% end %><% if @b %>b<% end %>", { "@a" => true, "@b" => false })
 
