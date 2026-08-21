@@ -187,4 +187,16 @@ describe("HerbStateValidActionsRule", () => {
       <div><% if busy %>B<% end %></div>
     `)
   })
+  test("flags actions on a counted state", () => {
+    expectError("`data-herb-increment` on `total` can never work, because `total` is counted from the template's loop. Write the item states its condition reads instead.")
+    expectError("`total=5` can never work, because `total` is counted from the template's loop. Write the item states its condition reads instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (total: 0) %>
+      <ul><% @items.each do |item| %><%# herb:state (pending: false) %><% if pending? %><% total += 1 %><% end %><li><%= item %></li><% end %></ul>
+      <button data-herb-increment="total">More</button>
+      <button data-herb-set="total=5">Set</button>
+      <p><%= total %></p>
+    `)
+  })
 })

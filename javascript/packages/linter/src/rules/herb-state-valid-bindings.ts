@@ -1,6 +1,6 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { StateScopeMap, declaredKind, isDerived } from "../utils/state-directives-utils.js"
+import { StateScopeMap, collectCountedFolds, declaredKind, isDerived } from "../utils/state-directives-utils.js"
 import { bareReadName } from "@herb-tools/client/directives"
 
 import { forEachAttribute, getAttributeName, getAttributeValueNodes, getTagLocalName, isERBContentNode, isHTMLElementNode } from "@herb-tools/core"
@@ -15,12 +15,14 @@ const TEXT_KINDS = ["string", "integer", "seeded"]
 
 class StateValidBindingsVisitor extends BaseRuleVisitor {
   private states: StateScopeMap
+  private counted: Set<string>
   private stack: (ERBBlockNode | null)[] = [null]
 
-  constructor(ruleName: string, states: StateScopeMap, context?: Partial<LintContext>) {
+  constructor(ruleName: string, states: StateScopeMap, counted: Set<string>, context?: Partial<LintContext>) {
     super(ruleName, context)
 
     this.states = states
+    this.counted = counted
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -66,6 +68,15 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
         return
       }
 
+      if (this.counted.has(name)) {
+        this.addOffense(
+          `\`${attributeName}\` binds the counted state \`${name}\`, and a binding writes back what the user changes. A counted state follows its items, so show the value outside a form control.`,
+          attribute.location,
+        )
+
+        return
+      }
+
       const kind = declaredKind(declaration)
 
       if (BOOLEAN_ATTRIBUTES.includes(attributeName!)) {
@@ -98,6 +109,15 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
     if (isDerived(declaration)) {
       this.addOffense(
         `\`<textarea>\` binds the derived state \`${name}\`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.`,
+        node.location,
+      )
+
+      return
+    }
+
+    if (this.counted.has(name)) {
+      this.addOffense(
+        `\`<textarea>\` binds the counted state \`${name}\`, and a binding writes back what the user changes. A counted state follows its items, so show the value outside a form control.`,
         node.location,
       )
 
@@ -167,7 +187,8 @@ export class HerbStateValidBindingsRule extends ParserRule {
 
     if (!states.hasDeclarations) return []
 
-    const visitor = new StateValidBindingsVisitor(this.ruleName, states, context)
+    const counted = new Set(collectCountedFolds(result.value, states).map((fold) => fold.name))
+    const visitor = new StateValidBindingsVisitor(this.ruleName, states, counted, context)
 
     visitor.visit(result.value)
 

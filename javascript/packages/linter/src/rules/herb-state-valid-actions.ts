@@ -1,6 +1,6 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, declaredKind, isActionAttribute, isDerived, kindWithArticle } from "../utils/state-directives-utils.js"
+import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, collectCountedFolds, declaredKind, isActionAttribute, isDerived, kindWithArticle } from "../utils/state-directives-utils.js"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "@herb-tools/client/directives"
 
 import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes } from "@herb-tools/core"
@@ -12,12 +12,14 @@ import type { StateDeclaration } from "@herb-tools/client/directives"
 
 class StateValidActionsVisitor extends BaseRuleVisitor {
   private states: StateScopeMap
+  private counted: Set<string>
   private stack: (ERBBlockNode | null)[] = [null]
 
-  constructor(ruleName: string, states: StateScopeMap, context?: Partial<LintContext>) {
+  constructor(ruleName: string, states: StateScopeMap, counted: Set<string>, context?: Partial<LintContext>) {
     super(ruleName, context)
 
     this.states = states
+    this.counted = counted
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -96,6 +98,15 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
         continue
       }
 
+      if (this.counted.has(stateName)) {
+        this.addOffense(
+          `\`${name}\` on \`${stateName}\` can never work, because \`${stateName}\` is counted from the template's loop. Write the item states its condition reads instead.`,
+          attribute.location,
+        )
+
+        continue
+      }
+
       if (!schema.needs) continue
 
       const kind = declaredKind(declaration)
@@ -143,6 +154,15 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     if (isDerived(declaration)) {
       this.addOffense(
         `\`${name}=${raw}\` can never work, because \`${name}\` is derived from \`${declaration.defaultSource}\`. Write the states it reads instead.`,
+        attribute.location,
+      )
+
+      return
+    }
+
+    if (this.counted.has(name)) {
+      this.addOffense(
+        `\`${name}=${raw}\` can never work, because \`${name}\` is counted from the template's loop. Write the item states its condition reads instead.`,
         attribute.location,
       )
 
@@ -216,7 +236,8 @@ export class HerbStateValidActionsRule extends ParserRule {
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const states = StateScopeMap.collect(result.value)
-    const visitor = new StateValidActionsVisitor(this.ruleName, states, context)
+    const counted = new Set(collectCountedFolds(result.value, states).map((fold) => fold.name))
+    const visitor = new StateValidActionsVisitor(this.ruleName, states, counted, context)
 
     visitor.visit(result.value)
 

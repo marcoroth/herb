@@ -103,4 +103,13 @@ describe("HerbStateValidBindingsRule", () => {
       <textarea><%= copy %></textarea>
     `)
   })
+  test("flags a control bound to a counted state", () => {
+    expectError("`value` binds the counted state `total`, and a binding writes back what the user changes. A counted state follows its items, so show the value outside a form control.")
+
+    assertOffenses(dedent`
+      <%# herb:state (total: 0) %>
+      <ul><% @items.each do |item| %><% total += 1 %><li><%= item %></li><% end %></ul>
+      <input type="number" value="<%= total %>">
+    `)
+  })
 })

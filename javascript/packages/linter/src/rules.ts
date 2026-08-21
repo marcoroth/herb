@@ -92,6 +92,7 @@ import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-commen
 import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
 import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
 import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
+import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
 import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
 import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
@@ -255,6 +256,7 @@ export const rules: RuleClass[] = [
   HerbIntoRequiresCollectionRule,
   HerbSlotsValidModeRule,
   HerbStateNoSilentReadsRule,
+  HerbStateNoServerWritesRule,
   HerbStateNoUnusedStatesRule,
   HerbStateRequiresClientModeRule,
   HerbStateValidActionsRule,
