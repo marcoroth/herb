@@ -20,11 +20,11 @@ module Herb
     # : (String, Range, Location, String) -> void
     def initialize: (String, Range, Location, String) -> void
 
-    # : () -> Range
-    def range: () -> Range
+    # : () -> Range?
+    def range: () -> Range?
 
-    # : () -> Location
-    def location: () -> Location
+    # : () -> Location?
+    def location: () -> Location?
 
     # : () -> serialized_token
     def to_hash: () -> serialized_token

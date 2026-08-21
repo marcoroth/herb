@@ -67,7 +67,8 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      location_inspect = location ? location.tree_inspect : "∅"
+      current_location = location
+      location_inspect = current_location ? current_location.tree_inspect : "∅"
 
       "#{green("\"#{value.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location_inspect})")}"
     end
@@ -83,9 +84,10 @@ module Herb
 
     #: () -> String
     def colorize_range
-      return "∅" unless range
+      current_range = range
+      return "∅" unless current_range
 
-      white("[") + cyan(range.from.to_s) + white(", ") + cyan(range.to.to_s) + white("]")
+      white("[") + cyan(current_range.from.to_s) + white(", ") + cyan(current_range.to.to_s) + white("]")
     end
 
     #: (Position?) -> String
