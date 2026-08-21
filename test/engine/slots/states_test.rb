@@ -297,6 +297,14 @@ module Engine
         assert_includes rendered, 'disabled="false"'
       end
 
+      test "a bare non-boolean state in a boolean attribute raises" do
+        error = assert_raises(Herb::Engine::CompilationError) do
+          compile(%(<%# herb:state (status: "") %><video muted="<%= status %>"></video>))
+        end
+
+        assert_match(/as a presence/, error.message)
+      end
+
       test "a computed read in a boolean attribute still raises" do
         error = assert_raises(Herb::Engine::CompilationError) do
           compile(<<~ERB)
