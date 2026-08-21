@@ -493,7 +493,7 @@ export class SlotState {
 
       this.#writeConditionals(manifest, resolved, names)
       this.#writePresence(manifest, resolved, names)
-    })
+    }, { retain: false })
 
     for (const [name, value] of Object.entries(values)) {
       this.#announceState(resolved, name, value, previous.get(name) ?? null)
