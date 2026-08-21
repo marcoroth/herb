@@ -411,3 +411,110 @@ describe("declared state", () => {
     expect(details).toMatchObject([{ name: "pending", value: true, previous: false, file: FILE, occurrence: 0, key: null }])
   })
 })
+
+describe("combo conditions", () => {
+  const COMBO_FILE = "app/views/page/combos.html.erb"
+
+  const COMBO_PAGE =
+    `<!--herb-region:${COMBO_FILE}:eeeeeeee:0-->` +
+    `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->Out<!--/herb-slot:0--></div>` +
+    `<span><!--herb-slot:1:conditional--><!--herb-branch:1:1-->Idle<!--/herb-slot:1--></span>` +
+    `<input data-herb-slot="2:boolean_attribute:disabled">` +
+    `<b><!--herb-slot:3:conditional--><!--herb-branch:3:1-->Calm<!--/herb-slot:3--></b>` +
+    `<template data-herb-region="${COMBO_FILE}:eeeeeeee">` +
+    `<!--herb-branch:0:0-->In<!--herb-branch:0:1-->Out` +
+    `<!--herb-branch:1:0-->Busy<!--herb-branch:1:1-->Idle` +
+    `<!--herb-branch:3:0-->Stuck<!--herb-branch:3:1-->Calm` +
+    `</template>` +
+    `<!--/herb-region:${COMBO_FILE}-->`
+
+  const COMBO_MANIFEST = {
+    state: {},
+    states: {
+      [COMBO_FILE]: {
+        version: "eeeeeeee",
+        declarations: [
+          { name: "counter1", kind: "integer", default: "0", scope: "region" },
+          { name: "counter2", kind: "integer", default: "5", scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+        ],
+        reads: {},
+        conditionals: {
+          0: { arms: [{ branch: 0, all: [["counter1", "0", ">"], ["counter2", "10", "<"]] }], else: 1 },
+          1: { arms: [{ branch: 0, any: [["pending", null], ["failed", null]] }], else: 1 },
+          3: { arms: [{ branch: 0, all: [["pending", null], { any: [["failed", null], ["attempts", "2", ">"]] }] }], else: 1 },
+        },
+        presence: { 2: { any: [["pending", null], ["failed", null]] } },
+      },
+    },
+  }
+
+  let comboState: SlotState
+
+  beforeEach(() => {
+    document.body.innerHTML = COMBO_PAGE + `<template data-herb-dependencies>${JSON.stringify(COMBO_MANIFEST)}</template>`
+
+    const comboSlots = new SlotIndex()
+
+    comboSlots.scan(document.body)
+
+    comboState = new SlotState(comboSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    comboState.adopt()
+  })
+
+  test("an all combo needs every condition and reacts to each state", () => {
+    expect(comboState.setState({ counter1: 3 })).toBe(true)
+    expect(document.querySelector("div")?.textContent).toContain("In")
+
+    expect(comboState.setState({ counter2: 12 })).toBe(true)
+    expect(document.querySelector("div")?.textContent).toContain("Out")
+
+    expect(comboState.setState({ counter2: 5 })).toBe(true)
+    expect(document.querySelector("div")?.textContent).toContain("In")
+  })
+
+  test("an any combo flips on either state", () => {
+    expect(comboState.setState({ failed: true })).toBe(true)
+    expect(document.querySelector("span")?.textContent).toContain("Busy")
+
+    expect(comboState.setState({ failed: false })).toBe(true)
+    expect(document.querySelector("span")?.textContent).toContain("Idle")
+
+    expect(comboState.setState({ pending: true })).toBe(true)
+    expect(document.querySelector("span")?.textContent).toContain("Busy")
+  })
+
+  test("a combo presence toggles the attribute from either state", () => {
+    const input = document.querySelector("input")!
+
+    expect(input.hasAttribute("disabled")).toBe(false)
+
+    comboState.setState({ failed: true })
+    expect(input.hasAttribute("disabled")).toBe(true)
+
+    comboState.setState({ failed: false })
+    expect(input.hasAttribute("disabled")).toBe(false)
+
+    comboState.setState({ pending: true })
+    expect(input.hasAttribute("disabled")).toBe(true)
+  })
+
+  test("a nested combo resolves its grouping", () => {
+    comboState.setState({ pending: true })
+    expect(document.querySelector("b")?.textContent).toContain("Calm")
+
+    comboState.setState({ attempts: 3 })
+    expect(document.querySelector("b")?.textContent).toContain("Stuck")
+
+    comboState.setState({ pending: false })
+    expect(document.querySelector("b")?.textContent).toContain("Calm")
+  })
+})

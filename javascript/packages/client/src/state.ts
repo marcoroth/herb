@@ -33,12 +33,23 @@ export interface StateManifest {
   reads: Record<string, number[]>
   bound?: Record<string, number[]>
   conditionals: Record<string, { arms: ConditionalArm[]; else: number | null }>
-  presence?: Record<string, [string, StateComparand] | [string, StateComparand, string]>
+  presence?: Record<string, StateCondition>
 }
 
 export type StateComparand = string | null | { state: string }
 
-export type ConditionalArm = [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
+export type StateCondition = [string, StateComparand] | [string, StateComparand, string] | ComboCondition
+
+export interface ComboCondition {
+  all?: StateCondition[]
+  any?: StateCondition[]
+}
+
+export interface ComboArm extends ComboCondition {
+  branch: number | null
+}
+
+export type ConditionalArm = [string, StateComparand, number | null] | [string, StateComparand, number | null, string] | ComboArm
 
 export interface StateScope {
   region: Region
@@ -701,7 +712,7 @@ export class SlotState {
         if (slot.type === "boolean_attribute") {
           const entry = manifest.presence?.[String(index)]
 
-          if (!entry || entry[1] !== null || slot.anchor.kind === "range" || !slot.attribute) continue
+          if (!entry || !Array.isArray(entry) || entry[1] !== null || slot.anchor.kind === "range" || !slot.attribute) continue
 
           return slot.anchor.element.hasAttribute(slot.attribute)
         }
@@ -719,12 +730,14 @@ export class SlotState {
 
   #seedFromConditional(manifest: StateManifest, scope: StateScope, name: string): StateValue | undefined {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
-      const mentions = conditional.arms.some(([armName]) => armName === name)
+      const mentions = conditional.arms.some((arm) => Array.isArray(arm) && arm[0] === name)
 
       if (!mentions) continue
 
       for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
-        const arm = conditional.arms.find(([, , branch]) => branch === slot.branch)
+        const arm = conditional.arms.find(
+          (candidate): candidate is Exclude<ConditionalArm, ComboArm> => Array.isArray(candidate) && candidate[2] === slot.branch,
+        )
 
         if (arm && arm[0] === name && arm[3] === undefined && typeof arm[1] !== "object") return arm[1] === null ? true : parseLiteral(arm[1])
         if (arm && arm[0] === name) return undefined
@@ -758,13 +771,10 @@ export class SlotState {
   }
 
   #writePresence(manifest: StateManifest, scope: StateScope, changed: string[]): void {
-    for (const [indexKey, [name, comparand, operator]] of Object.entries(manifest.presence ?? {})) {
-      const against = typeof comparand === "object" && comparand !== null ? comparand.state : null
+    for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
+      if (!conditionMentions(entry, changed)) continue
 
-      if (!changed.includes(name) && (against === null || !changed.includes(against))) continue
-
-      const value = this.#valueOf(name, scope)
-      const present = armMatches(value, comparand, operator, (against) => this.#valueOf(against, scope))
+      const present = conditionMatches(entry, (name) => this.#valueOf(name, scope))
 
       for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
         this.#slots.setBooleanAttribute(slot, present)
@@ -794,10 +804,18 @@ export class SlotState {
   }
 
   #targetBranch(conditional: StateManifest["conditionals"][string], scope: StateScope): number | null {
-    for (const [name, comparand, branch, operator] of conditional.arms) {
-      const value = this.#valueOf(name, scope)
+    const valueOf = (name: string) => this.#valueOf(name, scope)
 
-      if (armMatches(value, comparand, operator, (against) => this.#valueOf(against, scope))) return branch
+    for (const arm of conditional.arms) {
+      if (!Array.isArray(arm)) {
+        if (conditionMatches(arm, valueOf)) return arm.branch
+
+        continue
+      }
+
+      const [name, comparand, branch, operator] = arm
+
+      if (armMatches(valueOf(name), comparand, operator, valueOf)) return branch
     }
 
     return conditional.else
@@ -1104,11 +1122,39 @@ export function boundValue(element: Element, kind: StateKind): StateValue {
 }
 
 function armMentions(arm: ConditionalArm, changed: string[]): boolean {
+  if (!Array.isArray(arm)) return conditionMentions(arm, changed)
+
   const [name, comparand] = arm
 
   if (changed.includes(name)) return true
 
   return typeof comparand === "object" && comparand !== null && changed.includes(comparand.state)
+}
+
+function conditionMentions(condition: StateCondition, changed: string[]): boolean {
+  if (!Array.isArray(condition)) return comboParts(condition).some((part) => conditionMentions(part, changed))
+
+  const [name, comparand] = condition
+
+  if (changed.includes(name)) return true
+
+  return typeof comparand === "object" && comparand !== null && changed.includes(comparand.state)
+}
+
+function conditionMatches(condition: StateCondition, valueOf: (name: string) => StateValue): boolean {
+  if (Array.isArray(condition)) {
+    const [name, comparand, operator] = condition
+
+    return armMatches(valueOf(name), comparand, operator, valueOf)
+  }
+
+  if (condition.all) return condition.all.every((part) => conditionMatches(part, valueOf))
+
+  return comboParts(condition).some((part) => conditionMatches(part, valueOf))
+}
+
+function comboParts(combo: ComboCondition): StateCondition[] {
+  return combo.all ?? combo.any ?? []
 }
 
 function armMatches(value: StateValue, comparand: StateComparand, operator: string | undefined, other: (name: string) => StateValue): boolean {

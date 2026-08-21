@@ -297,6 +297,88 @@ module Engine
         refuse("<%# herb:state (attempts: 0) %><div><% if attempts > \"a\" %>x<% end %></div>", /against a String literal/)
       end
 
+      test "a conjunction compiles as an all combo" do
+        template = %(<%# herb:state (counter1: 0, counter2: 5) %><div><% if counter1 > 0 && counter2 < 10 %>In<% else %>Out<% end %></div>)
+        visitor, = compile(template)
+
+        assert_equal(
+          { arms: [{ "branch" => 0, "all" => [["counter1", "0", ">"], ["counter2", "10", "<"]] }], else: 1 },
+          visitor.state_conditional_entries.fetch(0)
+        )
+
+        rendered = render(template)
+
+        assert_includes rendered, "Out"
+
+        markup = parked(template)
+
+        assert_includes markup, "In"
+      end
+
+      test "a disjunction compiles as an any combo" do
+        visitor, = compile(%(<%# herb:state (pending: false, failed: false) %><div><% if pending? || failed? %>Busy<% else %>Idle<% end %></div>))
+
+        assert_equal(
+          { arms: [{ "branch" => 0, "any" => [["pending", nil], ["failed", nil]] }], else: 1 },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a parenthesized combo nests" do
+        visitor, = compile(%(<%# herb:state (pending: false, failed: false, attempts: 0) %><div><% if pending? && (failed? || attempts > 2) %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [{ "branch" => 0, "all" => [["pending", nil], { "any" => [["failed", nil], ["attempts", "2", ">"]] }] }], else: nil },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a combo takes a state pair as one of its conditions" do
+        visitor, = compile(%(<%# herb:state (counter1: 0, counter2: 5, pending: false) %><div><% if counter1 == counter2 && pending? %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [{ "branch" => 0, "all" => [["counter1", { "state" => "counter2" }], ["pending", nil]] }], else: nil },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a combo mixing a state with server code raises" do
+        refuse(
+          "<%# herb:state (pending: false) %><div><% if pending? && current_user.admin? %>x<% else %>y<% end %></div>",
+          /computes with a state/
+        )
+      end
+
+      test "a combo of server reads stays a server conditional" do
+        visitor, = compile(%(<%# herb:state (pending: false) %><div><% if signed_in? && admin? %>x<% else %>y<% end %></div>))
+
+        assert_empty visitor.state_conditional_entries
+      end
+
+      test "an unless reads a combo with its arms inverted" do
+        visitor, = compile(%(<%# herb:state (pending: false, failed: false) %><div><% unless pending? || failed? %>Free<% end %></div>))
+
+        assert_equal(
+          { arms: [{ "branch" => nil, "any" => [["pending", nil], ["failed", nil]] }], else: 0 },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a boolean attribute reads a combo" do
+        template = %(<%# herb:state (pending: false, failed: false) %><input disabled="<%= pending? || failed? %>">)
+        visitor, = compile(template)
+
+        assert_instance_of Herb::Engine::StateDirectives::Combo, visitor.state_presence.fetch(0)
+
+        off = render(template)
+
+        refute_includes off, "<input disabled"
+
+        on = render(%(<%# herb:state (pending: true, failed: false) %><input disabled="<%= pending? || failed? %>">))
+
+        assert_includes on, "<input disabled"
+      end
+
       test "an unless reads a state with its arms inverted" do
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)

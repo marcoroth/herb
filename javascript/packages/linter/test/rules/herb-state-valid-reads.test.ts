@@ -229,6 +229,42 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows combos of state conditions", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, counter1: 0, counter2: 5) %>
+      <% if counter1 > 0 && counter2 < 10 %>In range<% else %>Out<% end %>
+      <% if pending? || failed? %>Busy<% else %>Idle<% end %>
+      <% unless pending? || failed? %>Free<% end %>
+      <% if pending? && (failed? || counter1 > 2) %>Stuck<% end %>
+      <input disabled="<%= pending? || failed? %>">
+    `)
+  })
+
+  test("flags a combo mixing a state with server code", () => {
+    expectError("`pending? && current_user.admin?` combines a state with `current_user.admin?`, which the client cannot evaluate. Split the server condition into its own conditional, or compute it into a second state set from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false) %>
+      <% if pending? && current_user.admin? %>Ready<% else %>Not yet<% end %>
+    `)
+  })
+
+  test("flags the invalid condition inside a combo once", () => {
+    expectError("`attempts?` reads the Integer state `attempts` as a predicate. Write `attempts` bare, or declare a boolean flag. Only a boolean state reads with a `?`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, attempts: 0) %>
+      <% if pending? && attempts? %>x<% end %>
+    `)
+  })
+
+  test("allows a combo of server conditions", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false) %>
+      <% if signed_in? && current_user.admin? %>Admin<% end %>
+    `)
+  })
+
   test("flags a case that does not switch on a bare state read", () => {
     expectError("`case sort.downcase` does not switch on a bare state read. Write the state alone, or compute the value into its own state.")
 

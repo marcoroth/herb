@@ -173,10 +173,12 @@ module Herb
         presence = {} #: Hash[String, untyped]
 
         visitor.state_presence.each do |index, read|
-          comparand = read.against ? { "state" => read.against } : read.comparand
-          presence[index.to_s] = read.operator ? [read.name, comparand, read.operator] : [read.name, comparand]
-          (reads[read.name] ||= []) << index
-          (bound[read.name] ||= []) << index if read.comparand.nil? && bound_slot?(visitor.slots[index])
+          presence[index.to_s] = StateDirectives.condition_entry(read)
+          StateDirectives.read_names(read).each { |name| (reads[name] ||= []) << index }
+
+          next unless read.is_a?(StateDirectives::Read)
+
+          (bound[read.name] ||= []) << index if read.comparand.nil? && read.against.nil? && bound_slot?(visitor.slots[index])
         end
 
         conditionals = visitor.state_conditional_entries.to_h { |index, info|

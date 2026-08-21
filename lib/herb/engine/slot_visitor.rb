@@ -34,7 +34,7 @@ module Herb
       required_parser_option action_view_helpers: true, track_locations: true
 
       attr_reader :slots #: Array[Slot]
-      attr_reader :state_presence #: Hash[Integer, StateDirectives::Read]
+      attr_reader :state_presence #: Hash[Integer, untyped]
       attr_reader :document #: untyped
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
@@ -132,7 +132,7 @@ module Herb
         @named_elements = [] #: Array[Hash[Symbol, untyped]]
         attribute_open_tags = {} #: Hash[untyped, untyped]
         @attribute_open_tags = attribute_open_tags.compare_by_identity
-        @state_presence = {} #: Hash[Integer, StateDirectives::Read]
+        @state_presence = {} #: Hash[Integer, untyped]
         @interpolated_attributes = [] #: Array[untyped]
         @strict_locals = {} #: Hash[String, Symbol]
         @region_states = {} #: Hash[String, StateDirectives::Declaration]
@@ -768,7 +768,7 @@ module Herb
                   "as a predicate, or compared to a literal"
           end
 
-          unless read.is_a?(StateDirectives::Read)
+          unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
             return nil if arms.empty?
 
             raise Herb::Engine::CompilationError,
@@ -776,8 +776,7 @@ module Herb
                   "arm, so each one has to read a state"
           end
 
-          rewrite_predicate(arm, read.name)
-          rewrite_predicate(arm, read.against) if read.against
+          StateDirectives.read_names(read).each { |name| rewrite_predicate(arm, name) }
 
           arms << arm_entry(read, branch)
         end
@@ -787,11 +786,11 @@ module Herb
         { arms: arms, else: else_position }
       end
 
-      #: (StateDirectives::Read, Integer?) -> Array[untyped]
+      #: (untyped, Integer?) -> untyped
       def arm_entry(read, branch)
-        comparand = read.against ? { "state" => read.against } : read.comparand
+        return { "branch" => branch, read.op => read.parts.map { |part| StateDirectives.condition_entry(part) } } if read.is_a?(StateDirectives::Combo)
 
-        read.operator ? [read.name, comparand, branch, read.operator] : [read.name, comparand, branch]
+        StateDirectives.condition_entry(read).insert(2, branch)
       end
 
       #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
@@ -807,14 +806,12 @@ module Herb
                 "bare, as a predicate, or compared to a literal"
         end
 
-        return nil unless read.is_a?(StateDirectives::Read)
-
-        rewrite_predicate(node, read.name)
+        return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
         chain = conditional_chain(node)
         else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
 
-        rewrite_predicate(node, read.against) if read.against
+        StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
 
         { arms: [arm_entry(read, else_position)], else: 0 }
       end
@@ -961,16 +958,16 @@ module Herb
         end
       end
 
-      #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+      #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
       def convert_boolean_attribute(node, index, slot, expression, states)
         return nil unless slot.type == :attribute
         return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
 
         read = StateDirectives.condition_read(expression, states)
 
-        return nil unless read.is_a?(StateDirectives::Read)
+        return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
-        if read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
+        if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
           raise Herb::Engine::CompilationError,
                 "`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` " \
                 "as a presence; only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. " \
@@ -983,13 +980,7 @@ module Herb
 
         return nil unless position
 
-        condition = if read.against
-                      "#{read.name} #{read.operator || "=="} #{read.against}"
-                    elsif read.comparand
-                      "#{read.name} #{read.operator || "=="} #{read.comparand}"
-                    else
-                      read.name
-                    end
+        condition = StateDirectives.condition_source(read)
         replacement = erb_output_node(%[("#{slot.attribute}" if #{condition})])
 
         children[position] = replacement

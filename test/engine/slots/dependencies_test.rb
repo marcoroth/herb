@@ -437,6 +437,27 @@ module Engine
         assert_equal manifest["presence"].keys.map(&:to_i).sort, (manifest["reads"]["draft"] + manifest["reads"]["sending"]).sort - manifest["reads"]["draft"].take(1)
       end
 
+      test "carries a combo presence and registers every state it reads" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending: false, failed: false) %>
+          <input disabled="<%= pending? || failed? %>">
+          <div><% if pending? && failed? %>Stuck<% else %>Fine<% end %></div>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [{ "any" => [["pending", nil], ["failed", nil]] }], manifest["presence"].values
+
+        index = manifest["presence"].keys.first.to_i
+
+        assert_includes manifest["reads"]["pending"], index
+        assert_includes manifest["reads"]["failed"], index
+
+        conditional = manifest["conditionals"].values.first
+
+        assert_equal [{ "branch" => 0, "all" => [["pending", nil], ["failed", nil]] }], conditional["arms"]
+      end
+
       test "carries the states a template declares" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (pending: false, attempts: 0) %>

@@ -36,6 +36,11 @@ module Herb
         :against    #: String?
       )
 
+      Combo = Data.define(
+        :op,    #: String
+        :parts  #: Array[untyped]
+      )
+
       ORDERED_OPERATORS = [:>, :>=, :<, :<=].freeze #: Array[Symbol]
       MIRRORED_OPERATORS = { ">" => "<", ">=" => "<=", "<" => ">", "<=" => ">=" }.freeze #: Hash[String, String]
 
@@ -67,20 +72,93 @@ module Herb
           parameters.keywords.map { |keyword| declaration_for(keyword, locals) }
         end
 
-        #: (String, Hash[String, Declaration]) -> (Read | Symbol)?
+        #: (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
         def condition_read(expression, states)
           source = expression.strip
           parsed = expression_node(source)
 
           return mentions_any?(source, states) ? :computed : nil if parsed.nil?
 
-          read = bare_read(parsed, states)
+          read = tree_read(parsed, states)
           return read if read
 
-          equality = equality_read(parsed, states)
+          mentions_any?(source, states) ? :computed : nil
+        end
+
+        #: (untyped, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
+        def tree_read(node, states)
+          node = unwrap_parentheses(node)
+
+          read = bare_read(node, states)
+          return read if read
+
+          equality = equality_read(node, states)
           return equality if equality
 
-          mentions_any?(source, states) ? :computed : nil
+          combo_read(node, states)
+        end
+
+        #: (untyped) -> untyped
+        def unwrap_parentheses(node)
+          return node unless node.is_a?(Prism::ParenthesesNode)
+
+          body = node.body
+
+          return node unless body.is_a?(Prism::StatementsNode) && body.body.one?
+
+          unwrap_parentheses(body.body.first)
+        end
+
+        #: (untyped, Hash[String, Declaration]) -> (Combo | Symbol)?
+        def combo_read(node, states)
+          op = case node
+               when Prism::AndNode then "all"
+               when Prism::OrNode then "any"
+               else return nil
+               end
+
+          parts = flatten_combo(node, node.class).map { |part| tree_read(part, states) }
+
+          return nil if parts.none? { |part| part.is_a?(Read) || part.is_a?(Combo) }
+          return :computed if parts.any? { |part| part.nil? || part == :computed }
+
+          Combo.new(op: op, parts: parts)
+        end
+
+        #: (untyped, untyped) -> Array[untyped]
+        def flatten_combo(node, klass)
+          return [node] unless node.is_a?(klass)
+
+          flatten_combo(node.left, klass) + flatten_combo(node.right, klass)
+        end
+
+        #: (Read | Combo) -> Array[String]
+        def read_names(read)
+          return [read.name, read.against].compact if read.is_a?(Read)
+
+          read.parts.flat_map { |part| read_names(part) }
+        end
+
+        #: (Read | Combo) -> untyped
+        def condition_entry(read)
+          return { read.op => read.parts.map { |part| condition_entry(part) } } if read.is_a?(Combo)
+
+          comparand = read.against ? { "state" => read.against } : read.comparand
+
+          read.operator ? [read.name, comparand, read.operator] : [read.name, comparand]
+        end
+
+        #: (Read | Combo) -> String
+        def condition_source(read)
+          if read.is_a?(Read)
+            return read.name if read.comparand.nil? && read.against.nil?
+
+            "#{read.name} #{read.operator || "=="} #{read.against || read.comparand}"
+          else
+            joiner = read.op == "all" ? " && " : " || "
+
+            "(#{read.parts.map { |part| condition_source(part) }.join(joiner)})"
+          end
         end
 
         #: (String, Declaration) -> (Array[String] | Symbol)

@@ -22,7 +22,7 @@ module Herb
 
       attr_reader slots: Array[Slot]
 
-      attr_reader state_presence: Hash[Integer, StateDirectives::Read]
+      attr_reader state_presence: Hash[Integer, untyped]
 
       attr_reader document: untyped
 
@@ -231,8 +231,8 @@ module Herb
       # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
-      # : (StateDirectives::Read, Integer?) -> Array[untyped]
-      def arm_entry: (StateDirectives::Read, Integer?) -> Array[untyped]
+      # : (untyped, Integer?) -> untyped
+      def arm_entry: (untyped, Integer?) -> untyped
 
       # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
@@ -258,8 +258,8 @@ module Herb
       # : () -> void
       def check_state_value_reads: () -> void
 
-      # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
-      def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+      # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
+      def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
 
       # : (untyped, untyped, Integer, untyped, Integer) -> void
       def record_named_element: (untyped, untyped, Integer, untyped, Integer) -> void
