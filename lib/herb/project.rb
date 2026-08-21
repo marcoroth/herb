@@ -5,7 +5,6 @@
 require "timeout"
 require "tempfile"
 require "pathname"
-require "English"
 require "stringio"
 
 module Herb
@@ -42,33 +41,35 @@ module Herb
       "NestedERBTagError"
     ].freeze
 
-    ISSUE_TYPES = [
-      { key: :failed, label: "Parser crashed", symbol: "✗", color: :red, reportable: true,
-        hint: "This could be a bug in the parser. Reporting it helps us improve Herb for everyone.",
-        file_hint: ->(relative) { "Run `herb parse #{relative}` to see the parser output." } },
-      { key: :template_error, label: "Template errors", symbol: "✗", color: :red,
-        hint: "These files have issues in the template. Review the errors and update your templates to fix them." },
-      { key: :unexpected_error, label: "Unexpected parse errors", symbol: "✗", color: :red, reportable: true,
-        hint: "These errors may indicate a bug in the parser. Reporting them helps us make Herb more robust.",
-        file_hint: ->(relative) { "Run `herb parse #{relative}` to see the parser output." } },
-      { key: :strict_parse_error, label: "Strict mode parse errors", symbol: "⚠", color: :yellow,
-        hint: "These files use HTML patterns like omitted closing tags. Add explicit closing tags to fix." },
-      { key: :analyze_parse_error, label: "Analyze parse errors", symbol: "⚠", color: :yellow,
-        hint: "These files have issues detected during analysis. Review the errors and update your templates." },
-      { key: :timeout, label: "Timed out", symbol: "⚠", color: :yellow, reportable: true,
-        hint: "These files took too long to parse. This could indicate a parser issue. Reporting it helps us track down edge cases." },
-      { key: :validation_error, label: "Validation errors", symbol: "⚠", color: :yellow,
-        hint: "These templates have security, nesting, or accessibility issues. The templates compile fine otherwise. Review and fix these to improve your template structure." },
-      { key: :compilation_failed, label: "Compilation errors", symbol: "✗", color: :red, reportable: true,
-        hint: "These files could not be compiled to Ruby. This could be a bug in the engine. Reporting it helps us improve Herb's compatibility.",
-        file_hint: ->(relative) { "Run `herb compile #{relative}` to see the compilation error." } },
-      { key: :strict_compilation_failed, label: "Strict mode compilation errors", symbol: "⚠", color: :yellow,
-        hint: "These files fail to compile only in strict mode. Add explicit closing tags to fix, or pass --no-strict to allow.",
-        file_hint: ->(relative) { "Run `herb compile #{relative}` to see the compilation error." } },
-      { key: :invalid_ruby, label: "Invalid Ruby output", symbol: "✗", color: :red, reportable: true,
-        hint: "The engine produced Ruby code that doesn't parse. This is most likely a bug in the engine. Reporting it helps us fix it.",
-        file_hint: ->(relative) { "Run `herb compile #{relative}` to see the compiled output." } }
-    ].freeze
+    ISSUE_TYPES = Ractor.make_shareable(
+      [
+        { key: :failed, label: "Parser crashed", symbol: "✗", color: :red, reportable: true,
+          hint: "This could be a bug in the parser. Reporting it helps us improve Herb for everyone.",
+          file_hint: "parse", file_hint_suffix: "to see the parser output." },
+        { key: :template_error, label: "Template errors", symbol: "✗", color: :red,
+          hint: "These files have issues in the template. Review the errors and update your templates to fix them." },
+        { key: :unexpected_error, label: "Unexpected parse errors", symbol: "✗", color: :red, reportable: true,
+          hint: "These errors may indicate a bug in the parser. Reporting them helps us make Herb more robust.",
+          file_hint: "parse", file_hint_suffix: "to see the parser output." },
+        { key: :strict_parse_error, label: "Strict mode parse errors", symbol: "⚠", color: :yellow,
+          hint: "These files use HTML patterns like omitted closing tags. Add explicit closing tags to fix." },
+        { key: :analyze_parse_error, label: "Analyze parse errors", symbol: "⚠", color: :yellow,
+          hint: "These files have issues detected during analysis. Review the errors and update your templates." },
+        { key: :timeout, label: "Timed out", symbol: "⚠", color: :yellow, reportable: true,
+          hint: "These files took too long to parse. This could indicate a parser issue. Reporting it helps us track down edge cases." },
+        { key: :validation_error, label: "Validation errors", symbol: "⚠", color: :yellow,
+          hint: "These templates have security, nesting, or accessibility issues. The templates compile fine otherwise. Review and fix these to improve your template structure." },
+        { key: :compilation_failed, label: "Compilation errors", symbol: "✗", color: :red, reportable: true,
+          hint: "These files could not be compiled to Ruby. This could be a bug in the engine. Reporting it helps us improve Herb's compatibility.",
+          file_hint: "compile", file_hint_suffix: "to see the compilation error." },
+        { key: :strict_compilation_failed, label: "Strict mode compilation errors", symbol: "⚠", color: :yellow,
+          hint: "These files fail to compile only in strict mode. Add explicit closing tags to fix, or pass --no-strict to allow.",
+          file_hint: "compile", file_hint_suffix: "to see the compilation error." },
+        { key: :invalid_ruby, label: "Invalid Ruby output", symbol: "✗", color: :red, reportable: true,
+          hint: "The engine produced Ruby code that doesn't parse. This is most likely a bug in the engine. Reporting it helps us fix it.",
+          file_hint: "compile", file_hint_suffix: "to see the compiled output." }
+      ]
+    )
 
     class ResultTracker
       attr_reader :successful, :failed, :timeout, :template_error, :unexpected_error,
@@ -398,12 +399,12 @@ module Herb
           end
         end
 
-        Process.waitpid(pid)
+        _, status = Process.waitpid2(pid)
 
         stderr_file.rewind
         stderr_content = stderr_file.read
 
-        case $CHILD_STATUS.exitstatus
+        case status.exitstatus
         when 0
           result[:log] = "✅ Parsed #{file_path} successfully"
           result.merge!(compile_file(file_path, file_content))
@@ -414,7 +415,7 @@ module Herb
           result[:log] = "❌ Parsing #{file_path} failed"
           result[:status] = :failed
           result[:file_content] = file_content
-          result[:error_output] = { exit_code: $CHILD_STATUS.exitstatus, stderr: stderr_content }
+          result[:error_output] = { exit_code: status.exitstatus, stderr: stderr_content }
         end
       end
 
@@ -708,7 +709,9 @@ module Herb
             puts "   #{severity} #{type[:label]}"
           end
 
-          puts "\n   #{dimmed(type[:file_hint].call(relative))}" if type[:file_hint]
+          if type[:file_hint]
+            puts "\n   #{dimmed("Run `herb #{type[:file_hint]} #{relative}` #{type[:file_hint_suffix]}")}"
+          end
         end
       end
     end

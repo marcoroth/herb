@@ -17,7 +17,8 @@ module Herb
     ].freeze
 
     def self.generate_templates
-      require "pathname"
+      # Keep template-generation dependencies out of normal library startup.
+      require "pathname" # audition:disable runtime-require
       require_relative "../../templates/template"
 
       Dir.chdir(ROOT_PATH) do
