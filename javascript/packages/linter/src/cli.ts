@@ -196,7 +196,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, ignoreCounterComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -393,6 +393,72 @@ export class CLI {
       process.exit(0)
     }
 
+    if (updateCounters) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const loadedConfig = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+
+      const counterRules = Object.entries(loadedConfig.options?.linter?.rules ?? {})
+        .filter(([, ruleConfig]) => (ruleConfig as { counter?: boolean } | undefined)?.counter === true)
+        .map(([name]) => name)
+
+      if (counterRules.length === 0) {
+        console.error(`\n✗ No rules have \`counter: true\` in ${colorize(".herb.yml", "cyan")}. Add \`counter: true\` under \`linter.rules.<RuleName>\` first.\n`)
+        process.exit(1)
+      }
+
+      console.log(`\n${colorize("↻", "cyan")} Reconciling <%# herb:counter %> comments for ${counterRules.length} ${counterRules.length === 1 ? "rule" : "rules"}...`)
+
+      await Herb.load()
+
+      const files = await loadedConfig.findFilesForTool('linter', this.projectPath)
+      const linter = Linter.from(Herb, loadedConfig, undefined, { all: false })
+
+      const { readFileSync, writeFileSync } = await import("node:fs")
+      const { resolve } = await import("node:path")
+
+      let filesTouched = 0
+      let totalInserted = 0
+      let totalRewritten = 0
+      let totalDeleted = 0
+
+      for (const filename of files) {
+        const filePath = resolve(this.projectPath, filename)
+        const content = readFileSync(filePath, "utf-8")
+
+        const { source: updated, inserted, rewritten, deleted } = linter.updateCounters(content, {
+          fileName: filename,
+          projectPath: this.projectPath,
+        })
+
+        if (updated !== content) {
+          writeFileSync(filePath, updated, "utf-8")
+          filesTouched++
+          totalInserted += inserted
+          totalRewritten += rewritten
+          totalDeleted += deleted
+        }
+      }
+
+      const parts: string[] = []
+      if (totalInserted > 0) parts.push(`${totalInserted} inserted`)
+      if (totalRewritten > 0) parts.push(`${totalRewritten} updated`)
+      if (totalDeleted > 0) parts.push(`${totalDeleted} removed`)
+
+      if (parts.length === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} All <%# herb:counter %> comments already match. Nothing to update.\n`)
+      } else {
+        console.log(`\n${colorize("✓", "brightGreen")} Reconciled ${parts.join(", ")} across ${filesTouched} ${filesTouched === 1 ? "file" : "files"}.\n`)
+      }
+
+      process.exit(0)
+    }
+
     const silent = formatOption === 'json'
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
@@ -500,6 +566,7 @@ export class CLI {
         fix,
         fixUnsafe,
         ignoreDisableComments,
+        ignoreCounterComments,
         showFixDiff,
         linterConfig,
         config: processingConfig,

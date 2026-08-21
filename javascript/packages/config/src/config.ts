@@ -95,6 +95,7 @@ export type RuleConfig = {
   severity?: SeverityConfig
   frameworks?: Framework[]
   autoCorrect?: boolean
+  counter?: boolean
   include?: string[]
   only?: string[]
   exclude?: string[]

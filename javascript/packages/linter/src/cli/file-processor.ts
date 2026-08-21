@@ -45,6 +45,7 @@ export interface ProcessingContext {
   fix?: boolean
   fixUnsafe?: boolean
   ignoreDisableComments?: boolean
+  ignoreCounterComments?: boolean
   showFixDiff?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
@@ -210,6 +211,7 @@ export class FileProcessor {
         const result = this.linter.autofix(content, {
           fileName: item.filename,
           ignoreDisableComments: context?.ignoreDisableComments,
+          ignoreCounterComments: context?.ignoreCounterComments,
         }, [item.offense as LintOffense], { includeUnsafe: true })
 
         if (result.fixed.length > 0 && result.source !== content) {
@@ -341,6 +343,7 @@ export class FileProcessor {
       const lintResult = this.linter.lint(content, {
         fileName: filename,
         ignoreDisableComments: context?.ignoreDisableComments,
+        ignoreCounterComments: context?.ignoreCounterComments,
         partials: this.partials,
         partialCallers: this.partialCallers,
         projectPath: this.projectPath
@@ -354,6 +357,7 @@ export class FileProcessor {
         const autofixResult = this.linter.autofix(content, {
           fileName: filename,
           ignoreDisableComments: context?.ignoreDisableComments,
+          ignoreCounterComments: context?.ignoreCounterComments,
           partials: this.partials,
           partialCallers: this.partialCallers,
           projectPath: this.projectPath
@@ -505,6 +509,7 @@ export class FileProcessor {
         fix: context?.fix || false,
         fixUnsafe: context?.fixUnsafe || false,
         ignoreDisableComments: context?.ignoreDisableComments || false,
+        ignoreCounterComments: context?.ignoreCounterComments || false,
         loadCustomRules: context?.loadCustomRules || false,
         only: context?.only,
         allRules: context?.allRules || false,

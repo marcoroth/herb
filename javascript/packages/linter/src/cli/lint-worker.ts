@@ -23,6 +23,7 @@ export interface WorkerInput {
   fix: boolean
   fixUnsafe: boolean
   ignoreDisableComments: boolean
+  ignoreCounterComments: boolean
   loadCustomRules: boolean
   only?: string[]
   allRules: boolean
@@ -109,6 +110,7 @@ async function run() {
     const lintResult = linter.lint(content, {
       fileName: filename,
       ignoreDisableComments: data.ignoreDisableComments,
+      ignoreCounterComments: data.ignoreCounterComments,
       partials,
       partialCallers,
       projectPath: data.projectPath
@@ -118,6 +120,7 @@ async function run() {
       const autofixResult = linter.autofix(content, {
         fileName: filename,
         ignoreDisableComments: data.ignoreDisableComments,
+        ignoreCounterComments: data.ignoreCounterComments,
         partials,
         partialCallers,
         projectPath: data.projectPath

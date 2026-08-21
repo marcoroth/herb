@@ -29,6 +29,7 @@ const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
   frameworks: z.array(z.enum(FRAMEWORK_NAMES)).optional().describe("Frameworks this rule applies to (defaults to every framework)"),
+  counter: z.boolean().optional().describe("Whether to honor `<%# herb:counter RULE N %>` counter-based suppression comments for this rule (opt-in migration affordance)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
