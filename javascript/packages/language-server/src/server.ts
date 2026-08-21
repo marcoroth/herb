@@ -87,7 +87,7 @@ export class Server {
           inlayHintProvider: true,
           hoverProvider: true,
           completionProvider: {
-            triggerCharacters: [".", ":", "<", "&", "\"", "'", "/", ",", " ", "@"],
+            triggerCharacters: [".", ":", "<", "&", "\"", "'", "/", ",", " ", "@", "=", ">", "-"],
           },
           definitionProvider: true,
           referencesProvider: true,
