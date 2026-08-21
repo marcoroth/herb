@@ -471,6 +471,27 @@ module Engine
         assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, declaration["derived"])
       end
 
+      test "carries a counted state with its fold" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending_count: 0) %>
+          <ul>
+            <% @messages.each do |message| %>
+              <%# herb:key message.id %>
+              <%# herb:state (pending: false) %>
+              <% if pending? %><% pending_count += 1 %><% end %>
+              <li id="<%= message.id %>"><%= message.body %></li>
+            <% end %>
+          </ul>
+          <p><%= pending_count %></p>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+        declaration = manifest["declarations"].find { |declared| declared["name"] == "pending_count" }
+
+        assert_equal({ "collection" => 0, "when" => ["pending", nil], "by" => 1 }, declaration["count"])
+        assert_includes manifest["reads"]["pending_count"], 3
+      end
+
       test "carries the states a template declares" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (pending: false, attempts: 0) %>

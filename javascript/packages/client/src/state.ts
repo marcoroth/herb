@@ -23,9 +23,16 @@ export interface DeclaredState {
   kind: StateKind
   default: string
   derived?: StateCondition | null
+  count?: StateCount | null
   scope: "region" | number
   line?: number | null
   column?: number | null
+}
+
+export interface StateCount {
+  collection: number
+  when: StateCondition | null
+  by?: number
 }
 
 export interface StateManifest {
@@ -182,7 +189,10 @@ export class SlotState {
   }
 
   adopt(root: ParentNode = document): number {
-    if (typeof document !== "undefined") document.addEventListener(SLOT_EVENT, this.#migrateItemState)
+    if (typeof document !== "undefined") {
+      document.addEventListener(SLOT_EVENT, this.#migrateItemState)
+      document.addEventListener(SLOT_EVENT, this.#recountItems)
+    }
 
     const templates = [...root.querySelectorAll<HTMLTemplateElement>(DEPENDENCIES_SELECTOR)]
 
@@ -199,6 +209,7 @@ export class SlotState {
 
     document.addEventListener(SLOT_EVENT, this.#syncProperty)
     document.addEventListener(SLOT_EVENT, this.#migrateItemState)
+    document.addEventListener(SLOT_EVENT, this.#recountItems)
     document.addEventListener("input", this.#onBoundInput)
     document.addEventListener("change", this.#onBoundInput)
     document.addEventListener("reset", this.#onFormReset)
@@ -232,6 +243,7 @@ export class SlotState {
 
     document.removeEventListener(SLOT_EVENT, this.#syncProperty)
     document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
+    document.removeEventListener(SLOT_EVENT, this.#recountItems)
     document.removeEventListener("input", this.#onBoundInput)
     document.removeEventListener("change", this.#onBoundInput)
     document.removeEventListener("reset", this.#onFormReset)
@@ -533,6 +545,18 @@ export class SlotState {
         return false
       }
 
+      if (declaration.count) {
+        report({
+          template: resolved.region.file,
+          message: `\`${name}\` is counted from the template's loop, so it cannot be written. Write the item states its condition reads.`,
+          code: "herb-state-counted",
+          severity: "error",
+          value: name,
+        })
+
+        return false
+      }
+
       const shared = [...groups.keys()].find(candidate => candidate.region === target.region && candidate.item === target.item) ?? target
 
       groups.set(shared, [...(groups.get(shared) ?? []), name])
@@ -545,6 +569,11 @@ export class SlotState {
     for (const [scope, grouped] of groups) {
       dependents.set(scope, this.#derivedDependents(manifest, scope, grouped).map((name) => ({ name, previous: this.#valueOf(name, scope) })))
     }
+
+    const regionScope: StateScope = { region: resolved.region, item: null }
+    const counted = this.#countDeclarations(manifest).map((declaration) => ({ name: declaration.name, previous: this.#valueOf(declaration.name, regionScope) }))
+    const countDependents = this.#derivedDependents(manifest, regionScope, counted.map((entry) => entry.name))
+      .map((name) => ({ name, previous: this.#valueOf(name, regionScope) }))
 
     this.#slots.transaction(() => {
       for (const [name, value] of Object.entries(values)) {
@@ -571,6 +600,22 @@ export class SlotState {
         this.#writeConditionals(manifest, scope, changed)
         this.#writePresence(manifest, scope, changed)
       }
+
+      const recounted: string[] = []
+
+      for (const entry of [...counted, ...countDependents]) {
+        const value = this.#valueOf(entry.name, regionScope)
+
+        if (value === entry.previous) continue
+
+        recounted.push(entry.name)
+        this.#writeValueSlots(manifest, regionScope, entry.name, value)
+      }
+
+      if (recounted.length > 0) {
+        this.#writeConditionals(manifest, regionScope, recounted)
+        this.#writePresence(manifest, regionScope, recounted)
+      }
     }, { retain: false })
 
     for (const [name, value] of Object.entries(values)) {
@@ -583,6 +628,12 @@ export class SlotState {
 
         if (value !== dependent.previous) this.#announceState(scope, dependent.name, value, dependent.previous)
       }
+    }
+
+    for (const entry of [...counted, ...countDependents]) {
+      const value = this.#valueOf(entry.name, regionScope)
+
+      if (value !== entry.previous) this.#announceState(regionScope, entry.name, value, entry.previous)
     }
 
     return true
@@ -703,6 +754,7 @@ export class SlotState {
     const manifest = this.manifestFor(scope.region)
     const declaration = manifest ? this.#declaration(manifest, scope, name) : null
 
+    if (declaration?.count) return this.#countValue(declaration, scope)
     if (declaration?.derived) return this.#deriveValue(declaration, scope)
 
     const stored = this.#scoped.get(scope.region)?.get(scope.item?.key ?? "")?.get(name)
@@ -724,6 +776,43 @@ export class SlotState {
     }
 
     return conditionMatches(entry, (name) => this.#valueOf(name, scope))
+  }
+
+  #countDeclarations(manifest: StateManifest): DeclaredState[] {
+    return manifest.declarations.filter((declaration) => declaration.count)
+  }
+
+  #lastCounts = new WeakMap<Region, Map<string, StateValue>>()
+
+  #countValue(declaration: DeclaredState, scope: StateScope): StateValue {
+    const count = declaration.count
+
+    if (count === undefined || count === null) return null
+
+    const base = parseLiteral(declaration.default)
+    const start = typeof base === "number" ? base : 0
+    const slot = scope.region.slots.get(count.collection)
+    const items = slot && "items" in slot ? slot.items : null
+
+    if (!items) return start
+
+    let matches = 0
+
+    for (const item of items.values()) {
+      const itemScope: StateScope = { region: scope.region, item }
+
+      if (count.when === null || count.when === undefined || conditionMatches(count.when, (name) => this.#valueOf(name, itemScope))) {
+        matches += 1
+      }
+    }
+
+    const value = start + matches * (count.by ?? 1)
+    const cache = this.#lastCounts.get(scope.region) ?? new Map<string, StateValue>()
+
+    cache.set(declaration.name, value)
+    this.#lastCounts.set(scope.region, cache)
+
+    return value
   }
 
   #derivedDependents(manifest: StateManifest, scope: StateScope, written: string[]): string[] {
@@ -1034,6 +1123,77 @@ export class SlotState {
   #onPopState = (): void => {
     this.#readLocation()
   }
+
+  #recountItems = (event: Event): void => {
+    const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+    if (detail.operation !== "item-added" && detail.operation !== "item-removed") return
+    if (!detail.slot) return
+
+    const region = this.#slots.regionOf(detail.slot)
+
+    if (!region) return
+
+    const manifest = this.manifestFor(region)
+
+    if (!manifest) return
+    if (!this.#countDeclarations(manifest).some((declaration) => declaration.count?.collection === detail.index)) return
+    if (this.#recountQueued.has(region)) return
+
+    this.#recountQueued.add(region)
+
+    queueMicrotask(() => {
+      this.#recountQueued.delete(region)
+      this.#recountRegion(region)
+    })
+  }
+
+  #recountRegion(region: Region): void {
+    const manifest = this.manifestFor(region)
+
+    if (!manifest) return
+
+    const regionScope: StateScope = { region, item: null }
+    const changed: { name: string; value: StateValue; previous: StateValue }[] = []
+
+    for (const declaration of this.#countDeclarations(manifest)) {
+      const previous = this.#lastCounts.get(region)?.get(declaration.name) ?? null
+      const value = this.#valueOf(declaration.name, regionScope)
+
+      if (value === previous) continue
+
+      changed.push({ name: declaration.name, value, previous })
+    }
+
+    if (changed.length === 0) return
+
+    const cascade = this.#derivedDependents(manifest, regionScope, changed.map((entry) => entry.name))
+      .map((name) => ({ name, previous: this.#lastCounts.get(region)?.get(name) ?? null, value: this.#valueOf(name, regionScope) }))
+      .filter((entry) => entry.value !== entry.previous)
+
+    const cache = this.#lastCounts.get(region) ?? new Map<string, StateValue>()
+
+    for (const entry of cascade) cache.set(entry.name, entry.value)
+
+    this.#lastCounts.set(region, cache)
+
+    this.#slots.transaction(() => {
+      for (const entry of [...changed, ...cascade]) {
+        this.#writeValueSlots(manifest, regionScope, entry.name, entry.value)
+      }
+
+      const names = [...changed, ...cascade].map((entry) => entry.name)
+
+      this.#writeConditionals(manifest, regionScope, names)
+      this.#writePresence(manifest, regionScope, names)
+    }, { retain: false })
+
+    for (const entry of [...changed, ...cascade]) {
+      this.#announceState(regionScope, entry.name, entry.value, entry.previous)
+    }
+  }
+
+  #recountQueued = new Set<Region>()
 
   #migrateItemState = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail

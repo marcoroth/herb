@@ -64,6 +64,19 @@ module Herb
         def members: () -> [ :op, :parts ]
       end
 
+      class FoldIncrement < Data
+        attr_reader name(): String
+
+        attr_reader by(): Integer
+
+        def self.new: (String name, Integer by) -> instance
+                    | (name: String, by: Integer) -> instance
+
+        def self.members: () -> [ :name, :by ]
+
+        def members: () -> [ :name, :by ]
+      end
+
       ORDERED_OPERATORS: Array[Symbol]
 
       MIRRORED_OPERATORS: Hash[String, String]
@@ -100,6 +113,12 @@ module Herb
 
       # : (Read | Combo) -> String
       def self.condition_source: (Read | Combo) -> String
+
+      # : (String) -> FoldIncrement?
+      def self.fold_increment: (String) -> FoldIncrement?
+
+      # : (String, Hash[String, Declaration]) -> Array[String]
+      def self.assigned_state_names: (String, Hash[String, Declaration]) -> Array[String]
 
       # : (String, Declaration) -> (Array[String] | Symbol)
       def self.when_comparands: (String, Declaration) -> (Array[String] | Symbol)

@@ -185,6 +185,16 @@ module Herb
           [index.to_s, { "arms" => info[:arms], "else" => info[:else] }]
         }
 
+        if visitor.respond_to?(:state_count_entries)
+          visitor.state_count_entries.each do |count|
+            declaration = declarations.find { |declared| declared["name"] == count[:name] && declared["scope"] == "region" }
+
+            next unless declaration
+
+            declaration["count"] = { "collection" => count[:collection], "when" => count[:when], "by" => count[:by] }
+          end
+        end
+
         {
           "version" => visitor.schema[:version],
           "declarations" => declarations,

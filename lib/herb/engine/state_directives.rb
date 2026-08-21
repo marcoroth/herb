@@ -42,6 +42,11 @@ module Herb
         :parts  #: Array[untyped]
       )
 
+      FoldIncrement = Data.define(
+        :name, #: String
+        :by    #: Integer
+      )
+
       ORDERED_OPERATORS = [:>, :>=, :<, :<=].freeze #: Array[Symbol]
       MIRRORED_OPERATORS = { ">" => "<", ">=" => "<=", "<" => ">", "<=" => ">=" }.freeze #: Hash[String, String]
 
@@ -179,6 +184,74 @@ module Herb
 
             "(#{read.parts.map { |part| condition_source(part) }.join(joiner)})"
           end
+        end
+
+        #: (String) -> FoldIncrement?
+        def fold_increment(source)
+          result = Prism.parse(source.to_s.strip)
+
+          return nil if result.failure?
+
+          body = result.value.statements.body
+
+          return nil unless body.one?
+
+          node = body.first
+
+          case node
+          when Prism::LocalVariableOperatorWriteNode
+            return nil unless node.binary_operator == :+
+
+            step = node.value
+
+            return nil unless step.is_a?(Prism::IntegerNode)
+
+            FoldIncrement.new(name: node.name.to_s, by: step.value)
+          when Prism::LocalVariableWriteNode
+            value = node.value
+
+            return nil unless value.is_a?(Prism::CallNode) && value.name == :+
+
+            receiver = value.receiver
+
+            return nil unless receiver.is_a?(Prism::LocalVariableReadNode) && receiver.name == node.name
+
+            arguments = value.arguments&.arguments
+
+            return nil unless arguments&.one?
+
+            step = arguments.first
+
+            return nil unless step.is_a?(Prism::IntegerNode)
+
+            FoldIncrement.new(name: node.name.to_s, by: step.value)
+          end
+        end
+
+        #: (String, Hash[String, Declaration]) -> Array[String]
+        def assigned_state_names(source, states)
+          return [] unless mentions_any?(source, states)
+
+          result = Prism.parse(source)
+
+          return [] if result.failure?
+
+          names = [] #: Array[String]
+          queue = [] #: Array[untyped]
+          queue << result.value
+
+          while (node = queue.shift)
+            case node
+            when Prism::LocalVariableWriteNode, Prism::LocalVariableOperatorWriteNode,
+                 Prism::LocalVariableOrWriteNode, Prism::LocalVariableAndWriteNode,
+                 Prism::LocalVariableTargetNode
+              names << node.name.to_s if states.key?(node.name.to_s)
+            end
+
+            queue.concat(node.child_nodes.compact) if node.respond_to?(:child_nodes)
+          end
+
+          names.uniq
         end
 
         #: (String, Declaration) -> (Array[String] | Symbol)
