@@ -41,6 +41,11 @@ const NAME_ENTRY = /^(\d+):(.+)$/
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
 
+// A slot anchored on an element writes that element's content when the slot IS the content, which
+// covers a plain child and the RCDATA of a `<textarea>` or `<title>`. Every other anchored slot
+// addresses an attribute instead, so its content must be left alone.
+const CONTENT_SLOT_TYPES: SlotType[] = ["child", "raw_text"]
+
 export type SlotType =
   | "child"
   | "conditional"
@@ -1585,7 +1590,9 @@ export class SlotIndex {
 
     for (const entry of anchorEntries(element)) {
       const [index, type, ...name] = entry.split(":")
-      const kind = (type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE ? ("content" as const) : ("element" as const)
+      const kind = CONTENT_SLOT_TYPES.includes((type as SlotType) ?? DEFAULT_SLOT_TYPE)
+        ? ("content" as const)
+        : ("element" as const)
 
       this.#attach(
         region,
