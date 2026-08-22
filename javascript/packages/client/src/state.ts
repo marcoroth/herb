@@ -856,8 +856,9 @@ export class SlotState {
     const manifest = this.manifestFor(scope.region)
     if (!manifest) return undefined
 
-    let value = this.#seedFromValueSlot(manifest, scope, name)
+    let value = this.#shippedSeed(manifest, scope, name)
 
+    if (value === undefined) value = this.#seedFromValueSlot(manifest, scope, name)
     if (value === undefined) value = this.#seedFromConditional(manifest, scope, name)
     if (value === undefined) {
       const declaration = this.#declaration(manifest, scope, name)
@@ -869,6 +870,63 @@ export class SlotState {
     if (value !== undefined) bucket.set(name, value)
 
     return value
+  }
+
+  #shippedSeed(manifest: StateManifest, scope: StateScope, name: string): StateValue | undefined {
+    const declaration = this.#declaration(manifest, scope, name)
+
+    if (!declaration || declaration.derived || declaration.count) return undefined
+
+    const channel = scope.item?.seeds ?? scope.region.seeds
+    const shipped = scope.item?.seeds?.[name] ?? scope.region.seeds?.[name]
+
+    if (shipped === undefined) {
+      if (channel && parseLiteral(declaration.default) === undefined) {
+        this.#reportSeed(scope, declaration, `the server shipped no value for \`${name}\`; its rendered value was not a boolean, number, string, or nil, so the client falls back to what the page shows`, "seed the state with a primitive, since that is all a state can hold")
+      }
+
+      return undefined
+    }
+
+    const coerced = coerceSeed(shipped, declaration.kind)
+
+    if (coerced === undefined) {
+      this.#reportSeed(scope, declaration, `the server shipped ${JSON.stringify(shipped)} for \`${name}\`, which is declared as ${kindArticle(declaration.kind)}, and the client cannot read it as one`, `seed the state with ${kindArticle(declaration.kind)}`)
+
+      return undefined
+    }
+
+    if (coerced !== shipped) {
+      this.#reportSeed(scope, declaration, `the server shipped ${JSON.stringify(shipped)} for \`${name}\`, which is declared as ${kindArticle(declaration.kind)}, so the client coerced it to ${JSON.stringify(coerced)}`, `seed the state with ${kindArticle(declaration.kind)}`)
+    }
+
+    return coerced
+  }
+
+  #reportedSeeds = new WeakMap<Region, Set<string>>()
+
+  #reportSeed(scope: StateScope, declaration: DeclaredState, message: string, suggestion: string): void {
+    const reported = this.#reportedSeeds.get(scope.region) ?? new Set<string>()
+    const key = `${scope.item?.key ?? ""}:${declaration.name}`
+
+    if (reported.has(key)) return
+
+    reported.add(key)
+    this.#reportedSeeds.set(scope.region, reported)
+
+    const spot = declaration.line !== undefined && declaration.line !== null
+      ? { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
+      : {}
+
+    report({
+      template: scope.region.file,
+      message,
+      code: "herb-state-type",
+      severity: "warning",
+      value: declaration.name,
+      suggestion,
+      ...spot,
+    })
   }
 
   #seedFromValueSlot(manifest: StateManifest, scope: StateScope, name: string): StateValue | undefined {
@@ -1357,6 +1415,32 @@ export function boundValue(element: Element, kind: StateKind): StateValue {
   const raw = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
 
   return coerceState(raw, kind)
+}
+
+function coerceSeed(shipped: unknown, kind: StateKind): StateValue | undefined {
+  if (shipped !== null && typeof shipped !== "boolean" && typeof shipped !== "number" && typeof shipped !== "string") return undefined
+
+  switch (kind) {
+    case "boolean":
+      return typeof shipped === "boolean" ? shipped : shipped !== null
+    case "integer":
+      if (typeof shipped === "number") return Number.isInteger(shipped) ? shipped : Math.trunc(shipped)
+      if (typeof shipped === "string" && /^-?\d+$/.test(shipped.trim())) return Number(shipped.trim())
+
+      return undefined
+    case "string":
+    case "symbol":
+      if (typeof shipped === "string") return shipped
+      if (typeof shipped === "number" || typeof shipped === "boolean") return String(shipped)
+
+      return undefined
+    default:
+      return shipped
+  }
+}
+
+function kindArticle(kind: StateKind): string {
+  return kind === "integer" ? "an Integer" : `a ${kind.charAt(0).toUpperCase() + kind.slice(1)}`
 }
 
 function armMentions(arm: ConditionalArm, changed: string[]): boolean {

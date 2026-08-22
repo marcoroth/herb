@@ -26,7 +26,8 @@ const SLOT_CLOSE = /^\/herb-slot:(\d+)$/
 const ITEM_OPEN = /^herb-item:(\d+):([\s\S]*)$/
 const ITEM_CLOSE = /^\/herb-item:(\d+)$/
 const BRANCH = /^herb-branch:(\d+):(\w+)$/
-const MARKER = /^\/?herb-(region|slot|item|branch):/
+const MARKER = /^\/?herb-(region|slot|item|branch|seeds):/
+const SEEDS = /^herb-seeds:([\s\S]*)$/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
 const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
@@ -96,6 +97,7 @@ export interface Item {
   start: Comment
   end: Comment
   slots: SlotMap
+  seeds?: Record<string, unknown>
 }
 
 export interface Slot {
@@ -146,6 +148,7 @@ export interface Region {
   end: Comment | null
   slots: SlotMap
   names: Map<string, number>
+  seeds?: Record<string, unknown>
 }
 
 export interface ScanResult {
@@ -1464,6 +1467,18 @@ export class SlotIndex {
         continue
       }
 
+      const seeds = SEEDS.exec(data)
+
+      if (seeds) {
+        const holder = openItems[openItems.length - 1]?.item ?? openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
+
+        if (holder) holder.seeds = { ...(holder.seeds ?? {}), ...parseSeeds(seeds[1]) }
+
+        this.#seen.add(comment)
+
+        continue
+      }
+
       const branch = BRANCH.exec(data)
 
       if (branch) {
@@ -1711,6 +1726,16 @@ export class SlotIndex {
       yield node as Comment | Element
       node = walker.nextNode()
     }
+  }
+}
+
+function parseSeeds(json: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(json) as unknown
+
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {}
+  } catch {
+    return {}
   }
 }
 

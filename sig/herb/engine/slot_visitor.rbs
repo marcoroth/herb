@@ -64,6 +64,12 @@ module Herb
 
       NAMEABLE_TYPES: Array[Symbol]
 
+      SEEDS_MARKER: String
+
+      SEEDS_LOCAL: String
+
+      SEED_VALUE_TYPES: String
+
       class Slot < Data
         attr_reader index(): Integer
 
@@ -228,6 +234,9 @@ module Herb
 
       # : () -> void
       def apply_states: () -> void
+
+      # : (Array[StateDirectives::Declaration]) -> String?
+      def seeds_marker: (Array[StateDirectives::Declaration]) -> String?
 
       # : (StateDirectives::Declaration) -> String
       def state_assignment: (StateDirectives::Declaration) -> String

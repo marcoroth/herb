@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
@@ -590,6 +591,53 @@ module Engine
 
       test "a computed tag helper attribute raises" do
         refuse(%(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft.upcase %>), /computes with a state/)
+      end
+
+      SEEDED = <<~ERB
+        <%# locals: (open_initially: false) %>
+        <%# herb:slots client %>
+        <%# herb:state (open: open_initially, label: @label, count: 0, busy: open) %>
+        <div><% if busy %>Open<% else %>Closed<% end %></div>
+        <ul>
+          <% @messages.each do |message| %>
+            <%# herb:key message %>
+            <%# herb:state (pending: message.odd?, note: "x") %>
+            <li id="m<%= message %>"><%= message %></li>
+          <% end %>
+        </ul>
+      ERB
+
+      def seeds_in(rendered)
+        rendered.scan(/<!--herb-seeds:(.*?)-->/).flatten.map { |json| JSON.parse(json) }
+      end
+
+      test "the render ships the values of seeded states" do
+        rendered = render(SEEDED, { "open_initially" => true, "@label" => "shipped", "@messages" => [1, 2] })
+
+        assert_equal [{ "open" => true, "label" => "shipped" }, { "pending" => true }, { "pending" => false }], seeds_in(rendered)
+      end
+
+      test "the seeds marker survives a value containing a comment terminator" do
+        rendered = render(SEEDED, { "open_initially" => false, "@label" => "a-->b", "@messages" => [] })
+
+        assert_equal "a-->b", seeds_in(rendered).fetch(0).fetch("label")
+        assert_includes rendered, "<!--herb-seeds:"
+        refute_match(/<!--herb-seeds:[^>]*-->b/, rendered)
+      end
+
+      test "the seeds marker skips values the client cannot hold" do
+        template = %(<%# herb:slots client %><%# herb:state (shape: @shape, name: @name) %><p><%= name %></p>)
+        rendered = render(template, { "@shape" => [1, 2], "@name" => "n" })
+
+        assert_equal [{ "name" => "n" }], seeds_in(rendered)
+
+        only_shape = render(%(<%# herb:slots client %><%# herb:state (shape: @shape) %><p><%= shape %></p>), { "@shape" => [1, 2] })
+
+        assert_includes only_shape, "<!--herb-seeds:{}-->"
+      end
+
+      test "a template with only literal defaults ships no seeds" do
+        refute_includes render(STATUS), "herb-seeds"
       end
 
       test "an unless reads a state with its arms inverted" do

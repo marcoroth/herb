@@ -1,6 +1,8 @@
-import { describe, test, expect, beforeEach, vi } from "vitest"
+import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 import { SlotIndex } from "../src/slot-index"
 import { SlotState, STATE_EVENT } from "../src/state"
+import { resetReport } from "../src/report"
+import type { RuntimeDiagnostic } from "../src/report"
 
 const FILE = "app/views/page/chat.html.erb"
 
@@ -751,5 +753,204 @@ describe("counted states", () => {
   test("a counted state cannot be written", () => {
     expect(countState.setState({ pending_count: 5 })).toBe(false)
     expect(document.querySelector("p")?.textContent).toContain("0")
+  })
+})
+
+describe("shipped seeds", () => {
+  const SEED_FILE = "app/views/page/seeds.html.erb"
+
+  const SEED_PAGE =
+    `<!--herb-region:${SEED_FILE}:0a1b2c3d:0-->` +
+    `<!--herb-seeds:{"open":true,"label":"a-\\u002db"}-->` +
+    `<div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->Busy<!--/herb-slot:0--></div>` +
+    `<ul><!--herb-slot:1:collection-->` +
+    `<!--herb-item:1:a--><!--herb-seeds:{"pending":true}--><li id="a"><i><!--herb-slot:2:conditional--><!--herb-branch:2:0-->sending<!--/herb-slot:2--></i></li><!--/herb-item:1-->` +
+    `<!--herb-item:1:b--><!--herb-seeds:{"pending":false}--><li id="b"><i><!--herb-slot:2:conditional--><!--herb-branch:2:1-->sent<!--/herb-slot:2--></i></li><!--/herb-item:1-->` +
+    `<!--/herb-slot:1--></ul>` +
+    `<template data-herb-region="${SEED_FILE}:0a1b2c3d">` +
+    `<!--herb-branch:0:0-->Busy<!--herb-branch:0:1-->Idle` +
+    `<!--herb-branch:2:0-->sending<!--herb-branch:2:1-->sent` +
+    `</template>` +
+    `<!--/herb-region:${SEED_FILE}-->`
+
+  const SEED_MANIFEST = {
+    state: {},
+    states: {
+      [SEED_FILE]: {
+        version: "0a1b2c3d",
+        declarations: [
+          { name: "open", kind: "boolean", default: "open_initially", scope: "region" },
+          { name: "label", kind: "seeded", default: "@label", scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", scope: "region" },
+          { name: "pending", kind: "boolean", default: "message.odd?", scope: 1 },
+        ],
+        reads: {},
+        conditionals: {
+          0: { arms: [{ branch: 0, any: [["open", null], ["failed", null]] }], else: 1 },
+          2: { arms: [["pending", null, 0]], else: 1 },
+        },
+      },
+    },
+  }
+
+  let seedSlots: SlotIndex
+  let seedState: SlotState
+
+  beforeEach(() => {
+    document.body.innerHTML = SEED_PAGE + `<template data-herb-dependencies>${JSON.stringify(SEED_MANIFEST)}</template>`
+
+    seedSlots = new SlotIndex()
+    seedSlots.scan(document.body)
+
+    seedState = new SlotState(seedSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    seedState.adopt()
+  })
+
+  test("the scanner attaches seeds to the region and to each item", () => {
+    const region = seedSlots.regions()[0]!
+    const collection = region.slots.get(1)!
+
+    expect(region.seeds).toEqual({ open: true, label: "a--b" })
+    expect(collection.items.get("a")?.seeds).toEqual({ pending: true })
+    expect(collection.items.get("b")?.seeds).toEqual({ pending: false })
+  })
+
+  test("a seed the DOM cannot reveal still seeds from the channel", () => {
+    expect(seedState.getState("open")).toBe(true)
+    expect(seedState.getState("label")).toBe("a--b")
+
+    seedState.setState({ failed: true })
+    seedState.setState({ failed: false })
+
+    expect(document.querySelector("div")?.textContent).toContain("Busy")
+  })
+
+  test("item seeds resolve per item", () => {
+    const a = seedState.scopeFor(document.querySelector("#a")!, "pending")!
+    const b = seedState.scopeFor(document.querySelector("#b")!, "pending")!
+
+    expect(seedState.getState("pending", { scope: a })).toBe(true)
+    expect(seedState.getState("pending", { scope: b })).toBe(false)
+  })
+
+  test("reset returns to the shipped value", () => {
+    seedState.setState({ open: false })
+
+    expect(seedState.getState("open")).toBe(false)
+
+    seedState.reset("open")
+
+    expect(seedState.getState("open")).toBe(true)
+  })
+})
+
+describe("shipped seeds that disagree with the declaration", () => {
+  const ODD_FILE = "app/views/page/odd-seeds.html.erb"
+
+  interface FakeDevTools {
+    report(input: RuntimeDiagnostic | RuntimeDiagnostic[]): void
+    entries: RuntimeDiagnostic[]
+  }
+
+  let devTools: FakeDevTools
+
+  function boot(seeds: string, declarations: Record<string, unknown>[]): SlotState {
+    document.body.innerHTML =
+      `<!--herb-region:${ODD_FILE}:0ddc0ffe:0-->` +
+      `<!--herb-seeds:${seeds}-->` +
+      `<p><!--herb-slot:0-->0<!--/herb-slot:0--></p>` +
+      `<!--/herb-region:${ODD_FILE}-->` +
+      `<template data-herb-dependencies>${JSON.stringify({
+        state: {},
+        states: { [ODD_FILE]: { version: "0ddc0ffe", declarations, reads: {}, conditionals: {} } },
+      })}</template>`
+
+    const oddSlots = new SlotIndex()
+    oddSlots.scan(document.body)
+
+    const oddState = new SlotState(oddSlots, { persist: "none" })
+    oddState.adopt()
+
+    return oddState
+  }
+
+  beforeEach(() => {
+    resetReport()
+    devTools = { entries: [], report(input) { devTools.entries.push(...(Array.isArray(input) ? input : [input])) } }
+    ;(window as unknown as { HerbDevTools?: FakeDevTools }).HerbDevTools = devTools
+  })
+
+  afterEach(() => {
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("a seed of the declared kind reports nothing", () => {
+    const oddState = boot('{"count":5,"name":"x"}', [
+      { name: "count", kind: "integer", default: "@count", scope: "region", line: 2, column: 0 },
+      { name: "name", kind: "string", default: "@name", scope: "region", line: 2, column: 0 },
+    ])
+
+    expect(oddState.getState("count")).toBe(5)
+    expect(oddState.getState("name")).toBe("x")
+    expect(devTools.entries).toEqual([])
+  })
+
+  test("a seed of another kind is coerced and reported at the declaration", () => {
+    const oddState = boot('{"count":"5","name":7,"open":"yes"}', [
+      { name: "count", kind: "integer", default: "@count", scope: "region", line: 2, column: 0 },
+      { name: "name", kind: "string", default: "@name", scope: "region", line: 2, column: 0 },
+      { name: "open", kind: "boolean", default: "@open", scope: "region", line: 2, column: 0 },
+    ])
+
+    expect(oddState.getState("count")).toBe(5)
+    expect(oddState.getState("name")).toBe("7")
+    expect(oddState.getState("open")).toBe(true)
+
+    expect(devTools.entries.map((entry) => [entry.code, entry.severity, entry.value])).toEqual([
+      ["herb-state-type", "warning", "count"],
+      ["herb-state-type", "warning", "name"],
+      ["herb-state-type", "warning", "open"],
+    ])
+    expect(devTools.entries[0].message).toContain("coerced it to 5")
+    expect(devTools.entries[0].location).toEqual({ start: { line: 2, column: 0 } })
+  })
+
+  test("a seed the client cannot read falls back and reports", () => {
+    const oddState = boot('{"count":"five"}', [
+      { name: "count", kind: "integer", default: "@count", scope: "region", line: 2, column: 0 },
+    ])
+
+    expect(oddState.getState("count")).toBeNull()
+    expect(oddState.getState("count")).toBeNull()
+    expect(devTools.entries).toHaveLength(1)
+    expect(devTools.entries[0].message).toContain("cannot read it as one")
+  })
+
+  test("an empty channel still reports every dropped seed", () => {
+    const oddState = boot("{}", [
+      { name: "shape", kind: "seeded", default: "@shape", scope: "region", line: 2, column: 0 },
+    ])
+
+    expect(oddState.getState("shape")).toBeNull()
+    expect(devTools.entries.map((entry) => entry.value)).toEqual(["shape"])
+  })
+
+  test("a seeded state missing from a present channel reports the dropped value", () => {
+    const oddState = boot('{"name":"x"}', [
+      { name: "name", kind: "string", default: "@name", scope: "region", line: 2, column: 0 },
+      { name: "shape", kind: "seeded", default: "@shape", scope: "region", line: 2, column: 0 },
+      { name: "count", kind: "integer", default: "0", scope: "region", line: 2, column: 0 },
+    ])
+
+    expect(oddState.getState("shape")).toBeNull()
+    expect(oddState.getState("count")).toBe(0)
+    expect(devTools.entries.map((entry) => entry.value)).toEqual(["shape"])
+    expect(devTools.entries[0].message).toContain("shipped no value")
   })
 })

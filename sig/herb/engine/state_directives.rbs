@@ -123,6 +123,9 @@ module Herb
       # : (String, Declaration) -> (Array[String] | Symbol)
       def self.when_comparands: (String, Declaration) -> (Array[String] | Symbol)
 
+      # : (Declaration) -> bool
+      def self.seeded?: (Declaration) -> bool
+
       # : (String, Hash[String, Declaration]) -> bool
       def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
 
