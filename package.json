@@ -14,7 +14,7 @@
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/browser-playwright": "^5.0.0-rc.2",
     "@vitest/ui": "^5.0.0-rc.2",
-    "concurrently": "^10.0.4",
+    "concurrently": "^10.0.5",
     "dedent": "^1.7.2",
     "esbuild-plugin-copy": "^2.1.1",
     "nx": "22.7.7",
