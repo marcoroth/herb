@@ -84,3 +84,54 @@ describe("a region state read inside a collection item", () => {
     expect(textOf("2")).toBe("3")
   })
 })
+
+const BRANCH_FILE = "app/views/chat/edit.html.erb"
+
+const BRANCH_PAGE =
+  `<!--herb-region:${BRANCH_FILE}:ffffffff:0-->` +
+  `<div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>` +
+  `<template data-herb-region="${BRANCH_FILE}:ffffffff">` +
+  `<!--herb-branch:0:0--><textarea data-herb-slot="1:raw_text"></textarea>` +
+  `</template>` +
+  `<!--/herb-region:${BRANCH_FILE}-->`
+
+const BRANCH_MANIFEST = {
+  state: {},
+  states: {
+    [BRANCH_FILE]: {
+      version: "ffffffff",
+      declarations: [
+        { name: "editing", kind: "boolean", default: "false", scope: "region" },
+        { name: "body_draft", kind: "string", default: '""', scope: "region" },
+      ],
+      reads: { body_draft: [1] },
+      conditionals: { 0: { arms: [["editing", null, 0]], else: null } },
+    },
+  },
+}
+
+describe("a state read inside a branch that was never on the page", () => {
+  test("materializing the branch fills it with the value the client holds", () => {
+    document.body.innerHTML = BRANCH_PAGE + `<template data-herb-dependencies>${JSON.stringify(BRANCH_MANIFEST)}</template>`
+
+    const branchSlots = new SlotIndex()
+
+    branchSlots.scan(document.body)
+
+    const branchState = new SlotState(branchSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    branchState.adopt()
+    branchState.setState({ body_draft: "seeded body" })
+
+    expect(document.querySelector("textarea")).toBeNull()
+
+    branchState.setState({ editing: true })
+
+    expect(document.querySelector("textarea")?.textContent).toBe("seeded body")
+  })
+})

@@ -954,3 +954,61 @@ describe("shipped seeds that disagree with the declaration", () => {
     expect(devTools.entries[0].message).toContain("shipped no value")
   })
 })
+
+const MIXED_FILE = "app/views/page/filtered.html.erb"
+
+const MIXED_PAGE =
+  `<!--herb-region:${MIXED_FILE}:eeeeeeee:0-->` +
+  `<ul><!--herb-slot:0:collection-->` +
+  `<!--herb-item:0:a--><li data-herb-slot="1:boolean_attribute:hidden">first</li><!--/herb-item:0-->` +
+  `<!--herb-item:0:b--><li data-herb-slot="1:boolean_attribute:hidden">second</li><!--/herb-item:0-->` +
+  `<!--/herb-slot:0--></ul>` +
+  `<!--/herb-region:${MIXED_FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [MIXED_FILE]: {
+        version: "eeeeeeee",
+        declarations: [
+          { name: "filter", kind: "string", default: '"all"', scope: "region" },
+          { name: "starred", kind: "boolean", default: "false", scope: 0 },
+        ],
+        reads: {},
+        conditionals: {},
+        presence: { 1: { all: [["filter", '"starred"'], ["starred", "false"]] } },
+      },
+    },
+  })}</template>`
+
+describe("a condition reading both a region state and an item state", () => {
+  test("resolves each name in its own scope, once per row", () => {
+    document.body.innerHTML = MIXED_PAGE
+
+    const mixedSlots = new SlotIndex()
+
+    mixedSlots.scan(document.body)
+
+    const mixedState = new SlotState(mixedSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    mixedState.adopt()
+
+    const region = mixedSlots.regionsFor(MIXED_FILE)[0]
+    const rows = () => [...document.querySelectorAll("li")].map((li) => li.hasAttribute("hidden"))
+
+    expect(rows()).toEqual([false, false])
+
+    mixedState.setState({ starred: true }, { scope: { region, item: region.slots.get(0)!.items.get("b")! } })
+    mixedState.setState({ filter: "starred" }, { scope: { region, item: null } })
+
+    expect(rows()).toEqual([true, false])
+
+    mixedState.setState({ filter: "all" }, { scope: { region, item: null } })
+
+    expect(rows()).toEqual([false, false])
+  })
+})
