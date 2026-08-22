@@ -248,9 +248,10 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    reactionview (0.3.0)
+    reactionview (0.4.0)
       actionview (>= 7.0)
-      herb (>= 0.9.0, < 1.0.0)
+      cruise
+      herb (>= 0.10.0, < 0.11.0)
     regexp_parser (2.11.3)
     reline (0.7.0)
       io-console (~> 0.5)
@@ -329,7 +330,7 @@ DEPENDENCIES
   rake-compiler-dock (~> 1.12)
   rbs (~> 4.1)
   rbs-inline (~> 0.14)
-  reactionview (~> 0.3.0)
+  reactionview (~> 0.4.0)
   reline (~> 0.7)
   rubocop (~> 1.71)
   sorbet
