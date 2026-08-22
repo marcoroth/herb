@@ -133,6 +133,7 @@ export class SlotState {
   #timer: ReturnType<typeof setTimeout> | null = null
   #controller: AbortController | null = null
   #observer: MutationObserver | null = null
+  #hydrating = false
 
   constructor(slots: SlotIndex, options: StateOptions = {}) {
     this.#slots = slots
@@ -1296,6 +1297,7 @@ export class SlotState {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
     if (detail.operation !== "branch" || !detail.slot) return
+    if (this.#hydrating) return
 
     const slot = detail.slot
     const region = this.#slots.regionOf(slot)
@@ -1324,6 +1326,22 @@ export class SlotState {
       this.#writeValueSlots(manifest, scope, name, value)
     }
 
+    // Markup arriving from a skeleton brings its own nested conditionals and boolean attributes,
+    // and the parked copy says nothing about either. Settle them against the states in scope.
+    const at = this.scopeFor(element)
+
+    if (!at) return
+
+    const declared = manifest.declarations.map((declaration) => declaration.name)
+
+    this.#hydrating = true
+
+    try {
+      this.#writePresence(manifest, at, declared)
+      this.#writeConditionals(manifest, at, declared)
+    } finally {
+      this.#hydrating = false
+    }
   }
 
   #hydrateItemState = (event: Event): void => {
