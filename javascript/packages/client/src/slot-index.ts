@@ -596,6 +596,8 @@ export class SlotIndex {
 
     this.#writeFragment(slot, built)
 
+    slot.branch = value.branch
+
     report.applied += 1
 
     if (value.slots) {
@@ -1277,6 +1279,8 @@ export class SlotIndex {
 
     this.#writeFragment(slot, built)
 
+    slot.branch = branch
+
     return true
   }
 
@@ -1482,8 +1486,11 @@ export class SlotIndex {
       const branch = BRANCH.exec(data)
 
       if (branch) {
+        const index = Number(branch[1])
         const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
-        const slot = region?.slots.get(Number(branch[1]))
+        const item = openItems[openItems.length - 1]?.item ?? (region ? this.#enclosingItem(region, comment) : null)
+        const holder = item ?? region
+        const slot = openSlots.find((candidate) => candidate.index === index)?.slot ?? holder?.slots.get(index)
 
         if (slot && /^\d+$/.test(branch[2])) slot.branch = Number(branch[2])
 
