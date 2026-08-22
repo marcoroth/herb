@@ -240,7 +240,16 @@ export class SlotIndex {
   #slotRegions = new WeakMap<Slot, Region>()
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
+  #clientOwned = new WeakSet<Slot>()
   #observer: MutationObserver | null = null
+
+  claim(slot: Slot): void {
+    this.#clientOwned.add(slot)
+  }
+
+  claimed(slot: Slot): boolean {
+    return this.#clientOwned.has(slot)
+  }
 
   observe(root: Node = document.documentElement): ScanResult {
     this.#observer?.disconnect()
@@ -524,6 +533,9 @@ export class SlotIndex {
         this.#defer(report, payload, index, "no-slot")
         continue
       }
+
+      if (this.#clientOwned.has(slot)) continue
+
 
       if (typeof value === "boolean") {
         if (this.setBooleanAttribute(slot, value)) report.applied += 1
