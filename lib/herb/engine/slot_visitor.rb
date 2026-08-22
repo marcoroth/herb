@@ -33,6 +33,7 @@ module Herb
       recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
       required_parser_option action_view_helpers: true, track_locations: true
 
+      attr_accessor :bufvar #: String
       attr_reader :slots #: Array[Slot]
       attr_reader :state_presence #: Hash[Integer, untyped]
       attr_reader :document #: untyped
@@ -110,6 +111,7 @@ module Herb
 
         @markers = markers
         @mark = mark
+        @bufvar = "_buf"
         @mode = mode
         @statics = mode == :client ? {} : nil #: Hash[String, String]?
         @identify = identifier
@@ -762,7 +764,7 @@ module Herb
 
         "#{SEEDS_LOCAL} = { #{pairs} }.select { |_, v| #{SEED_VALUE_TYPES}.any? { |t| t === v } }" \
           ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }; " \
-          "_buf << \"<!--#{SEEDS_MARKER}\" << ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") << \"-->\""
+          "#{@bufvar} << ::Herb::Engine.raw(\"<!--#{SEEDS_MARKER}\" + ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") + \"-->\")"
       end
 
       #: (StateDirectives::Declaration) -> String

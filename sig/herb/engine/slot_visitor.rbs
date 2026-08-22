@@ -20,6 +20,8 @@ module Herb
     class SlotVisitor < Herb::Visitor
       include ContextAware
 
+      attr_accessor bufvar: String
+
       attr_reader slots: Array[Slot]
 
       attr_reader state_presence: Hash[Integer, untyped]

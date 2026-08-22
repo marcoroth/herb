@@ -640,6 +640,29 @@ module Engine
         refute_includes render(STATUS), "herb-seeds"
       end
 
+      test "the seeds marker writes to the buffer the engine was configured with" do
+        template = %(<%# herb:slots client %><%# herb:state (label: @label) %><p><%= label %></p>)
+        engine = Herb::Engine.new(
+          template,
+          visitors: [Herb::Engine::SlotVisitor.new(mode: :client)],
+          filename: "app/views/test.html.erb",
+          bufvar: "@output_buffer"
+        )
+
+        assert_includes engine.src, '@output_buffer << ::Herb::Engine.raw("<!--herb-seeds:'
+        refute_includes engine.src, "_buf <<"
+      end
+
+      test "the seeds marker survives a buffer that escapes what it appends" do
+        buffer = Class.new(String) do
+          def <<(value)
+            super(value.respond_to?(:html_safe?) && value.html_safe? ? value : value.to_s.gsub("<", "&lt;"))
+          end
+        end
+
+        assert_equal "<!--x-->", buffer.new.tap { |written| written << Herb::Engine.raw("<!--x-->") }.to_s
+      end
+
       test "an unless reads a state with its arms inverted" do
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)

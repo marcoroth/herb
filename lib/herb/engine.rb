@@ -89,6 +89,7 @@ module Herb
       else
         @visitors.each do |visitor|
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
+          visitor.bufvar = @bufvar if visitor.respond_to?(:bufvar=)
 
           parse_result.value.accept(visitor)
         end
@@ -127,6 +128,16 @@ module Herb
 
     def self.h(value)
       value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
+    end
+
+    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
+    # unless the value is already marked safe. A marker the engine generated is markup, so it has
+    # to survive both buffers unchanged.
+    #: (untyped) -> String
+    def self.raw(value)
+      string = value.to_s
+
+      string.respond_to?(:html_safe) ? string.html_safe : string
     end
 
     def self.attr(value)
