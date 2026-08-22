@@ -148,6 +148,8 @@ module Herb
 
       def visit_html_open_tag_node: (untyped node) -> untyped
 
+      def visit_erb_open_tag_node: (untyped node) -> untyped
+
       def visit_html_attribute_node: (untyped node) -> untyped
 
       def visit_html_comment_node: (untyped node) -> untyped
@@ -252,6 +254,9 @@ module Herb
       def condition_expression: (untyped) -> String
 
       # : (untyped) -> untyped
+      def convert_helper_boolean_attribute: (untyped) -> untyped
+
+      # : (untyped) -> untyped
       def register_count_fold: (untyped) -> untyped
 
       # : (untyped) -> void
@@ -268,6 +273,9 @@ module Herb
 
       # : (untyped, String) -> void
       def rewrite_predicate: (untyped, String) -> void
+
+      # : (untyped, String) -> untyped
+      def rewrite_literal_predicate: (untyped, String) -> untyped
 
       # : (untyped) -> untyped
       def predicate_token_for: (untyped) -> untyped

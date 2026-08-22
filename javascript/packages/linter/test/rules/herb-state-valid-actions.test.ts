@@ -199,4 +199,13 @@ describe("HerbStateValidActionsRule", () => {
       <p><%= total %></p>
     `)
   })
+  test("validates actions built by a tag helper", () => {
+    expectError("`data-herb-toggle` on `attempts` can never work, because `attempts` is an Integer and it needs a Boolean. Set a value instead, like `data-herb-set=\"attempts=...\"`, or declare a boolean flag.")
+
+    assertOffenses(dedent`
+      <%# herb:state (attempts: 0) %>
+      <%= tag.button "More", data: { herb_toggle: "attempts" } %>
+      <p><%= attempts %></p>
+    `)
+  })
 })

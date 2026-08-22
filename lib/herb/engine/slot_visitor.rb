@@ -342,6 +342,12 @@ module Herb
         @in_open_tag = false
       end
 
+      def visit_erb_open_tag_node(node)
+        @in_open_tag = true
+        super
+        @in_open_tag = false
+      end
+
       def visit_html_attribute_node(node)
         if dynamic?(node)
           record_slot(node, attribute_type_for(node))
@@ -388,6 +394,7 @@ module Herb
 
       def visit_erb_if_node(node)
         return if register_count_fold(node)
+        return if convert_helper_boolean_attribute(node)
 
         record_slot(node, :conditional) unless continuation?(node)
 
@@ -907,6 +914,47 @@ module Herb
       end
 
       #: (untyped) -> untyped
+      def convert_helper_boolean_attribute(node)
+        open_tag = @current_open_tag
+
+        return nil unless @in_open_tag && open_tag.is_a?(Herb::AST::ERBOpenTagNode)
+        return nil if continuation?(node)
+        return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
+
+        children = open_tag.children
+        position = children.index { |child| child.equal?(node) }
+
+        return nil unless position
+
+        statements = node.statements
+
+        return nil unless statements.is_a?(Array) && statements.one?
+
+        attribute = statements.fetch(0)
+
+        return nil unless attribute.is_a?(Herb::AST::HTMLAttributeNode) && !dynamic?(attribute)
+
+        name = attribute_name_for(attribute)
+
+        return nil unless name && Herb::HTML::Util.boolean_attribute?(name)
+
+        condition = condition_expression(node)
+        replacement = erb_output_node(%[(" #{name}" if #{condition})])
+
+        children[position] = replacement
+        record_slot(replacement, :attribute)
+
+        index = @indices[replacement]
+
+        return nil unless index
+
+        @slots[index] = @slots[index].with(type: :boolean_attribute, attribute: name, expression: condition)
+        @attribute_open_tags[replacement] = open_tag
+
+        replacement
+      end
+
+      #: (untyped) -> untyped
       def register_count_fold(node)
         return nil if continuation?(node)
         return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
@@ -1060,6 +1108,8 @@ module Herb
 
       #: (untyped, String) -> void
       def rewrite_predicate(node, name)
+        return if rewrite_literal_predicate(node, name)
+
         token = predicate_token_for(node)
 
         return unless token
@@ -1067,6 +1117,27 @@ module Herb
         token.value.gsub!(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
       rescue FrozenError
         nil
+      end
+
+      #: (untyped, String) -> untyped
+      def rewrite_literal_predicate(node, name)
+        return nil unless node.is_a?(Herb::AST::HTMLAttributeNode)
+
+        children = node.value&.children
+
+        return nil unless children.is_a?(Array)
+
+        position = children.index { |child| child.is_a?(Herb::AST::RubyLiteralNode) }
+
+        return nil unless position
+
+        literal = children.fetch(position) #: untyped
+        rewritten = literal.content.to_s.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+        replacement = Herb::AST::RubyLiteralNode.build(content: rewritten, location: literal.location)
+
+        children[position] = replacement
+
+        replacement
       end
 
       #: (untyped) -> untyped
@@ -1138,7 +1209,7 @@ module Herb
 
       #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
       def convert_boolean_attribute(node, index, slot, expression, states)
-        return nil unless slot.type == :attribute
+        return nil unless slot.type == :attribute || (slot.type == :boolean_attribute && !@state_presence.key?(index))
         return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
 
         read = StateDirectives.condition_read(expression, states)
@@ -1159,7 +1230,8 @@ module Herb
         return nil unless position
 
         condition = StateDirectives.condition_source(read)
-        replacement = erb_output_node(%[("#{slot.attribute}" if #{condition})])
+        spacing = open_tag.is_a?(Herb::AST::ERBOpenTagNode) ? " " : ""
+        replacement = erb_output_node(%[("#{spacing}#{slot.attribute}" if #{condition})])
 
         children[position] = replacement
 
@@ -1395,6 +1467,7 @@ module Herb
       #: (untyped) -> bool
       def dynamic?(node)
         return true if node.type.to_s.start_with?("AST_ERB_")
+        return true if node.is_a?(Herb::AST::RubyLiteralNode)
 
         node.compact_child_nodes.any? { |child| dynamic?(child) }
       end
@@ -1412,6 +1485,10 @@ module Herb
       #: (untyped) -> String?
       def attribute_expression_for(node)
         children = node.value&.children || []
+
+        literal = children.grep(Herb::AST::RubyLiteralNode)
+
+        return literal.fetch(0).content.to_s.strip if literal.one? && children.one?
 
         return nil unless children.all? { |child| child.is_a?(Herb::AST::LiteralNode) || child.is_a?(Herb::AST::ERBContentNode) }
 
@@ -1637,7 +1714,7 @@ module Herb
         return unless node.is_a?(Herb::AST::HTMLElementNode)
 
         open_tag = node.open_tag
-        return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode)
+        return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode) || open_tag.is_a?(Herb::AST::ERBOpenTagNode)
 
         anchors = (@element_anchored[open_tag] || []).map { |index|
           slot = @slots[index]

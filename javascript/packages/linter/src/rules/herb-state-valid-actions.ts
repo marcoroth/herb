@@ -6,7 +6,7 @@ import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "@he
 import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBBlockNode, HTMLOpenTagNode, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBBlockNode, HTMLOpenTagNode, HTMLAttributeNode, ERBOpenTagNode } from "@herb-tools/core"
 import type { ActionClause, ActionAttribute } from "../utils/state-directives-utils.js"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
@@ -39,6 +39,17 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     })
 
     super.visitHTMLOpenTagNode(node)
+  }
+
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    forEachAttribute(node, (attribute) => {
+      const name = getAttributeName(attribute)
+
+      if (name && isActionAttribute(name)) this.checkAction(attribute, name)
+      if (name === BY_ATTRIBUTE) this.checkBy(attribute)
+    })
+
+    super.visitERBOpenTagNode(node)
   }
 
   private checkAction(attribute: HTMLAttributeNode, name: ActionAttribute): void {
@@ -224,6 +235,7 @@ export class HerbStateValidActionsRule extends ParserRule {
   get parserOptions(): Partial<ParserOptions> {
     return {
       strict_locals: true,
+      action_view_helpers: true,
     }
   }
 

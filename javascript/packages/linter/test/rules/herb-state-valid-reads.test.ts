@@ -35,7 +35,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("still flags a state read beside an action attribute", () => {
-    expectError("`tag.button \"More\", data: { herb_increment: \"count\" }, title: count.to_s` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
+    expectError("`count.to_s` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (count: 0) %>
@@ -279,6 +279,25 @@ describe("HerbStateValidReadsRule", () => {
     assertOffenses(dedent`
       <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
       <% if busy == 3 %>x<% end %>
+    `)
+  })
+
+  test("allows tag helper attributes that read a state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", agreed: false, pending: false, sort: "name") %>
+      <%= tag.input value: draft %>
+      <%= tag.input type: "checkbox", checked: agreed %>
+      <%= tag.button "Send", disabled: pending? %>
+      <%= tag.option "Name", value: "name", selected: sort == "name" %>
+    `)
+  })
+
+  test("flags a computed tag helper attribute", () => {
+    expectError("`draft.upcase` computes with the state `draft`, and the client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <%= tag.input value: draft.upcase %>
     `)
   })
 

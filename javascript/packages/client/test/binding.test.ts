@@ -88,3 +88,105 @@ describe("bound slots", () => {
     expect(state.getState("draft")).toBe("")
   })
 })
+
+describe("property sync after user interaction", () => {
+  const SYNC_FILE = "app/views/page/sync.html.erb"
+
+  const SYNC_PAGE =
+    `<!--herb-region:${SYNC_FILE}:beefcafe:0-->` +
+    `<input id="agree" type="checkbox" data-herb-slot="0:boolean_attribute:checked">` +
+    `<select id="pick"><option value="name">name</option><option value="date" data-herb-slot="1:boolean_attribute:selected">date</option></select>` +
+    `<button id="submit" data-herb-slot="2:boolean_attribute:disabled">Send</button>` +
+    `<input id="draft" value="" data-herb-slot="3:attribute:value">` +
+    `<!--/herb-region:${SYNC_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      states: {
+        [SYNC_FILE]: {
+          version: "beefcafe",
+          declarations: [
+            { name: "agreed", kind: "boolean", default: "false", scope: "region" },
+            { name: "dated", kind: "boolean", default: "false", scope: "region" },
+            { name: "pending", kind: "boolean", default: "false", scope: "region" },
+            { name: "draft", kind: "string", default: '""', scope: "region" },
+          ],
+          reads: { agreed: [0], dated: [1], pending: [2], draft: [3] },
+          bound: { agreed: [0], draft: [3] },
+          conditionals: {},
+          presence: { 0: ["agreed", null], 1: ["dated", null], 2: ["pending", null] },
+        },
+      },
+    })}</template>`
+
+  let syncSlots: SlotIndex
+  let syncState: SlotState
+
+  beforeEach(() => {
+    document.body.innerHTML = SYNC_PAGE
+
+    syncSlots = new SlotIndex()
+    syncSlots.scan(document.body)
+
+    syncState = new SlotState(syncSlots, { persist: "none" })
+    syncState.adopt()
+    syncState.observe()
+  })
+
+  afterEach(() => syncState.disconnect())
+
+  test("a checkbox follows the state after the user has clicked it", () => {
+    const checkbox = document.querySelector<HTMLInputElement>("#agree")!
+
+    checkbox.click()
+
+    expect(syncState.getState("agreed")).toBe(true)
+    expect(checkbox.checked).toBe(true)
+
+    syncState.setState({ agreed: false })
+
+    expect(checkbox.hasAttribute("checked")).toBe(false)
+    expect(checkbox.checked).toBe(false)
+
+    syncState.setState({ agreed: true })
+
+    expect(checkbox.checked).toBe(true)
+  })
+
+  test("an option follows the state after the user has picked another", () => {
+    const select = document.querySelector<HTMLSelectElement>("#pick")!
+
+    select.value = "name"
+    select.dispatchEvent(new Event("change", { bubbles: true }))
+
+    syncState.setState({ dated: true })
+
+    expect(select.querySelector<HTMLOptionElement>("option[value=date]")!.selected).toBe(true)
+    expect(select.value).toBe("date")
+  })
+
+  test("a disabled button follows the state", () => {
+    const button = document.querySelector<HTMLButtonElement>("#submit")!
+
+    expect(button.disabled).toBe(false)
+
+    syncState.setState({ pending: true })
+
+    expect(button.disabled).toBe(true)
+
+    syncState.setState({ pending: false })
+
+    expect(button.disabled).toBe(false)
+  })
+
+  test("a bound input's value property follows a programmatic set", () => {
+    const input = document.querySelector<HTMLInputElement>("#draft")!
+
+    input.value = "typed by hand"
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+
+    syncState.setState({ draft: "from code" })
+
+    expect(input.getAttribute("value")).toBe("from code")
+    expect(input.value).toBe("from code")
+  })
+})

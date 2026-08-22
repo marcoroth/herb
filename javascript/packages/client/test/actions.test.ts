@@ -12,6 +12,9 @@ const PAGE =
   `<button id="both" data-herb-set="pending=false,failed=true">Fail</button>` +
   `<button id="bump" data-herb-increment="attempts" data-herb-by="2">More</button>` +
   `<button id="combo" data-herb-increment="attempts" data-herb-set="open=true">Both</button>` +
+  `<button id="same" data-herb-increment="attempts" data-herb-set="attempts=10">Same</button>` +
+  `<button id="arrowed" data-herb-set="click->open=true" data-herb-increment="attempts">Arrowed</button>` +
+  `<button id="trio" data-herb-toggle="open" data-herb-increment="attempts" data-herb-reset="sort">Trio</button>` +
   `<button id="tab-a" data-herb-set="sort=name">A</button>` +
   `<button id="quoted" data-herb-set="sort='hello, world'">Q</button>` +
   `<form id="form" data-herb-set="pending=true"><input id="draft-input" data-herb-reset="blur->sort"></form>` +
@@ -123,6 +126,29 @@ describe("declarative actions", () => {
 
     expect(state.getState("attempts")).toBe(1)
     expect(state.getState("open")).toBe(true)
+  })
+
+  test("increment and set on the same state apply set first, then the step", () => {
+    click("#same")
+
+    expect(state.getState("attempts")).toBe(11)
+  })
+
+  test("an arrowed set and a bare increment both fire on one click", () => {
+    click("#arrowed")
+
+    expect(state.getState("open")).toBe(true)
+    expect(state.getState("attempts")).toBe(1)
+  })
+
+  test("three action attributes on one element all fire", () => {
+    state.setState({ sort: "date" })
+
+    click("#trio")
+
+    expect(state.getState("open")).toBe(true)
+    expect(state.getState("attempts")).toBe(1)
+    expect(state.getState("sort")).toBe("name")
   })
 
   test("increment honours data-herb-by", () => {
@@ -314,5 +340,56 @@ describe("declarative actions", () => {
     expect((entries[0] as { code: string }).code).toBe("herb-state-type")
 
     delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+})
+
+describe("a tag helper input bound to a state", () => {
+  const HELPER_FILE = "app/views/page/show.html.erb"
+
+  const HELPER_PAGE =
+    `<!--herb-region:${HELPER_FILE}:57899424:0-->` +
+    `<input value="" data-herb-slot="0:attribute:value">` +
+    `<button id="quoted" data-herb-set="draft='abc'">Set</button>` +
+    `<p data-herb-slot="1:child"></p>` +
+    `<!--/herb-region:${HELPER_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      params: {},
+      states: {
+        [HELPER_FILE]: {
+          version: "57899424",
+          declarations: [{ name: "draft", kind: "string", default: '""', derived: null, line: 2, column: 0, scope: "region" }],
+          reads: { draft: [0, 1] },
+          bound: { draft: [0] },
+          conditionals: {},
+          presence: {},
+        },
+      },
+    })}</template>`
+
+  test("a quoted set writes the value into the input", () => {
+    document.body.innerHTML = HELPER_PAGE
+
+    const helperSlots = new SlotIndex()
+    helperSlots.scan(document.body)
+
+    const helperState = new SlotState(helperSlots, { persist: "none" })
+    helperState.adopt()
+    helperState.observe()
+
+    const helperActions = new SlotActions(helperState)
+    helperActions.start(document.body)
+
+    document.querySelector<HTMLElement>("#quoted")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    const input = document.querySelector<HTMLInputElement>("input")!
+
+    expect(helperState.getState("draft")).toBe("abc")
+    expect(input.getAttribute("value")).toBe("abc")
+    expect(input.value).toBe("abc")
+    expect(document.querySelector("p")?.textContent).toBe("abc")
+
+    helperActions.stop()
+    helperState.disconnect()
   })
 })
