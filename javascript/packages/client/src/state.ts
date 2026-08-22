@@ -1013,6 +1013,7 @@ export class SlotState {
         const present = conditionMatches(entry, (name) => this.#valueOf(name, placed.scope))
 
         this.#slots.setBooleanAttribute(placed.slot, present)
+        this.#slots.claim(placed.slot)
       }
     }
   }
@@ -1322,6 +1323,7 @@ export class SlotState {
 
       this.#writeValueSlots(manifest, scope, name, value)
     }
+
   }
 
   #hydrateItemState = (event: Event): void => {
@@ -1357,6 +1359,19 @@ export class SlotState {
         this.#write(slot, text)
         this.#slots.claim(slot)
       }
+    }
+
+    // A row built from the parked skeleton carries whatever presence the skeleton was blanked
+    // with, so every boolean attribute has to be decided from this item's own scope once.
+    const at: StateScope = { region, item }
+
+    for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
+      const slot = item.slots.get(Number(indexKey))
+
+      if (!slot) continue
+
+      this.#slots.setBooleanAttribute(slot, conditionMatches(entry, (name) => this.#valueOf(name, at)))
+      this.#slots.claim(slot)
     }
   }
 
