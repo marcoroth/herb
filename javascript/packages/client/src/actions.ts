@@ -32,6 +32,7 @@ export class SlotActions {
   #direct = new Map<Element, () => void>()
   #validated = new WeakSet<Element>()
   #observer: MutationObserver | null = null
+  #pinned: Map<string, StateScope> | null = null
   #listeners: [string, (event: Event) => void][] = []
 
   constructor(state: SlotState) {
@@ -251,7 +252,7 @@ export class SlotActions {
   }
 
   #run(element: Element, event: Event): boolean {
-    let handled = false
+    const pending: { action: ActionName; rest: string }[] = []
 
     for (const name of ACTION_NAMES) {
       const attribute = HERB_ATTRIBUTES[name]
@@ -262,9 +263,21 @@ export class SlotActions {
       for (const clause of clauses(value)) {
         if ((clause.event ?? defaultEventFor(element)) !== event.type) continue
 
-        this.#execute(element, name, clause.rest, event)
-        handled = true
+        pending.push({ action: name, rest: clause.rest })
       }
+    }
+
+    const handled = pending.length > 0
+
+    // One action can rewrite a branch that contains this very element, and a detached element has
+    // no scope to walk up from. Resolve every scope while the element is still on the page, so a
+    // later action in the same dispatch still knows where it lives.
+    this.#pinned = handled ? this.#pinScopes(element, pending) : null
+
+    try {
+      for (const entry of pending) this.#execute(element, entry.action, entry.rest, event)
+    } finally {
+      this.#pinned = null
     }
 
     return handled
@@ -288,8 +301,35 @@ export class SlotActions {
     }
   }
 
+  #pinScopes(element: Element, pending: { action: ActionName; rest: string }[]): Map<string, StateScope> {
+    const pinned = new Map<string, StateScope>()
+    const bare = this.#state.scopeFor(element)
+
+    if (bare) {
+      for (const declaration of this.#state.declaredStates(bare)) {
+        const scope = this.#state.scopeFor(element, declaration.name)
+
+        if (scope) pinned.set(declaration.name, scope)
+      }
+    }
+
+    for (const entry of pending) {
+      for (const raw of names(entry.rest)) {
+        const name = raw.split("=")[0].trim()
+
+        if (name === "" || pinned.has(name)) continue
+
+        const scope = this.#state.scopeFor(element, name)
+
+        if (scope) pinned.set(name, scope)
+      }
+    }
+
+    return pinned
+  }
+
   #declaration(element: Element, name: string): [StateScope, DeclaredState] | null {
-    const scope = this.#state.scopeFor(element, name)
+    const scope = this.#pinned?.get(name) ?? this.#state.scopeFor(element, name)
 
     if (!scope) {
       report({
