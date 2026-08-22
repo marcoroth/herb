@@ -33,6 +33,7 @@ const ITEM_STATICS = "item"
 const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
 const MAX_JOURNAL = 50
 const PART_MARKER = "herb-part"
+const SEEDS_KEY = "seeds"
 
 const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
@@ -642,9 +643,15 @@ export class SlotIndex {
     for (const key of wanted) {
       const item = slot.items.get(key)
 
-      if (item) {
-        this.#applySlots(payload, item.slots, value.items[key], report, mode)
-      }
+      if (!item) continue
+
+      const { [SEEDS_KEY]: seeds, ...slots } = value.items[key] as PayloadSlots & { [SEEDS_KEY]?: Record<string, unknown> }
+
+      // A row the client built has no `herb-seeds` comment of its own, so the response is where
+      // its seeded states come from.
+      if (seeds) item.seeds = { ...(item.seeds ?? {}), ...seeds }
+
+      this.#applySlots(payload, item.slots, slots, report, mode)
     }
   }
 

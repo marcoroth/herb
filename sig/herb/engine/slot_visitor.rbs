@@ -122,6 +122,12 @@ module Herb
       # : () -> Hash[Symbol, untyped]
       def state_declarations: () -> Hash[Symbol, untyped]
 
+      # The names of the seeded states declared inside a collection's item body, keyed by the
+      # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
+      # so a row the client builds for itself has no way to learn it from the markup.
+      # : () -> Hash[Integer, Array[String]]
+      def seeded_item_states: () -> Hash[Integer, Array[String]]
+
       # : () -> Array[Hash[Symbol, untyped]]
       def state_entries: () -> Array[Hash[Symbol, untyped]]
 
