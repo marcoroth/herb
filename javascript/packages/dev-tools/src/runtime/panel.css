@@ -548,3 +548,27 @@
 .herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-group-title {
   grid-column: 1 / -1;
 }
+
+.herb-dev-tools-element {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.4rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.08);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.herb-dev-tools-element:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.herb-dev-tools-element code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+}

@@ -694,7 +694,7 @@ export class SlotState {
     const listed = known.length > 0 ? `the states in scope are ${known.join(", ")}` : "no scope on this page declares it"
 
     report({
-      template: scope?.region.file ?? "",
+      template: scope?.region.file ?? this.#slots.regions()[0]?.file ?? "",
       message: `nothing here declares the state \`${name}\`; ${listed}`,
       code: "herb-unknown-state",
       severity: "error",
@@ -1018,6 +1018,7 @@ export class SlotState {
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
           report({
             template: scope.region.file,
+            element: slot.anchor.kind === "range" ? slot.anchor.start.parentElement : slot.anchor.element,
             message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
             code: "herb-no-parked-branch",
             severity: "warning",
