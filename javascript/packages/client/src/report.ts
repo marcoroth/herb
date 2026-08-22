@@ -19,6 +19,7 @@ export const RUNTIME_ORIGIN = "Herb Client Runtime"
 export const DEV_TOOLS_START_EVENT = "herb:dev-tools-start"
 
 const MAX_QUEUED = 50
+const NAVIGATION_EVENT = "turbo:before-render"
 
 const queued: RuntimeDiagnostic[] = []
 
@@ -135,15 +136,7 @@ function unhookGlobal(): void {
 export function clearOnNavigation(): () => void {
   if (typeof document === "undefined") return () => {}
 
-  let landed = false
-
   const clear = (): void => {
-    if (!landed) {
-      landed = true
-
-      return
-    }
-
     queued.length = 0
 
     const devTools = globalThis.window && (window as { HerbDevTools?: DevToolsGlobal }).HerbDevTools
@@ -151,9 +144,9 @@ export function clearOnNavigation(): () => void {
     devTools?.clear?.(RUNTIME_ORIGIN)
   }
 
-  document.addEventListener("turbo:load", clear)
+  document.addEventListener(NAVIGATION_EVENT, clear)
 
-  return () => document.removeEventListener("turbo:load", clear)
+  return () => document.removeEventListener(NAVIGATION_EVENT, clear)
 }
 
 function debugging(): boolean {

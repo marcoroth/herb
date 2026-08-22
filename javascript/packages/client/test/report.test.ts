@@ -31,6 +31,7 @@ const PAGE =
 
 interface FakeDevTools {
   report(input: RuntimeDiagnostic | RuntimeDiagnostic[]): void
+  clear(origin?: string): void
   entries: RuntimeDiagnostic[]
 }
 
@@ -39,6 +40,9 @@ function installDevTools(): FakeDevTools {
     entries: [],
     report(input) {
       devTools.entries.push(...(Array.isArray(input) ? input : [input]))
+    },
+    clear(origin) {
+      devTools.entries = devTools.entries.filter((entry) => origin !== undefined && entry.origin !== origin)
     },
   }
 
@@ -143,10 +147,8 @@ describe("runtime diagnostics", () => {
 
     const stop = clearOnNavigation()
 
-    document.dispatchEvent(new Event("turbo:load"))
-
     state.setState({ missing: true })
-    document.dispatchEvent(new Event("turbo:load"))
+    document.dispatchEvent(new Event("turbo:before-render"))
 
     const devTools = installDevTools()
     const cleared: (string | undefined)[] = []
@@ -156,7 +158,7 @@ describe("runtime diagnostics", () => {
     state.setState({ also_missing: true })
     expect(devTools.entries.map((entry) => entry.value)).toEqual(["also_missing"])
 
-    document.dispatchEvent(new Event("turbo:load"))
+    document.dispatchEvent(new Event("turbo:before-render"))
     expect(cleared).toEqual(["Herb Client Runtime"])
 
     stop()
@@ -300,7 +302,7 @@ describe("runtime diagnostics", () => {
     expect(devTools.entries.map((entry) => entry.value)).toEqual(["missing", "also_missing"])
   })
 
-  test("the landing page's own turbo:load keeps its diagnostics", () => {
+  test("a full page load keeps its diagnostics", () => {
     const stop = clearOnNavigation()
 
     state.setState({ missing: true })
@@ -311,6 +313,23 @@ describe("runtime diagnostics", () => {
     state.setState({ also_missing: true })
 
     expect(devTools.entries.map((entry) => entry.value)).toEqual(["missing", "also_missing"])
+
+    stop()
+  })
+
+  test("a navigated page keeps what its own scan reports", () => {
+    const devTools = installDevTools()
+    const stop = clearOnNavigation()
+
+    state.setState({ missing: true })
+
+    document.dispatchEvent(new Event("turbo:before-render"))
+    expect(devTools.entries).toEqual([])
+
+    state.setState({ also_missing: true })
+    document.dispatchEvent(new Event("turbo:load"))
+
+    expect(devTools.entries.map((entry) => entry.value)).toEqual(["also_missing"])
 
     stop()
   })
