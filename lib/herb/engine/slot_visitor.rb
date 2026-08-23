@@ -42,7 +42,7 @@ module Herb
       SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
-      COVERED = "_herb_covered_branches" #: String
+      COVERED = "@_herb_covered" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
       OCCURRENCE = "_herb_occurrence" #: String
 
@@ -1615,7 +1615,7 @@ module Herb
 
         statics[key] = markup
 
-        body.insert(1, erb_code_node(%(#{COVERED}["#{key}"] = true))) unless always
+        body.insert(1, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) unless always
       end
 
       #: (untyped) -> void
@@ -1624,20 +1624,28 @@ module Herb
         return if statics.nil? || statics.empty?
 
         branches = statics.sort_by { |key, _| key.split(":").map(&:to_i) }
+        seen = branches.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }.join(" && ")
 
         nodes = [
-          erb_code_node("if #{COVERED}.size < #{branches.size}"),
+          erb_code_node("unless #{seen}"),
           text_node(@markers.statics_open(identifier, version))
         ] #: Array[untyped]
 
         branches.each do |key, markup|
-          nodes.push(erb_code_node(%(unless #{COVERED}["#{key}"])), text_node(markup), erb_code_node("end"))
+          ref = "#{COVERED}[#{covered_key(key).inspect}]"
+
+          nodes.push(erb_code_node("unless #{ref}"), text_node(markup), erb_code_node("#{ref} = true"), erb_code_node("end"))
         end
 
         nodes.push(text_node(@markers.statics_close), erb_code_node("end"))
 
-        document_node.children.unshift(erb_code_node("#{COVERED} = {}"))
+        document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
         document_node.children.concat(nodes)
+      end
+
+      #: (String) -> String
+      def covered_key(key)
+        "#{identifier}:#{key}"
       end
 
       #: (untyped) -> Array[Array[untyped]]
@@ -1690,7 +1698,7 @@ module Herb
             text_node(@markers.item_open_suffix)
           )
 
-          body.insert(3, erb_code_node(%(#{COVERED}[#{key.inspect}] = true))) if parked
+          body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked
 
           body.push(text_node(@markers.item_close(slot_index)))
         end

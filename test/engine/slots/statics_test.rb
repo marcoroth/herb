@@ -140,7 +140,21 @@ module Engine
       test "keeps what it counts to itself" do
         output = render("<div><% if @a %>x<% end %></div>", { "@a" => true })
 
-        refute_includes output, "_herb_covered_branches"
+        refute_includes output, "@_herb_covered"
+      end
+
+      test "parks a branch once for a partial rendered many times in one response" do
+        source = Herb::Engine.new("<div><% if @a %>x<% else %>y<% end %></div>", **options).src
+        view = Object.new
+        view.instance_variable_set(:@_herb_covered, {})
+        view.define_singleton_method(:render) do |a|
+          @a = a
+          instance_eval(source, __FILE__, __LINE__)
+        end
+
+        rendered = Array.new(3) { view.render(true) }.join
+
+        assert_equal 1, rendered.scan("<template").size
       end
 
       test "parks nothing at all in server mode, and counts nothing either" do
@@ -150,7 +164,7 @@ module Engine
           filename: "app/views/test.html.erb"
         ).src
 
-        refute_includes compiled, "_herb_covered_branches"
+        refute_includes compiled, "@_herb_covered"
         refute_includes compiled, "<template"
         assert_includes evaluate_herb_source(compiled, { "@a" => false }), "herb-slot:0:conditional"
       end

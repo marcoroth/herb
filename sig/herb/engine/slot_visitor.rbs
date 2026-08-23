@@ -374,6 +374,9 @@ module Herb
       # : (untyped) -> void
       def append_statics: (untyped) -> void
 
+      # : (String) -> String
+      def covered_key: (String) -> String
+
       # : (untyped) -> Array[Array[untyped]]
       def branch_bodies: (untyped) -> Array[Array[untyped]]
 
