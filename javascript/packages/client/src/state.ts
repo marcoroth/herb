@@ -1362,12 +1362,11 @@ export class SlotState {
 
     if (!manifest) return
 
-    const scope: StateScope = { region, item: null }
     const item = detail.item
+    const at: StateScope = { region, item }
 
     for (const [name, indices] of Object.entries(manifest.reads)) {
-      if (this.#declaration(manifest, scope, name)?.scope !== "region") continue
-
+      const scope = this.scopeFor(at, name) ?? at
       const value = this.getState(name, { scope })
 
       if (value === undefined) continue
@@ -1386,8 +1385,6 @@ export class SlotState {
 
     // A row built from the parked skeleton carries whatever presence the skeleton was blanked
     // with, so every boolean attribute has to be decided from this item's own scope once.
-    const at: StateScope = { region, item }
-
     for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
       const slot = item.slots.get(Number(indexKey))
 
