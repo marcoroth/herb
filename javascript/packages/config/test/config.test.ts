@@ -1556,7 +1556,8 @@ describe("@herb-tools/config", () => {
         validators: {
           security: false,
           nesting: true,
-          accessibility: true
+          accessibility: true,
+          generator_template: true
         }
       })
     })
@@ -1588,7 +1589,8 @@ describe("@herb-tools/config", () => {
         validators: {
           security: true,
           nesting: true,
-          accessibility: true
+          accessibility: true,
+          generator_template: true
         }
       })
     })

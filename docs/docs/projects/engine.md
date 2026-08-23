@@ -71,11 +71,9 @@ Pass `trim: false` to keep every byte of whitespace around code and comment tags
 
 ### Known differences from Erubi
 
-Two things that `Erubi::Engine` accepts are handled differently by `Herb::Engine` on its default settings. Each one is deliberate.
+One thing that `Erubi::Engine` accepts is handled differently by `Herb::Engine` on its default settings, and it is deliberate.
 
 A `case` with its first `when`/`in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). The AST that pattern produces cannot be formatted or compiled reliably. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the same thing.
-
-Escaped tags such as `<%% %>` and `<%%= %>` raise `Herb::Engine::GeneratorTemplateError`. A template that emits literal ERB is a generator template, not a template to render.
 
 One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
 
@@ -109,6 +107,16 @@ Herb::Engine.new(source, parser_options: { strict: false })
 Since Herb trims, the conventional form with `case` and `when` in separate tags already works, and it is the form the formatter and the linter are built around.
 
 The linter is configured separately from the engine. Set [`framework`](/configuration#framework-configuration) in `.herb.yml` so rules that assume Action View stay quiet in a project that is not running it.
+
+### Templates that are not HTML
+
+The parser's [`html`](/parser-options) option turns HTML parsing off, so `<` followed by a letter is plain text and only the ERB tags are structured. That is the mode for mail text, YAML, JavaScript, shell scripts, and anything else that is not markup, where the HTML parser would reject `a <b` or `<<EOF`:
+
+```ruby
+Herb::Engine.new(source, parser_options: { html: false })
+```
+
+The ERB structure is still parsed, so control flow, blocks, and trimming behave the same as in an HTML template. Context-aware escaping falls back to `escapefunc` for every `<%= %>`, since there is no attribute, script, or style context to tell apart. Nothing else about compilation changes.
 
 ### Blocks
 
@@ -168,6 +176,12 @@ Strict parsing is a parser option rather than an engine option, so it is set thr
 Herb::Engine.new(source, parser_options: { strict: false })
 ```
 
+### Escaped tags
+
+`<%% %>` and `<%%= %>` are escaped ERB, and the engine compiles them to the literal text `<% %>` and `<%= %>`, the same as Erubi. Block tags are included, so `<%% form_with do %>` and its matching `<%% end %>` both reach the output as text.
+
+A template that writes literal ERB is usually a generator template, one whose own output is an ERB file, and compiling it is rarely what a project sweep wants. That judgement lives in [`GeneratorTemplateValidator`](#validators) instead of in the engine, so `herb analyze` skips such a file while a caller that means to compile it simply leaves the validator out.
+
 ## Validators
 
 Validators check a parsed template and report what they find. They are ordinary visitors, so nothing runs unless you pass it.
@@ -178,6 +192,7 @@ Validators check a parsed template and report what they find. They are ordinary 
 | `NestingValidator`       | Validates HTML nesting rules (e.g., no `<div>` inside `<p>`)                  |
 | `AccessibilityValidator` | Validates accessibility-related attributes                                    |
 | `RenderValidator`        | Validates `render` calls                                                      |
+| `GeneratorTemplateValidator` | Reports a template that writes literal ERB through `<%% %>`               |
 
 `Validators.all` builds the set a project has switched on in [`.herb.yml`](/configuration#engine-configuration), which is the usual way to ask for them:
 

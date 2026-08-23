@@ -23,6 +23,7 @@ engine:
     security: true
     nesting: true
     accessibility: true
+    generator_template: true
 
 linter:
   enabled: true

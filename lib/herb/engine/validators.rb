@@ -7,6 +7,7 @@ require_relative "validators/security_validator"
 require_relative "validators/nesting_validator"
 require_relative "validators/accessibility_validator"
 require_relative "validators/render_validator"
+require_relative "validators/generator_template_validator"
 
 module Herb
   class Engine
@@ -26,6 +27,7 @@ module Herb
         nesting: NestingValidator,
         accessibility: AccessibilityValidator,
         render: RenderValidator,
+        generator_template: GeneratorTemplateValidator,
       }.freeze #: Hash[Symbol, untyped]
 
       #: (?fatal: bool, **untyped) -> Herb::Visitor::Stack

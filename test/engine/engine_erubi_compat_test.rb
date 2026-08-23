@@ -325,5 +325,26 @@ module Engine
       assert_compiled_snapshot(template, trim: false)
       assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
     end
+
+    test "emits escaped ERB tags as literal text" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block as literal text" do
+      template = "<%% foo do %>\nx\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits escaped ERB tags as literal text inside parsed HTML" do
+      template = "<div class=\"card\"><%%= name %></div>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

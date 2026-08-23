@@ -1,7 +1,0 @@
----
-source: "Engine::EngineErubiDivergenceTest#test_0011_refuses an escaped ERB tag that Erubi passes through"
-input: "engine_erubi_divergence_test-16"
----
-_buf = ::String.new; _buf << '<% literal %>
-'.freeze;
-_buf.to_s

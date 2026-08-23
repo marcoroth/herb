@@ -285,7 +285,7 @@ module Herb
 
             opening = node.tag_opening.value
 
-            check_for_escaped_erb_tag!(opening)
+            return super if erb_escaped?(opening)
 
             should_escape = should_escape_output?(opening)
             index = claim(node)
