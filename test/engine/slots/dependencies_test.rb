@@ -458,6 +458,19 @@ module Engine
         assert_equal [{ "branch" => 0, "all" => [["pending", nil], ["failed", nil]] }], conditional["arms"]
       end
 
+      test "carries a derived state with its condition" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+          <div><% if busy %>Busy<% else %>Idle<% end %></div>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+        declaration = manifest["declarations"].find { |declared| declared["name"] == "busy" }
+
+        assert_equal "boolean", declaration["kind"].to_s
+        assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, declaration["derived"])
+      end
+
       test "carries the states a template declares" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (pending: false, attempts: 0) %>

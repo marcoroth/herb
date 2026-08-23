@@ -69,6 +69,10 @@ class UnusedStatesVisitor extends BaseRuleVisitor {
 
         for (const declaration of parsed.declarations) {
           this.declarations.push({ node, declaration, scope, used: false })
+
+          if (declaration.derived !== undefined && declaration.derived !== null && typeof declaration.derived === "object") {
+            this.uses.push({ source: declaration.defaultSource, stack: [...this.stack] })
+          }
         }
       }
 

@@ -18,16 +18,18 @@ module Herb
 
         attr_reader default(): String
 
+        attr_reader derived(): untyped
+
         attr_reader line(): Integer?
 
         attr_reader column(): Integer?
 
-        def self.new: (String name, Symbol kind, String default, Integer? line, Integer? column) -> instance
-                    | (name: String, kind: Symbol, default: String, line: Integer?, column: Integer?) -> instance
+        def self.new: (String name, Symbol kind, String default, untyped derived, Integer? line, Integer? column) -> instance
+                    | (name: String, kind: Symbol, default: String, derived: untyped, line: Integer?, column: Integer?) -> instance
 
-        def self.members: () -> [ :name, :kind, :default, :line, :column ]
+        def self.members: () -> [ :name, :kind, :default, :derived, :line, :column ]
 
-        def members: () -> [ :name, :kind, :default, :line, :column ]
+        def members: () -> [ :name, :kind, :default, :derived, :line, :column ]
       end
 
       class Read < Data
@@ -69,8 +71,8 @@ module Herb
       # : (untyped) -> String?
       def self.signature_of: (untyped) -> String?
 
-      # : (String, Hash[String, Symbol]) -> Array[Declaration]
-      def self.parse: (String, Hash[String, Symbol]) -> Array[Declaration]
+      # : (String, Hash[String, Symbol], ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+      def self.parse: (String, Hash[String, Symbol], ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
 
       # : (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
       def self.condition_read: (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
@@ -90,6 +92,9 @@ module Herb
       # : (Read | Combo) -> Array[String]
       def self.read_names: (Read | Combo) -> Array[String]
 
+      # : (untyped) -> Array[String]
+      def self.condition_names: (untyped) -> Array[String]
+
       # : (Read | Combo) -> untyped
       def self.condition_entry: (Read | Combo) -> untyped
 
@@ -102,11 +107,17 @@ module Herb
       # : (String, Hash[String, Declaration]) -> bool
       def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
 
-      # : (untyped, Hash[String, Symbol]) -> Declaration
-      private def self.declaration_for: (untyped, Hash[String, Symbol]) -> Declaration
+      # : (untyped, Hash[String, Symbol], Hash[String, Declaration], Array[String], Hash[String, Declaration]) -> Declaration
+      private def self.declaration_for: (untyped, Hash[String, Symbol], Hash[String, Declaration], Array[String], Hash[String, Declaration]) -> Declaration
 
-      # : (String, untyped, Hash[String, Symbol]) -> Declaration
-      private def self.bare_default: (String, untyped, Hash[String, Symbol]) -> Declaration
+      # : (String, untyped, Hash[String, Declaration], Array[String]) -> Declaration?
+      private def self.derived_default: (String, untyped, Hash[String, Declaration], Array[String]) -> Declaration?
+
+      # : (Read | Combo) -> Symbol
+      private def self.derived_kind: (Read | Combo) -> Symbol
+
+      # : (String, untyped, Hash[String, Symbol], Hash[String, Declaration]) -> Declaration
+      private def self.bare_default: (String, untyped, Hash[String, Symbol], Hash[String, Declaration]) -> Declaration
 
       # : (String) -> untyped
       private def self.expression_node: (String) -> untyped

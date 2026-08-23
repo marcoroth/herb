@@ -94,4 +94,12 @@ describe("HerbStateNoUnusedStatesRule", () => {
       <% end %>
     `)
   })
+  test("counts a derivation's sources as used", () => {
+    expectWarning("The state `stray` is never read or written in this template. Remove it, or disable this line when only app code uses it through `stateFor` or `useState`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, stray: false, busy: pending || failed) %>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
 })

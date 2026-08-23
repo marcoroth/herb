@@ -139,8 +139,18 @@ function declaredStateKind(kind: string): string {
   return ["boolean", "integer", "string", "symbol", "nil"].includes(kind) ? kind : "seeded"
 }
 
-function stateUsageLines(name: string, kind: string, defaultSource: string): string[] {
+function stateUsageLines(name: string, kind: string, defaultSource: string, derived = false): string[] {
   const fence = (language: string, ...lines: string[]) => ["```" + language, ...lines, "```"]
+
+  if (derived) {
+    const read = kind === "boolean" ? `<% if ${name} %>` : `<% if ${name} == ${defaultSource || "..."} %>`
+
+    return [
+      ...fence("erb", `<%= ${name} %>`, read),
+      "",
+      ...fence("javascript", `stateFor(element).get("${name}")`),
+    ]
+  }
 
   if (kind === "boolean") {
     return [
@@ -296,20 +306,25 @@ export class HoverProvider {
 
     if (!declaration) return null
 
-    const kind = declaredStateKind(declaration.kind)
+    const derived = declaration.derived !== undefined && declaration.derived !== null && typeof declaration.derived === "object" ? declaration.derived : null
+    const kind = derived ? derived.kind : declaredStateKind(declaration.kind)
     const parameter = entry.scope === null ? null : blockParameter(entry.scope)
     const scope = entry.scope === null
       ? "one value per rendering"
       : `one value for each \`${parameter ?? "item"}\``
 
+    const source = derived
+      ? `derived from \`${declaration.defaultSource}\``
+      : `default \`${declaration.defaultSource || "(none)"}\``
+
     const lines = [
       `**${declaration.name}** · Herb Client State`,
       "",
-      `\`${kind}\` · default \`${declaration.defaultSource || "(none)"}\` · ${scope}`,
+      `\`${kind}\` · ${source} · ${scope}`,
       "",
       "Example usage:",
       "",
-      ...stateUsageLines(declaration.name, kind, declaration.defaultSource),
+      ...stateUsageLines(declaration.name, kind, derived ? "" : declaration.defaultSource, derived !== null),
     ]
 
     const range = [local.declaration, ...(local.defaultValue ? [local.defaultValue] : []), ...local.usages]

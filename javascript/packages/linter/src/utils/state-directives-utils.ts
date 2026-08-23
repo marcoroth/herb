@@ -44,7 +44,15 @@ export function slotsDirectiveMode(node: ERBContentNode): "server" | "client" | 
   return slotsDirectiveModeOf(node.content?.value ?? "")
 }
 
+export function isDerived(declaration: StateDeclaration): boolean {
+  return declaration.derived !== undefined && declaration.derived !== null && typeof declaration.derived === "object"
+}
+
 export function declaredKind(declaration: StateDeclaration): "boolean" | "integer" | "string" | "symbol" | "nil" | "seeded" {
+  if (declaration.derived !== undefined && declaration.derived !== null && typeof declaration.derived === "object") {
+    return declaration.derived.kind
+  }
+
   switch (declaration.kind) {
     case "boolean":
     case "integer":

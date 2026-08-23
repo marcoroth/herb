@@ -265,6 +265,23 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("infers a derived state's kind for its reads", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, attempts: 0, busy: pending || failed, total: attempts) %>
+      <% if busy? %>Busy<% end %>
+      <% if total > 3 %>Many<% end %>
+    `)
+  })
+
+  test("flags a comparison against a derived state's inferred kind", () => {
+    expectError("`busy == 3` compares the Boolean state `busy` against an Integer literal, so it can never match. Compare against a Boolean, or redeclare the state.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <% if busy == 3 %>x<% end %>
+    `)
+  })
+
   test("flags a case that does not switch on a bare state read", () => {
     expectError("`case sort.downcase` does not switch on a bare state read. Write the state alone, or compute the value into its own state.")
 

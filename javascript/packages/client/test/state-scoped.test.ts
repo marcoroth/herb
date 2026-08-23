@@ -518,3 +518,121 @@ describe("combo conditions", () => {
     expect(document.querySelector("b")?.textContent).toContain("Calm")
   })
 })
+
+describe("derived states", () => {
+  const DERIVED_FILE = "app/views/page/derived.html.erb"
+
+  const DERIVED_PAGE =
+    `<!--herb-region:${DERIVED_FILE}:ffffffff:0-->` +
+    `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->Idle<!--/herb-slot:0--></div>` +
+    `<p><!--herb-slot:1-->0<!--/herb-slot:1--></p>` +
+    `<input data-herb-slot="2:boolean_attribute:disabled">` +
+    `<b><!--herb-slot:3:conditional--><!--herb-branch:3:1-->Calm<!--/herb-slot:3--></b>` +
+    `<template data-herb-region="${DERIVED_FILE}:ffffffff">` +
+    `<!--herb-branch:0:0-->Busy<!--herb-branch:0:1-->Idle` +
+    `<!--herb-branch:3:0-->Deep<!--herb-branch:3:1-->Calm` +
+    `</template>` +
+    `<!--/herb-region:${DERIVED_FILE}-->`
+
+  const DERIVED_MANIFEST = {
+    state: {},
+    states: {
+      [DERIVED_FILE]: {
+        version: "ffffffff",
+        declarations: [
+          { name: "pending", kind: "boolean", default: "false", scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+          { name: "busy", kind: "boolean", default: "pending || failed", derived: { any: [["pending", null], ["failed", null]] }, scope: "region" },
+          { name: "total", kind: "integer", default: "attempts", derived: ["attempts", null], scope: "region" },
+          { name: "deep", kind: "boolean", default: "busy && attempts > 2", derived: { all: [["busy", null], ["attempts", "2", ">"]] }, scope: "region" },
+        ],
+        reads: { total: [1] },
+        conditionals: {
+          0: { arms: [["busy", null, 0]], else: 1 },
+          3: { arms: [["deep", null, 0]], else: 1 },
+        },
+        presence: { 2: ["busy", null] },
+      },
+    },
+  }
+
+  let derivedState: SlotState
+
+  beforeEach(() => {
+    document.body.innerHTML = DERIVED_PAGE + `<template data-herb-dependencies>${JSON.stringify(DERIVED_MANIFEST)}</template>`
+
+    const derivedSlots = new SlotIndex()
+
+    derivedSlots.scan(document.body)
+
+    derivedState = new SlotState(derivedSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    derivedState.adopt()
+  })
+
+  test("a derived state computes from its sources", () => {
+    expect(derivedState.getState("busy")).toBe(false)
+    expect(derivedState.getState("total")).toBe(0)
+
+    derivedState.setState({ pending: true })
+
+    expect(derivedState.getState("busy")).toBe(true)
+  })
+
+  test("a source write fans out through the derivation", () => {
+    derivedState.setState({ failed: true })
+
+    expect(document.querySelector("div")?.textContent).toContain("Busy")
+    expect(document.querySelector("input")?.hasAttribute("disabled")).toBe(true)
+
+    derivedState.setState({ failed: false })
+
+    expect(document.querySelector("div")?.textContent).toContain("Idle")
+    expect(document.querySelector("input")?.hasAttribute("disabled")).toBe(false)
+  })
+
+  test("a derived value slot rewrites when its source changes", () => {
+    derivedState.setState({ attempts: 5 })
+
+    expect(document.querySelector("p")?.textContent).toContain("5")
+  })
+
+  test("a derivation cascades through another derivation", () => {
+    derivedState.setState({ pending: true })
+
+    expect(document.querySelector("b")?.textContent).toContain("Calm")
+
+    derivedState.setState({ attempts: 3 })
+
+    expect(document.querySelector("b")?.textContent).toContain("Deep")
+
+    derivedState.setState({ pending: false })
+
+    expect(document.querySelector("b")?.textContent).toContain("Calm")
+  })
+
+  test("a derived state cannot be written", () => {
+    expect(derivedState.setState({ busy: true })).toBe(false)
+    expect(document.querySelector("div")?.textContent).toContain("Idle")
+
+    expect(derivedState.toggle("busy")).toBe(false)
+  })
+
+  test("a derived change announces like any other", () => {
+    const names: string[] = []
+    const handler = (event: Event) => names.push((event as CustomEvent).detail.name)
+
+    document.addEventListener(STATE_EVENT, handler)
+    derivedState.setState({ failed: true })
+    document.removeEventListener(STATE_EVENT, handler)
+
+    expect(names).toContain("failed")
+    expect(names).toContain("busy")
+  })
+})
