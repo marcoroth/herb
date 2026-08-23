@@ -452,3 +452,39 @@ describe("an action on an element its own sibling action removes", () => {
     actions.stop()
   })
 })
+
+describe("an action attribute that is rewritten", () => {
+  test("runs what the attribute says now, not what it said when it was scanned", async () => {
+    document.body.innerHTML = PAGE
+
+    const rewriteSlots = new SlotIndex()
+    rewriteSlots.scan(document.body)
+
+    const rewriteState = new SlotState(rewriteSlots, { persist: "none", transport: async () => null })
+    rewriteState.adopt()
+
+    const actions = new SlotActions(rewriteState)
+    actions.start(document.body)
+
+    const button = document.createElement("button")
+
+    button.setAttribute("data-herb-set", "sort=date")
+    document.querySelector("section")!.appendChild(button)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    button.click()
+
+    expect(rewriteState.getState("sort")).toBe("date")
+
+    button.setAttribute("data-herb-set", "sort=name")
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    button.click()
+
+    expect(rewriteState.getState("sort")).toBe("name")
+
+    actions.stop()
+  })
+})

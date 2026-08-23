@@ -7,10 +7,6 @@ import type { ActionName, ActionSchema } from "./attributes"
 import type { Clause } from "./parsing"
 import type { DeclaredState, SlotState, StateScope, StateValue, StateValues } from "./state"
 
-export interface PendingAction {
-  action: ActionName
-  rest: string
-}
 
 export interface ResolvedDeclaration {
   scope: StateScope
@@ -37,10 +33,17 @@ function defaultEventFor(element: Element): string {
   return DEFAULT_EVENTS[element.localName] ?? "click"
 }
 
+interface Instruction {
+  action: ActionName
+  event: string
+  rest: string
+}
+
 export class SlotActions {
   readonly #state: SlotState
 
   #events = new Set<string>()
+  #parsed = new WeakMap<Element, Instruction[]>()
   #direct = new Map<Element, () => void>()
   #validated = new WeakSet<Element>()
   #observer: MutationObserver | null = null
@@ -57,6 +60,15 @@ export class SlotActions {
     this.#observer?.disconnect()
     this.#observer = new MutationObserver((records) => {
       for (const record of records) {
+        if (record.type === "attributes" && record.target instanceof Element) {
+          this.#parsed.delete(record.target)
+          this.#validated.delete(record.target)
+
+          this.scan(record.target)
+
+          continue
+        }
+
         for (const node of record.addedNodes) {
           if (node instanceof Element) {
             this.scan(node)
@@ -74,6 +86,8 @@ export class SlotActions {
     this.#observer.observe(observed, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: ACTION_NAMES.map((name) => HERB_ATTRIBUTES[name]),
     })
   }
 
@@ -104,26 +118,44 @@ export class SlotActions {
     elements.push(...root.querySelectorAll(ACTION_SELECTOR))
 
     for (const element of elements) {
-      for (const name of ACTION_NAMES) {
-        const value = element.getAttribute(HERB_ATTRIBUTES[name])
-
-        if (value === null) {
-          continue
-        }
-
-        for (const clause of clauses(value)) {
-          const event = clause.event ?? defaultEventFor(element)
-
-          if (DIRECT_EVENTS.includes(event)) {
-            this.#attach(element, event)
-          } else {
-            this.#delegate(event)
-          }
+      for (const instruction of this.#instructions(element)) {
+        if (DIRECT_EVENTS.includes(instruction.event)) {
+          this.#attach(element, instruction.event)
+        } else {
+          this.#delegate(instruction.event)
         }
       }
 
       this.#validate(element)
     }
+  }
+
+  // What an element's action attributes say, read once. A rewritten attribute drops the entry,
+  // so the next run reads it again.
+  #instructions(element: Element): Instruction[] {
+    const held = this.#parsed.get(element)
+
+    if (held) {
+      return held
+    }
+
+    const parsed: Instruction[] = []
+
+    for (const action of ACTION_NAMES) {
+      const value = element.getAttribute(HERB_ATTRIBUTES[action])
+
+      if (value === null) {
+        continue
+      }
+
+      for (const clause of clauses(value)) {
+        parsed.push({ action, event: clause.event ?? defaultEventFor(element), rest: clause.rest })
+      }
+    }
+
+    this.#parsed.set(element, parsed)
+
+    return parsed
   }
 
   #validate(element: Element): void {
@@ -307,24 +339,7 @@ export class SlotActions {
   }
 
   #run(element: Element, event: Event): boolean {
-    const pending: PendingAction[] = []
-
-    for (const name of ACTION_NAMES) {
-      const attribute = HERB_ATTRIBUTES[name]
-      const value = element.getAttribute(attribute)
-
-      if (value === null) {
-        continue
-      }
-
-      for (const clause of clauses(value)) {
-        if ((clause.event ?? defaultEventFor(element)) !== event.type) {
-          continue
-        }
-
-        pending.push({ action: name, rest: clause.rest })
-      }
-    }
+    const pending = this.#instructions(element).filter((instruction) => instruction.event === event.type)
 
     const handled = pending.length > 0
 
@@ -365,7 +380,7 @@ export class SlotActions {
     }
   }
 
-  #pinScopes(element: Element, pending: PendingAction[]): Map<string, StateScope> {
+  #pinScopes(element: Element, pending: Instruction[]): Map<string, StateScope> {
     const pinned = new Map<string, StateScope>()
     const bare = this.#state.scopeFor(element)
 
