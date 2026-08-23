@@ -132,17 +132,17 @@ describe("state-driven boolean attributes", () => {
   })
 
   test("a payload boolean applies as presence and reverts as one", () => {
-    const report = slots.apply({
+    const { token, result: report } = slots.transaction(() => slots.apply({
       template: FILE,
       version: "aaaaaaaa",
       occurrence: 0,
       slots: { 2: true },
-    })
+    }))
 
     expect(report.applied).toBe(1)
     expect(video().hasAttribute("muted")).toBe(true)
 
-    if (report.token) slots.revert(report.token)
+    slots.revert(token!)
 
     expect(video().hasAttribute("muted")).toBe(false)
   })

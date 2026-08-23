@@ -693,52 +693,50 @@ export class SlotState {
     const countDependents = this.#derivedDependents(manifest, regionScope, counted.map((entry) => entry.name))
       .map((name) => ({ name, previous: this.#valueOf(name, regionScope) }))
 
-    this.#slots.transaction(() => {
-      for (const [name, value] of Object.entries(values)) {
-        const target = scopes.get(name) ?? resolved
+    for (const [name, value] of Object.entries(values)) {
+      const target = scopes.get(name) ?? resolved
 
-        this.#store(target, name, value)
-        this.#writeValueSlots(manifest, target, name, value)
-      }
+      this.#store(target, name, value)
+      this.#writeValueSlots(manifest, target, name, value)
+    }
 
-      for (const [scope, grouped] of groups) {
-        const recomputed: string[] = []
+    for (const [scope, grouped] of groups) {
+      const recomputed: string[] = []
 
-        for (const dependent of dependents.get(scope) ?? []) {
-          const value = this.#valueOf(dependent.name, scope)
+      for (const dependent of dependents.get(scope) ?? []) {
+        const value = this.#valueOf(dependent.name, scope)
 
-          if (value === dependent.previous) {
-            continue
-          }
-
-          recomputed.push(dependent.name)
-          this.#writeValueSlots(manifest, scope, dependent.name, value)
-        }
-
-        const changed = [...grouped, ...recomputed]
-
-        this.#writeConditionals(manifest, scope, changed)
-        this.#writePresence(manifest, scope, changed)
-      }
-
-      const recounted: string[] = []
-
-      for (const entry of [...counted, ...countDependents]) {
-        const value = this.#valueOf(entry.name, regionScope)
-
-        if (value === entry.previous) {
+        if (value === dependent.previous) {
           continue
         }
 
-        recounted.push(entry.name)
-        this.#writeValueSlots(manifest, regionScope, entry.name, value)
+        recomputed.push(dependent.name)
+        this.#writeValueSlots(manifest, scope, dependent.name, value)
       }
 
-      if (recounted.length > 0) {
-        this.#writeConditionals(manifest, regionScope, recounted)
-        this.#writePresence(manifest, regionScope, recounted)
+      const changed = [...grouped, ...recomputed]
+
+      this.#writeConditionals(manifest, scope, changed)
+      this.#writePresence(manifest, scope, changed)
+    }
+
+    const recounted: string[] = []
+
+    for (const entry of [...counted, ...countDependents]) {
+      const value = this.#valueOf(entry.name, regionScope)
+
+      if (value === entry.previous) {
+        continue
       }
-    }, { retain: false })
+
+      recounted.push(entry.name)
+      this.#writeValueSlots(manifest, regionScope, entry.name, value)
+    }
+
+    if (recounted.length > 0) {
+      this.#writeConditionals(manifest, regionScope, recounted)
+      this.#writePresence(manifest, regionScope, recounted)
+    }
 
     for (const [name, value] of Object.entries(values)) {
       this.#announceState(scopes.get(name) ?? resolved, name, value, previous.get(name) ?? null)
@@ -1554,16 +1552,14 @@ export class SlotState {
 
     this.#lastCounts.set(region, cache)
 
-    this.#slots.transaction(() => {
-      for (const entry of [...changed, ...cascade]) {
-        this.#writeValueSlots(manifest, regionScope, entry.name, entry.value)
-      }
+    for (const entry of [...changed, ...cascade]) {
+      this.#writeValueSlots(manifest, regionScope, entry.name, entry.value)
+    }
 
-      const names = [...changed, ...cascade].map((entry) => entry.name)
+    const names = [...changed, ...cascade].map((entry) => entry.name)
 
-      this.#writeConditionals(manifest, regionScope, names)
-      this.#writePresence(manifest, regionScope, names)
-    }, { retain: false })
+    this.#writeConditionals(manifest, regionScope, names)
+    this.#writePresence(manifest, regionScope, names)
 
     for (const entry of [...changed, ...cascade]) {
       this.#announceState(regionScope, entry.name, entry.value, entry.previous)

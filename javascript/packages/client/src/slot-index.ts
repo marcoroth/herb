@@ -29,7 +29,7 @@ import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, pars
 import { attributeParts, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Region, RegionRange, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TemplateSource, TransactionOptions, TransactionResult } from "./types"
+import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Region, RegionRange, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TemplateSource, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -243,13 +243,7 @@ export class SlotIndex {
     this.#applying += 1
 
     try {
-      const { token } = this.transaction(() => {
-        this.#applyPayload(payload, report, options.items ?? "replace")
-      })
-
-      if (token !== null) {
-        report.token = token
-      }
+      this.#applyPayload(payload, report, options.items ?? "replace")
     } finally {
       this.#applying -= 1
     }
@@ -261,8 +255,8 @@ export class SlotIndex {
     return this.#applying > 0
   }
 
-  transaction<T>(work: () => T, options: TransactionOptions = {}): TransactionResult<T> {
-    if (this.#recording || options.retain === false) {
+  transaction<T>(work: () => T): TransactionResult<T> {
+    if (this.#recording) {
       return { token: null, result: work() }
     }
 

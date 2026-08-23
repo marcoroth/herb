@@ -193,11 +193,11 @@ describe("sibling collections sharing a state name", () => {
 
 describe("declared state", () => {
   test("a burst of state writes does not evict held revert tokens", () => {
-    const report = slots.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 1: "9" } })
+    const { token } = slots.transaction(() => slots.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 1: "9" } }))
 
     for (let step = 0; step < 60; step += 1) state.setState({ attempts: step })
 
-    expect(slots.revert(report.token!)).toBe(true)
+    expect(slots.revert(token!)).toBe(true)
   })
 
   test("a state compares against another state, from either side", () => {

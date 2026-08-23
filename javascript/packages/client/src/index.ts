@@ -22,7 +22,7 @@ export type { Slot, SlotType, SlotAnchor, Region, Item, ScanResult, ItemPlan, Re
 export type { SlotEventDetail, SlotOperation, Payload, PayloadSlots, PayloadValue, Branched, Collected, ApplyReport, Deferred, DeferredReason } from "./types"
 export type { ApplyMode, AppliedValue, PayloadItems, SlotValue, SlotValues, SlotMap, ItemMap, FragmentMap, NameMap, Seeds } from "./types"
 export type { Bounds, RangeAnchor, ElementAnchor, ContentAnchor, AnchorEntry, Marker, AttributeParts, PartsResolver } from "./types"
-export type { RegionRange, StaticsIdentity, TemplateSource, TransactionOptions, TransactionResult } from "./types"
+export type { RegionRange, StaticsIdentity, TemplateSource, TransactionResult } from "./types"
 export type { StateOptions, StateTransport, StateRequest, StateReport, StateSlot, StateMode, StatePersistence, DependencyMap } from "./state"
 export type { StateKind, StateValue, StateScope, StateManifest, DeclaredState, StateChangeDetail, ScopedSetOptions } from "./state"
 export type { StateValues, SerializedState, StateIndices, Conditional, ConditionalMap, PresenceMap, CountOptions } from "./state"

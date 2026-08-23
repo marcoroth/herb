@@ -200,7 +200,6 @@ export interface Deferred {
 export interface ApplyReport {
   applied: number
   deferred: Deferred[]
-  token?: RevertToken
 }
 
 export interface ItemPlan {
@@ -219,10 +218,6 @@ export interface AddItemOptions {
 
 export interface ApplyOptions {
   items?: ApplyMode
-}
-
-export interface TransactionOptions {
-  retain?: boolean
 }
 
 export interface TransactionResult<T> {

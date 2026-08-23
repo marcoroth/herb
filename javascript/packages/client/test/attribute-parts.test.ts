@@ -45,16 +45,16 @@ describe("interpolated attribute slots", () => {
   })
 
   test("the revert restores the previous whole value", () => {
-    const report = slots.apply({
+    const { token } = slots.transaction(() => slots.apply({
       template: FILE,
       version: "aaaaaaaa",
       occurrence: 0,
       slots: { 0: { items: { 1: { 1: ["9"] } } } },
-    })
+    }))
 
     expect(row("li")?.id).toBe("message_9")
 
-    if (report.token) slots.revert(report.token)
+    slots.revert(token!)
 
     expect(row("li")?.id).toBe("message_1")
   })

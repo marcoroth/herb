@@ -33,11 +33,11 @@ beforeEach(() => {
 
 describe("transaction and revert", () => {
   test("reverts an applied branch switch to the previous markup", () => {
-    const report = index.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 4: { branch: 0 } } })
+    const { token } = index.transaction(() => index.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 4: { branch: 0 } } }))
 
     expect(document.querySelector("div em")?.textContent).toBe("hidden")
 
-    index.revert(report.token!)
+    index.revert(token!)
 
     expect(document.querySelector("div i")?.textContent).toBe("shown")
     expect(index.slot(FILE, 4)!.branch).toBe(1)
@@ -171,7 +171,7 @@ describe("transaction and revert", () => {
     expect(document.querySelector("p b")?.textContent).toBe("bold")
   })
 
-  test("apply carries a token that reverts the whole payload", () => {
+  test("an apply inside a transaction reverts as a whole, and one outside records nothing", () => {
     const payload: Payload = {
       template: FILE,
       version: "aaaaaaaa",
@@ -179,12 +179,19 @@ describe("transaction and revert", () => {
       slots: { 3: "replaced", 0: { items: { a: { 2: "rewritten" } } } },
     }
 
-    const report = index.apply(payload, { items: "merge" })
+    const { token } = index.transaction(() => index.apply(payload, { items: "merge" }))
 
-    expect(report.token).toBeDefined()
-    expect(index.revert(report.token!)).toBe(true)
+    expect(token).not.toBeNull()
+    expect(index.revert(token!)).toBe(true)
     expect(document.querySelector("p b")?.textContent).toBe("bold")
     expect(index.currentText(index.slotInItem(FILE, 0, "a", 2)!)).toBe("first")
+
+    index.apply(payload, { items: "merge" })
+
+    const { token: none } = index.transaction(() => index.setText(index.slot(FILE, 3)!, "replaced"))
+
+    expect(none).toBeNull()
+    expect(document.querySelector("p")?.textContent).toBe("replaced")
   })
 
   test("an unchanged transaction yields no token, and a token reverts once", () => {
