@@ -29,7 +29,7 @@ import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, pars
 import { attributeParts, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
+import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -363,22 +363,33 @@ export class SlotIndex {
   }
 
   #addressOf(slot: Slot): SlotAddress {
-    return {
-      region: slot.region,
-      collection: slot.item?.collection.index ?? null,
-      key: slot.item?.key ?? null,
-      index: slot.index,
+    const path: ItemStep[] = []
+
+    let item = slot.item
+
+    while (item) {
+      path.unshift({ collection: item.collection.index, key: item.key })
+
+      item = item.collection.item
     }
+
+    return { region: slot.region, path, index: slot.index }
   }
 
   #slotAtAddress(address: SlotAddress): Slot | null {
-    const { region, collection, key, index } = address
+    let owner = address.region.slots
 
-    if (collection === null || key === null) {
-      return region.slots.get(index) ?? null
+    for (const step of address.path) {
+      const items = owner.get(step.collection)?.items.get(step.key)
+
+      if (!items) {
+        return null
+      }
+
+      owner = items.slots
     }
 
-    return region.slots.get(collection)?.items.get(key)?.slots.get(index) ?? null
+    return owner.get(address.index) ?? null
   }
 
   #applyPayload(payload: Payload, report: ApplyReport, mode: ApplyMode): void {
@@ -1408,7 +1419,7 @@ export class SlotIndex {
         popMatching(state.openSlots, (candidate) => candidate.index === marker.index)
         break
       case "item-open": {
-        const collection = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? this.#regionAt(state)?.slots.get(marker.index)
+        const collection = this.#collectionAt(state, marker.index)
         const item = collection?.items.get(marker.key)
 
         if (item && item.start === comment) {
@@ -1503,8 +1514,7 @@ export class SlotIndex {
   }
 
   #openItem(marker: ItemOpenMarker, comment: Comment, state: ParseState): void {
-    const region = this.#regionAt(state)
-    const collection = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? region?.slots.get(marker.index)
+    const collection = this.#collectionAt(state, marker.index)
 
     if (!collection) {
       return
@@ -1553,6 +1563,18 @@ export class SlotIndex {
 
   #regionAt(state: ParseState): Region | null {
     return last(state.openRegions)?.region ?? null
+  }
+
+  #collectionAt(state: ParseState, index: number): Slot | null {
+    const stacked = state.openSlots.find((candidate) => candidate.index === index)?.slot
+
+    if (stacked) {
+      return stacked
+    }
+
+    const owner = last(state.openItems)?.item?.slots ?? this.#regionAt(state)?.slots
+
+    return owner?.get(index) ?? null
   }
 
   #slotAt(state: ParseState, region: Region): Slot | null {

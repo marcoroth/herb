@@ -143,9 +143,13 @@ export interface Statics {
 
 export interface SlotAddress {
   region: Region
-  collection: number | null
-  key: string | null
+  path: ItemStep[]
   index: number
+}
+
+export interface ItemStep {
+  collection: number
+  key: string
 }
 
 export interface OpenSlot {

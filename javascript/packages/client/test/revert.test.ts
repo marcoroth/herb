@@ -101,6 +101,30 @@ describe("transaction and revert", () => {
     expect(index.currentText(index.slotInItem(FILE, 0, "a", 2)!)).toBe("first")
   })
 
+  test("reverts a write to a slot inside a collection nested in another collection", () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0--><ul><!--herb-slot:8:collection-->` +
+      `<!--herb-item:8:g--><li><ul><!--herb-slot:9:collection-->` +
+      `<!--herb-item:9:r--><li data-herb-slot="10:child">inner</li><!--/herb-item:9-->` +
+      `<!--/herb-slot:9--></ul></li><!--/herb-item:8-->` +
+      `<!--/herb-slot:8--></ul><!--/herb-region:${FILE}-->`
+
+    const nested = new SlotIndex()
+    nested.scan(document.body)
+
+    const outer = nested.slot(FILE, 8)!
+    const inner = outer.items.get("g")!.slots.get(9)!
+    const slot = inner.items.get("r")!.slots.get(10)!
+
+    const { token } = nested.transaction(() => nested.update(slot, "changed"))
+
+    expect(document.querySelector("[data-herb-slot]")?.textContent).toBe("changed")
+
+    nested.revert(token!)
+
+    expect(document.querySelector("[data-herb-slot]")?.textContent).toBe("inner")
+  })
+
   test("reverts a rekey back to the old key on the same node", () => {
     const collection = index.slot(FILE, 0)!
     const node = document.querySelector("#a")!
