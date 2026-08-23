@@ -74,6 +74,7 @@ export class Project {
       this.index,
       shared.documents,
       shared.readFile,
+      shared.parserService,
     )
   }
 
