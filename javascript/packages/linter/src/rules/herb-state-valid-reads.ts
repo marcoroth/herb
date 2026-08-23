@@ -206,6 +206,38 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   }
 
   private classifyPredicate(predicate: PrismNode, names: readonly string[]): "state" | "other" | "reported" {
+    const type = prismType(predicate)
+
+    if (type === "ParenthesesNode") {
+      const statements = predicate.body?.body
+
+      if (Array.isArray(statements) && statements.length === 1) {
+        return this.classifyPredicate(statements[0], names)
+      }
+    }
+
+    if ((type === "AndNode" || type === "OrNode") && predicate.left && predicate.right) {
+      const left = this.classifyPredicate(predicate.left, names)
+      if (left === "reported") return "reported"
+
+      const right = this.classifyPredicate(predicate.right, names)
+      if (right === "reported") return "reported"
+      if (left === "state" && right === "state") return "state"
+
+      if (left === "state" || right === "state") {
+        const server = left === "state" ? predicate.right : predicate.left
+
+        this.addOffense(
+          `\`${this.sliceOf(predicate)}\` combines a state with \`${this.sliceOf(server)}\`, which the client cannot evaluate. Split the server condition into its own conditional, or compute it into a second state set from app code.`,
+          this.locationOf(predicate),
+        )
+
+        return "reported"
+      }
+
+      return "other"
+    }
+
     const bare = prismBareRead(predicate)
 
     if (bare) {

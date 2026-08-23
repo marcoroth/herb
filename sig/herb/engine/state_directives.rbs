@@ -49,6 +49,19 @@ module Herb
         def members: () -> [ :name, :comparand, :kind, :operator, :against ]
       end
 
+      class Combo < Data
+        attr_reader op(): String
+
+        attr_reader parts(): Array[untyped]
+
+        def self.new: (String op, Array[untyped] parts) -> instance
+                    | (op: String, parts: Array[untyped]) -> instance
+
+        def self.members: () -> [ :op, :parts ]
+
+        def members: () -> [ :op, :parts ]
+      end
+
       ORDERED_OPERATORS: Array[Symbol]
 
       MIRRORED_OPERATORS: Hash[String, String]
@@ -59,8 +72,29 @@ module Herb
       # : (String, Hash[String, Symbol]) -> Array[Declaration]
       def self.parse: (String, Hash[String, Symbol]) -> Array[Declaration]
 
-      # : (String, Hash[String, Declaration]) -> (Read | Symbol)?
-      def self.condition_read: (String, Hash[String, Declaration]) -> (Read | Symbol)?
+      # : (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
+      def self.condition_read: (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
+
+      # : (untyped, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
+      def self.tree_read: (untyped, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
+
+      # : (untyped) -> untyped
+      def self.unwrap_parentheses: (untyped) -> untyped
+
+      # : (untyped, Hash[String, Declaration]) -> (Combo | Symbol)?
+      def self.combo_read: (untyped, Hash[String, Declaration]) -> (Combo | Symbol)?
+
+      # : (untyped, untyped) -> Array[untyped]
+      def self.flatten_combo: (untyped, untyped) -> Array[untyped]
+
+      # : (Read | Combo) -> Array[String]
+      def self.read_names: (Read | Combo) -> Array[String]
+
+      # : (Read | Combo) -> untyped
+      def self.condition_entry: (Read | Combo) -> untyped
+
+      # : (Read | Combo) -> String
+      def self.condition_source: (Read | Combo) -> String
 
       # : (String, Declaration) -> (Array[String] | Symbol)
       def self.when_comparands: (String, Declaration) -> (Array[String] | Symbol)
