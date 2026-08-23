@@ -120,7 +120,7 @@ export class SlotIndex {
         continue
       }
 
-      found.push({ region, slot: this.#enclosingSlot(region, node), item: this.#enclosingItem(region, node) })
+      found.push(this.#placementIn(region, node))
     }
 
     return found.sort((left, right) => {
@@ -1765,63 +1765,48 @@ export class SlotIndex {
     slot.children = []
   }
 
-  #enclosingItem(region: Region, node: Node): Item | null {
-    let innermost: Item | null = null
+  #placementIn(region: Region, node: Node): Placement {
+    let slots: SlotMap = region.slots
+    let slot: Slot | null = null
+    let item: Item | null = null
 
-    for (const slot of this.#everySlot(region)) {
-      for (const item of slot.items.values()) {
-        if (!withinBounds(item, node)) {
+    for (;;) {
+      let inner: Slot | null = null
+      let holder: Item | null = null
+
+      for (const candidate of slots.values()) {
+        if (candidate.anchor.kind !== "range" || !withinBounds(candidate.anchor, node)) {
           continue
         }
 
-        if (!innermost || withinBounds(innermost, item.start)) {
-          innermost = item
+        if (!inner || (inner.anchor.kind === "range" && withinBounds(inner.anchor, candidate.anchor.start))) {
+          inner = candidate
+        }
+
+        for (const held of candidate.items.values()) {
+          if (!withinBounds(held, node)) {
+            continue
+          }
+
+          if (!holder || withinBounds(holder, held.start)) {
+            holder = held
+          }
         }
       }
-    }
 
-    return innermost
-  }
-
-  *#everySlot(region: Region): Generator<Slot> {
-    const queue = [...region.slots.values()]
-
-    while (queue.length > 0) {
-      const slot = queue.shift()!
-
-      yield slot
-
-      for (const item of slot.items.values()) {
-        queue.push(...item.slots.values())
+      if (inner) {
+        slot = inner
       }
+
+      if (!holder) {
+        return { region, slot, item }
+      }
+
+      item = holder
+      slots = holder.slots
     }
   }
 
-  #enclosingSlot(region: Region, node: Node): Slot | null {
-    let innermost: Slot | null = null
-
-    for (const slot of this.#everySlot(region)) {
-      if (slot.anchor.kind !== "range") {
-        continue
-      }
-
-      if (!withinBounds(slot.anchor, node)) {
-        continue
-      }
-
-      if (!innermost) {
-        innermost = slot
-
-        continue
-      }
-
-      if (innermost.anchor.kind === "range" && withinBounds(innermost.anchor, slot.anchor.start)) {
-        innermost = slot
-      }
-    }
-
-    return innermost
-  }
 
   #regionConnected(region: Region): boolean {
     region.ranges = region.ranges.filter((range) => range.start.isConnected)
