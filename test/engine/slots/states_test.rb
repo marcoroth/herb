@@ -448,6 +448,103 @@ module Engine
         assert_nil entries.fetch("hue")[:derived]
       end
 
+      COUNTED = <<~ERB
+        <%# herb:slots client %>
+        <%# herb:state (pending_count: 0) %>
+        <ul>
+          <% @messages.each do |message| %>
+            <%# herb:key message %>
+            <%# herb:state (pending: message.odd?) %>
+            <% if pending? %><% pending_count = pending_count + 1 %><% end %>
+            <li id="m<%= message %>"><%= message %></li>
+          <% end %>
+        </ul>
+        <p><%= pending_count %></p>
+      ERB
+
+      test "a conditional increment compiles as a count" do
+        visitor, = compile(COUNTED)
+
+        assert_equal(
+          [{ name: "pending_count", collection: 0, by: 1, when: ["pending", nil] }],
+          visitor.state_count_entries
+        )
+
+        refute(visitor.slots.any? { |slot| slot.type == :conditional }, "the fold must not record a conditional slot")
+      end
+
+      test "the server renders the count the fold produces" do
+        rendered = render(COUNTED, { "@messages" => [1, 2, 3] })
+
+        assert_includes rendered, %(>2<)
+      end
+
+      test "a bare increment counts every item" do
+        template = <<~ERB
+          <%# herb:state (total: 0) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% total += 2 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+          <p><%= total %></p>
+        ERB
+
+        visitor, = compile(template)
+
+        assert_equal [{ name: "total", collection: 0, by: 2, when: nil }], visitor.state_count_entries
+        assert_includes render(template, { "@items" => [1, 2] }), %(>4<)
+      end
+
+      test "assigning a state outside a fold raises" do
+        refuse(
+          %(<%# herb:state (pending: false) %><div><% pending = true %><% if pending? %>A<% end %></div>),
+          /assigns the state `pending`/
+        )
+      end
+
+      test "a fold gated by a server condition raises" do
+        refuse(<<~ERB, /assigns the state `total`/)
+          <%# herb:state (total: 0) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% if item.big? %><% total += 1 %><% end %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+          <p><%= total %></p>
+        ERB
+      end
+
+      test "a count read before or inside its loop raises" do
+        refuse(<<~ERB, /before its count is complete/)
+          <%# herb:state (total: 0) %>
+          <p><%= total %></p>
+          <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+        ERB
+
+        refuse(<<~ERB, /inside the loop that counts it/)
+          <%# herb:state (total: 0) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><li id="i<%= item %>"><%= total %></li><% end %></ul>
+        ERB
+      end
+
+      test "a count needs an integer region state counted once" do
+        refuse(<<~ERB, /counts into the String state/)
+          <%# herb:state (label: "x") %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% label += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+        ERB
+
+        refuse(<<~ERB, /which is an item state/)
+          <%# herb:slots client %>
+          <ul><% @items.each do |item| %><%# herb:key item %><%# herb:state (mine: 0) %><% mine += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+        ERB
+
+        refuse(<<~ERB, /counted twice/)
+          <%# herb:state (total: 0) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><% total += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+          <p><%= total %></p>
+        ERB
+      end
+
+      test "a count cannot target a derived state" do
+        refuse(<<~ERB, /is derived from/)
+          <%# herb:state (pending: false, busy: pending) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% busy += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
+        ERB
+      end
+
       test "an unless reads a state with its arms inverted" do
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)

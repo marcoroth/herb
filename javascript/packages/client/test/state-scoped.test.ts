@@ -636,3 +636,120 @@ describe("derived states", () => {
     expect(names).toContain("busy")
   })
 })
+
+describe("counted states", () => {
+  const COUNT_FILE = "app/views/page/counts.html.erb"
+
+  const COUNT_PAGE =
+    `<!--herb-region:${COUNT_FILE}:cafe1234:0-->` +
+    `<ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><li id="a"><i><!--herb-slot:1:conditional--><!--herb-branch:1:1-->plain<!--/herb-slot:1--></i></li><!--/herb-item:0-->` +
+    `<!--herb-item:0:b--><li id="b"><i><!--herb-slot:1:conditional--><!--herb-branch:1:1-->plain<!--/herb-slot:1--></i></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<p><!--herb-slot:2-->0<!--/herb-slot:2--></p>` +
+    `<b><!--herb-slot:4:conditional--><!--herb-branch:4:1-->None<!--/herb-slot:4--></b>` +
+    `<template data-herb-region="${COUNT_FILE}:cafe1234">` +
+    `<!--herb-branch:0:item--><!--herb-item:0:--><li id=""><i><!--herb-slot:1:conditional--><!--/herb-slot:1--></i></li><!--/herb-item:0-->` +
+    `<!--herb-branch:1:0-->starred<!--herb-branch:1:1-->plain` +
+    `<!--herb-branch:4:0-->Some<!--herb-branch:4:1-->None` +
+    `</template>` +
+    `<!--/herb-region:${COUNT_FILE}-->`
+
+  const COUNT_MANIFEST = {
+    state: {},
+    states: {
+      [COUNT_FILE]: {
+        version: "cafe1234",
+        declarations: [
+          { name: "pending", kind: "boolean", default: "false", scope: 0 },
+          { name: "pending_count", kind: "integer", default: "0", count: { collection: 0, when: ["pending", null], by: 1 }, scope: "region" },
+          { name: "loud", kind: "boolean", default: "pending_count > 0", derived: ["pending_count", "0", ">"], scope: "region" },
+        ],
+        reads: { pending_count: [2] },
+        conditionals: {
+          1: { arms: [["pending", null, 0]], else: 1 },
+          4: { arms: [["loud", null, 0]], else: 1 },
+        },
+      },
+    },
+  }
+
+  let countSlots: SlotIndex
+  let countState: SlotState
+
+  beforeEach(() => {
+    document.body.innerHTML = COUNT_PAGE + `<template data-herb-dependencies>${JSON.stringify(COUNT_MANIFEST)}</template>`
+
+    countSlots = new SlotIndex()
+    countSlots.scan(document.body)
+
+    countState = new SlotState(countSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    countState.adopt()
+  })
+
+  function scopeOf(selector: string): NonNullable<ReturnType<SlotState["scopeFor"]>> {
+    return countState.scopeFor(document.querySelector(selector)!, "pending")!
+  }
+
+  test("a count computes over the collection's items", () => {
+    expect(countState.getState("pending_count")).toBe(0)
+
+    countState.setState({ pending: true }, { scope: scopeOf("#a") })
+
+    expect(countState.getState("pending_count")).toBe(1)
+  })
+
+  test("an item write fans out through the count and its derivations", () => {
+    countState.setState({ pending: true }, { scope: scopeOf("#a") })
+
+    expect(document.querySelector("p")?.textContent).toContain("1")
+    expect(document.querySelector("b")?.textContent).toContain("Some")
+
+    countState.setState({ pending: true }, { scope: scopeOf("#b") })
+
+    expect(document.querySelector("p")?.textContent).toContain("2")
+
+    countState.setState({ pending: false }, { scope: scopeOf("#a") })
+    countState.setState({ pending: false }, { scope: scopeOf("#b") })
+
+    expect(document.querySelector("p")?.textContent).toContain("0")
+    expect(document.querySelector("b")?.textContent).toContain("None")
+  })
+
+  test("removing a counted item recounts", async () => {
+    countState.setState({ pending: true }, { scope: scopeOf("#a") })
+
+    expect(document.querySelector("p")?.textContent).toContain("1")
+
+    const collection = countSlots.slot(COUNT_FILE, 0)!
+
+    expect(countSlots.removeItem(collection, "a")).toBe(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(document.querySelector("p")?.textContent).toContain("0")
+    expect(document.querySelector("b")?.textContent).toContain("None")
+  })
+
+  test("an added item joins the count once its state turns on", () => {
+    const collection = countSlots.slot(COUNT_FILE, 0)!
+
+    expect(countSlots.addItem(collection, "c")).not.toBeNull()
+    expect(countState.getState("pending_count")).toBe(0)
+
+    countState.setState({ pending: true }, { scope: countState.scopeFor(document.querySelectorAll("li")[2]!, "pending")! })
+
+    expect(document.querySelector("p")?.textContent).toContain("1")
+  })
+
+  test("a counted state cannot be written", () => {
+    expect(countState.setState({ pending_count: 5 })).toBe(false)
+    expect(document.querySelector("p")?.textContent).toContain("0")
+  })
+})

@@ -142,6 +142,8 @@ module Herb
         state_conditionals = {} #: Hash[untyped, Hash[Symbol, untyped]]
         @state_conditionals = state_conditionals.compare_by_identity
         @collection_nodes = [] #: Array[untyped]
+        @collection_body_depths = [] #: Array[Integer]
+        @state_counts = [] #: Array[Hash[Symbol, untyped]]
         @container_depth = 0
 
         @in_attribute = false
@@ -157,8 +159,26 @@ module Herb
       #: () -> String
       def version
         @version ||= Digest::SHA256.hexdigest(
-          (slot_entries.map(&:inspect) + state_entries.map(&:inspect)).join(",")
+          (slot_entries.map(&:inspect) + state_entries.map(&:inspect) + state_count_entries.map(&:inspect)).join(",")
         ).slice(0, 8).to_s
+      end
+
+      #: () -> Array[Hash[Symbol, untyped]]
+      def state_count_entries
+        @state_counts.filter_map { |count|
+          index = @indices[count[:collection]]
+
+          next unless index
+
+          read = count[:when]
+
+          {
+            name: count[:name],
+            collection: index,
+            by: count[:by],
+            when: read ? StateDirectives.condition_entry(read) : nil,
+          }
+        }
       end
 
       #: () -> Hash[Symbol, untyped]
@@ -367,6 +387,8 @@ module Herb
       end
 
       def visit_erb_if_node(node)
+        return if register_count_fold(node)
+
         record_slot(node, :conditional) unless continuation?(node)
 
         visit_branching_node(node)
@@ -415,34 +437,28 @@ module Herb
       end
 
       def visit_erb_iteration_block_node(node)
-        record_slot(node, :collection)
-
-        @collection_nodes.push(node)
-        visit_branching_node(node)
-        @collection_nodes.pop
+        visit_collection_node(node)
       end
 
       def visit_erb_while_node(node)
-        record_slot(node, :collection)
-
-        @collection_nodes.push(node)
-        visit_branching_node(node)
-        @collection_nodes.pop
+        visit_collection_node(node)
       end
 
       def visit_erb_until_node(node)
-        record_slot(node, :collection)
-
-        @collection_nodes.push(node)
-        visit_branching_node(node)
-        @collection_nodes.pop
+        visit_collection_node(node)
       end
 
       def visit_erb_for_node(node)
+        visit_collection_node(node)
+      end
+
+      def visit_collection_node(node)
         record_slot(node, :collection)
 
         @collection_nodes.push(node)
+        @collection_body_depths.push(@container_depth + 1)
         visit_branching_node(node)
+        @collection_body_depths.pop
         @collection_nodes.pop
       end
 
@@ -453,6 +469,7 @@ module Herb
 
         children.each_with_index do |child, index|
           register_state_directive(child, children)
+          check_state_assignment(child)
 
           @path.push(index)
           visit(child)
@@ -718,6 +735,7 @@ module Herb
 
         classify_state_conditionals
         check_state_value_reads
+        check_state_count_reads
       end
 
       #: (StateDirectives::Declaration) -> String
@@ -886,6 +904,158 @@ module Herb
         keyword = source[/\A[a-z]+/]
 
         STATE_KEYWORDS.key?(keyword.to_s) ? source.delete_prefix(keyword.to_s).strip : source
+      end
+
+      #: (untyped) -> untyped
+      def register_count_fold(node)
+        return nil if continuation?(node)
+        return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
+        return nil unless @container_depth == @collection_body_depths.last
+
+        scope = @collection_nodes.last
+
+        return nil unless scope
+
+        states = states_for(scope)
+
+        return nil if states.empty?
+
+        body = node.respond_to?(:statements) ? node.statements : nil #: untyped
+
+        return nil unless body.is_a?(Array)
+
+        significant = body.reject { |child| blank_child?(child) }
+
+        return nil unless significant.one?
+
+        assignment = significant.first
+
+        return nil unless assignment.is_a?(Herb::AST::ERBContentNode) && assignment.tag_opening&.value == "<%"
+
+        increment = StateDirectives.fold_increment(assignment.content&.value.to_s)
+
+        return nil unless increment && states.key?(increment.name)
+
+        read = StateDirectives.condition_read(condition_expression(node), states)
+
+        return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
+
+        register_count(increment, when_read: read)
+        StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
+
+        node
+      end
+
+      #: (untyped) -> void
+      def check_state_assignment(node)
+        return unless node.is_a?(Herb::AST::ERBContentNode)
+
+        tag = node.tag_opening&.value
+
+        return unless ["<%", "<%=", "<%=="].include?(tag)
+
+        scope = @collection_nodes.last
+        states = states_for(scope)
+
+        return if states.empty?
+
+        content = node.content&.value.to_s
+        assigned = StateDirectives.assigned_state_names(content, states)
+
+        return if assigned.empty?
+
+        if tag == "<%" && scope && @container_depth == @collection_body_depths.last
+          increment = StateDirectives.fold_increment(content)
+
+          if increment && assigned == [increment.name]
+            register_count(increment, when_read: nil)
+
+            return
+          end
+        end
+
+        raise Herb::Engine::CompilationError,
+              "`#{content.strip}` assigns the state `#{assigned.first}`; the client never sees a server-side " \
+              "write, so seed the initial value in the declaration, derive it from other states, count items " \
+              "with `#{assigned.first} += 1` behind a state condition in a keyed loop, or write it at runtime " \
+              "with `data-herb-set` or `state.set`"
+      end
+
+      #: (StateDirectives::FoldIncrement, when_read: untyped) -> void
+      def register_count(increment, when_read:)
+        name = increment.name
+        declaration = @region_states[name]
+
+        unless declaration
+          raise Herb::Engine::CompilationError,
+                "`#{name} += #{increment.by}` counts into `#{name}`, which is an item state; a count lives once " \
+                "per region, so declare `#{name}` at the top of the template"
+        end
+
+        if declaration.derived
+          raise Herb::Engine::CompilationError,
+                "`#{name} += #{increment.by}` counts into `#{name}`, which is derived from " \
+                "`#{declaration.default}`; a state is either derived or counted, so drop one of the two"
+        end
+
+        unless declaration.kind == :integer
+          raise Herb::Engine::CompilationError,
+                "`#{name} += #{increment.by}` counts into the #{declaration.kind.to_s.capitalize} state " \
+                "`#{name}`; a count is a number, so declare it as an Integer, like `(#{name}: 0)`"
+        end
+
+        if @state_counts.any? { |count| count[:name] == name }
+          raise Herb::Engine::CompilationError,
+                "`#{name}` is counted twice; one state holds one count, so declare a second state for the " \
+                "second count"
+        end
+
+        if @slots.any? { |slot| StateDirectives.mentions_any?(slot.expression.to_s, { name => declaration }) }
+          raise Herb::Engine::CompilationError,
+                "`#{name}` is read before its count is complete; the server renders that read mid-count and " \
+                "the client cannot keep it current there, so move the read after the loop"
+        end
+
+        @state_counts << { name: name, by: increment.by, collection: @collection_nodes.last, when: when_read }
+      end
+
+      #: () -> void
+      def check_state_count_reads
+        @state_counts.each do |count|
+          @slot_nodes.each do |node|
+            index = @indices[node]
+
+            next unless index
+
+            scope, = @slot_scopes[node]
+
+            next unless scope.equal?(count[:collection])
+
+            expression = @slots[index].expression.to_s
+
+            next if expression.strip.empty?
+
+            mentioned = {} #: Hash[String, untyped]
+            mentioned[count[:name]] = true
+
+            next unless StateDirectives.mentions_any?(expression, mentioned)
+
+            raise Herb::Engine::CompilationError,
+                  "`#{count[:name]}` is read inside the loop that counts it; the count is complete only after " \
+                  "the loop, so move the read below it"
+          end
+        end
+      end
+
+      #: (untyped) -> bool
+      def blank_child?(node)
+        return true if node.is_a?(Herb::AST::WhitespaceNode)
+
+        if node.is_a?(Herb::AST::HTMLTextNode) || node.is_a?(Herb::AST::LiteralNode)
+          return node.content.to_s.strip.empty?
+        end
+
+        false
       end
 
       #: (untyped, String) -> void

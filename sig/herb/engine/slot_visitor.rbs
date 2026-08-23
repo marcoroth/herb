@@ -108,6 +108,9 @@ module Herb
       # : () -> String
       def version: () -> String
 
+      # : () -> Array[Hash[Symbol, untyped]]
+      def state_count_entries: () -> Array[Hash[Symbol, untyped]]
+
       # : () -> Hash[Symbol, untyped]
       def state_declarations: () -> Hash[Symbol, untyped]
 
@@ -180,6 +183,8 @@ module Herb
 
       def visit_erb_for_node: (untyped node) -> untyped
 
+      def visit_collection_node: (untyped node) -> untyped
+
       private
 
       def visit_children_with_paths: (untyped children) -> untyped
@@ -245,6 +250,21 @@ module Herb
 
       # : (untyped) -> String
       def condition_expression: (untyped) -> String
+
+      # : (untyped) -> untyped
+      def register_count_fold: (untyped) -> untyped
+
+      # : (untyped) -> void
+      def check_state_assignment: (untyped) -> void
+
+      # : (StateDirectives::FoldIncrement, when_read: untyped) -> void
+      def register_count: (StateDirectives::FoldIncrement, when_read: untyped) -> void
+
+      # : () -> void
+      def check_state_count_reads: () -> void
+
+      # : (untyped) -> bool
+      def blank_child?: (untyped) -> bool
 
       # : (untyped, String) -> void
       def rewrite_predicate: (untyped, String) -> void
