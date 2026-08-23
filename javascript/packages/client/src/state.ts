@@ -574,10 +574,14 @@ export class SlotState {
         continue
       }
 
-      const item = placement.item
+      let item = placement.item
 
-      if (item && (!name || declared(manifest, name, item.collection.index) !== null)) {
-        return { region, item }
+      while (item) {
+        if (!name || declared(manifest, name, item.collection.index) !== null) {
+          return { region, item }
+        }
+
+        item = item.collection.item
       }
 
       if (!name || declared(manifest, name, null) !== null) {

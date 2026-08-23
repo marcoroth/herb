@@ -1056,3 +1056,67 @@ describe("a condition reading both a region state and an item state", () => {
     expect([...document.querySelectorAll("li")].map((li) => li.hasAttribute("hidden"))).toEqual([true, true, true])
   })
 })
+
+describe("a collection nested inside another collection", () => {
+  const NESTED_FILE = "app/views/page/nested.html.erb"
+
+  const NESTED_PAGE =
+    `<!--herb-region:${NESTED_FILE}:ffffffff:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:g--><li><span data-herb-slot="1:child">group</span><ul><!--herb-slot:2:collection-->` +
+    `<!--herb-item:2:r--><li data-herb-slot="3:child">row</li><!--/herb-item:2-->` +
+    `<!--/herb-slot:2--></ul></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul><!--/herb-region:${NESTED_FILE}-->`
+
+  const NESTED_MANIFEST = {
+    state: {},
+    states: {
+      [NESTED_FILE]: {
+        version: "ffffffff",
+        declarations: [
+          { name: "open", kind: "boolean", default: "false", scope: 0 },
+          { name: "picked", kind: "boolean", default: "false", scope: 2 },
+        ],
+        reads: {},
+        conditionals: {},
+      },
+    },
+  }
+
+  let nestedSlots: SlotIndex
+  let nestedState: SlotState
+
+  beforeEach(() => {
+    document.body.innerHTML = NESTED_PAGE + `<template data-herb-dependencies>${JSON.stringify(NESTED_MANIFEST)}</template>`
+
+    nestedSlots = new SlotIndex()
+    nestedSlots.scan(document.body)
+
+    nestedState = new SlotState(nestedSlots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    nestedState.adopt()
+  })
+
+  test("indexes the inner collection's items under the outer item that holds them", () => {
+    const outer = nestedSlots.slot(NESTED_FILE, 0)!
+    const inner = outer.items.get("g")!.slots.get(2)!
+
+    expect(inner.type).toBe("collection")
+    expect([...inner.items.keys()]).toEqual(["r"])
+  })
+
+  test("resolves a state declared on the outer collection from inside the inner one", () => {
+    const row = document.querySelector("[data-herb-slot='3:child']")!
+
+    expect(nestedState.scopeFor(row, "picked")?.item?.key).toBe("r")
+    expect(nestedState.scopeFor(row, "open")?.item?.key).toBe("g")
+  })
+
+  test("writes each state in the scope that declares it", () => {
+    const row = document.querySelector("[data-herb-slot='3:child']")!
+
+    nestedState.setState({ open: true }, { scope: nestedState.scopeFor(row, "open")! })
+    nestedState.setState({ picked: true }, { scope: nestedState.scopeFor(row, "picked")! })
+
+    expect(nestedState.getState("open", { scope: nestedState.scopeFor(row, "open")! })).toBe(true)
+    expect(nestedState.getState("picked", { scope: nestedState.scopeFor(row, "picked")! })).toBe(true)
+  })
+})
