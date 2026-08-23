@@ -190,3 +190,32 @@ describe("removeItem", () => {
     expect(index.currentText(index.slotInItem(FILE, 0, "again", "body")!)).toBe("back")
   })
 })
+
+describe("a collection nested inside a collection's row", () => {
+  const NESTED_FILE = "app/views/posts/nested.html.erb"
+
+  const NESTED =
+    `<!--herb-region:${NESTED_FILE}:aaaaaaaa:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><li><span data-herb-slot="1:child">a</span><ol><!--herb-slot:2:collection-->` +
+    `<!--herb-item:2:x--><li data-herb-slot="3:child">x</li><!--/herb-item:2-->` +
+    `<!--/herb-slot:2--></ol></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul><!--/herb-region:${NESTED_FILE}-->`
+
+  test("keys the row it builds without touching the rows inside it", () => {
+    document.body.innerHTML = NESTED
+
+    const nested = new SlotIndex()
+    nested.scan(document.body)
+
+    const collection = nested.slot(NESTED_FILE, 0)!
+
+    nested.addItem(collection, "b")
+
+    const built = collection.items.get("b")!
+
+    expect([...collection.items.keys()]).toEqual(["a", "b"])
+    expect(built.slots.get(2)!.type).toBe("collection")
+    expect([...built.slots.get(2)!.items.keys()]).toEqual([])
+    expect(document.body.innerHTML).not.toContain("herb-item:2:b")
+  })
+})

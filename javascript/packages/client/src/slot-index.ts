@@ -718,9 +718,12 @@ export class SlotIndex {
       }
 
       const comment = marker as Comment
+      const parsed = parseMarker(comment.data.trim())
 
-      if (parseMarker(comment.data.trim())?.kind === "item-open") {
+      if (parsed?.kind === "item-open" && parsed.index === slot.index) {
         comment.data = itemMarker(slot.index, key)
+
+        break
       }
     }
 
@@ -855,18 +858,21 @@ export class SlotIndex {
     this.#pruneItems(slot)
   }
 
+  // Every write into a range goes through here, so what stood there is forgotten, what stands
+  // there now is scanned in the context that holds it, and the change is announced once.
+  #rewrite(range: Range, source: DocumentFragment, context: ScanContext): ScanResult {
+    const added = [...source.childNodes]
+
+    range.deleteContents()
+    range.insertNode(source)
+
+    return this.scan(added, context)
+  }
+
   #writeFragment(slot: Slot, fragment: DocumentFragment): void {
     this.#forgetChildren(slot)
 
-    const range = this.rangeFor(slot)
-
-    range.deleteContents()
-
-    const added = [...fragment.childNodes]
-
-    range.insertNode(fragment)
-
-    this.scan(added, { region: slot.region, slot, item: slot.item })
+    this.#rewrite(this.rangeFor(slot), fragment, { region: slot.region, slot, item: slot.item })
 
     this.#announce(slot, "branch", slot.index)
   }
@@ -913,10 +919,11 @@ export class SlotIndex {
     if (slot.anchor.kind === "content") {
       slot.anchor.element.textContent = text
     } else {
-      const range = this.rangeFor(slot)
+      const fragment = document.createDocumentFragment()
 
-      range.deleteContents()
-      range.insertNode(document.createTextNode(text))
+      fragment.append(document.createTextNode(text))
+
+      this.#rewrite(this.rangeFor(slot), fragment, { region: slot.region, slot, item: slot.item })
     }
 
     this.#announce(slot, "value", slot.index)
@@ -1047,15 +1054,7 @@ export class SlotIndex {
     }
 
     const range = this.rangeFor(slot)
-
-    range.deleteContents()
-
-    const fragment = range.createContextualFragment(html)
-    const added = [...fragment.childNodes]
-
-    range.insertNode(fragment)
-
-    const result = this.scan(added, { region: slot.region, slot, item: slot.item })
+    const result = this.#rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item: slot.item })
 
     this.#announce(slot, "value", slot.index)
 
@@ -1078,15 +1077,7 @@ export class SlotIndex {
     })
 
     const range = this.rangeForItem(item)
-
-    range.deleteContents()
-
-    const fragment = range.createContextualFragment(html)
-    const added = [...fragment.childNodes]
-
-    range.insertNode(fragment)
-
-    const result = this.scan(added, { region: slot.region, slot, item })
+    const result = this.#rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item })
 
     this.#announce(slot, "item-updated", slot.index, key, slot.items.get(key) ?? null)
 
