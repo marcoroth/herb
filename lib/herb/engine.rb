@@ -17,7 +17,11 @@ require_relative "diagnostic/formatter"
 
 module Herb
   class Engine
-    attr_reader :src, :context, :bufvar, :visitors
+    attr_reader :src #: String
+    attr_reader :context #: Visitor::Context
+    attr_reader :bufvar #: String
+    attr_reader :visitors #: Visitor::Stack
+    attr_reader :parser_options #: Hash[Symbol, untyped]
 
     #: () -> Pathname?
     def filename

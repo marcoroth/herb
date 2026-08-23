@@ -2,13 +2,15 @@
 
 module Herb
   class Engine
-    attr_reader src: untyped
+    attr_reader src: String
 
-    attr_reader context: untyped
+    attr_reader context: Visitor::Context
 
-    attr_reader bufvar: untyped
+    attr_reader bufvar: String
 
-    attr_reader visitors: untyped
+    attr_reader visitors: Visitor::Stack
+
+    attr_reader parser_options: Hash[Symbol, untyped]
 
     # : () -> Pathname?
     def filename: () -> Pathname?

@@ -19,6 +19,7 @@ module Herb
         @source_lines = options[:source]&.lines
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @trim = options[:trim] != false
+        @html = engine.parser_options[:html] != false
         @tokens = [] #: Array[untyped]
         @padding_before = nil #: Hash[Integer, Integer]?
         @element_stack = [] #: Array[String]
@@ -389,8 +390,12 @@ module Herb
 
       private
 
+      def add_escaped_erb_tag(node)
+        add_text("#{node.tag_opening.value.sub("<%%", "<%")}#{node.content.value}#{node.tag_closing&.value}")
+      end
+
       def check_for_escaped_erb_tag!(opening)
-        return unless opening.start_with?("<%%")
+        return unless erb_escaped?(opening)
 
         raise Herb::Engine::GeneratorTemplateError,
               "This file appears to be a generator template (a template used to generate ERB files) " \
@@ -434,6 +439,8 @@ module Herb
 
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
+
+        return add_escaped_erb_tag(node) if !@html && erb_escaped?(opening)
 
         check_for_escaped_erb_tag!(opening)
 
