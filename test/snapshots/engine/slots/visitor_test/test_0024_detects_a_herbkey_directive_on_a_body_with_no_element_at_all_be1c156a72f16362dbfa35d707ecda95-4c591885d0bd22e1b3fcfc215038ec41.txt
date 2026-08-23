@@ -7,5 +7,5 @@ file: app/views/test.html.erb
 version: 70417e86
 
 slots:
-  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  location=1:0  key_source=directive  key_expression="u.id"
-  index=1  type=child  node_path=[0, 1]  expression="u.name"  location=1:40
+  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  key_source=directive  key_expression="u.id"
+  index=1  type=child  node_path=[0, 1]  expression="u.name"

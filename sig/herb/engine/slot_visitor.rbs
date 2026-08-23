@@ -73,8 +73,6 @@ module Herb
 
         attr_reader expression(): String?
 
-        attr_reader location(): String?
-
         attr_reader attribute(): String?
 
         attr_reader key_source(): Symbol?
@@ -87,12 +85,12 @@ module Herb
 
         attr_reader merged_paths(): Array[Array[Integer]]
 
-        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name, String? tag, Array[Array[Integer]] merged_paths) -> instance
-                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?, tag: String?, merged_paths: Array[Array[Integer]]) -> instance
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? attribute, Symbol? key_source, String? key_expression, String? name, String? tag, Array[Array[Integer]] merged_paths) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?, tag: String?, merged_paths: Array[Array[Integer]]) -> instance
 
-        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
+        def self.members: () -> [ :index, :type, :node_path, :expression, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
 
-        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
+        def members: () -> [ :index, :type, :node_path, :expression, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
       end
 
       # : (String) -> bool
@@ -360,8 +358,6 @@ module Herb
 
       # : (untyped) -> String?
       def attribute_expression_for: (untyped) -> String?
-
-      def location_for: (untyped node) -> untyped
 
       def erb_output?: (untyped opening) -> untyped
 

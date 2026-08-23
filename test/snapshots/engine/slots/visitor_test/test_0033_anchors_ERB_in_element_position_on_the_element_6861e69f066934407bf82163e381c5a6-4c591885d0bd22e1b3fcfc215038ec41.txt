@@ -7,4 +7,4 @@ file: app/views/test.html.erb
 version: 3aed3542
 
 slots:
-  index=0  type=element  node_path=[0]  expression="@attributes"  location=1:5
+  index=0  type=element  node_path=[0]  expression="@attributes"

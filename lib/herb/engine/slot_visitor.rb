@@ -70,7 +70,6 @@ module Herb
         :type,       #: Symbol
         :node_path,  #: Array[Integer]
         :expression, #: String?
-        :location,   #: String?
         :attribute,  #: String?
         :key_source, #: Symbol?
         :key_expression, #: String?
@@ -645,7 +644,6 @@ module Herb
           type: type,
           node_path: @path.dup,
           expression: expression_for(node),
-          location: location_for(node),
           attribute: attribute_name_for(node),
           key_source: key_source,
           key_expression: key_expression,
@@ -1550,13 +1548,6 @@ module Herb
         return nil unless erb_output?(outputs.fetch(0).tag_opening&.value.to_s)
 
         outputs.fetch(0).content&.value&.strip
-      end
-
-      def location_for(node)
-        location = node.location
-        return nil unless location
-
-        "#{location.start.line}:#{location.start.column}"
       end
 
       def erb_output?(opening)

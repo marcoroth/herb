@@ -7,4 +7,4 @@ file: app/views/test.html.erb
 version: 0861a400
 
 slots:
-  index=0  type=attribute_interpolation  node_path=[0]  location=1:5  attribute="class"
+  index=0  type=attribute_interpolation  node_path=[0]  attribute="class"

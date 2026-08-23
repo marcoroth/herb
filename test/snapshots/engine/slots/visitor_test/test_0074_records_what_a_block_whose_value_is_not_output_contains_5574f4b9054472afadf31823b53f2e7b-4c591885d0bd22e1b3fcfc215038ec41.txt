@@ -7,4 +7,4 @@ file: app/views/test.html.erb
 version: f49a7b64
 
 slots:
-  index=0  type=child  node_path=[0, 0, 0, 0]  expression="u.name"  location=1:30
+  index=0  type=child  node_path=[0, 0, 0, 0]  expression="u.name"

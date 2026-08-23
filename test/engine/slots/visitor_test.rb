@@ -64,7 +64,6 @@ module Engine
             fields = ["index=#{slot.index}", "type=#{slot.type}", "node_path=#{slot.node_path.inspect}"]
 
             fields << "expression=#{slot.expression.inspect}" unless slot.expression.nil?
-            fields << "location=#{slot.location}" unless slot.location.nil?
             fields << "attribute=#{slot.attribute.inspect}" unless slot.attribute.nil?
             fields << "key_source=#{slot.key_source}" unless slot.key_source.nil?
             fields << "key_expression=#{slot.key_expression.inspect}" unless slot.key_expression.nil?
@@ -116,7 +115,7 @@ module Engine
         end
       end
 
-      test "records source location" do
+      test "records an output that stands on a line of its own" do
         assert_slots_snapshot("<p>\n  <%= @name %>\n</p>")
       end
 

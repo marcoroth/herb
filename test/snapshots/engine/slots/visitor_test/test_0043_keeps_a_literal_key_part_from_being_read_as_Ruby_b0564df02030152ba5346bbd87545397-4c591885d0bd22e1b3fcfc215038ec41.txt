@@ -7,5 +7,5 @@ file: app/views/test.html.erb
 version: e7649cfc
 
 slots:
-  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  location=1:0  key_source=id  key_expression="\"a\\\\b\\\#{c}-\#{u.id}\""
-  index=1  type=attribute_interpolation  node_path=[0, 0]  expression="u.id"  location=1:24  attribute="id"
+  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  key_source=id  key_expression="\"a\\\\b\\\#{c}-\#{u.id}\""
+  index=1  type=attribute_interpolation  node_path=[0, 0]  expression="u.id"  attribute="id"

@@ -7,7 +7,7 @@ file: app/views/test.html.erb
 version: 6e821eff
 
 slots:
-  index=0  type=collection  node_path=[0, 0]  expression="@a.map do |i|"  location=1:5  key_source=index
+  index=0  type=collection  node_path=[0, 0]  expression="@a.map do |i|"  key_source=index
 
 warnings:
   type=unkeyed_collection  tag_name="b"  message="Add a `herb-key` or `id` attribute to `<b>` so rows can be matched across updates. Without a key, inserting or reordering the collection re-renders every following row and discards its focus, scroll, and input state."
