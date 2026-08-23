@@ -27,8 +27,24 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows a state named in a tag helper's action attribute", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <%= tag.button "More", data: { herb_increment: "count" } %>
+    `)
+  })
+
+  test("still flags a state read beside an action attribute", () => {
+    expectError("`tag.button \"More\", data: { herb_increment: \"count\" }, title: count.to_s` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <%= tag.button "More", data: { herb_increment: "count" }, title: count.to_s %>
+    `)
+  })
+
   test("flags a computed value read", () => {
-    expectError("`attempts + 1` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.")
+    expectError("`attempts + 1` computes with the state `attempts`, and the client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -36,8 +52,24 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows a state as an interpolated attribute's only output", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (status: "") %>
+      <div class="row-<%= status %>">x</div>
+    `)
+  })
+
+  test("flags a state mixed with other dynamics in an interpolated attribute", () => {
+    expectError("`status` reads a state inside an interpolated attribute that mixes other dynamic parts. Give the state its own attribute or its own output, since a state write cannot supply the other values.")
+
+    assertOffenses(dedent`
+      <%# herb:state (status: "") %>
+      <div class="row-<%= status %>-<%= @kind %>">x</div>
+    `)
+  })
+
   test("flags a negated condition the way it flags not", () => {
-    expectError("`!open` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+    expectError("`!open` computes with the state `open`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if open %>`, or as `open?`.")
 
     assertOffenses(dedent`
       <%# herb:state (open: false) %>
@@ -46,7 +78,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed condition", () => {
-    expectError("`attempts > 3` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+    expectError("`attempts > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -183,7 +215,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed read in a boolean attribute", () => {
-    expectError("`draft.empty?` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.")
+    expectError('`draft.empty?` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == ""`.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -193,7 +225,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("still flags equality in an attribute that is not boolean", () => {
-    expectError("`draft == \"\"` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.")
+    expectError('`draft == ""` computes with the state `draft`, and the client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>

@@ -105,6 +105,15 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
   private checkAssignment(attribute: HTMLAttributeNode, assignment: string): void {
     const separator = assignment.indexOf("=")
 
+    if (assignment.trim() === "") {
+      this.addOffense(
+        "`data-herb-set` has an empty clause. Remove the stray comma or space, since every clause has to be a `state=value` pair.",
+        attribute.location,
+      )
+
+      return
+    }
+
     if (separator < 1) {
       this.addOffense(
         `\`${assignment.trim()}\` in \`data-herb-set\` is not a \`state=value\` pair. Write the value to set, like \`${assignment.trim()}=true\`, or use \`data-herb-toggle\` to flip a boolean.`,

@@ -8,7 +8,7 @@ import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, has
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
 
-const KEY_DIRECTIVE = /^\s*herb:key\b/
+const KEY_DIRECTIVE = /^\s*herb:key\s+\S/
 
 interface IntoTarget {
   attribute: HTMLAttributeNode
@@ -86,13 +86,22 @@ function containsKeyedBlock(node: Node): boolean {
   const parts = node as unknown as { body?: Node[], children?: Node[], statements?: Node[] }
   const children = [...(parts.body ?? []), ...(parts.children ?? []), ...(parts.statements ?? [])]
 
-  if (node.type === "AST_ERB_BLOCK_NODE" && children.some(keysItems)) return true
+  if (node.type === "AST_ERB_BLOCK_NODE" && keyedBody(children)) return true
 
   return children.some(containsKeyedBlock)
 }
 
+function keyedBody(children: Node[]): boolean {
+  if (children.some((child) => isERBContentNode(child) && isERBComment(child) && KEY_DIRECTIVE.test(child.content?.value ?? ""))) {
+    return true
+  }
+
+  const elements = children.filter((child) => child.type === "AST_HTML_ELEMENT_NODE")
+
+  return elements.length === 1 && keysItems(elements[0])
+}
+
 function keysItems(node: Node): boolean {
-  if (isERBContentNode(node) && isERBComment(node) && KEY_DIRECTIVE.test(node.content?.value ?? "")) return true
   if (node.type !== "AST_HTML_ELEMENT_NODE") return false
 
   const element = node as HTMLElementNode

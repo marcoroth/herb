@@ -4,7 +4,7 @@ import { StateScopeMap, declaredKind, kindWithArticle } from "../utils/state-dir
 import { bareReadName, mentionsAnyState } from "@herb-tools/client/directives"
 
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
-import { getAttributeName } from "@herb-tools/core"
+import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode } from "@herb-tools/core"
@@ -79,9 +79,30 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     this.booleanAttribute = name !== null && isBooleanAttribute(name)
 
+    this.checkMixedInterpolation(node)
+
     super.visitHTMLAttributeNode(node)
 
     this.booleanAttribute = previous
+  }
+
+  private checkMixedInterpolation(node: HTMLAttributeNode): void {
+    const outputs = getAttributeValueNodes(node).filter((child) =>
+      isERBContentNode(child) && (child.tag_opening?.value === "<%=" || child.tag_opening?.value === "<%=="),
+    ) as ERBContentNode[]
+
+    if (outputs.length < 2) return
+
+    const names = this.states.namesIn(this.stack)
+    if (names.length === 0) return
+
+    const read = outputs.map((output) => output.content?.value.trim() ?? "").find((expression) => expression !== "" && mentionsAnyState(expression, names))
+    if (!read) return
+
+    this.addOffense(
+      `\`${read}\` reads a state inside an interpolated attribute that mixes other dynamic parts. Give the state its own attribute or its own output, since a state write cannot supply the other values.`,
+      node.location,
+    )
   }
 
   visitERBContentNode(node: ERBContentNode): void {
@@ -93,7 +114,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     const expression = node.content?.value.trim() ?? ""
 
-    if (expression === "" || !mentionsAnyState(expression, names)) return
+    if (expression === "" || !mentionsAnyState(withoutActionHashValues(expression), names)) return
 
     if (this.booleanAttribute) {
       const prism = node.prismNode
@@ -107,8 +128,10 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (bare && this.resolve(bare)) return
 
+    const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
+
     this.addOffense(
-      `\`${expression}\` computes with a state. The client cannot evaluate Ruby, so read the state bare and move the computation into a second state the app sets.`,
+      `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`,
       node.location,
     )
   }
@@ -248,8 +271,10 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
 
     if (mentionsAnyState(this.sliceOf(predicate), names)) {
+      const name = names.find(candidate => mentionsAnyState(this.sliceOf(predicate), [candidate])) ?? names[0]
+
       this.addOffense(
-        `\`${this.sliceOf(predicate)}\` computes with a state. The client cannot evaluate Ruby, so read a state bare, as a predicate, or compared to a literal.`,
+        `\`${this.sliceOf(predicate)}\` computes with the state \`${name}\`, and the client cannot run Ruby to pick the branch. ${this.conditionAdvice(name)}`,
         this.locationOf(predicate),
       )
 
@@ -317,6 +342,21 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
   }
 
+  private conditionAdvice(name: string): string {
+    const declaration = this.resolve(name)
+    const kind = declaration ? declaredKind(declaration) : "seeded"
+
+    if (kind === "boolean") {
+      return `Read it bare, \`<% if ${name} %>\`, or as \`${name}?\`.`
+    }
+
+    if ((kind === "string" || kind === "integer" || kind === "symbol") && declaration) {
+      return `Read it bare, \`<% if ${name} %>\`, or compare it to a literal, \`${name} == ${declaration.defaultSource}\`.`
+    }
+
+    return `Read it bare, \`<% if ${name} %>\`, or compare it to a literal.`
+  }
+
   private resolve(name: string): StateDeclaration | undefined {
     return this.states.resolve(this.stack, name)
   }
@@ -328,6 +368,12 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   private locationOf(node: PrismNode): Location {
     return locationFromByteOffset(this.source, node.location.startOffset, node.location.length)
   }
+}
+
+const ACTION_HASH_VALUE = /\bherb_(?:set|toggle|increment|decrement|reset|into|name|by)(?::|\s*=>)\s*(["'])(?:(?!\1).)*\1/g
+
+function withoutActionHashValues(expression: string): string {
+  return expression.replace(ACTION_HASH_VALUE, "")
 }
 
 function capitalize(word: string): string {

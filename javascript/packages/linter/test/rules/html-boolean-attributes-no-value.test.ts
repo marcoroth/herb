@@ -89,6 +89,18 @@ describe("html-boolean-attributes-no-value", () => {
     expectNoOffenses('<%# herb:state (draft: "") %>\n<p><%= draft %></p>\n<button disabled="<%= draft == \'\' %>">Send</button>')
   })
 
+  test("fails for a state read outside the loop that declares it", () => {
+    expectError('Boolean attribute `muted` should not have a value. Use `muted` instead of `muted="<%= starred %>"`.')
+
+    assertOffenses(dedent`
+      <% @rows.each do |row| %>
+        <%# herb:state (starred: false) %>
+        <button data-herb-toggle="starred">Star</button>
+      <% end %>
+      <video muted="<%= starred %>"></video>
+    `)
+  })
+
   test("fails for an ERB value that is not a declared state", () => {
     expectError('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="<%= agreed %>"`.')
 

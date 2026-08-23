@@ -59,6 +59,12 @@ The engine raises all of these as compile errors when the template renders. This
 <% if sort == 3 %>Odd<% end %>
 ```
 
+## Limits
+
+The rule matches state names by token, so an expression that merely contains a declared name is flagged as computing with it. With a state named `sort`, both `t("sort.by")` and `f.text_field :sort` draw the offense. The engine rejects the same expressions at compile time, so the linter mirrors it. Short generic state names collide easily; a more specific name avoids the whole class.
+
+A conditional whose first arm reads no state compiles as a server conditional, and a state read in a later arm is silently inert at runtime. The rule stays quiet on that shape today, matching the engine. Put the state arm first when the client should drive the branch.
+
 ## References
 
 \-
