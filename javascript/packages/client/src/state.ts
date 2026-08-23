@@ -816,13 +816,7 @@ export class SlotState {
       }
     }
 
-    const value = start + matches * (count.by ?? 1)
-    const cache = this.#lastCounts.get(scope.region) ?? new Map<string, StateValue>()
-
-    cache.set(declaration.name, value)
-    this.#lastCounts.set(scope.region, cache)
-
-    return value
+    return start + matches * (count.by ?? 1)
   }
 
   #derivedDependents(manifest: StateManifest, scope: StateScope, written: string[]): string[] {
@@ -1253,7 +1247,7 @@ export class SlotState {
 
     const cache = this.#lastCounts.get(region) ?? new Map<string, StateValue>()
 
-    for (const entry of cascade) cache.set(entry.name, entry.value)
+    for (const entry of [...changed, ...cascade]) cache.set(entry.name, entry.value)
 
     this.#lastCounts.set(region, cache)
 
