@@ -492,6 +492,21 @@ module Engine
         assert_includes manifest["reads"]["pending_count"], 3
       end
 
+      test "binds a tag helper input that reads a state" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (draft: "", agreed: false) %>
+          <%= tag.input value: draft %>
+          <%= tag.input type: "checkbox", checked: agreed %>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [0], manifest["reads"]["draft"]
+        assert_equal [0], manifest["bound"]["draft"]
+        assert_equal [["agreed", nil]], manifest["presence"].values
+        assert_equal [1], manifest["bound"]["agreed"]
+      end
+
       test "carries the states a template declares" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (pending: false, attempts: 0) %>

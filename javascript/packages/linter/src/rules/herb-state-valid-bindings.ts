@@ -6,7 +6,7 @@ import { bareReadName } from "@herb-tools/client/directives"
 import { forEachAttribute, getAttributeName, getAttributeValueNodes, getTagLocalName, isERBContentNode, isHTMLElementNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBBlockNode, ERBContentNode, HTMLElementNode, Node } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBBlockNode, ERBContentNode, HTMLElementNode, Node, RubyLiteralNode } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 const BOUND_ELEMENTS = ["input", "textarea", "select", "option"]
@@ -141,7 +141,9 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
       return child.tag_opening?.value === "<%=" || child.tag_opening?.value === "<%=="
     })
 
-    if (outputs.length !== 1) return null
+    const literal = nodes.length === 1 && nodes[0].type === "AST_RUBY_LITERAL_NODE" ? (nodes[0] as RubyLiteralNode) : null
+
+    if (outputs.length !== 1 && !literal) return null
 
     const meaningful = nodes.filter((child) => {
       if (isHTMLElementNode(child)) return true
@@ -151,7 +153,7 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
 
     if (meaningful.length > 0) return null
 
-    const name = bareReadName(outputs[0].content?.value ?? "")
+    const name = bareReadName(literal ? literal.content ?? "" : outputs[0].content?.value ?? "")
 
     if (!name) return null
 
@@ -172,6 +174,7 @@ export class HerbStateValidBindingsRule extends ParserRule {
   get parserOptions(): Partial<ParserOptions> {
     return {
       strict_locals: true,
+      action_view_helpers: true,
     }
   }
 

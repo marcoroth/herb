@@ -112,4 +112,13 @@ describe("HerbStateValidBindingsRule", () => {
       <input type="number" value="<%= total %>">
     `)
   })
+  test("checks a binding built by a tag helper", () => {
+    expectError("`value` on `<input>` binds the Boolean state `pending`, and a `value` holds text. Declare it as a String, like `(pending: \"\")`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, draft: "") %>
+      <%= tag.input value: draft %>
+      <%= tag.input value: pending %>
+    `)
+  })
 })

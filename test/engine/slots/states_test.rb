@@ -545,6 +545,53 @@ module Engine
         ERB
       end
 
+      test "a tag helper attribute reading a state is a bound slot" do
+        template = %(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft %>)
+        visitor, = compile(template)
+        slot = visitor.slots.fetch(0)
+
+        assert_equal [:attribute, "value", "draft", "input"], [slot.type, slot.attribute, slot.expression, slot.tag]
+        assert_includes render(template), %(<input value="" data-herb-slot="0:attribute:value">)
+      end
+
+      test "a tag helper boolean attribute reading a state renders presence" do
+        template = %(<%# herb:slots client %><%# herb:state (agreed: true) %><%= tag.input type: "checkbox", checked: agreed %>)
+        visitor, = compile(template)
+
+        assert_equal :boolean_attribute, visitor.slots.fetch(0).type
+        assert_equal "checked", visitor.slots.fetch(0).attribute
+        assert visitor.state_presence.key?(0)
+        assert_includes render(template), %(<input type="checkbox" checked data-herb-slot="0:boolean_attribute:checked">)
+
+        off = render(%(<%# herb:slots client %><%# herb:state (agreed: false) %><%= tag.input type: "checkbox", checked: agreed %>))
+
+        assert_includes off, %(<input type="checkbox" data-herb-slot="0:boolean_attribute:checked">)
+      end
+
+      test "a tag helper boolean attribute takes a predicate and a comparison" do
+        rendered = render(%(<%# herb:slots client %><%# herb:state (pending: true) %><%= tag.button "Send", disabled: pending? %>))
+
+        assert_includes rendered, %(<button disabled data-herb-slot="0:boolean_attribute:disabled">)
+
+        rendered = render(%(<%# herb:slots client %><%# herb:state (sort: "name") %><%= tag.option "Name", value: "name", selected: sort == "name" %>))
+
+        assert_includes rendered, %(<option value="name" selected data-herb-slot="0:boolean_attribute:selected">)
+      end
+
+      test "a tag helper boolean attribute on a server value stays a presence slot" do
+        template = %(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input disabled: done %>)
+        visitor, = compile(template)
+
+        assert_equal :boolean_attribute, visitor.slots.fetch(0).type
+        refute visitor.state_presence.key?(0)
+        assert_includes render(template, { "done" => true }), %(<input disabled data-herb-slot="0:boolean_attribute:disabled">)
+        assert_includes render(template, { "done" => false }), %(<input data-herb-slot="0:boolean_attribute:disabled">)
+      end
+
+      test "a computed tag helper attribute raises" do
+        refuse(%(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft.upcase %>), /computes with a state/)
+      end
+
       test "an unless reads a state with its arms inverted" do
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)

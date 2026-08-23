@@ -1,13 +1,13 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { StateScopeMap, declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
-import { bareReadName, mentionsAnyState } from "@herb-tools/client/directives"
+import { bareReadName, classifyDerivedDefault, mentionsAnyState } from "@herb-tools/client/directives"
 
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode, RubyLiteralNode } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 const LITERAL_KINDS: Record<string, string> = {
@@ -130,6 +130,31 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     const bare = bareReadName(expression)
 
     if (bare && this.resolve(bare)) return
+
+    const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
+
+    this.addOffense(
+      `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`,
+      node.location,
+    )
+  }
+
+  visitRubyLiteralNode(node: RubyLiteralNode): void {
+    const names = this.states.namesIn(this.stack)
+    if (names.length === 0) return
+
+    const expression = (node.content ?? "").trim()
+    if (expression === "" || !mentionsAnyState(expression, names)) return
+
+    if (this.booleanAttribute) {
+      const declared = new Map(names.map((name) => [name, declaredKind(this.resolve(name)!)]))
+
+      if (classifyDerivedDefault(expression, declared) !== "mixed") return
+    } else {
+      const bare = bareReadName(expression)
+
+      if (bare && this.resolve(bare)) return
+    }
 
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
@@ -464,6 +489,7 @@ export class HerbStateValidReadsRule extends ParserRule {
     return {
       strict_locals: true,
       prism_nodes: true,
+      action_view_helpers: true,
     }
   }
 
