@@ -413,7 +413,21 @@ export class SlotState {
   }
 
   scopeFor(target: Element | StateScope, name?: string): StateScope | null {
-    if (!(target instanceof Element)) return target
+    if (!(target instanceof Element)) {
+      if (!name || !target.item) return target
+
+      const manifest = this.manifestFor(target.region)
+
+      if (!manifest) return target
+
+      const collection = collectionOf(target.region, target.item)
+      const declaration = collection === null ? null : declared(manifest, name, collection)
+
+      if (declaration !== null && declaration.scope === collection) return target
+      if (declared(manifest, name, null) !== null) return { region: target.region, item: null }
+
+      return target
+    }
 
     for (const region of this.#slots.regions()) {
       if (!containsNode(region, target)) continue
@@ -478,29 +492,41 @@ export class SlotState {
     }
 
     const previous = new Map<string, StateValue>()
+    const scopes = new Map<string, StateScope>()
+    const groups = new Map<StateScope, string[]>()
 
     for (const name of names) {
-      if (this.#declaration(manifest, resolved, name) === null) {
+      const target = this.scopeFor(resolved, name) ?? resolved
+
+      if (this.#declaration(manifest, target, name) === null) {
         this.#reportUnknown(name, resolved)
 
         return false
       }
 
-      previous.set(name, this.#valueOf(name, resolved))
+      const shared = [...groups.keys()].find(candidate => candidate.region === target.region && candidate.item === target.item) ?? target
+
+      groups.set(shared, [...(groups.get(shared) ?? []), name])
+      scopes.set(name, shared)
+      previous.set(name, this.#valueOf(name, shared))
     }
 
     this.#slots.transaction(() => {
       for (const [name, value] of Object.entries(values)) {
-        this.#store(resolved, name, value)
-        this.#writeValueSlots(manifest, resolved, name, value)
+        const target = scopes.get(name) ?? resolved
+
+        this.#store(target, name, value)
+        this.#writeValueSlots(manifest, target, name, value)
       }
 
-      this.#writeConditionals(manifest, resolved, names)
-      this.#writePresence(manifest, resolved, names)
+      for (const [scope, grouped] of groups) {
+        this.#writeConditionals(manifest, scope, grouped)
+        this.#writePresence(manifest, scope, grouped)
+      }
     }, { retain: false })
 
     for (const [name, value] of Object.entries(values)) {
-      this.#announceState(resolved, name, value, previous.get(name) ?? null)
+      this.#announceState(scopes.get(name) ?? resolved, name, value, previous.get(name) ?? null)
     }
 
     return true

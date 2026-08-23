@@ -11,10 +11,13 @@ const PAGE =
   `<button id="toggle" data-herb-toggle="open">Details</button>` +
   `<button id="both" data-herb-set="pending=false,failed=true">Fail</button>` +
   `<button id="bump" data-herb-increment="attempts" data-herb-by="2">More</button>` +
+  `<button id="combo" data-herb-increment="attempts" data-herb-set="open=true">Both</button>` +
   `<button id="tab-a" data-herb-set="sort=name">A</button>` +
   `<button id="quoted" data-herb-set="sort='hello, world'">Q</button>` +
   `<form id="form" data-herb-set="pending=true"><input id="draft-input" data-herb-reset="blur->sort"></form>` +
   `<input id="typer" data-herb-set="sort=$value">` +
+  `<input id="bound" value="name" data-herb-slot="5:attribute:value">` +
+  `<button id="setter" data-herb-set="sort=date">Date</button>` +
   `<select id="chooser" data-herb-set="sort=$value"><option value="date">date</option></select>` +
   `<div id="menu" data-herb-set="mouseenter->open=true mouseleave->open=false">hover</div>` +
   `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->closed<!--/herb-slot:0--></div>` +
@@ -44,7 +47,8 @@ const PAGE =
           { name: "sort", kind: "string", default: '"name"', scope: "region" },
           { name: "starred", kind: "boolean", default: "false", scope: 2 },
         ],
-        reads: { attempts: [1] },
+        reads: { attempts: [1], sort: [5] },
+        bound: { sort: [5] },
         conditionals: {
           0: { arms: [["open", null, 0]], else: 1 },
           4: { arms: [["starred", null, 0]], else: 1 },
@@ -101,6 +105,24 @@ describe("declarative actions", () => {
     expect(state.getState("pending")).toBe(false)
     expect(state.getState("failed")).toBe(true)
     expect(order).toEqual(["pending", "failed"])
+  })
+
+  test("a set writes through to the bound input", () => {
+    click("#setter")
+
+    expect(state.getState("sort")).toBe("date")
+
+    const bound = document.querySelector<HTMLInputElement>("#bound")!
+
+    expect(bound.getAttribute("value")).toBe("date")
+    expect(bound.value).toBe("date")
+  })
+
+  test("two action attributes on one element both run", () => {
+    click("#combo")
+
+    expect(state.getState("attempts")).toBe(1)
+    expect(state.getState("open")).toBe(true)
   })
 
   test("increment honours data-herb-by", () => {

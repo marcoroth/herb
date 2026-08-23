@@ -181,6 +181,15 @@ describe("declared state", () => {
     expect(slots.revert(report.token!)).toBe(true)
   })
 
+  test("a scoped write to a region state reaches the region", () => {
+    const scope = state.scopeFor(document.querySelector("#a")!)!
+
+    expect(state.setState({ pending: true }, { scope })).toBe(true)
+
+    expect(state.getState("pending")).toBe(true)
+    expect(document.querySelector("div")?.textContent).toContain("Sending…")
+  })
+
   test("a rekeyed item keeps its scoped state", () => {
     const first = document.querySelector("#a")!
     const scope = state.scopeFor(first, "starred")!
