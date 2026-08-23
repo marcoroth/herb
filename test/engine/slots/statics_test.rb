@@ -109,16 +109,16 @@ module Engine
         assert_equal "<!--herb-branch:1:1-->even", parked(template, { "@items" => [1, 3] })
       end
 
-      test "parks a keyed collection's item template even when the collection rendered rows" do
+      test "parks a keyed collection's item template only when no row rendered" do
         template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
 
-        assert_includes parked(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+        refute_includes render(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
         assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
       end
 
       test "parks the item template with its values blanked" do
         template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
-        markup = parked(template, { "@items" => ["a", "b"] })
+        markup = parked(template, { "@items" => [] })
 
         assert_includes markup, %(<li id="")
         refute_includes markup, ">a<"

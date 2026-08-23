@@ -1681,13 +1681,16 @@ module Herb
           body = node.send(property)
           next unless body.is_a?(Array) && !body.empty?
 
-          park_item(slot_index, body)
+          key = @markers.item_statics_key(slot_index)
+          parked = park_item(key, body)
 
           body.unshift(
             text_node(@markers.item_open_prefix(slot_index)),
             erb_output_node(slot.key_expression),
             text_node(@markers.item_open_suffix)
           )
+
+          body.insert(3, erb_code_node(%(#{COVERED}[#{key.inspect}] = true))) if parked
 
           body.push(text_node(@markers.item_close(slot_index)))
         end
@@ -1729,14 +1732,13 @@ module Herb
         segments.size > 1 ? segments : nil
       end
 
-      def park_item(slot_index, body)
+      def park_item(key, body)
         statics = @statics
         return unless statics
 
+        slot_index = key.split(":").first.to_i
         markup = SlotStatics.new(@pending).markup(body)
         return unless markup
-
-        key = @markers.item_statics_key(slot_index)
 
         statics[key] = [
           @markers.branch(slot_index, SlotMarkers::ITEM_STATICS),

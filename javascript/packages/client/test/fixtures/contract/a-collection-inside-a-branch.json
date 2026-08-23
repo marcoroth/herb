@@ -2,7 +2,7 @@
   "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
   "template": "<% if @on %><% @items.each do |r| %><li id=\"<%= r %>\"><%= r %></li><% end %><% end %>",
   "rendered": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb--><template data-herb-region=\"app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7\"><!--herb-branch:1:item--><!--herb-item:1:--><li id=\"\" data-herb-slot=\"2:attribute:id 3:child\"></li><!--/herb-item:1--></template>",
+  "client": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
   "values": {
     "template": "app/views/contract/a-collection-inside-a-branch.html.erb",
     "version": "af67b5e7",

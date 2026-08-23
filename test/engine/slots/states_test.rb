@@ -706,12 +706,12 @@ module Engine
         assert_match(/computes with a state|reads a state/, error.message)
       end
 
-      test "a keyed collection with item states still parks its skeleton" do
+      test "a keyed collection with item states parks its template only when empty" do
         template = <<~ERB
           <ul><% @items.each do |item| %><%# herb:key item %><%# herb:state (locked: true) %><li id="row_<%= item %>"><%= item %></li><% end %></ul>
         ERB
 
-        assert_includes parked(template, { "@items" => ["a"] }), "herb-branch:0:item"
+        refute_includes render(template, { "@items" => ["a"] }), "herb-branch:0:item"
         assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
       end
 

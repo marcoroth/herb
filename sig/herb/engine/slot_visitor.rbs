@@ -389,7 +389,7 @@ module Herb
       # : (untyped) -> Array[String]?
       def attribute_segments: (untyped) -> Array[String]?
 
-      def park_item: (untyped slot_index, untyped body) -> untyped
+      def park_item: (untyped key, untyped body) -> untyped
 
       def anchor_attributes: (untyped node, ?untyped content_index) -> untyped
 
