@@ -6,6 +6,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/dynamics_compiler"
 
 module Engine
   module Slots
@@ -458,6 +459,18 @@ module Engine
         assert_equal 1, rendered.scan("<b").size
         refute_includes rendered, "&lt;!--"
         assert_includes rendered, %(<div data-herb-slot="1:child"><b data-herb-slot="0:child">hi</b></div>)
+      end
+
+      test "writes an item key the same way the values payload does, under either escaping" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+        key = %(a&b<c>"d")
+        payload = evaluate_herb_source(Herb::Engine::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src, { "@items" => [key] })
+
+        [false, true].each do |escape|
+          markup = evaluate_herb_source(Herb::Engine.new(template, **options, escape: escape).src, { "@items" => [key] })
+
+          assert_includes markup, "<!--herb-item:0:#{payload[:slots][0][:order].first}-->", "escape: #{escape}"
+        end
       end
 
       test "leaves a block's value as the block's own last expression" do

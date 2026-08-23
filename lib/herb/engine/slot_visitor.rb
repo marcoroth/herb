@@ -1701,7 +1701,7 @@ module Herb
 
           body.unshift(
             text_node(@markers.item_open_prefix(slot_index)),
-            erb_output_node(slot.key_expression),
+            erb_code_node("#{@bufvar} << ::Herb::Engine.raw((#{slot.key_expression}).to_s)"),
             text_node(@markers.item_open_suffix)
           )
 
