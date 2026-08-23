@@ -683,6 +683,24 @@ describe("updating one item of a collection", () => {
     expect(index.slot(FILE, 2)).toBeNull()
   })
 
+  test("a batch adding into two different items indexes each into its own item", () => {
+    const index = mounted(COLLECTION)
+    const list = document.querySelector("ul") ?? document.body.firstElementChild!
+    const first = document.createElement("i")
+    const second = document.createElement("i")
+
+    first.setAttribute("data-herb-slot", "7:child")
+    second.setAttribute("data-herb-slot", "8:child")
+
+    list.insertBefore(first, index.itemsFor(FILE, 0).get("1")!.end)
+    list.insertBefore(second, index.itemsFor(FILE, 0).get("2")!.end)
+
+    index.scan([first, second])
+
+    expect(index.slotInItem(FILE, 0, "1", 7)?.item?.key).toBe("1")
+    expect(index.slotInItem(FILE, 0, "2", 8)?.item?.key).toBe("2")
+  })
+
   test("a slot written into an item keeps the collection as its parent", () => {
     const index = mounted(COLLECTION)
     const collection = index.slot(FILE, 0)!

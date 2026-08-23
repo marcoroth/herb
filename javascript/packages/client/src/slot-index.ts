@@ -89,12 +89,16 @@ export class SlotIndex {
     const result: ScanResult = { regions: [], slots: [] }
     const list = asList(roots)
 
-    for (const group of siblingGroups(list)) {
-      const state = this.#seed(context ?? this.locate(group[0]) ?? {})
+    let state: ParseState | null = null
+    let seeded = ""
 
-      for (const root of group) {
-        this.#scanMarkers(root, result, state)
+    for (const root of list) {
+      if (!state || depth(state) === seeded) {
+        state = this.#seed(context ?? this.locate(root) ?? {})
+        seeded = depth(state)
       }
+
+      this.#scanMarkers(root, result, state)
     }
 
     for (const root of list) {
@@ -1764,32 +1768,8 @@ export class SlotIndex {
   }
 }
 
-function siblingGroups(list: Node[]): Node[][] {
-  const groups: Node[][] = []
-
-  let current: Node[] = []
-  let parent: Node | null | undefined
-
-  for (const node of list) {
-    if (current.length > 0 && node.parentNode === parent) {
-      current.push(node)
-
-      continue
-    }
-
-    if (current.length > 0) {
-      groups.push(current)
-    }
-
-    current = [node]
-    parent = node.parentNode
-  }
-
-  if (current.length > 0) {
-    groups.push(current)
-  }
-
-  return groups
+function depth(state: ParseState): string {
+  return `${state.openRegions.length}:${state.openSlots.length}:${state.openItems.length}`
 }
 
 function rangeAround(region: Region, node: Node): RegionRange | null {
