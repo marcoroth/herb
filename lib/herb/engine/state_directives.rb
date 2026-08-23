@@ -153,17 +153,6 @@ module Herb
           read.parts.flat_map { |part| read_names(part) }
         end
 
-        #: (untyped) -> Array[String]
-        def condition_names(entry)
-          return entry.values.flat_map { |parts| parts.flat_map { |part| condition_names(part) } } if entry.is_a?(Hash) && !entry.key?("state")
-          return [entry["state"]] if entry.is_a?(Hash)
-
-          names = [entry[0]] #: Array[String]
-          names += condition_names(entry[1]) if entry[1].is_a?(Hash)
-
-          names.uniq
-        end
-
         #: (Read | Combo) -> untyped
         def condition_entry(read)
           return { read.op => read.parts.map { |part| condition_entry(part) } } if read.is_a?(Combo)
@@ -351,7 +340,7 @@ module Herb
             return nil
           end
 
-          Declaration.new(name: name, kind: derived_kind(read), default: value.slice, derived: condition_entry(read), line: nil, column: nil)
+          Declaration.new(name: name, kind: derived_kind(read), default: value.slice, derived: read, line: nil, column: nil)
         end
 
         #: (Read | Combo) -> Symbol

@@ -105,9 +105,6 @@ module Herb
       # : (Read | Combo) -> Array[String]
       def self.read_names: (Read | Combo) -> Array[String]
 
-      # : (untyped) -> Array[String]
-      def self.condition_names: (untyped) -> Array[String]
-
       # : (Read | Combo) -> untyped
       def self.condition_entry: (Read | Combo) -> untyped
 

@@ -7,7 +7,7 @@ input: |2-
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 25c0946e
+version: 1f1c2346
 
 slots:
   index=0  type=child  node_path=[0, 1]  expression="@name"

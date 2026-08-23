@@ -1,22 +1,22 @@
 {
   "file": "app/views/contract/a-helper-block-building-an-element.html.erb",
   "template": "<%= tag.li(id: 1) do %><%= @n %><% end %><%= @after %>",
-  "rendered": "<!--herb-region:app/views/contract/a-helper-block-building-an-element.html.erb:9c27fd64:0--><li id=\"1\" data-herb-slot=\"0:child\">n</li><!--herb-slot:1-->A<!--/herb-slot:1--><!--/herb-region:app/views/contract/a-helper-block-building-an-element.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-helper-block-building-an-element.html.erb:9c27fd64:0--><li id=\"1\" data-herb-slot=\"0:child\">n</li><!--herb-slot:1-->A<!--/herb-slot:1--><!--/herb-region:app/views/contract/a-helper-block-building-an-element.html.erb-->",
+  "rendered": "<!--herb-region:app/views/contract/a-helper-block-building-an-element.html.erb:b36bd345:0--><li id=\"1\" data-herb-slot=\"0:child\">n</li><!--herb-slot:1-->A<!--/herb-slot:1--><!--/herb-region:app/views/contract/a-helper-block-building-an-element.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-helper-block-building-an-element.html.erb:b36bd345:0--><li id=\"1\" data-herb-slot=\"0:child\">n</li><!--herb-slot:1-->A<!--/herb-slot:1--><!--/herb-region:app/views/contract/a-helper-block-building-an-element.html.erb-->",
   "values": {
     "template": "app/views/contract/a-helper-block-building-an-element.html.erb",
-    "version": "9c27fd64",
+    "version": "b36bd345",
     "occurrence": 0,
     "slots": {
       "0": "N",
       "1": "B"
     }
   },
-  "expected": "<!--herb-region:app/views/contract/a-helper-block-building-an-element.html.erb:9c27fd64:0--><li id=\"1\" data-herb-slot=\"0:child\">N</li><!--herb-slot:1-->B<!--/herb-slot:1--><!--/herb-region:app/views/contract/a-helper-block-building-an-element.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/a-helper-block-building-an-element.html.erb:b36bd345:0--><li id=\"1\" data-herb-slot=\"0:child\">N</li><!--herb-slot:1-->B<!--/herb-slot:1--><!--/herb-region:app/views/contract/a-helper-block-building-an-element.html.erb-->",
   "schema": {
     "file": "app/views/contract/a-helper-block-building-an-element.html.erb",
     "identifier": "app/views/contract/a-helper-block-building-an-element.html.erb",
-    "version": "9c27fd64",
+    "version": "b36bd345",
     "slots": [
       {
         "index": 0,
@@ -40,14 +40,14 @@
       "@after": [
         {
           "file": "app/views/contract/a-helper-block-building-an-element.html.erb",
-          "version": "9c27fd64",
+          "version": "b36bd345",
           "index": 1
         }
       ],
       "@n": [
         {
           "file": "app/views/contract/a-helper-block-building-an-element.html.erb",
-          "version": "9c27fd64",
+          "version": "b36bd345",
           "index": 0
         }
       ]

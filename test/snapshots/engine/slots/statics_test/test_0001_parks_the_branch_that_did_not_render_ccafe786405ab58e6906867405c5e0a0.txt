@@ -2,4 +2,4 @@
 source: "Engine::Slots::StaticsTest#test_0001_parks the branch that did not render"
 input: "{source: \"<div><% if @admin %><b>Hi <%= @name %></b><% else %><i>guest</i><% end %></div>\", locals: {\"@admin\" => false, \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::SlotVisitor client>], filename: \"app/views/test.html.erb\"}}"
 ---
-<!--herb-region:app/views/test.html.erb:73338818:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><i>guest</i><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:73338818"><!--herb-branch:0:0--><b>Hi <!--herb-slot:1--><!--/herb-slot:1--></b></template>
+<!--herb-region:app/views/test.html.erb:5ac3015e:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><i>guest</i><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:5ac3015e"><!--herb-branch:0:0--><b>Hi <!--herb-slot:1--><!--/herb-slot:1--></b></template>

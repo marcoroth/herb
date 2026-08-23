@@ -25,6 +25,10 @@ module Engine
         evaluate_herb_source(src, locals)
       end
 
+      def encoded(read)
+        Herb::Engine::StateDirectives.condition_entry(read)
+      end
+
       def parked(template, locals = {})
         render(template, locals)[%r{<template data-herb-region="[^"]+">(.*)</template>}m, 1].to_s
       end
@@ -389,11 +393,11 @@ module Engine
         entries = visitor.state_entries.to_h { |entry| [entry[:name], entry] }
 
         assert_equal :boolean, entries.fetch("busy")[:kind]
-        assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, entries.fetch("busy")[:derived])
-        assert_equal ["attempts", "2", ">"], entries.fetch("many")[:derived]
-        assert_equal ["sort", %("name")], entries.fetch("named")[:derived]
+        assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, encoded(entries.fetch("busy")[:derived]))
+        assert_equal ["attempts", "2", ">"], encoded(entries.fetch("many")[:derived])
+        assert_equal ["sort", %("name")], encoded(entries.fetch("named")[:derived])
         assert_equal :integer, entries.fetch("total")[:kind]
-        assert_equal ["attempts", nil], entries.fetch("total")[:derived]
+        assert_equal ["attempts", nil], encoded(entries.fetch("total")[:derived])
         assert_nil entries.fetch("pending")[:derived]
       end
 

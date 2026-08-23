@@ -1,22 +1,22 @@
 {
   "file": "app/views/contract/a-boolean-attribute-inside-a-block.html.erb",
   "template": "<%# herb:state (sending: false) %><%= form_with(model: 1) do |f| %><video muted=\"<%= sending %>\"></video><% end %>",
-  "rendered": "<!--herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb:f99751f3:0--><!--herb-slot:0:block--><form><video  data-herb-slot=\"1:boolean_attribute:muted\"></video></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb:f99751f3:0--><!--herb-slot:0:block--><form><video  data-herb-slot=\"1:boolean_attribute:muted\"></video></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb-->",
+  "rendered": "<!--herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb:a207c872:0--><!--herb-slot:0:block--><form><video  data-herb-slot=\"1:boolean_attribute:muted\"></video></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb:a207c872:0--><!--herb-slot:0:block--><form><video  data-herb-slot=\"1:boolean_attribute:muted\"></video></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb-->",
   "values": {
     "template": "app/views/contract/a-boolean-attribute-inside-a-block.html.erb",
-    "version": "f99751f3",
+    "version": "a207c872",
     "occurrence": 0,
     "slots": {
       "1": false,
       "0": "<form><video ></video></form>"
     }
   },
-  "expected": "<!--herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb:f99751f3:0--><!--herb-slot:0:block--><form><video  data-herb-slot=\"1:boolean_attribute:muted\"></video></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb:a207c872:0--><!--herb-slot:0:block--><form><video  data-herb-slot=\"1:boolean_attribute:muted\"></video></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-boolean-attribute-inside-a-block.html.erb-->",
   "schema": {
     "file": "app/views/contract/a-boolean-attribute-inside-a-block.html.erb",
     "identifier": "app/views/contract/a-boolean-attribute-inside-a-block.html.erb",
-    "version": "f99751f3",
+    "version": "a207c872",
     "slots": [
       {
         "index": 0,
@@ -41,7 +41,7 @@
     "params": {},
     "states": {
       "app/views/contract/a-boolean-attribute-inside-a-block.html.erb": {
-        "version": "f99751f3",
+        "version": "a207c872",
         "declarations": [
           {
             "name": "sending",

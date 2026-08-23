@@ -144,6 +144,16 @@ module Herb
         { version: visitor.schema[:version], identifier: visitor.schema[:identifier], slots: index, states: states_manifest(visitor) }
       end
 
+      #: (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
+      def declared_entry(declaration, scope)
+        entry = declaration.transform_keys(&:to_s).merge("scope" => scope)
+        derived = entry["derived"]
+
+        entry["derived"] = StateDirectives.condition_entry(derived) if derived
+
+        entry
+      end
+
       #: (untyped) -> Hash[String, untyped]?
       def states_manifest(visitor)
         return nil unless visitor.respond_to?(:state_declarations)
@@ -154,8 +164,8 @@ module Herb
 
         return nil if names.empty?
 
-        declarations = declared[:region].map { |declaration| declaration.transform_keys(&:to_s).merge("scope" => "region") } +
-                       declared[:items].flat_map { |index, list| list.map { |declaration| declaration.transform_keys(&:to_s).merge("scope" => index) } }
+        declarations = declared[:region].map { |declaration| declared_entry(declaration, "region") } +
+                       declared[:items].flat_map { |index, list| list.map { |declaration| declared_entry(declaration, index) } }
 
         reads = {} #: Hash[String, Array[Integer]]
         bound = {} #: Hash[String, Array[Integer]]

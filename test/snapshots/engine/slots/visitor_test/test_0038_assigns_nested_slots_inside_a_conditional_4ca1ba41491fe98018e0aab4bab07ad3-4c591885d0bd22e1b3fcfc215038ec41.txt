@@ -4,7 +4,7 @@ input: "<div><% if @admin %><b><%= @secret %></b><% end %></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 8318a878
+version: 643ed88c
 
 slots:
   index=0  type=conditional  node_path=[0, 0]  expression="if @admin"

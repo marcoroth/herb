@@ -1,22 +1,22 @@
 {
   "file": "app/views/contract/two-attributes-on-one-element.html.erb",
   "template": "<div class=\"<%= @c %>\" id=\"<%= @i %>\"></div>",
-  "rendered": "<!--herb-region:app/views/contract/two-attributes-on-one-element.html.erb:b5b81d11:0--><div class=\"c\" id=\"i\" data-herb-slot=\"0:attribute:class 1:attribute:id\"></div><!--/herb-region:app/views/contract/two-attributes-on-one-element.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/two-attributes-on-one-element.html.erb:b5b81d11:0--><div class=\"c\" id=\"i\" data-herb-slot=\"0:attribute:class 1:attribute:id\"></div><!--/herb-region:app/views/contract/two-attributes-on-one-element.html.erb-->",
+  "rendered": "<!--herb-region:app/views/contract/two-attributes-on-one-element.html.erb:6a76c755:0--><div class=\"c\" id=\"i\" data-herb-slot=\"0:attribute:class 1:attribute:id\"></div><!--/herb-region:app/views/contract/two-attributes-on-one-element.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/two-attributes-on-one-element.html.erb:6a76c755:0--><div class=\"c\" id=\"i\" data-herb-slot=\"0:attribute:class 1:attribute:id\"></div><!--/herb-region:app/views/contract/two-attributes-on-one-element.html.erb-->",
   "values": {
     "template": "app/views/contract/two-attributes-on-one-element.html.erb",
-    "version": "b5b81d11",
+    "version": "6a76c755",
     "occurrence": 0,
     "slots": {
       "0": "d",
       "1": "j"
     }
   },
-  "expected": "<!--herb-region:app/views/contract/two-attributes-on-one-element.html.erb:b5b81d11:0--><div class=\"d\" id=\"j\" data-herb-slot=\"0:attribute:class 1:attribute:id\"></div><!--/herb-region:app/views/contract/two-attributes-on-one-element.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/two-attributes-on-one-element.html.erb:6a76c755:0--><div class=\"d\" id=\"j\" data-herb-slot=\"0:attribute:class 1:attribute:id\"></div><!--/herb-region:app/views/contract/two-attributes-on-one-element.html.erb-->",
   "schema": {
     "file": "app/views/contract/two-attributes-on-one-element.html.erb",
     "identifier": "app/views/contract/two-attributes-on-one-element.html.erb",
-    "version": "b5b81d11",
+    "version": "6a76c755",
     "slots": [
       {
         "index": 0,
@@ -41,14 +41,14 @@
       "@c": [
         {
           "file": "app/views/contract/two-attributes-on-one-element.html.erb",
-          "version": "b5b81d11",
+          "version": "6a76c755",
           "index": 0
         }
       ],
       "@i": [
         {
           "file": "app/views/contract/two-attributes-on-one-element.html.erb",
-          "version": "b5b81d11",
+          "version": "6a76c755",
           "index": 1
         }
       ]

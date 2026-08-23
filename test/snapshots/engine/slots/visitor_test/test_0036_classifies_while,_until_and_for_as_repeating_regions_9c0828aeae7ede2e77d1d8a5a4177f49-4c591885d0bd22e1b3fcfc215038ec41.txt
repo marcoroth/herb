@@ -4,7 +4,7 @@ input: "<% until @i %><b>x</b><% end %>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: e66fea0f
+version: b3fe409f
 
 slots:
   index=0  type=collection  node_path=[0]  expression="until @i"  key_source=index

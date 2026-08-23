@@ -1,11 +1,11 @@
 {
   "file": "app/views/contract/a-block-and-what-follows-it.html.erb",
   "template": "<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>",
-  "rendered": "<!--herb-region:app/views/contract/a-block-and-what-follows-it.html.erb:7fcb4c44:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0--><!--herb-slot:2-->A<!--/herb-slot:2--><!--/herb-region:app/views/contract/a-block-and-what-follows-it.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-block-and-what-follows-it.html.erb:7fcb4c44:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0--><!--herb-slot:2-->A<!--/herb-slot:2--><!--/herb-region:app/views/contract/a-block-and-what-follows-it.html.erb-->",
+  "rendered": "<!--herb-region:app/views/contract/a-block-and-what-follows-it.html.erb:2eaea62e:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0--><!--herb-slot:2-->A<!--/herb-slot:2--><!--/herb-region:app/views/contract/a-block-and-what-follows-it.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-block-and-what-follows-it.html.erb:2eaea62e:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0--><!--herb-slot:2-->A<!--/herb-slot:2--><!--/herb-region:app/views/contract/a-block-and-what-follows-it.html.erb-->",
   "values": {
     "template": "app/views/contract/a-block-and-what-follows-it.html.erb",
-    "version": "7fcb4c44",
+    "version": "2eaea62e",
     "occurrence": 0,
     "slots": {
       "1": "Name",
@@ -13,11 +13,11 @@
       "2": "B"
     }
   },
-  "expected": "<!--herb-region:app/views/contract/a-block-and-what-follows-it.html.erb:7fcb4c44:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0--><!--herb-slot:2-->B<!--/herb-slot:2--><!--/herb-region:app/views/contract/a-block-and-what-follows-it.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/a-block-and-what-follows-it.html.erb:2eaea62e:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0--><!--herb-slot:2-->B<!--/herb-slot:2--><!--/herb-region:app/views/contract/a-block-and-what-follows-it.html.erb-->",
   "schema": {
     "file": "app/views/contract/a-block-and-what-follows-it.html.erb",
     "identifier": "app/views/contract/a-block-and-what-follows-it.html.erb",
-    "version": "7fcb4c44",
+    "version": "2eaea62e",
     "slots": [
       {
         "index": 0,
@@ -48,7 +48,7 @@
       "@after": [
         {
           "file": "app/views/contract/a-block-and-what-follows-it.html.erb",
-          "version": "7fcb4c44",
+          "version": "2eaea62e",
           "index": 2
         }
       ]

@@ -4,7 +4,7 @@ input: "<% @u.each do |u| %><%# herb:key u.uuid %><li id=\"<%= u.id %>\">x</li><
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 036e96af
+version: 7b72418e
 
 slots:
   index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  key_source=directive  key_expression="u.uuid"

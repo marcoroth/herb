@@ -2,4 +2,4 @@
 source: "Engine::Slots::MarkersTest#test_0041_delimits a conditional inside an HTML comment"
 input: "{source: \"<!-- <% if @a %>yes<% end %> -->\", locals: {\"@a\" => true}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
 ---
-<!--herb-region:app/views/test.html.erb:65166bbb:0--><!--herb-slot:0:comment--><!-- yes --><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->
+<!--herb-region:app/views/test.html.erb:e5623121:0--><!--herb-slot:0:comment--><!-- yes --><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

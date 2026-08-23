@@ -4,7 +4,7 @@ input: "<div <%= @attributes %>>x</div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 3aed3542
+version: 76b5dd2d
 
 slots:
   index=0  type=element  node_path=[0]  expression="@attributes"

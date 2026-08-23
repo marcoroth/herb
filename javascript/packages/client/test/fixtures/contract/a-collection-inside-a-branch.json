@@ -1,11 +1,11 @@
 {
   "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
   "template": "<% if @on %><% @items.each do |r| %><li id=\"<%= r %>\"><%= r %></li><% end %><% end %>",
-  "rendered": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
+  "rendered": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:e21c5e4a:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:e21c5e4a:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
   "values": {
     "template": "app/views/contract/a-collection-inside-a-branch.html.erb",
-    "version": "af67b5e7",
+    "version": "e21c5e4a",
     "occurrence": 0,
     "slots": {
       "0": {
@@ -31,11 +31,11 @@
       }
     }
   },
-  "expected": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:af67b5e7:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--herb-item:1:b--><li id=\"b\" data-herb-slot=\"2:attribute:id 3:child\">b</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/a-collection-inside-a-branch.html.erb:e21c5e4a:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1:collection--><!--herb-item:1:a--><li id=\"a\" data-herb-slot=\"2:attribute:id 3:child\">a</li><!--/herb-item:1--><!--herb-item:1:b--><li id=\"b\" data-herb-slot=\"2:attribute:id 3:child\">b</li><!--/herb-item:1--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-collection-inside-a-branch.html.erb-->",
   "schema": {
     "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
     "identifier": "app/views/contract/a-collection-inside-a-branch.html.erb",
-    "version": "af67b5e7",
+    "version": "e21c5e4a",
     "slots": [
       {
         "index": 0,

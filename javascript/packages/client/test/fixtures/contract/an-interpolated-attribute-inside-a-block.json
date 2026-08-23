@@ -1,11 +1,11 @@
 {
   "file": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
   "template": "<%= form_with(model: 1) do |f| %><li id=\"row_<%= @r %>\">x</li><% end %>",
-  "rendered": "<!--herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:9c75cc2c:0--><!--herb-slot:0:block--><form><li id=\"row_7\" data-herb-slot=\"1:attribute_interpolation:id\">x</li></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:9c75cc2c:0--><!--herb-slot:0:block--><form><li id=\"row_7\" data-herb-slot=\"1:attribute_interpolation:id\">x</li></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb--><template data-herb-region=\"app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:9c75cc2c\"><!--herb-branch:1:parts-->row_<!--herb-part--></template>",
+  "rendered": "<!--herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:60164077:0--><!--herb-slot:0:block--><form><li id=\"row_7\" data-herb-slot=\"1:attribute_interpolation:id\">x</li></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:60164077:0--><!--herb-slot:0:block--><form><li id=\"row_7\" data-herb-slot=\"1:attribute_interpolation:id\">x</li></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb--><template data-herb-region=\"app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:60164077\"><!--herb-branch:1:parts-->row_<!--herb-part--></template>",
   "values": {
     "template": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
-    "version": "9c75cc2c",
+    "version": "60164077",
     "occurrence": 0,
     "slots": {
       "1": [
@@ -14,11 +14,11 @@
       "0": "<form><li id=\"row_8\">x</li></form>"
     }
   },
-  "expected": "<!--herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:9c75cc2c:0--><!--herb-slot:0:block--><form><li id=\"row_8\" data-herb-slot=\"1:attribute_interpolation:id\">x</li></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb:60164077:0--><!--herb-slot:0:block--><form><li id=\"row_8\" data-herb-slot=\"1:attribute_interpolation:id\">x</li></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-interpolated-attribute-inside-a-block.html.erb-->",
   "schema": {
     "file": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
     "identifier": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
-    "version": "9c75cc2c",
+    "version": "60164077",
     "slots": [
       {
         "index": 0,

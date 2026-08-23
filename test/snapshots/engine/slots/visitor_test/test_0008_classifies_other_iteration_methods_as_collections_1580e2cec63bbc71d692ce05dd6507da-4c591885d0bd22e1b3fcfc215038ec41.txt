@@ -4,7 +4,7 @@ input: "<div><% @a.map do |i| %><b>x</b><% end %></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 6e821eff
+version: 3aac42f5
 
 slots:
   index=0  type=collection  node_path=[0, 0]  expression="@a.map do |i|"  key_source=index

@@ -2,4 +2,4 @@
 source: "Engine::Slots::MarkersTest#test_0004_keeps paired comments for a slot that can render nothing"
 input: "{source: \"<div><% if @admin %>x<% end %></div>\", locals: {\"@admin\" => false}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
 ---
-<!--herb-region:app/views/test.html.erb:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->
+<!--herb-region:app/views/test.html.erb:5c690a9b:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

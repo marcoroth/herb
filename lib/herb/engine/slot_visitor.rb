@@ -144,6 +144,8 @@ module Herb
         @state_directives = [] #: Array[Hash[Symbol, untyped]]
         state_conditionals = {} #: Hash[untyped, Hash[Symbol, untyped]]
         @state_conditionals = state_conditionals.compare_by_identity
+        state_signatures = {} #: Hash[untyped, String]
+        @state_signatures = state_signatures.compare_by_identity
         @collection_nodes = [] #: Array[untyped]
         @collection_body_depths = [] #: Array[Integer]
         @state_counts = [] #: Array[Hash[Symbol, untyped]]
@@ -161,9 +163,41 @@ module Herb
 
       #: () -> String
       def version
-        @version ||= Digest::SHA256.hexdigest(
-          (slot_entries.map(&:inspect) + state_entries.map(&:inspect) + state_count_entries.map(&:inspect)).join(",")
-        ).slice(0, 8).to_s
+        @version ||= Digest::SHA256.hexdigest(version_projection.join(",")).slice(0, 8).to_s
+      end
+
+      # What a version stands for. It says a page and a payload were compiled from the same
+      # template, so it is taken from what a slot is and what a state means, and never from how
+      # either of them is spelled on the wire.
+      #: () -> Array[String]
+      def version_projection
+        conditionals = state_conditional_signatures
+
+        slots = @slots.map { |slot|
+          [
+            slot.index,
+            slot.type,
+            slot.node_path,
+            slot.attribute,
+            slot.name,
+            slot.key_source,
+            conditionals[slot.index]
+          ].inspect
+        }
+
+        declarations = state_entries.map { |entry|
+          [entry[:name], entry[:kind], entry[:default], entry[:scope], entry[:derived] && StateDirectives.condition_source(entry[:derived])].inspect
+        }
+
+        counts = @state_counts.filter_map { |count|
+          index = @indices[count[:collection]]
+
+          next unless index
+
+          [count[:name], index, count[:by], count[:when] && StateDirectives.condition_source(count[:when])].inspect
+        }
+
+        slots + declarations + counts
       end
 
       #: () -> Array[Hash[Symbol, untyped]]
@@ -235,6 +269,19 @@ module Herb
         end
 
         entries
+      end
+
+      #: () -> Hash[Integer, String]
+      def state_conditional_signatures
+        resolved = {} #: Hash[Integer, String]
+
+        @state_signatures.each do |node, signature|
+          index = @indices[node]
+
+          resolved[index] = signature if index
+        end
+
+        resolved
       end
 
       #: () -> Hash[Integer, Hash[Symbol, untyped]]
@@ -800,7 +847,7 @@ module Herb
         source = declaration.default
 
         if declaration.derived
-          StateDirectives.condition_names(declaration.derived).each do |name|
+          StateDirectives.read_names(declaration.derived).each do |name|
             source = source.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
           end
         end
@@ -824,7 +871,10 @@ module Herb
 
           info = state_conditional_for(node, states)
 
-          @state_conditionals[node] = info if info
+          next unless info
+
+          @state_signatures[node] = info.delete(:signature)
+          @state_conditionals[node] = info
         end
       end
 
@@ -840,6 +890,7 @@ module Herb
         conditions = else_position ? chain.take(else_position) : chain
 
         arms = [] #: Array[untyped]
+        sources = [] #: Array[String]
 
         conditions.each_with_index do |arm, branch|
           expression = condition_expression(arm)
@@ -862,11 +913,17 @@ module Herb
           StateDirectives.read_names(read).each { |name| rewrite_predicate(arm, name) }
 
           arms << arm_entry(read, branch)
+          sources << "#{StateDirectives.condition_source(read)}@#{branch}"
         end
 
         return nil if arms.empty?
 
-        { arms: arms, else: else_position }
+        { arms: arms, else: else_position, signature: signature_of(sources, else_position) }
+      end
+
+      #: (Array[String], Integer?) -> String
+      def signature_of(sources, else_position)
+        (sources + ["else@#{else_position}"]).join("|")
       end
 
       #: (untyped, Integer?) -> untyped
@@ -896,7 +953,11 @@ module Herb
 
         StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
 
-        { arms: [arm_entry(read, else_position)], else: 0 }
+        {
+          arms: [arm_entry(read, else_position)],
+          else: 0,
+          signature: signature_of(["!#{StateDirectives.condition_source(read)}@#{else_position}"], 0),
+        }
       end
 
       #: (untyped) -> Array[untyped]
@@ -928,6 +989,7 @@ module Herb
 
         declaration = states.fetch(read.name)
         arms = [] #: Array[untyped]
+        sources = [] #: Array[String]
 
         node.conditions.each_with_index do |arm, branch|
           list = condition_expression(arm)
@@ -947,12 +1009,15 @@ module Herb
 
           next unless comparands.is_a?(Array)
 
-          comparands.each { |comparand| arms << [read.name, comparand, branch] }
+          comparands.each do |comparand|
+            arms << [read.name, comparand, branch]
+            sources << "#{read.name}==#{comparand}@#{branch}"
+          end
         end
 
         else_branch = node.else_clause ? node.conditions.size : nil
 
-        { arms: arms, else: else_branch }
+        { arms: arms, else: else_branch, signature: signature_of(sources, else_branch) }
       end
 
       #: (untyped) -> String

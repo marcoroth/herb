@@ -108,6 +108,12 @@ module Herb
       # : () -> String
       def version: () -> String
 
+      # What a version stands for. It says a page and a payload were compiled from the same
+      # template, so it is taken from what a slot is and what a state means, and never from how
+      # either of them is spelled on the wire.
+      # : () -> Array[String]
+      def version_projection: () -> Array[String]
+
       # : () -> Array[Hash[Symbol, untyped]]
       def state_count_entries: () -> Array[Hash[Symbol, untyped]]
 
@@ -127,6 +133,9 @@ module Herb
 
       # : () -> Array[Hash[Symbol, untyped]]
       def state_entries: () -> Array[Hash[Symbol, untyped]]
+
+      # : () -> Hash[Integer, String]
+      def state_conditional_signatures: () -> Hash[Integer, String]
 
       # : () -> Hash[Integer, Hash[Symbol, untyped]]
       def state_conditional_entries: () -> Hash[Integer, Hash[Symbol, untyped]]
@@ -251,6 +260,9 @@ module Herb
 
       # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+      # : (Array[String], Integer?) -> String
+      def signature_of: (Array[String], Integer?) -> String
 
       # : (untyped, Integer?) -> untyped
       def arm_entry: (untyped, Integer?) -> untyped

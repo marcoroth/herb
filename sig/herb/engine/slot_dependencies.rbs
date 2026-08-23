@@ -58,6 +58,9 @@ module Herb
       # : (String, Array[String]?) -> Hash[Symbol, untyped]
       def build: (String, Array[String]?) -> Hash[Symbol, untyped]
 
+      # : (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
+      def declared_entry: (Hash[Symbol, untyped], String | Integer) -> Hash[String, untyped]
+
       # : (untyped) -> Hash[String, untyped]?
       def states_manifest: (untyped) -> Hash[String, untyped]?
 

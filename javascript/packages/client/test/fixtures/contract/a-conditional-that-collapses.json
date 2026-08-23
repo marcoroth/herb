@@ -1,21 +1,21 @@
 {
   "file": "app/views/contract/a-conditional-that-collapses.html.erb",
   "template": "<% if @on %><h1><%= @x %></h1><% else %><h1><%= @y %></h1><% end %>",
-  "rendered": "<!--herb-region:app/views/contract/a-conditional-that-collapses.html.erb:9d410987:0--><h1 data-herb-slot=\"0:child\">y</h1><!--/herb-region:app/views/contract/a-conditional-that-collapses.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-conditional-that-collapses.html.erb:9d410987:0--><h1 data-herb-slot=\"0:child\">y</h1><!--/herb-region:app/views/contract/a-conditional-that-collapses.html.erb-->",
+  "rendered": "<!--herb-region:app/views/contract/a-conditional-that-collapses.html.erb:22bdd1c0:0--><h1 data-herb-slot=\"0:child\">y</h1><!--/herb-region:app/views/contract/a-conditional-that-collapses.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-conditional-that-collapses.html.erb:22bdd1c0:0--><h1 data-herb-slot=\"0:child\">y</h1><!--/herb-region:app/views/contract/a-conditional-that-collapses.html.erb-->",
   "values": {
     "template": "app/views/contract/a-conditional-that-collapses.html.erb",
-    "version": "9d410987",
+    "version": "22bdd1c0",
     "occurrence": 0,
     "slots": {
       "0": "X"
     }
   },
-  "expected": "<!--herb-region:app/views/contract/a-conditional-that-collapses.html.erb:9d410987:0--><h1 data-herb-slot=\"0:child\">X</h1><!--/herb-region:app/views/contract/a-conditional-that-collapses.html.erb-->",
+  "expected": "<!--herb-region:app/views/contract/a-conditional-that-collapses.html.erb:22bdd1c0:0--><h1 data-herb-slot=\"0:child\">X</h1><!--/herb-region:app/views/contract/a-conditional-that-collapses.html.erb-->",
   "schema": {
     "file": "app/views/contract/a-conditional-that-collapses.html.erb",
     "identifier": "app/views/contract/a-conditional-that-collapses.html.erb",
-    "version": "9d410987",
+    "version": "22bdd1c0",
     "slots": [
       {
         "index": 0,
