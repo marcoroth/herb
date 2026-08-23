@@ -5,6 +5,17 @@ module Herb
   class Engine
     class SlotMarkers
       DEFAULT_TYPE = :child #: Symbol
+      ITEM_STATICS = "item" #: String
+      PARTS_STATICS = "parts" #: String
+      SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
+
+      # The Ruby source that turns a `name => value` list into the JSON a seeds marker or an
+      # item's seeds carry, keeping only what a state can hold.
+      #: (String) -> String
+      def self.seeds_expression(pairs)
+        "{ #{pairs} }.select { |_, v| #{SEED_VALUE_TYPES}.any? { |t| t === v } }" \
+          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }"
+      end
 
       #: (Integer, Symbol) -> String
       def slot_open(index, type)
@@ -23,9 +34,39 @@ module Herb
         "<!--/herb-slot:#{index}-->"
       end
 
-      #: (Integer, Integer) -> String
+      #: (Integer, Integer | String) -> String
       def branch(slot_index, branch_index)
         "<!--herb-branch:#{slot_index}:#{branch_index}-->"
+      end
+
+      #: (Integer, Integer | String) -> String
+      def statics_key(slot_index, branch_index)
+        "#{slot_index}:#{branch_index}"
+      end
+
+      #: (Integer) -> String
+      def item_statics_key(slot_index)
+        statics_key(slot_index, ITEM_STATICS)
+      end
+
+      #: (Integer) -> String
+      def parts_statics_key(slot_index)
+        statics_key(slot_index, PARTS_STATICS)
+      end
+
+      #: () -> String
+      def part
+        "<!--herb-part-->"
+      end
+
+      #: () -> String
+      def seeds_open_prefix
+        "<!--herb-seeds:"
+      end
+
+      #: () -> String
+      def seeds_open_suffix
+        "-->"
       end
 
       #: (Integer) -> String

@@ -590,9 +590,7 @@ module Herb
 
         pairs = names.map { |name| "#{name.inspect} => #{name}" }.join(", ")
 
-        "; #{SCOPE_BUFFER}#{index}[:seeds] = { #{pairs} }" \
-          ".select { |_, v| #{SlotVisitor::SEED_VALUE_TYPES}.any? { |t| t === v } }" \
-          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v };"
+        "; #{SCOPE_BUFFER}#{index}[:seeds] = #{SlotMarkers.seeds_expression(pairs)};"
       end
 
       #: (Integer) -> void

@@ -5,6 +5,17 @@ module Herb
     class SlotMarkers
       DEFAULT_TYPE: Symbol
 
+      ITEM_STATICS: String
+
+      PARTS_STATICS: String
+
+      SEED_VALUE_TYPES: String
+
+      # The Ruby source that turns a `name => value` list into the JSON a seeds marker or an
+      # item's seeds carry, keeping only what a state can hold.
+      # : (String) -> String
+      def self.seeds_expression: (String) -> String
+
       # : (Integer, Symbol) -> String
       def slot_open: (Integer, Symbol) -> String
 
@@ -14,8 +25,26 @@ module Herb
       # : (Integer) -> String
       def slot_close: (Integer) -> String
 
-      # : (Integer, Integer) -> String
-      def branch: (Integer, Integer) -> String
+      # : (Integer, Integer | String) -> String
+      def branch: (Integer, Integer | String) -> String
+
+      # : (Integer, Integer | String) -> String
+      def statics_key: (Integer, Integer | String) -> String
+
+      # : (Integer) -> String
+      def item_statics_key: (Integer) -> String
+
+      # : (Integer) -> String
+      def parts_statics_key: (Integer) -> String
+
+      # : () -> String
+      def part: () -> String
+
+      # : () -> String
+      def seeds_open_prefix: () -> String
+
+      # : () -> String
+      def seeds_open_suffix: () -> String
 
       # : (Integer) -> String
       def item_open_prefix: (Integer) -> String

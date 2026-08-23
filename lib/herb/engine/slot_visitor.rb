@@ -40,11 +40,9 @@ module Herb
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
       SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
-      PART_MARKER = "<!--herb-part-->" #: String
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
       COVERED = "_herb_covered_branches" #: String
-      ITEM_STATICS = "item" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
       OCCURRENCE = "_herb_occurrence" #: String
 
@@ -64,9 +62,7 @@ module Herb
       NAME_ATTRIBUTE = "data-herb-name" #: String
       NAMEABLE_TYPES = [:child, :collection, :conditional, :block].freeze #: Array[Symbol]
 
-      SEEDS_MARKER = "herb-seeds:" #: String
       SEEDS_LOCAL = "_herb_seeds" #: String
-      SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
 
       Slot = Data.define(
         :index,      #: Integer
@@ -782,9 +778,8 @@ module Herb
 
         pairs = seeded.map { |declaration| "#{declaration.name.inspect} => #{declaration.name}" }.join(", ")
 
-        "#{SEEDS_LOCAL} = { #{pairs} }.select { |_, v| #{SEED_VALUE_TYPES}.any? { |t| t === v } }" \
-          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }; " \
-          "#{@bufvar} << ::Herb::Engine.raw(\"<!--#{SEEDS_MARKER}\" + ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") + \"-->\")"
+        "#{SEEDS_LOCAL} = #{SlotMarkers.seeds_expression(pairs)}; " \
+          "#{@bufvar} << ::Herb::Engine.raw(#{@markers.seeds_open_prefix.inspect} + ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") + #{@markers.seeds_open_suffix.inspect})"
       end
 
       #: (StateDirectives::Declaration) -> String
@@ -1605,7 +1600,7 @@ module Herb
         branch_bodies(node).each_with_index do |body, branch_index|
           body.unshift(text_node(@markers.branch(slot_index, branch_index)))
 
-          park_branch("#{slot_index}:#{branch_index}", body, always: always)
+          park_branch(@markers.statics_key(slot_index, branch_index), body, always: always)
         end
       end
 
@@ -1710,7 +1705,7 @@ module Herb
           segments = attribute_segments(node)
           next unless segments
 
-          statics["#{index}:parts"] = @markers.branch(index, "parts") + segments.join(PART_MARKER)
+          statics[@markers.parts_statics_key(index)] = @markers.branch(index, SlotMarkers::PARTS_STATICS) + segments.join(@markers.part)
         end
       end
 
@@ -1741,10 +1736,10 @@ module Herb
         markup = SlotStatics.new(@pending).markup(body)
         return unless markup
 
-        key = "#{slot_index}:#{ITEM_STATICS}"
+        key = @markers.item_statics_key(slot_index)
 
         statics[key] = [
-          @markers.branch(slot_index, ITEM_STATICS),
+          @markers.branch(slot_index, SlotMarkers::ITEM_STATICS),
           @markers.item_open_prefix(slot_index),
           @markers.item_open_suffix,
           markup,

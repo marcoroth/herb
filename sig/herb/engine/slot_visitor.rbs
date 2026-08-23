@@ -32,15 +32,11 @@ module Herb
 
       SLOTS_DIRECTIVE: Regexp
 
-      PART_MARKER: String
-
       MODE_OPTION: Regexp
 
       MODES: Array[Symbol]
 
       COVERED: String
-
-      ITEM_STATICS: String
 
       OCCURRENCES: String
 
@@ -66,11 +62,7 @@ module Herb
 
       NAMEABLE_TYPES: Array[Symbol]
 
-      SEEDS_MARKER: String
-
       SEEDS_LOCAL: String
-
-      SEED_VALUE_TYPES: String
 
       class Slot < Data
         attr_reader index(): Integer
