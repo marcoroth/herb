@@ -8,7 +8,7 @@ import { tmpdir } from "os"
 import { join } from "path"
 
 import type { Node } from "@herb-tools/core"
-import type { RewriteContext } from "@herb-tools/rewriter"
+import type { RewriteContext } from "../src/index.js"
 
 describe("CustomRewriterLoader", () => {
   let tempDir: string

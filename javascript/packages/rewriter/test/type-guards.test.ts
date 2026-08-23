@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest"
-import { ASTRewriter, StringRewriter, isASTRewriterClass, isStringRewriterClass, isRewriterClass } from "@herb-tools/rewriter"
+import { ASTRewriter, StringRewriter, isASTRewriterClass, isStringRewriterClass, isRewriterClass } from "../src/index.js"
 
 import type { Node } from "@herb-tools/core"
 
