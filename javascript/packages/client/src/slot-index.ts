@@ -21,15 +21,16 @@
 import { ITEM_STATICS } from "./markers"
 import { HERB_ATTRIBUTES } from "./attributes"
 
-import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, staticsElements, withinBounds, withinRegion, withinRegionRange } from "./anchors"
+import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
-import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, parseStaticsIdentity, partsKey } from "./markers"
-import { attributeParts, attributeValue, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames, withoutMarkers } from "./fragments"
+import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } from "./markers"
+import { attributeValue, blankSlots, fillSlots, interpolateParts, templateNames, withoutMarkers } from "./fragments"
+import { Statics } from "./statics"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
+import type { AddItemOptions, AppliedValue, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -42,7 +43,7 @@ export class SlotIndex {
   #journal = new Map<RevertToken, Inverse[]>()
   #recording: Inverse[] | null = null
   #nextToken = 1
-  #statics = new Map<string, Statics>()
+  #statics = new Statics()
   #cause: BuildCause = "client"
   #built: Built | null = null
   #listeners = new Set<SlotListener>()
@@ -104,7 +105,7 @@ export class SlotIndex {
     }
 
     for (const root of list) {
-      this.#scanStatics(root)
+      this.#statics.adopt(root)
     }
 
     return result
@@ -705,7 +706,7 @@ export class SlotIndex {
       return
     }
 
-    this.#park(slot.region, itemStaticsKey(slot.index), this.#rowFragment(item))
+    this.#statics.park(slot.region, itemStaticsKey(slot.index), this.#rowFragment(item))
   }
 
   #buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}, text = false): void {
@@ -788,7 +789,7 @@ export class SlotIndex {
   }
 
   #partsResolver(slot: Slot): PartsResolver {
-    return (index) => this.#partsFor(slot.region.file, index)
+    return (index) => this.#statics.parts(slot.region.file, index)
   }
 
   #dropItem(slot: Slot, item: Item): void {
@@ -1274,11 +1275,7 @@ export class SlotIndex {
       return null
     }
 
-    return interpolateParts(this.#partsFor(slot.region.file, slot.index), value)
-  }
-
-  #partsFor(file: string, index: number): AttributeParts | null {
-    return attributeParts(this.parked(file, partsKey(index)))
+    return interpolateParts(this.#statics.parts(slot.region.file, slot.index), value)
   }
 
   capture(slot: Slot): boolean {
@@ -1286,59 +1283,27 @@ export class SlotIndex {
       return false
     }
 
-    const fragment = this.rangeFor(slot).cloneContents()
-
-    blankSlots(fragment)
-
-    return this.#park(slot.region, branchKey(slot.index, slot.branch), fragment)
+    return this.#statics.park(slot.region, branchKey(slot.index, slot.branch), this.#statics.blanked(this.rangeFor(slot).cloneContents()))
   }
 
   parked(file: string, key: string): DocumentFragment | null {
-    return this.#statics.get(file)?.fragments.get(key) ?? null
+    return this.#statics.parked(file, key)
   }
 
   parkedKeys(file: string): string[] {
-    return [...(this.#statics.get(file)?.fragments.keys() ?? [])]
+    return this.#statics.keys(file)
   }
 
   branchesFor(file: string, slot: number): number[] {
-    const prefix = `${slot}:`
-
-    return this.parkedKeys(file)
-      .filter((key) => key.startsWith(prefix))
-      .map((key) => numericBranch(key.slice(prefix.length)))
-      .filter((branch): branch is number => branch !== null)
-      .sort((left, right) => left - right)
+    return this.#statics.branches(file, slot)
   }
 
   renderModeFor(file: string, slot?: number): RenderMode {
-    if (slot === undefined) {
-      if (this.parkedKeys(file).length > 0) {
-        return "client"
-      }
-
-      return "server"
-    }
-
-    if (this.branchesFor(file, slot).length > 0) {
-      return "client"
-    }
-
-    return "server"
+    return this.#statics.mode(file, slot)
   }
 
   materialize(file: string, key: string, dynamics: SlotValues = {}): DocumentFragment | null {
-    const statics = this.parked(file, key)
-
-    if (!statics) {
-      return null
-    }
-
-    const copy = statics.cloneNode(true) as DocumentFragment
-
-    fillSlots(copy, dynamics, false, (index) => this.#partsFor(file, index))
-
-    return copy
+    return this.#statics.materialize(file, key, dynamics)
   }
 
   switchBranch(slot: Slot, branch: number | null, dynamics: SlotValues = {}): boolean {
@@ -1406,7 +1371,7 @@ export class SlotIndex {
   clear(): void {
     this.#regions = []
     this.#visited = new WeakSet()
-    this.#statics = new Map()
+    this.#statics.clear()
   }
 
   get size(): number {
@@ -1699,47 +1664,6 @@ export class SlotIndex {
     }
 
     return null
-  }
-
-  #scanStatics(root: Node): void {
-    for (const element of staticsElements(root)) {
-      const identity = this.#staticsIdentity(element)
-
-      if (!identity) {
-        continue
-      }
-
-      for (const [key, fragment] of parkedBranches(element)) {
-        this.#park(identity, key, fragment)
-      }
-
-      element.remove()
-    }
-  }
-
-  #park(identity: StaticsIdentity, key: string, fragment: DocumentFragment): boolean {
-    const { file, version } = identity
-    const held = this.#statics.get(file)
-
-    let statics: Statics = { version, fragments: new Map() }
-
-    if (held && held.version === version) {
-      statics = held
-    }
-
-    this.#statics.set(file, statics)
-
-    if (statics.fragments.has(key)) {
-      return false
-    }
-
-    statics.fragments.set(key, fragment)
-
-    return true
-  }
-
-  #staticsIdentity(element: HTMLTemplateElement): StaticsIdentity | null {
-    return parseStaticsIdentity(element.getAttribute(HERB_ATTRIBUTES.region) ?? "")
   }
 
   #nameSlot(element: Element, state: ParseState): void {
