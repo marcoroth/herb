@@ -141,7 +141,7 @@ export function closingFor(open: Comment, index: number): Comment | null {
   return null
 }
 
-export function skeletonElements(root: Node): HTMLTemplateElement[] {
+export function staticsElements(root: Node): HTMLTemplateElement[] {
   if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
     return []
   }

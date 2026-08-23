@@ -21,7 +21,7 @@
 import { ITEM_STATICS } from "./markers"
 import { HERB_ATTRIBUTES } from "./attributes"
 
-import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, skeletonElements, withinBounds, withinRegion, withinRegionRange } from "./anchors"
+import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, staticsElements, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
@@ -42,7 +42,7 @@ export class SlotIndex {
   #journal = new Map<RevertToken, Inverse[]>()
   #recording: Inverse[] | null = null
   #nextToken = 1
-  #skeletons = new Map<string, Statics>()
+  #statics = new Map<string, Statics>()
   #applying = 0
   #observer: MutationObserver | null = null
 
@@ -98,7 +98,7 @@ export class SlotIndex {
     }
 
     for (const root of list) {
-      this.#scanSkeletons(root)
+      this.#scanStatics(root)
     }
 
     return result
@@ -609,10 +609,10 @@ export class SlotIndex {
   }
 
   #rowTemplate(slot: Slot): DocumentFragment | null {
-    const skeleton = this.skeletonFor(slot.region.file, itemStaticsKey(slot.index))
+    const statics = this.parked(slot.region.file, itemStaticsKey(slot.index))
 
-    if (skeleton) {
-      return skeleton
+    if (statics) {
+      return statics
     }
 
     const [item] = this.#itemsInDocumentOrder(slot)
@@ -1173,7 +1173,7 @@ export class SlotIndex {
   }
 
   #partsFor(file: string, index: number): AttributeParts | null {
-    return attributeParts(this.skeletonFor(file, partsKey(index)))
+    return attributeParts(this.parked(file, partsKey(index)))
   }
 
   capture(slot: Slot): boolean {
@@ -1188,18 +1188,18 @@ export class SlotIndex {
     return this.#park(slot.region, branchKey(slot.index, slot.branch), fragment)
   }
 
-  skeletonFor(file: string, key: string): DocumentFragment | null {
-    return this.#skeletons.get(file)?.fragments.get(key) ?? null
+  parked(file: string, key: string): DocumentFragment | null {
+    return this.#statics.get(file)?.fragments.get(key) ?? null
   }
 
-  skeletonKeys(file: string): string[] {
-    return [...(this.#skeletons.get(file)?.fragments.keys() ?? [])]
+  parkedKeys(file: string): string[] {
+    return [...(this.#statics.get(file)?.fragments.keys() ?? [])]
   }
 
   branchesFor(file: string, slot: number): number[] {
     const prefix = `${slot}:`
 
-    return this.skeletonKeys(file)
+    return this.parkedKeys(file)
       .filter((key) => key.startsWith(prefix))
       .map((key) => numericBranch(key.slice(prefix.length)))
       .filter((branch): branch is number => branch !== null)
@@ -1208,7 +1208,7 @@ export class SlotIndex {
 
   renderModeFor(file: string, slot?: number): RenderMode {
     if (slot === undefined) {
-      if (this.skeletonKeys(file).length > 0) {
+      if (this.parkedKeys(file).length > 0) {
         return "client"
       }
 
@@ -1223,13 +1223,13 @@ export class SlotIndex {
   }
 
   materialize(file: string, key: string, dynamics: SlotValues = {}): DocumentFragment | null {
-    const skeleton = this.skeletonFor(file, key)
+    const statics = this.parked(file, key)
 
-    if (!skeleton) {
+    if (!statics) {
       return null
     }
 
-    const copy = skeleton.cloneNode(true) as DocumentFragment
+    const copy = statics.cloneNode(true) as DocumentFragment
 
     fillSlots(copy, dynamics, false, (index) => this.#partsFor(file, index))
 
@@ -1301,7 +1301,7 @@ export class SlotIndex {
   clear(): void {
     this.#regions = []
     this.#visited = new WeakSet()
-    this.#skeletons = new Map()
+    this.#statics = new Map()
   }
 
   get size(): number {
@@ -1567,8 +1567,8 @@ export class SlotIndex {
     return null
   }
 
-  #scanSkeletons(root: Node): void {
-    for (const element of skeletonElements(root)) {
+  #scanStatics(root: Node): void {
+    for (const element of staticsElements(root)) {
       const identity = this.#staticsIdentity(element)
 
       if (!identity) {
@@ -1585,7 +1585,7 @@ export class SlotIndex {
 
   #park(identity: StaticsIdentity, key: string, fragment: DocumentFragment): boolean {
     const { file, version } = identity
-    const held = this.#skeletons.get(file)
+    const held = this.#statics.get(file)
 
     let statics: Statics = { version, fragments: new Map() }
 
@@ -1593,7 +1593,7 @@ export class SlotIndex {
       statics = held
     }
 
-    this.#skeletons.set(file, statics)
+    this.#statics.set(file, statics)
 
     if (statics.fragments.has(key)) {
       return false

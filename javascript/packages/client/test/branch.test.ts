@@ -76,10 +76,10 @@ describe("markup parked in a template", () => {
     index.scan(document.body)
     expect(index.slot(FILE, 3)).toBeNull()
 
-    const skeleton = index.skeletonFor(FILE, "0:1")!.cloneNode(true) as DocumentFragment
+    const parked = index.parked(FILE, "0:1")!.cloneNode(true) as DocumentFragment
     const range = index.rangeFor(index.slot(FILE, 0)!)
 
-    range.insertNode(skeleton)
+    range.insertNode(parked)
     index.scan(document.body)
 
     expect(index.slot(FILE, 3)?.type).toBe("child")
@@ -87,7 +87,7 @@ describe("markup parked in a template", () => {
   })
 })
 
-describe("a skeleton once it has been read", () => {
+describe("parked statics once they have been read", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
   const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b>Hello</b></template><!--/herb-region:${FILE}-->`
@@ -100,7 +100,7 @@ describe("a skeleton once it has been read", () => {
     expect(document.querySelector("template")).toBeNull()
     expect(index.slot(FILE, 0)?.type).toBe("conditional")
     expect(index.regionsFor(FILE)).toHaveLength(1)
-    expect(index.skeletonFor(FILE, "0:1")?.textContent).toBe("Hello")
+    expect(index.parked(FILE, "0:1")?.textContent).toBe("Hello")
   })
 
   test("cannot be copied into the page by an update that spans it", () => {
@@ -141,16 +141,16 @@ describe("rendering a branch that never rendered, without a round trip", () => {
     <!--/herb-region:${FILE}-->
   `
 
-  test("parks the skeleton without making it addressable", () => {
+  test("parks the statics without making them addressable", () => {
     const index = new SlotIndex()
     document.body.innerHTML = page
     index.scan(document.body)
 
-    expect(index.skeletonKeys(FILE)).toEqual(["0:1"])
+    expect(index.parkedKeys(FILE)).toEqual(["0:1"])
     expect(index.slot(FILE, 3)).toBeNull()
   })
 
-  test("builds the branch from the skeleton and the values alone", () => {
+  test("builds the branch from the statics and the values alone", () => {
     const index = new SlotIndex()
     document.body.innerHTML = page
     index.scan(document.body)
@@ -166,13 +166,13 @@ describe("rendering a branch that never rendered, without a round trip", () => {
     expect(index.slot(FILE, 0)?.branch).toBe(1)
   })
 
-  test("keeps one copy of a skeleton however many times the template rendered", () => {
+  test("keeps one copy of the statics however many times the template rendered", () => {
     const index = new SlotIndex()
     document.body.innerHTML = page + nth(page, 1) + nth(page, 2)
     index.scan(document.body)
 
     expect(index.regionsFor(FILE)).toHaveLength(3)
-    expect(index.skeletonKeys(FILE)).toEqual(["0:1"])
+    expect(index.parkedKeys(FILE)).toEqual(["0:1"])
   })
 
   test("leaves a slot alone when the server said nothing about it", () => {
@@ -276,7 +276,7 @@ describe("a page where the server chose a different format per template", () => 
     document.body.append(next)
     index.scan(next)
 
-    expect(index.skeletonKeys(FILE)).toEqual(["0:2"])
+    expect(index.parkedKeys(FILE)).toEqual(["0:2"])
     expect(index.materialize(FILE, "0:1")).toBeNull()
   })
 
@@ -318,7 +318,7 @@ describe("statics parked once for the page", () => {
     index.scan(document.body)
 
     expect(index.regionsFor(FILE)).toHaveLength(3)
-    expect(index.skeletonKeys(FILE)).toEqual(["0:1", "0:2", "7:1"])
+    expect(index.parkedKeys(FILE)).toEqual(["0:1", "0:2", "7:1"])
     expect(document.querySelector("template")).toBeNull()
   })
 
@@ -362,7 +362,7 @@ describe("statics parked once for the page", () => {
     document.body.innerHTML = `<template data-herb-region="no-version-here"><!--herb-branch:0:1--><b>x</b></template>`
     index.scan(document.body)
 
-    expect(index.skeletonKeys("no-version-here")).toEqual([])
+    expect(index.parkedKeys("no-version-here")).toEqual([])
     expect(document.querySelector("template"), "an unreadable one is left alone").not.toBeNull()
   })
 
@@ -381,7 +381,7 @@ describe("output the compiler actually emits", () => {
     index.scan(document.body)
 
     expect(index.slot(VIEW, 0)?.branch).toBe(1)
-    expect(index.skeletonKeys(VIEW)).toEqual(["0:0"])
+    expect(index.parkedKeys(VIEW)).toEqual(["0:0"])
     expect(index.renderModeFor(VIEW, 0)).toBe("client")
     expect(index.materialize(VIEW, "0:1")).toBeNull()
 
@@ -404,7 +404,7 @@ describe("output the compiler actually emits", () => {
 
     index.scan(document.body)
 
-    expect(index.skeletonKeys(VIEW)).toEqual(["0:0", "1:0"])
+    expect(index.parkedKeys(VIEW)).toEqual(["0:0", "1:0"])
 
     index.rangeFor(index.slot(VIEW, 0)!).insertNode(index.materialize(VIEW, "0:0")!)
     index.scan(document.body)
@@ -458,7 +458,7 @@ describe("keeping a branch that rendered", () => {
 
     expect(index.materialize(VIEW, "0:1")).toBeNull()
     expect(index.capture(slot)).toBe(true)
-    expect(index.skeletonKeys(VIEW)).toEqual(["0:1"])
+    expect(index.parkedKeys(VIEW)).toEqual(["0:1"])
 
     index.update(slot, "")
 
@@ -478,10 +478,10 @@ describe("keeping a branch that rendered", () => {
     index.scan(document.body)
     index.capture(index.slot(VIEW, 0)!)
 
-    const skeleton = index.skeletonFor(VIEW, "0:1")!
+    const parked = index.parked(VIEW, "0:1")!
 
-    expect(skeleton.textContent).toBe("")
-    expect(skeleton.querySelector("span")?.getAttribute("class")).toBe("")
+    expect(parked.textContent).toBe("")
+    expect(parked.querySelector("span")?.getAttribute("class")).toBe("")
   })
 
   test("empties a slot inside a slot without tripping over what went with it", () => {
@@ -491,11 +491,11 @@ describe("keeping a branch that rendered", () => {
     index.scan(document.body)
     index.capture(index.slot(VIEW, 0)!)
 
-    const skeleton = index.skeletonFor(VIEW, "0:1")!
+    const parked = index.parked(VIEW, "0:1")!
 
-    expect(skeleton.textContent).toBe("")
-    expect(skeleton.querySelector("p"), "the markup around the slot stays").not.toBeNull()
-    expect(skeleton.querySelector("b"), "what the slot held goes").toBeNull()
+    expect(parked.textContent).toBe("")
+    expect(parked.querySelector("p"), "the markup around the slot stays").not.toBeNull()
+    expect(parked.querySelector("b"), "what the slot held goes").toBeNull()
   })
 
   test("defers to what the server parked", () => {
@@ -515,7 +515,7 @@ describe("keeping a branch that rendered", () => {
     index.scan(document.body)
 
     expect(index.capture(index.slot(FILE, 0)!)).toBe(false)
-    expect(index.skeletonKeys(FILE)).toEqual([])
+    expect(index.parkedKeys(FILE)).toEqual([])
   })
 })
 

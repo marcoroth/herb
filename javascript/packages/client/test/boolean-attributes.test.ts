@@ -51,7 +51,7 @@ beforeEach(() => {
 
 afterEach(() => state.disconnect())
 
-describe("a skeleton derived from a live row", () => {
+describe("a row template taken from a live row", () => {
   test("is born without the row's boolean attributes", () => {
     document.body.innerHTML =
       `<!--herb-region:${FILE}:aaaaaaaa:0-->` +

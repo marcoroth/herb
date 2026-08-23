@@ -59,7 +59,7 @@ describe("interpolated attribute slots", () => {
     expect(row("li")?.id).toBe("message_1")
   })
 
-  test("a skeleton-built row interpolates the values it is given", () => {
+  test("a row built from parked statics interpolates the values it is given", () => {
     const collection = slots.slot(FILE, 0)!
     const item = slots.addItem(collection, "7", { values: { id: "7", class: ["x", "y"] } })
 

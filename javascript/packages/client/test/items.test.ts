@@ -59,7 +59,7 @@ describe("addItem", () => {
     expect(keys()).toEqual(["a", "c", "b"])
   })
 
-  test("builds from the parked skeleton into an empty collection", () => {
+  test("builds from the parked row into an empty collection", () => {
     document.body.innerHTML = EMPTY
     index = new SlotIndex()
     index.scan(document.body)
@@ -72,7 +72,7 @@ describe("addItem", () => {
     expect(document.querySelector("#x")).not.toBeNull()
   })
 
-  test("prefers the skeleton over cloning a live row", () => {
+  test("prefers the parked row over cloning a live row", () => {
     document.querySelector("#a")!.setAttribute("data-decorated", "yes")
 
     const parked = document.createElement("template")
