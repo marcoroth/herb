@@ -211,7 +211,7 @@ export class CLI {
       }
 
       const config = await Config.loadForCLI(configPath, version, true)
-      const extensionAdded = addHerbExtensionRecommendation(this.projectPath)
+      const extensionAdded = existsSync(resolve(this.projectPath, ".vscode")) && addHerbExtensionRecommendation(this.projectPath)
 
       console.log(`\n✓ Configuration initialized at ${config.path}`)
 
