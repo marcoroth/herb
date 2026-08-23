@@ -2,6 +2,7 @@ export const RUNTIME_REPORT_VERSION = 1;
 export const RUNTIME_REPORT_SELECTOR = 'script[type="application/json"][data-herb-runtime-report]';
 export const MAX_RUNTIME_DIAGNOSTICS = 200;
 export const DEFAULT_ORIGIN = 'unknown';
+export const UNKNOWN_TEMPLATE = '(unknown template)';
 export const DEFAULT_SEVERITY: RuntimeSeverity = 'error';
 export const RENDER_VIA_VALUES = ['layout', 'template', 'partial', 'component'] as const;
 export const RUNTIME_SEVERITIES = ['error', 'warning', 'info', 'hint'] as const;
@@ -66,6 +67,7 @@ export interface RuntimeDiagnostic {
   value?: string;
   fix?: RuntimeFix;
   source?: string;
+  element?: Element | null;
 }
 
 export interface RuntimeReport {
@@ -88,6 +90,7 @@ export interface NormalizedDiagnostic {
   docsUrl: string | null;
   value: string | null;
   fix: NormalizedFix | null;
+  element: Element | null;
 }
 
 export interface NormalizedRuntimeReport {
@@ -261,7 +264,12 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     docsUrl: asString(value.docsUrl),
     value: asString(value.value),
     fix: normalizeFix(value.fix, template, sources),
+    element: asElement(value.element),
   };
+}
+
+function asElement(value: unknown): Element | null {
+  return typeof Element !== 'undefined' && value instanceof Element ? value : null;
 }
 
 function normalizeSources(value: unknown): Record<string, string> {

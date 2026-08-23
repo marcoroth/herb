@@ -110,6 +110,7 @@ export class SlotActions {
       if (!balancedQuotes(value)) {
         report({
           template: this.#templateOf(element),
+          element,
           message: `\`${attribute}="${value}"\` has an unbalanced quote`,
           code: "herb-invalid-action",
           severity: "error",
@@ -131,6 +132,7 @@ export class SlotActions {
     if (clause.event === "" || (clause.rest.trim() === "" && !schema.bare)) {
       report({
         template: this.#templateOf(element),
+        element,
         message: `\`${attribute}\` has a clause with ${clause.event === "" ? "no event before the arrow" : "nothing after the event"}`,
         code: "herb-invalid-action",
         severity: "error",
@@ -154,7 +156,7 @@ export class SlotActions {
       const kind = resolved[1].kind
 
       if (schema.needs && kind !== schema.needs && kind !== "seeded") {
-        this.#reportKind(resolved[0].region.file, attribute, name, kind, schema.needs)
+        this.#reportKind(resolved[0].region.file, attribute, name, kind, schema.needs, element)
       }
     }
   }
@@ -165,6 +167,7 @@ export class SlotActions {
     if (separator < 1) {
       report({
         template: this.#templateOf(element),
+        element,
         message: `\`${assignment.trim()}\` in \`${HERB_ATTRIBUTES.set}\` is not a \`state=value\` pair`,
         code: "herb-invalid-action",
         severity: "error",
@@ -184,6 +187,7 @@ export class SlotActions {
     if ((kind === "boolean" && raw !== "true" && raw !== "false") || (kind === "integer" && !/^-?\d+$/.test(raw))) {
       report({
         template: resolved[0].region.file,
+        element,
         message: `\`${name}=${raw}\` does not parse as a ${kind}; \`${name}\` is declared as one`,
         code: "herb-state-type",
         severity: "error",
@@ -192,9 +196,10 @@ export class SlotActions {
     }
   }
 
-  #reportKind(template: string, attribute: string, name: string, kind: string, wanted: string): void {
+  #reportKind(template: string, attribute: string, name: string, kind: string, wanted: string, element: Element | null = null): void {
     report({
       template,
+      element,
       message: `\`${attribute}\` on \`${name}\` can never work, because \`${name}\` is a ${kind} and it needs a ${wanted}`,
       code: "herb-state-type",
       severity: "error",
@@ -288,7 +293,8 @@ export class SlotActions {
 
     if (!scope) {
       report({
-        template: "",
+        template: this.#templateOf(element),
+        element,
         message: `nothing around this element declares the state \`${name}\``,
         code: "herb-unknown-state",
         severity: "error",
@@ -331,7 +337,8 @@ export class SlotActions {
 
       if (separator < 1) {
         report({
-          template: "",
+          template: this.#templateOf(element),
+          element,
           message: `\`${assignment}\` in \`${HERB_ATTRIBUTES.set}\` is not a \`state=value\` pair`,
           code: "herb-invalid-action",
           severity: "error",
@@ -360,6 +367,7 @@ export class SlotActions {
       if ((kind === "boolean" && raw !== "true" && raw !== "false") || (kind === "integer" && !/^-?\d+$/.test(raw))) {
         report({
           template: scope.region.file,
+          element,
           message: `\`${name}=${raw}\` does not parse as a ${kind}; \`${name}\` is declared as one`,
           code: "herb-state-type",
           severity: "error",
@@ -387,6 +395,7 @@ export class SlotActions {
       if (declaration.kind !== "boolean" && declaration.kind !== "seeded") {
         report({
           template: scope.region.file,
+          element,
           message: `\`${HERB_ATTRIBUTES.toggle}\` on \`${name}\` did nothing, because \`${name}\` is a ${declaration.kind} and toggling needs a boolean`,
           code: "herb-state-type",
           severity: "error",
