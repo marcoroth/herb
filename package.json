@@ -18,7 +18,7 @@
     "dedent": "^1.7.2",
     "esbuild-plugin-copy": "^2.1.1",
     "nx": "23.1.1",
-    "oxlint": "^1.78.0",
+    "oxlint": "^1.79.0",
     "playwright": "^1.62.1",
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
