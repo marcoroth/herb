@@ -22,9 +22,11 @@ module Herb
 
       attr_accessor bufvar: String
 
+      attr_reader markers: SlotMarkers
+
       attr_reader slots: Array[Slot]
 
-      attr_reader state_presence: Hash[Integer, untyped]
+      attr_reader states: StateCompiler
 
       attr_reader document: untyped
 
@@ -56,13 +58,9 @@ module Herb
 
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
-      STATE_KEYWORDS: Hash[String, Symbol]
-
       NAME_ATTRIBUTE: String
 
       NAMEABLE_TYPES: Array[Symbol]
-
-      SEEDS_LOCAL: String
 
       class Slot < Data
         attr_reader index(): Integer
@@ -111,36 +109,66 @@ module Herb
       # What a version stands for. It says a page and a payload were compiled from the same
       # template, so it is taken from what a slot is and what a state means, and never from how
       # either of them is spelled on the wire.
-      # : () -> Array[String]
-      def version_projection: () -> Array[String]
-
-      # : () -> Array[Hash[Symbol, untyped]]
-      def state_count_entries: () -> Array[Hash[Symbol, untyped]]
-
       # : () -> Hash[Symbol, untyped]
       def state_declarations: () -> Hash[Symbol, untyped]
-
-      # The names of the seeded states declared at the top of the template, which only the server
-      # can evaluate, so a payload carries them for the states the client cannot compute.
-      # : () -> Array[String]
-      def seeded_region_states: () -> Array[String]
-
-      # The names of the seeded states declared inside a collection's item body, keyed by the
-      # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
-      # so a row the client builds for itself has no way to learn it from the markup.
-      # : () -> Hash[Integer, Array[String]]
-      def seeded_item_states: () -> Hash[Integer, Array[String]]
 
       # : () -> Array[Hash[Symbol, untyped]]
       def state_entries: () -> Array[Hash[Symbol, untyped]]
 
-      # : () -> Hash[Integer, String]
-      def state_conditional_signatures: () -> Hash[Integer, String]
-
       # : () -> Hash[Integer, Hash[Symbol, untyped]]
       def state_conditional_entries: () -> Hash[Integer, Hash[Symbol, untyped]]
 
-      def inspect: () -> untyped
+      # : () -> Hash[Integer, String]
+      def state_conditional_signatures: () -> Hash[Integer, String]
+
+      # : () -> Array[Hash[Symbol, untyped]]
+      def state_count_entries: () -> Array[Hash[Symbol, untyped]]
+
+      # : () -> Hash[Integer, untyped]
+      def state_presence: () -> Hash[Integer, untyped]
+
+      # : () -> Array[String]
+      def seeded_region_states: () -> Array[String]
+
+      # : () -> Hash[Integer, Array[String]]
+      def seeded_item_states: () -> Hash[Integer, Array[String]]
+
+      # What the state compiler asks about the tree it is compiling into.
+      # : () -> untyped
+      def current_collection: () -> untyped
+
+      # : () -> bool
+      def in_item_body?: () -> bool
+
+      # : () -> bool
+      def inline?: () -> bool
+
+      # : (untyped) -> untyped
+      def open_tag_for: (untyped) -> untyped
+
+      # : () -> Array[untyped]
+      attr_reader slot_nodes: untyped
+
+      # : (untyped) -> untyped
+      def scope_of: (untyped) -> untyped
+
+      # : (Integer, Slot) -> void
+      def replace_slot: (Integer, Slot) -> void
+
+      # : (untyped, Integer) -> void
+      def assign_index: (untyped, Integer) -> void
+
+      # : () -> bool
+      def marking?: () -> bool
+
+      # : () -> Array[String]
+      def version_projection: () -> Array[String]
+
+      # The names of the seeded states declared at the top of the template, which only the server
+      # can evaluate, so a payload carries them for the states the client cannot compute.
+      # The names of the seeded states declared inside a collection's item body, keyed by the
+      # : () -> String
+      def inspect: () -> String
 
       # : () -> String
       def identifier: () -> String
@@ -207,20 +235,37 @@ module Herb
 
       def visit_collection_node: (untyped node) -> untyped
 
+      # : (untyped) -> bool
+      def continuation?: (untyped) -> bool
+
+      # : (untyped) -> bool
+      def exhaustive?: (untyped) -> bool
+
+      # : (untyped) -> Array[untyped]
+      def conditional_chain: (untyped) -> Array[untyped]
+
+      # : (untyped) -> bool
+      def blank_child?: (untyped) -> bool
+
+      def erb_output?: (untyped opening) -> untyped
+
+      # : (untyped) -> untyped
+      def continuation_of: (untyped) -> untyped
+
+      def text_node: (untyped content) -> untyped
+
+      def erb_code_node: (untyped code) -> untyped
+
+      def erb_output_node: (untyped code) -> untyped
+
       private
 
       def visit_children_with_paths: (untyped children) -> untyped
 
       def visit_branching_node: (untyped node) -> untyped
 
-      # : (untyped) -> bool
-      def continuation?: (untyped) -> bool
-
       # : () -> void
       def collapse_invariant_conditionals: () -> void
-
-      # : (untyped) -> bool
-      def exhaustive?: (untyped) -> bool
 
       # : (String) -> bool
       def branching_shape?: (String) -> bool
@@ -237,83 +282,8 @@ module Herb
       # : (untyped) -> Symbol
       def attribute_type_for: (untyped) -> Symbol
 
-      # : (untyped, Array[untyped]) -> void
-      def register_state_directive: (untyped, Array[untyped]) -> void
-
-      # : (String?) -> Symbol
-      def local_kind: (String?) -> Symbol
-
-      # : (untyped) -> Hash[String, StateDirectives::Declaration]
-      def states_for: (untyped) -> Hash[String, StateDirectives::Declaration]
-
-      # : () -> void
-      def apply_states: () -> void
-
-      # : (Array[StateDirectives::Declaration]) -> String?
-      def seeds_marker: (Array[StateDirectives::Declaration]) -> String?
-
-      # : (StateDirectives::Declaration) -> String
-      def state_assignment: (StateDirectives::Declaration) -> String
-
-      # : () -> void
-      def classify_state_conditionals: () -> void
-
-      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
-      def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
-
-      # : (Array[String], Integer?) -> String
-      def signature_of: (Array[String], Integer?) -> String
-
-      # : (untyped, Integer?) -> Hash[String, untyped]
-      def arm_entry: (untyped, Integer?) -> Hash[String, untyped]
-
-      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
-      def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
-
-      # : (untyped) -> Array[untyped]
-      def conditional_chain: (untyped) -> Array[untyped]
-
-      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
-      def state_case_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
-
-      # : (untyped) -> String
-      def condition_expression: (untyped) -> String
-
       # : (untyped) -> untyped
       def convert_helper_boolean_attribute: (untyped) -> untyped
-
-      # : (untyped) -> untyped
-      def register_count_fold: (untyped) -> untyped
-
-      # : (untyped) -> void
-      def check_state_assignment: (untyped) -> void
-
-      # : (StateDirectives::FoldIncrement, when_read: untyped) -> void
-      def register_count: (StateDirectives::FoldIncrement, when_read: untyped) -> void
-
-      # : () -> void
-      def check_state_count_reads: () -> void
-
-      # : (untyped) -> bool
-      def blank_child?: (untyped) -> bool
-
-      # : (untyped, String) -> void
-      def rewrite_predicate: (untyped, String) -> void
-
-      # : (untyped, String) -> untyped
-      def rewrite_literal_predicate: (untyped, String) -> untyped
-
-      # : (untyped) -> untyped
-      def predicate_token_for: (untyped) -> untyped
-
-      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
-      def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
-
-      # : () -> void
-      def check_state_value_reads: () -> void
-
-      # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
-      def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
 
       # : (untyped, untyped, Integer, untyped, Integer) -> void
       def record_named_element: (untyped, untyped, Integer, untyped, Integer) -> void
@@ -371,8 +341,6 @@ module Herb
       # : (untyped) -> String?
       def attribute_expression_for: (untyped) -> String?
 
-      def erb_output?: (untyped opening) -> untyped
-
       def insert_markers: (untyped node) -> untyped
 
       # : (untyped) -> Integer?
@@ -381,10 +349,8 @@ module Herb
       # : (untyped, Integer?) -> void
       def mark_branches: (untyped, Integer?) -> void
 
-      # : (String, Array[untyped]) -> void
       # : (String, Array[untyped], ?always: bool) -> void
-      def park_branch: (String, Array[untyped]) -> void
-                     | (String, Array[untyped], ?always: bool) -> void
+      def park_branch: (String, Array[untyped], ?always: bool) -> void
 
       # : (untyped) -> void
       def append_statics: (untyped) -> void
@@ -394,9 +360,6 @@ module Herb
 
       # : (untyped) -> Array[Array[untyped]]
       def branch_bodies: (untyped) -> Array[Array[untyped]]
-
-      # : (untyped) -> untyped
-      def continuation_of: (untyped) -> untyped
 
       # : (untyped, Integer?) -> void
       def wrap_items: (untyped, Integer?) -> void
@@ -422,12 +385,6 @@ module Herb
       def wrap_displaced: () -> untyped
 
       def region_open: () -> untyped
-
-      def text_node: (untyped content) -> untyped
-
-      def erb_code_node: (untyped code) -> untyped
-
-      def erb_output_node: (untyped code) -> untyped
 
       def comment_node: (untyped text) -> untyped
 
