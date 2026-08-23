@@ -53,7 +53,31 @@ describe("saying what changed", () => {
       ["item-removed", "a"],
       ["item-added", "b"],
       ["value", null],
+      ["built", null],
     ])
+  })
+
+  test("says what a payload built once the payload has landed", () => {
+    document.body.innerHTML = ITEMS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.apply({
+      template: FILE,
+      version: "bbbbbbbb",
+      occurrence: 0,
+      slots: { 0: { items: { b: { 1: "two" } } } },
+    } as Payload)
+
+    const last = seen[seen.length - 1]
+
+    expect(last.operation).toBe("built")
+    expect(last.cause).toBe("apply")
+    expect(last.built?.items.map((entry) => entry.item.key)).toEqual(["b"])
+    expect(last.built?.branches).toEqual([])
   })
 
   test("announces rewriting one item as an update, not as bare markup", () => {

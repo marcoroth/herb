@@ -116,8 +116,9 @@ describe("addItem", () => {
 
     index.addItem(index.slot(FILE, 0)!, "c")
 
-    expect(seen.map((event) => event.operation)).toEqual(["item-added"])
+    expect(seen.map((event) => event.operation)).toEqual(["item-added", "built"])
     expect(seen[0].key).toBe("c")
+    expect(seen[1].cause).toBe("client")
   })
 })
 

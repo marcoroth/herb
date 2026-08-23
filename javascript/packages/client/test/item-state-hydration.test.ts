@@ -86,6 +86,21 @@ describe("a region state read inside a collection item", () => {
     expect(textOf("1")).toBe("3")
     expect(textOf("2")).toBe("3")
   })
+
+  test("a row the payload built holds the value the client owns", () => {
+    const region = slots.regionsFor(FILE)[0]
+
+    state.setState({ count: 3 }, { scope: { region, item: null } })
+
+    slots.apply({
+      template: FILE,
+      version: "eeeeeeee",
+      occurrence: 0,
+      slots: { 0: { items: { 1: { 2: "0" }, 2: { 2: "0" } } } },
+    })
+
+    expect(textOf("2")).toBe("3")
+  })
 })
 
 const BRANCH_FILE = "app/views/chat/edit.html.erb"

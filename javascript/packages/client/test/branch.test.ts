@@ -544,8 +544,9 @@ describe("switching a branch from the client", () => {
 
     expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("over")
     expect(index.slot(FILE, 0)?.branch).toBe(0)
-    expect(seen).toHaveLength(1)
+    expect(seen.map((detail) => detail.operation)).toEqual(["branch", "built"])
     expect(seen[0]).toMatchObject({ file: FILE, index: 0, operation: "branch" })
+    expect(seen[1].built?.branches.map((branch) => branch.index)).toEqual([0])
   })
 
   test("parks what it replaces, so switching back needs nothing new", () => {

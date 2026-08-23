@@ -29,7 +29,7 @@ import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, pars
 import { attributeParts, attributeValue, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames, withoutMarkers } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
+import type { AddItemOptions, AppliedValue, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -43,7 +43,9 @@ export class SlotIndex {
   #recording: Inverse[] | null = null
   #nextToken = 1
   #statics = new Map<string, Statics>()
-  #applying = 0
+  #cause: BuildCause = "client"
+  #built: Built | null = null
+  #listeners = new Set<SlotListener>()
   #observer: MutationObserver | null = null
 
   claim(slot: Slot): void {
@@ -278,19 +280,44 @@ export class SlotIndex {
   apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
     const report: ApplyReport = { applied: 0, deferred: [] }
 
-    this.#applying += 1
-
-    try {
+    this.#building("apply", () => {
       this.#applyPayload(payload, report, options.items ?? "replace")
-    } finally {
-      this.#applying -= 1
-    }
+    })
 
     return report
   }
 
-  applying(): boolean {
-    return this.#applying > 0
+  // What a listener is told about, so a page can settle the markup an operation built without
+  // hearing about it while it is still being built.
+  subscribe(listener: SlotListener): () => void {
+    this.#listeners.add(listener)
+
+    return () => {
+      this.#listeners.delete(listener)
+    }
+  }
+
+  #building<T>(cause: BuildCause, work: () => T): T {
+    if (this.#built) {
+      return work()
+    }
+
+    const built: Built = { branches: [], items: [] }
+    const previous = this.#cause
+
+    this.#built = built
+    this.#cause = cause
+
+    try {
+      return work()
+    } finally {
+      this.#built = null
+      this.#cause = previous
+
+      if (built.branches.length > 0 || built.items.length > 0) {
+        this.#announceBuilt(built, cause)
+      }
+    }
   }
 
   transaction<T>(work: () => T): TransactionResult<T> {
@@ -547,15 +574,17 @@ export class SlotIndex {
       return true
     }
 
-    const built = this.materialize(slot.region.file, branchKey(slot.index, branch), dynamics)
+    const markup = this.materialize(slot.region.file, branchKey(slot.index, branch), dynamics)
 
-    if (!built) {
+    if (!markup) {
       return false
     }
 
-    this.#writeFragment(slot, built)
+    this.#writeFragment(slot, markup)
 
     slot.branch = branch
+
+    this.#built?.branches.push(slot)
 
     return true
   }
@@ -720,14 +749,20 @@ export class SlotIndex {
     this.scan(added, { region: slot.region, slot, item: slot.item })
 
     this.#recordSlot(slot, () => (live) => {
-      const built = live.items.get(key)
+      const made = live.items.get(key)
 
-      if (built) {
-        this.#dropItem(live, built)
+      if (made) {
+        this.#dropItem(live, made)
       }
     })
 
-    this.#announce(slot, "item-added", slot.index, key, slot.items.get(key) ?? null)
+    const item = slot.items.get(key) ?? null
+
+    if (item) {
+      this.#built?.items.push({ slot, item })
+    }
+
+    this.#announce(slot, "item-added", slot.index, key, item)
   }
 
   #insertionPoint(slot: Slot, anchor?: Node | null): Node | null {
@@ -935,26 +970,49 @@ export class SlotIndex {
   }
 
   #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, item: Item | null = null, previousKey: string | null = null): void {
+    const region = slot?.region ?? null
+
+    this.#notify({
+      file: region?.file ?? "",
+      occurrence: region?.occurrence ?? 0,
+      index,
+      operation,
+      key,
+      previousKey,
+      slot,
+      item,
+      cause: this.#cause,
+    })
+  }
+
+  #announceBuilt(built: Built, cause: BuildCause): void {
+    const [slot] = built.branches.length > 0 ? built.branches : built.items.map((entry) => entry.slot)
+    const region = slot?.region ?? null
+
+    this.#notify({
+      file: region?.file ?? "",
+      occurrence: region?.occurrence ?? 0,
+      index: slot?.index ?? 0,
+      operation: "built",
+      key: null,
+      previousKey: null,
+      slot: null,
+      item: null,
+      cause,
+      built,
+    })
+  }
+
+  #notify(detail: SlotEventDetail): void {
+    for (const listener of [...this.#listeners]) {
+      listener(detail)
+    }
+
     if (typeof document === "undefined") {
       return
     }
 
-    const region = slot?.region ?? null
-
-    document.dispatchEvent(
-      new CustomEvent<SlotEventDetail>(SLOT_EVENT, {
-        detail: {
-          file: region?.file ?? "",
-          occurrence: region?.occurrence ?? 0,
-          index,
-          operation,
-          key,
-          previousKey,
-          slot,
-          item,
-        },
-      }),
-    )
+    document.dispatchEvent(new CustomEvent<SlotEventDetail>(SLOT_EVENT, { detail }))
   }
 
   update(slot: Slot, html: string): ScanResult {
@@ -1059,7 +1117,9 @@ export class SlotIndex {
 
     const values = this.#itemValues(slot, template, options.values ?? {})
 
-    this.#buildItem(slot, key, template, anchor, values, options.text === true)
+    this.#building("client", () => {
+      this.#buildItem(slot, key, template, anchor, values, options.text === true)
+    })
 
     return slot.items.get(key) ?? null
   }
@@ -1286,7 +1346,7 @@ export class SlotIndex {
       return false
     }
 
-    return this.#swapBranch(slot, branch, dynamics)
+    return this.#building("client", () => this.#swapBranch(slot, branch, dynamics))
   }
 
   prune(): number {

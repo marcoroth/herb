@@ -2,12 +2,11 @@ import { report } from "./report"
 
 import { HERB_ATTRIBUTES } from "./attributes"
 import { elementOf, hostOf } from "./anchors"
-import { SLOT_EVENT } from "./slot-index"
 import { armOf, literal, matches, mentions, truthy } from "./conditions"
 
 import type { DiagnosticSpot } from "./report"
 import type { SlotIndex } from "./slot-index"
-import type { ApplyReport, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
+import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
 import type { ComboCondition, Conditional, ConditionalArm, StateComparand, StateCondition } from "./conditions"
 
 const VALUE_ELEMENTS = ["INPUT", "TEXTAREA", "SELECT"]
@@ -161,7 +160,7 @@ export class SlotState {
   #timer: ReturnType<typeof setTimeout> | null = null
   #controller: AbortController | null = null
   #observer: MutationObserver | null = null
-  #hydrating = false
+  #unsubscribe: (() => void) | null = null
 
   constructor(slots: SlotIndex, options: StateOptions = {}) {
     this.#slots = slots
@@ -175,6 +174,40 @@ export class SlotState {
 
     if (this.#persisted()) {
       this.#readLocation()
+    }
+
+    this.#unsubscribe = slots.subscribe(this.#onSlot)
+  }
+
+  // One listener for everything the index does, so what a page hears about is what already
+  // happened and not what is in the middle of happening.
+  #onSlot = (detail: SlotEventDetail): void => {
+    switch (detail.operation) {
+      case "built":
+        this.settle(detail.built ?? { branches: [], items: [] })
+        break
+      case "item-rekeyed":
+        this.#migrateItemState(detail)
+        break
+      case "item-added":
+      case "item-removed":
+        this.#recountItems(detail)
+        break
+      case "attribute":
+        this.#syncProperty(detail)
+        break
+    }
+  }
+
+  // Markup an operation built holds no state of its own, so every state the page has decided is
+  // written into it once it stands.
+  settle(built: Built): void {
+    for (const slot of built.branches) {
+      this.#settleBranch(slot)
+    }
+
+    for (const { slot, item } of built.items) {
+      this.#settleItem(slot, item)
     }
   }
 
@@ -218,13 +251,6 @@ export class SlotState {
   }
 
   adopt(root: ParentNode = document): number {
-    if (typeof document !== "undefined") {
-      document.addEventListener(SLOT_EVENT, this.#migrateItemState)
-      document.addEventListener(SLOT_EVENT, this.#recountItems)
-      document.addEventListener(SLOT_EVENT, this.#hydrateItemState)
-      document.addEventListener(SLOT_EVENT, this.#hydrateBranch)
-    }
-
     const templates = [...root.querySelectorAll<HTMLTemplateElement>(DEPENDENCIES_SELECTOR)]
 
     for (const template of templates) {
@@ -240,11 +266,8 @@ export class SlotState {
       return
     }
 
-    document.addEventListener(SLOT_EVENT, this.#syncProperty)
-    document.addEventListener(SLOT_EVENT, this.#migrateItemState)
-    document.addEventListener(SLOT_EVENT, this.#recountItems)
-    document.addEventListener(SLOT_EVENT, this.#hydrateItemState)
-    document.addEventListener(SLOT_EVENT, this.#hydrateBranch)
+    this.#unsubscribe ??= this.#slots.subscribe(this.#onSlot)
+
     document.addEventListener("input", this.#onBoundInput)
     document.addEventListener("change", this.#onBoundInput)
     document.addEventListener("reset", this.#onFormReset)
@@ -277,15 +300,13 @@ export class SlotState {
     this.#observer?.disconnect()
     this.#observer = null
 
+    this.#unsubscribe?.()
+    this.#unsubscribe = null
+
     if (typeof document === "undefined") {
       return
     }
 
-    document.removeEventListener(SLOT_EVENT, this.#syncProperty)
-    document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
-    document.removeEventListener(SLOT_EVENT, this.#recountItems)
-    document.removeEventListener(SLOT_EVENT, this.#hydrateItemState)
-    document.removeEventListener(SLOT_EVENT, this.#hydrateBranch)
     document.removeEventListener("input", this.#onBoundInput)
     document.removeEventListener("change", this.#onBoundInput)
     document.removeEventListener("reset", this.#onFormReset)
@@ -1227,7 +1248,7 @@ export class SlotState {
     }
   }
 
-  #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[], skip: Slot | null = null): void {
+  #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[]): void {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
       if (!conditional.arms.some((arm) => mentions(armOf(arm).condition, changed))) {
         continue
@@ -1235,11 +1256,6 @@ export class SlotState {
 
       for (const placed of this.#placedSlots(scope, Number(indexKey))) {
         const slot = placed.slot
-
-        if (slot === skip) {
-          continue
-        }
-
         const target = this.#targetBranch(conditional, placed.scope)
 
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
@@ -1449,8 +1465,7 @@ export class SlotState {
     this.#readLocation()
   }
 
-  #recountItems = (event: Event): void => {
-    const detail = (event as CustomEvent<SlotEventDetail>).detail
+  #recountItems = (detail: SlotEventDetail): void => {
 
     if (detail.operation !== "item-added" && detail.operation !== "item-removed") {
       return
@@ -1541,8 +1556,7 @@ export class SlotState {
 
   #recountQueued = new Set<Region>()
 
-  #migrateItemState = (event: Event): void => {
-    const detail = (event as CustomEvent<SlotEventDetail>).detail
+  #migrateItemState = (detail: SlotEventDetail): void => {
 
     if (detail.operation !== "item-rekeyed" || !detail.slot || !detail.key || detail.previousKey === null) {
       return
@@ -1567,18 +1581,7 @@ export class SlotState {
     }
   }
 
-  #hydrateBranch = (event: Event): void => {
-    const detail = (event as CustomEvent<SlotEventDetail>).detail
-
-    if (detail.operation !== "branch" || !detail.slot) {
-      return
-    }
-
-    if (this.#hydrating || this.#slots.applying()) {
-      return
-    }
-
-    const slot = detail.slot
+  #settleBranch(slot: Slot): void {
     const region = this.#slots.regionOf(slot)
 
     if (!region) {
@@ -1625,29 +1628,12 @@ export class SlotState {
 
     const declared = manifest.declarations.map((declaration) => declaration.name)
 
-    this.#hydrating = true
-
-    try {
-      this.#writePresence(manifest, at, declared)
-
-      this.#writeConditionals(manifest, at, declared, slot)
-    } finally {
-      this.#hydrating = false
-    }
+    this.#writePresence(manifest, at, declared)
+    this.#writeConditionals(manifest, at, declared)
   }
 
-  #hydrateItemState = (event: Event): void => {
-    const detail = (event as CustomEvent<SlotEventDetail>).detail
-
-    if (detail.operation !== "item-added" || !detail.slot || !detail.item) {
-      return
-    }
-
-    if (this.#slots.applying()) {
-      return
-    }
-
-    const region = this.#slots.regionOf(detail.slot)
+  #settleItem(collection: Slot, item: Item): void {
+    const region = this.#slots.regionOf(collection)
 
     if (!region) {
       return
@@ -1659,7 +1645,6 @@ export class SlotState {
       return
     }
 
-    const item = detail.item
     const at: StateScope = { region, item }
 
     for (const [name, indices] of Object.entries(manifest.reads)) {
@@ -1696,8 +1681,7 @@ export class SlotState {
     }
   }
 
-  #syncProperty = (event: Event): void => {
-    const detail = (event as CustomEvent<SlotEventDetail>).detail
+  #syncProperty = (detail: SlotEventDetail): void => {
 
     if (detail.operation !== "attribute") {
       return

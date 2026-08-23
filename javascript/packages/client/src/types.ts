@@ -18,6 +18,9 @@ export type SlotOperation =
   | "item-rekeyed"
   | "item-removed"
   | "item-updated"
+  | "built"
+
+export type BuildCause = "apply" | "client"
 
 export type RenderMode = "server" | "client"
 export type ApplyMode = "replace" | "merge"
@@ -182,7 +185,17 @@ export interface SlotEventDetail {
   previousKey: string | null
   slot: Slot | null
   item: Item | null
+  cause: BuildCause
+  built?: Built
 }
+
+// The markup an operation built, which holds no state of its own until something settles it.
+export interface Built {
+  branches: Slot[]
+  items: { slot: Slot; item: Item }[]
+}
+
+export type SlotListener = (detail: SlotEventDetail) => void
 
 export interface Payload {
   template: string
