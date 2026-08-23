@@ -2,7 +2,7 @@
  * Static understanding of the vocabulary this runtime executes: the `herb:state` and
  * `herb:slots` comment directives, and the `data-herb-*` action attribute grammar.
  *
- * This entry exists for tooling, the linter and the dev tools consume it, and it never
+ * This entry exists for tooling, the linter and the language service consume it, and it never
  * loads in an application: nothing in the runtime imports this module, so the production
  * entries are unaffected. The clause grammar re-exported here is the exact code
  * `SlotActions` runs, which is what keeps the linter and the runtime from drifting.

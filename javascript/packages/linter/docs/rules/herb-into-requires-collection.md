@@ -4,7 +4,7 @@
 
 ## Description
 
-Requires the `data-herb-into` attribute on a form to be a static value naming a keyed collection in the same template, an element carrying `data-herb-name` around a loop whose rows are keyed by a `herb:key` directive or a dynamic `id`.
+Requires the `data-herb-into` attribute on a form to be a static value naming a keyed collection in the same template, an element carrying `data-herb-name` around a loop whose rows are keyed by a `herb:key` directive, a dynamic `herb-key` attribute, or a dynamic `id`.
 
 ## Rationale
 
