@@ -186,6 +186,18 @@ module Engine
         assert_equal :structural, dependencies[0][:mode]
       end
 
+      test "gives a collapsed conditional the state of every branch it stands for" do
+        dependencies = dependencies_for("<% if @admin %><h1><%= @name %></h1><% else %><h1><%= @guest %></h1><% end %>")
+
+        assert_equal ["@admin", "@guest", "@name"], dependencies[0][:state]
+      end
+
+      test "never calls a collapsed conditional an identity, since the condition picks the value" do
+        dependencies = dependencies_for("<% if @admin %><h1><%= @name %></h1><% else %><h1><%= @guest %></h1><% end %>")
+
+        assert_equal :derived, dependencies[0][:mode]
+      end
+
       test "gives a slot inside a branch the state that branch's body reads" do
         dependencies = dependencies_for("<div><% if @admin %><b><%= @name %></b><% end %></div>")
 

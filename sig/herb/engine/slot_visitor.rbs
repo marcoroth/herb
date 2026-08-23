@@ -85,12 +85,14 @@ module Herb
 
         attr_reader tag(): String?
 
-        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name, String? tag) -> instance
-                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?, tag: String?) -> instance
+        attr_reader merged_paths(): Array[Array[Integer]]
 
-        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag ]
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression, String? name, String? tag, Array[Array[Integer]] merged_paths) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?, name: String?, tag: String?, merged_paths: Array[Array[Integer]]) -> instance
 
-        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag ]
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
       end
 
       # : (String) -> bool
@@ -216,8 +218,8 @@ module Herb
       # : (String) -> bool
       def branching_shape?: (String) -> bool
 
-      # : (Hash[Integer, Integer], Hash[Integer, bool]) -> void
-      def renumber: (Hash[Integer, Integer], Hash[Integer, bool]) -> void
+      # : (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
+      def renumber: (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
 
       # : (untyped, Symbol?) -> void
       def record_slot: (untyped, Symbol?) -> void

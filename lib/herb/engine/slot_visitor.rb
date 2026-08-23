@@ -74,7 +74,8 @@ module Herb
         :key_source, #: Symbol?
         :key_expression, #: String?
         :name, #: String?
-        :tag #: String?
+        :tag, #: String?
+        :merged_paths #: Array[Array[Integer]]
       )
 
       #: (String) -> bool
@@ -544,6 +545,7 @@ module Herb
       def collapse_invariant_conditionals
         merged = {} #: Hash[Integer, Integer]
         dropped = {} #: Hash[Integer, bool]
+        covered = Hash.new { |hash, key| hash[key] = [] } #: Hash[Integer, Array[Integer]]
 
         @pending.each do |node, index|
           next unless @slots[index].type == :conditional
@@ -564,12 +566,19 @@ module Herb
 
           dropped[index] = true
 
+          shared.each { |survivor| covered[survivor] << index }
+
           positions.drop(1).each do |indices|
-            indices.each_with_index { |old, position| merged[old] = shared.fetch(position) }
+            indices.each_with_index do |old, position|
+              survivor = shared.fetch(position)
+
+              merged[old] = survivor
+              covered[survivor] << old
+            end
           end
         end
 
-        renumber(merged, dropped) unless dropped.empty?
+        renumber(merged, dropped, covered) unless dropped.empty?
       end
 
       #: (untyped) -> bool
@@ -590,13 +599,14 @@ module Herb
         BRANCHING_TYPES.any? { |type| shape.include?("\u0000#{type}\u0000") }
       end
 
-      #: (Hash[Integer, Integer], Hash[Integer, bool]) -> void
-      def renumber(merged, dropped)
+      #: (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
+      def renumber(merged, dropped, covered)
         survivors = (0...@slots.size).reject { |index| dropped[index] || merged.key?(index) }
         moved = survivors.each_with_index.to_h #: Hash[Integer, Integer]
         resolve = ->(index) { moved.fetch(merged.fetch(index, index)) }
+        paths_for = ->(index) { covered.fetch(index, []).map { |other| @slots[other].node_path } }
 
-        @slots = survivors.each_with_index.map { |old, index| @slots[old].with(index: index) }
+        @slots = survivors.each_with_index.map { |old, index| @slots[old].with(index: index, merged_paths: paths_for.call(old)) }
         @slot_nodes = survivors.map { |old| @slot_nodes.fetch(old) }
 
         renumbered = {} #: Hash[untyped, Integer]
@@ -643,7 +653,8 @@ module Herb
           key_source: key_source,
           key_expression: key_expression,
           name: nil,
-          tag: @tag_stack.last
+          tag: @tag_stack.last,
+          merged_paths: []
         )
 
         @slots << slot

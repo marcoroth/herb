@@ -133,8 +133,9 @@ module Herb
         index = {} #: Hash[Integer, Hash[Symbol, untyped]]
 
         slots.each do |slot|
-          state = reached.filter_map { |name, paths| name if paths.key?(slot.node_path) }.sort
-          expressions = reached.values.filter_map { |paths| paths[slot.node_path] }.flatten.uniq
+          covered = [slot.node_path, *slot.merged_paths]
+          state = reached.filter_map { |name, paths| name if covered.any? { |path| paths.key?(path) } }.sort
+          expressions = reached.values.flat_map { |paths| covered.filter_map { |path| paths[path] } }.flatten.uniq
 
           index[slot.index] = { state: state, mode: mode_for(slot, state, expressions, settable) }
         end
@@ -366,6 +367,7 @@ module Herb
       def mode_for(slot, state, expressions, settable)
         return :structural if STRUCTURAL_TYPES.include?(slot.type)
         return :derived if PARTIAL_TYPES.include?(slot.type)
+        return :derived unless slot.merged_paths.empty?
         return :derived unless state.one?
         return :derived unless settable.include?(state.first)
 
