@@ -159,7 +159,7 @@ module Herb
         bound = {} #: Hash[String, Array[Integer]]
 
         visitor.slots.each do |slot|
-          next unless [:child, :attribute, :element, :raw_text].include?(slot.type)
+          next unless [:child, :attribute, :attribute_interpolation, :element, :raw_text].include?(slot.type)
 
           expression = slot.expression.to_s.strip
           name = expression.delete_suffix("?")
@@ -195,6 +195,7 @@ module Herb
       #: (untyped) -> bool
       def bound_slot?(slot)
         return false unless slot.respond_to?(:tag)
+        return false if slot.type == :attribute_interpolation
 
         tag = slot.tag.to_s
 

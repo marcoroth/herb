@@ -894,7 +894,8 @@ module Herb
         return unless read
 
         raise Herb::Engine::CompilationError,
-              "`#{read}` reads a state inside an interpolated attribute; a state write cannot rebuild the mixed value, so give the state its own attribute or compute the whole value in one output tag"
+              "`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts; a state " \
+              "write cannot supply the other values, so give the state its own attribute or its own output"
       end
 
       #: () -> void
@@ -913,7 +914,7 @@ module Herb
 
           next if states.empty?
 
-          if slot.type == :attribute_interpolation
+          if slot.type == :attribute_interpolation && slot.expression.to_s.strip.empty?
             check_interpolated_state_read(node, states)
             next
           end
@@ -1215,13 +1216,14 @@ module Herb
       def attribute_expression_for(node)
         children = node.value&.children || []
 
-        return nil unless children.one?
+        return nil unless children.all? { |child| child.is_a?(Herb::AST::LiteralNode) || child.is_a?(Herb::AST::ERBContentNode) }
 
-        child = children.first
+        outputs = children.grep(Herb::AST::ERBContentNode)
 
-        return nil unless child.is_a?(Herb::AST::ERBContentNode)
+        return nil unless outputs.one?
+        return nil unless erb_output?(outputs.fetch(0).tag_opening&.value.to_s)
 
-        child.content&.value&.strip
+        outputs.fetch(0).content&.value&.strip
       end
 
       def location_for(node)

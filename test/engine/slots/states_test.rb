@@ -221,12 +221,24 @@ module Engine
         assert_includes rendered, "<span"
       end
 
-      test "a state read inside an interpolated attribute is refused" do
+      test "a state read compiles as an interpolated attribute's only output" do
+        rendered = render(%(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
+
+        assert_includes rendered, 'class="row-"'
+      end
+
+      test "a predicate read in an interpolated attribute rewrites for the server" do
+        rendered = render(%(<%# herb:state (pending: false) %><div class="row-<%= pending? %>">x</div>))
+
+        assert_includes rendered, 'class="row-false"'
+      end
+
+      test "a state mixed with other dynamics in an interpolated attribute is refused" do
         error = assert_raises(Herb::Engine::CompilationError) do
-          compile(%(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
+          compile(%(<%# herb:state (status: "") %><div class="row-<%= status %>-<%= @kind %>">x</div>))
         end
 
-        assert_match(/interpolated attribute/, error.message)
+        assert_match(/mixes other dynamic parts/, error.message)
       end
 
       test "a negated state read in a conditional is refused" do
