@@ -274,6 +274,15 @@ module Herb
           }
         end
 
+        #: (Declaration) -> bool
+        def seeded?(declaration)
+          return false if declaration.derived
+
+          node = expression_node(declaration.default)
+
+          node.nil? || !KINDS.key?(node.class.name)
+        end
+
         #: (String, Hash[String, Declaration]) -> bool
         def mentions_any?(source, states)
           states.each_key.any? { |name| /(?<![\w?])#{Regexp.escape(name)}\??(?![\w?!])/.match?(source) }

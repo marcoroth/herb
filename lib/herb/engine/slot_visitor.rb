@@ -63,6 +63,10 @@ module Herb
       NAME_ATTRIBUTE = "data-herb-name" #: String
       NAMEABLE_TYPES = [:child, :collection, :conditional, :block].freeze #: Array[Symbol]
 
+      SEEDS_MARKER = "herb-seeds:" #: String
+      SEEDS_LOCAL = "_herb_seeds" #: String
+      SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
+
       Slot = Data.define(
         :index,      #: Integer
         :type,       #: Symbol
@@ -700,7 +704,7 @@ module Herb
           bucket[declaration.name] = declaration
         end
 
-        @state_directives << { node: node, parent: parent, scope: scope }
+        @state_directives << { node: node, parent: parent, scope: scope, inline: @in_open_tag || @in_attribute }
       end
 
       #: (String?) -> Symbol
@@ -734,8 +738,9 @@ module Herb
           scope = directive[:scope]
           bucket = scope ? (@item_states[scope] || {}) : @region_states
           assignments = bucket.values.map { |declaration| state_assignment(declaration) }.join("; ")
+          seeds = directive[:inline] ? nil : seeds_marker(bucket.values)
 
-          parent[position] = erb_code_node(assignments)
+          parent[position] = erb_code_node(seeds ? "#{assignments}; #{seeds}" : assignments)
         end
 
         return if @region_states.empty? && @item_states.empty?
@@ -743,6 +748,21 @@ module Herb
         classify_state_conditionals
         check_state_value_reads
         check_state_count_reads
+      end
+
+      #: (Array[StateDirectives::Declaration]) -> String?
+      def seeds_marker(declarations)
+        return nil unless @mark
+
+        seeded = declarations.select { |declaration| StateDirectives.seeded?(declaration) }
+
+        return nil if seeded.empty?
+
+        pairs = seeded.map { |declaration| "#{declaration.name.inspect} => #{declaration.name}" }.join(", ")
+
+        "#{SEEDS_LOCAL} = { #{pairs} }.select { |_, v| #{SEED_VALUE_TYPES}.any? { |t| t === v } }" \
+          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }; " \
+          "_buf << \"<!--#{SEEDS_MARKER}\" << ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") << \"-->\""
       end
 
       #: (StateDirectives::Declaration) -> String
