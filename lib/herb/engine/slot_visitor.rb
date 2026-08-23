@@ -458,7 +458,7 @@ module Herb
       end
 
       def visit_erb_block_node(node)
-        record_slot(node, :block)
+        record_slot(node, :block) if erb_output?(node.tag_opening&.value.to_s)
 
         @displaced << node if CAPTURING.match?(expression_for(node).to_s)
 

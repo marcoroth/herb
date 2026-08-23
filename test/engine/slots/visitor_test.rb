@@ -153,7 +153,7 @@ module Engine
         assert_slots_snapshot("<div><%= form_with model: @user do |f| %><input><% end %></div>")
       end
 
-      test "classifies a non-iteration method block as a plain block" do
+      test "does not record a block whose value is not output" do
         assert_slots_snapshot("<div><% @user.tap do |u| %><b>x</b><% end %></div>")
       end
 
@@ -490,6 +490,10 @@ module Engine
           [[0, :conditional], [1, :conditional], [2, :child], [3, :conditional], [4, :child]],
           types_for("<% if @c %><p><% if @d %><%= @x %><% end %></p><% else %><p><% if @e %><%= @y %><% end %></p><% end %>")
         )
+      end
+
+      test "records what a block whose value is not output contains" do
+        assert_slots_snapshot("<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>")
       end
     end
   end

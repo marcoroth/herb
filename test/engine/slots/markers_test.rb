@@ -430,6 +430,43 @@ module Engine
           options
         )
       end
+
+      class CapturingView
+        def initialize
+          @output_buffer = +""
+        end
+
+        def grab
+          outer = @output_buffer
+          @output_buffer = +""
+
+          yield
+
+          captured = @output_buffer
+          @output_buffer = outer
+
+          captured
+        end
+      end
+
+      test "puts no marker around a block whose value is not output" do
+        template = %(<% link = ->(label) do %><% grab do %><b><%= label %></b><% end %><% end %><div><%= link.call("hi") %></div>)
+        source = Herb::Engine.new(template, **options, bufvar: "@output_buffer").src
+        rendered = CapturingView.new.instance_eval(source)
+
+        refute_includes source.split("link.call").first, "<!--herb-slot"
+        assert_equal 1, rendered.scan("<b").size
+        refute_includes rendered, "&lt;!--"
+        assert_includes rendered, %(<div data-herb-slot="1:child"><b data-herb-slot="0:child">hi</b></div>)
+      end
+
+      test "leaves a block's value as the block's own last expression" do
+        template = "<% data = fetch do %><% { count: 7 } %><% end %><p><%= data[:count] %></p>"
+        source = Herb::Engine.new(template, **options).src
+
+        refute_match(/herb-slot:\d+:block/, source)
+        refute_match(%r{/herb-slot:\d+-->'.freeze;\s*end}, source)
+      end
     end
   end
 end
