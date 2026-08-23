@@ -3,6 +3,8 @@ import { report } from "./report"
 
 import type { SlotIndex } from "./slot-index"
 import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot } from "./types"
+import { scopeOf } from "./state"
+
 import type { SlotState, StateScope, StateValues } from "./state"
 
 export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
@@ -330,9 +332,14 @@ export class SlotMutations {
       return
     }
 
-    const scope: StateScope = { region, item }
+    const scope = scopeOf(region, item)
+    const declared = Object.fromEntries(Object.entries(values).filter(([name]) => this.#state.declares(scope, name)))
 
-    this.#state.setState(values, { scope })
+    if (Object.keys(declared).length === 0) {
+      return
+    }
+
+    this.#state.setState(declared, { scope })
   }
 
   #collection(target: MutationTarget): Slot | null {

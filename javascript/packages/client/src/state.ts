@@ -3,10 +3,13 @@ import { report } from "./report"
 import { HERB_ATTRIBUTES } from "./attributes"
 import { elementOf, hostOf } from "./anchors"
 import { armOf, literal, matches, mentions, truthy } from "./conditions"
+import { boundValue, coerceSeed, coerceState, kindArticle, printValue } from "./values"
+import { ServerState } from "./server-state"
 
 import type { DiagnosticSpot } from "./report"
 import type { SlotIndex } from "./slot-index"
 import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
+import type { StateKind, StateValue } from "./values"
 import type { ComboCondition, Conditional, ConditionalArm, StateComparand, StateCondition } from "./conditions"
 
 const VALUE_ELEMENTS = ["INPUT", "TEXTAREA", "SELECT"]
@@ -17,8 +20,6 @@ export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
 export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
 
 export type StateMode = "identity" | "structural" | "derived"
-export type StateKind = "boolean" | "integer" | "string" | "symbol" | "nil" | "seeded"
-export type StateValue = string | number | boolean | null
 export type StatePersistence = "url" | "known" | "none"
 export type StateTransport = (request: StateRequest, signal: AbortSignal) => Promise<Payload | null>
 export type StateListener = (value: StateValue, previous: StateValue) => void
@@ -62,6 +63,8 @@ export interface StateManifest {
 }
 
 export type { ComboCondition, Conditional, ConditionalArm, StateComparand, StateCondition } from "./conditions"
+export type { StateKind, StateValue } from "./values"
+export { boundValue, coerceState, printValue } from "./values"
 
 export interface StateScope {
   region: Region
@@ -136,29 +139,15 @@ export interface StateReport extends ApplyReport {
   failed: boolean
 }
 
-interface OptimisticWrite {
-  slot: Slot
-  value: string
-}
 
 export class SlotState {
   readonly #slots: SlotIndex
-  readonly #values = new Map<string, string>()
-  readonly #dependencies = new Map<string, StateSlot[]>()
-  readonly #params = new Map<string, string>()
+  readonly #server: ServerState
   readonly #declared = new Map<string, StateManifest>()
-  readonly #writtenParams = new Set<string>()
   readonly #scoped: ScopeStore = new Map()
   readonly #seeds: ScopeStore = new Map()
-  readonly #sequence = new Map<string, number>()
   readonly #options: ResolvedStateOptions
 
-  #pending = new Map<string, string>()
-  #restores: OptimisticWrite[] = []
-  #previous = new Map<string, string | undefined>()
-  #waiting: StateWaiter[] = []
-  #timer: ReturnType<typeof setTimeout> | null = null
-  #controller: AbortController | null = null
   #observer: MutationObserver | null = null
   #unsubscribe: (() => void) | null = null
 
@@ -166,17 +155,18 @@ export class SlotState {
     this.#slots = slots
 
     this.#options = {
-      transport: options.transport ?? this.#fetch.bind(this),
+      transport: options.transport ?? ((request, signal) => this.#server.fetch(request, signal)),
       debounce: options.debounce ?? 0,
       persist: options.persist ?? "url",
       format: options.format ?? "slots",
     }
 
-    if (this.#persisted()) {
-      this.#readLocation()
-    }
-
+    this.#server = new ServerState(slots, this.#options)
     this.#unsubscribe = slots.subscribe(this.#onSlot)
+  }
+
+  set(key: string | SerializedState, value?: string): Promise<StateReport> {
+    return this.#server.set(key, value)
   }
 
   // One listener for everything the index does, so what a page hears about is what already
@@ -211,44 +201,26 @@ export class SlotState {
     }
   }
 
-  #persisted(): boolean {
-    return this.#options.persist !== "none"
-  }
 
-  #known(name: string): boolean {
-    return this.#params.has(name) || this.#dependencies.has(name)
-  }
 
-  #transient(name: string): boolean {
-    return this.#options.persist === "known" && !this.#known(name)
-  }
 
-  #forget(names: string[]): void {
-    for (const name of names) {
-      this.#values.delete(name)
-      this.#writtenParams.add(name)
-    }
-  }
 
   get(key: string): string | undefined {
-    return this.#values.get(key)
+    return this.#server.get(key)
   }
 
   all(): SerializedState {
-    return Object.fromEntries(this.#values)
+    return this.#server.all()
   }
 
   names(): string[] {
-    return [...this.#dependencies.keys()]
+    return this.#server.names()
   }
 
   slotsFor(key: string): StateSlot[] {
-    return this.#dependencies.get(this.#stateName(key)) ?? []
+    return this.#server.slotsFor(key)
   }
 
-  #stateName(name: string): string {
-    return this.#params.get(name) ?? name
-  }
 
   adopt(root: ParentNode = document): number {
     const templates = [...root.querySelectorAll<HTMLTemplateElement>(DEPENDENCIES_SELECTOR)]
@@ -272,7 +244,7 @@ export class SlotState {
     document.addEventListener("change", this.#onBoundInput)
     document.addEventListener("reset", this.#onFormReset)
 
-    if (typeof window !== "undefined" && this.#persisted()) {
+    if (typeof window !== "undefined" && this.#server.persisted()) {
       window.addEventListener("popstate", this.#onPopState)
     }
 
@@ -316,156 +288,11 @@ export class SlotState {
     }
   }
 
-  set(key: string | SerializedState, value?: string): Promise<StateReport> {
-    let changes: SerializedState = key as SerializedState
 
-    if (typeof key === "string") {
-      changes = { [key]: value ?? "" }
-    }
 
-    const changed = Object.keys(changes)
 
-    for (const [name, next] of Object.entries(changes)) {
-      this.#pending.set(name, next)
-      this.#sequence.set(name, (this.#sequence.get(name) ?? 0) + 1)
 
-      if (!this.#previous.has(name)) {
-        this.#previous.set(name, this.#values.get(name))
-      }
 
-      this.#values.set(name, next)
-    }
-
-    this.#restores.push(...this.#optimistic(changed))
-
-    if (this.#options.debounce <= 0) {
-      return this.#flush()
-    }
-
-    if (this.#timer) {
-      clearTimeout(this.#timer)
-    }
-
-    return new Promise((resolve) => {
-      this.#waiting.push(resolve)
-      this.#timer = setTimeout(() => {
-        this.#timer = null
-        void this.#flush()
-      }, this.#options.debounce)
-    })
-  }
-
-  async #flush(): Promise<StateReport> {
-    const changes = this.#pending
-    const restores = this.#restores
-    const previous = this.#previous
-
-    this.#pending = new Map()
-    this.#restores = []
-    this.#previous = new Map()
-
-    if (changes.size === 0) {
-      return this.#settle(IDLE)
-    }
-
-    const changed = [...changes.keys()]
-    const taken = new Map(changed.map((name) => [name, this.#sequence.get(name) ?? 0]))
-    const transient = [...this.#values.keys()].filter((name) => this.#transient(name))
-
-    this.#controller?.abort()
-    const controller = new AbortController()
-    this.#controller = controller
-
-    let payload: Payload | null = null
-
-    try {
-      payload = await this.#options.transport({ state: this.all(), changed }, controller.signal)
-    } catch (error) {
-      this.#forget(transient)
-
-      if (controller.signal.aborted || this.#superseded(taken)) {
-        return this.#settle({ ...IDLE, written: restores.length, stale: true })
-      }
-
-      this.#restore(restores)
-
-      for (const [name, was] of previous) {
-        if (was === undefined) {
-          this.#values.delete(name)
-        } else {
-          this.#values.set(name, was)
-        }
-      }
-
-      return this.#settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true })
-    }
-
-    this.#forget(transient)
-
-    if (this.#superseded(taken)) {
-      return this.#settle({ ...IDLE, written: restores.length, stale: true })
-    }
-
-    let report: ApplyReport = { applied: 0, deferred: [] }
-
-    if (payload) {
-      report = this.#slots.apply(payload)
-    }
-
-    if (this.#persisted()) {
-      this.#writeLocation()
-    }
-
-    return this.#settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false })
-  }
-
-  #settle(report: StateReport): StateReport {
-    const waiting = this.#waiting
-
-    this.#waiting = []
-
-    for (const resolve of waiting) {
-      resolve(report)
-    }
-
-    return report
-  }
-
-  #superseded(taken: Map<string, number>): boolean {
-    for (const [name, sequence] of taken) {
-      if ((this.#sequence.get(name) ?? 0) !== sequence) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  #optimistic(changed: string[]): OptimisticWrite[] {
-    const restores: OptimisticWrite[] = []
-
-    for (const name of changed) {
-      const value = this.#values.get(name) ?? ""
-
-      for (const entry of this.#dependencies.get(this.#stateName(name)) ?? []) {
-        for (const slot of this.#resolve(entry)) {
-          const was = this.#slots.currentText(slot)
-
-          if (this.#write(slot, value)) {
-            restores.push({ slot, value: was })
-          }
-        }
-      }
-    }
-
-    return restores
-  }
-
-  #restore(restores: OptimisticWrite[]): void {
-    for (const restore of [...restores].reverse()) {
-      this.#write(restore.slot, restore.value)
-    }
-  }
 
   #write(slot: Slot, value: string): boolean {
     if (elementOf(slot.anchor) && slot.attribute) {
@@ -475,23 +302,6 @@ export class SlotState {
     return this.#slots.setText(slot, value)
   }
 
-  #resolve(entry: StateSlot): Slot[] {
-    const slots: Slot[] = []
-
-    for (const region of this.#slots.regionsFor(entry.file)) {
-      if (region.version !== entry.version) {
-        continue
-      }
-
-      const slot = region.slots.get(entry.index)
-
-      if (slot) {
-        slots.push(slot)
-      }
-    }
-
-    return slots
-  }
 
   #merge(json: string): void {
     if (!json.trim()) {
@@ -506,13 +316,7 @@ export class SlotState {
       return
     }
 
-    for (const [name, slots] of Object.entries(map.state ?? {})) {
-      this.#dependencies.set(name, slots)
-    }
-
-    for (const [request, name] of Object.entries(map.params ?? {})) {
-      this.#params.set(request, name)
-    }
+    this.#server.adopt(map)
 
     for (const [file, manifest] of Object.entries(map.states ?? {})) {
       this.#declared.set(file, manifest)
@@ -579,14 +383,14 @@ export class SlotState {
 
       while (item) {
         if (!name || declared(manifest, name, item.collection.index) !== null) {
-          return { region, item }
+          return scopeOf(region, item)
         }
 
         item = item.collection.item
       }
 
       if (!name || declared(manifest, name, null) !== null) {
-        return { region, item: null }
+        return scopeOf(region)
       }
     }
 
@@ -681,11 +485,9 @@ export class SlotState {
         return false
       }
 
-      const shared = [...groups.keys()].find(candidate => candidate.region === target.region && candidate.item === target.item) ?? target
-
-      groups.set(shared, [...(groups.get(shared) ?? []), name])
-      scopes.set(name, shared)
-      previous.set(name, this.#valueOf(name, shared))
+      groups.set(target, [...(groups.get(target) ?? []), name])
+      scopes.set(name, target)
+      previous.set(name, this.#valueOf(name, target))
     }
 
     const dependents = new Map<StateScope, StateSnapshot[]>()
@@ -694,7 +496,7 @@ export class SlotState {
       dependents.set(scope, this.#derivedDependents(manifest, scope, grouped).map((name) => ({ name, previous: this.#valueOf(name, scope) })))
     }
 
-    const regionScope: StateScope = { region: resolved.region, item: null }
+    const regionScope = scopeOf(resolved.region)
     const counted = this.#countDeclarations(manifest).map((declaration) => ({ name: declaration.name, previous: this.#valueOf(declaration.name, regionScope) }))
     const countDependents = this.#derivedDependents(manifest, regionScope, counted.map((entry) => entry.name))
       .map((name) => ({ name, previous: this.#valueOf(name, regionScope) }))
@@ -868,13 +670,13 @@ export class SlotState {
       const manifest = this.manifestFor(region)
 
       if (manifest && declared(manifest, name, null) !== null) {
-        return { region, item: null }
+        return scopeOf(region)
       }
     }
 
     for (const region of this.#slots.regions()) {
       if (this.#declared.has(region.file) && !this.manifestFor(region)) {
-        return { region, item: null }
+        return scopeOf(region)
       }
     }
 
@@ -988,7 +790,7 @@ export class SlotState {
     let counted = 0
 
     for (const item of items.values()) {
-      const itemScope: StateScope = { region: scope.region, item }
+      const itemScope = scopeOf(scope.region, item)
 
       if (count.when === null || count.when === undefined || matches(count.when, (name) => this.#valueOf(name, itemScope))) {
         counted += 1
@@ -1043,6 +845,11 @@ export class SlotState {
     }
 
     return parsed
+  }
+
+  // Whether anything in this scope, or the region around it, declares the state.
+  declares(scope: StateScope, name: string): boolean {
+    return this.#declarationIn(this.scopeFor(scope, name) ?? scope, name) !== null
   }
 
   #declarationIn(scope: StateScope, name: string): DeclaredState | null {
@@ -1345,44 +1152,7 @@ export class SlotState {
     )
   }
 
-  #readLocation(): void {
-    if (typeof window === "undefined") {
-      return
-    }
 
-    this.#values.clear()
-
-    for (const [name, value] of new URL(window.location.href).searchParams) {
-      if (name !== "format") {
-        this.#values.set(name, value)
-      }
-    }
-  }
-
-  #writeLocation(): void {
-    if (typeof window === "undefined" || !window.history?.replaceState) {
-      return
-    }
-
-    const url = new URL(window.location.href)
-
-    for (const name of this.#writtenParams) {
-      url.searchParams.delete(name)
-    }
-
-    this.#writtenParams.clear()
-
-    for (const [name, value] of this.#values) {
-      if (this.#options.persist === "known" && !this.#known(name)) {
-        continue
-      }
-
-      url.searchParams.set(name, value)
-      this.#writtenParams.add(name)
-    }
-
-    window.history.replaceState(window.history.state, "", url.toString())
-  }
 
   #onBoundInput = (event: Event): void => {
     const element = event.target
@@ -1462,7 +1232,7 @@ export class SlotState {
   }
 
   #onPopState = (): void => {
-    this.#readLocation()
+    this.#server.readLocation()
   }
 
   #recountItems = (detail: SlotEventDetail): void => {
@@ -1510,7 +1280,7 @@ export class SlotState {
       return
     }
 
-    const regionScope: StateScope = { region, item: null }
+    const regionScope = scopeOf(region)
     const changed: StateChange[] = []
 
     for (const declaration of this.#countDeclarations(manifest)) {
@@ -1645,7 +1415,7 @@ export class SlotState {
       return
     }
 
-    const at: StateScope = { region, item }
+    const at = scopeOf(region, item)
 
     for (const [name, indices] of Object.entries(manifest.reads)) {
       const scope = this.scopeFor(at, name) ?? at
@@ -1705,25 +1475,35 @@ export class SlotState {
     }
   }
 
-  async #fetch(request: StateRequest, signal: AbortSignal): Promise<Payload | null> {
-    const url = new URL(window.location.href)
-
-    for (const [name, value] of Object.entries(request.state)) {
-      url.searchParams.set(name, value)
-    }
-
-    url.searchParams.set("format", this.#options.format)
-
-    const response = await fetch(url.toString(), { signal, headers: { Accept: "application/json" } })
-
-    if (!response.ok) {
-      throw new Error(`Herb state request failed with ${response.status}`)
-    }
-
-    return (await response.json()) as Payload
-  }
 }
 
+
+const REGION_SCOPES = new WeakMap<Region, StateScope>()
+const ITEM_SCOPES = new WeakMap<Item, StateScope>()
+
+// A scope is the region and the item a state belongs to. The same pair always hands back the same
+// scope, so scopes group and compare by identity.
+export function scopeOf(region: Region, item: Item | null = null): StateScope {
+  if (!item) {
+    let scope = REGION_SCOPES.get(region)
+
+    if (!scope) {
+      scope = { region, item: null }
+      REGION_SCOPES.set(region, scope)
+    }
+
+    return scope
+  }
+
+  let scope = ITEM_SCOPES.get(item)
+
+  if (!scope) {
+    scope = { region, item }
+    ITEM_SCOPES.set(item, scope)
+  }
+
+  return scope
+}
 
 function scoped(store: ScopeStore, scope: StateScope): StateBucket {
   let regionStore = store.get(scope.region)
@@ -1800,107 +1580,6 @@ function comparandLiteral(comparand: StateComparand): StateValue | undefined {
   return comparand.value
 }
 
-function printValue(value: StateValue): string {
-  if (value === null) {
-    return ""
-  }
-
-  if (value === true) {
-    return "true"
-  }
-
-  if (value === false) {
-    return "false"
-  }
-
-  return String(value)
-}
-
-export function coerceState(text: string, kind: StateKind): StateValue {
-  if (kind === "boolean") {
-    return text === "true"
-  }
-
-  if (kind === "integer") {
-    const trimmed = text.trim()
-
-    if (!/^-?\d+$/.test(trimmed)) {
-      return 0
-    }
-
-    return Number(trimmed)
-  }
-
-  if (kind === "nil") {
-    if (text === "") {
-      return null
-    }
-
-    return text
-  }
-
-  return text
-}
-
-export function boundValue(element: Element, kind: StateKind): StateValue {
-  if (element instanceof HTMLInputElement && element.type === "checkbox") {
-    return element.checked
-  }
-
-  const raw = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
-
-  return coerceState(raw, kind)
-}
-
-function coerceSeed(shipped: unknown, kind: StateKind): StateValue | undefined {
-  if (shipped !== null && typeof shipped !== "boolean" && typeof shipped !== "number" && typeof shipped !== "string") {
-    return undefined
-  }
-
-  switch (kind) {
-    case "boolean":
-      if (typeof shipped === "boolean") {
-        return shipped
-      }
-
-      return shipped !== null
-    case "integer":
-      if (typeof shipped === "number") {
-        if (Number.isInteger(shipped)) {
-          return shipped
-        }
-
-        return Math.trunc(shipped)
-      }
-
-      if (typeof shipped === "string" && /^-?\d+$/.test(shipped.trim())) {
-        return Number(shipped.trim())
-      }
-
-      return undefined
-    case "string":
-    case "symbol":
-      if (typeof shipped === "string") {
-        return shipped
-      }
-
-      if (typeof shipped === "number" || typeof shipped === "boolean") {
-        return String(shipped)
-      }
-
-      return undefined
-    default:
-      return shipped
-  }
-}
-
-function kindArticle(kind: StateKind): string {
-  if (kind === "integer") {
-    return "an Integer"
-  }
-
-  return `a ${kind.charAt(0).toUpperCase() + kind.slice(1)}`
-}
 
 
 

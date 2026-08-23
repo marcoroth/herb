@@ -420,3 +420,66 @@ describe("SlotMutations", () => {
     expect(captured!.headers["X-CSRF-Token"]).toBe("tok123")
   })
 })
+
+describe("a template that declares no mutation states", () => {
+  const PLAIN_FILE = "app/views/conversations/plain.html.erb"
+
+  const PLAIN_PAGE =
+    `<!--herb-region:${PLAIN_FILE}:bbbbbbbb:0-->` +
+    `<ul data-herb-name="0:messages"><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:message_1--><li id="message_1" data-herb-slot="1:attribute:id">` +
+    `<span data-herb-name="2:body" data-herb-slot="2:child">hello</span></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<template data-herb-region="${PLAIN_FILE}:bbbbbbbb">` +
+    `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id">` +
+    `<span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->` +
+    `</template>` +
+    `<!--/herb-region:${PLAIN_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      states: {
+        [PLAIN_FILE]: {
+          version: "bbbbbbbb",
+          declarations: [{ name: "filter", kind: "string", default: '"all"', value: "all", scope: "region" }],
+          reads: {},
+          conditionals: {},
+        },
+      },
+    })}</template>`
+
+  test("sends the row without asking for a state the template does not have", async () => {
+    const entries: { code?: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report(input: unknown) {
+        entries.push(...(Array.isArray(input) ? input : [input]))
+      },
+      clear() {},
+    }
+
+    document.body.innerHTML = PLAIN_PAGE
+
+    const plainSlots = new SlotIndex()
+    plainSlots.scan(document.body)
+
+    const plainState = new SlotState(plainSlots, { persist: "none", transport: async () => null })
+    plainState.adopt()
+
+    const plainMutations = new SlotMutations(plainSlots, plainState, {
+      transport: async () => ({ template: PLAIN_FILE, version: "bbbbbbbb", occurrence: 0, slots: {} }) as Payload,
+    })
+
+    const result = await plainMutations.submit({
+      url: "/messages",
+      body: { body: "hi" },
+      into: { file: PLAIN_FILE, name: "messages" },
+      values: { body: "hi" },
+    })
+
+    expect(result.status).toBe("confirmed")
+    expect(document.body.textContent).toContain("hi")
+    expect(entries.map((entry) => entry.code)).not.toContain("herb-unknown-state")
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+})

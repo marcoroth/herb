@@ -1,7 +1,7 @@
 import { ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "./attributes"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "./parsing"
 import { report } from "./report"
-import { boundValue, coerceState } from "./state"
+import { boundValue, coerceState } from "./values"
 
 import type { ActionName, ActionSchema } from "./attributes"
 import type { Clause } from "./parsing"
@@ -432,12 +432,12 @@ export class SlotActions {
   }
 
   #group(groups: StateGroups, scope: StateScope, name: string, value: StateValue): void {
-    for (const [existing, values] of groups) {
-      if (existing.region === scope.region && existing.item === scope.item) {
-        values[name] = value
+    const values = groups.get(scope)
 
-        return
-      }
+    if (values) {
+      values[name] = value
+
+      return
     }
 
     groups.set(scope, { [name]: value })
