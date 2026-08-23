@@ -29,7 +29,7 @@ import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, pars
 import { attributeParts, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Region, RegionRange, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TemplateSource, TransactionResult } from "./types"
+import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Region, RegionRange, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -50,10 +50,6 @@ export class SlotIndex {
 
   claim(slot: Slot): void {
     slot.claimed = true
-  }
-
-  claimed(slot: Slot): boolean {
-    return slot.claimed
   }
 
   observe(root: Node = document.documentElement): ScanResult {
@@ -571,17 +567,17 @@ export class SlotIndex {
     return []
   }
 
-  #rowTemplate(slot: Slot, prefer: TemplateSource = "live"): DocumentFragment | null {
+  #rowTemplate(slot: Slot): DocumentFragment | null {
     const skeleton = this.skeletonFor(slot.region.file, itemStaticsKey(slot.index))
 
-    if (prefer === "skeleton" && skeleton) {
+    if (skeleton) {
       return skeleton
     }
 
     const [item] = this.#itemsInDocumentOrder(slot)
 
     if (!item) {
-      return skeleton
+      return null
     }
 
     return this.#rowFragment(item)
@@ -775,10 +771,6 @@ export class SlotIndex {
     }
 
     report.deferred.push(deferred)
-  }
-
-  currentValue(slot: Slot): string {
-    return this.#attributeValue(slot) ?? this.#current(slot)
   }
 
   currentText(slot: Slot): string {
@@ -983,7 +975,7 @@ export class SlotIndex {
       return null
     }
 
-    const template = this.#rowTemplate(slot, "skeleton")
+    const template = this.#rowTemplate(slot)
 
     if (!template) {
       return null
@@ -1368,8 +1360,6 @@ export class SlotIndex {
       version: marker.version,
       occurrence: marker.occurrence,
       ranges: [range],
-      start: comment,
-      end: null,
       slots: new Map(),
       names: new Map(),
     }
@@ -1388,10 +1378,6 @@ export class SlotIndex {
     }
 
     open.range.end = comment
-
-    if (open.range === open.region.ranges[0]) {
-      open.region.end = comment
-    }
   }
 
   #openSlot(marker: SlotOpenMarker, comment: Comment, result: ScanResult, state: ParseState): void {
@@ -1533,19 +1519,7 @@ export class SlotIndex {
   }
 
   #staticsIdentity(element: HTMLTemplateElement): StaticsIdentity | null {
-    const named = element.getAttribute(HERB_ATTRIBUTES.region)
-
-    if (named !== null) {
-      return parseStaticsIdentity(named)
-    }
-
-    const region = this.#enclosingRegion(element)
-
-    if (!region) {
-      return null
-    }
-
-    return { file: region.file, version: region.version }
+    return parseStaticsIdentity(element.getAttribute(HERB_ATTRIBUTES.region) ?? "")
   }
 
   #nameSlot(element: Element, state: ParseState): void {
@@ -1729,9 +1703,6 @@ export class SlotIndex {
 
   #regionConnected(region: Region): boolean {
     region.ranges = region.ranges.filter((range) => range.start.isConnected)
-
-    region.start = region.ranges[0]?.start ?? null
-    region.end = region.ranges[0]?.end ?? null
 
     return region.ranges.length > 0
   }

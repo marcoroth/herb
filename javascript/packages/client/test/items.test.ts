@@ -77,9 +77,9 @@ describe("addItem", () => {
 
     const parked = document.createElement("template")
 
-    parked.setAttribute("data-herb-statics", "0:item")
+    parked.setAttribute("data-herb-region", `${FILE}:aaaaaaaa`)
     parked.innerHTML =
-      `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->`
+      `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->`
     document.querySelector("ul")!.append(parked)
     index.scan(parked)
 

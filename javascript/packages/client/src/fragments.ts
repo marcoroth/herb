@@ -1,7 +1,6 @@
 import { anchoredSlots, closingFor, nameEntry, slotOpeners } from "./anchors"
 import { branchKey, branchOf, slotOpenIndex } from "./markers"
 
-import { HERB_ATTRIBUTES } from "./attributes"
 import { NAME_SELECTOR } from "./anchors"
 import { DEFAULT_SLOT_TYPE, PART_MARKER } from "./markers"
 
@@ -131,12 +130,6 @@ export function templateNames(template: DocumentFragment): NameMap {
 }
 
 export function parkedBranches(element: HTMLTemplateElement): FragmentMap {
-  const named = element.getAttribute(HERB_ATTRIBUTES.statics)
-
-  if (named !== null) {
-    return new Map([[named, element.content]])
-  }
-
   const branches: FragmentMap = new Map()
 
   let current: DocumentFragment | null = null

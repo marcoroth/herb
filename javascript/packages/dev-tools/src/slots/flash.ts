@@ -3,7 +3,6 @@ import type { Slot, SlotEventDetail, SlotOperation } from '@herb-tools/client'
 
 const COLORS: Record<SlotOperation, string> = {
   value: '#3b82f6',
-  markup: '#3b82f6',
   attribute: '#a855f7',
   branch: '#f59e0b',
   'item-added': '#10b981',

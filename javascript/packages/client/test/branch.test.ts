@@ -50,7 +50,7 @@ describe("markup parked in a template", () => {
     document.body.innerHTML = `
       <!--herb-region:${FILE}:aaaaaaaa:0-->
       <div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>
-      <template data-herb-statics="${FILE}">
+      <template data-herb-region="${FILE}:aaaaaaaa">
         <!--herb-branch:0:1--><b><!--herb-slot:3--><!--/herb-slot:3--></b>
       </template>
       <!--/herb-region:${FILE}-->
@@ -69,7 +69,7 @@ describe("markup parked in a template", () => {
     document.body.innerHTML = `
       <!--herb-region:${FILE}:aaaaaaaa:0-->
       <div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>
-      <template data-herb-statics="0:1"><!--herb-branch:0:1--><b><!--herb-slot:3-->secret<!--/herb-slot:3--></b></template>
+      <template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b><!--herb-slot:3-->secret<!--/herb-slot:3--></b></template>
       <!--/herb-region:${FILE}-->
     `
 
@@ -90,7 +90,7 @@ describe("markup parked in a template", () => {
 describe("a skeleton once it has been read", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
-  const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template><!--/herb-region:${FILE}-->`
+  const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b>Hello</b></template><!--/herb-region:${FILE}-->`
 
   test("leaves the document, and leaves the rendered markers alone", () => {
     const index = new SlotIndex()
@@ -111,8 +111,8 @@ describe("a skeleton once it has been read", () => {
     const region = index.regionsFor(FILE)[0]
     const range = document.createRange()
 
-    range.setStartAfter(region.start!)
-    range.setEndBefore(region.end!)
+    range.setStartAfter(region.ranges[0].start)
+    range.setEndBefore(region.ranges[0].end!)
 
     expect(range.cloneContents().querySelector("template")).toBeNull()
   })
@@ -137,7 +137,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
   const page = `
     <!--herb-region:${FILE}:aaaaaaaa:0-->
     <div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>
-    <template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello <!--herb-slot:3--><!--/herb-slot:3--></b></template>
+    <template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b>Hello <!--herb-slot:3--><!--/herb-slot:3--></b></template>
     <!--/herb-region:${FILE}-->
   `
 
@@ -194,7 +194,7 @@ describe("a page where the server chose a different format per template", () => 
   const withStatics = `
     <!--herb-region:${FILE}:aaaaaaaa:0-->
     <div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>
-    <template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template>
+    <template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b>Hello</b></template>
     <!--/herb-region:${FILE}-->
   `
 
@@ -227,7 +227,7 @@ describe("a page where the server chose a different format per template", () => 
       <!--herb-region:${FILE}:aaaaaaaa:0-->
       <div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>
       <div><!--herb-slot:7:conditional--><!--/herb-slot:7--></div>
-      <template data-herb-statics="0:1"><!--herb-branch:0:1--><b>public</b></template>
+      <template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b>public</b></template>
       <!--/herb-region:${FILE}-->
     `
 
@@ -249,7 +249,7 @@ describe("a page where the server chose a different format per template", () => 
 
     later.innerHTML = `
       <!--herb-region:${FILE}:aaaaaaaa:0-->
-      <template data-herb-statics="0:2"><!--herb-branch:0:2--><i>Goodbye</i></template>
+      <template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:2--><i>Goodbye</i></template>
       <!--/herb-region:${FILE}-->
     `
 
@@ -269,7 +269,7 @@ describe("a page where the server chose a different format per template", () => 
 
     next.innerHTML = `
       <!--herb-region:${FILE}:cccccccc:0-->
-      <template data-herb-statics="0:2"><!--herb-branch:0:2--><i>Goodbye</i></template>
+      <template data-herb-region="${FILE}:cccccccc"><!--herb-branch:0:2--><i>Goodbye</i></template>
       <!--/herb-region:${FILE}-->
     `
 
@@ -366,14 +366,6 @@ describe("statics parked once for the page", () => {
     expect(document.querySelector("template"), "an unreadable one is left alone").not.toBeNull()
   })
 
-  test("still accepts one branch named by attribute, inside its region", () => {
-    const index = new SlotIndex()
-
-    document.body.innerHTML = `<!--herb-region:${FILE}:aaaaaaaa:0--><template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template><!--/herb-region:${FILE}-->`
-    index.scan(document.body)
-
-    expect(index.skeletonKeys(FILE)).toEqual(["0:1"])
-  })
 })
 
 describe("output the compiler actually emits", () => {
@@ -530,7 +522,7 @@ describe("keeping a branch that rendered", () => {
 describe("switching a branch from the client", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
-  const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><b>under</b><!--/herb-slot:0--></div><template data-herb-statics="0:0"><!--herb-branch:0:0--><i>over</i></template><!--/herb-region:${FILE}-->`
+  const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><b>under</b><!--/herb-slot:0--></div><template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:0--><i>over</i></template><!--/herb-region:${FILE}-->`
 
   function watch(): SlotEventDetail[] {
     const seen: SlotEventDetail[] = []

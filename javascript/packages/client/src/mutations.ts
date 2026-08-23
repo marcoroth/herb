@@ -6,7 +6,6 @@ import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot } from "./
 import type { SlotState, StateScope, StateValues } from "./state"
 
 export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
-export type MutationScope = "collection" | "payload"
 export type MutationTransport = (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>
 export type ConfirmKey = (payload: Payload, temp: string) => string | null
 
@@ -29,7 +28,6 @@ export interface SubmitOptions {
   values?: ItemValues
   key?: string
   confirmKey?: ConfirmKey
-  scope?: MutationScope
 }
 
 export interface MutationResult {
@@ -288,7 +286,7 @@ export class SlotMutations {
 
     let narrowed = payload
 
-    if (slot && (options.scope ?? "collection") === "collection") {
+    if (slot) {
       narrowed = this.#narrow(payload, slot)
     }
 

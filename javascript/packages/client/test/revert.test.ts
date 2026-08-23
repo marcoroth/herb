@@ -14,8 +14,8 @@ const PAGE =
   `<div><!--herb-slot:4:conditional--><!--herb-branch:4:1--><i>shown</i><!--/herb-slot:4--></div>` +
   `<section data-herb-slot="5:element">original</section>` +
   `<div id="cond"><!--herb-slot:6:conditional--><!--herb-branch:6:1--><p data-herb-slot="7:child">typed</p><!--/herb-slot:6--></div>` +
-  `<template data-herb-statics="6:0"><!--herb-branch:6:0--><em>off</em></template>` +
-  `<template data-herb-statics="4:0"><!--herb-branch:4:0--><em>hidden</em></template>` +
+  `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:6:0--><em>off</em></template>` +
+  `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:4:0--><em>hidden</em></template>` +
   `<!--/herb-region:${FILE}-->`
 
 let index: SlotIndex

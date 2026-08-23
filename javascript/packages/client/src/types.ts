@@ -13,7 +13,6 @@ export type SlotType =
 export type SlotOperation =
   | "value"
   | "attribute"
-  | "markup"
   | "branch"
   | "item-added"
   | "item-rekeyed"
@@ -22,7 +21,6 @@ export type SlotOperation =
 
 export type RenderMode = "server" | "client"
 export type ApplyMode = "replace" | "merge"
-export type TemplateSource = "live" | "skeleton"
 
 export type SlotValue = string | string[]
 export type SlotValues = Record<number, SlotValue>
@@ -100,8 +98,6 @@ export interface Region {
   version: string
   occurrence: number
   ranges: RegionRange[]
-  start: Comment | null
-  end: Comment | null
   slots: SlotMap
   names: NameMap
   seeds?: Seeds

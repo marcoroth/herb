@@ -12,7 +12,6 @@ export const HERB_ATTRIBUTES = {
   slot: "data-herb-slot",
   name: "data-herb-name",
   region: "data-herb-region",
-  statics: "data-herb-statics",
   dependencies: "data-herb-dependencies",
   into: "data-herb-into",
   set: "data-herb-set",

@@ -7,7 +7,7 @@ export const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 export const NAME_ATTRIBUTE = HERB_ATTRIBUTES.name
 export const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
 export const NAME_SELECTOR = `[${NAME_ATTRIBUTE}]`
-export const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
+export const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}]`
 
 import type { AnchorEntry, Bounds, Marker, NameEntry, Region, RegionRange, SlotType } from "./types"
 

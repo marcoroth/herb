@@ -320,12 +320,6 @@ A conditional that was false rendered nothing, so its markup was never on the pa
 
 Naming its own region frees it from where it sits, so it can be parked once for the page, not once per rendering, and the parser moving it is of no consequence. Which branch is which comes out of the payload, because `herb-branch` is the same marker the rendered output carries. A branch runs to the next branch marker among the payload's own children, so a conditional nested inside a branch stays with the branch containing it.
 
-A `<template>` that says nothing about its region belongs to the region it was delivered in, and names one branch by attribute:
-
-```html
-<template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template>
-```
-
 The runtime takes each one out of the document once it has read it, the way a `<turbo-stream>` element removes itself after acting. A `<template>` keeps its content when it leaves the document, so nothing is lost. What is left is the rendered output and its markers, with no trace of the parked copy. This matters for one delivered inside its region, which until it is removed sits inside the range of that region and of any slot spanning it, where an update would copy it into the page or destroy it.
 
 Building a branch then costs only its values, with no round trip for markup the page already has:
