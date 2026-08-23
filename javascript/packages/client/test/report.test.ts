@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
 import { SlotState } from "../src/state"
 
-import { clearOnNavigation } from "../src/report"
+import { clearOnNavigation, resetReport } from "../src/report"
 
 import type { RuntimeDiagnostic } from "../src/report"
 
@@ -50,6 +50,8 @@ let slots: SlotIndex
 let state: SlotState
 
 beforeEach(() => {
+  resetReport()
+
   document.body.innerHTML = PAGE
   document.head.innerHTML = ""
 
@@ -121,6 +123,8 @@ describe("runtime diagnostics", () => {
 
     const stop = clearOnNavigation()
 
+    document.dispatchEvent(new Event("turbo:load"))
+
     state.setState({ missing: true })
     document.dispatchEvent(new Event("turbo:load"))
 
@@ -169,13 +173,28 @@ describe("runtime diagnostics", () => {
     warn.mockRestore()
   })
 
-  test("without the debug signal nothing is retained", () => {
+  test("without the debug signal diagnostics still queue for a late panel", () => {
     state.setState({ missing: true })
 
     const devTools = installDevTools()
 
-    state.setState({ busy: true })
+    state.setState({ also_missing: true })
 
-    expect(devTools.entries).toHaveLength(0)
+    expect(devTools.entries.map((entry) => entry.value)).toEqual(["missing", "also_missing"])
+  })
+
+  test("the landing page's own turbo:load keeps its diagnostics", () => {
+    const stop = clearOnNavigation()
+
+    state.setState({ missing: true })
+    document.dispatchEvent(new Event("turbo:load"))
+
+    const devTools = installDevTools()
+
+    state.setState({ also_missing: true })
+
+    expect(devTools.entries.map((entry) => entry.value)).toEqual(["missing", "also_missing"])
+
+    stop()
   })
 })
