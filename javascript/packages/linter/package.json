@@ -18,8 +18,8 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rolldown -c",
-    "watch": "tsc -b -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n\u2717 Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
@@ -57,7 +57,6 @@
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "@ruby/prism": "^1.9.0",
-    "dedent": "^1.7.2",
     "picomatch": "^4.0.5",
     "postcss": "^8.5.26",
     "postcss-selector-parser": "^6.1.2",

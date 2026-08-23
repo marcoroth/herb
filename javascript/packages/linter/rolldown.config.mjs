@@ -70,6 +70,17 @@ export default [
     external: isExternal,
   },
 
+  // CLI library exports (ESM)
+  {
+    input: "src/cli.ts",
+    output: {
+      file: "dist/cli.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external: isExternal,
+  },
+
   // Loader entry point (includes custom rule loader)
   {
     input: "src/loader.ts",
