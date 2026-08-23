@@ -1,7 +1,7 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute } from "../utils/rule-utils.js"
-import { StateScopeMap } from "../utils/state-directives-utils.js"
-import { bareReadName, classifyDefault } from "@herb-tools/client/directives"
+import { StateScopeMap, declaredKind } from "../utils/state-directives-utils.js"
+import { bareReadName, classifyDerivedDefault } from "@herb-tools/client/directives"
 import { hasAttributeValue, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
@@ -51,22 +51,19 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
 
     if (name !== null) return names.includes(name)
 
-    return this.comparesDeclaredState(expression, names)
-  }
+    // The engine accepts the whole condition grammar in a boolean attribute, combos included, so
+    // this defers to the same classifier the state rules use instead of matching one `==` by hand.
+    const declared = new Map<string, string>()
 
-  private comparesDeclaredState(expression: string, names: string[]): boolean {
-    const separator = expression.indexOf("==")
+    for (const candidate of names) {
+      const declaration = this.states.resolve(this.stack, candidate)
 
-    if (separator < 1 || expression[separator + 2] === "=") return false
+      if (declaration) declared.set(candidate, declaredKind(declaration))
+    }
 
-    const sides = [expression.slice(0, separator).trim(), expression.slice(separator + 2).trim()]
-    const read = sides.map((side) => bareReadName(side)).find((side) => side !== null && names.includes(side))
+    const classified = classifyDerivedDefault(expression, declared)
 
-    if (!read) return false
-
-    const comparand = sides.find((side) => bareReadName(side) !== read)
-
-    return comparand !== undefined && ["boolean", "integer", "string", "symbol", "nil"].includes(classifyDefault(comparand))
+    return classified !== null && classified !== "mixed"
   }
 
   private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {

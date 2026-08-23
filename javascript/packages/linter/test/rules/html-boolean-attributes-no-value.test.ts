@@ -111,3 +111,37 @@ describe("html-boolean-attributes-no-value", () => {
     `)
   })
 })
+
+describe("a boolean attribute driven by a combined state condition", () => {
+  test("allows a condition reading a region state and an item state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (filter: "all") %>
+      <ul>
+        <% @messages.each do |message| %>
+          <%# herb:key message.id %>
+          <%# herb:state (starred: false) %>
+          <li id="m<%= message.id %>" hidden="<%= filter == "starred" && starred == false %>"><%= message.body %></li>
+        <% end %>
+      </ul>
+    `)
+  })
+
+  test("allows an either-or condition", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (pending: false, failed: false) %>
+      <input disabled="<%= pending? || failed? %>">
+    `)
+  })
+
+  test("still flags a value that reads no state", () => {
+    expectError('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="<%= @locked && @admin %>"`.')
+
+    assertOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (pending: false) %>
+      <input disabled="<%= @locked && @admin %>">
+    `)
+  })
+})
