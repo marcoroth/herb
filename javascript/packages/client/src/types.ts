@@ -108,6 +108,18 @@ export interface ScanResult {
   slots: Slot[]
 }
 
+export interface Placement {
+  region: Region
+  slot: Slot | null
+  item: Item | null
+}
+
+export interface ScanContext {
+  region?: Region | null
+  slot?: Slot | null
+  item?: Item | null
+}
+
 export interface AnchorEntry {
   index: number
   type: SlotType

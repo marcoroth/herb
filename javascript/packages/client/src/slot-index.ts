@@ -21,15 +21,15 @@
 import { ITEM_STATICS } from "./markers"
 import { HERB_ATTRIBUTES } from "./attributes"
 
-import { anchorEntries, anchorKind, htmlOf, innerRange, markers, nameEntry, outerRange, skeletonElements, withinBounds, withinRegion } from "./anchors"
+import { anchorEntries, anchorKind, htmlOf, innerRange, markers, nameEntry, outerRange, skeletonElements, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, parseStaticsIdentity, partsKey } from "./markers"
 import { attributeParts, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
 
-import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Region, RegionRange, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
+import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
+import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -38,9 +38,7 @@ const NUMERIC_NAME = /^\d+$/
 
 export class SlotIndex {
   #regions: Region[] = []
-  #seen = new WeakSet<Comment>()
-  #anchored = new WeakSet<Element>()
-  #named = new WeakSet<Element>()
+  #visited = new WeakSet<Node>()
   #journal = new Map<RevertToken, Inverse[]>()
   #recording: Inverse[] | null = null
   #nextToken = 1
@@ -87,13 +85,16 @@ export class SlotIndex {
     this.#observer = null
   }
 
-  scan(roots: Node | Node[]): ScanResult {
+  scan(roots: Node | Node[], context?: ScanContext): ScanResult {
     const result: ScanResult = { regions: [], slots: [] }
-    const state: ParseState = { openRegions: [], openSlots: [], openItems: [] }
     const list = asList(roots)
 
-    for (const root of list) {
-      this.#scanMarkers(root, result, state)
+    for (const group of siblingGroups(list)) {
+      const state = this.#seed(context ?? this.locate(group[0]) ?? {})
+
+      for (const root of group) {
+        this.#scanMarkers(root, result, state)
+      }
     }
 
     for (const root of list) {
@@ -101,6 +102,58 @@ export class SlotIndex {
     }
 
     return result
+  }
+
+  locate(node: Node): Placement | null {
+    return this.placements(node)[0] ?? null
+  }
+
+  placements(node: Node): Placement[] {
+    const found: Placement[] = []
+
+    for (const region of this.#regions) {
+      if (!withinRegion(region, node)) {
+        continue
+      }
+
+      found.push({ region, slot: this.#enclosingSlot(region, node), item: this.#enclosingItem(region, node) })
+    }
+
+    return found.sort((left, right) => {
+      const leftStart = rangeAround(left.region, node)!.start
+      const rightStart = rangeAround(right.region, node)!.start
+
+      if (leftStart === rightStart) {
+        return 0
+      }
+
+      if (leftStart.compareDocumentPosition(rightStart) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return 1
+      }
+
+      return -1
+    })
+  }
+
+  #seed(context: ScanContext): ParseState {
+    const state: ParseState = { openRegions: [], openSlots: [], openItems: [] }
+    const region = context.region ?? context.slot?.region ?? context.item?.collection.region ?? null
+
+    if (region) {
+      const range = context.slot ? rangeAround(region, context.slot.anchor.kind === "range" ? context.slot.anchor.start : context.slot.anchor.element) : region.ranges[0]
+
+      state.openRegions.push({ region, range: range ?? region.ranges[0] })
+    }
+
+    if (context.item) {
+      state.openItems.push({ slot: context.item.collection.index, item: context.item })
+    }
+
+    if (context.slot) {
+      state.openSlots.push({ index: context.slot.index, slot: context.slot })
+    }
+
+    return state
   }
 
   regionsFor(file: string): Region[] {
@@ -309,7 +362,7 @@ export class SlotIndex {
     const address = this.#addressOf(slot)
 
     this.#recording.push(() => {
-      const live = this.#slotAt(address)
+      const live = this.#slotAtAddress(address)
 
       if (live) {
         restore(live)
@@ -326,7 +379,7 @@ export class SlotIndex {
     }
   }
 
-  #slotAt(address: SlotAddress): Slot | null {
+  #slotAtAddress(address: SlotAddress): Slot | null {
     const { region, collection, key, index } = address
 
     if (collection === null || key === null) {
@@ -639,7 +692,7 @@ export class SlotIndex {
 
     target.parentNode?.insertBefore(copy, target)
 
-    this.scan(added)
+    this.scan(added, { region: slot.region, slot, item: slot.item })
 
     this.#recordSlot(slot, () => (live) => {
       const built = live.items.get(key)
@@ -700,7 +753,7 @@ export class SlotIndex {
 
         target.parentNode?.insertBefore(copy, target)
 
-        this.scan(added)
+        this.scan(added, { region: live.region, slot: live, item: live.item })
         this.#announce(live, "item-added", live.index, item.key, live.items.get(item.key) ?? null)
       }
     })
@@ -752,7 +805,7 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    this.scan(added)
+    this.scan(added, { region: slot.region, slot, item: slot.item })
 
     this.#announce(slot, "branch", slot.index)
   }
@@ -914,7 +967,7 @@ export class SlotIndex {
         return this.scan([])
       }
 
-      return this.scan([...parent.childNodes])
+      return this.scan([...parent.childNodes], { region: slot.region, slot: slot.parent, item: slot.item })
     }
 
     const range = this.rangeFor(slot)
@@ -926,7 +979,7 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    const result = this.scan(added)
+    const result = this.scan(added, { region: slot.region, slot, item: slot.item })
 
     this.#announce(slot, "value", slot.index)
 
@@ -957,7 +1010,7 @@ export class SlotIndex {
 
     range.insertNode(fragment)
 
-    const result = this.scan(added)
+    const result = this.scan(added, { region: slot.region, slot, item })
 
     this.#announce(slot, "item-updated", slot.index, key, slot.items.get(key) ?? null)
 
@@ -1277,9 +1330,7 @@ export class SlotIndex {
 
   clear(): void {
     this.#regions = []
-    this.#seen = new WeakSet()
-    this.#anchored = new WeakSet()
-    this.#named = new WeakSet()
+    this.#visited = new WeakSet()
     this.#skeletons = new Map()
   }
 
@@ -1292,6 +1343,12 @@ export class SlotIndex {
       if (marker.nodeType === Node.ELEMENT_NODE) {
         const element = marker as Element
 
+        if (this.#visited.has(element)) {
+          continue
+        }
+
+        this.#visited.add(element)
+
         this.#anchorSlots(element, result, state)
         this.#nameSlot(element, state)
 
@@ -1299,18 +1356,19 @@ export class SlotIndex {
       }
 
       const comment = marker as Comment
-
-      if (this.#seen.has(comment)) {
-        continue
-      }
-
       const parsed = parseMarker(comment.data.trim())
 
       if (!parsed) {
         continue
       }
 
-      this.#seen.add(comment)
+      if (this.#visited.has(comment)) {
+        this.#replay(parsed, comment, state)
+
+        continue
+      }
+
+      this.#visited.add(comment)
 
       switch (parsed.kind) {
         case "region-open":
@@ -1332,12 +1390,61 @@ export class SlotIndex {
           this.#closeItem(parsed, comment, state)
           break
         case "seeds":
-          this.#sowSeeds(parsed, comment, state)
+          this.#sowSeeds(parsed, state)
           break
         case "branch":
-          this.#markBranch(parsed, comment, state)
+          this.#markBranch(parsed, state)
           break
       }
+    }
+  }
+
+  #replay(marker: MarkerData, comment: Comment, state: ParseState): void {
+    switch (marker.kind) {
+      case "region-open": {
+        const region = this.#regions.find((candidate) => {
+          return candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version
+        })
+        const range = region?.ranges.find((candidate) => candidate.start === comment)
+
+        if (region && range) {
+          state.openRegions.push({ region, range })
+        }
+
+        break
+      }
+      case "region-close":
+        popMatching(state.openRegions, (candidate) => candidate.region.file === marker.file)
+        break
+      case "slot-open": {
+        const holder = last(state.openItems)?.item ?? this.#regionAt(state)
+        const slot = holder?.slots.get(marker.index)
+
+        if (slot && slot.anchor.kind === "range" && slot.anchor.start === comment) {
+          state.openSlots.push({ index: slot.index, slot })
+        }
+
+        break
+      }
+      case "slot-close":
+        popMatching(state.openSlots, (candidate) => candidate.index === marker.index)
+        break
+      case "item-open": {
+        const collection = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? this.#regionAt(state)?.slots.get(marker.index)
+        const item = collection?.items.get(marker.key)
+
+        if (item && item.start === comment) {
+          state.openItems.push({ slot: marker.index, item })
+        }
+
+        break
+      }
+      case "item-close":
+        popMatching(state.openItems, (candidate) => candidate.slot === marker.index)
+        break
+      case "seeds":
+      case "branch":
+        break
     }
   }
 
@@ -1381,19 +1488,14 @@ export class SlotIndex {
   }
 
   #openSlot(marker: SlotOpenMarker, comment: Comment, result: ScanResult, state: ParseState): void {
-    const region = this.#regionAt(state, comment)
+    const region = this.#regionAt(state)
 
     if (!region) {
       return
     }
 
-    const item = last(state.openItems)?.item ?? null
-
-    let enclosing = last(state.openSlots)?.slot ?? null
-
-    if (!enclosing) {
-      enclosing = this.#enclosingSlot(region, comment)
-    }
+    const item = this.#itemAt(state, region)
+    const enclosing = this.#slotAt(state, region)
 
     const slot: Slot = {
       index: marker.index,
@@ -1423,7 +1525,7 @@ export class SlotIndex {
   }
 
   #openItem(marker: ItemOpenMarker, comment: Comment, state: ParseState): void {
-    const region = this.#regionAt(state, comment)
+    const region = this.#regionAt(state)
     const collection = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? region?.slots.get(marker.index)
 
     if (!collection) {
@@ -1445,8 +1547,8 @@ export class SlotIndex {
     }
   }
 
-  #sowSeeds(marker: SeedsMarker, comment: Comment, state: ParseState): void {
-    const holder = last(state.openItems)?.item ?? this.#regionAt(state, comment)
+  #sowSeeds(marker: SeedsMarker, state: ParseState): void {
+    const holder = last(state.openItems)?.item ?? this.#regionAt(state)
 
     if (!holder) {
       return
@@ -1455,21 +1557,15 @@ export class SlotIndex {
     holder.seeds = { ...(holder.seeds ?? {}), ...marker.seeds }
   }
 
-  #markBranch(marker: BranchMarker, comment: Comment, state: ParseState): void {
-    const region = this.#regionAt(state, comment)
+  #markBranch(marker: BranchMarker, state: ParseState): void {
+    const region = this.#regionAt(state)
     const branch = numericBranch(marker.branch)
 
     if (branch === null) {
       return
     }
 
-    let item = last(state.openItems)?.item ?? null
-
-    if (!item && region) {
-      item = this.#enclosingItem(region, comment)
-    }
-
-    const holder = item ?? region
+    const holder = last(state.openItems)?.item ?? region
     const slot = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? holder?.slots.get(marker.index)
 
     if (slot) {
@@ -1477,8 +1573,28 @@ export class SlotIndex {
     }
   }
 
-  #regionAt(state: ParseState, node: Node): Region | null {
-    return last(state.openRegions)?.region ?? this.#enclosingRegion(node)
+  #regionAt(state: ParseState): Region | null {
+    return last(state.openRegions)?.region ?? null
+  }
+
+  #slotAt(state: ParseState, region: Region): Slot | null {
+    const stacked = last(state.openSlots)?.slot ?? null
+
+    if (stacked && stacked.region === region) {
+      return stacked
+    }
+
+    return null
+  }
+
+  #itemAt(state: ParseState, region: Region): Item | null {
+    const opened = last(state.openItems)?.item ?? null
+
+    if (opened && opened.collection.region === region) {
+      return opened
+    }
+
+    return null
   }
 
   #scanSkeletons(root: Node): void {
@@ -1523,50 +1639,24 @@ export class SlotIndex {
   }
 
   #nameSlot(element: Element, state: ParseState): void {
-    if (this.#named.has(element)) {
-      return
-    }
-
     const entry = nameEntry(element)
 
     if (!entry) {
       return
     }
 
-    this.#named.add(element)
-
-    this.#regionAt(state, element)?.names.set(entry.name, entry.index)
+    this.#regionAt(state)?.names.set(entry.name, entry.index)
   }
 
   #anchorSlots(element: Element, result: ScanResult, state: ParseState): void {
-    if (this.#anchored.has(element)) {
-      return
-    }
-
-    this.#anchored.add(element)
-
-    const walked = last(state.openRegions)?.region ?? null
-    const region = walked ?? this.#enclosingRegion(element)
+    const region = this.#regionAt(state)
 
     if (!region) {
       return
     }
 
-    const stacked = last(state.openSlots) ?? null
-
-    let enclosing: Slot | null = null
-
-    if (stacked && stacked.slot.region === region) {
-      enclosing = stacked.slot
-    } else if (!walked) {
-      enclosing = this.#enclosingSlot(region, element)
-    }
-
-    let item = last(state.openItems)?.item ?? null
-
-    if (!item && !walked) {
-      item = this.#enclosingItem(region, element)
-    }
+    const enclosing = this.#slotAt(state, region)
+    const item = this.#itemAt(state, region)
 
     for (const entry of anchorEntries(element)) {
       const slot: Slot = {
@@ -1609,18 +1699,6 @@ export class SlotIndex {
     target.set(slot.index, slot)
 
     result.slots.push(slot)
-  }
-
-  #enclosingRegion(node: Node): Region | null {
-    for (let position = this.#regions.length - 1; position >= 0; position -= 1) {
-      const region = this.#regions[position]
-
-      if (withinRegion(region, node)) {
-        return region
-      }
-    }
-
-    return null
   }
 
   #forget(slot: Slot): void {
@@ -1714,4 +1792,36 @@ export class SlotIndex {
 
     return slot.anchor.element.isConnected
   }
+}
+
+function siblingGroups(list: Node[]): Node[][] {
+  const groups: Node[][] = []
+
+  let current: Node[] = []
+  let parent: Node | null | undefined
+
+  for (const node of list) {
+    if (current.length > 0 && node.parentNode === parent) {
+      current.push(node)
+
+      continue
+    }
+
+    if (current.length > 0) {
+      groups.push(current)
+    }
+
+    current = [node]
+    parent = node.parentNode
+  }
+
+  if (current.length > 0) {
+    groups.push(current)
+  }
+
+  return groups
+}
+
+function rangeAround(region: Region, node: Node): RegionRange | null {
+  return region.ranges.find((range) => withinRegionRange(range, node)) ?? null
 }

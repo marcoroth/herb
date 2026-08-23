@@ -250,6 +250,30 @@ describe("SlotIndex", () => {
       index.disconnect()
     })
 
+    test("keeps unrelated subtrees of one batch apart", async () => {
+      const host = mount("")
+
+      index.observe(host)
+
+      const first = document.createElement("div")
+      const second = document.createElement("div")
+
+      host.append(first, second)
+      await settle()
+
+      first.innerHTML = CHILD
+      second.innerHTML = ANCHORED
+      await settle()
+
+      const regions = index.regionsFor(FILE)
+
+      expect(regions.map((region) => region.version).sort()).toEqual(["25c0946e", "fd3dfd36"])
+      expect(index.slot(FILE, 0, 0)?.anchor.kind).toBe("range")
+      expect(regions.find((region) => region.version === "fd3dfd36")?.slots.get(0)?.anchor.kind).toBe("content")
+
+      index.disconnect()
+    })
+
     test("finds markers nested inside an added subtree, which the record does not report", async () => {
       const host = mount("")
 
@@ -646,6 +670,29 @@ describe("updating one item of a collection", () => {
     expect((first.anchor as { element: Element }).element.getAttribute("id")).toBe("1")
     expect((second.anchor as { element: Element }).element.getAttribute("id")).toBe("2")
     expect(document.querySelectorAll(".active")).toHaveLength(1)
+  })
+
+  test("a comment-anchored slot written into an item belongs to that item", () => {
+    const index = mounted(COLLECTION)
+    const collection = index.slot(FILE, 0)!
+
+    index.updateItem(collection, "1", `<li id="1" data-herb-slot="1:attribute"><!--herb-slot:2-->changed<!--/herb-slot:2--></li>`)
+
+    expect(index.slotInItem(FILE, 0, "1", 2)?.anchor.kind).toBe("range")
+    expect(index.slotInItem(FILE, 0, "1", 2)?.item?.key).toBe("1")
+    expect(index.slot(FILE, 2)).toBeNull()
+  })
+
+  test("a slot written into an item keeps the collection as its parent", () => {
+    const index = mounted(COLLECTION)
+    const collection = index.slot(FILE, 0)!
+
+    index.update(index.slotInItem(FILE, 0, "1", 2)!, `<!--herb-slot:3-->inner<!--/herb-slot:3--> text`)
+
+    const inner = index.slotInItem(FILE, 0, "1", 3)!
+
+    expect(inner.parent).toBe(index.slotInItem(FILE, 0, "1", 2))
+    expect(index.ancestorsOf(inner)).toContain(collection)
   })
 })
 

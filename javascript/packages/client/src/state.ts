@@ -105,11 +105,6 @@ export interface PlacedSlot {
   scope: StateScope
 }
 
-export interface PlacedItem {
-  item: Item
-  collection: number
-}
-
 export interface BoundState {
   name: string
   scope: StateScope
@@ -563,20 +558,25 @@ export class SlotState {
       return target
     }
 
+    const placed = new Map(this.#slots.placements(target).map((placement) => [placement.region, placement]))
+
     for (const region of this.#slots.regions()) {
-      if (!containsNode(region, target)) {
+      const placement = placed.get(region)
+
+      if (!placement) {
         continue
       }
 
       const manifest = this.manifestFor(region)
+
       if (!manifest) {
         continue
       }
 
-      const item = enclosingItem(region, target)
+      const item = placement.item
 
-      if (item && (!name || declared(manifest, name, item.collection) !== null)) {
-        return { region, item: item.item }
+      if (item && (!name || declared(manifest, name, item.collection.index) !== null)) {
+        return { region, item }
       }
 
       if (!name || declared(manifest, name, null) !== null) {
@@ -1810,42 +1810,6 @@ function declared(manifest: StateManifest, name: string, collection: number | nu
   }
 
   return manifest.declarations.find((declaration) => declaration.name === name && declaration.scope === "region") ?? null
-}
-
-function containsNode(region: Region, target: Node): boolean {
-  for (const range of region.ranges) {
-    if (!range.end) {
-      continue
-    }
-
-    const afterStart = range.start.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING
-    const beforeEnd = range.end.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_PRECEDING
-
-    if (afterStart && beforeEnd) {
-      return true
-    }
-  }
-
-  return false
-}
-
-function enclosingItem(region: Region, target: Node): PlacedItem | null {
-  for (const slot of region.slots.values()) {
-    if (slot.type !== "collection") {
-      continue
-    }
-
-    for (const item of slot.items.values()) {
-      const afterStart = item.start.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING
-      const beforeEnd = item.end.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_PRECEDING
-
-      if (afterStart && beforeEnd) {
-        return { item, collection: slot.index }
-      }
-    }
-  }
-
-  return null
 }
 
 function collectionIn(scope: StateScope): number | null {
