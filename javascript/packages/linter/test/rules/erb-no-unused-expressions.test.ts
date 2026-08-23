@@ -510,4 +510,25 @@ describe("ERBNoUnusedExpressionsRule", () => {
       assertOffenses(`<p><% link_to('→ next', path) %></p>`)
     })
   })
+
+  test("does not flag a bare read of a declared state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", pending: false) %>
+      <% draft %>
+      <% pending? %>
+      <input value="<%= draft %>">
+    `)
+  })
+
+  test("still flags a state name outside its declaring scope", () => {
+    expectError("Avoid unused expressions in silent ERB tags. `<% selected %>` is evaluated but its return value is discarded. Use `<%= selected %>` to output the value or remove the expression.")
+
+    assertOffenses(dedent`
+      <% @rows.each do |row| %>
+        <%# herb:state (selected: false) %>
+        <input type="checkbox" checked="<%= selected %>">
+      <% end %>
+      <% selected %>
+    `)
+  })
 })
