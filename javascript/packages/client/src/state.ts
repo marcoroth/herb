@@ -133,6 +133,7 @@ export class SlotState {
   #timer: ReturnType<typeof setTimeout> | null = null
   #controller: AbortController | null = null
   #observer: MutationObserver | null = null
+  #hydrating = false
 
   constructor(slots: SlotIndex, options: StateOptions = {}) {
     this.#slots = slots
@@ -815,13 +816,7 @@ export class SlotState {
       }
     }
 
-    const value = start + matches * (count.by ?? 1)
-    const cache = this.#lastCounts.get(scope.region) ?? new Map<string, StateValue>()
-
-    cache.set(declaration.name, value)
-    this.#lastCounts.set(scope.region, cache)
-
-    return value
+    return start + matches * (count.by ?? 1)
   }
 
   #derivedDependents(manifest: StateManifest, scope: StateScope, written: string[]): string[] {
@@ -1013,17 +1008,20 @@ export class SlotState {
         const present = conditionMatches(entry, (name) => this.#valueOf(name, placed.scope))
 
         this.#slots.setBooleanAttribute(placed.slot, present)
+        this.#slots.claim(placed.slot)
       }
     }
   }
 
-  #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[]): void {
+  #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[], skip: Slot | null = null): void {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
       const mentions = conditional.arms.some((arm) => armMentions(arm, changed))
       if (!mentions) continue
 
       for (const placed of this.#placedSlots(scope, Number(indexKey))) {
         const slot = placed.slot
+
+        if (slot === skip) continue
         const target = this.#targetBranch(conditional, placed.scope)
 
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
@@ -1249,7 +1247,7 @@ export class SlotState {
 
     const cache = this.#lastCounts.get(region) ?? new Map<string, StateValue>()
 
-    for (const entry of cascade) cache.set(entry.name, entry.value)
+    for (const entry of [...changed, ...cascade]) cache.set(entry.name, entry.value)
 
     this.#lastCounts.set(region, cache)
 
@@ -1295,6 +1293,7 @@ export class SlotState {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
     if (detail.operation !== "branch" || !detail.slot) return
+    if (this.#hydrating || this.#slots.applying()) return
 
     const slot = detail.slot
     const region = this.#slots.regionOf(slot)
@@ -1322,12 +1321,32 @@ export class SlotState {
 
       this.#writeValueSlots(manifest, scope, name, value)
     }
+
+    // Markup arriving from a skeleton brings its own nested conditionals and boolean attributes,
+    // and the parked copy says nothing about either. Settle them against the states in scope.
+    const at = this.scopeFor(element)
+
+    if (!at) return
+
+    const declared = manifest.declarations.map((declaration) => declaration.name)
+
+    this.#hydrating = true
+
+    try {
+      this.#writePresence(manifest, at, declared)
+
+      this.#writeConditionals(manifest, at, declared, slot)
+    } finally {
+      this.#hydrating = false
+    }
   }
 
   #hydrateItemState = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
     if (detail.operation !== "item-added" || !detail.slot || !detail.item) return
+
+    if (this.#slots.applying()) return
 
     const region = this.#slots.regionOf(detail.slot)
 
@@ -1337,12 +1356,11 @@ export class SlotState {
 
     if (!manifest) return
 
-    const scope: StateScope = { region, item: null }
     const item = detail.item
+    const at: StateScope = { region, item }
 
     for (const [name, indices] of Object.entries(manifest.reads)) {
-      if (this.#declaration(manifest, scope, name)?.scope !== "region") continue
-
+      const scope = this.scopeFor(at, name) ?? at
       const value = this.getState(name, { scope })
 
       if (value === undefined) continue
@@ -1357,6 +1375,17 @@ export class SlotState {
         this.#write(slot, text)
         this.#slots.claim(slot)
       }
+    }
+
+    // A row built from the parked skeleton carries whatever presence the skeleton was blanked
+    // with, so every boolean attribute has to be decided from this item's own scope once.
+    for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
+      const slot = item.slots.get(Number(indexKey))
+
+      if (!slot) continue
+
+      this.#slots.setBooleanAttribute(slot, conditionMatches(entry, (name) => this.#valueOf(name, at)))
+      this.#slots.claim(slot)
     }
   }
 

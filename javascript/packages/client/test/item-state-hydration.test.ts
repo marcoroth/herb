@@ -190,3 +190,63 @@ describe("a seeded item state on a row the client built", () => {
     expect(seededState.getState("body_draft", { scope: { region, item } })).toBe("hello")
   })
 })
+
+const NESTED_FILE = "app/views/chat/toolbar.html.erb"
+
+const NESTED_PAGE =
+  `<!--herb-region:${NESTED_FILE}:22222222:0-->` +
+  `<div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div>` +
+  `<template data-herb-region="${NESTED_FILE}:22222222">` +
+  `<!--herb-branch:0:0-->` +
+  `<span><!--herb-slot:1:conditional--><!--/herb-slot:1--></span>` +
+  `<button data-herb-slot="2:boolean_attribute:disabled">Delete</button>` +
+  `<!--herb-branch:1:0-->Delete message` +
+  `<!--herb-branch:1:1-->Delete selected` +
+  `</template>` +
+  `<!--/herb-region:${NESTED_FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [NESTED_FILE]: {
+        version: "22222222",
+        declarations: [
+          { name: "open", kind: "boolean", default: "false", scope: "region" },
+          { name: "count", kind: "integer", default: "0", scope: "region" },
+        ],
+        reads: {},
+        conditionals: {
+          0: { arms: [["open", null, 0]], else: null },
+          1: { arms: [["count", "1", 0]], else: 1 },
+        },
+        presence: { 2: ["count", "0"] },
+      },
+    },
+  })}</template>`
+
+describe("markup that materializes with a conditional and a boolean attribute inside it", () => {
+  test("settles both from the states in scope", () => {
+    document.body.innerHTML = NESTED_PAGE
+
+    const nestedSlots = new SlotIndex()
+
+    nestedSlots.scan(document.body)
+
+    const nestedState = new SlotState(nestedSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    nestedState.adopt()
+    nestedState.setState({ open: true })
+
+    expect(document.querySelector("span")?.textContent).toBe("Delete selected")
+    expect(document.querySelector("button")?.hasAttribute("disabled")).toBe(true)
+
+    nestedState.setState({ count: 1 })
+
+    expect(document.querySelector("span")?.textContent).toBe("Delete message")
+    expect(document.querySelector("button")?.hasAttribute("disabled")).toBe(false)
+  })
+})

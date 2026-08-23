@@ -247,6 +247,7 @@ export class SlotIndex {
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
   #clientOwned = new WeakSet<Slot>()
+  #applying = 0
   #observer: MutationObserver | null = null
 
   claim(slot: Slot): void {
@@ -425,13 +426,23 @@ export class SlotIndex {
   apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
     const report: ApplyReport = { applied: 0, deferred: [] }
 
-    const { token } = this.transaction(() => {
-      this.#applyPayload(payload, report, options.items ?? "replace")
-    })
+    this.#applying += 1
 
-    if (token !== null) report.token = token
+    try {
+      const { token } = this.transaction(() => {
+        this.#applyPayload(payload, report, options.items ?? "replace")
+      })
+
+      if (token !== null) report.token = token
+    } finally {
+      this.#applying -= 1
+    }
 
     return report
+  }
+
+  applying(): boolean {
+    return this.#applying > 0
   }
 
   transaction<T>(work: () => T, options: { retain?: boolean } = {}): { token: RevertToken | null; result: T } {
