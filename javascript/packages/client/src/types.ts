@@ -184,6 +184,7 @@ export interface Payload {
   template: string
   version: string
   occurrence: number
+  seeds?: Seeds
   slots: PayloadSlots
 }
 
@@ -198,6 +199,7 @@ export interface Branched {
 
 export interface Collected {
   items: PayloadItems
+  order?: string[]
 }
 
 export interface Deferred {

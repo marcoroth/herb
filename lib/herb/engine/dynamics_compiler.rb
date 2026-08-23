@@ -525,8 +525,19 @@ module Herb
       def add_postamble(_postamble)
         super("{ template: #{@slot_visitor.identifier.inspect}, " \
               "version: #{@slot_visitor.version.inspect}, " \
-              "occurrence: #{OCCURRENCE_BUFFER}, " \
+              "occurrence: #{OCCURRENCE_BUFFER}#{region_seeds}, " \
               "slots: #{BUFFER} }\n")
+      end
+
+      #: () -> String
+      def region_seeds
+        names = @slot_visitor.seeded_region_states
+
+        return "" if names.nil? || names.empty?
+
+        pairs = names.map { |name| "#{name.inspect} => #{name}" }.join(", ")
+
+        ", seeds: #{SlotMarkers.seeds_expression(pairs)}"
       end
 
       #: () -> void
@@ -562,24 +573,34 @@ module Herb
 
       #: (Integer) -> void
       def scope_open_collection(index)
-        @src << "; #{ITEMS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
+        @src << "; #{ITEMS_BUFFER}#{index} = ::Hash.new;"
       end
 
       #: (Integer, ?String?) -> void
       def scope_item_begin(index, key = nil)
-        advance = key ? "#{KEY_BUFFER}#{index} = (#{key}).to_s" : "#{KEY_BUFFER}#{index} += 1"
-
-        @src << "; #{advance}; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+        @src << "; #{KEY_BUFFER}#{index} = (#{key}).to_s" if key
+        @src << "; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
 
         @scopes.push(index)
       end
 
       #: (Integer) -> void
+      # An unkeyed collection emits no item markers, so nothing on the page can receive an item's
+      # values. Its interior is still compiled into a scope, so what it wrote is discarded here
+      # rather than landing in the scope around the collection.
+      #: (Integer) -> void
       def scope_item_end(index)
         leave_scope(index)
 
+        return unless keyed?(index)
+
         @src << item_seeds(index)
         @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
+      end
+
+      #: (Integer) -> bool
+      def keyed?(index)
+        !@slot_visitor.slots[index]&.key_expression.nil?
       end
 
       #: (Integer) -> String
@@ -595,7 +616,7 @@ module Herb
 
       #: (Integer) -> void
       def scope_close_collection(index)
-        @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index} };"
+        @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index}, order: #{ITEMS_BUFFER}#{index}.keys };"
       end
 
       #: (Integer) -> void

@@ -157,12 +157,12 @@ describe("applying values to a collection", () => {
     expect(keys()).toEqual(["Yukihiro", "Ada"])
   })
 
-  test("cannot be told to reorder items keyed by a number", () => {
+  test("orders items keyed by a number the way the payload's order names", () => {
     const index = mounted(ITEMS)
 
-    index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" }, 1: { 1: "one" } } } }, "bbbbbbbb"))
+    index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" }, 1: { 1: "one" } }, order: ["2", "1"] } }, "bbbbbbbb"))
 
-    expect(keys()).toEqual(["one", "two"])
+    expect(keys()).toEqual(["two", "one"])
   })
 
   test("builds into an empty collection from the item the server parked", () => {

@@ -114,6 +114,11 @@ module Herb
       # : () -> Hash[Symbol, untyped]
       def state_declarations: () -> Hash[Symbol, untyped]
 
+      # The names of the seeded states declared at the top of the template, which only the server
+      # can evaluate, so a payload carries them for the states the client cannot compute.
+      # : () -> Array[String]
+      def seeded_region_states: () -> Array[String]
+
       # The names of the seeded states declared inside a collection's item body, keyed by the
       # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
       # so a row the client builds for itself has no way to learn it from the markup.

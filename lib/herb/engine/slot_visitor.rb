@@ -196,6 +196,13 @@ module Herb
         { region: @region_states.values.map(&:to_h), items: items }
       end
 
+      # The names of the seeded states declared at the top of the template, which only the server
+      # can evaluate, so a payload carries them for the states the client cannot compute.
+      #: () -> Array[String]
+      def seeded_region_states
+        @region_states.values.select { |declaration| StateDirectives.seeded?(declaration) }.map(&:name)
+      end
+
       # The names of the seeded states declared inside a collection's item body, keyed by the
       # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
       # so a row the client builds for itself has no way to learn it from the markup.

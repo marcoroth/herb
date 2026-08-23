@@ -392,6 +392,10 @@ export class SlotIndex {
       return
     }
 
+    if (payload.seeds) {
+      region.seeds = { ...(region.seeds ?? {}), ...payload.seeds }
+    }
+
     this.#applySlots(payload, region.slots, payload.slots, report, mode)
   }
 
@@ -524,7 +528,7 @@ export class SlotIndex {
   }
 
   #applyItems(payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
-    const wanted = Object.keys(value.items)
+    const wanted = value.order ?? Object.keys(value.items)
 
     if (mode === "merge") {
       this.#mergeItems(payload, slot, wanted, report)

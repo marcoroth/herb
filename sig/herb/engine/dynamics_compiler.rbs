@@ -240,6 +240,9 @@ module Herb
       # : (String) -> void
       def add_postamble: (String) -> void
 
+      # : () -> String
+      def region_seeds: () -> String
+
       # : () -> void
       def capture_occurrence: () -> void
 
@@ -262,7 +265,15 @@ module Herb
       def scope_item_begin: (Integer, ?String?) -> void
 
       # : (Integer) -> void
+      #  An unkeyed collection emits no item markers, so nothing on the page can receive an item's
+      #  values. Its interior is still compiled into a scope, so what it wrote is discarded here
+      #  rather than landing in the scope around the collection.
+      # : (Integer) -> void
       def scope_item_end: (Integer) -> void
+                        | (Integer) -> void
+
+      # : (Integer) -> bool
+      def keyed?: (Integer) -> bool
 
       # : (Integer) -> String
       def item_seeds: (Integer) -> String

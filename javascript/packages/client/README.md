@@ -305,7 +305,7 @@ slots.reconcile(collection, ["3", "1", "2"])
 // { added: [], removed: [], moved: ["3", "1"], kept: [...], unchanged: false }
 ```
 
-One limit worth knowing: JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. Ascending is what an append wants and what most collections already are, so it rarely shows, but a collection whose order the server decides has to be keyed by something that is not a number.
+JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. The payload carries an explicit `order` alongside `items`, so a collection is put in the order the server rendered whatever its keys are.
 
 ## Branches that never rendered
 
