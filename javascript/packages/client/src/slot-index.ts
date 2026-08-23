@@ -240,7 +240,16 @@ export class SlotIndex {
   #slotRegions = new WeakMap<Slot, Region>()
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
+  #clientOwned = new WeakSet<Slot>()
   #observer: MutationObserver | null = null
+
+  claim(slot: Slot): void {
+    this.#clientOwned.add(slot)
+  }
+
+  claimed(slot: Slot): boolean {
+    return this.#clientOwned.has(slot)
+  }
 
   observe(root: Node = document.documentElement): ScanResult {
     this.#observer?.disconnect()
@@ -525,6 +534,9 @@ export class SlotIndex {
         continue
       }
 
+      if (this.#clientOwned.has(slot)) continue
+
+
       if (typeof value === "boolean") {
         if (this.setBooleanAttribute(slot, value)) report.applied += 1
         else this.#defer(report, payload, index, "partial-attribute")
@@ -595,6 +607,8 @@ export class SlotIndex {
     })
 
     this.#writeFragment(slot, built)
+
+    slot.branch = value.branch
 
     report.applied += 1
 
@@ -1277,6 +1291,8 @@ export class SlotIndex {
 
     this.#writeFragment(slot, built)
 
+    slot.branch = branch
+
     return true
   }
 
@@ -1482,8 +1498,11 @@ export class SlotIndex {
       const branch = BRANCH.exec(data)
 
       if (branch) {
+        const index = Number(branch[1])
         const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
-        const slot = region?.slots.get(Number(branch[1]))
+        const item = openItems[openItems.length - 1]?.item ?? (region ? this.#enclosingItem(region, comment) : null)
+        const holder = item ?? region
+        const slot = openSlots.find((candidate) => candidate.index === index)?.slot ?? holder?.slots.get(index)
 
         if (slot && /^\d+$/.test(branch[2])) slot.branch = Number(branch[2])
 

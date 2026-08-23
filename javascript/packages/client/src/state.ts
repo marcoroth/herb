@@ -192,6 +192,7 @@ export class SlotState {
     if (typeof document !== "undefined") {
       document.addEventListener(SLOT_EVENT, this.#migrateItemState)
       document.addEventListener(SLOT_EVENT, this.#recountItems)
+      document.addEventListener(SLOT_EVENT, this.#hydrateItemState)
     }
 
     const templates = [...root.querySelectorAll<HTMLTemplateElement>(DEPENDENCIES_SELECTOR)]
@@ -210,6 +211,7 @@ export class SlotState {
     document.addEventListener(SLOT_EVENT, this.#syncProperty)
     document.addEventListener(SLOT_EVENT, this.#migrateItemState)
     document.addEventListener(SLOT_EVENT, this.#recountItems)
+    document.addEventListener(SLOT_EVENT, this.#hydrateItemState)
     document.addEventListener("input", this.#onBoundInput)
     document.addEventListener("change", this.#onBoundInput)
     document.addEventListener("reset", this.#onFormReset)
@@ -244,6 +246,7 @@ export class SlotState {
     document.removeEventListener(SLOT_EVENT, this.#syncProperty)
     document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
     document.removeEventListener(SLOT_EVENT, this.#recountItems)
+    document.removeEventListener(SLOT_EVENT, this.#hydrateItemState)
     document.removeEventListener("input", this.#onBoundInput)
     document.removeEventListener("change", this.#onBoundInput)
     document.removeEventListener("reset", this.#onFormReset)
@@ -991,6 +994,7 @@ export class SlotState {
         if (slot.type === "boolean_attribute") continue
 
         this.#write(slot, text)
+        this.#slots.claim(slot)
       }
     }
   }
@@ -1271,6 +1275,42 @@ export class SlotState {
 
       buckets.delete(detail.previousKey)
       buckets.set(detail.key, bucket)
+    }
+  }
+
+  #hydrateItemState = (event: Event): void => {
+    const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+    if (detail.operation !== "item-added" || !detail.slot || !detail.item) return
+
+    const region = this.#slots.regionOf(detail.slot)
+
+    if (!region) return
+
+    const manifest = this.manifestFor(region)
+
+    if (!manifest) return
+
+    const scope: StateScope = { region, item: null }
+    const item = detail.item
+
+    for (const [name, indices] of Object.entries(manifest.reads)) {
+      if (this.#declaration(manifest, scope, name)?.scope !== "region") continue
+
+      const value = this.getState(name, { scope })
+
+      if (value === undefined) continue
+
+      const text = printValue(value)
+
+      for (const index of indices) {
+        const slot = item.slots.get(index)
+
+        if (!slot || slot.type === "boolean_attribute") continue
+
+        this.#write(slot, text)
+        this.#slots.claim(slot)
+      }
     }
   }
 
