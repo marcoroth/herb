@@ -1,0 +1,67 @@
+{
+  "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
+  "template": "<% if @on %><%= @x %><% end %>",
+  "rendered": "<!--herb-region:app/views/contract/a-conditional-matching-nothing.html.erb:64259716:0--><!--herb-slot:0:conditional--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-matching-nothing.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-conditional-matching-nothing.html.erb:64259716:0--><!--herb-slot:0:conditional--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-matching-nothing.html.erb--><template data-herb-region=\"app/views/contract/a-conditional-matching-nothing.html.erb:64259716\"><!--herb-branch:0:0--><!--herb-slot:1--><!--/herb-slot:1--></template>",
+  "values": {
+    "template": "app/views/contract/a-conditional-matching-nothing.html.erb",
+    "version": "64259716",
+    "occurrence": 0,
+    "slots": {
+      "0": {
+        "branch": 0,
+        "slots": {
+          "1": "X"
+        }
+      }
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-conditional-matching-nothing.html.erb:64259716:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><!--herb-slot:1-->X<!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-matching-nothing.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
+    "identifier": "app/views/contract/a-conditional-matching-nothing.html.erb",
+    "version": "64259716",
+    "slots": [
+      {
+        "index": 0,
+        "type": "conditional",
+        "node_path": [
+          0
+        ]
+      },
+      {
+        "index": 1,
+        "type": "child",
+        "node_path": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "state": {
+      "@on": [
+        {
+          "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
+          "version": "64259716",
+          "index": 0,
+          "mode": "structural"
+        }
+      ],
+      "@x": [
+        {
+          "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
+          "version": "64259716",
+          "index": 1,
+          "mode": "identity"
+        }
+      ]
+    },
+    "params": {
+      "on": "@on",
+      "x": "@x"
+    },
+    "states": {}
+  }
+}

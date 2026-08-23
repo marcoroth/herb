@@ -1,0 +1,24 @@
+{
+  "file": "app/views/contract/nothing-dynamic-at-all.html.erb",
+  "template": "<p>static</p>",
+  "rendered": "<!--herb-region:app/views/contract/nothing-dynamic-at-all.html.erb:e3b0c442:0--><p>static</p><!--/herb-region:app/views/contract/nothing-dynamic-at-all.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/nothing-dynamic-at-all.html.erb:e3b0c442:0--><p>static</p><!--/herb-region:app/views/contract/nothing-dynamic-at-all.html.erb-->",
+  "values": {
+    "template": "app/views/contract/nothing-dynamic-at-all.html.erb",
+    "version": "e3b0c442",
+    "occurrence": 0,
+    "slots": {}
+  },
+  "expected": "<!--herb-region:app/views/contract/nothing-dynamic-at-all.html.erb:e3b0c442:0--><p>static</p><!--/herb-region:app/views/contract/nothing-dynamic-at-all.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/nothing-dynamic-at-all.html.erb",
+    "identifier": "app/views/contract/nothing-dynamic-at-all.html.erb",
+    "version": "e3b0c442",
+    "slots": []
+  },
+  "dependencies": {
+    "state": {},
+    "params": {},
+    "states": {}
+  }
+}
