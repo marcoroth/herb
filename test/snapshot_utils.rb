@@ -367,12 +367,12 @@ module SnapshotUtils
     end
   end
 
-  def compare_with_actionview_erubi_evaluated(source, herb_result, locals, _options, enforce_equality: false)
+  def compare_with_actionview_erubi_evaluated(source, herb_result, locals, options, enforce_equality: false)
     require "action_view"
     require_erubi_silently
 
     begin
-      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer")
+      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer", **options.slice(:trim))
 
       view = ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil)
       view.instance_variable_set(:@output_buffer, ActionView::OutputBuffer.new)

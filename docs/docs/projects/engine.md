@@ -35,21 +35,24 @@ If a framework renders `.erb` files through the standard-library `ERB` by defaul
 
 `Herb::Engine` accepts all the same options as `Erubi::Engine`:
 
-- `bufvar` / `outvar` — Buffer variable name
-- `bufval` — Initial buffer value
-- `escape` / `escape_html` — Whether `<%= %>` escapes by default
-- `escapefunc` — Escape function name
-- `filename` — Template filename
-- `freeze` — Add frozen string literal comment
-- `freeze_template_literals` — Freeze template string literals
-- `preamble` / `postamble` — Custom preamble/postamble
-- `chain_appends` — Chain `<<` calls for performance
-- `ensure` — Wrap in begin/ensure block
-- `src` — Initial source string
+| Option | Purpose |
+| --- | --- |
+| `bufvar` / `outvar` | Buffer variable name |
+| `bufval` | Initial buffer value |
+| `escape` / `escape_html` | Whether `<%= %>` escapes by default |
+| `escapefunc` | Escape function name |
+| `filename` | Template filename |
+| `freeze` | Add frozen string literal comment |
+| `freeze_template_literals` | Freeze template string literals |
+| `preamble` / `postamble` | Custom preamble/postamble |
+| `chain_appends` | Chain `<<` calls for performance |
+| `ensure` | Wrap in begin/ensure block |
+| `src` | Initial source string |
+| `trim` | Fold the whitespace around standalone `<% %>` and `<%# %>` tags into the code (default `true`) |
 
 ### Whitespace trimming
 
-Erubi's `trim` behavior is always on and is not configurable. A `<% %>` tag that stands alone on its line drops the newline that follows it, and `-%>` drops it wherever the tag sits. `<%-` is accepted and leaves the whitespace in front of the tag alone, which is what Erubi does with it too. Trimming is what makes a `case` written across several tags compile:
+`trim` is on by default, the same as in Erubi. A `<% %>` or `<%# %>` tag that stands alone on its line folds the indentation in front of it and the newline after it into the code line, so neither reaches the output. `-%>` on a `<%= %>` tag drops the newline after it wherever the tag sits. `<%-` is accepted and leaves the whitespace in front of the tag alone, which is what Erubi does with it too. Trimming is what makes a `case` written across several tags compile under Erubi:
 
 ```erb
 <% case status %>
@@ -62,17 +65,17 @@ Erubi's `trim` behavior is always on and is not configurable. A `<% %>` tag that
 <% end %>
 ```
 
-The newline after `<% case status %>` is trimmed, so nothing lands between `case` and its first `when`, and the compiled Ruby is valid. Herb and Erubi emit byte-identical output here. Passing `trim: false` has no effect, whereas Erubi would honor it and emit a buffer append between the two tags.
+The newline after `<% case status %>` is trimmed, so nothing lands between `case` and its first `when`, and the compiled Ruby is valid. Herb and Erubi emit byte-identical output here.
+
+Pass `trim: false` to keep every byte of whitespace around code and comment tags, which is what a plain-text template usually wants. Herb renders the same output as Erubi with the option off, including the newline that `-%>` still drops after an expression. The `case` template above is the one place the two part ways under `trim: false`. Erubi appends the newline between `case` and `when` to the buffer and produces invalid Ruby. Herb does not emit the whitespace between a `case` tag and its first `when`, so the template keeps compiling.
 
 ### Known differences from Erubi
 
-Three things that `Erubi::Engine` accepts are handled differently by `Herb::Engine` on its default settings. Each one is deliberate.
+Two things that `Erubi::Engine` accepts are handled differently by `Herb::Engine` on its default settings. Each one is deliberate.
 
 A `case` with its first `when`/`in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). The AST that pattern produces cannot be formatted or compiled reliably. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the same thing.
 
 Escaped tags such as `<%% %>` and `<%%= %>` raise `Herb::Engine::GeneratorTemplateError`. A template that emits literal ERB is a generator template, not a template to render.
-
-`trim: false` is ignored and trimming stays on. Herb's whitespace handling is tied to the parsed AST, not to a scanner mode.
 
 One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
 
