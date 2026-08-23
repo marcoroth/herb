@@ -22,8 +22,6 @@ module Herb
     # that would return the whole element where the caller asked for one attribute. Those slots
     # are values, and values is how they come back.
     class SlotSubtree
-      ATTRIBUTE_TYPES: Array[Symbol]
-
       attr_reader slots: Array[untyped]
 
       attr_reader version: Array[untyped]

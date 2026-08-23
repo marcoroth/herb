@@ -1,0 +1,44 @@
+# Generated from lib/herb/engine/slot_types.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # What kinds of slot there are, and which of them behave the same way.
+    #
+    # Everything that asks a slot what it can do asks here, so the marker writer, the dependency
+    # map, the state compiler and the subtree compiler all draw the same lines.
+    module SlotTypes
+      # A slot whose markup depends on which way the template branched.
+      STRUCTURAL: Array[Symbol]
+
+      # A slot that stands for the whole value of an attribute, or for one word of it.
+      ATTRIBUTE_VALUES: Array[Symbol]
+
+      # Every kind of slot that is marked on the element it belongs to instead of by a comment pair.
+      ELEMENT_ANCHORED: Array[Symbol]
+
+      # A slot a `data-herb-name` can name.
+      NAMEABLE: Array[Symbol]
+
+      # A slot that renders a value, which is what a state can be read into.
+      VALUED: Array[Symbol]
+
+      # : (Symbol) -> bool
+      def self.structural?: (Symbol) -> bool
+
+      # : (Symbol) -> bool
+      def self.attribute_value?: (Symbol) -> bool
+
+      # : (Symbol) -> bool
+      def self.attribute?: (Symbol) -> bool
+
+      # : (Symbol) -> bool
+      def self.element_anchored?: (Symbol) -> bool
+
+      # : (Symbol) -> bool
+      def self.nameable?: (Symbol) -> bool
+
+      # : (Symbol) -> bool
+      def self.valued?: (Symbol) -> bool
+    end
+  end
+end

@@ -22,10 +22,6 @@ module Herb
     class SlotDependencies
       ATTRIBUTE: String
 
-      STRUCTURAL_TYPES: Array[Symbol]
-
-      PARTIAL_TYPES: Array[Symbol]
-
       # : (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
       def initialize: (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
 

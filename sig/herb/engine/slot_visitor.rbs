@@ -46,12 +46,6 @@ module Herb
 
       CAPTURING: Regexp
 
-      BRANCHING_TYPES: Array[Symbol]
-
-      ATTRIBUTE_TYPES: Array[Symbol]
-
-      ELEMENT_ANCHORED_TYPES: Array[Symbol]
-
       OPEN_TAG_TYPES: Array[Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode]
 
       BRANCH_BODY_PROPERTIES: Array[Symbol]
@@ -59,8 +53,6 @@ module Herb
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
       NAME_ATTRIBUTE: String
-
-      NAMEABLE_TYPES: Array[Symbol]
 
       class Slot < Data
         attr_reader index(): Integer
@@ -89,6 +81,30 @@ module Herb
         def self.members: () -> [ :index, :type, :node_path, :expression, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
 
         def members: () -> [ :index, :type, :node_path, :expression, :attribute, :key_source, :key_expression, :name, :tag, :merged_paths ]
+      end
+
+      # What a slot can do, which is decided by its type alone.
+      class Slot
+        # : () -> bool
+        def structural?: () -> bool
+
+        # : () -> bool
+        def attribute?: () -> bool
+
+        # : () -> bool
+        def anchored?: () -> bool
+
+        # : () -> bool
+        def nameable?: () -> bool
+
+        # : () -> bool
+        def valued?: () -> bool
+
+        # : () -> bool
+        def presence?: () -> bool
+
+        # : () -> bool
+        def interpolated?: () -> bool
       end
 
       # : (String) -> bool

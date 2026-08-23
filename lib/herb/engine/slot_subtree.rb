@@ -28,8 +28,6 @@ module Herb
     # that would return the whole element where the caller asked for one attribute. Those slots
     # are values, and values is how they come back.
     class SlotSubtree
-      ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation, :boolean_attribute].freeze #: Array[Symbol]
-
       attr_reader :slots, :version #: Array[untyped]
 
       #: (String, ?filename: String?) -> void
@@ -56,7 +54,7 @@ module Herb
 
         return false unless slot
 
-        !ATTRIBUTE_TYPES.include?(slot.type)
+        !slot.attribute?
       end
 
       #: (Integer) -> String?

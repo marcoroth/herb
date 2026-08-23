@@ -6,6 +6,7 @@ require "digest"
 require_relative "../visitor"
 require_relative "context_aware"
 require_relative "slot_identifier"
+require_relative "slot_types"
 require_relative "state_compiler"
 require_relative "slot_markers"
 require_relative "slot_statics"
@@ -50,16 +51,11 @@ module Herb
       OCCURRENCE = "_herb_occurrence" #: String
 
       CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
-      BRANCHING_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
-
-      ATTRIBUTE_TYPES = [:attribute, :attribute_interpolation].freeze #: Array[Symbol]
-      ELEMENT_ANCHORED_TYPES = [*ATTRIBUTE_TYPES, :boolean_attribute, :element, :raw_text].freeze #: Array[Symbol]
       OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[Herb::AST::HTMLOpenTagNode|Herb::AST::ERBOpenTagNode]
       BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
       BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
       NAME_ATTRIBUTE = "data-herb-name" #: String
-      NAMEABLE_TYPES = [:child, :collection, :conditional, :block].freeze #: Array[Symbol]
 
       Slot = Data.define(
         :index,      #: Integer
@@ -73,6 +69,30 @@ module Herb
         :tag, #: String?
         :merged_paths #: Array[Array[Integer]]
       )
+
+      # What a slot can do, which is decided by its type alone.
+      class Slot
+        #: () -> bool
+        def structural? = SlotTypes.structural?(type)
+
+        #: () -> bool
+        def attribute? = SlotTypes.attribute?(type)
+
+        #: () -> bool
+        def anchored? = SlotTypes.element_anchored?(type)
+
+        #: () -> bool
+        def nameable? = SlotTypes.nameable?(type)
+
+        #: () -> bool
+        def valued? = SlotTypes.valued?(type)
+
+        #: () -> bool
+        def presence? = type == :boolean_attribute
+
+        #: () -> bool
+        def interpolated? = type == :attribute_interpolation
+      end
 
       #: (String) -> bool
       def self.directive?(source)
@@ -671,7 +691,7 @@ module Herb
 
       #: (String) -> bool
       def branching_shape?(shape)
-        BRANCHING_TYPES.any? { |type| shape.include?("\u0000#{type}\u0000") }
+        SlotTypes::STRUCTURAL.any? { |type| shape.include?("\u0000#{type}\u0000") }
       end
 
       #: (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
@@ -744,7 +764,7 @@ module Herb
           )
         end
 
-        if !ELEMENT_ANCHORED_TYPES.include?(type)
+        if !SlotTypes.element_anchored?(type)
           @pending[node] = slot.index
         elsif @current_open_tag
           anchored = @element_anchored[@current_open_tag] || [] #: Array[Integer]
@@ -756,7 +776,7 @@ module Herb
 
       #: (Symbol) -> Symbol?
       def anchored_type_for(type)
-        return type if ATTRIBUTE_TYPES.include?(type)
+        return type if SlotTypes.attribute_value?(type)
 
         return nil if @in_attribute
         return :element if @in_open_tag
@@ -829,7 +849,7 @@ module Herb
         candidates = @slot_nodes[base..].to_a.select { |slot_node|
           scope, depth = @slot_scopes[slot_node]
           scope.equal?(base_scope) && depth == base_depth &&
-            NAMEABLE_TYPES.include?(@slots[@indices[slot_node]].type)
+            @slots[@indices[slot_node]].nameable?
         }
 
         @named_elements << {

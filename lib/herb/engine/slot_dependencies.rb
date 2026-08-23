@@ -29,8 +29,6 @@ module Herb
     # the branches read belongs to the slots in them, which carry their own state.
     class SlotDependencies
       ATTRIBUTE = "data-herb-dependencies" #: String
-      STRUCTURAL_TYPES = [:conditional, :collection, :block].freeze #: Array[Symbol]
-      PARTIAL_TYPES = [:attribute_interpolation].freeze #: Array[Symbol]
 
       #: (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
       def initialize(project_path, compile: nil)
@@ -172,7 +170,7 @@ module Herb
         bound = {} #: Hash[String, Array[Integer]]
 
         visitor.slots.each do |slot|
-          next unless [:child, :attribute, :attribute_interpolation, :element, :raw_text].include?(slot.type)
+          next unless slot.valued?
 
           expression = slot.expression.to_s.strip
           name = expression.delete_suffix("?")
@@ -382,8 +380,8 @@ module Herb
 
       #: (untyped, Array[String], Array[String?], Set[String]) -> Symbol
       def mode_for(slot, state, expressions, settable)
-        return :structural if STRUCTURAL_TYPES.include?(slot.type)
-        return :derived if PARTIAL_TYPES.include?(slot.type)
+        return :structural if slot.structural?
+        return :derived if slot.interpolated?
         return :derived unless slot.merged_paths.empty?
         return :derived unless state.one?
         return :derived unless settable.include?(state.first)

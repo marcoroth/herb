@@ -640,7 +640,7 @@ module Herb
 
           slot = @visitor.slots[index]
 
-          next unless [:child, :attribute, :attribute_interpolation, :boolean_attribute, :element, :raw_text].include?(slot.type)
+          next unless slot.valued? || slot.presence?
 
           scope, = @visitor.scope_of(node)
           states = states_for(scope)
