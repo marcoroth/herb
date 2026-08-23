@@ -1406,8 +1406,7 @@ export class SlotIndex {
         popMatching(state.openRegions, (candidate) => candidate.region.file === marker.file)
         break
       case "slot-open": {
-        const holder = last(state.openItems)?.item ?? this.#regionAt(state)
-        const slot = holder?.slots.get(marker.index)
+        const slot = this.#holderAt(state)?.slots.get(marker.index)
 
         if (slot && slot.anchor.kind === "range" && slot.anchor.start === comment) {
           state.openSlots.push({ index: slot.index, slot })
@@ -1536,7 +1535,7 @@ export class SlotIndex {
   }
 
   #sowSeeds(marker: SeedsMarker, state: ParseState): void {
-    const holder = last(state.openItems)?.item ?? this.#regionAt(state)
+    const holder = this.#holderAt(state)
 
     if (!holder) {
       return
@@ -1549,12 +1548,15 @@ export class SlotIndex {
     const region = this.#regionAt(state)
     const branch = numericBranch(marker.branch)
 
-    if (branch === null) {
+    if (branch === null || !region) {
       return
     }
 
-    const holder = last(state.openItems)?.item ?? region
-    const slot = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? holder?.slots.get(marker.index)
+    const stacked = state.openSlots.find((candidate) => {
+      return candidate.index === marker.index && candidate.slot.region === region
+    })?.slot
+
+    const slot = stacked ?? this.#holderAt(state)?.slots.get(marker.index)
 
     if (slot) {
       slot.branch = branch
@@ -1565,16 +1567,32 @@ export class SlotIndex {
     return last(state.openRegions)?.region ?? null
   }
 
+  #holderAt(state: ParseState): Region | Item | null {
+    const region = this.#regionAt(state)
+
+    if (!region) {
+      return null
+    }
+
+    return this.#itemAt(state, region) ?? region
+  }
+
   #collectionAt(state: ParseState, index: number): Slot | null {
-    const stacked = state.openSlots.find((candidate) => candidate.index === index)?.slot
+    const region = this.#regionAt(state)
+
+    if (!region) {
+      return null
+    }
+
+    const stacked = state.openSlots.find((candidate) => {
+      return candidate.index === index && candidate.slot.region === region
+    })?.slot
 
     if (stacked) {
       return stacked
     }
 
-    const owner = last(state.openItems)?.item?.slots ?? this.#regionAt(state)?.slots
-
-    return owner?.get(index) ?? null
+    return this.#holderAt(state)?.slots.get(index) ?? null
   }
 
   #slotAt(state: ParseState, region: Region): Slot | null {

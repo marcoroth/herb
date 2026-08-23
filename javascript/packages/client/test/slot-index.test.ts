@@ -737,3 +737,60 @@ describe("HerbRuntime", () => {
     expect(HerbRuntime.get()).toBeNull()
   })
 })
+
+describe("a partial rendered inside a collection item", () => {
+  const PARTIAL = "app/views/posts/_post.html.erb"
+
+  const NESTED =
+    `<!--herb-region:${FILE}:aaaaaaaa:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><li>` +
+    `<!--herb-region:${PARTIAL}:bbbbbbbb:0--><!--herb-slot:5-->body<!--/herb-slot:5--><!--/herb-region:${PARTIAL}-->` +
+    `</li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+  let index: SlotIndex
+
+  beforeEach(() => {
+    document.body.innerHTML = ""
+    index = new SlotIndex()
+  })
+
+  test("indexes the partial's slot in the partial's own region", () => {
+    index.scan(mount(NESTED))
+
+    expect(index.slot(PARTIAL, 5)).not.toBeNull()
+    expect(index.slotInItem(FILE, 0, "a", 5)).toBeNull()
+  })
+
+  test("parents a slot that arrives inside the partial's slot on a later scan", () => {
+    const host = mount(NESTED)
+
+    index.scan(host)
+
+    const outer = index.slot(PARTIAL, 5)!
+
+    index.rangeFor(outer).deleteContents()
+    index.rangeFor(outer).insertNode(index.rangeFor(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
+    index.scan(host)
+
+    const inner = index.slot(PARTIAL, 6)!
+
+    expect(inner).not.toBeNull()
+    expect(index.ancestorsOf(inner)).toEqual([outer])
+  })
+
+  test("forgets the slots inside the partial's slot when it is written", () => {
+    const host = mount(NESTED)
+
+    index.scan(host)
+
+    const outer = index.slot(PARTIAL, 5)!
+
+    index.rangeFor(outer).deleteContents()
+    index.rangeFor(outer).insertNode(index.rangeFor(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
+    index.scan(host)
+    index.update(outer, "replaced")
+
+    expect(index.slot(PARTIAL, 6)).toBeNull()
+  })
+})
