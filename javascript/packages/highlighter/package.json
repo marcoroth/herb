@@ -41,8 +41,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
-    "build": "tsc -b && rolldown -c",
-    "watch": "tsc -b -w",
+    "build": "tsc --emitDeclarationOnly && rolldown -c",
+    "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

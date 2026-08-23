@@ -27,8 +27,8 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rolldown -c",
-    "watch": "tsc -b -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "typecheck": "tsc -p tsconfig.test.json",

@@ -28,8 +28,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
-    "build": "yarn generate:node-tests && tsc -b && rolldown -c",
-    "watch": "tsc -b -w",
+    "build": "yarn generate:node-tests && tsc --emitDeclarationOnly && rolldown -c",
+    "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run --typecheck",
     "test:watch": "vitest --watch --typecheck",
     "test:nodes": "vitest run test/nodes",
