@@ -1,5 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
+
+import type { PayloadSlots } from "../src/slot-index"
 import { SlotState } from "../src/state"
 
 const FILE = "app/views/chat/show.html.erb"
@@ -133,5 +135,58 @@ describe("a state read inside a branch that was never on the page", () => {
     branchState.setState({ editing: true })
 
     expect(document.querySelector("textarea")?.textContent).toBe("seeded body")
+  })
+})
+
+const SEEDED_FILE = "app/views/chat/seeded.html.erb"
+
+const SEEDED_PAGE =
+  `<!--herb-region:${SEEDED_FILE}:11111111:0-->` +
+  `<ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul>` +
+  `<template data-herb-region="${SEEDED_FILE}:11111111">` +
+  `<!--herb-branch:0:item--><!--herb-item:0:--><li><span data-herb-slot="2:child"></span></li><!--/herb-item:0-->` +
+  `</template>` +
+  `<!--/herb-region:${SEEDED_FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [SEEDED_FILE]: {
+        version: "11111111",
+        declarations: [{ name: "body_draft", kind: "seeded", default: "message.body", scope: 0 }],
+        reads: { body_draft: [2] },
+        conditionals: {},
+      },
+    },
+  })}</template>`
+
+describe("a seeded item state on a row the client built", () => {
+  test("takes its value from the response, since the row carries no seeds comment", () => {
+    document.body.innerHTML = SEEDED_PAGE
+
+    const seededSlots = new SlotIndex()
+
+    seededSlots.scan(document.body)
+
+    const seededState = new SlotState(seededSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    seededState.adopt()
+
+    seededSlots.apply({
+      template: SEEDED_FILE,
+      version: "11111111",
+      occurrence: 0,
+      slots: { 0: { items: { 7: { 2: "hello", seeds: { body_draft: "hello" } } } } } as unknown as PayloadSlots,
+    })
+
+    const region = seededSlots.regionsFor(SEEDED_FILE)[0]
+    const item = region.slots.get(0)!.items.get("7")!
+
+    expect(item.seeds).toEqual({ body_draft: "hello" })
+    expect(seededState.getState("body_draft", { scope: { region, item } })).toBe("hello")
   })
 })

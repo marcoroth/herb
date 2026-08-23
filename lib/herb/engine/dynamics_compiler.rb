@@ -580,7 +580,23 @@ module Herb
       def scope_item_end(index)
         leave_scope(index)
 
+        @src << item_seeds(index)
         @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
+      end
+
+      # A row the client builds from the parked skeleton carries no `herb-seeds` comment, so the
+      # values response is the only place it can learn what the server seeded its states with.
+      #: (Integer) -> String
+      def item_seeds(index)
+        names = @slot_visitor.seeded_item_states[index]
+
+        return "" if names.nil? || names.empty?
+
+        pairs = names.map { |name| "#{name.inspect} => #{name}" }.join(", ")
+
+        "; #{SCOPE_BUFFER}#{index}[:seeds] = { #{pairs} }" \
+          ".select { |_, v| #{SlotVisitor::SEED_VALUE_TYPES}.any? { |t| t === v } }" \
+          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v };"
       end
 
       #: (Integer) -> void

@@ -200,6 +200,26 @@ module Herb
         { region: @region_states.values.map(&:to_h), items: items }
       end
 
+      # The names of the seeded states declared inside a collection's item body, keyed by the
+      # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
+      # so a row the client builds for itself has no way to learn it from the markup.
+      #: () -> Hash[Integer, Array[String]]
+      def seeded_item_states
+        seeded = {} #: Hash[Integer, Array[String]]
+
+        @item_states.each do |scope, declarations|
+          index = @indices[scope]
+
+          next unless index
+
+          names = declarations.values.select { |declaration| StateDirectives.seeded?(declaration) }.map(&:name)
+
+          seeded[index] = names unless names.empty?
+        end
+
+        seeded
+      end
+
       #: () -> Array[Hash[Symbol, untyped]]
       def state_entries
         declared = state_declarations
