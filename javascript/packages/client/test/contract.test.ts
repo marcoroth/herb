@@ -5,6 +5,7 @@ import type { DependencyMap } from "../src/state"
 import type { Item, Payload, Slot, SlotType } from "../src/types"
 
 import aBlockAndWhatFollowsIt from "./fixtures/contract/a-block-and-what-follows-it.json"
+import aBooleanAttributeDrivenByAValue from "./fixtures/contract/a-boolean-attribute-driven-by-a-value.json"
 import aBooleanAttributeInsideABlock from "./fixtures/contract/a-boolean-attribute-inside-a-block.json"
 import aCollectionInsideABranch from "./fixtures/contract/a-collection-inside-a-branch.json"
 import aConditionalInsideABlock from "./fixtures/contract/a-conditional-inside-a-block.json"
@@ -14,6 +15,8 @@ import aConditionalThatCollapses from "./fixtures/contract/a-conditional-that-co
 import aHelperBlockBuildingAnElement from "./fixtures/contract/a-helper-block-building-an-element.json"
 import aKeyedCollection from "./fixtures/contract/a-keyed-collection.json"
 import aKeyedCollectionWithDeclaredItemState from "./fixtures/contract/a-keyed-collection-with-declared-item-state.json"
+import aKeyedCollectionWhoseKeysCarryMarkup from "./fixtures/contract/a-keyed-collection-whose-keys-carry-markup.json"
+import aValueCarryingMarkupAndQuotes from "./fixtures/contract/a-value-carrying-markup-and-quotes.json"
 import anAttributeAndAChild from "./fixtures/contract/an-attribute-and-a-child.json"
 import anEmptyCollection from "./fixtures/contract/an-empty-collection.json"
 import anInterpolatedAttributeInsideABlock from "./fixtures/contract/an-interpolated-attribute-inside-a-block.json"
@@ -41,6 +44,7 @@ interface Fixture {
 
 const FIXTURES: Record<string, Fixture> = {
   "a block and what follows it": aBlockAndWhatFollowsIt as Fixture,
+  "a boolean attribute driven by a value": aBooleanAttributeDrivenByAValue as Fixture,
   "a boolean attribute inside a block": aBooleanAttributeInsideABlock as Fixture,
   "a collection inside a branch": aCollectionInsideABranch as Fixture,
   "a conditional inside a block": aConditionalInsideABlock as Fixture,
@@ -50,15 +54,19 @@ const FIXTURES: Record<string, Fixture> = {
   "a helper block building an element": aHelperBlockBuildingAnElement as Fixture,
   "a keyed collection": aKeyedCollection as Fixture,
   "a keyed collection with declared item state": aKeyedCollectionWithDeclaredItemState as Fixture,
+  "a keyed collection whose keys carry markup": aKeyedCollectionWhoseKeysCarryMarkup as Fixture,
   "an attribute and a child": anAttributeAndAChild as Fixture,
   "an empty collection": anEmptyCollection as Fixture,
   "an interpolated attribute inside a block": anInterpolatedAttributeInsideABlock as Fixture,
   "expressions in order": expressionsInOrder as Fixture,
   "nothing dynamic at all": nothingDynamicAtAll as Fixture,
+  "a value carrying markup and quotes": aValueCarryingMarkupAndQuotes as Fixture,
   "two attributes on one element": twoAttributesOnOneElement as Fixture,
 }
 
 const PARKED_REASONS = ["branch", "items", "partial-attribute"]
+
+const UNCHANGED = ["nothing dynamic at all", "a boolean attribute inside a block"]
 
 function mount(markup: string): HTMLElement {
   document.body.innerHTML = ""
@@ -105,7 +113,15 @@ function found(index: SlotIndex, file: string): Map<number, Slot> {
   return slots
 }
 
-describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture) => {
+describe("the contract table", () => {
+  test("renders every fixture but the static ones differently before and after", () => {
+    const same = Object.entries(FIXTURES).filter(([, fixture]) => fixture.rendered === fixture.expected)
+
+    expect(same.map(([label]) => label).sort()).toEqual([...UNCHANGED].sort())
+  })
+})
+
+describe.each(Object.entries(FIXTURES))("the contract for %s", (label, fixture) => {
   const schema = new Map(fixture.schema.slots.map((slot) => [slot.index, slot]))
 
   let index: SlotIndex

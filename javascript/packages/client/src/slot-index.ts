@@ -26,7 +26,7 @@ import { asList, last, popMatching } from "./arrays"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, parseStaticsIdentity, partsKey } from "./markers"
-import { attributeParts, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
+import { attributeParts, attributeValue, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
 import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
@@ -468,24 +468,26 @@ export class SlotIndex {
       return
     }
 
-    if (this.#same(slot, value)) {
+    const written = slot.attribute ? attributeValue(value) : value
+
+    if (this.#same(slot, written)) {
       return
     }
 
     if (slot.attribute) {
-      if (!this.setAttribute(slot, value)) {
+      if (!this.setAttribute(slot, written)) {
         this.#defer(report, payload, index, "partial-attribute")
 
         return
       }
     } else {
-      if (Array.isArray(value)) {
+      if (Array.isArray(written)) {
         this.#defer(report, payload, index, "partial-attribute")
 
         return
       }
 
-      this.update(slot, value)
+      this.update(slot, written)
     }
 
     report.applied += 1

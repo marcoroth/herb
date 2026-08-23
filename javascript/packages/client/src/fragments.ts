@@ -16,6 +16,18 @@ const HTML_ESCAPES: Record<string, string> = {
 
 const HTML_ESCAPE_PATTERN = /[&<>"']/g
 
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  "#39": "'",
+  "#x27": "'",
+}
+
+const HTML_ENTITY_PATTERN = /&(amp|lt|gt|quot|apos|#39|#x27);/g
+
 export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = false, parts?: PartsResolver): void {
   for (const open of slotOpeners(fragment)) {
     const index = slotOpenIndex(open.data.trim())
@@ -52,7 +64,7 @@ export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text
     }
 
     if (entry.attribute !== null) {
-      const whole = wholeAttribute(entry, value, parts)
+      const whole = wholeAttribute(entry, text ? value : attributeValue(value), parts)
 
       if (whole !== null) {
         element.setAttribute(entry.attribute, whole)
@@ -199,6 +211,22 @@ export function interpolateParts(parts: AttributeParts | null, value: SlotValue)
 
 export function escapeHTML(value: string): string {
   return value.replace(HTML_ESCAPE_PATTERN, (character) => HTML_ESCAPES[character])
+}
+
+export function unescapeHTML(value: string): string {
+  if (!value.includes("&")) {
+    return value
+  }
+
+  return value.replace(HTML_ENTITY_PATTERN, (_entity, name: string) => HTML_ENTITIES[name])
+}
+
+export function attributeValue(value: SlotValue): SlotValue {
+  if (Array.isArray(value)) {
+    return value.map(unescapeHTML)
+  }
+
+  return unescapeHTML(value)
 }
 
 function wholeAttribute(entry: AnchorEntry, value: SlotValue, parts?: PartsResolver): string | null {

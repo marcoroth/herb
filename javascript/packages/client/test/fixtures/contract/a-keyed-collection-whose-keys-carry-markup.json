@@ -1,0 +1,91 @@
+{
+  "file": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+  "template": "<% @items.each do |r| %><li id=\"<%= r %>\"><%= r %></li><% end %>",
+  "rendered": "<!--herb-region:app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb:64652ac4:0--><!--herb-slot:0:collection--><!--herb-item:0:a&b--><li id=\"a&amp;b\" data-herb-slot=\"1:attribute:id 2:child\">a&amp;b</li><!--/herb-item:0--><!--herb-item:0:c<d--><li id=\"c&lt;d\" data-herb-slot=\"1:attribute:id 2:child\">c&lt;d</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb:64652ac4:0--><!--herb-slot:0:collection--><!--herb-item:0:a&b--><li id=\"a&amp;b\" data-herb-slot=\"1:attribute:id 2:child\">a&amp;b</li><!--/herb-item:0--><!--herb-item:0:c<d--><li id=\"c&lt;d\" data-herb-slot=\"1:attribute:id 2:child\">c&lt;d</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb-->",
+  "values": {
+    "template": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+    "version": "64652ac4",
+    "occurrence": 0,
+    "slots": {
+      "0": {
+        "items": {
+          "c<d": {
+            "1": "c&lt;d",
+            "2": "c&lt;d"
+          },
+          "e\"f": {
+            "1": "e&quot;f",
+            "2": "e&quot;f"
+          }
+        },
+        "order": [
+          "c<d",
+          "e\"f"
+        ]
+      }
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb:64652ac4:0--><!--herb-slot:0:collection--><!--herb-item:0:c<d--><li id=\"c&lt;d\" data-herb-slot=\"1:attribute:id 2:child\">c&lt;d</li><!--/herb-item:0--><!--herb-item:0:e\"f--><li id=\"e&quot;f\" data-herb-slot=\"1:attribute:id 2:child\">e&quot;f</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+    "identifier": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+    "version": "64652ac4",
+    "slots": [
+      {
+        "index": 0,
+        "type": "collection",
+        "node_path": [
+          0
+        ],
+        "key_source": "id"
+      },
+      {
+        "index": 1,
+        "type": "attribute",
+        "node_path": [
+          0,
+          0
+        ],
+        "attribute": "id"
+      },
+      {
+        "index": 2,
+        "type": "child",
+        "node_path": [
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "state": {
+      "@items": [
+        {
+          "file": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+          "version": "64652ac4",
+          "index": 0,
+          "mode": "structural"
+        },
+        {
+          "file": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+          "version": "64652ac4",
+          "index": 1,
+          "mode": "derived"
+        },
+        {
+          "file": "app/views/contract/a-keyed-collection-whose-keys-carry-markup.html.erb",
+          "version": "64652ac4",
+          "index": 2,
+          "mode": "derived"
+        }
+      ]
+    },
+    "params": {
+      "items": "@items"
+    },
+    "states": {}
+  }
+}

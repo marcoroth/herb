@@ -1,0 +1,64 @@
+{
+  "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
+  "template": "<li title=\"<%= @t %>\"><%= @n %></li>",
+  "rendered": "<!--herb-region:app/views/contract/a-value-carrying-markup-and-quotes.html.erb:f2601d2d:0--><li title=\"a &quot;quoted&quot; &amp; &lt;tag&gt;\" data-herb-slot=\"0:attribute:title 1:child\">Tom &amp; &lt;b&gt;Jerry&lt;/b&gt;</li><!--/herb-region:app/views/contract/a-value-carrying-markup-and-quotes.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-value-carrying-markup-and-quotes.html.erb:f2601d2d:0--><li title=\"a &quot;quoted&quot; &amp; &lt;tag&gt;\" data-herb-slot=\"0:attribute:title 1:child\">Tom &amp; &lt;b&gt;Jerry&lt;/b&gt;</li><!--/herb-region:app/views/contract/a-value-carrying-markup-and-quotes.html.erb-->",
+  "values": {
+    "template": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
+    "version": "f2601d2d",
+    "occurrence": 0,
+    "slots": {
+      "0": "plain",
+      "1": "Tom &amp; Jerry"
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-value-carrying-markup-and-quotes.html.erb:f2601d2d:0--><li title=\"plain\" data-herb-slot=\"0:attribute:title 1:child\">Tom &amp; Jerry</li><!--/herb-region:app/views/contract/a-value-carrying-markup-and-quotes.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
+    "identifier": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
+    "version": "f2601d2d",
+    "slots": [
+      {
+        "index": 0,
+        "type": "attribute",
+        "node_path": [
+          0
+        ],
+        "attribute": "title"
+      },
+      {
+        "index": 1,
+        "type": "child",
+        "node_path": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "state": {
+      "@n": [
+        {
+          "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
+          "version": "f2601d2d",
+          "index": 1,
+          "mode": "identity"
+        }
+      ],
+      "@t": [
+        {
+          "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
+          "version": "f2601d2d",
+          "index": 0,
+          "mode": "identity"
+        }
+      ]
+    },
+    "params": {
+      "n": "@n",
+      "t": "@t"
+    },
+    "states": {}
+  }
+}

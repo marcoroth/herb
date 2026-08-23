@@ -3,6 +3,8 @@
 require "json"
 require "tmpdir"
 require "fileutils"
+require "erb/util"
+require "active_support/core_ext/string/output_safety"
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine/dynamics_compiler"
@@ -20,14 +22,26 @@ module Engine
 
       BUFFER = "@output_buffer"
 
+      # How the app compiles a template. ActionView escapes on the way into its buffer rather than
+      # in the compiled template, and the values compile escapes the same way in every context so
+      # the two halves write the same bytes for the same value.
+      ESCAPING = {
+        escape: true,
+        escapefunc: "::ERB::Util.h",
+        attrfunc: nil,
+        jsfunc: nil,
+        cssfunc: nil,
+      }.freeze
+
       # A view whose helpers capture a block the way ActionView does: the block writes into the
-      # buffer, the helper swaps the buffer around the yield and wraps what was written.
+      # buffer, the helper swaps the buffer around the yield and wraps what was written. What a
+      # helper returns is markup it produced itself, so it comes back safe and is not escaped again.
       class View
         def initialize(**assigns)
           assigns.each { |name, value| instance_variable_set(:"@#{name}", value) }
         end
 
-        def form_with(**) = "<form>#{capture { |*| yield(Field.new) }}</form>"
+        def form_with(**) = "<form>#{capture { |*| yield(Field.new) }}</form>".html_safe
         def tag = TagBuilder.new(self)
 
         def capture
@@ -39,7 +53,7 @@ module Engine
           written = @output_buffer
           @output_buffer = outer
 
-          written.empty? ? value.to_s : written
+          (written.empty? ? value.to_s : written).html_safe
         end
 
         class Field
@@ -51,7 +65,7 @@ module Engine
             @view = view
           end
 
-          def li(**, &) = "<li>#{@view.capture(&)}</li>"
+          def li(**, &) = "<li>#{@view.capture(&)}</li>".html_safe
         end
       end
 
@@ -96,6 +110,11 @@ module Engine
           { items: [1, 2] },
           { items: [2, 3] }
         ],
+        "a keyed collection whose keys carry markup" => [
+          %(<% @items.each do |r| %><li id="<%= r %>"><%= r %></li><% end %>),
+          { items: ["a&b", "c<d"] },
+          { items: ["c<d", %(e"f)] }
+        ],
         "an empty collection" => [
           %(<% @items.each do |r| %><li id="<%= r %>"><%= r %></li><% end %>),
           { items: [] },
@@ -115,6 +134,16 @@ module Engine
           %(<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>),
           { on: true, x: "x" },
           { on: true, x: "X" }
+        ],
+        "a boolean attribute driven by a value" => [
+          %(<video muted="<%= @muted %>"></video>),
+          { muted: false },
+          { muted: true }
+        ],
+        "a value carrying markup and quotes" => [
+          %(<li title="<%= @t %>"><%= @n %></li>),
+          { t: %(a "quoted" & <tag>), n: "Tom & <b>Jerry</b>" },
+          { t: "plain", n: "Tom & Jerry" }
         ],
         "a boolean attribute inside a block" => [
           %(<%# herb:state (sending: false) %><%= form_with(model: 1) do |f| %><video muted="<%= sending %>"></video><% end %>),
@@ -165,13 +194,13 @@ module Engine
 
       def render(label, source, assigns, mode:)
         visitor = Herb::Engine::SlotVisitor.new(mode: mode)
-        compiled = Herb::Engine.new(source, visitors: [visitor], filename: file_for(label), project_path: @project_path, bufvar: BUFFER).src
+        compiled = Herb::Engine.new(source, visitors: [visitor], filename: file_for(label), project_path: @project_path, bufvar: BUFFER, **ESCAPING).src
 
         [View.new(**assigns).instance_eval(compiled), visitor]
       end
 
       def values(label, source, assigns)
-        compiled = Herb::Engine::DynamicsCompiler.new(source, filename: file_for(label), project_path: @project_path, bufvar: BUFFER).src
+        compiled = Herb::Engine::DynamicsCompiler.new(source, filename: file_for(label), project_path: @project_path, bufvar: BUFFER, **ESCAPING).src
 
         View.new(**assigns).instance_eval(compiled)
       end

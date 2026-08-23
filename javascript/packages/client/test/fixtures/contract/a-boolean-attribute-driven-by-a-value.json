@@ -1,0 +1,46 @@
+{
+  "file": "app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb",
+  "template": "<video muted=\"<%= @muted %>\"></video>",
+  "rendered": "<!--herb-region:app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb:4ea0d17f:0--><video muted=\"false\" data-herb-slot=\"0:attribute:muted\"></video><!--/herb-region:app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb:4ea0d17f:0--><video muted=\"false\" data-herb-slot=\"0:attribute:muted\"></video><!--/herb-region:app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb-->",
+  "values": {
+    "template": "app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb",
+    "version": "4ea0d17f",
+    "occurrence": 0,
+    "slots": {
+      "0": "true"
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb:4ea0d17f:0--><video muted=\"true\" data-herb-slot=\"0:attribute:muted\"></video><!--/herb-region:app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb",
+    "identifier": "app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb",
+    "version": "4ea0d17f",
+    "slots": [
+      {
+        "index": 0,
+        "type": "attribute",
+        "node_path": [
+          0
+        ],
+        "attribute": "muted"
+      }
+    ]
+  },
+  "dependencies": {
+    "state": {
+      "@muted": [
+        {
+          "file": "app/views/contract/a-boolean-attribute-driven-by-a-value.html.erb",
+          "version": "4ea0d17f",
+          "index": 0,
+          "mode": "identity"
+        }
+      ]
+    },
+    "params": {
+      "muted": "@muted"
+    },
+    "states": {}
+  }
+}

@@ -287,3 +287,39 @@ describe("applying values the page has no place for", () => {
     expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 9, reason: "no-slot" }])
   })
 })
+
+describe("applying a value that carries entities", () => {
+  const ATTRS = `<!--herb-region:${FILE}:eeeeeeee:0--><li title="old" data-herb-slot="0:attribute:title 1:child">old</li><!--/herb-region:${FILE}-->`
+
+  const INTERPOLATED =
+    `<!--herb-region:${FILE}:ffffffff:0--><li class="row-old" data-herb-slot="0:attribute_interpolation:class">x</li>` +
+    `<template data-herb-region="${FILE}:ffffffff"><!--herb-branch:0:parts-->row-<!--herb-part--></template>` +
+    `<!--/herb-region:${FILE}-->`
+
+  test("writes an attribute the way the server's markup reads, not the bytes it sent", () => {
+    const index = mounted(ATTRS)
+
+    index.apply(payload(FILE, { 0: "Tom &amp; &lt;b&gt;Jerry&lt;/b&gt;", 1: "Tom &amp; Jerry" }, "eeeeeeee"))
+
+    const element = document.querySelector("li")!
+
+    expect(element.getAttribute("title")).toBe("Tom & <b>Jerry</b>")
+    expect(element.textContent).toBe("Tom & Jerry")
+  })
+
+  test("joins an interpolated attribute's parts with what the server would have written", () => {
+    const index = mounted(INTERPOLATED)
+
+    index.apply(payload(FILE, { 0: ["a &amp; b"] }, "ffffffff"))
+
+    expect(document.querySelector("li")!.getAttribute("class")).toBe("row-a & b")
+  })
+
+  test("leaves an entity the value only looks like alone", () => {
+    const index = mounted(ATTRS)
+
+    index.apply(payload(FILE, { 0: "100% &amp; rising &nbsp" }, "eeeeeeee"))
+
+    expect(document.querySelector("li")!.getAttribute("title")).toBe("100% & rising &nbsp")
+  })
+})

@@ -108,6 +108,8 @@ const report = slots.apply(payload)
 
 `applied` counts what was written, not what arrived. A value equal to the one already there is not written, since writing it would cost a re-parse, destroy whatever the slot contained, and announce a change that did not happen, so a payload matching the page reports `{ applied: 0, deferred: [] }` and touches nothing.
 
+A value arrives as the server would have written it into the page. A slot that stands in the markup takes those bytes as they are. An attribute is set through the DOM, which holds what the browser parsed out of the markup, so an attribute's value is read back from `&amp;` and `&lt;` to the characters they stand for before it is written.
+
 A payload names the template, the version and which rendering it is, so nothing has to be said about where it goes. A partial's values arrive nested inside the slot that rendered it and are handed to that partial's own region, so one call covers a page however many templates it was built from.
 
 Values alone cannot do everything, and the report is the difference. `applied` counts what was written and `deferred` says what was not, with enough to act on:
