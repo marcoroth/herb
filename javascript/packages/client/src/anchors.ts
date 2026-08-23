@@ -9,7 +9,7 @@ export const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
 export const NAME_SELECTOR = `[${NAME_ATTRIBUTE}]`
 export const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}]`
 
-import type { AnchorEntry, Bounds, Marker, NameEntry, Region, RegionRange, SlotType } from "./types"
+import type { AnchorEntry, Bounds, Marker, NameEntry, Region, RegionRange, SlotAnchor, SlotType } from "./types"
 
 export function anchored(element: Element): boolean {
   return element.hasAttribute(ANCHOR_ATTRIBUTE)
@@ -154,6 +154,66 @@ export function skeletonElements(root: Node): HTMLTemplateElement[] {
   }
 
   return found
+}
+
+export function rangeOf(anchor: SlotAnchor): Range {
+  if (anchor.kind === "range") {
+    return innerRange(anchor)
+  }
+
+  const range = document.createRange()
+
+  if (anchor.kind === "content") {
+    range.selectNodeContents(anchor.element)
+  } else {
+    range.selectNode(anchor.element)
+  }
+
+  return range
+}
+
+export function elementOf(anchor: SlotAnchor): Element | null {
+  if (anchor.kind === "range") {
+    return null
+  }
+
+  return anchor.element
+}
+
+export function hostOf(anchor: SlotAnchor): Element | null {
+  if (anchor.kind === "range") {
+    return anchor.start.parentElement
+  }
+
+  return anchor.element
+}
+
+export function currentHTML(anchor: SlotAnchor): string {
+  if (anchor.kind === "content") {
+    return anchor.element.innerHTML
+  }
+
+  if (anchor.kind === "element") {
+    return anchor.element.outerHTML
+  }
+
+  return htmlOf(innerRange(anchor))
+}
+
+export function currentText(anchor: SlotAnchor): string {
+  if (anchor.kind === "range") {
+    return innerRange(anchor).toString()
+  }
+
+  return anchor.element.textContent ?? ""
+}
+
+export function connected(anchor: SlotAnchor): boolean {
+  if (anchor.kind === "range") {
+    return anchor.start.isConnected
+  }
+
+  return anchor.element.isConnected
 }
 
 export function innerRange(bounds: Bounds): Range {

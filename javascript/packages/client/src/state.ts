@@ -1,6 +1,7 @@
 import { report } from "./report"
 
 import { HERB_ATTRIBUTES } from "./attributes"
+import { elementOf, hostOf } from "./anchors"
 import { SLOT_EVENT } from "./slot-index"
 
 import type { DiagnosticSpot } from "./report"
@@ -466,7 +467,7 @@ export class SlotState {
   }
 
   #write(slot: Slot, value: string): boolean {
-    if (slot.anchor.kind !== "range" && slot.attribute) {
+    if (elementOf(slot.anchor) && slot.attribute) {
       return this.#slots.setAttribute(slot, value)
     }
 
@@ -1148,21 +1149,19 @@ export class SlotState {
 
     for (const index of manifest.reads[name] ?? []) {
       for (const slot of this.#scopedSlots(scope, index)) {
+        const element = elementOf(slot.anchor)
+
         if (slot.type === "boolean_attribute") {
           const entry = manifest.presence?.[String(index)]
 
-          if (!entry || !Array.isArray(entry) || entry[1] !== null || slot.anchor.kind === "range" || !slot.attribute) {
+          if (!entry || !Array.isArray(entry) || entry[1] !== null || !element || !slot.attribute) {
             continue
           }
 
-          return slot.anchor.element.hasAttribute(slot.attribute)
+          return element.hasAttribute(slot.attribute)
         }
 
-        const text = slot.attribute && slot.anchor.kind !== "range"
-          ? (slot.anchor.element.getAttribute(slot.attribute) ?? "")
-          : this.#slots.currentText(slot)
-
-        return coerceState(text, declaration?.kind ?? "string")
+        return coerceState(this.#slots.currentText(slot), declaration?.kind ?? "string")
       }
     }
 
@@ -1264,7 +1263,7 @@ export class SlotState {
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
           report({
             template: scope.region.file,
-            element: elementFor(slot),
+            element: hostOf(slot.anchor),
             message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
             code: "herb-no-parked-branch",
             severity: "warning",
@@ -1460,7 +1459,7 @@ export class SlotState {
     for (const [name, indices] of Object.entries(manifest.bound ?? {})) {
       for (const index of indices) {
         for (const slot of this.#scopedSlots(scope, index)) {
-          if (slot.anchor.kind === "range" || slot.anchor.element !== element) {
+          if (elementOf(slot.anchor) !== element) {
             continue
           }
 
@@ -1618,7 +1617,7 @@ export class SlotState {
       return
     }
 
-    const element = elementFor(slot)
+    const element = hostOf(slot.anchor)
 
     if (!element) {
       return
@@ -1731,12 +1730,11 @@ export class SlotState {
     }
 
     const slot = detail.slot
+    const element = slot ? elementOf(slot.anchor) : null
 
-    if (!slot || slot.anchor.kind === "range" || slot.attribute !== "value") {
+    if (!slot || !element || slot.attribute !== "value") {
       return
     }
-
-    const element = slot.anchor.element
 
     if (!VALUE_ELEMENTS.includes(element.tagName)) {
       return
@@ -1814,14 +1812,6 @@ function declared(manifest: StateManifest, name: string, collection: number | nu
 
 function collectionIn(scope: StateScope): number | null {
   return scope.item?.collection.index ?? null
-}
-
-function elementFor(slot: Slot): Element | null {
-  if (slot.anchor.kind === "range") {
-    return slot.anchor.start.parentElement
-  }
-
-  return slot.anchor.element
 }
 
 function declarationSpot(declaration: DeclaredState): DiagnosticSpot {

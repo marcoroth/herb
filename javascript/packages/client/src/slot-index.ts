@@ -21,7 +21,7 @@
 import { ITEM_STATICS } from "./markers"
 import { HERB_ATTRIBUTES } from "./attributes"
 
-import { anchorEntries, anchorKind, htmlOf, innerRange, markers, nameEntry, outerRange, skeletonElements, withinBounds, withinRegion, withinRegionRange } from "./anchors"
+import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, skeletonElements, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
@@ -238,19 +238,7 @@ export class SlotIndex {
   }
 
   rangeFor(slot: Slot): Range {
-    if (slot.anchor.kind === "range") {
-      return innerRange(slot.anchor)
-    }
-
-    const range = document.createRange()
-
-    if (slot.anchor.kind === "content") {
-      range.selectNodeContents(slot.anchor.element)
-    } else {
-      range.selectNode(slot.anchor.element)
-    }
-
-    return range
+    return rangeOf(slot.anchor)
   }
 
   rangeForItem(item: Item): Range {
@@ -827,17 +815,7 @@ export class SlotIndex {
   }
 
   currentText(slot: Slot): string {
-    const attribute = this.#attributeValue(slot)
-
-    if (attribute !== null) {
-      return attribute
-    }
-
-    if (slot.anchor.kind !== "range") {
-      return slot.anchor.element.textContent ?? ""
-    }
-
-    return this.rangeFor(slot).toString()
+    return this.#attributeValue(slot) ?? currentText(slot.anchor)
   }
 
   setText(slot: Slot, text: string): boolean {
@@ -874,23 +852,17 @@ export class SlotIndex {
   }
 
   #attributeValue(slot: Slot): string | null {
-    if (slot.anchor.kind === "range" || !slot.attribute) {
+    const element = elementOf(slot.anchor)
+
+    if (!element || !slot.attribute) {
       return null
     }
 
-    return slot.anchor.element.getAttribute(slot.attribute) ?? ""
+    return element.getAttribute(slot.attribute) ?? ""
   }
 
   #current(slot: Slot): string {
-    if (slot.anchor.kind === "content") {
-      return slot.anchor.element.innerHTML
-    }
-
-    if (slot.anchor.kind === "element") {
-      return slot.anchor.element.outerHTML
-    }
-
-    return htmlOf(this.rangeFor(slot))
+    return currentHTML(slot.anchor)
   }
 
   #same(slot: Slot, value: SlotValue): boolean {
@@ -1107,7 +1079,7 @@ export class SlotIndex {
   }
 
   setAttribute(slot: Slot, value: SlotValue | null, name = slot.attribute): boolean {
-    if (slot.anchor.kind === "range" || name === null) {
+    if (!elementOf(slot.anchor) || name === null) {
       return false
     }
 
@@ -1129,20 +1101,18 @@ export class SlotIndex {
   }
 
   #writeAttribute(slot: Slot, value: string | null, name: string): boolean {
-    if (slot.anchor.kind === "range") {
+    const element = elementOf(slot.anchor)
+
+    if (!element) {
       return false
     }
 
-    if (slot.anchor.element.getAttribute(name) === value) {
+    if (element.getAttribute(name) === value) {
       return true
     }
 
     this.#recordSlot(slot, () => {
-      let before: string | null = null
-
-      if (slot.anchor.kind !== "range") {
-        before = slot.anchor.element.getAttribute(name)
-      }
+      const before = element.getAttribute(name)
 
       return (live) => {
         this.#writeAttribute(live, before, name)
@@ -1150,9 +1120,9 @@ export class SlotIndex {
     })
 
     if (value === null) {
-      slot.anchor.element.removeAttribute(name)
+      element.removeAttribute(name)
     } else {
-      slot.anchor.element.setAttribute(name, value)
+      element.setAttribute(name, value)
     }
 
     this.#announce(slot, "attribute", slot.index)
@@ -1161,15 +1131,15 @@ export class SlotIndex {
   }
 
   setBooleanAttribute(slot: Slot, present: boolean, name = slot.attribute): boolean {
-    if (slot.anchor.kind === "range" || name === null) {
+    const element = elementOf(slot.anchor)
+
+    if (!element || name === null) {
       return false
     }
 
     if (slot.type !== "boolean_attribute") {
       return false
     }
-
-    const element = slot.anchor.element
 
     if (element.hasAttribute(name) === present) {
       return true
@@ -1786,11 +1756,7 @@ export class SlotIndex {
   }
 
   #slotConnected(slot: Slot): boolean {
-    if (slot.anchor.kind === "range") {
-      return slot.anchor.start.isConnected
-    }
-
-    return slot.anchor.element.isConnected
+    return connected(slot.anchor)
   }
 }
 
