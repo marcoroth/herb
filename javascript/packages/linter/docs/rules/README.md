@@ -106,6 +106,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
 - [`herb-slots-valid-mode`](./herb-slots-valid-mode.md) - Validate the `herb:slots` mode.
 - [`herb-state-no-silent-reads`](./herb-state-no-silent-reads.md) - Disallow bare state reads in silent tags.
+- [`herb-state-no-server-writes`](./herb-state-no-server-writes.md) - Disallow server-side writes to declared states.
 - [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
 - [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md) - Require client mode for `herb:state`.
 - [`herb-state-single-declaration`](./herb-state-single-declaration.md) - One `herb:state` declaration per scope.
