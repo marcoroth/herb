@@ -8,6 +8,7 @@ function regionMarkup(occurrence: number): string {
   return (
     `<!--herb-region:${FILE}:aaaaaaaa:${occurrence}-->` +
     `<div><!--herb-slot:0:conditional--><!--herb-branch:0:2-->Sent<!--/herb-slot:0--></div>` +
+    `<aside><!--herb-slot:7:conditional--><!--herb-branch:7:0-->Idle<!--/herb-slot:7--></aside>` +
     `<p><!--herb-slot:1-->0<!--/herb-slot:1--></p>` +
     `<ul><!--herb-slot:2:collection-->` +
     `<!--herb-item:2:a--><li id="a" data-herb-slot="3:attribute:id"><span data-herb-slot="4:conditional"><!--herb-branch:4:1-->plain</span></li><!--/herb-item:2-->` +
@@ -15,6 +16,7 @@ function regionMarkup(occurrence: number): string {
     `<!--/herb-slot:2--></ul>` +
     `<template data-herb-region="${FILE}:aaaaaaaa">` +
     `<!--herb-branch:0:0-->Sending…<!--herb-branch:0:1-->Not sent<!--herb-branch:0:2-->Sent` +
+    `<!--herb-branch:7:1-->Busy` +
     `<!--herb-branch:4:0-->starred<!--herb-branch:4:1-->plain` +
     `</template>` +
     `<!--/herb-region:${FILE}-->`
@@ -36,6 +38,7 @@ const MANIFEST = {
       conditionals: {
         0: { arms: [["pending", null, 0], ["failed", null, 1]], else: 2 },
         4: { arms: [["starred", null, 0]], else: 1 },
+        7: { arms: [["pending", null, 1]], else: 0 },
       },
     },
   },
@@ -179,6 +182,16 @@ describe("declared state", () => {
     for (let step = 0; step < 60; step += 1) state.setState({ attempts: step })
 
     expect(slots.revert(report.token!)).toBe(true)
+  })
+
+  test("an unless conditional flips through its inverted arms", () => {
+    expect(document.querySelector("aside")?.textContent).toContain("Idle")
+
+    expect(state.setState({ pending: true })).toBe(true)
+    expect(document.querySelector("aside")?.textContent).toContain("Busy")
+
+    expect(state.setState({ pending: false })).toBe(true)
+    expect(document.querySelector("aside")?.textContent).toContain("Idle")
   })
 
   test("a scoped write to a region state reaches the region", () => {

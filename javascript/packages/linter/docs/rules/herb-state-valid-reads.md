@@ -4,11 +4,11 @@
 
 ## Description
 
-Validates every read of a declared state. A state is read bare (`<%= attempts %>`, `<% if pending %>`), as a predicate on a boolean (`pending?`), compared to a literal of its own type (`sort == "name"`), or switched over with literal `when` arms. A boolean attribute accepts the same read shapes, since its presence is a two-arm conditional (`disabled="<%= draft == "" %>"`). Anything else, a computed expression, an `unless`, a predicate on a non-boolean, or a comparison against a non-literal or a mismatched literal, is flagged.
+Validates every read of a declared state. A state is read bare (`<%= attempts %>`, `<% if pending %>`, `<% unless pending %>`), as a predicate on a boolean (`pending?`), compared to a literal of its own type (`sort == "name"`), or switched over with literal `when` arms. A boolean attribute accepts the same read shapes, since its presence is a two-arm conditional (`disabled="<%= draft == "" %>"`). Anything else, a computed expression, a predicate on a non-boolean, or a comparison against a non-literal or a mismatched literal, is flagged.
 
 ## Rationale
 
-The client resolves state reads itself, without the server. That works because every allowed shape is a lookup or a comparison both languages compute identically. A computed read (`attempts + 1`, `attempts > 3`) would need a Ruby evaluator in JavaScript, so the engine rejects it at compile time, and `unless` is rejected because its arms cannot map to branches the client can name.
+The client resolves state reads itself, without the server. That works because every allowed shape is a lookup or a comparison both languages compute identically. A computed read (`attempts + 1`, `attempts > 3`) would need a Ruby evaluator in JavaScript, so the engine rejects it at compile time. An `unless` reads like an `if` with its arms inverted, so every `if` shape works there too.
 
 The engine raises all of these as compile errors when the template renders. This rule reports the same findings in the editor first.
 
@@ -50,7 +50,6 @@ The engine raises all of these as compile errors when the template renders. This
 
 <% if attempts > 3 %>Too many<% end %>
 
-<% unless pending %>Idle<% end %>
 
 <% if attempts? %>Tried<% end %>
 

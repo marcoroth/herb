@@ -231,8 +231,8 @@ module Herb
       # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
-      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
-      def refuse_state_unless: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
       # : (untyped) -> Array[untyped]
       def conditional_chain: (untyped) -> Array[untyped]

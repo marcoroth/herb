@@ -86,12 +86,19 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a state read through unless", () => {
-    expectError("`unless pending` reads a state. Spell it as an `if` with the arms swapped, so each arm maps to a branch the client can name.")
+  test("allows a state read through unless", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false) %>
+      <% unless pending %>Idle<% else %>Busy<% end %>
+    `)
+  })
+
+  test("flags a computed unless condition", () => {
+    expectError("`attempts > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
 
     assertOffenses(dedent`
-      <%# herb:state (pending: false) %>
-      <% unless pending %>Idle<% end %>
+      <%# herb:state (attempts: 0) %>
+      <% unless attempts > 3 %>Fine<% end %>
     `)
   })
 

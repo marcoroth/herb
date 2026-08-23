@@ -109,11 +109,9 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     if (node.tag_opening?.value !== "<%=" && node.tag_opening?.value !== "<%==") return
 
     const names = this.states.namesIn(this.stack)
-
     if (names.length === 0) return
 
     const expression = node.content?.value.trim() ?? ""
-
     if (expression === "" || !mentionsAnyState(withoutActionHashValues(expression), names)) return
 
     if (this.booleanAttribute) {
@@ -141,13 +139,9 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (prismType(prism) === "UnlessNode" && prism.predicate) {
       const names = this.states.namesIn(this.stack)
-      const expression = this.sliceOf(prism.predicate)
 
-      if (names.length > 0 && mentionsAnyState(expression, names)) {
-        this.addOffense(
-          `\`unless ${expression}\` reads a state. Spell it as an \`if\` with the arms swapped, so each arm maps to a branch the client can name.`,
-          this.locationOf(prism.predicate),
-        )
+      if (names.length > 0) {
+        this.classifyPredicate(prism.predicate, names)
       }
     }
 
@@ -176,7 +170,6 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
   private checkConditionalChain(prism: PrismNode): void {
     const names = this.states.namesIn(this.stack)
-
     if (names.length === 0) return
 
     let stateDriven = false
@@ -184,11 +177,9 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     while (prismType(current) === "IfNode") {
       const predicate = current.predicate
-
       if (!predicate) return
 
       const read = this.classifyPredicate(predicate, names)
-
       if (read === "reported") return
 
       if (read === "state") {
@@ -214,7 +205,6 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (bare) {
       const declaration = this.resolve(bare.name)
-
       if (!declaration) return "other"
 
       if (bare.predicate) {
@@ -286,11 +276,9 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
   private checkCase(prism: PrismNode): void {
     const names = this.states.namesIn(this.stack)
-
     if (names.length === 0) return
 
     const subject = prism.predicate
-
     if (!subject) return
 
     const subjectText = this.sliceOf(subject)
