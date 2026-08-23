@@ -37,13 +37,21 @@ module Herb
 
         attr_reader kind(): Symbol?
 
-        def self.new: (String name, String? comparand, Symbol? kind) -> instance
-                    | (name: String, comparand: String?, kind: Symbol?) -> instance
+        attr_reader operator(): String?
 
-        def self.members: () -> [ :name, :comparand, :kind ]
+        attr_reader against(): String?
 
-        def members: () -> [ :name, :comparand, :kind ]
+        def self.new: (String name, String? comparand, Symbol? kind, String? operator, String? against) -> instance
+                    | (name: String, comparand: String?, kind: Symbol?, operator: String?, against: String?) -> instance
+
+        def self.members: () -> [ :name, :comparand, :kind, :operator, :against ]
+
+        def members: () -> [ :name, :comparand, :kind, :operator, :against ]
       end
+
+      ORDERED_OPERATORS: Array[Symbol]
+
+      MIRRORED_OPERATORS: Hash[String, String]
 
       # : (untyped) -> String?
       def self.signature_of: (untyped) -> String?
@@ -74,6 +82,9 @@ module Herb
 
       # : (untyped, Hash[String, Declaration]) -> Read?
       private def self.equality_read: (untyped, Hash[String, Declaration]) -> Read?
+
+      # : (untyped, Read, Read) -> Read
+      private def self.state_pair_read: (untyped, Read, Read) -> Read
     end
   end
 end

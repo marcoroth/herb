@@ -31,8 +31,13 @@ module Herb
       Read = Data.define(
         :name,      #: String
         :comparand, #: String?
-        :kind       #: Symbol?
+        :kind,      #: Symbol?
+        :operator,  #: String?
+        :against    #: String?
       )
+
+      ORDERED_OPERATORS = [:>, :>=, :<, :<=].freeze #: Array[Symbol]
+      MIRRORED_OPERATORS = { ">" => "<", ">=" => "<=", "<" => ">", "<=" => ">=" }.freeze #: Hash[String, String]
 
       class << self
         #: (untyped) -> String?
@@ -183,23 +188,30 @@ module Herb
                   "only a boolean state can be read with a `?`"
           end
 
-          Read.new(name: name, comparand: nil, kind: declaration.kind)
+          Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil)
         end
 
         #: (untyped, Hash[String, Declaration]) -> Read?
         def equality_read(node, states)
-          return nil unless node.is_a?(Prism::CallNode) && node.name == :==
+          return nil unless node.is_a?(Prism::CallNode)
+          return nil unless node.name == :== || node.name == :!= || ORDERED_OPERATORS.include?(node.name)
 
           left = node.receiver
           right = node.arguments&.arguments&.first
 
           return nil unless left && right && node.arguments&.arguments&.one?
 
-          read = bare_read(left, states) || bare_read(right, states)
+          left_read = bare_read(left, states)
+          right_read = bare_read(right, states)
+          read = left_read || right_read
 
           return nil unless read
 
-          literal = bare_read(left, states) ? right : left
+          if left_read && right_read
+            return state_pair_read(node, left_read, right_read)
+          end
+
+          literal = left_read ? right : left
           kind = KINDS[literal.class.name]
 
           unless kind
@@ -208,12 +220,48 @@ module Herb
                   "the client resolves a comparison by lookup, so the comparand has to be one"
           end
 
-          unless kind == read.kind || kind == :nil || read.kind == :seeded
+          operator = node.name == :== ? nil : node.name.to_s
+          operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!=" && bare_read(right, states)
+          ordered = operator && operator != "!="
+
+          if ordered && read.kind != :integer && read.kind != :seeded
+            raise Herb::Engine::CompilationError,
+                  "`#{node.slice}` orders the #{read.kind.to_s.capitalize} state `#{read.name}`; ordering compares " \
+                  "numbers, so only an Integer state takes `#{node.name}`"
+          end
+
+          if ordered && kind != :integer
+            raise Herb::Engine::CompilationError,
+                  "`#{node.slice}` orders the state `#{read.name}` against a #{kind.to_s.capitalize} literal; " \
+                  "ordering compares numbers, so the comparand has to be an Integer"
+          end
+
+          unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded
             raise Herb::Engine::CompilationError,
                   "`#{node.slice}` compares the #{read.kind.to_s.capitalize} state `#{read.name}` against a #{kind.to_s.capitalize} literal"
           end
 
-          Read.new(name: read.name, comparand: literal.slice, kind: read.kind)
+          Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil)
+        end
+
+        #: (untyped, Read, Read) -> Read
+        def state_pair_read(node, left, right)
+          operator = node.name == :== ? nil : node.name.to_s
+          ordered = operator && operator != "!="
+
+          if ordered && (left.kind != :integer || right.kind != :integer) && left.kind != :seeded && right.kind != :seeded
+            raise Herb::Engine::CompilationError,
+                  "`#{node.slice}` orders the states `#{left.name}` and `#{right.name}`; ordering compares numbers, " \
+                  "so both have to be Integer states"
+          end
+
+          if !ordered && left.kind != right.kind && left.kind != :seeded && right.kind != :seeded
+            raise Herb::Engine::CompilationError,
+                  "`#{node.slice}` compares the #{left.kind.to_s.capitalize} state `#{left.name}` with the " \
+                  "#{right.kind.to_s.capitalize} state `#{right.name}`, so it can never match"
+          end
+
+          Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name)
         end
       end
     end

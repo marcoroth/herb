@@ -170,10 +170,11 @@ module Herb
           (bound[name] ||= []) << slot.index if bound_slot?(slot)
         end
 
-        presence = {} #: Hash[String, [String, String?]]
+        presence = {} #: Hash[String, untyped]
 
         visitor.state_presence.each do |index, read|
-          presence[index.to_s] = [read.name, read.comparand]
+          comparand = read.against ? { "state" => read.against } : read.comparand
+          presence[index.to_s] = read.operator ? [read.name, comparand, read.operator] : [read.name, comparand]
           (reads[read.name] ||= []) << index
           (bound[read.name] ||= []) << index if read.comparand.nil? && bound_slot?(visitor.slots[index])
         end

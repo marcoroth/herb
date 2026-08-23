@@ -43,13 +43,18 @@ function prismBareRead(node: PrismNode | null | undefined): BareRead | null {
   return { name: predicate ? spelled.slice(0, -1) : spelled, predicate }
 }
 
-function equalitySides(node: PrismNode): [PrismNode, PrismNode] | null {
+const COMPARISON_OPERATORS = new Set(["==", "!=", ">", ">=", "<", "<="])
+
+function equalitySides(node: PrismNode): [PrismNode, PrismNode, string] | null {
   if (prismType(node) !== "CallNode") return null
-  if (String(node.name) !== "==") return null
+
+  const operator = String(node.name)
+
+  if (!COMPARISON_OPERATORS.has(operator)) return null
   if (!node.receiver) return null
   if (node.arguments_?.arguments_?.length !== 1) return null
 
-  return [node.receiver, node.arguments_.arguments_[0]]
+  return [node.receiver, node.arguments_.arguments_[0], operator]
 }
 
 class StateValidReadsVisitor extends BaseRuleVisitor {
@@ -226,13 +231,42 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     const sides = equalitySides(predicate)
 
     if (sides) {
-      const [left, right] = sides
+      const [left, right, operator] = sides
       const leftRead = prismBareRead(left)
       const rightRead = prismBareRead(right)
-      const declaration = (leftRead && this.resolve(leftRead.name)) || (rightRead && this.resolve(rightRead.name)) || null
+      const leftDeclaration = leftRead ? this.resolve(leftRead.name) : undefined
+      const rightDeclaration = rightRead ? this.resolve(rightRead.name) : undefined
+
+      if (leftDeclaration && rightDeclaration && leftRead && rightRead) {
+        const leftKind = declaredKind(leftDeclaration)
+        const rightKind = declaredKind(rightDeclaration)
+        const ordered = operator !== "==" && operator !== "!="
+
+        if (ordered && leftKind !== "seeded" && rightKind !== "seeded" && (leftKind !== "integer" || rightKind !== "integer")) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` orders the states \`${leftRead.name}\` and \`${rightRead.name}\`. Ordering compares numbers, so both have to be Integer states.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        if (!ordered && leftKind !== "seeded" && rightKind !== "seeded" && leftKind !== rightKind) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(leftKind)} state \`${leftRead.name}\` with the ${capitalize(rightKind)} state \`${rightRead.name}\`, so it can never match. Compare states of one kind, or redeclare one.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        return "state"
+      }
+
+      const declaration = leftDeclaration || rightDeclaration || null
 
       if (declaration) {
-        const comparand = leftRead && this.resolve(leftRead.name) ? right : left
+        const comparand = leftDeclaration ? right : left
         const comparandKind = LITERAL_KINDS[prismType(comparand)]
         const kind = declaredKind(declaration)
 
@@ -240,16 +274,38 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
           const example = kind === "seeded" ? "" : `, like \`${declaration.name} == ${declaration.defaultSource}\``
 
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the state \`${declaration.name}\` against something that is not a literal. Compare against a literal${example}, since the client resolves a comparison by lookup.`,
+            `\`${this.sliceOf(predicate)}\` compares the state \`${declaration.name}\` against something that is not a literal or another declared state. Compare against a literal${example}, since the client resolves a comparison by lookup.`,
             this.locationOf(predicate),
           )
 
           return "reported"
         }
 
-        if (kind !== "seeded" && comparandKind !== "nil" && comparandKind !== kind) {
+        const ordered = operator !== "==" && operator !== "!="
+
+        if (ordered && kind !== "seeded" && kind !== "integer") {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal, so it can never match. Compare against a ${capitalize(kind)}, or redeclare the state.`,
+            `\`${this.sliceOf(predicate)}\` orders the ${capitalize(kind)} state \`${declaration.name}\`. Ordering compares numbers, so only an Integer state takes \`${operator}\`.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        if (ordered && comparandKind !== "integer") {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` orders the state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal. Ordering compares numbers, so the comparand has to be an Integer.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        if (!ordered && kind !== "seeded" && comparandKind !== "nil" && comparandKind !== kind) {
+          const consequence = operator === "==" ? "so it can never match" : "so it always matches"
+
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal, ${consequence}. Compare against a ${capitalize(kind)}, or redeclare the state.`,
             this.locationOf(predicate),
           )
 

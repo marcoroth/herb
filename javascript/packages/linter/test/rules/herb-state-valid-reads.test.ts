@@ -77,12 +77,80 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a computed condition", () => {
-    expectError("`attempts > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
+  test("allows an ordered comparison on an integer state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (attempts: 0) %>
+      <% if attempts > 3 %>Too many<% end %>
+      <% if attempts <= 1 %>Fresh<% end %>
+    `)
+  })
+
+  test("allows comparing two states of one kind", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (counter1: 0, counter2: 5) %>
+      <% if counter1 > counter2 %>Ahead<% end %>
+      <% if counter1 == counter2 %>Tied<% end %>
+    `)
+  })
+
+  test("flags comparing states of different kinds", () => {
+    expectError("`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match. Compare states of one kind, or redeclare one.")
+
+    assertOffenses(dedent`
+      <%# herb:state (sort: "name", attempts: 0) %>
+      <% if sort == attempts %>x<% end %>
+    `)
+  })
+
+  test("flags ordering non-integer states against each other", () => {
+    expectError("`sort > other` orders the states `sort` and `other`. Ordering compares numbers, so both have to be Integer states.")
+
+    assertOffenses(dedent`
+      <%# herb:state (sort: "name", other: "x") %>
+      <% if sort > other %>x<% end %>
+    `)
+  })
+
+  test("allows a negated equality of the state's own kind", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (sort: "name") %>
+      <% if sort != "date" %>Named<% end %>
+    `)
+  })
+
+  test("flags a negated equality against another kind", () => {
+    expectError('`sort != 3` compares the String state `sort` against an Integer literal, so it always matches. Compare against a String, or redeclare the state.')
+
+    assertOffenses(dedent`
+      <%# herb:state (sort: "name") %>
+      <% if sort != 3 %>x<% end %>
+    `)
+  })
+
+  test("flags ordering a string state", () => {
+    expectError("`sort > \"a\"` orders the String state `sort`. Ordering compares numbers, so only an Integer state takes `>`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (sort: "name") %>
+      <% if sort > "a" %>x<% end %>
+    `)
+  })
+
+  test("flags ordering against a non-integer literal", () => {
+    expectError("`attempts > \"a\"` orders the state `attempts` against a String literal. Ordering compares numbers, so the comparand has to be an Integer.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
-      <% if attempts > 3 %>Too many<% end %>
+      <% if attempts > "a" %>x<% end %>
+    `)
+  })
+
+  test("flags a computed condition", () => {
+    expectError("`attempts * 2 > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (attempts: 0) %>
+      <% if attempts * 2 > 3 %>Too many<% end %>
     `)
   })
 
@@ -94,11 +162,11 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed unless condition", () => {
-    expectError("`attempts > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
+    expectError("`attempts * 2 > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
-      <% unless attempts > 3 %>Fine<% end %>
+      <% unless attempts * 2 > 3 %>Fine<% end %>
     `)
   })
 
@@ -112,7 +180,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a comparison against a non-literal", () => {
-    expectError('`sort == params[:sort]` compares the state `sort` against something that is not a literal. Compare against a literal, like `sort == "name"`, since the client resolves a comparison by lookup.')
+    expectError('`sort == params[:sort]` compares the state `sort` against something that is not a literal or another declared state. Compare against a literal, like `sort == "name"`, since the client resolves a comparison by lookup.')
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>

@@ -32,9 +32,13 @@ export interface StateManifest {
   declarations: DeclaredState[]
   reads: Record<string, number[]>
   bound?: Record<string, number[]>
-  conditionals: Record<string, { arms: [string, string | null, number | null][]; else: number | null }>
-  presence?: Record<string, [string, string | null]>
+  conditionals: Record<string, { arms: ConditionalArm[]; else: number | null }>
+  presence?: Record<string, [string, StateComparand] | [string, StateComparand, string]>
 }
+
+export type StateComparand = string | null | { state: string }
+
+export type ConditionalArm = [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
 
 export interface StateScope {
   region: Region
@@ -722,7 +726,8 @@ export class SlotState {
       for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
         const arm = conditional.arms.find(([, , branch]) => branch === slot.branch)
 
-        if (arm && arm[0] === name) return arm[1] === null ? true : parseLiteral(arm[1])
+        if (arm && arm[0] === name && arm[3] === undefined && typeof arm[1] !== "object") return arm[1] === null ? true : parseLiteral(arm[1])
+        if (arm && arm[0] === name) return undefined
         if (slot.branch === conditional.else || slot.branch === null) {
           const declaration = this.#declaration(manifest, scope, name)
 
@@ -753,11 +758,13 @@ export class SlotState {
   }
 
   #writePresence(manifest: StateManifest, scope: StateScope, changed: string[]): void {
-    for (const [indexKey, [name, comparand]] of Object.entries(manifest.presence ?? {})) {
-      if (!changed.includes(name)) continue
+    for (const [indexKey, [name, comparand, operator]] of Object.entries(manifest.presence ?? {})) {
+      const against = typeof comparand === "object" && comparand !== null ? comparand.state : null
+
+      if (!changed.includes(name) && (against === null || !changed.includes(against))) continue
 
       const value = this.#valueOf(name, scope)
-      const present = comparand === null ? rubyTruthy(value) : value === parseLiteral(comparand)
+      const present = armMatches(value, comparand, operator, (against) => this.#valueOf(against, scope))
 
       for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
         this.#slots.setBooleanAttribute(slot, present)
@@ -767,7 +774,7 @@ export class SlotState {
 
   #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[]): void {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
-      const mentions = conditional.arms.some(([name]) => changed.includes(name))
+      const mentions = conditional.arms.some((arm) => armMentions(arm, changed))
       if (!mentions) continue
 
       const target = this.#targetBranch(conditional, scope)
@@ -787,10 +794,10 @@ export class SlotState {
   }
 
   #targetBranch(conditional: StateManifest["conditionals"][string], scope: StateScope): number | null {
-    for (const [name, comparand, branch] of conditional.arms) {
+    for (const [name, comparand, branch, operator] of conditional.arms) {
       const value = this.#valueOf(name, scope)
 
-      if (comparand === null ? rubyTruthy(value) : value === parseLiteral(comparand)) return branch
+      if (armMatches(value, comparand, operator, (against) => this.#valueOf(against, scope))) return branch
     }
 
     return conditional.else
@@ -1094,6 +1101,32 @@ export function boundValue(element: Element, kind: StateKind): StateValue {
   const raw = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
 
   return coerceState(raw, kind)
+}
+
+function armMentions(arm: ConditionalArm, changed: string[]): boolean {
+  const [name, comparand] = arm
+
+  if (changed.includes(name)) return true
+
+  return typeof comparand === "object" && comparand !== null && changed.includes(comparand.state)
+}
+
+function armMatches(value: StateValue, comparand: StateComparand, operator: string | undefined, other: (name: string) => StateValue): boolean {
+  if (comparand === null) return rubyTruthy(value)
+
+  const literal = typeof comparand === "object" ? other(comparand.state) : parseLiteral(comparand)
+
+  if (operator === undefined) return value === literal
+  if (operator === "!=") return value !== literal
+  if (typeof value !== "number" || typeof literal !== "number") return false
+
+  switch (operator) {
+    case ">": return value > literal
+    case ">=": return value >= literal
+    case "<": return value < literal
+    case "<=": return value <= literal
+    default: return false
+  }
 }
 
 function rubyTruthy(value: StateValue): boolean {
