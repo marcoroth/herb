@@ -193,6 +193,7 @@ export class SlotState {
       document.addEventListener(SLOT_EVENT, this.#migrateItemState)
       document.addEventListener(SLOT_EVENT, this.#recountItems)
       document.addEventListener(SLOT_EVENT, this.#hydrateItemState)
+      document.addEventListener(SLOT_EVENT, this.#hydrateBranch)
     }
 
     const templates = [...root.querySelectorAll<HTMLTemplateElement>(DEPENDENCIES_SELECTOR)]
@@ -212,6 +213,7 @@ export class SlotState {
     document.addEventListener(SLOT_EVENT, this.#migrateItemState)
     document.addEventListener(SLOT_EVENT, this.#recountItems)
     document.addEventListener(SLOT_EVENT, this.#hydrateItemState)
+    document.addEventListener(SLOT_EVENT, this.#hydrateBranch)
     document.addEventListener("input", this.#onBoundInput)
     document.addEventListener("change", this.#onBoundInput)
     document.addEventListener("reset", this.#onFormReset)
@@ -247,6 +249,7 @@ export class SlotState {
     document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
     document.removeEventListener(SLOT_EVENT, this.#recountItems)
     document.removeEventListener(SLOT_EVENT, this.#hydrateItemState)
+    document.removeEventListener(SLOT_EVENT, this.#hydrateBranch)
     document.removeEventListener("input", this.#onBoundInput)
     document.removeEventListener("change", this.#onBoundInput)
     document.removeEventListener("reset", this.#onFormReset)
@@ -753,7 +756,10 @@ export class SlotState {
     }
   }
 
-  #valueOf(name: string, scope: StateScope): StateValue {
+  #valueOf(name: string, at: StateScope): StateValue {
+    // A condition may name states from more than one scope, so each name resolves against the
+    // nearest scope that declares it rather than against the scope the write started from.
+    const scope = this.scopeFor(at, name) ?? at
     const manifest = this.manifestFor(scope.region)
     const declaration = manifest ? this.#declaration(manifest, scope, name) : null
 
@@ -1003,10 +1009,10 @@ export class SlotState {
     for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
       if (!conditionMentions(entry, changed)) continue
 
-      const present = conditionMatches(entry, (name) => this.#valueOf(name, scope))
+      for (const placed of this.#placedSlots(scope, Number(indexKey))) {
+        const present = conditionMatches(entry, (name) => this.#valueOf(name, placed.scope))
 
-      for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
-        this.#slots.setBooleanAttribute(slot, present)
+        this.#slots.setBooleanAttribute(placed.slot, present)
       }
     }
   }
@@ -1016,9 +1022,10 @@ export class SlotState {
       const mentions = conditional.arms.some((arm) => armMentions(arm, changed))
       if (!mentions) continue
 
-      const target = this.#targetBranch(conditional, scope)
+      for (const placed of this.#placedSlots(scope, Number(indexKey))) {
+        const slot = placed.slot
+        const target = this.#targetBranch(conditional, placed.scope)
 
-      for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
           report({
             template: scope.region.file,
@@ -1052,16 +1059,22 @@ export class SlotState {
   }
 
   #scopedSlots(scope: StateScope, index: number): Slot[] {
+    return this.#placedSlots(scope, index).map((placed) => placed.slot)
+  }
+
+  // The same as `#scopedSlots`, but each slot keeps the scope it actually sits in. A condition
+  // that reads an item state has to be evaluated once per row, not once for the collection.
+  #placedSlots(scope: StateScope, index: number): { slot: Slot; scope: StateScope }[] {
     if (scope.item) {
       const slot = scope.item.slots.get(index)
 
-      return slot ? [slot] : []
+      return slot ? [{ slot, scope }] : []
     }
 
     const region = scope.region.slots.get(index)
-    if (region) return [region]
+    if (region) return [{ slot: region, scope }]
 
-    const found: Slot[] = []
+    const found: { slot: Slot; scope: StateScope }[] = []
 
     for (const candidate of scope.region.slots.values()) {
       if (candidate.type !== "collection") continue
@@ -1069,7 +1082,7 @@ export class SlotState {
       for (const item of candidate.items.values()) {
         const slot = item.slots.get(index)
 
-        if (slot) found.push(slot)
+        if (slot) found.push({ slot, scope: { region: scope.region, item } })
       }
     }
 
@@ -1275,6 +1288,39 @@ export class SlotState {
 
       buckets.delete(detail.previousKey)
       buckets.set(detail.key, bucket)
+    }
+  }
+
+  #hydrateBranch = (event: Event): void => {
+    const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+    if (detail.operation !== "branch" || !detail.slot) return
+
+    const slot = detail.slot
+    const region = this.#slots.regionOf(slot)
+
+    if (!region) return
+
+    const manifest = this.manifestFor(region)
+
+    if (!manifest) return
+
+    const element = slot.anchor.kind === "range" ? slot.anchor.start.parentElement : slot.anchor.element
+
+    if (!element) return
+
+    for (const [name, reads] of Object.entries(manifest.reads)) {
+      if (reads.length === 0) continue
+
+      const scope = this.scopeFor(element, name)
+
+      if (!scope) continue
+
+      const value = this.getState(name, { scope })
+
+      if (value === undefined) continue
+
+      this.#writeValueSlots(manifest, scope, name, value)
     }
   }
 

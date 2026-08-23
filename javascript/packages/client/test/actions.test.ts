@@ -393,3 +393,62 @@ describe("a tag helper input bound to a state", () => {
     helperState.disconnect()
   })
 })
+
+const SWAP_FILE = "app/views/page/swap.html.erb"
+
+const SWAP_PAGE =
+  `<!--herb-region:${SWAP_FILE}:cccccccc:0-->` +
+  `<div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->` +
+  `<button id="cancel" data-herb-set="editing=false" data-herb-reset="draft">Cancel</button>` +
+  `<!--/herb-slot:0--></div>` +
+  `<template data-herb-region="${SWAP_FILE}:cccccccc">` +
+  `<!--herb-branch:0:0--><button id="cancel" data-herb-set="editing=false" data-herb-reset="draft">Cancel</button>` +
+  `</template>` +
+  `<!--/herb-region:${SWAP_FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [SWAP_FILE]: {
+        version: "cccccccc",
+        declarations: [
+          { name: "editing", kind: "boolean", default: "true", scope: "region" },
+          { name: "draft", kind: "string", default: '"original"', scope: "region" },
+        ],
+        reads: {},
+        conditionals: { 0: { arms: [["editing", null, 0]], else: null } },
+      },
+    },
+  })}</template>`
+
+describe("an action on an element its own sibling action removes", () => {
+  test("the later action still resolves the scope the element had", () => {
+    document.body.innerHTML = SWAP_PAGE
+
+    const swapSlots = new SlotIndex()
+
+    swapSlots.scan(document.body)
+
+    const swapState = new SlotState(swapSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    swapState.adopt()
+
+    const actions = new SlotActions(swapState)
+
+    actions.start(document.body)
+    swapState.setState({ draft: "typed" })
+
+    document.getElementById("cancel")!.click()
+
+    const scope = swapState.scopeFor(document.querySelector("div")!)!
+
+    expect(swapState.getState("editing", { scope })).toBe(false)
+    expect(swapState.getState("draft", { scope })).toBe("original")
+
+    actions.stop()
+  })
+})
