@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
 import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
-import type { SlotEventDetail } from "../src/slot-index"
+import type { SlotEventDetail } from "../src/types"
 
 function nth(html: string, occurrence: number): string {
   return html.replace(/(<!--herb-region:[^>]*?:[0-9a-f]{8}):\d+-->/g, `$1:${occurrence}-->`)

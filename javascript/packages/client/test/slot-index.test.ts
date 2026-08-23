@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
 import { SlotIndex } from "../src/slot-index"
-import type { Item } from "../src/slot-index"
+import type { Item } from "../src/types"
 import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/posts/index.html.erb"

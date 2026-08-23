@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 
-import { RuntimePanel, escapeHTML, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
+import { RuntimePanel, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
 import { dropLeadingBlocks, resetRuntimeHighlighting } from "../src/runtime/highlighting"
 import { MAX_RUNTIME_DIAGNOSTICS, resetRuntimeReportWarnings } from "../src/runtime/report"
 
@@ -635,10 +635,6 @@ describe("inline code", () => {
 
   test("leaves an unpaired backtick alone", () => {
     expect(inlineCodeHTML("a ` b")).toBe("a ` b")
-  })
-
-  test("escapes every HTML significant character", () => {
-    expect(escapeHTML(`<&>"'`)).toBe("&lt;&amp;&gt;&quot;&#39;")
   })
 })
 

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
 import { SlotIndex } from "../src/slot-index"
-import type { Payload } from "../src/slot-index"
+import type { Payload } from "../src/types"
 
 import fixture from "./fixtures/round-trip.json"
 

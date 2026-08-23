@@ -3,7 +3,7 @@ import { describe, test, expect, beforeEach, vi } from "vitest"
 import { SlotIndex } from "../src/slot-index"
 import { SlotState } from "../src/state"
 
-import type { Payload } from "../src/slot-index"
+import type { Payload } from "../src/types"
 import type { StateRequest } from "../src/state"
 
 const FILE = "app/views/posts/index.html.erb"

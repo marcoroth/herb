@@ -1,5 +1,6 @@
 import panelStyles from './panel.css'
 
+import { escapeHTML } from '@herb-tools/core'
 import { injectStyle } from '../styles.js'
 import { loadRuntimeHighlighting, CONTEXT_LINES, FOCUSED_CONTEXT_LINES } from './highlighting.js'
 import { buildRenderStack, diagnosticKey, normalizeDiagnostic, trimOrigin, readRuntimeReport, UNKNOWN_TEMPLATE } from './report.js'
@@ -112,15 +113,6 @@ const BADGE_GLYPHS: Record<BadgeTone, string> = {
   info: 'ℹ️',
   hint: 'ℹ️',
   metric: '📊',
-}
-
-export function escapeHTML(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 export function inlineCodeHTML(text: string): string {

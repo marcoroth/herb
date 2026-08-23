@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
 import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
-import type { Payload, SlotEventDetail } from "../src/slot-index"
+import type { Payload, SlotEventDetail } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
 const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li data-herb-slot="1:child">one</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`

@@ -3,7 +3,7 @@ import { SlotIndex } from "../src/slot-index"
 import { SlotMutations } from "../src/mutations"
 import { SlotState } from "../src/state"
 
-import type { Payload } from "../src/slot-index"
+import type { Payload } from "../src/types"
 import type { MutationRequest } from "../src/mutations"
 
 const FILE = "app/views/conversations/show.html.erb"

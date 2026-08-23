@@ -529,8 +529,6 @@ module Herb
               "slots: #{BUFFER} }\n")
       end
 
-      # Counted where the region marker counts it, at the start of the rendering rather than the end,
-      # so a template rendering itself numbers its renderings the same way both compilers do.
       #: () -> void
       def capture_occurrence
         @src << "; #{OCCURRENCE_BUFFER} = #{@slot_visitor.occurrence_expression};"
@@ -584,8 +582,6 @@ module Herb
         @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
       end
 
-      # A row the client builds from the parked skeleton carries no `herb-seeds` comment, so the
-      # values response is the only place it can learn what the server seeded its states with.
       #: (Integer) -> String
       def item_seeds(index)
         names = @slot_visitor.seeded_item_states[index]

@@ -3,7 +3,9 @@ import { report } from "./report"
 import { HERB_ATTRIBUTES } from "./attributes"
 import { SLOT_EVENT } from "./slot-index"
 
-import type { ApplyReport, Item, Payload, Region, Slot, SlotEventDetail, SlotIndex } from "./slot-index"
+import type { DiagnosticSpot } from "./report"
+import type { SlotIndex } from "./slot-index"
+import type { ApplyReport, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
 
 const VALUE_ELEMENTS = ["INPUT", "TEXTAREA", "SELECT"]
 const IDLE: StateReport = { applied: 0, deferred: [], written: 0, restored: 0, stale: false, failed: false }
@@ -17,6 +19,18 @@ export type StateKind = "boolean" | "integer" | "string" | "symbol" | "nil" | "s
 export type StateValue = string | number | boolean | null
 export type StatePersistence = "url" | "known" | "none"
 export type StateTransport = (request: StateRequest, signal: AbortSignal) => Promise<Payload | null>
+export type StateListener = (value: StateValue, previous: StateValue) => void
+export type StateWaiter = (report: StateReport) => void
+
+export type StateValues = Record<string, StateValue>
+export type SerializedState = Record<string, string>
+export type StateIndices = Record<string, number[]>
+export type ConditionalMap = Record<string, Conditional>
+export type PresenceMap = Record<string, StateCondition>
+export type ResolvedStateOptions = Required<Omit<StateOptions, "transport">> & { transport: StateTransport }
+
+export type StateBucket = Map<string, StateValue>
+export type ScopeStore = Map<Region, Map<string, StateBucket>>
 
 export interface DeclaredState {
   name: string
@@ -38,10 +52,15 @@ export interface StateCount {
 export interface StateManifest {
   version: string
   declarations: DeclaredState[]
-  reads: Record<string, number[]>
-  bound?: Record<string, number[]>
-  conditionals: Record<string, { arms: ConditionalArm[]; else: number | null }>
-  presence?: Record<string, StateCondition>
+  reads: StateIndices
+  bound?: StateIndices
+  conditionals: ConditionalMap
+  presence?: PresenceMap
+}
+
+export interface Conditional {
+  arms: ConditionalArm[]
+  else: number | null
 }
 
 export type StateComparand = string | null | { state: string }
@@ -77,6 +96,35 @@ export interface ScopedSetOptions {
   scope?: StateScope | Element
 }
 
+export interface CountOptions extends ScopedSetOptions {
+  by?: number
+}
+
+export interface PlacedSlot {
+  slot: Slot
+  scope: StateScope
+}
+
+export interface PlacedItem {
+  item: Item
+  collection: number
+}
+
+export interface BoundState {
+  name: string
+  scope: StateScope
+  manifest: StateManifest
+}
+
+export interface StateSnapshot {
+  name: string
+  previous: StateValue
+}
+
+export interface StateChange extends StateSnapshot {
+  value: StateValue
+}
+
 export interface StateSlot {
   file: string
   version: string
@@ -91,7 +139,7 @@ export interface DependencyMap {
 }
 
 export interface StateRequest {
-  state: Record<string, string>
+  state: SerializedState
   changed: string[]
 }
 
@@ -109,7 +157,7 @@ export interface StateReport extends ApplyReport {
   failed: boolean
 }
 
-interface Restore {
+interface OptimisticWrite {
   slot: Slot
   value: string
 }
@@ -121,15 +169,15 @@ export class SlotState {
   readonly #params = new Map<string, string>()
   readonly #declared = new Map<string, StateManifest>()
   readonly #writtenParams = new Set<string>()
-  readonly #scoped = new Map<Region, Map<string, Map<string, StateValue>>>()
-  readonly #seeds = new Map<Region, Map<string, Map<string, StateValue>>>()
+  readonly #scoped: ScopeStore = new Map()
+  readonly #seeds: ScopeStore = new Map()
   readonly #sequence = new Map<string, number>()
-  readonly #options: Required<Omit<StateOptions, "transport">> & { transport: StateTransport }
+  readonly #options: ResolvedStateOptions
 
   #pending = new Map<string, string>()
-  #restores: Restore[] = []
+  #restores: OptimisticWrite[] = []
   #previous = new Map<string, string | undefined>()
-  #waiting: ((report: StateReport) => void)[] = []
+  #waiting: StateWaiter[] = []
   #timer: ReturnType<typeof setTimeout> | null = null
   #controller: AbortController | null = null
   #observer: MutationObserver | null = null
@@ -173,7 +221,7 @@ export class SlotState {
     return this.#values.get(key)
   }
 
-  all(): Record<string, string> {
+  all(): SerializedState {
     return Object.fromEntries(this.#values)
   }
 
@@ -208,7 +256,9 @@ export class SlotState {
   }
 
   observe(root: Node = document.documentElement): void {
-    if (typeof document === "undefined") return
+    if (typeof document === "undefined") {
+      return
+    }
 
     document.addEventListener(SLOT_EVENT, this.#syncProperty)
     document.addEventListener(SLOT_EVENT, this.#migrateItemState)
@@ -227,7 +277,10 @@ export class SlotState {
     this.#observer = new MutationObserver((records) => {
       for (const record of records) {
         for (const node of record.addedNodes) {
-          if (!(node instanceof Element)) continue
+          if (!(node instanceof Element)) {
+            continue
+          }
+
           if (node.matches(DEPENDENCIES_SELECTOR) || node.querySelector(DEPENDENCIES_SELECTOR)) {
             this.adopt()
 
@@ -244,7 +297,9 @@ export class SlotState {
     this.#observer?.disconnect()
     this.#observer = null
 
-    if (typeof document === "undefined") return
+    if (typeof document === "undefined") {
+      return
+    }
 
     document.removeEventListener(SLOT_EVENT, this.#syncProperty)
     document.removeEventListener(SLOT_EVENT, this.#migrateItemState)
@@ -260,8 +315,13 @@ export class SlotState {
     }
   }
 
-  set(key: string | Record<string, string>, value?: string): Promise<StateReport> {
-    const changes = typeof key === "string" ? { [key]: value ?? "" } : key
+  set(key: string | SerializedState, value?: string): Promise<StateReport> {
+    let changes: SerializedState = key as SerializedState
+
+    if (typeof key === "string") {
+      changes = { [key]: value ?? "" }
+    }
+
     const changed = Object.keys(changes)
 
     for (const [name, next] of Object.entries(changes)) {
@@ -277,9 +337,13 @@ export class SlotState {
 
     this.#restores.push(...this.#optimistic(changed))
 
-    if (this.#options.debounce <= 0) return this.#flush()
+    if (this.#options.debounce <= 0) {
+      return this.#flush()
+    }
 
-    if (this.#timer) clearTimeout(this.#timer)
+    if (this.#timer) {
+      clearTimeout(this.#timer)
+    }
 
     return new Promise((resolve) => {
       this.#waiting.push(resolve)
@@ -325,8 +389,11 @@ export class SlotState {
       this.#restore(restores)
 
       for (const [name, was] of previous) {
-        if (was === undefined) this.#values.delete(name)
-        else this.#values.set(name, was)
+        if (was === undefined) {
+          this.#values.delete(name)
+        } else {
+          this.#values.set(name, was)
+        }
       }
 
       return this.#settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true })
@@ -338,7 +405,11 @@ export class SlotState {
       return this.#settle({ ...IDLE, written: restores.length, stale: true })
     }
 
-    const report = payload ? this.#slots.apply(payload) : { applied: 0, deferred: [] }
+    let report: ApplyReport = { applied: 0, deferred: [] }
+
+    if (payload) {
+      report = this.#slots.apply(payload)
+    }
 
     if (this.#persisted()) {
       this.#writeLocation()
@@ -361,25 +432,31 @@ export class SlotState {
 
   #superseded(taken: Map<string, number>): boolean {
     for (const [name, sequence] of taken) {
-      if ((this.#sequence.get(name) ?? 0) !== sequence) return true
+      if ((this.#sequence.get(name) ?? 0) !== sequence) {
+        return true
+      }
     }
 
     return false
   }
 
-  #optimistic(changed: string[]): Restore[] {
-    const restores: Restore[] = []
+  #optimistic(changed: string[]): OptimisticWrite[] {
+    const restores: OptimisticWrite[] = []
 
     for (const name of changed) {
       const value = this.#values.get(name) ?? ""
 
       for (const entry of this.#dependencies.get(this.#stateName(name)) ?? []) {
-        if (entry.mode !== "identity") continue
+        if (entry.mode !== "identity") {
+          continue
+        }
 
         for (const slot of this.#resolve(entry)) {
           const was = this.#slots.currentText(slot)
 
-          if (this.#write(slot, value)) restores.push({ slot, value: was })
+          if (this.#write(slot, value)) {
+            restores.push({ slot, value: was })
+          }
         }
       }
     }
@@ -387,7 +464,7 @@ export class SlotState {
     return restores
   }
 
-  #restore(restores: Restore[]): void {
+  #restore(restores: OptimisticWrite[]): void {
     for (const restore of [...restores].reverse()) {
       this.#write(restore.slot, restore.value)
     }
@@ -405,18 +482,24 @@ export class SlotState {
     const slots: Slot[] = []
 
     for (const region of this.#slots.regionsFor(entry.file)) {
-      if (region.version !== entry.version) continue
+      if (region.version !== entry.version) {
+        continue
+      }
 
       const slot = region.slots.get(entry.index)
 
-      if (slot) slots.push(slot)
+      if (slot) {
+        slots.push(slot)
+      }
     }
 
     return slots
   }
 
   #merge(json: string): void {
-    if (!json.trim()) return
+    if (!json.trim()) {
+      return
+    }
 
     let map: DependencyMap
 
@@ -442,33 +525,53 @@ export class SlotState {
   manifestFor(region: Region): StateManifest | null {
     const manifest = this.#declared.get(region.file)
 
-    if (!manifest || manifest.version !== region.version) return null
+    if (!manifest || manifest.version !== region.version) {
+      return null
+    }
 
     return manifest
   }
 
   scopeFor(target: Element | StateScope, name?: string): StateScope | null {
     if (!(target instanceof Element)) {
-      if (!name || !target.item) return target
+      if (!name || !target.item) {
+        return target
+      }
 
       const manifest = this.manifestFor(target.region)
 
-      if (!manifest) return target
+      if (!manifest) {
+        return target
+      }
 
       const collection = collectionOf(target.region, target.item)
-      const declaration = collection === null ? null : declared(manifest, name, collection)
 
-      if (declaration !== null && declaration.scope === collection) return target
-      if (declared(manifest, name, null) !== null) return { region: target.region, item: null }
+      let declaration: DeclaredState | null = null
+
+      if (collection !== null) {
+        declaration = declared(manifest, name, collection)
+      }
+
+      if (declaration !== null && declaration.scope === collection) {
+        return target
+      }
+
+      if (declared(manifest, name, null) !== null) {
+        return { region: target.region, item: null }
+      }
 
       return target
     }
 
     for (const region of this.#slots.regions()) {
-      if (!containsNode(region, target)) continue
+      if (!containsNode(region, target)) {
+        continue
+      }
 
       const manifest = this.manifestFor(region)
-      if (!manifest) continue
+      if (!manifest) {
+        continue
+      }
 
       const item = enclosingItem(region, target)
 
@@ -476,7 +579,9 @@ export class SlotState {
         return { region, item: item.item }
       }
 
-      if (!name || declared(manifest, name, null) !== null) return { region, item: null }
+      if (!name || declared(manifest, name, null) !== null) {
+        return { region, item: null }
+      }
     }
 
     return null
@@ -484,9 +589,11 @@ export class SlotState {
 
   declaredStates(scope: StateScope): DeclaredState[] {
     const manifest = this.manifestFor(scope.region)
-    if (!manifest) return []
+    if (!manifest) {
+      return []
+    }
 
-    const collection = scope.item ? collectionOf(scope.region, scope.item) : null
+    const collection = collectionIn(scope)
 
     return manifest.declarations.filter((declaration) =>
       declaration.scope === "region" || (collection !== null && declaration.scope === collection),
@@ -495,14 +602,18 @@ export class SlotState {
 
   getState(name: string, options: ScopedSetOptions = {}): StateValue {
     const resolved = this.#scope(options.scope, name)
-    if (!resolved) return null
+    if (!resolved) {
+      return null
+    }
 
     return this.#valueOf(name, resolved)
   }
 
-  setState(values: Record<string, StateValue>, options: ScopedSetOptions = {}): boolean {
+  setState(values: StateValues, options: ScopedSetOptions = {}): boolean {
     const names = Object.keys(values)
-    if (names.length === 0) return false
+    if (names.length === 0) {
+      return false
+    }
 
     const resolved = this.#scope(options.scope, names[0])
 
@@ -571,7 +682,7 @@ export class SlotState {
       previous.set(name, this.#valueOf(name, shared))
     }
 
-    const dependents = new Map<StateScope, { name: string; previous: StateValue }[]>()
+    const dependents = new Map<StateScope, StateSnapshot[]>()
 
     for (const [scope, grouped] of groups) {
       dependents.set(scope, this.#derivedDependents(manifest, scope, grouped).map((name) => ({ name, previous: this.#valueOf(name, scope) })))
@@ -596,7 +707,9 @@ export class SlotState {
         for (const dependent of dependents.get(scope) ?? []) {
           const value = this.#valueOf(dependent.name, scope)
 
-          if (value === dependent.previous) continue
+          if (value === dependent.previous) {
+            continue
+          }
 
           recomputed.push(dependent.name)
           this.#writeValueSlots(manifest, scope, dependent.name, value)
@@ -613,7 +726,9 @@ export class SlotState {
       for (const entry of [...counted, ...countDependents]) {
         const value = this.#valueOf(entry.name, regionScope)
 
-        if (value === entry.previous) continue
+        if (value === entry.previous) {
+          continue
+        }
 
         recounted.push(entry.name)
         this.#writeValueSlots(manifest, regionScope, entry.name, value)
@@ -633,14 +748,18 @@ export class SlotState {
       for (const dependent of list) {
         const value = this.#valueOf(dependent.name, scope)
 
-        if (value !== dependent.previous) this.#announceState(scope, dependent.name, value, dependent.previous)
+        if (value !== dependent.previous) {
+          this.#announceState(scope, dependent.name, value, dependent.previous)
+        }
       }
     }
 
     for (const entry of [...counted, ...countDependents]) {
       const value = this.#valueOf(entry.name, regionScope)
 
-      if (value !== entry.previous) this.#announceState(regionScope, entry.name, value, entry.previous)
+      if (value !== entry.previous) {
+        this.#announceState(regionScope, entry.name, value, entry.previous)
+      }
     }
 
     return true
@@ -654,38 +773,56 @@ export class SlotState {
     return this.setState({ [name]: current !== true }, options)
   }
 
-  increment(name: string, options: ScopedSetOptions & { by?: number } = {}): boolean {
+  increment(name: string, options: CountOptions = {}): boolean {
     this.#requireKind(name, options, "integer", "increment")
 
     const current = this.getState(name, options)
-    const base = typeof current === "number" ? current : 0
+
+    let base = 0
+
+    if (typeof current === "number") {
+      base = current
+    }
 
     return this.setState({ [name]: base + (options.by ?? 1) }, options)
   }
 
-  decrement(name: string, options: ScopedSetOptions & { by?: number } = {}): boolean {
+  decrement(name: string, options: CountOptions = {}): boolean {
     return this.increment(name, { ...options, by: -(options.by ?? 1) })
   }
 
   reset(name: string, options: ScopedSetOptions = {}): boolean {
     const resolved = this.#scope(options.scope, name)
-    if (!resolved) return false
+    if (!resolved) {
+      return false
+    }
 
     const seeded = this.#seeds.get(resolved.region)?.get(resolved.item?.key ?? "")?.get(name)
 
     return this.setState({ [name]: seeded ?? this.#defaultOf(name, resolved) }, options)
   }
 
-  on(name: string, listener: (value: StateValue, previous: StateValue) => void, options: ScopedSetOptions = {}): () => void {
-    const scope = options.scope ? this.#scope(options.scope, name) : null
+  on(name: string, listener: StateListener, options: ScopedSetOptions = {}): () => void {
+    let scope: StateScope | null = null
+
+    if (options.scope) {
+      scope = this.#scope(options.scope, name)
+    }
 
     const handler = (event: Event): void => {
       const detail = (event as CustomEvent<StateChangeDetail>).detail
-      if (detail.name !== name) return
+      if (detail.name !== name) {
+        return
+      }
 
       if (scope) {
-        if (detail.file !== scope.region.file || detail.occurrence !== scope.region.occurrence) return
-        if ((scope.item?.key ?? null) !== detail.key) return
+        if (detail.file !== scope.region.file || detail.occurrence !== scope.region.occurrence) {
+          return
+        }
+
+        if ((scope.item?.key ?? null) !== detail.key) {
+          return
+        }
       }
 
       listener(detail.value, detail.previous)
@@ -697,8 +834,17 @@ export class SlotState {
   }
 
   #reportUnknown(name: string, scope: StateScope | null): void {
-    const known = scope ? this.declaredStates(scope).map((declaration) => declaration.name) : []
-    const listed = known.length > 0 ? `the states in scope are ${known.join(", ")}` : "no scope on this page declares it"
+    let known: string[] = []
+
+    if (scope) {
+      known = this.declaredStates(scope).map((declaration) => declaration.name)
+    }
+
+    let listed = "no scope on this page declares it"
+
+    if (known.length > 0) {
+      listed = `the states in scope are ${known.join(", ")}`
+    }
 
     report({
       template: scope?.region.file ?? this.#slots.regions()[0]?.file ?? "",
@@ -710,23 +856,29 @@ export class SlotState {
   }
 
   #scope(scope: StateScope | Element | undefined, name: string): StateScope | null {
-    if (scope) return this.scopeFor(scope, name)
+    if (scope) {
+      return this.scopeFor(scope, name)
+    }
 
     for (const region of this.#slots.regions()) {
       const manifest = this.manifestFor(region)
 
-      if (manifest && declared(manifest, name, null) !== null) return { region, item: null }
+      if (manifest && declared(manifest, name, null) !== null) {
+        return { region, item: null }
+      }
     }
 
     for (const region of this.#slots.regions()) {
-      if (this.#declared.has(region.file) && !this.manifestFor(region)) return { region, item: null }
+      if (this.#declared.has(region.file) && !this.manifestFor(region)) {
+        return { region, item: null }
+      }
     }
 
     return null
   }
 
   #declaration(manifest: StateManifest, scope: StateScope, name: string): DeclaredState | null {
-    const collection = scope.item ? collectionOf(scope.region, scope.item) : null
+    const collection = collectionIn(scope)
 
     return declared(manifest, name, collection)
   }
@@ -734,15 +886,18 @@ export class SlotState {
   #requireKind(name: string, options: ScopedSetOptions, kind: StateKind, operation: string): void {
     const resolved = this.#scope(options.scope, name)
 
-    if (!resolved) return
+    if (!resolved) {
+      return
+    }
 
-    const manifest = this.manifestFor(resolved.region)
-    const declaration = manifest ? this.#declaration(manifest, resolved, name) : null
+    const declaration = this.#declarationIn(resolved, name)
 
     if (declaration && declaration.kind !== kind && declaration.kind !== "seeded") {
-      const spot = declaration.line !== undefined && declaration.line !== null
-        ? { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
-        : {}
+      let suggestion = `use set with a ${kind} value`
+
+      if (kind === "boolean") {
+        suggestion = "set a value instead, or declare a boolean flag"
+      }
 
       report({
         template: resolved.region.file,
@@ -750,36 +905,46 @@ export class SlotState {
         code: "herb-state-type",
         severity: "error",
         value: name,
-        suggestion: kind === "boolean" ? `set a value instead, or declare a boolean flag` : `use set with a ${kind} value`,
-        ...spot,
+        suggestion,
+        ...declarationSpot(declaration),
       })
       throw new TypeError(`${operation} needs a ${kind} state, and \`${name}\` is declared as ${declaration.kind}`)
     }
   }
 
   #valueOf(name: string, at: StateScope): StateValue {
-    // A condition may name states from more than one scope, so each name resolves against the
-    // nearest scope that declares it rather than against the scope the write started from.
     const scope = this.scopeFor(at, name) ?? at
-    const manifest = this.manifestFor(scope.region)
-    const declaration = manifest ? this.#declaration(manifest, scope, name) : null
+    const declaration = this.#declarationIn(scope, name)
 
-    if (declaration?.count) return this.#countValue(declaration, scope)
-    if (declaration?.derived) return this.#deriveValue(declaration, scope)
+    if (declaration?.count) {
+      return this.#countValue(declaration, scope)
+    }
+
+    if (declaration?.derived) {
+      return this.#deriveValue(declaration, scope)
+    }
 
     const stored = this.#scoped.get(scope.region)?.get(scope.item?.key ?? "")?.get(name)
 
-    if (stored !== undefined) return stored
+    if (stored !== undefined) {
+      return stored
+    }
 
     const seeded = this.#seed(name, scope)
 
-    return seeded !== undefined ? seeded : this.#defaultOf(name, scope)
+    if (seeded !== undefined) {
+      return seeded
+    }
+
+    return this.#defaultOf(name, scope)
   }
 
   #deriveValue(declaration: DeclaredState, scope: StateScope): StateValue {
     const entry = declaration.derived
 
-    if (entry === undefined || entry === null) return null
+    if (entry === undefined || entry === null) {
+      return null
+    }
 
     if (declaration.kind !== "boolean" && Array.isArray(entry) && entry.length === 2 && entry[1] === null) {
       return this.#valueOf(entry[0], scope)
@@ -792,19 +957,29 @@ export class SlotState {
     return manifest.declarations.filter((declaration) => declaration.count)
   }
 
-  #lastCounts = new WeakMap<Region, Map<string, StateValue>>()
+  #lastCounts = new WeakMap<Region, StateBucket>()
 
   #countValue(declaration: DeclaredState, scope: StateScope): StateValue {
     const count = declaration.count
 
-    if (count === undefined || count === null) return null
+    if (count === undefined || count === null) {
+      return null
+    }
 
     const base = parseLiteral(declaration.default)
-    const start = typeof base === "number" ? base : 0
     const slot = scope.region.slots.get(count.collection)
-    const items = slot && "items" in slot ? slot.items : null
 
-    if (!items) return start
+    let start = 0
+
+    if (typeof base === "number") {
+      start = base
+    }
+
+    if (!slot) {
+      return start
+    }
+
+    const items = slot.items
 
     let matches = 0
 
@@ -820,17 +995,28 @@ export class SlotState {
   }
 
   #derivedDependents(manifest: StateManifest, scope: StateScope, written: string[]): string[] {
-    const collection = scope.item ? collectionOf(scope.region, scope.item) : null
+    const collection = collectionIn(scope)
     const changed = new Set(written)
     const dependents: string[] = []
 
     for (const declaration of manifest.declarations) {
-      if (!declaration.derived) continue
+      if (!declaration.derived) {
+        continue
+      }
 
-      const matches = collection !== null ? declaration.scope === collection : declaration.scope === "region"
+      let matches = declaration.scope === "region"
 
-      if (!matches) continue
-      if (!conditionMentions(declaration.derived, [...changed])) continue
+      if (collection !== null) {
+        matches = declaration.scope === collection
+      }
+
+      if (!matches) {
+        continue
+      }
+
+      if (!conditionMentions(declaration.derived, [...changed])) {
+        continue
+      }
 
       dependents.push(declaration.name)
       changed.add(declaration.name)
@@ -840,14 +1026,29 @@ export class SlotState {
   }
 
   #defaultOf(name: string, scope: StateScope): StateValue {
-    const manifest = this.manifestFor(scope.region)
-    const declaration = manifest ? this.#declaration(manifest, scope, name) : null
+    const declaration = this.#declarationIn(scope, name)
 
-    if (!declaration) return null
+    if (!declaration) {
+      return null
+    }
 
     const parsed = parseLiteral(declaration.default)
 
-    return parsed === undefined ? null : parsed
+    if (parsed === undefined) {
+      return null
+    }
+
+    return parsed
+  }
+
+  #declarationIn(scope: StateScope, name: string): DeclaredState | null {
+    const manifest = this.manifestFor(scope.region)
+
+    if (!manifest) {
+      return null
+    }
+
+    return this.#declaration(manifest, scope, name)
   }
 
   #seed(name: string, scope: StateScope): StateValue | undefined {
@@ -858,20 +1059,31 @@ export class SlotState {
     }
 
     const manifest = this.manifestFor(scope.region)
-    if (!manifest) return undefined
+    if (!manifest) {
+      return undefined
+    }
 
     let value = this.#shippedSeed(manifest, scope, name)
 
-    if (value === undefined) value = this.#seedFromValueSlot(manifest, scope, name)
-    if (value === undefined) value = this.#seedFromConditional(manifest, scope, name)
     if (value === undefined) {
-      const declaration = this.#declaration(manifest, scope, name)
-      const parsed = declaration ? parseLiteral(declaration.default) : undefined
-
-      value = parsed
+      value = this.#seedFromValueSlot(manifest, scope, name)
     }
 
-    if (value !== undefined) bucket.set(name, value)
+    if (value === undefined) {
+      value = this.#seedFromConditional(manifest, scope, name)
+    }
+
+    if (value === undefined) {
+      const declaration = this.#declaration(manifest, scope, name)
+
+      if (declaration) {
+        value = parseLiteral(declaration.default)
+      }
+    }
+
+    if (value !== undefined) {
+      bucket.set(name, value)
+    }
 
     return value
   }
@@ -879,7 +1091,9 @@ export class SlotState {
   #shippedSeed(manifest: StateManifest, scope: StateScope, name: string): StateValue | undefined {
     const declaration = this.#declaration(manifest, scope, name)
 
-    if (!declaration || declaration.derived || declaration.count) return undefined
+    if (!declaration || declaration.derived || declaration.count) {
+      return undefined
+    }
 
     const channel = scope.item?.seeds ?? scope.region.seeds
     const shipped = scope.item?.seeds?.[name] ?? scope.region.seeds?.[name]
@@ -913,14 +1127,12 @@ export class SlotState {
     const reported = this.#reportedSeeds.get(scope.region) ?? new Set<string>()
     const key = `${scope.item?.key ?? ""}:${declaration.name}`
 
-    if (reported.has(key)) return
+    if (reported.has(key)) {
+      return
+    }
 
     reported.add(key)
     this.#reportedSeeds.set(scope.region, reported)
-
-    const spot = declaration.line !== undefined && declaration.line !== null
-      ? { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
-      : {}
 
     report({
       template: scope.region.file,
@@ -929,7 +1141,7 @@ export class SlotState {
       severity: "warning",
       value: declaration.name,
       suggestion,
-      ...spot,
+      ...declarationSpot(declaration),
     })
   }
 
@@ -941,7 +1153,9 @@ export class SlotState {
         if (slot.type === "boolean_attribute") {
           const entry = manifest.presence?.[String(index)]
 
-          if (!entry || !Array.isArray(entry) || entry[1] !== null || slot.anchor.kind === "range" || !slot.attribute) continue
+          if (!entry || !Array.isArray(entry) || entry[1] !== null || slot.anchor.kind === "range" || !slot.attribute) {
+            continue
+          }
 
           return slot.anchor.element.hasAttribute(slot.attribute)
         }
@@ -961,19 +1175,35 @@ export class SlotState {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
       const mentions = conditional.arms.some((arm) => Array.isArray(arm) && arm[0] === name)
 
-      if (!mentions) continue
+      if (!mentions) {
+        continue
+      }
 
       for (const slot of this.#scopedSlots(scope, Number(indexKey))) {
         const arm = conditional.arms.find(
           (candidate): candidate is Exclude<ConditionalArm, ComboArm> => Array.isArray(candidate) && candidate[2] === slot.branch,
         )
 
-        if (arm && arm[0] === name && arm[3] === undefined && typeof arm[1] !== "object") return arm[1] === null ? true : parseLiteral(arm[1])
-        if (arm && arm[0] === name) return undefined
+        if (arm && arm[0] === name && arm[3] === undefined && typeof arm[1] !== "object") {
+          if (arm[1] === null) {
+            return true
+          }
+
+          return parseLiteral(arm[1])
+        }
+
+        if (arm && arm[0] === name) {
+          return undefined
+        }
+
         if (slot.branch === conditional.else || slot.branch === null) {
           const declaration = this.#declaration(manifest, scope, name)
 
-          return declaration?.kind === "boolean" ? false : undefined
+          if (declaration?.kind === "boolean") {
+            return false
+          }
+
+          return undefined
         }
       }
     }
@@ -992,7 +1222,9 @@ export class SlotState {
 
     for (const index of manifest.reads[name] ?? []) {
       for (const slot of this.#scopedSlots(scope, index)) {
-        if (slot.type === "boolean_attribute") continue
+        if (slot.type === "boolean_attribute") {
+          continue
+        }
 
         this.#write(slot, text)
         this.#slots.claim(slot)
@@ -1002,7 +1234,9 @@ export class SlotState {
 
   #writePresence(manifest: StateManifest, scope: StateScope, changed: string[]): void {
     for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
-      if (!conditionMentions(entry, changed)) continue
+      if (!conditionMentions(entry, changed)) {
+        continue
+      }
 
       for (const placed of this.#placedSlots(scope, Number(indexKey))) {
         const present = conditionMatches(entry, (name) => this.#valueOf(name, placed.scope))
@@ -1016,18 +1250,23 @@ export class SlotState {
   #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[], skip: Slot | null = null): void {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
       const mentions = conditional.arms.some((arm) => armMentions(arm, changed))
-      if (!mentions) continue
+      if (!mentions) {
+        continue
+      }
 
       for (const placed of this.#placedSlots(scope, Number(indexKey))) {
         const slot = placed.slot
 
-        if (slot === skip) continue
+        if (slot === skip) {
+          continue
+        }
+
         const target = this.#targetBranch(conditional, placed.scope)
 
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
           report({
             template: scope.region.file,
-            element: slot.anchor.kind === "range" ? slot.anchor.start.parentElement : slot.anchor.element,
+            element: elementFor(slot),
             message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
             code: "herb-no-parked-branch",
             severity: "warning",
@@ -1038,19 +1277,23 @@ export class SlotState {
     }
   }
 
-  #targetBranch(conditional: StateManifest["conditionals"][string], scope: StateScope): number | null {
+  #targetBranch(conditional: Conditional, scope: StateScope): number | null {
     const valueOf = (name: string) => this.#valueOf(name, scope)
 
     for (const arm of conditional.arms) {
       if (!Array.isArray(arm)) {
-        if (conditionMatches(arm, valueOf)) return arm.branch
+        if (conditionMatches(arm, valueOf)) {
+          return arm.branch
+        }
 
         continue
       }
 
       const [name, comparand, branch, operator] = arm
 
-      if (armMatches(valueOf(name), comparand, operator, valueOf)) return branch
+      if (armMatches(valueOf(name), comparand, operator, valueOf)) {
+        return branch
+      }
     }
 
     return conditional.else
@@ -1060,27 +1303,36 @@ export class SlotState {
     return this.#placedSlots(scope, index).map((placed) => placed.slot)
   }
 
-  // The same as `#scopedSlots`, but each slot keeps the scope it actually sits in. A condition
-  // that reads an item state has to be evaluated once per row, not once for the collection.
-  #placedSlots(scope: StateScope, index: number): { slot: Slot; scope: StateScope }[] {
+  #placedSlots(scope: StateScope, index: number): PlacedSlot[] {
     if (scope.item) {
       const slot = scope.item.slots.get(index)
 
-      return slot ? [{ slot, scope }] : []
+      if (!slot) {
+        return []
+      }
+
+      return [{ slot, scope }]
     }
 
     const region = scope.region.slots.get(index)
-    if (region) return [{ slot: region, scope }]
 
-    const found: { slot: Slot; scope: StateScope }[] = []
+    if (region) {
+      return [{ slot: region, scope }]
+    }
+
+    const found: PlacedSlot[] = []
 
     for (const candidate of scope.region.slots.values()) {
-      if (candidate.type !== "collection") continue
+      if (candidate.type !== "collection") {
+        continue
+      }
 
       for (const item of candidate.items.values()) {
         const slot = item.slots.get(index)
 
-        if (slot) found.push({ slot, scope: { region: scope.region, item } })
+        if (slot) {
+          found.push({ slot, scope: { region: scope.region, item } })
+        }
       }
     }
 
@@ -1088,7 +1340,9 @@ export class SlotState {
   }
 
   #announceState(scope: StateScope, name: string, value: StateValue, previous: StateValue): void {
-    if (typeof document === "undefined") return
+    if (typeof document === "undefined") {
+      return
+    }
 
     document.dispatchEvent(
       new CustomEvent<StateChangeDetail>(STATE_EVENT, {
@@ -1105,26 +1359,36 @@ export class SlotState {
   }
 
   #readLocation(): void {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined") {
+      return
+    }
 
     this.#values.clear()
 
     for (const [name, value] of new URL(window.location.href).searchParams) {
-      if (name !== "format") this.#values.set(name, value)
+      if (name !== "format") {
+        this.#values.set(name, value)
+      }
     }
   }
 
   #writeLocation(): void {
-    if (typeof window === "undefined" || !window.history?.replaceState) return
+    if (typeof window === "undefined" || !window.history?.replaceState) {
+      return
+    }
 
     const url = new URL(window.location.href)
 
-    for (const name of this.#writtenParams) url.searchParams.delete(name)
+    for (const name of this.#writtenParams) {
+      url.searchParams.delete(name)
+    }
 
     this.#writtenParams.clear()
 
     for (const [name, value] of this.#values) {
-      if (this.#options.persist === "known" && !this.#known(name)) continue
+      if (this.#options.persist === "known" && !this.#known(name)) {
+        continue
+      }
 
       url.searchParams.set(name, value)
       this.#writtenParams.add(name)
@@ -1136,7 +1400,9 @@ export class SlotState {
   #onBoundInput = (event: Event): void => {
     const element = event.target
 
-    if (!(element instanceof Element)) return
+    if (!(element instanceof Element)) {
+      return
+    }
 
     this.#syncBound(element)
   }
@@ -1144,7 +1410,9 @@ export class SlotState {
   #onFormReset = (event: Event): void => {
     const form = event.target
 
-    if (!(form instanceof HTMLFormElement)) return
+    if (!(form instanceof HTMLFormElement)) {
+      return
+    }
 
     setTimeout(() => {
       for (const element of form.elements) {
@@ -1156,7 +1424,9 @@ export class SlotState {
   #syncBound(element: Element): void {
     const found = this.#boundNameOf(element)
 
-    if (!found) return
+    if (!found) {
+      return
+    }
 
     const declaration = this.#declaration(found.manifest, found.scope, found.name)
     const value = boundValue(element, declaration?.kind ?? "string")
@@ -1168,23 +1438,33 @@ export class SlotState {
     for (const element of form.elements) {
       const found = this.#boundNameOf(element)
 
-      if (found) this.reset(found.name, { scope: found.scope })
+      if (found) {
+        this.reset(found.name, { scope: found.scope })
+      }
     }
   }
 
-  #boundNameOf(element: Element): { name: string, scope: StateScope, manifest: StateManifest } | null {
-    if (!VALUE_ELEMENTS.includes(element.tagName)) return null
+  #boundNameOf(element: Element): BoundState | null {
+    if (!VALUE_ELEMENTS.includes(element.tagName)) {
+      return null
+    }
 
     const scope = this.scopeFor(element)
-    if (!scope) return null
+    if (!scope) {
+      return null
+    }
 
     const manifest = this.manifestFor(scope.region)
-    if (!manifest) return null
+    if (!manifest) {
+      return null
+    }
 
     for (const [name, indices] of Object.entries(manifest.bound ?? {})) {
       for (const index of indices) {
         for (const slot of this.#scopedSlots(scope, index)) {
-          if (slot.anchor.kind === "range" || slot.anchor.element !== element) continue
+          if (slot.anchor.kind === "range" || slot.anchor.element !== element) {
+            continue
+          }
 
           return { name, scope, manifest }
         }
@@ -1201,18 +1481,33 @@ export class SlotState {
   #recountItems = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
-    if (detail.operation !== "item-added" && detail.operation !== "item-removed") return
-    if (!detail.slot) return
+    if (detail.operation !== "item-added" && detail.operation !== "item-removed") {
+      return
+    }
+
+    if (!detail.slot) {
+      return
+    }
 
     const region = this.#slots.regionOf(detail.slot)
 
-    if (!region) return
+    if (!region) {
+      return
+    }
 
     const manifest = this.manifestFor(region)
 
-    if (!manifest) return
-    if (!this.#countDeclarations(manifest).some((declaration) => declaration.count?.collection === detail.index)) return
-    if (this.#recountQueued.has(region)) return
+    if (!manifest) {
+      return
+    }
+
+    if (!this.#countDeclarations(manifest).some((declaration) => declaration.count?.collection === detail.index)) {
+      return
+    }
+
+    if (this.#recountQueued.has(region)) {
+      return
+    }
 
     this.#recountQueued.add(region)
 
@@ -1225,29 +1520,37 @@ export class SlotState {
   #recountRegion(region: Region): void {
     const manifest = this.manifestFor(region)
 
-    if (!manifest) return
+    if (!manifest) {
+      return
+    }
 
     const regionScope: StateScope = { region, item: null }
-    const changed: { name: string; value: StateValue; previous: StateValue }[] = []
+    const changed: StateChange[] = []
 
     for (const declaration of this.#countDeclarations(manifest)) {
       const previous = this.#lastCounts.get(region)?.get(declaration.name) ?? null
       const value = this.#valueOf(declaration.name, regionScope)
 
-      if (value === previous) continue
+      if (value === previous) {
+        continue
+      }
 
       changed.push({ name: declaration.name, value, previous })
     }
 
-    if (changed.length === 0) return
+    if (changed.length === 0) {
+      return
+    }
 
     const cascade = this.#derivedDependents(manifest, regionScope, changed.map((entry) => entry.name))
       .map((name) => ({ name, previous: this.#lastCounts.get(region)?.get(name) ?? null, value: this.#valueOf(name, regionScope) }))
       .filter((entry) => entry.value !== entry.previous)
 
-    const cache = this.#lastCounts.get(region) ?? new Map<string, StateValue>()
+    const cache: StateBucket = this.#lastCounts.get(region) ?? new Map()
 
-    for (const entry of [...changed, ...cascade]) cache.set(entry.name, entry.value)
+    for (const entry of [...changed, ...cascade]) {
+      cache.set(entry.name, entry.value)
+    }
 
     this.#lastCounts.set(region, cache)
 
@@ -1272,17 +1575,23 @@ export class SlotState {
   #migrateItemState = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
-    if (detail.operation !== "item-rekeyed" || !detail.slot || !detail.key || detail.previousKey === null) return
+    if (detail.operation !== "item-rekeyed" || !detail.slot || !detail.key || detail.previousKey === null) {
+      return
+    }
 
     const region = this.#slots.regionOf(detail.slot)
 
-    if (!region) return
+    if (!region) {
+      return
+    }
 
     for (const store of [this.#scoped, this.#seeds]) {
       const buckets = store.get(region)
       const bucket = buckets?.get(detail.previousKey)
 
-      if (!buckets || !bucket) continue
+      if (!buckets || !bucket) {
+        continue
+      }
 
       buckets.delete(detail.previousKey)
       buckets.set(detail.key, bucket)
@@ -1292,41 +1601,58 @@ export class SlotState {
   #hydrateBranch = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
-    if (detail.operation !== "branch" || !detail.slot) return
-    if (this.#hydrating || this.#slots.applying()) return
+    if (detail.operation !== "branch" || !detail.slot) {
+      return
+    }
+
+    if (this.#hydrating || this.#slots.applying()) {
+      return
+    }
 
     const slot = detail.slot
     const region = this.#slots.regionOf(slot)
 
-    if (!region) return
+    if (!region) {
+      return
+    }
 
     const manifest = this.manifestFor(region)
 
-    if (!manifest) return
+    if (!manifest) {
+      return
+    }
 
-    const element = slot.anchor.kind === "range" ? slot.anchor.start.parentElement : slot.anchor.element
+    const element = elementFor(slot)
 
-    if (!element) return
+    if (!element) {
+      return
+    }
 
     for (const [name, reads] of Object.entries(manifest.reads)) {
-      if (reads.length === 0) continue
+      if (reads.length === 0) {
+        continue
+      }
 
       const scope = this.scopeFor(element, name)
 
-      if (!scope) continue
+      if (!scope) {
+        continue
+      }
 
       const value = this.getState(name, { scope })
 
-      if (value === undefined) continue
+      if (value === undefined) {
+        continue
+      }
 
       this.#writeValueSlots(manifest, scope, name, value)
     }
 
-    // Markup arriving from a skeleton brings its own nested conditionals and boolean attributes,
-    // and the parked copy says nothing about either. Settle them against the states in scope.
     const at = this.scopeFor(element)
 
-    if (!at) return
+    if (!at) {
+      return
+    }
 
     const declared = manifest.declarations.map((declaration) => declaration.name)
 
@@ -1344,17 +1670,25 @@ export class SlotState {
   #hydrateItemState = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
-    if (detail.operation !== "item-added" || !detail.slot || !detail.item) return
+    if (detail.operation !== "item-added" || !detail.slot || !detail.item) {
+      return
+    }
 
-    if (this.#slots.applying()) return
+    if (this.#slots.applying()) {
+      return
+    }
 
     const region = this.#slots.regionOf(detail.slot)
 
-    if (!region) return
+    if (!region) {
+      return
+    }
 
     const manifest = this.manifestFor(region)
 
-    if (!manifest) return
+    if (!manifest) {
+      return
+    }
 
     const item = detail.item
     const at: StateScope = { region, item }
@@ -1363,26 +1697,30 @@ export class SlotState {
       const scope = this.scopeFor(at, name) ?? at
       const value = this.getState(name, { scope })
 
-      if (value === undefined) continue
+      if (value === undefined) {
+        continue
+      }
 
       const text = printValue(value)
 
       for (const index of indices) {
         const slot = item.slots.get(index)
 
-        if (!slot || slot.type === "boolean_attribute") continue
+        if (!slot || slot.type === "boolean_attribute") {
+          continue
+        }
 
         this.#write(slot, text)
         this.#slots.claim(slot)
       }
     }
 
-    // A row built from the parked skeleton carries whatever presence the skeleton was blanked
-    // with, so every boolean attribute has to be decided from this item's own scope once.
     for (const [indexKey, entry] of Object.entries(manifest.presence ?? {})) {
       const slot = item.slots.get(Number(indexKey))
 
-      if (!slot) continue
+      if (!slot) {
+        continue
+      }
 
       this.#slots.setBooleanAttribute(slot, conditionMatches(entry, (name) => this.#valueOf(name, at)))
       this.#slots.claim(slot)
@@ -1392,15 +1730,21 @@ export class SlotState {
   #syncProperty = (event: Event): void => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
-    if (detail.operation !== "attribute") return
+    if (detail.operation !== "attribute") {
+      return
+    }
 
     const slot = detail.slot
 
-    if (!slot || slot.anchor.kind === "range" || slot.attribute !== "value") return
+    if (!slot || slot.anchor.kind === "range" || slot.attribute !== "value") {
+      return
+    }
 
     const element = slot.anchor.element
 
-    if (!VALUE_ELEMENTS.includes(element.tagName)) return
+    if (!VALUE_ELEMENTS.includes(element.tagName)) {
+      return
+    }
 
     const written = element.getAttribute("value") ?? ""
 
@@ -1412,7 +1756,9 @@ export class SlotState {
   async #fetch(request: StateRequest, signal: AbortSignal): Promise<Payload | null> {
     const url = new URL(window.location.href)
 
-    for (const [name, value] of Object.entries(request.state)) url.searchParams.set(name, value)
+    for (const [name, value] of Object.entries(request.state)) {
+      url.searchParams.set(name, value)
+    }
 
     url.searchParams.set("format", this.#options.format)
 
@@ -1427,7 +1773,7 @@ export class SlotState {
 }
 
 
-function scoped(store: Map<Region, Map<string, Map<string, StateValue>>>, scope: StateScope): Map<string, StateValue> {
+function scoped(store: ScopeStore, scope: StateScope): StateBucket {
   let regionStore = store.get(scope.region)
 
   if (!regionStore) {
@@ -1447,48 +1793,98 @@ function scoped(store: Map<Region, Map<string, Map<string, StateValue>>>, scope:
 }
 
 function declared(manifest: StateManifest, name: string, collection: number | null): DeclaredState | null {
-  const scoped_ = manifest.declarations.find(
-    (declaration) => declaration.name === name && (collection !== null ? declaration.scope === collection : declaration.scope === "region"),
-  )
+  const exact = manifest.declarations.find((declaration) => {
+    if (declaration.name !== name) {
+      return false
+    }
 
-  if (scoped_) return scoped_
-  if (collection === null) return null
+    if (collection === null) {
+      return declaration.scope === "region"
+    }
+
+    return declaration.scope === collection
+  })
+
+  if (exact) {
+    return exact
+  }
+
+  if (collection === null) {
+    return null
+  }
 
   return manifest.declarations.find((declaration) => declaration.name === name && declaration.scope === "region") ?? null
 }
 
 function containsNode(region: Region, target: Node): boolean {
   for (const range of region.ranges) {
-    if (!range.end) continue
+    if (!range.end) {
+      continue
+    }
 
     const afterStart = range.start.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING
     const beforeEnd = range.end.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_PRECEDING
 
-    if (afterStart && beforeEnd) return true
+    if (afterStart && beforeEnd) {
+      return true
+    }
   }
 
   return false
 }
 
-function enclosingItem(region: Region, target: Node): { item: Item; collection: number } | null {
+function enclosingItem(region: Region, target: Node): PlacedItem | null {
   for (const slot of region.slots.values()) {
-    if (slot.type !== "collection") continue
+    if (slot.type !== "collection") {
+      continue
+    }
 
     for (const item of slot.items.values()) {
       const afterStart = item.start.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING
       const beforeEnd = item.end.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_PRECEDING
 
-      if (afterStart && beforeEnd) return { item, collection: slot.index }
+      if (afterStart && beforeEnd) {
+        return { item, collection: slot.index }
+      }
     }
   }
 
   return null
 }
 
+function collectionIn(scope: StateScope): number | null {
+  if (!scope.item) {
+    return null
+  }
+
+  return collectionOf(scope.region, scope.item)
+}
+
+function elementFor(slot: Slot): Element | null {
+  if (slot.anchor.kind === "range") {
+    return slot.anchor.start.parentElement
+  }
+
+  return slot.anchor.element
+}
+
+function declarationSpot(declaration: DeclaredState): DiagnosticSpot {
+  if (declaration.line === undefined || declaration.line === null) {
+    return {}
+  }
+
+  return { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
+}
+
 function collectionOf(region: Region, item: Item): number | null {
   for (const slot of region.slots.values()) {
-    if (slot.type !== "collection") continue
-    if ([...slot.items.values()].includes(item)) return slot.index
+    if (slot.type !== "collection") {
+      continue
+    }
+
+    if ([...slot.items.values()].includes(item)) {
+      return slot.index
+    }
   }
 
   return null
@@ -1497,11 +1893,26 @@ function collectionOf(region: Region, item: Item): number | null {
 function parseLiteral(source: string): StateValue | undefined {
   const trimmed = source.trim()
 
-  if (trimmed === "true") return true
-  if (trimmed === "false") return false
-  if (trimmed === "nil") return null
-  if (/^-?\d+$/.test(trimmed)) return Number(trimmed)
-  if (/^:[a-zA-Z_]\w*[?!]?$/.test(trimmed)) return trimmed.slice(1)
+  if (trimmed === "true") {
+    return true
+  }
+
+  if (trimmed === "false") {
+    return false
+  }
+
+  if (trimmed === "nil") {
+    return null
+  }
+
+  if (/^-?\d+$/.test(trimmed)) {
+    return Number(trimmed)
+  }
+
+  if (/^:[a-zA-Z_]\w*[?!]?$/.test(trimmed)) {
+    return trimmed.slice(1)
+  }
+
   if (/^"(?:[^"\\]|\\.)*"$/.test(trimmed) || /^'(?:[^'\\]|\\.)*'$/.test(trimmed)) {
     return trimmed.slice(1, -1).replace(/\\(.)/g, "$1")
   }
@@ -1510,23 +1921,51 @@ function parseLiteral(source: string): StateValue | undefined {
 }
 
 function printValue(value: StateValue): string {
-  if (value === null) return ""
-  if (value === true) return "true"
-  if (value === false) return "false"
+  if (value === null) {
+    return ""
+  }
+
+  if (value === true) {
+    return "true"
+  }
+
+  if (value === false) {
+    return "false"
+  }
 
   return String(value)
 }
 
 export function coerceState(text: string, kind: StateKind): StateValue {
-  if (kind === "boolean") return text === "true"
-  if (kind === "integer") return /^-?\d+$/.test(text.trim()) ? Number(text.trim()) : 0
-  if (kind === "nil") return text === "" ? null : text
+  if (kind === "boolean") {
+    return text === "true"
+  }
+
+  if (kind === "integer") {
+    const trimmed = text.trim()
+
+    if (!/^-?\d+$/.test(trimmed)) {
+      return 0
+    }
+
+    return Number(trimmed)
+  }
+
+  if (kind === "nil") {
+    if (text === "") {
+      return null
+    }
+
+    return text
+  }
 
   return text
 }
 
 export function boundValue(element: Element, kind: StateKind): StateValue {
-  if (element instanceof HTMLInputElement && element.type === "checkbox") return element.checked
+  if (element instanceof HTMLInputElement && element.type === "checkbox") {
+    return element.checked
+  }
 
   const raw = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
 
@@ -1534,20 +1973,40 @@ export function boundValue(element: Element, kind: StateKind): StateValue {
 }
 
 function coerceSeed(shipped: unknown, kind: StateKind): StateValue | undefined {
-  if (shipped !== null && typeof shipped !== "boolean" && typeof shipped !== "number" && typeof shipped !== "string") return undefined
+  if (shipped !== null && typeof shipped !== "boolean" && typeof shipped !== "number" && typeof shipped !== "string") {
+    return undefined
+  }
 
   switch (kind) {
     case "boolean":
-      return typeof shipped === "boolean" ? shipped : shipped !== null
+      if (typeof shipped === "boolean") {
+        return shipped
+      }
+
+      return shipped !== null
     case "integer":
-      if (typeof shipped === "number") return Number.isInteger(shipped) ? shipped : Math.trunc(shipped)
-      if (typeof shipped === "string" && /^-?\d+$/.test(shipped.trim())) return Number(shipped.trim())
+      if (typeof shipped === "number") {
+        if (Number.isInteger(shipped)) {
+          return shipped
+        }
+
+        return Math.trunc(shipped)
+      }
+
+      if (typeof shipped === "string" && /^-?\d+$/.test(shipped.trim())) {
+        return Number(shipped.trim())
+      }
 
       return undefined
     case "string":
     case "symbol":
-      if (typeof shipped === "string") return shipped
-      if (typeof shipped === "number" || typeof shipped === "boolean") return String(shipped)
+      if (typeof shipped === "string") {
+        return shipped
+      }
+
+      if (typeof shipped === "number" || typeof shipped === "boolean") {
+        return String(shipped)
+      }
 
       return undefined
     default:
@@ -1556,25 +2015,37 @@ function coerceSeed(shipped: unknown, kind: StateKind): StateValue | undefined {
 }
 
 function kindArticle(kind: StateKind): string {
-  return kind === "integer" ? "an Integer" : `a ${kind.charAt(0).toUpperCase() + kind.slice(1)}`
+  if (kind === "integer") {
+    return "an Integer"
+  }
+
+  return `a ${kind.charAt(0).toUpperCase() + kind.slice(1)}`
 }
 
 function armMentions(arm: ConditionalArm, changed: string[]): boolean {
-  if (!Array.isArray(arm)) return conditionMentions(arm, changed)
+  if (!Array.isArray(arm)) {
+    return conditionMentions(arm, changed)
+  }
 
   const [name, comparand] = arm
 
-  if (changed.includes(name)) return true
+  if (changed.includes(name)) {
+    return true
+  }
 
   return typeof comparand === "object" && comparand !== null && changed.includes(comparand.state)
 }
 
 function conditionMentions(condition: StateCondition, changed: string[]): boolean {
-  if (!Array.isArray(condition)) return comboParts(condition).some((part) => conditionMentions(part, changed))
+  if (!Array.isArray(condition)) {
+    return comboParts(condition).some((part) => conditionMentions(part, changed))
+  }
 
   const [name, comparand] = condition
 
-  if (changed.includes(name)) return true
+  if (changed.includes(name)) {
+    return true
+  }
 
   return typeof comparand === "object" && comparand !== null && changed.includes(comparand.state)
 }
@@ -1586,7 +2057,9 @@ function conditionMatches(condition: StateCondition, valueOf: (name: string) => 
     return armMatches(valueOf(name), comparand, operator, valueOf)
   }
 
-  if (condition.all) return condition.all.every((part) => conditionMatches(part, valueOf))
+  if (condition.all) {
+    return condition.all.every((part) => conditionMatches(part, valueOf))
+  }
 
   return comboParts(condition).some((part) => conditionMatches(part, valueOf))
 }
@@ -1596,13 +2069,29 @@ function comboParts(combo: ComboCondition): StateCondition[] {
 }
 
 function armMatches(value: StateValue, comparand: StateComparand, operator: string | undefined, other: (name: string) => StateValue): boolean {
-  if (comparand === null) return rubyTruthy(value)
+  if (comparand === null) {
+    return rubyTruthy(value)
+  }
 
-  const literal = typeof comparand === "object" ? other(comparand.state) : parseLiteral(comparand)
+  let literal: StateValue | undefined
 
-  if (operator === undefined) return value === literal
-  if (operator === "!=") return value !== literal
-  if (typeof value !== "number" || typeof literal !== "number") return false
+  if (typeof comparand === "object") {
+    literal = other(comparand.state)
+  } else {
+    literal = parseLiteral(comparand)
+  }
+
+  if (operator === undefined) {
+    return value === literal
+  }
+
+  if (operator === "!=") {
+    return value !== literal
+  }
+
+  if (typeof value !== "number" || typeof literal !== "number") {
+    return false
+  }
 
   switch (operator) {
     case ">": return value > literal

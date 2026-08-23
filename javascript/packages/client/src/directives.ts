@@ -8,12 +8,6 @@
  * `SlotActions` runs, which is what keeps the linter and the runtime from drifting.
  */
 
-export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./parsing"
-export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./attributes"
-
-export type { Clause } from "./parsing"
-export type { ActionName, ActionSchema, HerbAttribute } from "./attributes"
-
 const STATE_DIRECTIVE_PRESENCE = /^\s*herb:state\b/
 const STATE_DIRECTIVE_PATTERN = /^\s*herb:state\s*(\(.*\))\s*$/s
 const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s
@@ -56,7 +50,9 @@ export function isStateDirectiveContent(content: string): boolean {
 
 export function slotsDirectiveModeOf(content: string): "server" | "client" | null {
   const match = SLOTS_DIRECTIVE.exec(content)
-  if (!match) return null
+  if (!match) {
+    return null
+  }
 
   const mode = SLOTS_MODE.exec(match[1])?.[1]
 
@@ -66,7 +62,9 @@ export function slotsDirectiveModeOf(content: string): "server" | "client" | nul
 export function parseStateDirective(content: string): StateSignature | null {
   const match = STATE_DIRECTIVE_PATTERN.exec(content)
 
-  if (!match) return null
+  if (!match) {
+    return null
+  }
 
   const signature = match[1]
   const signatureOffset = content.indexOf(signature)
@@ -132,20 +130,49 @@ function parseStateSignature(signature: string, signatureOffset: number): StateS
 }
 
 export function classifyDefault(source: string): StateDefaultKind {
-  if (source === "") return "missing"
-  if (source === "true" || source === "false") return "boolean"
-  if (source === "nil") return "nil"
+  if (source === "") {
+    return "missing"
+  }
 
-  if (/^-?\d[\d_]*\.\d/.test(source)) return "float"
-  if (/^-?\d[\d_]*$/.test(source)) return "integer"
-  if (/^"(?:[^"\\#]|\\.|#(?!\{))*"$/s.test(source)) return "string"
-  if (/^'(?:[^'\\]|\\.)*'$/s.test(source)) return "string"
-  if (/^:(?:[a-zA-Z_]\w*[?!=]?|"[^"]*"|'[^']*')$/.test(source)) return "symbol"
+  if (source === "true" || source === "false") {
+    return "boolean"
+  }
 
-  if (source.startsWith("[")) return "array"
-  if (source.startsWith("{")) return "hash"
+  if (source === "nil") {
+    return "nil"
+  }
 
-  if (BARE_IDENTIFIER.test(source)) return "bare"
+  if (/^-?\d[\d_]*\.\d/.test(source)) {
+    return "float"
+  }
+
+  if (/^-?\d[\d_]*$/.test(source)) {
+    return "integer"
+  }
+
+  if (/^"(?:[^"\\#]|\\.|#(?!\{))*"$/s.test(source)) {
+    return "string"
+  }
+
+  if (/^'(?:[^'\\]|\\.)*'$/s.test(source)) {
+    return "string"
+  }
+
+  if (/^:(?:[a-zA-Z_]\w*[?!=]?|"[^"]*"|'[^']*')$/.test(source)) {
+    return "symbol"
+  }
+
+  if (source.startsWith("[")) {
+    return "array"
+  }
+
+  if (source.startsWith("{")) {
+    return "hash"
+  }
+
+  if (BARE_IDENTIFIER.test(source)) {
+    return "bare"
+  }
 
   return "seeded"
 }
@@ -169,7 +196,9 @@ const LITERAL_DEFAULT_KINDS = new Set(["boolean", "integer", "string", "symbol",
 export function classifyDerivedDefault(source: string, declared: ReadonlyMap<string, string>): DerivedDefault | "mixed" | null {
   const parsed = parseDerivedCondition(source.trim(), declared)
 
-  if (parsed === null && mentionsAnyState(source, [...declared.keys()])) return "mixed"
+  if (parsed === null && mentionsAnyState(source, [...declared.keys()])) {
+    return "mixed"
+  }
 
   return parsed
 }
@@ -187,7 +216,9 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
       for (const part of parts) {
         const parsed = parseDerivedCondition(part, declared)
 
-        if (parsed === null || parsed === "mixed") return parsed === "mixed" ? "mixed" : null
+        if (parsed === null || parsed === "mixed") {
+          return parsed === "mixed" ? "mixed" : null
+        }
 
         conditions.push(parsed.condition)
         sources.push(...parsed.sources)
@@ -213,15 +244,21 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
 
     const state = leftState ?? rightState
 
-    if (!state) return null
+    if (!state) {
+      return null
+    }
 
     const literal = (leftState ? right : left).trim()
 
-    if (!LITERAL_DEFAULT_KINDS.has(classifyDefault(literal))) return null
+    if (!LITERAL_DEFAULT_KINDS.has(classifyDefault(literal))) {
+      return null
+    }
 
     let spelled = operator === "==" ? undefined : operator
 
-    if (spelled && rightState && spelled !== "!=") spelled = MIRRORED_COMPARISONS[spelled]
+    if (spelled && rightState && spelled !== "!=") {
+      spelled = MIRRORED_COMPARISONS[spelled]
+    }
 
     const condition: DerivedCondition = spelled ? [state, literal, spelled] : [state, literal]
 
@@ -230,11 +267,15 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
 
   const bare = bareReadName(trimmed)
 
-  if (bare === null) return null
+  if (bare === null) {
+    return null
+  }
 
   const kind = declared.get(bare)
 
-  if (kind === undefined) return null
+  if (kind === undefined) {
+    return null
+  }
 
   if (trimmed.endsWith("?")) {
     return kind === "boolean" || kind === "seeded" || kind === "bare"
@@ -250,7 +291,9 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
 function derivedStateSide(side: string, declared: ReadonlyMap<string, string>): string | null {
   const bare = bareReadName(side.trim())
 
-  if (bare === null || !declared.has(bare)) return null
+  if (bare === null || !declared.has(bare)) {
+    return null
+  }
 
   return bare
 }
@@ -279,9 +322,11 @@ function splitTopLevelOperator(source: string, operator: "||" | "&&"): string[] 
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
-    else if (character === ")" || character === "]" || character === "}") depth -= 1
-    else if (depth === 0 && character === operator[0] && source[index + 1] === operator[1]) {
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    } else if (character === ")" || character === "]" || character === "}") {
+      depth -= 1
+    } else if (depth === 0 && character === operator[0] && source[index + 1] === operator[1]) {
       parts.push(source.slice(start, index).trim())
       index += 1
       start = index + 1
@@ -305,13 +350,23 @@ function splitTopLevelComparison(source: string): [string, string, string] | nul
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
-    else if (character === ")" || character === "]" || character === "}") depth -= 1
-    else if (depth === 0) {
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    } else if (character === ")" || character === "]" || character === "}") {
+      depth -= 1
+    } else if (depth === 0) {
       for (const operator of ["==", "!=", ">=", "<=", ">", "<"]) {
-        if (!source.startsWith(operator, index)) continue
-        if (operator === "<" && source[index + 1] === "<") break
-        if (operator === ">" && source[index + 1] === ">") break
+        if (!source.startsWith(operator, index)) {
+          continue
+        }
+
+        if (operator === "<" && source[index + 1] === "<") {
+          break
+        }
+
+        if (operator === ">" && source[index + 1] === ">") {
+          break
+        }
 
         return [source.slice(0, index), operator, source.slice(index + operator.length)]
       }
@@ -328,7 +383,9 @@ export function mentionsAnyState(source: string, stateNames: readonly string[]):
 export function bareReadName(expression: string): string | null {
   const source = expression.trim()
 
-  if (!/^[a-z_][a-zA-Z0-9_]*\??$/.test(source)) return null
+  if (!/^[a-z_][a-zA-Z0-9_]*\??$/.test(source)) {
+    return null
+  }
 
   return source.endsWith("?") ? source.slice(0, -1) : source
 }
@@ -353,8 +410,13 @@ function topLevelSegments(inner: string): Segment[] {
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
-    if (character === ")" || character === "]" || character === "}") depth -= 1
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    }
+
+    if (character === ")" || character === "]" || character === "}") {
+      depth -= 1
+    }
 
     if (character === "," && depth === 0) {
       segments.push({ text: inner.slice(start, index), start })
@@ -380,7 +442,9 @@ function skipString(content: string, index: number): number {
       continue
     }
 
-    if (content[cursor] === quote) return cursor + 1
+    if (content[cursor] === quote) {
+      return cursor + 1
+    }
 
     cursor += 1
   }
@@ -401,12 +465,16 @@ function balanced(inner: string): boolean {
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    }
 
     if (character === ")" || character === "]" || character === "}") {
       depth -= 1
 
-      if (depth < 0) return false
+      if (depth < 0) {
+        return false
+      }
     }
 
     index += 1

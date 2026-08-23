@@ -1,11 +1,18 @@
 import { HERB_ATTRIBUTES } from "./attributes"
 import { report } from "./report"
 
-import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot, SlotIndex } from "./slot-index"
-import type { SlotState, StateScope } from "./state"
+import type { SlotIndex } from "./slot-index"
+import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot } from "./types"
+import type { SlotState, StateScope, StateValues } from "./state"
 
 export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
+export type MutationScope = "collection" | "payload"
 export type MutationTransport = (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>
+export type ConfirmKey = (payload: Payload, temp: string) => string | null
+
+export type MutationFields = Record<string, string>
+export type MutationBody = FormData | MutationFields
+export type HeaderMap = Record<string, string>
 
 export interface MutationTarget {
   file: string
@@ -17,12 +24,12 @@ export interface MutationTarget {
 export interface SubmitOptions {
   url: string
   method?: string
-  body?: FormData | Record<string, string>
+  body?: MutationBody
   into: MutationTarget
   values?: ItemValues
   key?: string
-  confirmKey?: (payload: Payload, temp: string) => string | null
-  scope?: "collection" | "payload"
+  confirmKey?: ConfirmKey
+  scope?: MutationScope
 }
 
 export interface MutationResult {
@@ -35,13 +42,13 @@ export interface MutationResult {
 export interface MutationRequest {
   url: string
   method: string
-  body: FormData | Record<string, string> | undefined
-  headers: Record<string, string>
+  body: MutationBody | undefined
+  headers: HeaderMap
 }
 
 export interface MutationsOptions {
   transport?: MutationTransport
-  headers?: () => Record<string, string>
+  headers?: () => HeaderMap
   format?: string
 }
 
@@ -72,11 +79,20 @@ export class SlotMutations {
   submit(options: SubmitOptions): Promise<MutationResult> {
     const key = options.key ?? `herb-pending-${(this.#minted += 1)}`
     const slot = this.#collection(options.into)
-    const item = slot ? this.#slots.addItem(slot, key, { values: options.values, text: true }) : null
 
-    if (slot && item) this.#setStates(slot, item, { pending: true, failed: false })
+    let item: Item | null = null
 
-    const record: Sending = { options, key, slot: item ? slot : null }
+    if (slot) {
+      item = this.#slots.addItem(slot, key, { values: options.values, text: true })
+    }
+
+    const record: Sending = { options, key, slot: null }
+
+    if (slot && item) {
+      this.#setStates(slot, item, { pending: true, failed: false })
+
+      record.slot = slot
+    }
 
     this.#records.set(key, record)
 
@@ -86,25 +102,35 @@ export class SlotMutations {
   retry(target: string | Element): Promise<MutationResult> | null {
     const key = this.#keyOf(target)
 
-    if (key === null) return null
+    if (key === null) {
+      return null
+    }
 
     const record = this.#records.get(key)
 
-    if (!record) return null
+    if (!record) {
+      return null
+    }
 
     const item = record.slot?.items.get(key) ?? null
 
-    if (record.slot && item) this.#setStates(record.slot, item, { pending: true, failed: false })
+    if (record.slot && item) {
+      this.#setStates(record.slot, item, { pending: true, failed: false })
+    }
 
     return this.#enqueue(record)
   }
 
   discard(target: string | Element): boolean {
     const key = this.#keyOf(target)
-    if (key === null) return false
+    if (key === null) {
+      return false
+    }
 
     const record = this.#records.get(key)
-    if (!record) return false
+    if (!record) {
+      return false
+    }
 
     this.#records.delete(key)
 
@@ -116,7 +142,9 @@ export class SlotMutations {
   }
 
   observe(root: Document | Element = document): void {
-    if (typeof document === "undefined") return
+    if (typeof document === "undefined") {
+      return
+    }
 
     this.#observed?.removeEventListener("submit", this.#onSubmit, true)
     this.#observed = root
@@ -133,16 +161,22 @@ export class SlotMutations {
     const name = form.getAttribute(HERB_ATTRIBUTES.into)
     const region = this.#state.scopeFor(form)?.region
 
-    if (name === null || name === "" || !region) return null
+    if (name === null || name === "" || !region) {
+      return null
+    }
 
     const collection = this.#slots.slot(region.file, name, region.occurrence)
 
     if (!collection || collection.type !== "collection") {
+      let message = `\`${HERB_ATTRIBUTES.into}="${name}"\` names nothing in this template.`
+
+      if (collection) {
+        message = `\`${HERB_ATTRIBUTES.into}="${name}"\` names a ${collection.type} slot, and a send needs a collection.`
+      }
+
       report({
         template: region.file,
-        message: collection
-          ? `\`${HERB_ATTRIBUTES.into}="${name}"\` names a ${collection.type} slot, and a send needs a collection.`
-          : `\`${HERB_ATTRIBUTES.into}="${name}"\` names nothing in this template.`,
+        message,
         code: "herb-unknown-collection",
         severity: "error",
         suggestion: `name a keyed collection, the element carrying \`data-herb-name\` around the loop`,
@@ -153,10 +187,12 @@ export class SlotMutations {
     }
 
     const body = new FormData(form)
-    const values: Record<string, string> = {}
+    const values: MutationFields = {}
 
     for (const [key, value] of body.entries()) {
-      if (typeof value === "string") values[valueName(key)] = value
+      if (typeof value === "string") {
+        values[valueName(key)] = value
+      }
     }
 
     const result = this.submit({
@@ -176,8 +212,13 @@ export class SlotMutations {
   #onSubmit = (event: Event): void => {
     const form = event.target
 
-    if (!(form instanceof HTMLFormElement)) return
-    if (!form.hasAttribute(HERB_ATTRIBUTES.into)) return
+    if (!(form instanceof HTMLFormElement)) {
+      return
+    }
+
+    if (!form.hasAttribute(HERB_ATTRIBUTES.into)) {
+      return
+    }
 
     event.preventDefault()
     event.stopPropagation()
@@ -186,7 +227,9 @@ export class SlotMutations {
   }
 
   #keyOf(target: string | Element): string | null {
-    if (typeof target === "string") return target
+    if (typeof target === "string") {
+      return target
+    }
 
     return this.#state.scopeFor(target)?.item?.key ?? null
   }
@@ -213,7 +256,7 @@ export class SlotMutations {
     } catch (error) {
       this.#fail(record)
 
-      return { status: record.slot ? "failed" : "detached", key, error: error as Error }
+      return { status: statusOf(record.slot, "failed"), key, error: error as Error }
     }
 
     return this.#confirm(record, payload)
@@ -226,7 +269,7 @@ export class SlotMutations {
     if (!payload) {
       this.#settle(record)
 
-      return { status: slot ? "confirmed" : "detached", key }
+      return { status: statusOf(slot, "confirmed"), key }
     }
 
     let confirmed = key
@@ -235,12 +278,20 @@ export class SlotMutations {
       const real = (options.confirmKey ?? this.#realKey.bind(this))(payload, key)
 
       if (real && real !== key) {
-        if (this.#slots.rekeyItem(slot, key, real)) confirmed = real
-        else this.#slots.removeItem(slot, key)
+        if (this.#slots.rekeyItem(slot, key, real)) {
+          confirmed = real
+        } else {
+          this.#slots.removeItem(slot, key)
+        }
       }
     }
 
-    const narrowed = slot && (options.scope ?? "collection") === "collection" ? this.#narrow(payload, slot) : payload
+    let narrowed = payload
+
+    if (slot && (options.scope ?? "collection") === "collection") {
+      narrowed = this.#narrow(payload, slot)
+    }
+
     const report = this.#slots.apply(narrowed, { items: "merge" })
 
     if (report.applied === 0 && report.deferred.some((deferred) => deferred.reason === "stale-version")) {
@@ -253,27 +304,33 @@ export class SlotMutations {
     this.#settle(record, confirmed)
     this.#records.delete(key)
 
-    return { status: slot ? "confirmed" : "detached", key: confirmed, report }
+    return { status: statusOf(slot, "confirmed"), key: confirmed, report }
   }
 
   #settle(record: Sending, confirmed?: string): void {
     const slot = record.slot
     const item = slot?.items.get(confirmed ?? record.key) ?? null
 
-    if (slot && item) this.#setStates(slot, item, { pending: false, failed: false })
+    if (slot && item) {
+      this.#setStates(slot, item, { pending: false, failed: false })
+    }
   }
 
   #fail(record: Sending): void {
     const slot = record.slot
     const item = slot?.items.get(record.key) ?? null
 
-    if (slot && item) this.#setStates(slot, item, { pending: false, failed: true })
+    if (slot && item) {
+      this.#setStates(slot, item, { pending: false, failed: true })
+    }
   }
 
-  #setStates(slot: Slot, item: Item, values: Record<string, boolean>): void {
+  #setStates(slot: Slot, item: Item, values: StateValues): void {
     const region = this.#slots.regionOf(slot)
 
-    if (!region) return
+    if (!region) {
+      return
+    }
 
     const scope: StateScope = { region, item }
 
@@ -283,7 +340,9 @@ export class SlotMutations {
   #collection(target: MutationTarget): Slot | null {
     const index = target.name ?? target.index
 
-    if (index === undefined) return null
+    if (index === undefined) {
+      return null
+    }
 
     const slot = this.#slots.slot(target.file, index, target.occurrence ?? 0)
 
@@ -292,11 +351,15 @@ export class SlotMutations {
 
   #realKey(payload: Payload, temp: string): string | null {
     for (const value of Object.values(payload.slots)) {
-      if (typeof value !== "object" || value === null || !("items" in value)) continue
+      if (typeof value !== "object" || value === null || !("items" in value)) {
+        continue
+      }
 
       const keys = Object.keys((value as Collected).items).filter((key) => key !== temp)
 
-      if (keys.length === 1) return keys[0]
+      if (keys.length === 1) {
+        return keys[0]
+      }
 
       if (keys.length > 1) {
         report({
@@ -315,20 +378,24 @@ export class SlotMutations {
   #narrow(payload: Payload, slot: Slot): Payload {
     const value = payload.slots[slot.index]
 
-    if (value === undefined) return payload
+    if (value === undefined) {
+      return payload
+    }
 
     return { ...payload, slots: { [slot.index]: value } }
   }
 
   #request(options: SubmitOptions): MutationRequest {
-    const headers: Record<string, string> = {
+    const headers: HeaderMap = {
       Accept: "application/vnd.herb.slots+json",
       ...this.#options.headers?.(),
     }
 
     const token = typeof document === "undefined" ? null : document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
 
-    if (token && !headers["X-CSRF-Token"]) headers["X-CSRF-Token"] = token
+    if (token && !headers["X-CSRF-Token"]) {
+      headers["X-CSRF-Token"] = token
+    }
 
     return {
       url: options.url,
@@ -349,8 +416,13 @@ function defaultTransport(format: string): MutationTransport {
 
     url.searchParams.set("format", format)
 
-    const body =
-      request.body instanceof FormData ? request.body : request.body ? new URLSearchParams(request.body) : undefined
+    let body: FormData | URLSearchParams | undefined
+
+    if (request.body instanceof FormData) {
+      body = request.body
+    } else if (request.body) {
+      body = new URLSearchParams(request.body)
+    }
 
     const response = await fetch(url.toString(), {
       method: request.method,
@@ -359,14 +431,28 @@ function defaultTransport(format: string): MutationTransport {
       signal,
     })
 
-    if (!response.ok) throw new Error(`Herb mutation failed with ${response.status}`)
+    if (!response.ok) {
+      throw new Error(`Herb mutation failed with ${response.status}`)
+    }
 
     return (await response.json()) as Payload
   }
 }
 
+function statusOf(slot: Slot | null, attached: MutationStatus): MutationStatus {
+  if (!slot) {
+    return "detached"
+  }
+
+  return attached
+}
+
 function valueName(key: string): string {
   const segments = [...key.matchAll(/\[([^\[\]]+)\]/g)]
 
-  return segments.length > 0 ? segments[segments.length - 1][1] : key
+  if (segments.length === 0) {
+    return key
+  }
+
+  return segments[segments.length - 1][1]
 }

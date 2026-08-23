@@ -37,7 +37,9 @@ export class HerbRuntime {
 
   static start(options: RuntimeOptions = {}): HerbRuntime {
     const existing = HerbRuntime.get()
-    if (existing) return existing
+    if (existing) {
+      return existing
+    }
 
     const runtime = new HerbRuntime(CONSTRUCT, options)
 
@@ -90,7 +92,11 @@ export function stateFor(element: Element): ScopedState {
   const resolve = (name: string): ScopedSetOptions => {
     const scope = runtime?.state.scopeFor(element, name)
 
-    return scope ? { scope } : {}
+    if (!scope) {
+      return {}
+    }
+
+    return { scope }
   }
 
   return {

@@ -1,8 +1,9 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
 
-import type { PayloadSlots } from "../src/slot-index"
+import { SlotIndex } from "../src/slot-index"
 import { SlotState } from "../src/state"
+
+import type { PayloadSlots } from "../src/types"
 
 const FILE = "app/views/chat/show.html.erb"
 

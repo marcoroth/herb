@@ -5,7 +5,19 @@ import { boundValue, coerceState } from "./state"
 
 import type { ActionName, ActionSchema } from "./attributes"
 import type { Clause } from "./parsing"
-import type { DeclaredState, SlotState, StateScope, StateValue } from "./state"
+import type { DeclaredState, SlotState, StateScope, StateValue, StateValues } from "./state"
+
+export interface PendingAction {
+  action: ActionName
+  rest: string
+}
+
+export interface ResolvedDeclaration {
+  scope: StateScope
+  declaration: DeclaredState
+}
+
+export type StateGroups = Map<StateScope, StateValues>
 
 const DIRECT_EVENTS = ["mouseenter", "mouseleave"]
 
@@ -46,12 +58,20 @@ export class SlotActions {
     this.#observer = new MutationObserver((records) => {
       for (const record of records) {
         for (const node of record.addedNodes) {
-          if (node instanceof Element) this.scan(node)
+          if (node instanceof Element) {
+            this.scan(node)
+          }
         }
       }
     })
 
-    this.#observer.observe(root instanceof Element ? root : document.documentElement, {
+    let observed: Node = document.documentElement
+
+    if (root instanceof Element) {
+      observed = root
+    }
+
+    this.#observer.observe(observed, {
       childList: true,
       subtree: true,
     })
@@ -61,9 +81,13 @@ export class SlotActions {
     this.#observer?.disconnect()
     this.#observer = null
 
-    for (const [event, listener] of this.#listeners) document.removeEventListener(event, listener, true)
+    for (const [event, listener] of this.#listeners) {
+      document.removeEventListener(event, listener, true)
+    }
 
-    for (const detach of this.#direct.values()) detach()
+    for (const detach of this.#direct.values()) {
+      detach()
+    }
 
     this.#listeners = []
     this.#events = new Set()
@@ -71,16 +95,21 @@ export class SlotActions {
   }
 
   scan(root: ParentNode | Element): void {
-    const elements = [
-      ...(root instanceof Element && root.matches(ACTION_SELECTOR) ? [root] : []),
-      ...root.querySelectorAll(ACTION_SELECTOR),
-    ]
+    const elements: Element[] = []
+
+    if (root instanceof Element && root.matches(ACTION_SELECTOR)) {
+      elements.push(root)
+    }
+
+    elements.push(...root.querySelectorAll(ACTION_SELECTOR))
 
     for (const element of elements) {
       for (const name of ACTION_NAMES) {
         const value = element.getAttribute(HERB_ATTRIBUTES[name])
 
-        if (value === null) continue
+        if (value === null) {
+          continue
+        }
 
         for (const clause of clauses(value)) {
           const event = clause.event ?? defaultEventFor(element)
@@ -98,7 +127,9 @@ export class SlotActions {
   }
 
   #validate(element: Element): void {
-    if (this.#validated.has(element)) return
+    if (this.#validated.has(element)) {
+      return
+    }
 
     this.#validated.add(element)
 
@@ -106,7 +137,9 @@ export class SlotActions {
       const attribute = HERB_ATTRIBUTES[name]
       const value = element.getAttribute(attribute)
 
-      if (value === null) continue
+      if (value === null) {
+        continue
+      }
 
       if (!balancedQuotes(value)) {
         report({
@@ -131,10 +164,16 @@ export class SlotActions {
     const attribute = HERB_ATTRIBUTES[action]
 
     if (clause.event === "" || (clause.rest.trim() === "" && !schema.bare)) {
+      let problem = "nothing after the event"
+
+      if (clause.event === "") {
+        problem = "no event before the arrow"
+      }
+
       report({
         template: this.#templateOf(element),
         element,
-        message: `\`${attribute}\` has a clause with ${clause.event === "" ? "no event before the arrow" : "nothing after the event"}`,
+        message: `\`${attribute}\` has a clause with ${problem}`,
         code: "herb-invalid-action",
         severity: "error",
       })
@@ -152,12 +191,14 @@ export class SlotActions {
 
     for (const name of names(clause.rest)) {
       const resolved = this.#declaration(element, name)
-      if (!resolved) continue
+      if (!resolved) {
+        continue
+      }
 
-      const kind = resolved[1].kind
+      const kind = resolved.declaration.kind
 
       if (schema.needs && kind !== schema.needs && kind !== "seeded") {
-        this.#reportKind(resolved[0].region.file, attribute, name, kind, schema.needs, element)
+        this.#reportKind(resolved.scope.region.file, attribute, name, kind, schema.needs, element)
       }
     }
   }
@@ -181,13 +222,15 @@ export class SlotActions {
     const raw = unquote(assignment.slice(separator + 1).trim())
     const resolved = this.#declaration(element, name)
 
-    if (!resolved || raw === "$value") return
+    if (!resolved || raw === "$value") {
+      return
+    }
 
-    const kind = resolved[1].kind
+    const kind = resolved.declaration.kind
 
     if ((kind === "boolean" && raw !== "true" && raw !== "false") || (kind === "integer" && !/^-?\d+$/.test(raw))) {
       report({
-        template: resolved[0].region.file,
+        template: resolved.scope.region.file,
         element,
         message: `\`${name}=${raw}\` does not parse as a ${kind}; \`${name}\` is declared as one`,
         code: "herb-state-type",
@@ -213,7 +256,9 @@ export class SlotActions {
   }
 
   #delegate(event: string): void {
-    if (this.#events.has(event)) return
+    if (this.#events.has(event)) {
+      return
+    }
 
     this.#events.add(event)
 
@@ -224,44 +269,58 @@ export class SlotActions {
   }
 
   #attach(element: Element, _event: string): void {
-    if (this.#direct.has(element)) return
+    if (this.#direct.has(element)) {
+      return
+    }
 
     const listener = (fired: Event): void => {
       this.#run(element, fired)
     }
 
-    for (const direct of DIRECT_EVENTS) element.addEventListener(direct, listener)
+    for (const direct of DIRECT_EVENTS) {
+      element.addEventListener(direct, listener)
+    }
 
     this.#direct.set(element, () => {
-      for (const direct of DIRECT_EVENTS) element.removeEventListener(direct, listener)
+      for (const direct of DIRECT_EVENTS) {
+        element.removeEventListener(direct, listener)
+      }
     })
   }
 
   #dispatch(event: Event): void {
     const start = event.target
 
-    if (!(start instanceof Element)) return
+    if (!(start instanceof Element)) {
+      return
+    }
 
     let element: Element | null = start.closest(ACTION_SELECTOR)
 
     while (element) {
-      if (this.#run(element, event)) return
+      if (this.#run(element, event)) {
+        return
+      }
 
       element = element.parentElement?.closest(ACTION_SELECTOR) ?? null
     }
   }
 
   #run(element: Element, event: Event): boolean {
-    const pending: { action: ActionName; rest: string }[] = []
+    const pending: PendingAction[] = []
 
     for (const name of ACTION_NAMES) {
       const attribute = HERB_ATTRIBUTES[name]
       const value = element.getAttribute(attribute)
 
-      if (value === null) continue
+      if (value === null) {
+        continue
+      }
 
       for (const clause of clauses(value)) {
-        if ((clause.event ?? defaultEventFor(element)) !== event.type) continue
+        if ((clause.event ?? defaultEventFor(element)) !== event.type) {
+          continue
+        }
 
         pending.push({ action: name, rest: clause.rest })
       }
@@ -269,13 +328,16 @@ export class SlotActions {
 
     const handled = pending.length > 0
 
-    // One action can rewrite a branch that contains this very element, and a detached element has
-    // no scope to walk up from. Resolve every scope while the element is still on the page, so a
-    // later action in the same dispatch still knows where it lives.
-    this.#pinned = handled ? this.#pinScopes(element, pending) : null
+    this.#pinned = null
+
+    if (handled) {
+      this.#pinned = this.#pinScopes(element, pending)
+    }
 
     try {
-      for (const entry of pending) this.#execute(element, entry.action, entry.rest, event)
+      for (const entry of pending) {
+        this.#execute(element, entry.action, entry.rest, event)
+      }
     } finally {
       this.#pinned = null
     }
@@ -297,11 +359,13 @@ export class SlotActions {
         this.#count(element, rest, schema.step ?? 1)
       }
     } catch (error) {
-      if (!(error instanceof TypeError)) throw error
+      if (!(error instanceof TypeError)) {
+        throw error
+      }
     }
   }
 
-  #pinScopes(element: Element, pending: { action: ActionName; rest: string }[]): Map<string, StateScope> {
+  #pinScopes(element: Element, pending: PendingAction[]): Map<string, StateScope> {
     const pinned = new Map<string, StateScope>()
     const bare = this.#state.scopeFor(element)
 
@@ -309,7 +373,9 @@ export class SlotActions {
       for (const declaration of this.#state.declaredStates(bare)) {
         const scope = this.#state.scopeFor(element, declaration.name)
 
-        if (scope) pinned.set(declaration.name, scope)
+        if (scope) {
+          pinned.set(declaration.name, scope)
+        }
       }
     }
 
@@ -317,18 +383,22 @@ export class SlotActions {
       for (const raw of names(entry.rest)) {
         const name = raw.split("=")[0].trim()
 
-        if (name === "" || pinned.has(name)) continue
+        if (name === "" || pinned.has(name)) {
+          continue
+        }
 
         const scope = this.#state.scopeFor(element, name)
 
-        if (scope) pinned.set(name, scope)
+        if (scope) {
+          pinned.set(name, scope)
+        }
       }
     }
 
     return pinned
   }
 
-  #declaration(element: Element, name: string): [StateScope, DeclaredState] | null {
+  #declaration(element: Element, name: string): ResolvedDeclaration | null {
     const scope = this.#pinned?.get(name) ?? this.#state.scopeFor(element, name)
 
     if (!scope) {
@@ -348,16 +418,20 @@ export class SlotActions {
       .declaredStates(scope)
       .find((candidate) => candidate.name === name)
 
-    return declaration ? [scope, declaration] : null
+    if (!declaration) {
+      return null
+    }
+
+    return { scope, declaration }
   }
 
-  #apply(groups: Map<StateScope, Record<string, StateValue>>): void {
+  #apply(groups: StateGroups): void {
     for (const [scope, values] of groups) {
       this.#state.setState(values, { scope })
     }
   }
 
-  #group(groups: Map<StateScope, Record<string, StateValue>>, scope: StateScope, name: string, value: StateValue): void {
+  #group(groups: StateGroups, scope: StateScope, name: string, value: StateValue): void {
     for (const [existing, values] of groups) {
       if (existing.region === scope.region && existing.item === scope.item) {
         values[name] = value
@@ -370,7 +444,7 @@ export class SlotActions {
   }
 
   #set(element: Element, rest: string, event: Event): void {
-    const groups = new Map<StateScope, Record<string, StateValue>>()
+    const groups: StateGroups = new Map()
 
     for (const assignment of splitOutsideQuotes(rest, ",")) {
       const separator = assignment.indexOf("=")
@@ -391,15 +465,23 @@ export class SlotActions {
       const raw = unquote(assignment.slice(separator + 1).trim())
 
       const resolved = this.#declaration(element, name)
-      if (!resolved) return
+      if (!resolved) {
+        return
+      }
 
-      const [scope, declaration] = resolved
+      const { scope, declaration } = resolved
       const kind = declaration.kind
 
       if (raw === "$value") {
         const target = event.target
 
-        this.#group(groups, scope, name, target instanceof Element ? boundValue(target, kind) : null)
+        let bound: StateValue = null
+
+        if (target instanceof Element) {
+          bound = boundValue(target, kind)
+        }
+
+        this.#group(groups, scope, name, bound)
 
         continue
       }
@@ -424,13 +506,15 @@ export class SlotActions {
   }
 
   #toggle(element: Element, rest: string): void {
-    const groups = new Map<StateScope, Record<string, StateValue>>()
+    const groups: StateGroups = new Map()
 
     for (const name of names(rest)) {
       const resolved = this.#declaration(element, name)
-      if (!resolved) return
+      if (!resolved) {
+        return
+      }
 
-      const [scope, declaration] = resolved
+      const { scope, declaration } = resolved
 
       if (declaration.kind !== "boolean" && declaration.kind !== "seeded") {
         report({
@@ -453,20 +537,31 @@ export class SlotActions {
 
   #count(element: Element, rest: string, direction: number): void {
     const by = Number(element.getAttribute(HERB_ATTRIBUTES.by) ?? "1")
-    const step = direction * (Number.isFinite(by) ? by : 1)
+
+    let magnitude = 1
+
+    if (Number.isFinite(by)) {
+      magnitude = by
+    }
+
+    const step = direction * magnitude
 
     for (const name of names(rest)) {
       const resolved = this.#declaration(element, name)
-      if (!resolved) return
+      if (!resolved) {
+        return
+      }
 
-      this.#state.increment(name, { scope: resolved[0], by: step })
+      this.#state.increment(name, { scope: resolved.scope, by: step })
     }
   }
 
   #reset(element: Element, rest: string): void {
     if (rest.trim() === "") {
       const scope = this.#state.scopeFor(element)
-      if (!scope) return
+      if (!scope) {
+        return
+      }
 
       for (const declaration of this.#state.declaredStates(scope)) {
         this.#state.reset(declaration.name, { scope: this.#state.scopeFor(element, declaration.name) ?? scope })
@@ -477,10 +572,11 @@ export class SlotActions {
 
     for (const name of names(rest)) {
       const resolved = this.#declaration(element, name)
-      if (!resolved) return
+      if (!resolved) {
+        return
+      }
 
-      this.#state.reset(name, { scope: resolved[0] })
+      this.#state.reset(name, { scope: resolved.scope })
     }
   }
 }
-

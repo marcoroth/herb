@@ -23,10 +23,18 @@ export function useState(host: StateHost): ScopedState {
 
   const scope = state.scope
 
-  for (const name of scope ? namesFor(scope) : []) {
+  let names: string[] = []
+
+  if (scope) {
+    names = namesFor(scope)
+  }
+
+  for (const name of names) {
     const method = (host as unknown as Record<string, unknown>)[`${name}Changed`]
 
-    if (typeof method !== "function") continue
+    if (typeof method !== "function") {
+      continue
+    }
 
     unsubscribes.push(
       state.on(name, (value, previous) => (method as (value: unknown, previous: unknown) => void).call(host, value, previous)),
@@ -36,7 +44,9 @@ export function useState(host: StateHost): ScopedState {
   const teardown = host.disconnect?.bind(host)
 
   host.disconnect = () => {
-    for (const unsubscribe of unsubscribes) unsubscribe()
+    for (const unsubscribe of unsubscribes) {
+      unsubscribe()
+    }
 
     teardown?.()
   }
@@ -47,7 +57,9 @@ export function useState(host: StateHost): ScopedState {
 function namesFor(scope: StateScope): string[] {
   const runtime = HerbRuntime.get()
 
-  if (!runtime) return []
+  if (!runtime) {
+    return []
+  }
 
   return runtime.state.declaredStates(scope).map((declaration) => declaration.name)
 }
