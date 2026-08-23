@@ -216,6 +216,15 @@ describe("applying values to a block", () => {
     expect(index.slot(FILE, 1)).not.toBeNull()
   })
 
+  test("says the helper's own markup went unwritten when the interior does not account for it", () => {
+    const index = mounted(BLOCK)
+
+    const report = index.apply(payload(FILE, { 0: `<form action="/posts/2">Other</form>`, 1: "Other", 2: "later" }, "eeeeeeee"))
+
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "block" }])
+    expect(document.querySelector("form")!.innerHTML).toBe("<!--herb-slot:1-->Other<!--/herb-slot:1-->")
+  })
+
   test("falls back to the whole block when its interior is not addressable", () => {
     const index = mounted(BARE_BLOCK)
 

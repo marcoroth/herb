@@ -44,7 +44,7 @@ export type PayloadItems = Record<string, PayloadSlots>
 export type SeededSlots = PayloadSlots & { seeds?: Seeds }
 export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected
 export type AppliedValue = Exclude<PayloadValue, Payload>
-export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "items" | "partial-attribute"
+export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "block" | "items" | "partial-attribute"
 
 export type SlotAnchor = RangeAnchor | ElementAnchor | ContentAnchor
 

@@ -64,7 +64,7 @@ const FIXTURES: Record<string, Fixture> = {
   "two attributes on one element": twoAttributesOnOneElement as Fixture,
 }
 
-const PARKED_REASONS = ["branch", "items", "partial-attribute"]
+const PARKED_REASONS = ["branch", "block", "items", "partial-attribute"]
 
 const UNCHANGED = ["nothing dynamic at all", "a boolean attribute inside a block"]
 

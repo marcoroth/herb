@@ -1,4 +1,4 @@
-import { anchoredSlots, closingFor, nameEntry, slotOpeners } from "./anchors"
+import { ANCHOR_ATTRIBUTE, NAME_ATTRIBUTE, anchoredSlots, closingFor, markers, nameEntry, slotOpeners } from "./anchors"
 import { branchKey, branchOf, slotOpenIndex } from "./markers"
 
 import { NAME_SELECTOR } from "./anchors"
@@ -219,6 +219,27 @@ export function unescapeHTML(value: string): string {
   }
 
   return value.replace(HTML_ENTITY_PATTERN, (_entity, name: string) => HTML_ENTITIES[name])
+}
+
+export function withoutMarkers(html: string): string {
+  const holder = document.createElement("template")
+
+  holder.innerHTML = html
+
+  for (const marker of [...markers(holder.content)]) {
+    if (marker.nodeType === Node.COMMENT_NODE) {
+      (marker as Comment).remove()
+
+      continue
+    }
+
+    const element = marker as Element
+
+    element.removeAttribute(ANCHOR_ATTRIBUTE)
+    element.removeAttribute(NAME_ATTRIBUTE)
+  }
+
+  return holder.innerHTML
 }
 
 export function attributeValue(value: SlotValue): SlotValue {

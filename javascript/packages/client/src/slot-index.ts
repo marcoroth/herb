@@ -26,7 +26,7 @@ import { asList, last, popMatching } from "./arrays"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker, parseStaticsIdentity, partsKey } from "./markers"
-import { attributeParts, attributeValue, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames } from "./fragments"
+import { attributeParts, attributeValue, blankSlots, fillSlots, interpolateParts, parkedBranches, templateNames, withoutMarkers } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
 import type { AddItemOptions, AppliedValue, ApplyMode, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, Statics, StaticsIdentity, TransactionResult } from "./types"
@@ -415,6 +415,8 @@ export class SlotIndex {
   }
 
   #applySlots(payload: Payload, owner: SlotMap, values: PayloadSlots, report: ApplyReport, mode: ApplyMode): void {
+    const blocks: [Slot, number, AppliedValue][] = []
+
     for (const [key, value] of Object.entries(values)) {
       if (isPayload(value)) {
         this.#applyPayload(value, report, mode)
@@ -435,6 +437,16 @@ export class SlotIndex {
         continue
       }
 
+      if (slot.type === "block" && slot.children.length > 0) {
+        blocks.push([slot, index, value])
+
+        continue
+      }
+
+      this.#applyValue(payload, slot, index, value, report, mode)
+    }
+
+    for (const [slot, index, value] of blocks) {
       this.#applyValue(payload, slot, index, value, report, mode)
     }
   }
@@ -465,6 +477,10 @@ export class SlotIndex {
 
   #applyLeaf(payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {
     if (slot.type === "block" && slot.children.length > 0) {
+      if (!this.#covered(slot, value)) {
+        this.#defer(report, payload, index, "block")
+      }
+
       return
     }
 
@@ -884,6 +900,14 @@ export class SlotIndex {
 
   #current(slot: Slot): string {
     return currentHTML(slot.anchor)
+  }
+
+  #covered(slot: Slot, value: SlotValue): boolean {
+    if (Array.isArray(value)) {
+      return false
+    }
+
+    return withoutMarkers(this.#current(slot)) === withoutMarkers(value)
   }
 
   #same(slot: Slot, value: SlotValue): boolean {
