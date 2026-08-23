@@ -544,7 +544,7 @@ export class SlotState {
         return target
       }
 
-      const collection = collectionOf(target.region, target.item)
+      const collection = target.item.collection.index
 
       let declaration: DeclaredState | null = null
 
@@ -1849,11 +1849,7 @@ function enclosingItem(region: Region, target: Node): PlacedItem | null {
 }
 
 function collectionIn(scope: StateScope): number | null {
-  if (!scope.item) {
-    return null
-  }
-
-  return collectionOf(scope.region, scope.item)
+  return scope.item?.collection.index ?? null
 }
 
 function elementFor(slot: Slot): Element | null {
@@ -1870,20 +1866,6 @@ function declarationSpot(declaration: DeclaredState): DiagnosticSpot {
   }
 
   return { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
-}
-
-function collectionOf(region: Region, item: Item): number | null {
-  for (const slot of region.slots.values()) {
-    if (slot.type !== "collection") {
-      continue
-    }
-
-    if ([...slot.items.values()].includes(item)) {
-      return slot.index
-    }
-  }
-
-  return null
 }
 
 function parseLiteral(source: string): StateValue | undefined {

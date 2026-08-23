@@ -78,11 +78,15 @@ export interface Slot {
   branch: number | null
   parent: Slot | null
   children: Slot[]
+  region: Region
+  item: Item | null
+  claimed: boolean
 }
 
 export interface Item extends Bounds {
   key: string
   slots: SlotMap
+  collection: Slot
   seeds?: Seeds
 }
 
@@ -130,7 +134,7 @@ export interface Statics {
 }
 
 export interface SlotAddress {
-  region: Region | null
+  region: Region
   collection: number | null
   key: string | null
   index: number
@@ -139,7 +143,6 @@ export interface SlotAddress {
 export interface OpenSlot {
   index: number
   slot: Slot
-  region: Region | null
 }
 
 export interface OpenItem {

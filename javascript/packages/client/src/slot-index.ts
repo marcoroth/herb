@@ -44,19 +44,16 @@ export class SlotIndex {
   #journal = new Map<RevertToken, Inverse[]>()
   #recording: Inverse[] | null = null
   #nextToken = 1
-  #slotRegions = new WeakMap<Slot, Region>()
-  #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
-  #clientOwned = new WeakSet<Slot>()
   #applying = 0
   #observer: MutationObserver | null = null
 
   claim(slot: Slot): void {
-    this.#clientOwned.add(slot)
+    slot.claimed = true
   }
 
   claimed(slot: Slot): boolean {
-    return this.#clientOwned.has(slot)
+    return slot.claimed
   }
 
   observe(root: Node = document.documentElement): ScanResult {
@@ -219,8 +216,8 @@ export class SlotIndex {
     return ancestorsOf(slot)
   }
 
-  regionOf(slot: Slot): Region | null {
-    return this.#slotRegions.get(slot) ?? null
+  regionOf(slot: Slot): Region {
+    return slot.region
   }
 
   reconcile(slot: Slot, keys: string[]): ItemPlan {
@@ -325,42 +322,16 @@ export class SlotIndex {
   }
 
   #addressOf(slot: Slot): SlotAddress {
-    const region = this.#slotRegions.get(slot) ?? null
-    const owner = this.#owner(slot)
-
-    let collection: number | null = null
-    let key: string | null = null
-
-    if (region && owner !== region.slots) {
-      for (const candidate of region.slots.values()) {
-        if (candidate.type !== "collection") {
-          continue
-        }
-
-        for (const item of candidate.items.values()) {
-          if (item.slots === owner) {
-            collection = candidate.index
-            key = item.key
-
-            break
-          }
-        }
-
-        if (key !== null) {
-          break
-        }
-      }
+    return {
+      region: slot.region,
+      collection: slot.item?.collection.index ?? null,
+      key: slot.item?.key ?? null,
+      index: slot.index,
     }
-
-    return { region, collection, key, index: slot.index }
   }
 
   #slotAt(address: SlotAddress): Slot | null {
     const { region, collection, key, index } = address
-
-    if (!region) {
-      return null
-    }
 
     if (collection === null || key === null) {
       return region.slots.get(index) ?? null
@@ -404,7 +375,7 @@ export class SlotIndex {
         continue
       }
 
-      if (this.#clientOwned.has(slot)) {
+      if (slot.claimed) {
         continue
       }
 
@@ -481,12 +452,6 @@ export class SlotIndex {
   }
 
   #swapBranch(slot: Slot, branch: number | null, dynamics: SlotValues): boolean {
-    const region = this.#slotRegions.get(slot)
-
-    if (!region) {
-      return false
-    }
-
     this.#recordSlot(slot, () => {
       const before = this.#current(slot)
       const previous = slot.branch
@@ -508,7 +473,7 @@ export class SlotIndex {
       return true
     }
 
-    const built = this.materialize(region.file, branchKey(slot.index, branch), dynamics)
+    const built = this.materialize(slot.region.file, branchKey(slot.index, branch), dynamics)
 
     if (!built) {
       return false
@@ -607,13 +572,7 @@ export class SlotIndex {
   }
 
   #rowTemplate(slot: Slot, prefer: TemplateSource = "live"): DocumentFragment | null {
-    const region = this.#slotRegions.get(slot)
-
-    let skeleton: DocumentFragment | null = null
-
-    if (region) {
-      skeleton = this.skeletonFor(region.file, itemStaticsKey(slot.index))
-    }
+    const skeleton = this.skeletonFor(slot.region.file, itemStaticsKey(slot.index))
 
     if (prefer === "skeleton" && skeleton) {
       return skeleton
@@ -643,13 +602,7 @@ export class SlotIndex {
       return
     }
 
-    const region = this.#slotRegions.get(slot)
-
-    if (!region) {
-      return
-    }
-
-    this.#park(region, itemStaticsKey(slot.index), this.#rowFragment(item))
+    this.#park(slot.region, itemStaticsKey(slot.index), this.#rowFragment(item))
   }
 
   #buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}, text = false): void {
@@ -725,14 +678,8 @@ export class SlotIndex {
     return slot.anchor.end
   }
 
-  #partsResolver(slot: Slot): PartsResolver | undefined {
-    const region = this.#slotRegions.get(slot)
-
-    if (!region) {
-      return undefined
-    }
-
-    return (index) => this.#partsFor(region.file, index)
+  #partsResolver(slot: Slot): PartsResolver {
+    return (index) => this.#partsFor(slot.region.file, index)
   }
 
   #dropItem(slot: Slot, item: Item): void {
@@ -815,7 +762,7 @@ export class SlotIndex {
   }
 
   #owner(slot: Slot): SlotMap {
-    return this.#slotOwners.get(slot) ?? this.#slotRegions.get(slot)?.slots ?? new Map()
+    return slot.item?.slots ?? slot.region.slots
   }
 
   #defer(report: ApplyReport, payload: Payload, index: number | null, reason: DeferredReason, keys?: string[]): void {
@@ -930,11 +877,7 @@ export class SlotIndex {
       return
     }
 
-    let region: Region | null = null
-
-    if (slot) {
-      region = this.#slotRegions.get(slot) ?? null
-    }
+    const region = slot?.region ?? null
 
     document.dispatchEvent(
       new CustomEvent<SlotEventDetail>(SLOT_EVENT, {
@@ -1098,7 +1041,6 @@ export class SlotIndex {
   }
 
   #itemValues(slot: Slot, template: DocumentFragment, values: ItemValues): SlotValues {
-    const region = this.#slotRegions.get(slot)
     const names = templateNames(template)
     const resolved: SlotValues = {}
 
@@ -1109,7 +1051,7 @@ export class SlotIndex {
         continue
       }
 
-      const index = names.get(given) ?? region?.names.get(given)
+      const index = names.get(given) ?? slot.region.names.get(given)
 
       if (index !== undefined) {
         resolved[index] = value
@@ -1212,13 +1154,7 @@ export class SlotIndex {
       return null
     }
 
-    const region = this.#slotRegions.get(slot)
-
-    if (!region) {
-      return null
-    }
-
-    return interpolateParts(this.#partsFor(region.file, slot.index), value)
+    return interpolateParts(this.#partsFor(slot.region.file, slot.index), value)
   }
 
   #partsFor(file: string, index: number): AttributeParts | null {
@@ -1226,9 +1162,7 @@ export class SlotIndex {
   }
 
   capture(slot: Slot): boolean {
-    const region = this.#slotRegions.get(slot)
-
-    if (!region || slot.branch === null) {
+    if (slot.branch === null) {
       return false
     }
 
@@ -1236,7 +1170,7 @@ export class SlotIndex {
 
     blankSlots(fragment)
 
-    return this.#park(region, branchKey(slot.index, slot.branch), fragment)
+    return this.#park(slot.region, branchKey(slot.index, slot.branch), fragment)
   }
 
   skeletonFor(file: string, key: string): DocumentFragment | null {
@@ -1463,9 +1397,15 @@ export class SlotIndex {
   #openSlot(marker: SlotOpenMarker, comment: Comment, result: ScanResult, state: ParseState): void {
     const region = this.#regionAt(state, comment)
 
+    if (!region) {
+      return
+    }
+
+    const item = last(state.openItems)?.item ?? null
+
     let enclosing = last(state.openSlots)?.slot ?? null
 
-    if (!enclosing && region) {
+    if (!enclosing) {
       enclosing = this.#enclosingSlot(region, comment)
     }
 
@@ -1478,11 +1418,14 @@ export class SlotIndex {
       branch: null,
       parent: null,
       children: [],
+      region,
+      item,
+      claimed: false,
     }
 
-    state.openSlots.push({ index: slot.index, slot, region })
+    state.openSlots.push({ index: slot.index, slot })
 
-    this.#attach(region, slot, result, enclosing, last(state.openItems)?.item ?? null)
+    this.#attach(region, slot, result, enclosing, item)
   }
 
   #closeSlot(marker: SlotCloseMarker, comment: Comment, state: ParseState): void {
@@ -1495,9 +1438,15 @@ export class SlotIndex {
 
   #openItem(marker: ItemOpenMarker, comment: Comment, state: ParseState): void {
     const region = this.#regionAt(state, comment)
-    const item: Item = { key: marker.key, start: comment, end: comment, slots: new Map() }
+    const collection = state.openSlots.find((candidate) => candidate.index === marker.index)?.slot ?? region?.slots.get(marker.index)
 
-    region?.slots.get(marker.index)?.items.set(item.key, item)
+    if (!collection) {
+      return
+    }
+
+    const item: Item = { key: marker.key, start: comment, end: comment, slots: new Map(), collection }
+
+    collection.items.set(item.key, item)
 
     state.openItems.push({ slot: marker.index, item })
   }
@@ -1633,7 +1582,7 @@ export class SlotIndex {
 
     let enclosing: Slot | null = null
 
-    if (stacked && stacked.region === region) {
+    if (stacked && stacked.slot.region === region) {
       enclosing = stacked.slot
     } else if (!walked) {
       enclosing = this.#enclosingSlot(region, element)
@@ -1655,6 +1604,9 @@ export class SlotIndex {
         branch: null,
         parent: null,
         children: [],
+        region,
+        item,
+        claimed: false,
       }
 
       this.#attach(region, slot, result, enclosing, item)
@@ -1682,9 +1634,6 @@ export class SlotIndex {
 
     target.set(slot.index, slot)
 
-    this.#slotRegions.set(slot, region)
-    this.#slotOwners.set(slot, target)
-
     result.slots.push(slot)
   }
 
@@ -1701,14 +1650,11 @@ export class SlotIndex {
   }
 
   #forget(slot: Slot): void {
-    const owner = this.#slotOwners.get(slot)
+    const owner = this.#owner(slot)
 
-    if (owner?.get(slot.index) === slot) {
+    if (owner.get(slot.index) === slot) {
       owner.delete(slot.index)
     }
-
-    this.#slotRegions.delete(slot)
-    this.#slotOwners.delete(slot)
 
     if (slot.parent) {
       slot.parent.children = slot.parent.children.filter((child) => child !== slot)
