@@ -329,7 +329,11 @@ module Herb
         collapse_invariant_conditionals
         apply_names
         @states.apply_states
+      end
 
+      # What the visitor writes into the template, which runs once every visitor has read it.
+      #: (untyped) -> void
+      def finish(node)
         return unless @mark
 
         park_attribute_parts

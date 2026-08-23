@@ -480,6 +480,30 @@ module Engine
         refute_match(/herb-slot:\d+:block/, source)
         refute_match(%r{/herb-slot:\d+-->'.freeze;\s*end}, source)
       end
+      test "a visitor that rewrites the template never sees a marker" do
+        seen = []
+
+        rewriter = Class.new(Herb::Visitor) do
+          define_method(:seen) { seen }
+
+          def self.rewrites_erb_source? = true
+
+          def visit_html_comment_node(node)
+            seen << node.to_s
+
+            super
+          end
+        end.new
+
+        source = Herb::Engine.new(
+          "<div><%= @name %></div>",
+          visitors: [Herb::Engine::SlotVisitor.new, rewriter],
+          filename: "app/views/test.html.erb"
+        ).src
+
+        assert_empty rewriter.seen
+        assert_includes evaluate_herb_source(source, { "@name" => "Marco" }), "herb-slot"
+      end
     end
   end
 end

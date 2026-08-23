@@ -190,6 +190,10 @@ module Herb
 
       def visit_document_node: (untyped node) -> untyped
 
+      # What the visitor writes into the template, which runs once every visitor has read it.
+      # : (untyped) -> void
+      def finish: (untyped) -> void
+
       def visit_html_element_node: (untyped node) -> untyped
 
       def visit_erb_strict_locals_node: (untyped node) -> untyped

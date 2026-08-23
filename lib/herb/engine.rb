@@ -102,6 +102,12 @@ module Herb
           parse_result.value.accept(visitor)
         end
 
+        # A visitor that writes into the tree writes after every visitor has read it, so what one
+        # of them adds is never something another one reads as if the template had written it.
+        @visitors.each do |visitor| # rubocop:disable Style/CombinableLoops
+          visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
+        end
+
         compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
