@@ -150,6 +150,7 @@ module Herb
         derived = entry["derived"]
 
         entry["derived"] = StateDirectives.condition_entry(derived) if derived
+        entry["value"] = StateDirectives.literal_value(entry["default"]) if !derived && StateDirectives.literal?(entry["default"])
 
         entry
       end

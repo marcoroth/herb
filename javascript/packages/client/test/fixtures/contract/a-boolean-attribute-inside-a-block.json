@@ -50,7 +50,8 @@
             "derived": null,
             "line": 1,
             "column": 0,
-            "scope": "region"
+            "scope": "region",
+            "value": false
           }
         ],
         "reads": {

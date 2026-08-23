@@ -264,8 +264,8 @@ module Herb
       # : (Array[String], Integer?) -> String
       def signature_of: (Array[String], Integer?) -> String
 
-      # : (untyped, Integer?) -> untyped
-      def arm_entry: (untyped, Integer?) -> untyped
+      # : (untyped, Integer?) -> Hash[String, untyped]
+      def arm_entry: (untyped, Integer?) -> Hash[String, untyped]
 
       # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?

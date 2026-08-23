@@ -29,6 +29,10 @@ module Engine
         Herb::Engine::StateDirectives.condition_entry(read)
       end
 
+      def arm(branch, condition)
+        { "branch" => branch, "condition" => condition }
+      end
+
       def parked(template, locals = {})
         render(template, locals)[%r{<template data-herb-region="[^"]+">(.*)</template>}m, 1].to_s
       end
@@ -83,7 +87,7 @@ module Engine
         visitor, = compile(STATUS)
         entry = visitor.slot_entries.find { |candidate| candidate[:state_arms] }
 
-        assert_equal [["pending", nil, 0], ["failed", nil, 1]], entry[:state_arms]
+        assert_equal [{ "branch" => 0, "condition" => ["pending", nil] }, { "branch" => 1, "condition" => ["failed", nil] }], entry[:state_arms]
         assert_equal 2, entry[:state_else]
       end
 
@@ -247,13 +251,13 @@ module Engine
       test "an ordered comparison compiles with its operator in the arm" do
         visitor, = compile(%(<%# herb:state (attempts: 0) %><div><% if attempts > 3 %>Many<% else %>Few<% end %></div>))
 
-        assert_equal({ arms: [["attempts", "3", 0, ">"]], else: 1 }, visitor.state_conditional_entries.fetch(0))
+        assert_equal({ arms: [arm(0, ["attempts", { "value" => 3 }, ">"])], else: 1 }, visitor.state_conditional_entries.fetch(0))
       end
 
       test "a reversed ordered comparison mirrors its operator" do
         visitor, = compile(%(<%# herb:state (attempts: 0) %><div><% if 3 < attempts %>Many<% end %></div>))
 
-        assert_equal({ arms: [["attempts", "3", 0, ">"]], else: nil }, visitor.state_conditional_entries.fetch(0))
+        assert_equal({ arms: [arm(0, ["attempts", { "value" => 3 }, ">"])], else: nil }, visitor.state_conditional_entries.fetch(0))
       end
 
       test "an ordered presence carries its operator" do
@@ -270,7 +274,7 @@ module Engine
       test "a negated equality compiles for any kind" do
         visitor, = compile(%(<%# herb:state (sort: "name") %><div><% if sort != "date" %>Named<% end %></div>))
 
-        assert_equal({ arms: [["sort", "\"date\"", 0, "!="]], else: nil }, visitor.state_conditional_entries.fetch(0))
+        assert_equal({ arms: [arm(0, ["sort", { "value" => "date" }, "!="])], else: nil }, visitor.state_conditional_entries.fetch(0))
 
         refuse("<%# herb:state (sort: \"name\") %><div><% if sort != 3 %>x<% end %></div>", /against a Integer literal/)
       end
@@ -279,7 +283,7 @@ module Engine
         template = %(<%# herb:state (counter1: 0, counter2: 5) %><div><% if counter1 > counter2 %>Ahead<% else %>Behind<% end %></div>)
         visitor, = compile(template)
 
-        assert_equal({ arms: [["counter1", { "state" => "counter2" }, 0, ">"]], else: 1 }, visitor.state_conditional_entries.fetch(0))
+        assert_equal({ arms: [arm(0, ["counter1", { "state" => "counter2" }, ">"])], else: 1 }, visitor.state_conditional_entries.fetch(0))
 
         rendered = render(template)
 
@@ -307,7 +311,7 @@ module Engine
         visitor, = compile(template)
 
         assert_equal(
-          { arms: [{ "branch" => 0, "all" => [["counter1", "0", ">"], ["counter2", "10", "<"]] }], else: 1 },
+          { arms: [arm(0, { "all" => [["counter1", { "value" => 0 }, ">"], ["counter2", { "value" => 10 }, "<"]] })], else: 1 },
           visitor.state_conditional_entries.fetch(0)
         )
 
@@ -324,7 +328,7 @@ module Engine
         visitor, = compile(%(<%# herb:state (pending: false, failed: false) %><div><% if pending? || failed? %>Busy<% else %>Idle<% end %></div>))
 
         assert_equal(
-          { arms: [{ "branch" => 0, "any" => [["pending", nil], ["failed", nil]] }], else: 1 },
+          { arms: [arm(0, { "any" => [["pending", nil], ["failed", nil]] })], else: 1 },
           visitor.state_conditional_entries.fetch(0)
         )
       end
@@ -333,7 +337,7 @@ module Engine
         visitor, = compile(%(<%# herb:state (pending: false, failed: false, attempts: 0) %><div><% if pending? && (failed? || attempts > 2) %>x<% end %></div>))
 
         assert_equal(
-          { arms: [{ "branch" => 0, "all" => [["pending", nil], { "any" => [["failed", nil], ["attempts", "2", ">"]] }] }], else: nil },
+          { arms: [arm(0, { "all" => [["pending", nil], { "any" => [["failed", nil], ["attempts", { "value" => 2 }, ">"]] }] })], else: nil },
           visitor.state_conditional_entries.fetch(0)
         )
       end
@@ -342,7 +346,7 @@ module Engine
         visitor, = compile(%(<%# herb:state (counter1: 0, counter2: 5, pending: false) %><div><% if counter1 == counter2 && pending? %>x<% end %></div>))
 
         assert_equal(
-          { arms: [{ "branch" => 0, "all" => [["counter1", { "state" => "counter2" }], ["pending", nil]] }], else: nil },
+          { arms: [arm(0, { "all" => [["counter1", { "state" => "counter2" }], ["pending", nil]] })], else: nil },
           visitor.state_conditional_entries.fetch(0)
         )
       end
@@ -364,7 +368,7 @@ module Engine
         visitor, = compile(%(<%# herb:state (pending: false, failed: false) %><div><% unless pending? || failed? %>Free<% end %></div>))
 
         assert_equal(
-          { arms: [{ "branch" => nil, "any" => [["pending", nil], ["failed", nil]] }], else: 0 },
+          { arms: [arm(nil, { "any" => [["pending", nil], ["failed", nil]] })], else: 0 },
           visitor.state_conditional_entries.fetch(0)
         )
       end
@@ -394,8 +398,8 @@ module Engine
 
         assert_equal :boolean, entries.fetch("busy")[:kind]
         assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, encoded(entries.fetch("busy")[:derived]))
-        assert_equal ["attempts", "2", ">"], encoded(entries.fetch("many")[:derived])
-        assert_equal ["sort", %("name")], encoded(entries.fetch("named")[:derived])
+        assert_equal ["attempts", { "value" => 2 }, ">"], encoded(entries.fetch("many")[:derived])
+        assert_equal ["sort", { "value" => "name" }], encoded(entries.fetch("named")[:derived])
         assert_equal :integer, entries.fetch("total")[:kind]
         assert_equal ["attempts", nil], encoded(entries.fetch("total")[:derived])
         assert_nil entries.fetch("pending")[:derived]
@@ -671,7 +675,7 @@ module Engine
         template = %(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% else %>Busy<% end %></div>)
         visitor, = compile(template)
 
-        assert_equal({ arms: [["pending", nil, 1]], else: 0 }, visitor.state_conditional_entries.fetch(0))
+        assert_equal({ arms: [arm(1, ["pending", nil])], else: 0 }, visitor.state_conditional_entries.fetch(0))
 
         rendered = render(template)
 
@@ -685,7 +689,7 @@ module Engine
       test "an unless with no else points its truthy arm at nothing" do
         visitor, = compile(%(<%# herb:state (pending: false) %><div><% unless pending %>Idle<% end %></div>))
 
-        assert_equal({ arms: [["pending", nil, nil]], else: 0 }, visitor.state_conditional_entries.fetch(0))
+        assert_equal({ arms: [arm(nil, ["pending", nil])], else: 0 }, visitor.state_conditional_entries.fetch(0))
       end
 
       test "a predicate unless rewrites for the server" do

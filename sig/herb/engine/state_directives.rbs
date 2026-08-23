@@ -108,6 +108,17 @@ module Herb
       # : (Read | Combo) -> untyped
       def self.condition_entry: (Read | Combo) -> untyped
 
+      # : (Read) -> untyped
+      def self.comparand_entry: (Read) -> untyped
+
+      # A Ruby literal as the value it stands for. The client compares values and cannot run
+      # Ruby, so a comparand travels as what it means and not as what it was written as.
+      # : (String) -> untyped
+      def self.literal_value: (String) -> untyped
+
+      # : (String) -> bool
+      def self.literal?: (String) -> bool
+
       # : (Read | Combo) -> String
       def self.condition_source: (Read | Combo) -> String
 

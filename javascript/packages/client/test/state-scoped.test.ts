@@ -32,30 +32,34 @@ function regionMarkup(occurrence: number): string {
   )
 }
 
+function arm(branch: number | null, condition: unknown): unknown {
+  return { branch, condition }
+}
+
 const MANIFEST = {
   state: {},
   states: {
     [FILE]: {
       version: "aaaaaaaa",
       declarations: [
-        { name: "pending", kind: "boolean", default: "false", scope: "region" },
-        { name: "failed", kind: "boolean", default: "false", scope: "region" },
-        { name: "attempts", kind: "integer", default: "0", scope: "region" },
-        { name: "starred", kind: "boolean", default: "false", scope: 2 },
-        { name: "sort", kind: "string", default: '"name"', scope: "region" },
-        { name: "counter1", kind: "integer", default: "0", scope: "region" },
-        { name: "counter2", kind: "integer", default: "5", scope: "region" },
+        { name: "pending", kind: "boolean", default: "false", value: false, scope: "region" },
+        { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
+        { name: "attempts", kind: "integer", default: "0", value: 0, scope: "region" },
+        { name: "starred", kind: "boolean", default: "false", value: false, scope: 2 },
+        { name: "sort", kind: "string", default: '"name"', value: "name", scope: "region" },
+        { name: "counter1", kind: "integer", default: "0", value: 0, scope: "region" },
+        { name: "counter2", kind: "integer", default: "5", value: 5, scope: "region" },
       ],
       reads: { attempts: [1] },
       conditionals: {
-        0: { arms: [["pending", null, 0], ["failed", null, 1]], else: 2 },
-        4: { arms: [["starred", null, 0]], else: 1 },
-        7: { arms: [["pending", null, 1]], else: 0 },
-        8: { arms: [["attempts", "3", 0, ">"]], else: 1 },
-        10: { arms: [["sort", '"date"', 0, "!="]], else: 1 },
-        11: { arms: [["counter1", { state: "counter2" }, 0, ">"]], else: 1 },
+        0: { arms: [arm(0, ["pending", null]), arm(1, ["failed", null])], else: 2 },
+        4: { arms: [arm(0, ["starred", null])], else: 1 },
+        7: { arms: [arm(1, ["pending", null])], else: 0 },
+        8: { arms: [arm(0, ["attempts", { value: 3 }, ">"])], else: 1 },
+        10: { arms: [arm(0, ["sort", { value: "date" }, "!="])], else: 1 },
+        11: { arms: [arm(0, ["counter1", { state: "counter2" }, ">"])], else: 1 },
       },
-      presence: { 9: ["attempts", "2", ">="] },
+      presence: { 9: ["attempts", { value: 2 }, ">="] },
     },
   },
 }
@@ -154,8 +158,8 @@ describe("sibling collections sharing a state name", () => {
       [TWIN_FILE]: {
         version: "cccccccc",
         declarations: [
-          { name: "starred", kind: "boolean", default: "false", scope: 0 },
-          { name: "starred", kind: "boolean", default: "false", scope: 5 },
+          { name: "starred", kind: "boolean", default: "false", value: false, scope: 0 },
+          { name: "starred", kind: "boolean", default: "false", value: false, scope: 5 },
         ],
         reads: {},
         conditionals: {
@@ -436,11 +440,11 @@ describe("combo conditions", () => {
       [COMBO_FILE]: {
         version: "eeeeeeee",
         declarations: [
-          { name: "counter1", kind: "integer", default: "0", scope: "region" },
-          { name: "counter2", kind: "integer", default: "5", scope: "region" },
-          { name: "pending", kind: "boolean", default: "false", scope: "region" },
-          { name: "failed", kind: "boolean", default: "false", scope: "region" },
-          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+          { name: "counter1", kind: "integer", default: "0", value: 0, scope: "region" },
+          { name: "counter2", kind: "integer", default: "5", value: 5, scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", value: 0, scope: "region" },
         ],
         reads: {},
         conditionals: {
@@ -542,9 +546,9 @@ describe("derived states", () => {
       [DERIVED_FILE]: {
         version: "ffffffff",
         declarations: [
-          { name: "pending", kind: "boolean", default: "false", scope: "region" },
-          { name: "failed", kind: "boolean", default: "false", scope: "region" },
-          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", value: 0, scope: "region" },
           { name: "busy", kind: "boolean", default: "pending || failed", derived: { any: [["pending", null], ["failed", null]] }, scope: "region" },
           { name: "total", kind: "integer", default: "attempts", derived: ["attempts", null], scope: "region" },
           { name: "deep", kind: "boolean", default: "busy && attempts > 2", derived: { all: [["busy", null], ["attempts", "2", ">"]] }, scope: "region" },
@@ -663,8 +667,8 @@ describe("counted states", () => {
       [COUNT_FILE]: {
         version: "cafe1234",
         declarations: [
-          { name: "pending", kind: "boolean", default: "false", scope: 0 },
-          { name: "pending_count", kind: "integer", default: "0", count: { collection: 0, when: ["pending", null], by: 1 }, scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", value: false, scope: 0 },
+          { name: "pending_count", kind: "integer", default: "0", value: 0, count: { collection: 0, when: ["pending", null], by: 1 }, scope: "region" },
           { name: "loud", kind: "boolean", default: "pending_count > 0", derived: ["pending_count", "0", ">"], scope: "region" },
         ],
         reads: { pending_count: [2] },
@@ -781,7 +785,7 @@ describe("shipped seeds", () => {
         declarations: [
           { name: "open", kind: "boolean", default: "open_initially", scope: "region" },
           { name: "label", kind: "seeded", default: "@label", scope: "region" },
-          { name: "failed", kind: "boolean", default: "false", scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
           { name: "pending", kind: "boolean", default: "message.odd?", scope: 1 },
         ],
         reads: {},
@@ -945,7 +949,7 @@ describe("shipped seeds that disagree with the declaration", () => {
     const oddState = boot('{"name":"x"}', [
       { name: "name", kind: "string", default: "@name", scope: "region", line: 2, column: 0 },
       { name: "shape", kind: "seeded", default: "@shape", scope: "region", line: 2, column: 0 },
-      { name: "count", kind: "integer", default: "0", scope: "region", line: 2, column: 0 },
+      { name: "count", kind: "integer", default: "0", value: 0, scope: "region", line: 2, column: 0 },
     ])
 
     expect(oddState.getState("shape")).toBeNull()
@@ -971,7 +975,7 @@ const MIXED_PAGE =
         version: "eeeeeeee",
         declarations: [
           { name: "filter", kind: "string", default: '"all"', scope: "region" },
-          { name: "starred", kind: "boolean", default: "false", scope: 0 },
+          { name: "starred", kind: "boolean", default: "false", value: false, scope: 0 },
         ],
         reads: {},
         conditionals: {},
@@ -1073,8 +1077,8 @@ describe("a collection nested inside another collection", () => {
       [NESTED_FILE]: {
         version: "ffffffff",
         declarations: [
-          { name: "open", kind: "boolean", default: "false", scope: 0 },
-          { name: "picked", kind: "boolean", default: "false", scope: 2 },
+          { name: "open", kind: "boolean", default: "false", value: false, scope: 0 },
+          { name: "picked", kind: "boolean", default: "false", value: false, scope: 2 },
         ],
         reads: {},
         conditionals: {},

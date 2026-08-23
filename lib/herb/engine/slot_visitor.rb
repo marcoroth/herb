@@ -926,11 +926,9 @@ module Herb
         (sources + ["else@#{else_position}"]).join("|")
       end
 
-      #: (untyped, Integer?) -> untyped
+      #: (untyped, Integer?) -> Hash[String, untyped]
       def arm_entry(read, branch)
-        return { "branch" => branch, read.op => read.parts.map { |part| StateDirectives.condition_entry(part) } } if read.is_a?(StateDirectives::Combo)
-
-        StateDirectives.condition_entry(read).insert(2, branch)
+        { "branch" => branch, "condition" => StateDirectives.condition_entry(read) }
       end
 
       #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
@@ -1010,7 +1008,7 @@ module Herb
           next unless comparands.is_a?(Array)
 
           comparands.each do |comparand|
-            arms << [read.name, comparand, branch]
+            arms << { "branch" => branch, "condition" => [read.name, { "value" => StateDirectives.literal_value(comparand) }] }
             sources << "#{read.name}==#{comparand}@#{branch}"
           end
         end

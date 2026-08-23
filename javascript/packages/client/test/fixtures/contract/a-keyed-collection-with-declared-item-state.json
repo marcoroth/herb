@@ -93,7 +93,8 @@
             "derived": null,
             "line": 1,
             "column": 0,
-            "scope": "region"
+            "scope": "region",
+            "value": "all"
           },
           {
             "name": "starred",
@@ -102,7 +103,8 @@
             "derived": null,
             "line": 1,
             "column": 78,
-            "scope": 0
+            "scope": 0,
+            "value": false
           }
         ],
         "reads": {
@@ -120,11 +122,15 @@
             "all": [
               [
                 "filter",
-                "\"starred\""
+                {
+                  "value": "starred"
+                }
               ],
               [
                 "starred",
-                "false"
+                {
+                  "value": false
+                }
               ]
             ]
           }

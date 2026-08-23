@@ -157,9 +157,39 @@ module Herb
         def condition_entry(read)
           return { read.op => read.parts.map { |part| condition_entry(part) } } if read.is_a?(Combo)
 
-          comparand = read.against ? { "state" => read.against } : read.comparand
+          comparand = comparand_entry(read)
 
           read.operator ? [read.name, comparand, read.operator] : [read.name, comparand]
+        end
+
+        #: (Read) -> untyped
+        def comparand_entry(read)
+          return { "state" => read.against } if read.against
+          return nil unless read.comparand
+
+          { "value" => literal_value(read.comparand) }
+        end
+
+        # A Ruby literal as the value it stands for. The client compares values and cannot run
+        # Ruby, so a comparand travels as what it means and not as what it was written as.
+        #: (String) -> untyped
+        def literal_value(source)
+          node = expression_node(source)
+
+          case node
+          when Prism::TrueNode then true
+          when Prism::FalseNode then false
+          when Prism::NilNode then nil
+          when Prism::IntegerNode then node.value
+          when Prism::StringNode, Prism::SymbolNode then node.unescaped
+          end
+        end
+
+        #: (String) -> bool
+        def literal?(source)
+          node = expression_node(source)
+
+          !node.nil? && KINDS.key?(node.class.name)
         end
 
         #: (Read | Combo) -> String

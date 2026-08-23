@@ -472,7 +472,7 @@ module Engine
 
         manifest = subject.payload(path)["states"].values.first
 
-        assert_equal [["draft", %("")], ["sending", nil]], manifest["presence"].values
+        assert_equal [["draft", { "value" => "" }], ["sending", nil]], manifest["presence"].values
         assert_equal manifest["presence"].keys.map(&:to_i).sort, (manifest["reads"]["draft"] + manifest["reads"]["sending"]).sort - manifest["reads"]["draft"].take(1)
       end
 
@@ -494,7 +494,7 @@ module Engine
 
         conditional = manifest["conditionals"].values.first
 
-        assert_equal [{ "branch" => 0, "all" => [["pending", nil], ["failed", nil]] }], conditional["arms"]
+        assert_equal [{ "branch" => 0, "condition" => { "all" => [["pending", nil], ["failed", nil]] } }], conditional["arms"]
       end
 
       test "carries a derived state with its condition" do
@@ -565,7 +565,7 @@ module Engine
 
         conditional = manifest["conditionals"].values.first
 
-        assert_equal [["pending", nil, 0]], conditional["arms"]
+        assert_equal [{ "branch" => 0, "condition" => ["pending", nil] }], conditional["arms"]
         assert_equal 1, conditional["else"]
         assert_equal subject.version_for(path), manifest["version"]
       end
