@@ -443,6 +443,10 @@ export class SlotIndex {
   }
 
   #applyLeaf(payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {
+    if (slot.type === "block" && slot.children.length > 0) {
+      return
+    }
+
     if (this.#same(slot, value)) {
       return
     }

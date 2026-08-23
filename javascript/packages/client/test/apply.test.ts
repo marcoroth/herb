@@ -199,6 +199,33 @@ describe("applying values to a collection", () => {
   })
 })
 
+const BLOCK =
+  `<!--herb-region:${FILE}:eeeeeeee:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->Name<!--/herb-slot:1--></form><!--/herb-slot:0-->` +
+  `<!--herb-slot:2-->after<!--/herb-slot:2--><!--/herb-region:${FILE}-->`
+
+const BARE_BLOCK = `<!--herb-region:${FILE}:eeeeeeee:0--><!--herb-slot:0:block--><form>Name</form><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
+
+describe("applying values to a block", () => {
+  test("writes the interior the page can address and leaves the helper's markup alone", () => {
+    const index = mounted(BLOCK)
+
+    const report = index.apply(payload(FILE, { 0: "<form>Other</form>", 1: "Other", 2: "later" }, "eeeeeeee"))
+
+    expect(report.deferred).toEqual([])
+    expect(document.querySelector("form")!.innerHTML).toBe("<!--herb-slot:1-->Other<!--/herb-slot:1-->")
+    expect(index.slot(FILE, 1)).not.toBeNull()
+  })
+
+  test("falls back to the whole block when its interior is not addressable", () => {
+    const index = mounted(BARE_BLOCK)
+
+    const report = index.apply(payload(FILE, { 0: "<form>Other</form>" }, "eeeeeeee"))
+
+    expect(report.applied).toBe(1)
+    expect(document.querySelector("form")!.innerHTML).toBe("Other")
+  })
+})
+
 describe("applying values that came from more than one template", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
