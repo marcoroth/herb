@@ -1,7 +1,7 @@
 import { SLOT_EVENT } from '@herb-tools/client'
 import type { Slot, SlotEventDetail, SlotOperation } from '@herb-tools/client'
 
-const COLORS: Record<SlotOperation, string> = {
+const COLORS: Partial<Record<SlotOperation, string>> = {
   value: '#3b82f6',
   attribute: '#a855f7',
   branch: '#f59e0b',
@@ -55,6 +55,8 @@ export class SlotFlash {
 
   private draw = (event: Event) => {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
+
+    if (detail.operation === 'built') return
 
     if (detail.operation === 'item-removed') {
       this.paint(detail)
