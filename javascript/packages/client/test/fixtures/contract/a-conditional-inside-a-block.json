@@ -51,20 +51,12 @@
   },
   "dependencies": {
     "state": {
-      "@on": [
-        {
-          "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
-          "version": "5e947291",
-          "index": 1,
-          "mode": "structural"
-        }
-      ],
+      "@on": [],
       "@x": [
         {
           "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
           "version": "5e947291",
-          "index": 2,
-          "mode": "identity"
+          "index": 2
         }
       ]
     },

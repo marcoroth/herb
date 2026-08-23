@@ -62,26 +62,7 @@
   },
   "dependencies": {
     "state": {
-      "@items": [
-        {
-          "file": "app/views/contract/a-keyed-collection.html.erb",
-          "version": "64652ac4",
-          "index": 0,
-          "mode": "structural"
-        },
-        {
-          "file": "app/views/contract/a-keyed-collection.html.erb",
-          "version": "64652ac4",
-          "index": 1,
-          "mode": "derived"
-        },
-        {
-          "file": "app/views/contract/a-keyed-collection.html.erb",
-          "version": "64652ac4",
-          "index": 2,
-          "mode": "derived"
-        }
-      ]
+      "@items": []
     },
     "params": {
       "items": "@items"

@@ -265,6 +265,33 @@ module Engine
         refute_equal versions["index.html.erb"], versions["_search.html.erb"]
       end
 
+      def named_by(strategy)
+        Herb::Engine::SlotDependencies.new(
+          @project_path,
+          compile: lambda { |source, path|
+            visitor = Herb::Engine::SlotVisitor.new(mark: false, identifier: strategy)
+
+            Herb::Engine.new(source, visitors: [visitor], filename: path, project_path: @project_path)
+
+            visitor
+          }
+        )
+      end
+
+      test "names a template the way the markers do when they carry a digest" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        files = named_by(:digest).payload(entry)["state"]["@query"].map { |slot| slot["file"] }
+
+        assert_equal [Digest::SHA256.hexdigest("app/views/posts/index.html.erb").slice(0, 12)], files
+      end
+
+      test "names a template the way the markers do when a caller names them" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        files = named_by(->(path) { "v1/#{path}" }).payload(entry)["state"]["@query"].map { |slot| slot["file"] }
+
+        assert_equal ["v1/app/views/posts/index.html.erb"], files
+      end
+
       test "names a template the way the page does" do
         entry = page_with_partial
 
@@ -274,12 +301,12 @@ module Engine
         assert_includes files, "app/views/posts/_search.html.erb"
       end
 
-      test "reports a mode as a string once it travels" do
+      test "sends only the slots a page may write itself" do
         entry = page_with_partial
+        indices = subject.payload(entry)["state"]["@query"]
 
-        modes = subject.payload(entry)["state"]["@query"].map { |slot| slot["mode"] }.uniq.sort
-
-        assert_equal ["derived", "identity"], modes
+        assert_equal subject.across(entry)["@query"].count { |slot| slot[:mode] == :identity }, indices.size
+        assert(indices.none? { |slot| slot.key?("mode") })
       end
 
       test "says what a request calls a template's state" do
@@ -417,11 +444,11 @@ module Engine
         assert_empty subject.subtree_slots(entry, ["@nothing"])
       end
 
-      test "never calls a constant an identity once the map travels" do
+      test "never calls a constant an identity, so a page is never sent one to write" do
         entry = write("index.html.erb", "<div><%= Post.count %></div>")
 
         assert_equal([:derived], subject.across(entry)["Post.count"].map { |slot| slot[:mode] })
-        assert_equal(["derived"], subject.payload(entry)["state"]["Post.count"].map { |slot| slot["mode"] })
+        assert_empty subject.payload(entry)["state"]["Post.count"]
       end
 
       test "leaves a constant out of the names a request can set" do

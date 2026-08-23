@@ -49,24 +49,21 @@
         {
           "file": "app/views/contract/expressions-in-order.html.erb",
           "version": "6d55e225",
-          "index": 0,
-          "mode": "identity"
+          "index": 0
         }
       ],
       "@b": [
         {
           "file": "app/views/contract/expressions-in-order.html.erb",
           "version": "6d55e225",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ],
       "@c": [
         {
           "file": "app/views/contract/expressions-in-order.html.erb",
           "version": "6d55e225",
-          "index": 2,
-          "mode": "identity"
+          "index": 2
         }
       ]
     },

@@ -19,9 +19,8 @@ const PAGE =
 const MAP = {
   state: {
     "@name": [
-      { file: FILE, version: VERSION, index: 0, mode: "identity" },
-      { file: FILE, version: VERSION, index: 1, mode: "identity" },
-      { file: FILE, version: VERSION, index: 2, mode: "derived" },
+      { file: FILE, version: VERSION, index: 0 },
+      { file: FILE, version: VERSION, index: 1 },
     ],
   },
   params: { name: "@name" },
@@ -139,7 +138,7 @@ describe("writing before the server answers", () => {
 
     state.adopt()
 
-    expect(state.slotsFor("name")).toHaveLength(3)
+    expect(state.slotsFor("name")).toHaveLength(2)
     expect((await state.set("name", "Ada")).written).toBe(2)
   })
 
@@ -149,7 +148,7 @@ describe("writing before the server answers", () => {
 
     state.adopt()
 
-    expect(state.slotsFor("@name")).toHaveLength(3)
+    expect(state.slotsFor("@name")).toHaveLength(2)
     expect((await state.set("@name", "Ada")).written).toBe(2)
   })
 
@@ -236,8 +235,8 @@ describe("two flushes racing", () => {
 
   const RACE_MAP = {
     state: {
-      "@a": [{ file: FILE, version: VERSION, index: 0, mode: "identity" }],
-      "@b": [{ file: FILE, version: VERSION, index: 1, mode: "identity" }],
+      "@a": [{ file: FILE, version: VERSION, index: 0 }],
+      "@b": [{ file: FILE, version: VERSION, index: 1 }],
     },
     params: { a: "@a", b: "@b" },
   }

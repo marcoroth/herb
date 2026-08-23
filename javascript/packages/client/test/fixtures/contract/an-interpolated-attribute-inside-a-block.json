@@ -40,14 +40,7 @@
   },
   "dependencies": {
     "state": {
-      "@r": [
-        {
-          "file": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
-          "version": "9c75cc2c",
-          "index": 1,
-          "mode": "derived"
-        }
-      ]
+      "@r": []
     },
     "params": {
       "r": "@r"

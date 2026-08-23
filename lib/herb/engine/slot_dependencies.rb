@@ -69,7 +69,8 @@ module Herb
       def payload(entry_point, params: {})
         reached = across(entry_point)
         state = reached.transform_values { |slots|
-          slots.map { |slot| { "file" => identifier_for(slot[:file]), "version" => slot[:version], "index" => slot[:index], "mode" => slot[:mode].to_s } }
+          slots.select { |slot| slot[:mode] == :identity }
+               .map { |slot| { "file" => identifier_for(slot[:file]), "version" => slot[:version], "index" => slot[:index] } }
         }
 
         {
@@ -123,7 +124,7 @@ module Herb
         analysis = @dependencies.analyze(path)
         visitor = visitor_for(source, path)
 
-        return { version: nil, slots: {} } unless visitor.respond_to?(:slots)
+        return { version: nil, identifier: nil, slots: {} } unless visitor.respond_to?(:slots)
 
         slots = visitor.slots
         wanted = names || state_names(analysis)
@@ -140,7 +141,7 @@ module Herb
           index[slot.index] = { state: state, mode: mode_for(slot, state, expressions, settable) }
         end
 
-        { version: visitor.schema[:version], slots: index, states: states_manifest(visitor) }
+        { version: visitor.schema[:version], identifier: visitor.schema[:identifier], slots: index, states: states_manifest(visitor) }
       end
 
       #: (untyped) -> Hash[String, untyped]?
@@ -309,6 +310,11 @@ module Herb
 
       #: (String) -> String
       def identifier_for(path)
+        template(absolute(path))[:identifier] || relative_to_project(path)
+      end
+
+      #: (String) -> String
+      def relative_to_project(path)
         relative = Pathname.new(path).relative_path_from(@project_path).to_s
 
         relative.start_with?("..") ? path : relative
@@ -329,7 +335,7 @@ module Herb
 
         visitor = Herb::Engine::SlotVisitor.new(mark: false)
 
-        Herb::Engine.new(source, visitors: [visitor], filename: path)
+        Herb::Engine.new(source, visitors: [visitor], filename: path, project_path: @project_path.to_s)
 
         visitor
       end

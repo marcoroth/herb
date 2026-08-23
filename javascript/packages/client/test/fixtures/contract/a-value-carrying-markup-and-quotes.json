@@ -42,16 +42,14 @@
         {
           "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
           "version": "f2601d2d",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ],
       "@t": [
         {
           "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
           "version": "f2601d2d",
-          "index": 0,
-          "mode": "identity"
+          "index": 0
         }
       ]
     },

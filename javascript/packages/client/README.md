@@ -167,10 +167,12 @@ const report = await state.set("query", "ruby")
 The map is delivered the way parked statics are, and is taken out of the document once read:
 
 ```html
-<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0,"mode":"identity"}]},"params":{"query":"@query"}}</template>
+<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0}]},"params":{"query":"@query"}}</template>
 ```
 
 A partial knows the state under whatever name its caller passed it, so the map names every slot under the name the page uses. `Herb::Engine::SlotDependencies` builds it.
+
+The slots it lists for a state are the ones a page may write itself, which is why a state that only decides what renders is named with none. Those are written when `set` is called and put back if the request fails. Everything else is what the reply is for.
 
 A template reads `@query` and a request carries `query`, and what joins them is a line in a controller that no template sees. So the map says which request name feeds which state, and `set` takes the request name. A name the map says nothing about is tried as the state's own name, so `state.set("@query", …)` reaches it too.
 

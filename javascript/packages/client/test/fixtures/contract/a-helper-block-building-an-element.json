@@ -41,16 +41,14 @@
         {
           "file": "app/views/contract/a-helper-block-building-an-element.html.erb",
           "version": "9c27fd64",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ],
       "@n": [
         {
           "file": "app/views/contract/a-helper-block-building-an-element.html.erb",
           "version": "9c27fd64",
-          "index": 0,
-          "mode": "identity"
+          "index": 0
         }
       ]
     },

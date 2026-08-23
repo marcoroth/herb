@@ -77,32 +77,7 @@
   },
   "dependencies": {
     "state": {
-      "@items": [
-        {
-          "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
-          "version": "c9f57228",
-          "index": 0,
-          "mode": "structural"
-        },
-        {
-          "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
-          "version": "c9f57228",
-          "index": 1,
-          "mode": "derived"
-        },
-        {
-          "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
-          "version": "c9f57228",
-          "index": 2,
-          "mode": "derived"
-        },
-        {
-          "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
-          "version": "c9f57228",
-          "index": 3,
-          "mode": "derived"
-        }
-      ]
+      "@items": []
     },
     "params": {
       "items": "@items"

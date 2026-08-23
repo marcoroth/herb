@@ -86,6 +86,9 @@ module Herb
       def identifier_for: (String) -> String
 
       # : (String) -> String
+      def relative_to_project: (String) -> String
+
+      # : (String) -> String
       def absolute: (String) -> String
 
       # : (String, String) -> untyped

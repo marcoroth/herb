@@ -42,28 +42,14 @@
         {
           "file": "app/views/contract/two-attributes-on-one-element.html.erb",
           "version": "b5b81d11",
-          "index": 0,
-          "mode": "identity"
-        },
-        {
-          "file": "app/views/contract/two-attributes-on-one-element.html.erb",
-          "version": "b5b81d11",
-          "index": 1,
-          "mode": "derived"
+          "index": 0
         }
       ],
       "@i": [
         {
           "file": "app/views/contract/two-attributes-on-one-element.html.erb",
           "version": "b5b81d11",
-          "index": 0,
-          "mode": "derived"
-        },
-        {
-          "file": "app/views/contract/two-attributes-on-one-element.html.erb",
-          "version": "b5b81d11",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ]
     },

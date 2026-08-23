@@ -30,30 +30,9 @@
   },
   "dependencies": {
     "state": {
-      "@on": [
-        {
-          "file": "app/views/contract/a-conditional-that-collapses.html.erb",
-          "version": "9d410987",
-          "index": 0,
-          "mode": "derived"
-        }
-      ],
-      "@x": [
-        {
-          "file": "app/views/contract/a-conditional-that-collapses.html.erb",
-          "version": "9d410987",
-          "index": 0,
-          "mode": "derived"
-        }
-      ],
-      "@y": [
-        {
-          "file": "app/views/contract/a-conditional-that-collapses.html.erb",
-          "version": "9d410987",
-          "index": 0,
-          "mode": "derived"
-        }
-      ]
+      "@on": [],
+      "@x": [],
+      "@y": []
     },
     "params": {
       "on": "@on",

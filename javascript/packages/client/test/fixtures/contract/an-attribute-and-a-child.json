@@ -42,16 +42,14 @@
         {
           "file": "app/views/contract/an-attribute-and-a-child.html.erb",
           "version": "91711699",
-          "index": 0,
-          "mode": "identity"
+          "index": 0
         }
       ],
       "@n": [
         {
           "file": "app/views/contract/an-attribute-and-a-child.html.erb",
           "version": "91711699",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ]
     },

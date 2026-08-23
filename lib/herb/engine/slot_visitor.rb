@@ -5,6 +5,7 @@ require "digest"
 
 require_relative "../visitor"
 require_relative "context_aware"
+require_relative "slot_identifier"
 require_relative "slot_markers"
 require_relative "slot_statics"
 require_relative "state_directives"
@@ -260,11 +261,7 @@ module Herb
 
       #: () -> String
       def identifier
-        @identifier ||= case @identify
-                        when :path then context.relative_file_path
-                        when :digest then Digest::SHA256.hexdigest(context.relative_file_path).slice(0, 12).to_s
-                        else @identify.call(context.relative_file_path)
-                        end
+        @identifier ||= SlotIdentifier.new(@identify).call(context.relative_file_path)
       end
 
       #: () -> Hash[Symbol, untyped]

@@ -41,20 +41,12 @@
   },
   "dependencies": {
     "state": {
-      "@on": [
-        {
-          "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
-          "version": "64259716",
-          "index": 0,
-          "mode": "structural"
-        }
-      ],
+      "@on": [],
       "@x": [
         {
           "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
           "version": "64259716",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ]
     },

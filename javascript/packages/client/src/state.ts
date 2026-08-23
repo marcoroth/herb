@@ -125,7 +125,6 @@ export interface StateSlot {
   file: string
   version: string
   index: number
-  mode: StateMode
 }
 
 export interface DependencyMap {
@@ -443,10 +442,6 @@ export class SlotState {
       const value = this.#values.get(name) ?? ""
 
       for (const entry of this.#dependencies.get(this.#stateName(name)) ?? []) {
-        if (entry.mode !== "identity") {
-          continue
-        }
-
         for (const slot of this.#resolve(entry)) {
           const was = this.#slots.currentText(slot)
 

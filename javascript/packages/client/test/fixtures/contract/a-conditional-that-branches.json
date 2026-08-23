@@ -57,48 +57,26 @@
   },
   "dependencies": {
     "state": {
-      "@on": [
-        {
-          "file": "app/views/contract/a-conditional-that-branches.html.erb",
-          "version": "057b5b41",
-          "index": 0,
-          "mode": "structural"
-        },
-        {
-          "file": "app/views/contract/a-conditional-that-branches.html.erb",
-          "version": "057b5b41",
-          "index": 2,
-          "mode": "derived"
-        }
-      ],
+      "@on": [],
       "@x": [
         {
           "file": "app/views/contract/a-conditional-that-branches.html.erb",
           "version": "057b5b41",
-          "index": 1,
-          "mode": "identity"
+          "index": 1
         }
       ],
       "@y": [
         {
           "file": "app/views/contract/a-conditional-that-branches.html.erb",
           "version": "057b5b41",
-          "index": 0,
-          "mode": "structural"
-        },
-        {
-          "file": "app/views/contract/a-conditional-that-branches.html.erb",
-          "version": "057b5b41",
-          "index": 2,
-          "mode": "identity"
+          "index": 2
         }
       ],
       "@z": [
         {
           "file": "app/views/contract/a-conditional-that-branches.html.erb",
           "version": "057b5b41",
-          "index": 3,
-          "mode": "identity"
+          "index": 3
         }
       ]
     },

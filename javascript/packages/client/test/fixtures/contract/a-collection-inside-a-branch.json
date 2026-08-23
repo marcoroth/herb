@@ -77,34 +77,8 @@
   },
   "dependencies": {
     "state": {
-      "@items": [
-        {
-          "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
-          "version": "af67b5e7",
-          "index": 1,
-          "mode": "structural"
-        },
-        {
-          "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
-          "version": "af67b5e7",
-          "index": 2,
-          "mode": "derived"
-        },
-        {
-          "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
-          "version": "af67b5e7",
-          "index": 3,
-          "mode": "derived"
-        }
-      ],
-      "@on": [
-        {
-          "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
-          "version": "af67b5e7",
-          "index": 0,
-          "mode": "structural"
-        }
-      ]
+      "@items": [],
+      "@on": []
     },
     "params": {
       "items": "@items",
