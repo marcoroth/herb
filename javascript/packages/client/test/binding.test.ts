@@ -190,3 +190,44 @@ describe("property sync after user interaction", () => {
     expect(input.value).toBe("from code")
   })
 })
+
+const AREA_FILE = "app/views/page/note.html.erb"
+
+const AREA_PAGE =
+  `<!--herb-region:${AREA_FILE}:bbbbbbbb:0-->` +
+  `<textarea data-herb-slot="0:raw_text">hi</textarea>` +
+  `<!--/herb-region:${AREA_FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [AREA_FILE]: {
+        version: "bbbbbbbb",
+        declarations: [{ name: "note", kind: "string", default: '"hi"', scope: "region" }],
+        reads: { note: [0] },
+        bound: { note: [0] },
+        conditionals: {},
+      },
+    },
+  })}</template>`
+
+describe("a state rendered as a textarea's content", () => {
+  test("a write reaches the textarea", () => {
+    document.body.innerHTML = AREA_PAGE
+
+    const areaSlots = new SlotIndex()
+
+    areaSlots.scan(document.body)
+
+    const areaState = new SlotState(areaSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    areaState.adopt()
+
+    expect(areaState.setState({ note: "rewritten" })).toBe(true)
+    expect(document.querySelector("textarea")?.value).toBe("rewritten")
+  })
+})
