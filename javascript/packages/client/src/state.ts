@@ -1019,13 +1019,15 @@ export class SlotState {
     }
   }
 
-  #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[]): void {
+  #writeConditionals(manifest: StateManifest, scope: StateScope, changed: string[], skip: Slot | null = null): void {
     for (const [indexKey, conditional] of Object.entries(manifest.conditionals)) {
       const mentions = conditional.arms.some((arm) => armMentions(arm, changed))
       if (!mentions) continue
 
       for (const placed of this.#placedSlots(scope, Number(indexKey))) {
         const slot = placed.slot
+
+        if (slot === skip) continue
         const target = this.#targetBranch(conditional, placed.scope)
 
         if (!this.#slots.switchBranch(slot, target) && slot.branch !== target) {
@@ -1297,7 +1299,7 @@ export class SlotState {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
     if (detail.operation !== "branch" || !detail.slot) return
-    if (this.#hydrating) return
+    if (this.#hydrating || this.#slots.applying()) return
 
     const slot = detail.slot
     const region = this.#slots.regionOf(slot)
@@ -1338,7 +1340,8 @@ export class SlotState {
 
     try {
       this.#writePresence(manifest, at, declared)
-      this.#writeConditionals(manifest, at, declared)
+
+      this.#writeConditionals(manifest, at, declared, slot)
     } finally {
       this.#hydrating = false
     }
@@ -1348,6 +1351,8 @@ export class SlotState {
     const detail = (event as CustomEvent<SlotEventDetail>).detail
 
     if (detail.operation !== "item-added" || !detail.slot || !detail.item) return
+
+    if (this.#slots.applying()) return
 
     const region = this.#slots.regionOf(detail.slot)
 
