@@ -35,6 +35,8 @@ The engine raises each of these as a compile error when the template renders. Th
 <p data-herb-name="body"><%= @outro %></p>
 
 <p data-herb-name="body">just static text</p>
+
+<div data-herb-name="row"><span data-herb-name="body"><%= message.body %></span></div>
 ```
 
 ## References

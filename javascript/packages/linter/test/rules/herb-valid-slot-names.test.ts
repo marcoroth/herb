@@ -6,6 +6,20 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HerbValidSlotNamesRule)
 
 describe("HerbValidSlotNamesRule", () => {
+  test("flags a named element claiming the slot another one names", () => {
+    expectError('`data-herb-name="inner"` claims the slot already named `outer`. Keep one name or wrap what each should address, since both elements hold the same slot.')
+
+    assertOffenses(dedent`
+      <div data-herb-name="outer"><span data-herb-name="inner"><%= body %></span></div>
+    `)
+  })
+
+  test("allows a named element beside more dynamic content", () => {
+    expectNoOffenses(dedent`
+      <div data-herb-name="outer"><span data-herb-name="inner"><%= body %></span><%= caption %></div>
+    `)
+  })
+
   test("allows a named content slot", () => {
     expectNoOffenses(dedent`
       <p data-herb-name="body"><%= message.body %></p>

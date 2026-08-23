@@ -119,10 +119,56 @@ class ValidSlotNamesVisitor extends BaseRuleVisitor {
         continue
       }
 
+      const outer = this.named.find((candidate) =>
+        candidate !== named && containsElement(candidate.element, named.element) && !containsERBOutside(candidate.element, named.element),
+      )
+
+      if (outer) {
+        this.addOffense(
+          `\`${NAME_ATTRIBUTE}="${named.name}"\` claims the slot already named \`${outer.name}\`. Keep one name or wrap what each should address, since both elements hold the same slot.`,
+          named.attribute.location,
+        )
+
+        continue
+      }
+
       names.add(named.name)
       taken.set(named.scope, names)
     }
   }
+}
+
+function containsElement(outer: HTMLElementNode, inner: HTMLElementNode): boolean {
+  if (outer === inner) return false
+
+  return outer.body.some((child) => containsElementNode(child, inner))
+}
+
+function containsElementNode(node: Node, inner: HTMLElementNode): boolean {
+  if (node === (inner as unknown as Node)) return true
+  if (typeof node.type !== "string") return false
+
+  return childrenOf(node).some((child) => containsElementNode(child, inner))
+}
+
+function containsERBOutside(node: Node, excluded: HTMLElementNode): boolean {
+  if (node === (excluded as unknown as Node)) return false
+  if (typeof node.type !== "string") return false
+  if (node.type.startsWith("AST_ERB_")) return true
+
+  return childrenOf(node).some((child) => containsERBOutside(child, excluded))
+}
+
+function childrenOf(node: Node): Node[] {
+  const parts = node as unknown as { body?: Node[], children?: Node[], open_tag?: Node | null, value?: Node | null, statements?: Node[] }
+
+  return [
+    ...(parts.body ?? []),
+    ...(parts.children ?? []),
+    ...(parts.statements ?? []),
+    ...(parts.open_tag ? [parts.open_tag] : []),
+    ...(parts.value ? [parts.value] : []),
+  ] as Node[]
 }
 
 function containsDynamicContent(element: HTMLElementNode): boolean {
