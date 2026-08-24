@@ -330,8 +330,8 @@ module Engine
       with_optimize = Herb::Engine.new(template, visitors: [Herb::Engine::OptimizeVisitor.new]).src
 
       refute_equal without_optimize, with_optimize
-      assert_includes without_optimize, "tag.div"
-      refute_includes with_optimize, "tag.div"
+
+      assert_compiled_snapshot(template)
     end
 
     test "compilation with parser_options strict false" do

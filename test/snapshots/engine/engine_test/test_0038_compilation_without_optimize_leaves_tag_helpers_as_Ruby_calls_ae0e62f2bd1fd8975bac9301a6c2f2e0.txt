@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0038_compilation without optimize leaves tag helpers as Ruby calls"
+input: "{source: \"<%= tag.div class: \\\"container\\\" do %>Content<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << (tag.div class: "container" do; _buf << 'Content'.freeze; end);
+_buf.to_s

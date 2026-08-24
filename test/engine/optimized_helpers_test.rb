@@ -10,7 +10,6 @@ module Engine
     include SnapshotUtils
 
     FILENAME = "app/views/posts/index.html.erb"
-    TAG_OWNER = "ActionView::Helpers::TagHelper"
 
     module OverriddenTag
       def tag(*) = "whatever this application wanted instead"
@@ -75,7 +74,7 @@ module Engine
         assert_equal :warning, diagnostic.severity
         assert_equal FILENAME, diagnostic.template
         assert_equal 1, diagnostic.location.start.line
-        assert_includes diagnostic.message, "`tag` was compiled away as #{TAG_OWNER}"
+        assert_snapshot_matches(diagnostic.message, DEFAULT_SOURCE)
       end
 
       test "names the module that took the helper over" do
