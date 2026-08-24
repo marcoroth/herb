@@ -536,60 +536,66 @@ You can disable linting for an entire file by adding the `ignore` directive anyw
 The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
 :::
 
-### Counter-Based Suppression <Badge type="info" text="v0.10.4+" />
+### File-scoped counter suppression <Badge type="info" text="v0.10.4+" />
 
-For files with many pre-existing offenses that you plan to fix over time, `herb:counter` comments let you baseline the current count of a single rule without silencing new offenses of the same rule elsewhere in the file.
+For files with many pre-existing offenses that you plan to fix over time, `herb:disable` accepts an optional per-rule count (or `all`) that baselines the current number of offenses of a single rule without silencing new offenses of the same rule elsewhere in the file.
 
 ```erb
-<%# herb:counter html-tag-name-lowercase 3 %>
+<%# herb:disable html-tag-name-lowercase 3 %>
 
 <DIV></DIV>
 <DIV></DIV>
 <DIV></DIV>
 ```
 
-The first three `html-tag-name-lowercase` offenses in this file are suppressed. If a fourth is introduced, it will be reported and the linter will also raise `herb-counter-comment-out-of-date`, so the counter and the file stay in sync as you fix offenses.
+The first three `html-tag-name-lowercase` offenses in this file are suppressed. If a fourth is introduced it will be reported, and the linter will also raise `herb-disable-comment-out-of-date` so the count and the file stay in sync as you fix offenses.
+
+You can mix line-scoped and file-scoped entries in a single comment:
+
+```erb
+<%# herb:disable rule-a, rule-b 3, rule-c all %>
+```
+
+`rule-a` is line-scoped (existing behavior); `rule-b` has a file-scoped count; `rule-c` is fully waived for the file.
 
 #### Semantics
 
-Given `N` = the count in the `herb:counter` comment and `E` = the number of offenses of that rule found in the file:
+Given `N` = the count on a file-scoped entry and `E` = the number of offenses of that rule in the file (after line-scoped `herb:disable` filtering):
 
 | Case              | Behavior                                                                                              |
 | ----------------- | ----------------------------------------------------------------------------------------------------- |
 | `N == E`          | All `E` offenses are suppressed.                                                                      |
-| `N > E`           | No offenses are suppressed; `herb-counter-comment-out-of-date` reports the drift (autofix updates `N`).|
-| `0 < N < E`       | No offenses are suppressed; `herb-counter-comment-out-of-date` reports the drift (autofix updates `N`).|
-| `N == 0`, `E > 0` | No offenses are suppressed; `herb-counter-comment-unnecessary` fires (autofix removes the counter).   |
-| `N == 0`, `E == 0`| `herb-counter-comment-unnecessary` fires (autofix removes the counter).                               |
+| `N > E`           | Every offense is still reported; `herb-disable-comment-out-of-date` reports the drift (autofix updates `N`). |
+| `0 < N < E`       | The first `N` offenses are suppressed; `herb-disable-comment-out-of-date` reports the drift (autofix updates `N`). |
+| `N > 0`, `E == 0` | `herb-disable-comment-out-of-date` fires with the "remove the count" variant.                        |
+| `N == 0`, `E == 0`| No offense; no drift.                                                                                 |
+| `all`             | All offenses are suppressed; drift is never reported.                                                 |
 
-Counter comments must reference a known rule name and can only appear once per rule per file. Malformed counters, unknown rule names, and duplicate rules are reported by dedicated meta-rules:
+File-scoped entries must reference a known rule name and can only appear once per rule per file. Malformed entries, unknown rule names, and duplicates within one comment are reported by the existing herb-disable meta-rules:
 
-- `herb-counter-comment-malformed`
-- `herb-counter-comment-valid-rule-name`
-- `herb-counter-comment-no-duplicate-rules`
-- `herb-counter-comment-out-of-date`
-- `herb-counter-comment-unnecessary`
+- `herb-disable-comment-malformed`
+- `herb-disable-comment-valid-rule-name`
+- `herb-disable-comment-no-duplicate-rules`
+- `herb-disable-comment-out-of-date`
 
-#### Updating counters
+#### Updating counts
 
-To bulk-refresh counters after a large refactor, run the linter with `--update-counters`. This applies the `herb-counter-comment-out-of-date` autofix across your project, updating each counter to match the current offense count:
-
-```bash
-npx @herb-tools/linter --update-counters
-```
-
-#### Ignoring counters
-
-To report all offenses regardless of any `herb:counter` comments, pass `--ignore-counter-comments`:
+To bulk-refresh file-scoped counts after a large refactor, run the linter with `--update-disable-counts`. This applies the `herb-disable-comment-out-of-date` autofix across your project, updating each entry to match the current offense count (and dropping entries whose actual count is zero):
 
 ```bash
-npx @herb-tools/linter --ignore-counter-comments
+npx @herb-tools/linter --update-disable-counts
 ```
 
-Drift (out-of-date counters) is still reported when this flag is set, but nothing is suppressed.
+#### Ignoring counts
+
+To report all offenses regardless of file-scoped counts, pass `--ignore-disable-comments`. It disables both line-scoped and file-scoped suppression:
+
+```bash
+npx @herb-tools/linter --ignore-disable-comments
+```
 
 ::: tip
-Prefer inline `herb:disable` comments when you have a small number of intentional exceptions you want to keep. Use `herb:counter` when you want to baseline a large number of offenses in a file and drive the count down over time without silencing new offenses.
+Prefer plain line-scoped `herb:disable` comments when you have a small number of intentional exceptions. Use a file-scoped count when you want to baseline a large number of offenses in a file and drive the count down over time without silencing new offenses. Use `all` when you want to permanently waive a rule for a file.
 :::
 
 ## Configuration

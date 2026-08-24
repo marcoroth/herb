@@ -74,9 +74,9 @@ export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAut
   ignored: number
   wouldBeIgnored?: number
   /**
-   * Number of offenses suppressed by a matching `<%# herb:counter RULE N %>`
-   * comment (i.e. E === N, or E > N > 0). Kept separate from `ignored`
-   * (which is herb:disable-only).
+   * Number of offenses suppressed by a matching file-scoped
+   * `<%# herb:disable RULE N %>` (or `all`) entry. Kept separate from
+   * `ignored` (which counts line-scoped `herb:disable` suppressions).
    */
   counterSuppressed?: number
 }
@@ -304,8 +304,7 @@ export interface LintContext {
   ignoreDisableComments: boolean | undefined
   /**
    * Per-rule drift map built during the main rule loop and consumed by the
-   * `herb-counter-comment-out-of-date` and `herb-counter-comment-unnecessary`
-   * meta-rules.
+   * `herb-disable-comment-out-of-date` meta-rule.
    */
   counterDriftByRule: Map<string, HerbCounterDrift> | undefined
   /** Report offenses even when counter-suppressed (mirrors ignoreDisableComments). */
