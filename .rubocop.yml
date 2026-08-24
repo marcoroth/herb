@@ -1,3 +1,8 @@
+inherit_from: .rubocop_todo.yml
+
+require:
+  - ./rubocop/cop/herb/includes_assertion.rb
+
 AllCops:
   NewCops: enable
   SuggestExtensions: false
@@ -233,3 +238,8 @@ Style/IfUnlessModifier:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: false
+
+Herb/IncludesAssertion:
+  Enabled: true
+  Include:
+    - test/**/*
