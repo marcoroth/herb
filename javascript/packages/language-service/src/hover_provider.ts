@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, cloneNode } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, getTagLocalName, hasAttribute, getAttribute, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation, nodeToRange } from "./range_utils"
 import { RubyLocalsIndex } from "./ruby_locals_index"
@@ -183,6 +183,54 @@ function stateUsageLines(name: string, kind: string, defaultSource: string, deri
   ]
 }
 
+const SCOPED_STYLE_DOC = dedent(`
+  **\`<style scoped>\`** · Herb Engine
+
+  This block's CSS applies only to the markup in this file, like scoped styles in Vue and Svelte components. Herb marks the file's elements with a scope attribute and narrows the block's selectors to require it.
+
+  Example:
+
+  \`\`\`html
+  <style scoped>
+    .title {
+      color: red;
+    }
+  </style>
+
+  <h1 class="title">Hi</h1>
+  \`\`\`
+
+  becomes
+
+  \`\`\`html
+  <style>
+    .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+      color: red;
+    }
+  </style>
+
+  <h1 class="title" data-herb-scope-1a2b3c4d>Hi</h1>
+  \`\`\`
+
+  [Scoped styles](https://herb-tools.dev/projects/engine#scopedstyle-visitor)
+`).trim()
+
+class ScopedStyleCollector extends Visitor {
+  readonly found: Range[] = []
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (getTagLocalName(node) === "style" && hasAttribute(node, "scoped")) {
+      const attribute = getAttribute(node, "scoped")
+
+      if (attribute && hasSourceLocation(attribute.location)) {
+        this.found.push(nodeToRange(attribute))
+      }
+    }
+
+    this.visitChildNodes(node)
+  }
+}
+
 const DIRECTIVE_DOCS: Record<string, string> = {
   "herb:slots": [
     "**herb:slots** · Herb directive",
@@ -336,14 +384,30 @@ export class HoverProvider {
     }
   }
 
+  private getScopedStyleHover(textDocument: TextDocument, position: Position): Hover | null {
+    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true })
+    const collector = new ScopedStyleCollector()
+
+    collector.visit(parsed.value)
+
+    for (const range of collector.found) {
+      if (isPositionInRange(position, range)) {
+        return { contents: { kind: MarkupKind.Markdown, value: SCOPED_STYLE_DOC }, range }
+      }
+    }
+
+    return null
+  }
+
   getHover(textDocument: TextDocument, position: Position, options?: FrameworkOptions): Hover | null {
     const state = this.getStateHover(textDocument, position)
-
     if (state) return state
 
     const directive = this.getDirectiveHover(textDocument, position)
-
     if (directive) return directive
+
+    const scopedStyle = this.getScopedStyleHover(textDocument, position)
+    if (scopedStyle) return scopedStyle
 
     if (options?.framework !== "actionview") {
       return this.getEntityHover(textDocument, position)
