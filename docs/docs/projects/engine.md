@@ -761,9 +761,11 @@ A query issued inside an inlined partial is filed under the partial, not under t
 
 ### `ScopedStyle::Visitor` <Badge type="warning" text="experimental" />
 
-`ScopedStyle::Visitor` scopes a `<style scoped>` block to the markup written in the same file, the way Vue's single file components do. Every element the file wrote is given a scope attribute derived from its path, and the block's selectors are narrowed to require it.
+`ScopedStyle::Visitor` scopes a `<style scoped>` block to the markup written in the same file, similar to how Vue and Svelte scope a component's styles. It marks the file's elements with a scope attribute derived from its path, and narrows the block's selectors to require it, so the block styles those elements and nothing else.
 
-```erb
+It transforms this:
+
+```html
 <style scoped>
   .title { color: red; }
 </style>
@@ -771,7 +773,52 @@ A query issued inside an inlined partial is filed under the partial, not under t
 <h1 class="title">Hi</h1>
 ```
 
-Rewriting CSS is somebody else's job, so the visitor takes a `transform` to do it. Anything answering `call` will do:
+into this:
+
+```html
+<style>
+  .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+    color: red;
+  }
+</style>
+
+<h1 class="title" data-herb-scope-1a2b3c4d>Hi</h1>
+```
+
+Here the scope sits on the root alone. `:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)` matches the root and everything inside it, so nested elements need no attribute of their own. A file that renders a partial is scoped differently. Every element the file wrote carries the scope, and the selector narrows to `[data-herb-scope-1a2b3c4d]` alone, so the scope stays on that markup and never reaches into the partial.
+
+The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is one. Give the visitor a `LightningCSS::Transformer`, and each rule in the block is narrowed to the scope.
+
+```ruby
+require "herb/engine/scoped_style/visitor"
+require "lightningcss"
+
+Herb::Engine.new(source, filename: path, visitors: [
+  Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+])
+```
+
+The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there.
+
+Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive.
+
+`deliver` says where the narrowed CSS goes.
+
+| Value     | Description                                                                             |
+|-----------|-----------------------------------------------------------------------------------------|
+| `:inline` | Leaves the block where it was written. This is the default. It needs nothing else installed, and writes the block again on every render of the file. |
+| `:hoist`  | Takes the block out and registers the CSS on a [channel](#delivering-something-other-than-diagnostics) of the session the page is collecting into, so it is written once however many times the file renders. Needs `Herb::Engine::Report::Middleware` to put it on the page. |
+| `:none`   | Takes the block out and puts nothing in its place, for when the CSS was already gathered into an asset. The markup still carries its scope attribute. |
+
+It is set alongside `transform`:
+
+```ruby
+Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: :hoist)
+```
+
+#### Supplying your own transform
+
+Lightning CSS is one way to narrow the CSS, and not the only one. `transform` is any object that answers `call`. The visitor hands it the block's CSS and the scope, and reads a narrowed stylesheet back, so a different CSS engine or a hand-written rewriter fits the same slot.
 
 | Argument       | Type     | Description                                              |
 |----------------|----------|----------------------------------------------------------|
@@ -783,27 +830,6 @@ Rewriting CSS is somebody else's job, so the visitor takes a `transform` to do i
 transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
 #=> ".title[data-herb-scope-1a2b3c4d] { color: red }"
 ```
-
-The [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem answers that shape as it is:
-
-```ruby
-require "herb/engine/scoped_style/visitor"
-require "lightningcss"
-
-Herb::Engine.new(source, filename: path, visitors: [
-  Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new(minify: true))
-])
-```
-
-Given no `transform`, a block is left exactly as it was written and reported, because scoping the markup while leaving the CSS alone would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive.
-
-`deliver` says where the narrowed CSS goes. Hoisting registers it on a [channel](#delivering-something-other-than-diagnostics) of the session the page is collecting into:
-
-| Value     | Description                                                                             |
-|-----------|-----------------------------------------------------------------------------------------|
-| `:inline` | Leaves the block where it was written. Needs nothing else installed, and writes the block again on every render of the file. |
-| `:hoist`  | Takes the block out and registers the CSS with the session the page is collecting into, so it is written once however many times the file renders. Needs `Herb::Engine::Report::Middleware` to put it on the page. |
-| `:none`   | Takes the block out and puts nothing in its place, for when the CSS was already gathered into an asset. The markup still carries its scope attribute. |
 
 #### Gathering the CSS ahead of time
 
@@ -829,7 +855,7 @@ Templates then compile with `deliver: :none` and emit no CSS at all, because the
 
 Which files to gather, where the stylesheet goes, and how it reaches the page is the job of whatever integrates Herb with a framework.
 
-This has to run after `InlineRenderVisitor`, so that markup an inlined partial brought with it is given the partial's own scope, and before `SlotVisitor`, whose parked markup a client rebuilds from and which therefore has to already carry the attribute.
+It has to run after `InlineRenderVisitor`, so that markup an inlined partial brought with it takes the partial's own scope, and before `SlotVisitor`, because the markup `SlotVisitor` parks for a client to rebuild has to carry the attribute already.
 
 ## Diagnostics
 
