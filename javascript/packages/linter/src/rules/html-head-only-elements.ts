@@ -47,9 +47,9 @@ class HeadOnlyElementsVisitor extends ElementStackVisitor {
         const message = `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`
 
         if (verdict === "always") {
-          this.addOffenseWithCallChain(message, node.location, chain)
+          this.addOffenseWithCallChain(message, node.open_tag?.location ?? node.location, chain)
         } else if (verdict === "mixed") {
-          this.addOffenseWithCallChain(`${message} At least one call site renders this file inside the \`<body>\`.`, node.location, chain)
+          this.addOffenseWithCallChain(`${message} At least one call site renders this file inside the \`<body>\`.`, node.open_tag?.location ?? node.location, chain)
         } else if (verdict === "unknown" && this.alwaysRenders) {
           this.undecided.push({ tagName, node })
         }
@@ -67,7 +67,7 @@ class HeadOnlyElementsVisitor extends ElementStackVisitor {
     for (const { tagName, node } of this.undecided) {
       this.addOffense(
         `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag. This template also renders the body-only element \`<${this.bodyOnlyTagName}>\`, so one of the two is misplaced.`,
-        node.location,
+        node.open_tag?.location ?? node.location,
       )
     }
   }
