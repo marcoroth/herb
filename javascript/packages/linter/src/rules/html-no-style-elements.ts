@@ -1,4 +1,4 @@
-import { getTagLocalName } from "@herb-tools/core"
+import { getTagLocalName, hasAttribute } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
@@ -7,7 +7,7 @@ import { ParserRule } from "../types.js"
 
 class HTMLNoStyleElementsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagLocalName(node) === "style") {
+    if (getTagLocalName(node) === "style" && !hasAttribute(node, "scoped")) {
       this.addOffense(
         `Avoid inline \`<style>\` tags. ${this.suggestion()}`,
         node.open_tag!.location,

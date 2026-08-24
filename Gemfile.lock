@@ -153,6 +153,12 @@ GEM
       reline (>= 0.4.2)
     json (2.21.2)
     language_server-protocol (3.17.0.5)
+    lightningcss (0.1.1-aarch64-linux-gnu)
+    lightningcss (0.1.1-aarch64-linux-musl)
+    lightningcss (0.1.1-arm64-darwin)
+    lightningcss (0.1.1-x86_64-darwin)
+    lightningcss (0.1.1-x86_64-linux-gnu)
+    lightningcss (0.1.1-x86_64-linux-musl)
     lint_roller (1.1.0)
     lipgloss (0.2.2-aarch64-linux-gnu)
     lipgloss (0.2.2-aarch64-linux-musl)
@@ -320,6 +326,7 @@ DEPENDENCIES
   erubi
   herb!
   irb (~> 1.18)
+  lightningcss (~> 0.1)
   lz_string
   maxitest (~> 6.0)
   minitest-difftastic (~> 0.2)

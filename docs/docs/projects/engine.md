@@ -232,16 +232,17 @@ The `visitors` option accepts [visitors](/bindings/ruby/reference#visitors) that
 
 Herb ships the following transform visitors:
 
-| Visitor                       | Description                                                             |
-|-------------------------------|-------------------------------------------------------------------------|
-| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                        |
-| `ContentForVisitor`           | Appends HTML to the end of every matching element                       |
-| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                               |
-| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental)            |
-| `DebugVisitor`                | Annotates output with the template and position it came from            |
-| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)       |
-| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental) |
-| `InlineRenderVisitor`         | Replaces a `render` of a static partial with the partial (experimental) |
+| Visitor                       | Description                                                                  |
+|-------------------------------|------------------------------------------------------------------------------|
+| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                             |
+| `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
+| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
+| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental)                 |
+| `DebugVisitor`                | Annotates output with the template and position it came from                 |
+| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
+| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
+| `InlineRenderVisitor`         | Replaces a `render` of a static partial with the partial (experimental)      |
+| `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
@@ -757,6 +758,78 @@ Herb::Engine.new(source, visitors: [
 ```
 
 A query issued inside an inlined partial is filed under the partial, not under the template it landed in, and a collection reports one render per item rather than one for all of them. The lines and columns need no adjusting, because the nodes came from the partial's own source.
+
+### `ScopedStyle::Visitor` <Badge type="warning" text="experimental" />
+
+`ScopedStyle::Visitor` scopes a `<style scoped>` block to the markup written in the same file, the way Vue's single file components do. Every element the file wrote is given a scope attribute derived from its path, and the block's selectors are narrowed to require it.
+
+```erb
+<style scoped>
+  .title { color: red; }
+</style>
+
+<h1 class="title">Hi</h1>
+```
+
+Rewriting CSS is somebody else's job, so the visitor takes a `transform` to do it. Anything answering `call` will do:
+
+| Argument       | Type     | Description                                              |
+|----------------|----------|----------------------------------------------------------|
+| `css`          | `String` | The block's CSS, exactly as it was written               |
+| `scope:`       | `String` | A selector fragment every rule has to be narrowed by     |
+| *return value* | any      | Anything whose `to_s` is the narrowed CSS                |
+
+```ruby
+transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
+#=> ".title[data-herb-scope-1a2b3c4d] { color: red }"
+```
+
+The [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem answers that shape as it is:
+
+```ruby
+require "herb/engine/scoped_style/visitor"
+require "lightningcss"
+
+Herb::Engine.new(source, filename: path, visitors: [
+  Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new(minify: true))
+])
+```
+
+Given no `transform`, a block is left exactly as it was written and reported, because scoping the markup while leaving the CSS alone would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive.
+
+`deliver` says where the narrowed CSS goes. Hoisting registers it on a [channel](#delivering-something-other-than-diagnostics) of the session the page is collecting into:
+
+| Value     | Description                                                                             |
+|-----------|-----------------------------------------------------------------------------------------|
+| `:inline` | Leaves the block where it was written. Needs nothing else installed, and writes the block again on every render of the file. |
+| `:hoist`  | Takes the block out and registers the CSS with the session the page is collecting into, so it is written once however many times the file renders. Needs `Herb::Engine::Report::Middleware` to put it on the page. |
+| `:none`   | Takes the block out and puts nothing in its place, for when the CSS was already gathered into an asset. The markup still carries its scope attribute. |
+
+#### Gathering the CSS ahead of time
+
+A scope and its CSS are decided when a file is compiled, so everything a stylesheet needs is knowable before anything renders. `ScopedStyle::Collector` compiles a set of files for that and nothing else:
+
+```ruby
+require "herb/engine/scoped_style/collector"
+
+collector = Herb::Engine::ScopedStyle::Collector.new(transform: transform, project_path: root)
+
+collector.add("app/views/posts/_card.html.erb")
+collector.add("app/views/posts/index.html.erb")
+
+collector.to_css   #=> the one stylesheet those files add up to
+collector.styles   #=> { "data-herb-scope-1a2b3c4d" => "..." }
+collector.files    #=> which scopes each file contributed
+collector.failures #=> the files it could not compile, and why
+```
+
+Paths are expanded before they are compiled, so the scopes it gathers are the ones the same files carry when your application compiles them. A file it cannot compile is recorded in `failures` and skipped, so one broken template does not take a build down.
+
+Templates then compile with `deliver: :none` and emit no CSS at all, because the stylesheet already has it.
+
+Which files to gather, where the stylesheet goes, and how it reaches the page is the job of whatever integrates Herb with a framework.
+
+This has to run after `InlineRenderVisitor`, so that markup an inlined partial brought with it is given the partial's own scope, and before `SlotVisitor`, whose parked markup a client rebuilds from and which therefore has to already carry the attribute.
 
 ## Diagnostics
 
