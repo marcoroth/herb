@@ -81,7 +81,7 @@ module Herb
 
       #: (String, Hash[String, untyped]) -> Hash[String, untyped]
       def declared_states(entry_point, reached)
-        files = ([absolute(entry_point)] + reached.values.flatten.map { |slot| slot[:file] }).uniq
+        files = ([absolute(entry_point)] + reached.values.flatten.map { |slot| slot[:file] } + rendered_files(entry_point)).uniq
         manifests = {} #: Hash[String, untyped]
 
         files.each do |file|
@@ -159,7 +159,7 @@ module Herb
         bound = {} #: Hash[String, Array[Integer]]
 
         visitor.slots.each do |slot|
-          next unless [:child, :attribute, :element, :raw_text].include?(slot.type)
+          next unless [:child, :attribute, :attribute_interpolation, :element, :raw_text].include?(slot.type)
 
           expression = slot.expression.to_s.strip
           name = expression.delete_suffix("?")
@@ -170,17 +170,30 @@ module Herb
           (bound[name] ||= []) << slot.index if bound_slot?(slot)
         end
 
-        presence = {} #: Hash[String, [String, String?]]
+        presence = {} #: Hash[String, untyped]
 
         visitor.state_presence.each do |index, read|
-          presence[index.to_s] = [read.name, read.comparand]
-          (reads[read.name] ||= []) << index
-          (bound[read.name] ||= []) << index if read.comparand.nil? && bound_slot?(visitor.slots[index])
+          presence[index.to_s] = StateDirectives.condition_entry(read)
+          StateDirectives.read_names(read).each { |name| (reads[name] ||= []) << index }
+
+          next unless read.is_a?(StateDirectives::Read)
+
+          (bound[read.name] ||= []) << index if read.comparand.nil? && read.against.nil? && bound_slot?(visitor.slots[index])
         end
 
         conditionals = visitor.state_conditional_entries.to_h { |index, info|
           [index.to_s, { "arms" => info[:arms], "else" => info[:else] }]
         }
+
+        if visitor.respond_to?(:state_count_entries)
+          visitor.state_count_entries.each do |count|
+            declaration = declarations.find { |declared| declared["name"] == count[:name] && declared["scope"] == "region" }
+
+            next unless declaration
+
+            declaration["count"] = { "collection" => count[:collection], "when" => count[:when], "by" => count[:by] }
+          end
+        end
 
         {
           "version" => visitor.schema[:version],
@@ -195,6 +208,7 @@ module Herb
       #: (untyped) -> bool
       def bound_slot?(slot)
         return false unless slot.respond_to?(:tag)
+        return false if slot.type == :attribute_interpolation
 
         tag = slot.tag.to_s
 
@@ -257,6 +271,39 @@ module Herb
         }
 
         defaults.reject { |_, name| declared.value?(name) }.merge(declared)
+      end
+
+      #: (String) -> Array[String]
+      def rendered_files(entry_point)
+        partials = partial_paths
+        seen = [absolute(entry_point)]
+        queue = seen.dup
+
+        until queue.empty?
+          file = queue.shift
+
+          @dependencies.analyze(file).render_calls.each do |call|
+            next unless call[:partial]
+
+            name = File.basename(call[:partial].to_s)
+
+            (partials[name] || []).each do |candidate|
+              next if seen.include?(candidate)
+
+              seen << candidate
+              queue << candidate
+            end
+          end
+        end
+
+        seen
+      end
+
+      #: () -> Hash[String, Array[String]]
+      def partial_paths
+        @partial_paths ||= Dir.glob(@project_path.join("app/views/**/_*.erb").to_s).group_by { |path|
+          File.basename(path).delete_prefix("_").split(".").first.to_s
+        }
       end
 
       #: (String) -> String

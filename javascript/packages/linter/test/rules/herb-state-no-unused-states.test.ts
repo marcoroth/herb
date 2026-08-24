@@ -6,6 +6,16 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HerbStateNoUnusedStatesRule)
 
 describe("HerbStateNoUnusedStatesRule", () => {
+  test("a mention inside a comment is not a use", () => {
+    expectWarning("The state `open` is never read or written in this template. Remove it, or disable this line when only app code uses it through `stateFor` or `useState`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <%# open drives the menu %>
+      <p>static</p>
+    `)
+  })
+
   test("does not flag a state whose only read is negated", () => {
     expectNoOffenses(dedent`
       <%# herb:state (open: false) %>
@@ -82,6 +92,14 @@ describe("HerbStateNoUnusedStatesRule", () => {
       <% @rows.each do |row| %>
         <% if editing? %>Editing<% end %>
       <% end %>
+    `)
+  })
+  test("counts a derivation's sources as used", () => {
+    expectWarning("The state `stray` is never read or written in this template. Remove it, or disable this line when only app code uses it through `stateFor` or `useState`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, stray: false, busy: pending || failed) %>
+      <div><% if busy %>B<% end %></div>
     `)
   })
 })

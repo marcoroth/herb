@@ -1,19 +1,29 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute } from "../utils/rule-utils.js"
-import { StateScopeMap } from "../utils/state-directives-utils.js"
-import { bareReadName, classifyDefault } from "@herb-tools/client/directives"
+import { StateScopeMap, declaredKind } from "../utils/state-directives-utils.js"
+import { bareReadName, classifyDerivedDefault } from "@herb-tools/client/directives"
 import { hasAttributeValue, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, ERBBlockNode } from "@herb-tools/core"
 
 interface BooleanAttributeAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLAttributeNode>
 }
 
 class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttributeAutofixContext> {
-  public states: string[] = []
+  public states = new StateScopeMap()
+
+  private stack: (ERBBlockNode | null)[] = [null]
+
+  visitERBBlockNode(node: ERBBlockNode): void {
+    this.stack.push(node)
+
+    super.visitERBBlockNode(node)
+
+    this.stack.pop()
+  }
 
   protected checkStaticAttributeStaticValue({ originalAttributeName, attributeNode }: StaticAttributeStaticValueParams) {
     this.checkAttribute(originalAttributeName, attributeNode)
@@ -26,7 +36,9 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
   }
 
   private bindsDeclaredState(attributeNode: HTMLAttributeNode): boolean {
-    if (this.states.length === 0) return false
+    const names = this.states.namesIn(this.stack)
+
+    if (names.length === 0) return false
 
     const outputs = getAttributeValueNodes(attributeNode).filter((child) =>
       isERBContentNode(child) && (child.tag_opening?.value === "<%=" || child.tag_opening?.value === "<%=="),
@@ -37,24 +49,21 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
     const expression = (outputs[0] as { content?: { value: string } | null }).content?.value?.trim() ?? ""
     const name = bareReadName(expression)
 
-    if (name !== null) return this.states.includes(name)
+    if (name !== null) return names.includes(name)
 
-    return this.comparesDeclaredState(expression)
-  }
+    // The engine accepts the whole condition grammar in a boolean attribute, combos included, so
+    // this defers to the same classifier the state rules use instead of matching one `==` by hand.
+    const declared = new Map<string, string>()
 
-  private comparesDeclaredState(expression: string): boolean {
-    const separator = expression.indexOf("==")
+    for (const candidate of names) {
+      const declaration = this.states.resolve(this.stack, candidate)
 
-    if (separator < 1 || expression[separator + 2] === "=") return false
+      if (declaration) declared.set(candidate, declaredKind(declaration))
+    }
 
-    const sides = [expression.slice(0, separator).trim(), expression.slice(separator + 2).trim()]
-    const read = sides.map((side) => bareReadName(side)).find((side) => side !== null && this.states.includes(side))
+    const classified = classifyDerivedDefault(expression, declared)
 
-    if (!read) return false
-
-    const comparand = sides.find((side) => bareReadName(side) !== read)
-
-    return comparand !== undefined && ["boolean", "integer", "string", "symbol", "nil"].includes(classifyDefault(comparand))
+    return classified !== null && classified !== "mixed"
   }
 
   private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {
@@ -86,7 +95,7 @@ export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttribut
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<BooleanAttributeAutofixContext>[] {
     const visitor = new BooleanAttributesNoValueVisitor(this.ruleName, context)
 
-    visitor.states = StateScopeMap.collect(result.value).allNames()
+    visitor.states = StateScopeMap.collect(result.value)
     visitor.visit(result.value)
 
     return visitor.offenses

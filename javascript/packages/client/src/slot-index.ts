@@ -26,12 +26,14 @@ const SLOT_CLOSE = /^\/herb-slot:(\d+)$/
 const ITEM_OPEN = /^herb-item:(\d+):([\s\S]*)$/
 const ITEM_CLOSE = /^\/herb-item:(\d+)$/
 const BRANCH = /^herb-branch:(\d+):(\w+)$/
-const MARKER = /^\/?herb-(region|slot|item|branch):/
+const MARKER = /^\/?herb-(region|slot|item|branch|seeds):/
+const SEEDS = /^herb-seeds:([\s\S]*)$/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
 const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
 const MAX_JOURNAL = 50
 const PART_MARKER = "herb-part"
+const SEEDS_KEY = "seeds"
 
 const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
@@ -39,6 +41,11 @@ const NAME_ATTRIBUTE = HERB_ATTRIBUTES.name
 const NAME_ENTRY = /^(\d+):(.+)$/
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
+
+// A slot anchored on an element writes that element's content when the slot IS the content, which
+// covers a plain child and the RCDATA of a `<textarea>` or `<title>`. Every other anchored slot
+// addresses an attribute instead, so its content must be left alone.
+const CONTENT_SLOT_TYPES: SlotType[] = ["child", "raw_text"]
 
 export type SlotType =
   | "child"
@@ -96,6 +103,7 @@ export interface Item {
   start: Comment
   end: Comment
   slots: SlotMap
+  seeds?: Record<string, unknown>
 }
 
 export interface Slot {
@@ -146,6 +154,7 @@ export interface Region {
   end: Comment | null
   slots: SlotMap
   names: Map<string, number>
+  seeds?: Record<string, unknown>
 }
 
 export interface ScanResult {
@@ -237,7 +246,17 @@ export class SlotIndex {
   #slotRegions = new WeakMap<Slot, Region>()
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
+  #clientOwned = new WeakSet<Slot>()
+  #applying = 0
   #observer: MutationObserver | null = null
+
+  claim(slot: Slot): void {
+    this.#clientOwned.add(slot)
+  }
+
+  claimed(slot: Slot): boolean {
+    return this.#clientOwned.has(slot)
+  }
 
   observe(root: Node = document.documentElement): ScanResult {
     this.#observer?.disconnect()
@@ -407,17 +426,27 @@ export class SlotIndex {
   apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
     const report: ApplyReport = { applied: 0, deferred: [] }
 
-    const { token } = this.transaction(() => {
-      this.#applyPayload(payload, report, options.items ?? "replace")
-    })
+    this.#applying += 1
 
-    if (token !== null) report.token = token
+    try {
+      const { token } = this.transaction(() => {
+        this.#applyPayload(payload, report, options.items ?? "replace")
+      })
+
+      if (token !== null) report.token = token
+    } finally {
+      this.#applying -= 1
+    }
 
     return report
   }
 
-  transaction<T>(work: () => T): { token: RevertToken | null; result: T } {
-    if (this.#recording) return { token: null, result: work() }
+  applying(): boolean {
+    return this.#applying > 0
+  }
+
+  transaction<T>(work: () => T, options: { retain?: boolean } = {}): { token: RevertToken | null; result: T } {
+    if (this.#recording || options.retain === false) return { token: null, result: work() }
 
     const inverses: Inverse[] = []
 
@@ -522,6 +551,9 @@ export class SlotIndex {
         continue
       }
 
+      if (this.#clientOwned.has(slot)) continue
+
+
       if (typeof value === "boolean") {
         if (this.setBooleanAttribute(slot, value)) report.applied += 1
         else this.#defer(report, payload, index, "partial-attribute")
@@ -593,6 +625,8 @@ export class SlotIndex {
 
     this.#writeFragment(slot, built)
 
+    slot.branch = value.branch
+
     report.applied += 1
 
     if (value.slots) {
@@ -620,9 +654,15 @@ export class SlotIndex {
     for (const key of wanted) {
       const item = slot.items.get(key)
 
-      if (item) {
-        this.#applySlots(payload, item.slots, value.items[key], report, mode)
-      }
+      if (!item) continue
+
+      const { [SEEDS_KEY]: seeds, ...slots } = value.items[key] as PayloadSlots & { [SEEDS_KEY]?: Record<string, unknown> }
+
+      // A row the client built has no `herb-seeds` comment of its own, so the response is where
+      // its seeded states come from.
+      if (seeds) item.seeds = { ...(item.seeds ?? {}), ...seeds }
+
+      this.#applySlots(payload, item.slots, slots, report, mode)
     }
   }
 
@@ -1245,13 +1285,17 @@ export class SlotIndex {
     if (!region) return false
 
     this.#record(() => {
-      const before = slot.branch
+      const before = this.#current(slot)
+      const beforeBranch = slot.branch
       const address = this.#addressOf(slot)
 
       return () => {
         const live = this.#slotAt(address)
 
-        if (live) this.switchBranch(live, before)
+        if (!live) return
+
+        this.update(live, before)
+        live.branch = beforeBranch
       }
     })
 
@@ -1269,6 +1313,8 @@ export class SlotIndex {
     if (!built) return false
 
     this.#writeFragment(slot, built)
+
+    slot.branch = branch
 
     return true
   }
@@ -1460,11 +1506,26 @@ export class SlotIndex {
         continue
       }
 
+      const seeds = SEEDS.exec(data)
+
+      if (seeds) {
+        const holder = openItems[openItems.length - 1]?.item ?? openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
+
+        if (holder) holder.seeds = { ...(holder.seeds ?? {}), ...parseSeeds(seeds[1]) }
+
+        this.#seen.add(comment)
+
+        continue
+      }
+
       const branch = BRANCH.exec(data)
 
       if (branch) {
+        const index = Number(branch[1])
         const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
-        const slot = region?.slots.get(Number(branch[1]))
+        const item = openItems[openItems.length - 1]?.item ?? (region ? this.#enclosingItem(region, comment) : null)
+        const holder = item ?? region
+        const slot = openSlots.find((candidate) => candidate.index === index)?.slot ?? holder?.slots.get(index)
 
         if (slot && /^\d+$/.test(branch[2])) slot.branch = Number(branch[2])
 
@@ -1547,7 +1608,9 @@ export class SlotIndex {
 
     for (const entry of anchorEntries(element)) {
       const [index, type, ...name] = entry.split(":")
-      const kind = (type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE ? ("content" as const) : ("element" as const)
+      const kind = CONTENT_SLOT_TYPES.includes((type as SlotType) ?? DEFAULT_SLOT_TYPE)
+        ? ("content" as const)
+        : ("element" as const)
 
       this.#attach(
         region,
@@ -1707,6 +1770,16 @@ export class SlotIndex {
       yield node as Comment | Element
       node = walker.nextNode()
     }
+  }
+}
+
+function parseSeeds(json: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(json) as unknown
+
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {}
+  } catch {
+    return {}
   }
 }
 

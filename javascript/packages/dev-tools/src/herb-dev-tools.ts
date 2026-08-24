@@ -12,6 +12,8 @@ import type { RuntimeDiagnostic } from './runtime/report.js'
 
 const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
 
+export const DEV_TOOLS_START_EVENT = 'herb:dev-tools-start'
+
 export interface HerbDevToolsOptions {
   projectPath?: string
   devServer?: boolean | HerbClientOptions
@@ -41,6 +43,10 @@ export class HerbDevTools {
     window.HerbDevTools = devTools
 
     devTools.setup()
+
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent(DEV_TOOLS_START_EVENT, { detail: devTools }))
+    }
 
     return devTools
   }

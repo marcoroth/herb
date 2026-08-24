@@ -40,8 +40,9 @@ class HeadOnlyElementsVisitor extends ElementStackVisitor {
     if (tagName && isHeadOnlyTag(tagName)) {
       const isAllowedInSVG = (tagName === "title" || tagName === "style") && this.isInsideElement("svg")
       const isMetaWithItemprop = tagName === "meta" && hasAttribute(node, "itemprop")
+      const isScopedStyle = tagName === "style" && hasAttribute(node, "scoped")
 
-      if (!isAllowedInSVG && !isMetaWithItemprop) {
+      if (!isAllowedInSVG && !isMetaWithItemprop && !isScopedStyle) {
         const { verdict, chain } = this.placementAcrossCallers(inTheBodyNotTheHead)
         const message = `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`
 

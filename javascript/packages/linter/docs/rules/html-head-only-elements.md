@@ -11,6 +11,7 @@ Elements like `<title>`, `<meta>`, `<base>`, `<link>`, and `<style>` are permitt
 > [!NOTE] Exceptions
 > - `<title>` elements are allowed inside `<svg>` elements for accessibility purposes.
 > - `<meta>` elements with the `itemprop` attribute are allowed in the `<body>` for [microdata](https://html.spec.whatwg.org/multipage/microdata.html#the-itemprop-attribute) markup (e.g., Schema.org structured data).
+> - `<style scoped>` blocks are allowed in the `<body>`. They style the file they were written in, so the body is where they belong.
 
 ## Rationale
 
@@ -54,6 +55,16 @@ Placing these elements outside `<head>` leads to invalid HTML and undefined beha
     <title>Chart Title</title>
     <rect width="100" height="100" />
   </svg>
+</body>
+```
+
+```erb
+<body>
+  <style scoped>
+    .card { color: red; }
+  </style>
+
+  <div class="card">Confined to this file</div>
 </body>
 ```
 

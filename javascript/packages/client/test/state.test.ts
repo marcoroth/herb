@@ -362,6 +362,22 @@ describe("keeping commands out of the address bar", () => {
     window.history.replaceState({}, "", "/posts")
   })
 
+  test("keeps a param that appeared after adoption", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+
+    state.adopt()
+
+    window.history.replaceState({}, "", "/posts?modal=1")
+
+    await state.set("name", "Ada")
+
+    const params = new URLSearchParams(window.location.search)
+
+    expect(params.get("modal")).toBe("1")
+    expect(params.get("name")).toBe("Ada")
+  })
+
   test("persists a key the map names", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
     const state = new SlotState(slots, { persist: "known", transport: async () => null })

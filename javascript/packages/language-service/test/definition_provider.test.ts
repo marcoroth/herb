@@ -49,6 +49,44 @@ describe("DefinitionProvider", () => {
     return document.getText(link.originSelectionRange)
   }
 
+  describe("herb declarations", () => {
+    function targeted(service: DefinitionProvider, content: string, target: string, offset = 1) {
+      const document = TextDocument.create(VIEW_URI, "erb", 1, content)
+      const position = document.positionAt(content.indexOf(target) + offset)
+      const links = service.getDefinition(document, position, { framework: "actionview" })
+
+      return links.map(link => document.getText(link.targetSelectionRange))
+    }
+
+    it("jumps from a state read to its declaration", () => {
+      const service = createService()
+      const content = '<%# herb:state (pending: false) %>\n<p><%= pending? %></p>'
+
+      expect(targeted(service, content, "pending?")).toEqual(["pending"])
+    })
+
+    it("jumps from an action attribute to the declaration", () => {
+      const service = createService()
+      const content = '<%# herb:state (open: false) %>\n<button data-herb-toggle="open">x</button>'
+
+      expect(targeted(service, content, 'toggle="open', 8)).toEqual(["open"])
+    })
+
+    it("jumps from the default value to the declaration", () => {
+      const service = createService()
+      const content = '<%# herb:state (open: false) %>\n<p><%= open %></p>'
+
+      expect(targeted(service, content, "false")).toEqual(["open"])
+    })
+
+    it("jumps from data-herb-into to the collection it names", () => {
+      const service = createService()
+      const content = '<ul data-herb-name="messages"><% @m.each do |m| %><li id="<%= m %>">x</li><% end %></ul>\n<form data-herb-into="messages"></form>'
+
+      expect(targeted(service, content, "data-herb-into")).toEqual(["messages"])
+    })
+  })
+
   describe("qualified partial names", () => {
     it("resolves a partial relative to app/views", () => {
       const service = createService("/project/app/views/events/_featured_home.html.erb")

@@ -1,23 +1,25 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, declaredKind, isActionAttribute, kindWithArticle } from "../utils/state-directives-utils.js"
+import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, collectCountedFolds, declaredKind, isActionAttribute, isDerived, kindWithArticle } from "../utils/state-directives-utils.js"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "@herb-tools/client/directives"
 
 import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBBlockNode, HTMLOpenTagNode, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBBlockNode, HTMLOpenTagNode, HTMLAttributeNode, ERBOpenTagNode } from "@herb-tools/core"
 import type { ActionClause, ActionAttribute } from "../utils/state-directives-utils.js"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 class StateValidActionsVisitor extends BaseRuleVisitor {
   private states: StateScopeMap
+  private counted: Set<string>
   private stack: (ERBBlockNode | null)[] = [null]
 
-  constructor(ruleName: string, states: StateScopeMap, context?: Partial<LintContext>) {
+  constructor(ruleName: string, states: StateScopeMap, counted: Set<string>, context?: Partial<LintContext>) {
     super(ruleName, context)
 
     this.states = states
+    this.counted = counted
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -37,6 +39,17 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     })
 
     super.visitHTMLOpenTagNode(node)
+  }
+
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    forEachAttribute(node, (attribute) => {
+      const name = getAttributeName(attribute)
+
+      if (name && isActionAttribute(name)) this.checkAction(attribute, name)
+      if (name === BY_ATTRIBUTE) this.checkBy(attribute)
+    })
+
+    super.visitERBOpenTagNode(node)
   }
 
   private checkAction(attribute: HTMLAttributeNode, name: ActionAttribute): void {
@@ -85,7 +98,27 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     for (const stateName of names(clause.rest)) {
       const declaration = this.declarationOf(attribute, stateName)
 
-      if (!declaration || !schema.needs) continue
+      if (!declaration) continue
+
+      if (isDerived(declaration)) {
+        this.addOffense(
+          `\`${name}\` on \`${stateName}\` can never work, because \`${stateName}\` is derived from \`${declaration.defaultSource}\`. Write the states it reads instead.`,
+          attribute.location,
+        )
+
+        continue
+      }
+
+      if (this.counted.has(stateName)) {
+        this.addOffense(
+          `\`${name}\` on \`${stateName}\` can never work, because \`${stateName}\` is counted from the template's loop. Write the item states its condition reads instead.`,
+          attribute.location,
+        )
+
+        continue
+      }
+
+      if (!schema.needs) continue
 
       const kind = declaredKind(declaration)
 
@@ -105,6 +138,15 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
   private checkAssignment(attribute: HTMLAttributeNode, assignment: string): void {
     const separator = assignment.indexOf("=")
 
+    if (assignment.trim() === "") {
+      this.addOffense(
+        "`data-herb-set` has an empty clause. Remove the stray comma or space, since every clause has to be a `state=value` pair.",
+        attribute.location,
+      )
+
+      return
+    }
+
     if (separator < 1) {
       this.addOffense(
         `\`${assignment.trim()}\` in \`data-herb-set\` is not a \`state=value\` pair. Write the value to set, like \`${assignment.trim()}=true\`, or use \`data-herb-toggle\` to flip a boolean.`,
@@ -118,7 +160,27 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
     const raw = unquote(assignment.slice(separator + 1).trim())
     const declaration = this.declarationOf(attribute, name)
 
-    if (!declaration || raw === "$value") return
+    if (!declaration) return
+
+    if (isDerived(declaration)) {
+      this.addOffense(
+        `\`${name}=${raw}\` can never work, because \`${name}\` is derived from \`${declaration.defaultSource}\`. Write the states it reads instead.`,
+        attribute.location,
+      )
+
+      return
+    }
+
+    if (this.counted.has(name)) {
+      this.addOffense(
+        `\`${name}=${raw}\` can never work, because \`${name}\` is counted from the template's loop. Write the item states its condition reads instead.`,
+        attribute.location,
+      )
+
+      return
+    }
+
+    if (raw === "$value") return
 
     const kind = declaredKind(declaration)
 
@@ -173,6 +235,7 @@ export class HerbStateValidActionsRule extends ParserRule {
   get parserOptions(): Partial<ParserOptions> {
     return {
       strict_locals: true,
+      action_view_helpers: true,
     }
   }
 
@@ -185,7 +248,8 @@ export class HerbStateValidActionsRule extends ParserRule {
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const states = StateScopeMap.collect(result.value)
-    const visitor = new StateValidActionsVisitor(this.ruleName, states, context)
+    const counted = new Set(collectCountedFolds(result.value, states).map((fold) => fold.name))
+    const visitor = new StateValidActionsVisitor(this.ruleName, states, counted, context)
 
     visitor.visit(result.value)
 

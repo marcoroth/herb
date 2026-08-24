@@ -266,6 +266,11 @@ module Herb
       # : (Integer) -> void
       def scope_item_end: (Integer) -> void
 
+      # A row the client builds from the parked skeleton carries no `herb-seeds` comment, so the
+      # values response is the only place it can learn what the server seeded its states with.
+      # : (Integer) -> String
+      def item_seeds: (Integer) -> String
+
       # : (Integer) -> void
       def scope_close_collection: (Integer) -> void
 

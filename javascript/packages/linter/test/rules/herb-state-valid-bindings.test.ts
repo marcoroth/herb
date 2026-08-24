@@ -86,4 +86,39 @@ describe("HerbStateValidBindingsRule", () => {
       <% end %>
     `)
   })
+  test("flags a control bound to a derived state", () => {
+    expectError("`checked` binds the derived state `busy`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <input type="checkbox" checked="<%= busy %>">
+    `)
+  })
+
+  test("flags a textarea bound to a derived state", () => {
+    expectError("`<textarea>` binds the derived state `copy`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "", copy: draft) %>
+      <textarea><%= copy %></textarea>
+    `)
+  })
+  test("flags a control bound to a counted state", () => {
+    expectError("`value` binds the counted state `total`, and a binding writes back what the user changes. A counted state follows its items, so show the value outside a form control.")
+
+    assertOffenses(dedent`
+      <%# herb:state (total: 0) %>
+      <ul><% @items.each do |item| %><% total += 1 %><li><%= item %></li><% end %></ul>
+      <input type="number" value="<%= total %>">
+    `)
+  })
+  test("checks a binding built by a tag helper", () => {
+    expectError("`value` on `<input>` binds the Boolean state `pending`, and a `value` holds text. Declare it as a String, like `(pending: \"\")`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, draft: "") %>
+      <%= tag.input value: draft %>
+      <%= tag.input value: pending %>
+    `)
+  })
 })

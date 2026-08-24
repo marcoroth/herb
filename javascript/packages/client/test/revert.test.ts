@@ -13,6 +13,8 @@ const PAGE =
   `<!--/herb-slot:0--></ul>` +
   `<div><!--herb-slot:4:conditional--><!--herb-branch:4:1--><i>shown</i><!--/herb-slot:4--></div>` +
   `<section data-herb-slot="5:element">original</section>` +
+  `<div id="cond"><!--herb-slot:6:conditional--><!--herb-branch:6:1--><p data-herb-slot="7:child">typed</p><!--/herb-slot:6--></div>` +
+  `<template data-herb-statics="6:0"><!--herb-branch:6:0--><em>off</em></template>` +
   `<template data-herb-statics="4:0"><!--herb-branch:4:0--><em>hidden</em></template>` +
   `<!--/herb-region:${FILE}-->`
 
@@ -39,6 +41,18 @@ describe("transaction and revert", () => {
 
     expect(document.querySelector("div i")?.textContent).toBe("shown")
     expect(index.slot(FILE, 4)!.branch).toBe(1)
+  })
+
+  test("reverting a branch switch restores the branch's dynamic values", () => {
+    const slot = index.slot(FILE, 6)!
+
+    const { token } = index.transaction(() => index.switchBranch(slot, 0))
+
+    expect(document.querySelector("#cond em")?.textContent).toBe("off")
+
+    index.revert(token!)
+
+    expect(document.querySelector("#cond p")?.textContent).toBe("typed")
   })
 
   test("reverts an element slot update through the rescanned parent", () => {

@@ -2,7 +2,7 @@
  * Static understanding of the vocabulary this runtime executes: the `herb:state` and
  * `herb:slots` comment directives, and the `data-herb-*` action attribute grammar.
  *
- * This entry exists for tooling, the linter and the dev tools consume it, and it never
+ * This entry exists for tooling, the linter and the language service consume it, and it never
  * loads in an application: nothing in the runtime imports this module, so the production
  * entries are unaffected. The clause grammar re-exported here is the exact code
  * `SlotActions` runs, which is what keeps the linter and the runtime from drifting.
@@ -40,6 +40,7 @@ export interface StateDeclaration {
   defaultSource: string
   defaultOffset: number
   kind: StateDefaultKind
+  derived?: DerivedDefault | "mixed" | "forward" | null
 }
 
 export interface StateSignature {
@@ -106,6 +107,27 @@ function parseStateSignature(signature: string, signatureOffset: number): StateS
     })
   }
 
+  const names = declarations.map((declaration) => declaration.name)
+  const resolved = new Map<string, string>()
+
+  for (const [index, declaration] of declarations.entries()) {
+    if (declaration.kind === "bare" || declaration.kind === "seeded") {
+      const outcome = classifyDerivedDefault(declaration.defaultSource, resolved)
+
+      if (outcome === null) {
+        declaration.derived = mentionsAnyState(declaration.defaultSource, names.slice(index + 1)) ? "forward" : null
+      } else {
+        declaration.derived = outcome
+      }
+    } else {
+      declaration.derived = null
+    }
+
+    const kind = declaration.derived !== null && typeof declaration.derived === "object" ? declaration.derived.kind : declaration.kind
+
+    resolved.set(declaration.name, kind)
+  }
+
   return { signature, signatureOffset, declarations, malformed: null }
 }
 
@@ -126,6 +148,177 @@ export function classifyDefault(source: string): StateDefaultKind {
   if (BARE_IDENTIFIER.test(source)) return "bare"
 
   return "seeded"
+}
+
+export type DerivedComparand = string | null | { state: string }
+
+export type DerivedCondition =
+  | [string, DerivedComparand]
+  | [string, DerivedComparand, string]
+  | { all?: DerivedCondition[]; any?: DerivedCondition[] }
+
+export interface DerivedDefault {
+  kind: "boolean" | "integer" | "string" | "symbol" | "nil" | "seeded"
+  condition: DerivedCondition
+  sources: string[]
+}
+
+const MIRRORED_COMPARISONS: Record<string, string> = { ">": "<", ">=": "<=", "<": ">", "<=": ">=" }
+const LITERAL_DEFAULT_KINDS = new Set(["boolean", "integer", "string", "symbol", "nil"])
+
+export function classifyDerivedDefault(source: string, declared: ReadonlyMap<string, string>): DerivedDefault | "mixed" | null {
+  const parsed = parseDerivedCondition(source.trim(), declared)
+
+  if (parsed === null && mentionsAnyState(source, [...declared.keys()])) return "mixed"
+
+  return parsed
+}
+
+function parseDerivedCondition(source: string, declared: ReadonlyMap<string, string>): DerivedDefault | "mixed" | null {
+  const trimmed = unwrapParentheses(source.trim())
+
+  for (const [operator, key] of [["||", "any"], ["&&", "all"]] as const) {
+    const parts = splitTopLevelOperator(trimmed, operator)
+
+    if (parts.length > 1) {
+      const conditions: DerivedCondition[] = []
+      const sources: string[] = []
+
+      for (const part of parts) {
+        const parsed = parseDerivedCondition(part, declared)
+
+        if (parsed === null || parsed === "mixed") return parsed === "mixed" ? "mixed" : null
+
+        conditions.push(parsed.condition)
+        sources.push(...parsed.sources)
+      }
+
+      return { kind: "boolean", condition: { [key]: conditions }, sources: [...new Set(sources)] }
+    }
+  }
+
+  const comparison = splitTopLevelComparison(trimmed)
+
+  if (comparison) {
+    const [left, operator, right] = comparison
+    const leftState = derivedStateSide(left, declared)
+    const rightState = derivedStateSide(right, declared)
+
+    if (leftState && rightState) {
+      const spelled = operator === "==" ? undefined : operator
+      const condition: DerivedCondition = spelled ? [leftState, { state: rightState }, spelled] : [leftState, { state: rightState }]
+
+      return { kind: "boolean", condition, sources: [...new Set([leftState, rightState])] }
+    }
+
+    const state = leftState ?? rightState
+
+    if (!state) return null
+
+    const literal = (leftState ? right : left).trim()
+
+    if (!LITERAL_DEFAULT_KINDS.has(classifyDefault(literal))) return null
+
+    let spelled = operator === "==" ? undefined : operator
+
+    if (spelled && rightState && spelled !== "!=") spelled = MIRRORED_COMPARISONS[spelled]
+
+    const condition: DerivedCondition = spelled ? [state, literal, spelled] : [state, literal]
+
+    return { kind: "boolean", condition, sources: [state] }
+  }
+
+  const bare = bareReadName(trimmed)
+
+  if (bare === null) return null
+
+  const kind = declared.get(bare)
+
+  if (kind === undefined) return null
+
+  if (trimmed.endsWith("?")) {
+    return kind === "boolean" || kind === "seeded" || kind === "bare"
+      ? { kind: "boolean", condition: [bare, null], sources: [bare] }
+      : "mixed"
+  }
+
+  const resolved = LITERAL_DEFAULT_KINDS.has(kind) ? kind as DerivedDefault["kind"] : "seeded"
+
+  return { kind: resolved, condition: [bare, null], sources: [bare] }
+}
+
+function derivedStateSide(side: string, declared: ReadonlyMap<string, string>): string | null {
+  const bare = bareReadName(side.trim())
+
+  if (bare === null || !declared.has(bare)) return null
+
+  return bare
+}
+
+function unwrapParentheses(source: string): string {
+  let current = source
+
+  while (current.startsWith("(") && current.endsWith(")") && balanced(current.slice(1, -1))) {
+    current = current.slice(1, -1).trim()
+  }
+
+  return current
+}
+
+function splitTopLevelOperator(source: string, operator: "||" | "&&"): string[] {
+  const parts: string[] = []
+  let depth = 0
+  let start = 0
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]
+
+    if (character === '"' || character === "'") {
+      index = skipString(source, index) - 1
+
+      continue
+    }
+
+    if (character === "(" || character === "[" || character === "{") depth += 1
+    else if (character === ")" || character === "]" || character === "}") depth -= 1
+    else if (depth === 0 && character === operator[0] && source[index + 1] === operator[1]) {
+      parts.push(source.slice(start, index).trim())
+      index += 1
+      start = index + 1
+    }
+  }
+
+  parts.push(source.slice(start).trim())
+
+  return parts
+}
+
+function splitTopLevelComparison(source: string): [string, string, string] | null {
+  let depth = 0
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]
+
+    if (character === '"' || character === "'") {
+      index = skipString(source, index) - 1
+
+      continue
+    }
+
+    if (character === "(" || character === "[" || character === "{") depth += 1
+    else if (character === ")" || character === "]" || character === "}") depth -= 1
+    else if (depth === 0) {
+      for (const operator of ["==", "!=", ">=", "<=", ">", "<"]) {
+        if (!source.startsWith(operator, index)) continue
+        if (operator === "<" && source[index + 1] === "<") break
+        if (operator === ">" && source[index + 1] === ">") break
+
+        return [source.slice(0, index), operator, source.slice(index + operator.length)]
+      }
+    }
+  }
+
+  return null
 }
 
 export function mentionsAnyState(source: string, stateNames: readonly string[]): boolean {

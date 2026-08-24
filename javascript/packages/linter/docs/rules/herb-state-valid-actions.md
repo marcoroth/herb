@@ -4,7 +4,7 @@
 
 ## Description
 
-Validates the declarative action attributes `data-herb-set`, `data-herb-toggle`, `data-herb-increment`, `data-herb-decrement`, `data-herb-reset` and `data-herb-by`. Clause syntax must parse, quotes must balance, a named state must be declared in a scope enclosing the element, the operation must match the state's declared kind, and a `set` value must parse to that kind.
+Validates the declarative action attributes `data-herb-set`, `data-herb-toggle`, `data-herb-increment`, `data-herb-decrement`, `data-herb-reset` and `data-herb-by`. Clause syntax must parse, quotes must balance, a named state must be declared in a scope enclosing the element, the operation must match the state's declared kind, and a `set` value must parse to that kind. A derived state cannot be the target of any action, since its value follows from the states it reads.
 
 ## Rationale
 

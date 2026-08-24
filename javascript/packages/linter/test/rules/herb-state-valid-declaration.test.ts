@@ -183,4 +183,45 @@ describe("HerbStateValidDeclarationRule", () => {
       <div></div>
     `)
   })
+  test("allows derived states over earlier declarations", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, attempts: 0, sort: "name", busy: pending || failed, many: attempts > 2, named: sort == "name", total: attempts, pred: pending?) %>
+      <div><% if busy %>B<% end %></div>
+      <p><%= total %></p>
+      <span><% if many %>M<% end %></span>
+      <b><% if named %>N<% end %></b>
+      <i><% if pred %>P<% end %></i>
+    `)
+  })
+
+  test("flags a derived default mixing states with other Ruby", () => {
+    expectError("The state `busy` defaults to `pending || current_user.admin?`, which mixes state reads with other Ruby. A derived state reads only other states, and a seed reads none, so split the two apart.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, busy: pending || current_user.admin?) %>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
+
+  test("flags a derived state reading forward", () => {
+    expectError("The state `busy` reads a state that is declared after it. Reorder the signature, since a derived state reads only states declared before it.")
+
+    assertOffenses(dedent`
+      <%# herb:state (busy: pending || failed, pending: false, failed: false) %>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
+
+  test("flags an item state deriving from the region", () => {
+    expectError("The state `mirror` reads `open` from an enclosing scope. Declare it beside its sources, since a derived state reads states declared in its own signature.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <% @rows.each do |row| %>
+        <%# herb:state (mirror: open) %>
+        <span><% if mirror %>M<% end %></span>
+      <% end %>
+      <% if open? %>O<% end %>
+    `)
+  })
 })

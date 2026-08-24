@@ -5,52 +5,65 @@ import { Visitor, RubyReferenceCollector } from "@herb-tools/core"
 import { StrictLocalsCollector } from "./strict_locals_collector"
 
 import { lspPosition, isPositionInRange, nodeToRange } from "./range_utils"
-import { stringIndexFromByteOffset, isERBBlockNode, isERBIterationBlockNode } from "@herb-tools/core"
+import { stringIndexFromByteOffset, isERBBlockNode, isERBIterationBlockNode, isERBContentNode } from "@herb-tools/core"
+import { collectHerbAttributes, collectStateDirectives } from "./herb_attribute_links"
+
+import type { HerbAttributeLinks, AttributeStateUsage } from "./herb_attribute_links"
 
 import type { ParserService } from "./parser_service"
-import type { DocumentNode, Node, RubyReference } from "@herb-tools/core"
+import type { DocumentNode, Node, RubyReference, ERBContentNode } from "@herb-tools/core"
+import type { StateSignature } from "@herb-tools/client/directives"
 
-const PARSER_OPTIONS = { prism_program: true, strict_locals: true } as const
+const PARSER_OPTIONS = { prism_program: true, strict_locals: true, action_view_helpers: true } as const
 
 export interface RubyLocal {
   name: string
   declaration: Range
   usages: Range[]
+  defaultValue?: Range
 }
 
 export class RubyLocalsIndex {
   readonly locals: RubyLocal[]
+  readonly herbAttributes: HerbAttributeLinks
 
-  private constructor(locals: RubyLocal[]) {
+  private constructor(locals: RubyLocal[], herbAttributes: HerbAttributeLinks) {
     this.locals = locals
+    this.herbAttributes = herbAttributes
   }
 
   static build(parserService: ParserService, textDocument: TextDocument): RubyLocalsIndex {
     const text = textDocument.getText()
 
+    const empty = { stateUsages: [], slotNames: [] }
+
     const result = parserService.parseContent(text, PARSER_OPTIONS)
-    if (result.failed) return new RubyLocalsIndex([])
+    if (result.failed) return new RubyLocalsIndex([], empty)
 
     const document = result.value as DocumentNode
-    if (!document.prismNode) return new RubyLocalsIndex([])
+    if (!document.prismNode) return new RubyLocalsIndex([], empty)
 
     const references = new RubyReferenceCollector()
 
     references.visit(document.prismNode)
 
     const toRange = (reference: RubyReference) => referenceRange(reference, textDocument, text)
+    const herbAttributes = collectHerbAttributes(document)
 
     return new RubyLocalsIndex([
       ...strictLocals(document, references, toRange),
-      ...blockLocals(document, references, toRange)
-    ])
+      ...blockLocals(document, references, toRange),
+      ...stateLocals(document, references, toRange, herbAttributes.stateUsages)
+    ], herbAttributes)
   }
 
   at(position: Position): RubyLocal | null {
     let best: RubyLocal | null = null
 
     for (const local of this.locals) {
-      if (!isPositionInRange(position, local.declaration) && !local.usages.some(usage => isPositionInRange(position, usage))) continue
+      const onDefault = local.defaultValue !== undefined && isPositionInRange(position, local.defaultValue)
+
+      if (!isPositionInRange(position, local.declaration) && !onDefault && !local.usages.some(usage => isPositionInRange(position, usage))) continue
       if (!best || encloses(best.declaration, local.declaration)) best = local
     }
 
@@ -80,6 +93,36 @@ function blockLocals(document: DocumentNode, references: RubyReferenceCollector,
 
     return { name: binding.name, declaration: range, usages }
   })
+}
+
+function stateLocals(document: DocumentNode, references: RubyReferenceCollector, toRange: (reference: RubyReference) => Range, attributeUsages: AttributeStateUsage[]): RubyLocal[] {
+  return collectStateDirectives(document).flatMap(({ node, signature }) =>
+    signature.declarations.map(declaration => ({
+      name: declaration.name,
+      declaration: contentRange(node, declaration.nameOffset, declaration.name.length),
+      usages: [
+        ...references.bareCalls
+          .filter(call => call.name === declaration.name || call.name === `${declaration.name}?`)
+          .map(toRange),
+        ...attributeUsages.filter(usage => usage.name === declaration.name).map(usage => usage.range)
+      ],
+      defaultValue: declaration.defaultSource === "" ? undefined : contentRange(node, declaration.defaultOffset, declaration.defaultSource.length)
+    }))
+  )
+}
+
+function contentRange(node: ERBContentNode, offset: number, length: number): Range {
+  const content = node.content
+
+  if (!content) return nodeToRange(node)
+
+  const before = content.value.slice(0, offset)
+  const lines = before.split("\n")
+  const line = content.location.start.line + lines.length - 1
+  const column = lines.length === 1 ? content.location.start.column + before.length : lines[lines.length - 1].length
+  const from = lspPosition({ line, column })
+
+  return Range.create(from, Position.create(from.line, from.character + length))
 }
 
 function blockRanges(document: DocumentNode): Range[] {

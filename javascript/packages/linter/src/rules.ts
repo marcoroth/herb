@@ -91,10 +91,17 @@ import { HerbDisableCommentOutOfDateRule } from "./rules/herb-disable-comment-ou
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
+import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
+import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
 import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
 import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
 import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
+import { HerbScopedStylePreferSingleRootRule } from "./rules/herb-scoped-style-prefer-single-root.js"
+import { HerbScopedStyleRequireTopLevelRule } from "./rules/herb-scoped-style-require-top-level.js"
+import { HerbScopedStyleSingleDeclarationRule } from "./rules/herb-scoped-style-single-declaration.js"
+import { HerbStateSingleDeclarationRule } from "./rules/herb-state-single-declaration.js"
 import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
 import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
 import { HerbValidSlotNamesRule } from "./rules/herb-valid-slot-names.js"
@@ -252,10 +259,17 @@ export const rules: RuleClass[] = [
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
   HerbIntoRequiresCollectionRule,
+  HerbSlotsValidModeRule,
+  HerbStateNoSilentReadsRule,
+  HerbStateNoServerWritesRule,
   HerbStateNoUnusedStatesRule,
   HerbStateRequiresClientModeRule,
   HerbStateValidActionsRule,
   HerbStateValidBindingsRule,
+  HerbScopedStylePreferSingleRootRule,
+  HerbScopedStyleRequireTopLevelRule,
+  HerbScopedStyleSingleDeclarationRule,
+  HerbStateSingleDeclarationRule,
   HerbStateValidDeclarationRule,
   HerbStateValidReadsRule,
   HerbValidSlotNamesRule,
