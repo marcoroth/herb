@@ -27,6 +27,12 @@ module Herb
       # : (?max_diagnostics: Integer) -> void
       def initialize: (?max_diagnostics: Integer) -> void
 
+      # : (Symbol) { () -> untyped } -> untyped
+      def channel: (Symbol) { () -> untyped } -> untyped
+
+      # : () -> Array[untyped]
+      def channels: () -> Array[untyped]
+
       # : (Herb::Diagnostic) -> Herb::Diagnostic
       def add: (Herb::Diagnostic) -> Herb::Diagnostic
 
@@ -47,6 +53,9 @@ module Herb
 
       # : () -> bool
       def empty?: () -> bool
+
+      # : () -> bool
+      def reportable?: () -> bool
 
       # : () -> Hash[Symbol, untyped]
       def to_h: () -> Hash[Symbol, untyped]

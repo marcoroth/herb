@@ -32,6 +32,17 @@ module Herb
         @sources = {} #: Hash[String, String]
         @nodes = {} #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
         @render_tree = [] #: Array[Hash[Symbol, untyped]]
+        @channels = {} #: Hash[Symbol, untyped]
+      end
+
+      #: (Symbol) { () -> untyped } -> untyped
+      def channel(name, &build)
+        @channels[name] ||= build.call
+      end
+
+      #: () -> Array[untyped]
+      def channels
+        @channels.each_value.reject(&:empty?)
       end
 
       #: (Herb::Diagnostic) -> Herb::Diagnostic
@@ -91,7 +102,12 @@ module Herb
 
       #: () -> bool
       def empty?
-        @diagnostics.empty? && @nodes.empty?
+        !reportable? && channels.empty?
+      end
+
+      #: () -> bool
+      def reportable?
+        !(@diagnostics.empty? && @nodes.empty?)
       end
 
       #: () -> Hash[Symbol, untyped]

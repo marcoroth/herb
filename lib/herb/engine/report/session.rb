@@ -193,6 +193,11 @@ module Herb
           report.source(template, source)
         end
 
+        #: (Symbol) { () -> untyped } -> untyped
+        def channel(name, &)
+          report.channel(name, &)
+        end
+
         #: () -> Array[Herb::Diagnostic]
         def diagnostics
           report.diagnostics

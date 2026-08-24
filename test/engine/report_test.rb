@@ -4,6 +4,19 @@ require_relative "../test_helper"
 
 module Engine
   class ReportTest < Minitest::Spec
+    class Marker
+      attr_reader :entries, :anchor #: Array[String]
+
+      def initialize(anchor = :body)
+        @anchor = anchor
+        @entries = []
+      end #: Symbol
+
+      def add(entry) = @entries << entry
+      def empty? = @entries.empty?
+      def to_html = "<!--#{@entries.join(",")}-->"
+    end
+
     def report
       @report ||= Herb::Engine::Report.new
     end
@@ -154,6 +167,60 @@ module Engine
 
         assert_equal "https://herb-tools.dev/diagnostics/x", entry["docs_url"]
         refute entry.key?("docsUrl")
+      end
+    end
+
+    describe "channels" do
+      test "builds a channel the first time its name is asked for" do
+        built = 0
+
+        2.times do
+          report.channel(:marker) do
+            built += 1
+
+            Marker.new
+          end
+        end
+
+        assert_equal 1, built
+      end
+
+      test "answers the same channel every time" do
+        assert_same report.channel(:marker) { Marker.new }, report.channel(:marker) { Marker.new }
+      end
+
+      test "keeps a channel for each name" do
+        report.channel(:one) { Marker.new }.add("a")
+        report.channel(:two) { Marker.new }.add("b")
+
+        assert_equal 2, report.channels.length
+      end
+
+      test "leaves out a channel that collected nothing" do
+        report.channel(:empty) { Marker.new }
+        report.channel(:filled) { Marker.new }.add("a")
+
+        assert_equal ["<!--a-->"], report.channels.map(&:to_html)
+      end
+
+      test "is empty while every channel is" do
+        report.channel(:marker) { Marker.new }
+
+        assert_predicate report, :empty?
+
+        report.channel(:marker) { Marker.new }.add("a")
+
+        refute_predicate report, :empty?
+      end
+
+      test "a channel does not make it reportable, which is about diagnostics" do
+        report.channel(:marker) { Marker.new }.add("a")
+
+        refute_predicate report, :reportable?
+      end
+
+      test "knows nothing about what a channel holds" do
+        assert_empty Herb::Engine::Report.instance_methods(false).grep(/marker/)
       end
     end
   end
