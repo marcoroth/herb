@@ -19,10 +19,10 @@ class HTMLNoStyleElementsVisitor extends BaseRuleVisitor {
 
   private suggestion(): string {
     if (this.context.framework === "actionview") {
-      return "Extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`."
+      return "If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`."
     }
 
-    return "Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline."
+    return "If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline."
   }
 }
 
