@@ -21,7 +21,7 @@ describe("a branch whose markup was never in the DOM", () => {
 
     expect(slot.type).toBe("conditional")
     expect(slot.branch).toBeNull()
-    expect(index.rangeFor(slot).toString()).toBe("")
+    expect(index.rangeOf(slot).toString()).toBe("")
     expect(index.descendantsOf(slot)).toEqual([])
   })
 
@@ -35,7 +35,7 @@ describe("a branch whose markup was never in the DOM", () => {
     index.update(slot, `<!--herb-branch:0:1--><b><!--herb-slot:3-->secret<!--/herb-slot:3--></b>`)
 
     expect(index.slot(FILE, 3)?.type).toBe("child")
-    expect(index.rangeFor(index.slot(FILE, 3)!).toString()).toBe("secret")
+    expect(index.rangeOf(index.slot(FILE, 3)!).toString()).toBe("secret")
     expect(index.slot(FILE, 3)?.parent).toBe(slot)
     expect(index.slot(FILE, 0)?.branch).toBe(1)
   })
@@ -77,13 +77,13 @@ describe("markup parked in a template", () => {
     expect(index.slot(FILE, 3)).toBeNull()
 
     const parked = index.parked(FILE, "0:1")!.cloneNode(true) as DocumentFragment
-    const range = index.rangeFor(index.slot(FILE, 0)!)
+    const range = index.rangeOf(index.slot(FILE, 0)!)
 
     range.insertNode(parked)
     index.scan(document.body)
 
     expect(index.slot(FILE, 3)?.type).toBe("child")
-    expect(index.rangeFor(index.slot(FILE, 3)!).toString()).toBe("secret")
+    expect(index.rangeOf(index.slot(FILE, 3)!).toString()).toBe("secret")
   })
 })
 
@@ -158,7 +158,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
     const built = index.materialize(FILE, "0:1", { 3: "Marco" })!
 
     index.update(index.slot(FILE, 0)!, "")
-    index.rangeFor(index.slot(FILE, 0)!).insertNode(built)
+    index.rangeOf(index.slot(FILE, 0)!).insertNode(built)
     index.scan(document.body)
 
     expect(document.querySelector("b")?.textContent).toBe("Hello Marco")
@@ -339,7 +339,7 @@ describe("statics parked once for the page", () => {
 
     const built = index.materialize(FILE, "0:1", { 3: "Marco" })!
 
-    index.rangeFor(index.slot(FILE, 0)!).insertNode(built)
+    index.rangeOf(index.slot(FILE, 0)!).insertNode(built)
     index.scan(document.body)
 
     expect(document.querySelector("b")?.textContent).toBe("Hello Marco")
@@ -389,7 +389,7 @@ describe("output the compiler actually emits", () => {
     const built = index.materialize(VIEW, "0:0", { 1: "Marco" })!
 
     index.update(slot, "")
-    index.rangeFor(slot).insertNode(built)
+    index.rangeOf(slot).insertNode(built)
     index.scan(document.body)
 
     expect(document.querySelector("div")?.textContent).toBe("Hi Marco")
@@ -406,13 +406,13 @@ describe("output the compiler actually emits", () => {
 
     expect(index.parkedKeys(VIEW)).toEqual(["0:0", "1:0"])
 
-    index.rangeFor(index.slot(VIEW, 0)!).insertNode(index.materialize(VIEW, "0:0")!)
+    index.rangeOf(index.slot(VIEW, 0)!).insertNode(index.materialize(VIEW, "0:0")!)
     index.scan(document.body)
 
     expect(document.querySelector("p")?.textContent).toBe("outer")
     expect(index.slot(VIEW, 1)?.type, "the inner conditional is a slot of its own now").toBe("conditional")
 
-    index.rangeFor(index.slot(VIEW, 1)!).insertNode(index.materialize(VIEW, "1:0")!)
+    index.rangeOf(index.slot(VIEW, 1)!).insertNode(index.materialize(VIEW, "1:0")!)
     index.scan(document.body)
 
     expect(document.querySelector("p")?.textContent).toBe("deepouter")
@@ -425,7 +425,7 @@ describe("output the compiler actually emits", () => {
     document.body.innerHTML = `<!--herb-region:${VIEW}:cf7db90d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:cf7db90d"><!--herb-branch:0:0--><span class="" data-herb-slot="1:attribute:class 2:child"></span></template>`
 
     index.scan(document.body)
-    index.rangeFor(index.slot(VIEW, 0)!).insertNode(index.materialize(VIEW, "0:0")!)
+    index.rangeOf(index.slot(VIEW, 0)!).insertNode(index.materialize(VIEW, "0:0")!)
     index.scan(document.body)
 
     const attribute = index.slot(VIEW, 1)!
@@ -464,7 +464,7 @@ describe("keeping a branch that rendered", () => {
 
     const built = index.materialize(VIEW, "0:1", { 1: "Alice" })!
 
-    index.rangeFor(index.slot(VIEW, 0)!).insertNode(built)
+    index.rangeOf(index.slot(VIEW, 0)!).insertNode(built)
     index.scan(document.body)
 
     expect(document.querySelector("i")?.textContent).toBe("Hi Alice")
@@ -542,7 +542,7 @@ describe("switching a branch from the client", () => {
 
     expect(index.switchBranch(slot, 0)).toBe(true)
 
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("over")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("over")
     expect(index.slot(FILE, 0)?.branch).toBe(0)
     expect(seen.map((detail) => detail.operation)).toEqual(["branch", "built"])
     expect(seen[0]).toMatchObject({ file: FILE, index: 0, operation: "branch" })
@@ -558,7 +558,7 @@ describe("switching a branch from the client", () => {
 
     expect(index.branchesFor(FILE, 0).sort()).toEqual([0, 1])
     expect(index.switchBranch(index.slot(FILE, 0)!, 1)).toBe(true)
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("under")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("under")
   })
 
   test("does nothing when the branch it is asked for is the one already shown", () => {
@@ -578,7 +578,7 @@ describe("switching a branch from the client", () => {
     index.scan(document.body)
 
     expect(index.switchBranch(index.slot(FILE, 0)!, 7)).toBe(false)
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("under")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("under")
   })
 })
 
@@ -615,7 +615,7 @@ describe("a conditional inside a collection item", () => {
     const slot = index.slotInItem(ITEMS_FILE, 0, "1", 6)!
 
     expect(index.switchBranch(slot, 2)).toBe(false)
-    expect(index.rangeFor(slot).toString()).toContain("08:15")
+    expect(index.rangeOf(slot).toString()).toContain("08:15")
   })
 })
 
@@ -651,9 +651,9 @@ describe("a branch written into an item keeps its values", () => {
     })
 
     expect(slot.branch).toBe(2)
-    expect(index.rangeFor(slot).toString()).toContain("08:15")
+    expect(index.rangeOf(slot).toString()).toContain("08:15")
 
     expect(index.switchBranch(slot, 2)).toBe(false)
-    expect(index.rangeFor(slot).toString()).toContain("08:15")
+    expect(index.rangeOf(slot).toString()).toContain("08:15")
   })
 })

@@ -35,7 +35,7 @@ let state: SlotState
 function textOf(key: string): string {
   const item = slots.regionsFor(FILE)[0].slots.get(0)!.items.get(key)!
 
-  return slots.rangeFor(item.slots.get(2)!).toString()
+  return slots.rangeOf(item.slots.get(2)!).toString()
 }
 
 beforeEach(() => {

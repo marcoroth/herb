@@ -140,6 +140,6 @@ describe("saying what changed", () => {
 
     index.update(index.slot(FILE, 0)!, "there")
 
-    expect(index.rangeFor(seen[0].slot!).toString()).toBe("there")
+    expect(index.rangeOf(seen[0].slot!).toString()).toBe("there")
   })
 })

@@ -43,7 +43,7 @@ function mounted(html: string) {
 }
 
 function text(index: number, slots: SlotIndex): string {
-  return slots.rangeFor(slots.slot(FILE, index)!).toString()
+  return slots.rangeOf(slots.slot(FILE, index)!).toString()
 }
 
 function input(): HTMLInputElement {

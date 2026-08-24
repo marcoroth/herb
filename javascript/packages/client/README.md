@@ -90,11 +90,11 @@ slots.setAttribute(slot, "active")
 
 Markup is parsed against the range it is going into, so a replacement `<tr>` lands correctly inside a table.
 
-`rangeFor` gives the live range a slot covers, when you would rather write the update yourself:
+`rangeOf` gives the live range a slot or an item covers, when you would rather write the update yourself:
 
 ```typescript
-slots.rangeFor(slot)
-slots.rangeForItem(item)
+slots.rangeOf(slot)
+slots.rangeOf(item)
 ```
 
 ## Applying a whole payload

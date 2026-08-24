@@ -13,7 +13,7 @@ module Herb
     # Says which state each of a template's slots reads, and where that slot's next value can come
     # from:
     #
-    #     Herb::Engine::SlotDependencies.new(project_path).for("app/views/posts/index.html.erb")
+    #     Herb::Engine::SlotDependencies.new(project_path).slots_for("app/views/posts/index.html.erb")
     #     #=> { 0 => { state: ["@items"], mode: :structural },
     #           1 => { state: ["@items"], mode: :derived } }
     #
@@ -100,7 +100,7 @@ module Herb
       end
 
       #: (String) -> Hash[Integer, Hash[Symbol, untyped]]
-      def for(file_path)
+      def slots_for(file_path)
         template(absolute(file_path))[:slots]
       end
 

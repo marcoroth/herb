@@ -1,11 +1,10 @@
 import { HERB_ATTRIBUTES } from "./attributes"
 import { report } from "./report"
+import { scopeOf } from "./state"
 
 import type { SlotIndex } from "./slot-index"
 import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot } from "./types"
-import { scopeOf } from "./state"
-
-import type { SlotState, StateScope, StateValues } from "./state"
+import type { SlotState, StateValues } from "./state"
 
 export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
 export type MutationTransport = (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>

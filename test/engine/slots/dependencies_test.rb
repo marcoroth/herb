@@ -26,7 +26,7 @@ module Engine
 
         File.write(path, template)
 
-        Herb::Engine::SlotDependencies.new(@project_path).for(path)
+        Herb::Engine::SlotDependencies.new(@project_path).slots_for(path)
       end
 
       def write(name, template)
@@ -71,7 +71,7 @@ module Engine
         subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
 
         assert_empty subject.across(entry)
-        assert_empty subject.for(entry)
+        assert_empty subject.slots_for(entry)
         assert_nil subject.version_for(entry)
       end
 
@@ -100,7 +100,7 @@ module Engine
         subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
 
         assert_empty subject.across(entry)
-        assert_empty subject.for(entry)
+        assert_empty subject.slots_for(entry)
         assert_nil subject.version_for(entry)
       end
 
@@ -116,8 +116,8 @@ module Engine
           visitor
         }
 
-        rewritten = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).for(path)
-        plain = Herb::Engine::SlotDependencies.new(@project_path).for(path)
+        rewritten = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).slots_for(path)
+        plain = Herb::Engine::SlotDependencies.new(@project_path).slots_for(path)
 
         assert_equal plain.keys.sort, rewritten.keys.sort
         assert_equal(plain.values.map { |slot| slot[:state] }, rewritten.values.map { |slot| slot[:state] })

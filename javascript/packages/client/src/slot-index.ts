@@ -21,7 +21,7 @@
 import { ITEM_STATICS } from "./markers"
 import { HERB_ATTRIBUTES } from "./attributes"
 
-import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, withinBounds, withinRegion, withinRegionRange } from "./anchors"
+import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { applyPayload } from "./apply"
 import { isPayload, leaves } from "./payloads"
@@ -245,12 +245,8 @@ export class SlotIndex {
     return null
   }
 
-  rangeFor(slot: Slot): Range {
-    return rangeOf(slot.anchor)
-  }
-
-  rangeForItem(item: Item): Range {
-    return innerRange(item)
+  rangeOf(target: Slot | Item): Range {
+    return "anchor" in target ? rangeOfAnchor(target.anchor) : innerRange(target)
   }
 
   descendantsOf(slot: Slot): Slot[] {
@@ -721,7 +717,7 @@ export class SlotIndex {
   #writeFragment(slot: Slot, fragment: DocumentFragment): void {
     this.#forgetChildren(slot)
 
-    this.#rewrite(this.rangeFor(slot), fragment, { region: slot.region, slot, item: slot.item })
+    this.#rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: slot.item })
 
     this.#announce(slot, "branch", slot.index)
   }
@@ -761,7 +757,7 @@ export class SlotIndex {
 
       fragment.append(document.createTextNode(text))
 
-      this.#rewrite(this.rangeFor(slot), fragment, { region: slot.region, slot, item: slot.item })
+      this.#rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: slot.item })
     }
 
     this.#announce(slot, "value", slot.index)
@@ -791,7 +787,7 @@ export class SlotIndex {
     return withoutMarkers(this.#current(slot)) === withoutMarkers(value)
   }
 
-  matches(slot: Slot, value: SlotValue): boolean {
+  holds(slot: Slot, value: SlotValue): boolean {
     if (slot.type === "attribute_interpolation") {
       const whole = this.#interpolate(slot, value)
 
@@ -877,7 +873,7 @@ export class SlotIndex {
     this.#forgetChildren(slot)
 
     if (slot.anchor.kind === "element") {
-      const replacement = this.rangeFor(slot).createContextualFragment(html)
+      const replacement = this.rangeOf(slot).createContextualFragment(html)
       const element = slot.anchor.element
       const parent = element.parentNode
 
@@ -891,7 +887,7 @@ export class SlotIndex {
       return this.scan([...parent.childNodes], { region: slot.region, slot: slot.parent, item: slot.item })
     }
 
-    const range = this.rangeFor(slot)
+    const range = this.rangeOf(slot)
     const result = this.#rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item: slot.item })
 
     this.#announce(slot, "value", slot.index)
@@ -907,14 +903,14 @@ export class SlotIndex {
     }
 
     this.#recordSlot(slot, () => {
-      const before = htmlOf(this.rangeForItem(item))
+      const before = htmlOf(this.rangeOf(item))
 
       return (live) => {
         this.updateItem(live, key, before)
       }
     })
 
-    const range = this.rangeForItem(item)
+    const range = this.rangeOf(item)
     const result = this.#rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item })
 
     this.#announce(slot, "item-updated", slot.index, key, slot.items.get(key) ?? null)
@@ -1112,7 +1108,7 @@ export class SlotIndex {
       return false
     }
 
-    return this.#statics.park(slot.region, branchKey(slot.index, slot.branch), this.#statics.blanked(this.rangeFor(slot).cloneContents()))
+    return this.#statics.park(slot.region, branchKey(slot.index, slot.branch), this.#statics.blanked(this.rangeOf(slot).cloneContents()))
   }
 
   parked(file: string, key: string): DocumentFragment | null {

@@ -22,7 +22,7 @@ describe("page navigation and Turbo", () => {
 
     document.body.innerHTML = page("before")
     await settle()
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("before")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("before")
 
     const next = document.createElement("body")
     next.innerHTML = page("after")
@@ -30,7 +30,7 @@ describe("page navigation and Turbo", () => {
     await settle()
 
     expect(index.regionsFor(FILE)).toHaveLength(1)
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("after")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("after")
 
     index.disconnect()
   })
@@ -46,7 +46,7 @@ describe("page navigation and Turbo", () => {
     }
 
     expect(index.regionsFor(FILE)).toHaveLength(1)
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("three")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("three")
 
     index.disconnect()
   })
@@ -60,7 +60,7 @@ describe("page navigation and Turbo", () => {
     await settle()
 
     expect(index.regionsFor(PARTIAL)).toHaveLength(1)
-    expect(index.rangeFor(index.slot(PARTIAL, 0)!).toString()).toBe("row")
+    expect(index.rangeOf(index.slot(PARTIAL, 0)!).toString()).toBe("row")
 
     index.disconnect()
   })
@@ -107,7 +107,7 @@ describe("page navigation and Turbo", () => {
 
     expect(index.regionsFor(FILE)).toHaveLength(1)
     expect(after).not.toBe(before)
-    expect(index.rangeFor(after).toString()).toBe("live")
+    expect(index.rangeOf(after).toString()).toBe("live")
 
     index.disconnect()
   })

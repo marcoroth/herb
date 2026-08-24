@@ -119,7 +119,7 @@ function applyLeaf(slots: SlotIndex, payload: Payload, slot: Slot, index: number
 
     const written = slot.attribute ? attributeValue(value) : value
 
-    if (slots.matches(slot, written)) {
+    if (slots.holds(slot, written)) {
       return
     }
 

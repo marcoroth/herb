@@ -49,7 +49,7 @@ describe("applying values to a conditional", () => {
     const report = index.apply(payload(FILE, { 0: { branch: 0, slots: { 1: "still yes" } } }))
 
     expect(report.applied).toBe(1)
-    expect(index.rangeFor(index.slot(FILE, 1)!).toString()).toBe("still yes")
+    expect(index.rangeOf(index.slot(FILE, 1)!).toString()).toBe("still yes")
   })
 
   test("empties the position when the payload says no branch ran", () => {
@@ -59,7 +59,7 @@ describe("applying values to a conditional", () => {
 
     expect(report.applied).toBe(1)
     expect(index.slot(FILE, 0)?.branch).toBeNull()
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("")
   })
 
   test("builds a branch the page never had when its markup was parked", () => {
@@ -70,7 +70,7 @@ describe("applying values to a conditional", () => {
     expect(report.applied).toBe(1)
     expect(report.deferred).toEqual([])
     expect(index.slot(FILE, 0)?.branch).toBe(1)
-    expect(index.rangeFor(index.slot(FILE, 2)!).toString()).toBe("built")
+    expect(index.rangeOf(index.slot(FILE, 2)!).toString()).toBe("built")
   })
 
   test("can put back the branch it replaced, without the server parking it", () => {
@@ -83,7 +83,7 @@ describe("applying values to a conditional", () => {
 
     expect(report.deferred).toEqual([])
     expect(index.slot(FILE, 0)?.branch).toBe(0)
-    expect(index.rangeFor(index.slot(FILE, 1)!).toString()).toBe("back")
+    expect(index.rangeOf(index.slot(FILE, 1)!).toString()).toBe("back")
   })
 
   test("defers a branch it has no markup for, rather than guessing", () => {
@@ -93,7 +93,7 @@ describe("applying values to a conditional", () => {
 
     expect(report.applied).toBe(0)
     expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "branch" }])
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("")
   })
 })
 
@@ -248,7 +248,7 @@ describe("applying values that came from more than one template", () => {
     )
 
     expect(report.applied).toBe(1)
-    expect(index.rangeFor(index.slot(CARD, 0)!).toString()).toBe("replaced")
+    expect(index.rangeOf(index.slot(CARD, 0)!).toString()).toBe("replaced")
   })
 
   test("defers a partial whose version the page no longer carries", () => {
@@ -260,7 +260,7 @@ describe("applying values that came from more than one template", () => {
 
     expect(report.applied).toBe(0)
     expect(report.deferred).toEqual([{ file: CARD, occurrence: 0, index: null, reason: "stale-version" }])
-    expect(index.rangeFor(index.slot(CARD, 0)!).toString()).toBe("inner")
+    expect(index.rangeOf(index.slot(CARD, 0)!).toString()).toBe("inner")
   })
 })
 

@@ -139,11 +139,6 @@ export interface StaticsIdentity {
   version: string
 }
 
-export interface Statics {
-  version: string
-  fragments: FragmentMap
-}
-
 export interface SlotAddress {
   region: Region
   path: ItemStep[]

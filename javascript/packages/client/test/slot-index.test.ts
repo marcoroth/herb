@@ -82,8 +82,8 @@ describe("SlotIndex", () => {
     test("attributes a slot to the rendering its markers name, not the one they sit in", () => {
       index.scan(mount(DISPLACED))
 
-      expect(index.rangeFor(index.slot(FILE, 5)!).toString()).toBe("Title")
-      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("body")
+      expect(index.rangeOf(index.slot(FILE, 5)!).toString()).toBe("Title")
+      expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("body")
     })
 
     test("keeps a rendering while any part of it is still on the page", () => {
@@ -156,7 +156,7 @@ describe("SlotIndex", () => {
       const slot = index.slot(FILE, 0)
 
       expect(slot?.branch).toBeNull()
-      expect(index.rangeFor(slot!).toString()).toBe("")
+      expect(index.rangeOf(slot!).toString()).toBe("")
     })
   })
 
@@ -172,7 +172,7 @@ describe("SlotIndex", () => {
 
       const item = index.itemsFor(FILE, 0).get("2")!
 
-      expect(index.rangeForItem(item).toString()).toBe("2")
+      expect(index.rangeOf(item).toString()).toBe("2")
     })
   })
 
@@ -221,7 +221,7 @@ describe("SlotIndex", () => {
 
       expect(result.slots).toHaveLength(1)
       expect(index.slot(FILE, 5)?.type).toBe("child")
-      expect(index.rangeFor(index.slot(FILE, 5)!).toString()).toBe("late")
+      expect(index.rangeOf(index.slot(FILE, 5)!).toString()).toBe("late")
     })
 
     test("reports what a scan added", () => {
@@ -344,19 +344,19 @@ describe("SlotIndex", () => {
     test("covers what a child slot rendered", () => {
       index.scan(mount(CHILD))
 
-      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("Marco")
+      expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("Marco")
     })
 
     test("covers an anchored element's content", () => {
       index.scan(mount(ANCHORED))
 
-      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("Marco")
+      expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("Marco")
     })
 
     test("covers the element itself for an element anchor", () => {
       index.scan(mount(ATTR))
 
-      const range = index.rangeFor(index.slot(FILE, 1)!)
+      const range = index.rangeOf(index.slot(FILE, 1)!)
 
       expect((range.cloneContents().firstElementChild as HTMLElement).tagName).toBe("DIV")
     })
@@ -510,7 +510,7 @@ describe("reflecting updates", () => {
     index.update(index.slot(FILE, 0)!, "Alice")
 
     expect(document.body.textContent).toContain("Hi Alice!")
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("Alice")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("Alice")
   })
 
   test("writes into an element-anchored content slot", () => {
@@ -538,7 +538,7 @@ describe("reflecting updates", () => {
     const result = index.update(index.slot(FILE, 0)!, `<!--herb-slot:7-->fresh<!--/herb-slot:7-->`)
 
     expect(result.slots.map((slot) => slot.index)).toEqual([7])
-    expect(index.rangeFor(index.slot(FILE, 7)!).toString()).toBe("fresh")
+    expect(index.rangeOf(index.slot(FILE, 7)!).toString()).toBe("fresh")
     expect(index.slot(FILE, 7)?.parent).toBe(index.slot(FILE, 0))
   })
 
@@ -548,7 +548,7 @@ describe("reflecting updates", () => {
     index.updateItem(index.slot(FILE, 0)!, "2", `<li id="2">changed</li>`)
 
     expect(document.body.textContent).toContain("changed")
-    expect(index.rangeForItem(index.itemsFor(FILE, 0).get("1")!).toString()).toBe("1")
+    expect(index.rangeOf(index.itemsFor(FILE, 0).get("1")!).toString()).toBe("1")
   })
 
   test("parses a replacement item in table context, where a bare <tr> would be dropped", () => {
@@ -594,7 +594,7 @@ describe("markers that arrive as their own node", () => {
     const result = index.scan([open, close])
 
     expect(result.slots.map((slot) => slot.index)).toEqual([9])
-    expect(index.rangeFor(index.slot(FILE, 9)!).toString()).toBe("bare")
+    expect(index.rangeOf(index.slot(FILE, 9)!).toString()).toBe("bare")
   })
 
   test("a walker rooted at a comment would find nothing, which is why that path exists", () => {
@@ -615,7 +615,7 @@ describe("markers that arrive as their own node", () => {
     index.scan(host)
 
     expect(index.slot(FILE, 0)?.type).toBe("child")
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("x")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("x")
   })
 })
 
@@ -633,8 +633,8 @@ describe("a template rendered more than once", () => {
     const second = index.slotInItem(FILE, 0, "2", 2)!
 
     expect(first).not.toBe(second)
-    expect(index.rangeFor(first).toString()).toBe("1")
-    expect(index.rangeFor(second).toString()).toBe("2")
+    expect(index.rangeOf(first).toString()).toBe("1")
+    expect(index.rangeOf(second).toString()).toBe("2")
   })
 
   test("a collection's descendants include every item's slots", () => {
@@ -655,8 +655,8 @@ describe("updating one item of a collection", () => {
 
     index.update(index.slotInItem(FILE, 0, "1", 2)!, "changed")
 
-    expect(index.rangeFor(index.slotInItem(FILE, 0, "1", 2)!).toString()).toBe("changed")
-    expect(index.rangeFor(index.slotInItem(FILE, 0, "2", 2)!).toString()).toBe("2")
+    expect(index.rangeOf(index.slotInItem(FILE, 0, "1", 2)!).toString()).toBe("changed")
+    expect(index.rangeOf(index.slotInItem(FILE, 0, "2", 2)!).toString()).toBe("2")
   })
 
   test("each item's attribute slot points at that item's element", () => {
@@ -769,8 +769,8 @@ describe("a partial rendered inside a collection item", () => {
 
     const outer = index.slot(PARTIAL, 5)!
 
-    index.rangeFor(outer).deleteContents()
-    index.rangeFor(outer).insertNode(index.rangeFor(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
+    index.rangeOf(outer).deleteContents()
+    index.rangeOf(outer).insertNode(index.rangeOf(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
     index.scan(host)
 
     const inner = index.slot(PARTIAL, 6)!
@@ -786,8 +786,8 @@ describe("a partial rendered inside a collection item", () => {
 
     const outer = index.slot(PARTIAL, 5)!
 
-    index.rangeFor(outer).deleteContents()
-    index.rangeFor(outer).insertNode(index.rangeFor(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
+    index.rangeOf(outer).deleteContents()
+    index.rangeOf(outer).insertNode(index.rangeOf(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
     index.scan(host)
     index.update(outer, "replaced")
 
