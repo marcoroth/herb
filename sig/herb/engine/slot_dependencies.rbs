@@ -38,7 +38,7 @@ module Herb
       def declared_states: (String, Hash[String, untyped]) -> Hash[String, untyped]
 
       # : (String, ?params: Hash[String, String]) -> String
-      def element: (String, ?params: Hash[String, String]) -> String
+      def dependencies_tag: (String, ?params: Hash[String, String]) -> String
 
       # : (String) -> Hash[Integer, Hash[Symbol, untyped]]
       def slots_for: (String) -> Hash[Integer, Hash[Symbol, untyped]]

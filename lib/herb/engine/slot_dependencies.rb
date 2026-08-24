@@ -93,7 +93,7 @@ module Herb
       end
 
       #: (String, ?params: Hash[String, String]) -> String
-      def element(entry_point, params: {})
+      def dependencies_tag(entry_point, params: {})
         json = JSON.generate(payload(entry_point, params: params), script_safe: true)
 
         %(<template #{ATTRIBUTE}>#{json}</template>)

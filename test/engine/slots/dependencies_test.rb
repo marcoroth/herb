@@ -332,8 +332,8 @@ module Engine
       test "carries the declared names into the parked map" do
         entry = write("index.html.erb", "<ul><% @posts.each do |post| %><li><%= post %></li><% end %></ul>")
 
-        element = subject.element(entry, params: { "p" => "@posts" })
-        json = element.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
+        tag = subject.dependencies_tag(entry, params: { "p" => "@posts" })
+        json = tag.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
 
         assert_equal({ "p" => "@posts" }, JSON.parse(json)["params"])
       end
@@ -341,12 +341,12 @@ module Engine
       test "parks the map the way statics are parked" do
         entry = page_with_partial
 
-        element = subject.element(entry)
+        tag = subject.dependencies_tag(entry)
 
-        assert_match(/\A<template data-herb-dependencies>/, element)
-        assert_match(%r{</template>\z}, element)
+        assert_match(/\A<template data-herb-dependencies>/, tag)
+        assert_match(%r{</template>\z}, tag)
 
-        json = element.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
+        json = tag.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
 
         assert_equal subject.payload(entry), JSON.parse(json)
       end
