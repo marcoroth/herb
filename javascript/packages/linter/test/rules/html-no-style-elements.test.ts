@@ -21,7 +21,7 @@ describe("html-no-style-elements", () => {
     })
 
     test("fails with a style block that was not written as scoped", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
 
       assertOffenses(dedent`
         <style>
@@ -33,13 +33,13 @@ describe("html-no-style-elements", () => {
 
   describe("inline style tags", () => {
     test("fails with empty style tag", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
 
       assertOffenses("<style></style>", { framework: "ruby" })
     })
 
     test("fails with style tag", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
 
       assertOffenses(dedent`
         <style>
@@ -49,7 +49,7 @@ describe("html-no-style-elements", () => {
     })
 
     test("fails with style tag containing ERB comment", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
 
       assertOffenses(dedent`
         <style>
@@ -59,7 +59,7 @@ describe("html-no-style-elements", () => {
     })
 
     test("suggests an external stylesheet for a non-Action View framework", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
 
       assertOffenses("<style></style>", { framework: "hanami" })
     })
@@ -73,13 +73,13 @@ describe("html-no-style-elements", () => {
     })
 
     test("suggests stylesheet_link_tag for a style tag", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`.")
 
       assertOffenses("<style></style>", { framework: "actionview" })
     })
 
     test("fails with content_tag helper", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`.")
 
       assertOffenses(dedent`
         <%= content_tag :style do %>
@@ -89,7 +89,7 @@ describe("html-no-style-elements", () => {
     })
 
     test("fails with tag helper", () => {
-      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`.")
+      expectError("Avoid inline `<style>` tags. If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`.")
 
       assertOffenses(dedent`
         <%= tag.style do %>

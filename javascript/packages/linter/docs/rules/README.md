@@ -104,6 +104,9 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
 - [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
+- [`herb-scoped-style-prefer-single-root`](./herb-scoped-style-prefer-single-root.md) - Prefer a single root element when a file has a `<style scoped>` block.
+- [`herb-scoped-style-require-top-level`](./herb-scoped-style-require-top-level.md) - Require a `<style scoped>` block to be a top-level element.
+- [`herb-scoped-style-single-declaration`](./herb-scoped-style-single-declaration.md) - One `<style scoped>` block per file.
 - [`herb-slots-valid-mode`](./herb-slots-valid-mode.md) - Validate the `herb:slots` mode.
 - [`herb-state-no-silent-reads`](./herb-state-no-silent-reads.md) - Disallow bare state reads in silent tags.
 - [`herb-state-no-server-writes`](./herb-state-no-server-writes.md) - Disallow server-side writes to declared states.
