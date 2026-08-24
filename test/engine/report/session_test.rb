@@ -132,6 +132,54 @@ module Engine
       assert_equal 1, Herb::Engine::Report::Session.current.diagnostics.length
     end
 
+    test "a thread spawned while a session is open records into its own" do
+      session = Herb::Engine::Report::Session.open
+
+      Thread.new { Herb::Engine::Report::Session.record(diagnostic(code: "background")) }.join
+
+      assert_empty session.diagnostics
+    end
+
+    test "reaches a render happening in a fiber, the way a streaming response renders" do
+      session = Herb::Engine::Report::Session.open
+
+      Fiber.new { Herb::Engine::Report::Session.record(diagnostic(code: "streamed")) }.resume
+
+      assert_equal ["streamed"], session.diagnostics.map(&:code)
+      refute_predicate session, :empty?
+    end
+
+    test "a session opened inside a fiber does not escape it" do
+      session = Herb::Engine::Report::Session.open
+
+      Fiber.new { Herb::Engine::Report::Session.open }.resume
+
+      assert_same session, Herb::Engine::Report::Session.current
+    end
+
+    test "a ractor collects into its own, even reaching the one in fiber storage" do
+      session = Herb::Engine::Report::Session.open
+      Herb::Engine::Report::Session.record(diagnostic(code: "main"))
+
+      ractor = Ractor.new do
+        klass = Herb::Engine::Report::Session
+
+        reached = !Fiber[klass::STATE_KEY].nil?
+        refused = klass.stored.nil?
+
+        klass.record(Herb::Diagnostic.new(template: "app/views/a.html.erb", message: "m", code: "ractor"))
+
+        [reached, refused, klass.current.diagnostics.map(&:code)]
+      end
+
+      reached, refused, collected = ractor.value
+
+      assert reached, "expected fiber storage to still be inherited into the ractor"
+      assert refused, "expected the inherited session to be refused"
+      assert_equal ["ractor"], collected
+      assert_equal ["main"], session.diagnostics.map(&:code)
+    end
+
     describe "attributing what happens to the tag that caused it" do
       def session_with_frames
         Herb::Engine::Report::Session.capture do
