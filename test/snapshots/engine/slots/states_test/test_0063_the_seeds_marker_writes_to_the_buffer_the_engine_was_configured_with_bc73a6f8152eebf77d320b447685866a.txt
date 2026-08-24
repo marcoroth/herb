@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::StatesTest#test_0063_the seeds marker writes to the buffer the engine was configured with"
+input: "states src 35"
+---
+@output_buffer = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 
+ @output_buffer << '<!--herb-region:app/views/test.html.erb:a46dfcb0:'.freeze; @output_buffer << (_herb_occurrence).to_s; @output_buffer << '-->'.freeze; label = @label; _herb_seeds = { "label" => label }.select { |_, v| [true, false, ::Integer, ::String, ::Symbol, nil].any? { |t| t === v } }.transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }; @output_buffer << ::Herb::Engine.raw("<!--herb-seeds:" + ::JSON.generate(_herb_seeds).gsub("--", "-\\u002d") + "-->"); @output_buffer << '<p data-herb-slot="0:child">'.freeze; @output_buffer << (label).to_s; @output_buffer << '</p><!--/herb-region:app/views/test.html.erb-->'.freeze;
+@output_buffer.to_s

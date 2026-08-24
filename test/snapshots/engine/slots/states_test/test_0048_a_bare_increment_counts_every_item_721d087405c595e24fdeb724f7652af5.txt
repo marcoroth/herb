@@ -1,0 +1,8 @@
+---
+source: "Engine::Slots::StatesTest#test_0048_a bare increment counts every item"
+input: "states render 24"
+---
+<!--herb-region:app/views/test.html.erb:8ec9c0ba:0-->
+<ul><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="i1" data-herb-slot="1:attribute_interpolation:id 2:child">1</li><!--/herb-item:0--><!--herb-item:0:2--><li id="i2" data-herb-slot="1:attribute_interpolation:id 2:child">2</li><!--/herb-item:0--><!--/herb-slot:0--></ul>
+<p data-herb-slot="3:child">4</p>
+<!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:8ec9c0ba"><!--herb-branch:0:item--><!--herb-item:0:--><li id="i" data-herb-slot="1:attribute_interpolation:id 2:child"></li><!--/herb-item:0--><!--herb-branch:1:parts-->i<!--herb-part--></template>

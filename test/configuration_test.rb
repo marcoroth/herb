@@ -46,7 +46,7 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
     assert_equal "0.10.3", config.version
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb"], config.file_include_patterns
   end
 
   test "loads configuration using YAML anchors and aliases" do
@@ -61,10 +61,8 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
-    assert_includes config.file_include_patterns, "**/*.other.erb"
-    assert_includes config.file_exclude_patterns, "**/*.custom.erb"
-    assert_includes config.file_exclude_patterns, "**/*.other.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb", "**/*.other.erb"], config.file_include_patterns
+    assert_equal Herb::Configuration::DEFAULTS["files"]["exclude"] + ["**/*.custom.erb", "**/*.other.erb"], config.file_exclude_patterns
   end
 
   test "searches parent directories for config file" do
@@ -81,7 +79,7 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(subdir)
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb"], config.file_include_patterns
   end
 
   test "include patterns are additive with defaults" do
@@ -93,9 +91,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_include_patterns, "**/*.html"
-    assert_includes config.file_include_patterns, "**/*.html.erb"
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb"], config.file_include_patterns
   end
 
   test "exclude patterns are additive with defaults" do
@@ -107,9 +103,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_exclude_patterns, "node_modules/**/*"
-    assert_includes config.file_exclude_patterns, "vendor/**/*"
-    assert_includes config.file_exclude_patterns, "custom/**/*"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["exclude"] + ["custom/**/*"], config.file_exclude_patterns
   end
 
   test "exclude patterns that duplicate defaults result in duplicates" do
@@ -137,9 +131,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.linter_include_patterns, "**/*.html.erb"
-    assert_includes config.linter_include_patterns, "**/*.xml.erb"
-    assert_includes config.linter_include_patterns, "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.xml.erb", "**/*.custom.erb"], config.linter_include_patterns
   end
 
   test "linter_exclude_patterns combines files and linter patterns" do
@@ -154,9 +146,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.linter_exclude_patterns, "node_modules/**/*"
-    assert_includes config.linter_exclude_patterns, "public/**/*"
-    assert_includes config.linter_exclude_patterns, "legacy/**/*"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["exclude"] + ["public/**/*", "legacy/**/*"], config.linter_exclude_patterns
   end
 
   test "formatter_include_patterns combines files and formatter patterns" do
@@ -171,9 +161,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.formatter_include_patterns, "**/*.html.erb"
-    assert_includes config.formatter_include_patterns, "**/*.xml.erb"
-    assert_includes config.formatter_include_patterns, "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.xml.erb", "**/*.custom.erb"], config.formatter_include_patterns
   end
 
   test "formatter_exclude_patterns combines files and formatter patterns" do
@@ -188,9 +176,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.formatter_exclude_patterns, "node_modules/**/*"
-    assert_includes config.formatter_exclude_patterns, "public/**/*"
-    assert_includes config.formatter_exclude_patterns, "generated/**/*"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["exclude"] + ["public/**/*", "generated/**/*"], config.formatter_exclude_patterns
   end
 
   test "linter_enabled_for_path? returns true for normal paths" do
@@ -317,7 +303,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config["files"]["include"], "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb"], config["files"]["include"]
     assert_equal({ "key" => "value" }, config["custom"])
   end
 
@@ -330,7 +316,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.dig(:files, :include), "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb"], config.dig(:files, :include)
   end
 
   test "module-level configuration accessor" do
@@ -342,7 +328,7 @@ class ConfigurationTest < Minitest::Spec
 
     Herb.configure(@temp_dir)
 
-    assert_includes Herb.configuration.file_include_patterns, "**/*.custom.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"] + ["**/*.custom.erb"], Herb.configuration.file_include_patterns
   end
 
   test "reset_configuration clears cached config" do
@@ -366,16 +352,13 @@ class ConfigurationTest < Minitest::Spec
   test "default_file_patterns class method returns defaults" do
     patterns = Herb::Configuration.default_file_patterns
 
-    assert_includes patterns, "**/*.html"
-    assert_includes patterns, "**/*.html.erb"
-    assert_includes patterns, "**/*.turbo_stream.erb"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"], patterns
   end
 
   test "default_exclude_patterns class method returns defaults" do
     patterns = Herb::Configuration.default_exclude_patterns
 
-    assert_includes patterns, "node_modules/**/*"
-    assert_includes patterns, "vendor/**/*"
+    assert_equal Herb::Configuration::DEFAULTS["files"]["exclude"], patterns
   end
 
   test "linter config is accessible" do

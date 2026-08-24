@@ -1,0 +1,6 @@
+---
+source: "Engine::SubtreeCompilerTest::what it compiles to#test_0001_keeps the discarded output out of the buffer it returns"
+input: "keeps the discarded output out of the returned buffer"
+---
+__herb_subtree = ::String.new; __herb_sink = ::String.new; __herb_sink << '<div>outside'.freeze; __herb_subtree << '<p>inside</p>'.freeze; __herb_sink << '</div>'.freeze;
+__herb_subtree

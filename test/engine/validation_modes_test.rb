@@ -25,7 +25,7 @@ module Engine
         Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "ERB output tags"
+      assert_equal "1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.", error.message
       assert_equal 1, error.line
       assert_equal 5, error.column
     end
@@ -35,8 +35,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "invalid-nesting"
-      assert_includes error.message, "Block element <div> cannot be nested inside <p>"
+      assert_match(/Block element <div> cannot be nested inside <p> at line 1 \(invalid-nesting\)/, error.message)
     end
 
     test "a fatal validator is the default behavior" do
@@ -103,7 +102,7 @@ module Engine
         Herb::Engine.new("<div>\n<span>Content\n</div>", filename: "app/views/broken.html.erb")
       end
 
-      assert_includes error.annotated_source_code.join("\n"), "<span>Content"
+      assert_equal "    1  <div>\n    2  <span>Content\n    3  </div>", error.annotated_source_code.join("\n")
       assert_match(/\A\s+\d+\s{2}/, error.annotated_source_code.first)
     end
 

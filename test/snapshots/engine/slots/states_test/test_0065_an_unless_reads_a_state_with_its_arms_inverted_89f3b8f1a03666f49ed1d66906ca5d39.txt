@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0065_an unless reads a state with its arms inverted"
+input: "states rendered 36"
+---
+<!--herb-region:app/views/test.html.erb:8121cb24:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->Idle<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:8121cb24"><!--herb-branch:0:0-->Idle<!--herb-branch:0:1-->Busy</template>

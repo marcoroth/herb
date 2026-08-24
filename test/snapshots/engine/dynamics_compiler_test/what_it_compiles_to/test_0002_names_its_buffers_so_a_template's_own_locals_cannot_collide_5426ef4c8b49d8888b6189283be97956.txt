@@ -1,0 +1,6 @@
+---
+source: "Engine::DynamicsCompilerTest::what it compiles to#test_0002_names its buffers so a template's own locals cannot collide"
+input: "dynamics names its buffers"
+---
+__herb_dynamics = ::Hash.new;; __herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["unknown"] += 1) - 1;; __herb_dynamics[0] = (form_with(model: 1) do |f|; __herb_block1 = ::String.new;; __herb_block1 << (__herb_dynamics[1] = (f.label).to_s);; __herb_block1 end);
+{ template: "unknown", version: "c49b5dcd", occurrence: __herb_occurrence, slots: __herb_dynamics }

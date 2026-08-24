@@ -1,0 +1,16 @@
+---
+source: "Engine::InlineRenderVisitorTest::what an inlined partial still reports#test_0001_inlines the partial away"
+input: "inlines the partial away"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/posts/index.html.erb"); begin 
+ ::Herb::Engine::Report::Session.enter("app/views/posts/index.html.erb", 1, 0, :partial) 
+ ->() { 
+ ::Herb::Engine::Report::Session.enter_render("app/views/posts/_card.html.erb"); begin 
+ _buf << '<div>'.freeze; _buf << (::Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 1, 5) {
+title
+}).to_s; _buf << '</div>
+'.freeze; ensure; ::Herb::Engine::Report::Session.leave_render; end 
+ }.call() 
+ ::Herb::Engine::Report::Session.leave 
+ ensure; ::Herb::Engine::Report::Session.leave_render; end 
+_buf.to_s

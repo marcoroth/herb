@@ -29,12 +29,11 @@ module Engine
       end
 
       test "rewrites the attribute to carry the slot index" do
-        visitor, src = compile(%(<p data-herb-name="body"><%= @body %></p>))
+        template = %(<p data-herb-name="body"><%= @body %></p>)
+        _visitor, src = compile(template)
         rendered = evaluate_herb_source(src, { "@body" => "hi" })
-        index = visitor.slots.find { |slot| slot.name == "body" }.index
 
-        assert_includes rendered, %(data-herb-name="#{index}:body")
-        refute_includes rendered, %(data-herb-name="body")
+        assert_snapshot_matches(rendered, template)
       end
 
       test "mixed static text around one slot still resolves" do

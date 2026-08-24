@@ -287,7 +287,7 @@ module Engine
           "#{queries.size} SQL query"
         }
 
-        assert_includes session.report.to_json, %("value":"1 SQL query")
+        assert_equal "1 SQL query", JSON.parse(session.report.to_json)["diagnostics"].first["message"]
       end
 
       test "reports every tag still rendering, innermost first" do
@@ -471,7 +471,7 @@ module Engine
           end
         end
 
-        refute_includes session.report.render_tree.last.keys, :via
+        assert_equal [:id, :template, :parent, :line, :column], session.report.render_tree.last.keys
       end
 
       test "keeps the kind out of the frames it hands back" do

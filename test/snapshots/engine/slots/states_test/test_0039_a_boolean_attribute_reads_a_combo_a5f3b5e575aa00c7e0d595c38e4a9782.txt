@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0039_a boolean attribute reads a combo"
+input: "states on 21"
+---
+<!--herb-region:app/views/test.html.erb:88e0cf25:0--><input disabled data-herb-slot="0:boolean_attribute:disabled"><!--/herb-region:app/views/test.html.erb-->

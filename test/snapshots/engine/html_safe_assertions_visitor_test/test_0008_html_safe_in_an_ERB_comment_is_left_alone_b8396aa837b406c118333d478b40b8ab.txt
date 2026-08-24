@@ -1,0 +1,6 @@
+---
+source: "Engine::HTMLSafeAssertionsVisitorTest#test_0008_html_safe in an ERB comment is left alone"
+input: "html_safe in a comment is left alone"
+---
+_buf = ::String.new; _buf << '<div>x</div>'.freeze;
+_buf.to_s

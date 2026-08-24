@@ -1,0 +1,6 @@
+---
+source: "Engine::HerbAliasOmissionTest#test_0006_escape false never emits the alias"
+input: "escape false never emits alias"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (value).to_s; _buf << '</div>'.freeze;
+_buf.to_s

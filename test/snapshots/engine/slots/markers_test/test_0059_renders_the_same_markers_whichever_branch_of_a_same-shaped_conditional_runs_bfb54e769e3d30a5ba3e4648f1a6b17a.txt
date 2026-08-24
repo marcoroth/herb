@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0059_renders the same markers whichever branch of a same-shaped conditional runs"
+input: "{source: \"<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>\", locals: {\"@today\" => \"Mon\", \"@tomorrow\" => \"Tue\", \"@c\" => true}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:9d410987:0--><h1 data-herb-slot="0:child">Mon</h1><!--/herb-region:app/views/test.html.erb-->

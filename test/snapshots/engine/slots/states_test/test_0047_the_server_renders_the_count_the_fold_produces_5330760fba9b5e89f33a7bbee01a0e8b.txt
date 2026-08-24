@@ -1,0 +1,16 @@
+---
+source: "Engine::Slots::StatesTest#test_0047_the server renders the count the fold produces"
+input: "states rendered 23"
+---
+<!--herb-region:app/views/test.html.erb:32594058:0-->
+<ul>
+  <!--herb-slot:0:collection--><!--herb-item:0:1-->
+<!--herb-seeds:{"pending":true}-->    <li id="m1" data-herb-slot="1:attribute_interpolation:id 2:child">1</li>
+  <!--/herb-item:0--><!--herb-item:0:2-->
+<!--herb-seeds:{"pending":false}-->    <li id="m2" data-herb-slot="1:attribute_interpolation:id 2:child">2</li>
+  <!--/herb-item:0--><!--herb-item:0:3-->
+<!--herb-seeds:{"pending":true}-->    <li id="m3" data-herb-slot="1:attribute_interpolation:id 2:child">3</li>
+  <!--/herb-item:0--><!--/herb-slot:0-->
+</ul>
+<p data-herb-slot="3:child">2</p>
+<!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:32594058"><!--herb-branch:1:parts-->m<!--herb-part--></template>

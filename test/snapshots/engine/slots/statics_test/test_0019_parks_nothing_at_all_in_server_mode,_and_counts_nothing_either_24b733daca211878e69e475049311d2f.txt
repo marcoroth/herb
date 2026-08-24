@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::StaticsTest#test_0019_parks nothing at all in server mode, and counts nothing either"
+input: "statics server mode compiles no parking"
+---
+_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 
+ _buf << '<!--herb-region:app/views/test.html.erb:a6ef770d:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '--><div><!--herb-slot:0:conditional-->'.freeze; if @a; _buf << '<!--herb-branch:0:0-->x'.freeze; else; _buf << '<!--herb-branch:0:1-->y'.freeze; end; _buf << '<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

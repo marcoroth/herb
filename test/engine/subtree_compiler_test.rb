@@ -5,6 +5,8 @@ require_relative "../../lib/herb/engine/subtree_compiler"
 
 module Engine
   class SubtreeCompilerTest < Minitest::Spec
+    include SnapshotUtils
+
     class View
       attr_reader :ran
 
@@ -78,7 +80,7 @@ module Engine
       end
 
       test "the output of everything outside the target is thrown away" do
-        refute_includes render(TEMPLATE, [4], title: "T"), "T"
+        assert_equal "<ul><li>assigned</li></ul>", render(TEMPLATE, [4], title: "T")
       end
     end
 
@@ -124,7 +126,7 @@ module Engine
           compile("<div><p>a</p></div>", [9])
         end
 
-        assert_includes error.message, "[9]"
+        assert_equal "No node at node_path [9]", error.message
       end
 
       test "does not treat an open tag as a position" do
@@ -136,10 +138,7 @@ module Engine
 
     describe "what it compiles to" do
       test "keeps the discarded output out of the buffer it returns" do
-        compiled = compile("<div>outside<p>inside</p></div>", [0, 1])
-
-        assert_includes compiled, "__herb_sink << '<div>outside'"
-        assert_includes compiled, "__herb_subtree << '<p>inside</p>'"
+        assert_snapshot_matches(compile("<div>outside<p>inside</p></div>", [0, 1]), "keeps the discarded output out of the returned buffer")
       end
 
       test "returns the subtree buffer rather than the sink" do

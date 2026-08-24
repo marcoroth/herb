@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0002_rendered rows take the else arm while every arm is parked"
+input: "states markup 2"
+---
+<!--herb-branch:0:0-->Sending…<!--herb-branch:0:1-->Not sent<!--herb-branch:0:2-->Sent

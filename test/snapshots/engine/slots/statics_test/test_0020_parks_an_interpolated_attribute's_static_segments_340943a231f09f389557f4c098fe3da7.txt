@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0020_parks an interpolated attribute's static segments"
+input: "statics parks interpolated attribute segments"
+---
+<!--herb-branch:0:parts-->message_<!--herb-part--><!--herb-branch:1:parts-->row-<!--herb-part-->-of-<!--herb-part-->

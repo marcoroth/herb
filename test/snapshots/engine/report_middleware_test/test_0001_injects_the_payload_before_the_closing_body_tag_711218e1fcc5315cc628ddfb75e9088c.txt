@@ -1,0 +1,5 @@
+---
+source: "Engine::ReportMiddlewareTest#test_0001_injects the payload before the closing body tag"
+input: "middleware injected body"
+---
+<html><body><h1>Hello</h1><script type="application/json" data-herb-diagnostics data-count="1">{"version":1,"diagnostics":[{"template":"app/views/a.html.erb","message":"Something is wrong.","code":"invalid-nesting","severity":"error","kind":"diagnostic","origin":"Herb Compiler","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":5}}}],"renderTree":[],"nodes":{},"sources":{}}</script></body></html>

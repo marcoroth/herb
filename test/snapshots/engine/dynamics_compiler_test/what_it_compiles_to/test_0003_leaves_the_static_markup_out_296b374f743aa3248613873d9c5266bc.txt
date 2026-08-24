@@ -1,0 +1,6 @@
+---
+source: "Engine::DynamicsCompilerTest::what it compiles to#test_0003_leaves the static markup out"
+input: "dynamics leaves static markup out"
+---
+__herb_dynamics = ::Hash.new;; __herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["unknown"] += 1) - 1;
+{ template: "unknown", version: "e3b0c442", occurrence: __herb_occurrence, slots: __herb_dynamics }

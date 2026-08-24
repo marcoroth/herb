@@ -1,0 +1,6 @@
+---
+source: "Engine::DynamicsCompilerTest::what it compiles to#test_0001_collects into a Hash rather than a String"
+input: "dynamics compiles into a hash"
+---
+__herb_dynamics = ::Hash.new;; __herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["unknown"] += 1) - 1;
+{ template: "unknown", version: "e3b0c442", occurrence: __herb_occurrence, slots: __herb_dynamics }

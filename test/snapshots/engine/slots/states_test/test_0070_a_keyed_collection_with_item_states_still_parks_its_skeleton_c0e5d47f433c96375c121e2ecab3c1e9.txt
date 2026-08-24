@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0070_a keyed collection with item states still parks its skeleton"
+input: "states parked 39"
+---
+<!--herb-branch:1:parts-->row_<!--herb-part-->

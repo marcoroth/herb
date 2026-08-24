@@ -1,0 +1,8 @@
+---
+source: "Engine::InlineRenderVisitorTest::what the copy has to keep meaning#test_0005_resolves a partial in the format the template renders in"
+input: "resolves a partial in html format"
+---
+_buf = ::String.new; ->() { 
+ _buf << 'html version
+'.freeze; }.call() 
+_buf.to_s

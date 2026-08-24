@@ -1,0 +1,6 @@
+---
+source: "Engine::HerbAliasOmissionTest#test_0001_the alias is omitted when the compiled template never calls it"
+input: "alias omitted when unused"
+---
+_buf = ::String.new; _buf << '<h1>'.freeze; if a; _buf << '<div>x</div>'.freeze; end; _buf << '</h1>'.freeze;
+_buf.to_s

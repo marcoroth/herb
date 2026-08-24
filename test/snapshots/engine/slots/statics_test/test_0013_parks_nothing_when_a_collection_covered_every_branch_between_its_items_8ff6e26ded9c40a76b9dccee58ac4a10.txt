@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0013_parks nothing when a collection covered every branch between its items"
+input: "statics collection covers every branch"
+---
+<!--herb-region:app/views/test.html.erb:b016f016:0--><ul><!--herb-slot:0:collection--><li><!--herb-slot:1:conditional--><!--herb-branch:1:0-->odd<!--/herb-slot:1--></li><li><!--herb-slot:1:conditional--><!--herb-branch:1:1-->even<!--/herb-slot:1--></li><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->

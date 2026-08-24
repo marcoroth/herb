@@ -1,0 +1,6 @@
+---
+source: "Engine::HerbAliasOmissionTest#test_0004_a custom escape function drops the alias it no longer needs"
+input: "custom escape drops alias"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << CustomEscape.attribute((value)); _buf << '">x</div>'.freeze;
+_buf.to_s

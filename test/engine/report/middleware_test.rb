@@ -4,6 +4,8 @@ require_relative "../../test_helper"
 
 module Engine
   class ReportMiddlewareTest < Minitest::Spec
+    include SnapshotUtils
+
     PAGE = "<html><body><h1>Hello</h1></body></html>"
 
     before do
@@ -88,7 +90,7 @@ module Engine
           app { Herb::Engine::Report::Session.record(diagnostic) }
         ).call(nil)
 
-        assert_includes body_of(response), "data-herb-diagnostics"
+        assert_snapshot_matches(body_of(response), "middleware unwritable env body")
       end
     end
 
@@ -96,7 +98,7 @@ module Engine
       response = call(app { Herb::Engine::Report::Session.record(diagnostic) })
       body = body_of(response)
 
-      assert_includes body, 'data-herb-diagnostics data-count="1"'
+      assert_snapshot_matches(body, "middleware injected body")
       assert_match(%r{#{Regexp.escape(%(</script>))}</body>}, body)
     end
 
@@ -133,7 +135,7 @@ module Engine
         end
       )
 
-      assert_includes body_of(response), "data-herb-diagnostics"
+      assert_snapshot_matches(body_of(response), "middleware content type any case")
     end
 
     test "corrects the content length it just changed" do

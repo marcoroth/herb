@@ -276,11 +276,7 @@ module Engine
           ["<div><% if @x %><b>y</b><% end %></div>", { "@x" => true }],
           ["<ul><% @x.each do |i| %><li>i</li><% end %></ul>", { "@x" => ["a"] }]
         ].each do |template, locals|
-          engine = Herb::Engine.new(template, **options)
-          output = evaluate_herb_source(engine.src, locals)
-
-          refute_includes output, "<span", "expected no wrapper element for: #{template}"
-          refute_includes output, "display: contents"
+          assert_evaluated_snapshot(template, locals, options)
         end
       end
 
@@ -412,7 +408,8 @@ module Engine
         untaken = rendered(template, locals.merge("@c" => false))
 
         assert_equal taken.sub("Mon", "?"), untaken.sub("Tue", "?")
-        refute_includes taken, "herb-branch"
+
+        assert_evaluated_snapshot(template, locals.merge("@c" => true), options)
       end
 
       test "collapses a same-shaped conditional to one slot" do

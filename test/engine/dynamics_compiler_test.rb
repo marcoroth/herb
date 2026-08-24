@@ -5,6 +5,8 @@ require_relative "../../lib/herb/engine/dynamics_compiler"
 
 module Engine
   class DynamicsCompilerTest < Minitest::Spec
+    include SnapshotUtils
+
     class View
       def initialize(**assigns)
         assigns.each { |name, value| instance_variable_set(:"@#{name}", value) }
@@ -66,7 +68,7 @@ module Engine
       test "a literal default is not shipped, since the client already knows it" do
         seeds = dynamics(seeded_rows, rows: [1]).fetch(0).fetch(:items).fetch("1").fetch(:seeds)
 
-        refute_includes seeds.keys, "flag"
+        assert_equal ["draft"], seeds.keys
       end
 
       test "an item with only literal defaults carries no seeds" do
@@ -81,7 +83,7 @@ module Engine
           </ul>
         ERB
 
-        refute_includes dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys, :seeds
+        assert_equal [1, 2], dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys
       end
 
       test "a value the client cannot hold is dropped" do
@@ -150,7 +152,7 @@ module Engine
       test "leaves out the slots of a branch that did not run" do
         result = dynamics(CONDITIONAL, admin: true, secret: "s", public: "p")
 
-        refute_includes result[0][:slots].keys, 2
+        assert_equal [1], result[0][:slots].keys
       end
 
       test "reports a conditional whose branches lay out the same as one value" do
@@ -280,19 +282,18 @@ module Engine
 
     describe "what it compiles to" do
       test "collects into a Hash rather than a String" do
-        assert_includes Herb::Engine::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
+        assert_snapshot_matches(Herb::Engine::DynamicsCompiler.new("<p>x</p>").src, "dynamics compiles into a hash")
       end
 
       test "names its buffers so a template's own locals cannot collide" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %>)
         compiled = Herb::Engine::DynamicsCompiler.new(source).src
 
-        assert_includes compiled, "__herb_block1"
-        refute_includes compiled, "_buf"
+        assert_snapshot_matches(compiled, "dynamics names its buffers")
       end
 
       test "leaves the static markup out" do
-        refute_includes Herb::Engine::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+        assert_snapshot_matches(Herb::Engine::DynamicsCompiler.new("<p>hello</p>").src, "dynamics leaves static markup out")
       end
     end
   end

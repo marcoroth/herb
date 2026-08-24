@@ -1,0 +1,5 @@
+---
+source: "Engine::ReportTest::the script tag#test_0001_is inert JSON the reader can find"
+input: "report inert json script tag"
+---
+<script type="application/json" data-herb-diagnostics data-count="1">{"version":1,"diagnostics":[{"template":"app/views/a.html.erb","message":"m","code":"c","severity":"error","kind":"diagnostic","origin":"Herb Compiler","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":5}}}],"renderTree":[],"nodes":{},"sources":{}}</script>

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0054_a tag helper attribute reading a state is a bound slot"
+input: "states render 25"
+---
+<!--herb-region:app/views/test.html.erb:6fb2bfa6:0--><input value="" data-herb-slot="0:attribute:value"><!--/herb-region:app/views/test.html.erb-->

@@ -61,8 +61,7 @@ module Engine
         reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
         files = reached.map { |slot| File.basename(slot[:file]) }.uniq
 
-        assert_includes files, "index.html.erb"
-        refute_includes files, "_plain.html.erb"
+        assert_equal ["index.html.erb"], files
       end
 
       test "says nothing at all when the host compiles no slots anywhere" do
@@ -90,8 +89,7 @@ module Engine
         reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
         files = reached.map { |slot| File.basename(slot[:file]) }.uniq
 
-        assert_includes files, "index.html.erb"
-        refute_includes files, "_plain.html.erb"
+        assert_equal ["index.html.erb"], files
       end
 
       test "says nothing at all when the host compiles no slots anywhere" do
@@ -230,8 +228,7 @@ module Engine
 
         reached = subject.across(entry)["@query"].map { |slot| [File.basename(slot[:file]), slot[:index], slot[:mode]] }
 
-        assert_includes reached, ["_search.html.erb", 0, :identity]
-        assert_includes reached, ["_search.html.erb", 1, :derived]
+        assert_equal [["index.html.erb", 0, :identity], ["index.html.erb", 1, :derived], ["_search.html.erb", 0, :identity], ["_search.html.erb", 1, :derived]], reached
       end
 
       test "keys what it reaches by the name the page knows, not the partial's" do
@@ -239,8 +236,7 @@ module Engine
 
         across = subject.across(entry)
 
-        assert_includes across.keys, "@query"
-        refute_includes across.keys, "term"
+        assert_equal ["@query"], across.keys
       end
 
       test "gives every slot the version of the template it came from" do
@@ -258,8 +254,7 @@ module Engine
 
         files = subject.payload(entry)["state"]["@query"].map { |slot| slot["file"] }.uniq
 
-        assert_includes files, "app/views/posts/index.html.erb"
-        assert_includes files, "app/views/posts/_search.html.erb"
+        assert_equal ["app/views/posts/index.html.erb", "app/views/posts/_search.html.erb"], files
       end
 
       test "reports a mode as a string once it travels" do
@@ -318,7 +313,7 @@ module Engine
 
         files = subject.across(entry)["@posts"].map { |slot| File.basename(slot[:file]) }
 
-        assert_includes files, "_card.html.erb"
+        assert_equal ["index.html.erb", "_card.html.erb"], files.uniq
       end
 
       test "leaves an item template reached through an each block to the server" do
@@ -450,8 +445,8 @@ module Engine
 
         index = manifest["presence"].keys.first.to_i
 
-        assert_includes manifest["reads"]["pending"], index
-        assert_includes manifest["reads"]["failed"], index
+        assert_equal [index], manifest["reads"]["pending"]
+        assert_equal [index], manifest["reads"]["failed"]
 
         conditional = manifest["conditionals"].values.first
 
@@ -489,7 +484,7 @@ module Engine
         declaration = manifest["declarations"].find { |declared| declared["name"] == "pending_count" }
 
         assert_equal({ "collection" => 0, "when" => ["pending", nil], "by" => 1 }, declaration["count"])
-        assert_includes manifest["reads"]["pending_count"], 3
+        assert_equal [3], manifest["reads"]["pending_count"]
       end
 
       test "binds a tag helper input that reads a state" do
@@ -544,7 +539,7 @@ module Engine
         assert_equal 2, manifest["reads"]["draft"].size
         assert_equal 1, manifest["bound"]["draft"].size
         assert_equal 1, manifest["bound"]["agreed"].size
-        refute_includes manifest["bound"]["draft"], manifest["reads"]["draft"].last
+        refute_operator manifest["bound"]["draft"], :include?, manifest["reads"]["draft"].last
       end
 
       test "counts a state read in an interpolated attribute" do

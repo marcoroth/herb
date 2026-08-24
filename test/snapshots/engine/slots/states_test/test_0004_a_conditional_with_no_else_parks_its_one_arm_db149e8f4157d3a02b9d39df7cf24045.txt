@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0004_a conditional with no else parks its one arm"
+input: "states parked 5"
+---
+<!--herb-branch:0:0--><nav>menu</nav>

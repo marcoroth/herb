@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0043_never emits a wrapper element"
+input: "{source: \"<p><%= @x %></p>\", locals: {\"@x\" => \"a\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:fd3dfd36:0--><p data-herb-slot="0:child">a</p><!--/herb-region:app/views/test.html.erb-->

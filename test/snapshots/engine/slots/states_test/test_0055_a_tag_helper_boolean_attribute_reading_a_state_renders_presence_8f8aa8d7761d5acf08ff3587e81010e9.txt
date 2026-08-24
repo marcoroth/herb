@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0055_a tag helper boolean attribute reading a state renders presence"
+input: "states off 27"
+---
+<!--herb-region:app/views/test.html.erb:3589edab:0--><input type="checkbox" data-herb-slot="0:boolean_attribute:checked"><!--/herb-region:app/views/test.html.erb-->

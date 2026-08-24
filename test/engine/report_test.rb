@@ -4,6 +4,8 @@ require_relative "../test_helper"
 
 module Engine
   class ReportTest < Minitest::Spec
+    include SnapshotUtils
+
     def report
       @report ||= Herb::Engine::Report.new
     end
@@ -91,21 +93,19 @@ module Engine
       test "is inert JSON the reader can find" do
         report.add(diagnostic)
 
-        assert_includes report.to_html, '<script type="application/json" data-herb-diagnostics'
-        assert_includes report.to_html, "</script>"
+        assert_snapshot_matches(report.to_html, "report inert json script tag")
       end
 
       test "counts what it carries, so a test need not parse it" do
         report.add(diagnostic)
 
-        assert_includes report.to_html, 'data-count="1"'
+        assert_snapshot_matches(report.to_html, "report data-count")
       end
 
       test "cannot close the script element early" do
         report.add(diagnostic(message: "</script><img src=x onerror=alert(1)>"))
 
-        refute_includes report.to_html, "</script><img"
-        assert_includes report.to_html, "\\u003c/script"
+        assert_snapshot_matches(report.to_html, "report escaped early close")
         assert_equal 1, report.to_html.scan("</script>").length
       end
     end

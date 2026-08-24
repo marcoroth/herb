@@ -1,0 +1,8 @@
+---
+source: "Engine::InlineRenderVisitorTest::what the copy has to keep meaning#test_0013_renders nothing for a collection that is nil, the way Rails does"
+input: "renders nothing for a nil collection"
+---
+_buf = ::String.new; ((nil) || []).each_with_index do |post, post_counter| 
+ _buf << '<div>Post</div>
+'.freeze; end 
+_buf.to_s

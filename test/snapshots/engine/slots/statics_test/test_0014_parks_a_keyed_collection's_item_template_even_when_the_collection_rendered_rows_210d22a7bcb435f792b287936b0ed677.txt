@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0014_parks a keyed collection's item template even when the collection rendered rows"
+input: "statics keyed collection parks item template with rows"
+---
+<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id 2:child"></li><!--/herb-item:0-->
