@@ -7,6 +7,30 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoStyleElementsRule)
 
 describe("html-no-style-elements", () => {
+  describe("scoped style blocks", () => {
+    test("passes with a scoped style block, which is already confined to one file", () => {
+      expectNoOffenses(dedent`
+        <style scoped>
+          .danger { color: red; }
+        </style>
+      `, { framework: "ruby" })
+    })
+
+    test("passes with an empty scoped style block", () => {
+      expectNoOffenses("<style scoped></style>", { framework: "ruby" })
+    })
+
+    test("fails with a style block that was not written as scoped", () => {
+      expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")
+
+      assertOffenses(dedent`
+        <style>
+          .danger { color: red; }
+        </style>
+      `, { framework: "ruby" })
+    })
+  })
+
   describe("inline style tags", () => {
     test("fails with empty style tag", () => {
       expectError("Avoid inline `<style>` tags. Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline.")

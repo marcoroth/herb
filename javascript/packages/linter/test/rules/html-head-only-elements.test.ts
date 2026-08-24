@@ -152,6 +152,40 @@ describe("html-head-only-elements", () => {
     `)
   })
 
+  test("passes when a scoped style block is in the body", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <style scoped>
+            .card { color: red; }
+          </style>
+
+          <div class="card">Hi</div>
+        </body>
+      </html>
+    `)
+  })
+
+  test("fails when a style block in the body was not written as scoped", () => {
+    expectError("Element `<style>` must be placed inside the `<head>` tag.")
+
+    assertOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <style>
+            .card { color: red; }
+          </style>
+        </body>
+      </html>
+    `)
+  })
+
   test("passes when meta with itemprop is in body (microdata)", () => {
     expectNoOffenses(dedent`
       <html>
