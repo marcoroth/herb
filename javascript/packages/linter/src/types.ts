@@ -257,33 +257,40 @@ export interface LexerRuleConstructor {
 }
 
 /**
- * A single herb:counter comment observed in the source, indexed by rule name
- * and reported to the meta-rules via LintContext.
+ * A single file-scoped `<%# herb:disable rule N|all %>` entry observed in the
+ * source, indexed by rule name and reported to the meta-rules via LintContext.
  */
 export interface HerbCounterCacheEntry {
   ruleName: string
-  count: number
+  /** Suppression count. `"all"` means suppress every offense of this rule. */
+  count: number | "all"
   line: number
   column: number
   raw: string
 }
 
 /**
- * Per-rule reconciliation between a herb:counter comment (E) and the actual
- * offense count for the file (N), placed on LintContext so the
- * out-of-date and unnecessary meta-rules can read it after the main rule
+ * Per-rule reconciliation between a file-scoped `<%# herb:disable rule N %>`
+ * entry (E) and the actual offense count for the file (N), placed on
+ * LintContext so the out-of-date meta-rule can read it after the main rule
  * loop has run.
+ *
+ * `"all"` entries never trigger drift and are omitted from this map.
  */
 export interface HerbCounterDrift {
   ruleName: string
-  /** Declared expected count (E) */
+  /** Declared expected count (E). Always a number; `"all"` entries are not tracked here. */
   expected: number
-  /** Actual offense count (N) after herb:disable filtering */
+  /** Actual offense count (N) after herb:disable line-scope filtering */
   actual: number
-  /** Location metadata of the herb:counter comment */
+  /** Location metadata of the enclosing herb:disable comment */
   line: number
   column: number
   raw: string
+  /** Zero-based offset of the count token within `raw`, for autofix. */
+  countOffset: number
+  /** Length of the count token as it appears in `raw`. */
+  countLength: number
 }
 
 /**

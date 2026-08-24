@@ -39,7 +39,6 @@ export interface SummaryData {
   autofixableCount: number
   unsafeAutofixableCount?: number
   ignoreDisableComments?: boolean
-  ignoreCounterComments?: boolean
   rulesSkippedByVersion?: VersionSkippedRule[]
   rulesDisabledByConfig?: number
   rulesNotEnabledByDefault?: number
@@ -167,7 +166,7 @@ export class SummaryReporter {
 
     const totalCounterSuppressed = data.totalCounterSuppressed ?? 0
     if (totalCounterSuppressed > 0) {
-      const message = `${totalCounterSuppressed} ${this.pluralize(totalCounterSuppressed, "offense")} suppressed with herb:counter`
+      const message = `${totalCounterSuppressed} ${this.pluralize(totalCounterSuppressed, "offense")} suppressed by file-scoped herb:disable count`
 
       console.log(`  ${colorize(pad("Counter"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
     }

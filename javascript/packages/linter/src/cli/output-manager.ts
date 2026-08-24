@@ -150,7 +150,7 @@ export class OutputManager {
       autofixableCount: allOffenses.filter(offense => offense.autocorrectable).length,
       unsafeAutofixableCount: allOffenses.filter(offense => offense.unsafeAutocorrectable).length,
       ignoreDisableComments: context?.ignoreDisableComments,
-      ignoreCounterComments: context?.ignoreCounterComments,
+
       rulesSkippedByVersion,
       rulesDisabledByConfig: results.rulesDisabledByConfig,
       rulesNotEnabledByDefault: results.rulesNotEnabledByDefault,

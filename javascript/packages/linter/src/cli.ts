@@ -196,7 +196,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, ignoreCounterComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -403,7 +403,7 @@ export class CLI {
 
       const loadedConfig = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
 
-      console.log(`\n${colorize("↻", "cyan")} Reconciling <%# herb:counter %> comments...`)
+      console.log(`\n${colorize("↻", "cyan")} Reconciling file-scoped <%# herb:disable rule N %> counts...`)
 
       await Herb.load()
 
@@ -439,7 +439,7 @@ export class CLI {
       if (totalDeleted > 0) parts.push(`${totalDeleted} removed`)
 
       if (parts.length === 0) {
-        console.log(`\n${colorize("✓", "brightGreen")} All <%# herb:counter %> comments already match. Nothing to update.\n`)
+        console.log(`\n${colorize("✓", "brightGreen")} All file-scoped <%# herb:disable %> counts already match. Nothing to update.\n`)
       } else {
         console.log(`\n${colorize("✓", "brightGreen")} Reconciled ${parts.join(", ")} across ${filesTouched} ${filesTouched === 1 ? "file" : "files"}.\n`)
       }
@@ -554,7 +554,6 @@ export class CLI {
         fix,
         fixUnsafe,
         ignoreDisableComments,
-        ignoreCounterComments,
         showFixDiff,
         linterConfig,
         config: processingConfig,

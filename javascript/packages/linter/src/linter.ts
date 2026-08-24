@@ -6,7 +6,6 @@ import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./utils/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
-import { parseHerbCounterLine } from "./herb-counter-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
 
@@ -267,11 +266,7 @@ export class Linter {
       "herb-disable-comment-malformed",
       "herb-disable-comment-missing-rules",
       "herb-disable-comment-unnecessary",
-      "herb-counter-comment-valid-rule-name",
-      "herb-counter-comment-no-duplicate-rules",
-      "herb-counter-comment-malformed",
-      "herb-counter-comment-out-of-date",
-      "herb-counter-comment-unnecessary",
+      "herb-disable-comment-out-of-date",
     ]
   }
 
@@ -496,14 +491,15 @@ export class Linter {
    *   - No comment: pass-through, nothing suppressed.
    *   - Comment, E == N: suppress all N.
    *   - Comment, N > E: keep all offenses (they still surface), and let the
-   *     drift map trigger `herb-counter-comment-out-of-date`.
+   *     drift map trigger `herb-disable-comment-out-of-date`.
    *   - Comment, 0 < N < E: suppress all N; drift map triggers
-   *     `herb-counter-comment-out-of-date` (autocorrectable).
-   *   - Comment, N == 0: nothing to suppress; drift map triggers
-   *     `herb-counter-comment-unnecessary` (autocorrectable).
+   *     `herb-disable-comment-out-of-date` (autocorrectable).
+   *   - Comment, N > 0 and E == 0: nothing to suppress; drift map triggers
+   *     `herb-disable-comment-out-of-date` with the "remove the count" variant.
+   *   - Comment, `all`: suppress every offense, never emit drift.
    *
-   * Drift is recorded on `counterDriftByRule` for the two file-scoped
-   * meta-rules to consume after the main rule loop.
+   * Drift is recorded on `counterDriftByRule` for the file-scoped meta-rule
+   * to consume after the main rule loop.
    */
   private applyCounterSuppression(
     offenses: LintOffense[],
@@ -522,7 +518,19 @@ export class Linter {
     }
 
     const actual = offenses.length
+
+    // `all` suppresses everything and never reports drift.
+    if (entry.count === "all") {
+      if (ignoreCounterComments) return { kept: offenses, suppressed: [] }
+
+      return { kept: [], suppressed: offenses }
+    }
+
     const expected = entry.count
+    const countRaw = String(expected)
+    const countRelative = entry.raw.lastIndexOf(countRaw)
+    const countOffset = countRelative === -1 ? 0 : countRelative
+    const countLength = countRaw.length
 
     counterDriftByRule.set(ruleName, {
       ruleName,
@@ -531,6 +539,8 @@ export class Linter {
       line: entry.line,
       column: entry.column,
       raw: entry.raw,
+      countOffset,
+      countLength,
     })
 
     if (ignoreCounterComments) {
@@ -610,26 +620,27 @@ export class Linter {
 
       if (line.includes("herb:disable")) {
         const herbDisable = parseHerbDisableLine(line)
-        herbDisableCache.set(lineNumber, herbDisable?.ruleNames || [])
-      }
 
-      if (line.includes("herb:counter")) {
-        const herbCounter = parseHerbCounterLine(line)
+        if (herbDisable) {
+          herbDisableCache.set(lineNumber, herbDisable.ruleNames)
 
-        if (herbCounter) {
-          // First occurrence wins; duplicates are reported by
-          // `herb-counter-comment-no-duplicate-rules`.
-          if (!herbCounterCache.has(herbCounter.ruleName)) {
-            const column = line.indexOf(herbCounter.match) + 1
+          for (const entry of herbDisable.fileScopedEntries) {
+            // First occurrence wins; duplicates are reported by
+            // `herb-disable-comment-no-duplicate-rules`.
+            if (herbCounterCache.has(entry.name)) continue
 
-            herbCounterCache.set(herbCounter.ruleName, {
-              ruleName: herbCounter.ruleName,
-              count: herbCounter.count,
+            const column = line.indexOf(herbDisable.match) + 1
+
+            herbCounterCache.set(entry.name, {
+              ruleName: entry.name,
+              count: entry.count,
               line: lineNumber,
               column,
-              raw: herbCounter.match,
+              raw: herbDisable.match,
             })
           }
+        } else {
+          herbDisableCache.set(lineNumber, [])
         }
       }
     }
@@ -648,8 +659,7 @@ export class Linter {
 
     const deferredRuleNames = new Set([
       "herb-disable-comment-unnecessary",
-      "herb-counter-comment-out-of-date",
-      "herb-counter-comment-unnecessary",
+      "herb-disable-comment-out-of-date",
     ])
 
     const regularRules = this.rules.filter(ruleClass => !deferredRuleNames.has(ruleClass.ruleName))
@@ -684,7 +694,7 @@ export class Linter {
         ruleClass.ruleName,
         herbCounterCache,
         counterDriftByRule,
-        context?.ignoreCounterComments,
+        context?.ignoreCounterComments || context?.ignoreDisableComments,
       )
 
       counterSuppressedCount += suppressed.length
@@ -935,36 +945,52 @@ export class Linter {
   }
 
   /**
-   * Rewrite, insert, or delete `<%# herb:counter %>` comments so every
-   * counter-enabled rule's declared count matches reality for this file.
+   * Rewrite or delete the count/`all` portion of file-scoped
+   * `<%# herb:disable rule N %>` entries so every declared count matches
+   * reality for this file.
    *
-   * Bulk-adoption entrypoint for `--update-counters`, the analogue of
-   * `erb_lint -a` for counter comments. Modelled on `--disable-failing`:
-   * we run a lint pass with `ignoreCounterComments: true` to get true offense
-   * counts per rule, then reconcile the source line-by-line.
+   * Bulk-adoption entrypoint for `--update-disable-counts`, the analogue of
+   * `erb_lint -a` for counter-style disable entries. Modelled on
+   * `--disable-failing`: we run a lint pass with `ignoreCounterComments: true`
+   * to get true offense counts per rule, then reconcile the source
+   * line-by-line.
    *
    * Deliberately independent of `--fix`; per spec, `--fix` fixes code and
-   * would silently mask new violations if it also rewrote counters.
+   * would silently mask new violations if it also rewrote counts.
    *
-   * @returns { source, updated } where `updated` reports how many comments
+   * `all` entries are left alone — they intentionally waive drift tracking.
+   *
+   * @returns { source, updated } where `updated` reports how many entries
    * were inserted, rewritten, or deleted.
    */
   updateCounters(source: string, context?: Partial<LintContext>): { source: string, inserted: number, rewritten: number, deleted: number } {
     const lines = source.split("\n")
 
-    // Locate existing comments per rule.
-    const existing = new Map<string, { line: number, raw: string, count: number }>()
+    // Locate existing file-scoped disable entries per rule.
+    interface ExistingEntry {
+      line: number
+      raw: string
+      count: number
+      countRaw: string
+    }
+
+    const existing = new Map<string, ExistingEntry>()
 
     for (let i = 0; i < lines.length; i++) {
-      const parsed = parseHerbCounterLine(lines[i])
+      const parsed = parseHerbDisableLine(lines[i])
       if (!parsed) continue
-      if (existing.has(parsed.ruleName)) continue // duplicates handled by dedicated rule
 
-      existing.set(parsed.ruleName, {
-        line: i + 1,
-        raw: parsed.match,
-        count: parsed.count,
-      })
+      for (const entry of parsed.fileScopedEntries) {
+        if (entry.count === "all") continue // `all` opts out of drift updates
+        if (existing.has(entry.name)) continue // duplicates handled by dedicated rule
+
+        existing.set(entry.name, {
+          line: i + 1,
+          raw: parsed.match,
+          count: entry.count,
+          countRaw: entry.countRaw,
+        })
+      }
     }
 
     if (existing.size === 0) {
@@ -985,25 +1011,26 @@ export class Linter {
     let rewritten = 0
     let deleted = 0
 
-    // Process from bottom to top so line numbers stay valid for deletions.
-    const rewriteOps: Array<{ line: number, oldRaw: string, newRaw: string }> = []
-    const deleteOps: number[] = []
+    const rewriteOps: Array<{ line: number, ruleName: string, oldRaw: string, newRaw: string }> = []
+    const deleteOps: Array<{ line: number, ruleName: string, oldRaw: string }> = []
 
     for (const [ruleName, current] of existing) {
       const actual = actualByRule.get(ruleName) || 0
 
       if (actual === 0) {
-        deleteOps.push(current.line)
+        deleteOps.push({ line: current.line, ruleName, oldRaw: current.raw })
         deleted++
         continue
       }
 
       if (actual === current.count) continue
 
-      const newRaw = current.raw.replace(new RegExp(`(\\s)${current.count}(\\s*%>)$`), `$1${actual}$2`)
+      // Rewrite `rule-name <count>` -> `rule-name <actual>` inside the raw comment.
+      const pattern = new RegExp(`(\\b${ruleName}\\s+)${current.countRaw}\\b`)
+      const newRaw = current.raw.replace(pattern, `$1${actual}`)
 
       if (newRaw !== current.raw) {
-        rewriteOps.push({ line: current.line, oldRaw: current.raw, newRaw })
+        rewriteOps.push({ line: current.line, ruleName, oldRaw: current.raw, newRaw })
         rewritten++
       }
     }
@@ -1013,18 +1040,42 @@ export class Linter {
       lines[idx] = lines[idx].replace(op.oldRaw, op.newRaw)
     }
 
-    for (const lineNumber of [...deleteOps].sort((a, b) => b - a)) {
-      const idx = lineNumber - 1
+    // Process deletions bottom-up so line numbers stay valid.
+    for (const op of [...deleteOps].sort((a, b) => b.line - a.line)) {
+      const idx = op.line - 1
       const original = lines[idx]
-      const existingEntry = Array.from(existing.values()).find(e => e.line === lineNumber)
-      if (!existingEntry) continue
+      const parsed = parseHerbDisableLine(original)
+      if (!parsed) continue
 
-      const stripped = original.replace(existingEntry.raw, "").replace(/[ \t]+$/, "")
+      // If the file-scoped entry is the only entry in the comment, remove the
+      // whole comment. Otherwise strip just this entry from the rules string.
+      const remaining = parsed.ruleNameDetails.length +
+        parsed.fileScopedEntries.filter(e => e.name !== op.ruleName).length
 
-      if (stripped.trim().length === 0) {
-        lines.splice(idx, 1)
+      if (remaining === 0) {
+        const stripped = original.replace(parsed.match, "").replace(/[ \t]+$/, "")
+
+        if (stripped.trim().length === 0) {
+          lines.splice(idx, 1)
+        } else {
+          lines[idx] = stripped
+        }
       } else {
-        lines[idx] = stripped
+        const entry = parsed.fileScopedEntries.find(e => e.name === op.ruleName)
+        if (!entry) continue
+
+        // Rebuild the rules string without this entry.
+        const kept: string[] = []
+
+        for (const detail of parsed.ruleNameDetails) kept.push(detail.name)
+        for (const fileEntry of parsed.fileScopedEntries) {
+          if (fileEntry.name === op.ruleName) continue
+          kept.push(`${fileEntry.name} ${fileEntry.countRaw}`)
+        }
+
+        const newRulesString = kept.join(", ")
+        const newRaw = parsed.match.replace(parsed.rulesString, newRulesString)
+        lines[idx] = original.replace(parsed.match, newRaw)
       }
     }
 

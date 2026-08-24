@@ -83,15 +83,11 @@ import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comm
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
 import { HerbConfigFrameworkOptionRule } from "./rules/herb-config-framework-option.js"
-import { HerbCounterCommentMalformedRule } from "./rules/herb-counter-comment-malformed.js"
-import { HerbCounterCommentNoDuplicateRulesRule } from "./rules/herb-counter-comment-no-duplicate-rules.js"
-import { HerbCounterCommentOutOfDateRule } from "./rules/herb-counter-comment-out-of-date.js"
-import { HerbCounterCommentUnnecessaryRule } from "./rules/herb-counter-comment-unnecessary.js"
-import { HerbCounterCommentValidRuleNameRule } from "./rules/herb-counter-comment-valid-rule-name.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
 import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-comment-no-duplicate-rules.js"
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
+import { HerbDisableCommentOutOfDateRule } from "./rules/herb-disable-comment-out-of-date.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
@@ -248,15 +244,11 @@ export const rules: RuleClass[] = [
   ERBStrictLocalsRequiredRule,
 
   HerbConfigFrameworkOptionRule,
-  HerbCounterCommentMalformedRule,
-  HerbCounterCommentNoDuplicateRulesRule,
-  HerbCounterCommentOutOfDateRule,
-  HerbCounterCommentUnnecessaryRule,
-  HerbCounterCommentValidRuleNameRule,
   HerbDisableCommentMalformedRule,
   HerbDisableCommentMissingRulesRule,
   HerbDisableCommentNoDuplicateRulesRule,
   HerbDisableCommentNoRedundantAllRule,
+  HerbDisableCommentOutOfDateRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
   HerbIntoRequiresCollectionRule,

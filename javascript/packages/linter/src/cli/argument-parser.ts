@@ -27,7 +27,6 @@ export interface ParsedArguments {
   fix: boolean
   fixUnsafe: boolean
   ignoreDisableComments: boolean
-  ignoreCounterComments: boolean
   updateCounters: boolean
   force: boolean
   init: boolean
@@ -66,9 +65,9 @@ export class ArgumentParser {
       --fix                         automatically fix auto-correctable offenses
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
-      --ignore-counter-comments     report offenses even when counter-suppressed with <%# herb:counter %> comments
-      --update-counters             lint, then rewrite/delete every existing <%# herb:counter %>
-                                    comment so its declared count matches reality
+                                    (also disables file-scoped counter suppression from <%# herb:disable rule N|all %>)
+      --update-disable-counts       lint, then rewrite the count in every existing <%# herb:disable rule N %>
+                                    entry so its declared count matches reality
                                     (analogue of erb_lint -a; do not fold into --fix)
       --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
       --log-level <severity>        only report diagnostics of this severity or higher (error|warning|info|hint) [default: hint]
@@ -107,8 +106,7 @@ export class ArgumentParser {
         fix: { type: "boolean" },
         "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
-        "ignore-counter-comments": { type: "boolean" },
-        "update-counters": { type: "boolean" },
+        "update-disable-counts": { type: "boolean" },
         "fail-level": { type: "string" },
         "log-level": { type: "string" },
         format: { type: "string" },
@@ -188,8 +186,7 @@ export class ArgumentParser {
     const fix = values.fix || fixUnsafe  // --fix-unsafely implies --fix
     const force = !!values.force
     const ignoreDisableComments = values["ignore-disable-comments"] || false
-    const ignoreCounterComments = values["ignore-counter-comments"] || false
-    const updateCounters = values["update-counters"] || false
+    const updateCounters = values["update-disable-counts"] || false
     const configFile = values["config-file"]
     const init = values.init || false
     const upgrade = values.upgrade || false
@@ -230,7 +227,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, ignoreCounterComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
   }
 
   private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {
