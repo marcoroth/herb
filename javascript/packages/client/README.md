@@ -310,6 +310,13 @@ slots.reconcile(collection, ["3", "1", "2"])
 // { added: [], removed: [], moved: ["3", "1"], kept: [...], unchanged: false }
 ```
 
+`reconcileItems` carries that plan out: it builds, drops and reorders a collection's rows so its items are exactly the keys given, and returns the keys it could not build because the collection had no row to copy. `apply` uses it; a page doing its own optimistic collection edits can call it directly.
+
+```typescript
+slots.reconcileItems(collection, ["3", "1", "2"])
+// [] — or ["4"] if key 4 had no row to build from
+```
+
 JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. The payload carries an explicit `order` alongside `items`, so a collection is put in the order the server rendered whatever its keys are.
 
 ## Branches that never rendered

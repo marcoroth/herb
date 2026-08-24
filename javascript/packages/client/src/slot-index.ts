@@ -23,6 +23,7 @@ import { HERB_ATTRIBUTES } from "./attributes"
 
 import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
+import { applyPayload } from "./apply"
 import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } from "./markers"
@@ -279,13 +280,7 @@ export class SlotIndex {
   }
 
   apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
-    const report: ApplyReport = { applied: 0, deferred: [] }
-
-    this.#building("apply", () => {
-      this.#applyPayload(payload, report, options.items ?? "replace")
-    })
-
-    return report
+    return this.#building("apply", () => applyPayload(this, payload, options.items ?? "replace"))
   }
 
   // What a listener is told about, so a page can settle the markup an operation built without
@@ -420,138 +415,10 @@ export class SlotIndex {
     return owner.get(address.index) ?? null
   }
 
-  #applyPayload(payload: Payload, report: ApplyReport, mode: ApplyMode): void {
-    const region = this.region(payload.template, payload.occurrence)
 
-    if (!region) {
-      this.#defer(report, payload, null, "no-region")
 
-      return
-    }
 
-    if (region.version !== payload.version) {
-      this.#defer(report, payload, null, "stale-version")
 
-      return
-    }
-
-    if (payload.seeds) {
-      region.seeds = { ...(region.seeds ?? {}), ...payload.seeds }
-    }
-
-    this.#applySlots(payload, region.slots, payload.slots, report, mode)
-  }
-
-  #applySlots(payload: Payload, owner: SlotMap, values: PayloadSlots, report: ApplyReport, mode: ApplyMode): void {
-    const blocks: [Slot, number, AppliedValue][] = []
-
-    for (const [key, value] of Object.entries(values)) {
-      if (isPayload(value)) {
-        this.#applyPayload(value, report, mode)
-
-        continue
-      }
-
-      const index = Number(key)
-      const slot = owner.get(index)
-
-      if (!slot) {
-        this.#defer(report, payload, index, "no-slot")
-
-        continue
-      }
-
-      if (slot.claimed) {
-        continue
-      }
-
-      if (slot.type === "block" && slot.children.length > 0) {
-        blocks.push([slot, index, value])
-
-        continue
-      }
-
-      this.#applyValue(payload, slot, index, value, report, mode)
-    }
-
-    for (const [slot, index, value] of blocks) {
-      this.#applyValue(payload, slot, index, value, report, mode)
-    }
-  }
-
-  #applyValue(payload: Payload, slot: Slot, index: number, value: AppliedValue, report: ApplyReport, mode: ApplyMode): void {
-    if (typeof value === "boolean") {
-      if (this.setBooleanAttribute(slot, value)) {
-        report.applied += 1
-      } else {
-        this.#defer(report, payload, index, "partial-attribute")
-      }
-
-      return
-    }
-
-    if (typeof value === "string" || Array.isArray(value)) {
-      this.#applyLeaf(payload, slot, index, value, report)
-
-      return
-    }
-
-    if ("items" in value) {
-      this.#applyItems(payload, slot, value, report, mode)
-    } else {
-      this.#applyBranch(payload, slot, value, report, mode)
-    }
-  }
-
-  #applyLeaf(payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {
-    if (slot.type === "block" && slot.children.length > 0) {
-      if (!this.#covered(slot, value)) {
-        this.#defer(report, payload, index, "block")
-      }
-
-      return
-    }
-
-    const written = slot.attribute ? attributeValue(value) : value
-
-    if (this.#same(slot, written)) {
-      return
-    }
-
-    if (slot.attribute) {
-      if (!this.setAttribute(slot, written)) {
-        this.#defer(report, payload, index, "partial-attribute")
-
-        return
-      }
-    } else {
-      if (Array.isArray(written)) {
-        this.#defer(report, payload, index, "partial-attribute")
-
-        return
-      }
-
-      this.update(slot, written)
-    }
-
-    report.applied += 1
-  }
-
-  #applyBranch(payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: ApplyMode): void {
-    if (value.branch !== slot.branch) {
-      if (!this.#swapBranch(slot, value.branch, leaves(value.slots))) {
-        this.#defer(report, payload, slot.index, "branch")
-
-        return
-      }
-
-      report.applied += 1
-    }
-
-    if (value.slots) {
-      this.#applySlots(payload, this.#owner(slot), value.slots, report, mode)
-    }
-  }
 
   #swapBranch(slot: Slot, branch: number | null, dynamics: SlotValues): boolean {
     this.#recordSlot(slot, () => {
@@ -590,59 +457,41 @@ export class SlotIndex {
     return true
   }
 
-  #applyItems(payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
-    const wanted = value.order ?? Object.keys(value.items)
 
-    if (mode === "merge") {
-      this.#mergeItems(payload, slot, wanted, report)
-    } else {
-      const plan = this.reconcile(slot, wanted)
-
-      if (!plan.unchanged) {
-        const unbuilt = this.#reconcileItems(slot, wanted, plan)
-
-        if (unbuilt.length > 0) {
-          this.#defer(report, payload, slot.index, "items", unbuilt)
-        }
-      }
-    }
-
-    for (const key of wanted) {
-      const item = slot.items.get(key)
-
-      if (!item) {
-        continue
-      }
-
-      const { seeds, ...slots } = value.items[key] as SeededSlots
-
-      if (seeds) {
-        item.seeds = { ...(item.seeds ?? {}), ...seeds }
-      }
-
-      this.#applySlots(payload, item.slots, slots, report, mode)
-    }
-  }
-
-  #mergeItems(payload: Payload, slot: Slot, wanted: string[], report: ApplyReport): void {
+  #mergeItems(slot: Slot, wanted: string[]): string[] {
     const added = wanted.filter((key) => !slot.items.has(key))
 
     if (added.length === 0) {
-      return
+      return []
     }
 
     const template = this.#rowTemplate(slot)
     const anchor = this.#itemsEnd(slot)
 
     if (!template || !anchor) {
-      this.#defer(report, payload, slot.index, "items", added)
-
-      return
+      return added
     }
 
     for (const key of added) {
       this.#buildItem(slot, key, template, anchor)
     }
+
+    return []
+  }
+
+  // Makes a collection's live items be exactly `wanted`, in that order. In "merge" mode it only
+  // adds the keys it does not have. Returns the keys it could not build, since the collection
+  // had no row to copy.
+  reconcileItems(slot: Slot, wanted: string[], mode: ApplyMode = "replace"): string[] {
+    return this.#building("client", () => {
+      if (mode === "merge") {
+        return this.#mergeItems(slot, wanted)
+      }
+
+      const plan = this.reconcile(slot, wanted)
+
+      return plan.unchanged ? [] : this.#reconcileItems(slot, wanted, plan)
+    })
   }
 
   #reconcileItems(slot: Slot, wanted: string[], plan: ItemPlan): string[] {
@@ -881,17 +730,6 @@ export class SlotIndex {
     return slot.item?.slots ?? slot.region.slots
   }
 
-  #defer(report: ApplyReport, payload: Payload, index: number | null, reason: DeferredReason, keys?: string[]): void {
-    const deferred = { file: payload.template, occurrence: payload.occurrence, index, reason }
-
-    if (keys) {
-      report.deferred.push({ ...deferred, keys })
-
-      return
-    }
-
-    report.deferred.push(deferred)
-  }
 
   currentText(slot: Slot): string {
     return this.#attributeValue(slot) ?? currentText(slot.anchor)
@@ -945,7 +783,7 @@ export class SlotIndex {
     return currentHTML(slot.anchor)
   }
 
-  #covered(slot: Slot, value: SlotValue): boolean {
+  covers(slot: Slot, value: SlotValue): boolean {
     if (Array.isArray(value)) {
       return false
     }
@@ -953,7 +791,7 @@ export class SlotIndex {
     return withoutMarkers(this.#current(slot)) === withoutMarkers(value)
   }
 
-  #same(slot: Slot, value: SlotValue): boolean {
+  matches(slot: Slot, value: SlotValue): boolean {
     if (slot.type === "attribute_interpolation") {
       const whole = this.#interpolate(slot, value)
 
