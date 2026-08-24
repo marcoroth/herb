@@ -824,6 +824,39 @@ Wrapping a request works too. A session that is already open is one somebody mea
 session = Herb::Engine::Report::Session.capture { get "/posts" }
 ```
 
+### Delivering something other than diagnostics
+
+Diagnostics are not the only thing a page collects. A `Herb::Engine::Report` also keeps **channels**, which is where a producer other than the compiler puts what it found, and it knows nothing about what any of them hold.
+
+A channel is anything answering three methods:
+
+| Method     | Returns  | Description                                                        |
+|------------|----------|--------------------------------------------------------------------|
+| `empty?`   | `bool`   | Whether it collected anything. An empty channel is never written.  |
+| `to_html`  | `String` | The markup to put on the page.                                     |
+| `anchor`   | `Symbol` | `:head` or `:body`, the tag it wants to be written before.         |
+
+The block builds one the first time its name is asked for, so a producer registers itself as it records and nothing has to be wired up in advance:
+
+```ruby
+Herb::Engine::Report::Session.current.channel(:query_log) { QueryLog.new }.add(sql)
+```
+
+A channel that collects queries and writes them at the end of the body looks like this:
+
+```ruby
+class QueryLog
+  def initialize = @queries = []
+  def add(sql) = @queries << sql
+
+  def anchor = :body
+  def empty? = @queries.empty?
+  def to_html = %(<script type="application/json" data-query-log>#{JSON.generate(@queries)}</script>)
+end
+```
+
+The middleware writes every non-empty channel before the tag it asked for, and a channel asking for a tag the response does not have is left alone. Adding a producer needs nothing in `Report`, `Session`, or `Middleware`.
+
 ## Instrumentation <Badge type="warning" text="experimental" />
 
 `InstrumentationVisitor` frames every ERB tag with a call saying which tag is rendering, so whatever happens while it renders can be attributed to it rather than to the template as a whole.

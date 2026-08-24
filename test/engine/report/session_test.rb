@@ -565,5 +565,13 @@ module Engine
         refute_predicate session, :empty?
       end
     end
+
+    test "hands a channel through to the report it is collecting into" do
+      session = Herb::Engine::Report::Session.open
+      channel = Object.new
+
+      assert_same channel, session.channel(:thing) { channel }
+      assert_same channel, session.report.channel(:thing) { Object.new }
+    end
   end
 end
