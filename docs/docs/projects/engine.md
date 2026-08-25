@@ -800,7 +800,7 @@ Herb::Engine.new(source, filename: path, visitors: [
 
 The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there.
 
-Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive.
+Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
 
 `deliver` says where the narrowed CSS goes.
 
@@ -830,6 +830,8 @@ Lightning CSS is one way to narrow the CSS, and not the only one. `transform` is
 transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
 #=> ".title[data-herb-scope-1a2b3c4d] { color: red }"
 ```
+
+A return value answering `warnings` has each of them reported as a diagnostic, which is how a `LightningCSS::Result` surfaces what Lightning CSS kept without acting on. CSS a transform could not act on is CSS that does nothing once the page renders, so it is worth saying so at compile time. A transform answering with a plain string reports nothing.
 
 #### Gathering the CSS ahead of time
 
