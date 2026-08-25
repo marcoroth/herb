@@ -108,7 +108,7 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(@temp_dir)
 
     assert_includes config.file_exclude_patterns, "node_modules/**/*"
-    assert_includes config.file_exclude_patterns, "vendor/**/*"
+    refute_includes config.file_exclude_patterns, "vendor/**/*"
     assert_includes config.file_exclude_patterns, "custom/**/*"
   end
 
@@ -116,13 +116,13 @@ class ConfigurationTest < Minitest::Spec
     write_config(<<~YAML)
       files:
         exclude:
-          - "vendor/**/*"
+          - "node_modules/**/*"
     YAML
 
     config = Herb::Configuration.load(@temp_dir)
 
-    vendor_count = config.file_exclude_patterns.count { |p| p == "vendor/**/*" }
-    assert_equal 2, vendor_count
+    node_modules_count = config.file_exclude_patterns.count { |p| p == "node_modules/**/*" }
+    assert_equal 2, node_modules_count
   end
 
   test "linter_include_patterns combines files and linter patterns" do
@@ -203,7 +203,7 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(@temp_dir)
 
     refute config.linter_enabled_for_path?("node_modules/pkg/file.html.erb")
-    refute config.linter_enabled_for_path?("vendor/bundle/file.html.erb")
+    assert config.linter_enabled_for_path?("vendor/bundle/file.html.erb")
   end
 
   test "linter_enabled_for_path? respects files.exclude" do
@@ -375,7 +375,7 @@ class ConfigurationTest < Minitest::Spec
     patterns = Herb::Configuration.default_exclude_patterns
 
     assert_includes patterns, "node_modules/**/*"
-    assert_includes patterns, "vendor/**/*"
+    refute_includes patterns, "vendor/**/*"
   end
 
   test "linter config is accessible" do

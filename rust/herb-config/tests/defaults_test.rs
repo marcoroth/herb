@@ -18,7 +18,7 @@ fn default_exclude_patterns_contains_common_directories() {
   assert!(patterns.contains(&"node_modules/**/*".to_string()));
   assert!(patterns.contains(&"storage/**/*".to_string()));
   assert!(patterns.contains(&"tmp/**/*".to_string()));
-  assert!(patterns.contains(&"vendor/**/*".to_string()));
+  assert!(!patterns.contains(&"vendor/**/*".to_string()));
 }
 
 #[test]
