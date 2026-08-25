@@ -10,7 +10,12 @@ module Bench
   module Corpus
     REPO_URL = "https://github.com/marcoroth/herb-corpus.git"
     BENCH_ROOT = File.expand_path("..", __dir__)
-    CORPUS_PATH = File.join(BENCH_ROOT, "tmp", "herb-corpus")
+    CORPUS_PATH =
+      if (override = ENV["HERB_CORPUS_PATH"]) && !override.empty?
+        File.expand_path(override)
+      else
+        File.join(BENCH_ROOT, "tmp", "herb-corpus")
+      end
     ERB_DIR = File.join(CORPUS_PATH, "erb")
 
     module_function
