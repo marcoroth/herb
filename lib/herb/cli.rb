@@ -11,7 +11,7 @@ require_relative "engine/slot_visitor"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :file_timeout
 
   def initialize(args)
     @args = args
@@ -339,6 +339,10 @@ class Herb::CLI
 
       parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
         self.optimize = true
+      end
+
+      parser.on("--scoped-styles", "Scope each `<style scoped>` block to its file with Lightning CSS (for compile/render commands) (default: false)") do
+        self.scoped_styles = true
       end
 
       parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
@@ -1115,6 +1119,13 @@ class Herb::CLI
     exit(0)
   end
 
+  def scoped_style_visitor
+    require_relative "engine/scoped_style/visitor"
+    Herb.ensure_installed("lightningcss")
+
+    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -1124,6 +1135,10 @@ class Herb::CLI
 
       slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
       slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+      visitors = []
+
+      visitors << slot_visitor if slot_visitor
+      visitors << scoped_style_visitor if scoped_styles
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
@@ -1138,7 +1153,7 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
       options[:validate_ruby] = true
-      options[:visitors] = [slot_visitor] if slot_visitor
+      options[:visitors] = visitors unless visitors.empty?
 
       engine = Herb::Engine.new(source, options)
 
@@ -1250,7 +1265,11 @@ class Herb::CLI
 
       options[:optimize] = true if optimize
       options[:trim] = true if trim
-      options[:visitors] = [slot_visitor] if slot_visitor
+
+      visitors = []
+      visitors << slot_visitor if slot_visitor
+      visitors << scoped_style_visitor if scoped_styles
+      options[:visitors] = visitors unless visitors.empty?
 
       engine = Herb::Engine.new(source, options)
       compiled_code = engine.src

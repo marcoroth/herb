@@ -227,6 +227,54 @@ describe("a page that waits for the server", () => {
   })
 })
 
+describe("two flushes racing", () => {
+  const RACE_PAGE =
+    `<!--herb-region:${FILE}:${VERSION}:0-->` +
+    `<p><!--herb-slot:0-->old-a<!--/herb-slot:0--></p>` +
+    `<p><!--herb-slot:1-->old-b<!--/herb-slot:1--></p>` +
+    `<!--/herb-region:${FILE}-->`
+
+  const RACE_MAP = {
+    state: {
+      "@a": [{ file: FILE, version: VERSION, index: 0, mode: "identity" }],
+      "@b": [{ file: FILE, version: VERSION, index: 1, mode: "identity" }],
+    },
+    params: { a: "@a", b: "@b" },
+  }
+
+  test("an aborted flush leaves the newer flush's world alone", async () => {
+    const slots = mounted(RACE_PAGE + `<template data-herb-dependencies>${JSON.stringify(RACE_MAP)}</template>`)
+
+    let calls = 0
+    const transport = async (_request: StateRequest, signal: AbortSignal): Promise<Payload | null> => {
+      calls += 1
+
+      if (calls === 1) {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))
+        })
+      }
+
+      return null
+    }
+
+    const state = new SlotState(slots, { debounce: 0, transport })
+
+    state.adopt()
+
+    const first = state.set("a", "new-a")
+
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    const second = state.set("b", "new-b")
+
+    await Promise.all([first, second])
+
+    expect(text(0, slots)).toBe("new-a")
+    expect(state.get("a")).toBe("new-a")
+  })
+})
+
 describe("reconciling with the server", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
@@ -312,6 +360,22 @@ describe("keeping commands out of the address bar", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
     window.history.replaceState({}, "", "/posts")
+  })
+
+  test("keeps a param that appeared after adoption", async () => {
+    const slots = mounted(PAGE + DEPENDENCIES)
+    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+
+    state.adopt()
+
+    window.history.replaceState({}, "", "/posts?modal=1")
+
+    await state.set("name", "Ada")
+
+    const params = new URLSearchParams(window.location.search)
+
+    expect(params.get("modal")).toBe("1")
+    expect(params.get("name")).toBe("Ada")
   })
 
   test("persists a key the map names", async () => {

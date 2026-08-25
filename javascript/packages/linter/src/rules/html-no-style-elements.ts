@@ -1,4 +1,4 @@
-import { getTagLocalName } from "@herb-tools/core"
+import { getTagLocalName, hasAttribute } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
@@ -7,7 +7,7 @@ import { ParserRule } from "../types.js"
 
 class HTMLNoStyleElementsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagLocalName(node) === "style") {
+    if (getTagLocalName(node) === "style" && !hasAttribute(node, "scoped")) {
       this.addOffense(
         `Avoid inline \`<style>\` tags. ${this.suggestion()}`,
         node.open_tag!.location,
@@ -19,10 +19,10 @@ class HTMLNoStyleElementsVisitor extends BaseRuleVisitor {
 
   private suggestion(): string {
     if (this.context.framework === "actionview") {
-      return "Extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`."
+      return "If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`."
     }
 
-    return "Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline."
+    return "If the styles belong to this file, mark the block `<style scoped>`. Otherwise extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline."
   }
 }
 

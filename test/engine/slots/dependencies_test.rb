@@ -423,6 +423,153 @@ module Engine
 
         assert_empty subject.across(entry)
       end
+      test "carries the presence a boolean attribute compares" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (draft: "", sending: false) %>
+          <p><%= draft %></p>
+          <button disabled="<%= draft == "" %>">Send</button>
+          <video muted="<%= sending %>"></video>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [["draft", %("")], ["sending", nil]], manifest["presence"].values
+        assert_equal manifest["presence"].keys.map(&:to_i).sort, (manifest["reads"]["draft"] + manifest["reads"]["sending"]).sort - manifest["reads"]["draft"].take(1)
+      end
+
+      test "carries a combo presence and registers every state it reads" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending: false, failed: false) %>
+          <input disabled="<%= pending? || failed? %>">
+          <div><% if pending? && failed? %>Stuck<% else %>Fine<% end %></div>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [{ "any" => [["pending", nil], ["failed", nil]] }], manifest["presence"].values
+
+        index = manifest["presence"].keys.first.to_i
+
+        assert_includes manifest["reads"]["pending"], index
+        assert_includes manifest["reads"]["failed"], index
+
+        conditional = manifest["conditionals"].values.first
+
+        assert_equal [{ "branch" => 0, "all" => [["pending", nil], ["failed", nil]] }], conditional["arms"]
+      end
+
+      test "carries a derived state with its condition" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+          <div><% if busy %>Busy<% else %>Idle<% end %></div>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+        declaration = manifest["declarations"].find { |declared| declared["name"] == "busy" }
+
+        assert_equal "boolean", declaration["kind"].to_s
+        assert_equal({ "any" => [["pending", nil], ["failed", nil]] }, declaration["derived"])
+      end
+
+      test "carries a counted state with its fold" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending_count: 0) %>
+          <ul>
+            <% @messages.each do |message| %>
+              <%# herb:key message.id %>
+              <%# herb:state (pending: false) %>
+              <% if pending? %><% pending_count += 1 %><% end %>
+              <li id="<%= message.id %>"><%= message.body %></li>
+            <% end %>
+          </ul>
+          <p><%= pending_count %></p>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+        declaration = manifest["declarations"].find { |declared| declared["name"] == "pending_count" }
+
+        assert_equal({ "collection" => 0, "when" => ["pending", nil], "by" => 1 }, declaration["count"])
+        assert_includes manifest["reads"]["pending_count"], 3
+      end
+
+      test "binds a tag helper input that reads a state" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (draft: "", agreed: false) %>
+          <%= tag.input value: draft %>
+          <%= tag.input type: "checkbox", checked: agreed %>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [0], manifest["reads"]["draft"]
+        assert_equal [0], manifest["bound"]["draft"]
+        assert_equal [["agreed", nil]], manifest["presence"].values
+        assert_equal [1], manifest["bound"]["agreed"]
+      end
+
+      test "carries the states a template declares" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (pending: false, attempts: 0) %>
+          <div><%= @query %></div>
+          <p><%= attempts %></p>
+          <span><% if pending? %>wait<% else %>done<% end %></span>
+        ERB
+
+        payload = subject.payload(path)
+        manifest = payload["states"].values.first
+
+        names = manifest["declarations"].map { |declaration| declaration["name"] }
+
+        assert_equal ["pending", "attempts"], names
+        assert_equal ["region"], manifest["declarations"].map { |declaration| declaration["scope"] }.uniq
+        assert_equal 1, manifest["reads"]["attempts"].size
+
+        conditional = manifest["conditionals"].values.first
+
+        assert_equal [["pending", nil, 0]], conditional["arms"]
+        assert_equal 1, conditional["else"]
+        assert_equal subject.version_for(path), manifest["version"]
+      end
+
+      test "marks a state read into a form control as bound" do
+        path = write("index.html.erb", <<~ERB)
+          <%# herb:state (draft: "", agreed: false) %>
+          <input value="<%= draft %>">
+          <input type="checkbox" checked="<%= agreed %>">
+          <p><%= draft %></p>
+        ERB
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal 2, manifest["reads"]["draft"].size
+        assert_equal 1, manifest["bound"]["draft"].size
+        assert_equal 1, manifest["bound"]["agreed"].size
+        refute_includes manifest["bound"]["draft"], manifest["reads"]["draft"].last
+      end
+
+      test "counts a state read in an interpolated attribute" do
+        path = write("index.html.erb", %(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
+
+        manifest = subject.payload(path)["states"].values.first
+
+        assert_equal [0], manifest["reads"]["status"]
+        assert_empty manifest["bound"]
+      end
+
+      test "carries the states of a partial no server state reaches" do
+        write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
+        path = write("index.html.erb", %(<div><%= render "menu" %></div>))
+
+        manifests = subject.payload(path)["states"]
+
+        assert_equal(["open"], manifests.values.compact.flat_map { |manifest| manifest["declarations"].map { |declaration| declaration["name"] } })
+      end
+
+      test "carries no states section entry for a template that declares none" do
+        path = write("index.html.erb", "<div><%= @query %></div>")
+
+        assert_empty subject.payload(path)["states"]
+      end
     end
   end
 end

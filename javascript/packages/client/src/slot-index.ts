@@ -17,6 +17,8 @@
  * attaching slots to an already-indexed region when the new markup landed inside one.
  */
 
+import { HERB_ATTRIBUTES } from "./attributes"
+
 const REGION_OPEN = /^herb-region:(.*):([0-9a-f]+):(\d+)$/
 const REGION_CLOSE = /^\/herb-region:(.*)$/
 const SLOT_OPEN = /^herb-slot:(\d+)(?::([a-z_]+))?$/
@@ -24,14 +26,26 @@ const SLOT_CLOSE = /^\/herb-slot:(\d+)$/
 const ITEM_OPEN = /^herb-item:(\d+):([\s\S]*)$/
 const ITEM_CLOSE = /^\/herb-item:(\d+)$/
 const BRANCH = /^herb-branch:(\d+):(\w+)$/
-const MARKER = /^\/?herb-(region|slot|item|branch):/
+const MARKER = /^\/?herb-(region|slot|item|branch|seeds):/
+const SEEDS = /^herb-seeds:([\s\S]*)$/
 const STATICS_REGION = /^(.*):([0-9a-f]+)$/
 const ITEM_STATICS = "item"
-const STATICS_SELECTOR = "template[data-herb-region], template[data-herb-statics]"
-const ANCHOR_ATTRIBUTE = "data-herb-slot"
+const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}], template[${HERB_ATTRIBUTES.statics}]`
+const MAX_JOURNAL = 50
+const PART_MARKER = "herb-part"
+const SEEDS_KEY = "seeds"
+
+const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
+const NAME_ATTRIBUTE = HERB_ATTRIBUTES.name
+const NAME_ENTRY = /^(\d+):(.+)$/
 
 const DEFAULT_SLOT_TYPE: SlotType = "child"
+
+// A slot anchored on an element writes that element's content when the slot IS the content, which
+// covers a plain child and the RCDATA of a `<textarea>` or `<title>`. Every other anchored slot
+// addresses an attribute instead, so its content must be left alone.
+const CONTENT_SLOT_TYPES: SlotType[] = ["child", "raw_text"]
 
 export type SlotType =
   | "child"
@@ -55,7 +69,29 @@ export type SlotAnchor =
 export type SlotMap = Map<number, Slot>
 export type ItemMap = Map<string, Item>
 export type FragmentMap = Map<string, DocumentFragment>
-export type SlotValues = Record<number, string>
+export type SlotValues = Record<number, string | string[]>
+export type ItemValues = Record<number | string, string | string[]>
+
+export interface AddItemOptions {
+  values?: ItemValues
+  before?: string
+  text?: boolean
+}
+
+export interface ApplyOptions {
+  items?: "replace" | "merge"
+}
+
+export type RevertToken = number
+
+interface SlotAddress {
+  region: Region | null
+  collection: number | null
+  key: string | null
+  index: number
+}
+
+type Inverse = () => void
 
 export interface StaticsIdentity {
   file: string
@@ -67,6 +103,7 @@ export interface Item {
   start: Comment
   end: Comment
   slots: SlotMap
+  seeds?: Record<string, unknown>
 }
 
 export interface Slot {
@@ -86,6 +123,7 @@ export type SlotOperation =
   | "markup"
   | "branch"
   | "item-added"
+  | "item-rekeyed"
   | "item-removed"
   | "item-updated"
 
@@ -95,6 +133,7 @@ export interface SlotEventDetail {
   index: number
   operation: SlotOperation
   key: string | null
+  previousKey: string | null
   slot: Slot | null
   item: Item | null
 }
@@ -114,6 +153,8 @@ export interface Region {
   start: Comment | null
   end: Comment | null
   slots: SlotMap
+  names: Map<string, number>
+  seeds?: Record<string, unknown>
 }
 
 export interface ScanResult {
@@ -141,7 +182,7 @@ export interface Collected {
   items: { [key: string]: PayloadSlots }
 }
 
-export type PayloadValue = string | Payload | Branched | Collected
+export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected
 
 export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "items" | "partial-attribute"
 
@@ -156,6 +197,7 @@ export interface Deferred {
 export interface ApplyReport {
   applied: number
   deferred: Deferred[]
+  token?: RevertToken
 }
 
 export interface ItemPlan {
@@ -197,10 +239,24 @@ export class SlotIndex {
   #regions: Region[] = []
   #seen = new WeakSet<Comment>()
   #anchored = new WeakSet<Element>()
+  #named = new WeakSet<Element>()
+  #journal = new Map<RevertToken, Inverse[]>()
+  #recording: Inverse[] | null = null
+  #nextToken = 1
   #slotRegions = new WeakMap<Slot, Region>()
   #slotOwners = new WeakMap<Slot, SlotMap>()
   #skeletons = new Map<string, Statics>()
+  #clientOwned = new WeakSet<Slot>()
+  #applying = 0
   #observer: MutationObserver | null = null
+
+  claim(slot: Slot): void {
+    this.#clientOwned.add(slot)
+  }
+
+  claimed(slot: Slot): boolean {
+    return this.#clientOwned.has(slot)
+  }
 
   observe(root: Node = document.documentElement): ScanResult {
     this.#observer?.disconnect()
@@ -260,16 +316,43 @@ export class SlotIndex {
     return this.regionsFor(file).find((region) => region.occurrence === occurrence) ?? null
   }
 
-  slot(file: string, index: number, occurrence = 0): Slot | null {
-    return this.region(file, occurrence)?.slots.get(index) ?? null
+  slot(file: string, index: number | string, occurrence = 0): Slot | null {
+    const region = this.region(file, occurrence)
+
+    if (!region) return null
+
+    const resolved = this.#slotIndex(region, index, null)
+
+    return resolved === null ? null : (region.slots.get(resolved) ?? null)
   }
 
-  itemsFor(file: string, index: number, occurrence = 0): ItemMap {
+  itemsFor(file: string, index: number | string, occurrence = 0): ItemMap {
     return this.slot(file, index, occurrence)?.items ?? new Map()
   }
 
-  slotInItem(file: string, collection: number, key: string, index: number, occurrence = 0): Slot | null {
-    return this.itemsFor(file, collection, occurrence).get(key)?.slots.get(index) ?? null
+  slotInItem(file: string, collection: number | string, key: string, index: number | string, occurrence = 0): Slot | null {
+    const region = this.region(file, occurrence)
+    const item = this.itemsFor(file, collection, occurrence).get(key)
+
+    if (!region || !item) return null
+
+    const resolved = this.#slotIndex(region, index, item)
+
+    return resolved === null ? null : (item.slots.get(resolved) ?? null)
+  }
+
+  #slotIndex(region: Region, index: number | string, item: Item | null): number | null {
+    if (typeof index === "number") return index
+
+    const name = region.names.get(index)
+
+    if (name !== undefined) return name
+
+    for (const slot of (item?.slots ?? region.slots).values()) {
+      if (slot.attribute === index) return slot.index
+    }
+
+    return null
   }
 
   rangeFor(slot: Slot): Range {
@@ -340,27 +423,123 @@ export class SlotIndex {
     return { added, removed, moved, kept, unchanged: added.length === 0 && removed.length === 0 && moved.length === 0 }
   }
 
-  apply(payload: Payload): ApplyReport {
+  apply(payload: Payload, options: ApplyOptions = {}): ApplyReport {
     const report: ApplyReport = { applied: 0, deferred: [] }
 
-    this.#applyPayload(payload, report)
+    this.#applying += 1
+
+    try {
+      const { token } = this.transaction(() => {
+        this.#applyPayload(payload, report, options.items ?? "replace")
+      })
+
+      if (token !== null) report.token = token
+    } finally {
+      this.#applying -= 1
+    }
 
     return report
   }
 
-  #applyPayload(payload: Payload, report: ApplyReport): void {
+  applying(): boolean {
+    return this.#applying > 0
+  }
+
+  transaction<T>(work: () => T, options: { retain?: boolean } = {}): { token: RevertToken | null; result: T } {
+    if (this.#recording || options.retain === false) return { token: null, result: work() }
+
+    const inverses: Inverse[] = []
+
+    this.#recording = inverses
+
+    let result: T
+
+    try {
+      result = work()
+    } finally {
+      this.#recording = null
+    }
+
+    if (inverses.length === 0) return { token: null, result }
+
+    const token = this.#nextToken++
+
+    this.#journal.set(token, inverses)
+
+    if (this.#journal.size > MAX_JOURNAL) {
+      const oldest = this.#journal.keys().next().value
+
+      if (oldest !== undefined) this.#journal.delete(oldest)
+    }
+
+    return { token, result }
+  }
+
+  revert(token: RevertToken): boolean {
+    const inverses = this.#journal.get(token)
+
+    if (!inverses) return false
+
+    this.#journal.delete(token)
+
+    for (let position = inverses.length - 1; position >= 0; position -= 1) inverses[position]()
+
+    return true
+  }
+
+  #record(make: () => Inverse): void {
+    if (!this.#recording) return
+
+    this.#recording.push(make())
+  }
+
+  #addressOf(slot: Slot): SlotAddress {
+    const region = this.#slotRegions.get(slot) ?? null
+    const owner = this.#owner(slot)
+    let collection: number | null = null
+    let key: string | null = null
+
+    if (region && owner !== region.slots) {
+      for (const candidate of region.slots.values()) {
+        if (candidate.type !== "collection") continue
+
+        for (const item of candidate.items.values()) {
+          if (item.slots === owner) {
+            collection = candidate.index
+            key = item.key
+            break
+          }
+        }
+
+        if (key !== null) break
+      }
+    }
+
+    return { region, collection, key, index: slot.index }
+  }
+
+  #slotAt(address: SlotAddress): Slot | null {
+    const { region, collection, key, index } = address
+
+    if (!region) return null
+    if (collection === null || key === null) return region.slots.get(index) ?? null
+
+    return region.slots.get(collection)?.items.get(key)?.slots.get(index) ?? null
+  }
+
+  #applyPayload(payload: Payload, report: ApplyReport, mode: "replace" | "merge"): void {
     const region = this.region(payload.template, payload.occurrence)
 
     if (!region) return this.#defer(report, payload, null, "no-region")
     if (region.version !== payload.version) return this.#defer(report, payload, null, "stale-version")
 
-    this.#applySlots(payload, region.slots, payload.slots, report)
+    this.#applySlots(payload, region.slots, payload.slots, report, mode)
   }
 
-  #applySlots(payload: Payload, owner: SlotMap, values: PayloadSlots, report: ApplyReport): void {
+  #applySlots(payload: Payload, owner: SlotMap, values: PayloadSlots, report: ApplyReport, mode: "replace" | "merge"): void {
     for (const [key, value] of Object.entries(values)) {
       if (isPayload(value)) {
-        this.#applyPayload(value, report)
+        this.#applyPayload(value, report, mode)
         continue
       }
 
@@ -372,7 +551,17 @@ export class SlotIndex {
         continue
       }
 
-      if (typeof value === "string") {
+      if (this.#clientOwned.has(slot)) continue
+
+
+      if (typeof value === "boolean") {
+        if (this.setBooleanAttribute(slot, value)) report.applied += 1
+        else this.#defer(report, payload, index, "partial-attribute")
+
+        continue
+      }
+
+      if (typeof value === "string" || Array.isArray(value)) {
         if (this.#same(slot, value)) continue
 
         if (slot.attribute && !this.setAttribute(slot, value)) {
@@ -380,20 +569,27 @@ export class SlotIndex {
           continue
         }
 
-        if (!slot.attribute) this.update(slot, value)
+        if (!slot.attribute) {
+          if (Array.isArray(value)) {
+            this.#defer(report, payload, index, "partial-attribute")
+            continue
+          }
+
+          this.update(slot, value)
+        }
 
         report.applied += 1
         continue
       }
 
-      if ("items" in value) this.#applyItems(payload, slot, value, report)
-      else this.#applyBranch(payload, slot, value, report)
+      if ("items" in value) this.#applyItems(payload, slot, value, report, mode)
+      else this.#applyBranch(payload, slot, value, report, mode)
     }
   }
 
-  #applyBranch(payload: Payload, slot: Slot, value: Branched, report: ApplyReport): void {
+  #applyBranch(payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: "replace" | "merge"): void {
     if (value.branch === slot.branch) {
-      if (value.slots) this.#applySlots(payload, this.#owner(slot), value.slots, report)
+      if (value.slots) this.#applySlots(payload, this.#owner(slot), value.slots, report, mode)
 
       return
     }
@@ -412,34 +608,79 @@ export class SlotIndex {
 
     if (!built) return this.#defer(report, payload, slot.index, "branch")
 
+    this.#record(() => {
+      const before = this.#current(slot)
+      const beforeBranch = slot.branch
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (!live) return
+
+        this.update(live, before)
+        live.branch = beforeBranch
+      }
+    })
+
     this.#writeFragment(slot, built)
+
+    slot.branch = value.branch
 
     report.applied += 1
 
     if (value.slots) {
-      this.#applySlots(payload, this.#owner(slot), value.slots, report)
+      this.#applySlots(payload, this.#owner(slot), value.slots, report, mode)
     }
   }
 
-  #applyItems(payload: Payload, slot: Slot, value: Collected, report: ApplyReport): void {
+  #applyItems(payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: "replace" | "merge"): void {
     const wanted = Object.keys(value.items)
-    const plan = this.reconcile(slot, wanted)
 
-    if (!plan.unchanged) {
-      const unbuilt = this.#reconcileItems(slot, wanted, plan)
+    if (mode === "merge") {
+      this.#mergeItems(payload, slot, wanted, report)
+    } else {
+      const plan = this.reconcile(slot, wanted)
 
-      if (unbuilt.length > 0) {
-        this.#defer(report, payload, slot.index, "items", unbuilt)
+      if (!plan.unchanged) {
+        const unbuilt = this.#reconcileItems(slot, wanted, plan)
+
+        if (unbuilt.length > 0) {
+          this.#defer(report, payload, slot.index, "items", unbuilt)
+        }
       }
     }
 
     for (const key of wanted) {
       const item = slot.items.get(key)
 
-      if (item) {
-        this.#applySlots(payload, item.slots, value.items[key], report)
-      }
+      if (!item) continue
+
+      const { [SEEDS_KEY]: seeds, ...slots } = value.items[key] as PayloadSlots & { [SEEDS_KEY]?: Record<string, unknown> }
+
+      // A row the client built has no `herb-seeds` comment of its own, so the response is where
+      // its seeded states come from.
+      if (seeds) item.seeds = { ...(item.seeds ?? {}), ...seeds }
+
+      this.#applySlots(payload, item.slots, slots, report, mode)
     }
+  }
+
+  #mergeItems(payload: Payload, slot: Slot, wanted: string[], report: ApplyReport): void {
+    const added = wanted.filter((key) => !slot.items.has(key))
+
+    if (added.length === 0) return
+
+    const template = this.#rowTemplate(slot)
+    const anchor = slot.anchor.kind === "range" ? slot.anchor.end : null
+
+    if (!template || !anchor) {
+      this.#defer(report, payload, slot.index, "items", added)
+
+      return
+    }
+
+    for (const key of added) this.#buildItem(slot, key, template, anchor)
   }
 
   #reconcileItems(slot: Slot, wanted: string[], plan: ItemPlan): string[] {
@@ -466,16 +707,15 @@ export class SlotIndex {
     return []
   }
 
-  #rowTemplate(slot: Slot): DocumentFragment | null {
+  #rowTemplate(slot: Slot, prefer: "live" | "skeleton" = "live"): DocumentFragment | null {
+    const region = this.#slotRegions.get(slot)
+    const skeleton = region ? this.skeletonFor(region.file, `${slot.index}:${ITEM_STATICS}`) : null
+
+    if (prefer === "skeleton" && skeleton) return skeleton
+
     const [item] = this.#itemsInDocumentOrder(slot)
 
-    if (!item) {
-      const region = this.#slotRegions.get(slot)
-
-      return region ? this.skeletonFor(region.file, `${slot.index}:${ITEM_STATICS}`) : null
-    }
-
-    return this.#rowFragment(item)
+    return item ? this.#rowFragment(item) : skeleton
   }
 
   #rowFragment(item: Item): DocumentFragment {
@@ -502,7 +742,7 @@ export class SlotIndex {
     this.#park(region, `${slot.index}:${ITEM_STATICS}`, this.#rowFragment(item))
   }
 
-  #buildItem(slot: Slot, key: string, template: DocumentFragment): void {
+  #buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}, text = false): void {
     const copy = template.cloneNode(true) as DocumentFragment
 
     for (const marker of this.#markers(copy)) {
@@ -514,18 +754,68 @@ export class SlotIndex {
       if (open) comment.data = `herb-item:${slot.index}:${key}`
     }
 
-    const added = [...copy.childNodes]
-    const anchor = this.#itemsInDocumentOrder(slot)[0]?.start ?? (slot.anchor.kind === "range" ? slot.anchor.end : null)
+    for (const node of [...copy.childNodes]) {
+      if (node.nodeType !== Node.COMMENT_NODE) continue
 
-    if (anchor) anchor.parentNode?.insertBefore(copy, anchor)
+      const branch = BRANCH.exec((node as Comment).data.trim())
+
+      if (branch && branch[2] === ITEM_STATICS) node.remove()
+    }
+
+    const region = this.#slotRegions.get(slot)
+
+    fillSlots(copy, values, text, region ? (index) => this.#partsFor(region.file, index) : undefined)
+
+    const added = [...copy.childNodes]
+    const target =
+      anchor ?? this.#itemsInDocumentOrder(slot)[0]?.start ?? (slot.anchor.kind === "range" ? slot.anchor.end : null)
+
+    if (target) target.parentNode?.insertBefore(copy, target)
     else return
 
     this.scan(added)
+
+    this.#record(() => {
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+        const built = live?.items.get(key)
+
+        if (live && built) this.#dropItem(live, built)
+      }
+    })
 
     this.#announce(slot, "item-added", slot.index, key, slot.items.get(key) ?? null)
   }
 
   #dropItem(slot: Slot, item: Item): void {
+    this.#record(() => {
+      const keep = document.createRange()
+
+      keep.setStartBefore(item.start)
+      keep.setEndAfter(item.end)
+
+      const fragment = keep.cloneContents()
+      const address = this.#addressOf(slot)
+      const following = this.#itemsInDocumentOrder(slot)
+      const nextKey = following[following.indexOf(item) + 1]?.key ?? null
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (!live || live.anchor.kind !== "range" || live.items.has(item.key)) return
+
+        const target = (nextKey !== null ? live.items.get(nextKey)?.start : null) ?? live.anchor.end
+        const copy = fragment.cloneNode(true) as DocumentFragment
+        const added = [...copy.childNodes]
+
+        target.parentNode?.insertBefore(copy, target)
+        this.scan(added)
+        this.#announce(live, "item-added", live.index, item.key, live.items.get(item.key) ?? null)
+      }
+    })
+
     this.#keepItem(slot, item)
     this.#announce(slot, "item-removed", slot.index, item.key, item)
 
@@ -540,6 +830,17 @@ export class SlotIndex {
 
   #order(slot: Slot, keys: string[]): void {
     if (slot.anchor.kind !== "range") return
+
+    this.#record(() => {
+      const before = this.#itemsInDocumentOrder(slot).map((item) => item.key)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.#order(live, before)
+      }
+    })
 
     const end = slot.anchor.end
 
@@ -607,6 +908,17 @@ export class SlotIndex {
     if (slot.anchor.kind === "element") return false
     if (this.currentText(slot) === text) return false
 
+    this.#record(() => {
+      const before = this.#current(slot)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.update(live, before)
+      }
+    })
+
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
     slot.children = []
@@ -636,8 +948,16 @@ export class SlotIndex {
     return holder.innerHTML
   }
 
-  #same(slot: Slot, value: string): boolean {
-    if (slot.type === "attribute_interpolation") return false
+  #same(slot: Slot, value: string | string[]): boolean {
+    if (slot.type === "attribute_interpolation") {
+      const whole = this.#interpolate(slot, value)
+
+      if (whole === null || slot.anchor.kind === "range" || !slot.attribute) return false
+
+      return slot.anchor.element.getAttribute(slot.attribute) === whole
+    }
+
+    if (Array.isArray(value)) return false
 
     if (slot.attribute && slot.anchor.kind !== "range") {
       return slot.anchor.element.getAttribute(slot.attribute) === value
@@ -646,7 +966,7 @@ export class SlotIndex {
     return this.#current(slot) === value
   }
 
-  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, item: Item | null = null): void {
+  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, item: Item | null = null, previousKey: string | null = null): void {
     if (typeof document === "undefined") return
 
     const region = slot ? this.#slotRegions.get(slot) : null
@@ -659,6 +979,7 @@ export class SlotIndex {
           index,
           operation,
           key,
+          previousKey,
           slot,
           item,
         },
@@ -671,6 +992,17 @@ export class SlotIndex {
       return { regions: [], slots: [] }
     }
 
+    this.#record(() => {
+      const before = this.#current(slot)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.update(live, before)
+      }
+    })
+
     for (const descendant of this.descendantsOf(slot)) this.#forget(descendant)
 
     slot.children = []
@@ -678,11 +1010,12 @@ export class SlotIndex {
     if (slot.anchor.kind === "element") {
       const replacement = this.rangeFor(slot).createContextualFragment(html)
       const element = slot.anchor.element
+      const parent = element.parentNode
 
       element.replaceWith(replacement)
       this.#forget(slot)
 
-      return this.scan([...(element.parentNode?.childNodes ?? [])])
+      return this.scan(parent ? [...parent.childNodes] : [])
     }
 
     const range = this.rangeFor(slot)
@@ -705,6 +1038,21 @@ export class SlotIndex {
     const item = slot.items.get(key)
     if (!item) return null
 
+    this.#record(() => {
+      const holder = document.createElement("div")
+
+      holder.append(this.rangeForItem(item).cloneContents())
+
+      const before = holder.innerHTML
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.updateItem(live, key, before)
+      }
+    })
+
     const range = this.rangeForItem(item)
 
     range.deleteContents()
@@ -721,10 +1069,109 @@ export class SlotIndex {
     return result
   }
 
-  setAttribute(slot: Slot, value: string | null, name = slot.attribute): boolean {
+  addItem(slot: Slot, key: string, options: AddItemOptions = {}): Item | null {
+    if (slot.type !== "collection" || slot.anchor.kind !== "range") return null
+    if (slot.items.has(key)) return null
+
+    const template = this.#rowTemplate(slot, "skeleton")
+
+    if (!template) return null
+
+    const anchor =
+      options.before !== undefined ? (slot.items.get(options.before)?.start ?? slot.anchor.end) : slot.anchor.end
+
+    this.#buildItem(slot, key, template, anchor, this.#itemValues(slot, template, options.values ?? {}), options.text === true)
+
+    return slot.items.get(key) ?? null
+  }
+
+  removeItem(slot: Slot, key: string): boolean {
+    const item = slot.items.get(key)
+
+    if (!item) return false
+
+    this.#dropItem(slot, item)
+
+    return true
+  }
+
+  rekeyItem(slot: Slot, from: string, to: string): boolean {
+    if (from === to || slot.items.has(to)) return false
+
+    const item = slot.items.get(from)
+
+    if (!item) return false
+
+    item.start.data = `herb-item:${slot.index}:${to}`
+    item.key = to
+    slot.items.delete(from)
+    slot.items.set(to, item)
+
+    this.#record(() => {
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.rekeyItem(live, to, from)
+      }
+    })
+
+    this.#announce(slot, "item-rekeyed", slot.index, to, item, from)
+
+    return true
+  }
+
+  #itemValues(slot: Slot, template: DocumentFragment, values: ItemValues): SlotValues {
+    const region = this.#slotRegions.get(slot)
+    const names = templateNames(template)
+    const resolved: SlotValues = {}
+
+    for (const [given, value] of Object.entries(values)) {
+      if (/^\d+$/.test(given)) {
+        resolved[Number(given)] = value
+
+        continue
+      }
+
+      const index = names.get(given) ?? region?.names.get(given)
+
+      if (index !== undefined) resolved[index] = value
+    }
+
+    return resolved
+  }
+
+  setAttribute(slot: Slot, value: string | string[] | null, name = slot.attribute): boolean {
     if (slot.anchor.kind === "range" || name === null) return false
-    if (slot.type === "attribute_interpolation") return false
+
+    if (slot.type === "attribute_interpolation") {
+      const whole = this.#interpolate(slot, value)
+
+      if (whole === null) return false
+
+      value = whole
+    }
+
+    if (Array.isArray(value)) return false
+
+    return this.#writeAttribute(slot, value, name)
+  }
+
+  #writeAttribute(slot: Slot, value: string | null, name: string): boolean {
+    if (slot.anchor.kind === "range") return false
     if (slot.anchor.element.getAttribute(name) === value) return true
+
+    this.#record(() => {
+      const before = slot.anchor.kind === "range" ? null : slot.anchor.element.getAttribute(name)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.#writeAttribute(live, before, name)
+      }
+    })
 
     if (value === null) {
       slot.anchor.element.removeAttribute(name)
@@ -735,6 +1182,49 @@ export class SlotIndex {
     this.#announce(slot, "attribute", slot.index)
 
     return true
+  }
+
+  setBooleanAttribute(slot: Slot, present: boolean, name = slot.attribute): boolean {
+    if (slot.anchor.kind === "range" || name === null) return false
+    if (slot.type !== "boolean_attribute") return false
+
+    const element = slot.anchor.element
+
+    if (element.hasAttribute(name) === present) return true
+
+    this.#record(() => {
+      const before = element.hasAttribute(name)
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (live) this.setBooleanAttribute(live, before, name)
+      }
+    })
+
+    element.toggleAttribute(name, present)
+
+    if (name in element) {
+      ;(element as unknown as Record<string, unknown>)[name] = present
+    }
+
+    this.#announce(slot, "attribute", slot.index)
+
+    return true
+  }
+
+  #interpolate(slot: Slot, value: string | string[] | null): string | null {
+    if (value === null) return null
+
+    const region = this.#slotRegions.get(slot)
+    if (!region) return null
+
+    return interpolateParts(this.#partsFor(region.file, slot.index), value)
+  }
+
+  #partsFor(file: string, index: number): string[] | null {
+    return attributeParts(this.skeletonFor(file, `${index}:parts`))
   }
 
   capture(slot: Slot): boolean {
@@ -782,7 +1272,7 @@ export class SlotIndex {
 
     const copy = skeleton.cloneNode(true) as DocumentFragment
 
-    fillSlots(copy, dynamics)
+    fillSlots(copy, dynamics, false, (index) => this.#partsFor(file, index))
 
     return copy
   }
@@ -793,6 +1283,21 @@ export class SlotIndex {
     const region = this.regionOf(slot)
 
     if (!region) return false
+
+    this.#record(() => {
+      const before = this.#current(slot)
+      const beforeBranch = slot.branch
+      const address = this.#addressOf(slot)
+
+      return () => {
+        const live = this.#slotAt(address)
+
+        if (!live) return
+
+        this.update(live, before)
+        live.branch = beforeBranch
+      }
+    })
 
     this.capture(slot)
 
@@ -808,6 +1313,8 @@ export class SlotIndex {
     if (!built) return false
 
     this.#writeFragment(slot, built)
+
+    slot.branch = branch
 
     return true
   }
@@ -856,6 +1363,7 @@ export class SlotIndex {
     this.#regions = []
     this.#seen = new WeakSet()
     this.#anchored = new WeakSet()
+    this.#named = new WeakSet()
     this.#skeletons = new Map()
   }
 
@@ -869,6 +1377,7 @@ export class SlotIndex {
     for (const marker of this.#markers(root)) {
       if (marker.nodeType === Node.ELEMENT_NODE) {
         this.#anchorSlots(marker as Element, result, state)
+        this.#nameSlot(marker as Element, state)
 
         continue
       }
@@ -903,6 +1412,7 @@ export class SlotIndex {
             start: comment,
             end: null,
             slots: new Map(),
+            names: new Map(),
           }
 
           openRegions.push({ region, range })
@@ -996,11 +1506,26 @@ export class SlotIndex {
         continue
       }
 
+      const seeds = SEEDS.exec(data)
+
+      if (seeds) {
+        const holder = openItems[openItems.length - 1]?.item ?? openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
+
+        if (holder) holder.seeds = { ...(holder.seeds ?? {}), ...parseSeeds(seeds[1]) }
+
+        this.#seen.add(comment)
+
+        continue
+      }
+
       const branch = BRANCH.exec(data)
 
       if (branch) {
+        const index = Number(branch[1])
         const region = openRegions[openRegions.length - 1]?.region ?? this.#enclosingRegion(comment)
-        const slot = region?.slots.get(Number(branch[1]))
+        const item = openItems[openItems.length - 1]?.item ?? (region ? this.#enclosingItem(region, comment) : null)
+        const holder = item ?? region
+        const slot = openSlots.find((candidate) => candidate.index === index)?.slot ?? holder?.slots.get(index)
 
         if (slot && /^\d+$/.test(branch[2])) slot.branch = Number(branch[2])
 
@@ -1037,7 +1562,7 @@ export class SlotIndex {
   }
 
   #staticsIdentity(element: HTMLTemplateElement): StaticsIdentity | null {
-    const named = element.getAttribute("data-herb-region")
+    const named = element.getAttribute(HERB_ATTRIBUTES.region)
 
     if (named !== null) {
       const match = STATICS_REGION.exec(named)
@@ -1048,6 +1573,20 @@ export class SlotIndex {
     const region = this.#enclosingRegion(element)
 
     return region ? { file: region.file, version: region.version } : null
+  }
+
+  #nameSlot(element: Element, state: ParseState): void {
+    if (this.#named.has(element)) return
+
+    const entry = NAME_ENTRY.exec(element.getAttribute(NAME_ATTRIBUTE) ?? "")
+
+    if (!entry) return
+
+    this.#named.add(element)
+
+    const region = state.openRegions[state.openRegions.length - 1]?.region ?? this.#enclosingRegion(element)
+
+    region?.names.set(entry[2], Number(entry[1]))
   }
 
   #anchorSlots(element: Element, result: ScanResult, state: ParseState): void {
@@ -1069,7 +1608,9 @@ export class SlotIndex {
 
     for (const entry of anchorEntries(element)) {
       const [index, type, ...name] = entry.split(":")
-      const kind = (type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE ? ("content" as const) : ("element" as const)
+      const kind = CONTENT_SLOT_TYPES.includes((type as SlotType) ?? DEFAULT_SLOT_TYPE)
+        ? ("content" as const)
+        : ("element" as const)
 
       this.#attach(
         region,
@@ -1210,13 +1751,15 @@ export class SlotIndex {
       return
     }
 
-    if (root.nodeType === Node.ELEMENT_NODE && anchored(root as Element)) {
+    if (root.nodeType === Node.ELEMENT_NODE && (anchored(root as Element) || named(root as Element))) {
       yield root as Element
     }
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_ELEMENT, {
       acceptNode: (node) =>
-        (node.nodeType === Node.COMMENT_NODE ? MARKER.test((node as Comment).data.trim()) : anchored(node as Element))
+        (node.nodeType === Node.COMMENT_NODE
+          ? MARKER.test((node as Comment).data.trim())
+          : anchored(node as Element) || named(node as Element))
           ? NodeFilter.FILTER_ACCEPT
           : NodeFilter.FILTER_SKIP,
     })
@@ -1227,6 +1770,16 @@ export class SlotIndex {
       yield node as Comment | Element
       node = walker.nextNode()
     }
+  }
+}
+
+function parseSeeds(json: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(json) as unknown
+
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {}
+  } catch {
+    return {}
   }
 }
 
@@ -1245,8 +1798,26 @@ function skeletonElements(root: Node): HTMLTemplateElement[] {
   return found
 }
 
+function attributeParts(fragment: DocumentFragment | null): string[] | null {
+  if (!fragment) return null
+
+  const segments: string[] = [""]
+
+  for (const node of fragment.childNodes) {
+    if (node.nodeType === Node.COMMENT_NODE) {
+      if ((node as Comment).data.trim() === PART_MARKER) segments.push("")
+
+      continue
+    }
+
+    segments[segments.length - 1] += node.textContent ?? ""
+  }
+
+  return segments.length > 1 ? segments : null
+}
+
 function parkedBranches(element: HTMLTemplateElement): FragmentMap {
-  const named = element.getAttribute("data-herb-statics")
+  const named = element.getAttribute(HERB_ATTRIBUTES.statics)
 
   if (named !== null) return new Map([[named, element.content]])
 
@@ -1270,12 +1841,34 @@ function parkedBranches(element: HTMLTemplateElement): FragmentMap {
   return branches
 }
 
-function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
+function templateNames(template: DocumentFragment): Map<string, number> {
+  const names = new Map<string, number>()
+
+  for (const element of template.querySelectorAll(ANCHOR_SELECTOR)) {
+    for (const entry of anchorEntries(element)) {
+      const [index, , ...name] = entry.split(":")
+
+      if (name.length > 0) names.set(name.join(":"), Number(index))
+    }
+  }
+
+  for (const element of template.querySelectorAll(`[${NAME_ATTRIBUTE}]`)) {
+    const entry = NAME_ENTRY.exec(element.getAttribute(NAME_ATTRIBUTE) ?? "")
+
+    if (entry) names.set(entry[2], Number(entry[1]))
+  }
+
+  return names
+}
+
+function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = false, parts?: (index: number) => string[] | null): void {
   for (const open of slotOpeners(fragment)) {
     const index = Number(SLOT_OPEN.exec(open.data.trim())?.[1])
     const value = dynamics[index]
 
     if (value === undefined) continue
+
+    if (Array.isArray(value)) continue
 
     const close = closingFor(open, index)
     if (!close) continue
@@ -1285,7 +1878,7 @@ function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
     range.setStartAfter(open)
     range.setEndBefore(close)
     range.deleteContents()
-    range.insertNode(range.createContextualFragment(value))
+    range.insertNode(range.createContextualFragment(text ? escapeText(value) : value))
   }
 
   for (const element of fragment.querySelectorAll(ANCHOR_SELECTOR)) {
@@ -1295,10 +1888,31 @@ function fillSlots(fragment: DocumentFragment, dynamics: SlotValues): void {
 
       if (value === undefined) continue
 
-      if (name.length > 0) element.setAttribute(name.join(":"), value)
-      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.innerHTML = value
+      if (name.length > 0) {
+        const whole = type === "attribute_interpolation"
+          ? interpolateParts(parts?.(Number(index)) ?? null, value)
+          : Array.isArray(value) ? null : value
+
+        if (whole !== null) element.setAttribute(name.join(":"), whole)
+      } else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE && !Array.isArray(value)) {
+        element.innerHTML = text ? escapeText(value) : value
+      }
     }
   }
+}
+
+function escapeText(value: string): string {
+  return value.replace(/[&<>]/g, (match) => (match === "&" ? "&amp;" : match === "<" ? "&lt;" : "&gt;"))
+}
+
+function interpolateParts(parts: string[] | null, value: string | string[]): string | null {
+  if (!parts) return null
+
+  const dynamics = Array.isArray(value) ? value : [value]
+
+  if (dynamics.length !== parts.length - 1) return null
+
+  return parts.reduce((whole, segment, position) => (position === 0 ? segment : `${whole}${dynamics[position - 1]}${segment}`), "")
 }
 
 function blankSlots(fragment: DocumentFragment): void {
@@ -1319,8 +1933,12 @@ function blankSlots(fragment: DocumentFragment): void {
     for (const entry of anchorEntries(element)) {
       const [, type, ...name] = entry.split(":")
 
-      if (name.length > 0) element.setAttribute(name.join(":"), "")
-      else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) element.replaceChildren()
+      if (name.length > 0) {
+        if (type === "boolean_attribute") element.removeAttribute(name.join(":"))
+        else element.setAttribute(name.join(":"), "")
+      } else if ((type ?? DEFAULT_SLOT_TYPE) === DEFAULT_SLOT_TYPE) {
+        element.replaceChildren()
+      }
     }
   }
 }
@@ -1361,6 +1979,10 @@ function closingFor(open: Comment, index: number): Comment | null {
 
 function anchorEntries(element: Element): string[] {
   return element.getAttribute(ANCHOR_ATTRIBUTE)?.split(/\s+/).filter(Boolean) ?? []
+}
+
+function named(element: Element): boolean {
+  return element.hasAttribute(NAME_ATTRIBUTE)
 }
 
 function anchored(element: Element): boolean {

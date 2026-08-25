@@ -2,7 +2,8 @@ import panelStyles from './panel.css'
 
 import { injectStyle } from '../styles.js'
 import { loadRuntimeHighlighting } from './highlighting.js'
-import { buildRenderStack, diagnosticKey, normalizeDiagnostic, trimOrigin, readRuntimeReport } from './report.js'
+import { buildRenderStack, diagnosticKey, normalizeDiagnostic, trimOrigin, readRuntimeReport, UNKNOWN_TEMPLATE } from './report.js'
+import { flashElement } from '../slots/flash.js'
 
 import { MAX_RUNTIME_DIAGNOSTICS, RUNTIME_SEVERITIES } from './report.js'
 
@@ -31,6 +32,7 @@ interface PanelEntry {
   key: string
   diagnostic: NormalizedDiagnostic
   count: number
+  payload: boolean
 }
 
 interface PanelState {
@@ -125,6 +127,7 @@ function mergeDiagnostics(existing: NormalizedDiagnostic, incoming: NormalizedDi
     docsUrl: existing.docsUrl ?? incoming.docsUrl,
     value: existing.value ?? incoming.value,
     fix: existing.fix ?? incoming.fix,
+    element: incoming.element?.isConnected ? incoming.element : existing.element,
   }
 }
 
@@ -179,7 +182,11 @@ export class RuntimePanel {
 
     this.cleared = false
 
-    for (const candidate of candidates) {
+    for (const raw of candidates) {
+      const candidate = raw !== null && typeof raw === 'object' && (typeof raw.template !== 'string' || raw.template.length === 0)
+        ? { ...raw, template: UNKNOWN_TEMPLATE }
+        : raw
+
       if (typeof candidate?.template === 'string' && typeof candidate?.source === 'string') {
         this.sources[candidate.template] = candidate.source
       }
@@ -337,7 +344,7 @@ export class RuntimePanel {
       return
     }
 
-    this.entries = []
+    this.entries = this.entries.filter(entry => !entry.payload)
     this.cleared = false
 
     this.applyPayload(report)
@@ -366,11 +373,11 @@ export class RuntimePanel {
     this.sources = report.sources
 
     for (const diagnostic of report.diagnostics) {
-      this.add(diagnostic)
+      this.add(diagnostic, true)
     }
   }
 
-  private add(diagnostic: NormalizedDiagnostic): string {
+  private add(diagnostic: NormalizedDiagnostic, payload = false): string {
     const key = diagnosticKey(diagnostic)
     const existing = this.entries.find(entry => entry.key === key)
 
@@ -381,7 +388,7 @@ export class RuntimePanel {
       return key
     }
 
-    this.entries.push({ key, diagnostic, count: 1 })
+    this.entries.push({ key, diagnostic, count: 1, payload })
 
     while (this.entries.length > MAX_RUNTIME_DIAGNOSTICS) {
       this.entries.shift()
@@ -735,11 +742,15 @@ export class RuntimePanel {
 
     const repeat = entry.count > 1 ? `<span class="herb-dev-tools-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : ''
     const suggestion = diagnostic.suggestion === null ? '' : `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`
+    const element = diagnostic.element !== null && diagnostic.element.isConnected
+      ? `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it"><span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span><code>${escapeHTML(describeElement(diagnostic.element))}</code></button>`
+      : ''
 
     return [
       `<article class="herb-dev-tools-card" data-herb-dev-tools-origin="${escapeHTML(diagnostic.origin)}" data-herb-dev-tools-kind="${escapeHTML(diagnostic.kind)}">`,
       `<div class="herb-dev-tools-card-head">${marker}${code}${docs}<span class="herb-dev-tools-origin">${escapeHTML(diagnostic.origin)}</span>${repeat}</div>`,
       `<p class="herb-dev-tools-message">${inlineCodeHTML(diagnostic.message)}</p>`,
+      element,
       suggestion,
       this.excerptHTML(diagnostic),
       this.stackHTML(diagnostic),
@@ -759,7 +770,7 @@ export class RuntimePanel {
       return `<div class="herb-dev-tools-excerpt" data-herb-dev-tools-excerpt-pending></div>`
     }
 
-    const target = this.onOpenFile === null
+    const target = this.onOpenFile === null || diagnostic.template === UNKNOWN_TEMPLATE
       ? null
       : { file: diagnostic.template, line: diagnostic.location.start.line, column: diagnostic.location.start.column }
 
@@ -889,8 +900,15 @@ export class RuntimePanel {
           this.render()
         } else if (action === 'open') {
           this.openFrom(element)
+        } else if (action === 'locate') {
+          this.locateFrom(element)
         }
       })
+
+      if (element.getAttribute('data-herb-dev-tools-action') === 'locate') {
+        element.addEventListener('mouseenter', () => this.outlineFrom(element, true))
+        element.addEventListener('mouseleave', () => this.outlineFrom(element, false))
+      }
     })
 
     root.querySelectorAll<HTMLElement>('herb-ansi[data-herb-dev-tools-file]').forEach((element) => {
@@ -907,6 +925,43 @@ export class RuntimePanel {
     })
   }
 
+  private entryFor(trigger: HTMLElement): PanelEntry | undefined {
+    const index = Number(trigger.getAttribute('data-herb-dev-tools-entry'))
+
+    return Number.isInteger(index) ? this.entries[index] : undefined
+  }
+
+  private locateFrom(trigger: HTMLElement) {
+    const target = this.entryFor(trigger)?.diagnostic.element
+
+    if (!target || !target.isConnected) return
+
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    flashElement(target)
+  }
+
+  private outline: HTMLElement | null = null
+
+  private outlineFrom(trigger: HTMLElement, on: boolean) {
+    this.outline?.remove()
+    this.outline = null
+
+    if (!on) return
+
+    const target = this.entryFor(trigger)?.diagnostic.element
+
+    if (!target || !target.isConnected) return
+
+    const rect = target.getBoundingClientRect()
+    const box = document.createElement('div')
+
+    box.className = 'herb-slot-flash herb-element-outline'
+    box.style.cssText = `position:absolute;z-index:2147483000;pointer-events:none;top:${rect.top + window.scrollY}px;left:${rect.left + window.scrollX}px;width:${rect.width}px;height:${rect.height}px;outline:2px solid #f59e0b;outline-offset:2px;background:rgba(245,158,11,0.12)`
+
+    document.body.appendChild(box)
+    this.outline = box
+  }
+
   private openFrom(element: HTMLElement) {
     const file = element.getAttribute('data-herb-dev-tools-file')
 
@@ -919,4 +974,13 @@ export class RuntimePanel {
 
     this.onOpenFile(file, Number.isFinite(line) ? line : 1, Number.isFinite(column) ? column : 1)
   }
+}
+
+function describeElement(element: Element): string {
+  const tag = element.tagName.toLowerCase()
+  const id = element.id ? `#${element.id}` : ''
+  const herb = [...element.attributes].find(attribute => attribute.name.startsWith('data-herb-'))
+  const detail = herb ? ` ${herb.name}="${herb.value.length > 40 ? `${herb.value.slice(0, 40)}…` : herb.value}"` : ''
+
+  return `<${tag}${id}${detail}>`
 }
