@@ -37,6 +37,13 @@ The first invocation clones the corpus into `bench/tmp/herb-corpus/`
 
 - Total wall time and per-file average for each engine variant
 - Compiled output size (bytes) for each engine
+- Ruby-side allocated object count (`GC.stat(:total_allocated_objects)` delta)
+- Native malloc calls and bytes, captured by a small `malloc`/`calloc`/`realloc`
+  interposer at `bench/engine/malloc_count.c` that is compiled on demand into
+  `bench/tmp/libmalloc_count.{dylib,so}` and preloaded into each worker via
+  `DYLD_INSERT_LIBRARIES` (macOS) or `LD_PRELOAD` (Linux). This surfaces the
+  parser/AST allocations Herb's C extension makes, which are invisible to
+  `GC.stat`. Requires a working `cc` on `$PATH` (override with `CC=…`).
 - Per-engine failure count. Failing files are dumped to
   `bench/tmp/engine-{erubi_only,herb_only,both_failed}.txt` for triage —
   a failure that's Herb-specific is a real signal.

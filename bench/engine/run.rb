@@ -34,8 +34,10 @@ module Bench
     module_function
 
     WORKER    = File.expand_path("worker.rb", __dir__)
+    SHIM_SRC  = File.expand_path("malloc_count.c", __dir__)
     TMP_DIR   = File.expand_path("../tmp", __dir__)
     LIST_PATH = File.join(TMP_DIR, "engine-shared-files.txt")
+    SHIM_LIB  = File.join(TMP_DIR, "libmalloc_count.#{RUBY_PLATFORM =~ /darwin/ ? "dylib" : "so"}")
 
     ENGINES = %w[erubi herb herb-locations].freeze
 
@@ -58,6 +60,7 @@ module Bench
 
       screening = screen(files)
       write_shared_list(screening[:shared])
+      build_malloc_shim!
 
       results = ENGINES.map { |name| [name, measure_engine(name)] }.to_h
 
@@ -151,9 +154,14 @@ module Bench
       Reporter.header("Timing #{LABELS[name] || name} (subprocess)")
 
       cmd = [RbConfig.ruby, WORKER, name, LIST_PATH]
-      puts Reporter.dim("  $ #{cmd.join(" ")}")
+      counters_path = File.join(TMP_DIR, "native-#{name}.json")
+      File.delete(counters_path) if File.exist?(counters_path)
 
-      out, err, status = Open3.capture3(*cmd)
+      env = malloc_shim_env(counters_path)
+      pretty_env = env.map { |k, v| "#{k}=#{Corpus.relative(v)}" }.join(" ")
+      puts Reporter.dim("  $ #{pretty_env} #{cmd.join(" ")}")
+
+      out, err, status = Open3.capture3(env, *cmd)
 
       unless status.success?
         warn Reporter.red("  worker for #{name} exited with #{status.exitstatus}")
@@ -161,15 +169,71 @@ module Bench
         return { error: err, elapsed: 0.0, files: 0, compiled_bytes: 0, failures: [] }
       end
 
-      data = JSON.parse(out, symbolize_names: true)
+      data   = JSON.parse(out, symbolize_names: true)
+      native = read_native_counters(counters_path)
+      data[:native] = native
+
       files_timed = [data[:files], 1].max
       Reporter.kv("Elapsed",           Reporter.format_time(data[:elapsed]))
       Reporter.kv("Per file",          Reporter.format_time(data[:elapsed] / files_timed))
       Reporter.kv("Failures",          data[:failures].size.to_s)
       Reporter.kv("Compiled bytes",    format_bytes(data[:compiled_bytes]))
-      Reporter.kv("Allocated objects", format_count(data[:allocated_objects]))
-      Reporter.kv("Objects per file",  format_count(data[:allocated_objects] / files_timed))
+      Reporter.kv("Ruby objects",      format_count(data[:allocated_objects]))
+      Reporter.kv("Ruby obj/file",     format_count(data[:allocated_objects] / files_timed))
+      if native
+        Reporter.kv("Native malloc calls",  format_count(native[:calls]))
+        Reporter.kv("Native malloc bytes",  format_bytes(native[:bytes]))
+        Reporter.kv("Native bytes/file",    format_bytes(native[:bytes] / files_timed))
+      else
+        Reporter.kv("Native malloc",  Reporter.yellow("(shim not loaded — see warning above)"))
+      end
       data
+    end
+
+    # ---- native malloc shim ------------------------------------------------
+
+    # Builds bench/tmp/libmalloc_count.{dylib,so} if it doesn't exist yet
+    # (or the source is newer). Compiled with -O2 -fPIC. Shim is portable
+    # C11; on macOS it uses __interpose, on Linux LD_PRELOAD + dlsym.
+    def build_malloc_shim!
+      return if File.exist?(SHIM_LIB) && File.mtime(SHIM_LIB) >= File.mtime(SHIM_SRC)
+
+      FileUtils.mkdir_p(TMP_DIR)
+      Reporter.header("Building native-malloc counter shim")
+      puts Reporter.dim("  #{Corpus.relative(SHIM_SRC)} -> #{Corpus.relative(SHIM_LIB)}")
+
+      cc = ENV["CC"] || "cc"
+      flags =
+        if RUBY_PLATFORM =~ /darwin/
+          %w[-O2 -std=c11 -dynamiclib]
+        else
+          %w[-O2 -std=c11 -fPIC -shared -ldl]
+        end
+
+      cmd = [cc, *flags, SHIM_SRC, "-o", SHIM_LIB]
+      _out, err, status = Open3.capture3(*cmd)
+      unless status.success?
+        warn Reporter.red("  Failed to build malloc shim:")
+        warn err
+        FileUtils.rm_f(SHIM_LIB)
+        return
+      end
+      puts Reporter.dim("  built ok")
+    end
+
+    def malloc_shim_env(counters_path)
+      return {} unless File.exist?(SHIM_LIB)
+
+      preload_var = RUBY_PLATFORM =~ /darwin/ ? "DYLD_INSERT_LIBRARIES" : "LD_PRELOAD"
+      { preload_var => SHIM_LIB, "MALLOC_COUNT_OUT" => counters_path }
+    end
+
+    def read_native_counters(path)
+      return nil unless File.exist?(path)
+
+      JSON.parse(File.read(path), symbolize_names: true)
+    rescue JSON::ParserError
+      nil
     end
 
     def report(screening, results)
@@ -189,9 +253,14 @@ module Bench
         label = LABELS[name]
         Reporter.kv("#{label} total",      Reporter.format_time(r[:elapsed]))
         Reporter.kv("#{label} per file",   Reporter.format_time(r[:elapsed] / [shared_count, 1].max))
-        Reporter.kv("#{label} bytes",      format_bytes(r[:compiled_bytes]))
-        Reporter.kv("#{label} objects",    format_count(r[:allocated_objects]))
-        Reporter.kv("#{label} obj/file",   format_count(r[:allocated_objects] / [shared_count, 1].max))
+        Reporter.kv("#{label} out bytes",  format_bytes(r[:compiled_bytes]))
+        Reporter.kv("#{label} Ruby objs",  format_count(r[:allocated_objects]))
+        Reporter.kv("#{label} Ruby obj/file", format_count(r[:allocated_objects] / [shared_count, 1].max))
+        if r[:native]
+          Reporter.kv("#{label} native calls",     format_count(r[:native][:calls]))
+          Reporter.kv("#{label} native bytes",     format_bytes(r[:native][:bytes]))
+          Reporter.kv("#{label} native bytes/file", format_bytes(r[:native][:bytes] / [shared_count, 1].max))
+        end
         puts
       end
 
@@ -199,9 +268,14 @@ module Bench
       Reporter.kv("Herb (locations on)  vs Erubi", Reporter.format_ratio(erubi[:elapsed], herb_locations[:elapsed]))
       Reporter.kv("Locations on vs off overhead",  Reporter.format_ratio(herb[:elapsed], herb_locations[:elapsed]))
       Reporter.kv("Output size (Herb/Erubi)",      size_ratio_label(herb[:compiled_bytes], erubi[:compiled_bytes]))
-      Reporter.kv("Objects (Herb off / Erubi)",    count_ratio(herb[:allocated_objects],           erubi[:allocated_objects]))
-      Reporter.kv("Objects (Herb on  / Erubi)",    count_ratio(herb_locations[:allocated_objects], erubi[:allocated_objects]))
-      Reporter.kv("Objects (Herb on / off)",       count_ratio(herb_locations[:allocated_objects], herb[:allocated_objects]))
+      Reporter.kv("Ruby objs (Herb off / Erubi)",  count_ratio(herb[:allocated_objects],           erubi[:allocated_objects]))
+      Reporter.kv("Ruby objs (Herb on  / Erubi)",  count_ratio(herb_locations[:allocated_objects], erubi[:allocated_objects]))
+      Reporter.kv("Ruby objs (Herb on / off)",     count_ratio(herb_locations[:allocated_objects], herb[:allocated_objects]))
+      if erubi[:native] && herb[:native] && herb_locations[:native]
+        Reporter.kv("Native bytes (Herb off / Erubi)", count_ratio(herb[:native][:bytes],           erubi[:native][:bytes]))
+        Reporter.kv("Native bytes (Herb on  / Erubi)", count_ratio(herb_locations[:native][:bytes], erubi[:native][:bytes]))
+        Reporter.kv("Native bytes (Herb on / off)",    count_ratio(herb_locations[:native][:bytes], herb[:native][:bytes]))
+      end
 
       results.each { |name, r| warn_on_late_failures(name, r[:failures]) }
     end
