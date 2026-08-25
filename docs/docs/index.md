@@ -27,8 +27,8 @@ hero:
       link: https://github.com/marcoroth/herb
 
     - theme: alt
-      text: What's new in v0.9
-      link: /blog/whats-new-in-herb-v0-9
+      text: What's new in v0.10
+      link: /blog/whats-new-in-herb-v0-10
 
     - theme: alt
       text: Herb Playground

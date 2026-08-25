@@ -7,7 +7,7 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { ExtractCodeActionProvider, isExtractToPartialFailure } from "../src/extract_code_action_provider"
 import { ParserService } from "../src/parser_service"
-import type { TextDocumentEdit, CreateFile } from "vscode-languageserver-types"
+import type { TextDocumentEdit, CreateFile, TextEdit } from "vscode-languageserver-types"
 import type { ExtractToPartialSuccess } from "../src/extract_code_action_provider"
 
 const URI = "file:///project/app/views/users/show.html.erb"
@@ -53,14 +53,14 @@ describe("ExtractCodeActionProvider", () => {
     const documentChanges = result.edit.documentChanges as (CreateFile | TextDocumentEdit)[]
     const edit = documentChanges[1] as TextDocumentEdit
 
-    return edit.edits[0].newText
+    return (edit.edits[0] as TextEdit).newText
   }
 
   function renderCall(result: ExtractToPartialSuccess): string {
     const documentChanges = result.edit.documentChanges as (CreateFile | TextDocumentEdit)[]
     const edit = documentChanges[2] as TextDocumentEdit
 
-    return edit.edits[0].newText
+    return (edit.edits[0] as TextEdit).newText
   }
 
   describe("code actions", () => {
@@ -71,7 +71,7 @@ describe("ExtractCodeActionProvider", () => {
         </div>
       `
 
-      const actions = createService().getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService().getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions).toHaveLength(1)
       expect(actions[0].kind).toBe(CodeActionKind.RefactorExtract)
@@ -82,7 +82,7 @@ describe("ExtractCodeActionProvider", () => {
     it("offers a prompting action when the client supports the command", () => {
       const content = `<div id="banner">Hello</div>`
 
-      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions).toHaveLength(1)
       expect(actions[0].title).toBe("Herb: Extract to partial…")
@@ -94,7 +94,7 @@ describe("ExtractCodeActionProvider", () => {
     it("does not offer an action without a selection", () => {
       const content = `<div>Hello</div>`
 
-      const actions = createService().getCodeActions(createDocument(content), Range.create(0, 3, 0, 3))
+      const actions = createService().getCodeActions(createDocument(content), Range.create(0, 3, 0, 3), { framework: "actionview" })
 
       expect(actions).toHaveLength(0)
     })
@@ -106,7 +106,7 @@ describe("ExtractCodeActionProvider", () => {
         </div>
       `
 
-      const actions = createService().getCodeActions(createDocument(content), selectionOf(content, "<div>\n  <span>Hello</span>"))
+      const actions = createService().getCodeActions(createDocument(content), selectionOf(content, "<div>\n  <span>Hello</span>"), { framework: "actionview" })
 
       expect(actions).toHaveLength(0)
     })
@@ -116,7 +116,7 @@ describe("ExtractCodeActionProvider", () => {
 
       const service = new ExtractCodeActionProvider(parserService, { supportsResourceCreation: false, supportsExtractToPartialCommand: false }, () => false)
 
-      expect(service.getCodeActions(createDocument(content), selectionOf(content, content))).toHaveLength(0)
+      expect(service.getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })).toHaveLength(0)
     })
   })
 
@@ -735,37 +735,48 @@ describe("ExtractCodeActionProvider", () => {
   describe("suggested name", () => {
     it("uses the id attribute", () => {
       const content = `<div id="user-card">Hello</div>`
-      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions[0].command?.arguments?.[0]).toMatchObject({ suggestedName: "user_card" })
     })
 
     it("falls back to the first class name", () => {
       const content = `<div class="user-card highlighted">Hello</div>`
-      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions[0].command?.arguments?.[0]).toMatchObject({ suggestedName: "user_card" })
     })
 
     it("ignores utility class lists", () => {
       const content = `<section class="rounded-lg border bg-white p-6 shadow-sm">Hello</section>`
-      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions[0].command?.arguments?.[0]).toMatchObject({ suggestedName: "section" })
     })
 
     it("falls back to the tag name", () => {
       const content = `<article>Hello</article>`
-      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions[0].command?.arguments?.[0]).toMatchObject({ suggestedName: "article" })
     })
 
     it("falls back to a generic name", () => {
       const content = `<%= @user.name %>`
-      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content))
+      const actions = createService(true).getCodeActions(createDocument(content), selectionOf(content, content), { framework: "actionview" })
 
       expect(actions[0].command?.arguments?.[0]).toMatchObject({ suggestedName: "partial" })
+    })
+  })
+  describe("framework scoping", () => {
+    it("offers nothing when the framework is not Action View", () => {
+      const content = "<div>\n  <span>Extract me</span>\n</div>"
+      const document = createDocument(content)
+      const range = selectionOf(content, "<span>Extract me</span>")
+
+      expect(createService().getCodeActions(document, range, { framework: "actionview" }).length).toBeGreaterThan(0)
+      expect(createService().getCodeActions(document, range, { framework: "sinatra" })).toEqual([])
+      expect(createService().getCodeActions(document, range, {})).toEqual([])
     })
   })
 })

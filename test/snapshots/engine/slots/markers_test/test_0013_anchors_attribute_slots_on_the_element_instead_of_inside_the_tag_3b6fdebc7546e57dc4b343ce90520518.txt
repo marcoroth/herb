@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0013_anchors attribute slots on the element instead of inside the tag"
+input: "{source: \"<div class=\\\"<%= @klass %>\\\"></div>\", locals: {\"@klass\" => \"card\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:1028a42b:0--><div class="card" data-herb-slot="0:attribute:class"></div><!--/herb-region:app/views/test.html.erb-->

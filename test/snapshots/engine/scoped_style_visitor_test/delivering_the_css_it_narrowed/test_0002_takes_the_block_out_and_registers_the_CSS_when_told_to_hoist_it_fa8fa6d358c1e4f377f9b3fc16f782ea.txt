@@ -1,0 +1,7 @@
+---
+source: "Engine::ScopedStyleVisitorTest::delivering the CSS it narrowed#test_0002_takes the block out and registers the CSS when told to hoist it"
+input: "{source: \"<style scoped>.a { color: red; }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform deliver=hoist>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::ScopedStyle::Channel.record("data-herb-scope-2940ba8a", ".a { color: red; }/* narrowed */") 
+ _buf << '<h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf.to_s

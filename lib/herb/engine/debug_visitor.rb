@@ -9,6 +9,8 @@ module Herb
     class DebugVisitor < Herb::Visitor
       include ContextAware
 
+      required_parser_option track_locations: true
+
       #: () -> bool
       def self.reads_erb_source?
         true

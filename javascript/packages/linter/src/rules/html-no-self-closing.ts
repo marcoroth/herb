@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
+import { isVoidElement, findParent, BaseRuleVisitor } from "../utils/rule-utils.js"
 import { getTagName, getTagLocalName, isWhitespaceNode, Token, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"

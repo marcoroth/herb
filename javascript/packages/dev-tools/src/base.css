@@ -1,0 +1,19 @@
+@keyframes herb-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.herb-floating-menu:has(.herb-dev-tools-attached .herb-dev-tools-badge) {
+  display: flex;
+  align-items: stretch;
+}
+
+.herb-floating-menu:has(.herb-dev-tools-attached .herb-dev-tools-badge) .herb-menu-trigger {
+  border-radius: 0;
+  border-left: none;
+}
+
+.herb-dev-tools-badge-slot {
+  display: flex;
+  align-items: stretch;
+}

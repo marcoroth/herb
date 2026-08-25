@@ -1,11 +1,12 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { stateSignatureOf } from "../utils/state-directives-utils.js"
 import { ParserRule } from "../types.js"
 import { PrismVisitor } from "@herb-tools/core"
 
 import { isPrismNodeType, isRubyParameterNode } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 
-import type { ERBStrictLocalsNode, ParseResult, ParserOptions, PrismNodes, RubyParameterNode } from "@herb-tools/core"
+import type { ERBContentNode, ERBStrictLocalsNode, ParseResult, ParserOptions, PrismNodes, RubyParameterNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const IGNORED_PREFIX = "_"
@@ -83,13 +84,29 @@ class LocalReferenceCollector extends PrismVisitor {
   }
 }
 
+class StateDefaultCollector extends BaseRuleVisitor {
+  public readonly defaults: string[] = []
+
+  visitERBContentNode(node: ERBContentNode): void {
+    const parsed = stateSignatureOf(node)
+
+    if (!parsed || parsed.malformed) return
+
+    for (const declaration of parsed.declarations) {
+      if (declaration.defaultSource) this.defaults.push(declaration.defaultSource)
+    }
+  }
+}
+
 class ActionViewNoUnusedStrictLocalsVisitor extends BaseRuleVisitor {
   private readonly references: Set<string>
+  private readonly stateDefaults: string[]
 
-  constructor(ruleName: string, references: Set<string>, context?: Partial<LintContext>) {
+  constructor(ruleName: string, references: Set<string>, stateDefaults: string[], context?: Partial<LintContext>) {
     super(ruleName, context)
 
     this.references = references
+    this.stateDefaults = stateDefaults
   }
 
   visitERBStrictLocalsNode(node: ERBStrictLocalsNode): void {
@@ -103,6 +120,7 @@ class ActionViewNoUnusedStrictLocalsVisitor extends BaseRuleVisitor {
       if (name.startsWith(IGNORED_PREFIX)) continue
       if (this.references.has(name)) continue
       if (this.isUsedInDefaultValue(node, name)) continue
+      if (this.isUsedInStateDefault(name)) continue
 
       this.addOffense(
         `Strict local \`${name}\` is never used in this partial. ${this.contractFor(local, name)} Remove it from the \`locals:\` declaration and from the call sites.`,
@@ -118,6 +136,12 @@ class ActionViewNoUnusedStrictLocalsVisitor extends BaseRuleVisitor {
     return local.required
       ? `Callers have to pass \`${name}:\` for a value the template never renders.`
       : `Callers can pass \`${name}:\` for a value the template never renders.`
+  }
+
+  private isUsedInStateDefault(name: string): boolean {
+    const pattern = new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`)
+
+    return this.stateDefaults.some((source) => pattern.test(source))
   }
 
   private isUsedInDefaultValue(node: ERBStrictLocalsNode, name: string): boolean {
@@ -168,7 +192,11 @@ export class ActionViewNoUnusedStrictLocalsRule extends ParserRule {
 
     if (collector.forwardsEveryLocal) return []
 
-    const visitor = new ActionViewNoUnusedStrictLocalsVisitor(this.ruleName, collector.names, context)
+    const stateDefaults = new StateDefaultCollector(this.ruleName, context)
+
+    stateDefaults.visit(result.value)
+
+    const visitor = new ActionViewNoUnusedStrictLocalsVisitor(this.ruleName, collector.names, stateDefaults.defaults, context)
 
     visitor.visit(result.value)
 

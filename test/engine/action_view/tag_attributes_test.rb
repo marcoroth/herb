@@ -33,7 +33,6 @@ module Engine
         )
       end
 
-      # TODO: Whitespace difference — Herb strips leading indentation on attributes
       test "tag.attributes with multiline HTML and dynamic values" do
         template = <<~ERB
           <div
@@ -44,7 +43,7 @@ module Engine
           </div>
         ERB
 
-        assert_optimized_mismatch_snapshot(template, { dom_id: "post_1" })
+        assert_optimized_snapshot(template, { dom_id: "post_1" })
       end
 
       test "tag.attributes with dynamic boolean attribute" do

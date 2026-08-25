@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
 import type { ParseResult, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode, ERBIterationBlockNode, ERBBlockNode, ParserOptions } from "@herb-tools/core"

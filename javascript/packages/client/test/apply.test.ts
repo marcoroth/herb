@@ -1,0 +1,262 @@
+import { describe, test, expect, beforeEach } from "vitest"
+
+import { SlotIndex } from "../src/slot-index"
+import type { Payload } from "../src/slot-index"
+
+const FILE = "app/views/posts/index.html.erb"
+const CARD = "app/views/posts/_card.html.erb"
+
+const COND_FALSE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+const COND_TRUE = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot="1:child">yes</b><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+const PARKED = `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><i data-herb-slot="2:child">no</i></template>`
+
+const ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:1--><li data-herb-slot="1:child">one</li><!--/herb-item:0--><!--herb-item:0:2--><li data-herb-slot="1:child">two</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+const NAMED_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:ada--><li data-herb-slot="1:child">Ada</li><!--/herb-item:0--><!--herb-item:0:grace--><li data-herb-slot="1:child">Grace</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+const EMPTY_ITEMS = `<!--herb-region:${FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+const PARKED_ITEM =
+  `<template data-herb-region="${FILE}:bbbbbbbb"><!--herb-branch:0:item-->` +
+  `<!--herb-item:0:--><li data-herb-slot="1:child"></li><!--/herb-item:0--></template>`
+
+const NESTED =
+  `<!--herb-region:${FILE}:cccccccc:0--><div><!--herb-slot:0-->` +
+  `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-slot="0:child">inner</p><!--/herb-region:${CARD}-->` +
+  `<!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+
+function mounted(html: string): SlotIndex {
+  document.body.innerHTML = html
+
+  const index = new SlotIndex()
+  index.scan(document.body)
+
+  return index
+}
+
+function payload(template: string, slots: Payload["slots"], version = "aaaaaaaa", occurrence = 0): Payload {
+  return { template, version, occurrence, slots }
+}
+
+describe("applying values to a conditional", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("fills the branch that is already on the page", () => {
+    const index = mounted(COND_TRUE)
+
+    const report = index.apply(payload(FILE, { 0: { branch: 0, slots: { 1: "still yes" } } }))
+
+    expect(report.applied).toBe(1)
+    expect(index.rangeFor(index.slot(FILE, 1)!).toString()).toBe("still yes")
+  })
+
+  test("empties the position when the payload says no branch ran", () => {
+    const index = mounted(COND_TRUE)
+
+    const report = index.apply(payload(FILE, { 0: { branch: null } }))
+
+    expect(report.applied).toBe(1)
+    expect(index.slot(FILE, 0)?.branch).toBeNull()
+    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("")
+  })
+
+  test("builds a branch the page never had when its markup was parked", () => {
+    const index = mounted(COND_FALSE + PARKED)
+
+    const report = index.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "built" } } }))
+
+    expect(report.applied).toBe(1)
+    expect(report.deferred).toEqual([])
+    expect(index.slot(FILE, 0)?.branch).toBe(1)
+    expect(index.rangeFor(index.slot(FILE, 2)!).toString()).toBe("built")
+  })
+
+  test("can put back the branch it replaced, without the server parking it", () => {
+    const index = mounted(COND_TRUE + PARKED)
+
+    index.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "built" } } }))
+    expect(index.slot(FILE, 0)?.branch).toBe(1)
+
+    const report = index.apply(payload(FILE, { 0: { branch: 0, slots: { 1: "back" } } }))
+
+    expect(report.deferred).toEqual([])
+    expect(index.slot(FILE, 0)?.branch).toBe(0)
+    expect(index.rangeFor(index.slot(FILE, 1)!).toString()).toBe("back")
+  })
+
+  test("defers a branch it has no markup for, rather than guessing", () => {
+    const index = mounted(COND_FALSE)
+
+    const report = index.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "built" } } }))
+
+    expect(report.applied).toBe(0)
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "branch" }])
+    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("")
+  })
+})
+
+describe("applying values to a collection", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("writes into the items the page already has", () => {
+    const index = mounted(ITEMS)
+
+    const report = index.apply(
+      payload(FILE, { 0: { items: { 1: { 1: "ONE" }, 2: { 1: "TWO" } } } }, "bbbbbbbb"),
+    )
+
+    expect(report.applied).toBe(2)
+    expect(report.deferred).toEqual([])
+    expect(document.querySelectorAll("li")[0].textContent).toBe("ONE")
+    expect(document.querySelectorAll("li")[1].textContent).toBe("TWO")
+  })
+
+  const keys = () => [...document.querySelectorAll("li")].map((li) => li.textContent)
+
+  test("drops an item the payload no longer has", () => {
+    const index = mounted(ITEMS)
+
+    const report = index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["two"])
+  })
+
+  test("builds an item it has never seen from one it has", () => {
+    const index = mounted(ITEMS)
+
+    const report = index.apply(
+      payload(FILE, { 0: { items: { 1: { 1: "one" }, 2: { 1: "two" }, 3: { 1: "three" } } } }, "bbbbbbbb"),
+    )
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["one", "two", "three"])
+    expect(index.slotInItem(FILE, 0, "3", 1)).not.toBeNull()
+  })
+
+  test("puts the items in the order the payload asked for", () => {
+    const index = mounted(NAMED_ITEMS)
+
+    index.apply(payload(FILE, { 0: { items: { grace: { 1: "Grace" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"))
+
+    expect(keys()).toEqual(["Grace", "Ada"])
+  })
+
+  test("adds, removes and reorders in one go", () => {
+    const index = mounted(NAMED_ITEMS)
+
+    const report = index.apply(
+      payload(FILE, { 0: { items: { yuki: { 1: "Yukihiro" }, ada: { 1: "Ada" } } } }, "bbbbbbbb"),
+    )
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["Yukihiro", "Ada"])
+  })
+
+  test("cannot be told to reorder items keyed by a number", () => {
+    const index = mounted(ITEMS)
+
+    index.apply(payload(FILE, { 0: { items: { 2: { 1: "two" }, 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(keys()).toEqual(["one", "two"])
+  })
+
+  test("builds into an empty collection from the item the server parked", () => {
+    const index = mounted(EMPTY_ITEMS + PARKED_ITEM)
+
+    const report = index.apply(payload(FILE, { 0: { items: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["one"])
+    expect(index.slotInItem(FILE, 0, "1", 1)).not.toBeNull()
+  })
+
+  test("builds again after every item has been deleted", () => {
+    const index = mounted(ITEMS)
+    const empty = payload(FILE, { 0: { items: {} } }, "bbbbbbbb")
+
+    expect(index.apply(empty).deferred).toEqual([])
+    expect(keys()).toEqual([])
+
+    const report = index.apply(payload(FILE, { 0: { items: { 9: { 1: "again" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["again"])
+  })
+
+  test("asks for an item when the collection is empty and nothing was parked", () => {
+    const index = mounted(EMPTY_ITEMS)
+
+    const report = index.apply(payload(FILE, { 0: { items: { 1: { 1: "one" } } } }, "bbbbbbbb"))
+
+    expect(report.deferred).toEqual([
+      { file: FILE, occurrence: 0, index: 0, reason: "items", keys: ["1"] },
+    ])
+  })
+})
+
+describe("applying values that came from more than one template", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("hands a partial's values to the partial's own region", () => {
+    const index = mounted(NESTED)
+
+    const report = index.apply(
+      payload(FILE, { 0: payload(CARD, { 0: "replaced" }, "dddddddd") }, "cccccccc"),
+    )
+
+    expect(report.applied).toBe(1)
+    expect(index.rangeFor(index.slot(CARD, 0)!).toString()).toBe("replaced")
+  })
+
+  test("defers a partial whose version the page no longer carries", () => {
+    const index = mounted(NESTED)
+
+    const report = index.apply(
+      payload(FILE, { 0: payload(CARD, { 0: "replaced" }, "eeeeeeee") }, "cccccccc"),
+    )
+
+    expect(report.applied).toBe(0)
+    expect(report.deferred).toEqual([{ file: CARD, occurrence: 0, index: null, reason: "stale-version" }])
+    expect(index.rangeFor(index.slot(CARD, 0)!).toString()).toBe("inner")
+  })
+})
+
+describe("an attribute a template only partly wrote", () => {
+  const PARTIAL = `<!--herb-region:${FILE}:aaaaaaaa:0--><div class="card active" data-herb-slot="0:attribute_interpolation:class"></div><!--/herb-region:${FILE}-->`
+
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("is refused rather than written over", () => {
+    const index = mounted(PARTIAL)
+
+    const report = index.apply(payload(FILE, { 0: "" }))
+
+    expect(report.applied).toBe(0)
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "partial-attribute" }])
+    expect(document.querySelector("div")?.getAttribute("class")).toBe("card active")
+  })
+})
+
+describe("applying values the page has no place for", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("names the slot it could not find and keeps going", () => {
+    const index = mounted(COND_TRUE)
+
+    const report = index.apply(payload(FILE, { 1: "written", 9: "nowhere" }))
+
+    expect(report.applied).toBe(1)
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 9, reason: "no-slot" }])
+  })
+})

@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0019_handles XML processing instructions"
+input: "{source: \"<?xml-stylesheet type=\\\"text/xsl\\\" href=\\\"feed.xsl\\\"?>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<?xml-stylesheet type="text/xsl" href="feed.xsl"?>'.freeze;
+_buf.to_s

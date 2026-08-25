@@ -18,15 +18,20 @@ interface OpenTag {
 
 export interface ANSIConverterOptions {
   links?: boolean
+  linkResolver?: LinkResolver
 }
+
+export type LinkResolver = (url: string) => string | null
 
 export const ANSI_PALETTE = ONEDARK_ANSI_PALETTE
 
 export class ANSIConverter {
   private readonly links: boolean
+  private readonly linkResolver: LinkResolver | null
 
   constructor(options: ANSIConverterOptions = {}) {
     this.links = options.links ?? true
+    this.linkResolver = options.linkResolver ?? null
   }
 
   toHTML(text: string): string {
@@ -41,9 +46,10 @@ export class ANSIConverter {
       if (group === "") return
 
       const merged = this.mergeAdjacentSpans(group)
+      const target = url !== null && this.links ? this.resolveUrl(url) : null
 
-      if (url !== null && this.links && this.isLinkableUrl(url)) {
-        output += `<a href="${this.escapeHTML(url)}" rel="noopener noreferrer">${merged}</a>`
+      if (target !== null) {
+        output += `<a href="${this.escapeHTML(target)}" rel="noopener noreferrer">${merged}</a>`
       } else {
         output += merged
       }
@@ -108,6 +114,14 @@ export class ANSIConverter {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#x27;")
+  }
+
+  private resolveUrl(url: string): string | null {
+    const resolved = this.linkResolver === null ? url : this.linkResolver(url)
+
+    if (resolved === null || resolved === "") return null
+
+    return this.isLinkableUrl(resolved) ? resolved : null
   }
 
   private isLinkableUrl(url: string): boolean {

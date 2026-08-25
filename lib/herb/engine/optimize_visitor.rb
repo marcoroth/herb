@@ -18,6 +18,13 @@ module Herb
     # Inserting it is the whole opt-in. There is no check first for whether a template looks like
     # it contains helpers, because a caller that added this has already answered that question.
     #
+    # Its presence also lets the engine collapse a template that carries no Ruby into the single
+    # string literal it renders, skipping the buffer the compiler would otherwise build up. A
+    # template that was HTML to begin with qualifies, and so does one left fully static once the
+    # helpers above resolved to markup. The collapse is held back when the caller drives the buffer
+    # itself through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a
+    # diagnostic that the compiled template still needs to report.
+    #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
     # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
@@ -67,6 +74,13 @@ module Herb
         warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
       end
 
+      #: () -> Hash[Symbol, untyped]
+      def required_parser_options
+        return super unless @verify
+
+        super.merge(track_locations: true)
+      end
+
       #: (Herb::AST::DocumentNode) -> void
       def visit_document_node(node)
         @sources = {} #: Hash[String, Herb::Location?]
@@ -91,6 +105,15 @@ module Herb
         collect(node.element_source, node.location)
 
         super
+      end
+
+      #: (Herb::Engine, untyped) -> String?
+      def compile_static_body(engine, compiler)
+        text = compiler.static_template_text
+
+        return unless text
+
+        engine.string_literal(text)
       end
 
       #: () -> String

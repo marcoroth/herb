@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 
-import { isDebugOutputCall } from "./prism-rule-utils.js"
+import { isDebugOutputCall } from "../utils/prism-rule-utils.js"
 
 import type { ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

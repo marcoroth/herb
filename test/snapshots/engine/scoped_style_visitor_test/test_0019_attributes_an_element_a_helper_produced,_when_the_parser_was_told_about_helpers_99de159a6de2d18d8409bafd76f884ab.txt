@@ -1,0 +1,6 @@
+---
+source: "Engine::ScopedStyleVisitorTest#test_0019_attributes an element a helper produced, when the parser was told about helpers"
+input: "{source: \"<style scoped>.btn { color: red; }</style><div><%= link_to \\\"x\\\", \\\"/p\\\", class: \\\"btn\\\" %><%= render \\\"posts/plain\\\" %></div>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>], project_path: \"test/fixtures/scoped_styles\", parser_options: {action_view_helpers: true}}}"
+---
+_buf = ::String.new; _buf << '<style>.btn { color: red; }/* narrowed */</style><div data-herb-scope-2940ba8a><a class="btn" href="/p" data-herb-scope-2940ba8a>x</a>'.freeze; _buf << (render "posts/plain").to_s; _buf << '</div>'.freeze;
+_buf.to_s

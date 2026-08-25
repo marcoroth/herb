@@ -1,5 +1,3 @@
-import { renameEmscriptenNodeRequire } from "./libherb-plugin.mjs"
-
 export default {
   input: "src/index.ts",
   output: [
@@ -16,5 +14,4 @@ export default {
   ],
   external: [/@ruby\/prism/],
   platform: "node",
-  plugins: [renameEmscriptenNodeRequire()],
 }

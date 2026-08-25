@@ -19,6 +19,8 @@ module Herb
       class Middleware
         HTML_CONTENT_TYPE = %r{\Atext/html}i #: Regexp
         BODY_END_TAG = %r{</body>}i #: Regexp
+        HEAD_END_TAG = %r{</head>}i #: Regexp
+        ANCHORS = { head: HEAD_END_TAG, body: BODY_END_TAG }.freeze #: Hash[Symbol, Regexp]
 
         # Where the session for this request is left, so that anything holding the env can read what
         # the page collected.
@@ -63,15 +65,38 @@ module Herb
           html = read(body)
 
           return response unless html
-          return response unless html.match?(BODY_END_TAG)
 
-          html = html.sub(BODY_END_TAG) { |tag| "#{report.to_html}#{tag}" }
+          injected = inject_channels(html, report)
+          injected = inject_report(injected, report)
 
-          set_content_length(headers, html)
+          return response if injected.equal?(html)
 
-          [status, headers, [html]]
+          set_content_length(headers, injected)
+
+          [status, headers, [injected]]
         rescue StandardError
           response
+        end
+
+        #: (String, Herb::Engine::Report) -> String
+        def inject_channels(html, report)
+          report.channels.reduce(html) do |carried, channel|
+            tag = ANCHORS[channel.anchor]
+            markup = channel.to_html
+
+            next carried if tag.nil? || markup.empty?
+            next carried unless carried.match?(tag)
+
+            carried.sub(tag) { |matched| "#{markup}#{matched}" }
+          end
+        end
+
+        #: (String, Herb::Engine::Report) -> String
+        def inject_report(html, report)
+          return html unless report.reportable?
+          return html unless html.match?(BODY_END_TAG)
+
+          html.sub(BODY_END_TAG) { |tag| "#{report.to_html}#{tag}" }
         end
 
         #: (untyped) -> bool

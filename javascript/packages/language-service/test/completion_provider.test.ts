@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { CompletionProvider } from "../src/completion_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 import { buildPartialIndex } from "@herb-tools/analysis/node"
 import { relative } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -22,6 +22,7 @@ describe("CompletionProvider", () => {
     await Herb.load()
     const parserService = new ParserService(Herb)
     service = new CompletionProvider(parserService)
+    service.setConfig({ framework: "actionview" })
   })
 
   function createDocument(content: string): TextDocument {
@@ -633,6 +634,8 @@ describe("CompletionProvider", () => {
 
         return path.startsWith("..") ? null : path
       })
+
+      partialService.setConfig({ framework: "actionview" })
     })
 
     afterAll(() => {
@@ -1335,7 +1338,7 @@ describe("CompletionProvider", () => {
 
     beforeAll(() => {
       actionViewService = new CompletionProvider(new ParserService(Herb))
-      actionViewService.setFramework("actionview")
+      actionViewService.setConfig({ framework: "actionview" })
     })
 
     function labelsFor(content: string): string[] {
@@ -1358,10 +1361,203 @@ describe("CompletionProvider", () => {
     })
 
     it("stays quiet when the project isn't an Action View project", () => {
+      const plainService = new CompletionProvider(new ParserService(Herb))
       const document = createDocument("<%= form_with model: @user do ")
-      const result = service.getCompletions(document, Position.create(0, 29))
+      const result = plainService.getCompletions(document, Position.create(0, 29))
 
       expect(result ? result.items.map(item => item.label) : []).not.toContain("|form|")
     })
   })
+  describe("framework scoping", () => {
+    function labelsFrom(provider: CompletionProvider, content: string): string[] {
+      const document = createDocument(content)
+      const result = provider.getCompletions(document, Position.create(0, content.length))
+
+      return result ? result.items.map(item => item.label) : []
+    }
+
+    it("offers helper completions for an Action View project", () => {
+      expect(labelsFrom(service, "<%= link").length).toBeGreaterThan(0)
+    })
+
+    it("offers no helper completions when the framework is not Action View", () => {
+      const provider = new CompletionProvider(new ParserService(Herb))
+      provider.setConfig({ framework: "sinatra" })
+
+      expect(labelsFrom(provider, "<%= link")).toEqual([])
+    })
+
+    it("still completes HTML elements when the framework is not Action View", () => {
+      const provider = new CompletionProvider(new ParserService(Herb))
+      provider.setConfig({ framework: "sinatra" })
+
+      expect(labelsFrom(provider, "<di").length).toBeGreaterThan(0)
+    })
+  })
 })
+
+describe("herb attribute completions", () => {
+  let service: CompletionProvider
+
+  beforeAll(async () => {
+    await Herb.load()
+    service = new CompletionProvider(new ParserService(Herb))
+  })
+
+  const STATES = '<%# herb:state (open: false, attempts: 0, draft: "") %>\n'
+
+  function labels(content: string, line: number, character: number): string[] {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const completions = service.getCompletions(document, Position.create(line, character))
+
+    return (completions?.items ?? []).map(item => item.label)
+  }
+
+  function insideValue(content: string, marker: string): [number, number] {
+    const lines = content.split("\n")
+    const line = lines.findIndex(text => text.includes(marker))
+
+    return [line, lines[line].indexOf(marker) + marker.length]
+  }
+
+  it("completes the authored attribute names", () => {
+    const content = "<button data-herb->x</button>"
+
+    expect(labels(content, 0, 18)).toEqual([
+      "data-herb-name",
+      "data-herb-into",
+      "data-herb-set",
+      "data-herb-toggle",
+      "data-herb-increment",
+      "data-herb-decrement",
+      "data-herb-reset",
+      "data-herb-by",
+    ])
+  })
+
+  it("toggle offers only boolean states", () => {
+    const content = STATES + '<button data-herb-toggle="">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-toggle="'))).toEqual(["open"])
+  })
+
+  it("increment offers only integer states", () => {
+    const content = STATES + '<button data-herb-increment="">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-increment="'))).toEqual(["attempts"])
+  })
+
+  it("decrement offers only integer states", () => {
+    const content = STATES + '<button data-herb-decrement="">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-decrement="'))).toEqual(["attempts"])
+  })
+
+  it("reset offers every state", () => {
+    const content = STATES + '<button data-herb-reset="">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-reset="'))).toEqual(["open", "attempts", "draft"])
+  })
+
+  it("set offers states and event prefixes", () => {
+    const content = STATES + '<button data-herb-set="">x</button>'
+    const offered = labels(content, ...insideValue(content, 'data-herb-set="'))
+
+    expect(offered).toContain("open")
+    expect(offered).toContain("draft")
+    expect(offered).toContain("click->")
+    expect(offered).toContain("pointerdown->")
+    expect(offered).toContain("transitionend->")
+  })
+
+  it("narrows the events to the typed prefix", () => {
+    const content = STATES + '<button data-herb-set="pointer">x</button>'
+    const offered = labels(content, ...insideValue(content, 'data-herb-set="pointer'))
+
+    expect(offered).toContain("pointerup->")
+    expect(offered).not.toContain("click->")
+  })
+
+  it("set completes a boolean assignment's value", () => {
+    const content = STATES + '<button data-herb-set="open=">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-set="open='))).toEqual(["true", "false"])
+  })
+
+  it("set offers the empty string for a string assignment", () => {
+    const content = STATES + '<button data-herb-set="draft=">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-set="draft='))).toEqual(["''"])
+  })
+
+  it("chains the suggestion popup through an event and a state", () => {
+    const content = STATES + '<button data-herb-set="">x</button>'
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const [line, character] = insideValue(content, 'data-herb-set="')
+    const completions = service.getCompletions(document, Position.create(line, character))
+    const items = completions?.items ?? []
+
+    const event = items.find(item => item.label === "click->")
+    const state = items.find(item => item.label === "open")
+    const other = items.find(item => item.label === "draft")
+
+    expect(event?.command?.command).toBe("editor.action.triggerSuggest")
+    expect(state?.command?.command).toBe("editor.action.triggerSuggest")
+    expect(other?.textEdit && "newText" in other.textEdit && other.textEdit.newText).toBe("draft=$0")
+  })
+
+  it("set offers no events after an event prefix", () => {
+    const content = STATES + '<button data-herb-set="change->">x</button>'
+    const offered = labels(content, ...insideValue(content, 'data-herb-set="change->'))
+
+    expect(offered).toContain("open")
+    expect(offered).not.toContain("click->")
+  })
+
+  it("completes herb keys inside a tag helper's data hash", () => {
+    const content = '<%= tag.button "x", data: { herb_t } %>'
+    const offered = labels(content, 0, content.indexOf("herb_t") + 6)
+
+    expect(offered).toEqual(["herb_toggle:"])
+  })
+
+  it("offers every herb key at an empty data hash", () => {
+    const content = '<%= tag.button "x", data: {  } %>'
+    const offered = labels(content, 0, content.indexOf("{ ") + 2)
+
+    expect(offered).toContain("herb_set:")
+    expect(offered).toContain("herb_into:")
+  })
+
+  it("completes a state inside a data hash value", () => {
+    const content = STATES + '<%= tag.button "x", data: { herb_toggle: "" } %>'
+
+    expect(labels(content, ...insideValue(content, 'herb_toggle: "'))).toEqual(["open"])
+  })
+
+  it("runs the set grammar inside a data hash value", () => {
+    const content = STATES + '<%= tag.button "x", data: { herb_set: "open=" } %>'
+
+    expect(labels(content, ...insideValue(content, 'herb_set: "open='))).toEqual(["true", "false"])
+  })
+
+  it("offers an item state only inside its loop", () => {
+    const content =
+      '<%# herb:state (open: false) %>\n' +
+      "<% @items.each do |item| %>\n" +
+      '  <%# herb:state (locked: true) %>\n' +
+      '  <button data-herb-toggle="">in</button>\n' +
+      "<% end %>\n" +
+      '<button data-herb-toggle="">out</button>'
+
+    expect(labels(content, 3, 28)).toEqual(["open", "locked"])
+    expect(labels(content, 5, 26)).toEqual(["open"])
+  })
+
+  it("into offers the collections the template names", () => {
+    const content = '<ul data-herb-name="messages"><% @m.each do |m| %><li id="<%= m %>">x</li><% end %></ul>\n<form data-herb-into=""></form>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-into="'))).toEqual(["messages"])
+  })
+})
+

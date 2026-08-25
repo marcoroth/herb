@@ -1,10 +1,10 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "../utils/rule-utils.js"
 import { isERBNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, Node } from "@herb-tools/core"
-import type { StaticAttributeDynamicValueParams, DynamicAttributeDynamicValueParams } from "./rule-utils.js"
+import type { StaticAttributeDynamicValueParams, DynamicAttributeDynamicValueParams } from "../utils/rule-utils.js"
 
 class ERBNoRawOutputInAttributeValueVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeDynamicValue({ valueNodes, attributeNode }: StaticAttributeDynamicValueParams): void {

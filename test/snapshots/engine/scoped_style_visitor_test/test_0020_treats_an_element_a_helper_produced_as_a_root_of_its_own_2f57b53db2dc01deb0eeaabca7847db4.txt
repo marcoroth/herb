@@ -1,0 +1,6 @@
+---
+source: "Engine::ScopedStyleVisitorTest#test_0020_treats an element a helper produced as a root of its own"
+input: "{source: \"<style scoped>.btn { color: red; }</style><%= link_to \\\"x\\\", \\\"/p\\\", class: \\\"btn\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>], parser_options: {action_view_helpers: true}}}"
+---
+_buf = ::String.new; _buf << '<style>.btn { color: red; }/* narrowed */</style><a class="btn" href="/p" data-herb-scope-2940ba8a>x</a>'.freeze;
+_buf.to_s

@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, isKnownHTMLElement, isKnownSVGElement, isKnownMathMLElement, isCustomElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isKnownHTMLElement, isKnownSVGElement, isKnownMathMLElement, isCustomElement } from "../utils/rule-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

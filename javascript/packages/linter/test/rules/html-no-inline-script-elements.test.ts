@@ -32,19 +32,19 @@ describe("html-no-inline-script-elements", () => {
       <script src="https://example.com/app.js">
         alert("hello")
       </script>
-    `)
+    `, { framework: "ruby" })
   })
 
   test("fails with empty inline script tag", () => {
     expectError("Avoid inline `<script>` tags. Extract the JavaScript into a separate `.js` file and deliver it through your framework's asset pipeline.")
 
-    assertOffenses("<script></script>")
+    assertOffenses("<script></script>", { framework: "ruby" })
   })
 
   test("fails with inline script tag", () => {
     expectError("Avoid inline `<script>` tags. Extract the JavaScript into a separate `.js` file and deliver it through your framework's asset pipeline.")
 
-    assertOffenses("<script>alert('hello')</script>")
+    assertOffenses("<script>alert('hello')</script>", { framework: "ruby" })
   })
 
   test("fails with script tag with unallowed type", () => {
@@ -52,7 +52,7 @@ describe("html-no-inline-script-elements", () => {
 
     assertOffenses(dedent`
       <script type="text/javascript">alert("hello")</script>
-    `)
+    `, { framework: "ruby" })
   })
 
   test("suggests an external JavaScript file for a non-Action View framework", () => {

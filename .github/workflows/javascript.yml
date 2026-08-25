@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened, labeled, closed]
+    types: [opened, synchronize, reopened, closed]
   release:
     types: [published]
 
@@ -15,14 +15,13 @@ permissions:
 
 jobs:
   main:
-    if: |
-      github.event.action != 'closed' &&
-      (github.event.action != 'labeled' || github.event.label.name == 'release-preview')
+    if: github.event.action != 'closed'
     env:
       GH_TOKEN: ${{ github.token }}
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+      NX_NO_CLOUD: "true"
+      # NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -71,14 +70,6 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install
 
-      - name: Restore nx build artifacts
-        uses: actions/cache/restore@v6
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-
-
       - name: Build tailwind-class-sorter package
         env:
           RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
@@ -91,15 +82,11 @@ jobs:
           GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: yarn build
 
+      - name: Run `typecheck` for all NX packages
+        run: yarn typecheck
+
       - name: Run `test` for all NX packages
         run: yarn test
-
-      - name: Save nx build artifacts
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/cache/save@v6
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ github.sha }}
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
@@ -198,10 +185,8 @@ jobs:
 
   preview-check:
     if: |
-      (github.event.action != 'labeled' || github.event.label.name == 'release-preview') && (
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main'))
+      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     runs-on: ubuntu-latest
     outputs:
@@ -279,7 +264,7 @@ jobs:
           path: javascript/packages/
 
       - name: Publish preview packages
-        run: npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server'
+        run: npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server' './javascript/packages/dev-tools' './javascript/packages/client' './javascript/packages/core'
 
   publish-vscode:
     name: Publish VSCode extension

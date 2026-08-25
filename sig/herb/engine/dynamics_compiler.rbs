@@ -11,7 +11,7 @@ module Herb
     #
     #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
     #     view.instance_eval(source)
-    #     #=> { 0 => "Hello" }
+    #     #=> { template: "app/views/posts/index.html.erb", version: "fd3dfd36", slots: { 0 => "Hello" } }
     #
     # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
     # and its `dynamic` values for the same reason. A template's statics never change between
@@ -19,6 +19,14 @@ module Herb
     #
     # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
     # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
+    #
+    # ## Values name the template they came from
+    #
+    # An index means nothing on its own, because it is a position in one template's numbering, and
+    # it means something else in the next template. So the values arrive wrapped in the identifier
+    # and version `SlotVisitor` gave the markers, which is the same pair the page carries in
+    # `<!--herb-region:ID:VERSION-->`. A client holding both can tell that they were compiled
+    # together, and a version that no longer matches says the indices cannot be trusted.
     #
     # ## The shape follows the template, not the render
     #
@@ -40,22 +48,36 @@ module Herb
     #
     # A conditional and a collection are always present, because both are evaluated on every render
     # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
-    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
+    # an empty collection is `{ items: {} }`, both of which the client has to be told.
     #
-    # ## Collections group by row
+    # ## Collections group by item
     #
-    # A collection holds its rows in render order, each row carrying the slots inside it:
+    # A collection holds its items in render order, each item carrying the slots inside it:
     #
     #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
-    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
-    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #     #=> { 0 => { items: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                           2 => { 1 => "Joe",   2 => "Doe" } } } }
     #
     # Grouping the other way would give one list per slot and leave the client to zip them back
-    # together, which it cannot do once a row is inserted rather than appended.
+    # together, which it cannot do once an item is inserted rather than appended.
     #
-    # Rows are keyed by their position for now. Taking the key the template declares, through
-    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
-    # reordered, and it belongs to `SlotVisitor` rather than here.
+    # An item is keyed by the key its template declares, through `herb-key` or `id` or a
+    # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
+    # decides what that key is and this evaluates it, so an item arrives under the same key the
+    # marker around it carries. A collection that declares none falls back to position.
+    #
+    # ## A partial keeps its own values
+    #
+    # `<%= render "posts/card" %>` evaluates to that partial's own values, so the slot holding it
+    # holds a whole payload rather than a string:
+    #
+    #     { template: "index.html.erb", version: "a1b2c3d4",
+    #       slots: { 0 => { template: "_card.html.erb", version: "e5f6a7b8", slots: { 0 => "Marco" } } } }
+    #
+    # Nothing else would work, because the partial numbers its slots in its own template and the
+    # page marks them out as their own region. Coercing it to a string would flatten a partial's
+    # values into the markup they were meant to replace, and a partial rendering a partial is
+    # ordinary, so this nests as deeply as the template does.
     #
     # ## Escaping
     #
@@ -65,9 +87,20 @@ module Herb
     #
     # ## Blocks
     #
-    # A tag that takes a block, such as `<%= form_with do |f| %>`, is one entry holding everything
-    # the block rendered. The helper decides where the block's output goes, so there is no position
-    # in the template to attribute the pieces to.
+    # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding everything
+    # the block rendered, because the helper wraps that output in markup of its own that only the
+    # helper can produce. What the template wrote inside the block keeps its own indices alongside:
+    #
+    #     <%= form_with(model: @user) do |f| %><%= f.label %><% end %>
+    #     #=> { 0 => "<form>Name</form>", 1 => "Name" }
+    #
+    # So a caller that can address slot 1 sends a value, and one that cannot falls back to slot 0
+    # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
+    # for conditionals and collections.
+    #
+    # A block yielding more than once is the exception, since one index cannot stand for the several
+    # values its interior took. `each` and the other iterations are compiled as collections for that
+    # reason, and a helper that yields repeatedly reports the last value its interior took.
     class DynamicsCompiler < Herb::Engine
       BUFFER: String
 
@@ -77,15 +110,29 @@ module Herb
 
       SCOPE_BUFFER: String
 
-      ROWS_BUFFER: String
+      ITEMS_BUFFER: String
 
       KEY_BUFFER: String
+
+      OCCURRENCE_BUFFER: String
 
       BRANCHING_NODES: Array[String]
 
       class Compiler < Herb::Engine::Compiler
         # : (untyped, ?Hash[Symbol, untyped]) -> void
         def initialize: (untyped, ?Hash[Symbol, untyped]) -> void
+
+        # : (untyped) -> void
+        def visit_html_attribute_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_content_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_yield_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_render_node: (untyped) -> void
 
         # : (untyped) { () -> void } -> void
         def visit_erb_control_node: (untyped) { () -> void } -> void
@@ -122,8 +169,8 @@ module Herb
 
         private
 
-        # : () -> Integer?
-        def claim: () -> Integer?
+        # : (untyped) -> Integer?
+        def claim: (untyped) -> Integer?
 
         # : (String) -> void
         def add_expression: (String) -> void
@@ -146,15 +193,20 @@ module Herb
         # : (untyped, Integer) -> void
         def own_branches: (untyped, Integer) -> void
 
-        # : () { (Integer?) -> void } -> void
-        def collection: () { (Integer?) -> void } -> void
+        # : (untyped) { (Integer?) -> void } -> void
+        def collection: (untyped) { (Integer?) -> void } -> void
 
         # : (Integer?) { () -> void } -> void
-        def row: (Integer?) { () -> void } -> void
+        def item: (Integer?) { () -> void } -> void
+
+        # : (Integer) -> String?
+        def item_key: (Integer) -> String?
 
         # : (untyped, Symbol) -> void
         def iteration: (untyped, Symbol) -> void
       end
+
+      attr_reader slot_visitor: SlotVisitor
 
       # : (String, ?Hash[Symbol, untyped]) -> void
       def initialize: (String, ?Hash[Symbol, untyped]) -> void
@@ -168,8 +220,11 @@ module Herb
       # : (Symbol, *untyped) -> void
       def add_scope: (Symbol, *untyped) -> void
 
-      # : (String, Symbol?, Integer?, bool) -> void
-      def add_dynamic: (String, Symbol?, Integer?, bool) -> void
+      # : (String, Symbol?, Integer?, bool, ?nested: bool) -> void
+      def add_dynamic: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
+
+      # : (Integer) -> bool
+      def boolean_presence?: (Integer) -> bool
 
       # : (String, Integer?, bool) -> void
       def add_dynamic_block: (String, Integer?, bool) -> void
@@ -181,6 +236,14 @@ module Herb
       def inspect: () -> String
 
       private
+
+      # : (String) -> void
+      def add_postamble: (String) -> void
+
+      # Counted where the region marker counts it, at the start of the rendering rather than the end,
+      # so a template rendering itself numbers its renderings the same way both compilers do.
+      # : () -> void
+      def capture_occurrence: () -> void
 
       # : () -> String
       def current_scope: () -> String
@@ -197,11 +260,16 @@ module Herb
       # : (Integer) -> void
       def scope_open_collection: (Integer) -> void
 
-      # : (Integer) -> void
-      def scope_row_begin: (Integer) -> void
+      # : (Integer, ?String?) -> void
+      def scope_item_begin: (Integer, ?String?) -> void
 
       # : (Integer) -> void
-      def scope_row_end: (Integer) -> void
+      def scope_item_end: (Integer) -> void
+
+      # A row the client builds from the parked skeleton carries no `herb-seeds` comment, so the
+      # values response is the only place it can learn what the server seeded its states with.
+      # : (Integer) -> String
+      def item_seeds: (Integer) -> String
 
       # : (Integer) -> void
       def scope_close_collection: (Integer) -> void
@@ -211,6 +279,12 @@ module Herb
 
       # : (String, Symbol?, bool) -> String
       def dynamic_value: (String, Symbol?, bool) -> String
+
+      # : (Integer, String) -> String
+      def assignment: (Integer, String) -> String
+
+      # : (Integer) -> bool
+      def interpolated?: (Integer) -> bool
 
       # : (String) -> void
       def add_block_dynamic: (String) -> void

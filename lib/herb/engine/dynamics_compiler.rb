@@ -3,6 +3,7 @@
 
 require_relative "../../herb"
 require_relative "../engine"
+require_relative "slot_visitor"
 
 module Herb
   class Engine
@@ -15,7 +16,7 @@ module Herb
     #
     #     source = Herb::Engine::DynamicsCompiler.new(%(<h1><%= @title %></h1>)).src
     #     view.instance_eval(source)
-    #     #=> { 0 => "Hello" }
+    #     #=> { template: "app/views/posts/index.html.erb", version: "fd3dfd36", slots: { 0 => "Hello" } }
     #
     # The names follow Phoenix LiveView, which splits a rendered template into its `static` strings
     # and its `dynamic` values for the same reason. A template's statics never change between
@@ -23,6 +24,14 @@ module Herb
     #
     # This is a separate compiler rather than an option on `Herb::Engine` because that class is a
     # drop-in for `Erubi::Engine` and has to keep answering the way Erubi does.
+    #
+    # ## Values name the template they came from
+    #
+    # An index means nothing on its own, because it is a position in one template's numbering, and
+    # it means something else in the next template. So the values arrive wrapped in the identifier
+    # and version `SlotVisitor` gave the markers, which is the same pair the page carries in
+    # `<!--herb-region:ID:VERSION-->`. A client holding both can tell that they were compiled
+    # together, and a version that no longer matches says the indices cannot be trusted.
     #
     # ## The shape follows the template, not the render
     #
@@ -44,22 +53,36 @@ module Herb
     #
     # A conditional and a collection are always present, because both are evaluated on every render
     # even when they produce nothing. A conditional that matched no branch is `{ branch: nil }` and
-    # an empty collection is `{ rows: {} }`, both of which the client has to be told.
+    # an empty collection is `{ items: {} }`, both of which the client has to be told.
     #
-    # ## Collections group by row
+    # ## Collections group by item
     #
-    # A collection holds its rows in render order, each row carrying the slots inside it:
+    # A collection holds its items in render order, each item carrying the slots inside it:
     #
     #     <% users.each do |user| %><%= user.first %> <%= user.last %><% end %>
-    #     #=> { 0 => { rows: { 1 => { 1 => "Marco", 2 => "Roth" },
-    #                          2 => { 1 => "Joe",   2 => "Doe" } } } }
+    #     #=> { 0 => { items: { 1 => { 1 => "Marco", 2 => "Roth" },
+    #                           2 => { 1 => "Joe",   2 => "Doe" } } } }
     #
     # Grouping the other way would give one list per slot and leave the client to zip them back
-    # together, which it cannot do once a row is inserted rather than appended.
+    # together, which it cannot do once an item is inserted rather than appended.
     #
-    # Rows are keyed by their position for now. Taking the key the template declares, through
-    # `herb-key` or `id` or a `<%# herb:key %>` directive, is what makes a row survive being
-    # reordered, and it belongs to `SlotVisitor` rather than here.
+    # An item is keyed by the key its template declares, through `herb-key` or `id` or a
+    # `<%# herb:key %>` directive, which is what makes it survive being reordered. `SlotVisitor`
+    # decides what that key is and this evaluates it, so an item arrives under the same key the
+    # marker around it carries. A collection that declares none falls back to position.
+    #
+    # ## A partial keeps its own values
+    #
+    # `<%= render "posts/card" %>` evaluates to that partial's own values, so the slot holding it
+    # holds a whole payload rather than a string:
+    #
+    #     { template: "index.html.erb", version: "a1b2c3d4",
+    #       slots: { 0 => { template: "_card.html.erb", version: "e5f6a7b8", slots: { 0 => "Marco" } } } }
+    #
+    # Nothing else would work, because the partial numbers its slots in its own template and the
+    # page marks them out as their own region. Coercing it to a string would flatten a partial's
+    # values into the markup they were meant to replace, and a partial rendering a partial is
+    # ordinary, so this nests as deeply as the template does.
     #
     # ## Escaping
     #
@@ -69,16 +92,28 @@ module Herb
     #
     # ## Blocks
     #
-    # A tag that takes a block, such as `<%= form_with do |f| %>`, is one entry holding everything
-    # the block rendered. The helper decides where the block's output goes, so there is no position
-    # in the template to attribute the pieces to.
+    # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding everything
+    # the block rendered, because the helper wraps that output in markup of its own that only the
+    # helper can produce. What the template wrote inside the block keeps its own indices alongside:
+    #
+    #     <%= form_with(model: @user) do |f| %><%= f.label %><% end %>
+    #     #=> { 0 => "<form>Name</form>", 1 => "Name" }
+    #
+    # So a caller that can address slot 1 sends a value, and one that cannot falls back to slot 0
+    # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
+    # for conditionals and collections.
+    #
+    # A block yielding more than once is the exception, since one index cannot stand for the several
+    # values its interior took. `each` and the other iterations are compiled as collections for that
+    # reason, and a helper that yields repeatedly reports the last value its interior took.
     class DynamicsCompiler < Herb::Engine
       BUFFER = "__herb_dynamics" #: String
       BLOCK_BUFFER = "__herb_block" #: String
       SLOT_BUFFER = "__herb_slot" #: String
       SCOPE_BUFFER = "__herb_scope" #: String
-      ROWS_BUFFER = "__herb_rows" #: String
+      ITEMS_BUFFER = "__herb_items" #: String
       KEY_BUFFER = "__herb_key" #: String
+      OCCURRENCE_BUFFER = "__herb_occurrence" #: String
 
       BRANCHING_NODES = [
         "AST_ERB_IF_NODE",
@@ -93,7 +128,10 @@ module Herb
         def initialize(engine, options = {})
           super
 
-          @slots = 0
+          @slot_visitor = engine.slot_visitor
+          @current_node = nil
+          @current_attribute = nil
+          @rendering = false
           @block_depth = 0
 
           branch_counts = {} #: Hash[Integer, Integer]
@@ -101,6 +139,48 @@ module Herb
 
           @branch_counts = branch_counts
           @branch_owner = branch_owner.compare_by_identity
+        end
+
+        #: (untyped) -> void
+        def visit_html_attribute_node(node)
+          previous = @current_attribute
+          @current_attribute = node
+
+          super
+        ensure
+          @current_attribute = previous
+        end
+
+        #: (untyped) -> void
+        def visit_erb_content_node(node)
+          previous = @current_node
+          @current_node = node
+
+          super
+        ensure
+          @current_node = previous
+        end
+
+        #: (untyped) -> void
+        def visit_erb_yield_node(node)
+          previous = @current_node
+          @current_node = node
+
+          super
+        ensure
+          @current_node = previous
+        end
+
+        #: (untyped) -> void
+        def visit_erb_render_node(node)
+          previous = @current_node
+          @current_node = node
+          @rendering = node.end_node.nil?
+
+          super
+        ensure
+          @current_node = previous
+          @rendering = false
         end
 
         #: (untyped) { () -> void } -> void
@@ -141,11 +221,9 @@ module Herb
 
         #: (untyped) -> void
         def visit_erb_iteration_block_node(node)
-          return visit_erb_block_node(node) if output_block?(node)
-
-          collection do |index|
+          collection(node) do |index|
             visit_erb_control_node(node) do
-              row(index) do
+              item(index) do
                 visit_all(node.body)
 
                 visit(node.rescue_clause)
@@ -182,7 +260,7 @@ module Herb
           check_for_escaped_erb_tag!(opening)
 
           should_escape = should_escape_output?(opening)
-          index = claim
+          index = claim(node)
 
           @tokens << [
             should_escape ? :expr_block_escaped : :expr_block,
@@ -207,15 +285,17 @@ module Herb
 
         #: () -> void
         def generate_output
+          @engine.send(:capture_occurrence)
+
           optimize_tokens(@tokens).each do |type, value, context, extra|
             case type
             when :text then @engine.send(:add_text, value)
             when :code then @engine.send(:add_code, value)
             when :scope then @engine.send(:add_scope, *extra)
             when :dynamic
-              index, escaped = extra
+              index, escaped, nested = extra
 
-              @engine.send(:add_dynamic, value, context, index, escaped)
+              @engine.send(:add_dynamic, value, context, index, escaped, nested: nested)
             when :expr_block, :expr_block_escaped
               @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
             when :expr_block_end
@@ -226,25 +306,20 @@ module Herb
 
         private
 
-        #: () -> Integer?
-        def claim
-          return nil if @block_depth.positive?
-
-          index = @slots
-          @slots += 1
-
-          index
+        #: (untyped) -> Integer?
+        def claim(node)
+          @slot_visitor.index_for(@current_attribute || node)
         end
 
         #: (String) -> void
         def add_expression(code)
-          @tokens << [:dynamic, code, current_context, [claim, false]]
+          @tokens << [:dynamic, code, current_context, [claim(@current_node), false, @rendering]]
           @last_trim_consumed_newline = false
         end
 
         #: (String) -> void
         def add_expression_escaped(code)
-          @tokens << [:dynamic, code, current_context, [claim, true]]
+          @tokens << [:dynamic, code, current_context, [claim(@current_node), true, @rendering]]
           @last_trim_consumed_newline = false
         end
 
@@ -270,7 +345,7 @@ module Herb
         def conditional(node)
           return yield if branch?(node)
 
-          index = claim
+          index = claim(node)
 
           return yield unless index
 
@@ -302,9 +377,9 @@ module Herb
           end
         end
 
-        #: () { (Integer?) -> void } -> void
-        def collection
-          index = claim
+        #: (untyped) { (Integer?) -> void } -> void
+        def collection(node)
+          index = claim(node)
 
           return yield(nil) unless index
 
@@ -316,21 +391,26 @@ module Herb
         end
 
         #: (Integer?) { () -> void } -> void
-        def row(index)
+        def item(index)
           return yield unless index
 
-          @tokens << [:scope, "", nil, [:row_begin, index]]
+          @tokens << [:scope, "", nil, [:item_begin, index, item_key(index)]]
 
           yield
 
-          @tokens << [:scope, "", nil, [:row_end, index]]
+          @tokens << [:scope, "", nil, [:item_end, index]]
+        end
+
+        #: (Integer) -> String?
+        def item_key(index)
+          @slot_visitor.slots[index]&.key_expression
         end
 
         #: (untyped, Symbol) -> void
         def iteration(node, part)
-          collection do |index|
+          collection(node) do |index|
             visit_erb_control_node(node) do
-              row(index) do
+              item(index) do
                 visit_all(node.send(part) || [])
               end
 
@@ -339,14 +419,14 @@ module Herb
           end
         end
       end
+      attr_reader :slot_visitor #: SlotVisitor
 
       #: (String, ?Hash[Symbol, untyped]) -> void
       def initialize(input, properties = {})
         @block_depth = 0
         @scopes = [] #: Array[Integer]
-
-        given = properties[:parser_options] || {} #: Hash[Symbol, untyped]
-        parser_options = given.merge(iteration_nodes: true)
+        @slot_visitor = properties[:slot_visitor] || SlotVisitor.new(mode: :server, mark: false)
+        visitors = [*properties[:visitors], @slot_visitor]
 
         super(
           input,
@@ -354,7 +434,7 @@ module Herb
             bufvar: BUFFER,
             bufval: "::Hash.new",
             postamble: "#{BUFFER}\n",
-            parser_options: parser_options
+            visitors: visitors
           )
         )
       end
@@ -376,13 +456,37 @@ module Herb
         send(:"scope_#{kind}", *)
       end
 
-      #: (String, Symbol?, Integer?, bool) -> void
-      def add_dynamic(code, context, index, escaped)
-        value = dynamic_value(code, context, escaped)
+      #: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
+      def add_dynamic(code, context, index, escaped, nested: false)
+        value = if index && boolean_presence?(index)
+                  "!!(#{code})"
+                elsif nested
+                  "(#{code})"
+                else
+                  dynamic_value(code, context, escaped)
+                end
 
-        return add_block_dynamic(value) unless @block_depth.zero?
+        unless @block_depth.zero?
+          if index && boolean_presence?(index)
+            attribute = @slot_visitor.slots[index].attribute.to_s.inspect
 
-        @src << "; " << current_scope << "[" << index.to_s << "] = " << value << ";"
+            return add_block_dynamic("(#{assignment(index, value)}) ? #{attribute} : \"\"")
+          end
+
+          if index && interpolated?(index)
+            return add_block_dynamic("(#{assignment(index, value)}).fetch(-1)")
+          end
+
+          return add_block_dynamic(index ? assignment(index, value) : value)
+        end
+        return if index.nil?
+
+        @src << "; " << assignment(index, value) << ";"
+      end
+
+      #: (Integer) -> bool
+      def boolean_presence?(index)
+        @slot_visitor.slots[index]&.type == :boolean_attribute
       end
 
       #: (String, Integer?, bool) -> void
@@ -417,6 +521,21 @@ module Herb
 
       private
 
+      #: (String) -> void
+      def add_postamble(_postamble)
+        super("{ template: #{@slot_visitor.identifier.inspect}, " \
+              "version: #{@slot_visitor.version.inspect}, " \
+              "occurrence: #{OCCURRENCE_BUFFER}, " \
+              "slots: #{BUFFER} }\n")
+      end
+
+      # Counted where the region marker counts it, at the start of the rendering rather than the end,
+      # so a template rendering itself numbers its renderings the same way both compilers do.
+      #: () -> void
+      def capture_occurrence
+        @src << "; #{OCCURRENCE_BUFFER} = #{@slot_visitor.occurrence_expression};"
+      end
+
       #: () -> String
       def current_scope
         @scopes.empty? ? BUFFER : "#{SCOPE_BUFFER}#{@scopes.last}"
@@ -445,26 +564,44 @@ module Herb
 
       #: (Integer) -> void
       def scope_open_collection(index)
-        @src << "; #{ROWS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
+        @src << "; #{ITEMS_BUFFER}#{index} = ::Hash.new; #{KEY_BUFFER}#{index} = 0;"
       end
 
-      #: (Integer) -> void
-      def scope_row_begin(index)
-        @src << "; #{KEY_BUFFER}#{index} += 1; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+      #: (Integer, ?String?) -> void
+      def scope_item_begin(index, key = nil)
+        advance = key ? "#{KEY_BUFFER}#{index} = (#{key}).to_s" : "#{KEY_BUFFER}#{index} += 1"
+
+        @src << "; #{advance}; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
 
         @scopes.push(index)
       end
 
       #: (Integer) -> void
-      def scope_row_end(index)
+      def scope_item_end(index)
         leave_scope(index)
 
-        @src << "; #{ROWS_BUFFER}#{index}[#{KEY_BUFFER}#{index}] = #{SCOPE_BUFFER}#{index};"
+        @src << item_seeds(index)
+        @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
+      end
+
+      # A row the client builds from the parked skeleton carries no `herb-seeds` comment, so the
+      # values response is the only place it can learn what the server seeded its states with.
+      #: (Integer) -> String
+      def item_seeds(index)
+        names = @slot_visitor.seeded_item_states[index]
+
+        return "" if names.nil? || names.empty?
+
+        pairs = names.map { |name| "#{name.inspect} => #{name}" }.join(", ")
+
+        "; #{SCOPE_BUFFER}#{index}[:seeds] = { #{pairs} }" \
+          ".select { |_, v| #{SlotVisitor::SEED_VALUE_TYPES}.any? { |t| t === v } }" \
+          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v };"
       end
 
       #: (Integer) -> void
       def scope_close_collection(index)
-        @src << "; #{current_scope}[#{index}] = { rows: #{ROWS_BUFFER}#{index} };"
+        @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index} };"
       end
 
       #: (Integer) -> void
@@ -482,9 +619,23 @@ module Herb
         "(#{code}).to_s"
       end
 
+      #: (Integer, String) -> String
+      def assignment(index, value)
+        if interpolated?(index)
+          "(#{current_scope}[#{index}] ||= []) << #{value}"
+        else
+          "#{current_scope}[#{index}] = #{value}"
+        end
+      end
+
+      #: (Integer) -> bool
+      def interpolated?(index)
+        @slot_visitor.slots[index]&.type == :attribute_interpolation
+      end
+
       #: (String) -> void
       def add_block_dynamic(value)
-        @src << "; " << @bufvar << " << " << value << ";"
+        @src << "; " << @bufvar << " << (" << value << ");"
       end
 
       #: () -> void

@@ -1,0 +1,11 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0015_preserves indentation of attributes around an erb expression"
+input: "{source: \"<div\\n  class=\\\"foo\\\"\\n  id=\\\"<%= dom_id %>\\\"\\n  data-colour=\\\"chartreuse\\\"\\n>\\n  Content\\n</div>\\n\", locals: {dom_id: \"fooDlg\"}, options: {}}"
+---
+<div
+  class="foo"
+  id="fooDlg"
+  data-colour="chartreuse"
+>
+  Content
+</div>

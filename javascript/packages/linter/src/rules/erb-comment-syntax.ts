@@ -1,7 +1,7 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
-import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "./strict-locals-utils.js"
+import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "../utils/strict-locals-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"

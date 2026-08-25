@@ -32,12 +32,8 @@ options: {transform_conditionals: true}
     │   │       │               │       ├── tag_closing: "%>" (location: (1:39)-(1:39))
     │   │       │               │       ├── then_keyword: ∅
     │   │       │               │       ├── statements: (1 item)
-    │   │       │               │       │   └── @ ERBContentNode (location: (1:12)-(1:39))
-    │   │       │               │       │       ├── tag_opening: "<%=" (location: (1:12)-(1:15))
-    │   │       │               │       │       ├── content: " 'active' " (location: (1:15)-(1:25))
-    │   │       │               │       │       ├── tag_closing: "%>" (location: (1:37)-(1:39))
-    │   │       │               │       │       ├── parsed: false
-    │   │       │               │       │       └── valid: true
+    │   │       │               │       │   └── @ LiteralNode (location: (1:16)-(1:24))
+    │   │       │               │       │       └── content: "active"
     │   │       │               │       │
     │   │       │               │       ├── subsequent: ∅
     │   │       │               │       └── end_node:

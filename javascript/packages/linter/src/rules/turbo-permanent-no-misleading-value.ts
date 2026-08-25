@@ -1,10 +1,10 @@
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "../utils/rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
 import { getStaticAttributeValue, hasAttributeValue, isERBOpenTagNode } from "@herb-tools/core"
 
-import type { StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import type { StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "../utils/rule-utils.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, HTMLOpenTagNode, ERBOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
 

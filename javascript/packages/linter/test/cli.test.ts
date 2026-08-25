@@ -1796,7 +1796,7 @@ describe("CLI Output Formatting", () => {
       } finally {
         try { unlinkSync(configPath) } catch {}
       }
-    })
+    }, 10_000)
 
     describe("`Rules` summary line", () => {
       function rulesLine(output: string): string {

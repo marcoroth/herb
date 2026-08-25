@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext } from "../types"
-import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
 import { hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isRubyParameterNode, getTagLocalName } from "@herb-tools/core"

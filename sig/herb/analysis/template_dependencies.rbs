@@ -55,7 +55,9 @@ module Herb
 
       def state_flow: (untyped entry_point, untyped state) -> untyped
 
-      def affected_nodes: (untyped file_path, untyped state) -> untyped
+      def affected_nodes: (untyped file_path, untyped state, ?conditions_only: untyped) -> untyped
+
+      def nodes_in: (untyped ast, untyped state, ?conditions_only: untyped) -> untyped
 
       def dependency_index: (untyped file_path) -> untyped
 
@@ -106,6 +108,8 @@ module Herb
       def component_methods_for: (untyped template_path) -> untyped
 
       def partial_index: () -> untyped
+
+      def iterated_names: (untyped call, untyped carrying) -> untyped
 
       def expression_references?: (untyped expression, untyped name) -> untyped
 

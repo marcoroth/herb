@@ -220,7 +220,7 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
 
   return ast_html_element_node_init(
     (AST_NODE_T*) open_tag,
-    open_tag->tag_name,
+    token_copy(open_tag->tag_name, parser->allocator),
     body,
     NULL,
     false,

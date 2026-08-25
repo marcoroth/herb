@@ -1,11 +1,17 @@
 import { isPartialPath } from "@herb-tools/analysis"
+
 import { join } from "./posix_path"
 import { uriFromPath } from "./uri"
 
 import { Location, Position, Range } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { DefinitionProvider } from "./definition_provider"
+import { RubyLocalsIndex } from "./ruby_locals_index"
+import { slotNameGroupAt } from "./herb_attribute_links"
+import { isPositionInRange } from "./range_utils"
+import type { ParserService } from "./parser_service"
 
+import type { ProjectConfig } from "./types.js"
 import type { PartialReference } from "@herb-tools/language-service"
 import type { ProjectIndex } from "@herb-tools/analysis/node"
 
@@ -21,20 +27,35 @@ export class ReferencesProvider {
   private index: ProjectIndex
   private documents: OpenDocuments
   private read: (filePath: string) => string | null
+  private config?: ProjectConfig
+
+  private parserService?: ParserService
 
   constructor(
     definitionProvider: DefinitionProvider,
     index: ProjectIndex,
     documents: OpenDocuments,
-    read: (filePath: string) => string | null
+    read: (filePath: string) => string | null,
+    parserService?: ParserService
   ) {
     this.definitionProvider = definitionProvider
     this.index = index
     this.documents = documents
     this.read = read
+    this.parserService = parserService
+  }
+
+  setConfig(config?: ProjectConfig) {
+    this.config = config
   }
 
   getReferences(document: TextDocument, position: Position, includeDeclaration: boolean): Location[] {
+    const herb = this.getHerbReferences(document, position, includeDeclaration)
+
+    if (herb.length > 0) return herb
+
+    if (this.config?.framework !== "actionview") return []
+
     const callers = this.index.callers
     if (!callers) return []
 
@@ -54,6 +75,27 @@ export class ReferencesProvider {
     }
 
     return locations
+  }
+
+  private getHerbReferences(document: TextDocument, position: Position, includeDeclaration: boolean): Location[] {
+    if (!this.parserService) return []
+
+    const index = RubyLocalsIndex.build(this.parserService, document)
+    const local = index.at(position)
+
+    if (local) {
+      const locations = includeDeclaration ? [Location.create(document.uri, local.declaration)] : []
+
+      return [...locations, ...local.usages.map(usage => Location.create(document.uri, usage))]
+    }
+
+    const group = slotNameGroupAt(index.herbAttributes, position, isPositionInRange)
+
+    if (!group) return []
+
+    const declarations = includeDeclaration ? group.declarations : []
+
+    return [...declarations, ...group.usages].map(range => Location.create(document.uri, range))
   }
 
   private partialAt(document: TextDocument, position: Position): string | null {

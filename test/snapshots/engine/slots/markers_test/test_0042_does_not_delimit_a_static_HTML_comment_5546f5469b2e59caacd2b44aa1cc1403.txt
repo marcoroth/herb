@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0042_does not delimit a static HTML comment"
+input: "{source: \"<!-- just a note --><p><%= @a %></p>\", locals: {\"@a\" => \"A\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:12eca184:0--><!-- just a note --><p data-herb-slot="0:child">A</p><!--/herb-region:app/views/test.html.erb-->
