@@ -27,7 +27,7 @@ module Herb
       #
       # A file is scoped as a whole, so markup an inlined partial brought with it belongs to the
       # partial and not to the template it landed in. `Herb::Engine::Origin` is what says so, which
-      # is why this has to run after `InlineRenderVisitor` and before `SlotVisitor`, whose parked
+      # is why this has to run after `InlineRenderVisitor` and before `Slots::Visitor`, whose parked
       # markup a client rebuilds from and which therefore has to already carry the attribute.
       #
       # Rewriting the selectors is somebody else's job. `transform` is anything answering `call` with

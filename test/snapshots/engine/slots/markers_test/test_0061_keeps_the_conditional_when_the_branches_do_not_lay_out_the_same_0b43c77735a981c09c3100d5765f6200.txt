@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::MarkersTest#test_0061_keeps the conditional when the branches do not lay out the same"
-input: "{source: \"<% if @c %><h1><%= @today %></h1><% else %><h2><%= @tomorrow %></h2><% end %>\", locals: {\"@c\" => false, \"@today\" => \"Mon\", \"@tomorrow\" => \"Tue\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:2a5b1a83:0--><!--herb-slot:0:conditional--><!--herb-branch:0:1--><h2 data-herb-slot="2:child">Tue</h2><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

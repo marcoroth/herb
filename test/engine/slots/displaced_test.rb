@@ -2,7 +2,7 @@
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
 
 module Engine
   module Slots
@@ -22,7 +22,7 @@ module Engine
       end
 
       def compile(source)
-        Herb::Engine.new(source, visitors: [Herb::Engine::SlotVisitor.new], filename: FILE).src
+        Herb::Engine.new(source, visitors: [Herb::Engine::Slots::Visitor.new], filename: FILE).src
       end
 
       def render(source, **assigns)

@@ -5,8 +5,8 @@ require "nokogiri"
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -14,7 +14,7 @@ module Engine
       include SnapshotUtils
 
       def options
-        { visitors: [Herb::Engine::SlotVisitor.new], filename: "app/views/test.html.erb" }
+        { visitors: [Herb::Engine::Slots::Visitor.new], filename: "app/views/test.html.erb" }
       end
 
       def parse_slotted(template, locals)
@@ -464,7 +464,7 @@ module Engine
       test "writes an item key the same way the values payload does, under either escaping" do
         template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
         key = %(a&b<c>"d")
-        payload = evaluate_herb_source(Herb::Engine::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src, { "@items" => [key] })
+        payload = evaluate_herb_source(Herb::Engine::Slots::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src, { "@items" => [key] })
 
         [false, true].each do |escape|
           markup = evaluate_herb_source(Herb::Engine.new(template, **options, escape: escape).src, { "@items" => [key] })
@@ -497,7 +497,7 @@ module Engine
 
         source = Herb::Engine.new(
           "<div><%= @name %></div>",
-          visitors: [Herb::Engine::SlotVisitor.new, rewriter],
+          visitors: [Herb::Engine::Slots::Visitor.new, rewriter],
           filename: "app/views/test.html.erb"
         ).src
 

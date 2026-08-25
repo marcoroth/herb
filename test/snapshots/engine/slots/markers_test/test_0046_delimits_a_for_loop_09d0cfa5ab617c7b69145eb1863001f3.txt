@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::MarkersTest#test_0046_delimits a for loop"
-input: "{source: \"<% for x in @l %><b><%= x %></b><% end %>\", locals: {\"@l\" => [1]}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:ec9cf1b2:0--><!--herb-slot:0:collection--><b data-herb-slot="1:child">1</b><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

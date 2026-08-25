@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::MarkersTest#test_0018_compiles a collection into the generated source"
+input: "{source: \"<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>\", options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 
+ _buf << '<!--herb-region:app/views/test.html.erb:efe7da5f:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '--><ul><!--herb-slot:0:collection-->'.freeze; @items.each do |item|; _buf << '<li data-herb-slot="1:child">'.freeze; _buf << (item).to_s; _buf << '</li>'.freeze; end; _buf << '<!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

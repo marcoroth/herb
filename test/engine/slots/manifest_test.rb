@@ -2,13 +2,13 @@
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
 
 module Engine
   module Slots
     class ManifestTest < Minitest::Spec
       def compile(template, mode: :client)
-        visitor = Herb::Engine::SlotVisitor.new(mode: mode)
+        visitor = Herb::Engine::Slots::Visitor.new(mode: mode)
 
         Herb::Engine.new(template, visitors: [visitor], filename: "app/views/posts/index.html.erb")
 

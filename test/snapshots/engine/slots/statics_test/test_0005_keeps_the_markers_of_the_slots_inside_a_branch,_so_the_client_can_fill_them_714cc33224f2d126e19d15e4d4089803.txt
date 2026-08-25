@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0005_keeps the markers of the slots inside a branch, so the client can fill them"
-input: "{source: \"<div><% if @a %><span class=\\\"<%= @c %>\\\"><%= @name %></span><% end %></div>\", locals: {\"@a\" => false, \"@c\" => \"item\", \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::SlotVisitor client>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:2646ceeb:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:2646ceeb"><!--herb-branch:0:0--><span class="" data-herb-slot="1:attribute:class 2:child"></span></template>

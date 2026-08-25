@@ -3,8 +3,8 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -12,7 +12,7 @@ module Engine
       include SnapshotUtils
 
       def options
-        { visitors: [Herb::Engine::SlotVisitor.new(mode: :client)], filename: "app/views/test.html.erb" }
+        { visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], filename: "app/views/test.html.erb" }
       end
 
       def render(template, locals = {})
@@ -160,7 +160,7 @@ module Engine
       test "parks nothing at all in server mode, and counts nothing either" do
         compiled = Herb::Engine.new(
           "<div><% if @a %>x<% else %>y<% end %></div>",
-          visitors: [Herb::Engine::SlotVisitor.new(mode: :server)],
+          visitors: [Herb::Engine::Slots::Visitor.new(mode: :server)],
           filename: "app/views/test.html.erb"
         ).src
 
@@ -179,7 +179,7 @@ module Engine
 
       test "the values payload carries an interpolated attribute as its dynamic parts" do
         template = %(<div class="row-<%= @kind %>-of-<%= @size %>">x</div>)
-        source = Herb::Engine::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src
+        source = Herb::Engine::Slots::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src
         payload = evaluate_herb_source(source, { "@kind" => "a", "@size" => "b" })
 
         assert_equal ["a", "b"], payload[:slots][0]
@@ -194,7 +194,7 @@ module Engine
       test "parks nothing at all unless the mode asks for it" do
         source = Herb::Engine.new(
           "<div><% if @a %>x<% end %></div>",
-          visitors: [Herb::Engine::SlotVisitor.new],
+          visitors: [Herb::Engine::Slots::Visitor.new],
           filename: "app/views/test.html.erb"
         ).src
 

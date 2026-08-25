@@ -4,7 +4,7 @@ require "json"
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
 require_relative "../../../lib/herb/engine/report/session"
 
 module Engine
@@ -13,7 +13,7 @@ module Engine
       TEMPLATE = %(<li id="<%= @n %>"><%= @n %></li>) #: String
 
       def compile(deliver:, source: TEMPLATE, filename: "app/views/posts/_card.html.erb")
-        visitor = Herb::Engine::SlotVisitor.new(mode: :client, deliver: deliver)
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, deliver: deliver)
 
         Herb::Engine.new(source, visitors: [visitor], filename: filename).src
       end
@@ -33,7 +33,7 @@ module Engine
       def channel_after(renders, source)
         session = Herb::Engine::Report::Session.capture { renders.times { |n| view(source).render(n) } }
 
-        session.channel(Herb::Engine::SlotManifest::Channel::NAME) { nil }
+        session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }
       end
 
       test "writes nothing at all unless a delivery asks for it" do
@@ -44,7 +44,7 @@ module Engine
       end
 
       test "refuses a delivery it does not have" do
-        error = assert_raises(ArgumentError) { Herb::Engine::SlotVisitor.new(deliver: :everywhere) }
+        error = assert_raises(ArgumentError) { Herb::Engine::Slots::Visitor.new(deliver: :everywhere) }
 
         assert_match(/deliver has to be one of/, error.message)
       end
@@ -109,7 +109,7 @@ module Engine
           view(second).render(2)
         end
 
-        channel = session.channel(Herb::Engine::SlotManifest::Channel::NAME) { nil }
+        channel = session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }
 
         assert_equal 2, channel.manifests.size
       end
@@ -121,11 +121,11 @@ module Engine
 
         session = Herb::Engine::Report::Session.capture { view(source).render(2) }
 
-        assert_equal 1, session.channel(Herb::Engine::SlotManifest::Channel::NAME) { nil }.manifests.size
+        assert_equal 1, session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }.manifests.size
       end
 
       test "an empty channel renders nothing, so a page that says nothing carries nothing" do
-        channel = Herb::Engine::SlotManifest::Channel.new
+        channel = Herb::Engine::Slots::Manifest::Channel.new
 
         assert_predicate channel, :empty?
         assert_equal "", channel.to_html

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
-require_relative "../../lib/herb/engine/dynamics_compiler"
+require_relative "../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   class DynamicsCompilerTest < Minitest::Spec
@@ -13,7 +13,7 @@ module Engine
       def form_with(**) = "<form>#{yield(Field.new)}</form>"
 
       def render(*)
-        source = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
+        source = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
 
         View.new(inner: "inner").instance_eval(source)
       end
@@ -30,10 +30,10 @@ module Engine
     end
 
     CONDITIONAL = "<% if @admin %><b><%= @secret %></b><% else %><%= @public %><% end %>"
-    PARTIAL_VERSION = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
+    PARTIAL_VERSION = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
 
     def payload(source, **assigns)
-      compiled = Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
 
       View.new(**assigns).instance_eval(compiled)
     end
@@ -280,19 +280,19 @@ module Engine
 
     describe "what it compiles to" do
       test "collects into a Hash rather than a String" do
-        assert_includes Herb::Engine::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
+        assert_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
       end
 
       test "names its buffers so a template's own locals cannot collide" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %>)
-        compiled = Herb::Engine::DynamicsCompiler.new(source).src
+        compiled = Herb::Engine::Slots::DynamicsCompiler.new(source).src
 
         assert_includes compiled, "__herb_block1"
         refute_includes compiled, "_buf"
       end
 
       test "leaves the static markup out" do
-        refute_includes Herb::Engine::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+        refute_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "hello"
       end
     end
   end

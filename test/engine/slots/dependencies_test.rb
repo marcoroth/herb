@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/slot_dependencies"
+require_relative "../../../lib/herb/engine/slots/dependencies"
 require_relative "../../../lib/herb/engine/debug_visitor"
 
 require "tmpdir"
@@ -26,7 +26,7 @@ module Engine
 
         File.write(path, template)
 
-        Herb::Engine::SlotDependencies.new(@project_path).slots_for(path)
+        Herb::Engine::Slots::Dependencies.new(@project_path).slots_for(path)
       end
 
       def write(name, template)
@@ -38,7 +38,7 @@ module Engine
       end
 
       def subject
-        Herb::Engine::SlotDependencies.new(@project_path)
+        Herb::Engine::Slots::Dependencies.new(@project_path)
       end
 
       def page_with_partial
@@ -53,12 +53,12 @@ module Engine
         compile = lambda { |source, file|
           next nil if File.basename(file).start_with?("_")
 
-          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          visitor = Herb::Engine::Slots::Visitor.new(mark: false)
           Herb::Engine.new(source, visitors: [visitor], filename: file)
           visitor
         }
 
-        reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
+        reached = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).across(entry)["@name"]
         files = reached.map { |slot| File.basename(slot[:file]) }.uniq
 
         assert_includes files, "index.html.erb"
@@ -68,7 +68,7 @@ module Engine
       test "says nothing at all when the host compiles no slots anywhere" do
         entry = write("index.html.erb", "<div><%= @name %></div>")
 
-        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
+        subject = Herb::Engine::Slots::Dependencies.new(@project_path, compile: ->(_source, _file) {})
 
         assert_empty subject.across(entry)
         assert_empty subject.slots_for(entry)
@@ -82,12 +82,12 @@ module Engine
         compile = lambda { |source, file|
           next nil if File.basename(file).start_with?("_")
 
-          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          visitor = Herb::Engine::Slots::Visitor.new(mark: false)
           Herb::Engine.new(source, visitors: [visitor], filename: file)
           visitor
         }
 
-        reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
+        reached = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).across(entry)["@name"]
         files = reached.map { |slot| File.basename(slot[:file]) }.uniq
 
         assert_includes files, "index.html.erb"
@@ -97,7 +97,7 @@ module Engine
       test "says nothing at all when the host compiles no slots anywhere" do
         entry = write("index.html.erb", "<div><%= @name %></div>")
 
-        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
+        subject = Herb::Engine::Slots::Dependencies.new(@project_path, compile: ->(_source, _file) {})
 
         assert_empty subject.across(entry)
         assert_empty subject.slots_for(entry)
@@ -111,13 +111,13 @@ module Engine
         File.write(path, template)
 
         compile = lambda { |source, file|
-          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          visitor = Herb::Engine::Slots::Visitor.new(mark: false)
           Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
           visitor
         }
 
-        rewritten = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).slots_for(path)
-        plain = Herb::Engine::SlotDependencies.new(@project_path).slots_for(path)
+        rewritten = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).slots_for(path)
+        plain = Herb::Engine::Slots::Dependencies.new(@project_path).slots_for(path)
 
         assert_equal plain.keys.sort, rewritten.keys.sort
         assert_equal(plain.values.map { |slot| slot[:state] }, rewritten.values.map { |slot| slot[:state] })
@@ -130,17 +130,17 @@ module Engine
 
         File.write(path, template)
 
-        marker = Herb::Engine::SlotVisitor.new
+        marker = Herb::Engine::Slots::Visitor.new
         Herb::Engine.new(template, visitors: [Herb::Engine::DebugVisitor.new, marker], filename: path)
 
         compile = lambda { |source, file|
-          visitor = Herb::Engine::SlotVisitor.new
+          visitor = Herb::Engine::Slots::Visitor.new
           Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
           visitor
         }
 
-        matching = Herb::Engine::SlotDependencies.new(@project_path, compile: compile)
-        bare = Herb::Engine::SlotDependencies.new(@project_path)
+        matching = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile)
+        bare = Herb::Engine::Slots::Dependencies.new(@project_path)
 
         assert_equal marker.schema[:version], matching.version_for(path)
         refute_equal marker.schema[:version], bare.version_for(path)
@@ -266,10 +266,10 @@ module Engine
       end
 
       def named_by(strategy)
-        Herb::Engine::SlotDependencies.new(
+        Herb::Engine::Slots::Dependencies.new(
           @project_path,
           compile: lambda { |source, path|
-            visitor = Herb::Engine::SlotVisitor.new(mark: false, identifier: strategy)
+            visitor = Herb::Engine::Slots::Visitor.new(mark: false, identifier: strategy)
 
             Herb::Engine.new(source, visitors: [visitor], filename: path, project_path: @project_path)
 

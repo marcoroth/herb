@@ -7,8 +7,8 @@ require "erb/util"
 require "active_support/core_ext/string/output_safety"
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
-require_relative "../../../lib/herb/engine/slot_dependencies"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/dependencies"
 
 module Engine
   module Slots
@@ -193,14 +193,14 @@ module Engine
       end
 
       def render(label, source, assigns, mode:)
-        visitor = Herb::Engine::SlotVisitor.new(mode: mode)
+        visitor = Herb::Engine::Slots::Visitor.new(mode: mode)
         compiled = Herb::Engine.new(source, visitors: [visitor], filename: file_for(label), project_path: @project_path, bufvar: BUFFER, **ESCAPING).src
 
         [View.new(**assigns).instance_eval(compiled), visitor]
       end
 
       def values(label, source, assigns)
-        compiled = Herb::Engine::DynamicsCompiler.new(source, filename: file_for(label), project_path: @project_path, bufvar: BUFFER, **ESCAPING).src
+        compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: file_for(label), project_path: @project_path, bufvar: BUFFER, **ESCAPING).src
 
         View.new(**assigns).instance_eval(compiled)
       end
@@ -208,7 +208,7 @@ module Engine
       def dependencies(label, source)
         path = write(label, source)
 
-        Herb::Engine::SlotDependencies.new(@project_path).payload(path)
+        Herb::Engine::Slots::Dependencies.new(@project_path).payload(path)
       end
 
       def fixture(label, source, before, after)
@@ -252,7 +252,7 @@ module Engine
       end
 
       test "the marker grammar fixture is the one SlotMarkers builds" do
-        markers = Herb::Engine::SlotMarkers.new
+        markers = Herb::Engine::Slots::Markers.new
 
         grammar = {
           slot_open: { child: markers.slot_open(3, :child), conditional: markers.slot_open(4, :conditional), collection: markers.slot_open(5, :collection) },

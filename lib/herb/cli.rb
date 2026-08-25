@@ -6,7 +6,7 @@
 require "optparse"
 
 require_relative "../herb"
-require_relative "engine/slot_visitor"
+require_relative "engine/slots/visitor"
 
 class Herb::CLI
   include Herb::Colors
@@ -348,9 +348,9 @@ class Herb::CLI
       parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
         self.slots = (mode || "server").to_sym
 
-        unless Herb::Engine::SlotVisitor::MODES.include?(slots)
+        unless Herb::Engine::Slots::Visitor::MODES.include?(slots)
           puts "Unknown --slots mode: #{mode}"
-          puts "Expected one of: #{Herb::Engine::SlotVisitor::MODES.join(", ")}"
+          puts "Expected one of: #{Herb::Engine::Slots::Visitor::MODES.join(", ")}"
 
           exit(1)
         end
@@ -1133,8 +1133,8 @@ class Herb::CLI
       source = file_content
       options = {}
 
-      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
-      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+      slot_mode = slots || Herb::Engine::Slots::Visitor.directive_mode(source)
+      slot_visitor = Herb::Engine::Slots::Visitor.new(mode: slot_mode) if slot_mode
       visitors = []
 
       visitors << slot_visitor if slot_visitor
@@ -1250,8 +1250,8 @@ class Herb::CLI
       source = file_content
       options = {}
 
-      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
-      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+      slot_mode = slots || Herb::Engine::Slots::Visitor.directive_mode(source)
+      slot_visitor = Herb::Engine::Slots::Visitor.new(mode: slot_mode) if slot_mode
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true

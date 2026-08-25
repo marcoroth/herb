@@ -4,8 +4,8 @@ require "json"
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -13,7 +13,7 @@ module Engine
       include SnapshotUtils
 
       def compile(template)
-        visitor = Herb::Engine::SlotVisitor.new(mode: :client)
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client)
         engine = Herb::Engine.new(template, visitors: [visitor], filename: "app/views/test.html.erb")
 
         [visitor, engine.src]
@@ -26,7 +26,7 @@ module Engine
       end
 
       def encoded(read)
-        Herb::Engine::StateDirectives.condition_entry(read)
+        Herb::Engine::Slots::StateDirectives.condition_entry(read)
       end
 
       def arm(branch, condition)
@@ -377,7 +377,7 @@ module Engine
         template = %(<%# herb:state (pending: false, failed: false) %><input disabled="<%= pending? || failed? %>">)
         visitor, = compile(template)
 
-        assert_instance_of Herb::Engine::StateDirectives::Combo, visitor.state_presence.fetch(0)
+        assert_instance_of Herb::Engine::Slots::StateDirectives::Combo, visitor.state_presence.fetch(0)
 
         off = render(template)
 
@@ -652,7 +652,7 @@ module Engine
         template = %(<%# herb:slots client %><%# herb:state (label: @label) %><p><%= label %></p>)
         engine = Herb::Engine.new(
           template,
-          visitors: [Herb::Engine::SlotVisitor.new(mode: :client)],
+          visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)],
           filename: "app/views/test.html.erb",
           bufvar: "@output_buffer"
         )
@@ -756,7 +756,7 @@ module Engine
       end
 
       test "the values payload carries presence as a boolean" do
-        source = Herb::Engine::DynamicsCompiler.new(BOOLEAN_ATTRIBUTES, filename: "app/views/test.html.erb").src
+        source = Herb::Engine::Slots::DynamicsCompiler.new(BOOLEAN_ATTRIBUTES, filename: "app/views/test.html.erb").src
         payload = evaluate_herb_source(source, {})
 
         assert_equal true, payload[:slots][0]

@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::MarkersTest#test_0005_distinguishes an element's attribute slot from its content slot"
-input: "{source: \"<li class=\\\"<%= @c %>\\\"><%= @name %></li>\", locals: {\"@c\" => \"item\", \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:dfb12a52:0--><li class="item" data-herb-slot="0:attribute:class 1:child">Marco</li><!--/herb-region:app/views/test.html.erb-->

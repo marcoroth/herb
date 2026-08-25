@@ -1,7 +1,0 @@
----
-source: "Engine::Slots::MarkersTest#test_0016_compiles slot markers into the generated source"
-input: "{source: \"<p><%= @name %></p>\", options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
----
-_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 
- _buf << '<!--herb-region:app/views/test.html.erb:0417e5d5:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '--><p data-herb-slot="0:child">'.freeze; _buf << (@name).to_s; _buf << '</p><!--/herb-region:app/views/test.html.erb-->'.freeze;
-_buf.to_s

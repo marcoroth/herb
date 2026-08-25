@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0030_anchors an interpolated attribute value"
+input: "{source: \"<div class=\\\"a <%= @c %> b\\\"></div>\", locals: {\"@c\" => \"C\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:90ffdd5f:0--><div class="a C b" data-herb-slot="0:attribute_interpolation:class"></div><!--/herb-region:app/views/test.html.erb-->

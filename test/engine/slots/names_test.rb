@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
 
 module Engine
   module Slots
@@ -11,7 +11,7 @@ module Engine
       include SnapshotUtils
 
       def compile(template)
-        visitor = Herb::Engine::SlotVisitor.new(mode: :client)
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client)
         engine = Herb::Engine.new(template, visitors: [visitor], filename: "app/views/test.html.erb")
 
         [visitor, engine.src]

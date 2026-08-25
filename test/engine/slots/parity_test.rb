@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -43,7 +43,7 @@ module Engine
       }.freeze
 
       def compile(source)
-        Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb")
+        Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb")
       end
 
       def evaluate(compiler, assigns)
