@@ -79,7 +79,7 @@ module Herb
 
     def enabled_for_path?: (untyped path, untyped tool) -> untyped
 
-    def include_override?: (untyped path, untyped tool_include, untyped user_includes) -> bool
+    def include_override?: (untyped path, untyped tool_include, untyped user_includes) -> untyped
 
     def linter_enabled_for_path?: (untyped path) -> untyped
 
