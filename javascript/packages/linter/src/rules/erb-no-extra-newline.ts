@@ -1,6 +1,6 @@
 import { type Node, Location } from "@herb-tools/core"
 
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { BaseSourceRuleVisitor } from "../utils/rule-utils.js"
 import { positionFromOffset } from "@herb-tools/core"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"

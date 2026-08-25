@@ -319,7 +319,14 @@ impl RenderGraph {
     names.sort();
 
     InferredSignature {
-      locals: names.into_iter().map(|name| StrictLocal { name, required: false }).collect(),
+      locals: names
+        .into_iter()
+        .map(|name| StrictLocal {
+          name,
+          required: false,
+          default_source: None,
+        })
+        .collect(),
       call_site_count: callers.len(),
       keyword_rest: !self.is_complete(),
     }

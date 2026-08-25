@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0026_tag.hr void element with attributes"
 input: "{source: \"<%= tag.hr class: \\\"divider\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<hr class="divider">'.freeze;
-_buf.to_s
+'<hr class="divider">'.freeze

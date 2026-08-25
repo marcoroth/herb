@@ -5,10 +5,105 @@ import { Position, MarkupKind, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { HoverProvider } from "../src/hover_provider"
+
+import type { FrameworkOptions } from "../src/types"
 import { ParserService } from "../src/parser_service"
 import { Herb } from "@herb-tools/node-wasm"
 
 import type { ParseOptions, ParseResult } from "@herb-tools/core"
+
+describe("herb state hover", () => {
+  let service: HoverProvider
+
+  beforeAll(async () => {
+    await Herb.load()
+    service = new HoverProvider(new ParserService(Herb))
+  })
+
+  function hover(content: string, line: number, character: number): string {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const result = service.getHover(document, Position.create(line, character))
+    const contents = result?.contents
+
+    return contents && typeof contents === "object" && "value" in contents ? contents.value : ""
+  }
+
+  const TEMPLATE =
+    '<%# herb:state (pending: false, attempts: 0) %>\n' +
+    "<% @items.each do |item| %>\n" +
+    '  <%# herb:state (locked: true) %>\n' +
+    '  <p><%= locked %></p>\n' +
+    "<% end %>\n" +
+    "<p><%= pending? %></p>\n" +
+    '<button data-herb-increment="attempts">More</button>'
+
+  it("documents a boolean state from a read", () => {
+    const value = hover(TEMPLATE, 5, 9)
+
+    expect(value).toContain("**pending** · Herb Client State")
+    expect(value).toContain("`boolean` · default `false` · one value per rendering")
+    expect(value).toContain("```erb")
+    expect(value).toContain("<%= pending %>")
+    expect(value).toContain('data-herb-toggle="pending"')
+    expect(value).toContain('stateFor(element).set({ pending: true })')
+    expect(value).toContain('<% if pending? %>')
+  })
+
+  it("documents an item state with its loop scope", () => {
+    const value = hover(TEMPLATE, 3, 10)
+
+    expect(value).toContain("**locked** · Herb Client State")
+    expect(value).toContain("one value for each `item`")
+  })
+
+  it("documents an integer state from an action attribute", () => {
+    const value = hover(TEMPLATE, 6, 30)
+
+    expect(value).toContain("**attempts** · Herb Client State")
+    expect(value).toContain("`integer` · default `0` · one value per rendering")
+    expect(value).toContain('data-herb-increment="attempts"')
+    expect(value).toContain('<% if attempts == 0 %>')
+  })
+
+  it("scopes the hover range to the state token inside an attribute", () => {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, TEMPLATE)
+    const result = service.getHover(document, Position.create(6, 30))
+
+    expect(document.getText(result?.range)).toBe("attempts")
+  })
+
+  it("documents a state inside a tag helper's data hash", () => {
+    const content =
+      '<%# herb:state (draft: "") %>\n' +
+      '<%= tag.button data: { herb_set: "click->draft=abc" } do %>\n' +
+      "  a\n" +
+      "<% end %>"
+
+    const value = hover(content, 1, content.split("\n")[1].indexOf("draft"))
+
+    expect(value).toContain("**draft** · Herb Client State")
+  })
+
+  it("documents the herb:state directive keyword", () => {
+    const value = hover(TEMPLATE, 0, 6)
+
+    expect(value).toContain("**herb:state** · Herb directive")
+    expect(value).toContain("strict-locals signature")
+  })
+
+  it("documents herb:slots and herb:key", () => {
+    const content = "<%# herb:slots client %>\n<% @items.each do |item| %><%# herb:key item %><li id=\"x\"><%= item %></li><% end %>"
+
+    expect(hover(content, 0, 8)).toContain("**herb:slots** · Herb directive")
+    expect(hover(content, 1, 35)).toContain("**herb:key** · Herb directive")
+  })
+
+  it("says nothing for a plain local", () => {
+    const content = "<%# locals: (title:) %>\n<h1><%= title %></h1>"
+
+    expect(hover(content, 1, 9)).toBe("")
+  })
+})
 
 describe("HoverProvider", () => {
   let parserService: ParserService
@@ -24,10 +119,10 @@ describe("HoverProvider", () => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
 
-  function getHover(content: string, line: number, character: number) {
+  function getHover(content: string, line: number, character: number, options: FrameworkOptions = { framework: "actionview" }) {
     const document = createDocument(content)
 
-    return service.getHover(document, Position.create(line, character))
+    return service.getHover(document, Position.create(line, character), options)
   }
 
   function hoverValue(content: string, line: number, character: number): string {
@@ -496,6 +591,26 @@ describe("HoverProvider", () => {
     })
   })
 
+  describe("non-ActionView frameworks", () => {
+    it("returns null for a tag helper when the framework is not Action View", () => {
+      expect(getHover(`<%= tag.div class: "x" %>`, 0, 8, { framework: "sinatra" })).toBeNull()
+    })
+
+    it("returns null for a tag helper when no framework is configured", () => {
+      expect(getHover(`<%= tag.div class: "x" %>`, 0, 8, {})).toBeNull()
+    })
+
+    it("returns null for an ERB helper call when the framework is not Action View", () => {
+      expect(getHover(`<%= link_to "Home", root_path %>`, 0, 6, { framework: "hanami" })).toBeNull()
+    })
+
+    it("still hovers character references when the framework is not Action View", () => {
+      const hover = getHover("<p>&amp;</p>", 0, 5, { framework: "sinatra" })
+
+      expect((hover!.contents as { value: string }).value).toContain("Named character reference")
+    })
+  })
+
   describe("character references", () => {
     describe("named character references", () => {
       it("shows hover for &lt;", () => {
@@ -725,8 +840,8 @@ describe("HoverProvider", () => {
       const document = createDocument(content)
       const position = Position.create(2, 9)
 
-      const first = provider.getHover(document, position)
-      const second = provider.getHover(document, position)
+      const first = provider.getHover(document, position, { framework: "actionview" })
+      const second = provider.getHover(document, position, { framework: "actionview" })
 
       expect(first).not.toBeNull()
       expect(second).toEqual(first)
@@ -743,11 +858,53 @@ describe("HoverProvider", () => {
       const document = createDocument(content)
       const position = Position.create(0, 5)
 
-      const first = provider.getHover(document, position)
-      const second = provider.getHover(document, position)
+      const first = provider.getHover(document, position, { framework: "actionview" })
+      const second = provider.getHover(document, position, { framework: "actionview" })
 
       expect(first).not.toBeNull()
       expect(second).toEqual(first)
     })
+  })
+})
+
+describe("scoped style hover", () => {
+  let service: HoverProvider
+
+  beforeAll(async () => {
+    await Herb.load()
+    service = new HoverProvider(new ParserService(Herb))
+  })
+
+  function hover(content: string, line: number, character: number): string {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const result = service.getHover(document, Position.create(line, character))
+    const contents = result?.contents
+
+    return contents && typeof contents === "object" && "value" in contents ? contents.value : ""
+  }
+
+  const TEMPLATE = dedent`
+    <style scoped>
+      .card { color: red; }
+    </style>
+
+    <div class="card">Hi</div>
+  `
+
+  it("documents the scoped attribute on a style block", () => {
+    const value = hover(TEMPLATE, 0, 9)
+
+    expect(value).toContain("**`<style scoped>`** · Herb Engine")
+    expect(value).toContain("applies only to the markup in this file")
+    expect(value).toContain(".title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)")
+    expect(value).toContain("https://herb-tools.dev/projects/engine#scopedstyle-visitor")
+  })
+
+  it("does not hover on the style tag name", () => {
+    expect(hover(TEMPLATE, 0, 3)).toBe("")
+  })
+
+  it("does not hover on a plain style block", () => {
+    expect(hover("<style>\n  .card {}\n</style>", 0, 3)).toBe("")
   })
 })

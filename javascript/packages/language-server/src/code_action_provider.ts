@@ -1,10 +1,11 @@
-import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 import { Linter } from "@herb-tools/linter"
 import { Project } from "./project"
+import { OPEN_DOCUMENT_COMMAND } from "./commands"
 
 import { isValidFramework } from "@herb-tools/core"
 import { getFullDocumentRange, lspRangeFromLocation } from "@herb-tools/language-service"
@@ -275,11 +276,7 @@ export class CodeActionProvider {
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
-      command: {
-        title: 'Open .herb.yml',
-        command: 'vscode.open',
-        arguments: [configUri]
-      }
+      command: this.openDocumentCommand(configUri)
     }
 
     return action
@@ -307,15 +304,19 @@ export class CodeActionProvider {
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
         edit,
-        command: {
-          title: 'Open .herb.yml',
-          command: 'vscode.open',
-          arguments: [configUri]
-        }
+        command: this.openDocumentCommand(configUri)
       }
 
       return [action]
     })
+  }
+
+  private openDocumentCommand(uri: string): Command {
+    return {
+      title: 'Open .herb.yml',
+      command: OPEN_DOCUMENT_COMMAND,
+      arguments: [uri]
+    }
   }
 
   private suggestedFramework(diagnostic: Diagnostic): Framework | undefined {

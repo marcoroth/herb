@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { isERBNode, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

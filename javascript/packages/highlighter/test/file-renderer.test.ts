@@ -168,6 +168,36 @@ describe("FileRenderer", () => {
     })
   })
 
+  describe("fileUrl", () => {
+    const content = dedent`
+      line 1
+      line 2
+      line 3
+    `
+
+    const hyperlinks = (output: string) => {
+      return [...output.matchAll(/\x1b\]8;;(.*?)\x1b\\(.*?)\x1b\]8;;\x1b\\/g)].map(([, url, text]) => ({
+        url,
+        text: stripAnsiColors(text),
+      }))
+    }
+
+    it("links the file path and the focused line number to the file", () => {
+      const result = renderer.renderWithFocusLine("/test/file.erb", content, 2, 1, true, 80, false, false, "file:///test/file.erb")
+
+      expect(hyperlinks(result)).toEqual([
+        { url: "file:///test/file.erb", text: "/test/file.erb" },
+        { url: "file:///test/file.erb", text: "2" },
+      ])
+    })
+
+    it("leaves the file path and the line numbers unlinked without a fileUrl", () => {
+      const result = renderer.renderWithFocusLine("/test/file.erb", content, 2, 1, true)
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+  })
+
   describe("renderPlain", () => {
     it("should render content without line numbers or file headers", () => {
       const content = dedent`

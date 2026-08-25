@@ -104,11 +104,11 @@ export class SyntaxRenderer {
       const nextToken = tokens[i + 1]
       const prevToken = tokens[i - 1]
 
-      if (token.range.start > lastEnd) {
-        highlighted += content.slice(lastEnd, token.range.start)
+      if (token.range.from > lastEnd) {
+        highlighted += content.slice(lastEnd, token.range.from)
       }
 
-      const tokenText = content.slice(token.range.start, token.range.end)
+      const tokenText = content.slice(token.range.from, token.range.to)
 
       this.updateState(state, token, tokenText, nextToken, prevToken)
 
@@ -123,7 +123,7 @@ export class SyntaxRenderer {
         highlighted += tokenText
       }
 
-      lastEnd = token.range.end
+      lastEnd = token.range.to
     }
 
     if (lastEnd < content.length) {

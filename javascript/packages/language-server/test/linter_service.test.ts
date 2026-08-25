@@ -429,6 +429,7 @@ describe("LinterService", () => {
     test("reports an offense that only the call sites can justify", async () => {
       const callers = new RenderGraph(
         new Map([[PARTIAL, [{ caller: "app/views/layouts/application.html.erb", locals: [], ancestors: ["html", "body"] }]]]),
+        new Map(),
         new Set(["app/views/layouts/application.html.erb"]),
         new Map(),
         new Set()
@@ -436,7 +437,7 @@ describe("LinterService", () => {
 
       const client = clientWith()
 
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(callers))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), callerServiceFor(callers))
 
       vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
@@ -449,7 +450,7 @@ describe("LinterService", () => {
     test("stays silent for the same partial when no call site is known", async () => {
       const empty = new RenderGraph(new Map(), new Map(), new Set(), new Map(), new Set())
       const client = clientWith()
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(empty))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), callerServiceFor(empty))
 
       vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
@@ -468,6 +469,7 @@ describe("LinterService", () => {
           via: "render" as const,
           location: { line: 12, column: 4 }
         }]]]),
+        new Map(),
         new Set(),
         new Map(),
         new Set()
@@ -475,7 +477,7 @@ describe("LinterService", () => {
 
       const client = clientWith()
 
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(callers))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), callerServiceFor(callers))
 
       vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
@@ -495,7 +497,7 @@ describe("LinterService", () => {
     test("omits related information when nothing rendered the file", async () => {
       const empty = new RenderGraph(new Map(), new Map(), new Set(), new Map(), new Set())
       const client = clientWith()
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(empty))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), callerServiceFor(empty))
 
       vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 
@@ -514,6 +516,7 @@ describe("LinterService", () => {
           via: "render" as const,
           location: { line: 12, column: 4 }
         }]]]),
+        new Map(),
         new Set(),
         new Map(),
         new Set()
@@ -521,7 +524,7 @@ describe("LinterService", () => {
 
       const client = clientWith(false)
 
-      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(callers))
+      const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), callerServiceFor(callers))
 
       vi.spyOn(index, "relativePathFor").mockReturnValue(PARTIAL)
 

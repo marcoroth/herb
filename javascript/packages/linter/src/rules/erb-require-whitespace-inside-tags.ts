@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { isERBEscapedNode } from "@herb-tools/core"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"

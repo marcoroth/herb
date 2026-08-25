@@ -1,0 +1,5 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0004_preserves tabs between attributes"
+input: "{source: \"<div\\tclass=\\\"foo\\\"\\tid=\\\"bar\\\">Content</div>\\n\", locals: {}, options: {}}"
+---
+<div	class="foo"	id="bar">Content</div>

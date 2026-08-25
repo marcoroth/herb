@@ -1,7 +1,7 @@
 import { getTagLocalName, getStaticAttributeValue, hasAttributeValue, HELPER_REGISTRY, HELPER_BY_SOURCE } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
-import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "./rule-utils.js"
+import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
@@ -21,19 +21,25 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
 
   private checkScriptNonce(node: HTMLElementNode): void {
     if (!isJavaScriptTagElement(node)) return
+    if (findElementAttribute(node, "src")) return
 
     const nonceAttribute = findElementAttribute(node, "nonce")
 
     if (!nonceAttribute || !hasAttributeValue(nonceAttribute)) {
-      this.addOffense(
-        "Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`.",
-        node.tag_name!.location,
-      )
+      this.addOffense(this.missingNonceMessage(), node.tag_name!.location)
 
       return
     }
 
     this.checkLiteralNonceOnTagHelper(node, nonceAttribute)
+  }
+
+  private missingNonceMessage(): string {
+    if (this.context.framework === "actionview") {
+      return "Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`."
+    }
+
+    return "Missing a `nonce` attribute on `<script>` tag. Use a dynamically generated nonce."
   }
 
   private checkLiteralNonceOnTagHelper(node: HTMLElementNode, nonceAttribute: HTMLAttributeNode): void {

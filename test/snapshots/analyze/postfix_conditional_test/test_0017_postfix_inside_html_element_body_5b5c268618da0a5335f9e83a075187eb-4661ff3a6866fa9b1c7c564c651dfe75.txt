@@ -23,12 +23,8 @@ options: {transform_conditionals: true}
     │   │       ├── tag_closing: "%>" (location: (1:30)-(1:30))
     │   │       ├── then_keyword: ∅
     │   │       ├── statements: (1 item)
-    │   │       │   └── @ ERBContentNode (location: (1:5)-(1:30))
-    │   │       │       ├── tag_opening: "<%=" (location: (1:5)-(1:8))
-    │   │       │       ├── content: " 'text' " (location: (1:8)-(1:16))
-    │   │       │       ├── tag_closing: "%>" (location: (1:28)-(1:30))
-    │   │       │       ├── parsed: false
-    │   │       │       └── valid: true
+    │   │       │   └── @ HTMLTextNode (location: (1:9)-(1:15))
+    │   │       │       └── content: "text"
     │   │       │
     │   │       ├── subsequent: ∅
     │   │       └── end_node:

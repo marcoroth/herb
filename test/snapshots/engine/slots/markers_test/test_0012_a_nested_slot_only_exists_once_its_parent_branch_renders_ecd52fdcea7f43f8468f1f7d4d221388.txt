@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0012_a nested slot only exists once its parent branch renders"
+input: "{source: \"<div><% if @admin %><b><%= @secret %></b><% end %></div>\", locals: {\"@admin\" => false, \"@secret\" => \"s\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:8318a878:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

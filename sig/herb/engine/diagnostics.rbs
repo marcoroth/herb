@@ -22,6 +22,9 @@ module Herb
     module Diagnostics
       include Kernel
 
+      # : (untyped) -> void
+      def self.included: (untyped) -> void
+
       # : () -> Array[Herb::Diagnostic]
       def diagnostics: () -> Array[Herb::Diagnostic]
 

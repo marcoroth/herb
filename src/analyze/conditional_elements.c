@@ -362,7 +362,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T** documen
       body,
       (AST_NODE_T*) close_tag,
       node,
-      matched_open->open_tag->tag_name,
+      token_copy(matched_open->open_tag->tag_name, allocator),
       hb_string("HTML"),
       start_position,
       end_position,

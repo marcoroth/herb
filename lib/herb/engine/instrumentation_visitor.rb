@@ -41,6 +41,7 @@ module Herb
       include ContextAware
 
       recommended_parser_option render_nodes: true
+      required_parser_option track_locations: true
 
       #: () -> bool
       def self.rewrites_erb_source?

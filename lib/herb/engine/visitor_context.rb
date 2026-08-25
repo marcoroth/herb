@@ -30,20 +30,29 @@ module Herb
       UNKNOWN_FILE_PATH = "unknown" #: String
 
       attr_reader :file_path #: Pathname?
-      attr_reader :project_path #: Pathname
-      attr_reader :relative_file_path #: String
       attr_reader :options #: Hash[Symbol, untyped]
       attr_reader :data #: Hash[Symbol, untyped]
 
       #: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
       def initialize(file_path: nil, project_path: nil, options: {}, **data)
         @file_path = self.class.coerce_file_path(file_path)
-        @project_path = self.class.coerce_project_path(project_path)
-        @relative_file_path = self.class.derive_relative_file_path(@file_path, @project_path)
+        @project_path_cache = [] #: Array[Pathname]
+        @project_path_cache << self.class.coerce_project_path(project_path) if project_path
+        @relative_file_path_cache = [] #: Array[String]
         @options = options.dup.freeze
         @data = data.tap { |values| values[:origin] ||= Origin.new }.freeze
 
         freeze
+      end
+
+      #: () -> Pathname
+      def project_path
+        @project_path_cache[0] ||= self.class.coerce_project_path(nil)
+      end
+
+      #: () -> String
+      def relative_file_path
+        @relative_file_path_cache[0] ||= self.class.derive_relative_file_path(file_path, project_path)
       end
 
       #: () -> Herb::Engine::Origin

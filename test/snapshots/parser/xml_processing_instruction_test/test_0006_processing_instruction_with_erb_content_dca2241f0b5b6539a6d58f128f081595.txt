@@ -1,0 +1,24 @@
+---
+source: "Parser::XMLProcessingInstructionTest#test_0006_processing instruction with erb content"
+input: "<?marker name=\"<%= placeholder_name %>\">"
+---
+@ DocumentNode (location: (1:0)-(1:40))
+└── children: (1 item)
+    └── @ XMLProcessingInstructionNode (location: (1:0)-(1:40))
+        ├── tag_opening: "<?" (location: (1:0)-(1:2))
+        ├── target: "marker" (location: (1:2)-(1:8))
+        ├── children: (3 items)
+        │   ├── @ LiteralNode (location: (1:8)-(1:15))
+        │   │   └── content: " name=\""
+        │   │
+        │   ├── @ ERBContentNode (location: (1:15)-(1:38))
+        │   │   ├── tag_opening: "<%=" (location: (1:15)-(1:18))
+        │   │   ├── content: " placeholder_name " (location: (1:18)-(1:36))
+        │   │   ├── tag_closing: "%>" (location: (1:36)-(1:38))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ LiteralNode (location: (1:38)-(1:39))
+        │       └── content: "\""
+        │
+        └── tag_closing: ">" (location: (1:39)-(1:40))

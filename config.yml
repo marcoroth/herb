@@ -792,6 +792,21 @@ nodes:
         - name: "tag_closing"
           type: "token"
 
+    - name: "XMLProcessingInstructionNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "target"
+          type: "token"
+
+        - name: "children"
+          type: "array"
+          kind: "Node"
+
+        - name: "tag_closing"
+          type: "token"
+
     - name: "CDATANode"
       fields:
         - name: "tag_opening"

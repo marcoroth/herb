@@ -49,7 +49,7 @@ describe("deepMerge", () => {
   })
 
   test("handles null values", () => {
-    const target = { a: 1, b: 2 }
+    const target: { a: number | null, b: number } = { a: 1, b: 2 }
     const source = { a: null }
 
     const result = deepMerge(target, source)
@@ -58,7 +58,7 @@ describe("deepMerge", () => {
   })
 
   test("keeps the target object when the source value is null", () => {
-    const target = { engine: { validators: { security: true } }, b: 2 }
+    const target: { engine: { validators: { security: boolean } } | null, b: number } = { engine: { validators: { security: true } }, b: 2 }
     const source = { engine: null }
 
     const result = deepMerge(target, source)
@@ -137,7 +137,7 @@ describe("deepMerge", () => {
   })
 
   test("creates new object reference for nested objects", () => {
-    const target = { a: { x: 1 } }
+    const target: { a: { x?: number, y?: number } } = { a: { x: 1 } }
     const source = { a: { y: 2 } }
 
     const result = deepMerge(target, source)

@@ -1,0 +1,574 @@
+.herb-dev-tools-runtime-root {
+  --herb-dev-tools-severity-error: #dc2626;
+  --herb-dev-tools-severity-warning: #f59e0b;
+  --herb-dev-tools-severity-info: #3b82f6;
+  --herb-dev-tools-severity-hint: #10b981;
+  --herb-dev-tools-severity-metric: #9ca3af;
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2147483641;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  pointer-events: none;
+}
+
+.herb-dev-tools-runtime-root > * {
+  pointer-events: auto;
+}
+
+.herb-dev-tools-badge {
+  --herb-dev-tools-badge-accent: var(--herb-dev-tools-severity-warning);
+  --herb-dev-tools-badge-surface: color-mix(in srgb, var(--herb-dev-tools-badge-accent) 10%, #ffffff);
+  --herb-dev-tools-badge-surface-strong: color-mix(in srgb, var(--herb-dev-tools-badge-accent) 24%, #ffffff);
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--herb-dev-tools-badge-accent);
+  border-radius: 999px;
+  background: var(--herb-dev-tools-badge-surface);
+  color: color-mix(in srgb, var(--herb-dev-tools-badge-accent) 45%, #111827);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.herb-dev-tools-badge-error {
+  --herb-dev-tools-badge-accent: var(--herb-dev-tools-severity-error);
+}
+
+.herb-dev-tools-badge-warning {
+  --herb-dev-tools-badge-accent: var(--herb-dev-tools-severity-warning);
+}
+
+.herb-dev-tools-badge-info {
+  --herb-dev-tools-badge-accent: var(--herb-dev-tools-severity-info);
+}
+
+.herb-dev-tools-badge-hint {
+  --herb-dev-tools-badge-accent: var(--herb-dev-tools-severity-hint);
+}
+
+.herb-dev-tools-badge-metric {
+  --herb-dev-tools-badge-accent: var(--herb-dev-tools-severity-metric);
+}
+
+.herb-dev-tools-badge:hover {
+  background: var(--herb-dev-tools-badge-surface-strong);
+  border-color: color-mix(in srgb, var(--herb-dev-tools-badge-accent) 80%, #111827);
+}
+
+.herb-dev-tools-badge.herb-dev-tools-open {
+  background: var(--herb-dev-tools-badge-surface-strong);
+}
+
+.herb-dev-tools-badge-glyph {
+  font-size: 12px;
+}
+
+.herb-dev-tools-badge-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.herb-dev-tools-panel {
+  order: 1;
+  display: none;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(70vh, 640px);
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.herb-dev-tools-panel.herb-dev-tools-open {
+  display: flex;
+}
+
+.herb-dev-tools-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.herb-dev-tools-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.herb-dev-tools-summary {
+  flex: 1;
+  min-width: 0;
+  color: #6b7280;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.herb-dev-tools-clear,
+.herb-dev-tools-hide,
+.herb-dev-tools-expand,
+.herb-dev-tools-close {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+.herb-dev-tools-clear:hover,
+.herb-dev-tools-hide:hover,
+.herb-dev-tools-expand:hover,
+.herb-dev-tools-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.herb-dev-tools-clear,
+.herb-dev-tools-hide {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.herb-dev-tools-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.herb-dev-tools-expand,
+.herb-dev-tools-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.herb-dev-tools-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.herb-dev-tools-filter {
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 11px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.herb-dev-tools-filter:hover {
+  border-color: #9ca3af;
+}
+
+.herb-dev-tools-filter.herb-dev-tools-filter-active {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+}
+
+.herb-dev-tools-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px 12px;
+}
+
+.herb-dev-tools-empty {
+  margin: 12px 0;
+  color: #6b7280;
+  text-align: center;
+}
+
+.herb-dev-tools-group {
+  margin-top: 10px;
+}
+
+.herb-dev-tools-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  word-break: break-all;
+}
+
+.herb-dev-tools-group-count {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #4b5563;
+  font-size: 10px;
+}
+
+.herb-dev-tools-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #ffffff;
+}
+
+.herb-dev-tools-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.herb-dev-tools-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--herb-dev-tools-severity-metric);
+}
+
+.herb-dev-tools-dot-error {
+  background: var(--herb-dev-tools-severity-error);
+}
+
+.herb-dev-tools-dot-warning {
+  background: var(--herb-dev-tools-severity-warning);
+}
+
+.herb-dev-tools-dot-info {
+  background: var(--herb-dev-tools-severity-info);
+}
+
+.herb-dev-tools-dot-hint {
+  background: var(--herb-dev-tools-severity-hint);
+}
+
+.herb-dev-tools-metric {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #3730a3;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.herb-dev-tools-code {
+  color: #1d4ed8;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.herb-dev-tools-origin {
+  margin-left: auto;
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+.herb-dev-tools-repeat {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.herb-dev-tools-message {
+  margin: 0 0 6px;
+  color: #111827;
+  line-height: 1.45;
+}
+
+.herb-dev-tools-suggestion {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border-left: 3px solid #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+  line-height: 1.45;
+}
+
+.herb-dev-tools-excerpt,
+.herb-dev-tools-fix-diff {
+  margin: 6px 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.herb-dev-tools-fix-diff {
+  margin: 0 8px 8px;
+}
+
+.herb-dev-tools-ansi {
+  padding: 8px;
+  font-size: 11px;
+}
+
+.herb-dev-tools-fix {
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.herb-dev-tools-fix-summary {
+  padding: 6px 8px;
+  color: #374151;
+  font-size: 11px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.herb-dev-tools-fix-summary:hover {
+  color: #111827;
+}
+
+.herb-dev-tools-fix-command {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  color: #111827;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 10px;
+}
+
+.herb-dev-tools-stack {
+  margin-top: 8px;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 6px;
+}
+
+.herb-dev-tools-stack-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.herb-dev-tools-stack-order {
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.herb-dev-tools-frames {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.herb-dev-tools-frame {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.herb-dev-tools-frame-via {
+  flex-shrink: 0;
+  min-width: 66px;
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+.herb-dev-tools-frame-target {
+  color: #374151;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.herb-dev-tools-runtime-root.herb-dev-tools-attached {
+  position: static;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  pointer-events: auto;
+}
+
+.herb-dev-tools-runtime-root.herb-dev-tools-attached .herb-dev-tools-badge {
+  order: 0;
+  box-sizing: border-box;
+  align-self: stretch;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid #c0c0c0;
+  border-top: none;
+  border-right: none;
+  border-radius: 0 0 0 10px;
+  background: var(--herb-dev-tools-badge-surface);
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.herb-dev-tools-runtime-root.herb-dev-tools-attached .herb-dev-tools-badge:hover {
+  background: var(--herb-dev-tools-badge-surface-strong);
+  border-color: #c0c0c0;
+  border-top: none;
+  border-right: none;
+}
+
+.herb-dev-tools-runtime-root.herb-dev-tools-attached .herb-dev-tools-panel {
+  position: fixed;
+  top: 30px;
+  right: 8px;
+}
+
+@keyframes herb-dev-tools-bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.45); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.herb-dev-tools-badge-count.herb-dev-tools-bump {
+  display: inline-block;
+  animation: herb-dev-tools-bump 420ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .herb-dev-tools-badge-count.herb-dev-tools-bump {
+    animation: none;
+  }
+}
+
+.herb-dev-tools-path {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.herb-dev-tools-path:hover {
+  text-decoration: underline;
+}
+
+.herb-dev-tools-path:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.herb-dev-tools-docs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.6;
+  text-decoration: none;
+}
+
+.herb-dev-tools-docs:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+  color: #111827;
+}
+
+.herb-dev-tools-docs-glyph {
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+.herb-dev-tools-inline-code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(120, 130, 150, 0.16);
+  color: inherit;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.herb-dev-tools-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  background: rgba(17, 24, 39, 0.45);
+}
+
+.herb-dev-tools-runtime-root .herb-dev-tools-panel.herb-dev-tools-expanded,
+.herb-dev-tools-runtime-root.herb-dev-tools-attached .herb-dev-tools-panel.herb-dev-tools-expanded {
+  position: fixed;
+  inset: 24px;
+  top: 24px;
+  right: 24px;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  z-index: 2147483642;
+}
+
+.herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(640px, (100% - 12px) / 2)), 1fr));
+  align-items: start;
+  gap: 0 12px;
+}
+
+.herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-group-title {
+  grid-column: 1 / -1;
+}
+
+.herb-dev-tools-element {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.4rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.08);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.herb-dev-tools-element:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.herb-dev-tools-element code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+}

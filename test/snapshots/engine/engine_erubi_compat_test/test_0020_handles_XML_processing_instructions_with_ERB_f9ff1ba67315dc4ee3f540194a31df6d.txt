@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0020_handles XML processing instructions with ERB"
+input: "{source: \"<?xml-stylesheet type=\\\"text/xsl\\\" href=\\\"<%= path %>\\\"?>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<?xml-stylesheet type="text/xsl" href="'.freeze; _buf << (path).to_s; _buf << '"?>'.freeze;
+_buf.to_s

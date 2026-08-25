@@ -34,6 +34,11 @@ module Herb
       @context.relative_file_path
     end
 
+    #: (String) -> String
+    def string_literal(text)
+      "'#{text.gsub(/['\\]/, '\\\\\&')}#{@text_end}"
+    end
+
     ESCAPE_TABLE = {
       "&" => "&amp;",
       "<" => "&lt;",
@@ -76,15 +81,7 @@ module Herb
 
       @src << "# frozen_string_literal: true\n" if @freeze
 
-      if properties[:ensure]
-        @src << "begin; __original_outvar = #{@bufvar}"
-        @src << (/\A@[^@]/ =~ @bufvar ? "; " : " if defined?(#{@bufvar}); ")
-      end
-
-      @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
-      @src << preamble
-
-      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
+      parse_result = ::Herb.parse(input, **parse_options, track_whitespace: true)
       parser_errors = parse_result.errors
 
       if parser_errors.any?
@@ -92,23 +89,34 @@ module Herb
       else
         @visitors.each do |visitor|
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
+          visitor.bufvar = @bufvar if visitor.respond_to?(:bufvar=)
 
           parse_result.value.accept(visitor)
         end
-
-        report(input)
 
         compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
 
-        compiler.generate_output
+        static_body = buffer_required?(properties) ? nil : compile_static_body(compiler)
+
+        if static_body
+          @src << static_body
+        else
+          write_buffer_prelude(properties, preamble)
+
+          report(input)
+
+          compiler.generate_output
+
+          @src << "\n" unless @src.end_with?("\n")
+          add_postamble(postamble)
+
+          @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
+
+          insert_herb_alias!
+        end
       end
-
-      @src << "\n" unless @src.end_with?("\n")
-      add_postamble(postamble)
-
-      @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       if properties.fetch(:validate_ruby, false)
         ensure_valid_ruby!(@src)
@@ -120,6 +128,16 @@ module Herb
 
     def self.h(value)
       value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
+    end
+
+    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
+    # unless the value is already marked safe. A marker the engine generated is markup, so it has
+    # to survive both buffers unchanged.
+    #: (untyped) -> String
+    def self.raw(value)
+      string = value.to_s
+
+      string.respond_to?(:html_safe) ? string.html_safe : string
     end
 
     def self.attr(value)
@@ -321,6 +339,50 @@ module Herb
 
     private
 
+    #: (Hash[Symbol, untyped]) -> bool
+    def buffer_required?(properties)
+      return true if properties[:ensure] || properties[:preamble] || properties[:postamble] || properties[:bufval]
+
+      collected_diagnostics.any?
+    end
+
+    #: (untyped) -> String?
+    def compile_static_body(compiler)
+      @visitors.each do |visitor|
+        next unless visitor.respond_to?(:compile_static_body)
+
+        body = visitor.compile_static_body(self, compiler)
+
+        return body if body
+      end
+
+      nil
+    end
+
+    #: () -> Array[Herb::Diagnostic]
+    def collected_diagnostics
+      @visitors.grep(Diagnostics).flat_map(&:diagnostics)
+    end
+
+    #: (Hash[Symbol, untyped], String) -> void
+    def write_buffer_prelude(properties, preamble)
+      if properties[:ensure]
+        @src << "begin; __original_outvar = #{@bufvar}"
+        @src << (/\A@[^@]/ =~ @bufvar ? "; " : " if defined?(#{@bufvar}); ")
+      end
+
+      @herb_alias_index = (@src.length if @escape && @escapefunc == "__herb.h")
+      @src << preamble
+    end
+
+    #: () -> void
+    def insert_herb_alias!
+      return unless @herb_alias_index
+      return unless @src.include?("__herb.")
+
+      @src.insert(@herb_alias_index, "__herb = ::Herb::Engine; ")
+    end
+
     def handle_parser_errors(parser_errors, input, _ast)
       message = ErrorFormatter.new(input, parser_errors, filename: filename).format_all
 
@@ -379,6 +441,13 @@ module Herb
 
     def context_options(properties)
       properties.except(:visitors, :src, :context)
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def parse_options
+      return @parser_options if @parser_options.key?(:track_locations)
+
+      @parser_options.merge(track_locations: false)
     end
 
     #: () -> Hash[Symbol, untyped]

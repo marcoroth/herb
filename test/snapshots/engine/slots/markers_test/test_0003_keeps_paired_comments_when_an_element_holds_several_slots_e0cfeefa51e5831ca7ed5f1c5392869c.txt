@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0003_keeps paired comments when an element holds several slots"
+input: "{source: \"<div><%= @a %><%= @b %></div>\", locals: {\"@a\" => \"x\", \"@b\" => \"y\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:93fc4024:0--><div><!--herb-slot:0-->x<!--/herb-slot:0--><!--herb-slot:1-->y<!--/herb-slot:1--></div><!--/herb-region:app/views/test.html.erb-->

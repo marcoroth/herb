@@ -1,4 +1,8 @@
+import errorOverlayStyles from './error-overlay.css';
+
 import { Diagnostic } from '@herb-tools/core';
+
+import { injectStyle } from '../styles';
 
 export interface ValidationError extends Omit<Diagnostic, 'location'> {
   location?: {
@@ -207,8 +211,11 @@ export class ErrorOverlay {
   private allValidationData: ValidationData[] = [];
   private isVisible = false;
   private destroyed = false;
+  private styleElement: HTMLStyleElement | null = null;
 
   constructor() {
+    this.styleElement = injectStyle('error-overlay', errorOverlayStyles);
+
     this.init();
   }
 
@@ -228,6 +235,9 @@ export class ErrorOverlay {
     }
 
     this.isVisible = false;
+
+    this.styleElement?.remove();
+    this.styleElement = null;
   }
 
   private init() {

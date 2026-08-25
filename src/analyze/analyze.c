@@ -205,9 +205,9 @@ static AST_ERB_END_NODE_T* build_end_node(AST_ERB_CONTENT_NODE_T* end_erb, hb_al
   end_erb->base.errors = NULL;
 
   AST_ERB_END_NODE_T* end_node = ast_erb_end_node_init(
-    end_erb->tag_opening,
-    end_erb->content,
-    end_erb->tag_closing,
+    token_copy(end_erb->tag_opening, allocator),
+    token_copy(end_erb->content, allocator),
+    token_copy(end_erb->tag_closing, allocator),
     end_erb->tag_opening->location.start,
     erb_content_end_position(end_erb),
     end_errors,
@@ -400,9 +400,9 @@ static size_t process_case_structure(
 
       if (next_type == CONTROL_TYPE_WHEN) {
         condition_node = (AST_NODE_T*) ast_erb_when_node_init(
-          next_erb->tag_opening,
-          next_erb->content,
-          next_erb->tag_closing,
+          token_copy(next_erb->tag_opening, allocator),
+          token_copy(next_erb->content, allocator),
+          token_copy(next_erb->tag_closing, allocator),
           then_keyword,
           statements,
           cond_start,
@@ -412,9 +412,9 @@ static size_t process_case_structure(
         );
       } else {
         condition_node = (AST_NODE_T*) ast_erb_in_node_init(
-          next_erb->tag_opening,
-          next_erb->content,
-          next_erb->tag_closing,
+          token_copy(next_erb->tag_opening, allocator),
+          token_copy(next_erb->content, allocator),
+          token_copy(next_erb->tag_closing, allocator),
           then_keyword,
           statements,
           cond_start,
@@ -449,9 +449,9 @@ static size_t process_case_structure(
     next_erb->base.errors = NULL;
 
     else_clause = ast_erb_else_node_init(
-      next_erb->tag_opening,
-      next_erb->content,
-      next_erb->tag_closing,
+      token_copy(next_erb->tag_opening, allocator),
+      token_copy(next_erb->content, allocator),
+      token_copy(next_erb->tag_closing, allocator),
       else_children,
       next_erb->tag_opening->location.start,
       erb_content_end_position(next_erb),
@@ -486,9 +486,9 @@ static size_t process_case_structure(
 
   if (hb_array_size(in_conditions) > 0) {
     AST_ERB_CASE_MATCH_NODE_T* case_match_node = ast_erb_case_match_node_init(
-      erb_node->tag_opening,
-      erb_node->content,
-      erb_node->tag_closing,
+      token_copy(erb_node->tag_opening, allocator),
+      token_copy(erb_node->content, allocator),
+      token_copy(erb_node->tag_closing, allocator),
       non_when_non_in_children,
       HERB_PRISM_NODE_EMPTY,
       in_conditions,
@@ -507,9 +507,9 @@ static size_t process_case_structure(
   }
 
   AST_ERB_CASE_NODE_T* case_node = ast_erb_case_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     non_when_non_in_children,
     HERB_PRISM_NODE_EMPTY,
     when_conditions,
@@ -566,9 +566,9 @@ static size_t process_begin_structure(
     next_erb->base.errors = NULL;
 
     else_clause = ast_erb_else_node_init(
-      next_erb->tag_opening,
-      next_erb->content,
-      next_erb->tag_closing,
+      token_copy(next_erb->tag_opening, allocator),
+      token_copy(next_erb->content, allocator),
+      token_copy(next_erb->tag_closing, allocator),
       else_children,
       next_erb->tag_opening->location.start,
       erb_content_end_position(next_erb),
@@ -590,9 +590,9 @@ static size_t process_begin_structure(
     next_erb->base.errors = NULL;
 
     ensure_clause = ast_erb_ensure_node_init(
-      next_erb->tag_opening,
-      next_erb->content,
-      next_erb->tag_closing,
+      token_copy(next_erb->tag_opening, allocator),
+      token_copy(next_erb->content, allocator),
+      token_copy(next_erb->tag_closing, allocator),
       ensure_children,
       next_erb->tag_opening->location.start,
       erb_content_end_position(next_erb),
@@ -624,9 +624,9 @@ static size_t process_begin_structure(
   erb_node->base.errors = NULL;
 
   AST_ERB_BEGIN_NODE_T* begin_node = ast_erb_begin_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     HERB_PRISM_NODE_EMPTY,
     children,
     rescue_clause,
@@ -683,9 +683,9 @@ static size_t process_block_structure(
     next_erb->base.errors = NULL;
 
     else_clause = ast_erb_else_node_init(
-      next_erb->tag_opening,
-      next_erb->content,
-      next_erb->tag_closing,
+      token_copy(next_erb->tag_opening, allocator),
+      token_copy(next_erb->content, allocator),
+      token_copy(next_erb->tag_closing, allocator),
       else_children,
       next_erb->tag_opening->location.start,
       erb_content_end_position(next_erb),
@@ -707,9 +707,9 @@ static size_t process_block_structure(
     next_erb->base.errors = NULL;
 
     ensure_clause = ast_erb_ensure_node_init(
-      next_erb->tag_opening,
-      next_erb->content,
-      next_erb->tag_closing,
+      token_copy(next_erb->tag_opening, allocator),
+      token_copy(next_erb->content, allocator),
+      token_copy(next_erb->tag_closing, allocator),
       ensure_children,
       next_erb->tag_opening->location.start,
       erb_content_end_position(next_erb),
@@ -763,9 +763,9 @@ static size_t process_block_structure(
     extract_block_arguments_from_erb_node(erb_node, context->source, &block_errors, allocator);
 
   AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     HERB_PRISM_NODE_EMPTY,
     children,
     block_arguments,
