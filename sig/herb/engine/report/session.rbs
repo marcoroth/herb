@@ -17,9 +17,19 @@ module Herb
       class Session
         STATE_KEY: Symbol
 
+        RACTOR_KEY: Symbol
+
+        THREAD_KEY: Symbol
+
         attr_reader report: Herb::Engine::Report
 
         attr_reader previous: Session?
+
+        # : () -> Session?
+        def self.stored: () -> Session?
+
+        # : (Session?) -> void
+        def self.store: (Session?) -> void
 
         # : () -> Session
         def self.current: () -> Session
@@ -88,6 +98,9 @@ module Herb
 
         # : (String, String?) -> void
         def source: (String, String?) -> void
+
+        # : (Symbol) { () -> untyped } -> untyped
+        def channel: (Symbol) { () -> untyped } -> untyped
 
         # : () -> Array[Herb::Diagnostic]
         def diagnostics: () -> Array[Herb::Diagnostic]

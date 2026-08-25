@@ -588,3 +588,79 @@ describe("switching a branch from the client", () => {
     expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("under")
   })
 })
+
+describe("a conditional inside a collection item", () => {
+  const ITEMS_FILE = "app/views/chat/show.html.erb"
+
+  const rendered =
+    `<!--herb-region:${ITEMS_FILE}:bbbbbbbb:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:1--><li><!--herb-slot:6:conditional--><!--herb-branch:6:2-->Sent <span data-herb-slot="7:child">08:15</span><!--/herb-slot:6--></li><!--/herb-item:0-->` +
+    `<!--herb-item:0:2--><li><!--herb-slot:6:conditional--><!--herb-branch:6:0-->Sending…<!--/herb-slot:6--></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<template data-herb-region="${ITEMS_FILE}:bbbbbbbb">` +
+    `<!--herb-branch:6:0-->Sending…` +
+    `<!--herb-branch:6:2-->Sent <span data-herb-slot="7:child"></span>` +
+    `</template>` +
+    `<!--/herb-region:${ITEMS_FILE}-->`
+
+  beforeEach(() => { document.body.innerHTML = "" })
+
+  test("remembers the branch the server rendered for each item", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = rendered
+    index.scan(document.body)
+
+    expect(index.slotInItem(ITEMS_FILE, 0, "1", 6)?.branch).toBe(2)
+    expect(index.slotInItem(ITEMS_FILE, 0, "2", 6)?.branch).toBe(0)
+  })
+
+  test("switching to the branch an item already shows keeps its server values", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = rendered
+    index.scan(document.body)
+
+    const slot = index.slotInItem(ITEMS_FILE, 0, "1", 6)!
+
+    expect(index.switchBranch(slot, 2)).toBe(false)
+    expect(index.rangeFor(slot).toString()).toContain("08:15")
+  })
+})
+
+describe("a branch written into an item keeps its values", () => {
+  const CONFIRM_FILE = "app/views/chat/show.html.erb"
+
+  const pendingRow =
+    `<!--herb-region:${CONFIRM_FILE}:cccccccc:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:7--><li><!--herb-slot:6:conditional--><!--herb-branch:6:0-->Sending…<!--/herb-slot:6--></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<template data-herb-region="${CONFIRM_FILE}:cccccccc">` +
+    `<!--herb-branch:6:0-->Sending…` +
+    `<!--herb-branch:6:2-->Sent <span data-herb-slot="7:child"></span>` +
+    `</template>` +
+    `<!--/herb-region:${CONFIRM_FILE}-->`
+
+  beforeEach(() => { document.body.innerHTML = "" })
+
+  test("applying the server's branch records it, so a later switch is a no-op", () => {
+    const index = new SlotIndex()
+    document.body.innerHTML = pendingRow
+    index.scan(document.body)
+
+    const slot = index.slotInItem(CONFIRM_FILE, 0, "7", 6)!
+
+    expect(slot.branch).toBe(0)
+
+    index.apply({
+      template: CONFIRM_FILE,
+      version: "cccccccc",
+      occurrence: 0,
+      slots: { 0: { items: { 7: { 6: { branch: 2, slots: { 7: "08:15" } } } } } },
+    })
+
+    expect(slot.branch).toBe(2)
+    expect(index.rangeFor(slot).toString()).toContain("08:15")
+
+    expect(index.switchBranch(slot, 2)).toBe(false)
+    expect(index.rangeFor(slot).toString()).toContain("08:15")
+  })
+})

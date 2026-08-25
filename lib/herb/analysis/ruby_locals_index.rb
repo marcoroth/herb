@@ -3,6 +3,7 @@
 require "prism"
 
 require_relative "ruby_locals_index/local"
+require_relative "ruby_locals_index/state_locals"
 require_relative "ruby_locals_index/named_reference"
 require_relative "ruby_locals_index/offset_table"
 require_relative "ruby_locals_index/reference_collector"
@@ -32,7 +33,9 @@ module Herb
         references = ReferenceCollector.new(program)
 
         new(
-          strict_locals(document, references, offsets) + block_locals(document, references, offsets),
+          strict_locals(document, references, offsets) +
+            block_locals(document, references, offsets) +
+            StateLocals.locals(document, references, offsets, declarations(document)),
           references.assignments.to_set(&:name)
         )
       end

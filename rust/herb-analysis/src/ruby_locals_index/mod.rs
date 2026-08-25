@@ -47,6 +47,7 @@ impl RubyLocalsIndex {
 
     let mut locals = strict_locals(document, &references, &offsets);
     locals.extend(block_locals(document, &references, &offsets));
+    locals.extend(state_locals(document, &references, &offsets));
 
     Self {
       locals,
@@ -203,6 +204,114 @@ fn any_children(node: &AnyNode) -> Vec<&AnyNode> {
     AnyNode::ERBRenderNode(inner) => inner.body.iter().collect(),
     _ => Vec::new(),
   }
+}
+
+fn state_locals(document: &herb::nodes::DocumentNode, references: &ReferenceCollector, offsets: &OffsetTable) -> Vec<Local> {
+  let mut found = Vec::new();
+
+  for child in &document.children {
+    collect_state_locals(child, references, offsets, &mut found);
+  }
+
+  found
+}
+
+fn collect_state_locals(node: &AnyNode, references: &ReferenceCollector, offsets: &OffsetTable, found: &mut Vec<Local>) {
+  if let AnyNode::ERBContentNode(inner) = node {
+    if let Some(signature) = state_signature(inner) {
+      for name in signature_names(&signature) {
+        let predicate = format!("{name}?");
+        let usages = references
+          .bare_calls
+          .iter()
+          .filter(|call| call.name == name || call.name == predicate)
+          .map(|call| offsets.location_for(call))
+          .collect();
+
+        found.push(Local::new(name, inner.location, usages));
+      }
+    }
+  }
+
+  for child in any_children(node) {
+    collect_state_locals(child, references, offsets, found);
+  }
+}
+
+fn state_signature(node: &herb::nodes::ERBContentNode) -> Option<String> {
+  if node.tag_opening.as_ref()?.value != "<%#" {
+    return None;
+  }
+
+  let content = node.content.as_ref()?.value.trim();
+  let content = content.strip_prefix('-').map_or(content, str::trim);
+  let content = content.strip_suffix('-').map_or(content, str::trim);
+  let rest = content.strip_prefix("herb:state")?.trim();
+
+  if rest.starts_with('(') && rest.ends_with(')') {
+    Some(rest.to_string())
+  } else {
+    None
+  }
+}
+
+fn signature_names(signature: &str) -> Vec<String> {
+  let inner = signature.get(1..signature.len().saturating_sub(1)).unwrap_or("");
+  let mut parts: Vec<String> = Vec::new();
+  let mut current = String::new();
+  let mut depth = 0i32;
+  let mut quote: Option<char> = None;
+
+  for character in inner.chars() {
+    match quote {
+      Some(open) => {
+        if character == open {
+          quote = None;
+        }
+
+        current.push(character);
+      }
+      None => match character {
+        '"' | '\'' => {
+          quote = Some(character);
+          current.push(character);
+        }
+        '(' | '[' | '{' => {
+          depth += 1;
+          current.push(character);
+        }
+        ')' | ']' | '}' => {
+          depth -= 1;
+          current.push(character);
+        }
+        ',' if depth == 0 => parts.push(std::mem::take(&mut current)),
+        _ => current.push(character),
+      },
+    }
+  }
+
+  if !current.trim().is_empty() {
+    parts.push(current);
+  }
+
+  parts.iter().filter_map(|part| keyword_name(part)).collect()
+}
+
+fn keyword_name(part: &str) -> Option<String> {
+  let trimmed = part.trim();
+  let name = trimmed[..trimmed.find(':')?].trim();
+  let mut characters = name.chars();
+  let first = characters.next()?;
+
+  if !(first.is_ascii_lowercase() || first == '_') {
+    return None;
+  }
+
+  if !characters.all(|character| character.is_ascii_alphanumeric() || character == '_') {
+    return None;
+  }
+
+  Some(name.to_string())
 }
 
 fn innermost_enclosing<'a>(locations: &'a [Location], inner: &Location) -> Option<&'a Location> {

@@ -458,12 +458,35 @@ module Herb
 
       #: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
       def add_dynamic(code, context, index, escaped, nested: false)
-        value = nested ? "(#{code})" : dynamic_value(code, context, escaped)
+        value = if index && boolean_presence?(index)
+                  "!!(#{code})"
+                elsif nested
+                  "(#{code})"
+                else
+                  dynamic_value(code, context, escaped)
+                end
 
-        return add_block_dynamic(index ? assignment(index, value) : value) unless @block_depth.zero?
+        unless @block_depth.zero?
+          if index && boolean_presence?(index)
+            attribute = @slot_visitor.slots[index].attribute.to_s.inspect
+
+            return add_block_dynamic("(#{assignment(index, value)}) ? #{attribute} : \"\"")
+          end
+
+          if index && interpolated?(index)
+            return add_block_dynamic("(#{assignment(index, value)}).fetch(-1)")
+          end
+
+          return add_block_dynamic(index ? assignment(index, value) : value)
+        end
         return if index.nil?
 
         @src << "; " << assignment(index, value) << ";"
+      end
+
+      #: (Integer) -> bool
+      def boolean_presence?(index)
+        @slot_visitor.slots[index]&.type == :boolean_attribute
       end
 
       #: (String, Integer?, bool) -> void
@@ -557,7 +580,23 @@ module Herb
       def scope_item_end(index)
         leave_scope(index)
 
+        @src << item_seeds(index)
         @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
+      end
+
+      # A row the client builds from the parked skeleton carries no `herb-seeds` comment, so the
+      # values response is the only place it can learn what the server seeded its states with.
+      #: (Integer) -> String
+      def item_seeds(index)
+        names = @slot_visitor.seeded_item_states[index]
+
+        return "" if names.nil? || names.empty?
+
+        pairs = names.map { |name| "#{name.inspect} => #{name}" }.join(", ")
+
+        "; #{SCOPE_BUFFER}#{index}[:seeds] = { #{pairs} }" \
+          ".select { |_, v| #{SlotVisitor::SEED_VALUE_TYPES}.any? { |t| t === v } }" \
+          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v };"
       end
 
       #: (Integer) -> void
@@ -582,7 +621,16 @@ module Herb
 
       #: (Integer, String) -> String
       def assignment(index, value)
-        "#{current_scope}[#{index}] = #{value}"
+        if interpolated?(index)
+          "(#{current_scope}[#{index}] ||= []) << #{value}"
+        else
+          "#{current_scope}[#{index}] = #{value}"
+        end
+      end
+
+      #: (Integer) -> bool
+      def interpolated?(index)
+        @slot_visitor.slots[index]&.type == :attribute_interpolation
       end
 
       #: (String) -> void

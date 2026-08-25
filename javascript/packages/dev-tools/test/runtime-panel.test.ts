@@ -1391,10 +1391,10 @@ describe("report", () => {
     expect(fix.querySelector(".herb-dev-tools-fix-diff")).not.toBeNull()
   })
 
-  test("ignores an entry without a template or message", () => {
+  test("ignores an entry without a message", () => {
     const panel = createPanel()
 
-    panel.report([{ message: "no template" } as RuntimeDiagnostic])
+    panel.report([{ template: "app/views/a.html.erb" } as RuntimeDiagnostic])
 
     expect(root()).toBeNull()
   })
@@ -1647,13 +1647,63 @@ describe("destroy", () => {
   })
 })
 
+describe("diagnostics that name an element", () => {
+  test("render a locate control that scrolls to the element and flashes it", () => {
+    const target = document.createElement("button")
+    target.setAttribute("data-herb-toggle", "open")
+    target.textContent = "Details"
+    document.body.appendChild(target)
+
+    const scrolled: unknown[] = []
+    target.scrollIntoView = ((options: unknown) => { scrolled.push(options) }) as typeof target.scrollIntoView
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "nothing around this element declares the state `open`", code: "herb-unknown-state", element: target })
+
+    const control = document.querySelector<HTMLElement>(".herb-dev-tools-element")!
+
+    expect(control).not.toBeNull()
+    expect(control.textContent).toContain('<button data-herb-toggle="open">')
+
+    control.click()
+
+    expect(scrolled).toHaveLength(1)
+    expect(document.querySelector(".herb-element-flash")).not.toBeNull()
+  })
+
+  test("skip the control once the element has left the page", () => {
+    const target = document.createElement("span")
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
+    target.remove()
+    panel.refresh()
+
+    expect(document.querySelector(".herb-dev-tools-element")).toBeNull()
+  })
+})
+
+describe("diagnostics without a template", () => {
+  test("are kept under a placeholder instead of being dropped", () => {
+    const panel = createPanel()
+
+    panel.report({ template: "", message: "nothing around this element declares the state `pending`", code: "herb-unknown-state", severity: "error" })
+
+    expect(cards()).toHaveLength(1)
+    expect(document.body.textContent).toContain("(unknown template)")
+  })
+})
+
 describe("refresh", () => {
-  test("replaces the entries from a fresh payload", () => {
+  test("replaces the payload's entries and keeps the reported ones", () => {
     embed(PAYLOAD)
 
     const panel = createPanel()
 
-    panel.report(diagnostic({ origin: "Acme Scanner", code: "hook-rule" }))
+    panel.report(diagnostic({ origin: "Acme Scanner", code: "hook-rule", message: "reported at runtime" }))
 
     expect(cards()).toHaveLength(4)
 
@@ -1663,8 +1713,26 @@ describe("refresh", () => {
 
     panel.refresh()
 
-    expect(cards()).toHaveLength(1)
-    expect(document.querySelector(".herb-dev-tools-message")!.textContent).toBe("fresh")
+    expect(cards()).toHaveLength(2)
+
+    const messages = [...document.querySelectorAll(".herb-dev-tools-message")].map(element => element.textContent)
+
+    expect(messages).toContain("fresh")
+    expect(messages).toContain("reported at runtime")
+  })
+
+  test("a navigation's refresh keeps what the client runtime reported before it", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    panel.report(diagnostic({ code: "herb-state-type", message: "raised during the first scan" }))
+
+    expect(cards()).toHaveLength(4)
+
+    panel.refresh()
+
+    expect(cards()).toHaveLength(4)
   })
 
   test("keeps the current entries when the page ships no payload", () => {

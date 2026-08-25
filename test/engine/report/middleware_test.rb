@@ -14,6 +14,18 @@ module Engine
       Herb::Engine::Report::Session.reset!
     end
 
+    class Marker
+      def initialize(anchor, entry)
+        @anchor = anchor
+        @entry = entry
+      end
+
+      attr_reader :anchor #: Symbol
+
+      def empty? = false
+      def to_html = "<!--#{@entry}-->"
+    end
+
     def diagnostic(message: "Something is wrong.")
       Herb::Diagnostic.new(
         template: "app/views/a.html.erb",
@@ -195,6 +207,65 @@ module Engine
 
       assert_includes body_of(first), "first"
       refute_includes body_of(second), "first"
+    end
+
+    DOCUMENT = "<html><head><title>t</title></head><body><h1>Hello</h1></body></html>"
+
+    describe "channels" do
+      def respond_with(document = DOCUMENT, &collect)
+        app = lambda { |_env|
+          collect&.call
+
+          [200, { "content-type" => "text/html" }, [document]]
+        }
+
+        Herb::Engine::Report::Middleware.new(app).call({}).last.first
+      end
+
+      test "writes a channel before the tag it asked for" do
+        html = respond_with do
+          Herb::Engine::Report::Session.current.channel(:head) { Marker.new(:head, "h") }
+        end
+
+        assert_equal "<html><head><title>t</title><!--h--></head><body><h1>Hello</h1></body></html>", html
+      end
+
+      test "writes a body channel before the closing body tag" do
+        html = respond_with do
+          Herb::Engine::Report::Session.current.channel(:body) { Marker.new(:body, "b") }
+        end
+
+        assert_equal "<html><head><title>t</title></head><body><h1>Hello</h1><!--b--></body></html>", html
+      end
+
+      test "writes every channel it was given" do
+        html = respond_with do
+          Herb::Engine::Report::Session.current.channel(:head) { Marker.new(:head, "h") }
+          Herb::Engine::Report::Session.current.channel(:body) { Marker.new(:body, "b") }
+        end
+
+        assert_equal "<html><head><title>t</title><!--h--></head><body><h1>Hello</h1><!--b--></body></html>", html
+      end
+
+      test "leaves a channel alone when the response has no tag for it" do
+        html = respond_with("<div>no document here</div>") do
+          Herb::Engine::Report::Session.current.channel(:head) { Marker.new(:head, "h") }
+        end
+
+        assert_equal "<div>no document here</div>", html
+      end
+
+      test "leaves a channel alone when it asked for a tag nobody writes before" do
+        html = respond_with do
+          Herb::Engine::Report::Session.current.channel(:nowhere) { Marker.new(:nowhere, "n") }
+        end
+
+        assert_equal DOCUMENT, html
+      end
+
+      test "returns the response untouched when nothing collected" do
+        assert_equal DOCUMENT, respond_with
+      end
     end
   end
 end

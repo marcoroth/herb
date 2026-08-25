@@ -42,6 +42,64 @@ module Engine
       payload(source, **assigns)[:slots]
     end
 
+    describe "seeded item states" do
+      def seeded_rows
+        <<~ERB
+          <%# herb:slots client %>
+          <ul>
+            <% @rows.each do |row| %>
+              <%# herb:key row %>
+              <%# herb:state (draft: row.to_s, flag: false) %>
+              <li id="r<%= row %>"><%= row %></li>
+            <% end %>
+          </ul>
+        ERB
+      end
+
+      test "each item carries the values the server seeded it with" do
+        items = dynamics(seeded_rows, rows: [1, 2]).fetch(0).fetch(:items)
+
+        assert_equal({ "draft" => "1" }, items.fetch("1").fetch(:seeds))
+        assert_equal({ "draft" => "2" }, items.fetch("2").fetch(:seeds))
+      end
+
+      test "a literal default is not shipped, since the client already knows it" do
+        seeds = dynamics(seeded_rows, rows: [1]).fetch(0).fetch(:items).fetch("1").fetch(:seeds)
+
+        refute_includes seeds.keys, "flag"
+      end
+
+      test "an item with only literal defaults carries no seeds" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <ul>
+            <% @rows.each do |row| %>
+              <%# herb:key row %>
+              <%# herb:state (flag: false) %>
+              <li id="r<%= row %>"><%= row %></li>
+            <% end %>
+          </ul>
+        ERB
+
+        refute_includes dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys, :seeds
+      end
+
+      test "a value the client cannot hold is dropped" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <ul>
+            <% @rows.each do |row| %>
+              <%# herb:key row %>
+              <%# herb:state (shape: @list, name: row.to_s) %>
+              <li id="r<%= row %>"><%= row %></li>
+            <% end %>
+          </ul>
+        ERB
+
+        assert_equal({ "name" => "1" }, dynamics(source, rows: [1], list: [1, 2]).fetch(0).fetch(:items).fetch("1").fetch(:seeds))
+      end
+    end
+
     describe "what it collects" do
       test "one value per expression" do
         assert_equal({ 0 => "Hello" }, dynamics("<h1><%= @title %></h1>", title: "Hello"))

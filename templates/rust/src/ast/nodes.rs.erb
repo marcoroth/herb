@@ -199,7 +199,7 @@ pub(crate) unsafe fn convert_node(node_pointer: *const c_void, source: &std::syn
     let node_base_ref = &(*c_node_pointer).base;
 
     Some(<%= node.name %> {
-      node_type: "<%= node.name %>".to_string(),
+      node_type: "<%= node.type %>".to_string(),
       location: convert_location(node_base_ref.location),
       errors: convert_errors(node_base_ref.errors),
       <%- node.fields.each do |field| -%>
