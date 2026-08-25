@@ -1,43 +1,45 @@
-import { TextEdit } from "vscode-languageserver-types"
+import {
+  CancellationToken,
+  Position,
+  SnippetString,
+  TextDocument,
+  window,
+} from "vscode"
 
-import type { FormattingOptions, Position } from "vscode-languageserver-types"
-import type { TextDocument } from "vscode-languageserver-textdocument"
+const BLOCK_SNIPPET = new SnippetString("\n\t$0\n<% end %>")
 
-export class OnTypeFormattingProvider {
-  getTextEdits(
-    document: TextDocument,
-    position: Position,
-    character: string,
-    options: FormattingOptions = { tabSize: 2, insertSpaces: true },
-  ): TextEdit[] {
-    if (character !== ">") return []
-
-    const offset = document.offsetAt(position)
-    const source = document.getText()
-    if (!shouldCompleteErbBlock(source, offset)) return []
-
-    const lineStart = source.lastIndexOf("\n", offset - 1) + 1
-    const line = source.slice(lineStart, offset)
-
-    const indentation = line.match(/^\s*/)?.[0] ?? ""
-    const indentationUnit = options.insertSpaces
-      ? " ".repeat(options.tabSize)
-      : "\t"
-    const bodyIndentation = indentation + indentationUnit
-
-    return [
-      TextEdit.insert(
-        position,
-        `\n${bodyIndentation}\n${indentation}<% end %>`,
-      ),
-    ]
+export async function applyOnTypeFormattingSnippet(
+  document: TextDocument,
+  documentVersion: number,
+  position: Position,
+  character: string,
+  token: CancellationToken,
+): Promise<boolean> {
+  if (
+    token.isCancellationRequested ||
+    document.version !== documentVersion ||
+    character !== ">"
+  ) {
+    return false
   }
+
+  const source = document.getText()
+  const offset = document.offsetAt(position)
+  if (!shouldCompleteErbBlock(source, offset)) return false
+
+  const editor = window.visibleTextEditors.find(
+    (candidate) =>
+      candidate.document.uri.toString() === document.uri.toString(),
+  )
+  if (!editor) return false
+
+  return editor.insertSnippet(BLOCK_SNIPPET, position, {
+    undoStopBefore: false,
+    undoStopAfter: false,
+  })
 }
 
-export function shouldCompleteErbBlock(
-  source: string,
-  offset: number,
-): boolean {
+function shouldCompleteErbBlock(source: string, offset: number): boolean {
   const lineStart = source.lastIndexOf("\n", offset - 1) + 1
   const line = source.slice(lineStart, offset)
   const tagStart = line.lastIndexOf("<%")

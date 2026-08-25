@@ -91,7 +91,7 @@ export class Session {
     this.rewriteCodeActionProvider = new RewriteCodeActionProvider(this.parserService, process.cwd())
     this.commentProvider = new CommentProvider(this.parserService)
     this.documentSymbolProvider = new DocumentSymbolProvider(this.parserService)
-    this.onTypeFormattingProvider = new OnTypeFormattingProvider(this.parserService)
+    this.onTypeFormattingProvider = new OnTypeFormattingProvider()
 
     this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, this.capabilities, existsSync)
 

@@ -18,7 +18,6 @@ describe("Capabilities", () => {
 
       expect(capabilities.hasConfiguration).toBe(false)
       expect(capabilities.hasWorkspaceFolders).toBe(false)
-      expect(capabilities.hasApplyEdit).toBe(false)
       expect(capabilities.hasShowDocument).toBe(false)
       expect(capabilities.hasDiagnosticRelatedInformation).toBe(false)
     })
@@ -27,11 +26,7 @@ describe("Capabilities", () => {
       const capabilities = new Capabilities({
         ...mockParams,
         capabilities: {
-          workspace: {
-            applyEdit: true,
-            configuration: true,
-            workspaceFolders: true,
-          },
+          workspace: { configuration: true, workspaceFolders: true },
           window: { showDocument: { support: true } },
           textDocument: { publishDiagnostics: { relatedInformation: true } }
         }
@@ -39,7 +34,6 @@ describe("Capabilities", () => {
 
       expect(capabilities.hasConfiguration).toBe(true)
       expect(capabilities.hasWorkspaceFolders).toBe(true)
-      expect(capabilities.hasApplyEdit).toBe(true)
       expect(capabilities.hasShowDocument).toBe(true)
       expect(capabilities.hasDiagnosticRelatedInformation).toBe(true)
     })

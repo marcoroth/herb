@@ -47,6 +47,7 @@
   "contributes": {
     "configurationDefaults": {
       "[erb]": {
+        "editor.formatOnType": true,
         "editor.quickSuggestions": {
           "other": true,
           "comments": false,

@@ -78,17 +78,14 @@ describe("on-type formatting", () => {
       1,
       source,
     )
-    const getFormatting = vi.fn().mockReturnValue({
-      edits: [{ newText: "expected" }],
-      cursor: null,
-    })
+    const getTextEdits = vi.fn().mockReturnValue([{ newText: "expected" }])
     const server = new Server()
 
     Object.assign(server, {
       session: {
         capabilities: { hasApplyEdit: false, hasShowDocument: false },
         documents: { get: vi.fn().mockReturnValue(document) },
-        onTypeFormattingProvider: { getFormatting },
+        onTypeFormattingProvider: { getTextEdits },
       },
     })
 
@@ -99,10 +96,10 @@ describe("on-type formatting", () => {
       options: { tabSize: 4, insertSpaces: true },
     }
 
-    await expect(connectionState.onTypeFormatting?.(params)).resolves.toEqual([
+    expect(connectionState.onTypeFormatting?.(params)).toEqual([
       { newText: "expected" },
     ])
-    expect(getFormatting).toHaveBeenCalledWith(
+    expect(getTextEdits).toHaveBeenCalledWith(
       document,
       params.position,
       params.ch,
@@ -110,7 +107,7 @@ describe("on-type formatting", () => {
     )
   })
 
-  it("applies the edit before moving the cursor to the block body", async () => {
+  it("returns edits without issuing nested client requests", async () => {
     const source = "<% if user.admin? %>"
     const document = TextDocument.create(
       "file:///test.html.erb",
@@ -125,65 +122,14 @@ describe("on-type formatting", () => {
       },
       newText: "\n  \n<% end %>",
     }
-    const cursor = { line: 1, character: 2 }
     const server = new Server()
-
-    connectionState.applyEdit.mockResolvedValue({ applied: true })
-    connectionState.showDocument.mockResolvedValue({ success: true })
 
     Object.assign(server, {
       session: {
         capabilities: { hasApplyEdit: true, hasShowDocument: true },
         documents: { get: vi.fn().mockReturnValue(document) },
         onTypeFormattingProvider: {
-          getFormatting: vi.fn().mockReturnValue({ edits: [edit], cursor }),
-        },
-      },
-    })
-
-    const result = await connectionState.onTypeFormatting?.({
-      textDocument: { uri: document.uri },
-      position: { line: 0, character: source.length },
-      ch: ">",
-      options: { tabSize: 2, insertSpaces: true },
-    })
-
-    expect(connectionState.applyEdit).toHaveBeenCalledWith({
-      changes: { [document.uri]: [edit] },
-    })
-    expect(connectionState.showDocument).toHaveBeenCalledWith({
-      uri: document.uri,
-      takeFocus: true,
-      selection: { start: cursor, end: cursor },
-    })
-    expect(connectionState.applyEdit.mock.invocationCallOrder[0]).toBeLessThan(
-      connectionState.showDocument.mock.invocationCallOrder[0],
-    )
-    expect(result).toEqual([])
-  })
-
-  it("returns the edit when the client does not apply it", async () => {
-    const source = "<% if user.admin? %>"
-    const document = TextDocument.create(
-      "file:///test.html.erb",
-      "erb",
-      1,
-      source,
-    )
-    const edit = { newText: "\n  \n<% end %>" }
-    const server = new Server()
-
-    connectionState.applyEdit.mockResolvedValue({ applied: false })
-
-    Object.assign(server, {
-      session: {
-        capabilities: { hasApplyEdit: true, hasShowDocument: true },
-        documents: { get: vi.fn().mockReturnValue(document) },
-        onTypeFormattingProvider: {
-          getFormatting: vi.fn().mockReturnValue({
-            edits: [edit],
-            cursor: { line: 1, character: 2 },
-          }),
+          getTextEdits: vi.fn().mockReturnValue([edit]),
         },
       },
     })
@@ -196,43 +142,7 @@ describe("on-type formatting", () => {
     })
 
     expect(result).toEqual([edit])
+    expect(connectionState.applyEdit).not.toHaveBeenCalled()
     expect(connectionState.showDocument).not.toHaveBeenCalled()
-  })
-
-  it("keeps the applied edit when moving the cursor fails", async () => {
-    const source = "<% if user.admin? %>"
-    const document = TextDocument.create(
-      "file:///test.html.erb",
-      "erb",
-      1,
-      source,
-    )
-    const server = new Server()
-
-    connectionState.applyEdit.mockResolvedValue({ applied: true })
-    connectionState.showDocument.mockRejectedValue(new Error("client failure"))
-
-    Object.assign(server, {
-      session: {
-        capabilities: { hasApplyEdit: true, hasShowDocument: true },
-        documents: { get: vi.fn().mockReturnValue(document) },
-        onTypeFormattingProvider: {
-          getFormatting: vi.fn().mockReturnValue({
-            edits: [{ newText: "\n  \n<% end %>" }],
-            cursor: { line: 1, character: 2 },
-          }),
-        },
-      },
-    })
-
-    const request = connectionState.onTypeFormatting?.({
-      textDocument: { uri: document.uri },
-      position: { line: 0, character: source.length },
-      ch: ">",
-      options: { tabSize: 2, insertSpaces: true },
-    })
-
-    await expect(request).resolves.toEqual([])
-    expect(connectionState.error).toHaveBeenCalled()
   })
 })

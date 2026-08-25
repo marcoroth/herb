@@ -207,50 +207,17 @@ export class Server {
       return this.session.projects.get(params.textDocument.uri)?.formattingProvider.formatRange(params) ?? []
     })
 
-    this.connection.onDocumentOnTypeFormatting(async (params: DocumentOnTypeFormattingParams) => {
+    this.connection.onDocumentOnTypeFormatting((params: DocumentOnTypeFormattingParams) => {
       const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      const formatting = this.session.onTypeFormattingProvider.getFormatting(
+      return this.session.onTypeFormattingProvider.getTextEdits(
         document,
         params.position,
         params.ch,
         params.options,
       )
-
-      if (
-        formatting.cursor === null ||
-        !this.session.capabilities.hasApplyEdit ||
-        !this.session.capabilities.hasShowDocument
-      ) {
-        return formatting.edits
-      }
-
-      const applyResult = await this.connection.workspace.applyEdit({
-        changes: { [document.uri]: formatting.edits },
-      })
-
-      if (!applyResult.applied) return formatting.edits
-
-      try {
-        const showResult = await this.connection.window.showDocument({
-          uri: document.uri,
-          takeFocus: true,
-          selection: {
-            start: formatting.cursor,
-            end: formatting.cursor,
-          },
-        })
-
-        if (!showResult.success) {
-          this.connection.console.warn("Failed to move the cursor after on-type formatting")
-        }
-      } catch (error) {
-        this.connection.console.error(`Failed to move the cursor after on-type formatting: ${error}`)
-      }
-
-      return []
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {

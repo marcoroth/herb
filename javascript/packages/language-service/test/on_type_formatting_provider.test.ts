@@ -1,22 +1,15 @@
-import { beforeAll, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 import { Position } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Herb } from "@herb-tools/node-wasm"
 
 import { OnTypeFormattingProvider } from "../src/on_type_formatting_provider.js"
-import { ParserService } from "../src/parser_service.js"
 
 function createDocument(content: string) {
   return TextDocument.create("file:///test.html.erb", "erb", 1, content)
 }
 
 describe("OnTypeFormattingProvider", () => {
-  let provider: OnTypeFormattingProvider
-
-  beforeAll(async () => {
-    await Herb.load()
-    provider = new OnTypeFormattingProvider(new ParserService(Herb))
-  })
+  const provider = new OnTypeFormattingProvider()
 
   it("inserts an ERB end tag after a do block opener", () => {
     const source = "<% @items.each do |item| %>"
@@ -33,18 +26,6 @@ describe("OnTypeFormattingProvider", () => {
         newText: "\n  \n<% end %>",
       },
     ])
-  })
-
-  it("places the cursor on the indented block body line", () => {
-    const source = "<% if user.admin? %>"
-    const document = createDocument(source)
-
-    expect(
-      provider.getFormatting(document, Position.create(0, source.length), ">", {
-        tabSize: 2,
-        insertSpaces: true,
-      }).cursor,
-    ).toEqual({ line: 1, character: 2 })
   })
 
   it.each([
@@ -145,6 +126,26 @@ describe("OnTypeFormattingProvider", () => {
       provider.getTextEdits(
         document,
         Position.create(0, firstLine.length),
+        ">",
+      ),
+    ).toEqual([])
+  })
+
+  it("does not consume an enclosing block's end tag", () => {
+    const openingTag = "  <% if item.ok? %>"
+    const document = createDocument(
+      [
+        "<% items.each do |item| %>",
+        openingTag,
+        "  <% end %>",
+        "<% end %>",
+      ].join("\n"),
+    )
+
+    expect(
+      provider.getTextEdits(
+        document,
+        Position.create(1, openingTag.length),
         ">",
       ),
     ).toEqual([])

@@ -3,6 +3,7 @@ import * as path from "path"
 import { workspace, ExtensionContext, Disposable, window } from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, WorkspaceEdit } from "vscode-languageclient/node"
 import { Config, defaultPersonalSettings } from "@herb-tools/config"
+import { applyOnTypeFormattingSnippet } from "./on-type-formatting"
 
 const inlayHintDefaults = defaultPersonalSettings.inlayHints!
 
@@ -183,6 +184,37 @@ export class Client {
         configurationSection: 'languageServerHerb',
       },
       initializationOptions: await this.getInitializationOptions(),
+      middleware: {
+        provideOnTypeFormattingEdits: async (
+          document,
+          position,
+          character,
+          options,
+          token,
+          next,
+        ) => {
+          const documentVersion = document.version
+          if (
+            await applyOnTypeFormattingSnippet(
+              document,
+              documentVersion,
+              position,
+              character,
+              token,
+            )
+          ) {
+            return []
+          }
+
+          return next(
+            document,
+            position,
+            character,
+            options,
+            token,
+          )
+        },
+      },
       outputChannel: this.outputChannel,
     }
   }
