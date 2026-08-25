@@ -47,7 +47,9 @@ module Herb
       #     scope: ":where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)"
       #
       # Without one, a block is left exactly as it was written and reported. Scoping the markup while
-      # leaving the CSS alone would turn a scoped block into a global one.
+      # leaving the CSS alone would turn a scoped block into a global one. A `transform` that raises
+      # is treated the same way, so CSS nobody can read costs the block it was written in and not the
+      # whole template.
       #
       # `deliver` says where the narrowed CSS goes. `:inline` leaves the block where it was written,
       # which needs nothing else installed and writes the block again on every render of the file it
@@ -146,6 +148,9 @@ module Herb
         # : () -> void
         def narrow: () -> void
 
+        # : (Pending, String) -> String?
+        def narrowed_css: (Pending, String) -> String?
+
         # : (Pending, String, String) -> void
         def place: (Pending, String, String) -> void
 
@@ -175,6 +180,9 @@ module Herb
 
         # : (Herb::AST::HTMLElementNode) -> void
         def untransformed_style: (Herb::AST::HTMLElementNode) -> void
+
+        # : (Herb::AST::HTMLElementNode, StandardError) -> nil
+        def untransformable_style: (Herb::AST::HTMLElementNode, StandardError) -> nil
 
         # : (String, String) -> String
         def scope_selector: (String, String) -> String

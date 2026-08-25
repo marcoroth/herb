@@ -67,5 +67,9 @@ module Engine
 
       assert_compiled_snapshot(source, options(deliver: :hoist))
     end
+
+    test "leaves a block it could not parse as it was written, instead of raising" do
+      assert_compiled_snapshot(%(<style scoped>!!! { color: red }</style><h1>Hi</h1>), options)
+    end
   end
 end

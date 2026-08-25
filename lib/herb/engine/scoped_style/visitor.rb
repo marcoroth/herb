@@ -56,7 +56,9 @@ module Herb
       #     scope: ":where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)"
       #
       # Without one, a block is left exactly as it was written and reported. Scoping the markup while
-      # leaving the CSS alone would turn a scoped block into a global one.
+      # leaving the CSS alone would turn a scoped block into a global one. A `transform` that raises
+      # is treated the same way, so CSS nobody can read costs the block it was written in and not the
+      # whole template.
       #
       # `deliver` says where the narrowed CSS goes. `:inline` leaves the block where it was written,
       # which needs nothing else installed and writes the block again on every render of the file it
@@ -279,13 +281,25 @@ module Herb
         def narrow
           @pending.each do |pending|
             scope = @scopes[pending.file] #: as String
-            narrowed = @transform.call(pending.css, scope: scope_selector(pending.file, scope)).to_s
+            narrowed = narrowed_css(pending, scope)
+
+            next unless narrowed
+
             place(pending, scope, narrowed)
 
             @styles[scope] = narrowed
           end
 
+          @scopes.delete_if { |_file, scope| !@styles.key?(scope) }
+
           nil
+        end
+
+        #: (Pending, String) -> String?
+        def narrowed_css(pending, scope)
+          @transform.call(pending.css, scope: scope_selector(pending.file, scope)).to_s
+        rescue StandardError => e
+          untransformable_style(pending.node, e)
         end
 
         #: (Pending, String, String) -> void
@@ -403,6 +417,17 @@ module Herb
             "A `<style scoped>` block was found, and #{self.class.name} was given no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page.",
             node.location,
             code: "scoped-style-without-a-transform"
+          )
+
+          nil
+        end
+
+        #: (Herb::AST::HTMLElementNode, StandardError) -> nil
+        def untransformable_style(node, error)
+          warning(
+            "A `<style scoped>` block could not be narrowed by the `transform` #{self.class.name} was given, so it was left as it was written and still applies to the whole page. It failed with `#{error.message}`.",
+            node.location,
+            code: "scoped-style-that-could-not-be-narrowed"
           )
 
           nil
