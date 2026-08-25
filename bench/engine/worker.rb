@@ -25,7 +25,13 @@ when "erubi"
 when "herb"
   require "herb"
   require "herb/engine"
-  compile = ->(src) { Herb::Engine.new(src) }
+  # Herb::Engine defaults to track_locations: false; be explicit so the
+  # bench doesn't silently change if the default shifts.
+  compile = ->(src) { Herb::Engine.new(src, parser_options: { track_locations: false }) }
+when "herb-locations"
+  require "herb"
+  require "herb/engine"
+  compile = ->(src) { Herb::Engine.new(src, parser_options: { track_locations: true }) }
 else
   abort "unknown engine: #{engine_name}"
 end

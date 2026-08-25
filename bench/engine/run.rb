@@ -37,7 +37,13 @@ module Bench
     TMP_DIR   = File.expand_path("../tmp", __dir__)
     LIST_PATH = File.join(TMP_DIR, "engine-shared-files.txt")
 
-    ENGINES = %w[erubi herb].freeze
+    ENGINES = %w[erubi herb herb-locations].freeze
+
+    LABELS = {
+      "erubi"          => "Erubi::Engine",
+      "herb"           => "Herb::Engine (track_locations: false)",
+      "herb-locations" => "Herb::Engine (track_locations: true)",
+    }.freeze
 
     def run
       limit = ENV["BENCH_LIMIT"]&.to_i
@@ -142,7 +148,7 @@ module Bench
 
     # Run one engine, in its own Ruby subprocess, over the shared file list.
     def measure_engine(name)
-      Reporter.header("Timing #{name} (subprocess)")
+      Reporter.header("Timing #{LABELS[name] || name} (subprocess)")
 
       cmd = [RbConfig.ruby, WORKER, name, LIST_PATH]
       puts Reporter.dim("  $ #{cmd.join(" ")}")
@@ -167,25 +173,29 @@ module Bench
       Reporter.header("Results")
 
       shared_count = screening[:shared].size
-      erubi = results["erubi"]
-      herb  = results["herb"]
+      erubi          = results["erubi"]
+      herb           = results["herb"]
+      herb_locations = results["herb-locations"]
 
       Reporter.kv("Corpus files scanned",   screening[:total].to_s)
       Reporter.kv("Timed (shared) files",   shared_count.to_s)
       puts
-      Reporter.kv("Erubi::Engine total",    Reporter.format_time(erubi[:elapsed]))
-      Reporter.kv("Erubi::Engine per file", Reporter.format_time(erubi[:elapsed] / [shared_count, 1].max))
-      Reporter.kv("Erubi::Engine bytes",    format_bytes(erubi[:compiled_bytes]))
-      puts
-      Reporter.kv("Herb::Engine total",     Reporter.format_time(herb[:elapsed]))
-      Reporter.kv("Herb::Engine per file",  Reporter.format_time(herb[:elapsed] / [shared_count, 1].max))
-      Reporter.kv("Herb::Engine bytes",     format_bytes(herb[:compiled_bytes]))
-      puts
-      Reporter.kv("Herb vs Erubi",          Reporter.format_ratio(erubi[:elapsed], herb[:elapsed]))
-      Reporter.kv("Output size (Herb/Erubi)", size_ratio_label(herb[:compiled_bytes], erubi[:compiled_bytes]))
 
-      warn_on_late_failures("erubi", erubi[:failures])
-      warn_on_late_failures("herb",  herb[:failures])
+      ENGINES.each do |name|
+        r = results[name]
+        label = LABELS[name]
+        Reporter.kv("#{label} total",    Reporter.format_time(r[:elapsed]))
+        Reporter.kv("#{label} per file", Reporter.format_time(r[:elapsed] / [shared_count, 1].max))
+        Reporter.kv("#{label} bytes",    format_bytes(r[:compiled_bytes]))
+        puts
+      end
+
+      Reporter.kv("Herb (locations off) vs Erubi", Reporter.format_ratio(erubi[:elapsed], herb[:elapsed]))
+      Reporter.kv("Herb (locations on)  vs Erubi", Reporter.format_ratio(erubi[:elapsed], herb_locations[:elapsed]))
+      Reporter.kv("Locations on vs off overhead",  Reporter.format_ratio(herb[:elapsed], herb_locations[:elapsed]))
+      Reporter.kv("Output size (Herb/Erubi)",      size_ratio_label(herb[:compiled_bytes], erubi[:compiled_bytes]))
+
+      results.each { |name, r| warn_on_late_failures(name, r[:failures]) }
     end
 
     def warn_on_late_failures(name, failures)
