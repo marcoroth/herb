@@ -1,0 +1,17 @@
+sources:
+  - type: git
+    name: ruby/gem_rbs_collection
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    revision: main
+    repo_dir: gems
+
+path: .gem_rbs_collection
+
+gems:
+  - name: herb
+    ignore: true
+
+  - name: steep
+    ignore: true
+
+  - name: strscan

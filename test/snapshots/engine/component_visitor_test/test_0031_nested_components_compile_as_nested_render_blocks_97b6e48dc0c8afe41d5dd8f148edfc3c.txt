@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0031_nested components compile as nested render blocks"
+input: "{source: \"<Card><Button>Go</Button></Card>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render Card.new do; _buf << (render Button.new do; _buf << 'Go'.freeze; end); end);
+_buf.to_s

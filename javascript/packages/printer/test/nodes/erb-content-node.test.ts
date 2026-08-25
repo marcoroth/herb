@@ -12,10 +12,8 @@ describe("ERBContentNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBContentNode.from({
-      type: "AST_ERB_CONTENT_NODE",
+    const node = ERBContentNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " content "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -27,10 +25,8 @@ describe("ERBContentNode Printing", () => {
   })
 
   test("can print from output node", () => {
-    const node = ERBContentNode.from({
-      type: "AST_ERB_CONTENT_NODE",
+    const node = ERBContentNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%="),
       content: createToken("TOKEN_ERB_CONTENT", " content "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

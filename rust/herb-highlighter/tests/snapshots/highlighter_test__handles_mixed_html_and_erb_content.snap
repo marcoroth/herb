@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: "highlighter(\"onedark\").highlight(\"test.erb\",\n\"<h1 id=\\\"<%= dom_id(article) %>\\\">Title</h1>\", &plain())"
+---
+[38;2;224;108;117m<[0m[38;2;224;108;117mh1[0m [38;2;209;154;102mid[0m[38;2;86;182;194m=[0m[38;2;152;195;121m"[0m[38;2;190;80;70m<%=[0m dom_id(article) [38;2;190;80;70m%>[0m[38;2;152;195;121m"[0m[38;2;224;108;117m>[0m[38;2;171;178;191mTitle[0m[38;2;224;108;117m</[0m[38;2;224;108;117mh1[0m[38;2;224;108;117m>[0m

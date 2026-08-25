@@ -8,11 +8,15 @@ public class ParserOptions {
   private boolean transformConditionals = false;
   private boolean renderNodes = false;
   private boolean strictLocals = false;
+  private boolean iterationNodes = false;
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
   private boolean dotNotationTags = false;
   private boolean html = true;
+  private boolean trackLocations = true;
+  private int timeout = 1000;
+  private Integer maxErrors = 25;
 
   public ParserOptions() {}
 
@@ -79,6 +83,15 @@ public class ParserOptions {
     return strictLocals;
   }
 
+  public ParserOptions iterationNodes(boolean value) {
+    this.iterationNodes = value;
+    return this;
+  }
+
+  public boolean isIterationNodes() {
+    return iterationNodes;
+  }
+
   public ParserOptions prismNodes(boolean value) {
     this.prismNodes = value;
     return this;
@@ -122,6 +135,33 @@ public class ParserOptions {
 
   public boolean isHtml() {
     return html;
+  }
+
+  public ParserOptions trackLocations(boolean value) {
+    this.trackLocations = value;
+    return this;
+  }
+
+  public boolean isTrackLocations() {
+    return trackLocations;
+  }
+
+  public ParserOptions timeout(int value) {
+    this.timeout = value;
+    return this;
+  }
+
+  public int getTimeout() {
+    return timeout;
+  }
+
+  public ParserOptions maxErrors(Integer value) {
+    this.maxErrors = value;
+    return this;
+  }
+
+  public Integer getMaxErrors() {
+    return maxErrors;
   }
 
   public static ParserOptions create() {

@@ -7,11 +7,14 @@ import {
   hasWhitespaceBetween,
   isInlineElement,
   isLineBreakingElement,
+  isMultilineERBComment,
 } from "./format-helpers.js"
 
 import {
+  isGluedControlFlowNode,
   hasWhitespaceBeforeNode as hasWhitespaceBeforeNodeHelper,
   lastUnitEndsWithWhitespace as lastUnitEndsWithWhitespaceHelper,
+  tryFuseAdjacentAtomic as tryFuseAdjacentAtomicHelper,
   tryMergeAtomicAfterText as tryMergeAtomicAfterTextHelper,
   tryMergeTextAfterAtomic as tryMergeTextAfterAtomicHelper,
 } from "./text-flow-helpers.js"
@@ -23,6 +26,7 @@ import {
 export interface TextFlowAnalyzerDelegate {
   tryRenderInlineElement(element: HTMLElementNode): string | null
   renderERBAsString(node: ERBContentNode): string
+  tryRenderControlFlowInline(node: Node): string | null
 }
 
 /**
@@ -89,8 +93,25 @@ export class TextFlowAnalyzer {
         }
 
         lastProcessedIndex = i
+      } else if (isMultilineERBComment(child)) {
+        result.push({
+          unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
+          node: child
+        })
+
+        lastProcessedIndex = i
       } else if (isNode(child, ERBContentNode)) {
         const merged = this.processERBContentNode(result, children, child, i, lastProcessedIndex)
+
+        if (merged) {
+          lastProcessedIndex = i
+
+          continue
+        }
+
+        lastProcessedIndex = i
+      } else if (isGluedControlFlowNode(children, i)) {
+        const merged = this.processGluedControlFlowNode(result, children, child, i, lastProcessedIndex)
 
         if (merged) {
           lastProcessedIndex = i
@@ -143,10 +164,45 @@ export class TextFlowAnalyzer {
       return false
     }
 
-    if (lastProcessedIndex >= 0) {
-      const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || lastUnitEndsWithWhitespaceHelper(result)
+    const hasWhitespace = lastProcessedIndex < 0 ||
+      hasWhitespaceBetween(children, lastProcessedIndex, index) ||
+      lastUnitEndsWithWhitespaceHelper(result)
 
-      if (!hasWhitespace && tryMergeAtomicAfterTextHelper(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
+    if (isLineBreakingElement(child)) {
+      if (hasWhitespace) {
+        result.push({
+          unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
+          node: child
+        })
+
+        return false
+      }
+
+      const fused =
+        tryMergeAtomicAfterTextHelper(result, children, lastProcessedIndex, inlineContent, 'inline', child) ||
+        tryFuseAdjacentAtomicHelper(result, inlineContent)
+
+      if (!fused) {
+        result.push({
+          unit: { content: inlineContent, type: 'inline', isAtomic: true, breaksFlow: false },
+          node: child
+        })
+      }
+
+      result.push({
+        unit: { content: '', type: 'text', isAtomic: false, breaksFlow: true },
+        node: null
+      })
+
+      return true
+    }
+
+    if (!hasWhitespace) {
+      if (tryMergeAtomicAfterTextHelper(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
+        return true
+      }
+
+      if (tryFuseAdjacentAtomicHelper(result, inlineContent)) {
         return true
       }
     }
@@ -159,14 +215,63 @@ export class TextFlowAnalyzer {
     return false
   }
 
+  /**
+   * A control-flow node glued to its neighbours cannot be broken onto its own
+   * lines without injecting whitespace, so it becomes one atomic token that
+   * the wrapper is unable to split.
+   *
+   * If it can't be flattened onto a single line we fall back to the normal
+   * block layout, the break is still wrong, but it is the pre-existing
+   * behaviour rather than a mangled inline render.
+   */
+  private processGluedControlFlowNode(result: ContentUnitWithNode[], children: Node[], child: Node, index: number, lastProcessedIndex: number): boolean {
+    const inlineContent = this.delegate.tryRenderControlFlowInline(child)
+
+    if (inlineContent === null) {
+      result.push({
+        unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
+        node: child
+      })
+
+      return false
+    }
+
+    if (lastProcessedIndex >= 0) {
+      const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || lastUnitEndsWithWhitespaceHelper(result)
+
+      if (!hasWhitespace) {
+        if (tryMergeAtomicAfterTextHelper(result, children, lastProcessedIndex, inlineContent, 'erb', child)) {
+          return true
+        }
+
+        if (tryFuseAdjacentAtomicHelper(result, inlineContent)) {
+          return true
+        }
+      }
+    }
+
+    result.push({
+      unit: { content: inlineContent, type: 'erb', isAtomic: true, breaksFlow: false },
+      node: child
+    })
+
+    return false
+  }
+
   private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode, index: number, lastProcessedIndex: number): boolean {
     const erbContent = this.delegate.renderERBAsString(child)
 
     if (lastProcessedIndex >= 0) {
       const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || lastUnitEndsWithWhitespaceHelper(result)
 
-      if (!hasWhitespace && tryMergeAtomicAfterTextHelper(result, children, lastProcessedIndex, erbContent, 'erb', child)) {
-        return true
+      if (!hasWhitespace) {
+        if (tryMergeAtomicAfterTextHelper(result, children, lastProcessedIndex, erbContent, 'erb', child)) {
+          return true
+        }
+
+        if (tryFuseAdjacentAtomicHelper(result, erbContent)) {
+          return true
+        }
       }
 
       if (hasWhitespace && result.length > 0) {

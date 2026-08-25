@@ -5,10 +5,13 @@
 
 require "optparse"
 
+require_relative "../herb"
+require_relative "engine/slot_visitor"
+
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :file_timeout
 
   def initialize(args)
     @args = args
@@ -107,6 +110,7 @@ class Herb::CLI
         bundle exec herb actionview check [path]    Check if render calls resolve to valid partial files.
         bundle exec herb actionview graph [path]    Show render dependency graph for a project or file.
         bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
+        bundle exec herb actionview context [file]  Show what a partial is rendered inside of.
 
         bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
         bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
@@ -154,6 +158,7 @@ class Herb::CLI
                   project.silent = silent
                   project.verbose = verbose || ci?
                   project.isolate = isolate
+                  project.file_timeout = file_timeout if file_timeout
                   project.validate_ruby = true
                   project.arena_stats = arena_stats
                   project.leak_check = leak_check
@@ -166,7 +171,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, track_locations: track_locations.nil? || track_locations, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
                 when "compile"
                   compile_template
                 when "render"
@@ -180,12 +185,7 @@ class Herb::CLI
                   puts Herb.extract_html(file_content)
                   exit(0)
                 when "playground"
-                  require "bundler/inline"
-
-                  gemfile do
-                    source "https://rubygems.org"
-                    gem "lz_string"
-                  end
+                  Herb.ensure_installed("lz_string")
 
                   hash = LZString::UriSafe.compress(file_content)
                   local_url = "http://localhost:5173"
@@ -269,6 +269,10 @@ class Herb::CLI
         self.isolate = true
       end
 
+      parser.on("--timeout SECONDS", Float, "Per-file timeout for parse + compile (for analyze command) (default: #{Herb::Project::DEFAULT_FILE_TIMEOUT})") do |seconds|
+        self.file_timeout = seconds
+      end
+
       parser.on("--log-file", "Enable log file generation") do
         self.log_file = true
       end
@@ -317,6 +321,14 @@ class Herb::CLI
         self.track_whitespace = true
       end
 
+      parser.on("--track-locations", "Enable source location tracking (for parse command) (default: true)") do
+        self.track_locations = true
+      end
+
+      parser.on("--no-track-locations", "Disable source location tracking (for parse command)") do
+        self.track_locations = false
+      end
+
       parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do
         self.action_view_helpers = true
       end
@@ -327,6 +339,21 @@ class Herb::CLI
 
       parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
         self.optimize = true
+      end
+
+      parser.on("--scoped-styles", "Scope each `<style scoped>` block to its file with Lightning CSS (for compile/render commands) (default: false)") do
+        self.scoped_styles = true
+      end
+
+      parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
+        self.slots = (mode || "server").to_sym
+
+        unless Herb::Engine::SlotVisitor::MODES.include?(slots)
+          puts "Unknown --slots mode: #{mode}"
+          puts "Expected one of: #{Herb::Engine::SlotVisitor::MODES.join(", ")}"
+
+          exit(1)
+        end
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -388,7 +415,7 @@ class Herb::CLI
 
     case subcommand
     when "check"
-      require_relative "action_view/render_analyzer"
+      require_relative "analysis/render_analyzer"
 
       path = File.expand_path(@file || ".")
 
@@ -397,12 +424,12 @@ class Herb::CLI
         exit(1)
       end
 
-      analyzer = Herb::ActionView::RenderAnalyzer.new(path)
+      analyzer = Herb::Analysis::RenderAnalyzer.new(path)
       has_issues = analyzer.check!
 
       exit(has_issues ? 1 : 0)
     when "graph"
-      require_relative "action_view/render_analyzer"
+      require_relative "analysis/render_analyzer"
 
       path = @file || "."
 
@@ -413,7 +440,7 @@ class Herb::CLI
 
       path = File.expand_path(path)
       project_root = File.directory?(path) ? path : config.project_root&.to_s || File.dirname(path)
-      analyzer = Herb::ActionView::RenderAnalyzer.new(project_root)
+      analyzer = Herb::Analysis::RenderAnalyzer.new(project_root)
 
       if File.file?(path)
         analyzer.graph_file!(path)
@@ -421,6 +448,104 @@ class Herb::CLI
         analyzer.graph!
       end
 
+      exit(0)
+    when "dependencies"
+      require_relative "analysis/template_dependencies"
+
+      path = @file || "."
+      path = File.expand_path(path)
+
+      if File.file?(path)
+        project_root = config.project_root&.to_s || File.dirname(path)
+        dep_analyzer = Herb::Analysis::TemplateDependencies.new(project_root)
+        dep_analyzer.scan_helpers!
+        result = dep_analyzer.analyze(path)
+        relative = Pathname.new(path).relative_path_from(project_root).to_s
+        is_entry_point = !File.basename(path).start_with?("_")
+
+        puts ""
+        puts " #{bold("Herb")} \u{1f33f} #{dimmed("v#{Herb::VERSION}")}"
+        puts ""
+        puts " #{cyan(relative)} #{dimmed(is_entry_point ? "(entry point)" : "(partial)")}"
+        puts ""
+
+        print_dependency_result(result)
+
+        if is_entry_point && result.instance_variables.any?
+          puts " #{bold("State flow")} #{dimmed("(which templates are affected by each state change)")}"
+          puts ""
+
+          result.instance_variables.each do |ivar|
+            affected = dep_analyzer.affected_templates(path, ivar)
+            short = affected.map { |f| Pathname.new(f).relative_path_from(project_root).to_s }
+
+            puts "   #{yellow(ivar)} #{dimmed("(#{short.size} #{short.size == 1 ? "template" : "templates"})")}"
+            short.each { |f| puts "     #{dimmed(f)}" }
+            puts ""
+          end
+
+          index = dep_analyzer.dependency_index(path)
+
+          if index.any?
+            puts " #{bold("Node index")} #{dimmed("(which DOM nodes are affected by each state change)")}"
+            puts ""
+
+            index.each do |state, nodes|
+              puts "   #{yellow(state)} #{dimmed("(#{nodes.size} #{nodes.size == 1 ? "node" : "nodes"})")}"
+
+              nodes.each_with_index do |n, i|
+                connector = i == nodes.size - 1 ? "\u2514\u2500\u2500" : "\u251c\u2500\u2500"
+                attr = n[:attribute] ? " #{dimmed("attr=#{n[:attribute]}")}" : ""
+                puts "     #{connector} #{dimmed("[#{n[:node_path].join(",")}]")} #{n[:type]}#{attr} #{dimmed(one_line(n[:expression], 60))}"
+              end
+
+              puts ""
+            end
+          end
+        end
+      elsif File.directory?(path)
+        require_relative "analysis/render_analyzer"
+
+        dep_analyzer = Herb::Analysis::TemplateDependencies.new(path)
+        dep_analyzer.scan_helpers!
+
+        render_analyzer = Herb::Analysis::RenderAnalyzer.new(path)
+        erb_files = render_analyzer.send(:find_erb_files)
+
+        puts ""
+        puts " #{bold("Herb")} \u{1f33f} #{dimmed("v#{Herb::VERSION}")}"
+        puts ""
+        puts dimmed(" Analyzing dependencies in #{erb_files.size} files...")
+        puts ""
+
+        erb_files.each do |file|
+          result = dep_analyzer.analyze(file)
+          relative = Pathname.new(file).relative_path_from(path).to_s
+
+          next if result.instance_variables.empty? && result.constants.empty? && result.unknown_calls.empty?
+
+          puts " #{cyan(relative)}"
+          puts "   #{dimmed("state:")} #{result.instance_variables.join(", ")}" if result.instance_variables.any?
+          puts "   #{dimmed("constants:")} #{result.constants.join(", ")}" if result.constants.any?
+          puts "   #{dimmed("locals declared:")} #{result.locals_declared.join(", ")}" if result.locals_declared.any?
+          puts "   #{dimmed("locals received:")} #{result.locals_received.keys.join(", ")}" if result.locals_received.any?
+          puts "   #{dimmed("unknown:")} #{result.unknown_calls.join(", ")}" if result.unknown_calls.any?
+          puts ""
+        end
+      else
+        puts "Not a file or directory: '#{path}'."
+        exit(1)
+      end
+
+      exit(0)
+    when "flow"
+      actionview_flow(config)
+      exit(0)
+    when "context"
+      actionview_context(config)
+      exit(0)
+    when "signature"
+      actionview_signature(config)
       exit(0)
     when "render"
       @file = @args[2]
@@ -433,14 +558,23 @@ class Herb::CLI
           bundle exec herb actionview [subcommand] [options]
 
         Subcommands:
-          check [path]    Check if render calls resolve to valid partial files
-          graph [path]    Show render dependency graph for a project or file
-          render [file]   Render ERB template using ActionView helpers
+          check [path]          Check render calls and flag dependency warnings
+          graph [path]          Show render dependency graph for a project or file
+          dependencies [path]   Show template dependency manifest (state, locals, helpers)
+          flow <file> <state>   Trace one piece of state through every partial it reaches
+          context <partial>     Show what a partial is always, sometimes, or never rendered inside
+          signature <partial>   Show the strict locals a partial receives across every call site
+          render [file]         Render ERB template using ActionView helpers
 
         Examples:
           bundle exec herb actionview check
           bundle exec herb actionview graph
           bundle exec herb actionview graph app/views/posts/show.html.erb
+          bundle exec herb actionview dependencies app/views/posts/show.html.erb
+          bundle exec herb actionview dependencies
+          bundle exec herb actionview flow app/views/posts/show.html.erb @post
+          bundle exec herb actionview context app/views/posts/_card.html.erb
+          bundle exec herb actionview signature app/views/posts/_card.html.erb
           bundle exec herb actionview render app/views/posts/show.html.erb
 
       HELP
@@ -449,6 +583,325 @@ class Herb::CLI
       puts "Unknown actionview subcommand: '#{subcommand}'"
       puts "Run 'herb actionview help' for available subcommands."
       exit(1)
+    end
+  end
+
+  def print_dependency_result(result)
+    if result.instance_variables.any?
+      puts " #{bold("Instance variables")} #{dimmed("(state)")}"
+      result.instance_variables.each { |v| puts "   #{v}" }
+      puts ""
+    end
+
+    if result.constants.any?
+      puts " #{bold("Constants")}"
+      result.constants.each { |c| puts "   #{c}" }
+      puts ""
+    end
+
+    if result.locals_declared.any?
+      puts " #{bold("Locals declared")} #{dimmed("(strict locals)")}"
+      result.locals_declared.each { |l| puts "   #{l}" }
+      puts ""
+    end
+
+    if result.locals_received.any?
+      puts " #{bold("Locals received")} #{dimmed("(from render calls)")}"
+      result.locals_received.each { |name, value| puts "   #{name} #{dimmed("\u2190")} #{value}" }
+      puts ""
+    end
+
+    if result.helper_calls.any?
+      puts " #{bold("Helper calls")} #{dimmed("(known)")}"
+      result.helper_calls.each { |h| puts "   #{dimmed(h)}" }
+      puts ""
+    end
+
+    return unless result.unknown_calls.any?
+
+    puts " #{bold("Unknown calls")}"
+    result.unknown_calls.each { |u| puts "   #{yellow(u)}" }
+    puts ""
+  end
+
+  def actionview_project_index(config)
+    require_relative "analysis/project_index"
+
+    unless @file
+      puts "Please provide a partial path."
+      exit(1)
+    end
+
+    path = File.expand_path(@file)
+
+    unless File.file?(path)
+      puts "Not a file: '#{path}'."
+      exit(1)
+    end
+
+    project_root = config.project_root&.to_s || File.dirname(path)
+    project = Herb::Analysis::ProjectIndex.new(project_root)
+    project.index_all
+
+    [project, path, project_root]
+  end
+
+  def actionview_header(path, project_root)
+    relative = Pathname.new(path).relative_path_from(Pathname.new(project_root)).to_s
+
+    puts ""
+    puts " #{bold("Herb")} \u{1f33f} #{dimmed("v#{Herb::VERSION}")}"
+    puts ""
+    puts " #{cyan(relative)}"
+    puts ""
+  end
+
+  def verdict_marker(verdict)
+    case verdict
+    when :always then green("\u2713")
+    when :never  then dimmed("\u2717")
+    when :mixed  then yellow("~")
+    else dimmed("?")
+    end
+  end
+
+  def actionview_flow(config)
+    require_relative "analysis/template_dependencies"
+
+    @file = @args[2]
+    state = @args[3]
+
+    unless @file
+      puts "Please provide a template path."
+      puts "Example: herb actionview flow app/views/posts/show.html.erb @post"
+      exit(1)
+    end
+
+    path = File.expand_path(@file)
+
+    unless File.file?(path)
+      puts "Not a file: '#{path}'."
+      exit(1)
+    end
+
+    project_root = config.project_root&.to_s || File.dirname(path)
+    dependencies = Herb::Analysis::TemplateDependencies.new(project_root)
+    dependencies.scan_helpers!
+
+    result = dependencies.analyze(path)
+    available = (result.instance_variables + result.constants).sort
+
+    unless state
+      actionview_header(path, project_root)
+      print_available_state(dependencies, path, available, project_root)
+      exit(0)
+    end
+
+    flow = dependencies.state_flow(path, state)
+
+    actionview_header(path, project_root)
+
+    unless flow
+      puts " #{dimmed("'#{state}' is not read by this template.")}"
+      puts ""
+
+      print_available_state(dependencies, path, available, project_root)
+
+      exit(1)
+    end
+
+    puts " #{bold("State flow")} #{dimmed("for #{yellow(state)}")}"
+    puts ""
+
+    print_flow_node(flow, project_root, "", true, true)
+
+    puts ""
+  end
+
+  def print_available_state(dependencies, path, available, project_root)
+    if available.empty?
+      puts " #{dimmed("This template does not read any instance variables or constants.")}"
+      puts ""
+
+      return
+    end
+
+    relative = Pathname.new(path).relative_path_from(Pathname.new(project_root)).to_s
+
+    puts " #{bold("Available state")} #{dimmed("(#{available.size} in this template)")}"
+    puts ""
+
+    available.each do |name|
+      affected = dependencies.affected_templates(path, name)
+      reach = affected.size <= 1 ? dimmed("this template only") : dimmed("#{affected.size} templates")
+
+      puts "   #{yellow(name)} #{reach}"
+    end
+
+    puts ""
+    puts " #{dimmed("Trace one with:")}"
+    puts "   #{dimmed("herb actionview flow #{relative} #{available.first}")}"
+    puts ""
+  end
+
+  def nesting_depths(nodes)
+    stack = [] #: Array[Array[Integer]]
+
+    nodes.map do |node|
+      path = node[:node_path] || []
+
+      stack.pop while stack.any? && !path_contains?(stack.last, path)
+
+      depth = stack.size
+      stack.push(path)
+
+      depth
+    end
+  end
+
+  def path_contains?(outer, inner)
+    outer.length < inner.length && inner[0, outer.length] == outer
+  end
+
+  def one_line(expression, limit = 72)
+    text = expression.to_s.gsub(/\s+/, " ").strip
+
+    text.length > limit ? "#{text[0, limit - 1]}\u2026" : text
+  end
+
+  def print_flow_node(node, project_root, prefix, last, root)
+    puts " #{prefix}\u2502" unless root
+
+    relative = Pathname.new(node.file).relative_path_from(Pathname.new(project_root)).to_s
+    connector = if root
+                  ""
+                else
+                  last ? "\u2514\u2500\u2500 " : "\u251c\u2500\u2500 "
+                end
+    carried = node.names.map { |name| yellow(name) }.join(", ")
+
+    via = if node.via&.any?
+            dimmed(" \u2190 #{node.via.map { |name, expression| "#{name}: #{expression}" }.join(", ")}")
+          else
+            ""
+          end
+
+    puts " #{prefix}#{connector}#{cyan(relative)} #{dimmed("[")}#{carried}#{dimmed("]")}#{via}"
+
+    child_prefix = if root
+                     prefix
+                   else
+                     prefix + (last ? "    " : "\u2502   ")
+                   end
+
+    depths = nesting_depths(node.nodes)
+
+    node.nodes.each_with_index do |affected, index|
+      nesting = "  " * depths[index]
+
+      puts " #{child_prefix}#{nesting}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(one_line(affected[:expression]))} #{dimmed("(#{affected[:location]})")}"
+    end
+
+    node.children.each_with_index do |child, index|
+      print_flow_node(child, project_root, child_prefix, index == node.children.size - 1, false)
+    end
+  end
+
+  def actionview_context(config)
+    @file = @args[2]
+    project, path, project_root = actionview_project_index(config)
+
+    actionview_header(path, project_root)
+
+    context = project.graph.context_of(path)
+    callers = project.graph.callers_of(path)
+
+    if callers.empty?
+      puts " #{dimmed("Not rendered by any template.")}"
+      puts ""
+      exit(0)
+    end
+
+    puts " #{bold("Rendered inside")} #{dimmed("(#{context.chains.size} #{context.chains.size == 1 ? "path" : "paths"})")}"
+    puts ""
+
+    context.chains.each_with_index do |chain, index|
+      connector = index == context.chains.size - 1 ? "\u2514\u2500\u2500" : "\u251c\u2500\u2500"
+      trail = chain.tags.any? ? chain.tags.join(dimmed(" \u203a ")) : dimmed("(top level)")
+      times = chain.occurrences > 1 ? dimmed(" \u00d7#{chain.occurrences}") : ""
+
+      puts "   #{connector} #{trail}#{times}"
+    end
+
+    puts ""
+
+    unless context.resolved
+      puts " #{yellow("Some call sites could not be resolved, so 'never' is reported as unknown.")}"
+      puts ""
+    end
+
+    tags = context.chains.flat_map(&:tags).uniq.sort
+
+    return if tags.empty?
+
+    puts " #{bold("Verdicts")}"
+    puts ""
+
+    tags.each do |tag|
+      verdict = context.ancestor_verdict([], tag)
+
+      puts "   #{verdict_marker(verdict)} #{tag} #{dimmed(verdict.to_s)}"
+    end
+
+    puts ""
+  end
+
+  def actionview_signature(config)
+    @file = @args[2]
+    project, path, project_root = actionview_project_index(config)
+
+    actionview_header(path, project_root)
+
+    signature = project.graph.infer_signature(path)
+    declaration = project.partials.declaration_for_file(path)
+
+    if signature.call_site_count.zero?
+      puts " #{dimmed("Not rendered by any template, so there is nothing to infer.")}"
+      puts ""
+      exit(0)
+    end
+
+    puts " #{bold("Inferred")} #{dimmed("(from #{signature.call_site_count} #{signature.call_site_count == 1 ? "call site" : "call sites"})")}"
+    puts ""
+    puts "   #{signature.strict_locals_declaration}"
+    puts ""
+
+    if declaration&.has_declaration
+      puts " #{bold("Declared")}"
+      puts ""
+      puts "   #{dimmed("required")} #{declaration.required_locals.join(", ")}" if declaration.required_locals.any?
+      puts "   #{dimmed("optional")} #{declaration.optional_locals.join(", ")}" if declaration.optional_locals.any?
+      puts "   #{dimmed("keyword rest")} #{declaration.has_keyword_rest}"
+      puts ""
+
+      declared = declaration.required_locals + declaration.optional_locals
+      passed = signature.locals.map(&:name)
+
+      undeclared = passed - declared
+      unused = declared - passed
+
+      if undeclared.any? && !declaration.has_keyword_rest
+        puts " #{yellow("Passed but not declared:")} #{undeclared.join(", ")}"
+        puts ""
+      end
+
+      if unused.any?
+        puts " #{dimmed("Declared but never passed:")} #{unused.join(", ")}"
+        puts ""
+      end
+    else
+      puts " #{dimmed("This partial does not declare strict locals yet.")}"
+      puts ""
     end
   end
 
@@ -666,11 +1119,27 @@ class Herb::CLI
     exit(0)
   end
 
+  def scoped_style_visitor
+    require_relative "engine/scoped_style/visitor"
+    Herb.ensure_installed("lightningcss")
+
+    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+  end
+
   def compile_template
     require_relative "engine"
 
     begin
+      source = file_content
       options = {}
+
+      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
+      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+      visitors = []
+
+      visitors << slot_visitor if slot_visitor
+      visitors << scoped_style_visitor if scoped_styles
+
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
@@ -684,7 +1153,11 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
       options[:validate_ruby] = true
-      engine = Herb::Engine.new(file_content, options)
+      options[:visitors] = visitors unless visitors.empty?
+
+      engine = Herb::Engine.new(source, options)
+
+      print_warnings(slot_visitor&.warnings || []) unless json
 
       if json
         result = {
@@ -755,11 +1228,31 @@ class Herb::CLI
     end
   end
 
+  def print_warnings(warnings)
+    return if warnings.empty?
+
+    $stderr.puts
+
+    warnings.each do |warning|
+      location = [@file, warning.location&.start&.line, warning.location&.start&.column].compact.join(":")
+
+      warn "#{bold(yellow("warning"))}: #{warning.message}"
+      warn "  #{dimmed(location)}"
+      warn "  #{dimmed(warning.expression.to_s)}" if warning.respond_to?(:expression) && warning.expression
+      $stderr.puts
+    end
+  end
+
   def render_template
     require_relative "engine"
 
     begin
+      source = file_content
       options = {}
+
+      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
+      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
@@ -773,10 +1266,17 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
 
-      engine = Herb::Engine.new(file_content, options)
+      visitors = []
+      visitors << slot_visitor if slot_visitor
+      visitors << scoped_style_visitor if scoped_styles
+      options[:visitors] = visitors unless visitors.empty?
+
+      engine = Herb::Engine.new(source, options)
       compiled_code = engine.src
 
       rendered_output = eval(compiled_code)
+
+      print_warnings(slot_visitor&.warnings || []) unless json
 
       if json
         result = {
@@ -785,6 +1285,8 @@ class Herb::CLI
           filename: engine.filename,
           strict: options[:strict],
         }
+
+        result[:slots] = slot_visitor.schema if slot_visitor
 
         puts result.to_json
       elsif silent

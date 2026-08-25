@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor, ElementStackVisitor, findParent } from "./rule-utils.js"
+import { BaseRuleVisitor, ElementStackVisitor, findParent } from "../utils/rule-utils.js"
 import { getTagName, getOpenTag, isHTMLOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -26,7 +26,7 @@ class XMLDeclarationChecker extends BaseRuleVisitor {
 
 class TagNameLowercaseVisitor extends ElementStackVisitor<TagNameAutofixContext> {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
-    if (!this.isInsideElement("svg") || this.currentTagName === "svg") {
+    if (!this.mayBeInsideSVG || this.currentTagName === "svg") {
       this.checkTagName(node)
     }
 
@@ -34,11 +34,26 @@ class TagNameLowercaseVisitor extends ElementStackVisitor<TagNameAutofixContext>
   }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
-    if (!this.isInsideElement("svg") || this.currentTagName === "svg") {
+    if (!this.mayBeInsideSVG || this.currentTagName === "svg") {
       this.checkTagName(node)
     }
 
     super.visitHTMLCloseTagNode(node)
+  }
+
+  /**
+   * Whether this position could be inside an `<svg>`, counting the elements the
+   * call sites nest this file in.
+   *
+   * SVG tag names are case sensitive, so lowercasing `<linearGradient>` breaks
+   * it. That makes the safe direction to stay quiet whenever an `<svg>` is
+   * possible, including when only some call sites supply one, rather than to
+   * lowercase markup that is already correct.
+   */
+  private get mayBeInsideSVG(): boolean {
+    const verdict = this.isInsideElementAcrossCallers("svg")
+
+    return verdict === "always" || verdict === "mixed"
   }
 
   private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode): void {

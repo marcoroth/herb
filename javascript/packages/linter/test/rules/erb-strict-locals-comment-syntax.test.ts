@@ -1,5 +1,6 @@
 import dedent from "dedent"
-import { describe, test } from "vitest"
+import { describe, expect, test } from "vitest"
+import { Herb } from "@herb-tools/node-wasm"
 import { ERBStrictLocalsCommentSyntaxRule } from "../../src/rules/erb-strict-locals-comment-syntax.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
@@ -55,7 +56,7 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
   })
 
   test("flags locals() without colon", () => {
-    expectError("Use `locals:` with a colon, not `locals()`. Correct format: `<%# locals: (...) %>`.")
+    expectError("Use `locals:` with a colon, not `locals()`. Correct format: `<%# locals: (...) %>`.", [1, 4],)
 
     assertOffenses(dedent`
       <%# locals() %>
@@ -63,7 +64,7 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
   })
 
   test("flags local: (singular) instead of locals:", () => {
-    expectError("Use `locals:` (plural), not `local:`.")
+    expectError("Use `locals:` (plural), not `local:`.", [1, 4])
 
     assertOffenses(dedent`
       <%# local: (user:) %>
@@ -71,7 +72,7 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
   })
 
   test("flags missing colon before parentheses", () => {
-    expectError("Use `locals:` with a colon before the parentheses, not `locals (`.")
+    expectError("Use `locals:` with a colon before the parentheses, not `locals (`.", [1, 4])
 
     assertOffenses(dedent`
       <%# locals (user:) %>
@@ -79,7 +80,7 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
   })
 
   test("flags missing space after colon", () => {
-    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.")
+    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.", [1, 11])
 
     assertOffenses(dedent`
       <%# locals:() %>
@@ -87,21 +88,148 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
   })
 
   test("flags missing space after colon with locals", () => {
-    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.")
+    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.", [1, 11])
 
     assertOffenses(dedent`
       <%# locals:(title:) %>
     `)
   })
 
+  test("flags parameters that are not wrapped in parentheses", () => {
+    expectError("Strict locals parameters must be wrapped in parentheses. Use `<%# locals: (user:) %>`.", [1, 12])
+
+    assertOffenses(`<%# locals: user %>`)
+  })
+
+  test("flags parameters without parentheses and keeps the keyword arguments in the suggestion", () => {
+    expectError("Strict locals parameters must be wrapped in parentheses. Use `<%# locals: (user:, admin: false) %>`.", [1, 12])
+
+    assertOffenses(`<%# locals: user:, admin: false %>`)
+  })
+
+  test("flags an empty declaration without parentheses", () => {
+    expectError("Strict locals declarations always need parentheses. Use `<%# locals: () %>` for a partial without locals.", [1, 12])
+
+    assertOffenses(`<%# locals: %>`)
+  })
+
+  test("flags unbalanced parentheses", () => {
+    expectError("Unbalanced parentheses in the strict locals declaration. Add the missing closing `)`.", [1, 12])
+
+    assertOffenses(`<%# locals: (user: %>`)
+  })
+
+  test("flags positional arguments", () => {
+    expectError("Strict locals only support keyword arguments. Use `user:` instead of the positional argument `user`.", [1, 13])
+
+    assertOffenses(`<%# locals: (user) %>`)
+  })
+
+  test("flags every positional argument", () => {
+    expectError("Strict locals only support keyword arguments. Use `user:` instead of the positional argument `user`.", [1, 13])
+    expectError("Strict locals only support keyword arguments. Use `admin:` instead of the positional argument `admin`.", [1, 19])
+
+    assertOffenses(`<%# locals: (user, admin) %>`)
+  })
+
+  test("flags block arguments", () => {
+    expectError("Strict locals only support keyword arguments. The block argument `&block` is not supported.", [1, 13])
+
+    assertOffenses(`<%# locals: (&block) %>`)
+  })
+
+  test("flags splat arguments", () => {
+    expectError("Strict locals only support keyword arguments. The splat argument `*args` is not supported. Use `**args` to accept arbitrary keyword arguments.", [1, 13])
+
+    assertOffenses(`<%# locals: (*args) %>`)
+  })
+
+  test("flags a trailing comma", () => {
+    expectError("Remove the extra comma from the strict locals parameters.", [1, 18])
+
+    assertOffenses(`<%# locals: (user:,) %>`)
+  })
+
+  test("flags a leading comma", () => {
+    expectError("Remove the extra comma from the strict locals parameters.", [1, 13])
+
+    assertOffenses(`<%# locals: (, user:) %>`)
+  })
+
+  test("flags a double comma", () => {
+    expectError("Remove the extra comma from the strict locals parameters.", [1, 19])
+
+    assertOffenses(`<%# locals: (user:,, admin:) %>`)
+  })
+
+  test("flags duplicate declarations", () => {
+    expectError("Duplicate strict locals declaration. Rails only uses the first `<%# locals: (...) %>` declaration in a partial.", [3, 4])
+
+    assertOffenses(dedent`
+      <%# locals: (user:) %>
+      <p>Content</p>
+      <%# locals: (admin:) %>
+    `)
+  })
+
   test("flags Ruby comment syntax for strict locals in execution tags", () => {
-    expectError("Use `<%#` instead of `<% #` for strict locals comments. Only ERB comment syntax is recognized by Rails.")
-    expectError("Use `<%#` instead of `<%- #` for strict locals comments. Only ERB comment syntax is recognized by Rails.")
+    expectError("Use `<%#` instead of `<% #` for strict locals comments. Only ERB comment syntax is recognized.", [1, 0])
+    expectError("Use `<%#` instead of `<%- #` for strict locals comments. Only ERB comment syntax is recognized.", [2, 0])
 
     assertOffenses(dedent`
       <% # locals: (user:) %>
       <%- # locals: (admin: false) %>
     `)
+  })
+
+  test("points invalid Ruby syntax at the parser error", () => {
+    expectError("Invalid Ruby syntax in the strict locals declaration: '@' without identifiers is not allowed as an instance variable name.", [1, 19])
+
+    assertOffenses(`<%# locals: (user: @) %>`)
+  })
+
+  test("uses precise ranges for every offense type", () => {
+    const cases: Array<{
+      source: string
+      start: [line: number, column: number]
+      end: [line: number, column: number]
+    }> = [
+      { source: "<%# locals() %>", start: [1, 4], end: [1, 10] },
+      { source: "<%# local: (user:) %>", start: [1, 4], end: [1, 10] },
+      { source: "<%# locals (user:) %>", start: [1, 4], end: [1, 10] },
+      { source: "<%# locals:() %>", start: [1, 11], end: [1, 12] },
+      { source: "<%# locals: user %>", start: [1, 12], end: [1, 16] },
+      { source: "<%# locals: %>", start: [1, 12], end: [1, 12] },
+      { source: "<%# locals: (user: %>", start: [1, 12], end: [1, 13] },
+      { source: "<%# locals: (user) %>", start: [1, 13], end: [1, 17] },
+      { source: "<%# locals: (*args) %>", start: [1, 13], end: [1, 18] },
+      { source: "<%# locals: (&block) %>", start: [1, 13], end: [1, 19] },
+      { source: "<%# locals: (user:,) %>", start: [1, 18], end: [1, 19] },
+      { source: "<%# locals: (, user:) %>", start: [1, 13], end: [1, 14] },
+      {
+        source: "<%# locals: (user:,, admin:) %>",
+        start: [1, 19],
+        end: [1, 20],
+      },
+      {
+        source: "<%# locals: (user:) %>\n<%# locals: (admin:) %>",
+        start: [2, 4],
+        end: [2, 11],
+      },
+      { source: "<% # locals: (user:) %>", start: [1, 0], end: [1, 2] },
+      { source: "<%# locals: (user: @) %>", start: [1, 19], end: [1, 20] },
+    ]
+
+    const rule = new ERBStrictLocalsCommentSyntaxRule()
+
+    for (const { source, start, end } of cases) {
+      const result = Herb.parse(source, rule.parserOptions)
+      const offenses = rule.check(result)
+
+      expect(offenses, source).toHaveLength(1)
+      expect([offenses[0].location.start.line, offenses[0].location.start.column], source).toEqual(start)
+      expect([offenses[0].location.end.line, offenses[0].location.end.column], source).toEqual(end)
+    }
   })
 
   test("allows single strict locals comment anywhere in partial", () => {
@@ -117,16 +245,12 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     expectNoOffenses(`<%# locals: (user:) %>`, { fileName: "_partial.html.erb" })
   })
 
-  test("warns when strict locals used in non-partial files", () => {
-    expectError("Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.")
-
-    assertOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/users/show.html.erb" })
+  test("leaves non-partial enforcement to the Action View rule", () => {
+    expectNoOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/users/show.html.erb" })
   })
 
-  test("warns when strict locals used in layout files", () => {
-    expectError("Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.")
-
-    assertOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/layouts/application.html.erb" })
+  test("leaves layout enforcement to the Action View rule", () => {
+    expectNoOffenses(`<%# locals: (user:) %>`, { fileName: "app/views/layouts/application.html.erb" })
   })
 
   test("does not warn when filename is not provided (unknown context)", () => {

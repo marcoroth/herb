@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { isERBOutputNode } from "@herb-tools/core"
 
 import type { ERBRenderNode, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -25,7 +25,8 @@ export class ActionViewNoSilentRenderRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

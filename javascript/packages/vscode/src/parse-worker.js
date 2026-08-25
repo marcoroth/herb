@@ -12,6 +12,7 @@ const { Config } = require('@herb-tools/config');
   const formatterMaxLineLength = parseInt(process.argv[6]) || 80;
   const linterRulesJson = process.argv[7] || '{}';
   const workspaceRoot = process.argv[8] || process.cwd();
+  const formatterIndentStyle = process.argv[9] === 'tab' ? 'tab' : 'space';
 
   let linterRules = {};
   try {
@@ -89,6 +90,7 @@ const { Config } = require('@herb-tools/config');
       try {
         const formatter = new Formatter(Herb, {
           indentWidth: formatterIndentWidth,
+          indentStyle: formatterIndentStyle,
           maxLineLength: formatterMaxLineLength
         });
         const formattedContent = formatter.format(content);

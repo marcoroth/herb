@@ -35,7 +35,7 @@ typedef struct {
 tag_helper_info_T* tag_helper_info_init(hb_allocator_T* allocator);
 void tag_helper_info_free(tag_helper_info_T** info);
 
-tag_helper_handler_T* get_tag_helper_handlers(void);
+const tag_helper_handler_T* const* get_tag_helper_handlers(void);
 size_t get_tag_helper_handlers_count(void);
 
 char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator);

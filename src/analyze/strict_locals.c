@@ -112,7 +112,8 @@ static hb_array_T* extract_strict_locals(
   const char* params_open,
   const uint8_t* synthetic_start,
   hb_array_T* errors,
-  hb_allocator_T* allocator
+  hb_allocator_T* allocator,
+  const parser_options_T* parser_options
 ) {
   if (!params) { return hb_array_init(0, allocator); }
 
@@ -132,11 +133,11 @@ static hb_array_T* extract_strict_locals(
     hb_string_T name = local->name ? local->name->value : hb_string("");
 
     if (string_equals(local->kind.data, "positional")) {
-      append_strict_locals_positional_argument_error(name, start, end, allocator, local->base.errors);
+      append_strict_locals_positional_argument_error(name, start, end, allocator, &local->base.errors, parser_options);
     } else if (string_equals(local->kind.data, "rest")) {
-      append_strict_locals_splat_argument_error(name, start, end, allocator, local->base.errors);
+      append_strict_locals_splat_argument_error(name, start, end, allocator, &local->base.errors, parser_options);
     } else if (string_equals(local->kind.data, "block")) {
-      append_strict_locals_block_argument_error(name, start, end, allocator, local->base.errors);
+      append_strict_locals_block_argument_error(name, start, end, allocator, &local->base.errors, parser_options);
     }
   }
 
@@ -146,7 +147,8 @@ static hb_array_T* extract_strict_locals(
 static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   AST_ERB_CONTENT_NODE_T* erb_node,
   const char* source,
-  hb_allocator_T* allocator
+  hb_allocator_T* allocator,
+  const parser_options_T* parser_options
 ) {
   const char* content_bytes = erb_node->content->value.data;
   const char* params_open = find_params_open(content_bytes);
@@ -183,14 +185,15 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
       error_start,
       error_end,
       allocator,
-      errors
+      &errors,
+      parser_options
     );
     hb_allocator_dealloc(allocator, rest);
 
     return ast_erb_strict_locals_node_init(
-      erb_node->tag_opening,
-      erb_node->content,
-      erb_node->tag_closing,
+      token_copy(erb_node->tag_opening, allocator),
+      token_copy(erb_node->content, allocator),
+      token_copy(erb_node->tag_closing, allocator),
       erb_node->analyzed_ruby,
       erb_node->prism_node,
       locals,
@@ -265,7 +268,8 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
       params_open,
       synthetic_start,
       errors,
-      allocator
+      allocator,
+      parser_options
     );
   }
 
@@ -275,9 +279,9 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   hb_buffer_free(&synthetic_buffer);
 
   return ast_erb_strict_locals_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     erb_node->analyzed_ruby,
     erb_node->prism_node,
     locals,
@@ -300,7 +304,7 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
     if (!is_strict_locals_node(erb_node)) { continue; }
 
     AST_ERB_STRICT_LOCALS_NODE_T* strict_locals_node =
-      create_strict_locals_node(erb_node, context->source, context->allocator);
+      create_strict_locals_node(erb_node, context->source, context->allocator, context->options);
 
     if (!strict_locals_node) { continue; }
 
@@ -309,12 +313,17 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
         strict_locals_node->base.location.start,
         strict_locals_node->base.location.end,
         context->allocator,
-        strict_locals_node->base.errors
+        &strict_locals_node->base.errors,
+        context->options
       );
     }
 
     context->found_strict_locals = true;
     hb_array_set(array, index, strict_locals_node);
+
+    if (strict_locals_node->analyzed_ruby == erb_node->analyzed_ruby) { erb_node->analyzed_ruby = NULL; }
+
+    ast_node_free(child, context->allocator);
   }
 }
 

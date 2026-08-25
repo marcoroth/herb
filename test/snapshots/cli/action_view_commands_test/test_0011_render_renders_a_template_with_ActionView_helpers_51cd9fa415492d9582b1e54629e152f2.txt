@@ -1,0 +1,6 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0011_render renders a template with ActionView helpers"
+input: "actionview render"
+---
+exit: 0
+<a href="/">Home</a>

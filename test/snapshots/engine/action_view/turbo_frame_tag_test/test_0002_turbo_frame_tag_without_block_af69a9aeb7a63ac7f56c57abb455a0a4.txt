@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0002_turbo_frame_tag without block"
+input: "{source: \"<%= turbo_frame_tag \\\"tray\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<turbo-frame id="tray"></turbo-frame>'.freeze

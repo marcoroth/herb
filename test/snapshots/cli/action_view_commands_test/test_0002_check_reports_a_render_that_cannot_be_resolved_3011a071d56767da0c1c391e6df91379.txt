@@ -1,0 +1,33 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0002_check reports a render that cannot be resolved"
+input: "unresolved: <table><%= render \"posts/missing\" %></table>"
+---
+exit: 1
+
+Herb 🌿 vVERSION
+
+✓ Using Herb config file at <project>/.herb.yml
+Checking render calls in 1 file...
+
+────────────────────────────────────────────────────────────
+
+ Unresolved render calls:
+ These render calls reference partials that could not be found on disk.
+
+ app/views/posts/index.html.erb:
+   ✗ posts/missing at 1:7 - app/views/posts/_missing.html.erb, app/views/posts/_missing.html.herb, app/views/posts/_missing.erb, app/views/posts/_missing.herb, app/views/posts/_missing.turbo_stream.erb, app/views/posts/_missing.turbo_stream.herb
+
+ ────────────────────────────────────────────────────────────
+
+ Issue summary:
+  Unresolved partials (1 reference in 1 file)
+
+ ────────────────────────────────────────────────────────────
+
+ Summary:
+  Version      herb gem vVERSION, libprism vVERSION, libherb vVERSION (Ruby C native extension)
+  Checked      1 file
+  Renders      1 total | 1 with partial
+  Partials     0 on disk | 1 unresolved
+  Duration     <duration>
+

@@ -68,6 +68,16 @@ module Engine
           <% end %>
         ERB
       end
+
+      test "link_to with aria-label string key" do
+        assert_optimized_snapshot('<%= link_to "More", "#", "aria-label": "Learn more about GitHub" %>')
+        assert_parsed_snapshot('<%= link_to "More", "#", "aria-label": "Learn more about GitHub" %>', action_view_helpers: true)
+      end
+
+      test "link_to with aria hash label" do
+        assert_optimized_snapshot('<%= link_to "More", "#", aria: { label: "Learn more about GitHub" } %>')
+        assert_parsed_snapshot('<%= link_to "More", "#", aria: { label: "Learn more about GitHub" } %>', action_view_helpers: true)
+      end
     end
   end
 end

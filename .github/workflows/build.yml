@@ -12,12 +12,12 @@ permissions:
 jobs:
   build:
     name: Build
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Add LLVM apt Repo
         run: |-
@@ -47,11 +47,19 @@ jobs:
       - name: RuboCop
         run: bundle exec rubocop
 
+      - name: Yerba
+        run: bundle exec yerba check
+
       - name: clang-format version
         run: clang-format-21 --version
 
       - name: Lint
         run: bin/lint
+
+      - name: RBS Validation
+        run: |-
+          bundle exec rbs collection install --frozen
+          bundle exec rbs -Isig validate
 
       - name: Steep
         run: bundle exec steep check
@@ -80,5 +88,11 @@ jobs:
       - name: Run C tests
         run: ./run_herb_tests
 
+      - name: Run allocation benchmark
+        run: make bench_allocs
+
       - name: Run valgrind on examples/
         run: ./bin/valgrind_check_examples
+
+      - name: Run valgrind on examples/ with the tracking allocator
+        run: ./bin/valgrind_check_allocations

@@ -180,9 +180,7 @@ describe("Spacing", () => {
         <div id="speakers" class="grid gap-4 min-w-full mb-6">
           <% @speakers_without_github.each do |speaker| %>
             <%= content_tag :div, id: dom_id(speaker), class: "flex justify-between p-4 rounded-lg border bg-white" do %>
-              <span>
-                <%= link_to speaker.name, edit_speaker_path(speaker), class: "underline link", data: {turbo_frame: "modal"} %>
-              </span>
+              <span><%= link_to speaker.name, edit_speaker_path(speaker), class: "underline link", data: {turbo_frame: "modal"} %></span>
 
               <span>
                 <%= link_to "https://github.com/search?q=#{speaker.name}&type=users", target: "_blank", class: "underline link" do %>
@@ -600,7 +598,6 @@ describe("Spacing", () => {
 
           <!-- Body comment -->
           <p>Content</p>
-
           <!-- Footer comment -->
         </div>
       `)

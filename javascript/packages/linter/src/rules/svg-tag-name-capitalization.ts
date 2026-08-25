@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
+import { ElementStackVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, Mutable, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLCloseTagNode, ERBOpenTagNode, Token, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -29,7 +29,7 @@ class SVGTagNameCapitalizationVisitor extends ElementStackVisitor<SVGTagNameCapi
   }
 
   private checkTagName(tagNameToken: Token | null, type: string, autofixNode?: HTMLTagNode): void {
-    if (!this.isInsideElement("svg")) return
+    if (this.isInsideElementAcrossCallers("svg") !== "always") return
 
     const tagName = tagNameToken?.value
     if (!tagName) return

@@ -14,7 +14,10 @@
         "parallel": false
       },
       "inputs": ["{workspaceRoot}/Gemfile", "{workspaceRoot}/Gemfile.lock", "{workspaceRoot}/Makefile"],
-      "outputs": ["{workspaceRoot}/vendor/bundle/ruby/*/bundler/gems/prism-*/build/libprism.a"]
+      "outputs": [
+        "{workspaceRoot}/vendor/bundle/ruby/*/bundler/gems/prism-*/build/libprism.a",
+        "{workspaceRoot}/vendor/prism"
+      ]
     },
     "clean": {
       "executor": "nx:run-commands",

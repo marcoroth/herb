@@ -264,9 +264,7 @@ static void add_multiple_tags_error_to_erb_node(
     allocator
   );
 
-  if (!erb_node->errors) { erb_node->errors = hb_array_init(0, allocator); }
-
-  hb_array_append(erb_node->errors, error);
+  hb_array_append_lazy(&erb_node->errors, error, allocator);
 }
 
 static void check_and_report_multiple_tags_in_if(AST_ERB_IF_NODE_T* if_node, hb_allocator_T* allocator) {
@@ -392,7 +390,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
     AST_HTML_CONDITIONAL_OPEN_TAG_NODE_T* conditional_open_tag = ast_html_conditional_open_tag_node_init(
       conditional_node,
-      tag_name_token,
+      token_copy(tag_name_token, allocator),
       false,
       conditional_node->location.start,
       conditional_node->location.end,
@@ -404,7 +402,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
     AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
       (AST_NODE_T*) conditional_open_tag,
-      tag_name_token,
+      token_copy(tag_name_token, allocator),
       body,
       (AST_NODE_T*) close_tag,
       false,
@@ -425,6 +423,8 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
         hb_array_append(consumed_indices, index);
       }
     }
+
+    i = close_index;
   }
 
   if (hb_array_size(consumed_indices) > 0) {
@@ -528,6 +528,12 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
     case AST_ERB_BLOCK_NODE: {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) node;
       transform_conditional_open_tags_in_array(block_node->body, context);
+      return false;
+    }
+
+    case AST_ERB_ITERATION_BLOCK_NODE: {
+      AST_ERB_ITERATION_BLOCK_NODE_T* iteration_block_node = (AST_ERB_ITERATION_BLOCK_NODE_T*) node;
+      transform_conditional_open_tags_in_array(iteration_block_node->body, context);
       return false;
     }
 

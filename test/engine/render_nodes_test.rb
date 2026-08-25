@@ -38,15 +38,54 @@ module Engine
     def render_diagnostics(template, **_options)
       result = Herb.parse(template, render_nodes: true)
 
-      validator = Herb::Engine::Validators::RenderValidator.new(
-        enabled: true,
-        filename: Pathname.new("app/views/posts/show.html.erb"),
-        project_path: Pathname.new(@project_path)
+      validator = Herb::Engine::Validators::RenderValidator.new
+
+      validator.inherit_context(
+        Herb::Engine::VisitorContext.new(
+          file_path: "app/views/posts/show.html.erb",
+          project_path: @project_path
+        )
       )
 
       result.value.accept(validator)
 
       validator.diagnostics
+    end
+
+    def flat_project_diagnostics(partial)
+      root = Dir.mktmpdir("herb_render_flat")
+
+      begin
+        FileUtils.mkdir_p(File.join(root, "posts"))
+        File.write(File.join(root, "posts", "_card.html.erb"), "<div>Card</div>")
+
+        result = Herb.parse(%(<%= render "#{partial}" %>), render_nodes: true)
+        validator = Herb::Engine::Validators::RenderValidator.new
+
+        validator.inherit_context(
+          Herb::Engine::VisitorContext.new(
+            file_path: "posts/show.html.erb",
+            project_path: Pathname.new(root)
+          )
+        )
+
+        result.value.accept(validator)
+
+        validator.diagnostics
+      ensure
+        FileUtils.rm_rf(root)
+      end
+    end
+
+    test "resolves a partial in a project that does not keep templates in app/views" do
+      assert_empty flat_project_diagnostics("posts/card")
+    end
+
+    test "still reports a missing partial in a project that does not keep templates in app/views" do
+      diagnostics = flat_project_diagnostics("posts/nope")
+
+      assert_equal 1, diagnostics.size
+      assert_includes diagnostics.first.message, "could not be resolved"
     end
 
     test "no diagnostics for existing partial" do
@@ -65,18 +104,18 @@ module Engine
       diagnostics = render_diagnostics('<%= render "nonexistent/missing" %>')
 
       assert_equal 1, diagnostics.length
-      assert_equal :error, diagnostics.first[:severity]
-      assert_includes diagnostics.first[:message], "Partial 'nonexistent/missing' could not be resolved"
-      assert_equal "RenderUnresolved", diagnostics.first[:code]
+      assert_equal :error, diagnostics.first.severity
+      assert_includes diagnostics.first.message, "Partial 'nonexistent/missing' could not be resolved"
+      assert_equal "render-unresolved", diagnostics.first.code
     end
 
     test "warns for dynamic render calls" do
       diagnostics = render_diagnostics("<%= render @product %>")
 
       assert_equal 1, diagnostics.length
-      assert_equal :warning, diagnostics.first[:severity]
-      assert_includes diagnostics.first[:message], "Dynamic render call cannot be statically resolved"
-      assert_equal "RenderDynamic", diagnostics.first[:code]
+      assert_equal :warning, diagnostics.first.severity
+      assert_includes diagnostics.first.message, "Dynamic render call cannot be statically resolved"
+      assert_equal "render-dynamic", diagnostics.first.code
     end
 
     test "no diagnostics for keyword partial that exists" do
@@ -89,7 +128,7 @@ module Engine
       diagnostics = render_diagnostics('<%= render partial: "missing/partial" %>')
 
       assert_equal 1, diagnostics.length
-      assert_includes diagnostics.first[:message], "Partial 'missing/partial' could not be resolved"
+      assert_includes diagnostics.first.message, "Partial 'missing/partial' could not be resolved"
     end
 
     test "render validator is not run during normal compilation" do
@@ -105,11 +144,9 @@ module Engine
     test "no validation when filename is not provided" do
       result = Herb.parse('<%= render "nonexistent" %>', render_nodes: true)
 
-      validator = Herb::Engine::Validators::RenderValidator.new(
-        enabled: true,
-        filename: nil,
-        project_path: Pathname.new(@project_path)
-      )
+      validator = Herb::Engine::Validators::RenderValidator.new
+
+      validator.inherit_context(Herb::Engine::VisitorContext.new(project_path: @project_path))
 
       result.value.accept(validator)
 

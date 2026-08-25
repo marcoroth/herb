@@ -1,9 +1,9 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
-import { getTagName, getTagLocalName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
+import { isVoidElement, findParent, BaseRuleVisitor } from "../utils/rule-utils.js"
+import { getTagName, getTagLocalName, isWhitespaceNode, Token, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
-import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult, ParserOptions } from "@herb-tools/core"
+import type { Node, HTMLOpenTagNode, HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 interface NoSelfClosingAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode>
@@ -27,7 +27,7 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 
       this.addOffense(
         `Use \`${instead}\` instead of self-closing \`<${tagName} />\` for HTML compatibility.`,
-        node.location,
+        node.tag_closing.location,
         {
           node,
           tagName,
@@ -55,6 +55,13 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     return { action_view_helpers: true }
   }
 
+  private isIndentation(precedingNode: Node | null, node: Node): boolean {
+    return !!precedingNode &&
+      isWhitespaceNode(node) &&
+      isWhitespaceNode(precedingNode) &&
+      (precedingNode.value?.value?.includes("\n") || false)
+  }
+
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
     const visitor = new NoSelfClosingVisitor(this.ruleName, context)
 
@@ -76,8 +83,13 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     if (node.children && Array.isArray(node.children)) {
       const children = node.children as Node[]
 
-      if (children.length > 0 && isWhitespaceNode(children[children.length - 1])) {
-        node.children = children.slice(0, -1)
+      if (children.length > 0) {
+        const lastChild = children[children.length - 1]
+        const secondToLastChild = children[children.length - 2] ?? null
+
+        if (isWhitespaceNode(lastChild) && !this.isIndentation(secondToLastChild, lastChild)) {
+          node.children = children.slice(0, -1)
+        }
       }
     }
 
@@ -85,18 +97,10 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
       const parent = findParent(result.value, node as any as Node) as Mutable<HTMLElementNode> | null
 
       if (parent && parent.type === "AST_HTML_ELEMENT_NODE") {
-        const tag_opening: SerializedToken = { type: "TOKEN_HTML_TAG_START_CLOSE", value: "</", location: Location.zero, range: [0, 0] }
-        const tag_name: SerializedToken = { type: "TOKEN_IDENTIFIER", value: tagName, location: Location.zero, range: [0, 0] }
-        const tag_closing: SerializedToken = { type: "TOKEN_HTML_TAG_END", value: ">", location: Location.zero, range: [0, 0] }
-
-        parent.close_tag = HTMLCloseTagNode.from({
-          type: "AST_HTML_CLOSE_TAG_NODE",
-          tag_opening,
-          tag_name,
-          tag_closing,
-          children: [],
-          errors: [],
-          location: Location.zero,
+        parent.close_tag = HTMLCloseTagNode.build({
+          tag_opening: Token.from("TOKEN_HTML_TAG_START_CLOSE", "</"),
+          tag_name: Token.from("TOKEN_IDENTIFIER", tagName),
+          tag_closing: Token.from("TOKEN_HTML_TAG_END", ">"),
         })
       }
     }

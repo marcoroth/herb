@@ -1,0 +1,12 @@
+---
+source: herb-highlighter/tests/inline_diagnostic_renderer_test.rs
+expression: "render(content, &[diagnostic()], true)"
+---
+/test/file.erb
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+        │      [error] Test error message (test-rule)
+        │
+      3 │ line 3

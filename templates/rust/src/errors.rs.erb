@@ -1,5 +1,5 @@
 use crate::{Location, Position, Token};
-use colored::*;
+use crate::style::Colorize;
 
 fn escape_string(s: &str) -> String {
   s.replace('\\', "\\\\")

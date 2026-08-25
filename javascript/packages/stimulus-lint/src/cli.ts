@@ -19,12 +19,17 @@ class StimulusFileProcessor extends FileProcessor {
     this.stimulusProject = stimulusProject
   }
 
+  async findUnknownRules(ruleNames: string[], context?: any, formatOption: any = 'detailed', additionalRuleNames: string[] = []) {
+    return this.parentProcessor.findUnknownRules(ruleNames, context, formatOption, additionalRuleNames)
+  }
+
   async processFiles(files: string[], formatOption: any = 'detailed', context?: any) {
     const lintStartTime = Date.now()
 
     const baseResults = await this.parentProcessor.processFiles(files, formatOption, context)
 
-    const stimulusLinter = new StimulusLinter(Herb, defaultRules, this.stimulusProject)
+    const stimulusRules = context?.only ? defaultRules.filter(rule => context.only.includes(rule.ruleName)) : defaultRules
+    const stimulusLinter = new StimulusLinter(Herb, stimulusRules, this.stimulusProject)
 
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
@@ -136,6 +141,10 @@ export class CLI extends HerbLinterCLI {
 
   constructor() {
     super()
+  }
+
+  protected additionalRuleNames(): string[] {
+    return defaultRules.map(rule => rule.ruleName)
   }
 
   protected async beforeProcess(): Promise<void> {

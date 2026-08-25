@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0026_Ruby interpolation in the content is not evaluated - render"
+input: "{source: \"<main></main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={} content=\"<p>\\\#{1 + 1}</p>\">]}}"
+---
+<main><p>#{1 + 1}</p></main>

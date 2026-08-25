@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/core",
-  "version": "0.10.1",
+  "version": "0.10.3",
   "description": "Core module exporting shared interfaces, AST node definitions, and common utilities for Herb",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -15,10 +15,11 @@
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "download-html-entities": "node scripts/download-html-entities.mjs",
-    "build": "yarn download-html-entities && yarn clean && rollup -c",
-    "dev": "rollup -c -w",
+    "build": "yarn download-html-entities && yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
@@ -30,10 +31,10 @@
       "default": "./dist/herb-core.esm.js"
     }
   },
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "@ruby/prism": "^1.9.0"
   },
+  "devDependencies": {},
   "files": [
     "package.json",
     "README.md",

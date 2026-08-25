@@ -2,7 +2,6 @@
   "version": 2,
   "projects": {
     "@herb-tools/browser": "javascript/packages/browser",
-    "@herb-tools/client": "javascript/packages/client",
     "@herb-tools/config": "javascript/packages/config",
     "@herb-tools/core": "javascript/packages/core",
     "@herb-tools/dev-tools": "javascript/packages/dev-tools",
@@ -24,6 +23,7 @@
     "prism": "./prism",
     "ruby-gem": "./ext",
     "templates": "./templates",
-    "wasm": "./wasm"
+    "wasm": "./wasm",
+    "@herb-tools/client": "javascript/packages/client"
   }
 }

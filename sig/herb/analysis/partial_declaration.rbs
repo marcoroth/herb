@@ -1,0 +1,80 @@
+# Generated from lib/herb/analysis/partial_declaration.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class StrictLocal < Data
+      attr_reader name(): untyped
+
+      attr_reader required(): untyped
+
+      attr_reader default_source(): untyped
+
+      def self.new: (untyped name, untyped required, untyped default_source) -> instance
+                  | (name: untyped, required: untyped, default_source: untyped) -> instance
+
+      def self.members: () -> [ :name, :required, :default_source ]
+
+      def members: () -> [ :name, :required, :default_source ]
+    end
+
+    class StrictLocal
+      # : (name: String, required: bool, ?default_source: String?) -> void
+      def initialize: (name: String, required: bool, ?default_source: String?) -> void
+
+      # : () -> Hash[String, untyped]
+      def to_h: () -> Hash[String, untyped]
+
+      # : (Hash[String, untyped]) -> StrictLocal
+      def self.from: (Hash[String, untyped]) -> StrictLocal
+    end
+
+    class PartialDeclaration
+      KEYWORD_KIND: String
+
+      KEYWORD_REST_KIND: String
+
+      attr_reader file: String
+
+      attr_reader locals: Array[StrictLocal]
+
+      attr_reader location: Hash[String, Integer]?
+
+      attr_accessor has_declaration: bool
+
+      attr_accessor has_keyword_rest: bool
+
+      # : (String) -> PartialDeclaration
+      def self.without_strict_locals: (String) -> PartialDeclaration
+
+      # : (Herb::AST::DocumentNode, String) -> PartialDeclaration
+      def self.from_document: (Herb::AST::DocumentNode, String) -> PartialDeclaration
+
+      # : (Herb::AST::Node) -> Hash[String, Integer]?
+      def self.location_of: (Herb::AST::Node) -> Hash[String, Integer]?
+
+      # : (Hash[String, untyped]) -> PartialDeclaration
+      def self.from: (Hash[String, untyped]) -> PartialDeclaration
+
+      # : (String) -> void
+      def initialize: (String) -> void
+
+      # : (Hash[String, Integer]?) -> void
+      attr_writer location: untyped
+
+      # : (String, bool, ?default_source: String?) -> void
+      def add_local: (String, bool, ?default_source: String?) -> void
+
+      # : () -> Array[String]
+      def required_locals: () -> Array[String]
+
+      # : () -> Array[String]
+      def optional_locals: () -> Array[String]
+
+      # : (String) -> bool
+      def accepts?: (String) -> bool
+
+      # : () -> Hash[String, untyped]
+      def to_h: () -> Hash[String, untyped]
+    end
+  end
+end

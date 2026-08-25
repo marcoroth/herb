@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0037_tag.div with empty string class"
+input: "{source: \"<%= tag.div class: \\\"\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<div class=""></div>'.freeze

@@ -180,5 +180,23 @@ module Analyze
         <%= (condition? ? "true" : "false") if another_condition? %>
       HTML
     end
+
+    test "ternary with postfix unless" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= (condition? ? "true" : "false") unless hidden? %>
+      HTML
+    end
+
+    test "ternary without spaces around branches with postfix if" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= (condition? ? "true":"false") if another_condition? %>
+      HTML
+    end
+
+    test "postfix with a body that would be HTML-escaped" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= '<b>' if selected %>
+      HTML
+    end
   end
 end

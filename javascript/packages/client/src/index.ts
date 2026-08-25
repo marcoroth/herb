@@ -1,63 +1,23 @@
-export { Connection } from "./connection"
-export { HerbClient } from "./client"
-export { Toast } from "./toast"
-export { MismatchAlert } from "./mismatch-alert"
-export { ConnectionDot } from "./connection-dot"
-export { applyPatch } from "./patch"
+export { HerbRuntime } from "./runtime"
+export { SlotIndex } from "./slot-index"
+export { SlotState } from "./state"
+export { SlotMutations } from "./mutations"
+export { SlotActions } from "./actions"
 
-export type {
-  ConnectionOptions,
-  ConnectionState,
-  HerbClientOptions,
-  HerbMessage,
-  WelcomeMessage,
-  PatchMessage,
-  ReloadMessage,
-  ErrorMessage,
-  FixedMessage,
-  DiffOperation,
-  ParseError,
-} from "./types"
+export { stateFor } from "./runtime"
+export { report, clearOnNavigation } from "./report"
 
-import { HerbClient } from "./client"
-import type { HerbClientOptions } from "./types"
+export { SLOT_EVENT } from "./slot-index"
+export { RUNTIME_ORIGIN } from "./report"
+export { DEPENDENCIES_ATTRIBUTE, DEPENDENCIES_SELECTOR, STATE_EVENT } from "./state"
+export { HERB_ATTRIBUTES, ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR } from "./attributes"
 
-declare global {
-  interface Window {
-    __herbClient?: HerbClient
-  }
-}
+export type { RuntimeDiagnostic } from "./report"
+export type { HerbAttribute, ActionName, ActionSchema } from "./attributes"
+export type { MutationTarget, SubmitOptions, MutationStatus, MutationResult, MutationRequest, MutationTransport, MutationsOptions } from "./mutations"
 
-let instance: HerbClient | null = null
-
-export function initHerbClient(options: HerbClientOptions = {}): HerbClient {
-  if (instance) {
-    instance.disconnect()
-  }
-
-  instance = new HerbClient(options)
-  window.__herbClient = instance
-  instance.connect()
-
-  return instance
-}
-
-export function getHerbClient(): HerbClient | null {
-  return instance
-}
-
-function autoInitialize(): void {
-  const debugMeta = document.querySelector('meta[name="herb-debug-mode"]')
-
-  if (!debugMeta || debugMeta.getAttribute("content") !== "true") return
-
-  initHerbClient()
-}
-
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoInitialize)
-  } else {
-    autoInitialize()
-  }
-}
+export type { RuntimeOptions, ScopedState } from "./runtime"
+export type { Slot, SlotType, SlotAnchor, Region, Item, ScanResult, ItemPlan, RenderMode, ItemValues, AddItemOptions, ApplyOptions, RevertToken } from "./slot-index"
+export type { SlotEventDetail, SlotOperation, Payload, PayloadSlots, PayloadValue, Branched, Collected, ApplyReport, Deferred, DeferredReason } from "./slot-index"
+export type { StateOptions, StateTransport, StateRequest, StateReport, StateSlot, StateMode, StatePersistence, DependencyMap } from "./state"
+export type { StateKind, StateValue, StateScope, StateManifest, DeclaredState, StateChangeDetail, ScopedSetOptions } from "./state"

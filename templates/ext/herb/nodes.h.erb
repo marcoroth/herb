@@ -3,8 +3,9 @@
 
 #include "../../src/include/herb.h"
 #include <ruby.h>
+#include <stdbool.h>
 
 void rb_init_node_classes(void);
-VALUE rb_node_from_c_struct(AST_NODE_T* node);
+VALUE rb_node_from_c_struct(AST_NODE_T* node, const parser_options_T* options);
 
 #endif

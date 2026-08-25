@@ -26,12 +26,26 @@ TEST(html_util_html_self_closing_tag_string)
   ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("somelongerstring"), &alloc), hb_string("<somelongerstring />")));
 END
 
+TEST(html_util_is_whitespace_preserving_element)
+  ck_assert(is_whitespace_preserving_element(hb_string("pre")));
+  ck_assert(is_whitespace_preserving_element(hb_string("textarea")));
+  ck_assert(is_whitespace_preserving_element(hb_string("script")));
+  ck_assert(is_whitespace_preserving_element(hb_string("style")));
+  ck_assert(is_whitespace_preserving_element(hb_string("PRE")));
+
+  ck_assert(!is_whitespace_preserving_element((hb_string_T) { .data = NULL, .length = 0 }));
+  ck_assert(!is_whitespace_preserving_element(hb_string("")));
+  ck_assert(!is_whitespace_preserving_element(hb_string("div")));
+  ck_assert(!is_whitespace_preserving_element(hb_string("prefix")));
+END
+
 TCase* html_util_tests(void) {
   TCase* html_util = tcase_create("HTML Util");
 
   tcase_add_test(html_util, html_util_html_closing_tag_string);
   tcase_add_test(html_util, html_util_html_closing_tag_string);
   tcase_add_test(html_util, html_util_html_self_closing_tag_string);
+  tcase_add_test(html_util, html_util_is_whitespace_preserving_element);
 
   return html_util;
 }

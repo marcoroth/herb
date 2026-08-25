@@ -1,10 +1,12 @@
-import { Token } from "@herb-tools/core"
-import { Herb } from "@herb-tools/node-wasm"
+import { Token, RUBY_KEYWORDS } from "@herb-tools/core"
 import { colorize } from "./color.js"
 
 import type { HerbBackend } from "@herb-tools/core"
 import type { Color } from "./color.js"
 import type { ColorScheme } from "./themes.js"
+
+const HIGHLIGHTED_METHODS = ["raise"]
+const HIGHLIGHTED_WORDS = new Set([...RUBY_KEYWORDS, ...HIGHLIGHTED_METHODS])
 
 type SyntaxRenderState = {
   inTag: boolean
@@ -22,10 +24,10 @@ export class SyntaxRenderer {
   private isColorEnabled: boolean
   private herb: HerbBackend
 
-  public constructor(colors: ColorScheme, herb?: HerbBackend) {
+  public constructor(colors: ColorScheme, herb: HerbBackend) {
     this.colors = colors
     this.isColorEnabled = process.env.NO_COLOR === undefined
-    this.herb = herb || Herb
+    this.herb = herb
   }
 
   public async initialize(): Promise<void> {
@@ -67,45 +69,10 @@ export class SyntaxRenderer {
     if (!this.isColorEnabled) return code
 
     const words = code.split(/(\s+|[^\w\s]+)/)
-    const keywords = [
-      "if",
-      "unless",
-      "else",
-      "elsif",
-      "end",
-      "def",
-      "class",
-      "module",
-      "return",
-      "yield",
-      "break",
-      "next",
-      "case",
-      "when",
-      "then",
-      "while",
-      "until",
-      "for",
-      "in",
-      "do",
-      "begin",
-      "rescue",
-      "ensure",
-      "retry",
-      "raise",
-      "super",
-      "self",
-      "nil",
-      "true",
-      "false",
-      "and",
-      "or",
-      "not",
-    ]
 
     return words
       .map((word) => {
-        if (keywords.includes(word)) {
+        if (HIGHLIGHTED_WORDS.has(word)) {
           return this.applyColor(word, this.colors.RUBY_KEYWORD)
         }
 
@@ -137,11 +104,11 @@ export class SyntaxRenderer {
       const nextToken = tokens[i + 1]
       const prevToken = tokens[i - 1]
 
-      if (token.range.start > lastEnd) {
-        highlighted += content.slice(lastEnd, token.range.start)
+      if (token.range.from > lastEnd) {
+        highlighted += content.slice(lastEnd, token.range.from)
       }
 
-      const tokenText = content.slice(token.range.start, token.range.end)
+      const tokenText = content.slice(token.range.from, token.range.to)
 
       this.updateState(state, token, tokenText, nextToken, prevToken)
 
@@ -156,7 +123,7 @@ export class SyntaxRenderer {
         highlighted += tokenText
       }
 
-      lastEnd = token.range.end
+      lastEnd = token.range.to
     }
 
     if (lastEnd < content.length) {
@@ -283,6 +250,6 @@ export class SyntaxRenderer {
     }
 
     const color = this.colors[token.type as keyof ColorScheme]
-    return color !== undefined ? color : null
+    return typeof color === "string" ? color : null
   }
 }

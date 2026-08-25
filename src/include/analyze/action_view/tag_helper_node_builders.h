@@ -77,6 +77,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_precise(
   hb_allocator_T* allocator
 );
 
+AST_NODE_T* create_conditional_boolean_attribute(
+  const char* name_string,
+  const char* condition_source,
+  attribute_positions_T* positions,
+  hb_allocator_T* allocator
+);
+
 hb_array_T* prepend_attribute(hb_array_T* attributes, AST_NODE_T* attribute, hb_allocator_T* allocator);
 
 AST_HTML_ATTRIBUTE_NODE_T* create_href_attribute(

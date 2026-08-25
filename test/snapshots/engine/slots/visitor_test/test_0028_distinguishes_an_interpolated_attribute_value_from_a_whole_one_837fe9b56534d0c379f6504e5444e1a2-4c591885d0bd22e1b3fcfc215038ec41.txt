@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0028_distinguishes an interpolated attribute value from a whole one"
+input: "<div class=\"a <%= @c %> b\"></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 0861a400
+
+slots:
+  index=0  type=attribute_interpolation  node_path=[0]  expression="@c"  location=1:5  attribute="class"

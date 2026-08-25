@@ -1,19 +1,25 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor, isBodyOnlyTag } from "./rule-utils.js"
+import { ElementStackVisitor, isBodyOnlyTag } from "../utils/rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
+
+const inTheHeadNotTheBody = (ancestors: string[]) => ancestors.includes("head") && !ancestors.includes("body")
 
 class HTMLBodyOnlyElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
 
-    if (tagName && !this.isInsideElement("body") && this.isInsideElement("head") && isBodyOnlyTag(tagName)) {
-      this.addOffense(
-        `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
-        node.location,
-      )
+    if (tagName && isBodyOnlyTag(tagName)) {
+      const { verdict, chain } = this.placementAcrossCallers(inTheHeadNotTheBody)
+      const message = `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`
+
+      if (verdict === "always") {
+        this.addOffenseWithCallChain(message, node.location, chain)
+      } else if (verdict === "mixed") {
+        this.addOffenseWithCallChain(`${message} At least one call site renders this file inside the \`<head>\`.`, node.location, chain)
+      }
     }
 
     super.visitHTMLElementNode(node)
@@ -30,6 +36,12 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
       enabled: true,
       severity: "error",
       exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

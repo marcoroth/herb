@@ -14,6 +14,27 @@ Additionally, Rails only supports keyword arguments in strict locals declaration
 
 This rule catches invalid comment forms and argument types early during development.
 
+## Autofix
+
+Most of these offenses are corrected by `--fix`. The rewrites are safe because the declaration they replace is one Rails rejects outright.
+
+| Before                               | After                                  |
+|--------------------------------------|----------------------------------------|
+| `<%# locals() %>`                    | `<%# locals: () %>`                    |
+| `<%# local: (user:) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals (user:) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals:(user:) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals: %>`                     | `<%# locals: () %>`                    |
+| `<%# locals: user:, admin: false %>` | `<%# locals: (user:, admin: false) %>` |
+| `<%# locals: (user: %>`              | `<%# locals: (user:) %>`               |
+| `<% # locals: (user:) %>`            | `<%# locals: (user:) %>`               |
+| `<%# locals: (user) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals: (user:,) %>`            | `<%# locals: (user:) %>`               |
+
+A parameter list written without parentheses is wrapped in them, and any bare name in it becomes a required keyword argument, since that is the only form Rails accepts.
+
+Block arguments, splat arguments, and duplicate declarations are reported but not corrected. Each has more than one reasonable rewrite, so the choice is left to you.
+
 ## Examples
 
 ### ✅ Good
@@ -22,30 +43,43 @@ Required keyword argument:
 
 ```erb
 <%# locals: (user:) %>
+
+<%= user %>
 ```
 
 Keyword argument with default value:
 
 ```erb
 <%# locals: (user:, admin: false) %>
+
+<%= user %>
+<%= admin %>
 ```
 
 Complex default values:
 
 ```erb
 <%# locals: (items: [], config: {}) %>
+
+<%= items %>
+<%= config %>
 ```
 
 No locals (empty):
 
 ```erb
 <%# locals: () %>
+
+<p>Static content only</p>
 ```
 
 Double-splat for optional keyword arguments:
 
 ```erb
 <%# locals: (message: "Hello", **attributes) %>
+
+<%= message %>
+<%= attributes %>
 ```
 
 ### 🚫 Bad
@@ -82,10 +116,20 @@ Empty `locals:` without parentheses:
 <%# locals: %>
 ```
 
+Missing space after the colon:
+
+```erb
+<%# locals:(user:) %>
+
+<%= user %>
+```
+
 Unbalanced parentheses:
 
 ```erb
 <%# locals: (user: %>
+
+<%= user %>
 ```
 
 #### Wrong tag type (must use ERB comment tag)
@@ -140,12 +184,20 @@ Double comma:
 
 #### Duplicate declarations
 
-Only one `locals:` comment is allowed per partial:
+Only one `locals:` comment is allowed per file:
 
 ```erb
 <%# locals: (user:) %>
 <p>Content</p>
 <%# locals: (admin:) %>
+```
+
+## Configuration
+
+Strict locals is an Action View feature, so this rule only applies to Action View projects and needs `framework` to be set:
+
+```yaml
+framework: actionview
 ```
 
 ## References

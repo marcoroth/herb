@@ -1,0 +1,37 @@
+---
+source: "CLI::ActionViewCommandsTest#test_0005_graph shows the render tree for a project"
+input: "project graph: <table><%= render \"posts/row\" %></table>"
+---
+exit: 0
+
+Herb 🌿 vVERSION
+
+✓ Using Herb config file at <project>/.herb.yml
+Building render graph for 3 files...
+
+────────────────────────────────────────────────────────────
+
+ Entry points: (1 template)
+
+ posts/index.html.erb
+   └── ✓ posts/row
+       └── ✓ posts/cell
+
+ ────────────────────────────────────────────────────────────
+
+ Partial usage: (who renders each partial)
+
+   ✓ posts/cell
+     └── rendered by posts/_row.html.erb
+
+   ✓ posts/row
+     └── rendered by posts/index.html.erb
+
+ ────────────────────────────────────────────────────────────
+
+ Summary:
+  Entry points 1
+  Partials     2
+  Reachable    2
+  Unreachable  0
+

@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[warning] Content should be more descriptive (content-description)
+
+/test/file.erb:1:95
+
+  →   1 │ …ncated-when-the-line-is-too-long">Content</div>
+        │                                    ~~~~~~~

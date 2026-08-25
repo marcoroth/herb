@@ -72,6 +72,7 @@ hb_string_T hb_string_trim_start(hb_string_T string);
 hb_string_T hb_string_trim_end(hb_string_T string);
 hb_string_T hb_string_trim(hb_string_T string);
 bool hb_string_is_blank(hb_string_T string);
+bool hb_string_equals_collapsing_whitespace(hb_string_T a, hb_string_T b);
 hb_string_T hb_string_copy(hb_string_T string, hb_allocator_T* allocator);
 
 char* hb_string_to_c_string_using_malloc(hb_string_T string);

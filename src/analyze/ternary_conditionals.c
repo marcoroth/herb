@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
+#include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
@@ -12,14 +13,6 @@
 #include <prism.h>
 #include <stdbool.h>
 #include <string.h>
-
-static bool is_erb_output_tag(AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (!erb_node || !erb_node->tag_opening) { return false; }
-
-  hb_string_T opening = erb_node->tag_opening->value;
-
-  return opening.length >= 3 && opening.data[0] == '<' && opening.data[1] == '%' && opening.data[2] == '=';
-}
 
 static pm_node_t* find_ternary_statement(analyzed_ruby_T* analyzed) {
   if (!analyzed || !analyzed->valid || !analyzed->root) { return NULL; }
@@ -72,7 +65,20 @@ static body_info_T extract_statements_body_info(
 
   info.offset_in_content = (size_t) (body_start - parser_start);
   info.length = (size_t) (body_end - body_start);
-  info.source = hb_allocator_strndup(allocator, (const char*) body_start, info.length);
+
+  bool has_leading_space = info.length > 0 && *body_start == ' ';
+  bool has_trailing_space = info.length > 0 && *(body_end - 1) == ' ';
+
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, info.length + 2, allocator);
+
+  if (!has_leading_space) { hb_buffer_append_char(&buffer, ' '); }
+
+  hb_buffer_append_with_length(&buffer, (const char*) body_start, info.length);
+
+  if (!has_trailing_space) { hb_buffer_append_char(&buffer, ' '); }
+
+  info.source = hb_buffer_value(&buffer);
 
   return info;
 }
@@ -87,84 +93,85 @@ static char* extract_condition_source(pm_if_node_t* if_node, hb_allocator_T* all
   return hb_allocator_strndup(allocator, (const char*) predicate->location.start, length);
 }
 
+static bool append_branch_statement(
+  hb_array_T* statements,
+  pm_statements_node_t* branch,
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  static_output_node_type_T static_node_type,
+  hb_allocator_T* allocator
+) {
+  position_T content_start = erb_node->content->location.start;
+
+  if (append_static_output_node(
+        statements,
+        branch,
+        erb_node->analyzed_ruby,
+        content_start,
+        static_node_type,
+        allocator
+      )) {
+    return true;
+  }
+
+  body_info_T info = extract_statements_body_info(branch, erb_node->analyzed_ruby, allocator);
+  if (!info.source) { return false; }
+
+  position_T branch_start = { .line = content_start.line,
+                              .column = content_start.column + (uint32_t) info.offset_in_content };
+
+  position_T branch_end = { .line = content_start.line,
+                            .column = content_start.column + (uint32_t) (info.offset_in_content + info.length) };
+
+  token_T* content = create_synthetic_token(allocator, info.source, TOKEN_ERB_CONTENT, branch_start, branch_end);
+
+  hb_allocator_dealloc(allocator, (void*) info.source);
+
+  AST_ERB_CONTENT_NODE_T* branch_erb_node = ast_erb_content_node_init(
+    token_copy(erb_node->tag_opening, allocator),
+    content,
+    token_copy(erb_node->tag_closing, allocator),
+    NULL,
+    false,
+    true,
+    HERB_PRISM_NODE_EMPTY,
+    erb_node->base.location.start,
+    erb_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  if (!branch_erb_node) { return false; }
+
+  hb_array_append(statements, (AST_NODE_T*) branch_erb_node);
+
+  return true;
+}
+
 AST_NODE_T* transform_ternary_expression(
   AST_ERB_CONTENT_NODE_T* erb_node,
   pm_if_node_t* if_node,
+  static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
-  body_info_T true_info = extract_statements_body_info(if_node->statements, erb_node->analyzed_ruby, allocator);
-  if (!true_info.source) { return NULL; }
-
   pm_else_node_t* else_node = (pm_else_node_t*) if_node->subsequent;
   if (!else_node) { return NULL; }
-
-  body_info_T false_info = extract_statements_body_info(else_node->statements, erb_node->analyzed_ruby, allocator);
-  if (!false_info.source) { return NULL; }
 
   char* condition_source = extract_condition_source(if_node, allocator);
   if (!condition_source) { return NULL; }
 
   position_T start = erb_node->base.location.start;
   position_T end = erb_node->base.location.end;
-  position_T content_start = erb_node->content->location.start;
-
-  position_T true_content_start = { .line = content_start.line,
-                                    .column = content_start.column + (uint32_t) true_info.offset_in_content };
-
-  position_T true_content_end = { .line = content_start.line,
-                                  .column = content_start.column
-                                          + (uint32_t) (true_info.offset_in_content + true_info.length) };
-
-  token_T* true_content =
-    create_synthetic_token(allocator, true_info.source, TOKEN_ERB_CONTENT, true_content_start, true_content_end);
-
-  AST_ERB_CONTENT_NODE_T* true_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
-    true_content,
-    erb_node->tag_closing,
-    NULL,
-    false,
-    true,
-    HERB_PRISM_NODE_EMPTY,
-    start,
-    end,
-    hb_array_init(0, allocator),
-    allocator
-  );
-
-  if (!true_erb_node) { return NULL; }
-
-  position_T false_content_start = { .line = content_start.line,
-                                     .column = content_start.column + (uint32_t) false_info.offset_in_content };
-
-  position_T false_content_end = { .line = content_start.line,
-                                   .column = content_start.column
-                                           + (uint32_t) (false_info.offset_in_content + false_info.length) };
-
-  token_T* false_content =
-    create_synthetic_token(allocator, false_info.source, TOKEN_ERB_CONTENT, false_content_start, false_content_end);
-
-  AST_ERB_CONTENT_NODE_T* false_erb_node = ast_erb_content_node_init(
-    erb_node->tag_opening,
-    false_content,
-    erb_node->tag_closing,
-    NULL,
-    false,
-    true,
-    HERB_PRISM_NODE_EMPTY,
-    start,
-    end,
-    hb_array_init(0, allocator),
-    allocator
-  );
-
-  if (!false_erb_node) { return NULL; }
 
   hb_array_T* true_statements = hb_array_init(1, allocator);
   hb_array_T* false_statements = hb_array_init(1, allocator);
 
-  hb_array_append(true_statements, (AST_NODE_T*) true_erb_node);
-  hb_array_append(false_statements, (AST_NODE_T*) false_erb_node);
+  if (!append_branch_statement(true_statements, if_node->statements, erb_node, static_node_type, allocator)) {
+    return NULL;
+  }
+
+  if (!append_branch_statement(false_statements, else_node->statements, erb_node, static_node_type, allocator)) {
+    return NULL;
+  }
 
   token_T* else_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
   token_T* else_content_token = create_synthetic_token(allocator, " else ", TOKEN_ERB_CONTENT, end, end);
@@ -191,6 +198,9 @@ AST_NODE_T* transform_ternary_expression(
 
   token_T* if_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
   token_T* if_content = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
+
+  hb_buffer_free(&condition_buffer);
+  hb_allocator_dealloc(allocator, condition_source);
   token_T* if_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
 
   token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
@@ -202,7 +212,7 @@ AST_NODE_T* transform_ternary_expression(
 
   herb_prism_node_T empty_prism_node = HERB_PRISM_NODE_EMPTY;
 
-  AST_ERB_IF_NODE_T* result_if_node = ast_erb_if_node_init(
+  return (AST_NODE_T*) ast_erb_if_node_init(
     if_opening,
     if_content,
     if_closing,
@@ -216,11 +226,13 @@ AST_NODE_T* transform_ternary_expression(
     hb_array_init(0, allocator),
     allocator
   );
-
-  return (AST_NODE_T*) result_if_node;
 }
 
-static void transform_ternary_array(hb_array_T* array, analyze_ruby_context_T* context) {
+static void transform_ternary_array(
+  hb_array_T* array,
+  analyze_ruby_context_T* context,
+  static_output_node_type_T static_node_type
+) {
   if (!array || !context) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
@@ -235,8 +247,12 @@ static void transform_ternary_array(hb_array_T* array, analyze_ruby_context_T* c
     pm_node_t* ternary_node = find_ternary_statement(erb_node->analyzed_ruby);
     if (!ternary_node) { continue; }
 
-    AST_NODE_T* replacement = transform_ternary_expression(erb_node, (pm_if_node_t*) ternary_node, context->allocator);
-    if (replacement) { hb_array_set(array, i, replacement); }
+    AST_NODE_T* replacement =
+      transform_ternary_expression(erb_node, (pm_if_node_t*) ternary_node, static_node_type, context->allocator);
+    if (replacement) {
+      hb_array_set(array, i, replacement);
+      ast_node_free(child, context->allocator);
+    }
   }
 }
 
@@ -244,11 +260,20 @@ static void transform_ternary_blocks(const AST_NODE_T* node, analyze_ruby_contex
   if (!node || !context) { return; }
 
   switch (node->type) {
-    case AST_DOCUMENT_NODE: transform_ternary_array(((AST_DOCUMENT_NODE_T*) node)->children, context); break;
-    case AST_HTML_ELEMENT_NODE: transform_ternary_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context); break;
-    case AST_HTML_OPEN_TAG_NODE: transform_ternary_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context); break;
+    case AST_DOCUMENT_NODE:
+      transform_ternary_array(((AST_DOCUMENT_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_HTML_TEXT);
+      break;
+
+    case AST_HTML_ELEMENT_NODE:
+      transform_ternary_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context, STATIC_OUTPUT_NODE_HTML_TEXT);
+      break;
+
+    case AST_HTML_OPEN_TAG_NODE:
+      transform_ternary_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_NONE);
+      break;
+
     case AST_HTML_ATTRIBUTE_VALUE_NODE:
-      transform_ternary_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
+      transform_ternary_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context, STATIC_OUTPUT_NODE_LITERAL);
       break;
     default: break;
   }

@@ -1,19 +1,23 @@
-export { Config, resolveSeverity } from "./config.js"
-export { HerbConfigSchema } from "./config-schema.js"
+export { Config, resolveSeverity, ALL_RULES_KEY, defaultPersonalSettings } from "./config.js"
+export { HerbConfigSchema, FRAMEWORKS, FRAMEWORK_NAMES } from "./config-schema.js"
 export { addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "./vscode.js"
 
 export type {
+  Framework,
+  TemplateEngine,
   HerbConfig,
   HerbConfigOptions,
   LinterConfig,
   FormatterConfig,
+  EngineConfig,
   RuleConfig,
   FilesConfig,
   LoadOptions,
   FromObjectOptions,
   ConfigValidationError,
   SeverityConfig,
-  LinterMode
+  LinterMode,
+  PersonalHerbSettings
 } from "./config.js"
 
 export type { VSCodeExtensionsJson } from "./vscode.js"

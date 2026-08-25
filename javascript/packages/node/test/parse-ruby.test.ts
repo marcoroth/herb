@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb, inspectPrismNode } from "../src/index.ts"
+import { Herb, inspectPrismNode } from "../src/index.js"
 
 describe("parseRuby", () => {
   beforeAll(async () => {

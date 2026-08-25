@@ -202,6 +202,22 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitXMLProcessingInstructionNode(node: Nodes.XMLProcessingInstructionNode): void {
+    if (node.tag_opening) {
+      this.write(node.tag_opening.value)
+    }
+
+    if (node.target) {
+      this.write(node.target.value)
+    }
+
+    this.visitChildNodes(node)
+
+    if (node.tag_closing) {
+      this.write(node.tag_closing.value)
+    }
+  }
+
   visitCDATANode(node: Nodes.CDATANode): void {
     if (node.tag_opening) {
       this.write(node.tag_opening.value)
@@ -251,6 +267,30 @@ export class IdentityPrinter extends Printer {
   }
 
   visitERBBlockNode(node: Nodes.ERBBlockNode): void {
+    this.printERBNode(node)
+
+    if (node.body) {
+      node.body.forEach(child => this.visit(child))
+    }
+
+    if (node.rescue_clause) {
+      this.visit(node.rescue_clause)
+    }
+
+    if (node.else_clause) {
+      this.visit(node.else_clause)
+    }
+
+    if (node.ensure_clause) {
+      this.visit(node.ensure_clause)
+    }
+
+    if (node.end_node) {
+      this.visit(node.end_node)
+    }
+  }
+
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
     this.printERBNode(node)
 
     if (node.body) {

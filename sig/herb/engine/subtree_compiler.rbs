@@ -1,0 +1,128 @@
+# Generated from lib/herb/engine/subtree_compiler.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Compiles a template into Ruby that renders one part of it rather than all of it.
+    #
+    # Re-rendering a region means running the template again and keeping only the piece that
+    # changed. The piece cannot be compiled on its own, because what it renders depends on
+    # everything the template did before reaching it:
+    #
+    #     require "herb/engine/subtree_compiler"
+    #
+    #     source = Herb::Engine::SubtreeCompiler.new(template, node_path: [0, 1]).src
+    #     view.instance_eval(source)
+    #     #=> "<ul><li>Marco</li></ul>"
+    #
+    # ## Everything runs, only the target is kept
+    #
+    # A local assigned earlier, a helper called for its side effect, the loop the target sits
+    # inside: all of it has to run for the target to render the same as it would have. So nothing
+    # is skipped. What changes is where the output goes.
+    #
+    # The engine writes every append through one buffer variable, so the target's output is
+    # collected by pointing that variable at the buffer being returned while the target renders and
+    # at a sink the rest of the time. Escaping, blocks, and control flow then need no special
+    # handling, because none of them know which buffer they are writing to.
+    #
+    # Pruning the work that only fed discarded output is a separate question, and answering it
+    # needs to know which expressions the target actually depends on. Running everything is the
+    # answer that is correct without that analysis.
+    #
+    # ## Addressing
+    #
+    # The target is named by `node_path`, the same path `SlotVisitor` records for a slot and
+    # `Herb::ActionView::TemplateDependencies` reports for a node, so a caller that has one from
+    # either has one that works here.
+    #
+    # The path indexes a document's children, an element's body, and the bodies of the ERB nodes
+    # that branch or repeat. It does not descend into an open tag, so an attribute is not
+    # addressable, and the body of an `else` or a `when` is indexed as part of the node it hangs
+    # off rather than on its own. Both match `SlotVisitor`, and both are worth changing in the two
+    # places at once rather than in either alone.
+    class SubtreeCompiler < Herb::Engine
+      BUFFER: String
+
+      SINK: String
+
+      INDEXED_PROPERTIES: Array[Symbol]
+
+      class TargetNotFound < Herb::Engine::CompilationError
+        # : (Array[Integer]) -> void
+        def initialize: (Array[Integer]) -> void
+      end
+
+      class Compiler < Herb::Engine::Compiler
+        # : (untyped, ?Hash[Symbol, untyped]) -> void
+        def initialize: (untyped, ?Hash[Symbol, untyped]) -> void
+
+        # : () -> bool
+        def found?: () -> bool
+
+        # : (untyped) -> void
+        def visit_document_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_html_element_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_html_conditional_element_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_if_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_unless_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_case_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_block_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_iteration_block_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_while_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_until_node: (untyped) -> void
+
+        # : (untyped) -> void
+        def visit_erb_for_node: (untyped) -> void
+
+        # : (Array[untyped]) -> void
+        def visit_all: (Array[untyped]) -> void
+
+        # : () -> void
+        def generate_output: () -> void
+
+        private
+
+        # : (*untyped) { () -> void } -> void
+        def indexing: (*untyped) { () -> void } -> void
+
+        # : (untyped) { () -> void } -> void
+        def branching: (untyped) { () -> void } -> void
+      end
+
+      attr_reader node_path: Array[Integer]
+
+      # : (String, ?Hash[Symbol, untyped]) -> void
+      def initialize: (String, ?Hash[Symbol, untyped]) -> void
+
+      # : () -> untyped
+      def compiler_class: () -> untyped
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (Symbol) -> void
+      def add_subtree_boundary: (Symbol) -> void
+
+      # : (String) -> void
+      def add_postamble: (String) -> void
+    end
+  end
+end

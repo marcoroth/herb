@@ -1,0 +1,71 @@
+import { getTagLocalName } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
+
+import { BaseRuleVisitor, isJavaScriptTagElement, findElementAttribute } from "../utils/rule-utils.js"
+import { ParserRule } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+
+const IGNORED_ELEMENT_SOURCES = new Set([
+  "ActionView::Helpers::AssetTagHelper#javascript_include_tag",
+  "ActionView::Helpers::JavaScriptHelper#javascript_tag",
+])
+
+function isExternalScript(node: HTMLElementNode): boolean {
+  return !!findElementAttribute(node, "src") && node.body.length === 0
+}
+
+class HTMLNoInlineScriptElementsVisitor extends BaseRuleVisitor {
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (this.isInlineScript(node)) {
+      this.addOffense(
+        `Avoid inline \`<script>\` tags. ${this.suggestion()}`,
+        node.open_tag!.location,
+      )
+    }
+
+    super.visitHTMLElementNode(node)
+  }
+
+  private suggestion(): string {
+    if (this.context.framework === "actionview") {
+      return "Extract the JavaScript into a separate `.js` file and include it with `javascript_include_tag`."
+    }
+
+    return "Extract the JavaScript into a separate `.js` file and deliver it through your framework's asset pipeline."
+  }
+
+  private isInlineScript(node: HTMLElementNode): boolean {
+    if (getTagLocalName(node) !== "script") return false
+    if (!isJavaScriptTagElement(node)) return false
+    if (IGNORED_ELEMENT_SOURCES.has(node.element_source)) return false
+    if (isExternalScript(node)) return false
+
+    return true
+  }
+}
+
+export class HTMLNoInlineScriptElementsRule extends ParserRule {
+  static ruleName = "html-no-inline-script-elements"
+  static introducedIn = this.version("unreleased")
+
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: false,
+      severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new HTMLNoInlineScriptElementsVisitor(this.ruleName, context)
+
+    visitor.visit(result.value)
+
+    return visitor.offenses
+  }
+}

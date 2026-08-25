@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0010_content_tag :script with nonce false"
+input: "{source: \"<%= content_tag(:script, \\\"alert(1)\\\", nonce: false) %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<script nonce="false">alert(1)</script>'.freeze

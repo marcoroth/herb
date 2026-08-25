@@ -1,11 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest"
+import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
-import { ANSI_REGEX } from "../src/color.js"
+import { ANSI_REGEX } from "../src/ansi.js"
 import { stripAnsiColors } from "./util.js"
 
 import { DiagnosticRenderer } from "../src/diagnostic-renderer.js"
+import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
+
+import { Location } from "@herb-tools/core"
 
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -14,7 +18,7 @@ describe("DiagnosticRenderer", () => {
   let syntaxRenderer: SyntaxRenderer
 
   beforeEach(async () => {
-    syntaxRenderer = new SyntaxRenderer(themes.onedark)
+    syntaxRenderer = new SyntaxRenderer(themes.onedark, Herb)
     await syntaxRenderer.initialize()
     renderer = new DiagnosticRenderer(syntaxRenderer)
   })
@@ -24,10 +28,7 @@ describe("DiagnosticRenderer", () => {
   ): Diagnostic => ({
     message: "Test error message",
     severity: "error",
-    location: {
-      start: { line: 2, column: 5 },
-      end: { line: 2, column: 10 },
-    },
+    location: Location.from(2, 5, 2, 10),
     code: "test-rule",
     ...overrides,
   })
@@ -35,44 +36,49 @@ describe("DiagnosticRenderer", () => {
   describe("renderSingle", () => {
     it("should render a single error diagnostic", () => {
       const diagnostic = createDiagnostic()
-      const content = "line 1\nline <error> content\nline 3"
+      const content = dedent`
+        line 1
+        line <error> content
+        line 3
+      `
       const result = renderer.renderSingle(
         "/test/file.erb",
         diagnostic,
         content,
       )
 
-      expect(result).toMatch(/\[.*error.*\]/)
-      expect(result).toContain("Test error message")
-      expect(result).toContain("test-rule")
-      expect(result).toMatch(/\/test\/file\.erb.*2:5/)
-      expect(result).toContain("→")
-      expect(result).toMatch(/~{5}/)
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should render a single warning diagnostic", () => {
       const diagnostic = createDiagnostic({ severity: "warning" })
-      const content = "line 1\nline <warn> content\nline 3"
+      const content = dedent`
+        line 1
+        line <warn> content
+        line 3
+      `
       const result = renderer.renderSingle(
         "/test/file.erb",
         diagnostic,
         content,
       )
 
-      expect(result).toMatch(/\[.*warning.*\]/)
-      expect(result).toContain("Test error message")
-      expect(result).toContain("test-rule")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle custom context lines", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 5, column: 1 },
-          end: { line: 5, column: 5 },
-        },
+        location: Location.from(5, 1, 5, 5),
       })
-      const content =
-        "line 1\nline 2\nline 3\nline 4\nline 5 error\nline 6\nline 7"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+        line 4
+        line 5 error
+        line 6
+        line 7
+      `
 
       const result = renderer.renderSingle(
         "/test/file.erb",
@@ -81,16 +87,16 @@ describe("DiagnosticRenderer", () => {
         { contextLines: 1 },
       )
 
-      expect(result).toMatch(/line.*4/)
-      expect(result).toMatch(/line.*5.*error/)
-      expect(result).toMatch(/line.*6/)
-      expect(result).not.toMatch(/\s+3\s+│/)
-      expect(result).not.toMatch(/\s+7\s+│/)
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should hide line numbers when requested", () => {
       const diagnostic = createDiagnostic()
-      const content = "line 1\nline <error> content\nline 3"
+      const content = dedent`
+        line 1
+        line <error> content
+        line 3
+      `
       const result = renderer.renderSingle(
         "/test/file.erb",
         diagnostic,
@@ -98,16 +104,12 @@ describe("DiagnosticRenderer", () => {
         { showLineNumbers: false },
       )
 
-      expect(result).not.toMatch(/\d+\s*│/)
-      expect(result).toContain("Test error message")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle edge cases for line boundaries", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 5 },
-        },
+        location: Location.from(1, 1, 1, 5),
       })
       const content = "single line"
 
@@ -118,51 +120,115 @@ describe("DiagnosticRenderer", () => {
         { contextLines: 5 },
       )
 
-      expect(result).toMatch(/single.*line/)
-      expect(result).toContain("→")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should highlight backticks in messages", () => {
       const diagnostic = createDiagnostic({
         message: "Error with `code` in message",
       })
-      const content = "line 1\nline <error> content\nline 3"
+      const content = dedent`
+        line 1
+        line <error> content
+        line 3
+      `
       const result = renderer.renderSingle(
         "/test/file.erb",
         diagnostic,
         content,
       )
 
-      expect(result).toContain("`code`")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle multi-character error ranges", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 2, column: 5 },
-          end: { line: 2, column: 15 },
-        },
+        location: Location.from(2, 5, 2, 15),
       })
-      const content = "line 1\nline <long error> content\nline 3"
+      const content = dedent`
+        line 1
+        line <long error> content
+        line 3
+      `
       const result = renderer.renderSingle(
         "/test/file.erb",
         diagnostic,
         content,
       )
 
-      expect(result).toMatch(/~{10}/)
+      expect(stripAnsiColors(result)).toMatchSnapshot()
+    })
+  })
+
+  describe("fileUrl", () => {
+    const content = dedent`
+      line 1
+      line <error> content
+      line 3
+    `
+
+    const hyperlinks = (output: string) => {
+      return [...output.matchAll(/\x1b\]8;;(.*?)\x1b\\(.*?)\x1b\]8;;\x1b\\/g)].map(([, url, text]) => ({
+        url,
+        text: stripAnsiColors(text),
+      }))
+    }
+
+    it("links the marked line number to the file", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+      })
+
+      expect(hyperlinks(result)).toEqual([
+        { url: "file:///test/file.erb", text: "/test/file.erb:2:5" },
+        { url: "file:///test/file.erb", text: "2" },
+      ])
+    })
+
+    it("does not link the line numbers of context lines", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+        contextLines: 1,
+      })
+
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("1")
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("3")
+    })
+
+    it("links the line number of every marked line of a multi-line diagnostic", () => {
+      const diagnostic = createDiagnostic({ location: Location.from(1, 1, 3, 7) })
+      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, {
+        fileUrl: "file:///test/file.erb",
+      })
+
+      expect(hyperlinks(result).map(({ text }) => text)).toEqual(["/test/file.erb:1:1", "1", "2", "3"])
+    })
+
+    it("leaves the line numbers unlinked without a fileUrl", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content)
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+
+    it("leaves the line numbers unlinked when line numbers are hidden", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+        showLineNumbers: false,
+      })
+
+      expect(hyperlinks(result)).toEqual([])
     })
   })
 
   describe("error handling", () => {
     it("should handle invalid line numbers gracefully", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 999, column: 1 },
-          end: { line: 999, column: 5 },
-        },
+        location: Location.from(999, 1, 999, 5),
       })
-      const content = "line 1\nline 2"
+      const content = dedent`
+        line 1
+        line 2
+      `
 
       const result = renderer.renderSingle(
         "/test/file.erb",
@@ -170,18 +236,18 @@ describe("DiagnosticRenderer", () => {
         content,
       )
 
-      expect(result).toContain("Test error message")
-      expect(result).toContain("test-rule")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle invalid column numbers gracefully", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 2, column: 999 },
-          end: { line: 2, column: 1000 },
-        },
+        location: Location.from(2, 999, 2, 1000),
       })
-      const content = "line 1\nshort\nline 3"
+      const content = dedent`
+        line 1
+        short
+        line 3
+      `
 
       const result = renderer.renderSingle(
         "/test/file.erb",
@@ -189,8 +255,74 @@ describe("DiagnosticRenderer", () => {
         content,
       )
 
-      expect(result).toContain("Test error message")
-      expect(result).toContain("short")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
+    })
+  })
+
+  describe("multi-line diagnostics", () => {
+    const multiLineContent = dedent`
+      <div>
+
+        <div id="gems">
+          <% @gems.each do |topic_gem| %>
+            <%= render partial: "gem_card" %>
+          <% end %>
+        </div>
+
+      </div>
+    `
+
+    const multiLineDiagnostic = createDiagnostic({
+      message: "Multi-line offense",
+      severity: "warning",
+      location: Location.from(4, 4, 6, 13),
+      code: "multi-line-rule",
+    })
+
+    it("marks every line the diagnostic spans and expands the trailing context off the end line", () => {
+      const result = renderer.renderSingle("/test/file.erb", multiLineDiagnostic, multiLineContent, {
+        wrapLines: false,
+        contextLines: 2,
+      })
+
+      expect(stripAnsiColors(result)).toMatchSnapshot()
+    })
+
+    it("does not mark blank lines inside the span", () => {
+      const content = dedent`
+        <% if true %>
+
+        <% end %>
+      `
+
+      const diagnostic = createDiagnostic({
+        location: Location.from(1, 0, 3, 9),
+      })
+
+      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, { wrapLines: false })
+
+      expect(stripAnsiColors(result)).toMatchSnapshot()
+    })
+
+    it("aligns markers to the content when line numbers are hidden", () => {
+      const result = renderer.renderSingle("/test/file.erb", multiLineDiagnostic, multiLineContent, {
+        wrapLines: false,
+        contextLines: 2,
+        showLineNumbers: false,
+      })
+
+      expect(stripAnsiColors(result)).toMatchSnapshot()
+    })
+
+    it("keeps a single marker for single-line diagnostics", () => {
+      const content = dedent`
+        line 1
+        line <error> content
+        line 3
+      `
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, { wrapLines: false })
+
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
   })
 
@@ -200,10 +332,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Class name should be shorter",
-        location: {
-          start: { line: 1, column: 13 },
-          end: { line: 1, column: 33 }
-        },
+        location: Location.from(1, 13, 1, 33),
         code: "class-name-length"
       })
 
@@ -217,12 +346,7 @@ describe("DiagnosticRenderer", () => {
         }
       )
 
-      const strippedResult = stripAnsiColors(result)
-
-      expect(strippedResult).toContain("…")
-      expect(strippedResult).toContain("this-is-a-very-long")
-      expect(strippedResult).not.toContain("Content</div>")
-      expect(result).toContain("Class name should be shorter")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should show ellipsis at beginning when diagnostic is at end of long line", () => {
@@ -231,10 +355,7 @@ describe("DiagnosticRenderer", () => {
       const diagnostic = createDiagnostic({
         message: "Content should be more descriptive",
         severity: "warning",
-        location: {
-          start: { line: 1, column: 95 },
-          end: { line: 1, column: 102 }
-        },
+        location: Location.from(1, 95, 1, 102),
         code: "content-description"
       })
 
@@ -248,12 +369,7 @@ describe("DiagnosticRenderer", () => {
         }
       )
 
-      const strippedResult = stripAnsiColors(result)
-
-      expect(strippedResult).toContain("…")
-      expect(strippedResult).toContain("Content")
-      expect(strippedResult).not.toContain("this-is-a-very-long")
-      expect(result).toContain("Content should be more descriptive")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should show ellipsis on both sides when diagnostic is in middle of long line", () => {
@@ -261,10 +377,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Avoid 'should-be' in class names",
-        location: {
-          start: { line: 1, column: 45 },
-          end: { line: 1, column: 54 }
-        },
+        location: Location.from(1, 45, 1, 54),
         code: "class-naming-convention"
       })
 
@@ -278,14 +391,7 @@ describe("DiagnosticRenderer", () => {
         }
       )
 
-      const strippedResult = stripAnsiColors(result)
-
-      const ellipsisCount = (strippedResult.match(/…/g) || []).length
-      expect(ellipsisCount).toBeGreaterThanOrEqual(2)
-      expect(strippedResult).toContain("should-be")
-      expect(strippedResult).not.toContain("this-is-a-very")
-      expect(strippedResult).not.toContain("Content</div>")
-      expect(result).toContain("Avoid 'should-be' in class names")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should adjust pointer position correctly for truncated diagnostics", () => {
@@ -293,10 +399,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Test diagnostic positioning",
-        location: {
-          start: { line: 1, column: 50 },
-          end: { line: 1, column: 55 }
-        },
+        location: Location.from(1, 50, 1, 55),
         code: "test-positioning"
       })
 
@@ -310,21 +413,19 @@ describe("DiagnosticRenderer", () => {
         }
       )
 
-      expect(result).toMatch(/~{5}/)
-      expect(result).toContain("…")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle truncation with context lines", () => {
-      const content = `<div class="short-line">Short</div>
-<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-is-too-long">Content</div>
-<div class="another-short-line">Short</div>`
+      const content = dedent`
+        <div class="short-line">Short</div>
+        <div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-is-too-long">Content</div>
+        <div class="another-short-line">Short</div>
+      `
 
       const diagnostic = createDiagnostic({
         message: "Long class name detected",
-        location: {
-          start: { line: 2, column: 13 }, // Points to long class name
-          end: { line: 2, column: 30 }
-        },
+        location: Location.from(2, 13, 2, 30), // Points to long class name
         code: "class-name-length"
       })
 
@@ -339,12 +440,7 @@ describe("DiagnosticRenderer", () => {
         }
       )
 
-      const strippedResult = stripAnsiColors(result)
-
-      expect(strippedResult).toContain("short-line")
-      expect(strippedResult).toContain("another-short-line")
-      expect(strippedResult).toContain("…")
-      expect(result).toContain("Long class name detected")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should not truncate when maxWidth is sufficient", () => {
@@ -352,10 +448,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Test short line",
-        location: {
-          start: { line: 1, column: 13 },
-          end: { line: 1, column: 18 }
-        },
+        location: Location.from(1, 13, 1, 18),
         code: "test-short"
       })
 
@@ -372,8 +465,7 @@ describe("DiagnosticRenderer", () => {
       const strippedResult = stripAnsiColors(result)
 
       expect(strippedResult).not.toContain("…")
-      expect(strippedResult).toContain("short")
-      expect(strippedResult).toContain("Content")
+      expect(strippedResult).toMatchSnapshot()
     })
   })
 
@@ -383,10 +475,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Line too long",
-        location: {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 5 },
-        },
+        location: Location.from(1, 1, 1, 5),
         code: "line-length",
       })
 
@@ -398,8 +487,7 @@ describe("DiagnosticRenderer", () => {
       )
 
       expect(result).toMatch(ANSI_REGEX)
-      const strippedResult = stripAnsiColors(result)
-      expect(strippedResult).toContain("…")
+      expect(result).toMatchSnapshot()
     })
 
     it("should preserve colors when extracting from end of styled line", () => {
@@ -407,10 +495,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "End content issue",
-        location: {
-          start: { line: 1, column: 95 },
-          end: { line: 1, column: 103 },
-        },
+        location: Location.from(1, 95, 1, 103),
         code: "end-content",
       })
 
@@ -421,9 +506,8 @@ describe("DiagnosticRenderer", () => {
         { truncateLines: true, maxWidth: 50 },
       )
 
-      const strippedResult = stripAnsiColors(result)
-      expect(strippedResult).toContain("ShortEnd")
       expect(result).toMatch(ANSI_REGEX)
+      expect(result).toMatchSnapshot()
     })
 
     it("should preserve colors when extracting from middle of styled line", () => {
@@ -431,10 +515,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Middle issue",
-        location: {
-          start: { line: 1, column: 30 },
-          end: { line: 1, column: 44 },
-        },
+        location: Location.from(1, 30, 1, 44),
         code: "middle-content",
       })
 
@@ -445,9 +526,8 @@ describe("DiagnosticRenderer", () => {
         { truncateLines: true, maxWidth: 50 },
       )
 
-      const strippedResult = stripAnsiColors(result)
-      expect(strippedResult).toContain("MIDDLE_TARGET")
       expect(result).toMatch(ANSI_REGEX)
+      expect(result).toMatchSnapshot()
     })
   })
 
@@ -458,7 +538,11 @@ describe("DiagnosticRenderer", () => {
 
       try {
         const diagnostic = createDiagnostic()
-        const content = "line 1\nline <error> content\nline 3"
+        const content = dedent`
+          line 1
+          line <error> content
+          line 3
+        `
         const result = renderer.renderSingle(
           "/test/file.erb",
           diagnostic,
@@ -466,7 +550,7 @@ describe("DiagnosticRenderer", () => {
         )
 
         expect(result).not.toMatch(ANSI_REGEX)
-        expect(result).toContain("Test error message")
+        expect(result).toMatchSnapshot()
       } finally {
         if (originalNoColor === undefined) {
           delete process.env.NO_COLOR

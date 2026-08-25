@@ -1,0 +1,102 @@
+# Generated from lib/herb/engine/instrumentation_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Wraps every ERB tag in a call that says which tag is rendering, so that whatever happens
+    # while it renders can be attributed to it rather than to the template as a whole.
+    #
+    # This is half of a mechanism and does nothing by itself. It supplies where, and something else
+    # has to supply what. A template compiled with it and rendered with nothing watching records no
+    # entries at all, and only costs a call per tag. What makes it worth having is anything that
+    # calls `Herb::Engine::Report::Session.observe` while a tag is rendering:
+    #
+    #     require "herb/engine/instrumentation_visitor"
+    #
+    #     engine = Herb::Engine.new(source, visitors: [Herb::Engine::InstrumentationVisitor.new])
+    #
+    #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+    #       Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+    #     end
+    #
+    #     session = Herb::Engine::Report::Session.capture { render(engine.src) }
+    #
+    #     session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+    #       "#{queries.size} SQL queries"
+    #     end
+    #     #=> app/views/posts/_card.html.erb:7:8: [sql-queries] 3 SQL queries
+    #
+    # Nothing about that subscription is Herb's, which is the point. Because what gets watched is
+    # decided at render time rather than compiled in, adding a producer never means recompiling a
+    # template, and Herb never has to ship a class per thing worth watching.
+    #
+    # A tag that opens a block, or that assigns to a local, is framed from the outside rather than
+    # wrapped, because wrapping either one would change what the template means: a block would lose
+    # its body, and an assignment would bind inside the wrapper instead of the template.
+    class InstrumentationVisitor < Herb::Visitor
+      include ContextAware
+
+      # : () -> bool
+      def self.rewrites_erb_source?: () -> bool
+
+      SESSION: ::String
+
+      ASSIGNMENT_NODES: untyped
+
+      ARRAY_PROPERTIES: untyped
+
+      NODE_PROPERTIES: untyped
+
+      def self.experimental_warning_issued: () -> bool
+
+      def self.experimental_warning_issued=: (bool) -> bool
+
+      attr_accessor experimental_warning_issued: bool
+
+      def initialize: () -> untyped
+
+      def visit_document_node: (untyped node) -> untyped
+
+      def inspect: () -> untyped
+
+      private
+
+      def frame_render: (untyped node) -> untyped
+
+      def instrument: (untyped node) -> untyped
+
+      def rewrite: (untyped nodes) -> untyped
+
+      # : (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+      def rewrite_import: (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+
+      # : (Herb::AST::Node) -> Array[Herb::AST::Node]
+      def rewrite_node: (Herb::AST::Node) -> Array[Herb::AST::Node]
+
+      def framed?: (untyped node) -> untyped
+
+      def assignment?: (untyped node) -> untyped
+
+      def block?: (untyped node) -> untyped
+
+      def via: (untyped node) -> untyped
+
+      def wrapped_output: (untyped node) -> untyped
+
+      def wrapped_statement: (untyped node) -> untyped
+
+      def enter_node: (untyped node) -> untyped
+
+      def leave_node: (untyped node) -> untyped
+
+      def enter_render_node: (untyped node, untyped file) -> untyped
+
+      def leave_render_node: (untyped node) -> untyped
+
+      def position: (untyped node) -> untyped
+
+      def code: (untyped node) -> untyped
+
+      def erb_node: (untyped node, untyped opening, untyped code) -> untyped
+    end
+  end
+end

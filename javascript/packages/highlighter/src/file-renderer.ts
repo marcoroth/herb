@@ -1,15 +1,9 @@
-import { colorize } from "./color.js"
-import { applyDimToStyledText } from "./util.js"
+import { colorize, hyperlink } from "./color.js"
+import { dimStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
-import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
+import * as gutter from "./gutter.js"
 
 import type { SyntaxRenderer } from "./syntax-renderer.js"
-
-export interface FileRenderOptions {
-  showLineNumbers?: boolean
-  contextLines?: number
-  focusLine?: number
-}
 
 export class FileRenderer {
   private syntaxRenderer: SyntaxRenderer
@@ -26,29 +20,22 @@ export class FileRenderer {
 
     for (let i = 1; i <= lines.length; i++) {
       const line = lines[i - 1] || ""
-      const lineNumber = colorize(i.toString().padStart(3, " "), "gray")
-      const separator = colorize("│", "gray")
+      const prefix = gutter.linePrefix(i, false)
 
       if (wrapLines) {
-        const linePrefix = `    ${lineNumber} ${separator} `
-        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-        const wrappedLines = LineWrapper.wrapLine(line, availableWidth, "")
+        const wrappedLines = LineWrapper.wrapLine(line, gutter.availableWidth(maxWidth), "")
 
         for (let j = 0; j < wrappedLines.length; j++) {
           if (j === 0) {
-            output += `${linePrefix}${wrappedLines[j]}\n`
+            output += `${prefix}${wrappedLines[j]}\n`
           } else {
-            output += `        ${separator} ${wrappedLines[j]}\n`
+            output += `${gutter.continuationPrefix()}${wrappedLines[j]}\n`
           }
         }
       } else if (truncateLines) {
-        const linePrefix = `    ${lineNumber} ${separator} `
-        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-        const truncatedLine = LineWrapper.truncateLine(line, availableWidth)
-
-        output += `${linePrefix}${truncatedLine}\n`
+        output += `${prefix}${LineWrapper.truncateLine(line, gutter.availableWidth(maxWidth))}\n`
       } else {
-        output += `    ${lineNumber} ${separator} ${line}\n`
+        output += `${prefix}${line}\n`
       }
     }
 
@@ -64,6 +51,7 @@ export class FileRenderer {
     maxWidth = LineWrapper.getTerminalWidth(),
     wrapLines = false,
     truncateLines = false,
+    fileUrl?: string,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
     const lines = highlightedContent.split("\n")
@@ -71,52 +59,43 @@ export class FileRenderer {
     const startLine = Math.max(1, focusLine - contextLines)
     const endLine = Math.min(lines.length, focusLine + contextLines)
 
-    let output = showLineNumbers ? `${colorize(path, "cyan")}\n\n` : ""
+    const header = fileUrl ? hyperlink(colorize(path, "cyan"), fileUrl) : colorize(path, "cyan")
+
+    let output = showLineNumbers ? `${header}\n\n` : ""
 
     for (let i = startLine; i <= endLine; i++) {
       const line = lines[i - 1] || ""
       const isFocusLine = i === focusLine
 
       if (showLineNumbers) {
-        const lineNumber = isFocusLine
-          ? colorize(i.toString().padStart(3, " "), "bold")
-          : colorize(i.toString().padStart(3, " "), "gray")
-
-        const prefix = isFocusLine ? colorize("  → ", "cyan") : "    "
-
-        const separator = colorize("│", "gray")
+        const prefix = gutter.linePrefix(i, isFocusLine, isFocusLine ? "cyan" : undefined, isFocusLine ? fileUrl : undefined)
 
         let displayLine = line
 
         if (!isFocusLine) {
-          displayLine = applyDimToStyledText(line)
+          displayLine = dimStyledText(line)
         }
 
         if (wrapLines) {
-          const linePrefix = `${prefix}${lineNumber} ${separator} `
-          const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-          const wrappedLines = LineWrapper.wrapLine(displayLine, availableWidth, "")
+          const wrappedLines = LineWrapper.wrapLine(displayLine, gutter.availableWidth(maxWidth), "")
 
           for (let j = 0; j < wrappedLines.length; j++) {
             if (j === 0) {
-              output += `${linePrefix}${wrappedLines[j]}\n`
+              output += `${prefix}${wrappedLines[j]}\n`
             } else {
-              output += `        ${separator} ${wrappedLines[j]}\n`
+              output += `${gutter.continuationPrefix()}${wrappedLines[j]}\n`
             }
           }
         } else if (truncateLines) {
-          const linePrefix = `${prefix}${lineNumber} ${separator} `
-          const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-          const truncatedLine = LineWrapper.truncateLine(displayLine, availableWidth)
-          output += `${linePrefix}${truncatedLine}\n`
+          output += `${prefix}${LineWrapper.truncateLine(displayLine, gutter.availableWidth(maxWidth))}\n`
         } else {
-          output += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
+          output += `${prefix}${displayLine}\n`
         }
       } else {
         let displayLine = line
 
         if (!isFocusLine) {
-          displayLine = applyDimToStyledText(line)
+          displayLine = dimStyledText(line)
         }
 
         if (wrapLines) {

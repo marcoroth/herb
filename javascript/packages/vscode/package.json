@@ -2,7 +2,7 @@
   "name": "herb-lsp",
   "displayName": "Herb LSP - HTML+ERB Language Tools",
   "description": "VS Code extension for connecting with the Herb Language Server and Language Tools for HTML+ERB files",
-  "version": "0.10.1",
+  "version": "0.10.3",
   "private": true,
   "license": "MIT",
   "pricing": "Free",
@@ -45,6 +45,15 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "[erb]": {
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": true
+        }
+      }
+    },
     "configuration": {
       "type": "object",
       "title": "Herb (HTML+ERB)",
@@ -77,12 +86,46 @@
           "description": "Number of spaces for each indentation level.",
           "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
+        "languageServerHerb.formatter.indentStyle": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "space",
+            "tab"
+          ],
+          "default": "space",
+          "description": "Character used for indentation.",
+          "markdownDescription": "Character used for indentation.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
         "languageServerHerb.formatter.maxLineLength": {
           "scope": "resource",
           "type": "number",
           "default": 80,
           "description": "Maximum line length before wrapping.",
           "markdownDescription": "Maximum line length before wrapping.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
+        "languageServerHerb.inlayHints.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Annotate the closing tag of longer blocks with what it closes. An ERB end tag shows the expression that opened the block, and an HTML closing tag shows the element's id or class.",
+          "markdownDescription": "Annotate the closing tag of longer blocks with what it closes. An ERB `<% end %>` shows the expression that opened the block, like `# if user.admin?`, and an HTML closing tag shows the element's `id` or `class`, like `<!-- .card.card-wide -->`.\n\n**Note**: VS Code's own `editor.inlayHints.enabled` still applies on top of this, and turning it off hides hints from every extension."
+        },
+        "languageServerHerb.inlayHints.minimumLines": {
+          "scope": "resource",
+          "type": "number",
+          "minimum": 1,
+          "default": 10,
+          "description": "How many lines below its opening tag a closing tag has to be before it gets a hint. The default of 2 leaves blocks that fit within two lines unannotated.",
+          "markdownDescription": "How many lines below its opening tag a closing tag has to be before it gets a hint. The default of `2` leaves blocks that fit within two lines unannotated, since you can still see what they opened."
+        },
+        "languageServerHerb.inlayHints.maximumClasses": {
+          "scope": "resource",
+          "type": "number",
+          "minimum": 0,
+          "default": 2,
+          "description": "How many of an element's classes to include in its hint. Past a couple the list is the element's styling rather than its name, so the rest are left off. Set to 0 to name elements by id alone.",
+          "markdownDescription": "How many of an element's classes to include in its hint. Past a couple the list is the element's styling rather than its name, so the rest are left off, which keeps utility-class markup readable. Set to `0` to name elements by `id` alone."
         },
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -94,6 +137,13 @@
           ],
           "default": "verbose",
           "description": "Traces the communication between Visual Studio Code and the Herb language server (for debugging)."
+        },
+        "languageServerHerb.workspace.suggestAddingProjects": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Suggest adding a file's project folder to the workspace when an HTML+ERB file outside the current workspace folders is opened. Herb only analyzes files inside workspace folders.",
+          "markdownDescription": "Suggest adding a file's project folder to the workspace when an HTML+ERB file outside the current workspace folders is opened. Herb only analyzes files inside workspace folders."
         }
       }
     },
@@ -150,6 +200,11 @@
         "when": "editorLangId == erb"
       },
       {
+        "command": "herb.extractToPartial",
+        "title": "Herb: Extract to Partial",
+        "when": "editorLangId == erb"
+      },
+      {
         "command": "herb.toggleLinter",
         "title": "Herb: Toggle Linter",
         "icon": "$(symbol-boolean)"
@@ -163,6 +218,11 @@
         "command": "herb.setIndentWidth",
         "title": "Herb: Set Indent Width",
         "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "herb.setIndentStyle",
+        "title": "Herb: Set Indent Style",
+        "icon": "$(symbol-enum)"
       },
       {
         "command": "herb.setMaxLineLength",
@@ -237,6 +297,16 @@
       ],
       "view/item/context": [
         {
+          "command": "herb.toggleLinter",
+          "when": "view == herbConfiguration && (viewItem == linterSetting || viewItem == personalLinterSetting)",
+          "group": "inline"
+        },
+        {
+          "command": "herb.toggleFormatter",
+          "when": "view == herbConfiguration && (viewItem == formatterSetting || viewItem == personalFormatterSetting)",
+          "group": "inline"
+        },
+        {
           "command": "herb.reprocessFile",
           "when": "view == herbFileStatus && (viewItem == herbFileWithIssues || viewItem == herbFileOk)",
           "group": "inline"
@@ -266,17 +336,16 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
-    "publish": "vsce publish",
-    "build": "yarn clean && yarn sync-defaults && yarn run check-types && yarn build:language-server && node esbuild.js",
+    "build": "yarn clean && yarn sync-defaults && yarn run typecheck && yarn build:language-server && node esbuild.js",
     "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "yarn run check-types && node esbuild.js --production",
+    "package": "yarn run typecheck && node esbuild.js --production",
     "build-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "yarn run build-tests && yarn run build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "if [ -z \"$DISPLAY\" ]; then xvfb-run -a yarn vscode:test; else yarn vscode:test; fi",
     "vscode:test": "vscode-test",
     "clean": "rimraf dist",
@@ -284,18 +353,19 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/config": "0.10.1",
-    "@herb-tools/formatter": "0.10.1",
-    "@herb-tools/linter": "0.10.1",
-    "@herb-tools/node-wasm": "0.10.1",
+    "@herb-tools/config": "0.10.3",
+    "@herb-tools/formatter": "0.10.3",
+    "@herb-tools/language-server": "0.10.3",
+    "@herb-tools/language-service": "0.10.3",
+    "@herb-tools/linter": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.3",
     "@types/mocha": "^10.0.10",
-    "@types/node": "25.x",
+    "@types/node": "26.x",
     "@types/vscode": "^1.100.0",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.9.1",
-    "esbuild": "^0.28.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
+    "esbuild": "^0.28.2",
     "npm-run-all": "^4.1.5",
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.0.0"
   }
 }

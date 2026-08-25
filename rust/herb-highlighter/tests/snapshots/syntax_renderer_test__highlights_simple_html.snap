@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/syntax_renderer_test.rs
+expression: "renderer(Theme::OneDark).highlight(\"<div>hello</div>\")"
+---
+[38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m[38;2;171;178;191mhello[0m[38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m

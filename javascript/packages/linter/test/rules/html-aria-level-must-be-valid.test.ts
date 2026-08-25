@@ -138,4 +138,34 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
       <div role="heading" aria-level="">Empty value</div>
     `)
   })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with a valid aria-level", () => {
+      expectNoOffenses('<%= tag.div role: "heading", aria: { level: 2 } %>')
+    })
+
+    test("fails for tag.div with an out-of-range aria-level", () => {
+      expectWarning("The `aria-level` attribute must be an integer between 1 and 6, got `9`.")
+
+      assertOffenses('<%= tag.div role: "heading", aria: { level: 9 } %>')
+    })
+
+    test("fails for content_tag with an out-of-range aria-level", () => {
+      expectWarning("The `aria-level` attribute must be an integer between 1 and 6, got `9`.")
+
+      assertOffenses('<%= content_tag :div, "Title", role: "heading", aria: { level: 9 } %>')
+    })
+
+    test("passes for a dynamic aria-level, which must not be read as an empty value", () => {
+      expectNoOffenses('<%= tag.div role: "heading", aria: { level: level } %>')
+    })
+
+    test("passes for an interpolated aria-level", () => {
+      expectNoOffenses('<%= tag.div role: "heading", aria: { level: "#{level}" } %>')
+    })
+
+    test("passes for a nil aria-level, which must not be read as an empty value", () => {
+      expectNoOffenses('<%= tag.div aria: { level: nil } %>')
+    })
+  })
 })

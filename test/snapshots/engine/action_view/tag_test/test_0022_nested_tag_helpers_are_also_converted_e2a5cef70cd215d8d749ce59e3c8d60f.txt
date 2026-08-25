@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::TagTest#test_0022_nested tag helpers are also converted"
+input: "{source: \"<%= tag.div class: \\\"outer\\\" do %>\\n  <%= tag.span \\\"Inner\\\" %>\\n<% end %>\\n\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<div class="outer">
+  <span>Inner</span>
+</div>'.freeze
