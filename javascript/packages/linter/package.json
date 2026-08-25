@@ -4,7 +4,7 @@
   "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
-  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%64@herb-tools/linter%60:%20",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/linter%60:%20",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marcoroth/herb.git",
