@@ -71,5 +71,9 @@ module Engine
     test "leaves a block it could not parse as it was written, instead of raising" do
       assert_compiled_snapshot(%(<style scoped>!!! { color: red }</style><h1>Hi</h1>), options)
     end
+
+    test "reports what Lightning CSS kept without acting on" do
+      assert_compiled_snapshot(%(<style scoped>.a:deep(.b) { color: red }</style><h1>Hi</h1>), options)
+    end
   end
 end

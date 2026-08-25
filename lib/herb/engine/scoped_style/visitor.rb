@@ -45,6 +45,9 @@ module Herb
       #     transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
       #     #=> ".title[data-herb-scope-1a2b3c4d] { color: red }"
       #
+      # Anything the return value answers to `warnings` is reported, because CSS a transform kept
+      # without acting on it is CSS that does nothing once the page is rendered.
+      #
       # `LightningCSS::Transformer` answers that, so it can be handed over as it is:
       #
       #     Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new(minify: true))
@@ -297,7 +300,11 @@ module Herb
 
         #: (Pending, String) -> String?
         def narrowed_css(pending, scope)
-          @transform.call(pending.css, scope: scope_selector(pending.file, scope)).to_s
+          result = @transform.call(pending.css, scope: scope_selector(pending.file, scope))
+
+          warned_style(pending.node, result)
+
+          result.to_s
         rescue StandardError => e
           untransformable_style(pending.node, e)
         end
@@ -429,6 +436,21 @@ module Herb
             node.location,
             code: "scoped-style-that-could-not-be-narrowed"
           )
+
+          nil
+        end
+
+        #: (Herb::AST::HTMLElementNode, untyped) -> void
+        def warned_style(node, result)
+          return unless result.respond_to?(:warnings)
+
+          result.warnings.each do |message|
+            warning(
+              "The `transform` could not act on something in this `<style scoped>` block, so that part of the CSS was kept as it was written and does nothing. It reported `#{message}`.",
+              node.location,
+              code: "scoped-style-with-a-warning"
+            )
+          end
 
           nil
         end

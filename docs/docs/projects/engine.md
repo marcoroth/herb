@@ -831,6 +831,8 @@ transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
 #=> ".title[data-herb-scope-1a2b3c4d] { color: red }"
 ```
 
+A return value answering `warnings` has each of them reported as a diagnostic, which is how a `LightningCSS::Result` surfaces what Lightning CSS kept without acting on. CSS a transform could not act on is CSS that does nothing once the page renders, so it is worth saying so at compile time. A transform answering with a plain string reports nothing.
+
 #### Gathering the CSS ahead of time
 
 A scope and its CSS are decided when a file is compiled, so everything a stylesheet needs is knowable before anything renders. `ScopedStyle::Collector` compiles a set of files for that and nothing else:

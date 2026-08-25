@@ -39,6 +39,18 @@ module Engine
       end
     end
 
+    class WarningTransform
+      Narrowed = Data.define(:css, :warnings) do
+        def to_s
+          css
+        end
+      end
+
+      def call(css, **)
+        Narrowed.new(css: "#{css}/* narrowed */", warnings: ["it kept `:deep()` without acting on it"])
+      end
+    end
+
     def options(transform: Transform.new, filename: TEMPLATE, visitors: [], deliver: :inline, **overrides)
       visitor = Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: deliver)
 
@@ -297,6 +309,17 @@ module Engine
       visitor = settings[:visitors].last
 
       assert_equal ["scoped-style-that-could-not-be-narrowed"], visitor.diagnostics.map(&:code)
+      assert_equal 1, visitor.styles.size
+    end
+
+    test "reports what the transform kept but could not act on" do
+      settings = options(transform: WarningTransform.new)
+
+      assert_compiled_snapshot(%(<style scoped>.a:deep(.b) { color: red; }</style><h1>Hi</h1>), settings)
+
+      visitor = settings[:visitors].last
+
+      assert_equal ["scoped-style-with-a-warning"], visitor.diagnostics.map(&:code)
       assert_equal 1, visitor.styles.size
     end
 
