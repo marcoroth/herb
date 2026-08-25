@@ -54,8 +54,10 @@ The first invocation clones the corpus into `bench/tmp/herb-corpus/`
   GC-warmup cost from one engine cannot bias the next.
 - Only files that both engines can compile without raising are included in
   the timed set, so neither engine gets credit for skipping work.
-- Sources are loaded into memory before timing so file I/O doesn't skew
-  the measurement.
+- Sources are read from disk inside the timed loop. File I/O is part of
+  what a real compile pass pays for, and we want the bench to reflect
+  optimizations that touch either side (e.g. streaming the parser or
+  avoiding a full string copy of the source).
 - No warmup: cold-compile performance is what this bench cares about.
 
 [herb-corpus]: https://github.com/marcoroth/herb-corpus
