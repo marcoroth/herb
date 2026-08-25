@@ -89,6 +89,14 @@ module Herb
       files["exclude"] || DEFAULTS.dig("files", "exclude") || []
     end
 
+    def user_file_include_patterns
+      @user_config.dig("files", "include") || []
+    end
+
+    def user_tool_include_patterns(tool)
+      @user_config.dig(tool.to_s, "include") || []
+    end
+
     def linter
       @config["linter"] || {}
     end
@@ -153,6 +161,11 @@ module Herb
         return !path_excluded?(path, tool_exclude)
       end
 
+      user_includes = user_file_include_patterns
+      if user_includes.any? && path_included?(path, user_includes)
+        return !path_excluded?(path, tool_exclude)
+      end
+
       exclude_patterns = exclude_patterns_for(tool)
 
       !path_excluded?(path, exclude_patterns)
@@ -182,8 +195,12 @@ module Herb
         Dir[File.join(expanded_path, pattern)]
       end.uniq
 
+      user_includes = user_file_include_patterns
+
       all_files.reject do |file|
         relative = file.sub("#{expanded_path}/", "")
+        next false if user_includes.any? && path_included?(relative, user_includes)
+
         path_excluded?(relative, file_exclude_patterns)
       end.sort
     end
@@ -194,6 +211,9 @@ module Herb
 
       include_patterns = include_patterns_for(tool)
       exclude_patterns = exclude_patterns_for(tool)
+      user_includes = user_file_include_patterns
+      tool_includes = user_tool_include_patterns(tool)
+      tool_exclude_patterns = send(tool.to_s)["exclude"] || []
 
       all_files = include_patterns.flat_map do |pattern|
         Dir[File.join(expanded_path, pattern)]
@@ -201,6 +221,15 @@ module Herb
 
       all_files.reject do |file|
         relative = file.sub("#{expanded_path}/", "")
+
+        if tool_includes.any? && path_included?(relative, tool_includes)
+          next path_excluded?(relative, tool_exclude_patterns)
+        end
+
+        if user_includes.any? && path_included?(relative, user_includes)
+          next path_excluded?(relative, tool_exclude_patterns)
+        end
+
         path_excluded?(relative, exclude_patterns)
       end.sort
     end
