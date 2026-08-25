@@ -21,7 +21,7 @@ module Bench
         format("%.2fs", seconds)
       else
         minutes = (seconds / 60).floor
-        format("%dm%.1fs", minutes, seconds - (minutes * 60))
+        format("%<minutes>dm%<seconds>.1fs", minutes: minutes, seconds: seconds - (minutes * 60))
       end
     end
 

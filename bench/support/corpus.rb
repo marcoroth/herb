@@ -11,7 +11,7 @@ module Bench
     REPO_URL = "https://github.com/marcoroth/herb-corpus.git"
     BENCH_ROOT = File.expand_path("..", __dir__)
     CORPUS_PATH =
-      if (override = ENV["HERB_CORPUS_PATH"]) && !override.empty?
+      if (override = ENV.fetch("HERB_CORPUS_PATH", nil)) && !override.empty?
         File.expand_path(override)
       else
         File.join(BENCH_ROOT, "tmp", "herb-corpus")
@@ -37,7 +37,7 @@ module Bench
         "--depth", "1",
         "--filter=blob:none",
         REPO_URL,
-        CORPUS_PATH,
+        CORPUS_PATH
       ]
 
       _out, err, status = Open3.capture3(*cmd)
@@ -55,7 +55,7 @@ module Bench
     end
 
     # Returns a sorted list of every .erb / .rhtml / .herb file in the corpus.
-    def files(extensions: %w[erb rhtml herb])
+    def files(extensions: ["erb", "rhtml", "herb"])
       root = ensure!
       pattern = "**/*.{#{extensions.join(",")}}"
       Dir.glob(pattern, base: root).sort.map { |rel| File.join(root, rel) }

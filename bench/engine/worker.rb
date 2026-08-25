@@ -60,11 +60,11 @@ end
 
 allocated_objects = GC.stat(:total_allocated_objects) - allocated_objects_before
 
-STDOUT.write(JSON.generate(
-  engine: engine_name,
-  files: files.size,
-  elapsed: elapsed,
-  compiled_bytes: compiled_bytes,
-  allocated_objects: allocated_objects,
-  failures: failures,
-))
+$stdout.write(JSON.generate(
+                engine: engine_name,
+                files: files.size,
+                elapsed: elapsed,
+                compiled_bytes: compiled_bytes,
+                allocated_objects: allocated_objects,
+                failures: failures
+              ))

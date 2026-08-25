@@ -15,7 +15,6 @@
 #
 # The corpus is fetched into bench/tmp/herb-corpus/ on first run and reused
 # after that; it is never committed.
-_TMP_FILE_LIST = nil
 
 $LOAD_PATH.unshift(File.expand_path("../..", __dir__))
 $LOAD_PATH.unshift(File.expand_path("../../lib", __dir__))
@@ -39,30 +38,30 @@ module Bench
     LIST_PATH = File.join(TMP_DIR, "engine-shared-files.txt")
     SHIM_LIB  = File.join(TMP_DIR, "libmalloc_count.#{RUBY_PLATFORM =~ /darwin/ ? "dylib" : "so"}")
 
-    ENGINES = %w[erubi herb herb-locations].freeze
+    ENGINES = ["erubi", "herb", "herb-locations"].freeze
 
     LABELS = {
-      "erubi"          => "Erubi::Engine",
-      "herb"           => "Herb::Engine (track_locations: false)",
+      "erubi" => "Erubi::Engine",
+      "herb" => "Herb::Engine (track_locations: false)",
       "herb-locations" => "Herb::Engine (track_locations: true)",
     }.freeze
 
     def run
       limit = ENV["BENCH_LIMIT"]&.to_i
       files = Corpus.files
-      files = files.first(limit) if limit && limit.positive?
+      files = files.first(limit) if limit&.positive?
 
       puts
       puts Reporter.bold("Herb::Engine vs Erubi::Engine (compile)")
       puts Reporter.dim("Corpus:   #{Corpus.relative(Corpus::ERB_DIR)}")
-      puts Reporter.dim("Files:    #{files.size}#{limit ? " (limited via BENCH_LIMIT=#{limit})" : ""}")
+      puts Reporter.dim("Files:    #{files.size}#{" (limited via BENCH_LIMIT=#{limit})" if limit}")
       puts Reporter.dim("Runtime:  #{RUBY_DESCRIPTION}")
 
       screening = screen(files)
       write_shared_list(screening[:shared])
       build_malloc_shim!
 
-      results = ENGINES.map { |name| [name, measure_engine(name)] }.to_h
+      results = ENGINES.to_h { |name| [name, measure_engine(name)] }
 
       report(screening, results)
     end
@@ -129,10 +128,10 @@ module Bench
       $stderr.print("\n") if done == total
     end
 
-    def pct(n, total)
+    def pct(count, total)
       return "0%" if total.zero?
 
-      format("%.1f%%", 100.0 * n / total)
+      format("%.1f%%", 100.0 * count / total)
     end
 
     def dump_list(name, files)
@@ -155,7 +154,7 @@ module Bench
 
       cmd = [RbConfig.ruby, WORKER, name, LIST_PATH]
       counters_path = File.join(TMP_DIR, "native-#{name}.json")
-      File.delete(counters_path) if File.exist?(counters_path)
+      FileUtils.rm_f(counters_path)
 
       env = malloc_shim_env(counters_path)
       pretty_env = env.map { |k, v| "#{k}=#{Corpus.relative(v)}" }.join(" ")
@@ -185,7 +184,7 @@ module Bench
         Reporter.kv("Native malloc bytes",  format_bytes(native[:bytes]))
         Reporter.kv("Native bytes/file",    format_bytes(native[:bytes] / files_timed))
       else
-        Reporter.kv("Native malloc",  Reporter.yellow("(shim not loaded — see warning above)"))
+        Reporter.kv("Native malloc", Reporter.yellow("(shim not loaded — see warning above)"))
       end
       data
     end
@@ -205,9 +204,9 @@ module Bench
       cc = ENV["CC"] || "cc"
       flags =
         if RUBY_PLATFORM =~ /darwin/
-          %w[-O2 -std=c11 -dynamiclib]
+          ["-O2", "-std=c11", "-dynamiclib"]
         else
-          %w[-O2 -std=c11 -fPIC -shared -ldl]
+          ["-O2", "-std=c11", "-fPIC", "-shared", "-ldl"]
         end
 
       cmd = [cc, *flags, SHIM_SRC, "-o", SHIM_LIB]
@@ -304,19 +303,19 @@ module Bench
     end
 
     def format_bytes(bytes)
-      units = %w[B KB MB GB]
+      units = ["B", "KB", "MB", "GB"]
       value = bytes.to_f
       unit = units.shift
       while value >= 1024 && !units.empty?
         value /= 1024
         unit = units.shift
       end
-      format("%.2f %s", value, unit)
+      format("%<value>.2f %<unit>s", value: value, unit: unit)
     end
 
-    def format_count(n)
+    def format_count(count)
       # 1_234_567 -> "1,234,567"
-      n.to_i.to_s.reverse.scan(/\d{1,3}/).join(",").reverse
+      count.to_i.to_s.reverse.scan(/\d{1,3}/).join(",").reverse
     end
 
     # Plain N.NNx ratio for comparing raw counts (allocated objects,
