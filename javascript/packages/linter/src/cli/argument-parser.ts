@@ -66,8 +66,9 @@ export class ArgumentParser {
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
                                     (also disables file-scoped counter suppression from <%# herb:disable rule N|all %>)
-      --update-disable-counts       lint, then rewrite the count in every existing <%# herb:disable rule N %>
-                                    entry so its declared count matches reality
+      --update-disable-counts       lint, then rewrite the count in each <%# herb:disable rule N %>
+                                    entry (scoped to the given paths, or the whole tracked file set
+                                    when no paths are passed) so its declared count matches reality
                                     (analogue of erb_lint -a; do not fold into --fix)
       --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
       --log-level <severity>        only report diagnostics of this severity or higher (error|warning|info|hint) [default: hint]

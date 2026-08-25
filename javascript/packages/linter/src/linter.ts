@@ -976,12 +976,20 @@ export class Linter {
 
     const existing = new Map<string, ExistingEntry>()
 
+    // Only reconcile entries whose rule name is present in this linter's
+    // rule set. An unknown rule (typically a custom rule that wasn't loaded
+    // into this linter instance) means "we can't measure this" — leave the
+    // entry untouched rather than assuming zero offenses and deleting it.
+    // `herb-disable-comment-valid-rule-name` already flags unknown names.
+    const knownRuleNames = new Set(this.rules.map(ruleClass => ruleClass.ruleName))
+
     for (let i = 0; i < lines.length; i++) {
       const parsed = parseHerbDisableLine(lines[i])
       if (!parsed) continue
 
       for (const entry of parsed.fileScopedEntries) {
         if (entry.count === "all") continue // `all` opts out of drift updates
+        if (!knownRuleNames.has(entry.name)) continue // unmeasurable — do not touch
         if (existing.has(entry.name)) continue // duplicates handled by dedicated rule
 
         existing.set(entry.name, {
