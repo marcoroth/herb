@@ -60,6 +60,31 @@
       }
     ]
   },
+  "manifest": {
+    "file": "app/views/contract/a-keyed-collection.html.erb",
+    "identifier": "app/views/contract/a-keyed-collection.html.erb",
+    "version": "7700cd32",
+    "slots": [
+      {
+        "index": 0,
+        "type": "collection"
+      },
+      {
+        "index": 1,
+        "type": "attribute",
+        "attribute": "id",
+        "collection": 0
+      },
+      {
+        "index": 2,
+        "type": "child",
+        "collection": 0
+      }
+    ],
+    "names": {},
+    "parts": {},
+    "states": null
+  },
   "dependencies": {
     "state": {
       "@items": []

@@ -6,6 +6,7 @@ require "digest"
 require_relative "../visitor"
 require_relative "context_aware"
 require_relative "slot_identifier"
+require_relative "slot_manifest/channel"
 require_relative "slot_types"
 require_relative "state_compiler"
 require_relative "slot_markers"
@@ -46,6 +47,7 @@ module Herb
       SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
       MODE_OPTION = /\b(server|client)\b/ #: Regexp
       MODES = [:server, :client].freeze #: Array[Symbol]
+      DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
       COVERED = "@_herb_covered" #: String
       OCCURRENCES = "@_herb_region_occurrences" #: String
       OCCURRENCE = "_herb_occurrence" #: String
@@ -117,13 +119,15 @@ module Herb
       end
 
       #: (?markers: SlotMarkers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
-      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path, mark: true)
+      def initialize(markers: SlotMarkers.new, mode: :server, identifier: :path, mark: true, deliver: :inline)
         super()
 
         raise ArgumentError, "unknown slot mode #{mode.inspect}, expected one of #{MODES.inspect}" unless MODES.include?(mode)
+        raise ArgumentError, "deliver has to be one of #{DELIVERIES.join(", ")}, got #{deliver.inspect}" unless DELIVERIES.include?(deliver)
 
         @markers = markers
         @mark = mark
+        @deliver = deliver
         @bufvar = "_buf"
         @mode = mode
         @statics = mode == :client ? {} : nil #: Hash[String, String]?
@@ -301,6 +305,78 @@ module Herb
         @identifier ||= SlotIdentifier.new(@identify).call(context.relative_file_path)
       end
 
+      #: () -> Hash[String, untyped]
+      def manifest
+        {
+          "file" => context.relative_file_path,
+          "identifier" => identifier,
+          "version" => version,
+          "slots" => manifest_slots,
+          "names" => manifest_names,
+          "parts" => manifest_parts,
+          "states" => @states.manifest,
+        }
+      end
+
+      #: () -> Array[Hash[String, untyped]]
+      def manifest_slots
+        @slots.map { |slot|
+          entry = { "index" => slot.index, "type" => slot.type.to_s } #: Hash[String, untyped]
+
+          entry["attribute"] = slot.attribute if slot.attribute
+
+          collection = enclosing_collection(slot)
+          entry["collection"] = collection if collection
+
+          entry
+        }
+      end
+
+      #: (Slot) -> Integer?
+      def enclosing_collection(slot)
+        node = @slot_nodes[slot.index]
+
+        return nil unless node
+
+        scope, = @slot_scopes[node]
+
+        return nil unless scope
+
+        @indices[scope]
+      end
+
+      #: () -> Hash[String, Integer]
+      def manifest_names
+        names = {} #: Hash[String, Integer]
+
+        @slots.each do |slot|
+          name = slot.name
+
+          names[name] = slot.index if name
+        end
+
+        names
+      end
+
+      #: () -> Hash[String, Array[String]]
+      def manifest_parts
+        parts = {} #: Hash[String, Array[String]]
+
+        @interpolated_attributes.each do |node|
+          index = @indices[node]
+
+          next unless index
+
+          segments = attribute_segments(node)
+
+          next unless segments
+
+          parts[index.to_s] = segments
+        end
+
+        parts
+      end
+
       #: () -> Hash[Symbol, untyped]
       def schema
         {
@@ -361,6 +437,35 @@ module Herb
         wrap_displaced
         wrap_region(node)
         append_statics(node)
+        deliver_manifest(node)
+      end
+
+      #: (untyped) -> void
+      def deliver_manifest(document_node)
+        return if @deliver == :none
+        return if @slots.empty? && @states.manifest.nil?
+
+        json = JSON.generate(manifest, script_safe: true)
+        key = "#{identifier}:#{version}"
+
+        document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
+
+        if @deliver == :hoist
+          document_node.children.push(erb_code_node("::Herb::Engine::SlotManifest::Channel.record(#{key.dump}, #{json.dump})"))
+
+          return
+        end
+
+        ref = "#{COVERED}[#{"manifest:#{key}".inspect}]"
+
+        document_node.children.push(
+          erb_code_node("unless #{ref}"),
+          text_node(@markers.manifest_open(identifier, version)),
+          text_node(json),
+          text_node(@markers.manifest_close),
+          erb_code_node("#{ref} = true"),
+          erb_code_node("end")
+        )
       end
 
       def visit_html_element_node(node)

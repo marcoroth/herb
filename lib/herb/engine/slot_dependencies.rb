@@ -128,7 +128,6 @@ module Herb
         wanted = names || state_names(analysis)
         reached = reached_paths(visitor, source, wanted)
         settable = (analysis.instance_variables + analysis.locals_declared + (names || [])).to_set - analysis.constants.to_set
-
         index = {} #: Hash[Integer, Hash[Symbol, untyped]]
 
         slots.each do |slot|
@@ -142,78 +141,46 @@ module Herb
         { version: visitor.schema[:version], identifier: visitor.schema[:identifier], slots: index, states: states_manifest(visitor) }
       end
 
-      #: (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
-      def declared_entry(declaration, scope)
-        entry = declaration.transform_keys(&:to_s).merge("scope" => scope)
-        derived = entry["derived"]
-
-        entry["derived"] = StateDirectives.condition_entry(derived) if derived
-        entry["value"] = StateDirectives.literal_value(entry["default"]) if !derived && StateDirectives.literal?(entry["default"])
-
-        entry
-      end
-
       #: (untyped) -> Hash[String, untyped]?
       def states_manifest(visitor)
-        return nil unless visitor.respond_to?(:state_declarations)
+        return nil unless visitor.respond_to?(:states)
 
-        declared = visitor.state_declarations
-        names = declared[:region].map { |declaration| declaration[:name] } +
-                declared[:items].values.flatten.map { |declaration| declaration[:name] }
+        manifest = visitor.states.manifest
 
-        return nil if names.empty?
+        return nil unless manifest
 
-        declarations = declared[:region].map { |declaration| declared_entry(declaration, "region") } +
-                       declared[:items].flat_map { |index, list| list.map { |declaration| declared_entry(declaration, index) } }
+        {
+          "version" => manifest["version"],
+          "declarations" => manifest["declarations"],
+          "reads" => manifest["reads"],
+          "bound" => bound_states(visitor, manifest),
+          "conditionals" => manifest["conditionals"],
+          "presence" => manifest["presence"],
+        }
+      end
 
-        reads = {} #: Hash[String, Array[Integer]]
+      #: (untyped, Hash[String, untyped]) -> Hash[String, Array[Integer]]
+      def bound_states(visitor, manifest)
+        names = manifest["declarations"].map { |declaration| declaration["name"] }
         bound = {} #: Hash[String, Array[Integer]]
 
         visitor.slots.each do |slot|
           next unless slot.valued?
 
-          expression = slot.expression.to_s.strip
-          name = expression.delete_suffix("?")
+          name = slot.expression.to_s.strip.delete_suffix("?")
 
           next unless names.include?(name)
 
-          (reads[name] ||= []) << slot.index
           (bound[name] ||= []) << slot.index if bound_slot?(slot)
         end
 
-        presence = {} #: Hash[String, untyped]
-
         visitor.state_presence.each do |index, read|
-          presence[index.to_s] = StateDirectives.condition_entry(read)
-          StateDirectives.read_names(read).each { |name| (reads[name] ||= []) << index }
-
           next unless read.is_a?(StateDirectives::Read)
 
           (bound[read.name] ||= []) << index if read.comparand.nil? && read.against.nil? && bound_slot?(visitor.slots[index])
         end
 
-        conditionals = visitor.state_conditional_entries.to_h { |index, info|
-          [index.to_s, { "arms" => info[:arms], "else" => info[:else] }]
-        }
-
-        if visitor.respond_to?(:state_count_entries)
-          visitor.state_count_entries.each do |count|
-            declaration = declarations.find { |declared| declared["name"] == count[:name] && declared["scope"] == "region" }
-
-            next unless declaration
-
-            declaration["count"] = { "collection" => count[:collection], "when" => count[:when], "by" => count[:by] }
-          end
-        end
-
-        {
-          "version" => visitor.schema[:version],
-          "declarations" => declarations,
-          "reads" => reads,
-          "bound" => bound,
-          "conditionals" => conditionals,
-          "presence" => presence,
-        }
+        bound
       end
 
       #: (untyped) -> bool

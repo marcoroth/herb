@@ -49,6 +49,28 @@
       }
     ]
   },
+  "manifest": {
+    "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "identifier": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "version": "a9e9757d",
+    "slots": [
+      {
+        "index": 0,
+        "type": "block"
+      },
+      {
+        "index": 1,
+        "type": "conditional"
+      },
+      {
+        "index": 2,
+        "type": "child"
+      }
+    ],
+    "names": {},
+    "parts": {},
+    "states": null
+  },
   "dependencies": {
     "state": {
       "@on": [],

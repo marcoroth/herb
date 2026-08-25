@@ -224,6 +224,7 @@ module Engine
           values: values(label, source, after),
           expected: expected,
           schema: visitor.schema,
+          manifest: visitor.manifest,
           dependencies: dependencies(label, source),
         }
       end

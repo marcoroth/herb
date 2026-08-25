@@ -43,6 +43,28 @@
       }
     ]
   },
+  "manifest": {
+    "file": "app/views/contract/expressions-in-order.html.erb",
+    "identifier": "app/views/contract/expressions-in-order.html.erb",
+    "version": "fcd78050",
+    "slots": [
+      {
+        "index": 0,
+        "type": "child"
+      },
+      {
+        "index": 1,
+        "type": "child"
+      },
+      {
+        "index": 2,
+        "type": "child"
+      }
+    ],
+    "names": {},
+    "parts": {},
+    "states": null
+  },
   "dependencies": {
     "state": {
       "@a": [

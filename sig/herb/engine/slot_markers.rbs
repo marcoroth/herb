@@ -69,6 +69,12 @@ module Herb
 
       # : () -> String
       def statics_close: () -> String
+
+      # : (String, String) -> String
+      def manifest_open: (String, String) -> String
+
+      # : () -> String
+      def manifest_close: () -> String
     end
   end
 end

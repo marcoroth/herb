@@ -38,6 +38,30 @@
       }
     ]
   },
+  "manifest": {
+    "file": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
+    "identifier": "app/views/contract/an-interpolated-attribute-inside-a-block.html.erb",
+    "version": "60164077",
+    "slots": [
+      {
+        "index": 0,
+        "type": "block"
+      },
+      {
+        "index": 1,
+        "type": "attribute_interpolation",
+        "attribute": "id"
+      }
+    ],
+    "names": {},
+    "parts": {
+      "1": [
+        "row_",
+        ""
+      ]
+    },
+    "states": null
+  },
   "dependencies": {
     "state": {
       "@r": []

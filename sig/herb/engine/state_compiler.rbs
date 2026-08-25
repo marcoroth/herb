@@ -29,6 +29,12 @@ module Herb
       # : () -> Array[String]
       def count_signatures: () -> Array[String]
 
+      # : () -> Hash[String, untyped]?
+      def manifest: () -> Hash[String, untyped]?
+
+      # : (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
+      def declared_entry: (Hash[Symbol, untyped], String | Integer) -> Hash[String, untyped]
+
       # : (String, String?) -> void
       def declare_local: (String, String?) -> void
 

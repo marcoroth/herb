@@ -75,6 +75,88 @@
       }
     ]
   },
+  "manifest": {
+    "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "identifier": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "version": "ba888992",
+    "slots": [
+      {
+        "index": 0,
+        "type": "collection"
+      },
+      {
+        "index": 1,
+        "type": "attribute",
+        "attribute": "id",
+        "collection": 0
+      },
+      {
+        "index": 2,
+        "type": "boolean_attribute",
+        "attribute": "hidden",
+        "collection": 0
+      },
+      {
+        "index": 3,
+        "type": "child",
+        "collection": 0
+      }
+    ],
+    "names": {},
+    "parts": {},
+    "states": {
+      "version": "ba888992",
+      "declarations": [
+        {
+          "name": "filter",
+          "kind": "string",
+          "default": "\"all\"",
+          "derived": null,
+          "line": 1,
+          "column": 0,
+          "scope": "region",
+          "value": "all"
+        },
+        {
+          "name": "starred",
+          "kind": "boolean",
+          "default": "false",
+          "derived": null,
+          "line": 1,
+          "column": 78,
+          "scope": 0,
+          "value": false
+        }
+      ],
+      "reads": {
+        "filter": [
+          2
+        ],
+        "starred": [
+          2
+        ]
+      },
+      "conditionals": {},
+      "presence": {
+        "2": {
+          "all": [
+            [
+              "filter",
+              {
+                "value": "starred"
+              }
+            ],
+            [
+              "starred",
+              {
+                "value": false
+              }
+            ]
+          ]
+        }
+      }
+    }
+  },
   "dependencies": {
     "state": {
       "@items": []

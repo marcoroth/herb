@@ -38,6 +38,8 @@ module Herb
 
       MODES: Array[Symbol]
 
+      DELIVERIES: Array[Symbol]
+
       COVERED: String
 
       OCCURRENCES: String
@@ -189,6 +191,21 @@ module Herb
       # : () -> String
       def identifier: () -> String
 
+      # : () -> Hash[String, untyped]
+      def manifest: () -> Hash[String, untyped]
+
+      # : () -> Array[Hash[String, untyped]]
+      def manifest_slots: () -> Array[Hash[String, untyped]]
+
+      # : (Slot) -> Integer?
+      def enclosing_collection: (Slot) -> Integer?
+
+      # : () -> Hash[String, Integer]
+      def manifest_names: () -> Hash[String, Integer]
+
+      # : () -> Hash[String, Array[String]]
+      def manifest_parts: () -> Hash[String, Array[String]]
+
       # : () -> Hash[Symbol, untyped]
       def schema: () -> Hash[Symbol, untyped]
 
@@ -209,6 +226,9 @@ module Herb
       # What the visitor writes into the template, which runs once every visitor has read it.
       # : (untyped) -> void
       def finish: (untyped) -> void
+
+      # : (untyped) -> void
+      def deliver_manifest: (untyped) -> void
 
       def visit_html_element_node: (untyped node) -> untyped
 

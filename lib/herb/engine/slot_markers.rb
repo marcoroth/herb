@@ -108,6 +108,16 @@ module Herb
       def statics_close
         "</template>"
       end
+
+      #: (String, String) -> String
+      def manifest_open(file, version)
+        %(<template data-herb-manifest="#{file}:#{version}">)
+      end
+
+      #: () -> String
+      def manifest_close
+        "</template>"
+      end
     end
   end
 end
