@@ -9,6 +9,18 @@ import { LAYOUT, renderedFrom, renderedFromNowhere } from "../helpers/partial-ca
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLHeadOnlyElementsRule)
 
 describe("html-head-only-elements", () => {
+  test("reports only the opening tag, not the whole element", () => {
+    expectError("Element `<style>` must be placed inside the `<head>` tag.", { line: 2, column: 2, endLine: 2, endColumn: 9 })
+
+    assertOffenses(dedent`
+      <body>
+        <style>
+          .a { color: red; }
+        </style>
+      </body>
+    `)
+  })
+
   test("passes when head-only elements are inside head", () => {
     expectNoOffenses(dedent`
       <html>

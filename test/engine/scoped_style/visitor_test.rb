@@ -31,6 +31,26 @@ module Engine
       end
     end
 
+    class RaisingTransform
+      def call(css, **)
+        raise ArgumentError, "no idea what to do with that" if css.include?("!!!")
+
+        "#{css}/* narrowed */"
+      end
+    end
+
+    class WarningTransform
+      Narrowed = Data.define(:css, :warnings) do
+        def to_s
+          css
+        end
+      end
+
+      def call(css, **)
+        Narrowed.new(css: "#{css}/* narrowed */", warnings: ["it kept `:deep()` without acting on it"])
+      end
+    end
+
     def options(transform: Transform.new, filename: TEMPLATE, visitors: [], deliver: :inline, **overrides)
       visitor = Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: deliver)
 
@@ -267,6 +287,40 @@ module Engine
 
         assert_equal 0, response.first.scan("<style").length
       end
+    end
+
+    test "leaves a block alone, and the file unattributed, when the transform could not narrow it" do
+      settings = options(transform: RaisingTransform.new)
+
+      assert_compiled_snapshot(%(<style scoped>!!! { color: red; }</style><h1>Hi</h1>), settings)
+
+      visitor = settings[:visitors].last
+
+      assert_equal ["scoped-style-that-could-not-be-narrowed"], visitor.diagnostics.map(&:code)
+      assert_empty visitor.styles
+    end
+
+    test "scopes the file all the same when one block narrowed and another could not" do
+      source = %(<style scoped>.a { color: red; }</style><style scoped>!!! {}</style><h1 class="a">Hi</h1>)
+      settings = options(transform: RaisingTransform.new)
+
+      assert_compiled_snapshot(source, settings)
+
+      visitor = settings[:visitors].last
+
+      assert_equal ["scoped-style-that-could-not-be-narrowed"], visitor.diagnostics.map(&:code)
+      assert_equal 1, visitor.styles.size
+    end
+
+    test "reports what the transform kept but could not act on" do
+      settings = options(transform: WarningTransform.new)
+
+      assert_compiled_snapshot(%(<style scoped>.a:deep(.b) { color: red; }</style><h1>Hi</h1>), settings)
+
+      visitor = settings[:visitors].last
+
+      assert_equal ["scoped-style-with-a-warning"], visitor.diagnostics.map(&:code)
+      assert_equal 1, visitor.styles.size
     end
 
     test "visitor is not loaded when only requiring herb" do

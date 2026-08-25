@@ -105,6 +105,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
 - [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
+- [`herb-scoped-style-no-unused-selector`](./herb-scoped-style-no-unused-selector.md) - No unused selector in a `<style scoped>` block.
 - [`herb-scoped-style-prefer-single-root`](./herb-scoped-style-prefer-single-root.md) - Prefer a single root element when a file has a `<style scoped>` block.
 - [`herb-scoped-style-require-top-level`](./herb-scoped-style-require-top-level.md) - Require a `<style scoped>` block to be a top-level element.
 - [`herb-scoped-style-single-declaration`](./herb-scoped-style-single-declaration.md) - One `<style scoped>` block per file.
@@ -150,6 +151,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
 - [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
+- [`html-no-empty-css-rule`](./html-no-empty-css-rule.md) - No empty CSS rule in a `<style>` block.
 - [`html-no-empty-headings`](./html-no-empty-headings.md) - Disallow empty heading elements
 - [`html-no-event-handler-attributes`](./html-no-event-handler-attributes.md) - Disallow inline event handler attributes
 - [`html-no-inline-script-elements`](./html-no-inline-script-elements.md) - Disallow inline script elements
