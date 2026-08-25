@@ -2337,6 +2337,7 @@ multiple-rule-offenses.html.erb:
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        138 enabled | 21 not enabled
+
  TIP: 11 of the logged offenses don't fail the build.
       Run herb-lint --log-level=error to stop logging them, or set linter.logLevel in your .herb.yml.
       To start enforcing them instead, set linter.failLevel to hint in your .herb.yml."
