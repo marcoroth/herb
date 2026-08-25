@@ -86,6 +86,20 @@ describe("comment-helpers", () => {
       expect(result).toBe("\n  line1\n    indented\n  line3\n")
     })
 
+    test("indents multiline content relative to the base indent", () => {
+      const raw = ["", "    line1", "      indented", "    line3", ""].join("\n")
+      const result = formatHTMLCommentInner(raw, 2, "    ")
+
+      expect(result.split("\n")).toEqual(["", "      line1", "        indented", "      line3", "    "])
+    })
+
+    test("aligns the closing line with the base indent", () => {
+      const raw = ["line1", "line2"].join("\n")
+      const result = formatHTMLCommentInner(raw, 2, "  ")
+
+      expect(result.split("\n")).toEqual(["", "    line1", "    line2", "  "])
+    })
+
     test("handles empty inner string", () => {
       const result = formatHTMLCommentInner("", 2)
       expect(result).toBe("  ")
@@ -149,6 +163,35 @@ describe("comment-helpers", () => {
         expect(result.footer).toBe("%>")
         expect(result.contentLines).toEqual(["first line", "second line"])
       }
+    })
+
+    describe("commented-out output tags (<%#=) — https://github.com/marcoroth/herb/issues/1754", () => {
+      test("does not insert a space between <%# and = on a single line", () => {
+        const result = formatERBCommentLines("<%#", "= tag.link rel: \"manifest\", href: pwa_manifest_path(format: :json) ", "%>")
+
+        expect(result).toEqual({
+          type: "single-line",
+          text: "<%#= tag.link rel: \"manifest\", href: pwa_manifest_path(format: :json) %>"
+        })
+      })
+
+      test("does not insert a space when multiline content collapses to a single line starting with =", () => {
+        const result = formatERBCommentLines("<%#", "\n  = foo\n", "%>")
+
+        expect(result).toEqual({
+          type: "single-line",
+          text: "<%#= foo %>"
+        })
+      })
+
+      test("preserves a genuine comment body that starts with = after a space", () => {
+        const result = formatERBCommentLines("<%#", " = foo", "%>")
+
+        expect(result).toEqual({
+          type: "single-line",
+          text: "<%# = foo %>"
+        })
+      })
     })
   })
 })

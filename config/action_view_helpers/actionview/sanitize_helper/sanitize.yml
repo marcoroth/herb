@@ -1,0 +1,37 @@
+---
+name: "sanitize"
+source: "ActionView::Helpers::SanitizeHelper#sanitize"
+gem: "actionview"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "sanitize(html, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/SanitizeHelper.html#method-i-sanitize"
+
+description: |-
+  Sanitizes HTML input, stripping all tags and attributes that are not explicitly allowed.
+
+tag: null
+
+arguments:
+  - name: "html"
+    position: 1
+    type: "string"
+    optional: false
+    description: |-
+      HTML string to sanitize.
+
+options:
+  - name: "tags"
+    type: "array"
+    description: |-
+      Allowed HTML tags.
+
+  - name: "attributes"
+    type: "array"
+    description: |-
+      Allowed HTML attributes.
+
+block_arguments: []
+special_behaviors: []

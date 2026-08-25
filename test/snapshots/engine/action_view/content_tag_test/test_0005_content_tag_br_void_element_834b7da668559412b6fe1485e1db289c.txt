@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0005_content_tag br void element"
+input: "{source: \"<%= content_tag :br %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<br />

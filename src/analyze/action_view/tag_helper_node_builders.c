@@ -3,10 +3,12 @@
 #include "../../include/lexer/token_struct.h"
 #include "../../include/lib/hb_allocator.h"
 #include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_buffer.h"
 #include "../../include/lib/hb_string.h"
 #include "../../include/location/location.h"
 #include "../../include/location/position.h"
 #include "../../include/location/range.h"
+#include "../../include/prism/herb_prism_node.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -27,8 +29,10 @@ token_T* create_synthetic_token(
     size_t length = strlen(value);
     char* copied = hb_allocator_strndup(allocator, value, length);
     token->value = hb_string_from_data(copied, length);
+    token->owns_value = true;
   } else {
     token->value = HB_STRING_EMPTY;
+    token->owns_value = false;
   }
 
   token->type = type;
@@ -124,7 +128,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node_precise(
       open_quote,
       value_children,
       close_quote,
-      positions->quoted,
+      true,
       positions->value_start,
       positions->value_end,
       hb_array_init(0, allocator),
@@ -179,7 +183,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_precise(
     NULL,
     value_children,
     NULL,
-    false,
+    true,
     positions->content_start,
     positions->content_end,
     hb_array_init(0, allocator),
@@ -195,6 +199,59 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_precise(
     hb_array_init(0, allocator),
     allocator
   );
+}
+
+AST_NODE_T* create_conditional_boolean_attribute(
+  const char* name_string,
+  const char* condition_source,
+  attribute_positions_T* positions,
+  hb_allocator_T* allocator
+) {
+  if (!name_string || !condition_source) { return NULL; }
+
+  AST_HTML_ATTRIBUTE_NODE_T* attribute = create_html_attribute_node_precise(name_string, NULL, positions, allocator);
+  if (!attribute) { return NULL; }
+
+  hb_array_T* statements = hb_array_init(1, allocator);
+  hb_array_append(statements, (AST_NODE_T*) attribute);
+
+  position_T start = positions->name_start;
+  position_T end = positions->content_end;
+
+  hb_buffer_T condition_buffer;
+  hb_buffer_init(&condition_buffer, strlen(condition_source) + 16, allocator);
+  hb_buffer_append(&condition_buffer, " if (");
+  hb_buffer_append(&condition_buffer, condition_source);
+  hb_buffer_append(&condition_buffer, ") ");
+
+  AST_ERB_END_NODE_T* end_node = ast_erb_end_node_init(
+    create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end),
+    create_synthetic_token(allocator, " end ", TOKEN_ERB_CONTENT, end, end),
+    create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end),
+    end,
+    end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
+    create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start),
+    create_synthetic_token(allocator, hb_buffer_value(&condition_buffer), TOKEN_ERB_CONTENT, start, end),
+    create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end),
+    NULL,
+    HERB_PRISM_NODE_EMPTY,
+    statements,
+    NULL,
+    end_node,
+    start,
+    end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  hb_buffer_free(&condition_buffer);
+
+  return (AST_NODE_T*) if_node;
 }
 
 AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
@@ -384,4 +441,25 @@ void append_body_content_node(
 
     if (text_node) { hb_array_append(body, (AST_NODE_T*) text_node); }
   }
+}
+
+AST_CDATA_NODE_T* create_javascript_cdata_node(
+  hb_array_T* children,
+  position_T start,
+  position_T end,
+  hb_allocator_T* allocator
+) {
+  token_T* cdata_opening = create_synthetic_token(allocator, "\n//<![CDATA[\n", TOKEN_CDATA_START, start, end);
+
+  token_T* cdata_closing = create_synthetic_token(allocator, "\n//]]>\n", TOKEN_CDATA_END, start, end);
+
+  return ast_cdata_node_init(
+    cdata_opening,
+    children,
+    cdata_closing,
+    start,
+    end,
+    hb_array_init(0, allocator),
+    allocator
+  );
 }

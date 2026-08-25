@@ -1,6 +1,6 @@
 import { Node, HTMLTextNode, HTMLElementNode, HTMLDoctypeNode, ERBContentNode, WhitespaceNode, XMLDeclarationNode } from "@herb-tools/core"
 import { isNode, getTagName, isERBNode, isERBOutputNode, isERBCommentNode, isCommentNode, isERBControlFlowNode } from "@herb-tools/core"
-import { findPreviousMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode } from "./format-helpers.js"
+import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode, countBlankLines } from "./format-helpers.js"
 
 import { INLINE_ELEMENTS, SPACEABLE_CONTAINERS } from "./format-helpers.js"
 
@@ -65,6 +65,10 @@ export class SpacingAnalyzer {
       return false
     }
 
+    if (isCurrentComment && findNextMeaningfulSibling(siblings, currentIndex) === -1) {
+      return false
+    }
+
     if (isCurrentMultiline || isPreviousMultiline) {
       return true
     }
@@ -121,11 +125,22 @@ export class SpacingAnalyzer {
    * Check if there's a blank line (double newline) in the nodes at the given index
    */
   hasBlankLineBetween(body: Node[], index: number): boolean {
+    return this.blankLinesBetween(body, index) > 0
+  }
+
+  /**
+   * Count the user-authored blank lines in the nodes at the given index
+   */
+  blankLinesBetween(body: Node[], index: number): number {
+    let count = 0
+
     for (let lookbackIndex = index - 1; lookbackIndex >= 0 && lookbackIndex >= index - 2; lookbackIndex--) {
       const node = body[lookbackIndex]
 
-      if (isNode(node, HTMLTextNode) && node.content.includes('\n\n')) {
-        return true
+      if (isNode(node, HTMLTextNode)) {
+        count = Math.max(count, countBlankLines(node.content))
+
+        break
       }
 
       if (isNode(node, WhitespaceNode)) {
@@ -138,8 +153,10 @@ export class SpacingAnalyzer {
     for (let lookaheadIndex = index; lookaheadIndex < body.length && lookaheadIndex <= index + 1; lookaheadIndex++) {
       const node = body[lookaheadIndex]
 
-      if (isNode(node, HTMLTextNode) && node.content.includes('\n\n')) {
-        return true
+      if (isNode(node, HTMLTextNode)) {
+        count = Math.max(count, countBlankLines(node.content))
+
+        break
       }
 
       if (isNode(node, WhitespaceNode)) {
@@ -149,7 +166,7 @@ export class SpacingAnalyzer {
       break
     }
 
-    return false
+    return count
   }
 
   /**

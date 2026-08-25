@@ -9,6 +9,7 @@ These are the user-facing tools that integrate into your development workflow:
 * [Herb Language Server](/projects/language-server)
 * [Herb Formatter](/projects/formatter)
 * [Herb Linter](/projects/linter)
+* [Herb Dev Server](/projects/dev-server)
 * [Herb CLI](/projects/cli)
 
 ## Language Bindings
@@ -30,4 +31,5 @@ These specialized libraries provide additional functionality for working with HT
 * [Printer](/projects/printer)
 * [Rewriter](/projects/rewriter)
 * [Config](/projects/config)
+* [Client Runtime](/projects/client)
 * [Core](/projects/core)

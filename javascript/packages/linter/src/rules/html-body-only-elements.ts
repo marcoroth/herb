@@ -1,41 +1,28 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, isBodyOnlyTag } from "./rule-utils.js"
+import { ElementStackVisitor, isBodyOnlyTag } from "../utils/rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
-class HTMLBodyOnlyElementsVisitor extends BaseRuleVisitor {
-  private elementStack: string[] = []
+const inTheHeadNotTheBody = (ancestors: string[]) => ancestors.includes("head") && !ancestors.includes("body")
 
+class HTMLBodyOnlyElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
-    if (!tagName) return
 
-    this.checkBodyOnlyElement(node, tagName)
+    if (tagName && isBodyOnlyTag(tagName)) {
+      const { verdict, chain } = this.placementAcrossCallers(inTheHeadNotTheBody)
+      const message = `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`
 
-    this.elementStack.push(tagName)
-    this.visitChildNodes(node)
-    this.elementStack.pop()
-  }
+      if (verdict === "always") {
+        this.addOffenseWithCallChain(message, node.location, chain)
+      } else if (verdict === "mixed") {
+        this.addOffenseWithCallChain(`${message} At least one call site renders this file inside the \`<head>\`.`, node.location, chain)
+      }
+    }
 
-  private checkBodyOnlyElement(node: HTMLElementNode, tagName: string): void {
-    if (this.insideBody) return
-    if (!this.insideHead) return
-    if (!isBodyOnlyTag(tagName)) return
-
-    this.addOffense(
-      `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
-      node.location,
-    )
-  }
-
-  private get insideBody(): boolean {
-    return this.elementStack.includes("body")
-  }
-
-  private get insideHead(): boolean {
-    return this.elementStack.includes("head")
+    super.visitHTMLElementNode(node)
   }
 }
 
@@ -49,6 +36,12 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
       enabled: true,
       severity: "error",
       exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

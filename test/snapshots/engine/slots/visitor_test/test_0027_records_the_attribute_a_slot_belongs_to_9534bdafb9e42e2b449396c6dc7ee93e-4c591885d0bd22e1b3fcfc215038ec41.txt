@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0027_records the attribute a slot belongs to"
+input: "<div class=\"<%= @c %>\" id=\"<%= @i %>\"></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: b5b81d11
+
+slots:
+  index=0  type=attribute  node_path=[0]  expression="@c"  location=1:5  attribute="class"
+  index=1  type=attribute  node_path=[0]  expression="@i"  location=1:23  attribute="id"

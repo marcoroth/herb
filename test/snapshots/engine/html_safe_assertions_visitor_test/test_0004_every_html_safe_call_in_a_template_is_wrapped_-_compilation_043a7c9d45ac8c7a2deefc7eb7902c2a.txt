@@ -1,0 +1,6 @@
+---
+source: "Engine::HTMLSafeAssertionsVisitorTest#test_0004_every html_safe call in a template is wrapped - compilation"
+input: "{source: \"<div><%= a.html_safe %> and <%= b.html_safe %></div>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (::Herb::Engine::HTMLSafeAssertions.check(a, file: "app/views/test.html.erb".freeze, line: 1, column: 6, source: "<%= a.html_safe %>".freeze, mode: :raise).html_safe).to_s; _buf << ' and '.freeze; _buf << (::Herb::Engine::HTMLSafeAssertions.check(b, file: "app/views/test.html.erb".freeze, line: 1, column: 29, source: "<%= b.html_safe %>".freeze, mode: :raise).html_safe).to_s; _buf << '</div>'.freeze;
+_buf.to_s

@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, labeled, closed]
+    types: [opened, synchronize, reopened, closed]
   release:
     types: [published]
 
@@ -18,17 +18,19 @@ jobs:
     if: github.event.action != 'closed'
     env:
       GH_TOKEN: ${{ github.token }}
+      NX_NO_CLOUD: "true"
+      # NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: Add LLVM apt Repo
@@ -57,9 +59,9 @@ jobs:
       - name: Render Templates
         run: bundle exec rake templates
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: yarn install
@@ -80,6 +82,9 @@ jobs:
           GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: yarn build
 
+      - name: Run `typecheck` for all NX packages
+        run: yarn typecheck
+
       - name: Run `test` for all NX packages
         run: yarn test
 
@@ -92,16 +97,17 @@ jobs:
         run: deno run --allow-read --allow-env javascript/packages/node-wasm/test/deno_smoke.ts
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-packages
           path: javascript/packages/*/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
 
       - name: Upload docs artifact
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request' && github.event.pull_request.auto_merge == null
+        uses: actions/upload-artifact@v7
         with:
           name: docs-preview
           path: docs/.vitepress/dist
@@ -129,37 +135,57 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: javascript/packages/
 
-      - name: Publish packages with provenance
+      - name: Publish packages
         run: |
+          failed=()
+
           for package_dir in javascript/packages/*; do
-            if [ -d "$package_dir" ] && [ -f "$package_dir/package.json" ]; then
-              package=$(basename "$package_dir")
+            [ -f "$package_dir/package.json" ] || continue
 
-              if [ "$package" = "vscode" ]; then
-                echo "Skipping vscode package..."
-                continue
-              fi
+            name=$(jq -r '.name' "$package_dir/package.json")
+            version=$(jq -r '.version' "$package_dir/package.json")
 
-              echo "Publishing $package..."
-              (cd "$package_dir" && npm publish --provenance --access public --ignore-scripts)
+            if [ "$(jq -r '.private // false' "$package_dir/package.json")" = "true" ]; then
+              echo "Skipping $name (private)"
+              continue
             fi
+
+            if npm view "$name@$version" version > /dev/null 2>&1; then
+              echo "Skipping $name@$version (already published)"
+              continue
+            fi
+
+            echo "::group::Publishing $name@$version"
+
+            if (cd "$package_dir" && npm publish --access public --ignore-scripts); then
+              echo "Published $name@$version"
+            else
+              failed+=("$name@$version")
+            fi
+
+            echo "::endgroup::"
           done
+
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Failed to publish: ${failed[*]}"
+            exit 1
+          fi
 
   preview-check:
     if: |
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
       (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     runs-on: ubuntu-latest
@@ -179,10 +205,43 @@ jobs:
         if: github.event_name == 'push'
         run: echo "result=true" >> $GITHUB_OUTPUT
 
+  auto-merge-check:
+    name: Check auto-merge status
+    needs: main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+
+    steps:
+      - name: Check whether auto-merge is enabled
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          enabled=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.auto_merge != null')
+
+          echo "Auto-merge enabled for #$PR_NUMBER: $enabled"
+          echo "enabled=$enabled" >> $GITHUB_OUTPUT
+
   preview:
     name: Publish preview packages
-    needs: [main, preview-check]
-    if: needs.preview-check.outputs.has-permissions == 'true'
+    needs: [main, preview-check, auto-merge-check]
+    if: |
+      needs.preview-check.outputs.has-permissions == 'true' &&
+      needs.auto-merge-check.outputs.enabled != 'true'
     runs-on: ubuntu-latest
 
     permissions:
@@ -190,18 +249,22 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
         with:
-          node-version: 20
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: javascript/packages/
 
       - name: Publish preview packages
-        run: npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server'
+        run: npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server' './javascript/packages/dev-tools' './javascript/packages/client' './javascript/packages/core'
 
   publish-vscode:
     name: Publish VSCode extension
@@ -212,12 +275,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: javascript/packages/
@@ -238,10 +303,11 @@ jobs:
 
   deploy-preview:
     name: Deploy docs preview to Cloudflare Pages
-    needs: [main, preview-check]
+    needs: [main, preview-check, auto-merge-check]
     if: |
       github.event_name == 'pull_request' &&
-      needs.preview-check.outputs.has-permissions == 'true'
+      needs.preview-check.outputs.has-permissions == 'true' &&
+      needs.auto-merge-check.outputs.enabled != 'true'
     runs-on: ubuntu-latest
 
     permissions:
@@ -251,7 +317,7 @@ jobs:
 
     steps:
       - name: Download docs artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: docs-preview
           path: dist
@@ -267,7 +333,7 @@ jobs:
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add comment with preview URL
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const previewUrl = '${{ steps.deploy.outputs.url }}';
@@ -342,7 +408,7 @@ jobs:
           fi
 
       - name: Update PR comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: comments } = await github.rest.issues.listComments({

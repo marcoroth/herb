@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0001_image_tag with string source"
+input: "{source: \"<%= image_tag \\\"icon.png\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<img src="/images/icon.png" />

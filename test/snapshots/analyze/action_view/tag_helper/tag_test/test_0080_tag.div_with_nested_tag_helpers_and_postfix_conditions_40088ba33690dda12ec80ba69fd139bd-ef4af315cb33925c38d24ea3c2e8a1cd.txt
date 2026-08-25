@@ -38,7 +38,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "wrapper_classes"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
@@ -57,7 +57,7 @@ options: {action_view_helpers: true}
     │   │   │   │       ├── open_tag:
     │   │   │   │       │   └── @ ERBOpenTagNode (location: (2:2)-(2:79))
     │   │   │   │       │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
-    │   │   │   │       │       ├── content: " tag.div(render("icons/#{icon}"), class: icon_classes) if icon.present? " (location: (2:5)-(2:77))
+    │   │   │   │       │       ├── content: " tag.div(render("icons/#{icon}"), class: icon_classes) " (location: (2:5)-(2:60))
     │   │   │   │       │       ├── tag_closing: "%>" (location: (2:77)-(2:79))
     │   │   │   │       │       ├── tag_name: "div" (location: (2:10)-(2:13))
     │   │   │   │       │       └── children: (1 item)
@@ -78,7 +78,7 @@ options: {action_view_helpers: true}
     │   │   │   │       │                       │       └── content: "icon_classes"
     │   │   │   │       │                       │
     │   │   │   │       │                       ├── close_quote: ∅
-    │   │   │   │       │                       └── quoted: false
+    │   │   │   │       │                       └── quoted: true
     │   │   │   │       │
     │   │   │   │       │
     │   │   │   │       │
@@ -129,7 +129,7 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │       ├── open_tag:
     │   │   │   │   │   │       │   └── @ ERBOpenTagNode (location: (5:4)-(5:64))
     │   │   │   │   │   │       │       ├── tag_opening: "<%=" (location: (5:4)-(5:7))
-    │   │   │   │   │   │       │       ├── content: " tag.h3(title, class: title_classes) if title.present? " (location: (5:7)-(5:62))
+    │   │   │   │   │   │       │       ├── content: " tag.h3(title, class: title_classes) " (location: (5:7)-(5:44))
     │   │   │   │   │   │       │       ├── tag_closing: "%>" (location: (5:62)-(5:64))
     │   │   │   │   │   │       │       ├── tag_name: "h3" (location: (5:12)-(5:14))
     │   │   │   │   │   │       │       └── children: (1 item)
@@ -150,7 +150,7 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │       │                       │       └── content: "title_classes"
     │   │   │   │   │   │       │                       │
     │   │   │   │   │   │       │                       ├── close_quote: ∅
-    │   │   │   │   │   │       │                       └── quoted: false
+    │   │   │   │   │   │       │                       └── quoted: true
     │   │   │   │   │   │       │
     │   │   │   │   │   │       │
     │   │   │   │   │   │       │
@@ -202,7 +202,7 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │                       │       └── content: "message_classes"
     │   │   │   │   │   │                       │
     │   │   │   │   │   │                       ├── close_quote: ∅
-    │   │   │   │   │   │                       └── quoted: false
+    │   │   │   │   │   │                       └── quoted: true
     │   │   │   │   │   │
     │   │   │   │   │   │
     │   │   │   │   │   │

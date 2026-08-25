@@ -1,6 +1,10 @@
 #include "../src/include/herb.h"
-#include "../src/include/util/hb_allocator.h"
+#include "../src/include/lib/hb_allocator.h"
+#include "../src/include/parser/parser.h"
+#include "../src/include/util/io.h"
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -128,7 +132,20 @@ typedef struct {
   const char* source;
 } test_case_T;
 
-static void run_lex_benchmark(const char* name, const char* source) {
+static bool no_untracked_deallocations(const char* phase, const char* name, hb_allocator_tracking_stats_T* stats) {
+  if (stats->untracked_deallocation_count == 0) { return true; }
+
+  printf(
+    "  %-5s %-9s  FAILED: %zu deallocation(s) of untracked pointers\n",
+    phase,
+    name,
+    stats->untracked_deallocation_count
+  );
+
+  return false;
+}
+
+static bool run_lex_benchmark(const char* name, const char* source) {
   hb_allocator_T allocator = hb_allocator_with_tracking();
 
   hb_array_T* tokens = herb_lex(source, &allocator);
@@ -139,10 +156,15 @@ static void run_lex_benchmark(const char* name, const char* source) {
     name, stats->allocation_count, stats->deallocation_count, stats->bytes_allocated, tokens->size);
 
   herb_free_tokens(&tokens, &allocator);
+
+  bool ok = no_untracked_deallocations("lex", name, stats);
+
   hb_allocator_destroy(&allocator);
+
+  return ok;
 }
 
-static void run_parse_benchmark(const char* name, const char* source) {
+static bool run_parse_benchmark(const char* name, const char* source) {
   hb_allocator_T allocator = hb_allocator_with_tracking();
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, &allocator);
@@ -153,10 +175,123 @@ static void run_parse_benchmark(const char* name, const char* source) {
     name, stats->allocation_count, stats->deallocation_count, stats->bytes_allocated);
 
   ast_node_free((AST_NODE_T*) root, &allocator);
+
+  bool ok = no_untracked_deallocations("parse", name, stats);
+
   hb_allocator_destroy(&allocator);
+
+  return ok;
 }
 
-int main(void) {
+static bool run_source_check(
+  const char* path,
+  const char* label,
+  const char* source,
+  const parser_options_T* options
+) {
+  hb_allocator_T allocator = hb_allocator_with_tracking();
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(source, options, &allocator);
+
+  ast_node_free((AST_NODE_T*) root, &allocator);
+
+  hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
+
+  printf("  %-44s  %-10s  allocs: %-6zu  deallocs: %-6zu  bytes_alloc: %-8zu\n",
+    path, label, stats->allocation_count, stats->deallocation_count, stats->bytes_allocated);
+
+  bool ok = no_untracked_deallocations(label, path, stats);
+
+  hb_allocator_destroy(&allocator);
+
+  return ok;
+}
+
+typedef struct {
+  const char* label;
+  size_t offset;
+  bool value;
+} option_toggle_T;
+
+static const option_toggle_T OPTION_TOGGLES[] = {
+  {          "whitespace",     offsetof(parser_options_T, track_whitespace), true },
+  {         "action-view",  offsetof(parser_options_T, action_view_helpers), true },
+  {        "conditionals", offsetof(parser_options_T, transform_conditionals), true },
+  {        "render-nodes",          offsetof(parser_options_T, render_nodes), true },
+  {       "strict-locals",         offsetof(parser_options_T, strict_locals), true },
+  {     "iteration-nodes",       offsetof(parser_options_T, iteration_nodes), true },
+  {         "prism-nodes",           offsetof(parser_options_T, prism_nodes), true },
+  {    "prism-nodes-deep",      offsetof(parser_options_T, prism_nodes_deep), true },
+  {       "prism-program",         offsetof(parser_options_T, prism_program), true },
+  {   "dot-notation-tags",     offsetof(parser_options_T, dot_notation_tags), true },
+  {          "no-analyze",             offsetof(parser_options_T, analyze), false },
+  {           "no-strict",              offsetof(parser_options_T, strict), false },
+  {             "no-html",                offsetof(parser_options_T, html), false },
+  {        "no-locations",     offsetof(parser_options_T, track_locations), false },
+};
+
+static const size_t OPTION_TOGGLES_COUNT = sizeof(OPTION_TOGGLES) / sizeof(OPTION_TOGGLES[0]);
+
+static void set_toggle(parser_options_T* options, size_t offset, bool value) {
+  *(bool*) ((char*) options + offset) = value;
+}
+
+static bool run_file_check(const char* path) {
+  hb_allocator_T file_allocator = hb_allocator_with_malloc();
+  char* source = herb_read_file(path, &file_allocator);
+
+  if (!source) {
+    printf("  %-44s  FAILED: could not read file\n", path);
+
+    return false;
+  }
+
+  bool ok = run_source_check(path, "default", source, NULL);
+
+  for (size_t i = 0; i < OPTION_TOGGLES_COUNT; i++) {
+    parser_options_T options = HERB_DEFAULT_PARSER_OPTIONS;
+    set_toggle(&options, OPTION_TOGGLES[i].offset, OPTION_TOGGLES[i].value);
+
+    ok = run_source_check(path, OPTION_TOGGLES[i].label, source, &options) && ok;
+  }
+
+  parser_options_T everything = HERB_DEFAULT_PARSER_OPTIONS;
+
+  for (size_t i = 0; i < OPTION_TOGGLES_COUNT; i++) {
+    if (OPTION_TOGGLES[i].value) { set_toggle(&everything, OPTION_TOGGLES[i].offset, true); }
+  }
+
+  ok = run_source_check(path, "all", source, &everything) && ok;
+
+  uint32_t error_count = 0;
+  parser_options_T capped = HERB_DEFAULT_PARSER_OPTIONS;
+  capped.max_errors = 1;
+  capped.error_count = &error_count;
+
+  ok = run_source_check(path, "max-errors", source, &capped) && ok;
+
+  hb_allocator_dealloc(&file_allocator, source);
+
+  return ok;
+}
+
+static int run_file_checks(int count, char** paths) {
+  printf("=== Allocation Check ===\n\n");
+
+  bool ok = true;
+
+  for (int i = 0; i < count; i++) { ok = run_file_check(paths[i]) && ok; }
+
+  printf("\n");
+
+  if (!ok) { return 1; }
+
+  return 0;
+}
+
+int main(int argc, char** argv) {
+  if (argc > 1) { return run_file_checks(argc - 1, argv + 1); }
+
   test_case_T cases[] = {
     { "small",  SMALL_INPUT },
     { "medium", MEDIUM_INPUT },
@@ -167,12 +302,16 @@ int main(void) {
 
   printf("=== Allocation Benchmark ===\n\n");
 
+  bool ok = true;
+
   for (size_t i = 0; i < num_cases; i++) {
     printf("[%s] (%zu bytes input)\n", cases[i].name, strlen(cases[i].source));
-    run_lex_benchmark(cases[i].name, cases[i].source);
-    run_parse_benchmark(cases[i].name, cases[i].source);
+    ok = run_lex_benchmark(cases[i].name, cases[i].source) && ok;
+    ok = run_parse_benchmark(cases[i].name, cases[i].source) && ok;
     printf("\n");
   }
+
+  if (!ok) { return 1; }
 
   return 0;
 }

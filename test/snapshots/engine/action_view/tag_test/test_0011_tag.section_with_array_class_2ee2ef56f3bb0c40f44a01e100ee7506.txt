@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0011_tag.section with array class"
+input: "{source: \"<%= tag.section class: [\\\"kitties\\\", \\\"puppies\\\"] %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<section class="kitties puppies"></section>

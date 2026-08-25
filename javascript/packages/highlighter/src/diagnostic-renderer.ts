@@ -1,8 +1,11 @@
-import { colorize, hyperlink, severityColor, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
-import { applyDimToStyledText } from "./util.js"
+import { colorize, hyperlink, severityColor } from "./color.js"
+import { visibleWidth, ANSI_REGEX_START, ANSI_ESCAPE } from "./ansi.js"
+import { dimStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
-import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
+import * as gutter from "./gutter.js"
+import { computeDiagnosticMarkers } from "./diagnostic-markers.js"
 
+import type { DiagnosticMarker } from "./diagnostic-markers.js"
 import type { SyntaxRenderer } from "./syntax-renderer.js"
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -41,9 +44,9 @@ export class DiagnosticRenderer {
     diagnosticEnd: number,
     maxWidth: number
   ): { line: string; adjustedStart: number; adjustedEnd: number } {
-    const plainLine = line.replace(ANSI_REGEX, "")
+    const plainLineLength = visibleWidth(line)
 
-    if (plainLine.length <= maxWidth) {
+    if (plainLineLength <= maxWidth) {
       return { line, adjustedStart: diagnosticStart, adjustedEnd: diagnosticEnd }
     }
 
@@ -63,11 +66,11 @@ export class DiagnosticRenderer {
       }
     }
 
-    if (diagnosticStart > plainLine.length - maxWidth / 3) {
+    if (diagnosticStart > plainLineLength - maxWidth / 3) {
       const availableWidth = maxWidth - ellipsisLength
-      const startPos = Math.max(0, plainLine.length - availableWidth)
+      const startPos = Math.max(0, plainLineLength - availableWidth)
 
-      const visiblePortion = this.extractPortionFromPosition(line, startPos, plainLine.length)
+      const visiblePortion = this.extractPortionFromPosition(line, startPos, plainLineLength)
       const truncated = ellipsis + visiblePortion
 
       return {
@@ -79,7 +82,7 @@ export class DiagnosticRenderer {
 
     const contextWidth = maxWidth - (ellipsisLength * 2)
     const contextStart = Math.max(0, diagnosticStart - contextWidth / 3)
-    const contextEnd = Math.min(plainLine.length, contextStart + contextWidth)
+    const contextEnd = Math.min(plainLineLength, contextStart + contextWidth)
 
     const visiblePortion = this.extractPortionFromPosition(line, contextStart, contextEnd)
     const truncated = ellipsis + visiblePortion + ellipsis
@@ -134,7 +137,7 @@ export class DiagnosticRenderer {
   ): string {
     const {
       contextLines = 2,
-      showLineNumbers: _showLineNumbers = true, // eslint-disable-line no-unused-vars
+      showLineNumbers = true,
       optimizeHighlighting = true,
       wrapLines = true,
       maxWidth = LineWrapper.getTerminalWidth(),
@@ -153,11 +156,15 @@ export class DiagnosticRenderer {
     const diagnosticId = codeUrl ? hyperlink(diagnosticIdText, codeUrl) : diagnosticIdText
 
     const originalLines = content.split("\n")
-    const targetLineNumber = diagnostic.location.start.line
-    const column = diagnostic.location.start.column - 1
 
-    const startLine = Math.max(1, targetLineNumber - contextLines)
-    const endLine = Math.min(originalLines.length, targetLineNumber + contextLines)
+    const markers = computeDiagnosticMarkers(diagnostic.location, originalLines)
+    const markersByLine = new Map<number, DiagnosticMarker>(markers.map(marker => [marker.line, marker]))
+
+    const firstMarkedLine = markers[0].line
+    const lastMarkedLine = markers[markers.length - 1].line
+
+    const startLine = Math.max(1, firstMarkedLine - contextLines)
+    const endLine = Math.min(originalLines.length, lastMarkedLine + contextLines)
 
     let lines: string[]
     let lineOffset = 0
@@ -180,85 +187,67 @@ export class DiagnosticRenderer {
       lineOffset = 0
     }
 
+    const gutterPrefix = showLineNumbers ? gutter.continuationPrefix() : ""
+    const contentWidth = showLineNumbers ? gutter.availableWidth(maxWidth) : maxWidth
+
     let contextOutput = ""
-    let adjustedColumn = column
-    let adjustedPointerLength = Math.max(1, diagnostic.location.end.column - diagnostic.location.start.column)
 
     for (let i = startLine; i <= endLine; i++) {
       const line = lines[i - 1 - lineOffset] || ""
-      const isTargetLine = i === targetLineNumber
+      const marker = markersByLine.get(i)
+      const isTargetLine = marker !== undefined
 
-      const lineNumber = isTargetLine
-        ? colorize(i.toString().padStart(3, " "), "bold")
-        : colorize(i.toString().padStart(3, " "), "gray")
+      let markerStart = marker ? marker.start : 0
+      let markerLength = marker ? Math.max(1, marker.end - marker.start) : 0
 
-      const prefix = isTargetLine
-        ? colorize("  → ", color)
-        : "    "
+      const prefix = showLineNumbers ? gutter.linePrefix(i, isTargetLine, isTargetLine ? color : undefined, isTargetLine ? fileUrlOption : undefined) : ""
 
-      const separator = colorize("│", "gray")
-
-      let displayLine = line
-
-      if (isTargetLine) {
-        displayLine = line
-      } else {
-        displayLine = applyDimToStyledText(line)
-      }
+      const displayLine = isTargetLine ? line : dimStyledText(line)
 
       if (shouldWrap) {
-        const linePrefix = `${prefix}${lineNumber} ${separator} `
-        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-        const wrappedLines = LineWrapper.wrapLine(displayLine, availableWidth, "")
+        const wrappedLines = LineWrapper.wrapLine(displayLine, contentWidth, "")
 
         for (let j = 0; j < wrappedLines.length; j++) {
           if (j === 0) {
-            contextOutput += `${linePrefix}${wrappedLines[j]}\n`
+            contextOutput += `${prefix}${wrappedLines[j]}\n`
           } else {
-            contextOutput += `        ${separator} ${wrappedLines[j]}\n`
+            contextOutput += `${gutterPrefix}${wrappedLines[j]}\n`
           }
         }
       } else if (shouldTruncate) {
-        const linePrefix = `${prefix}${lineNumber} ${separator} `
-        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-
         let truncatedLine: string
 
-        if (isTargetLine) {
-          const diagnosticEnd = diagnostic.location.end.column - 1
-          const result = this.truncateLineForDiagnostic(displayLine, column, diagnosticEnd, availableWidth)
+        if (marker) {
+          const result = this.truncateLineForDiagnostic(displayLine, marker.start, marker.end, contentWidth)
           truncatedLine = result.line
-          adjustedColumn = result.adjustedStart
-          adjustedPointerLength = Math.max(1, result.adjustedEnd - result.adjustedStart)
+          markerStart = result.adjustedStart
+          markerLength = Math.max(1, result.adjustedEnd - result.adjustedStart)
         } else {
-          truncatedLine = LineWrapper.truncateLine(displayLine, availableWidth)
+          truncatedLine = LineWrapper.truncateLine(displayLine, contentWidth)
         }
 
-        contextOutput += `${linePrefix}${truncatedLine}\n`
+        contextOutput += `${prefix}${truncatedLine}\n`
       } else {
-        contextOutput += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
+        contextOutput += `${prefix}${displayLine}\n`
       }
 
-      if (isTargetLine) {
-        const pointerPrefix = `        ${colorize("│", "gray")}`
-        const pointerSpacing = " ".repeat(adjustedColumn + 2)
-        const adjustedPointer = colorize(
-          "~".repeat(adjustedPointerLength),
-          color,
-        )
-        contextOutput += `${pointerPrefix}${pointerSpacing}${adjustedPointer}\n`
+      if (marker) {
+        const pointer_prefix = showLineNumbers ? gutter.pointerPrefix() : ""
+        const pointerSpacing = " ".repeat(Math.max(0, markerStart + (showLineNumbers ? 1 : 0)))
+        const pointer = colorize("~".repeat(markerLength), color)
+
+        contextOutput += `${pointer_prefix}${pointerSpacing}${pointer}\n`
       }
     }
 
     const highlightedMessage = this.highlightBackticks(diagnostic.message)
     const { suffix } = options
     const suffixText = suffix ? ` ${suffix}` : ""
+    const header = showLineNumbers ? `${fileHeader}\n\n` : ""
 
     return `[${text}] ${highlightedMessage} (${diagnosticId})${suffixText}
 
-${fileHeader}
-
-${contextOutput.trimEnd()}
+${header}${contextOutput.trimEnd()}
 `
   }
 }

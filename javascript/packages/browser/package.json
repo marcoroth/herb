@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/browser",
-  "version": "0.9.2",
+  "version": "0.10.3",
   "description": "WebAssembly-based HTML-aware ERB parser for browsers.",
   "type": "module",
   "license": "MIT",
@@ -18,11 +18,12 @@
     "build": "yarn clean && yarn build:wasm && yarn build:javascript",
     "build:wasm": "cd ../../../wasm && make ../javascript/packages/browser/build/libherb.js && cd -",
     "clean:wasm": "cd ../../../wasm && make clean_browser && cd -",
-    "build:javascript": "rollup -c",
-    "dev": "rollup -c -w",
+    "build:javascript": "tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist && rimraf build",
     "test": "vitest run",
     "test:ui": "vitest --watch --ui",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
@@ -34,7 +35,8 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.9.2"
+    "@herb-tools/core": "0.10.3",
+    "@ruby/prism": "^1.9.0"
   },
   "files": [
     "package.json",

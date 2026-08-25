@@ -1,0 +1,81 @@
+# Generated from lib/herb/analysis/template_dependencies/node_dependency_collector.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class TemplateDependencies
+      class NodeDependencyCollector < ::Herb::Visitor
+        BRANCH_BODY_PROPERTIES: Array[Symbol]
+
+        BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
+
+        ASSIGNMENT_NODES: Array[untyped]
+
+        attr_reader affected: untyped
+
+        def initialize: (untyped state, untyped helper_registry, untyped custom_helpers, ?conditions_only: untyped) -> untyped
+
+        def visit_document_node: (untyped node) -> untyped
+
+        def visit_html_element_node: (untyped node) -> untyped
+
+        def visit_html_open_tag_node: (untyped node) -> untyped
+
+        def visit_erb_content_node: (untyped node) -> untyped
+
+        def visit_erb_if_node: (untyped node) -> untyped
+
+        def visit_erb_unless_node: (untyped node) -> untyped
+
+        def visit_erb_case_node: (untyped node) -> untyped
+
+        def visit_erb_node: (untyped node) -> untyped
+
+        def visit_erb_render_node: (untyped node) -> untyped
+
+        def visit_erb_block_node: (untyped node) -> untyped
+
+        def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+        def visit_erb_while_node: (untyped node) -> untyped
+
+        def visit_erb_until_node: (untyped node) -> untyped
+
+        def visit_erb_for_node: (untyped node) -> untyped
+
+        private
+
+        def visit_children_with_paths: (untyped children) -> untyped
+
+        def check_block_for_state: (untyped node, untyped type) -> untyped
+
+        def visit_branching_node: (untyped node) -> untyped
+
+        def bind_assignments: (untyped node) -> untyped
+
+        def assigned_names: (untyped code) -> untyped
+
+        def collect_assignments: (untyped node, untyped names) -> untyped
+
+        def right_hand_side: (untyped node) -> untyped
+
+        def bindings_for: (untyped node) -> untyped
+
+        def block_parameters: (untyped code) -> untyped
+
+        def collect_parameters: (untyped node, untyped names) -> untyped
+
+        def own_expression: (untyped node) -> untyped
+
+        def collect_all_expressions: (untyped node) -> untyped
+
+        def check_erb_expression: (untyped node, untyped type) -> untyped
+
+        def check_attribute: (untyped attribute_node, untyped path) -> untyped
+
+        def references_state?: (untyped code) -> untyped
+
+        def references_name?: (untyped code, untyped name) -> untyped
+      end
+    end
+  end
+end

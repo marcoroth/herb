@@ -11,7 +11,8 @@ options: {action_view_helpers: true}
     │   │   └── @ VoidElementContentError (location: (1:21)-(1:28))
     │   │       ├── message: "Void element `br` cannot have content. `content_tag :br` does not accept a positional argument for content."
     │   │       ├── tag_name: "br" (location: (1:4)-(1:15))
-    │   │       └── helper_name: "content_tag :br"
+    │   │       ├── helper_name: "content_tag :br"
+    │   │       └── content_type: "a positional argument"
     │   │
     │   ├── open_tag:
     │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:31))

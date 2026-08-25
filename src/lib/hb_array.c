@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -33,6 +34,8 @@ hb_array_T* hb_array_init(const size_t capacity, hb_allocator_T* allocator) {
 }
 
 bool hb_array_append(hb_array_T* array, void* item) {
+  assert(array != NULL);
+
   if (!array) { return false; }
 
   if (array->size >= array->capacity) {
@@ -116,6 +119,15 @@ void hb_array_remove_item(hb_array_T* array, void* item) {
   if (index != SIZE_MAX) { hb_array_remove(array, index); }
 }
 
+bool hb_array_append_lazy(hb_array_T** array, void* item, hb_allocator_T* allocator) {
+  if (*array == NULL) {
+    *array = hb_array_init(8, allocator);
+    if (!*array) { return false; }
+  }
+
+  return hb_array_append(*array, item);
+}
+
 // Alias for hb_array_append
 bool hb_array_push(hb_array_T* array, void* item) {
   return hb_array_append(array, item);
@@ -139,6 +151,20 @@ size_t hb_array_size(const hb_array_T* array) {
 
 size_t hb_array_capacity(const hb_array_T* array) {
   return array->capacity;
+}
+
+void hb_array_replace_contents(hb_array_T* array, hb_array_T** source) {
+  if (!array || !source || !*source) { return; }
+
+  hb_allocator_dealloc(array->allocator, array->items);
+
+  array->items = (*source)->items;
+  array->size = (*source)->size;
+  array->capacity = (*source)->capacity;
+
+  hb_allocator_dealloc((*source)->allocator, *source);
+
+  *source = NULL;
 }
 
 void hb_array_free(hb_array_T** array) {

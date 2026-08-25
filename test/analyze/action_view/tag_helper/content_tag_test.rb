@@ -284,5 +284,27 @@ module Analyze::ActionView::TagHelper
         <%= content_tag(:div, content_tag(:p, "Hello world!"), class: "strong") %>
       HTML
     end
+
+    test "content_tag :input with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :input do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :img with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :br with inline block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:br) { "content" } %>
+      HTML
+    end
   end
 end

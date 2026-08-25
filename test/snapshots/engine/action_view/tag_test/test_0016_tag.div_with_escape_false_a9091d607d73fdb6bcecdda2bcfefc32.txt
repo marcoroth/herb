@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0016_tag.div with escape false"
+input: "{source: \"<%= tag.img src: \\\"open & shut.png\\\", escape: false %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<img src="open & shut.png">'.freeze

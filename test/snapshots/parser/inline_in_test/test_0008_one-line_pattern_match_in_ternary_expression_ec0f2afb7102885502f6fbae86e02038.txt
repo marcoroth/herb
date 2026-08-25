@@ -1,0 +1,16 @@
+---
+source: "Parser::InlineInTest#test_0008_one-line pattern match in ternary expression"
+input: |2-
+<%= (value in Integer) ? "yes" : "no" %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:40))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " (value in Integer) ? "yes" : "no" " (location: (1:3)-(1:38))
+    │   ├── tag_closing: "%>" (location: (1:38)-(1:40))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:40)-(2:0))
+        └── content: "\n"

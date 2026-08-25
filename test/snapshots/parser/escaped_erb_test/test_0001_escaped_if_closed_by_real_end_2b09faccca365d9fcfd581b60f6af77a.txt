@@ -1,0 +1,35 @@
+---
+source: "Parser::EscapedERBTest#test_0001_escaped if closed by real end"
+input: |2-
+<%% if true %>
+  content
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (3:3)-(3:6))
+│       ├── message: "unexpected_token_ignore: unexpected 'end', ignoring it"
+│       ├── error_message: "unexpected 'end', ignoring it"
+│       ├── diagnostic_id: "unexpected_token_ignore"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%%" (location: (1:0)-(1:3))
+    │   ├── content: " if true " (location: (1:3)-(1:12))
+    │   ├── tag_closing: "%>" (location: (1:12)-(1:14))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:14)-(3:0))
+    │   │       └── content: "\n  content\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

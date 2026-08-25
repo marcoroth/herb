@@ -8,9 +8,11 @@ import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
 import { deserializePrismParseResult } from "./prism/index.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
+import type { ParseResultFor } from "./parse-result.js"
 import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { PrismParseResult } from "./prism/index.js"
+import type { DiffOptions, DiffResult } from "./diff-result.js"
 
 /**
  * The main Herb parser interface, providing methods to lex and parse input.
@@ -69,12 +71,12 @@ export abstract class HerbBackend {
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse(source: string, options?: ParseOptions): ParseResult {
+  parse<const Options extends ParseOptions>(source: string, options?: Options): ParseResultFor<Options> {
     this.ensureBackend()
 
     const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
 
-    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions))
+    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions)) as ParseResultFor<Options>
   }
 
   /**
@@ -115,6 +117,20 @@ export abstract class HerbBackend {
     }
 
     return deserializePrismParseResult(bytes, source)
+  }
+
+  /**
+   * Diffs two source strings and returns the minimal set of AST differences.
+   * @param oldSource - The old source code.
+   * @param newSource - The new source code.
+   * @param options - Optional diff options.
+   * @returns A DiffResult containing the operations.
+   * @throws Error if the backend is not loaded.
+   */
+  diff(oldSource: string, newSource: string, options?: DiffOptions): DiffResult {
+    this.ensureBackend()
+
+    return this.backend.diff(ensureString(oldSource), ensureString(newSource), options)
   }
 
   /**

@@ -1,13 +1,13 @@
-import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
-import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue, findAttributeByName, isERBOpenTagNode } from "@herb-tools/core"
-
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import { getTagLocalName, getStaticAttributeValue, hasAttributeValue, HELPER_REGISTRY, HELPER_BY_SOURCE } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
+import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "../utils/rule-utils.js"
+import { ParserRule } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+
 const HELPERS_WITH_CSP_NONCE_SUPPORT = [
-  "ActionView::Helpers::AssetTagHelper#javascript_include_tag",
-  "ActionView::Helpers::JavaScriptHelper#javascript_tag",
+  HELPER_REGISTRY["javascript_include_tag"].source,
+  HELPER_REGISTRY["javascript_tag"].source,
 ]
 
 class RequireScriptNonceVisitor extends BaseRuleVisitor {
@@ -20,20 +20,26 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
   }
 
   private checkScriptNonce(node: HTMLElementNode): void {
-    if (!this.isJavaScriptTag(node)) return
+    if (!isJavaScriptTagElement(node)) return
+    if (findElementAttribute(node, "src")) return
 
-    const nonceAttribute = this.findAttribute(node, "nonce")
+    const nonceAttribute = findElementAttribute(node, "nonce")
 
     if (!nonceAttribute || !hasAttributeValue(nonceAttribute)) {
-      this.addOffense(
-        "Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`.",
-        node.tag_name!.location,
-      )
+      this.addOffense(this.missingNonceMessage(), node.tag_name!.location)
 
       return
     }
 
     this.checkLiteralNonceOnTagHelper(node, nonceAttribute)
+  }
+
+  private missingNonceMessage(): string {
+    if (this.context.framework === "actionview") {
+      return "Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`."
+    }
+
+    return "Missing a `nonce` attribute on `<script>` tag. Use a dynamically generated nonce."
   }
 
   private checkLiteralNonceOnTagHelper(node: HTMLElementNode, nonceAttribute: HTMLAttributeNode): void {
@@ -53,39 +59,23 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
   }
 
   private helperName(node: HTMLElementNode): string {
-    if (node.element_source === "ActionView::Helpers::TagHelper#content_tag") {
-      return "content_tag"
+    if (!node.element_source) return "unknown"
+
+    const helper = HELPER_BY_SOURCE[node.element_source]
+
+    if (!helper) return node.element_source
+
+    if (helper.name === "tag") {
+      return `tag.${node.tag_name?.value ?? "script"}`
     }
 
-    if (node.element_source === "ActionView::Helpers::TagHelper#tag") {
-      return "tag.script"
-    }
-
-    return node.element_source ?? "unknown"
-  }
-
-  private isJavaScriptTag(node: HTMLElementNode): boolean {
-    const typeAttribute = this.findAttribute(node, "type")
-    if (!typeAttribute) return true
-
-    const typeValue = getStaticAttributeValue(typeAttribute)
-    if (typeValue === null) return true
-
-    return typeValue === "text/javascript" || typeValue === "application/javascript"
-  }
-
-  private findAttribute(node: HTMLElementNode, name: string) {
-    if (isERBOpenTagNode(node.open_tag)) {
-      return findAttributeByName(node.open_tag.children, name)
-    }
-
-    return getAttribute(node, name)
+    return helper.name
   }
 }
 
 export class HTMLRequireScriptNonceRule extends ParserRule {
   static ruleName = "html-require-script-nonce"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

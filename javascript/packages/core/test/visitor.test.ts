@@ -6,6 +6,7 @@ import {
   HTMLElementNode,
   HTMLTextNode,
   ERBContentNode,
+  RubyParameterNode,
 } from "../src/index.js"
 
 import type { Node } from "../src/index.js"
@@ -27,39 +28,20 @@ describe("Visitor", () => {
     const position = new Position(1, 0)
     const location = new Location(position, position)
 
-    const text = new HTMLTextNode({
-      type: "AST_HTML_TEXT_NODE",
+    const text = HTMLTextNode.build({
       location,
-      errors: [],
       content: "Hello",
     })
 
-    const erb = new ERBContentNode({
-      type: "AST_ERB_CONTENT_NODE",
-      location,
-      errors: [],
-      tag_opening: null,
-      content: null,
-      tag_closing: null,
-      parsed: false,
-      valid: false,
-    })
+    const erb = ERBContentNode.build({ location })
 
-    const element = new HTMLElementNode({
-      type: "AST_HTML_ELEMENT_NODE",
+    const element = HTMLElementNode.build({
       location,
-      errors: [],
-      open_tag: null,
-      tag_name: null,
       body: [text, erb],
-      close_tag: null,
-      is_void: false,
     })
 
-    const doc = new DocumentNode({
-      type: "AST_DOCUMENT_NODE",
+    const doc = DocumentNode.build({
       location,
-      errors: [],
       children: [element],
     })
 
@@ -72,5 +54,39 @@ describe("Visitor", () => {
       "HTMLTextNode",
       "ERBContentNode",
     ])
+  })
+
+  test("accept does not crash when visitor is missing a visit method", () => {
+    const position = new Position(1, 0)
+    const location = new Location(position, position)
+
+    const node = RubyParameterNode.build({
+      location,
+      kind: "required",
+      required: true,
+    })
+
+    const incompleteVisitor = new Visitor()
+    delete (incompleteVisitor as any).visitRubyParameterNode
+
+    expect(() => {
+      node.accept(incompleteVisitor)
+    }).not.toThrow()
+  })
+
+  test("accept calls the visitor method when it exists", () => {
+    const position = new Position(1, 0)
+    const location = new Location(position, position)
+
+    const node = RubyParameterNode.build({
+      location,
+      kind: "required",
+      required: true,
+    })
+
+    const visitor = new RecordingVisitor()
+    node.accept(visitor)
+
+    expect(visitor.visited).toContain("RubyParameterNode")
   })
 })

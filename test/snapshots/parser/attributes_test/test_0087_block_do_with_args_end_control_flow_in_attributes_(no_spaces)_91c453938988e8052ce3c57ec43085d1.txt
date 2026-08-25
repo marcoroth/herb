@@ -27,6 +27,13 @@ input: "<div <%items.each do |item|%>data-item<%end%>></div>"
         │       │       │       ├── equals: ∅
         │       │       │       └── value: ∅
         │       │       │
+        │       │       ├── block_arguments: (1 item)
+        │       │       │   └── @ RubyParameterNode (location: (1:22)-(1:26))
+        │       │       │       ├── name: "item" (location: (1:22)-(1:26))
+        │       │       │       ├── default_value: ∅
+        │       │       │       ├── kind: "positional"
+        │       │       │       └── required: true
+        │       │       │
         │       │       ├── rescue_clause: ∅
         │       │       ├── else_clause: ∅
         │       │       ├── ensure_clause: ∅

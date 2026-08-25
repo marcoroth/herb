@@ -1,0 +1,52 @@
+# Generated from lib/herb/analysis/template_dependencies/dependency_collector.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class TemplateDependencies
+      class DependencyCollector < ::Herb::Visitor
+        attr_reader instance_variables: untyped
+
+        attr_reader constants: untyped
+
+        attr_reader locals_declared: untyped
+
+        attr_reader locals_received: untyped
+
+        attr_reader helper_calls: untyped
+
+        attr_reader unknown_calls: untyped
+
+        attr_reader render_calls: untyped
+
+        def initialize: (untyped helper_registry, untyped custom_helpers, ?untyped prescanned_locals) -> untyped
+
+        def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+        def visit_erb_block_node: (untyped node) -> untyped
+
+        def visit_erb_node: (untyped node) -> untyped
+
+        def visit_erb_render_node: (untyped node) -> untyped
+
+        def visit_erb_strict_locals_node: (untyped node) -> untyped
+
+        private
+
+        def analyze_erb_node: (untyped erb_node) -> untyped
+
+        # : (untyped, iterating: bool) { () -> void } -> void
+        def within_block: (untyped, iterating: bool) { () -> void } -> void
+
+        def block_parameters: (untyped code) -> untyped
+
+        def collect_parameters: (untyped node, untyped names) -> untyped
+
+        def analyze_ruby_expression: (untyped code) -> untyped
+
+        def walk_prism_node: (untyped node) -> untyped
+
+        def check_call_node: (untyped node) -> untyped
+      end
+    end
+  end
+end

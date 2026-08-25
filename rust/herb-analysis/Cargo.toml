@@ -1,0 +1,31 @@
+[package]
+name = "herb-analysis"
+version = "0.10.3"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "Cross-file static analysis of Ruby and Action View sources for Herb"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+publish = false
+
+[lib]
+name = "herb_analysis"
+path = "src/lib.rs"
+
+[[bin]]
+name = "herb-analysis"
+path = "src/bin/herb_analysis.rs"
+required-features = ["cli"]
+
+[features]
+default = []
+cli = ["dep:colored"]
+
+[dependencies]
+colored = { version = "3", optional = true }
+herb = { path = ".." }
+herb-config = { path = "../herb-config" }
+rubydex = { git = "https://github.com/Shopify/rubydex", tag = "v0.3.0" }
+
+[dev-dependencies]
+insta = "1.40"

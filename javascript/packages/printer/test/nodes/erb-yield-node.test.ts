@@ -11,10 +11,8 @@ describe("ERBYieldNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBYieldNode.from({
-      type: "AST_ERB_YIELD_NODE",
+    const node = ERBYieldNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%="),
       content: createToken("TOKEN_ERB_CONTENT", " yield "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

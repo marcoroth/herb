@@ -1,0 +1,6 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+  -   1 │ <img src="a.png">
+  +     │ <img src="a.png" alt="">

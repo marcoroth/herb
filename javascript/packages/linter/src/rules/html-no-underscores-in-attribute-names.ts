@@ -5,7 +5,7 @@ import {
   StaticAttributeDynamicValueParams,
   DynamicAttributeStaticValueParams,
   DynamicAttributeDynamicValueParams
-} from "./rule-utils.js"
+} from "../utils/rule-utils.js"
 
 import { getStaticContentFromNodes } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"

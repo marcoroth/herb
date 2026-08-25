@@ -1,0 +1,19 @@
+---
+name: "model_name_from_record_or_class"
+source: "ActionView::RecordIdentifier#model_name_from_record_or_class"
+gem: "actionview"
+output: "boolean"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: "model_name_from_record_or_class"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/RecordIdentifier.html"
+
+description: |-
+  Extracts the `ActiveModel::Name` from a record instance or class.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

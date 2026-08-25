@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0024_an all-caps void tag is left as HTML"
+input: "{source: \"<BR>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<BR>'.freeze;
+_buf.to_s

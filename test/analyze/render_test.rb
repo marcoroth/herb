@@ -191,5 +191,35 @@ module Analyze
         <%= render "card", title: @title, body: "Hello", layout: "wide" %>
       HTML
     end
+
+    test "render called on a receiver is not an Action View render" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= element.render :headline %>
+      HTML
+    end
+
+    test "render called on a receiver without arguments is not an Action View render" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= paginator.render %>
+      HTML
+    end
+
+    test "render called on a receiver with render keywords is not an Action View render" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= element.render partial: "card", template: "card" %>
+      HTML
+    end
+
+    test "render called on self is an Action View render" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= self.render "shared/header" %>
+      HTML
+    end
+
+    test "render with a cached collection" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render partial: "product", collection: @products, cached: true %>
+      HTML
+    end
   end
 end

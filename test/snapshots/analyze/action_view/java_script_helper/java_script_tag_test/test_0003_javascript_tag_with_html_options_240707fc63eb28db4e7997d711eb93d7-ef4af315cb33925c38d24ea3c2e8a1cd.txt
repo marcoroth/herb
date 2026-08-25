@@ -37,8 +37,17 @@ options: {action_view_helpers: true}
     │   │
     │   ├── tag_name: "script" (location: (1:4)-(1:18))
     │   ├── body: (1 item)
-    │   │   └── @ HTMLTextNode (location: (1:0)-(1:70))
-    │   │       └── content: "alert('Hello')"
+    │   │   └── @ CDATANode (location: (1:0)-(1:70))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(1:70))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (1:0)-(1:70))
+    │   │       │       └── content: "alert('Hello')"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(1:70))
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLVirtualCloseTagNode (location: (1:70)-(1:70))

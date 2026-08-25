@@ -1,3 +1,5 @@
+template_engine: erubi
+
 files:
   include:
     - "**/*.herb"
@@ -28,4 +30,5 @@ linter:
 formatter:
   enabled: false
   indentWidth: 2
+  indentStyle: space
   maxLineLength: 80

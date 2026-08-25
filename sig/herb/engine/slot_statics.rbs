@@ -1,0 +1,65 @@
+# Generated from lib/herb/engine/slot_statics.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Prints the markup a branch would render, with everything dynamic left out.
+    #
+    # It runs over a branch body after `SlotVisitor` has marked it, so what comes out is the
+    # branch's static HTML with an empty marker pair everywhere a slot would go. That is what a
+    # client needs to build the branch itself: the parts that never change, and the positions of
+    # the parts that do.
+    #
+    # A node that is itself a slot prints as nothing, because its markers were inserted around
+    # it and stay. A conditional nested inside a branch is a slot, so it prints as its empty pair
+    # and parks its own branches separately, rather than having all of its alternatives written
+    # out inside its parent's.
+    #
+    # Anything it does not recognise raises. Parking nothing for a branch leaves it server
+    # rendered, which is correct but slower. Parking markup that is missing a piece would render
+    # the branch wrong, which is not recoverable.
+    class SlotStatics
+      class Unprintable < StandardError
+      end
+
+      SKIPPED_PREFIXES: Array[String]
+
+      # : (Hash[untyped, Integer], ?Array[untyped], ?Hash[untyped, Array[Integer]]) -> void
+      def initialize: (Hash[untyped, Integer], ?Array[untyped], ?Hash[untyped, Array[Integer]]) -> void
+
+      # : (Array[untyped]) -> String?
+      def markup: (Array[untyped]) -> String?
+
+      # : (Array[untyped]) -> [String, Array[Integer]]?
+      def signature: (Array[untyped]) -> [ String, Array[Integer] ]?
+
+      private
+
+      # : (Array[untyped]) -> String?
+      def run: (Array[untyped]) -> String?
+
+      # : (untyped) -> void
+      def write: (untyped) -> void
+
+      # : (Integer) -> void
+      def write_placeholder: (Integer) -> void
+
+      # : (untyped) -> void
+      def write_all: (untyped) -> void
+
+      # : (untyped, untyped, untyped) -> void
+      def write_wrapped: (untyped, untyped, untyped) -> void
+
+      # : (untyped) -> void
+      def write_attribute: (untyped) -> void
+
+      # : (untyped) -> void
+      def write_attribute_value: (untyped) -> void
+
+      # : (untyped) -> void
+      def emit: (untyped) -> void
+
+      # : (untyped) -> void
+      def separate: (untyped) -> void
+    end
+  end
+end

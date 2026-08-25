@@ -48,11 +48,11 @@ options: {strict_locals: true}
     │   │   │   ├── content: " locals: (user:) " (location: (2:5)-(2:22))
     │   │   │   ├── tag_closing: "%>" (location: (2:22)-(2:24))
     │   │   │   └── locals: (1 item)
-    │   │   │       └── @ RubyStrictLocalNode (location: (2:15)-(2:20))
+    │   │   │       └── @ RubyParameterNode (location: (2:15)-(2:20))
     │   │   │           ├── name: "user" (location: (2:15)-(2:20))
     │   │   │           ├── default_value: ∅
-    │   │   │           ├── required: true
-    │   │   │           └── double_splat: false
+    │   │   │           ├── kind: "keyword"
+    │   │   │           └── required: true
     │   │   │
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (2:24)-(3:2))

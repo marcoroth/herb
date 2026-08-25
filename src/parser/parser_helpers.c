@@ -92,7 +92,7 @@ void parser_exit_foreign_content(parser_T* parser) {
 
 void parser_append_unexpected_error_impl(
   parser_T* parser,
-  hb_array_T* errors,
+  hb_array_T** errors,
   const char* description,
   token_type_T first_token,
   ...
@@ -111,7 +111,8 @@ void parser_append_unexpected_error_impl(
     token->location.start,
     token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   hb_allocator_dealloc(parser->allocator, expected);
@@ -120,7 +121,7 @@ void parser_append_unexpected_error_impl(
 
 void parser_append_unexpected_error_string(
   parser_T* parser,
-  hb_array_T* errors,
+  hb_array_T** errors,
   const char* description,
   const char* expected
 ) {
@@ -133,20 +134,22 @@ void parser_append_unexpected_error_string(
     token->location.start,
     token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   token_free(token, parser->allocator);
 }
 
-void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, hb_array_T* errors) {
+void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, hb_array_T** errors) {
   append_unexpected_token_error(
     expected_type,
     parser->current_token,
     parser->current_token->location.start,
     parser->current_token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 }
 
@@ -180,7 +183,7 @@ token_T* parser_consume_if_present(parser_T* parser, const token_type_T type) {
   return parser_advance(parser);
 }
 
-token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_type, hb_array_T* array) {
+token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_type, hb_array_T** array) {
   token_T* token = parser_consume_if_present(parser, expected_type);
 
   if (token == NULL) {
@@ -192,7 +195,8 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
       token->location.start,
       token->location.end,
       parser->allocator,
-      array
+      array,
+      &parser->options
     );
   }
 
@@ -203,26 +207,27 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
   parser_T* parser,
   AST_HTML_OPEN_TAG_NODE_T* open_tag,
   hb_array_T* body,
-  hb_array_T* errors
+  hb_array_T** errors
 ) {
   append_missing_closing_tag_error(
     open_tag->tag_name,
     open_tag->tag_name->location.start,
     open_tag->tag_name->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   return ast_html_element_node_init(
     (AST_NODE_T*) open_tag,
-    open_tag->tag_name,
+    token_copy(open_tag->tag_name, parser->allocator),
     body,
     NULL,
     false,
     hb_string("HTML"),
     open_tag->base.location.start,
     open_tag->base.location.end,
-    errors,
+    *errors,
     parser->allocator
   );
 }
@@ -230,7 +235,7 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
 void parser_handle_mismatched_tags(
   const parser_T* parser,
   const AST_HTML_CLOSE_TAG_NODE_T* close_tag,
-  hb_array_T* errors
+  hb_array_T** errors
 ) {
   if (hb_array_size(parser->open_tags_stack) > 0) {
     token_T* expected_tag = hb_array_last(parser->open_tags_stack);
@@ -242,7 +247,8 @@ void parser_handle_mismatched_tags(
       actual_tag->location.start,
       actual_tag->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   } else {
     append_missing_opening_tag_error(
@@ -250,7 +256,8 @@ void parser_handle_mismatched_tags(
       close_tag->tag_name->location.start,
       close_tag->tag_name->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   }
 }
@@ -263,7 +270,7 @@ bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_t
   return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
 }
 
-void parser_synchronize(parser_T* parser, hb_array_T* errors) {
+void parser_synchronize(parser_T* parser, hb_array_T** errors) {
   (void) errors;
 
   while (parser->current_token->type != TOKEN_EOF) {

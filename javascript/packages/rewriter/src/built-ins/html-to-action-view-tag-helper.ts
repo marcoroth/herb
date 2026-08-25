@@ -1,5 +1,5 @@
-import { Visitor, Location, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken } from "@herb-tools/core"
-import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isWhitespaceNode } from "@herb-tools/core"
+import { Visitor, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, Token, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isERBOutputNode, isWhitespaceNode } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
@@ -7,21 +7,86 @@ import { asMutable } from "../mutable.js"
 import type { RewriteContext } from "../context.js"
 import type { Node, HTMLAttributeValueNode } from "@herb-tools/core"
 
-function serializeAttributeValue(value: HTMLAttributeValueNode): string {
-  const hasERB = value.children.some(child => isERBContentNode(child))
+const ENTITY_REFERENCE = /&(#[0-9]+|#[xX][0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/
 
-  if (hasERB && value.children.length === 1 && isERBContentNode(value.children[0])) {
-    return value.children[0].content?.value?.trim() ?? '""'
+const OPENING_BRACKETS = new Set(["(", "[", "{"])
+const CLOSING_BRACKETS = new Set([")", "]", "}"])
+const WHITESPACE = new Set([" ", "\t", "\n", "\r", "\f", "\v"])
+
+const RUBY_LABEL = /^[a-z_][a-z0-9_]*$/
+
+// TODO: extract to config/
+const BOOLEAN_ATTRIBUTES = new Set(["allowfullscreen", "async", "autobuffer", "autofocus", "autoplay", "checked", "controls", "default", "defer", "disabled", "formnovalidate", "hidden", "inert", "ismap", "itemscope", "loop", "multiple", "muted", "novalidate", "open", "pubdate", "readonly", "required", "reversed", "scoped", "seamless", "selected", "sortable", "truespeed", "typemustmatch"])
+
+export interface SerializedAttributes {
+  attributes: string
+  href: string | null
+  id: string | null
+  src: string | null
+  rel: string | null
+}
+
+function hasTopLevelWhitespace(expression: string): boolean {
+  let depth = 0
+  let quote: string | null = null
+
+  for (let index = 0; index < expression.length; index++) {
+    const character = expression[index]
+
+    if (quote) {
+      if (character === "\\") index++
+      else if (character === quote) quote = null
+
+      continue
+    }
+
+    if (character === '"' || character === "'") quote = character
+    else if (OPENING_BRACKETS.has(character)) depth++
+    else if (CLOSING_BRACKETS.has(character)) depth--
+    else if (depth === 0 && WHITESPACE.has(character)) return true
+  }
+
+  return false
+}
+
+function escapeForDoubleQuotedString(content: string): string {
+  return content.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/#(?=[{@$])/g, "\\#")
+}
+
+function serializeExpression(node: Node): string | null {
+  if (!isERBContentNode(node)) return null
+  if (!isERBOutputNode(node)) return null
+
+  const expression = node.content?.value?.trim() ?? ""
+
+  return expression === "" ? null : expression
+}
+
+function serializeAttributeValue(value: HTMLAttributeValueNode): string | null {
+  const children = value.children ?? []
+
+  if (children.length === 1 && isERBContentNode(children[0])) {
+    const expression = serializeExpression(children[0])
+    if (!expression) return null
+
+    return hasTopLevelWhitespace(expression) ? `(${expression})` : expression
   }
 
   const parts: string[] = []
 
-  for (const child of value.children) {
+  for (const child of children) {
     if (isLiteralNode(child)) {
-      parts.push(child.content)
-    } else if (isERBContentNode(child)) {
-      parts.push(`#{${child.content?.value?.trim() ?? ""}}`)
+      if (ENTITY_REFERENCE.test(child.content)) return null
+
+      parts.push(escapeForDoubleQuotedString(child.content))
+
+      continue
     }
+
+    const expression = serializeExpression(child)
+    if (!expression) return null
+
+    parts.push(`#{${expression}}`)
   }
 
   return `"${parts.join("")}"`
@@ -31,28 +96,45 @@ function dashToUnderscore(string: string): string {
   return string.replace(/-/g, "_")
 }
 
-interface SerializedAttributes {
-  attributes: string
-  href: string | null
-  id: string | null
-  src: string | null
+function getStaticAttributeValue(children: Node[], attributeName: string): string | null {
+  for (const child of children) {
+    if (!isHTMLAttributeNode(child)) continue
+    if (getStaticAttributeName(child.name!) !== attributeName) continue
+    if (!child.value) return null
+    if (!child.value.children.every(value => isLiteralNode(value))) return null
+
+    return child.value.children.map(value => isLiteralNode(value) ? value.content : "").join("")
+  }
+
+  return null
 }
 
-function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean } = {}): SerializedAttributes {
+export function serializeTagHelperAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean, extractRel?: boolean } = {}): SerializedAttributes | null {
   const regular: string[] = []
   const prefixed: Map<string, string[]> = new Map()
+  const seen = new Set<string>()
 
   let href: string | null = null
   let id: string | null = null
   let src: string | null = null
+  let rel: string | null = null
 
   for (const child of children) {
-    if (!isHTMLAttributeNode(child)) continue
+    if (!isHTMLAttributeNode(child)) return null
 
-    const name = getStaticAttributeName(child.name!)
-    if (!name) continue
+    const name = getStaticAttributeName(child.name!)?.toLowerCase()
+
+    if (!name) return null
+
+    if (seen.has(name)) return null
+
+    seen.add(name)
+
+    if (!child.value && !BOOLEAN_ATTRIBUTES.has(name)) return null
 
     const value = child.value ? serializeAttributeValue(child.value) : "true"
+
+    if (!value) return null
 
     if (options.extractHref && name === "href") {
       href = value
@@ -69,16 +151,26 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
       continue
     }
 
+    if (options.extractRel && name === "rel") {
+      rel = value
+      continue
+    }
+
     const dataMatch = name.match(/^(data|aria)-(.+)$/)
 
     if (dataMatch) {
       const [, prefix, rest] = dataMatch
+      const key = dashToUnderscore(rest)
+
+      if (!RUBY_LABEL.test(key)) return null
 
       if (!prefixed.has(prefix)) {
         prefixed.set(prefix, [])
       }
 
-      prefixed.get(prefix)!.push(`${dashToUnderscore(rest)}: ${value}`)
+      prefixed.get(prefix)!.push(`${key}: ${value}`)
+    } else if (!RUBY_LABEL.test(name)) {
+      return null
     } else {
       regular.push(`${name}: ${value}`)
     }
@@ -90,7 +182,7 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
     parts.push(`${prefix}: { ${entries.join(", ")} }`)
   }
 
-  return { attributes: parts.join(", "), href, id, src }
+  return { attributes: parts.join(", "), href, id, src, rel }
 }
 
 function isTextOnlyBody(body: Node[]): boolean {
@@ -100,6 +192,13 @@ function isTextOnlyBody(body: Node[]): boolean {
 }
 
 class HTMLToActionViewTagHelperVisitor extends Visitor {
+  private readonly shallow: boolean
+
+  constructor(options: { shallow?: boolean } = {}) {
+    super()
+    this.shallow = options.shallow ?? false
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     const openTag = node.open_tag
 
@@ -115,83 +214,89 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       return
     }
 
-    if (node.body) {
+    if (!this.shallow && node.body) {
       for (const child of node.body) {
         this.visit(child)
       }
     }
 
-    const isAnchor = tagName.value === "a"
-    const isTurboFrame = tagName.value === "turbo-frame"
-    const isScript = tagName.value === "script"
-    const isImg = tagName.value === "img"
+    const preferredHelper = findPreferredHelperForTag(tagName.value)
     const attributes = openTag.children.filter(child => !isWhitespaceNode(child))
-    const hasSrcAttribute = (isScript || isImg) && attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
-    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame, extractSrc: isScript || isImg })
+    const implicitAttrName = preferredHelper?.implicitAttribute?.name
+    const hasSrcAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
+    const hasHrefAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "href")
+    const isStylesheetLink = tagName.value === "link" && hasHrefAttribute && getStaticAttributeValue(attributes, "rel") === "stylesheet"
+    const serialized = serializeTagHelperAttributes(attributes, {
+      extractHref: implicitAttrName === "href" || isStylesheetLink,
+      extractId: implicitAttrName === "id",
+      extractSrc: implicitAttrName === "src" || tagName.value === "script",
+      extractRel: isStylesheetLink,
+    })
+
+    if (!serialized) return
+
+    const { attributes: attributesString, href, id, src } = serialized
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
 
     let content: string
     let elementSource: string
 
-    if (isAnchor) {
+    if (preferredHelper?.name === "link_to") {
       content = this.buildLinkToContent(node, attributesString, href, isInlineContent)
-      elementSource = "ActionView::Helpers::UrlHelper#link_to"
-    } else if (isTurboFrame) {
+      elementSource = preferredHelper.source
+    } else if (preferredHelper?.name === "turbo_frame_tag") {
       content = this.buildTurboFrameTagContent(node, attributesString, id, isInlineContent)
-      elementSource = "Turbo::FramesHelper#turbo_frame_tag"
-    } else if (isScript && hasSrcAttribute) {
-      content = this.buildJavascriptIncludeTagContent(attributesString, src)
-      elementSource = "ActionView::Helpers::AssetTagHelper#javascript_include_tag"
-    } else if (isScript) {
-      content = this.buildJavascriptTagContent(node, attributesString, isInlineContent)
-      elementSource = "ActionView::Helpers::JavaScriptHelper#javascript_tag"
-    } else if (isImg) {
+      elementSource = preferredHelper.source
+    } else if (preferredHelper?.name === "image_tag") {
       content = this.buildImageTagContent(attributesString, src)
-      elementSource = "ActionView::Helpers::AssetTagHelper#image_tag"
+      elementSource = preferredHelper.source
+    } else if (isStylesheetLink) {
+      content = this.buildStylesheetLinkTagContent(attributesString, href)
+      elementSource = HELPER_REGISTRY["stylesheet_link_tag"].source
+    } else if (tagName.value === "script" && hasSrcAttribute) {
+      content = this.buildJavascriptIncludeTagContent(attributesString, src)
+      elementSource = HELPER_REGISTRY["javascript_include_tag"].source
+    } else if (tagName.value === "script") {
+      content = this.buildJavascriptTagContent(node, attributesString, isInlineContent)
+      elementSource = HELPER_REGISTRY["javascript_tag"].source
     } else {
       content = this.buildTagContent(tagName.value, node, attributesString, isInlineContent)
-      elementSource = "ActionView::Helpers::TagHelper#tag"
+      elementSource = HELPER_REGISTRY["tag"].source
     }
 
-    const erbOpenTag = new ERBOpenTagNode({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const erbOpenTag = ERBOpenTagNode.build({
       location: openTag.location,
-      errors: [],
-      tag_opening: createSyntheticToken("<%="),
-      content: createSyntheticToken(content),
-      tag_closing: createSyntheticToken("%>"),
-      tag_name: createSyntheticToken(tagName.value),
-      children: [],
+      tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+      content: Token.from("TOKEN_ERB_CONTENT", content),
+      tag_closing: Token.from("TOKEN_ERB_END", "%>"),
+      tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
     })
 
     asMutable(node).open_tag = erbOpenTag
     asMutable(node).element_source = elementSource
 
+    const isScript = tagName.value === "script"
     const isInlineLiteralContent = isScript && hasBody && node.body.length === 1 && isLiteralNode(node.body[0]) && !node.body[0].content.includes("\n")
-    const isInlineForm = isInlineContent || isInlineLiteralContent || (isTurboFrame && !hasBody) || (isScript && hasSrcAttribute) || isImg
+    const isVoidHelper = preferredHelper?.isVoid ?? node.is_void
+    const isInlineForm = isInlineContent || isInlineLiteralContent || isVoidHelper || (preferredHelper?.name === "turbo_frame_tag" && !hasBody) || (isScript && hasSrcAttribute)
 
     if (node.is_void) {
       asMutable(node).close_tag = null
     } else if (isInlineForm) {
       asMutable(node).body = []
 
-      const virtualClose = new HTMLVirtualCloseTagNode({
-        type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
-        location: Location.zero,
-        errors: [],
-        tag_name: createSyntheticToken(tagName.value),
+      const virtualClose = HTMLVirtualCloseTagNode.build({
+        tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
       })
 
       asMutable(node).close_tag = virtualClose
     } else if (node.close_tag) {
-      const erbEnd = new ERBEndNode({
-        type: "AST_ERB_END_NODE",
+      const erbEnd = ERBEndNode.build({
         location: node.close_tag.location,
-        errors: [],
-        tag_opening: createSyntheticToken("<%"),
-        content: createSyntheticToken(" end "),
-        tag_closing: createSyntheticToken("%>"),
+        tag_opening: Token.from("TOKEN_ERB_START", "<%"),
+        content: Token.from("TOKEN_ERB_CONTENT", " end "),
+        tag_closing: Token.from("TOKEN_ERB_END", "%>"),
       })
 
       asMutable(node).close_tag = erbEnd
@@ -285,6 +390,17 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     return argString ? ` image_tag ${argString} ` : ` image_tag `
   }
 
+  private buildStylesheetLinkTagContent(attributes: string, source: string | null): string {
+    const args: string[] = []
+
+    if (source) args.push(source)
+    if (attributes) args.push(attributes)
+
+    const argString = args.join(", ")
+
+    return argString ? ` stylesheet_link_tag ${argString} ` : ` stylesheet_link_tag `
+  }
+
   private buildLinkToContent(node: HTMLElementNode, attribute: string, href: string | null, isInlineContent: boolean): string {
     const args: string[] = []
 
@@ -316,11 +432,11 @@ export class HTMLToActionViewTagHelperRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag, image_tag)"
+    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag, image_tag, stylesheet_link_tag)"
   }
 
-  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
-    const visitor = new HTMLToActionViewTagHelperVisitor()
+  rewrite<T extends Node>(node: T, context: RewriteContext): T {
+    const visitor = new HTMLToActionViewTagHelperVisitor({ shallow: context.shallow })
 
     visitor.visit(node)
 

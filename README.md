@@ -59,7 +59,9 @@ The Herb ecosystem offers multiple tools that integrate seamlessly into editors,
 | [Herb Language Service](https://herb-tools.dev/projects/language-service) | HTML+ERB language service with ActionView tag helper support. |
 | [Herb Language Server](https://herb-tools.dev/projects/language-server) | Rich editor integration for VS Code, Zed, Neovim, and more. |
 | [Herb Engine](https://herb-tools.dev/projects/engine) | HTML-aware ERB rendering engine, API-compatible with Erubi. |
+| [Herb Dev Server](https://herb-tools.dev/projects/dev-server) | File-watching dev server with live DOM patching for templates. *(experimental)* |
 | [Herb Dev Tools](https://herb-tools.dev/projects/dev-tools) | In-browser dev tools for inspecting and debugging templates, shipped with ReActionView. |
+| [Herb Client Runtime](https://herb-tools.dev/projects/client) | Browser runtime that updates the slots a template rendered, in place. *(experimental)* |
 | [ReActionView](https://reactionview.dev) | ActionView-compatible ERB engine with modern DX for Rails. |
 
 You can use the Herb Parser programmatically in **Ruby**, **Java**, **Rust**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
@@ -141,6 +143,8 @@ At [**RailsConf 2025**](https://www.rubyevents.org/events/railsconf-2025) in Jul
 At [**Rails World 2025**](https://www.rubyevents.org/events/rails-world-2025) in September 2025, `Herb::Engine`, ReActionView, and the visual dev tools were launched with the talk [*Introducing ReActionView: An ActionView-Compatible ERB Engine*](https://www.rubyevents.org/talks/introducing-reactionview-an-actionview-compatible-erb-engine).
 
 At [**San Francisco Ruby Conference 2025**](https://www.rubyevents.org/events/sfruby-2025) in November 2025, the keynote [*Herb to ReActionView: A New Foundation for the View Layer*](https://www.rubyevents.org/talks/keynote-herb-to-reactionview-a-new-foundation-for-the-view-layer) gave an overview of how Herb came to be, what Herb can do for you today, and how it could enable the next generation of the Rails view layer with ReActionView.
+
+At [**RubyKaigi 2026**](https://rubykaigi.org/2026/presentations/marcoroth.html) in April 2026, the talk [*HTML-Aware ERB: The Path to Reactive Rendering*](https://www.rubyevents.org/talks/html-aware-erb-the-path-to-reactive-rendering) walked through the engineering path from structural understanding to reactive rendering, and shipped Herb v0.10 with the syntax tree diff engine, the dev server, Action View render graph analysis, and compile-time optimizations.
 
 ## Contributing
 

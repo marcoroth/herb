@@ -1,0 +1,46 @@
+---
+source: "Analyze::BlockTest#test_0047_block with block parameter argument"
+input: |2-
+<% block do |&callback| %>
+  <%= callback %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " block do |&callback| " (location: (1:2)-(1:24))
+    │   ├── tag_closing: "%>" (location: (1:24)-(1:26))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:26)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:17))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " callback " (location: (2:5)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:17)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:13)-(1:22))
+    │   │       ├── name: "callback" (location: (1:14)-(1:22))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "block"
+    │   │       └── required: false
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

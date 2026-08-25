@@ -1,8 +1,8 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isHTMLTextNode } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 
 import type { ParseResult, ERBStrictLocalsNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -19,7 +19,7 @@ class ActionViewStrictLocalsPartialOnlyVisitor extends BaseRuleVisitor {
 export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
   static unsafeAutocorrectable = true
   static ruleName = "actionview-strict-locals-partial-only"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get parserOptions() {
     return { strict_locals: true }
@@ -29,6 +29,7 @@ export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
     return {
       enabled: true,
       severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

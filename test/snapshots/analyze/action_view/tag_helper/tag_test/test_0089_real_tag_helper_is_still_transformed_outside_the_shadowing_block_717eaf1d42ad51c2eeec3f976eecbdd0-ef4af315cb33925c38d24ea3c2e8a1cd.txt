@@ -1,0 +1,66 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0089_real tag helper is still transformed outside the shadowing block"
+input: |2-
+<% @tags.each do |tag| %>
+  <%= tag.name %>
+<% end %>
+<%= tag.hr %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (4 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @tags.each do |tag| " (location: (1:2)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:25)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:17))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " tag.name " (location: (2:5)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:17)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:18)-(1:21))
+    │   │       ├── name: "tag" (location: (1:18)-(1:21))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (3:9)-(4:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (4:0)-(4:13))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (4:0)-(4:13))
+    │   │       ├── tag_opening: "<%=" (location: (4:0)-(4:3))
+    │   │       ├── content: " tag.hr " (location: (4:3)-(4:11))
+    │   │       ├── tag_closing: "%>" (location: (4:11)-(4:13))
+    │   │       ├── tag_name: "hr" (location: (4:8)-(4:10))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "hr" (location: (4:8)-(4:10))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (4:13)-(5:0))
+        └── content: "\n"

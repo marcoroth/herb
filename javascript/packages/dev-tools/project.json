@@ -5,12 +5,16 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
       },
       "dependsOn": [
-        "@herb-tools/core:build"
+        "@herb-tools/core:build",
+        "@herb-tools/client:build",
+        "@herb-tools/highlighter:build",
+        "@herb-tools/browser:build"
       ]
     },
     "dev": {

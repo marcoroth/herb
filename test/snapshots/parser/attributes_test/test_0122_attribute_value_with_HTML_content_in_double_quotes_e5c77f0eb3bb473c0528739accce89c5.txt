@@ -1,0 +1,46 @@
+---
+source: "Parser::AttributesTest#test_0122_attribute value with HTML content in double quotes"
+input: "<iframe srcdoc=\"<base target='foo'>\"></iframe>"
+---
+@ DocumentNode (location: (1:0)-(1:46))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:46))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:37))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "iframe" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:36)-(1:37))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:8)-(1:36))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:14))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:8)-(1:14))
+        │       │       │               └── content: "srcdoc"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:14)-(1:15))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:36))
+        │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:16)-(1:35))
+        │       │               │       └── content: "<base target='foo'>"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:35)-(1:36))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "iframe" (location: (1:1)-(1:7))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:37)-(1:46))
+        │       ├── tag_opening: "</" (location: (1:37)-(1:39))
+        │       ├── tag_name: "iframe" (location: (1:39)-(1:45))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:45)-(1:46))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

@@ -1,0 +1,80 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0007_ternary inside attribute value with static suffix"
+input: |2-
+<div class="<%= cond ? 'text' : 'hidden' %> mb-4">content</div>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:63))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:50))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:49)-(1:50))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:49))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:49))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (2 items)
+    │   │       │               │   ├── @ ERBIfNode (location: (1:12)-(1:43))
+    │   │       │               │   │   ├── tag_opening: "<%" (location: (1:12)-(1:12))
+    │   │       │               │   │   ├── content: " if cond " (location: (1:12)-(1:43))
+    │   │       │               │   │   ├── tag_closing: "%>" (location: (1:43)-(1:43))
+    │   │       │               │   │   ├── then_keyword: ∅
+    │   │       │               │   │   ├── statements: (1 item)
+    │   │       │               │   │   │   └── @ LiteralNode (location: (1:23)-(1:29))
+    │   │       │               │   │   │       └── content: "text"
+    │   │       │               │   │   │
+    │   │       │               │   │   ├── subsequent:
+    │   │       │               │   │   │   └── @ ERBElseNode (location: (1:43)-(1:43))
+    │   │       │               │   │   │       ├── tag_opening: "<%" (location: (1:43)-(1:43))
+    │   │       │               │   │   │       ├── content: " else " (location: (1:43)-(1:43))
+    │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:43)-(1:43))
+    │   │       │               │   │   │       └── statements: (1 item)
+    │   │       │               │   │   │           └── @ LiteralNode (location: (1:32)-(1:40))
+    │   │       │               │   │   │               └── content: "hidden"
+    │   │       │               │   │   │
+    │   │       │               │   │   │
+    │   │       │               │   │   └── end_node:
+    │   │       │               │   │       └── @ ERBEndNode (location: (1:43)-(1:43))
+    │   │       │               │   │           ├── tag_opening: "<%" (location: (1:43)-(1:43))
+    │   │       │               │   │           ├── content: " end " (location: (1:43)-(1:43))
+    │   │       │               │   │           └── tag_closing: "%>" (location: (1:43)-(1:43))
+    │   │       │               │   │
+    │   │       │               │   │
+    │   │       │               │   └── @ LiteralNode (location: (1:43)-(1:48))
+    │   │       │               │       └── content: " mb-4"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:48)-(1:49))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:50)-(1:57))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:57)-(1:63))
+    │   │       ├── tag_opening: "</" (location: (1:57)-(1:59))
+    │   │       ├── tag_name: "div" (location: (1:59)-(1:62))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:62)-(1:63))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:63)-(2:0))
+        └── content: "\n"

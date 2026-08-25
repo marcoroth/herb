@@ -1,0 +1,68 @@
+---
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0015_javascript_tag with less-than and nested ERB control flow (gh-1426)"
+input: |2-
+<%= javascript_tag do %>
+  if (n<o.length) {
+    <% if condition %>
+      doSomething()
+    <% end %>
+  }
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:9))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:24))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " javascript_tag do " (location: (1:3)-(1:22))
+    │   │       ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   │       ├── tag_name: "script" (location: (1:4)-(1:18))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "script" (location: (1:4)-(1:18))
+    │   ├── body: (1 item)
+    │   │   └── @ CDATANode (location: (1:0)-(7:9))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(7:9))
+    │   │       ├── children: (5 items)
+    │   │       │   ├── @ LiteralNode (location: (1:24)-(3:4))
+    │   │       │   │   └── content: "\n  if (n<o.length) {\n    "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (3:4)-(3:22))
+    │   │       │   │   ├── tag_opening: "<%" (location: (3:4)-(3:6))
+    │   │       │   │   ├── content: " if condition " (location: (3:6)-(3:20))
+    │   │       │   │   ├── tag_closing: "%>" (location: (3:20)-(3:22))
+    │   │       │   │   ├── parsed: false
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   ├── @ LiteralNode (location: (3:22)-(5:4))
+    │   │       │   │   └── content: "\n      doSomething()\n    "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (5:4)-(5:13))
+    │   │       │   │   ├── tag_opening: "<%" (location: (5:4)-(5:6))
+    │   │       │   │   ├── content: " end " (location: (5:6)-(5:11))
+    │   │       │   │   ├── tag_closing: "%>" (location: (5:11)-(5:13))
+    │   │       │   │   ├── parsed: false
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   └── @ LiteralNode (location: (5:13)-(7:0))
+    │   │       │       └── content: "\n  }\n"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(7:9))
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ ERBEndNode (location: (7:0)-(7:9))
+    │   │       ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │   │       ├── content: " end " (location: (7:2)-(7:7))
+    │   │       └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

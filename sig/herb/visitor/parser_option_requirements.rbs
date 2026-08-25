@@ -1,0 +1,76 @@
+# Generated from lib/herb/visitor/parser_option_requirements.rb with RBS::Inline
+
+module Herb
+  class Visitor
+    # Lets a visitor declare the parser options the AST it is handed has to carry, so that
+    # whoever parses can satisfy them before visiting.
+    #
+    #     class PrismProgramVisitor < Herb::Visitor
+    #       required_parser_option prism_program: true
+    #       recommended_parser_option strict: false
+    #     end
+    #
+    # A required option is one the visitor cannot work without, and a recommended one is a soft
+    # requirement it only works better with. `Herb::Visitor.parser_options_for` resolves both for
+    # a set of visitors, raising on a conflicting requirement and warning on a conflicting
+    # recommendation.
+    #
+    # `Herb::Visitor` includes this, so every visitor has it. Anything else that is passed to
+    # `Herb::Engine` as a visitor can include it too.
+    module ParserOptionRequirements
+      # : (untyped) -> void
+      def self.included: (untyped) -> void
+
+      module ClassMethods
+        # : (**untyped) -> void
+        def required_parser_option: (**untyped) -> void
+
+        # : (**untyped) -> void
+        def recommended_parser_option: (**untyped) -> void
+
+        # : () -> Hash[Symbol, untyped]
+        def required_parser_options: () -> Hash[Symbol, untyped]
+
+        # : () -> Hash[Symbol, untyped]
+        def recommended_parser_options: () -> Hash[Symbol, untyped]
+
+        # : (untyped) -> void
+        def inherited: (untyped) -> void
+
+        # : (Array[untyped], ?Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+        def parser_options_for: (Array[untyped], ?Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+
+        private
+
+        # : (Array[untyped], Hash[Symbol, untyped]) -> void
+        def apply_required_parser_options: (Array[untyped], Hash[Symbol, untyped]) -> void
+
+        # : (Array[untyped], Hash[Symbol, untyped]) -> void
+        def apply_recommended_parser_options: (Array[untyped], Hash[Symbol, untyped]) -> void
+
+        # : (Symbol) -> Hash[Symbol, untyped]
+        def declared_parser_options: (Symbol) -> Hash[Symbol, untyped]
+
+        # : (Array[untyped], Symbol) { (untyped, Symbol, untyped) -> void } -> void
+        def each_declared_parser_option: (Array[untyped], Symbol) { (untyped, Symbol, untyped) -> void } -> void
+
+        # : (untyped) -> String
+        def describe: (untyped) -> String
+      end
+
+      # : () -> Hash[Symbol, untyped]
+      def required_parser_options: () -> Hash[Symbol, untyped]
+
+      # : () -> Hash[Symbol, untyped]
+      def recommended_parser_options: () -> Hash[Symbol, untyped]
+
+      # : (untyped) -> untyped
+      def self.class_of: (untyped) -> untyped
+
+      private
+
+      # : () -> untyped
+      def declaring_class: () -> untyped
+    end
+  end
+end

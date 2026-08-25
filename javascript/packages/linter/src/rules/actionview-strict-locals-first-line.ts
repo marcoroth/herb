@@ -1,9 +1,9 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { createLiteral } from "@herb-tools/core"
 
 import { isERBStrictLocalsNode, isHTMLTextNode } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 
 import type { ParseResult, DocumentNode, ERBStrictLocalsNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -54,7 +54,7 @@ class ActionViewStrictLocalsFirstLineVisitor extends BaseRuleVisitor {
 export class ActionViewStrictLocalsFirstLineRule extends ParserRule {
   static autocorrectable = true
   static ruleName = "actionview-strict-locals-first-line"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get parserOptions() {
     return { strict_locals: true }
@@ -64,6 +64,7 @@ export class ActionViewStrictLocalsFirstLineRule extends ParserRule {
     return {
       enabled: false,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

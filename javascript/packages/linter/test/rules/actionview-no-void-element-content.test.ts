@@ -91,4 +91,56 @@ describe("ActionViewNoVoidElementContentRule", () => {
       <%= content_tag :br, "hello" %>
     `)
   })
+
+  test("tag.img with do...end block is not allowed", () => {
+    expectError(`Void element \`img\` cannot have content. \`tag.img\` does not accept a block for content.`)
+
+    assertOffenses(dedent`
+      <%= tag.img alt: "hello" do %>
+        a
+      <% end %>
+    `)
+  })
+
+  test("tag.br with inline block is not allowed", () => {
+    expectError(`Void element \`br\` cannot have content. \`tag.br\` does not accept a block for content.`)
+
+    assertOffenses(dedent`
+      <%= tag.br { "content" } %>
+    `)
+  })
+
+  test("tag.input with do...end block is not allowed", () => {
+    expectError(`Void element \`input\` cannot have content. \`tag.input\` does not accept a block for content.`)
+
+    assertOffenses(dedent`
+      <%= tag.input do %>
+        content
+      <% end %>
+    `)
+  })
+
+  test("content_tag :input with do...end block is not allowed", () => {
+    expectError(`Void element \`input\` cannot have content. \`content_tag :input\` does not accept a block for content.`)
+
+    assertOffenses(dedent`
+      <%= content_tag :input do %>
+        content
+      <% end %>
+    `)
+  })
+
+  test("tag.div with do...end block is allowed (non-void element)", () => {
+    expectNoOffenses(dedent`
+      <%= tag.div do %>
+        content
+      <% end %>
+    `)
+  })
+
+  test("tag.span with inline block is allowed (non-void element)", () => {
+    expectNoOffenses(dedent`
+      <%= tag.span { "content" } %>
+    `)
+  })
 })

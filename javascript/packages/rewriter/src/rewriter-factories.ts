@@ -1,5 +1,6 @@
 import { TailwindClassSorterRewriter } from "./built-ins/tailwind-class-sorter.js"
 import { ActionViewTagHelperToHTMLRewriter } from "./built-ins/action-view-tag-helper-to-html.js"
+import { ERBStringToDirectOutputRewriter } from "./built-ins/erb-string-to-direct-output.js"
 import { HTMLToActionViewTagHelperRewriter } from "./built-ins/html-to-action-view-tag-helper.js"
 
 export interface TailwindClassSorterOptions {
@@ -40,6 +41,10 @@ export async function tailwindClassSorter(options: TailwindClassSorterOptions = 
 
 export function actionViewTagHelperToHTML(): ActionViewTagHelperToHTMLRewriter {
   return new ActionViewTagHelperToHTMLRewriter()
+}
+
+export function erbStringToDirectOutput(): ERBStringToDirectOutputRewriter {
+  return new ERBStringToDirectOutputRewriter()
 }
 
 export function htmlToActionViewTagHelper(): HTMLToActionViewTagHelperRewriter {

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0036_tag.div with nil class"
+input: "{source: \"<%= tag.div class: nil %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div class=""></div>

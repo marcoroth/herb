@@ -1,0 +1,19 @@
+---
+name: "capture"
+source: "ActionView::Helpers::CaptureHelper#capture"
+gem: "actionview"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: true
+signature: "capture(*, **, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CaptureHelper.html#method-i-capture"
+
+description: |-
+  Extracts a part of a template as a string object. Useful for capturing markup for later use.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

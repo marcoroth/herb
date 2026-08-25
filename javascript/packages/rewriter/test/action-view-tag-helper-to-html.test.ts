@@ -3,7 +3,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
+import { ActionViewTagHelperToHTMLRewriter } from "../src/index.js"
 
 import type { Node } from "@herb-tools/core"
 
@@ -119,6 +119,24 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
+    test("tag.div with a dynamic boolean attribute becomes a conditional attribute", () => {
+      expect(transform('<%= tag.div hidden: a != b %>')).toBe(
+        '<div <% if (a != b) %>hidden<% end %>></div>'
+      )
+    })
+
+    test("tag.div with a shorthand boolean attribute becomes a conditional attribute", () => {
+      expect(transform('<%= tag.div(hidden:) %>')).toBe(
+        '<div <% if (hidden) %>hidden<% end %>></div>'
+      )
+    })
+
+    test("tag.div with a dynamic boolean attribute inside a data hash keeps its value", () => {
+      expect(transform('<%= tag.div data: { hidden: a != b } %>')).toBe(
+        '<div data-hidden="<%= ::Herb::Engine.nested_attribute_value(a != b) %>"></div>'
+      )
+    })
+
     test("tag.div with variable attribute value wraps in ERB", () => {
       const input = dedent`
         <%= tag.div class: class_name do %>
@@ -211,7 +229,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div class="content" <%= **attributes %>>
+        <div class="content" <%= tag.attributes(**attributes) %>>
           Content
         </div>
       `
@@ -354,6 +372,54 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
         '<script nonce="false">alert(1)</script>'
       )
     })
+
+    test("content_tag with splat attributes", () => {
+      const input = dedent`
+        <%= content_tag(:div, **attributes) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div <%= tag.attributes(**attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("content_tag with splat attributes in data", () => {
+      const input = dedent`
+        <%= content_tag(:div, data: { controller: "one", **attributes }) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div data-controller="one" <%= tag.attributes(data: attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("content_tag with splat attributes in aria", () => {
+      const input = dedent`
+        <%= content_tag(:div, aria: { label: "one", **attributes }) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div aria-label="one" <%= tag.attributes(aria: attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
   })
 
   describe("nested helpers", () => {
@@ -401,7 +467,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("link_to with inline block and attributes", () => {
       expect(transform('<%= link_to("/about", class: "btn") { "About" } %>')).toBe(
-        '<a href="/about" class="btn">About</a>'
+        '<a class="btn" href="/about">About</a>'
       )
     })
 
@@ -455,7 +521,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("turbo_frame_tag with loading lazy", () => {
       expect(transform('<%= turbo_frame_tag "tray", src: tray_path(tray), loading: "lazy" %>')).toBe(
-        '<turbo-frame id="tray" src="<%= tray_path(tray) %>" loading="lazy"></turbo-frame>'
+        '<turbo-frame loading="lazy" id="tray" src="<%= tray_path(tray) %>"></turbo-frame>'
       )
     })
 
@@ -467,7 +533,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" class="frame">
+        <turbo-frame class="frame" id="tray">
           Content
         </turbo-frame>
       `
@@ -499,7 +565,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" data-controller="frame">
+        <turbo-frame data-controller="frame" id="tray">
           Content
         </turbo-frame>
       `
@@ -515,7 +581,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" <%= **attributes %>>
+        <turbo-frame <%= tag.attributes(**attributes) %> id="tray">
           Content
         </turbo-frame>
       `
@@ -527,7 +593,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
   describe("javascript_tag helpers", () => {
     test("javascript_tag with content as argument", () => {
       expect(transform(`<%= javascript_tag "alert('Hello')" %>`)).toBe(
-        `<script>alert('Hello')</script>`
+        `<script>\n//<![CDATA[\nalert('Hello')\n//]]>\n</script>`
       )
     })
 
@@ -540,7 +606,11 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       const expected = dedent`
         <script>
+        //<![CDATA[
+
           alert('Hello')
+
+        //]]>
         </script>
       `
 
@@ -549,7 +619,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_tag with type attribute", () => {
       expect(transform(`<%= javascript_tag "alert('Hello')", type: "application/javascript" %>`)).toBe(
-        `<script type="application/javascript">alert('Hello')</script>`
+        `<script type="application/javascript">\n//<![CDATA[\nalert('Hello')\n//]]>\n</script>`
       )
     })
 
@@ -562,7 +632,11 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       const expected = dedent`
         <script nonce="<%= content_security_policy_nonce %>">
+        //<![CDATA[
+
           alert('Hello')
+
+        //]]>
         </script>
       `
 
@@ -578,7 +652,11 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       const expected = dedent`
         <script>
+        //<![CDATA[
+
           alert('Hello')
+
+        //]]>
         </script>
       `
 
@@ -595,7 +673,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with defer", () => {
       expect(transform(`<%= javascript_include_tag "application", defer: true %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" defer></script>`
+        `<script defer src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -610,7 +688,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with nonce true resolves to content_security_policy_nonce", () => {
       expect(transform(`<%= javascript_include_tag "application", nonce: true %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" nonce="<%= content_security_policy_nonce %>"></script>`
+        `<script nonce="<%= content_security_policy_nonce %>" src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -622,13 +700,13 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with interpolated nonce", () => {
       expect(transform('<%= javascript_include_tag "application", nonce: "static-#{dynamic}" %>')).toBe(
-        '<script src="<%= javascript_path("application") %>" nonce="static-<%= dynamic %>"></script>'
+        '<script nonce="static-<%= dynamic %>" src="<%= javascript_path("application") %>"></script>'
       )
     })
 
     test("javascript_include_tag with data attributes", () => {
       expect(transform(`<%= javascript_include_tag "application", data: { turbo_track: "reload" } %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" data-turbo-track="reload"></script>`
+        `<script data-turbo-track="reload" src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -658,37 +736,37 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with URL and nonce", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", nonce: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" nonce="<%= content_security_policy_nonce %>"></script>`
+        `<script nonce="<%= content_security_policy_nonce %>" src="http://www.example.com/xmlhr.js"></script>`
       )
     })
 
     test("javascript_include_tag with URL and async", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", async: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" async></script>`
+        `<script async src="http://www.example.com/xmlhr.js"></script>`
       )
     })
 
     test("javascript_include_tag with URL and defer", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", defer: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" defer></script>`
+        `<script defer src="http://www.example.com/xmlhr.js"></script>`
       )
     })
 
     test("javascript_include_tag with defer as string", () => {
       expect(transform(`<%= javascript_include_tag "application", defer: "true" %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" defer="true"></script>`
+        `<script defer="true" src="<%= javascript_path("application") %>"></script>`
       )
     })
 
-    test("javascript_include_tag with extname false", () => {
+    test("javascript_include_tag with extname false forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "template.jst", extname: false %>`)).toBe(
-        `<script src="<%= javascript_path("template.jst") %>" extname="false"></script>`
+        `<script src="<%= javascript_path("template.jst", extname: false) %>"></script>`
       )
     })
 
-    test("javascript_include_tag with host and protocol", () => {
+    test("javascript_include_tag with host and protocol forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "xmlhr", host: "localhost", protocol: "https" %>`)).toBe(
-        `<script src="<%= javascript_path("xmlhr") %>" host="localhost" protocol="https"></script>`
+        `<script src="<%= javascript_path("xmlhr", host: "localhost", protocol: "https") %>"></script>`
       )
     })
 
@@ -706,6 +784,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
         `<script src="<%= asset_path("application.js") %>"></script>`
       )
     })
+
+    test("javascript_include_tag with skip_pipeline forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", skip_pipeline: true %>`)).toBe(
+        `<script src="<%= javascript_path("application", skip_pipeline: true) %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with protocol forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", protocol: "https" %>`)).toBe(
+        `<script src="<%= javascript_path("application", protocol: "https") %>"></script>`
+      )
+    })
   })
 
   describe("image_tag helpers", () => {
@@ -717,13 +807,13 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with alt attribute", () => {
       expect(transform('<%= image_tag "icon.png", alt: "Icon" %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" alt="Icon" />'
+        '<img alt="Icon" src="<%= image_path("icon.png") %>" />'
       )
     })
 
     test("image_tag with multiple attributes", () => {
       expect(transform('<%= image_tag "photo.jpg", alt: "Photo", class: "avatar" %>')).toBe(
-        '<img src="<%= image_path("photo.jpg") %>" alt="Photo" class="avatar" />'
+        '<img alt="Photo" class="avatar" src="<%= image_path("photo.jpg") %>" />'
       )
     })
 
@@ -777,7 +867,171 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with data attributes", () => {
       expect(transform('<%= image_tag "icon.png", data: { controller: "image" } %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" data-controller="image" />'
+        '<img data-controller="image" src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with splat attributes", () => {
+      expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
+        '<img <%= tag.attributes(**attributes) %> src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with skip_pipeline forwards to image_path", () => {
+      expect(transform('<%= image_tag "icon.png", skip_pipeline: true %>')).toBe(
+        '<img src="<%= image_path("icon.png", skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("image_tag with size WxH creates width and height attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32x32" %>')).toBe(
+        '<img width="32" height="32" src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with size N creates square width and height attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32" %>')).toBe(
+        '<img width="32" height="32" src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with size and other attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>')).toBe(
+        '<img alt="Icon" class="avatar" width="32" height="32" src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with dynamic size expands to width and height", () => {
+      expect(transform('<%= image_tag "icon.png", size: some_var %>')).toBe(
+        '<img width="<%= some_var.to_s.split("x", 2)[0] %>" height="<%= some_var.to_s.split("x", 2)[-1] %>" src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with string source does not segfault with path_options signature", () => {
+      expect(transform('<%= image_tag "logo.png", alt: "Logo", class: "brand" %>')).toBe(
+        '<img alt="Logo" class="brand" src="<%= image_path("logo.png") %>" />'
+      )
+    })
+  })
+
+  describe("stylesheet_link_tag helpers", () => {
+    test("stylesheet_link_tag with source", () => {
+      expect(transform('<%= stylesheet_link_tag "style" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with source including extension", () => {
+      expect(transform('<%= stylesheet_link_tag "style.css" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style.css") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with URL", () => {
+      expect(transform('<%= stylesheet_link_tag "http://www.example.com/style.css" %>')).toBe(
+        '<link rel="stylesheet" href="http://www.example.com/style.css" />'
+      )
+    })
+
+    test("stylesheet_link_tag with extname false, skip_pipeline and rel", () => {
+      expect(transform('<%= stylesheet_link_tag "style.less", extname: false, skip_pipeline: true, rel: "stylesheet/less" %>')).toBe(
+        '<link rel="stylesheet/less" href="<%= stylesheet_path("style.less", extname: false, skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with media all", () => {
+      expect(transform('<%= stylesheet_link_tag "style", media: "all" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style") %>" media="all" />'
+      )
+    })
+
+    test("stylesheet_link_tag with media print", () => {
+      expect(transform('<%= stylesheet_link_tag "style", media: "print" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style") %>" media="print" />'
+      )
+    })
+
+    test("stylesheet_link_tag with multiple sources", () => {
+      expect(transform('<%= stylesheet_link_tag "random.styles", "/css/stylish" %>')).toBe(
+        dedent`
+          <link rel="stylesheet" href="<%= stylesheet_path("random.styles") %>" />
+          <link rel="stylesheet" href="<%= stylesheet_path("/css/stylish") %>" />
+        `
+      )
+    })
+
+    test("stylesheet_link_tag with protocol-relative URL", () => {
+      expect(transform('<%= stylesheet_link_tag "//cdn.example.com/style.css" %>')).toBe(
+        '<link rel="stylesheet" href="//cdn.example.com/style.css" />'
+      )
+    })
+
+    test("stylesheet_link_tag with host and protocol forwards to stylesheet_path", () => {
+      expect(transform('<%= stylesheet_link_tag "style", host: "localhost", protocol: "https" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("style", host: "localhost", protocol: "https") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with skip_pipeline forwards to stylesheet_path", () => {
+      expect(transform('<%= stylesheet_link_tag "application", skip_pipeline: true %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application", skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with rel keeps the explicit value in the leading position", () => {
+      expect(transform('<%= stylesheet_link_tag "application", rel: "preload" %>')).toBe(
+        '<link rel="preload" href="<%= stylesheet_path("application") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with nonce true resolves to content_security_policy_nonce", () => {
+      expect(transform('<%= stylesheet_link_tag "application", nonce: true %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" nonce="<%= content_security_policy_nonce %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with nonce false omits nonce attribute", () => {
+      expect(transform('<%= stylesheet_link_tag "application", nonce: false %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with interpolated nonce", () => {
+      expect(transform('<%= stylesheet_link_tag "application", nonce: "static-#{dynamic}" %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" nonce="static-<%= dynamic %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with data attributes", () => {
+      expect(transform('<%= stylesheet_link_tag "application", data: { turbo_track: "reload" } %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" data-turbo-track="reload" />'
+      )
+    })
+
+    test("stylesheet_link_tag with asset_path source passes through", () => {
+      expect(transform('<%= stylesheet_link_tag asset_path("application.css") %>')).toBe(
+        '<link rel="stylesheet" href="<%= asset_path("application.css") %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with ruby expression source wraps in stylesheet_path", () => {
+      expect(transform('<%= stylesheet_link_tag stylesheet %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path(stylesheet) %>" />'
+      )
+    })
+
+    test("stylesheet_link_tag with splat attributes", () => {
+      expect(transform('<%= stylesheet_link_tag "application", **attributes %>')).toBe(
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" <%= tag.attributes(**attributes) %> />'
+      )
+    })
+
+    test("stylesheet_link_tag with multiple sources and media", () => {
+      expect(transform('<%= stylesheet_link_tag "application", "admin", media: "all" %>')).toBe(
+        dedent`
+          <link rel="stylesheet" href="<%= stylesheet_path("application") %>" media="all" />
+          <link rel="stylesheet" href="<%= stylesheet_path("admin") %>" media="all" />
+        `
       )
     })
   })
@@ -827,15 +1081,15 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("tag.div with array data attribute wraps in .to_json", () => {
+    test("tag.div with array data attribute wraps in nested_attribute_value", () => {
       expect(transform('<%= tag.div data: { items: ["a", "b"] } %>')).toBe(
-        '<div data-items="<%= ["a", "b"].to_json %>"></div>'
+        '<div data-items="<%= ::Herb::Engine.nested_attribute_value(["a", "b"]) %>"></div>'
       )
     })
 
-    test("tag.div with nested hash data attribute wraps in .to_json", () => {
+    test("tag.div with nested hash data attribute wraps in nested_attribute_value", () => {
       expect(transform('<%= tag.div data: { config: { nested: "hash" } } %>')).toBe(
-        '<div data-config="<%= { nested: "hash" }.to_json %>"></div>'
+        '<div data-config="<%= ::Herb::Engine.nested_attribute_value({ nested: "hash" }) %>"></div>'
       )
     })
   })
@@ -856,6 +1110,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("tag.attributes with attributes before", () => {
       expect(transform('<button class="primary" <%= tag.attributes(id: "cta") %>>Click</button>')).toBe(
         '<button class="primary" id="cta">Click</button>'
+      )
+    })
+
+    test("tag.attributes with a dynamic boolean attribute", () => {
+      expect(transform('<option <%= tag.attributes(selected: option == current) %>>One</option>')).toBe(
+        '<option <% if (option == current) %>selected<% end %>>One</option>'
       )
     })
 

@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0050_indented expression block with right trim removes following newline"
+input: "{source: \"<div>\\n  <%= capture do -%>\\n    bar\\n  <% end %>\\n</div>\", locals: {}, options: {}}"
+---
+<div>
+      bar
+</div>

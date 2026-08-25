@@ -1,0 +1,34 @@
+import type { SerializedNode } from "./nodes.js"
+
+export type DiffOperationType =
+  | "attribute_added"
+  | "attribute_removed"
+  | "attribute_value_changed"
+  | "erb_content_changed"
+  | "node_inserted"
+  | "node_moved"
+  | "node_removed"
+  | "node_replaced"
+  | "node_unwrapped"
+  | "node_wrapped"
+  | "tag_name_changed"
+  | "text_changed"
+  | "whitespace_changed"
+
+export interface DiffOperation {
+  type: DiffOperationType
+  path: number[]
+  oldNode: SerializedNode | null
+  newNode: SerializedNode | null
+  oldIndex: number
+  newIndex: number
+}
+
+export interface DiffResult {
+  identical: boolean
+  operations: DiffOperation[]
+}
+
+export interface DiffOptions {
+  track_whitespace_changes?: boolean
+}

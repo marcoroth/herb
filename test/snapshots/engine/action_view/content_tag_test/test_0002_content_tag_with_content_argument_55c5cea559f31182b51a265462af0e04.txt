@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0002_content_tag with content argument"
+input: "{source: \"<%= content_tag :div, \\\"Content\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div>Content</div>

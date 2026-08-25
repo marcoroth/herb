@@ -7,9 +7,16 @@ import { AutofixService } from '../src/autofix_service'
 import { Config } from '@herb-tools/config'
 import { Herb } from '@herb-tools/node-wasm'
 
+import type { Project } from '../src/project'
+import type { PersonalHerbSettings } from '../src/user_settings'
+
 describe('AutofixService', () => {
   let connection: Connection
   let autofixService: AutofixService
+
+  const projectWith = (settings: Partial<PersonalHerbSettings> = {}) => {
+    return { root: '/test', settingsFor: async () => settings } as unknown as Project
+  }
 
   beforeAll(async () => {
     await Herb.load()
@@ -23,7 +30,7 @@ describe('AutofixService', () => {
       }
     } as unknown as Connection
 
-    autofixService = new AutofixService(connection)
+    autofixService = new AutofixService(connection, projectWith())
   })
 
   describe('autofix', () => {
@@ -99,7 +106,7 @@ describe('AutofixService', () => {
             'html-tag-name-lowercase': { enabled: false }
           }
         }
-      }, { projectPath: '/test', version: '0.9.2' })
+      }, { projectPath: '/test', version: '0.10.3' })
 
       autofixService.setConfig(config)
 
@@ -110,10 +117,40 @@ describe('AutofixService', () => {
       expect(result).toEqual([])
     })
 
+    it('should fix framework-scoped rules when the project configures their framework', async () => {
+      const config = Config.fromObject({
+        framework: 'actionview',
+        linter: { enabled: true }
+      }, { projectPath: '/test', version: '0.10.3' })
+
+      autofixService.setConfig(config)
+
+      const input = '<%= "Sale".html_safe %>\n'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      const result = await autofixService.autofix(document)
+
+      expect(result[0].newText).not.toContain('html_safe')
+    })
+
+    it('should leave framework-scoped rules alone when the project configures another framework', async () => {
+      const config = Config.fromObject({
+        framework: 'sinatra',
+        linter: { enabled: true }
+      }, { projectPath: '/test', version: '0.10.3' })
+
+      autofixService.setConfig(config)
+
+      const input = '<%= "Sale".html_safe %>\n'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      const result = await autofixService.autofix(document)
+
+      expect(result).toEqual([])
+    })
+
     it('should rebuild linter when config changes', async () => {
       const config1 = Config.fromObject({
         linter: { enabled: true }
-      }, { projectPath: '/test', version: '0.9.2' })
+      }, { projectPath: '/test', version: '0.10.3' })
 
       autofixService.setConfig(config1)
 
@@ -130,13 +167,36 @@ describe('AutofixService', () => {
             'html-tag-name-lowercase': { enabled: false }
           }
         }
-      }, { projectPath: '/test', version: '0.9.2' })
+      }, { projectPath: '/test', version: '0.10.3' })
 
       autofixService.setConfig(config2)
 
       const result2 = await autofixService.autofix(document)
 
       expect(result2).toEqual([])
+    })
+  })
+
+  describe('with a resolved indent style', () => {
+    it('should fix indentation to the style the diagnostics were reported against', async () => {
+      const project = projectWith({ formatter: { indentStyle: 'tab', indentWidth: 2 } })
+      const service = new AutofixService(connection, project)
+
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, '<div>\n  <span>test</span>\n</div>\n')
+      const result = await service.autofix(document)
+
+      expect(result).toHaveLength(1)
+      expect(result[0].newText).toBe('<div>\n\t<span>test</span>\n</div>\n')
+    })
+
+    it('should leave indentation alone when the style already matches', async () => {
+      const project = projectWith({ formatter: { indentStyle: 'tab', indentWidth: 2 } })
+      const service = new AutofixService(connection, project)
+
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, '<div>\n\t<span>test</span>\n</div>\n')
+      const result = await service.autofix(document)
+
+      expect(result).toEqual([])
     })
   })
 })

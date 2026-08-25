@@ -1,0 +1,50 @@
+<%
+  options = YAML.safe_load_file("config/options.yml")
+
+  def pascal_case(string)
+    string.split("_").map(&:capitalize).join
+  end
+
+  def title_case(string)
+    string.split("_").map(&:capitalize).join("")
+  end
+-%>
+
+use std::fmt;
+
+<% options.each do |key, config| -%>
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum <%= pascal_case(key) %> {
+<% config["values"].each do |value| -%>
+  <%= title_case(value) %>,
+<% end -%>
+}
+
+impl Default for <%= pascal_case(key) %> {
+  fn default() -> Self {
+    <%= pascal_case(key) %>::<%= title_case(config["default"]) %>
+  }
+}
+
+impl fmt::Display for <%= pascal_case(key) %> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+    <% config["values"].each do |value| -%>
+      <%= pascal_case(key) %>::<%= title_case(value) %> => write!(f, "<%= value %>"),
+    <% end -%>
+    }
+  }
+}
+
+impl <%= pascal_case(key) %> {
+  pub fn from_str(string: &str) -> Option<Self> {
+    match string {
+    <% config["values"].each do |value| -%>
+      "<%= value %>" => Some(<%= pascal_case(key) %>::<%= title_case(value) %>),
+    <% end -%>
+      _ => None,
+    }
+  }
+}
+
+<% end -%>

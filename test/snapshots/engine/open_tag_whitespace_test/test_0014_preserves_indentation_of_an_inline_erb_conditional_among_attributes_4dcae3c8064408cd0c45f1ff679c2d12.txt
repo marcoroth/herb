@@ -1,0 +1,11 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0014_preserves indentation of an inline erb conditional among attributes"
+input: "{source: \"<input\\n  type=\\\"text\\\"\\n  <% if required %>required<% end %>\\n>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<input
+  type="text"
+  '.freeze;   if required 
+ _buf << 'required'.freeze; end; _buf << '
+>
+'.freeze;
+_buf.to_s

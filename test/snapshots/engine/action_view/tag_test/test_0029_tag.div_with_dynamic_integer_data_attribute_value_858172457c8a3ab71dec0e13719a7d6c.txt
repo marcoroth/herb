@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0029_tag.div with dynamic integer data attribute value"
+input: "{source: \"<%= tag.div data: { count: item_count } %>\", locals: {item_count: 42}, options: {action_view_helpers: true}}"
+---
+<div data-count="42"></div>

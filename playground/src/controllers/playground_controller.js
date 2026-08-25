@@ -9,16 +9,24 @@ import Prism from "prismjs"
 
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
+import { registerLanguageService } from "../language-service"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
-import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
+import { ParseTreeView } from "../parse-tree-view"
+import { DiffView } from "../diff-view"
+import { TooltipRegistry } from "../tooltip"
 
 import { Herb } from "@herb-tools/browser"
-import { Linter } from "@herb-tools/linter"
-import { analyze } from "../analyze"
+import { FRAMEWORKS } from "@herb-tools/config/schema"
+import { AnalyzeClient } from "../analyze-client"
 import { analyzeRuby } from "../analyze-ruby"
 
 window.Herb = Herb
-window.analyze = analyze
+
+const URL_UPDATE_THROTTLE = 100
+const ANALYZE_DEBOUNCE = 250
+const FAST_ANALYZE_DEBOUNCE = 50
+const FAST_ANALYZE_MAX_LENGTH = 600
+const DEFAULT_FRAMEWORK = "actionview"
 
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
@@ -77,6 +85,15 @@ export default class extends Controller {
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
+    "highlighterViewer",
+    "highlighterOutput",
+    "highlighterShowDiagnostics",
+    "highlighterShowLineNumbers",
+    "highlighterSplitDiagnostics",
+    "highlighterSplitDiagnosticsLabel",
+    "highlighterFocusLine",
+    "highlighterFocusLineLabel",
+    "highlighterContextLines",
     "rewriteViewer",
     "rewriteOutput",
     "rewriteStatus",
@@ -90,6 +107,14 @@ export default class extends Controller {
     "formatTooltip",
     "autofixButton",
     "autofixTooltip",
+    "autofixUnsafeWrapper",
+    "autofixUnsafeButton",
+    "autofixUnsafeTooltip",
+    "autofixViewer",
+    "autofixOutput",
+    "autofixError",
+    "autofixVerification",
+    "autofixIncludeUnsafe",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -111,6 +136,7 @@ export default class extends Controller {
     "diagnosticsViewer",
     "diagnosticsContent",
     "diagnosticsFilter",
+    "linterFramework",
     "noDiagnostics",
     "diagnosticsList",
     "fullViewer",
@@ -125,7 +151,21 @@ export default class extends Controller {
     "commitHash",
     "prismNodesDeepLabel",
     "switchLink",
+    "diffViewer",
+    "diffOutput",
+    "diffStatus",
+    "diffLiveButton",
+    "diffCheckpointButton",
+    "diffSnapshotButton",
+    "diffCheckButton",
+    "diffWhitespaceCheckbox",
+    "diffParseError",
   ]
+
+  pendingHash = null
+  pendingSearch = null
+  urlUpdateTimeout = null
+  lastURLUpdateAt = 0
 
   get isRubyMode() {
     return this.modeValue === "ruby"
@@ -154,12 +194,19 @@ export default class extends Controller {
       this.restoreParserOptions()
       this.restorePrinterOptions()
       this.restoreFormatterOptions()
+      this.restoreAutofixOptions()
+      this.populateFrameworkOptions()
+      this.restoreLinterOptions()
     }
+
+    this.lastWrittenHash = null
+    this.analyzeTimeout = null
+    this.parseTreeView = this.hasParseOutputTarget ? this.createParseTreeView() : null
+    this.diffView = this.createDiffView()
+    this.analyzeClient = new AnalyzeClient()
 
     this.inputTarget.focus()
     this.load()
-
-    this.urlUpdatedFromChangeEvent = false
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: this.isRubyMode ? "ruby" : "erb",
@@ -170,7 +217,7 @@ export default class extends Controller {
 
     this.editor.onEditorClick((position) => {
       this.editor.clearAllHighlights()
-      this.clearTreeLocationHighlights()
+      this.parseTreeView?.clearHighlights()
 
       const range = findTreeLocationItemWithSmallestRangeFromPosition(
         this.treeLocations,
@@ -178,15 +225,10 @@ export default class extends Controller {
         position.column - 1,
       )
 
-      if (range) {
-        revealTreeLine(range.element)
-        range.element.classList.add("tree-location-highlight")
-        range.element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        })
-      }
+      if (!range) return
+
+      this.parseTreeView.revealLine(range.lineIndex)
+      this.parseTreeView.highlightLine(range.lineIndex)
     })
 
     this.editor.onDidChangeCursorPosition(({ position }) => {
@@ -202,14 +244,8 @@ export default class extends Controller {
 
     this.setupSwitchLinks()
     this.setupThemeListener()
-    this.setupTooltip()
-    this.setupAutofixTooltip()
-    this.setupShareTooltip()
-    this.setupGitHubTooltip()
-    this.setupCopyTooltip()
-    this.setupExampleTooltip()
-    this.setupCopyViewerTooltip()
-    this.setupPrinterVerificationTooltip()
+    this.tooltips = this.createTooltips()
+    this.tooltips.attachAll()
   }
 
   get isDarkMode() {
@@ -263,38 +299,123 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("popstate", this.handlePopState)
-    this.removeTooltip()
-    this.removeAutofixTooltip()
-    this.removeShareTooltip()
-    this.removeGitHubTooltip()
-    this.removeCopyTooltip()
-    this.removeExampleTooltip()
-    this.removeCopyViewerTooltip()
-    this.removePrinterVerificationTooltip()
+
+    this.languageService?.dispose()
+    this.languageService = null
+
+    this.analyzeClient?.dispose()
+    this.analyzeClient = null
+
+    this.parseTreeView?.dispose()
+    this.parseTreeView = null
+
+    if (this.analyzeTimeout !== null) {
+      clearTimeout(this.analyzeTimeout)
+      this.analyzeTimeout = null
+    }
+
+    if (this.urlUpdateTimeout !== null) {
+      clearTimeout(this.urlUpdateTimeout)
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }
+
+    this.tooltips?.detachAll()
   }
 
   handlePopState = async (_event) => {
-    if (this.urlUpdatedFromChangeEvent === false) {
-      this.editor.setValue(this.decompressedValue)
-    }
+    if (window.parent.location.hash.slice(1) === this.lastWrittenHash) return
+
+    this.editor.setValue(this.decompressedValue)
   }
 
   async load() {
     await Herb.load()
+    this.setupLanguageService()
     this.analyze()
   }
 
+  setupLanguageService() {
+    if (this.isRubyMode) return
+    if (this.languageService) return
+
+    this.languageService = registerLanguageService(Herb)
+    this.languageService.setFramework(this.getLinterOptions().framework)
+
+    window.languageService = this.languageService
+  }
+
   updateURL() {
-    window.parent.location.hash = this.compressedValue
+    this.queueURLUpdate({ hash: this.compressedValue })
 
     if (!this.isRubyMode) {
       const options = this.getParserOptions()
       const printerOptions = this.getPrinterOptions()
       const formatterOptions = this.getFormatterOptions()
+      const autofixOptions = this.getAutofixOptions()
+      const linterOptions = this.getLinterOptions()
       this.setOptionsInURL(options)
       this.setPrinterOptionsInURL(printerOptions)
       this.setFormatterOptionsInURL(formatterOptions)
+      this.setAutofixOptionsInURL(autofixOptions)
+      this.setLinterOptionsInURL(linterOptions)
     }
+  }
+
+  updateSearchParams(update) {
+    const params = new URLSearchParams(
+      this.pendingSearch !== null ? this.pendingSearch : window.parent.location.search,
+    )
+
+    update(params)
+
+    this.queueURLUpdate({ search: params.toString() })
+  }
+
+  queueURLUpdate({ hash, search }) {
+    if (hash !== undefined) this.pendingHash = hash
+    if (search !== undefined) this.pendingSearch = search
+
+    if (this.urlUpdateTimeout !== null) return
+    if (!this.hasPendingURLUpdate) return
+
+    const elapsed = Date.now() - this.lastURLUpdateAt
+
+    this.urlUpdateTimeout = setTimeout(() => {
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }, Math.max(0, URL_UPDATE_THROTTLE - elapsed))
+  }
+
+  get hasPendingURLUpdate() {
+    const location = window.parent.location
+
+    if (this.pendingHash !== null && this.pendingHash !== location.hash.slice(1)) return true
+    if (this.pendingSearch !== null && this.pendingSearch !== new URLSearchParams(location.search).toString()) return true
+
+    return false
+  }
+
+  flushURLUpdate() {
+    const location = window.parent.location
+    const hash = this.pendingHash
+    const search = this.pendingSearch
+
+    this.pendingHash = null
+    this.pendingSearch = null
+    this.lastURLUpdateAt = Date.now()
+
+    if (hash !== null && hash !== location.hash.slice(1)) {
+      this.lastWrittenHash = hash
+      location.hash = hash
+    }
+
+    if (search === null || search === new URLSearchParams(location.search).toString()) return
+
+    const url = new URL(location)
+    url.search = search
+
+    window.parent.history.replaceState({}, '', url)
   }
 
   async insert(event) {
@@ -385,6 +506,14 @@ export default class extends Controller {
           content = this.formatSuccessTarget.textContent
         } else if (!this.formatErrorTarget.classList.contains('hidden')) {
           const blurredPre = this.formatErrorTarget.querySelector('pre.language-html')
+          content = blurredPre ? blurredPre.textContent : ''
+        }
+        break
+      case 'autofix':
+        if (!this.autofixOutputTarget.classList.contains('hidden')) {
+          content = this.autofixOutputTarget.textContent
+        } else if (!this.autofixErrorTarget.classList.contains('hidden')) {
+          const blurredPre = this.autofixErrorTarget.querySelector('pre.language-html')
           content = blurredPre ? blurredPre.textContent : ''
         }
         break
@@ -516,6 +645,50 @@ export default class extends Controller {
     }
   }
 
+  restoreAutofixOptions() {
+    const autofixOptionsFromURL = this.getAutofixOptionsFromURL()
+
+    if (Object.keys(autofixOptionsFromURL).length > 0) {
+      this.setAutofixOptions(autofixOptionsFromURL)
+    }
+  }
+
+  populateFrameworkOptions() {
+    if (!this.hasLinterFrameworkTarget) return
+
+    const options = Object.entries(FRAMEWORKS)
+      .map(([framework, label]) => new Option(label, framework, false, framework === DEFAULT_FRAMEWORK))
+      .sort((a, b) => a.text.localeCompare(b.text))
+
+    this.linterFrameworkTarget.replaceChildren(...options, new Option("Not set", ""))
+  }
+
+  restoreLinterOptions() {
+    const linterOptionsFromURL = this.getLinterOptionsFromURL()
+
+    if (Object.keys(linterOptionsFromURL).length > 0) {
+      this.setLinterOptions(linterOptionsFromURL)
+    }
+  }
+
+  setLinterOptions(linterOptions) {
+    if (!this.hasLinterFrameworkTarget) return
+    if (!linterOptions.hasOwnProperty('framework')) return
+
+    const framework = linterOptions.framework || ""
+    const isKnownFramework = Array.from(this.linterFrameworkTarget.options).some(option => option.value === framework)
+
+    if (isKnownFramework) {
+      this.linterFrameworkTarget.value = framework
+    }
+  }
+
+  setAutofixOptions(autofixOptions) {
+    if (this.hasAutofixIncludeUnsafeTarget && autofixOptions.hasOwnProperty('includeUnsafe')) {
+      this.autofixIncludeUnsafeTarget.checked = Boolean(autofixOptions.includeUnsafe)
+    }
+  }
+
   setPrinterOptions(printerOptions) {
     if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
       this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
@@ -528,8 +701,23 @@ export default class extends Controller {
     }
   }
 
+  get activeTab() {
+    return this.activeViewerButton?.dataset?.viewer ?? "parse"
+  }
+
+  get analyzeJobs() {
+    const jobs = ["lint"]
+    const tab = this.activeTab
+
+    if (this.isValidTab(tab) && tab !== "diagnostics" && tab !== "diff") {
+      jobs.push(tab)
+    }
+
+    return jobs
+  }
+
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full', 'highlighter']
     return validTabs.includes(tab)
   }
 
@@ -558,19 +746,17 @@ export default class extends Controller {
   }
 
   updateTabInURL(tabName) {
-    const url = new URL(window.parent.location)
+    this.updateSearchParams((params) => {
+      if (tabName && tabName !== 'parse') {
+        params.set('tab', tabName)
+      } else {
+        params.delete('tab')
+      }
 
-    if (tabName && tabName !== 'parse') {
-      url.searchParams.set('tab', tabName)
-    } else {
-      url.searchParams.delete('tab')
-    }
-
-    if (tabName !== 'diagnostics') {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+      if (tabName !== 'diagnostics') {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   getClosestButton(element) {
@@ -597,6 +783,7 @@ export default class extends Controller {
 
     this.setActiveTab(tabName)
     this.updateTabInURL(tabName)
+    this.analyze()
   }
 
   showDiagnostics(_event) {
@@ -639,61 +826,142 @@ export default class extends Controller {
     this.currentViewer.style.cursor = null
   }
 
-  setupHoverListener(element, location) {
-    element.addEventListener("mouseenter", () => {
-      this.clearTreeLocationHighlights()
-      this.editor.clearAllHighlights()
-      this.editor.highlightAndRevealSection(
-        ...location,
-        element.classList.contains("error-class")
-          ? "error-highlight"
-          : "info-highlight",
-      )
-    })
-
-    element.classList.add("hover-highlight")
-  }
-
   expandAllNodes() {
-    if (this.hasParseOutputTarget) {
-      expandAll(this.parseOutputTarget)
-    }
+    this.parseTreeView?.expandAll()
   }
 
   collapseAllNodes() {
-    if (this.hasParseOutputTarget) {
-      collapseAll(this.parseOutputTarget)
-    }
+    this.parseTreeView?.collapseAll()
   }
 
-  clearTreeLocationHighlights() {
-    this.parseOutputTarget
-      .querySelectorAll(".tree-location-highlight")
-      .forEach((element) => {
-        element.classList.remove("tree-location-highlight")
-      })
+  createTooltips() {
+    const registry = new TooltipRegistry()
+
+    const element = (name) => (this[`has${name[0].toUpperCase()}${name.slice(1)}Target`] ? this[`${name}Target`] : null)
+
+    registry.add("format", element("formatButton"), element("formatTooltip"))
+    registry.add("autofix", element("autofixButton"), element("autofixTooltip"))
+    registry.add("autofixUnsafe", element("autofixUnsafeButton"), element("autofixUnsafeTooltip"))
+    registry.add("share", element("shareButton"), element("shareTooltip"))
+    registry.add("github", element("githubButton"), element("githubTooltip"))
+    registry.add("copy", element("copyButton"), element("copyTooltip"))
+    registry.add("example", element("exampleButton"), element("exampleTooltip"))
+    registry.add("copyViewer", element("copyViewerButton"), element("copyViewerTooltip"))
+    registry.addFloating("printerVerification", element("printerVerification"), "printer-verification-tooltip")
+
+    return registry
   }
 
-  get treeLocations() {
-    return Array.from(
-      this.parseOutputTarget?.querySelectorAll(".token.location") || [],
-    ).map((locationElement) => {
-      const element = locationElement.previousElementSibling
-      const location = Array.from(
-        locationElement.textContent.matchAll(/\d+/g),
-      ).map((i) => parseInt(i))
+  createDiffView() {
+    return new DiffView({
+      viewer: this.hasDiffViewerTarget ? this.diffViewerTarget : null,
+      output: this.hasDiffOutputTarget ? this.diffOutputTarget : null,
+      status: this.hasDiffStatusTarget ? this.diffStatusTarget : null,
+      parseError: this.hasDiffParseErrorTarget ? this.diffParseErrorTarget : null,
+      liveButton: this.hasDiffLiveButtonTarget ? this.diffLiveButtonTarget : null,
+      checkpointButton: this.hasDiffCheckpointButtonTarget ? this.diffCheckpointButtonTarget : null,
+      snapshotButton: this.hasDiffSnapshotButtonTarget ? this.diffSnapshotButtonTarget : null,
+      checkButton: this.hasDiffCheckButtonTarget ? this.diffCheckButtonTarget : null,
+      whitespaceCheckbox: this.hasDiffWhitespaceCheckboxTarget ? this.diffWhitespaceCheckboxTarget : null,
+    }, {
+      getSource: () => (this.editor ? this.editor.getValue() : this.inputTarget.value),
+      setSource: (source) => {
+        if (this.editor) {
+          this.editor.setValue(source)
+        } else {
+          this.inputTarget.value = source
+        }
 
-      location[1] += 1
-      location[3] += 1
-
-      return { element, locationElement, location }
+        this.analyze()
+      },
+      onOptionsChanged: () => this.updateURL(),
     })
   }
 
-  async input() {
-    this.urlUpdatedFromChangeEvent = true
-    await this.analyze()
-    this.urlUpdatedFromChangeEvent = false
+  setDiffModeLive() {
+    this.diffView?.setModeLive()
+  }
+
+  setDiffModeCheckpoint() {
+    this.diffView?.setModeCheckpoint()
+  }
+
+  diffTakeSnapshot() {
+    this.diffView?.takeSnapshot()
+  }
+
+  diffCheckpoint() {
+    this.diffView?.checkpoint()
+  }
+
+  diffSnapshot() {
+    this.diffView?.takeSnapshot()
+  }
+
+  diffCheck() {
+    this.diffView?.checkpoint()
+  }
+
+  diffOptions() {
+    return this.diffView?.options ?? {}
+  }
+
+  onDiffOptionChange(_event) {
+    this.diffView?.optionsChanged()
+  }
+
+  clearDiffFeed() {
+    this.diffView?.clearFeed()
+  }
+
+  updateDiff(parseSuccess = true) {
+    this.diffView?.update(parseSuccess)
+  }
+
+  createParseTreeView() {
+    return new ParseTreeView(this.parseOutputTarget, {
+      onHoverLocation: (location, isError) => {
+        this.parseTreeView.clearHighlights()
+        this.editor?.clearAllHighlights()
+        this.editor?.highlightAndRevealSection(
+          ...location,
+          isError ? "error-highlight" : "info-highlight",
+        )
+      },
+    })
+  }
+
+  clearTreeLocationHighlights() {
+    this.parseTreeView?.clearHighlights()
+  }
+
+  get treeLocations() {
+    return this.parseTreeView?.locations ?? []
+  }
+
+  renderParseTree(tree) {
+    if (!this.hasParseOutputTarget) return
+
+    this.parseTreeView?.render(tree)
+  }
+
+  input() {
+    this.scheduleAnalyze()
+  }
+
+  scheduleAnalyze() {
+    if (this.analyzeTimeout !== null) clearTimeout(this.analyzeTimeout)
+
+    this.analyzeTimeout = setTimeout(() => {
+      this.analyzeTimeout = null
+      this.analyze()
+    }, this.analyzeDebounce)
+  }
+
+  get analyzeDebounce() {
+    const length = this.editor ? this.editor.getValue().length : this.inputTarget.value.length
+
+    return length <= FAST_ANALYZE_MAX_LENGTH ? FAST_ANALYZE_DEBOUNCE : ANALYZE_DEBOUNCE
   }
 
   async formatEditor(event) {
@@ -708,7 +976,16 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const formatterOptions = this.getFormatterOptions()
-      const result = await analyze(Herb, value, {}, {}, formatterOptions)
+      const result = await this.analyzeClient.analyze({
+        source: value,
+        options: {},
+        printerOptions: {},
+        formatterOptions,
+        autofixOptions: {},
+        linterOptions: {},
+        highlighterOptions: {},
+        jobs: ["format"],
+      })
 
       if (result.formatted) {
         if (this.editor) {
@@ -731,6 +1008,21 @@ export default class extends Controller {
     }
   }
 
+  async autofixThroughWorker(source, includeUnsafe) {
+    const result = await this.analyzeClient.analyze({
+      source,
+      options: {},
+      printerOptions: {},
+      formatterOptions: {},
+      autofixOptions: { includeUnsafe },
+      linterOptions: this.getLinterOptions(),
+      highlighterOptions: {},
+      jobs: ["lint", "autofix"],
+    })
+
+    return result.autofix
+  }
+
   async autofixEditor(event) {
     if (this.isRubyMode) return
 
@@ -745,11 +1037,10 @@ export default class extends Controller {
 
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-      const linter = new Linter(Herb)
-      const result = linter.autofix(value)
+      const result = await this.autofixThroughWorker(value, false)
 
-      if (result && typeof result === "object" && "source" in result) {
-        const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
+      if (result) {
+        const fixedCount = result.fixedCount
 
         if (fixedCount > 0 && typeof result.source === "string") {
           if (this.editor) {
@@ -785,6 +1076,59 @@ export default class extends Controller {
     }
   }
 
+  async autofixUnsafeEditor(event) {
+    if (this.isRubyMode) return
+
+    const button = this.getClosestButton(event.target)
+
+    if (button.disabled) {
+      return
+    }
+
+    const warningIcon = button.querySelector(".fa-triangle-exclamation")
+    const checkIcon = button.querySelector(".fa-circle-check")
+
+    try {
+      const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+      const result = await this.autofixThroughWorker(value, true)
+
+      if (result) {
+        const fixedCount = result.fixedCount
+
+        if (fixedCount > 0 && typeof result.source === "string") {
+          if (this.editor) {
+            this.editor.setValue(result.source)
+          } else {
+            this.inputTarget.value = result.source
+          }
+
+          if (warningIcon && checkIcon) {
+            warningIcon.classList.add("hidden")
+            checkIcon.classList.remove("hidden")
+            checkIcon.style.display = ""
+
+            setTimeout(() => {
+              this.resetAutofixUnsafeButtonIcons()
+            }, 1000)
+          }
+
+          const offensesLabel = fixedCount === 1 ? "offense" : "offenses"
+          this.showTemporaryMessage(`Autofixed ${fixedCount} unsafe linter ${offensesLabel}`, "success")
+
+          await this.analyze()
+          this.resetAutofixUnsafeButtonIcons()
+        } else {
+          this.showTemporaryMessage("No unsafe autocorrectable linter offenses found", "info")
+        }
+      } else {
+        this.showTemporaryMessage("Failed to autofix unsafe linter offenses", "error")
+      }
+    } catch (error) {
+      console.error("Autofix unsafe error:", error)
+      this.showTemporaryMessage("Failed to autofix unsafe linter offenses", "error")
+    }
+  }
+
   async analyze() {
     this.updateURL()
 
@@ -797,7 +1141,22 @@ export default class extends Controller {
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
     const formatterOptions = this.getFormatterOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions)
+    const autofixOptions = this.getAutofixOptions()
+    const linterOptions = this.getLinterOptions()
+    const highlighterOptions = this.getHighlighterOptions()
+
+    const result = await this.analyzeClient.analyzeLatest({
+      source: value,
+      options,
+      printerOptions,
+      formatterOptions,
+      autofixOptions,
+      linterOptions,
+      highlighterOptions,
+      jobs: this.analyzeJobs,
+    })
+
+    if (!result) return
 
     this.updatePosition(1, 0, value.length)
 
@@ -805,20 +1164,10 @@ export default class extends Controller {
 
     const allDiagnostics = []
 
-    if (result.parseResult) {
-      const errors = result.parseResult.recursiveErrors()
-      allDiagnostics.push(...errors.map((error) => {
-        const diagnostic = error.toMonacoDiagnostic()
+    allDiagnostics.push(...result.parserDiagnostics)
 
-        diagnostic.source = "Herb Parser"
-        diagnostic.code = diagnostic.code || error.constructor?.name || 'parser-error'
-
-        return diagnostic
-      }))
-    }
-
-    if (result.lintResult && result.lintResult.offenses) {
-      const lintDiagnostics = result.lintResult.offenses.map((offense) => ({
+    if (result.lintOffenses) {
+      const lintDiagnostics = result.lintOffenses.map((offense) => ({
         severity: offense.severity,
         message: offense.message,
         line: offense.location.start.line,
@@ -917,31 +1266,18 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasParseOutputTarget) {
-      this.parseOutputTarget.classList.add("language-tree")
-      this.parseOutputTarget.textContent = result.string
-
-      Prism.highlightElement(this.parseOutputTarget)
-      makeTreeCollapsible(this.parseOutputTarget)
-
-      this.treeLocations.forEach(({ element, locationElement, location }) => {
-        this.setupHoverListener(locationElement, location)
-        this.setupHoverListener(element, location)
-
-        if (element.classList.contains("string")) {
-          this.setupHoverListener(element.previousElementSibling, location)
-        }
-      })
+    if (result.string !== undefined) {
+      this.renderParseTree(result.string)
     }
 
-    if (this.hasHtmlViewerTarget) {
+    if (this.hasHtmlViewerTarget && result.html !== undefined) {
       this.htmlViewerTarget.classList.add("language-html")
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
     }
 
-    if (this.hasRewriteViewerTarget) {
+    if (this.hasRewriteViewerTarget && result.rewritten !== undefined) {
       const options = this.getParserOptions()
 
       if (this.hasRewriteActionViewHelpersTarget) {
@@ -963,11 +1299,33 @@ export default class extends Controller {
       }
     }
 
-    const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+    if (this.hasHighlighterOutputTarget && result.highlighted !== undefined) {
+      this.highlighterOutputTarget.textContent = result.highlighted || "No highlighter output available"
+
+      const offenses = result.lintOffenses ? result.lintOffenses.length : 0
+
+      const showingDiagnostics = this.hasHighlighterShowDiagnosticsTarget
+        ? this.highlighterShowDiagnosticsTarget.checked && offenses > 0
+        : offenses > 0
+
+      if (this.hasHighlighterFocusLineTarget) {
+        this.highlighterFocusLineTarget.disabled = showingDiagnostics
+      }
+
+      if (this.hasHighlighterFocusLineLabelTarget) {
+        this.highlighterFocusLineLabelTarget.classList.toggle("opacity-40", showingDiagnostics)
+      }
+
+      if (this.hasHighlighterSplitDiagnosticsLabelTarget) {
+        this.highlighterSplitDiagnosticsLabelTarget.classList.toggle("opacity-40", !showingDiagnostics)
+      }
+    }
+
+    const hasParserErrors = result.hasParserErrors
     const currentSource = this.editor ? this.editor.getValue() : this.inputTarget.value
     const isWellFormatted = currentSource === result.formatted
 
-    if (this.hasFormatViewerTarget) {
+    if (this.hasFormatViewerTarget && result.formatted !== undefined) {
       if (hasParserErrors) {
         this.formatSuccessTarget.classList.add('hidden')
         this.formatErrorTarget.classList.remove('hidden')
@@ -1001,56 +1359,113 @@ export default class extends Controller {
       }
     }
 
+    if (this.hasAutofixViewerTarget && result.autofix !== undefined) {
+      const autofixedSource = result.autofix ? result.autofix.source : null
+      const fixedCount = result.autofix ? result.autofix.fixedCount : 0
+      const offenseCount = result.lintOffenses ? result.lintOffenses.length : 0
+
+      if (hasParserErrors || autofixedSource === null) {
+        this.autofixOutputTarget.classList.add('hidden')
+        this.autofixErrorTarget.classList.remove('hidden')
+
+        const pre = this.autofixErrorTarget.querySelector('pre.language-html')
+        pre.textContent = autofixedSource || currentSource
+
+        Prism.highlightElement(pre)
+
+        if (this.hasAutofixVerificationTarget) {
+          this.autofixVerificationTarget.textContent = '⚠ Autofix Unavailable'
+          this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
+        }
+      } else {
+        this.autofixErrorTarget.classList.add('hidden')
+        this.autofixOutputTarget.classList.remove('hidden')
+
+        this.autofixOutputTarget.textContent = autofixedSource
+
+        Prism.highlightElement(this.autofixOutputTarget)
+
+        if (this.hasAutofixVerificationTarget) {
+          const offensesLabel = fixedCount === 1 ? 'offense' : 'offenses'
+
+          if (fixedCount > 0) {
+            this.autofixVerificationTarget.textContent = `✓ Autofixed ${fixedCount} ${offensesLabel}`
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+          } else if (offenseCount > 0) {
+            this.autofixVerificationTarget.textContent = '⚠ No autofixes available'
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-orange-600 text-orange-100'
+          } else {
+            this.autofixVerificationTarget.textContent = '✓ No Herb Linter offenses found'
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+          }
+        }
+      }
+    }
+
     if (this.hasFormatButtonTarget) {
-      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+      const hasParserErrors = result.hasParserErrors
 
       if (hasParserErrors) {
         this.formatButtonTarget.disabled = true
         this.formatButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
         this.formatButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
-        this.setupTooltip()
-        this.updateFormatTooltipText('Cannot format code due to parser errors. Fix parser errors in Diagnostics tab first.')
+        this.tooltips.attach("format")
+        this.tooltips.setText("format", 'Cannot format code due to parser errors. Fix parser errors in Diagnostics tab first.')
       } else {
         this.formatButtonTarget.disabled = false
         this.formatButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
         this.formatButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
-        this.updateFormatTooltipText('Format the editor content using the Herb Formatter')
+        this.tooltips.setText("format", 'Format the editor content using the Herb Formatter')
       }
     }
 
     if (this.hasAutofixButtonTarget) {
-      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
-      const hasLintOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) && result.lintResult.offenses.length > 0)
+      const hasParserErrors = result.hasParserErrors
+      const hasLintOffenses = !!(result.lintOffenses && result.lintOffenses.length > 0)
 
       if (hasParserErrors) {
         this.disableAutofixButton()
-        this.setupAutofixTooltip()
-        this.updateAutofixTooltipText('Cannot autofix code due to parser errors. Fix parser errors in Diagnostics tab first.')
+        this.tooltips.attach("autofix")
+        this.tooltips.setText("autofix", 'Cannot autofix code due to parser errors. Fix parser errors in Diagnostics tab first.')
       } else if (!hasLintOffenses) {
         this.disableAutofixButton()
-        this.setupAutofixTooltip()
-        this.updateAutofixTooltipText('No Herb Linter offenses found to autofix.')
+        this.tooltips.attach("autofix")
+        this.tooltips.setText("autofix", 'No Herb Linter offenses found to autofix.')
       } else {
         this.enableAutofixButton()
-        this.updateAutofixTooltipText('Autocorrect autocorrectable Herb Linter offenses')
+        this.tooltips.setText("autofix", 'Autocorrect autocorrectable Herb Linter offenses')
       }
     }
 
-    if (this.hasRubyViewerTarget) {
+    if (this.hasAutofixUnsafeWrapperTarget) {
+      const hasParserErrors = result.hasParserErrors
+      const hasUnsafeOffenses = result.hasUnsafeOffenses
+
+      if (hasParserErrors || !hasUnsafeOffenses) {
+        this.autofixUnsafeWrapperTarget.classList.add('hidden')
+      } else {
+        this.autofixUnsafeWrapperTarget.classList.remove('hidden')
+        this.enableAutofixUnsafeButton()
+        this.tooltips.setText("autofixUnsafe", 'Autocorrect unsafe Herb Linter offenses')
+      }
+    }
+
+    if (this.hasRubyViewerTarget && result.ruby !== undefined) {
       this.rubyViewerTarget.classList.add("language-ruby")
       this.rubyViewerTarget.textContent = result.ruby
 
       Prism.highlightElement(this.rubyViewerTarget)
     }
 
-    if (this.hasLexViewerTarget) {
+    if (this.hasLexViewerTarget && result.lex !== undefined) {
       this.lexViewerTarget.classList.add("language-tree")
       this.lexViewerTarget.textContent = result.lex
 
       Prism.highlightElement(this.lexViewerTarget)
     }
 
-    if (this.hasPrinterViewerTarget) {
+    if (this.hasPrinterViewerTarget && result.printed !== undefined) {
+      const trackLocations = this.getParserOptions().track_locations
       const printedContent = result.printed || 'No printed output available'
 
       if (typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')) {
@@ -1069,29 +1484,35 @@ export default class extends Controller {
         const trackWhitespace = options.track_whitespace
         const isError = typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')
 
-        if (isError) {
+        if (!trackLocations) {
+          this.printerVerificationTarget.textContent = '⚠ Enable "Track locations"'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+          this.tooltips.setText("printerVerification", 'The printer needs source locations. Enable "Track locations" to print the parsed document.')
+          this.hidePrinterDiff()
+          this.hidePrinterLegend()
+        } else if (isError) {
           this.printerVerificationTarget.textContent = '⚠ Round-trip Failed'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
-          this.updatePrinterVerificationTooltip('Source → Parse → AST → Print → Source failed due to printer error - unable to verify document preservation. Try enabling "Ignore errors" to attempt printing anyway.')
+          this.tooltips.setText("printerVerification", 'Source → Parse → AST → Print → Source failed due to printer error - unable to verify document preservation. Try enabling "Ignore errors" to attempt printing anyway.')
           this.hidePrinterDiff()
           this.hidePrinterLegend()
         } else if (!trackWhitespace) {
           this.printerVerificationTarget.textContent = '⚠ Enable "Track whitespace"'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
-          this.updatePrinterVerificationTooltip('Enable "Track whitespace" to verify no document details are lost during parsing (Source → Parse → AST → Print → Source)')
+          this.tooltips.setText("printerVerification", 'Enable "Track whitespace" to verify no document details are lost during parsing (Source → Parse → AST → Print → Source)')
           this.hidePrinterDiff()
           this.hidePrinterLegend()
         } else if (isMatch) {
           this.printerVerificationTarget.textContent = '✓ Perfect Round-trip'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
-          this.updatePrinterVerificationTooltip('✓ No document details lost during parsing - Source → Parse → AST → Print → Source preserved everything')
+          this.tooltips.setText("printerVerification", '✓ No document details lost during parsing - Source → Parse → AST → Print → Source preserved everything')
           this.hidePrinterDiff()
           this.hidePrinterLegend()
         } else {
           this.printerVerificationTarget.textContent = '✗ Round-trip Differences'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
-          this.updatePrinterVerificationTooltip('⚠ Document details lost during parsing - differences below show what was lost in Source → Parse → AST → Print → Source')
-          this.showPrinterDiff(currentSource, result.printed)
+          this.tooltips.setText("printerVerification", '⚠ Document details lost during parsing - differences below show what was lost in Source → Parse → AST → Print → Source')
+          this.showPrinterDiff(result.printedDiff)
           this.showPrinterLegend()
         }
       }
@@ -1102,6 +1523,8 @@ export default class extends Controller {
       this.updateDiagnosticsFilterButtons(this.currentDiagnosticsFilter)
       this.updateDiagnosticsViewer(this.getFilteredDiagnostics())
     }
+
+    this.updateDiff(!hasParserErrors)
   }
 
   async analyzeRuby(value) {
@@ -1176,22 +1599,7 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasParseOutputTarget) {
-      this.parseOutputTarget.classList.add("language-tree")
-      this.parseOutputTarget.textContent = result.string
-
-      Prism.highlightElement(this.parseOutputTarget)
-      makeTreeCollapsible(this.parseOutputTarget)
-
-      this.treeLocations.forEach(({ element, locationElement, location }) => {
-        this.setupHoverListener(locationElement, location)
-        this.setupHoverListener(element, location)
-
-        if (element.classList.contains("string")) {
-          this.setupHoverListener(element.previousElementSibling, location)
-        }
-      })
-    }
+    this.renderParseTree(result.string)
   }
 
   get compressedValue() {
@@ -1278,6 +1686,17 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onAutofixOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  onLinterOptionChange(_event) {
+    this.languageService?.setFramework(this.getLinterOptions().framework)
+    this.updateURL()
+    this.analyze()
+  }
+
   getPrinterOptions() {
     const options = {}
     if (this.hasPrinterIgnoreErrorsTarget) {
@@ -1300,6 +1719,64 @@ export default class extends Controller {
     return options
   }
 
+  getHighlighterOptions() {
+    const options = {}
+
+    if (this.hasHighlighterShowDiagnosticsTarget) {
+      options.showDiagnostics = this.highlighterShowDiagnosticsTarget.checked
+    }
+
+    if (this.hasHighlighterShowLineNumbersTarget) {
+      options.showLineNumbers = this.highlighterShowLineNumbersTarget.checked
+    }
+
+    if (this.hasHighlighterSplitDiagnosticsTarget) {
+      options.splitDiagnostics = this.highlighterSplitDiagnosticsTarget.checked
+    }
+
+    if (this.hasHighlighterFocusLineTarget) {
+      const focusLine = parseInt(this.highlighterFocusLineTarget.value, 10)
+
+      if (!isNaN(focusLine) && focusLine > 0) {
+        options.focusLine = focusLine
+      }
+    }
+
+    if (this.hasHighlighterContextLinesTarget) {
+      const contextLines = parseInt(this.highlighterContextLinesTarget.value, 10)
+
+      if (!isNaN(contextLines) && contextLines >= 0) {
+        options.contextLines = contextLines
+      }
+    }
+
+    return options
+  }
+
+  onHighlighterOptionChange() {
+    this.analyze()
+  }
+
+  getLinterOptions() {
+    const options = {}
+
+    if (this.hasLinterFrameworkTarget) {
+      options.framework = this.linterFrameworkTarget.value || undefined
+    }
+
+    return options
+  }
+
+  getAutofixOptions() {
+    const options = {}
+
+    if (this.hasAutofixIncludeUnsafeTarget) {
+      options.includeUnsafe = this.autofixIncludeUnsafeTarget.checked
+    }
+
+    return options
+  }
+
   getOptionsFromURL() {
     const urlParams = new URLSearchParams(window.parent.location.search)
     const optionsString = urlParams.get('options')
@@ -1316,15 +1793,16 @@ export default class extends Controller {
   }
 
   setOptionsInURL(options) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,
+      transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
@@ -1343,18 +1821,16 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultOptions).length > 0) {
-      url.searchParams.set('options', JSON.stringify(nonDefaultOptions))
-    } else {
-      url.searchParams.delete('options')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultOptions).length > 0) {
+        params.set('options', JSON.stringify(nonDefaultOptions))
+      } else {
+        params.delete('options')
+      }
+    })
   }
 
   setPrinterOptionsInURL(printerOptions) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       ignoreErrors: false,
     }
@@ -1370,13 +1846,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultPrinterOptions).length > 0) {
-      url.searchParams.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
-    } else {
-      url.searchParams.delete('printerOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultPrinterOptions).length > 0) {
+        params.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
+      } else {
+        params.delete('printerOptions')
+      }
+    })
   }
 
   getPrinterOptionsFromURL() {
@@ -1395,8 +1871,6 @@ export default class extends Controller {
   }
 
   setFormatterOptionsInURL(formatterOptions) {
-    const url = new URL(window.parent.location)
-
     const nonDefaultFormatterOptions = {}
 
     Object.keys(formatterOptions).forEach(key => {
@@ -1405,13 +1879,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
-      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
-    } else {
-      url.searchParams.delete('formatterOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+        params.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+      } else {
+        params.delete('formatterOptions')
+      }
+    })
   }
 
   getFormatterOptionsFromURL() {
@@ -1423,6 +1897,77 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(formatterOptionsString))
       } catch (e) {
         console.warn('Failed to parse formatter options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setAutofixOptionsInURL(autofixOptions) {
+    const defaults = {
+      includeUnsafe: false,
+    }
+
+    const nonDefaultAutofixOptions = {}
+
+    Object.keys(autofixOptions).forEach(key => {
+      const value = autofixOptions[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultAutofixOptions[key] = value
+      }
+    })
+
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultAutofixOptions).length > 0) {
+        params.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
+      } else {
+        params.delete('autofixOptions')
+      }
+    })
+  }
+
+  getAutofixOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const autofixOptionsString = urlParams.get('autofixOptions')
+
+    if (autofixOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(autofixOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse autofix options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setLinterOptionsInURL(linterOptions) {
+    const nonDefaultLinterOptions = {}
+
+    if (linterOptions.hasOwnProperty('framework') && linterOptions.framework !== DEFAULT_FRAMEWORK) {
+      nonDefaultLinterOptions.framework = linterOptions.framework ?? null
+    }
+
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultLinterOptions).length > 0) {
+        params.set('linterOptions', JSON.stringify(nonDefaultLinterOptions))
+      } else {
+        params.delete('linterOptions')
+      }
+    })
+  }
+
+  getLinterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const linterOptionsString = urlParams.get('linterOptions')
+
+    if (linterOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(linterOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse linter options from URL:', e)
       }
     }
 
@@ -1441,15 +1986,13 @@ export default class extends Controller {
   }
 
   updateDiagnosticsFilterInURL(filter) {
-    const url = new URL(window.parent.location)
-
-    if (filter && filter !== 'all') {
-      url.searchParams.set('diagnosticsFilter', filter)
-    } else {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (filter && filter !== 'all') {
+        params.set('diagnosticsFilter', filter)
+      } else {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   updateDiagnosticsViewer(diagnostics) {
@@ -1458,14 +2001,12 @@ export default class extends Controller {
     )
 
     if (filteredDiagnostics.length === 0) {
-      console.log('No diagnostics, showing message')
       this.diagnosticsListTarget.classList.add('hidden')
       this.noDiagnosticsTarget.classList.remove('hidden')
       this.updateNoDiagnosticsMessage()
       return
     }
 
-    console.log('Has diagnostics, showing list')
     this.noDiagnosticsTarget.classList.add('hidden')
     this.diagnosticsListTarget.classList.remove('hidden')
 
@@ -1614,79 +2155,15 @@ export default class extends Controller {
     })
   }
 
-  setupTooltip() {
-    if (this.hasFormatTooltipTarget) {
-      this.formatButtonTarget.addEventListener('mouseenter', this.showTooltip)
-      this.formatButtonTarget.addEventListener('mouseleave', this.hideTooltip)
-    }
-  }
 
-  removeTooltip() {
-    if (this.hasFormatTooltipTarget) {
-      this.formatButtonTarget.removeEventListener('mouseenter', this.showTooltip)
-      this.formatButtonTarget.removeEventListener('mouseleave', this.hideTooltip)
 
-      this.hideTooltip()
-    }
-  }
 
-  showTooltip = ()  => {
-    if (this.hasFormatTooltipTarget) {
-      this.formatTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideTooltip = () => {
-    if (this.hasFormatTooltipTarget) {
-      this.formatTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  updateFormatTooltipText(text) {
-    if (this.hasFormatTooltipTarget) {
-      const textNode = this.formatTooltipTarget.firstChild
-      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        textNode.textContent = text
-      }
-    }
-  }
 
-  setupAutofixTooltip() {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixButtonTarget.addEventListener('mouseenter', this.showAutofixTooltip)
-      this.autofixButtonTarget.addEventListener('mouseleave', this.hideAutofixTooltip)
-    }
-  }
 
-  removeAutofixTooltip() {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixButtonTarget.removeEventListener('mouseenter', this.showAutofixTooltip)
-      this.autofixButtonTarget.removeEventListener('mouseleave', this.hideAutofixTooltip)
 
-      this.hideAutofixTooltip()
-    }
-  }
 
-  showAutofixTooltip = () => {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixTooltipTarget.classList.remove('hidden')
-    }
-  }
-
-  hideAutofixTooltip = () => {
-    if (this.hasAutofixTooltipTarget) {
-      this.autofixTooltipTarget.classList.add('hidden')
-    }
-  }
-
-  updateAutofixTooltipText(text) {
-    if (this.hasAutofixTooltipTarget) {
-      const textNode = this.autofixTooltipTarget.firstChild
-      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        textNode.textContent = text
-      }
-    }
-  }
 
   enableAutofixButton() {
     this.autofixButtonTarget.disabled = false
@@ -1717,184 +2194,64 @@ export default class extends Controller {
     }
   }
 
-  setupShareTooltip() {
-    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
-      this.shareButtonTarget.addEventListener('mouseenter', this.showShareTooltip)
-      this.shareButtonTarget.addEventListener('mouseleave', this.hideShareTooltip)
+
+
+
+
+
+  enableAutofixUnsafeButton() {
+    this.autofixUnsafeButtonTarget.disabled = false
+    this.autofixUnsafeButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+    this.autofixUnsafeButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+  }
+
+  disableAutofixUnsafeButton() {
+    this.autofixUnsafeButtonTarget.disabled = true
+    this.autofixUnsafeButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+    this.autofixUnsafeButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+    this.resetAutofixUnsafeButtonIcons()
+  }
+
+  resetAutofixUnsafeButtonIcons() {
+    if (!this.hasAutofixUnsafeButtonTarget) return
+
+    const warningIcon = this.autofixUnsafeButtonTarget.querySelector(".fa-triangle-exclamation")
+    const checkIcon = this.autofixUnsafeButtonTarget.querySelector(".fa-circle-check")
+
+    if (warningIcon) {
+      warningIcon.classList.remove("hidden")
+    }
+
+    if (checkIcon) {
+      checkIcon.classList.add("hidden")
+      checkIcon.style.display = ""
     }
   }
 
-  removeShareTooltip() {
-    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
-      this.shareButtonTarget.removeEventListener('mouseenter', this.showShareTooltip)
-      this.shareButtonTarget.removeEventListener('mouseleave', this.hideShareTooltip)
-      this.hideShareTooltip()
-    }
-  }
 
-  showShareTooltip = () => {
-    if (this.hasShareTooltipTarget) {
-      this.shareTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideShareTooltip = () => {
-    if (this.hasShareTooltipTarget) {
-      this.shareTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupGitHubTooltip() {
-    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
-      this.githubButtonTarget.addEventListener('mouseenter', this.showGitHubTooltip)
-      this.githubButtonTarget.addEventListener('mouseleave', this.hideGitHubTooltip)
-    }
-  }
 
-  removeGitHubTooltip() {
-    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
-      this.githubButtonTarget.removeEventListener('mouseenter', this.showGitHubTooltip)
-      this.githubButtonTarget.removeEventListener('mouseleave', this.hideGitHubTooltip)
-      this.hideGitHubTooltip()
-    }
-  }
 
-  showGitHubTooltip = () => {
-    if (this.hasGithubTooltipTarget) {
-      this.githubTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideGitHubTooltip = () => {
-    if (this.hasGithubTooltipTarget) {
-      this.githubTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupCopyTooltip() {
-    if (this.hasCopyButtonTarget && this.hasCopyTooltipTarget) {
-      this.copyButtonTarget.addEventListener('mouseenter', this.showCopyTooltip)
-      this.copyButtonTarget.addEventListener('mouseleave', this.hideCopyTooltip)
-    }
-  }
 
-  removeCopyTooltip() {
-    if (this.hasCopyButtonTarget && this.hasCopyTooltipTarget) {
-      this.copyButtonTarget.removeEventListener('mouseenter', this.showCopyTooltip)
-      this.copyButtonTarget.removeEventListener('mouseleave', this.hideCopyTooltip)
-      this.hideCopyTooltip()
-    }
-  }
 
-  showCopyTooltip = () => {
-    if (this.hasCopyTooltipTarget) {
-      this.copyTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideCopyTooltip = () => {
-    if (this.hasCopyTooltipTarget) {
-      this.copyTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupExampleTooltip() {
-    if (this.hasExampleButtonTarget && this.hasExampleTooltipTarget) {
-      this.exampleButtonTarget.addEventListener('mouseenter', this.showExampleTooltip)
-      this.exampleButtonTarget.addEventListener('mouseleave', this.hideExampleTooltip)
-    }
-  }
 
-  removeExampleTooltip() {
-    if (this.hasExampleButtonTarget && this.hasExampleTooltipTarget) {
-      this.exampleButtonTarget.removeEventListener('mouseenter', this.showExampleTooltip)
-      this.exampleButtonTarget.removeEventListener('mouseleave', this.hideExampleTooltip)
-      this.hideExampleTooltip()
-    }
-  }
 
-  showExampleTooltip = () => {
-    if (this.hasExampleTooltipTarget) {
-      this.exampleTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideExampleTooltip = () => {
-    if (this.hasExampleTooltipTarget) {
-      this.exampleTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupCopyViewerTooltip() {
-    if (this.hasCopyViewerButtonTarget && this.hasCopyViewerTooltipTarget) {
-      this.copyViewerButtonTarget.addEventListener('mouseenter', this.showCopyViewerTooltip)
-      this.copyViewerButtonTarget.addEventListener('mouseleave', this.hideCopyViewerTooltip)
-    }
-  }
 
-  removeCopyViewerTooltip() {
-    if (this.hasCopyViewerButtonTarget && this.hasCopyViewerTooltipTarget) {
-      this.copyViewerButtonTarget.removeEventListener('mouseenter', this.showCopyViewerTooltip)
-      this.copyViewerButtonTarget.removeEventListener('mouseleave', this.hideCopyViewerTooltip)
-      this.hideCopyViewerTooltip()
-    }
-  }
 
-  showCopyViewerTooltip = () => {
-    if (this.hasCopyViewerTooltipTarget) {
-      this.copyViewerTooltipTarget.classList.remove('hidden')
-    }
-  }
 
-  hideCopyViewerTooltip = () => {
-    if (this.hasCopyViewerTooltipTarget) {
-      this.copyViewerTooltipTarget.classList.add('hidden')
-    }
-  }
 
-  setupPrinterVerificationTooltip() {
-    if (this.hasPrinterVerificationTarget) {
-      this.printerVerificationTarget.addEventListener('mouseenter', this.showPrinterVerificationTooltip)
-      this.printerVerificationTarget.addEventListener('mouseleave', this.hidePrinterVerificationTooltip)
-    }
-  }
 
-  removePrinterVerificationTooltip() {
-    if (this.hasPrinterVerificationTarget) {
-      this.printerVerificationTarget.removeEventListener('mouseenter', this.showPrinterVerificationTooltip)
-      this.printerVerificationTarget.removeEventListener('mouseleave', this.hidePrinterVerificationTooltip)
-      this.hidePrinterVerificationTooltip()
-    }
-  }
 
-  showPrinterVerificationTooltip = () => {
-    if (!this.printerVerificationTooltipText) return
 
-    const existing = document.getElementById('printer-verification-tooltip')
-    if (existing) existing.remove()
 
-    const rect = this.printerVerificationTarget.getBoundingClientRect()
 
-    const tooltip = document.createElement('div')
-    tooltip.id = 'printer-verification-tooltip'
-    tooltip.className = 'fixed px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-[9999] pointer-events-none'
-    tooltip.textContent = this.printerVerificationTooltipText
-
-    tooltip.style.left = `${rect.left + (rect.width / 2)}px`
-    tooltip.style.top = `${rect.top - 8}px`
-    tooltip.style.transform = 'translate(-50%, -100%)'
-
-    document.body.appendChild(tooltip)
-  }
-
-  hidePrinterVerificationTooltip = () => {
-    const tooltip = document.getElementById('printer-verification-tooltip')
-    if (tooltip) tooltip.remove()
-  }
-
-  updatePrinterVerificationTooltip(text) {
-    this.printerVerificationTooltipText = text
-  }
 
   showShareSuccessMessage() {
     this.showTemporaryMessage("Copied Share URL to clipboard", "success")
@@ -1932,14 +2289,7 @@ export default class extends Controller {
   }
 
   updateNoDiagnosticsMessage() {
-    console.log('updateNoDiagnosticsMessage called', {
-      hasTarget: !!this.noDiagnosticsTarget,
-      filter: this.currentDiagnosticsFilter,
-      allDiagnosticsCount: this.allDiagnostics?.length || 0
-    })
-
     if (!this.hasNoDiagnosticsTarget) {
-      console.log('No noDiagnosticsTarget found')
       return
     }
 
@@ -2108,7 +2458,7 @@ export default class extends Controller {
       .replace(/'/g, "&#039;")
   }
 
-  showPrinterDiff(original, printed) {
+  showPrinterDiff(diff) {
     if (!this.hasPrinterDiffTarget || !this.hasPrinterDiffContentTarget) {
       return
     }
@@ -2116,8 +2466,7 @@ export default class extends Controller {
     this.printerOutputTarget.classList.add('hidden')
     this.printerDiffTarget.classList.remove('hidden')
 
-    const diff = this.computeCharDiff(original, printed)
-    this.printerDiffContentTarget.innerHTML = diff.replace(/^(\s*\n)+/, '')
+    this.printerDiffContentTarget.textContent = diff || 'No differences to display'
   }
 
   hidePrinterDiff() {
@@ -2141,78 +2490,5 @@ export default class extends Controller {
     }
   }
 
-  computeCharDiff(original, printed) {
-    const originalChars = Array.from(original)
-    const printedChars = Array.from(printed)
-
-    const dp = this.computeEditDistance(originalChars, printedChars)
-    const diff = this.backtrackDiff(originalChars, printedChars, dp)
-
-    let result = ''
-    for (const op of diff) {
-      if (op.type === 'equal') {
-        result += this.escapeHtml(op.char)
-      } else if (op.type === 'delete') {
-        result += `<span class="bg-yellow-400 text-black">${this.escapeHtml(op.char)}</span>`
-      } else if (op.type === 'insert') {
-        result += `<span class="bg-green-500 text-black">${this.escapeHtml(op.char)}</span>`
-      }
-    }
-
-    return result
-  }
-
-  computeEditDistance(str1, str2) {
-    const m = str1.length
-    const n = str2.length
-    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0))
-
-    for (let i = 0; i <= m; i++) dp[i][0] = i
-    for (let j = 0; j <= n; j++) dp[0][j] = j
-
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        if (str1[i - 1] === str2[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1]
-        } else {
-          dp[i][j] = Math.min(
-            dp[i - 1][j] + 1,     // deletion
-            dp[i][j - 1] + 1,     // insertion
-            dp[i - 1][j - 1] + 1  // substitution
-          )
-        }
-      }
-    }
-
-    return dp
-  }
-
-  backtrackDiff(str1, str2, dp) {
-    const diff = []
-    let i = str1.length
-    let j = str2.length
-
-    while (i > 0 || j > 0) {
-      if (i > 0 && j > 0 && str1[i - 1] === str2[j - 1]) {
-        diff.unshift({ type: 'equal', char: str1[i - 1] })
-        i--
-        j--
-      } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
-        // Substitution - show as delete + insert
-        diff.unshift({ type: 'delete', char: str1[i - 1] })
-        diff.unshift({ type: 'insert', char: str2[j - 1] })
-        i--
-        j--
-      } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
-        diff.unshift({ type: 'delete', char: str1[i - 1] })
-        i--
-      } else if (j > 0 && dp[i][j] === dp[i][j - 1] + 1) {
-        diff.unshift({ type: 'insert', char: str2[j - 1] })
-        j--
-      }
-    }
-
-    return diff
-  }
 
 }

@@ -25,6 +25,13 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (2:13)-(3:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:22)-(1:26))
+    │   │       ├── name: "item" (location: (1:22)-(1:26))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

@@ -1,17 +1,22 @@
 import dedent from "dedent"
-import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
+
+import { readFileSync, writeFileSync, statSync, fstatSync, existsSync } from "fs"
 import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
+import { parseArgs } from "util"
+import { name, version, dependencies } from "../package.json"
+
+import { colorize } from "@herb-tools/highlighter"
+import { addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
-import { colorize } from "@herb-tools/highlighter"
+import { Config } from "@herb-tools/config"
 
 import { Formatter } from "./formatter.js"
+import { SummaryReporter } from "./cli/summary-reporter.js"
 import { ASTRewriter, StringRewriter, CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
-import { parseArgs } from "util"
 
-import { name, version, dependencies } from "../package.json"
+import type { SkippedFile } from "./cli/summary-reporter.js"
 
 const pluralize = (count: number, singular: string, plural: string = singular + 's'): string => {
   return count === 1 ? singular : plural
@@ -54,6 +59,7 @@ export class CLI {
       --config-file <path>            explicitly specify path to .herb.yml config file
       --force                         force formatting even if disabled in .herb.yml
       --indent-width <number>         number of spaces per indentation level (default: 2)
+      --indent-style <space|tab>      character used for indentation (default: space)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
@@ -63,13 +69,14 @@ export class CLI {
       herb-format templates/                      # Format all configured files within the given directory
       herb-format "templates/**/*.html.erb"       # Format all \`**/*.html.erb\` files in the templates/ directory
       herb-format "**/*.html.erb"                 # Format all \`*.html.erb\` files using glob pattern
-      herb-format "**/*.xml.erb"                  # Format all \`*.xml.erb\` files using glob pattern
+      herb-format --force "**/*.xml.erb"          # Format files not covered by the configured patterns
 
       herb-format --check                         # Check if all configured files are formatted
       herb-format --check templates/              # Check if all configured files in templates/ are formatted
 
       herb-format --force                         # Format even if disabled in project config
       herb-format --indent-width 4                # Format with 4-space indentation
+      herb-format --indent-style tab              # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
@@ -85,6 +92,7 @@ export class CLI {
         init: { type: "boolean" },
         "config-file": { type: "string" },
         "indent-width": { type: "string" },
+        "indent-style": { type: "string" },
         "max-line-length": { type: "string" }
       },
       allowPositionals: true
@@ -108,6 +116,18 @@ export class CLI {
       indentWidth = parsed
     }
 
+    let indentStyle: "space" | "tab" | undefined
+
+    if (values["indent-style"]) {
+      if (values["indent-style"] !== "space" && values["indent-style"] !== "tab") {
+        console.error(
+          `Invalid indent-style: ${values["indent-style"]}. Must be "space" or "tab".`,
+        )
+        process.exit(1)
+      }
+      indentStyle = values["indent-style"]
+    }
+
     let maxLineLength: number | undefined
 
     if (values["max-line-length"]) {
@@ -129,12 +149,16 @@ export class CLI {
       isInitMode: values.init,
       configFile: values["config-file"],
       indentWidth,
+      indentStyle,
       maxLineLength
     }
   }
 
   async run() {
-    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, maxLineLength } = this.parseArguments()
+    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, indentStyle, maxLineLength } = this.parseArguments()
+
+    const startTime = Date.now()
+    const startDate = new Date()
 
     try {
       await Herb.load()
@@ -156,6 +180,7 @@ export class CLI {
       this.determineProjectPath(positionals)
 
       const file = positionals[0]
+      const isUsingStdin = (!file && !isCheckMode && this.hasStdinInput()) || file === "-"
 
       if (isInitMode) {
         const configPath = configFile || this.projectPath
@@ -196,9 +221,13 @@ export class CLI {
       const formatterConfig = config.formatter || {}
 
       if (hasConfigFile && formatterConfig.enabled === false && !isForceMode) {
-        console.log("Formatter is disabled in .herb.yml configuration.")
-        console.log("To enable formatting, set formatter.enabled: true in .herb.yml")
-        console.log("Or use --force to format anyway.")
+        console.error("Formatter is disabled in .herb.yml configuration.")
+        console.error("To enable formatting, set formatter.enabled: true in .herb.yml")
+        console.error("Or use --force to format anyway.")
+
+        if (isUsingStdin) {
+          process.stdout.write(await this.readStdin())
+        }
 
         process.exit(0)
       }
@@ -208,11 +237,16 @@ export class CLI {
         console.error()
       }
 
+      console.error()
       console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
       console.error()
 
       if (indentWidth !== undefined) {
         formatterConfig.indentWidth = indentWidth
+      }
+
+      if (indentStyle !== undefined) {
+        formatterConfig.indentStyle = indentStyle
       }
 
       if (maxLineLength !== undefined) {
@@ -354,19 +388,7 @@ export class CLI {
 
       const formatter = Formatter.from(Herb, config, { preRewriters, postRewriters })
 
-      if (!file && !process.stdin.isTTY) {
-        if (isCheckMode) {
-          console.error("Error: --check mode is not supported with stdin")
-
-          process.exit(1)
-        }
-
-        const source = await this.readStdin()
-        const result = formatter.format(source)
-        const output = result.endsWith('\n') ? result : result + '\n'
-
-        process.stdout.write(output)
-      } else if (file === "-") {
+      if (isUsingStdin) {
         if (isCheckMode) {
           console.error("Error: --check mode is not supported with stdin")
 
@@ -411,52 +433,14 @@ export class CLI {
           process.exit(1)
         }
 
-        const files = [...new Set(allFiles)]
+        const files = this.rejectUnsupportedFiles([...new Set(allFiles)], config, isForceMode)
 
         if (files.length === 0) {
           console.log(`No files found matching patterns: ${positionals.join(', ')}`)
           process.exit(0)
         }
 
-        let formattedCount = 0
-        const unformattedFiles: string[] = []
-
-        for (const filePath of files) {
-          const displayPath = relative(process.cwd(), filePath)
-
-          try {
-            const source = readFileSync(filePath, "utf-8")
-            const result = formatter.format(source)
-            const output = result.endsWith('\n') ? result : result + '\n'
-
-            if (output !== source) {
-              if (isCheckMode) {
-                unformattedFiles.push(displayPath)
-              } else {
-                writeFileSync(filePath, output, "utf-8")
-                console.log(`Formatted: ${displayPath}`)
-              }
-              formattedCount++
-            }
-          } catch (error) {
-            console.error(`Error formatting ${displayPath}:`, error)
-          }
-        }
-
-        if (isCheckMode) {
-          if (unformattedFiles.length > 0) {
-            console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
-            unformattedFiles.forEach(file => console.log(`  ${file}`))
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
-            process.exit(1)
-          } else {
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
-          }
-        } else {
-          console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
-        }
-
-        process.exit(0)
+        this.processFiles(files, formatter, isCheckMode, startTime, startDate)
       } else {
         const files = await config.findFilesForTool('formatter', process.cwd())
 
@@ -466,49 +450,108 @@ export class CLI {
           process.exit(0)
         }
 
-        let formattedCount = 0
-        const unformattedFiles: string[] = []
-
-        for (const filePath of files) {
-          const displayPath = relative(process.cwd(), filePath)
-
-          try {
-            const source = readFileSync(filePath, "utf-8")
-            const result = formatter.format(source)
-            const output = result.endsWith('\n') ? result : result + '\n'
-
-            if (output !== source) {
-              if (isCheckMode) {
-                unformattedFiles.push(displayPath)
-              } else {
-                writeFileSync(filePath, output, "utf-8")
-                console.log(`Formatted: ${displayPath}`)
-              }
-              formattedCount++
-            }
-          } catch (error) {
-            console.error(`Error formatting ${displayPath}:`, error)
-          }
-        }
-
-        if (isCheckMode) {
-          if (unformattedFiles.length > 0) {
-            console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
-            unformattedFiles.forEach(file => console.log(`  ${file}`))
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
-
-            process.exit(1)
-          } else {
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
-          }
-        } else {
-          console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
-        }
+        this.processFiles(files, formatter, isCheckMode, startTime, startDate)
       }
     } catch (error) {
       console.error(error)
 
       process.exit(1)
+    }
+  }
+
+  private processFiles(files: string[], formatter: Formatter, isCheckMode: boolean = false, startTime: number = Date.now(), startDate: Date = new Date()): void {
+    const changedFiles: string[] = []
+    const skippedFiles: SkippedFile[] = []
+
+    let erroredCount = 0
+
+    for (const filePath of files) {
+      const displayPath = relative(process.cwd(), filePath)
+
+      try {
+        const source = readFileSync(filePath, "utf-8")
+        const { output: formatted, skipped, errorCount } = formatter.formatWithResult(source, {}, filePath)
+
+        if (skipped) {
+          skippedFiles.push({ path: displayPath, reason: skipped, errorCount })
+
+          continue
+        }
+
+        const output = formatted.endsWith("\n") ? formatted : formatted + "\n"
+
+        if (output !== source) {
+          changedFiles.push(displayPath)
+
+          if (!isCheckMode) {
+            writeFileSync(filePath, output, "utf-8")
+            console.log(`${colorize("✓", "brightGreen")} ${colorize("Formatted:", "green")} ${colorize(displayPath, "cyan")}`)
+          }
+        }
+      } catch (error) {
+        erroredCount++
+
+        console.error(`Error formatting ${displayPath}:`, error)
+      }
+    }
+
+    const reporter = new SummaryReporter()
+
+    const data = {
+      fileCount: files.length,
+      changedFiles,
+      skippedFiles,
+      erroredCount,
+      isCheckMode,
+      startTime,
+      startDate,
+      showTiming: true
+    }
+
+    if (isCheckMode && changedFiles.length > 0) {
+      console.log(`\nThe following ${pluralize(changedFiles.length, "file is", "files are")} not formatted:`)
+      changedFiles.forEach(file => console.log(`  ${colorize(file, "cyan")}`))
+    }
+
+    reporter.displaySkipped(data)
+    reporter.displaySummary(data)
+
+    process.exit(isCheckMode && changedFiles.length > 0 ? 1 : 0)
+  }
+
+  private rejectUnsupportedFiles(files: string[], config: Config, isForceMode: boolean | undefined): string[] {
+    if (isForceMode) {
+      return files
+    }
+
+    const supported = files.filter(file => config.isPathIncludedForTool(file, 'formatter'))
+    const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'formatter'))
+
+    if (unsupported.length > 0) {
+      console.error(`⚠️  Skipped ${unsupported.length} ${pluralize(unsupported.length, 'file')} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
+
+      for (const file of unsupported) {
+        console.error(`  ${colorize(relative(process.cwd(), resolve(file)), "cyan")}`)
+      }
+
+      console.error(`   Use --force to format ${unsupported.length === 1 ? 'it' : 'them'} anyway.`)
+      console.error()
+    }
+
+    return supported
+  }
+
+  private hasStdinInput(): boolean {
+    if (process.stdin.isTTY) {
+      return false
+    }
+
+    try {
+      const stats = fstatSync(0)
+
+      return stats.isFIFO() || stats.isFile() || stats.isSocket()
+    } catch {
+      return false
     }
   }
 

@@ -63,31 +63,40 @@ options: {render_nodes: true, prism_nodes: true}
     │   │       ├── closing_loc: ∅
     │   │       ├── equal_loc: ∅
     │   │       └── block: ∅
-    │   ├── partial: "card" (location: (1:20)-(1:26))
-    │   ├── template_path: ∅
-    │   ├── layout: ∅
-    │   ├── file: ∅
-    │   ├── inline_template: ∅
-    │   ├── body: ∅
-    │   ├── plain: ∅
-    │   ├── html: ∅
-    │   ├── renderable: ∅
-    │   ├── collection: ∅
-    │   ├── object: ∅
-    │   ├── as_name: ∅
-    │   ├── spacer_template: ∅
-    │   ├── formats: ∅
-    │   ├── variants: ∅
-    │   ├── handlers: ∅
-    │   ├── content_type: ∅
-    │   └── locals: (1 item)
-    │       └── @ RubyRenderLocalNode (location: (1:38)-(1:51))
-    │           ├── name: "title" (location: (1:38)-(1:44))
-    │           └── value:
-    │               └── @ RubyLiteralNode (location: (1:45)-(1:51))
-    │                   └── content: "@title"
-    │
-    │
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:56))
+    │   │       ├── partial: "card" (location: (1:20)-(1:26))
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: ∅
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: (1 item)
+    │   │           └── @ RubyRenderLocalNode (location: (1:38)-(1:51))
+    │   │               ├── name: "title" (location: (1:38)-(1:44))
+    │   │               └── value:
+    │   │                   └── @ RubyLiteralNode (location: (1:45)-(1:51))
+    │   │                       └── content: "@title"
+    │   │
+    │   │
+    │   │
+    │   ├── body: []
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node: ∅
     │
     └── @ HTMLTextNode (location: (1:56)-(2:0))
         └── content: "\n"

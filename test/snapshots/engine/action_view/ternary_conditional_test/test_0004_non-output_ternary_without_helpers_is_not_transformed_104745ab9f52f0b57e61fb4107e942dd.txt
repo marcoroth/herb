@@ -1,0 +1,4 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0004_non-output ternary without helpers is not transformed"
+input: "{source: \"<% admin ? \\\"Admin\\\" : \\\"User\\\" %>\", locals: {admin: true}, options: {action_view_helpers: true}}"
+---

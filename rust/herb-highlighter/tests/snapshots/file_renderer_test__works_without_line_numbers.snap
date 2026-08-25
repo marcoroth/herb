@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/file_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+line 1
+line 2
+line 3

@@ -77,6 +77,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_precise(
   hb_allocator_T* allocator
 );
 
+AST_NODE_T* create_conditional_boolean_attribute(
+  const char* name_string,
+  const char* condition_source,
+  attribute_positions_T* positions,
+  hb_allocator_T* allocator
+);
+
 hb_array_T* prepend_attribute(hb_array_T* attributes, AST_NODE_T* attribute, hb_allocator_T* allocator);
 
 AST_HTML_ATTRIBUTE_NODE_T* create_href_attribute(
@@ -84,6 +91,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_href_attribute(
   bool is_ruby_expression,
   position_T start_position,
   position_T end_position,
+  hb_allocator_T* allocator
+);
+
+AST_CDATA_NODE_T* create_javascript_cdata_node(
+  hb_array_T* children,
+  position_T start,
+  position_T end,
   hb_allocator_T* allocator
 );
 

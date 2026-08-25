@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineTest#test_0028_CDATA section inside script compiles correctly"
+input: "{source: \"<script><![CDATA[ alert(1) ]]></script>\", locals: {}, options: {}}"
+---
+<script><![CDATA[ alert(1) ]]></script>

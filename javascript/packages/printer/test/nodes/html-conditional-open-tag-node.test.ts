@@ -13,10 +13,8 @@ describe("HTMLConditionalOpenTagNode Printing", () => {
   })
 
   test("can print from manually constructed node", () => {
-    const open_tag_a = HTMLOpenTagNode.from({
-      type: "AST_HTML_OPEN_TAG_NODE",
+    const open_tag_a = HTMLOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_TAG_START", "<"),
       tag_name: createToken("TOKEN_IDENTIFIER", "div"),
       tag_closing: createToken("TOKEN_HTML_TAG_END", ">"),
@@ -24,10 +22,8 @@ describe("HTMLConditionalOpenTagNode Printing", () => {
       is_void: false
     })
 
-    const open_tag_b = HTMLOpenTagNode.from({
-      type: "AST_HTML_OPEN_TAG_NODE",
+    const open_tag_b = HTMLOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_TAG_START", "<"),
       tag_name: createToken("TOKEN_IDENTIFIER", "div"),
       tag_closing: createToken("TOKEN_HTML_TAG_END", ">"),
@@ -35,10 +31,8 @@ describe("HTMLConditionalOpenTagNode Printing", () => {
       is_void: false
     })
 
-    const else_node = ERBElseNode.from({
-      type: "AST_ERB_ELSE_NODE",
+    const else_node = ERBElseNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " else "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -49,10 +43,8 @@ describe("HTMLConditionalOpenTagNode Printing", () => {
       ]
     })
 
-    const if_node = ERBIfNode.from({
-      type: "AST_ERB_IF_NODE",
+    const if_node = ERBIfNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " if condition "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -65,10 +57,8 @@ describe("HTMLConditionalOpenTagNode Printing", () => {
       end_node
     })
 
-    const node = HTMLConditionalOpenTagNode.from({
-      type: "AST_HTML_CONDITIONAL_OPEN_TAG_NODE",
+    const node = HTMLConditionalOpenTagNode.build({
       location,
-      errors: [],
       conditional: if_node,
       tag_name: createToken("TOKEN_IDENTIFIER", "div"),
       is_void: false

@@ -27,16 +27,16 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
 
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: Add LLVM apt Repo
@@ -78,10 +78,10 @@ jobs:
         run: yarn build
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docs/.vitepress/dist
 
@@ -92,10 +92,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     needs: build
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     name: Deploy
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

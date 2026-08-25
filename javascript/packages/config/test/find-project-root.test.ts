@@ -1,0 +1,67 @@
+import { describe, test, expect, beforeAll, afterAll } from "vitest"
+import { mkdirSync, writeFileSync, rmSync } from "fs"
+import { join } from "path"
+import { Config } from "../src/config.js"
+
+describe("findProjectRootSync", () => {
+  const tempDir = join(process.cwd(), "tmp-test-find-project-root")
+
+  beforeAll(() => {
+    mkdirSync(join(tempDir, "app", "frontend", "components"), { recursive: true })
+    mkdirSync(join(tempDir, "app", "views", "layouts"), { recursive: true })
+
+    writeFileSync(join(tempDir, ".herb.yml"), "linter:\n  exclude:\n    - 'app/views/**/*.html.erb'\n")
+    writeFileSync(join(tempDir, "app", "frontend", "README.md"), "# Frontend\n")
+    writeFileSync(join(tempDir, "app", "frontend", "components", "button.html.erb"), "<button></button>\n")
+    writeFileSync(join(tempDir, "app", "views", "layouts", "application.html.erb"), "<html></html>\n")
+  })
+
+  afterAll(() => {
+    rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  test("finds project root with .herb.yml over subdirectory with README.md", () => {
+    const filePath = join(tempDir, "app", "frontend", "components", "button.html.erb")
+    const projectRoot = Config.findProjectRootSync(filePath)
+
+    expect(projectRoot).toBe(tempDir)
+  })
+
+  test("finds project root from deeply nested file path", () => {
+    const filePath = join(tempDir, "app", "views", "layouts", "application.html.erb")
+    const projectRoot = Config.findProjectRootSync(filePath)
+
+    expect(projectRoot).toBe(tempDir)
+  })
+
+  test("prefers .herb.yml over soft project indicators like README.md", () => {
+    const filePath = join(tempDir, "app", "frontend", "components", "button.html.erb")
+    const projectRoot = Config.findProjectRootSync(filePath)
+
+    expect(projectRoot).not.toBe(join(tempDir, "app", "frontend"))
+    expect(projectRoot).toBe(tempDir)
+  })
+})
+
+describe("findProjectRootSync without a .herb.yml", () => {
+  const tempDir = join(process.cwd(), "tmp-test-find-project-root-gemspec")
+  const gem = join(tempDir, "some_gem")
+
+  beforeAll(() => {
+    mkdirSync(join(gem, "app", "views"), { recursive: true })
+
+    writeFileSync(join(tempDir, "Gemfile"), "source 'https://rubygems.org'\n")
+    writeFileSync(join(gem, "some_gem.gemspec"), "Gem::Specification.new\n")
+    writeFileSync(join(gem, "app", "views", "index.html.erb"), "<div></div>\n")
+  })
+
+  afterAll(() => {
+    rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  test("recognizes a gemspec as a project indicator", () => {
+    const projectRoot = Config.findProjectRootSync(join(gem, "app", "views", "index.html.erb"))
+
+    expect(projectRoot).toBe(gem)
+  })
+})

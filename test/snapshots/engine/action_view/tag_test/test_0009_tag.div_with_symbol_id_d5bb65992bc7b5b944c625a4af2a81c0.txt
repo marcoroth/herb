@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0009_tag.div with symbol id"
+input: "{source: \"<%= tag.div id: :main %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<div id="main"></div>'.freeze

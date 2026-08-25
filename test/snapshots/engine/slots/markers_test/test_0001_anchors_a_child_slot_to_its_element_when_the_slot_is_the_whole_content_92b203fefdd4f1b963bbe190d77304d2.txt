@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0001_anchors a child slot to its element when the slot is the whole content"
+input: "{source: \"<td class=\\\"name\\\"><%= @name %></td>\", locals: {\"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:fd3dfd36:0--><td class="name" data-herb-slot="0:child">Marco</td><!--/herb-region:app/views/test.html.erb-->

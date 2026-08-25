@@ -1,5 +1,5 @@
 import { SourceRule } from "../types.js"
-import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./rule-utils.js"
+import { BaseSourceRuleVisitor, createEndOfFileLocation } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
@@ -30,7 +30,10 @@ export class ERBRequireTrailingNewlineRule extends SourceRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
     }
   }
 

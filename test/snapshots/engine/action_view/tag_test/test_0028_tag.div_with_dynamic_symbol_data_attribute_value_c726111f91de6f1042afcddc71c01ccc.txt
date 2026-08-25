@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0028_tag.div with dynamic symbol data attribute value"
+input: "{source: \"<%= tag.div data: { controller: controller_name } %>\", locals: {controller_name: :navigation}, options: {action_view_helpers: true}}"
+---
+<div data-controller="navigation"></div>

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0015_wraps the document in a region marker carrying file and version"
+input: "{source: \"<p><%= @name %></p>\", locals: {\"@name\" => \"x\"}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:fd3dfd36:0--><p data-herb-slot="0:child">x</p><!--/herb-region:app/views/test.html.erb-->

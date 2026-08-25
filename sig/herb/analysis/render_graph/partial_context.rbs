@@ -1,0 +1,31 @@
+# Generated from lib/herb/analysis/render_graph/partial_context.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RenderGraph
+      class PartialContext < Data
+        attr_reader chains(): untyped
+
+        attr_reader resolved(): untyped
+
+        def self.new: (untyped chains, untyped resolved) -> instance
+                    | (chains: untyped, resolved: untyped) -> instance
+
+        def self.members: () -> [ :chains, :resolved ]
+
+        def members: () -> [ :chains, :resolved ]
+      end
+
+      class PartialContext
+        # : (Array[String], *String) -> Symbol
+        def ancestor_verdict: (Array[String], *String) -> Symbol
+
+        # : (Array[String], *String) -> String?
+        def closest_ancestor: (Array[String], *String) -> String?
+
+        # : (Array[String], Array[String]) -> String?
+        def innermost: (Array[String], Array[String]) -> String?
+      end
+    end
+  end
+end

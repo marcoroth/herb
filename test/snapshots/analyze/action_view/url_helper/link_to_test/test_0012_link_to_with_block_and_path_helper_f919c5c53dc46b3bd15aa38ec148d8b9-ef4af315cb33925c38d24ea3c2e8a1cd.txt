@@ -33,7 +33,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "root_path"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

@@ -176,7 +176,7 @@ export function areAllOfType<T extends (new (...args: any[]) => Node)[]>(
 
 export function areAllOfType(
   nodes: Node[],
-  ...types: Array<(node: Node) => boolean>
+  ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>
 ): boolean
 
 export function areAllOfType(
@@ -220,7 +220,7 @@ export function filterNodes<T extends (new (...args: any[]) => Node)[]>(
 
 export function filterNodes(
   nodes: Node[] | undefined | null,
-  ...types: Array<(node: Node) => boolean>
+  ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>
 ): Node[]
 
 export function filterNodes(

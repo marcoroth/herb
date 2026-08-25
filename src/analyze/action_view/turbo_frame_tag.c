@@ -1,31 +1,8 @@
-#include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/lib/hb_allocator.h"
 
 #include <prism.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
-
-bool detect_turbo_frame_tag(pm_call_node_t* call_node, pm_parser_t* parser) {
-  if (!call_node || !call_node->name) { return false; }
-
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
-  return constant && constant->length == 15 && strncmp((const char*) constant->start, "turbo_frame_tag", 15) == 0;
-}
-
-char* extract_turbo_frame_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) call_node;
-  (void) parser;
-
-  return hb_allocator_strdup(allocator, "turbo-frame");
-}
-
-char* extract_turbo_frame_tag_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) call_node;
-  (void) parser;
-  (void) allocator;
-
-  return NULL;
-}
 
 char* extract_turbo_frame_tag_id(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   if (!call_node || !call_node->arguments) { return NULL; }
@@ -74,15 +51,3 @@ char* extract_turbo_frame_tag_id(pm_call_node_t* call_node, pm_parser_t* parser,
 
   return result;
 }
-
-bool turbo_frame_tag_supports_block(void) {
-  return true;
-}
-
-const tag_helper_handler_T turbo_frame_tag_handler = { .name = "turbo_frame_tag",
-                                                       .source =
-                                                         HB_STRING_LITERAL("Turbo::FramesHelper#turbo_frame_tag"),
-                                                       .detect = detect_turbo_frame_tag,
-                                                       .extract_tag_name = extract_turbo_frame_tag_name,
-                                                       .extract_content = extract_turbo_frame_tag_content,
-                                                       .supports_block = turbo_frame_tag_supports_block };

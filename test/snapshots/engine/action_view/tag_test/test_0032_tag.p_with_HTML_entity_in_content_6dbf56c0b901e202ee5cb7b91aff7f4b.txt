@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0032_tag.p with HTML entity in content"
+input: "{source: \"<%= tag.p \\\"&copy; 2024 Example Corp\\\" %>\", type: \"rails_output\", action_view_helpers: true}"
+---
+<p>&amp;copy; 2024 Example Corp</p>

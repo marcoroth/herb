@@ -1,0 +1,66 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0009_multiple ternaries in document"
+input: |2-
+<%= first ? 'a' : 'b' %>
+<%= second ? 'c' : 'd' %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (4 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:24))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if first " (location: (1:0)-(1:24))
+    │   ├── tag_closing: "%>" (location: (1:24)-(1:24))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:12)-(1:15))
+    │   │       └── content: "a"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (1:24)-(1:24))
+    │   │       ├── tag_opening: "<%" (location: (1:24)-(1:24))
+    │   │       ├── content: " else " (location: (1:24)-(1:24))
+    │   │       ├── tag_closing: "%>" (location: (1:24)-(1:24))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (1:18)-(1:21))
+    │   │               └── content: "b"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:24)-(1:24))
+    │           ├── tag_opening: "<%" (location: (1:24)-(1:24))
+    │           ├── content: " end " (location: (1:24)-(1:24))
+    │           └── tag_closing: "%>" (location: (1:24)-(1:24))
+    │
+    │
+    ├── @ HTMLTextNode (location: (1:24)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBIfNode (location: (2:0)-(2:25))
+    │   ├── tag_opening: "<%" (location: (2:0)-(2:0))
+    │   ├── content: " if second " (location: (2:0)-(2:25))
+    │   ├── tag_closing: "%>" (location: (2:25)-(2:25))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (2:13)-(2:16))
+    │   │       └── content: "c"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (2:25)-(2:25))
+    │   │       ├── tag_opening: "<%" (location: (2:25)-(2:25))
+    │   │       ├── content: " else " (location: (2:25)-(2:25))
+    │   │       ├── tag_closing: "%>" (location: (2:25)-(2:25))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (2:19)-(2:22))
+    │   │               └── content: "d"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (2:25)-(2:25))
+    │           ├── tag_opening: "<%" (location: (2:25)-(2:25))
+    │           ├── content: " end " (location: (2:25)-(2:25))
+    │           └── tag_closing: "%>" (location: (2:25)-(2:25))
+    │
+    │
+    └── @ HTMLTextNode (location: (2:25)-(3:0))
+        └── content: "\n"

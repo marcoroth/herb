@@ -10,45 +10,54 @@ options: {render_nodes: true}
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
     │   ├── content: " render "card", title: @title, body: "Hello", layout: "wide" " (location: (1:3)-(1:64))
     │   ├── tag_closing: "%>" (location: (1:64)-(1:66))
-    │   ├── partial: "card" (location: (1:11)-(1:17))
-    │   ├── template_path: ∅
-    │   ├── layout: ∅
-    │   ├── file: ∅
-    │   ├── inline_template: ∅
-    │   ├── body: ∅
-    │   ├── plain: ∅
-    │   ├── html: ∅
-    │   ├── renderable: ∅
-    │   ├── collection: ∅
-    │   ├── object: ∅
-    │   ├── as_name: ∅
-    │   ├── spacer_template: ∅
-    │   ├── formats: ∅
-    │   ├── variants: ∅
-    │   ├── handlers: ∅
-    │   ├── content_type: ∅
-    │   └── locals: (3 items)
-    │       ├── @ RubyRenderLocalNode (location: (1:19)-(1:32))
-    │       │   ├── name: "title" (location: (1:19)-(1:25))
-    │       │   └── value:
-    │       │       └── @ RubyLiteralNode (location: (1:26)-(1:32))
-    │       │           └── content: "@title"
-    │       │
-    │       │
-    │       ├── @ RubyRenderLocalNode (location: (1:34)-(1:47))
-    │       │   ├── name: "body" (location: (1:34)-(1:39))
-    │       │   └── value:
-    │       │       └── @ RubyLiteralNode (location: (1:40)-(1:47))
-    │       │           └── content: "\"Hello\""
-    │       │
-    │       │
-    │       └── @ RubyRenderLocalNode (location: (1:49)-(1:63))
-    │           ├── name: "layout" (location: (1:49)-(1:56))
-    │           └── value:
-    │               └── @ RubyLiteralNode (location: (1:57)-(1:63))
-    │                   └── content: "\"wide\""
-    │
-    │
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:66))
+    │   │       ├── partial: "card" (location: (1:11)-(1:17))
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: ∅
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: (3 items)
+    │   │           ├── @ RubyRenderLocalNode (location: (1:19)-(1:32))
+    │   │           │   ├── name: "title" (location: (1:19)-(1:25))
+    │   │           │   └── value:
+    │   │           │       └── @ RubyLiteralNode (location: (1:26)-(1:32))
+    │   │           │           └── content: "@title"
+    │   │           │
+    │   │           │
+    │   │           ├── @ RubyRenderLocalNode (location: (1:34)-(1:47))
+    │   │           │   ├── name: "body" (location: (1:34)-(1:39))
+    │   │           │   └── value:
+    │   │           │       └── @ RubyLiteralNode (location: (1:40)-(1:47))
+    │   │           │           └── content: "\"Hello\""
+    │   │           │
+    │   │           │
+    │   │           └── @ RubyRenderLocalNode (location: (1:49)-(1:63))
+    │   │               ├── name: "layout" (location: (1:49)-(1:56))
+    │   │               └── value:
+    │   │                   └── @ RubyLiteralNode (location: (1:57)-(1:63))
+    │   │                       └── content: "\"wide\""
+    │   │
+    │   │
+    │   │
+    │   ├── body: []
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node: ∅
     │
     └── @ HTMLTextNode (location: (1:66)-(2:0))
         └── content: "\n"

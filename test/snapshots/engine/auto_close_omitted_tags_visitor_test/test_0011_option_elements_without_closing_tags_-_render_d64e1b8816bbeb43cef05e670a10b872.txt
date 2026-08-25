@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0011_option elements without closing tags - render"
+input: "{source: \"<select><option value=\\\"1\\\">One<option value=\\\"2\\\">Two</select>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<select><option value="1">One</option><option value="2">Two</option></select>

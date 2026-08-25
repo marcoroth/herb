@@ -1,12 +1,14 @@
 #include "include/herb.h"
 #include "include/analyze/analyze.h"
 #include "include/analyze/prism_annotate.h"
+#include "include/errors.h"
 #include "include/lexer/lexer.h"
 #include "include/lexer/token.h"
 #include "include/lib/hb_allocator.h"
 #include "include/lib/hb_array.h"
 #include "include/parser/parser.h"
 #include "include/version.h"
+#include "include/visitor.h"
 
 #include <prism.h>
 #include <stdlib.h>
@@ -30,6 +32,14 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* 
   return tokens;
 }
 
+static bool herb_count_node_errors(const AST_NODE_T* node, void* data) {
+  if (node == NULL) { return false; }
+
+  if (node->errors != NULL) { *((uint32_t*) data) += (uint32_t) hb_array_size(node->errors); }
+
+  return true;
+}
+
 HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   const char* source,
   const parser_options_T* options,
@@ -43,6 +53,11 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   if (options != NULL) { parser_options = *options; }
+
+  uint32_t error_count = 0;
+  if (parser_options.error_count == NULL) { parser_options.error_count = &error_count; }
+
+  parser_options_set_deadline(&parser_options);
 
   if (parser_options.start_line > 0) {
     lexer.current_line = parser_options.start_line;
@@ -62,6 +77,11 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
 
   if (parser_options.analyze) { herb_analyze_parse_tree(document, source, &parser_options, allocator); }
 
+  if (parser_options.error_count != NULL) {
+    *parser_options.error_count = 0;
+    herb_visit_node((AST_NODE_T*) document, herb_count_node_errors, parser_options.error_count);
+  }
+
   if (parser_options.prism_nodes || parser_options.prism_program) {
     herb_annotate_prism_nodes(
       document,
@@ -70,6 +90,17 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
       parser_options.prism_nodes_deep,
       parser_options.prism_program,
       allocator
+    );
+  }
+
+  if (parser_options_past_deadline(&parser_options)) {
+    append_timeout_error(
+      parser_options.timeout_ms,
+      document->base.location.start,
+      document->base.location.end,
+      allocator,
+      &document->base.errors,
+      options
     );
   }
 

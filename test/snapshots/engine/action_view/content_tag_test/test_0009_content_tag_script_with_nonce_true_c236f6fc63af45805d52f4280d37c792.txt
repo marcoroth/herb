@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0009_content_tag :script with nonce true"
+input: "{source: \"<%= content_tag(:script, \\\"alert(1)\\\", nonce: true) %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script nonce="true">alert(1)</script>

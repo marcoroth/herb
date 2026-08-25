@@ -1,0 +1,8 @@
+---
+source: "Engine::ScopedStyleVisitorTest#test_0021_does not attribute a style or a script element"
+input: "{source: \"<style scoped>.a { color: red; }</style>\\n<script>console.log(1)</script>\\n<div>Hi</div>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>]}}"
+---
+_buf = ::String.new; _buf << '<style>.a { color: red; }/* narrowed */</style>
+<script>console.log(1)</script>
+<div data-herb-scope-2940ba8a>Hi</div>'.freeze;
+_buf.to_s

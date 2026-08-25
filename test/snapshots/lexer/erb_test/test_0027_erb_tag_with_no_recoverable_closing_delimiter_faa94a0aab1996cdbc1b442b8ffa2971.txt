@@ -1,0 +1,7 @@
+---
+source: "Lexer::ERBTest#test_0027_erb tag with no recoverable closing delimiter"
+input: "<%= items.select { |item| item.size > 3 "
+---
+#<Herb::Token type="TOKEN_ERB_START" value="<%=" range=[0, 3] start=(1:0) end=(1:3)>
+#<Herb::Token type="TOKEN_ERB_CONTENT" value=" items.select { |item| item.size > 3 " range=[3, 40] start=(1:3) end=(1:40)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[40, 40] start=(1:40) end=(1:40)>

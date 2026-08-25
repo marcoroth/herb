@@ -1,0 +1,8 @@
+---
+source: "Engine::OptimizedHelpersTest::what it compiles in#test_0006_carries the position of the element the helper produced"
+input: "{source: \"<div>\\n  <%= tag.span %>\\n</div>\", options: {filename: \"app/views/posts/index.html.erb\", visitors: [#<Herb::Engine::OptimizeVisitor verify=true>]}}"
+---
+_buf = ::String.new; _buf << '<div>
+  <span></span>
+</div>'.freeze; ::Herb::Engine::Report::Session.record_compile_diagnostics("app/views/posts/index.html.erb", [{ message: "`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by " + method(:tag).owner.to_s, severity: :warning, code: "overwritten-helper", origin: "Herb Engine", suggestion: "Remove the override, or compile this template without `OptimizeVisitor`.", line: 2, column: 2, end_line: 2, end_column: 17 }].freeze) if respond_to?(:tag, true) && method(:tag).owner.to_s != "ActionView::Helpers::TagHelper";
+_buf.to_s

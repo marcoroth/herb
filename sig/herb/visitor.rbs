@@ -4,6 +4,10 @@ module Herb
   class Visitor
     include AST::Helpers
 
+    include ParserOptionRequirements
+
+    extend Herb::Visitor::ParserOptionRequirements::ClassMethods
+
     # : (Herb::AST::Node?) -> void
     def visit: (Herb::AST::Node?) -> void
 
@@ -12,6 +16,12 @@ module Herb
 
     # : (Herb::AST::Node) -> void
     def visit_child_nodes: (Herb::AST::Node) -> void
+
+    # : (Herb::AST::Node) -> void
+    def visit_node: (Herb::AST::Node) -> void
+
+    # : (Herb::AST::Node) -> void
+    def visit_erb_node: (Herb::AST::Node) -> void
 
     # : (Herb::AST::DocumentNode) -> void
     def visit_document_node: (Herb::AST::DocumentNode) -> void
@@ -70,6 +80,9 @@ module Herb
     # : (Herb::AST::XMLDeclarationNode) -> void
     def visit_xml_declaration_node: (Herb::AST::XMLDeclarationNode) -> void
 
+    # : (Herb::AST::XMLProcessingInstructionNode) -> void
+    def visit_xml_processing_instruction_node: (Herb::AST::XMLProcessingInstructionNode) -> void
+
     # : (Herb::AST::CDATANode) -> void
     def visit_cdata_node: (Herb::AST::CDATANode) -> void
 
@@ -90,6 +103,9 @@ module Herb
 
     # : (Herb::AST::ERBBlockNode) -> void
     def visit_erb_block_node: (Herb::AST::ERBBlockNode) -> void
+
+    # : (Herb::AST::ERBIterationBlockNode) -> void
+    def visit_erb_iteration_block_node: (Herb::AST::ERBIterationBlockNode) -> void
 
     # : (Herb::AST::ERBWhenNode) -> void
     def visit_erb_when_node: (Herb::AST::ERBWhenNode) -> void
@@ -124,11 +140,14 @@ module Herb
     # : (Herb::AST::RubyRenderLocalNode) -> void
     def visit_ruby_render_local_node: (Herb::AST::RubyRenderLocalNode) -> void
 
+    # : (Herb::AST::RubyRenderKeywordsNode) -> void
+    def visit_ruby_render_keywords_node: (Herb::AST::RubyRenderKeywordsNode) -> void
+
     # : (Herb::AST::ERBRenderNode) -> void
     def visit_erb_render_node: (Herb::AST::ERBRenderNode) -> void
 
-    # : (Herb::AST::RubyStrictLocalNode) -> void
-    def visit_ruby_strict_local_node: (Herb::AST::RubyStrictLocalNode) -> void
+    # : (Herb::AST::RubyParameterNode) -> void
+    def visit_ruby_parameter_node: (Herb::AST::RubyParameterNode) -> void
 
     # : (Herb::AST::ERBStrictLocalsNode) -> void
     def visit_erb_strict_locals_node: (Herb::AST::ERBStrictLocalsNode) -> void

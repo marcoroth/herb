@@ -14,21 +14,18 @@ export class Token {
   readonly location: Location
   readonly type: string
 
-  static from(token: SerializedToken) {
-    return new Token(
-      token.value,
-      Range.from(token.range),
-      Location.from(token.location),
-      token.type,
-    )
-  }
+  static from(token: SerializedToken): Token
+  static from(type: string, value: string): Token
+  static from(tokenOrType: SerializedToken | string, value?: string): Token {
+    if (typeof tokenOrType === "string") {
+      return new Token(value!, Range.zero, Location.zero, tokenOrType)
+    }
 
-  static synthetic(value: string, type: string = "SYNTETHIC") {
     return new Token(
-      value,
-      Range.zero,
-      Location.zero,
-      type
+      tokenOrType.value,
+      Range.fromOptional(tokenOrType.range),
+      Location.fromOptional(tokenOrType.location),
+      tokenOrType.type,
     )
   }
 
@@ -53,7 +50,7 @@ export class Token {
   }
 
   treeInspect(): string {
-    return `"${this.value}" ${this.location.treeInspectWithLabel()}`
+    return `"${this.value}" ${this.location ? this.location.treeInspectWithLabel() : "(location: ∅)"}`
   }
 
   valueInspect(): string {
@@ -63,7 +60,7 @@ export class Token {
   }
 
   inspect(): string {
-    return `#<Herb::Token type="${this.type}" value=${this.valueInspect()} range=${this.range.treeInspect()} start=${this.location.start.treeInspect()} end=${this.location.end.treeInspect()}>`
+    return `#<Herb::Token type="${this.type}" value=${this.valueInspect()} range=${this.range ? this.range.treeInspect() : "∅"} start=${this.location ? this.location.start.treeInspect() : "∅"} end=${this.location ? this.location.end.treeInspect() : "∅"}>`
   }
 
   toString(): string {

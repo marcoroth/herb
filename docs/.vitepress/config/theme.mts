@@ -7,6 +7,7 @@ const defaultSidebar = [
     items: [
       { text: "Overview", link: "/overview" },
       { text: "Configuration", link: "/configuration" },
+      { text: "Parser Options", link: "/parser-options" },
       { text: "Projects", link: "/projects" },
     ],
   },
@@ -18,7 +19,9 @@ const defaultSidebar = [
       { text: "Formatter", link: "/projects/formatter" },
       { text: "Linter", link: "/projects/linter" },
       { text: "CLI", link: "/projects/cli" },
+      { text: "Dev Server", link: "/projects/dev-server" },
       { text: "Dev Tools", link: "/projects/dev-tools" },
+      { text: "Client Runtime", link: "/projects/client" },
     ],
   },
   {
@@ -50,11 +53,24 @@ const defaultSidebar = [
       { text: "Cursor", link: "/integrations/editors/cursor" },
       { text: "Helix", link: "/integrations/editors/helix" },
       { text: "Neovim", link: "/integrations/editors/neovim" },
+      { text: "Nova", link: "/integrations/editors/nova" },
       { text: "RubyMine", link: "/integrations/editors/rubymine" },
       { text: "Sublime Text", link: "/integrations/editors/sublime" },
       { text: "Vim", link: "/integrations/editors/vim" },
       { text: "Visual Studio Code", link: "/integrations/editors/vscode" },
       { text: "Zed", link: "/integrations/editors/zed" },
+    ],
+  },
+  {
+    text: "CI Integrations",
+    collapsed: false,
+    items: [
+      { text: "Overview", link: "/integrations/ci" },
+      { text: "GitHub Actions", link: "/integrations/ci/github-actions" },
+      { text: "GitLab CI", link: "/integrations/ci/gitlab" },
+      { text: "Bitbucket Pipelines", link: "/integrations/ci/bitbucket" },
+      { text: "Reviewdog", link: "/integrations/ci/reviewdog" },
+      { text: "Git Hooks", link: "/integrations/git-hooks" },
     ],
   },
   {

@@ -14,26 +14,6 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:84)-(1:86))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (3 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:33))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:33))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:33))
-    │   │           │   │               └── content: "href"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:26)-(1:33))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:33))
-    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:33))
-    │   │           │           │       └── content: "/path"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:33)-(1:33))
-    │   │           │           └── quoted: true
-    │   │           │
-    │   │           │
     │   │           ├── @ HTMLAttributeNode (location: (1:43)-(1:62))
     │   │           │   ├── name:
     │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:43)-(1:53))
@@ -54,23 +34,43 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:65)-(1:81))
+    │   │           ├── @ HTMLAttributeNode (location: (1:65)-(1:81))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:65)-(1:70))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:65)-(1:70))
+    │   │           │   │               └── content: "data-hello"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: " => " (location: (1:70)-(1:74))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:74)-(1:81))
+    │   │           │           ├── open_quote: """ (location: (1:74)-(1:75))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:75)-(1:80))
+    │   │           │           │       └── content: "value"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:80)-(1:81))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:26)-(1:33))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:65)-(1:70))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:33))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:65)-(1:70))
-    │   │               │               └── content: "data-hello"
+    │   │               │           └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: " => " (location: (1:70)-(1:74))
+    │   │               ├── equals: "=" (location: (1:26)-(1:33))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:74)-(1:81))
-    │   │                       ├── open_quote: """ (location: (1:74)-(1:75))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:26)-(1:33))
+    │   │                       ├── open_quote: """ (location: (1:26)-(1:26))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:75)-(1:80))
-    │   │                       │       └── content: "value"
+    │   │                       │   └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │                       │       └── content: "/path"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:80)-(1:81))
+    │   │                       ├── close_quote: """ (location: (1:33)-(1:33))
     │   │                       └── quoted: true
     │   │
     │   │
