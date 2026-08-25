@@ -1,0 +1,6 @@
+---
+source: "Engine::ScopedStyleLightningCSSTest#test_0005_puts the scope ahead of a pseudo element"
+input: "{source: \"<style scoped>.item::before { content: \\\"x\\\" }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
+---
+_buf = ::String.new; _buf << '<style>.item:where([data-herb-scope-2940ba8a],[data-herb-scope-2940ba8a] *):before{content:"x"}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::ScopedStyleLightningCSSTest#test_0009_leaves a block it could not parse as it was written, instead of raising"
+input: "{source: \"<style scoped>!!! { color: red }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("app/views/posts/index.html.erb", [{ message: "A `<style scoped>` block could not be narrowed by the `transform` Herb::Engine::ScopedStyle::Visitor was given, so it was left as it was written and still applies to the whole page. It failed with `Invalid empty selector at :0:1`.", severity: :warning, code: "scoped-style-that-could-not-be-narrowed", origin: "Herb Compiler", line: 1, column: 0, end_line: 1, end_column: 40 }].freeze); _buf << '<style scoped>!!! { color: red }</style><h1>Hi</h1>'.freeze;
+_buf.to_s

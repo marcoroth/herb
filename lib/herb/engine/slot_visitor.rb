@@ -33,8 +33,9 @@ module Herb
       recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
       required_parser_option action_view_helpers: true, track_locations: true
 
+      attr_accessor :bufvar #: String
       attr_reader :slots #: Array[Slot]
-      attr_reader :state_presence #: Hash[Integer, StateDirectives::Read]
+      attr_reader :state_presence #: Hash[Integer, untyped]
       attr_reader :document #: untyped
       attr_reader :warnings #: Array[Herb::Warnings::Warning]
 
@@ -62,6 +63,10 @@ module Herb
 
       NAME_ATTRIBUTE = "data-herb-name" #: String
       NAMEABLE_TYPES = [:child, :collection, :conditional, :block].freeze #: Array[Symbol]
+
+      SEEDS_MARKER = "herb-seeds:" #: String
+      SEEDS_LOCAL = "_herb_seeds" #: String
+      SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
 
       Slot = Data.define(
         :index,      #: Integer
@@ -106,6 +111,7 @@ module Herb
 
         @markers = markers
         @mark = mark
+        @bufvar = "_buf"
         @mode = mode
         @statics = mode == :client ? {} : nil #: Hash[String, String]?
         @identify = identifier
@@ -132,7 +138,7 @@ module Herb
         @named_elements = [] #: Array[Hash[Symbol, untyped]]
         attribute_open_tags = {} #: Hash[untyped, untyped]
         @attribute_open_tags = attribute_open_tags.compare_by_identity
-        @state_presence = {} #: Hash[Integer, StateDirectives::Read]
+        @state_presence = {} #: Hash[Integer, untyped]
         @interpolated_attributes = [] #: Array[untyped]
         @strict_locals = {} #: Hash[String, Symbol]
         @region_states = {} #: Hash[String, StateDirectives::Declaration]
@@ -142,6 +148,8 @@ module Herb
         state_conditionals = {} #: Hash[untyped, Hash[Symbol, untyped]]
         @state_conditionals = state_conditionals.compare_by_identity
         @collection_nodes = [] #: Array[untyped]
+        @collection_body_depths = [] #: Array[Integer]
+        @state_counts = [] #: Array[Hash[Symbol, untyped]]
         @container_depth = 0
 
         @in_attribute = false
@@ -157,8 +165,26 @@ module Herb
       #: () -> String
       def version
         @version ||= Digest::SHA256.hexdigest(
-          (slot_entries.map(&:inspect) + state_entries.map(&:inspect)).join(",")
+          (slot_entries.map(&:inspect) + state_entries.map(&:inspect) + state_count_entries.map(&:inspect)).join(",")
         ).slice(0, 8).to_s
+      end
+
+      #: () -> Array[Hash[Symbol, untyped]]
+      def state_count_entries
+        @state_counts.filter_map { |count|
+          index = @indices[count[:collection]]
+
+          next unless index
+
+          read = count[:when]
+
+          {
+            name: count[:name],
+            collection: index,
+            by: count[:by],
+            when: read ? StateDirectives.condition_entry(read) : nil,
+          }
+        }
       end
 
       #: () -> Hash[Symbol, untyped]
@@ -172,6 +198,26 @@ module Herb
         end
 
         { region: @region_states.values.map(&:to_h), items: items }
+      end
+
+      # The names of the seeded states declared inside a collection's item body, keyed by the
+      # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
+      # so a row the client builds for itself has no way to learn it from the markup.
+      #: () -> Hash[Integer, Array[String]]
+      def seeded_item_states
+        seeded = {} #: Hash[Integer, Array[String]]
+
+        @item_states.each do |scope, declarations|
+          index = @indices[scope]
+
+          next unless index
+
+          names = declarations.values.select { |declaration| StateDirectives.seeded?(declaration) }.map(&:name)
+
+          seeded[index] = names unless names.empty?
+        end
+
+        seeded
       end
 
       #: () -> Array[Hash[Symbol, untyped]]
@@ -322,6 +368,12 @@ module Herb
         @in_open_tag = false
       end
 
+      def visit_erb_open_tag_node(node)
+        @in_open_tag = true
+        super
+        @in_open_tag = false
+      end
+
       def visit_html_attribute_node(node)
         if dynamic?(node)
           record_slot(node, attribute_type_for(node))
@@ -367,6 +419,9 @@ module Herb
       end
 
       def visit_erb_if_node(node)
+        return if register_count_fold(node)
+        return if convert_helper_boolean_attribute(node)
+
         record_slot(node, :conditional) unless continuation?(node)
 
         visit_branching_node(node)
@@ -415,34 +470,28 @@ module Herb
       end
 
       def visit_erb_iteration_block_node(node)
-        record_slot(node, :collection)
-
-        @collection_nodes.push(node)
-        visit_branching_node(node)
-        @collection_nodes.pop
+        visit_collection_node(node)
       end
 
       def visit_erb_while_node(node)
-        record_slot(node, :collection)
-
-        @collection_nodes.push(node)
-        visit_branching_node(node)
-        @collection_nodes.pop
+        visit_collection_node(node)
       end
 
       def visit_erb_until_node(node)
-        record_slot(node, :collection)
-
-        @collection_nodes.push(node)
-        visit_branching_node(node)
-        @collection_nodes.pop
+        visit_collection_node(node)
       end
 
       def visit_erb_for_node(node)
+        visit_collection_node(node)
+      end
+
+      def visit_collection_node(node)
         record_slot(node, :collection)
 
         @collection_nodes.push(node)
+        @collection_body_depths.push(@container_depth + 1)
         visit_branching_node(node)
+        @collection_body_depths.pop
         @collection_nodes.pop
       end
 
@@ -453,6 +502,7 @@ module Herb
 
         children.each_with_index do |child, index|
           register_state_directive(child, children)
+          check_state_assignment(child)
 
           @path.push(index)
           visit(child)
@@ -644,7 +694,7 @@ module Herb
         return unless signature
 
         scope = @collection_nodes.last
-        declared = StateDirectives.parse(signature, @strict_locals)
+        declared = StateDirectives.parse(signature, @strict_locals, enclosing: scope ? @region_states : {})
         empty = {} #: Hash[String, StateDirectives::Declaration]
         bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
@@ -676,7 +726,7 @@ module Herb
           bucket[declaration.name] = declaration
         end
 
-        @state_directives << { node: node, parent: parent, scope: scope }
+        @state_directives << { node: node, parent: parent, scope: scope, inline: @in_open_tag || @in_attribute }
       end
 
       #: (String?) -> Symbol
@@ -710,21 +760,46 @@ module Herb
           scope = directive[:scope]
           bucket = scope ? (@item_states[scope] || {}) : @region_states
           assignments = bucket.values.map { |declaration| state_assignment(declaration) }.join("; ")
+          seeds = directive[:inline] ? nil : seeds_marker(bucket.values)
 
-          parent[position] = erb_code_node(assignments)
+          parent[position] = erb_code_node(seeds ? "#{assignments}; #{seeds}" : assignments)
         end
 
         return if @region_states.empty? && @item_states.empty?
 
         classify_state_conditionals
         check_state_value_reads
+        check_state_count_reads
+      end
+
+      #: (Array[StateDirectives::Declaration]) -> String?
+      def seeds_marker(declarations)
+        return nil unless @mark
+
+        seeded = declarations.select { |declaration| StateDirectives.seeded?(declaration) }
+
+        return nil if seeded.empty?
+
+        pairs = seeded.map { |declaration| "#{declaration.name.inspect} => #{declaration.name}" }.join(", ")
+
+        "#{SEEDS_LOCAL} = { #{pairs} }.select { |_, v| #{SEED_VALUE_TYPES}.any? { |t| t === v } }" \
+          ".transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }; " \
+          "#{@bufvar} << ::Herb::Engine.raw(\"<!--#{SEEDS_MARKER}\" + ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") + \"-->\")"
       end
 
       #: (StateDirectives::Declaration) -> String
       def state_assignment(declaration)
-        return "#{declaration.name} = !!(#{declaration.default})" if declaration.kind == :boolean
+        source = declaration.default
 
-        "#{declaration.name} = #{declaration.default}"
+        if declaration.derived
+          StateDirectives.condition_names(declaration.derived).each do |name|
+            source = source.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+          end
+        end
+
+        return "#{declaration.name} = !!(#{source})" if declaration.kind == :boolean
+
+        "#{declaration.name} = #{source}"
       end
 
       #: () -> void
@@ -748,8 +823,7 @@ module Herb
       #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_conditional_for(node, states)
         return state_case_for(node, states) if node.is_a?(Herb::AST::ERBCaseNode)
-
-        refuse_state_unless(node, states) if node.is_a?(Herb::AST::ERBUnlessNode)
+        return state_unless_for(node, states) if node.is_a?(Herb::AST::ERBUnlessNode)
 
         return nil unless node.is_a?(Herb::AST::ERBIfNode)
 
@@ -757,7 +831,7 @@ module Herb
         else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
         conditions = else_position ? chain.take(else_position) : chain
 
-        arms = [] #: Array[[String, String?, Integer]]
+        arms = [] #: Array[untyped]
 
         conditions.each_with_index do |arm, branch|
           expression = condition_expression(arm)
@@ -769,7 +843,7 @@ module Herb
                   "as a predicate, or compared to a literal"
           end
 
-          unless read.is_a?(StateDirectives::Read)
+          unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
             return nil if arms.empty?
 
             raise Herb::Engine::CompilationError,
@@ -777,8 +851,9 @@ module Herb
                   "arm, so each one has to read a state"
           end
 
-          rewrite_predicate(arm, read.name)
-          arms << [read.name, read.comparand, branch]
+          StateDirectives.read_names(read).each { |name| rewrite_predicate(arm, name) }
+
+          arms << arm_entry(read, branch)
         end
 
         return nil if arms.empty?
@@ -786,15 +861,34 @@ module Herb
         { arms: arms, else: else_position }
       end
 
-      #: (untyped, Hash[String, StateDirectives::Declaration]) -> void
-      def refuse_state_unless(node, states)
+      #: (untyped, Integer?) -> untyped
+      def arm_entry(read, branch)
+        return { "branch" => branch, read.op => read.parts.map { |part| StateDirectives.condition_entry(part) } } if read.is_a?(StateDirectives::Combo)
+
+        StateDirectives.condition_entry(read).insert(2, branch)
+      end
+
+      #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_unless_for(node, states)
         expression = condition_expression(node)
         read = StateDirectives.condition_read(expression, states)
 
-        return if read.nil?
+        return nil if read.nil?
 
-        raise Herb::Engine::CompilationError,
-              "`unless #{expression}` reads a state; spell it as an `if` so the arms map to branches the client can name"
+        if read == :computed
+          raise Herb::Engine::CompilationError,
+                "`unless #{expression}` computes with a state; the client cannot evaluate Ruby, so a state is read " \
+                "bare, as a predicate, or compared to a literal"
+        end
+
+        return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
+
+        chain = conditional_chain(node)
+        else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
+
+        StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
+
+        { arms: [arm_entry(read, else_position)], else: 0 }
       end
 
       #: (untyped) -> Array[untyped]
@@ -825,7 +919,7 @@ module Herb
         rewrite_predicate(node, read.name)
 
         declaration = states.fetch(read.name)
-        arms = [] #: Array[[String, String?, Integer]]
+        arms = [] #: Array[untyped]
 
         node.conditions.each_with_index do |arm, branch|
           list = condition_expression(arm)
@@ -861,8 +955,203 @@ module Herb
         STATE_KEYWORDS.key?(keyword.to_s) ? source.delete_prefix(keyword.to_s).strip : source
       end
 
+      #: (untyped) -> untyped
+      def convert_helper_boolean_attribute(node)
+        open_tag = @current_open_tag
+
+        return nil unless @in_open_tag && open_tag.is_a?(Herb::AST::ERBOpenTagNode)
+        return nil if continuation?(node)
+        return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
+
+        children = open_tag.children
+        position = children.index { |child| child.equal?(node) }
+
+        return nil unless position
+
+        statements = node.statements
+
+        return nil unless statements.is_a?(Array) && statements.one?
+
+        attribute = statements.fetch(0)
+
+        return nil unless attribute.is_a?(Herb::AST::HTMLAttributeNode) && !dynamic?(attribute)
+
+        name = attribute_name_for(attribute)
+
+        return nil unless name && Herb::HTML::Util.boolean_attribute?(name)
+
+        condition = condition_expression(node)
+        replacement = erb_output_node(%[(" #{name}" if #{condition})])
+
+        children[position] = replacement
+        record_slot(replacement, :attribute)
+
+        index = @indices[replacement]
+
+        return nil unless index
+
+        @slots[index] = @slots[index].with(type: :boolean_attribute, attribute: name, expression: condition)
+        @attribute_open_tags[replacement] = open_tag
+
+        replacement
+      end
+
+      #: (untyped) -> untyped
+      def register_count_fold(node)
+        return nil if continuation?(node)
+        return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
+        return nil unless @container_depth == @collection_body_depths.last
+
+        scope = @collection_nodes.last
+
+        return nil unless scope
+
+        states = states_for(scope)
+
+        return nil if states.empty?
+
+        body = node.respond_to?(:statements) ? node.statements : nil #: untyped
+
+        return nil unless body.is_a?(Array)
+
+        significant = body.reject { |child| blank_child?(child) }
+
+        return nil unless significant.one?
+
+        assignment = significant.first
+
+        return nil unless assignment.is_a?(Herb::AST::ERBContentNode) && assignment.tag_opening&.value == "<%"
+
+        increment = StateDirectives.fold_increment(assignment.content&.value.to_s)
+
+        return nil unless increment && states.key?(increment.name)
+
+        read = StateDirectives.condition_read(condition_expression(node), states)
+
+        return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
+
+        register_count(increment, when_read: read)
+        StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
+
+        node
+      end
+
+      #: (untyped) -> void
+      def check_state_assignment(node)
+        return unless node.is_a?(Herb::AST::ERBContentNode)
+
+        tag = node.tag_opening&.value
+
+        return unless ["<%", "<%=", "<%=="].include?(tag)
+
+        scope = @collection_nodes.last
+        states = states_for(scope)
+
+        return if states.empty?
+
+        content = node.content&.value.to_s
+        assigned = StateDirectives.assigned_state_names(content, states)
+
+        return if assigned.empty?
+
+        if tag == "<%" && scope && @container_depth == @collection_body_depths.last
+          increment = StateDirectives.fold_increment(content)
+
+          if increment && assigned == [increment.name]
+            register_count(increment, when_read: nil)
+
+            return
+          end
+        end
+
+        raise Herb::Engine::CompilationError,
+              "`#{content.strip}` assigns the state `#{assigned.first}`; the client never sees a server-side " \
+              "write, so seed the initial value in the declaration, derive it from other states, count items " \
+              "with `#{assigned.first} += 1` behind a state condition in a keyed loop, or write it at runtime " \
+              "with `data-herb-set` or `state.set`"
+      end
+
+      #: (StateDirectives::FoldIncrement, when_read: untyped) -> void
+      def register_count(increment, when_read:)
+        name = increment.name
+        declaration = @region_states[name]
+
+        unless declaration
+          raise Herb::Engine::CompilationError,
+                "`#{name} += #{increment.by}` counts into `#{name}`, which is an item state; a count lives once " \
+                "per region, so declare `#{name}` at the top of the template"
+        end
+
+        if declaration.derived
+          raise Herb::Engine::CompilationError,
+                "`#{name} += #{increment.by}` counts into `#{name}`, which is derived from " \
+                "`#{declaration.default}`; a state is either derived or counted, so drop one of the two"
+        end
+
+        unless declaration.kind == :integer
+          raise Herb::Engine::CompilationError,
+                "`#{name} += #{increment.by}` counts into the #{declaration.kind.to_s.capitalize} state " \
+                "`#{name}`; a count is a number, so declare it as an Integer, like `(#{name}: 0)`"
+        end
+
+        if @state_counts.any? { |count| count[:name] == name }
+          raise Herb::Engine::CompilationError,
+                "`#{name}` is counted twice; one state holds one count, so declare a second state for the " \
+                "second count"
+        end
+
+        if @slots.any? { |slot| StateDirectives.mentions_any?(slot.expression.to_s, { name => declaration }) }
+          raise Herb::Engine::CompilationError,
+                "`#{name}` is read before its count is complete; the server renders that read mid-count and " \
+                "the client cannot keep it current there, so move the read after the loop"
+        end
+
+        @state_counts << { name: name, by: increment.by, collection: @collection_nodes.last, when: when_read }
+      end
+
+      #: () -> void
+      def check_state_count_reads
+        @state_counts.each do |count|
+          @slot_nodes.each do |node|
+            index = @indices[node]
+
+            next unless index
+
+            scope, = @slot_scopes[node]
+
+            next unless scope.equal?(count[:collection])
+
+            expression = @slots[index].expression.to_s
+
+            next if expression.strip.empty?
+
+            mentioned = {} #: Hash[String, untyped]
+            mentioned[count[:name]] = true
+
+            next unless StateDirectives.mentions_any?(expression, mentioned)
+
+            raise Herb::Engine::CompilationError,
+                  "`#{count[:name]}` is read inside the loop that counts it; the count is complete only after " \
+                  "the loop, so move the read below it"
+          end
+        end
+      end
+
+      #: (untyped) -> bool
+      def blank_child?(node)
+        return true if node.is_a?(Herb::AST::WhitespaceNode)
+
+        if node.is_a?(Herb::AST::HTMLTextNode) || node.is_a?(Herb::AST::LiteralNode)
+          return node.content.to_s.strip.empty?
+        end
+
+        false
+      end
+
       #: (untyped, String) -> void
       def rewrite_predicate(node, name)
+        return if rewrite_literal_predicate(node, name)
+
         token = predicate_token_for(node)
 
         return unless token
@@ -870,6 +1159,27 @@ module Herb
         token.value.gsub!(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
       rescue FrozenError
         nil
+      end
+
+      #: (untyped, String) -> untyped
+      def rewrite_literal_predicate(node, name)
+        return nil unless node.is_a?(Herb::AST::HTMLAttributeNode)
+
+        children = node.value&.children
+
+        return nil unless children.is_a?(Array)
+
+        position = children.index { |child| child.is_a?(Herb::AST::RubyLiteralNode) }
+
+        return nil unless position
+
+        literal = children.fetch(position) #: untyped
+        rewritten = literal.content.to_s.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+        replacement = Herb::AST::RubyLiteralNode.build(content: rewritten, location: literal.location)
+
+        children[position] = replacement
+
+        replacement
       end
 
       #: (untyped) -> untyped
@@ -894,7 +1204,8 @@ module Herb
         return unless read
 
         raise Herb::Engine::CompilationError,
-              "`#{read}` reads a state inside an interpolated attribute; a state write cannot rebuild the mixed value, so give the state its own attribute or compute the whole value in one output tag"
+              "`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts; a state " \
+              "write cannot supply the other values, so give the state its own attribute or its own output"
       end
 
       #: () -> void
@@ -913,7 +1224,7 @@ module Herb
 
           next if states.empty?
 
-          if slot.type == :attribute_interpolation
+          if slot.type == :attribute_interpolation && slot.expression.to_s.strip.empty?
             check_interpolated_state_read(node, states)
             next
           end
@@ -938,14 +1249,21 @@ module Herb
         end
       end
 
-      #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+      #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
       def convert_boolean_attribute(node, index, slot, expression, states)
-        return nil unless slot.type == :attribute
+        return nil unless slot.type == :attribute || (slot.type == :boolean_attribute && !@state_presence.key?(index))
         return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
 
         read = StateDirectives.condition_read(expression, states)
 
-        return nil unless read.is_a?(StateDirectives::Read)
+        return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
+
+        if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
+          raise Herb::Engine::CompilationError,
+                "`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` " \
+                "as a presence; only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. " \
+                "Compare the state to a literal, or declare it as a boolean"
+        end
 
         open_tag = @attribute_open_tags[node]
         children = open_tag&.children
@@ -953,8 +1271,9 @@ module Herb
 
         return nil unless position
 
-        condition = read.comparand ? "#{read.name} == #{read.comparand}" : read.name
-        replacement = erb_output_node(%[("#{slot.attribute}" if #{condition})])
+        condition = StateDirectives.condition_source(read)
+        spacing = open_tag.is_a?(Herb::AST::ERBOpenTagNode) ? " " : ""
+        replacement = erb_output_node(%[("#{spacing}#{slot.attribute}" if #{condition})])
 
         children[position] = replacement
 
@@ -1013,6 +1332,12 @@ module Herb
         if scope_names.key?(name)
           raise Herb::Engine::CompilationError,
                 "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
+        end
+
+        if (existing = @slots[index].name)
+          raise Herb::Engine::CompilationError,
+                "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`; " \
+                "both elements hold the same slot, so keep one name or wrap what each should address"
         end
 
         if attribute_conflict?(name, index, named[:scope])
@@ -1184,6 +1509,7 @@ module Herb
       #: (untyped) -> bool
       def dynamic?(node)
         return true if node.type.to_s.start_with?("AST_ERB_")
+        return true if node.is_a?(Herb::AST::RubyLiteralNode)
 
         node.compact_child_nodes.any? { |child| dynamic?(child) }
       end
@@ -1202,13 +1528,18 @@ module Herb
       def attribute_expression_for(node)
         children = node.value&.children || []
 
-        return nil unless children.one?
+        literal = children.grep(Herb::AST::RubyLiteralNode)
 
-        child = children.first
+        return literal.fetch(0).content.to_s.strip if literal.one? && children.one?
 
-        return nil unless child.is_a?(Herb::AST::ERBContentNode)
+        return nil unless children.all? { |child| child.is_a?(Herb::AST::LiteralNode) || child.is_a?(Herb::AST::ERBContentNode) }
 
-        child.content&.value&.strip
+        outputs = children.grep(Herb::AST::ERBContentNode)
+
+        return nil unless outputs.one?
+        return nil unless erb_output?(outputs.fetch(0).tag_opening&.value.to_s)
+
+        outputs.fetch(0).content&.value&.strip
       end
 
       def location_for(node)
@@ -1425,7 +1756,7 @@ module Herb
         return unless node.is_a?(Herb::AST::HTMLElementNode)
 
         open_tag = node.open_tag
-        return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode)
+        return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode) || open_tag.is_a?(Herb::AST::ERBOpenTagNode)
 
         anchors = (@element_anchored[open_tag] || []).map { |index|
           slot = @slots[index]

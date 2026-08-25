@@ -6,6 +6,15 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HerbStateValidActionsRule)
 
 describe("HerbStateValidActionsRule", () => {
+  test("a trailing comma reads as an empty clause", () => {
+    expectError("`data-herb-set` has an empty clause. Remove the stray comma or space, since every clause has to be a `state=value` pair.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="open=true,">x</button>
+    `)
+  })
+
   test("allows well-formed actions against declared states", () => {
     expectNoOffenses(dedent`
       <%# herb:state (open: false, attempts: 0, sort: "name", draft: "") %>
@@ -156,6 +165,47 @@ describe("HerbStateValidActionsRule", () => {
       <%# herb:state (draft: "") %>
       <button data-herb-set="draft=true">Literal word</button>
       <button data-herb-set="draft=">Empty</button>
+    `)
+  })
+  test("flags every action on a derived state", () => {
+    expectError("`data-herb-toggle` on `busy` can never work, because `busy` is derived from `pending || failed`. Write the states it reads instead.")
+    expectError("`busy=false` can never work, because `busy` is derived from `pending || failed`. Write the states it reads instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <button data-herb-toggle="busy">Toggle</button>
+      <button data-herb-set="busy=false">Clear</button>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
+
+  test("allows actions on a derived state's sources", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
+      <button data-herb-toggle="pending">Toggle</button>
+      <button data-herb-set="failed=true">Fail</button>
+      <div><% if busy %>B<% end %></div>
+    `)
+  })
+  test("flags actions on a counted state", () => {
+    expectError("`data-herb-increment` on `total` can never work, because `total` is counted from the template's loop. Write the item states its condition reads instead.")
+    expectError("`total=5` can never work, because `total` is counted from the template's loop. Write the item states its condition reads instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (total: 0) %>
+      <ul><% @items.each do |item| %><%# herb:state (pending: false) %><% if pending? %><% total += 1 %><% end %><li><%= item %></li><% end %></ul>
+      <button data-herb-increment="total">More</button>
+      <button data-herb-set="total=5">Set</button>
+      <p><%= total %></p>
+    `)
+  })
+  test("validates actions built by a tag helper", () => {
+    expectError("`data-herb-toggle` on `attempts` can never work, because `attempts` is an Integer and it needs a Boolean. Set a value instead, like `data-herb-set=\"attempts=...\"`, or declare a boolean flag.")
+
+    assertOffenses(dedent`
+      <%# herb:state (attempts: 0) %>
+      <%= tag.button "More", data: { herb_toggle: "attempts" } %>
+      <p><%= attempts %></p>
     `)
   })
 })

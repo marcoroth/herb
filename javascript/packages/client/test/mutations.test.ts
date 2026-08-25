@@ -346,6 +346,38 @@ describe("SlotMutations", () => {
     expect(document.querySelectorAll("li")[1]?.textContent).not.toContain("Sending…")
   })
 
+  test("a confirm carrying several rows reports the ambiguity", async () => {
+    const entries: { code: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => {
+        if (Array.isArray(input)) entries.push(...(input as { code: string }[]))
+        else entries.push(input as { code: string })
+      },
+    }
+
+    const wide: Payload = {
+      template: FILE,
+      version: "aaaaaaaa",
+      occurrence: 0,
+      slots: { 0: { items: { message_1: { 2: "kept" }, message_2: { 2: "also kept" } } } },
+    }
+
+    const mutations = build(() => Promise.resolve(wide))
+
+    const outcome = await mutations.submit({
+      url: "/messages",
+      body: {},
+      into: { file: FILE, name: "messages" },
+      values: { body: "typed" },
+    })
+
+    expect(outcome.key).not.toBe("message_1")
+    expect(entries.map((entry) => entry.code)).toContain("herb-ambiguous-confirm")
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
   test("an optimistic value renders as text, never as markup", async () => {
     const mutations = build(() => Promise.resolve(null))
 

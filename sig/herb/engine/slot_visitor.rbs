@@ -20,9 +20,11 @@ module Herb
     class SlotVisitor < Herb::Visitor
       include ContextAware
 
+      attr_accessor bufvar: String
+
       attr_reader slots: Array[Slot]
 
-      attr_reader state_presence: Hash[Integer, StateDirectives::Read]
+      attr_reader state_presence: Hash[Integer, untyped]
 
       attr_reader document: untyped
 
@@ -63,6 +65,12 @@ module Herb
       NAME_ATTRIBUTE: String
 
       NAMEABLE_TYPES: Array[Symbol]
+
+      SEEDS_MARKER: String
+
+      SEEDS_LOCAL: String
+
+      SEED_VALUE_TYPES: String
 
       class Slot < Data
         attr_reader index(): Integer
@@ -108,8 +116,17 @@ module Herb
       # : () -> String
       def version: () -> String
 
+      # : () -> Array[Hash[Symbol, untyped]]
+      def state_count_entries: () -> Array[Hash[Symbol, untyped]]
+
       # : () -> Hash[Symbol, untyped]
       def state_declarations: () -> Hash[Symbol, untyped]
+
+      # The names of the seeded states declared inside a collection's item body, keyed by the
+      # collection's slot index. A seeded value is a Ruby expression only the server can evaluate,
+      # so a row the client builds for itself has no way to learn it from the markup.
+      # : () -> Hash[Integer, Array[String]]
+      def seeded_item_states: () -> Hash[Integer, Array[String]]
 
       # : () -> Array[Hash[Symbol, untyped]]
       def state_entries: () -> Array[Hash[Symbol, untyped]]
@@ -145,6 +162,8 @@ module Herb
 
       def visit_html_open_tag_node: (untyped node) -> untyped
 
+      def visit_erb_open_tag_node: (untyped node) -> untyped
+
       def visit_html_attribute_node: (untyped node) -> untyped
 
       def visit_html_comment_node: (untyped node) -> untyped
@@ -179,6 +198,8 @@ module Herb
       def visit_erb_until_node: (untyped node) -> untyped
 
       def visit_erb_for_node: (untyped node) -> untyped
+
+      def visit_collection_node: (untyped node) -> untyped
 
       private
 
@@ -222,6 +243,9 @@ module Herb
       # : () -> void
       def apply_states: () -> void
 
+      # : (Array[StateDirectives::Declaration]) -> String?
+      def seeds_marker: (Array[StateDirectives::Declaration]) -> String?
+
       # : (StateDirectives::Declaration) -> String
       def state_assignment: (StateDirectives::Declaration) -> String
 
@@ -231,8 +255,11 @@ module Herb
       # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
       def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
-      # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
-      def refuse_state_unless: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+      # : (untyped, Integer?) -> untyped
+      def arm_entry: (untyped, Integer?) -> untyped
+
+      # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+      def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
       # : (untyped) -> Array[untyped]
       def conditional_chain: (untyped) -> Array[untyped]
@@ -243,8 +270,29 @@ module Herb
       # : (untyped) -> String
       def condition_expression: (untyped) -> String
 
+      # : (untyped) -> untyped
+      def convert_helper_boolean_attribute: (untyped) -> untyped
+
+      # : (untyped) -> untyped
+      def register_count_fold: (untyped) -> untyped
+
+      # : (untyped) -> void
+      def check_state_assignment: (untyped) -> void
+
+      # : (StateDirectives::FoldIncrement, when_read: untyped) -> void
+      def register_count: (StateDirectives::FoldIncrement, when_read: untyped) -> void
+
+      # : () -> void
+      def check_state_count_reads: () -> void
+
+      # : (untyped) -> bool
+      def blank_child?: (untyped) -> bool
+
       # : (untyped, String) -> void
       def rewrite_predicate: (untyped, String) -> void
+
+      # : (untyped, String) -> untyped
+      def rewrite_literal_predicate: (untyped, String) -> untyped
 
       # : (untyped) -> untyped
       def predicate_token_for: (untyped) -> untyped
@@ -255,8 +303,8 @@ module Herb
       # : () -> void
       def check_state_value_reads: () -> void
 
-      # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
-      def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Read?
+      # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
+      def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
 
       # : (untyped, untyped, Integer, untyped, Integer) -> void
       def record_named_element: (untyped, untyped, Integer, untyped, Integer) -> void

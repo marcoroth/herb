@@ -12,6 +12,29 @@ const COLORS: Record<SlotOperation, string> = {
   'item-rekeyed': '#14b8a6'
 }
 
+export const ELEMENT_FLASH_COLOUR = '#f59e0b'
+const ELEMENT_FLASH_DURATION = 1600
+
+export function flashElement(element: Element, colour = ELEMENT_FLASH_COLOUR): HTMLElement | null {
+  if (!element.isConnected) return null
+
+  const rect = element.getBoundingClientRect()
+
+  if (rect.width === 0 && rect.height === 0) return null
+
+  const overlay = document.createElement('div')
+
+  overlay.className = 'herb-slot-flash herb-element-flash'
+  overlay.style.cssText = `position:absolute;z-index:2147483000;pointer-events:none;top:${rect.top + window.scrollY}px;left:${rect.left + window.scrollX}px;width:${rect.width}px;height:${rect.height}px;background:${colour};opacity:0.22;outline:2px solid ${colour};outline-offset:2px;transition:opacity ${ELEMENT_FLASH_DURATION}ms ease-out`
+
+  document.body.appendChild(overlay)
+
+  requestAnimationFrame(() => { overlay.style.opacity = '0' })
+  setTimeout(() => overlay.remove(), ELEMENT_FLASH_DURATION)
+
+  return overlay
+}
+
 export class SlotFlash {
   private static readonly DURATION = 1600
 

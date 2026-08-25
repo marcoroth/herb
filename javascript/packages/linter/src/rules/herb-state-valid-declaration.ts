@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { stateSignatureOf } from "../utils/state-directives-utils.js"
+import { isDerived, stateSignatureOf } from "../utils/state-directives-utils.js"
 
 import { isRubyParameterNode, Location } from "@herb-tools/core"
 
@@ -77,6 +77,24 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     const nameLocation = this.contentLocation(node, declaration.nameOffset, declaration.name.length)
     const defaultLocation = this.contentLocation(node, declaration.defaultOffset, Math.max(declaration.defaultSource.length, 1))
 
+    if (declaration.derived === "mixed") {
+      this.addOffense(
+        `The state \`${declaration.name}\` defaults to \`${declaration.defaultSource}\`, which mixes state reads with other Ruby. A derived state reads only other states, and a seed reads none, so split the two apart.`,
+        defaultLocation,
+      )
+
+      return
+    }
+
+    if (declaration.derived === "forward") {
+      this.addOffense(
+        `The state \`${declaration.name}\` reads a state that is declared after it. Reorder the signature, since a derived state reads only states declared before it.`,
+        defaultLocation,
+      )
+
+      return
+    }
+
     switch (declaration.kind) {
       case "missing":
         this.addOffense(
@@ -107,6 +125,17 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 
         return
       case "bare":
+        if (isDerived(declaration)) break
+
+        if (this.scopes.some((outer) => outer !== this.scopes[this.scopes.length - 1] && outer.has(declaration.defaultSource))) {
+          this.addOffense(
+            `The state \`${declaration.name}\` reads \`${declaration.defaultSource}\` from an enclosing scope. Declare it beside its sources, since a derived state reads states declared in its own signature.`,
+            defaultLocation,
+          )
+
+          return
+        }
+
         if (!this.locals.has(declaration.defaultSource)) {
           this.addOffense(
             `The state \`${declaration.name}\` defaults to \`${declaration.defaultSource}\`, which is not a declared strict local. Declare it, like \`<%# locals: (${declaration.defaultSource}: false) %>\`, or use a literal default. A bare name a caller never passed raises a \`NameError\` at render.`,

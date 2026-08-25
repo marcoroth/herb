@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
 import { report, clearOnNavigation, RUNTIME_ORIGIN } from "@herb-tools/client"
 
-import { HerbDevTools } from "../src/index"
+import { HerbDevTools, DEV_TOOLS_START_EVENT } from "../src/index"
 
 let devTools: HerbDevTools | null = null
 let stopClearing: (() => void) | null = null
@@ -21,13 +21,13 @@ afterEach(() => {
 })
 
 describe("the client runtime reporting into the panel", () => {
-  test("a diagnostic raised before start is delivered with the next one after it", () => {
+  test("a diagnostic raised before start is delivered as soon as the panel starts", () => {
     report({ template: "app/views/a.html.erb", message: "raised before the panel existed" })
 
     const instance = HerbDevTools.start({ devServer: false })!
     devTools = instance
 
-    expect(instance.runtimePanel?.count).toBe(0)
+    expect(instance.runtimePanel?.count).toBe(1)
 
     report({ template: "app/views/a.html.erb", message: "raised after", code: "herb-unknown-state" })
 
@@ -44,7 +44,7 @@ describe("the client runtime reporting into the panel", () => {
 
     expect(instance.runtimePanel?.count).toBe(2)
 
-    document.dispatchEvent(new Event("turbo:load"))
+    document.dispatchEvent(new Event("turbo:before-render"))
 
     expect(instance.runtimePanel?.count).toBe(1)
   })
@@ -60,5 +60,20 @@ describe("the client runtime reporting into the panel", () => {
     handle.dismiss()
 
     expect(instance.runtimePanel?.count).toBe(0)
+  })
+
+  test("start() announces itself so a runtime can flush what it queued", () => {
+    const seen: unknown[] = []
+    const listener = (event: Event) => seen.push((event as CustomEvent).detail)
+
+    document.addEventListener(DEV_TOOLS_START_EVENT, listener)
+
+    const instance = HerbDevTools.start({ devServer: false })!
+
+    document.removeEventListener(DEV_TOOLS_START_EVENT, listener)
+
+    expect(seen).toEqual([instance])
+
+    instance.stop()
   })
 })

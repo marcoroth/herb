@@ -11,10 +11,16 @@ const PAGE =
   `<button id="toggle" data-herb-toggle="open">Details</button>` +
   `<button id="both" data-herb-set="pending=false,failed=true">Fail</button>` +
   `<button id="bump" data-herb-increment="attempts" data-herb-by="2">More</button>` +
+  `<button id="combo" data-herb-increment="attempts" data-herb-set="open=true">Both</button>` +
+  `<button id="same" data-herb-increment="attempts" data-herb-set="attempts=10">Same</button>` +
+  `<button id="arrowed" data-herb-set="click->open=true" data-herb-increment="attempts">Arrowed</button>` +
+  `<button id="trio" data-herb-toggle="open" data-herb-increment="attempts" data-herb-reset="sort">Trio</button>` +
   `<button id="tab-a" data-herb-set="sort=name">A</button>` +
   `<button id="quoted" data-herb-set="sort='hello, world'">Q</button>` +
   `<form id="form" data-herb-set="pending=true"><input id="draft-input" data-herb-reset="blur->sort"></form>` +
   `<input id="typer" data-herb-set="sort=$value">` +
+  `<input id="bound" value="name" data-herb-slot="5:attribute:value">` +
+  `<button id="setter" data-herb-set="sort=date">Date</button>` +
   `<select id="chooser" data-herb-set="sort=$value"><option value="date">date</option></select>` +
   `<div id="menu" data-herb-set="mouseenter->open=true mouseleave->open=false">hover</div>` +
   `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->closed<!--/herb-slot:0--></div>` +
@@ -44,7 +50,8 @@ const PAGE =
           { name: "sort", kind: "string", default: '"name"', scope: "region" },
           { name: "starred", kind: "boolean", default: "false", scope: 2 },
         ],
-        reads: { attempts: [1] },
+        reads: { attempts: [1], sort: [5] },
+        bound: { sort: [5] },
         conditionals: {
           0: { arms: [["open", null, 0]], else: 1 },
           4: { arms: [["starred", null, 0]], else: 1 },
@@ -101,6 +108,47 @@ describe("declarative actions", () => {
     expect(state.getState("pending")).toBe(false)
     expect(state.getState("failed")).toBe(true)
     expect(order).toEqual(["pending", "failed"])
+  })
+
+  test("a set writes through to the bound input", () => {
+    click("#setter")
+
+    expect(state.getState("sort")).toBe("date")
+
+    const bound = document.querySelector<HTMLInputElement>("#bound")!
+
+    expect(bound.getAttribute("value")).toBe("date")
+    expect(bound.value).toBe("date")
+  })
+
+  test("two action attributes on one element both run", () => {
+    click("#combo")
+
+    expect(state.getState("attempts")).toBe(1)
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("increment and set on the same state apply set first, then the step", () => {
+    click("#same")
+
+    expect(state.getState("attempts")).toBe(11)
+  })
+
+  test("an arrowed set and a bare increment both fire on one click", () => {
+    click("#arrowed")
+
+    expect(state.getState("open")).toBe(true)
+    expect(state.getState("attempts")).toBe(1)
+  })
+
+  test("three action attributes on one element all fire", () => {
+    state.setState({ sort: "date" })
+
+    click("#trio")
+
+    expect(state.getState("open")).toBe(true)
+    expect(state.getState("attempts")).toBe(1)
+    expect(state.getState("sort")).toBe("name")
   })
 
   test("increment honours data-herb-by", () => {
@@ -292,5 +340,115 @@ describe("declarative actions", () => {
     expect((entries[0] as { code: string }).code).toBe("herb-state-type")
 
     delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+})
+
+describe("a tag helper input bound to a state", () => {
+  const HELPER_FILE = "app/views/page/show.html.erb"
+
+  const HELPER_PAGE =
+    `<!--herb-region:${HELPER_FILE}:57899424:0-->` +
+    `<input value="" data-herb-slot="0:attribute:value">` +
+    `<button id="quoted" data-herb-set="draft='abc'">Set</button>` +
+    `<p data-herb-slot="1:child"></p>` +
+    `<!--/herb-region:${HELPER_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      params: {},
+      states: {
+        [HELPER_FILE]: {
+          version: "57899424",
+          declarations: [{ name: "draft", kind: "string", default: '""', derived: null, line: 2, column: 0, scope: "region" }],
+          reads: { draft: [0, 1] },
+          bound: { draft: [0] },
+          conditionals: {},
+          presence: {},
+        },
+      },
+    })}</template>`
+
+  test("a quoted set writes the value into the input", () => {
+    document.body.innerHTML = HELPER_PAGE
+
+    const helperSlots = new SlotIndex()
+    helperSlots.scan(document.body)
+
+    const helperState = new SlotState(helperSlots, { persist: "none" })
+    helperState.adopt()
+    helperState.observe()
+
+    const helperActions = new SlotActions(helperState)
+    helperActions.start(document.body)
+
+    document.querySelector<HTMLElement>("#quoted")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    const input = document.querySelector<HTMLInputElement>("input")!
+
+    expect(helperState.getState("draft")).toBe("abc")
+    expect(input.getAttribute("value")).toBe("abc")
+    expect(input.value).toBe("abc")
+    expect(document.querySelector("p")?.textContent).toBe("abc")
+
+    helperActions.stop()
+    helperState.disconnect()
+  })
+})
+
+const SWAP_FILE = "app/views/page/swap.html.erb"
+
+const SWAP_PAGE =
+  `<!--herb-region:${SWAP_FILE}:cccccccc:0-->` +
+  `<div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->` +
+  `<button id="cancel" data-herb-set="editing=false" data-herb-reset="draft">Cancel</button>` +
+  `<!--/herb-slot:0--></div>` +
+  `<template data-herb-region="${SWAP_FILE}:cccccccc">` +
+  `<!--herb-branch:0:0--><button id="cancel" data-herb-set="editing=false" data-herb-reset="draft">Cancel</button>` +
+  `</template>` +
+  `<!--/herb-region:${SWAP_FILE}-->` +
+  `<template data-herb-dependencies>${JSON.stringify({
+    state: {},
+    states: {
+      [SWAP_FILE]: {
+        version: "cccccccc",
+        declarations: [
+          { name: "editing", kind: "boolean", default: "true", scope: "region" },
+          { name: "draft", kind: "string", default: '"original"', scope: "region" },
+        ],
+        reads: {},
+        conditionals: { 0: { arms: [["editing", null, 0]], else: null } },
+      },
+    },
+  })}</template>`
+
+describe("an action on an element its own sibling action removes", () => {
+  test("the later action still resolves the scope the element had", () => {
+    document.body.innerHTML = SWAP_PAGE
+
+    const swapSlots = new SlotIndex()
+
+    swapSlots.scan(document.body)
+
+    const swapState = new SlotState(swapSlots, {
+      persist: "none",
+      transport: () => {
+        throw new Error("a declared state must never reach the transport")
+      },
+    })
+
+    swapState.adopt()
+
+    const actions = new SlotActions(swapState)
+
+    actions.start(document.body)
+    swapState.setState({ draft: "typed" })
+
+    document.getElementById("cancel")!.click()
+
+    const scope = swapState.scopeFor(document.querySelector("div")!)!
+
+    expect(swapState.getState("editing", { scope })).toBe(false)
+    expect(swapState.getState("draft", { scope })).toBe("original")
+
+    actions.stop()
   })
 })

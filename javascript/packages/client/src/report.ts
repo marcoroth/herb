@@ -7,6 +7,7 @@ export interface RuntimeDiagnostic {
   location?: { start: { line: number; column: number } }
   suggestion?: string
   value?: string
+  element?: Element | null
 }
 
 interface DevToolsGlobal {
@@ -15,14 +16,19 @@ interface DevToolsGlobal {
 }
 
 export const RUNTIME_ORIGIN = "Herb Client Runtime"
+export const DEV_TOOLS_START_EVENT = "herb:dev-tools-start"
 
 const MAX_QUEUED = 50
+const NAVIGATION_EVENT = "turbo:before-render"
 
 const queued: RuntimeDiagnostic[] = []
 
+let armed = false
+let hooked = false
+
 export function report(diagnostic: RuntimeDiagnostic): void {
   const entry = { origin: RUNTIME_ORIGIN, ...diagnostic }
-  const devTools = globalThis.window && (window as { HerbDevTools?: DevToolsGlobal }).HerbDevTools
+  const devTools = currentDevTools()
 
   if (devTools?.report) {
     if (queued.length > 0) devTools.report(queued.splice(0))
@@ -32,13 +38,99 @@ export function report(diagnostic: RuntimeDiagnostic): void {
     return
   }
 
-  if (!debugging()) return
+  if (debugging()) {
+    const log = entry.severity === "error" ? console.error : console.warn
 
-  console.warn(`[herb] ${entry.message}${entry.suggestion ? `. ${entry.suggestion}` : ""}`, entry)
+    log(`[herb] ${entry.message}${entry.suggestion ? `. ${entry.suggestion}` : ""}`, entry)
+  }
 
   queued.push(entry)
 
   if (queued.length > MAX_QUEUED) queued.shift()
+
+  arm()
+}
+
+export function flushReports(): number {
+  const devTools = currentDevTools()
+
+  if (!devTools?.report || queued.length === 0) return 0
+
+  const flushed = queued.splice(0)
+
+  devTools.report(flushed)
+
+  return flushed.length
+}
+
+export function resetReport(): void {
+  queued.length = 0
+  disarm()
+}
+
+function currentDevTools(): DevToolsGlobal | undefined {
+  return globalThis.window ? (window as { HerbDevTools?: DevToolsGlobal }).HerbDevTools : undefined
+}
+
+function arm(): void {
+  if (typeof document === "undefined") return
+
+  hookGlobal()
+
+  if (armed) return
+
+  armed = true
+  document.addEventListener(DEV_TOOLS_START_EVENT, onDevToolsReady)
+  window.addEventListener("load", onDevToolsReady)
+}
+
+function disarm(): void {
+  unhookGlobal()
+
+  if (!armed) return
+
+  armed = false
+  document.removeEventListener(DEV_TOOLS_START_EVENT, onDevToolsReady)
+  window.removeEventListener("load", onDevToolsReady)
+}
+
+function onDevToolsReady(): void {
+  flushReports()
+}
+
+function hookGlobal(): void {
+  if (typeof window === "undefined") return
+
+  const descriptor = Object.getOwnPropertyDescriptor(window, "HerbDevTools")
+
+  if (descriptor?.get) return
+  if (descriptor && (descriptor.value !== undefined && descriptor.value !== null)) return
+  if (descriptor && descriptor.configurable === false) return
+
+  let current: DevToolsGlobal | undefined
+
+  Object.defineProperty(window, "HerbDevTools", {
+    configurable: true,
+    enumerable: true,
+    get: () => current,
+    set: (value: DevToolsGlobal | undefined) => {
+      current = value
+
+      if (value) queueMicrotask(flushReports)
+    },
+  })
+
+  hooked = true
+}
+
+function unhookGlobal(): void {
+  if (!hooked || typeof window === "undefined") return
+
+  hooked = false
+
+  const descriptor = Object.getOwnPropertyDescriptor(window, "HerbDevTools")
+
+  if (descriptor?.get && descriptor.get() === undefined) delete (window as { HerbDevTools?: unknown }).HerbDevTools
 }
 
 export function clearOnNavigation(): () => void {
@@ -52,9 +144,9 @@ export function clearOnNavigation(): () => void {
     devTools?.clear?.(RUNTIME_ORIGIN)
   }
 
-  document.addEventListener("turbo:load", clear)
+  document.addEventListener(NAVIGATION_EVENT, clear)
 
-  return () => document.removeEventListener("turbo:load", clear)
+  return () => document.removeEventListener(NAVIGATION_EVENT, clear)
 }
 
 function debugging(): boolean {

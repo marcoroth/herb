@@ -3,6 +3,7 @@ import { CompletionItemKind, InsertTextFormat } from "vscode-html-languageservic
 
 import { buildHTMLDocument } from "./herb-html-document.js"
 import { getLanguageService as getUpstreamLanguageService } from "vscode-html-languageservice"
+import { herbHTMLDataProvider } from "./herb_html_data_provider"
 
 import { TOKEN_LIST_ATTRIBUTES, getHelper } from "@herb-tools/core"
 
@@ -21,9 +22,9 @@ const DEFAULT_HERB_PARSE_OPTIONS: ParseOptions = {
 }
 
 export function getLanguageService(options?: LanguageServiceOptions): LanguageService {
-  const upstream = getUpstreamLanguageService(options)
+  const dataProviders = [herbHTMLDataProvider, ...(options?.customDataProviders ?? [])]
+  const upstream = getUpstreamLanguageService({ ...options, customDataProviders: dataProviders })
   const herb = options?.herb
-  const dataProviders = options?.customDataProviders ?? []
 
   const framework = options?.framework
 
