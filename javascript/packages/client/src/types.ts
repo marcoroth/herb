@@ -21,7 +21,6 @@ export type SlotOperation =
   | "built"
 
 export type BuildCause = "apply" | "client"
-
 export type RenderMode = "server" | "client"
 export type ApplyMode = "replace" | "merge"
 
@@ -50,6 +49,8 @@ export type AppliedValue = Exclude<PayloadValue, Payload>
 export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "block" | "items" | "partial-attribute"
 
 export type SlotAnchor = RangeAnchor | ElementAnchor | ContentAnchor
+
+export type SlotListener = (detail: SlotEventDetail) => void
 
 export interface Bounds {
   start: Comment
@@ -184,13 +185,10 @@ export interface SlotEventDetail {
   built?: Built
 }
 
-// The markup an operation built, which holds no state of its own until something settles it.
 export interface Built {
   branches: Slot[]
   items: { slot: Slot; item: Item }[]
 }
-
-export type SlotListener = (detail: SlotEventDetail) => void
 
 export interface Payload {
   template: string

@@ -1042,14 +1042,11 @@ describe("a condition reading both a region state and an item state", () => {
     const collection = region.slots.get(0)!
 
     addedState.setState({ filter: "starred" }, { scope: { region, item: null } })
-
     addedSlots.addItem(collection, "c")
 
     expect(collection.items.get("c")!.slots.get(1)!.anchor.kind).toBe("element")
     expect([...document.querySelectorAll("li")].map((li) => li.hasAttribute("hidden"))).toEqual([true, true, true])
 
-    // The server renders every state as its default, so its answer for a state-driven boolean
-    // attribute is always stale. It must not win over what the client already decided.
     addedSlots.apply({
       template: MIXED_FILE,
       version: "eeeeeeee",

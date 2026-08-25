@@ -1,16 +1,9 @@
-/**
- * The condition language a template's state directives compile to.
- *
- * A condition names a state, an optional comparand and an optional operator. A comparand is
- * another state, a value, or nothing at all, which reads the state for its truth. A combo joins
- * conditions with `all` or `any`. An arm is a condition and the branch it selects.
- */
-
 export type ConditionValue = string | number | boolean | null
-
+export type ConditionalArm = Arm | ComboArm | [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
 export type StateComparand = null | { state: string } | { value: ConditionValue } | string
-
 export type StateCondition = [string, StateComparand] | [string, StateComparand, string] | ComboCondition
+
+export type ValueOf = (name: string) => ConditionValue
 
 export interface ComboCondition {
   all?: StateCondition[]
@@ -26,14 +19,10 @@ export interface ComboArm extends ComboCondition {
   branch: number | null
 }
 
-export type ConditionalArm = Arm | ComboArm | [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
-
 export interface Conditional {
   arms: ConditionalArm[]
   else: number | null
 }
-
-export type ValueOf = (name: string) => ConditionValue
 
 export function armOf(arm: ConditionalArm): Arm {
   if (Array.isArray(arm)) {

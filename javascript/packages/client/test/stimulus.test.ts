@@ -1,6 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { HerbRuntime, stateFor } from "../src/runtime"
+import { stateFor } from "../src/scoped-state"
 import { useState } from "../src/stimulus"
+
+import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/page/card.html.erb"
 

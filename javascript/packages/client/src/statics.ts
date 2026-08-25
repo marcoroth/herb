@@ -7,10 +7,11 @@
  * filled with whatever values it is given.
  */
 
+import { HERB_ATTRIBUTES } from "./attributes"
+
 import { attributeParts, blankSlots, fillSlots, parkedBranches } from "./fragments"
 import { numericBranch, partsKey } from "./markers"
 import { staticsElements } from "./anchors"
-import { HERB_ATTRIBUTES } from "./attributes"
 import { parseStaticsIdentity } from "./markers"
 
 import type { AttributeParts, FragmentMap, RenderMode, SlotValues, StaticsIdentity } from "./types"
@@ -45,8 +46,6 @@ export class Statics {
     return true
   }
 
-  // Takes every parked set a subtree carries, and the containers with it, since what they hold
-  // now lives here.
   adopt(root: Node): void {
     for (const element of staticsElements(root)) {
       const identity = parseStaticsIdentity(element.getAttribute(HERB_ATTRIBUTES.region) ?? "")
@@ -89,8 +88,6 @@ export class Statics {
     return this.branches(file, slot).length > 0 ? "client" : "server"
   }
 
-  // The static stretches of an interpolated attribute, read once from the markup that carries
-  // them and kept, since every write of that attribute joins the same stretches.
   parts(file: string, index: number): AttributeParts | null {
     const held = this.#held.get(file)
 

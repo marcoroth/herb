@@ -19,24 +19,31 @@
  */
 
 import { ITEM_STATICS } from "./markers"
-import { HERB_ATTRIBUTES } from "./attributes"
+
+import { Statics } from "./statics"
 
 import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { applyPayload } from "./apply"
-import { isPayload, leaves } from "./payloads"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } from "./markers"
-import { attributeValue, blankSlots, fillSlots, interpolateParts, templateNames, withoutMarkers } from "./fragments"
-import { Statics } from "./statics"
+import { blankSlots, fillSlots, interpolateParts, templateNames, withoutMarkers } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AppliedValue, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, AttributeParts, Branched, Collected, DeferredReason, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, PayloadSlots, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, SeededSlots, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
+import type { AddItemOptions, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
 const MAX_JOURNAL = 50
 const NUMERIC_NAME = /^\d+$/
+
+function depth(state: ParseState): string {
+  return `${state.openRegions.length}:${state.openSlots.length}:${state.openItems.length}`
+}
+
+function rangeAround(region: Region, node: Node): RegionRange | null {
+  return region.ranges.find((range) => withinRegionRange(range, node)) ?? null
+}
 
 export class SlotIndex {
   #regions: Region[] = []
@@ -279,8 +286,6 @@ export class SlotIndex {
     return this.#building("apply", () => applyPayload(this, payload, options.items ?? "replace"))
   }
 
-  // What a listener is told about, so a page can settle the markup an operation built without
-  // hearing about it while it is still being built.
   subscribe(listener: SlotListener): () => void {
     this.#listeners.add(listener)
 
@@ -411,11 +416,6 @@ export class SlotIndex {
     return owner.get(address.index) ?? null
   }
 
-
-
-
-
-
   #swapBranch(slot: Slot, branch: number | null, dynamics: SlotValues): boolean {
     this.#recordSlot(slot, () => {
       const before = this.#current(slot)
@@ -453,7 +453,6 @@ export class SlotIndex {
     return true
   }
 
-
   #mergeItems(slot: Slot, wanted: string[]): string[] {
     const added = wanted.filter((key) => !slot.items.has(key))
 
@@ -475,9 +474,6 @@ export class SlotIndex {
     return []
   }
 
-  // Makes a collection's live items be exactly `wanted`, in that order. In "merge" mode it only
-  // adds the keys it does not have. Returns the keys it could not build, since the collection
-  // had no row to copy.
   reconcileItems(slot: Slot, wanted: string[], mode: ApplyMode = "replace"): string[] {
     return this.#building("client", () => {
       if (mode === "merge") {
@@ -703,8 +699,6 @@ export class SlotIndex {
     this.#pruneItems(slot)
   }
 
-  // Every write into a range goes through here, so what stood there is forgotten, what stands
-  // there now is scanned in the context that holds it, and the change is announced once.
   #rewrite(range: Range, source: DocumentFragment, context: ScanContext): ScanResult {
     const added = [...source.childNodes]
 
@@ -716,9 +710,7 @@ export class SlotIndex {
 
   #writeFragment(slot: Slot, fragment: DocumentFragment): void {
     this.#forgetChildren(slot)
-
     this.#rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: slot.item })
-
     this.#announce(slot, "branch", slot.index)
   }
 
@@ -1278,9 +1270,12 @@ export class SlotIndex {
 
         break
       }
-      case "region-close":
+
+      case "region-close": {
         popMatching(state.openRegions, (candidate) => candidate.region.file === marker.file)
         break
+      }
+
       case "slot-open": {
         const slot = this.#holderAt(state)?.slots.get(marker.index)
 
@@ -1290,9 +1285,13 @@ export class SlotIndex {
 
         break
       }
-      case "slot-close":
+
+      case "slot-close": {
         popMatching(state.openSlots, (candidate) => candidate.index === marker.index)
+
         break
+      }
+
       case "item-open": {
         const collection = this.#collectionAt(state, marker.index)
         const item = collection?.items.get(marker.key)
@@ -1303,12 +1302,20 @@ export class SlotIndex {
 
         break
       }
-      case "item-close":
+
+      case "item-close": {
         popMatching(state.openItems, (candidate) => candidate.slot === marker.index)
+
         break
-      case "seeds":
-      case "branch":
+      }
+
+      case "seeds": {
         break
+      }
+
+      case "branch": {
+        break
+      }
     }
   }
 
@@ -1428,10 +1435,7 @@ export class SlotIndex {
       return
     }
 
-    const stacked = state.openSlots.find((candidate) => {
-      return candidate.index === marker.index && candidate.slot.region === region
-    })?.slot
-
+    const stacked = state.openSlots.find((candidate) => candidate.index === marker.index && candidate.slot.region === region)?.slot
     const slot = stacked ?? this.#holderAt(state)?.slots.get(marker.index)
 
     if (slot) {
@@ -1460,9 +1464,7 @@ export class SlotIndex {
       return null
     }
 
-    const stacked = state.openSlots.find((candidate) => {
-      return candidate.index === index && candidate.slot.region === region
-    })?.slot
+    const stacked = state.openSlots.find((candidate) => candidate.index === index && candidate.slot.region === region)?.slot
 
     if (stacked) {
       return stacked
@@ -1616,7 +1618,6 @@ export class SlotIndex {
     }
   }
 
-
   #regionConnected(region: Region): boolean {
     region.ranges = region.ranges.filter((range) => range.start.isConnected)
 
@@ -1626,12 +1627,4 @@ export class SlotIndex {
   #slotConnected(slot: Slot): boolean {
     return connected(slot.anchor)
   }
-}
-
-function depth(state: ParseState): string {
-  return `${state.openRegions.length}:${state.openSlots.length}:${state.openItems.length}`
-}
-
-function rangeAround(region: Region, node: Node): RegionRange | null {
-  return region.ranges.find((range) => withinRegionRange(range, node)) ?? null
 }

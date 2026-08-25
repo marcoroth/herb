@@ -1,23 +1,25 @@
 import { report } from "./report"
-
-import { HERB_ATTRIBUTES } from "./attributes"
 import { elementOf, hostOf } from "./anchors"
-import { armOf, literal, matches, mentions, truthy } from "./conditions"
+import { armOf, matches, mentions } from "./conditions"
 import { boundValue, coerceSeed, coerceState, kindArticle, printValue } from "./values"
+import { scopeOf, scoped, declared, collectionIn, declarationSpot, declaredValue, comparandLiteral } from "./state-helpers.js"
+
 import { ServerState } from "./server-state"
 
-import type { DiagnosticSpot } from "./report"
-import type { SlotIndex } from "./slot-index"
-import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
-import type { StateKind, StateValue } from "./values"
-import type { ComboCondition, Conditional, ConditionalArm, StateComparand, StateCondition } from "./conditions"
+import { HERB_ATTRIBUTES } from "./attributes"
 
-const VALUE_ELEMENTS = ["INPUT", "TEXTAREA", "SELECT"]
-const IDLE: StateReport = { applied: 0, deferred: [], written: 0, restored: 0, stale: false, failed: false }
+export const REGION_SCOPES = new WeakMap<Region, StateScope>()
+export const ITEM_SCOPES = new WeakMap<Item, StateScope>()
+export const VALUE_ELEMENTS = ["input", "textarea", "select"]
 
 export const STATE_EVENT = "herb:state-change"
 export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
 export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
+
+import type { SlotIndex } from "./slot-index"
+import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
+import type { StateKind, StateValue } from "./values"
+import type { Conditional, StateCondition } from "./conditions"
 
 export type StateMode = "identity" | "structural" | "derived"
 export type StatePersistence = "url" | "known" | "none"
@@ -61,10 +63,6 @@ export interface StateManifest {
   conditionals: ConditionalMap
   presence?: PresenceMap
 }
-
-export type { ComboCondition, Conditional, ConditionalArm, StateComparand, StateCondition } from "./conditions"
-export type { StateKind, StateValue } from "./values"
-export { boundValue, coerceState, printValue } from "./values"
 
 export interface StateScope {
   region: Region
@@ -139,7 +137,6 @@ export interface StateReport extends ApplyReport {
   failed: boolean
 }
 
-
 export class SlotState {
   readonly #slots: SlotIndex
   readonly #server: ServerState
@@ -169,28 +166,31 @@ export class SlotState {
     return this.#server.set(key, value)
   }
 
-  // One listener for everything the index does, so what a page hears about is what already
-  // happened and not what is in the middle of happening.
   #onSlot = (detail: SlotEventDetail): void => {
     switch (detail.operation) {
-      case "built":
+      case "built": {
         this.settle(detail.built ?? { branches: [], items: [] })
         break
-      case "item-rekeyed":
+      }
+
+      case "item-rekeyed": {
         this.#migrateItemState(detail)
         break
+      }
+
       case "item-added":
-      case "item-removed":
+      case "item-removed": {
         this.#recountItems(detail)
         break
-      case "attribute":
+      }
+
+      case "attribute": {
         this.#syncProperty(detail)
         break
+      }
     }
   }
 
-  // Markup an operation built holds no state of its own, so every state the page has decided is
-  // written into it once it stands.
   settle(built: Built): void {
     for (const slot of built.branches) {
       this.#settleBranch(slot)
@@ -200,10 +200,6 @@ export class SlotState {
       this.#settleItem(slot, item)
     }
   }
-
-
-
-
 
   get(key: string): string | undefined {
     return this.#server.get(key)
@@ -220,7 +216,6 @@ export class SlotState {
   slotsFor(key: string): StateSlot[] {
     return this.#server.slotsFor(key)
   }
-
 
   adopt(root: ParentNode = document): number {
     const templates = [...root.querySelectorAll<HTMLTemplateElement>(DEPENDENCIES_SELECTOR)]
@@ -288,12 +283,6 @@ export class SlotState {
     }
   }
 
-
-
-
-
-
-
   #write(slot: Slot, value: string): boolean {
     if (elementOf(slot.anchor) && slot.attribute) {
       return this.#slots.setAttribute(slot, value)
@@ -301,7 +290,6 @@ export class SlotState {
 
     return this.#slots.setText(slot, value)
   }
-
 
   #merge(json: string): void {
     if (!json.trim()) {
@@ -498,8 +486,7 @@ export class SlotState {
 
     const regionScope = scopeOf(resolved.region)
     const counted = this.#countDeclarations(manifest).map((declaration) => ({ name: declaration.name, previous: this.#valueOf(declaration.name, regionScope) }))
-    const countDependents = this.#derivedDependents(manifest, regionScope, counted.map((entry) => entry.name))
-      .map((name) => ({ name, previous: this.#valueOf(name, regionScope) }))
+    const countDependents = this.#derivedDependents(manifest, regionScope, counted.map((entry) => entry.name)).map((name) => ({ name, previous: this.#valueOf(name, regionScope) }))
 
     for (const [name, value] of Object.entries(values)) {
       const target = scopes.get(name) ?? resolved
@@ -847,7 +834,6 @@ export class SlotState {
     return parsed
   }
 
-  // Whether anything in this scope, or the region around it, declares the state.
   declares(scope: StateScope, name: string): boolean {
     return this.#declarationIn(this.scopeFor(scope, name) ?? scope, name) !== null
   }
@@ -1152,8 +1138,6 @@ export class SlotState {
     )
   }
 
-
-
   #onBoundInput = (event: Event): void => {
     const element = event.target
 
@@ -1202,7 +1186,7 @@ export class SlotState {
   }
 
   #boundNameOf(element: Element): BoundState | null {
-    if (!VALUE_ELEMENTS.includes(element.tagName)) {
+    if (!VALUE_ELEMENTS.includes(element.localName)) {
       return null
     }
 
@@ -1236,7 +1220,6 @@ export class SlotState {
   }
 
   #recountItems = (detail: SlotEventDetail): void => {
-
     if (detail.operation !== "item-added" && detail.operation !== "item-removed") {
       return
     }
@@ -1452,7 +1435,6 @@ export class SlotState {
   }
 
   #syncProperty = (detail: SlotEventDetail): void => {
-
     if (detail.operation !== "attribute") {
       return
     }
@@ -1464,7 +1446,7 @@ export class SlotState {
       return
     }
 
-    if (!VALUE_ELEMENTS.includes(element.tagName)) {
+    if (!VALUE_ELEMENTS.includes(element.localName)) {
       return
     }
 
@@ -1474,115 +1456,4 @@ export class SlotState {
       ;(element as HTMLInputElement).value = written
     }
   }
-
 }
-
-
-const REGION_SCOPES = new WeakMap<Region, StateScope>()
-const ITEM_SCOPES = new WeakMap<Item, StateScope>()
-
-// A scope is the region and the item a state belongs to. The same pair always hands back the same
-// scope, so scopes group and compare by identity.
-export function scopeOf(region: Region, item: Item | null = null): StateScope {
-  if (!item) {
-    let scope = REGION_SCOPES.get(region)
-
-    if (!scope) {
-      scope = { region, item: null }
-      REGION_SCOPES.set(region, scope)
-    }
-
-    return scope
-  }
-
-  let scope = ITEM_SCOPES.get(item)
-
-  if (!scope) {
-    scope = { region, item }
-    ITEM_SCOPES.set(item, scope)
-  }
-
-  return scope
-}
-
-function scoped(store: ScopeStore, scope: StateScope): StateBucket {
-  let regionStore = store.get(scope.region)
-
-  if (!regionStore) {
-    regionStore = new Map()
-    store.set(scope.region, regionStore)
-  }
-
-  const key = scope.item?.key ?? ""
-  let bucket = regionStore.get(key)
-
-  if (!bucket) {
-    bucket = new Map()
-    regionStore.set(key, bucket)
-  }
-
-  return bucket
-}
-
-function declared(manifest: StateManifest, name: string, collection: number | null): DeclaredState | null {
-  const exact = manifest.declarations.find((declaration) => {
-    if (declaration.name !== name) {
-      return false
-    }
-
-    if (collection === null) {
-      return declaration.scope === "region"
-    }
-
-    return declaration.scope === collection
-  })
-
-  if (exact) {
-    return exact
-  }
-
-  if (collection === null) {
-    return null
-  }
-
-  return manifest.declarations.find((declaration) => declaration.name === name && declaration.scope === "region") ?? null
-}
-
-function collectionIn(scope: StateScope): number | null {
-  return scope.item?.collection.index ?? null
-}
-
-function declarationSpot(declaration: DeclaredState): DiagnosticSpot {
-  if (declaration.line === undefined || declaration.line === null) {
-    return {}
-  }
-
-  return { location: { start: { line: declaration.line, column: declaration.column ?? 0 } } }
-}
-
-function declaredValue(declaration: DeclaredState): StateValue | undefined {
-  if (declaration.value !== undefined) {
-    return declaration.value
-  }
-
-  return literal(declaration.default)
-}
-
-function comparandLiteral(comparand: StateComparand): StateValue | undefined {
-  if (comparand === null || typeof comparand !== "object") {
-    return typeof comparand === "string" ? literal(comparand) : undefined
-  }
-
-  if ("state" in comparand) {
-    return undefined
-  }
-
-  return comparand.value
-}
-
-
-
-
-
-
-

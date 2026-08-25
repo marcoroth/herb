@@ -1,12 +1,3 @@
-/**
- * Applying a values payload to the index.
- *
- * This walks the shape a payload describes and decides what the page has to become: which value
- * goes where, which branch a conditional took, which items a collection holds. The index owns the
- * writing; this owns reading the payload and saying what it means. Anything that needs markup the
- * page never had is reported as deferred.
- */
-
 import { isPayload, leaves } from "./payloads"
 import { attributeValue } from "./fragments"
 
@@ -160,7 +151,6 @@ function applyBranch(slots: SlotIndex, payload: Payload, slot: Slot, value: Bran
 
 function applyItems(slots: SlotIndex, payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
     const wanted = value.order ?? Object.keys(value.items)
-
     const unbuilt = slots.reconcileItems(slot, wanted, mode)
 
     if (unbuilt.length > 0) {

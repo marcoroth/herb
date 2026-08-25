@@ -121,7 +121,7 @@ describe("the contract table", () => {
   })
 })
 
-describe.each(Object.entries(FIXTURES))("the contract for %s", (label, fixture) => {
+describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture) => {
   const schema = new Map(fixture.schema.slots.map((slot) => [slot.index, slot]))
 
   let index: SlotIndex

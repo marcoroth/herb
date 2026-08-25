@@ -1,36 +1,21 @@
+import { DIRECT_EVENTS } from "./events"
 import { ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "./attributes"
-import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "./parsing"
+
 import { report } from "./report"
 import { boundValue, coerceState } from "./values"
+import { defaultEventFor } from "./events"
+import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "./parsing"
 
 import type { ActionName, ActionSchema } from "./attributes"
 import type { Clause } from "./parsing"
-import type { DeclaredState, SlotState, StateScope, StateValue, StateValues } from "./state"
+import type { DeclaredState, SlotState, StateScope, StateValues } from "./state"
+import type { StateValue } from "./values"
 
+export type StateGroups = Map<StateScope, StateValues>
 
 export interface ResolvedDeclaration {
   scope: StateScope
   declaration: DeclaredState
-}
-
-export type StateGroups = Map<StateScope, StateValues>
-
-const DIRECT_EVENTS = ["mouseenter", "mouseleave"]
-
-const DEFAULT_EVENTS: Record<string, string> = {
-  form: "submit",
-  input: "input",
-  textarea: "input",
-  select: "change",
-  details: "toggle",
-}
-
-function defaultEventFor(element: Element): string {
-  if (element instanceof HTMLInputElement && ["submit", "button", "reset"].includes(element.type)) {
-    return "click"
-  }
-
-  return DEFAULT_EVENTS[element.localName] ?? "click"
 }
 
 interface Instruction {
@@ -130,8 +115,6 @@ export class SlotActions {
     }
   }
 
-  // What an element's action attributes say, read once. A rewritten attribute drops the entry,
-  // so the next run reads it again.
   #instructions(element: Element): Instruction[] {
     const held = this.#parsed.get(element)
 

@@ -11,9 +11,6 @@
 export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./parsing"
 export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./attributes"
 
-export type { Clause } from "./parsing"
-export type { ActionName, ActionSchema, HerbAttribute } from "./attributes"
-
 const STATE_DIRECTIVE_PRESENCE = /^\s*herb:state\b/
 const STATE_DIRECTIVE_PATTERN = /^\s*herb:state\s*(\(.*\))\s*$/s
 const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s

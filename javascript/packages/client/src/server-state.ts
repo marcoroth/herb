@@ -1,12 +1,3 @@
-/**
- * The state a page asks the server for.
- *
- * A page sets a state, the slots that state reaches are written with the new value straight away,
- * and the server is asked what the template renders now. What comes back is applied over the
- * optimistic writes, and a request that fails or is overtaken puts them back. The values live in
- * the URL, so a reload and a back button land on the same page.
- */
-
 import { elementOf } from "./anchors"
 
 import type { SlotIndex } from "./slot-index"
@@ -61,8 +52,6 @@ export class ServerState {
     return this.#dependencies.get(this.stateName(key)) ?? []
   }
 
-  // What the page was told about the states a template reads, which is what says a name is one
-  // the page knows and which slots it may write itself.
   adopt(map: DependencyMap): void {
     for (const [name, slots] of Object.entries(map.state ?? {})) {
       this.#dependencies.set(name, slots)

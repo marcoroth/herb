@@ -1,6 +1,7 @@
 import { HERB_ATTRIBUTES } from "./attributes"
+
 import { report } from "./report"
-import { scopeOf } from "./state"
+import { scopeOf } from "./state-helpers"
 
 import type { SlotIndex } from "./slot-index"
 import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot } from "./types"

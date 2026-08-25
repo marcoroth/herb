@@ -1,6 +1,8 @@
-import { HerbRuntime, stateFor } from "./runtime"
+import { HerbRuntime } from "./runtime"
 
-import type { ScopedState } from "./runtime"
+import { stateFor } from "./scoped-state"
+
+import type { ScopedState } from "./scoped-state"
 import type { StateScope } from "./state"
 import type { SlotMutations } from "./mutations"
 import type { SlotIndex } from "./slot-index"

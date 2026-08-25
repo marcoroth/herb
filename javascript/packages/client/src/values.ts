@@ -1,11 +1,3 @@
-/**
- * What a state holds, and how it reads back from the page.
- *
- * A state is a boolean, an integer, a string, a symbol or nil. The page writes it as text and
- * reads it back the same way, so every conversion between the two lives here, alongside the one
- * for what a server ships as a seed.
- */
-
 export type StateValue = string | number | boolean | null
 export type StateKind = "boolean" | "integer" | "string" | "symbol" | "nil" | "seeded"
 
