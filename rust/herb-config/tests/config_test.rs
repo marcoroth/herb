@@ -833,7 +833,10 @@ mod config_instance_methods {
   fn exclude_patterns_that_duplicate_defaults_result_in_duplicates() {
     let config = config_from_yaml("files:\n  exclude:\n    - 'node_modules/**/*'\n");
 
-    assert_eq!(config.get_files_config_for_tool(Tool::Linter).exclude, Some(exclude_with(&["node_modules/**/*"])));
+    assert_eq!(
+      config.get_files_config_for_tool(Tool::Linter).exclude,
+      Some(exclude_with(&["node_modules/**/*"]))
+    );
   }
 
   #[test]
