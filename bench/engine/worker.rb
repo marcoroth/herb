@@ -45,6 +45,9 @@ sources = files.map { |path| [path, File.read(path)] }
 failures = []
 compiled_bytes = 0
 
+GC.start
+allocated_objects_before = GC.stat(:total_allocated_objects)
+
 elapsed = Benchmark.realtime do
   sources.each do |(path, src)|
     engine = compile.call(src)
@@ -54,10 +57,13 @@ elapsed = Benchmark.realtime do
   end
 end
 
+allocated_objects = GC.stat(:total_allocated_objects) - allocated_objects_before
+
 STDOUT.write(JSON.generate(
   engine: engine_name,
   files: sources.size,
   elapsed: elapsed,
   compiled_bytes: compiled_bytes,
+  allocated_objects: allocated_objects,
   failures: failures,
 ))

@@ -162,10 +162,13 @@ module Bench
       end
 
       data = JSON.parse(out, symbolize_names: true)
-      Reporter.kv("Elapsed",         Reporter.format_time(data[:elapsed]))
-      Reporter.kv("Per file",        Reporter.format_time(data[:elapsed] / [data[:files], 1].max))
-      Reporter.kv("Failures",        data[:failures].size.to_s)
-      Reporter.kv("Compiled bytes",  format_bytes(data[:compiled_bytes]))
+      files_timed = [data[:files], 1].max
+      Reporter.kv("Elapsed",           Reporter.format_time(data[:elapsed]))
+      Reporter.kv("Per file",          Reporter.format_time(data[:elapsed] / files_timed))
+      Reporter.kv("Failures",          data[:failures].size.to_s)
+      Reporter.kv("Compiled bytes",    format_bytes(data[:compiled_bytes]))
+      Reporter.kv("Allocated objects", format_count(data[:allocated_objects]))
+      Reporter.kv("Objects per file",  format_count(data[:allocated_objects] / files_timed))
       data
     end
 
@@ -184,9 +187,11 @@ module Bench
       ENGINES.each do |name|
         r = results[name]
         label = LABELS[name]
-        Reporter.kv("#{label} total",    Reporter.format_time(r[:elapsed]))
-        Reporter.kv("#{label} per file", Reporter.format_time(r[:elapsed] / [shared_count, 1].max))
-        Reporter.kv("#{label} bytes",    format_bytes(r[:compiled_bytes]))
+        Reporter.kv("#{label} total",      Reporter.format_time(r[:elapsed]))
+        Reporter.kv("#{label} per file",   Reporter.format_time(r[:elapsed] / [shared_count, 1].max))
+        Reporter.kv("#{label} bytes",      format_bytes(r[:compiled_bytes]))
+        Reporter.kv("#{label} objects",    format_count(r[:allocated_objects]))
+        Reporter.kv("#{label} obj/file",   format_count(r[:allocated_objects] / [shared_count, 1].max))
         puts
       end
 
@@ -194,6 +199,9 @@ module Bench
       Reporter.kv("Herb (locations on)  vs Erubi", Reporter.format_ratio(erubi[:elapsed], herb_locations[:elapsed]))
       Reporter.kv("Locations on vs off overhead",  Reporter.format_ratio(herb[:elapsed], herb_locations[:elapsed]))
       Reporter.kv("Output size (Herb/Erubi)",      size_ratio_label(herb[:compiled_bytes], erubi[:compiled_bytes]))
+      Reporter.kv("Objects (Herb off / Erubi)",    count_ratio(herb[:allocated_objects],           erubi[:allocated_objects]))
+      Reporter.kv("Objects (Herb on  / Erubi)",    count_ratio(herb_locations[:allocated_objects], erubi[:allocated_objects]))
+      Reporter.kv("Objects (Herb on / off)",       count_ratio(herb_locations[:allocated_objects], herb[:allocated_objects]))
 
       results.each { |name, r| warn_on_late_failures(name, r[:failures]) }
     end
@@ -230,6 +238,20 @@ module Bench
         unit = units.shift
       end
       format("%.2f %s", value, unit)
+    end
+
+    def format_count(n)
+      # 1_234_567 -> "1,234,567"
+      n.to_i.to_s.reverse.scan(/\d{1,3}/).join(",").reverse
+    end
+
+    # Plain N.NNx ratio for comparing raw counts (allocated objects,
+    # compiled bytes). Doesn't tag "slower/faster" since those don't
+    # apply to counts.
+    def count_ratio(candidate, baseline)
+      return "n/a" if baseline.to_i.zero?
+
+      format("%.2fx", candidate.to_f / baseline)
     end
   end
 end
