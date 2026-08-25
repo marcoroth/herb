@@ -74,6 +74,9 @@ dkms.conf
 
 # Temporary files
 tmp/*
+/bench/tmp/
+/bench/linter/vendor/
+/bench/linter/Gemfile.lock
 
 # Bundler Config
 !/.bundle/config
