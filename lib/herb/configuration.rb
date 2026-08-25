@@ -157,18 +157,16 @@ module Herb
       tool_include = tool_config["include"] || []
       tool_exclude = tool_config["exclude"] || []
 
-      if tool_include.any? && path_included?(path, tool_include)
-        return !path_excluded?(path, tool_exclude)
-      end
+      return !path_excluded?(path, tool_exclude) if include_override?(path, tool_include, user_file_include_patterns)
 
-      user_includes = user_file_include_patterns
-      if user_includes.any? && path_included?(path, user_includes)
-        return !path_excluded?(path, tool_exclude)
-      end
+      !path_excluded?(path, exclude_patterns_for(tool))
+    end
 
-      exclude_patterns = exclude_patterns_for(tool)
+    def include_override?(path, tool_include, user_includes)
+      return true if tool_include.any? && path_included?(path, tool_include)
+      return true if user_includes.any? && path_included?(path, user_includes)
 
-      !path_excluded?(path, exclude_patterns)
+      false
     end
 
     def linter_enabled_for_path?(path)
@@ -188,49 +186,26 @@ module Herb
     end
 
     def find_files(search_path = nil)
-      search_path ||= @project_root || @start_path
-      expanded_path = File.expand_path(search_path.to_s)
-
-      all_files = file_include_patterns.flat_map do |pattern|
-        Dir[File.join(expanded_path, pattern)]
-      end.uniq
-
-      user_includes = user_file_include_patterns
-
-      all_files.reject do |file|
-        relative = file.sub("#{expanded_path}/", "")
-        next false if user_includes.any? && path_included?(relative, user_includes)
-
-        path_excluded?(relative, file_exclude_patterns)
-      end.sort
+      collect_files(search_path, file_include_patterns, file_exclude_patterns, user_file_include_patterns)
     end
 
     def find_files_for_tool(tool, search_path = nil)
+      override_includes = user_file_include_patterns + user_tool_include_patterns(tool)
+      tool_exclude = send(tool.to_s)["exclude"] || []
+
+      collect_files(search_path, include_patterns_for(tool), exclude_patterns_for(tool), override_includes, tool_exclude)
+    end
+
+    def collect_files(search_path, include_patterns, exclude_patterns, override_includes, override_excludes = [])
       search_path ||= @project_root || @start_path
       expanded_path = File.expand_path(search_path.to_s)
 
-      include_patterns = include_patterns_for(tool)
-      exclude_patterns = exclude_patterns_for(tool)
-      user_includes = user_file_include_patterns
-      tool_includes = user_tool_include_patterns(tool)
-      tool_exclude_patterns = send(tool.to_s)["exclude"] || []
-
-      all_files = include_patterns.flat_map do |pattern|
-        Dir[File.join(expanded_path, pattern)]
-      end.uniq
+      all_files = include_patterns.flat_map { |pattern| Dir[File.join(expanded_path, pattern)] }.uniq
 
       all_files.reject do |file|
         relative = file.sub("#{expanded_path}/", "")
-
-        if tool_includes.any? && path_included?(relative, tool_includes)
-          next path_excluded?(relative, tool_exclude_patterns)
-        end
-
-        if user_includes.any? && path_included?(relative, user_includes)
-          next path_excluded?(relative, tool_exclude_patterns)
-        end
-
-        path_excluded?(relative, exclude_patterns)
+        excludes = path_included?(relative, override_includes) ? override_excludes : exclude_patterns
+        path_excluded?(relative, excludes)
       end.sort
     end
 
