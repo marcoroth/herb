@@ -1,4 +1,0 @@
-# Config used by the bench/linter run. We pass --only on the CLI to pick the
-# rule set, so this file only exists to stop herb-lint from walking up and
-# picking up the repo's own .herb.yml.
-framework: ruby

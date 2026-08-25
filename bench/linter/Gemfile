@@ -1,6 +1,0 @@
-# frozen_string_literal: true
-
-source "https://rubygems.org"
-
-# Pinned reasonably recent versions. `bundle update erb_lint` to refresh.
-gem "erb_lint", "~> 0.9"
