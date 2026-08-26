@@ -59,7 +59,7 @@ beforeEach(() => {
   slots = new Slots()
   slots.scan(document.body)
 
-  state = new State(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
 })
 
@@ -115,7 +115,7 @@ describe("Outbox", () => {
     ).replace('"declarations":[', '"declarations":[{"name":"draft","kind":"string","default":"\\"\\"","scope":"region"},')
     slots = new Slots()
     slots.scan(document.body)
-    state = new State(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
     state.observe()
 
@@ -170,7 +170,7 @@ describe("Outbox", () => {
     document.body.innerHTML = PAGE.replace("</ul>", '</ul><p data-herb-name="note"><!--herb-slot:4-->x<!--/herb-slot:4--></p>')
     slots = new Slots()
     slots.scan(document.body)
-    state = new State(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     const entries: { code: string }[] = []
@@ -468,7 +468,7 @@ describe("a template that declares no mutation states", () => {
     const plainSlots = new Slots()
     plainSlots.scan(document.body)
 
-    const plainState = new State(plainSlots, { persist: "none", transport: async () => null })
+    const plainState = new State(plainSlots, { transport: async () => null })
     plainState.adopt()
 
     const plainMutations = new Outbox(plainSlots, plainState, {

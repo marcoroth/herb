@@ -355,156 +355,14 @@ describe("reconciling with the server", () => {
   })
 })
 
-describe("keeping commands out of the address bar", () => {
+describe("sending state to the server", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
-    window.history.replaceState({}, "", "/posts")
-  })
-
-  test("keeps a param that appeared after adoption", async () => {
-    const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new State(slots, { persist: "known", transport: async () => null })
-
-    state.adopt()
-
-    window.history.replaceState({}, "", "/posts?modal=1")
-
-    await state.set("name", "Ada")
-
-    const params = new URLSearchParams(window.location.search)
-
-    expect(params.get("modal")).toBe("1")
-    expect(params.get("name")).toBe("Ada")
-  })
-
-  test("persists a key the map names", async () => {
-    const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new State(slots, { persist: "known", transport: async () => null })
-
-    state.adopt()
-
-    await state.set("name", "Ada")
-
-    expect(window.location.search).toBe("?name=Ada")
-  })
-
-  test("leaves out a key the map says nothing about", async () => {
-    const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new State(slots, { persist: "known", transport: async () => null })
-
-    state.adopt()
-
-    await state.set({ name: "Ada", remove: "3" })
-
-    expect(window.location.search).toBe("?name=Ada")
-    expect(state.get("name")).toBe("Ada")
-  })
-
-  test("forgets a command that arrived in the address bar, once it has been sent", async () => {
-    window.history.replaceState({}, "", "/posts?name=Marco&reset=1")
-
-    const slots = mounted(PAGE + DEPENDENCIES)
-    const seen: StateRequest[] = []
-    const state = new State(slots, {
-      persist: "known",
-      transport: async (request) => {
-        seen.push(request)
-
-        return null
-      },
-    })
-
-    state.adopt()
-
-    await state.set("name", "Ada")
-    await state.set("name", "Grace")
-
-    expect(seen[0].state).toEqual({ name: "Ada", reset: "1" })
-    expect(seen[1].state).toEqual({ name: "Grace" })
-    expect(state.get("reset")).toBeUndefined()
-    expect(window.location.search).toBe("?name=Grace")
-  })
-
-  test("forgets a command once it has been sent, so the next ask does not repeat it", async () => {
-    const slots = mounted(PAGE + DEPENDENCIES)
-    const seen: StateRequest[] = []
-    const state = new State(slots, {
-      persist: "known",
-      transport: async (request) => {
-        seen.push(request)
-
-        return null
-      },
-    })
-
-    state.adopt()
-
-    await state.set({ add: "1" })
-    await state.set("name", "Ada")
-
-    expect(seen[0].state).toEqual({ add: "1" })
-    expect(seen[1].state).toEqual({ name: "Ada" })
-    expect(state.get("add")).toBeUndefined()
-  })
-
-  test("still sends what it leaves out", async () => {
-    const slots = mounted(PAGE + DEPENDENCIES)
-    const seen: StateRequest[] = []
-    const state = new State(slots, {
-      persist: "known",
-      transport: async (request) => {
-        seen.push(request)
-
-        return null
-      },
-    })
-
-    state.adopt()
-
-    await state.set({ add: "1" })
-
-    expect(seen[0].state).toEqual({ add: "1" })
-    expect(window.location.search).toBe("")
-  })
-
-  test("writes nothing to the address bar when the page has no map", async () => {
-    const slots = mounted(PAGE)
-    const state = new State(slots, { persist: "known", transport: async () => null })
-
-    await state.set("name", "Ada")
-
-    expect(window.location.search).toBe("")
-  })
-})
-
-describe("state that has no business in a URL", () => {
-  beforeEach(() => {
-    document.body.innerHTML = ""
-    window.history.replaceState({}, "", "/posts")
-  })
-
-  test("does not read the query string when it is not kept there", () => {
-    window.history.replaceState({}, "", "/posts?name=Marco")
-
-    const state = new State(mounted(PAGE), { transport: async () => null, persist: "none" })
-
-    expect(state.get("name")).toBeUndefined()
-    expect(state.all()).toEqual({})
-  })
-
-  test("leaves the address bar alone", async () => {
-    const state = new State(mounted(PAGE), { transport: async () => null, persist: "none" })
-
-    await state.set("name", "Ada")
-
-    expect(window.location.search).toBe("")
-    expect(state.get("name")).toBe("Ada")
   })
 
   test("still sends what it was given", async () => {
     const seen: StateRequest[] = []
     const state = new State(mounted(PAGE), {
-      persist: "none",
       transport: async (request) => {
         seen.push(request)
 
@@ -520,7 +378,7 @@ describe("state that has no business in a URL", () => {
 
   test("still writes the slots it can", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new State(slots, { transport: async () => null, persist: "none" })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -529,42 +387,8 @@ describe("state that has no business in a URL", () => {
     expect(report.written).toBe(2)
     expect(text(0, slots)).toBe("Ada")
   })
-})
-
-describe("the query string as the state", () => {
-  beforeEach(() => {
-    document.body.innerHTML = ""
-    window.history.replaceState({}, "", "/posts")
-  })
-
-  test("reads what the page was asked for", () => {
-    window.history.replaceState({}, "", "/posts?name=Marco&page=2")
-
-    const state = new State(mounted(PAGE), { transport: async () => null })
-
-    expect(state.get("name")).toBe("Marco")
-    expect(state.get("page")).toBe("2")
-  })
-
-  test("leaves the format out of the state it carries", () => {
-    window.history.replaceState({}, "", "/posts?name=Marco&format=slots")
-
-    const state = new State(mounted(PAGE), { transport: async () => null })
-
-    expect(state.all()).toEqual({ name: "Marco" })
-  })
-
-  test("puts the state it was given back in the address bar", async () => {
-    const state = new State(mounted(PAGE), { transport: async () => null })
-
-    await state.set("name", "Ada")
-
-    expect(window.location.search).toBe("?name=Ada")
-  })
 
   test("sends the whole state, and says which of it changed", async () => {
-    window.history.replaceState({}, "", "/posts?name=Marco&page=2")
-
     const seen: StateRequest[] = []
     const state = new State(mounted(PAGE), {
       transport: async (request) => {
@@ -574,10 +398,11 @@ describe("the query string as the state", () => {
       },
     })
 
+    await state.set({ name: "Marco", page: "2" })
     await state.set("name", "Ada")
 
-    expect(seen[0].state).toEqual({ name: "Ada", page: "2" })
-    expect(seen[0].changed).toEqual(["name"])
+    expect(seen[1].state).toEqual({ name: "Ada", page: "2" })
+    expect(seen[1].changed).toEqual(["name"])
   })
 
   test("sends one request for everything set together", async () => {

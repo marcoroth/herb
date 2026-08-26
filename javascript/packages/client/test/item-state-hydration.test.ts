@@ -45,7 +45,6 @@ beforeEach(() => {
   slots.scan(document.body)
 
   state = new State(slots, {
-    persist: "none",
     transport: () => {
       throw new Error("a declared state must never reach the transport")
     },
@@ -137,7 +136,6 @@ describe("a state read inside a branch that was never on the page", () => {
     branchSlots.scan(document.body)
 
     const branchState = new State(branchSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -184,7 +182,6 @@ describe("a seeded item state on a row the client built", () => {
     seededSlots.scan(document.body)
 
     const seededState = new State(seededSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -248,7 +245,6 @@ describe("markup that materializes with a conditional and a boolean attribute in
     nestedSlots.scan(document.body)
 
     const nestedState = new State(nestedSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },

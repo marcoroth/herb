@@ -173,7 +173,7 @@ describe("what a page can be typed into, worked out without being told", () => {
     const slots = new Slots()
     slots.scan(document.body)
 
-    const state = new State(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    const state = new State(slots, { transport: () => { throw new Error("no transport") } })
     state.adopt()
     state.observe()
 
@@ -235,7 +235,7 @@ describe("the states a template declares, from its own manifest", () => {
     const slots = new Slots()
     slots.scan(document.body)
 
-    const state = new State(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    const state = new State(slots, { transport: () => { throw new Error("no transport") } })
     state.adopt()
 
     const region = slots.regionsFor(DECLARED_FILE)[0]
@@ -262,7 +262,7 @@ describe("manifests a project extracted ahead of rendering", () => {
 
   test("are held for a page that carries none of its own", () => {
     const runtime = Runtime.start({
-      state: { persist: "none" },
+      state: {},
       manifests: { [`${FILE}:${VERSION}`]: MANIFEST as never },
     })
 

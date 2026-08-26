@@ -44,7 +44,6 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     this.options = {
       transport: options.transport ?? ((request, signal) => this.server.fetch(request, signal)),
       debounce: options.debounce ?? 0,
-      persist: options.persist ?? "url",
       format: options.format ?? "slots",
     }
 
@@ -117,10 +116,6 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
     this.bound.observe()
 
-    if (typeof window !== "undefined" && this.server.persisted()) {
-      window.addEventListener("popstate", this.onPopState)
-    }
-
     this.unobserveElements?.()
 
     this.elements = elements ?? new ElementObserver()
@@ -156,10 +151,6 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
 
     this.bound.disconnect()
-
-    if (typeof window !== "undefined") {
-      window.removeEventListener("popstate", this.onPopState)
-    }
   }
 
   private write(slot: Slot, value: string): boolean {
@@ -844,10 +835,6 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
         },
       }),
     )
-  }
-
-  private onPopState = (): void => {
-    this.server.readLocation()
   }
 
   itemRekeyed(slot: Slot, key: string, previousKey: string): void {

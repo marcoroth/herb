@@ -79,7 +79,6 @@ function boot(markup: string): void {
   slots.scan(document.body)
 
   state = new State(slots, {
-    persist: "none",
     transport: () => {
       throw new Error("a declared state must never reach the transport")
     },
@@ -120,7 +119,6 @@ describe("a state read in an interpolated attribute", () => {
     rowSlots.scan(document.body)
 
     const rowState = new State(rowSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -179,7 +177,6 @@ describe("sibling collections sharing a state name", () => {
     twinSlots.scan(document.body)
 
     const twinState = new State(twinSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -298,7 +295,7 @@ describe("declared state", () => {
     document.body.innerHTML = regionMarkup(0) + `<template data-herb-dependencies>${JSON.stringify(manifest)}</template>`
     slots = new Slots()
     slots.scan(document.body)
-    state = new State(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     state.setState({ attempts: 0 })
@@ -353,7 +350,7 @@ describe("declared state", () => {
     document.body.innerHTML = regionMarkup(0) + regionMarkup(1) + dependencies()
     slots = new Slots()
     slots.scan(document.body)
-    state = new State(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     const regions = slots.regionsFor(FILE)
@@ -389,7 +386,7 @@ describe("declared state", () => {
       regionMarkup(0).split("aaaaaaaa").join("bbbbbbbb") + dependencies()
     slots = new Slots()
     slots.scan(document.body)
-    state = new State(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     expect(state.setState({ pending: true })).toBe(false)
@@ -398,7 +395,7 @@ describe("declared state", () => {
   test("the transport is never called", () => {
     const transport = vi.fn()
 
-    state = new State(slots, { persist: "none", transport })
+    state = new State(slots, { transport })
     state.adopt()
     state.setState({ pending: true })
 
@@ -468,7 +465,6 @@ describe("combo conditions", () => {
     comboSlots.scan(document.body)
 
     comboState = new State(comboSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -574,7 +570,6 @@ describe("derived states", () => {
     derivedSlots.scan(document.body)
 
     derivedState = new State(derivedSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -691,7 +686,6 @@ describe("counted states", () => {
     countSlots.scan(document.body)
 
     countState = new State(countSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -808,7 +802,6 @@ describe("shipped seeds", () => {
     seedSlots.scan(document.body)
 
     seedState = new State(seedSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -879,7 +872,7 @@ describe("shipped seeds that disagree with the declaration", () => {
     const oddSlots = new Slots()
     oddSlots.scan(document.body)
 
-    const oddState = new State(oddSlots, { persist: "none" })
+    const oddState = new State(oddSlots, {})
     oddState.adopt()
 
     return oddState
@@ -994,7 +987,6 @@ describe("a condition reading both a region state and an item state", () => {
     mixedSlots.scan(document.body)
 
     const mixedState = new State(mixedSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -1031,7 +1023,6 @@ describe("a condition reading both a region state and an item state", () => {
     addedSlots.scan(document.body)
 
     const addedState = new State(addedSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -1093,7 +1084,7 @@ describe("a collection nested inside another collection", () => {
     nestedSlots = new Slots()
     nestedSlots.scan(document.body)
 
-    nestedState = new State(nestedSlots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    nestedState = new State(nestedSlots, { transport: () => { throw new Error("no transport") } })
     nestedState.adopt()
   })
 

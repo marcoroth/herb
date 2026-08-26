@@ -17,7 +17,6 @@ export class ServerState {
   private readonly values = new Map<string, string>()
   private readonly dependencies = new Map<string, StateSlot[]>()
   private readonly params = new Map<string, string>()
-  private readonly writtenParams = new Set<string>()
   private readonly sequence = new Map<string, number>()
 
   private pending = new Map<string, string>()
@@ -30,10 +29,6 @@ export class ServerState {
   constructor(slots: Slots, options: ResolvedStateOptions) {
     this.slots = slots
     this.options = options
-
-    if (this.persisted()) {
-      this.readLocation()
-    }
   }
 
   get(key: string): string | undefined {
@@ -120,7 +115,6 @@ export class ServerState {
 
     const changed = [...changes.keys()]
     const taken = new Map(changed.map((name) => [name, this.sequence.get(name) ?? 0]))
-    const transient = [...this.values.keys()].filter((name) => this.transient(name))
 
     this.controller?.abort()
     const controller = new AbortController()
@@ -131,8 +125,6 @@ export class ServerState {
     try {
       payload = await this.options.transport({ state: this.all(), changed }, controller.signal)
     } catch (error) {
-      this.forget(transient)
-
       if (controller.signal.aborted || this.superseded(taken)) {
         return this.settle({ ...IDLE, written: restores.length, stale: true })
       }
@@ -150,8 +142,6 @@ export class ServerState {
       return this.settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true })
     }
 
-    this.forget(transient)
-
     if (this.superseded(taken)) {
       return this.settle({ ...IDLE, written: restores.length, stale: true })
     }
@@ -160,10 +150,6 @@ export class ServerState {
 
     if (payload) {
       report = this.slots.apply(payload)
-    }
-
-    if (this.persisted()) {
-      this.writeLocation()
     }
 
     return this.settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false })
@@ -235,45 +221,6 @@ export class ServerState {
     return slots
   }
 
-  readLocation(): void {
-    if (typeof window === "undefined") {
-      return
-    }
-
-    this.values.clear()
-
-    for (const [name, value] of new URL(window.location.href).searchParams) {
-      if (name !== "format") {
-        this.values.set(name, value)
-      }
-    }
-  }
-
-  writeLocation(): void {
-    if (typeof window === "undefined" || !window.history?.replaceState) {
-      return
-    }
-
-    const url = new URL(window.location.href)
-
-    for (const name of this.writtenParams) {
-      url.searchParams.delete(name)
-    }
-
-    this.writtenParams.clear()
-
-    for (const [name, value] of this.values) {
-      if (this.options.persist === "known" && !this.known(name)) {
-        continue
-      }
-
-      url.searchParams.set(name, value)
-      this.writtenParams.add(name)
-    }
-
-    window.history.replaceState(window.history.state, "", url.toString())
-  }
-
   async fetch(request: StateRequest, signal: AbortSignal): Promise<Payload | null> {
     const url = new URL(window.location.href)
 
@@ -290,21 +237,6 @@ export class ServerState {
     }
 
     return (await response.json()) as Payload
-  }
-
-  private transient(name: string): boolean {
-    return this.options.persist === "known" && !this.known(name)
-  }
-
-  private forget(names: string[]): void {
-    for (const name of names) {
-      this.values.delete(name)
-      this.writtenParams.add(name)
-    }
-  }
-
-  persisted(): boolean {
-    return this.options.persist !== "none"
   }
 
   stateName(name: string): string {

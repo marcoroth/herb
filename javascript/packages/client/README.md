@@ -139,15 +139,7 @@ state.set("query", "")
 state.get("query")
 ```
 
-By default the query string is where the state lives, so the address bar keeps matching the page and back, forward and bookmarking all keep working without the server holding a session. `set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
-
-That default fits a view's inputs, which is what a search box, a filter and a page number are. It does not fit everything. A form about to save a row is a mutation and not a view, a long value runs into what a URL can hold, and anything private has no business in a server log or a `Referer` header. Those pages keep their state in memory:
-
-```typescript
-Runtime.start({ state: { persist: "none" } })
-```
-
-A page that keeps state in memory never reads the query string and never writes to it, and everything else is unchanged. It still sends the whole state, and it still writes the slots it can.
+`set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
 
 A page that has told the client which slots read which state can write some of them itself. The compiler marks each slot with where its next value comes from:
 
@@ -183,7 +175,6 @@ Runtime.start({
   state: {
     transport: async (request, signal) => fetch(build(request), { signal }).then((response) => response.json()),
     debounce: 150,
-    persist: "none",
   },
 })
 ```

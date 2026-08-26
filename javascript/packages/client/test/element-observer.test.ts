@@ -36,13 +36,13 @@ afterEach(() => {
 
 describe("the watch a started runtime keeps over the page", () => {
   test("is one observer, however many parts of the runtime care about it", () => {
-    Runtime.start({ state: { persist: "none" } })
+    Runtime.start({ state: {} })
 
     expect(built).toBe(1)
   })
 
   test("is given up once the runtime stops", async () => {
-    const runtime = Runtime.start({ state: { persist: "none" } })
+    const runtime = Runtime.start({ state: {} })
 
     runtime.stop()
 

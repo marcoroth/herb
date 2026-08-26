@@ -44,7 +44,7 @@ beforeEach(() => {
   slots = new Slots()
   slots.scan(document.body)
 
-  state = new State(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
   state.observe()
 })
@@ -125,7 +125,7 @@ describe("state-driven boolean attributes", () => {
     const freshSlots = new Slots()
     freshSlots.scan(document.body)
 
-    const fresh = new State(freshSlots, { persist: "none" })
+    const fresh = new State(freshSlots, {})
     fresh.adopt()
 
     expect(fresh.getState("sending")).toBe(true)

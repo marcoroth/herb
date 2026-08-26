@@ -63,7 +63,7 @@ beforeEach(() => {
   slots = new Slots()
   slots.scan(document.body)
 
-  state = new State(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
 })
 
@@ -121,7 +121,7 @@ describe("runtime diagnostics", () => {
     )
     slots = new Slots()
     slots.scan(document.body)
-    state = new State(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     const devTools = installDevTools()

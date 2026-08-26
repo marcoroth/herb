@@ -37,7 +37,7 @@ beforeEach(() => {
   slots = new Slots()
   slots.scan(document.body)
 
-  state = new State(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
   state.observe()
 })
@@ -127,7 +127,7 @@ describe("property sync after user interaction", () => {
     syncSlots = new Slots()
     syncSlots.scan(document.body)
 
-    syncState = new State(syncSlots, { persist: "none" })
+    syncState = new State(syncSlots, {})
     syncState.adopt()
     syncState.observe()
   })
@@ -219,7 +219,6 @@ describe("a state rendered as a textarea's content", () => {
     areaSlots.scan(document.body)
 
     const areaState = new State(areaSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },

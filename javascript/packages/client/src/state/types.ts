@@ -27,7 +27,6 @@ import type { ApplyReport, Item, Payload, Region, Slot } from "../types"
 import type { StateKind, StateValue } from "./values"
 
 export type StateMode = "identity" | "structural" | "derived"
-export type StatePersistence = "url" | "known" | "none"
 export type StateTransport = (request: StateRequest, signal: AbortSignal) => Promise<Payload | null>
 export type StateListener = (value: StateValue, previous: StateValue) => void
 export type StateWaiter = (report: StateReport) => void
@@ -131,7 +130,6 @@ export interface StateRequest {
 export interface StateOptions {
   transport?: StateTransport
   debounce?: number
-  persist?: StatePersistence
   format?: string
 }
 

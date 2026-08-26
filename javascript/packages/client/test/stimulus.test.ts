@@ -28,7 +28,7 @@ let runtime: Runtime
 
 beforeEach(() => {
   document.body.innerHTML = PAGE
-  runtime = Runtime.start({ state: { persist: "none" } })
+  runtime = Runtime.start({ state: {} })
   runtime.slots.scan(document.body)
   runtime.state.adopt()
 })

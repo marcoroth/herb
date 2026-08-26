@@ -75,7 +75,7 @@ beforeEach(() => {
   slots = new Slots()
   slots.scan(document.body)
 
-  state = new State(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
 
   actions = new Actions(state)
@@ -385,7 +385,7 @@ describe("a tag helper input bound to a state", () => {
     const helperSlots = new Slots()
     helperSlots.scan(document.body)
 
-    const helperState = new State(helperSlots, { persist: "none" })
+    const helperState = new State(helperSlots, {})
     helperState.adopt()
     helperState.observe()
 
@@ -441,7 +441,6 @@ describe("an action on an element its own sibling action removes", () => {
     swapSlots.scan(document.body)
 
     const swapState = new State(swapSlots, {
-      persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -472,7 +471,7 @@ describe("an action attribute that is rewritten", () => {
     const rewriteSlots = new Slots()
     rewriteSlots.scan(document.body)
 
-    const rewriteState = new State(rewriteSlots, { persist: "none", transport: async () => null })
+    const rewriteState = new State(rewriteSlots, { transport: async () => null })
     rewriteState.adopt()
 
     const actions = new Actions(rewriteState)
