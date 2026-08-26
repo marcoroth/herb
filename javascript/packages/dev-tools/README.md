@@ -429,12 +429,12 @@ A page that wants diagnostics right now should use the JavaScript API above.
 The payload is embedded in the document as a single inert JSON script tag.
 
 ```html
-<script type="application/json" data-herb-runtime-report>
+<script type="application/json" data-herb-diagnostics>
   { "version": 1, "renderTree": [], "diagnostics": [] }
 </script>
 ```
 
-Both the `type="application/json"` attribute and the `data-herb-runtime-report` attribute are
+Both the `type="application/json"` attribute and the `data-herb-diagnostics` attribute are
 required. Only the first matching tag in the document is read. The tag may appear anywhere, though
 placing it before the dev-tools bundle lets the bundle auto-initialize without waiting for
 `DOMContentLoaded`.
@@ -468,7 +468,7 @@ can simply emit a fresh payload.
       "origin": "Herb Linter",
       "location": { "start": { "line": 1, "column": 1 }, "end": { "line": 1, "column": 38 } },
       "suggestion": "Remove the inner form.",
-      "docsUrl": "https://herb-tools.dev/linter/rules/html-no-nested-forms",
+      "docs_url": "https://herb-tools.dev/linter/rules/html-no-nested-forms",
       "fix": { "kind": "safe", "source": "<div>\n</div>\n" }
     }
   ],
@@ -539,7 +539,7 @@ The same shape the JavaScript API accepts.
 | `origin` | no | string | Freeform display text, trimmed. Defaults to `unknown`. |
 | `location` | no | object | `{ start, end }`, each `{ line, column }`. |
 | `suggestion` | no | string | What to do about it. |
-| `docsUrl` | no | string | Absolute `http` or `https` URL. |
+| `docs_url` | no | string | Absolute `http` or `https` URL. Spelled `docsUrl` on the JavaScript API. |
 | `value` | no | string | Badge text for a `metric`. |
 | `fix` | no | object | `{ kind, source }`, the template as this one fix would rewrite it. |
 | `overlay` | no | string | `blocking` or `dismissible`. Absent leaves the entry docked. |
@@ -626,7 +626,12 @@ byte identical to the known source for the same template, since a fix that chang
 nothing to show. A `fix` on a template whose source is unknown is kept but cannot be rendered,
 because the panel has no original to diff against. That card renders everything else as usual.
 
-#### `docsUrl`
+#### `docs_url`
+
+The payload spells this key `docs_url`, matching the snake_case the engine writes the rest of a
+diagnostic in. The JavaScript API spells the same field `docsUrl`, matching the camelCase the rest of
+that API uses. The reader accepts either, so a producer can use whichever spelling belongs to the
+side it is writing from.
 
 Only absolute `http`, `https` and `file` URLs are linked, and the scheme is matched
 case-insensitively. Anything else, including `javascript:` and protocol relative URLs, renders the

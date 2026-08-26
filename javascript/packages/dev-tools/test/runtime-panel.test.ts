@@ -105,7 +105,7 @@ function embed(payload: unknown) {
   const script = document.createElement("script")
 
   script.type = "application/json"
-  script.setAttribute("data-herb-runtime-report", "")
+  script.setAttribute("data-herb-diagnostics", "")
   script.textContent = typeof payload === "string" ? payload : JSON.stringify(payload)
 
   document.body.appendChild(script)
@@ -1810,7 +1810,7 @@ describe("refresh", () => {
 
     expect(cards()).toHaveLength(4)
 
-    document.querySelector("script[data-herb-runtime-report]")!.remove()
+    document.querySelector("script[data-herb-diagnostics]")!.remove()
 
     embed({ version: 1, diagnostics: [{ template: "app/views/new.html.erb", message: "fresh" }] })
 
