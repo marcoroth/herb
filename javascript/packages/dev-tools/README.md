@@ -60,7 +60,9 @@ HerbDevTools.start({
 
 The package ships a demo page under `demo/`, a stand-in Rails posts page carrying a realistic report. A layout renders an index which renders one partial twice as a collection, and the report describes a linter error with an autofix, a linter warning, and a runtime metric against it. Every content card names the partial that rendered it, so the render stack in the panel reads against something visible on the page.
 
-A card at the top wires up buttons for `report()`, batching, deduplication, `dismiss()`, both forms of `clear()`, `show()`, and the expand toggle, so every part of the API is exercisable without the console.
+A card at the top wires up buttons for `report()`, batching, deduplication, `dismiss()`, both forms of `clear()`, `show()`, `open()`, `close()`, the expand toggle, and both [`overlay`](#overlay) modes, so every part of the API is exercisable without the console.
+
+One of them reports entries carrying an `element`, which is the field the payload cannot express and only the JavaScript API has. Each of those cards gets a locate control that scrolls the page to its element and flashes it, and hovering the control outlines the element in place. The two point at different things on purpose, so the card labels show both shapes the panel can render: an id, as `<div#cover-three>`, and the first `data-herb-` attribute it finds, as `<article data-herb-debug-outline-type="partial">`.
 
 `yarn dev` inside `javascript/packages/dev-tools` serves it on `http://localhost:5212` straight from `src/`, so edits hot reload with no build step.
 
@@ -118,6 +120,149 @@ Passing `source` registers it for that template, so later calls naming the same 
 out. A card whose template has no source renders its message, suggestion and render stack without an
 excerpt, which is a supported state rather than a degraded one.
 
+#### `element`
+
+`element` points a diagnostic at the DOM node it is about. It is a live `Element`, so like
+[`source`](#source) it is a convenience of the JavaScript API and has no place in the payload.
+
+A card whose entry carries a connected element grows a locate control. Pressing it scrolls the page
+to that element and flashes it, and hovering the control outlines the element where it sits. An
+element that has since left the document is ignored, so a stale reference degrades to a card without
+the control instead of to a broken one.
+
+Locating gets the panel out of its own way first. A panel filling the window collapses back to the
+corner, and a dismissible overlay closes, because both of them are covering the thing you just asked
+to be shown. A blocking overlay is the exception and stays exactly where it is, since nothing may
+dismiss it and the page behind it did not render anyway.
+
+#### `overlay`
+
+By default an entry lands in the docked panel and waits to be clicked. `overlay` asks the panel to
+present itself full screen instead, for a finding that the page cannot sensibly be read around.
+
+```js
+window.HerbDevTools.report({
+  template: "app/views/posts/show.html.erb",
+  message: "The template could not be compiled.",
+  origin: "Herb Parser",
+  overlay: "blocking"
+})
+```
+
+It takes one of two values, and omitting it (or passing `false`) keeps the entry docked.
+
+| Value | Presentation |
+| --- | --- |
+| `"blocking"` | Fills the viewport, scroll locked, with no control that closes it. |
+| `"dismissible"` | The same screen inside a box over the page, closed by the × button, the backdrop, or `Escape`. |
+
+`"blocking"` is for a page that does not exist. A template that failed to compile rendered nothing,
+so there is nothing behind the overlay to go back to, and the panel therefore draws no close button,
+no "Hide for this session", and no **Clear**. `Escape` does nothing. It also shows over a panel that
+was hidden for the session, because a hidden panel is a preference about noise and this is not noise.
+
+`"dismissible"` is for a page that works with something broken in it. Server-rendered markup that
+failed to hydrate is the case it exists for. Closing it puts the panel back in its docked corner,
+open, with the filter chip belonging to the finding that was just featured selected and that finding
+scrolled into view, so what filled the screen a moment ago is the first thing you see. When the
+featured findings come from more than one origin the All chip is selected instead.
+
+Closing always lands in the same place, whether the overlay was raised over a docked panel or over an
+expanded one, since **close** means leaving full screen behind and there is only one place to leave
+it to. Any severity filter is released on the way out, so nothing can hide the finding you were just
+looking at.
+
+Dismissal is tracked per entry, using the same key as [deduplication](#deduplication). It survives
+re-renders, which is its job, and it does not survive a new report. Calling `report()` again for a
+diagnostic whose overlay was closed raises the overlay again, because a producer calling `report()`
+is asking for the screen. Clearing a diagnostic forgets its dismissal along with it.
+
+Both modes are properties of a diagnostic, not of the panel, so the overlay is up exactly as long as
+something is asking for it. Removing the last entry that asked takes the overlay down.
+
+##### The overlay shows only what asked for it
+
+An overlay is not the panel drawn larger. It lists the entries that requested it and nothing else,
+because a finding that takes the whole screen is claiming to be the thing worth reading. A page whose
+template failed to compile has linter warnings and query counts still sitting in the panel, and none
+of them describe a page that exists.
+
+So the origin filters and the **Clear** control are both absent while an overlay is focused. With the
+chips gone, the header is the only place left to say how much is on screen, so a focused overlay
+showing more than one entry puts the count there. Everything the panel holds is still there, and
+`count` still reports all of it.
+
+A **Show other diagnostics** button in the header widens the overlay to every entry the panel holds,
+with the origin filters back. It appears only when something is actually being held back. **Back to
+the error** returns to the focused view, and widening the scope of a blocking overlay does not
+unblock it.
+
+The button carries no count, because none of the available counts is the right one. The badge counts
+diagnostics and drops metrics, the panel's own total counts both, and neither answers "how many will
+I see if I press this". Its tooltip names the exact number being held back, where there is room to be
+precise about which number it is.
+
+##### Blocking gets its own screen
+
+A focused overlay is not styled like the panel. Its header becomes a band carrying a severity dot,
+the shared `origin` of the entries as a title, and the `template:line:column` of the single entry
+when there is only one. That location opens the file in the editor, the same as the paths on a card
+do, and falls back to plain text when no editor handler is configured. Excerpts get more surrounding
+context and a larger type size, since there is room for both.
+
+The band is tinted by severity, never filled with it. A pale wash of the severity colour, a border of
+the same hue, a severity dot, and darkened text carry the signal without a saturated block of colour
+on screen, so an error reads red and a warning reads amber at the same weight. The severity comes
+from the entries on show, so featuring a warning stays amber even while an unrelated error sits in
+the panel behind it.
+
+The bar's size and layout belong to the panel at full size, not to overlays, so expanding the docked
+panel with its own control gets the same bar. The three full-size views (a focused overlay, a widened
+one, and the expanded panel) are the same object at different scopes, and only the compact docked
+panel keeps the small header.
+
+The **colour** is narrower than that. It appears only while an overlay is focused on something, which
+is the only state where one diagnostic is the subject. Widening the overlay and expanding the
+panel both show the ordinary list, so both get the neutral bar. A tinted bar always means "this
+entry", never "this panel".
+
+The two modes differ in how much they take. A blocking overlay fills the viewport edge to edge with
+no border, no corner radius, and nothing showing through, in the shape a framework error screen
+takes. A dismissible one puts that same screen in a box over the page, with the page still visible
+around it, which is the honest picture when the page underneath still works.
+
+Widening either puts the ordinary panel title and the origin filters back, and
+nothing else about the bar moves. Its layout, size, tint and controls stay where they were, so
+widening does not make the page jump. How much screen the overlay takes does not change either, so a
+widened blocking overlay is still edge to edge and a widened dismissible one is still a box.
+
+#### Featuring an entry from the panel
+
+Every card in the docked panel carries an expand control that puts that one entry on a dismissible
+screen of its own, whatever it was reported with. It is a way of looking at an entry, so it does not change the
+diagnostic. Closing the screen behaves exactly as closing a reported dismissible overlay does, and
+the entry can be featured again afterwards.
+
+The control is absent while a screen is already featured, and while a blocking overlay is up, since
+blocking outranks it.
+
+When entries disagree, `"blocking"` wins. A page holding one blocking finding and five dismissible
+ones is blocked, and the overlay shows the blocking one alone.
+
+##### Blocking is not uncloseable
+
+The absent controls are the ones a **person** can reach. The reporter keeps every programmatic
+route, so the producer that raised a blocking overlay can always take it down.
+
+```js
+const handle = window.HerbDevTools.report({ /* … */ overlay: "blocking" })
+
+handle.dismiss()
+```
+
+`clear()` and `clear(origin)` do the same. This is what lets a dev server drop the overlay when the
+file it complained about is saved and compiles.
+
 #### The handle
 
 `report` returns a handle whose `dismiss()` removes exactly what that call added.
@@ -142,8 +287,8 @@ window.HerbDevTools.clear()
 The argument is matched exactly against the `origin` a diagnostic carries, after the same whitespace
 trim the reader applies on the way in.
 
-The panel header carries the same operation as a control, scoped to the active filter. With the All
-filter selected it reads **Clear all** and empties the panel. With an origin chip selected it reads
+The panel header carries the same operation as a control, scoped to the active origin chip. With the
+All chip selected it reads **Clear all** and empties the panel. With an origin chip selected it reads
 **Clear Herb Linter**, or whatever the chip says, and removes only that origin. Nothing about it is
 confirmed first, because the cost of clearing is a page reload.
 
@@ -152,10 +297,14 @@ Diagnostics that came from the embedded payload return on the next page load, be
 re-reads the tag. Anything pushed through `report()` is gone until something calls `report()` again.
 The stored "hidden for this session" state is untouched, so clearing and hiding stay independent.
 
-Clearing everything would normally take the badge and the panel with it, since the panel only renders
-while it holds entries. To keep that from reading as a crash, a clear that empties an open panel
-leaves it open on an empty state saying so. Closing the panel, or reporting something new, returns it
-to normal behaviour.
+The control closes the panel when it empties it, since an empty panel has nothing to say and the
+badge has nothing to count. Clearing one origin out of several leaves the panel open on what remains.
+Nothing about this touches the stored "hidden for this session" state, so the panel comes back on the
+next `report()` or the next page.
+
+`clear()` called from JavaScript leaves an emptied panel open on an empty state saying what happened,
+because a panel that vanishes under a caller reads as a crash. The control can afford to close
+because the person pressing it knows what they just did.
 
 #### `show({ open })`
 
@@ -167,6 +316,22 @@ window.HerbDevTools.show()
 window.HerbDevTools.show({ open: true })
 ```
 
+#### `open({ expanded })` and `close()`
+
+`open()` opens the runtime diagnostics panel, undismissing it first if it was hidden for the session.
+Pass `{ expanded: true }` to open it filling the window, or `{ expanded: false }` to force it back
+into the corner. Omitting `expanded` leaves whichever of the two the panel was last in.
+
+```js
+window.HerbDevTools.open()
+window.HerbDevTools.open({ expanded: true })
+window.HerbDevTools.close()
+```
+
+`close()` closes the panel and leaves the badge in place, which is what the panel's own × does.
+Neither one touches the stored "hidden for this session" state, and neither can close an overlay. Use
+[`overlay`](#overlay) for that.
+
 The Herb menu carries a **Runtime Diagnostics** toggle that does the same thing without the console.
 Switching it off is the panel header's "Hide for this session", and switching it back on is `show()`.
 Both write the same stored state, so the two can never disagree. Neither one brings back entries that
@@ -174,8 +339,8 @@ were cleared, because those are gone rather than hidden.
 
 #### When the panel is off
 
-`report`, `clear` and `show` are no-ops that log nothing when the panel is switched off with
-`runtimePanel: false`. Guarding the global is the only check a caller needs.
+`report`, `clear`, `show`, `open` and `close` are no-ops that log nothing when the panel is switched
+off with `runtimePanel: false`. Guarding the global is the only check a caller needs.
 
 #### Deduplication
 
@@ -188,6 +353,24 @@ used in its place, so untyped findings and metrics on the same line stay distinc
 The panel holds at most **200** entries. Reporting past that cap drops the oldest entry rather than
 growing without bound, since a report loop must not be able to exhaust the page's memory.
 Deduplication happens first, so a repeated finding costs one slot no matter how often it fires.
+
+### Filters
+
+The panel filters on two independent axes, each a row of chips above the list. The first is
+[`origin`](#origins), the second is severity.
+
+The severity row folds the four `severity` values into three words, matching the vocabulary the badge
+tooltip uses, so the panel speaks one language about severity. **Errors** and **Warnings** are what they say, **Notices**
+covers `info` and `hint` together, and **Metrics** covers everything with `kind: "metric"`, which has
+no severity at all. **Any severity** clears the row.
+
+The two rows are faceted, so each one counts against the other's selection. Picking **Warnings**
+leaves the origin row listing only the origins that have a warning, with counts to match, and picking
+an origin does the same to the severity row. A chip is never shown leading to an empty list.
+
+The severity row appears only when the panel holds more than one of these groups, since a row that
+can only ever say "all of them" is noise. A selection that stops matching anything is released rather
+than left stranded, and both selections persist for the session the same way.
 
 ### Origins
 
@@ -223,7 +406,14 @@ The badge takes its glyph and colour from the worst severity it is holding, and 
 
 Code excerpts and autofix diffs are rendered as ANSI by [`@herb-tools/highlighter`](/projects/highlighter) and displayed in a `<herb-ansi>` element.
 
-The header ends with a control that expands the panel to fill the window, which gives long excerpts and wide autofix diffs room to breathe. Expanding is always user-initiated. Collapse it with the same control, by clicking the backdrop, or by pressing Escape, and the panel returns to its anchored position. Both the open and the expanded state persist for the session. The host page keeps its own scrolling throughout.
+The header carries no counts of its own. The filter chips directly beneath it already count every
+origin and every severity, and the badge's tooltip carries the whole summary, so repeating it in the
+title row only cost space the controls could use. The controls sit next to the title, and the window
+controls stay at the right edge.
+
+The header ends with a control that expands the panel to fill the window, which gives long excerpts and wide autofix diffs room to breathe. Its icon is a pair of corner brackets, pointing outwards to expand and inwards to collapse. Expanding is always user-initiated. Collapse it with the same control or by clicking the backdrop, and the panel returns to its anchored position. Both the open and the expanded state persist for the session. The host page keeps its own scrolling throughout.
+
+`Escape` does what the close button does, so it closes the panel and leaves the badge. It does not collapse an expanded panel back into the corner, because closing is what a reader reaches for Escape to do. It is only listened for while the panel fills the window, so a docked panel never takes the key away from the page.
 
 The panel header's "Hide for this session" and the Herb menu's **Runtime Diagnostics** toggle are the same switch. Either one hides the badge for the session, and the toggle or `show()` brings it back.
 
@@ -352,6 +542,7 @@ The same shape the JavaScript API accepts.
 | `docsUrl` | no | string | Absolute `http` or `https` URL. |
 | `value` | no | string | Badge text for a `metric`. |
 | `fix` | no | object | `{ kind, source }`, the template as this one fix would rewrite it. |
+| `overlay` | no | string | `blocking` or `dismissible`. Absent leaves the entry docked. |
 | `source` | no | string | JavaScript API only. The payload uses top level `sources` instead. |
 
 An entry missing `template` or `message` is dropped. Everything else falls back to a default, so a
@@ -478,6 +669,8 @@ never throws. Concretely:
   signal, since it distinguishes "checked and clean" from "not checked".
 - A `fix` that is unusable is dropped on its own. The card keeps its message, excerpt, and render
   stack.
+- An `overlay` value the reader does not know becomes no overlay, so a payload from a newer producer
+  degrades to a docked entry instead of a screen nothing can dismiss.
 
 ### Not built
 

@@ -398,3 +398,72 @@ describe("runtime diagnostics menu toggle", () => {
     expect(toggle()!.checked).toBe(true)
   })
 })
+
+describe("opening the runtime diagnostics", () => {
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement | null
+  }
+
+  function report(instance: HerbDevTools) {
+    instance.report({
+      template: "app/views/posts/_actions.html.erb",
+      message: "Nested `<form>` elements are not allowed.",
+    })
+  }
+
+  test("opens the panel and closes it again", () => {
+    const instance = startDevTools()
+
+    report(instance)
+
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(false)
+
+    instance.open()
+
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+
+    instance.close()
+
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(false)
+  })
+
+  test("opens filling the window and back into the corner", () => {
+    const instance = startDevTools()
+
+    report(instance)
+
+    instance.open({ expanded: true })
+
+    expect(panel()!.classList.contains("herb-dev-tools-expanded")).toBe(true)
+
+    instance.open({ expanded: false })
+
+    expect(panel()!.classList.contains("herb-dev-tools-expanded")).toBe(false)
+  })
+
+  test("opens a panel that was hidden for the session", () => {
+    const instance = startDevTools()
+
+    report(instance)
+    instance.runtimePanel!.dismiss()
+
+    expect(panel()).toBeNull()
+
+    instance.open()
+
+    expect(instance.runtimePanel!.dismissed).toBe(false)
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+  })
+
+  test("is a no-op when the panel is switched off", () => {
+    const instance = startDevTools({ runtimePanel: false })
+
+    expect(() => {
+      instance.open()
+      instance.open({ expanded: true })
+      instance.close()
+    }).not.toThrow()
+
+    expect(panel()).toBeNull()
+  })
+})

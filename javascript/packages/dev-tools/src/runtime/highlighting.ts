@@ -8,13 +8,19 @@ import type { NormalizedDiagnostic, NormalizedFix } from './report.js'
 
 export const HIGHLIGHTER_THEME = 'onedark'
 export const CONTEXT_LINES = 2
+export const FOCUSED_CONTEXT_LINES = 6
 export const DIFF_CONTEXT_LINES = 1
 export const MAX_WIDTH = 120
 
 const BLOCK_SEPARATOR = '\n\n'
 
+export interface ExcerptOptions {
+  fileUrl?: string
+  contextLines?: number
+}
+
 export interface RuntimeHighlighting {
-  excerpt(source: string, diagnostic: NormalizedDiagnostic, fileUrl?: string): string | null
+  excerpt(source: string, diagnostic: NormalizedDiagnostic, options?: ExcerptOptions): string | null
   diff(path: string, source: string, fix: NormalizedFix): string | null
 }
 
@@ -50,24 +56,27 @@ async function build(): Promise<RuntimeHighlighting> {
   const diffRenderer = new DiffRenderer(syntaxRenderer, colors)
 
   return {
-    excerpt(source, diagnostic, fileUrl) {
+    excerpt(source, diagnostic, options = {}) {
       if (diagnostic.location === null) {
         return null
       }
+
+      const { fileUrl } = options
+      const contextLines = options.contextLines ?? CONTEXT_LINES
 
       try {
         if (diagnostic.severity === null) {
           const focusLine = clampLine(diagnostic.location.start.line, source)
 
           return dropLeadingBlocks(
-            fileRenderer.renderWithFocusLine(diagnostic.template, source, focusLine, CONTEXT_LINES, true, MAX_WIDTH, false, false, fileUrl),
+            fileRenderer.renderWithFocusLine(diagnostic.template, source, focusLine, contextLines, true, MAX_WIDTH, false, false, fileUrl),
             1,
           )
         }
 
         return dropLeadingBlocks(
           diagnosticRenderer.renderSingle(diagnostic.template, toDiagnostic(diagnostic, source), source, {
-            contextLines: CONTEXT_LINES,
+            contextLines,
             showLineNumbers: true,
             wrapLines: false,
             truncateLines: false,
