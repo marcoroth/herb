@@ -10,7 +10,7 @@ require_relative "../../../lib/herb/engine/report/session"
 module Engine
   module Slots
     class ManifestChannelTest < Minitest::Spec
-      TEMPLATE = %(<li id="<%= @n %>"><%= @n %></li>) #: String
+      TEMPLATE = %(<li data-herb-name="row" id="row-<%= @n %>-x"><%= @n %></li>) #: String
 
       def compile(deliver:, source: TEMPLATE, filename: "app/views/posts/_card.html.erb")
         visitor = Herb::Engine::Slots::Visitor.new(mode: :client, deliver: deliver)
@@ -70,7 +70,7 @@ module Engine
         held = JSON.parse(json)
 
         assert_equal 1, held.size
-        assert_equal ["file", "identifier", "version", "slots", "names", "parts", "states"], held.values.fetch(0).keys
+        assert_equal ["file", "identifier", "version", "names", "parts", "states"], held.values.fetch(0).keys
       end
 
       test "records the manifest once for a partial rendered many times when it is hoisted" do
@@ -146,6 +146,18 @@ module Engine
         hoisted = JSON.parse(channel_after(1, compile(deliver: :hoist)).to_html[%r{data-count="\d+">(\{.*\})</template>}m, 1])
 
         assert_equal inlined, hoisted
+      end
+
+      test "a template with nothing of its own to say records nothing" do
+        compiled = compile(deliver: :hoist, source: %(<p><%= @n %></p>))
+
+        refute_includes compiled, "Manifest::Channel"
+      end
+
+      test "and inlines nothing either" do
+        compiled = compile(deliver: :inline, source: %(<p><%= @n %></p>))
+
+        refute_includes compiled, "data-herb-manifests"
       end
 
       test "an empty channel renders nothing, so a page that says nothing carries nothing" do

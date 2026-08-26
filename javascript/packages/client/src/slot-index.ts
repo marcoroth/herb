@@ -30,6 +30,7 @@ import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } from "./markers"
 import { blankSlots, fillSlots, interpolateParts, templateNames, withoutMarkers } from "./fragments"
 
+import type { StateManifest } from "./state"
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
 import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
@@ -253,6 +254,10 @@ export class SlotIndex {
     }
 
     return null
+  }
+
+  statesFor(file: string, version: string): StateManifest | null {
+    return this.#manifests.statesOf(file, version)
   }
 
   rangeOf(target: Slot | Item): Range {
@@ -1267,9 +1272,7 @@ export class SlotIndex {
   #replay(marker: MarkerData, comment: Comment, state: ParseState): void {
     switch (marker.kind) {
       case "region-open": {
-        const region = this.#regions.find((candidate) => {
-          return candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version
-        })
+        const region = this.#regions.find((candidate) => candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version)
         const range = region?.ranges.find((candidate) => candidate.start === comment)
 
         if (region && range) {
@@ -1329,10 +1332,7 @@ export class SlotIndex {
 
   #openRegion(marker: RegionOpenMarker, comment: Comment, result: ScanResult, state: ParseState): void {
     const range: RegionRange = { start: comment, end: null }
-
-    const existing = this.#regions.find((candidate) => {
-      return candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version
-    })
+    const existing = this.#regions.find((candidate) => candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version)
 
     if (existing) {
       existing.ranges.push(range)

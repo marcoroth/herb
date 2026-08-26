@@ -333,7 +333,7 @@ export class SlotState {
   }
 
   manifestFor(region: Region): StateManifest | null {
-    const manifest = this.#declared.get(region.file)
+    const manifest = this.#slots.statesFor(region.file, region.version) ?? this.#declared.get(region.file)
 
     if (!manifest || manifest.version !== region.version) {
       return null

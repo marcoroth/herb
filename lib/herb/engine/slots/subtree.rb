@@ -42,7 +42,7 @@ module Herb
           Herb::Engine.new(source, visitors: [visitor], filename: filename)
 
           @slots = visitor.slots
-          @version = visitor.schema[:version]
+          @version = visitor.version
         end #: String
 
         #: (Integer) -> Array[Integer]?

@@ -43,16 +43,6 @@
     "file": "app/views/contract/a-conditional-matching-nothing.html.erb",
     "identifier": "app/views/contract/a-conditional-matching-nothing.html.erb",
     "version": "83ab2bfd",
-    "slots": [
-      {
-        "index": 0,
-        "type": "conditional"
-      },
-      {
-        "index": 1,
-        "type": "child"
-      }
-    ],
     "names": {},
     "parts": {},
     "states": null

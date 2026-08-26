@@ -609,6 +609,29 @@ module Engine
 
         assert_empty subject.payload(path)["states"]
       end
+
+      test "hands the map to the response rather than writing it into the body" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        session = Herb::Engine::Report::Session.capture { subject.deliver(entry) }
+        channel = session.channel(Herb::Engine::Slots::Dependencies::Channel::NAME) { nil }
+
+        assert_equal :body, channel.anchor
+        assert_equal subject.dependencies_tag(entry), channel.to_html
+      end
+
+      test "carries one map for a response however many times it is handed over" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        session = Herb::Engine::Report::Session.capture { 3.times { subject.deliver(entry) } }
+        channel = session.channel(Herb::Engine::Slots::Dependencies::Channel::NAME) { nil }
+
+        assert_equal 1, channel.to_html.scan("data-herb-dependencies").size
+      end
+
+      test "a response nobody handed a map to carries nothing" do
+        session = Herb::Engine::Report::Session.capture { nil }
+
+        assert_nil session.channel(Herb::Engine::Slots::Dependencies::Channel::NAME) { nil }
+      end
     end
   end
 end

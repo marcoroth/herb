@@ -83,12 +83,12 @@ module Engine
         assert_includes parked(template), "menu"
       end
 
-      test "records the arm table in the schema" do
+      test "records the arm table against the slot it belongs to" do
         visitor, = compile(STATUS)
-        entry = visitor.slot_entries.find { |candidate| candidate[:state_arms] }
+        conditional = visitor.state_conditional_entries.fetch(0)
 
-        assert_equal [{ "branch" => 0, "condition" => ["pending", nil] }, { "branch" => 1, "condition" => ["failed", nil] }], entry[:state_arms]
-        assert_equal 2, entry[:state_else]
+        assert_equal [arm(0, ["pending", nil]), arm(1, ["failed", nil])], conditional[:arms]
+        assert_equal 2, conditional[:else]
       end
 
       test "if with equality and case produce the same arm table" do
@@ -103,8 +103,8 @@ module Engine
 
         arms = lambda { |template|
           visitor, = compile(template)
-          entry = visitor.slot_entries.find { |candidate| candidate[:state_arms] }
-          [entry[:state_arms], entry[:state_else]]
+          conditional = visitor.state_conditional_entries.fetch(0)
+          [conditional[:arms], conditional[:else]]
         }
 
         assert_equal arms.call(equality), arms.call(cased)

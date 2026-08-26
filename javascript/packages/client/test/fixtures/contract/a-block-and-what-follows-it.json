@@ -47,20 +47,6 @@
     "file": "app/views/contract/a-block-and-what-follows-it.html.erb",
     "identifier": "app/views/contract/a-block-and-what-follows-it.html.erb",
     "version": "2eaea62e",
-    "slots": [
-      {
-        "index": 0,
-        "type": "block"
-      },
-      {
-        "index": 1,
-        "type": "child"
-      },
-      {
-        "index": 2,
-        "type": "child"
-      }
-    ],
     "names": {},
     "parts": {},
     "states": null

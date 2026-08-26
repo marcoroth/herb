@@ -40,18 +40,6 @@
     "file": "app/views/contract/two-attributes-on-one-element.html.erb",
     "identifier": "app/views/contract/two-attributes-on-one-element.html.erb",
     "version": "6a76c755",
-    "slots": [
-      {
-        "index": 0,
-        "type": "attribute",
-        "attribute": "class"
-      },
-      {
-        "index": 1,
-        "type": "attribute",
-        "attribute": "id"
-      }
-    ],
     "names": {},
     "parts": {},
     "states": null

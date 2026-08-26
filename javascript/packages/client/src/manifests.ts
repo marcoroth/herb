@@ -1,20 +1,11 @@
 import { HERB_ATTRIBUTES } from "./attributes"
 
 import type { StateManifest } from "./state"
-import type { SlotType } from "./types"
-
-export interface ManifestSlot {
-  index: number
-  type: SlotType
-  attribute?: string
-  collection?: number
-}
 
 export interface TemplateManifest {
   file: string
   identifier: string
   version: string
-  slots: ManifestSlot[]
   names: Record<string, number>
   parts: Record<string, string[]>
   states: StateManifest | null

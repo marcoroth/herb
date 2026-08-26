@@ -21,8 +21,6 @@ module Herb
       # A conditional is reported against its own condition rather than everything inside it. What
       # the branches read belongs to the slots in them, which carry their own state.
       class Dependencies
-        ATTRIBUTE: String
-
         # : (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
         def initialize: (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
 
@@ -39,7 +37,13 @@ module Herb
         def declared_states: (String, Hash[String, untyped]) -> Hash[String, untyped]
 
         # : (String, ?params: Hash[String, String]) -> String
+        def envelope: (String, ?params: Hash[String, String]) -> String
+
+        # : (String, ?params: Hash[String, String]) -> String
         def dependencies_tag: (String, ?params: Hash[String, String]) -> String
+
+        # : (String, ?params: Hash[String, String]) -> void
+        def deliver: (String, ?params: Hash[String, String]) -> void
 
         # : (String) -> Hash[Integer, Hash[Symbol, untyped]]
         def slots_for: (String) -> Hash[Integer, Hash[Symbol, untyped]]

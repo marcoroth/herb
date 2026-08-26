@@ -79,27 +79,6 @@
     "file": "app/views/contract/a-collection-inside-a-branch.html.erb",
     "identifier": "app/views/contract/a-collection-inside-a-branch.html.erb",
     "version": "e21c5e4a",
-    "slots": [
-      {
-        "index": 0,
-        "type": "conditional"
-      },
-      {
-        "index": 1,
-        "type": "collection"
-      },
-      {
-        "index": 2,
-        "type": "attribute",
-        "attribute": "id",
-        "collection": 1
-      },
-      {
-        "index": 3,
-        "type": "child",
-        "collection": 1
-      }
-    ],
     "names": {},
     "parts": {},
     "states": null

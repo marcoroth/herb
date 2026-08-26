@@ -223,3 +223,50 @@ describe("what a page can be typed into, worked out without being told", () => {
     expect(state.getState("hint")).toBe("")
   })
 })
+
+describe("the states a template declares, from its own manifest", () => {
+  const DECLARED_FILE = "app/views/declared.html.erb"
+
+  const STATES = {
+    version: "cccccccc",
+    declarations: [{ name: "open", kind: "boolean", default: "false", value: false, scope: "region" }],
+    reads: {},
+    conditionals: { 0: { arms: [{ branch: 0, condition: ["open", null] }], else: 1 } },
+    presence: {},
+  }
+
+  const DECLARED_PAGE =
+    `<!--herb-region:${DECLARED_FILE}:cccccccc:0-->` +
+    `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->shut<!--/herb-slot:0--></div>` +
+    `<template data-herb-region="${DECLARED_FILE}:cccccccc"><!--herb-branch:0:0-->open</template>` +
+    `<!--/herb-region:${DECLARED_FILE}-->`
+
+  const MANIFEST_TAG = `<template data-herb-manifests>${JSON.stringify({
+    [`${DECLARED_FILE}:cccccccc`]: {
+      file: DECLARED_FILE,
+      identifier: DECLARED_FILE,
+      version: "cccccccc",
+      names: {},
+      parts: {},
+      states: STATES,
+    },
+  })}</template>`
+
+  test("is read from the manifest, with no states in the envelope at all", () => {
+    document.body.innerHTML = DECLARED_PAGE + MANIFEST_TAG + `<template data-herb-dependencies>${JSON.stringify({ state: {} })}</template>`
+
+    const slots = new SlotIndex()
+    slots.scan(document.body)
+
+    const state = new SlotState(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    state.adopt()
+
+    const region = slots.regionsFor(DECLARED_FILE)[0]
+
+    expect(state.manifestFor(region)?.declarations[0].name).toBe("open")
+
+    state.setState({ open: true }, { scope: { region, item: null } })
+
+    expect(document.querySelector("div")!.textContent).toContain("open")
+  })
+})

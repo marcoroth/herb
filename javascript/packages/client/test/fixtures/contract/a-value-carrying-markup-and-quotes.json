@@ -40,17 +40,6 @@
     "file": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
     "identifier": "app/views/contract/a-value-carrying-markup-and-quotes.html.erb",
     "version": "853586d4",
-    "slots": [
-      {
-        "index": 0,
-        "type": "attribute",
-        "attribute": "title"
-      },
-      {
-        "index": 1,
-        "type": "child"
-      }
-    ],
     "names": {},
     "parts": {},
     "states": null

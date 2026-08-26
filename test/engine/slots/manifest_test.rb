@@ -27,23 +27,6 @@ module Engine
         assert_equal compile("<p><%= @name %></p>").version, built["version"]
       end
 
-      test "says what each slot is" do
-        built = manifest(%(<li class="<%= @c %>"><%= @n %></li>))
-
-        assert_equal [
-          { "index" => 0, "type" => "attribute", "attribute" => "class" },
-          { "index" => 1, "type" => "child" }
-        ], built["slots"]
-      end
-
-      test "says which collection a slot renders inside" do
-        built = manifest(%(<% @items.each do |r| %><%# herb:key r %><li id="<%= r %>"><%= r %></li><% end %>))
-        inside = built["slots"].reject { |slot| slot["type"] == "collection" }
-
-        assert_equal([0, 0], inside.map { |slot| slot["collection"] })
-        assert_nil built["slots"].find { |slot| slot["type"] == "collection" }["collection"]
-      end
-
       test "carries a name the template wrote on an element" do
         built = manifest(%(<ul data-herb-name="rows"><% @items.each do |r| %><li><%= r %></li><% end %></ul>))
 

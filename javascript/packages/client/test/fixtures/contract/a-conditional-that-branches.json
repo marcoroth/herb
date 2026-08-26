@@ -59,24 +59,6 @@
     "file": "app/views/contract/a-conditional-that-branches.html.erb",
     "identifier": "app/views/contract/a-conditional-that-branches.html.erb",
     "version": "15f51fc3",
-    "slots": [
-      {
-        "index": 0,
-        "type": "conditional"
-      },
-      {
-        "index": 1,
-        "type": "child"
-      },
-      {
-        "index": 2,
-        "type": "child"
-      },
-      {
-        "index": 3,
-        "type": "child"
-      }
-    ],
     "names": {},
     "parts": {},
     "states": null

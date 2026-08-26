@@ -5,6 +5,7 @@ require_relative "../../../herb"
 require_relative "../../engine"
 require_relative "visitor"
 require_relative "../../analysis/template_dependencies"
+require_relative "dependencies/channel"
 
 require "json"
 
@@ -28,9 +29,8 @@ module Herb
       #
       # A conditional is reported against its own condition rather than everything inside it. What
       # the branches read belongs to the slots in them, which carry their own state.
+      #
       class Dependencies
-        ATTRIBUTE = "data-herb-dependencies" #: String
-
         #: (String | Pathname, ?compile: ^(String, String) -> untyped) -> void
         def initialize(project_path, compile: nil)
           @compile = compile
@@ -68,8 +68,7 @@ module Herb
         def payload(entry_point, params: {})
           reached = across(entry_point)
           state = reached.transform_values { |slots|
-            slots.select { |slot| slot[:mode] == :identity }
-                 .map { |slot| { "file" => identifier_for(slot[:file]), "version" => slot[:version], "index" => slot[:index] } }
+            slots.select { |slot| slot[:mode] == :identity }.map { |slot| { "file" => identifier_for(slot[:file]), "version" => slot[:version], "index" => slot[:index] } }
           }
 
           {
@@ -94,10 +93,20 @@ module Herb
         end
 
         #: (String, ?params: Hash[String, String]) -> String
-        def dependencies_tag(entry_point, params: {})
-          json = JSON.generate(payload(entry_point, params: params), script_safe: true)
+        def envelope(entry_point, params: {})
+          JSON.generate(payload(entry_point, params: params), script_safe: true)
+        end
 
-          %(<template #{ATTRIBUTE}>#{json}</template>)
+        #: (String, ?params: Hash[String, String]) -> String
+        def dependencies_tag(entry_point, params: {})
+          Channel.tag(envelope(entry_point, params: params))
+        end
+
+        #: (String, ?params: Hash[String, String]) -> void
+        def deliver(entry_point, params: {})
+          Channel.record(envelope(entry_point, params: params))
+
+          nil
         end
 
         #: (String) -> Hash[Integer, Hash[Symbol, untyped]]
@@ -139,7 +148,7 @@ module Herb
             index[slot.index] = { state: state, mode: mode_for(slot, state, expressions, settable) }
           end
 
-          { version: visitor.schema[:version], identifier: visitor.schema[:identifier], slots: index, states: states_manifest(visitor) }
+          { version: visitor.version, identifier: visitor.identifier, slots: index, states: states_manifest(visitor) }
         end
 
         #: (untyped) -> Hash[String, untyped]?

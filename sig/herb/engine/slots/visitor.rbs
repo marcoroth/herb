@@ -187,12 +187,6 @@ module Herb
         # : () -> Hash[String, untyped]
         def manifest: () -> Hash[String, untyped]
 
-        # : () -> Array[Hash[String, untyped]]
-        def manifest_slots: () -> Array[Hash[String, untyped]]
-
-        # : (Slot) -> Integer?
-        def enclosing_collection: (Slot) -> Integer?
-
         # : () -> Hash[String, Integer]
         def manifest_names: () -> Hash[String, Integer]
 

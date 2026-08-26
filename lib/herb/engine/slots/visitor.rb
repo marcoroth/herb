@@ -119,7 +119,7 @@ module Herb
         end
 
         #: (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
-        def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :none)
+        def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist)
           super()
 
           raise ArgumentError, "unknown slot mode #{mode.inspect}, expected one of #{MODES.inspect}" unless MODES.include?(mode)
@@ -304,38 +304,10 @@ module Herb
             "file" => context.relative_file_path,
             "identifier" => identifier,
             "version" => version,
-            "slots" => manifest_slots,
             "names" => manifest_names,
             "parts" => manifest_parts,
             "states" => @states.manifest,
           }
-        end
-
-        #: () -> Array[Hash[String, untyped]]
-        def manifest_slots
-          @slots.map { |slot|
-            entry = { "index" => slot.index, "type" => slot.type.to_s } #: Hash[String, untyped]
-
-            entry["attribute"] = slot.attribute if slot.attribute
-
-            collection = enclosing_collection(slot)
-            entry["collection"] = collection if collection
-
-            entry
-          }
-        end
-
-        #: (Slot) -> Integer?
-        def enclosing_collection(slot)
-          node = @slot_nodes[slot.index]
-
-          return nil unless node
-
-          scope, = @slot_scopes[node]
-
-          return nil unless scope
-
-          @indices[scope]
         end
 
         #: () -> Hash[String, Integer]
@@ -388,9 +360,6 @@ module Herb
             entry = entry.merge(key_source: slot.key_source) if slot.key_source
             entry = entry.merge(name: slot.name) if slot.name
 
-            info = state_conditional_entries[slot.index]
-            entry = entry.merge(state_arms: info[:arms], state_else: info[:else]) if info
-
             entry
           }
         end
@@ -435,18 +404,21 @@ module Herb
         #: (untyped) -> void
         def deliver_manifest(document_node)
           return if @deliver == :none
-          return if @slots.empty? && @states.manifest.nil?
 
-          json = JSON.generate(manifest, script_safe: true)
+          built = manifest
+
+          return if built["names"].empty? && built["parts"].empty? && built["states"].nil?
+
+          json = JSON.generate(built, script_safe: true)
           key = "#{identifier}:#{version}"
-
-          document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
 
           if @deliver == :hoist
             document_node.children.push(erb_code_node("::Herb::Engine::Slots::Manifest::Channel.record(#{key.dump}, #{json.dump})"))
 
             return
           end
+
+          document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
 
           ref = "#{COVERED}[#{"manifest:#{key}".inspect}]"
 
