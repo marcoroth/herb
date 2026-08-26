@@ -24,14 +24,14 @@ module Herb
 
         SKIPPED_PREFIXES: Array[String]
 
-        # : (Hash[untyped, Integer], ?Array[untyped], ?Hash[untyped, Array[Integer]]) -> void
-        def initialize: (Hash[untyped, Integer], ?Array[untyped], ?Hash[untyped, Array[Integer]]) -> void
+        # : (Hash[untyped, Annotation], ?Hash[untyped, Array[Annotation]]) -> void
+        def initialize: (Hash[untyped, Annotation], ?Hash[untyped, Array[Annotation]]) -> void
 
         # : (Array[untyped]) -> String?
         def markup: (Array[untyped]) -> String?
 
-        # : (Array[untyped]) -> [String, Array[Integer]]?
-        def signature: (Array[untyped]) -> [ String, Array[Integer] ]?
+        # : (Array[untyped]) -> [String, Array[Annotation]]?
+        def signature: (Array[untyped]) -> [ String, Array[Annotation] ]?
 
         private
 
@@ -41,8 +41,8 @@ module Herb
         # : (untyped) -> void
         def write: (untyped) -> void
 
-        # : (Integer) -> void
-        def write_placeholder: (Integer) -> void
+        # : (Annotation) -> void
+        def write_placeholder: (Annotation) -> void
 
         # : (untyped) -> void
         def write_all: (untyped) -> void

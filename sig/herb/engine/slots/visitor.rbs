@@ -201,14 +201,14 @@ module Herb
         # : () -> Array[Hash[Symbol, untyped]]
         def slot_entries: () -> Array[Hash[Symbol, untyped]]
 
+        # : () -> Array[String]
+        def recorded_expressions: () -> Array[String]
+
         # : (untyped) -> Integer?
         def index_for: (untyped) -> Integer?
 
         # : () -> String
         def occurrence_expression: () -> String
-
-        # : (untyped) -> Array[Integer]
-        def anchored_indices_for: (untyped) -> Array[Integer]
 
         def visit_document_node: (untyped node) -> untyped
 
@@ -296,8 +296,8 @@ module Herb
         # : (String) -> bool
         def branching_shape?: (String) -> bool
 
-        # : (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
-        def renumber: (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
+        # : () -> void
+        def number_slots: () -> void
 
         # : (untyped, Symbol?) -> void
         def record_slot: (untyped, Symbol?) -> void
@@ -320,14 +320,14 @@ module Herb
         # : () -> void
         def apply_names: () -> void
 
-        # : (Hash[Symbol, untyped], Hash[String, Integer]) -> void
-        def bind_name: (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+        # : (Hash[Symbol, untyped], Hash[String, Annotation]) -> void
+        def bind_name: (Hash[Symbol, untyped], Hash[String, Annotation]) -> void
 
-        # : (Hash[Symbol, untyped]) -> Integer
-        def resolve_named_slot: (Hash[Symbol, untyped]) -> Integer
+        # : (Hash[Symbol, untyped]) -> Annotation
+        def resolve_named_slot: (Hash[Symbol, untyped]) -> Annotation
 
-        # : (String, Integer, untyped) -> bool
-        def attribute_conflict?: (String, Integer, untyped) -> bool
+        # : (String, Annotation, untyped) -> bool
+        def attribute_conflict?: (String, Annotation, untyped) -> bool
 
         # : (untyped) -> [Symbol, String?]
         def key_for: (untyped) -> [ Symbol, String? ]

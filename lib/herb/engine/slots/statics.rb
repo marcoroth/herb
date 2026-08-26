@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "annotation"
+
 module Herb
   class Engine
     module Slots
@@ -26,14 +28,13 @@ module Herb
 
         SKIPPED_PREFIXES = ["AST_ERB_", "AST_RUBY_"].freeze #: Array[String]
 
-        #: (Hash[untyped, Integer], ?Array[untyped], ?Hash[untyped, Array[Integer]]) -> void
-        def initialize(pending, slots = [], anchored = {})
-          @pending = pending
-          @slots = slots
+        #: (Hash[untyped, Annotation], ?Hash[untyped, Array[Annotation]]) -> void
+        def initialize(standing, anchored = {})
+          @standing = standing
           @anchored = anchored
           @out = +"" #: String
           @signature = false
-          @indices = [] #: Array[Integer]
+          @found = [] #: Array[Annotation]
         end
 
         #: (Array[untyped]) -> String?
@@ -43,13 +44,13 @@ module Herb
           run(nodes)
         end
 
-        #: (Array[untyped]) -> [String, Array[Integer]]?
+        #: (Array[untyped]) -> [String, Array[Annotation]]?
         def signature(nodes)
           @signature = true
 
           shape = run(nodes)
 
-          shape ? [shape, @indices] : nil
+          shape ? [shape, @found] : nil
         end
 
         private
@@ -57,7 +58,7 @@ module Herb
         #: (Array[untyped]) -> String?
         def run(nodes)
           @out = +""
-          @indices = [] #: Array[Integer]
+          @found = [] #: Array[Annotation]
 
           write_all(nodes)
 
@@ -68,9 +69,9 @@ module Herb
 
         #: (untyped) -> void
         def write(node)
-          index = @pending[node]
+          standing = @standing[node]
 
-          return write_placeholder(index) if index
+          return write_placeholder(standing) if standing
 
           return if SKIPPED_PREFIXES.any? { |prefix| node.type.to_s.start_with?(prefix) }
 
@@ -87,7 +88,7 @@ module Herb
             emit(node.tag_opening&.value || "<")
             emit(node.tag_name&.value)
 
-            @anchored[node]&.each { |index| write_placeholder(index) }
+            @anchored[node]&.each { |annotation| write_placeholder(annotation) }
 
             write_all(node.children)
             emit(node.tag_closing&.value || ">")
@@ -114,13 +115,13 @@ module Herb
           end
         end
 
-        #: (Integer) -> void
-        def write_placeholder(index)
+        #: (Annotation) -> void
+        def write_placeholder(annotation)
           return unless @signature
 
-          @indices << index
+          @found << annotation
 
-          emit("\u0000#{@slots[index]&.type}\u0000")
+          emit("\u0000#{annotation.type}\u0000")
         end
 
         #: (untyped) -> void

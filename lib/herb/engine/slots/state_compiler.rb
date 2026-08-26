@@ -562,7 +562,7 @@ module Herb
             raise Herb::Engine::CompilationError, "`#{name}` is counted twice; one state holds one count, so declare a second state for the second count"
           end
 
-          if @visitor.slots.any? { |slot| StateDirectives.mentions_any?(slot.expression.to_s, { name => declaration }) }
+          if @visitor.recorded_expressions.any? { |expression| StateDirectives.mentions_any?(expression, { name => declaration }) }
             raise Herb::Engine::CompilationError, "`#{name}` is read before its count is complete; the server renders that read mid-count and the client cannot keep it current there, so move the read after the loop"
           end
 

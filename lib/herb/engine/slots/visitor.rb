@@ -6,6 +6,7 @@ require "digest"
 require_relative "../../visitor"
 require_relative "../context_aware"
 require_relative "../experimental"
+require_relative "annotation"
 require_relative "identifier"
 require_relative "manifest/channel"
 require_relative "types"
@@ -139,21 +140,22 @@ module Herb
           @warnings = [] #: Array[Herb::Warnings::Warning]
           @path = [] #: Array[Integer]
 
-          pending = {} #: Hash[untyped, Integer]
-          element_anchored = {} #: Hash[untyped, Array[Integer]]
+          @annotations = [] #: Array[Annotation]
+
+          standing = {} #: Hash[untyped, Annotation]
+          annotation_of = {} #: Hash[untyped, Annotation]
+          element_anchored = {} #: Hash[untyped, Array[Annotation]]
           continuations = {} #: Hash[untyped, bool]
           indices = {} #: Hash[untyped, Integer]
 
-          @pending = pending.compare_by_identity
+          @standing = standing.compare_by_identity
+          @annotation_of = annotation_of.compare_by_identity
           @element_anchored = element_anchored.compare_by_identity
           @continuations = continuations.compare_by_identity
           @indices = indices.compare_by_identity
 
-          slot_nodes = [] #: Array[untyped]
-          @slot_nodes = slot_nodes
+          @slot_nodes = [] #: Array[untyped]
           @tag_stack = [] #: Array[String]
-          slot_scopes = {} #: Hash[untyped, untyped]
-          @slot_scopes = slot_scopes.compare_by_identity
           @named_elements = [] #: Array[Hash[Symbol, untyped]]
           attribute_open_tags = {} #: Hash[untyped, untyped]
           @attribute_open_tags = attribute_open_tags.compare_by_identity
@@ -243,7 +245,9 @@ module Herb
 
         #: (untyped) -> untyped
         def scope_of(node)
-          @slot_scopes[node]
+          annotation = @annotation_of[node]
+
+          annotation && [annotation.scope, annotation.depth]
         end
 
         #: (Integer, Slot) -> void
@@ -367,6 +371,11 @@ module Herb
           }
         end
 
+        #: () -> Array[String]
+        def recorded_expressions
+          @annotations.map { |annotation| annotation.expression.to_s }
+        end
+
         #: (untyped) -> Integer?
         def index_for(node)
           @indices[node]
@@ -377,11 +386,6 @@ module Herb
           "((#{OCCURRENCES} ||= ::Hash.new(0))[#{identifier.inspect}] += 1) - 1"
         end
 
-        #: (untyped) -> Array[Integer]
-        def anchored_indices_for(open_tag)
-          @element_anchored[open_tag] || []
-        end
-
         def visit_document_node(node)
           @document = node
 
@@ -389,6 +393,7 @@ module Herb
 
           collapse_invariant_conditionals
           apply_names
+          number_slots
 
           @states.apply_states
         end
@@ -448,7 +453,7 @@ module Herb
           @tag_stack.push(tag_name)
 
           name_attribute = attributes_for(node).find { |attribute| attribute_name_for(attribute)&.downcase == NAME_ATTRIBUTE }
-          base = @slot_nodes.size
+          base = @annotations.size
           base_scope = @collection_nodes.last
           base_depth = @container_depth
 
@@ -719,42 +724,41 @@ module Herb
 
         #: () -> void
         def collapse_invariant_conditionals
-          merged = {} #: Hash[Integer, Integer]
-          dropped = {} #: Hash[Integer, bool]
-          covered = Hash.new { |hash, key| hash[key] = [] } #: Hash[Integer, Array[Integer]]
+          collapsed = false
 
-          @pending.each do |node, index|
-            next unless @slots[index].type == :conditional
-            next unless exhaustive?(node)
+          @standing.each_value do |annotation|
+            next unless annotation.type == :conditional
+            next unless exhaustive?(annotation.node)
 
-            bodies = branch_bodies(node)
+            bodies = branch_bodies(annotation.node)
             next unless bodies.size > 1
 
-            signatures = bodies.filter_map { |body| Statics.new(@pending, @slots, @element_anchored).signature(body) }
+            signatures = bodies.filter_map { |body| Statics.new(@standing, @element_anchored).signature(body) }
             next unless signatures.size == bodies.size
 
             shapes = signatures.map { |shape, _| shape }
             next unless shapes.uniq.one?
             next if branching_shape?(shapes.fetch(0))
 
-            positions = signatures.map { |_, indices| indices }
+            positions = signatures.map { |_, found| found }
             shared = positions.fetch(0)
 
-            dropped[index] = true
+            annotation.dropped = true
+            collapsed = true
 
-            shared.each { |survivor| covered[survivor] << index }
+            shared.each { |survivor| survivor.covered << annotation }
 
-            positions.drop(1).each do |indices|
-              indices.each_with_index do |old, position|
+            positions.drop(1).each do |found|
+              found.each_with_index do |other, position|
                 survivor = shared.fetch(position)
 
-                merged[old] = survivor
-                covered[survivor] << old
+                other.merged_into = survivor
+                survivor.covered << other
               end
             end
           end
 
-          renumber(merged, dropped, covered) unless dropped.empty?
+          @standing.delete_if { |_node, annotation| annotation.dropped } if collapsed
         end
 
         #: (String) -> bool
@@ -762,37 +766,20 @@ module Herb
           Types::STRUCTURAL.any? { |type| shape.include?("\u0000#{type}\u0000") }
         end
 
-        #: (Hash[Integer, Integer], Hash[Integer, bool], Hash[Integer, Array[Integer]]) -> void
-        def renumber(merged, dropped, covered)
-          survivors = (0...@slots.size).reject { |index| dropped[index] || merged.key?(index) }
-          moved = survivors.each_with_index.to_h #: Hash[Integer, Integer]
-          resolve = ->(index) { moved.fetch(merged.fetch(index, index)) }
-          paths_for = ->(index) { covered.fetch(index, []).map { |other| @slots[other].node_path } }
+        #: () -> void
+        def number_slots
+          surviving = @annotations.reject(&:gone?)
 
-          @slots = survivors.each_with_index.map { |old, index| @slots[old].with(index: index, merged_paths: paths_for.call(old)) }
-          @slot_nodes = survivors.map { |old| @slot_nodes.fetch(old) }
+          surviving.each_with_index { |annotation, index| annotation.index = index }
 
-          renumbered = {} #: Hash[untyped, Integer]
-          pending = renumbered.compare_by_identity
+          @slots = surviving.each_with_index.map { |annotation, index| annotation.to_slot(index) }
+          @slot_nodes = surviving.map(&:node)
 
-          @pending.each do |node, index|
-            pending[node] = resolve.call(index) unless dropped[index]
+          @annotations.each do |annotation|
+            next if annotation.dropped
+
+            @indices[annotation.node] = annotation.survivor.index
           end
-
-          @pending = pending
-
-          @element_anchored.each do |open_tag, indices|
-            @element_anchored[open_tag] = indices.map { |index| resolve.call(index) }
-          end
-
-          recorded = {} #: Hash[untyped, Integer]
-          lookup = recorded.compare_by_identity
-
-          @indices.each do |node, index|
-            lookup[node] = resolve.call(index) unless dropped[index]
-          end
-
-          @indices = lookup
         end
 
         #: (untyped, Symbol?) -> void
@@ -806,23 +793,21 @@ module Herb
 
           key_source, key_expression = type == :collection ? key_for(node) : [nil, nil]
 
-          slot = Slot.new(
-            index: @slots.size,
+          annotation = Annotation.new(
+            node: node,
             type: type,
             node_path: @path.dup,
             expression: expression_for(node),
             attribute: attribute_name_for(node),
             key_source: key_source,
             key_expression: key_expression,
-            name: nil,
             tag: @tag_stack.last,
-            merged_paths: []
+            scope: @collection_nodes.last,
+            depth: @container_depth
           )
 
-          @slots << slot
-          @slot_nodes << node
-          @slot_scopes[node] = [@collection_nodes.last, @container_depth]
-          @indices[node] = slot.index
+          @annotations << annotation
+          @annotation_of[node] = annotation
 
           if type == :collection && key_source == :index
             @warnings << Herb::Warnings::UnkeyedCollectionWarning.new(
@@ -832,11 +817,11 @@ module Herb
             )
           end
 
-          if !Types.element_anchored?(type)
-            @pending[node] = slot.index
+          if !annotation.anchored?
+            @standing[node] = annotation
           elsif @current_open_tag
-            anchored = @element_anchored[@current_open_tag] || [] #: Array[Integer]
-            anchored << slot.index
+            anchored = @element_anchored[@current_open_tag] || [] #: Array[Annotation]
+            anchored << annotation
 
             @element_anchored[@current_open_tag] = anchored
           end
@@ -891,10 +876,13 @@ module Herb
           children[position] = replacement
           record_slot(replacement, :attribute)
 
-          index = @indices[replacement]
-          return nil unless index
+          annotation = @annotation_of[replacement]
+          return nil unless annotation
 
-          @slots[index] = @slots[index].with(type: :boolean_attribute, attribute: name, expression: condition)
+          annotation.type = :boolean_attribute
+          annotation.attribute = name
+          annotation.expression = condition
+
           @attribute_open_tags[replacement] = open_tag
 
           replacement
@@ -908,10 +896,8 @@ module Herb
             raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` must be a static, non-empty value; a slot name is an address, so it cannot be computed"
           end
 
-          candidates = @slot_nodes[base..].to_a.select { |slot_node|
-            scope, depth = @slot_scopes[slot_node]
-
-            scope.equal?(base_scope) && depth == base_depth && @slots[@indices[slot_node]].nameable?
+          candidates = @annotations[base..].to_a.select { |annotation|
+            annotation.scope.equal?(base_scope) && annotation.depth == base_depth && annotation.nameable?
           }
 
           @named_elements << {
@@ -935,38 +921,38 @@ module Herb
 
         #: () -> void
         def apply_names
-          taken = {} #: Hash[untyped, Hash[String, Integer]]
+          taken = {} #: Hash[untyped, Hash[String, Annotation]]
 
           @named_elements.each { |named| bind_name(named, taken[named[:scope]] ||= {}) }
         end
 
-        #: (Hash[Symbol, untyped], Hash[String, Integer]) -> void
+        #: (Hash[Symbol, untyped], Hash[String, Annotation]) -> void
         def bind_name(named, scope_names)
           name = named[:name] #: String
-          index = resolve_named_slot(named)
+          annotation = resolve_named_slot(named)
 
           if scope_names.key?(name)
             raise Herb::Engine::CompilationError, "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
           end
 
-          if (existing = @slots[index].name)
+          if (existing = annotation.name)
             raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`; both elements hold the same slot, so keep one name or wrap what each should address"
           end
 
-          if attribute_conflict?(name, index, named[:scope])
+          if attribute_conflict?(name, annotation, named[:scope])
             raise Herb::Engine::CompilationError, "the name `#{name}` collides with the `#{name}` attribute slot in the same scope; an attribute slot is already addressable by its attribute"
           end
 
-          scope_names[name] = index
+          scope_names[name] = annotation
 
-          @slots[index] = @slots[index].with(name: name)
+          annotation.name = name
         end
 
-        #: (Hash[Symbol, untyped]) -> Integer
+        #: (Hash[Symbol, untyped]) -> Annotation
         def resolve_named_slot(named)
           name = named[:name]
           tag = named[:node].tag_name&.value
-          candidates = named[:candidates].map { |slot_node| @indices[slot_node] }.compact.uniq
+          candidates = named[:candidates].reject(&:dropped).map(&:survivor).uniq
 
           if candidates.empty?
             raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot; the element holds nothing dynamic"
@@ -979,10 +965,10 @@ module Herb
           candidates.fetch(0)
         end
 
-        #: (String, Integer, untyped) -> bool
-        def attribute_conflict?(name, index, scope)
-          @slots.each_with_index.any? { |slot, slot_index|
-            slot.attribute == name && slot_index != index && @slot_scopes[@slot_nodes[slot_index]]&.fetch(0).equal?(scope)
+        #: (String, Annotation, untyped) -> bool
+        def attribute_conflict?(name, annotation, scope)
+          @annotations.any? { |other|
+            !other.gone? && other.attribute == name && !other.equal?(annotation) && other.scope.equal?(scope)
           }
         end
 
@@ -1146,7 +1132,7 @@ module Herb
 
             while index < array.size
               child = array[index]
-              slot_index = @pending[child]
+              slot_index = @standing[child]&.survivor&.index
 
               insert_markers(child)
               wrap_items(child, slot_index)
@@ -1173,11 +1159,11 @@ module Herb
           body = node.body
           return nil unless body.is_a?(Array) && body.size == 1
 
-          slot_index = @pending[body[0]]
-          return nil unless slot_index
-          return nil unless @slots[slot_index].type == :child
+          annotation = @standing[body[0]]&.survivor
+          return nil unless annotation
+          return nil unless annotation.type == :child
 
-          slot_index
+          annotation.index
         end
 
         #: (untyped, Integer?) -> void
@@ -1199,7 +1185,7 @@ module Herb
           statics = @statics
           return unless statics
 
-          markup = Statics.new(@pending).markup(body)
+          markup = Statics.new(@standing).markup(body)
           return unless markup
 
           statics[key] = markup
@@ -1312,7 +1298,7 @@ module Herb
           return unless statics
 
           slot_index = key.split(":").first.to_i
-          markup = Statics.new(@pending).markup(body)
+          markup = Statics.new(@standing).markup(body)
           return unless markup
 
           statics[key] = [
@@ -1330,10 +1316,10 @@ module Herb
           open_tag = node.open_tag
           return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode) || open_tag.is_a?(Herb::AST::ERBOpenTagNode)
 
-          anchors = (@element_anchored[open_tag] || []).map { |index|
-            slot = @slots[index]
+          anchors = (@element_anchored[open_tag] || []).map { |annotation|
+            slot = @slots.fetch(annotation.survivor.index)
 
-            [index, slot.type, anchor_name_for(slot)]
+            [slot.index, slot.type, anchor_name_for(slot)]
           }
 
           anchors << [content_index, :child, nil] if content_index
