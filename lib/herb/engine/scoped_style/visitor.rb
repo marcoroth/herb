@@ -95,7 +95,7 @@ module Herb
         def initialize(transform: nil, deliver: :inline)
           super()
 
-          raise ArgumentError, "deliver has to be one of #{DELIVERIES.join(", ")}, got #{deliver.inspect}" unless DELIVERIES.include?(deliver)
+          raise ArgumentError, "`deliver: #{deliver.inspect}` is not a delivery. Pass one of #{DELIVERIES.map(&:inspect).join(", ")}." unless DELIVERIES.include?(deliver)
 
           @deliver = deliver
           @transform = transform

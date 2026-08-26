@@ -133,6 +133,9 @@ module Herb
         # : (Declaration) -> bool
         def self.seeded?: (Declaration) -> bool
 
+        # : ((Symbol | String)?) -> String
+        def self.kind_article: ((Symbol | String)?) -> String
+
         # : (String, Hash[String, Declaration]) -> bool
         def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
 

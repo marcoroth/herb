@@ -50,7 +50,7 @@ module Engine
       test "refuses a delivery it does not have" do
         error = assert_raises(ArgumentError) { Herb::Engine::Slots::Visitor.new(deliver: :everywhere) }
 
-        assert_match(/deliver has to be one of/, error.message)
+        assert_equal "`deliver: :everywhere` is not a delivery. Pass one of :inline, :hoist, :none.", error.message
       end
 
       test "writes the manifest beside the region when asked to inline it" do

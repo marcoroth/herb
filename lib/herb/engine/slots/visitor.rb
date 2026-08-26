@@ -125,8 +125,8 @@ module Herb
         def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist)
           super()
 
-          raise ArgumentError, "unknown slot mode #{mode.inspect}, expected one of #{MODES.inspect}" unless MODES.include?(mode)
-          raise ArgumentError, "deliver has to be one of #{DELIVERIES.join(", ")}, got #{deliver.inspect}" unless DELIVERIES.include?(deliver)
+          raise ArgumentError, "`mode: #{mode.inspect}` is not a slot mode. Pass one of #{MODES.map(&:inspect).join(", ")}." unless MODES.include?(mode)
+          raise ArgumentError, "`deliver: #{deliver.inspect}` is not a delivery. Pass one of #{DELIVERIES.map(&:inspect).join(", ")}." unless DELIVERIES.include?(deliver)
 
           @markers = markers
           @mark = mark
@@ -893,7 +893,7 @@ module Herb
           name = static_attribute_value(name_attribute)
 
           unless name && !name.empty?
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` must be a static, non-empty value; a slot name is an address, so it cannot be computed"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` is computed or empty. A slot name is an address the browser looks up, so give it a static, non-empty value."
           end
 
           candidates = @annotations[base..].to_a.select { |annotation|
@@ -932,15 +932,15 @@ module Herb
           annotation = resolve_named_slot(named)
 
           if scope_names.key?(name)
-            raise Herb::Engine::CompilationError, "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
+            raise Herb::Engine::CompilationError, "Two slots in the same scope are both named `#{name}`. A slot name is an address, so give one of them a different name."
           end
 
           if (existing = annotation.name)
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`; both elements hold the same slot, so keep one name or wrap what each should address"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`. Both elements hold the same slot, so keep one name or wrap what each should address in its own element."
           end
 
           if attribute_conflict?(name, annotation, named[:scope])
-            raise Herb::Engine::CompilationError, "the name `#{name}` collides with the `#{name}` attribute slot in the same scope; an attribute slot is already addressable by its attribute"
+            raise Herb::Engine::CompilationError, "The name `#{name}` collides with the `#{name}` attribute slot in the same scope. An attribute slot is already addressable by its attribute, so drop the name or rename it."
           end
 
           scope_names[name] = annotation
@@ -955,11 +955,11 @@ module Herb
           candidates = named[:candidates].reject(&:dropped).map(&:survivor).uniq
 
           if candidates.empty?
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot; the element holds nothing dynamic"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot, since the element holds nothing dynamic. Move the name onto an element that wraps an ERB output, or remove it."
           end
 
           unless candidates.one?
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots; wrap the one it should name in its own element"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots. Wrap the one it should name in its own element."
           end
 
           candidates.fetch(0)

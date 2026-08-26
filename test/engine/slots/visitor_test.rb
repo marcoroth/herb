@@ -376,7 +376,7 @@ module Engine
       test "refuses a mode it does not know" do
         error = assert_raises(ArgumentError) { Herb::Engine::Slots::Visitor.new(mode: :nonsense) }
 
-        assert_match(/unknown slot mode/, error.message)
+        assert_equal "`mode: :nonsense` is not a slot mode. Pass one of :server, :client.", error.message
       end
 
       test "leaves other ERB comments alone" do
