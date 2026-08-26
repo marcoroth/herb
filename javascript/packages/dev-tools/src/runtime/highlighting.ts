@@ -1,5 +1,5 @@
 import { Location } from '@herb-tools/core'
-import { DiagnosticRenderer, DiffRenderer, FileRenderer, HerbANSIElement, SyntaxRenderer } from '@herb-tools/highlighter'
+import { DiagnosticRenderer, DiffRenderer, FileRenderer, HerbANSIElement, InlineDiagnosticRenderer, SyntaxRenderer } from '@herb-tools/highlighter'
 
 import { resolveTheme } from '@herb-tools/highlighter'
 
@@ -21,6 +21,7 @@ export interface ExcerptOptions {
 
 export interface RuntimeHighlighting {
   excerpt(source: string, diagnostic: NormalizedDiagnostic, options?: ExcerptOptions): string | null
+  combined(path: string, source: string, diagnostics: NormalizedDiagnostic[]): string | null
   diff(path: string, source: string, fix: NormalizedFix): string | null
 }
 
@@ -54,6 +55,7 @@ async function build(): Promise<RuntimeHighlighting> {
   const diagnosticRenderer = new DiagnosticRenderer(syntaxRenderer)
   const fileRenderer = new FileRenderer(syntaxRenderer)
   const diffRenderer = new DiffRenderer(syntaxRenderer, colors)
+  const inlineRenderer = new InlineDiagnosticRenderer(syntaxRenderer)
 
   return {
     excerpt(source, diagnostic, options = {}) {
@@ -85,6 +87,30 @@ async function build(): Promise<RuntimeHighlighting> {
           }),
           2,
         )
+      } catch (_error) {
+        return null
+      }
+    },
+
+    combined(path, source, diagnostics) {
+      const markable = diagnostics.filter(diagnostic => diagnostic.location !== null && diagnostic.severity !== null)
+
+      if (markable.length === 0) {
+        return null
+      }
+
+      try {
+        const rendered = inlineRenderer.render(
+          path,
+          source,
+          markable.map(diagnostic => toDiagnostic(diagnostic, source)),
+          true,
+          false,
+          MAX_WIDTH,
+          false,
+        )
+
+        return dropLeadingBlocks(rendered, 1)
       } catch (_error) {
         return null
       }

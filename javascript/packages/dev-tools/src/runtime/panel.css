@@ -644,6 +644,30 @@
   font-size: 11px;
 }
 
+.herb-dev-tools-view {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.herb-dev-tools-view:hover {
+  opacity: 1;
+}
+
+.herb-dev-tools-combined {
+  margin: 10px 0 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .herb-dev-tools-scope {
   flex: none;
   padding: 4px 10px;
