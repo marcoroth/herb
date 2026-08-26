@@ -191,7 +191,7 @@ module Herb
 
         #: (String, Herb::Location?, Symbol) -> nil
         def slot_error(message, location, family)
-          error(message, location, code: "slots-#{family}", error_class: Herb::Engine::CompilationError)
+          error(message, location, code: "slots-#{family}")
 
           @degraded = true
 
@@ -425,7 +425,8 @@ module Herb
         #: (untyped) -> void
         def finish(node)
           return unless @mark
-          return if @degraded
+
+          return wrap_region(node) if @degraded
 
           insert_markers(node)
           wrap_displaced

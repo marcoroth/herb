@@ -1,4 +1,5 @@
 import { clearOnNavigation } from "./shared/report"
+import { watchCoverage } from "./shared/coverage"
 
 import { ACTION_ATTRIBUTES } from "./grammar/attributes"
 
@@ -30,6 +31,7 @@ export class Runtime {
 
   private elements: ElementObserver | null = null
   private stopClearing: (() => void) | null = null
+  private stopWatchingCoverage: (() => void) | null = null
 
   private constructor(token?: symbol, options: RuntimeOptions = {}) {
     if (token !== CONSTRUCT) {
@@ -66,6 +68,7 @@ export class Runtime {
     runtime.actions.start(document, elements)
     runtime.outbox.observe()
     runtime.stopClearing = clearOnNavigation()
+    runtime.stopWatchingCoverage = watchCoverage(runtime.slots)
 
     instance = runtime
 
@@ -86,6 +89,8 @@ export class Runtime {
     this.elements = null
     this.stopClearing?.()
     this.stopClearing = null
+    this.stopWatchingCoverage?.()
+    this.stopWatchingCoverage = null
 
     if (instance === this) {
       instance = null

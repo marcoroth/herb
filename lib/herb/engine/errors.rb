@@ -4,25 +4,6 @@
 module Herb
   class Engine
     class CompilationError < StandardError
-      attr_reader :line #: Integer?
-      attr_reader :column #: Integer?
-      attr_reader :filename #: String?
-      attr_reader :suggestion #: String?
-
-      def initialize(message, line: nil, column: nil, filename: nil, suggestion: nil)
-        @line = line
-        @column = column
-        @filename = filename
-        @suggestion = suggestion
-
-        super(message)
-      end
-
-      def origin
-        return nil unless filename || (line && column)
-
-        [filename, ("#{line}:#{column}" if line && column)].compact.join(":")
-      end
     end
 
     class GeneratorTemplateError < CompilationError

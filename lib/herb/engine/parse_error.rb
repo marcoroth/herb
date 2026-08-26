@@ -13,6 +13,7 @@ module Herb
       attr_reader :source #: String
       attr_reader :visitors #: Array[String]
       attr_reader :parser_options #: Hash[Symbol, untyped]
+      attr_reader :filename #: String?
 
       #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
       def initialize(message, diagnostics:, source:, filename: nil, visitors: [], parser_options: {})
@@ -20,8 +21,9 @@ module Herb
         @source = source
         @visitors = visitors
         @parser_options = parser_options
+        @filename = filename
 
-        super(message, filename: filename)
+        super(message)
       end
 
       #: () -> Integer?

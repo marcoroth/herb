@@ -25,6 +25,10 @@ module Engine
         compile(template).first.slots
       end
 
+      def compiler_findings(error)
+        error.message.gsub(/\e\[[0-9;]*m/, "").scan(/slots-\w+: (.+)/).flatten
+      end
+
       test "records a name against the slot the element holds" do
         named = slots(%(<p data-herb-name="body"><%= @body %></p>)).find { |slot| slot.name == "body" }
 
@@ -63,7 +67,7 @@ module Engine
           compile(%(<p data-herb-name="pair"><%= @first %> and <%= @second %></p>))
         end
 
-        assert_equal "`data-herb-name=\"pair\"` on `<p>` is ambiguous between 2 slots. Wrap the one it should name in its own element.", error.message
+        assert_equal ["`data-herb-name=\"pair\"` on `<p>` is ambiguous between 2 slots. Wrap the one it should name in its own element."], compiler_findings(error)
       end
 
       test "an element holding nothing dynamic names no slot" do
@@ -71,7 +75,7 @@ module Engine
           compile(%(<p data-herb-name="static">plain text</p>))
         end
 
-        assert_equal "`data-herb-name=\"static\"` on `<p>` names no slot, since the element holds nothing dynamic. Move the name onto an element that wraps an ERB output, or remove it.", error.message
+        assert_equal ["`data-herb-name=\"static\"` on `<p>` names no slot, since the element holds nothing dynamic. Move the name onto an element that wraps an ERB output, or remove it."], compiler_findings(error)
       end
 
       test "a computed name is refused" do
@@ -79,7 +83,7 @@ module Engine
           compile(%(<p data-herb-name="<%= @name %>"><%= @body %></p>))
         end
 
-        assert_equal "`data-herb-name` on `<p>` is computed or empty. A slot name is an address the browser looks up, so give it a static, non-empty value.", error.message
+        assert_equal ["`data-herb-name` on `<p>` is computed or empty. A slot name is an address the browser looks up, so give it a static, non-empty value."], compiler_findings(error)
       end
 
       test "two slots in one scope cannot share a name" do
@@ -87,7 +91,7 @@ module Engine
           compile(%(<p data-herb-name="body"><%= @a %></p><div data-herb-name="body"><%= @b %></div>))
         end
 
-        assert_equal "Two slots in the same scope are both named `body`. A slot name is an address, so give one of them a different name.", error.message
+        assert_equal ["Two slots in the same scope are both named `body`. A slot name is an address, so give one of them a different name."], compiler_findings(error)
       end
 
       test "a name may repeat between an item and its region" do
@@ -106,7 +110,7 @@ module Engine
           compile(%(<div id="<%= @id %>"><p data-herb-name="id"><%= @body %></p></div>))
         end
 
-        assert_equal "The name `id` collides with the `id` attribute slot in the same scope. An attribute slot is already addressable by its attribute, so drop the name or rename it.", error.message
+        assert_equal ["The name `id` collides with the `id` attribute slot in the same scope. An attribute slot is already addressable by its attribute, so drop the name or rename it."], compiler_findings(error)
       end
 
       test "a collapsed conditional does not shift the collision check" do
@@ -129,7 +133,7 @@ module Engine
           compile(%(<div data-herb-name="outer"><span data-herb-name="inner"><%= @x %></span></div>))
         end
 
-        assert_equal "`data-herb-name=\"outer\"` claims the slot already named `inner`. Both elements hold the same slot, so keep one name or wrap what each should address in its own element.", error.message
+        assert_equal ["`data-herb-name=\"outer\"` claims the slot already named `inner`. Both elements hold the same slot, so keep one name or wrap what each should address in its own element."], compiler_findings(error)
       end
 
       test "a nested container's slots do not confuse the count" do

@@ -148,18 +148,25 @@ module Engine
       test "a state it refused still answers the reads that follow it" do
         _, src = report(%(<%# herb:state (rate: 1.0) %><div><% if rate %>a<% else %>b<% end %></div>))
 
-        assert_equal "<div>a</div>", evaluate_herb_source(src, {})
+        assert_equal "<!--herb-region:app/views/test.html.erb:bdc3b983:0--><div>a</div><!--/herb-region:app/views/test.html.erb-->", evaluate_herb_source(src, {})
       end
 
-      test "a fatal visitor still refuses to compile, and says where" do
+      test "a fatal visitor refuses to compile, and shows the source it refused" do
         error = assert_raises(Herb::Engine::CompilationError) do
           Herb::Engine.new(THREE_BAD_STATES, visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], filename: "app/views/test.html.erb")
         end
 
-        assert_equal "app/views/test.html.erb:2:0", error.origin
-        assert_equal 2, error.line
-        assert_equal 0, error.column
-        assert_equal FLOAT_DEFAULT, error.message
+        shown = error.message.gsub(/\e\[[0-9;]*m/, "")
+
+        assert_equal ["Location: Line 2, Column 0"], shown.scan(/Location: Line \d+, Column \d+/).uniq
+        assert_equal(
+          [
+            "slots-declaration: #{FLOAT_DEFAULT}",
+            "slots-declaration: The state `draft` has a Hash default. Declare each leaf as its own state, like `(draft_title: \"\")`.",
+            "slots-declaration: The state `tally` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
+          ],
+          shown.scan(/slots-\w+: .+/)
+        )
       end
 
       test "a fatal visitor is what a caller gets without asking" do

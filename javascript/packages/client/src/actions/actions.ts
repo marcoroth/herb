@@ -230,6 +230,10 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
     const scope = this.pinned?.get(name) ?? this.state.scopeFor(element, name)
 
     if (!scope) {
+      if (this.state.refusedRegion(element)) {
+        return null
+      }
+
       report({
         template: this.templateOf(element),
         element,

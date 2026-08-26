@@ -37,6 +37,10 @@ module Engine
         render(template, locals)[%r{<template data-herb-region="[^"]+">(.*)</template>}m, 1].to_s
       end
 
+      def compiler_findings(error)
+        error.message.gsub(/\e\[[0-9;]*m/, "").scan(/slots-\w+: (.+)/).flatten
+      end
+
       STATUS = <<~ERB
         <%# herb:state (pending: false, failed: false) %>
         <div><% if pending? %>Sending…<% elsif failed? %>Not sent<% else %>Sent<% end %></div>
@@ -150,7 +154,7 @@ module Engine
       def refuse(template, message)
         error = assert_raises(Herb::Engine::CompilationError) { compile(template) }
 
-        assert_equal message, error.message
+        assert_equal [message], compiler_findings(error)
       end
 
       test "compile errors" do
@@ -282,8 +286,8 @@ module Engine
         end
 
         assert_equal(
-          "`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute.",
-          error.message
+          ["`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute."],
+          compiler_findings(error)
         )
       end
 
@@ -311,8 +315,8 @@ module Engine
         end
 
         assert_equal(
-          "`status` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values, so give the state its own attribute or its own output.",
-          error.message
+          ["`status` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values, so give the state its own attribute or its own output."],
+          compiler_findings(error)
         )
       end
 
@@ -828,8 +832,8 @@ module Engine
         end
 
         assert_equal(
-          "`unless attempts * 2 > 3` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal.",
-          error.message
+          ["`unless attempts * 2 > 3` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."],
+          compiler_findings(error)
         )
       end
 
@@ -839,8 +843,8 @@ module Engine
         end
 
         assert_equal(
-          "`!open` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal.",
-          error.message
+          ["`!open` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."],
+          compiler_findings(error)
         )
       end
 
@@ -910,8 +914,8 @@ module Engine
         end
 
         assert_equal(
-          "`muted=\"<%= status %>\"` reads the String state `status` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean.",
-          error.message
+          ["`muted=\"<%= status %>\"` reads the String state `status` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean."],
+          compiler_findings(error)
         )
       end
 

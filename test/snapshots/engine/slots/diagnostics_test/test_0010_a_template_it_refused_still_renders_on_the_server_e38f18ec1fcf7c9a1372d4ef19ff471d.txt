@@ -2,5 +2,6 @@
 source: "Engine::Slots::DiagnosticsTest#test_0010_a template it refused still renders on the server"
 input: "{source: \"<h1>Report</h1>\\n<%# herb:state (rate: 1.0, draft: { title: \\\"\\\" }, tally: []) %>\\n<div><%= rate %><%= draft %><%= tally %></div>\\n\", locals: {}, options: {visitors: [#<Herb::Engine::Slots::Visitor client fatal=false>], filename: \"app/views/test.html.erb\"}}"
 ---
-<h1>Report</h1>
+<!--herb-region:app/views/test.html.erb:ed7529c2:0--><h1>Report</h1>
 <div>1.0{title: ""}[]</div>
+<!--/herb-region:app/views/test.html.erb-->

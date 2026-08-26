@@ -3,6 +3,7 @@ import { Actions } from "../src/actions/actions"
 import { Slots } from "../src/slots/slots"
 import { State } from "../src/state/state"
 import { STATE_EVENT } from "../src/shared/events"
+import { resetReport } from "../src/shared/report"
 
 const FILE = "app/views/page/panel.html.erb"
 
@@ -497,5 +498,63 @@ describe("an action attribute that is rewritten", () => {
     expect(rewriteState.getState("sort")).toBe("name")
 
     actions.stop()
+  })
+})
+
+describe("a template the compiler refused", () => {
+  const REFUSED = "app/views/page/refused.html.erb"
+
+  const REFUSED_PAGE =
+    `<!--herb-region:${REFUSED}:bbbbbbbb:0-->` +
+    `<section>` +
+    `<button id="refused-toggle" data-herb-toggle="open">Details</button>` +
+    `<button id="refused-reset" data-herb-reset="sort">Reset</button>` +
+    `</section>` +
+    `<!--/herb-region:${REFUSED}-->`
+
+  let refusedActions: Actions
+  let entries: { code: string }[]
+
+  beforeEach(() => {
+    actions.stop()
+    resetReport()
+
+    document.body.innerHTML = REFUSED_PAGE
+    entries = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const refusedSlots = new Slots()
+
+    refusedSlots.scan(document.body)
+
+    const refusedState = new State(refusedSlots, {})
+
+    refusedState.adopt()
+
+    refusedActions = new Actions(refusedState)
+    refusedActions.start(document.body)
+  })
+
+  afterEach(() => {
+    refusedActions.stop()
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("the page still says which template the markup came from", () => {
+    const slots = new Slots()
+
+    slots.scan(document.body)
+
+    expect(slots.regions().map((region) => region.file)).toEqual([REFUSED])
+  })
+
+  test("says nothing about the controls inside it, because the compiler already did", () => {
+    document.querySelector<HTMLElement>("#refused-toggle")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    document.querySelector<HTMLElement>("#refused-reset")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(entries.map((entry) => entry.code)).toEqual([])
   })
 })

@@ -181,6 +181,16 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
   }
 
+  refusedRegion(element: Element): Region | null {
+    for (const placement of this.slots.placements(element)) {
+      if (!this.manifestFor(placement.region)) {
+        return placement.region
+      }
+    }
+
+    return null
+  }
+
   manifestFor(region: Region): StateManifest | null {
     const manifest = this.slots.statesFor(region.file, region.version) ?? this.declared.get(region.file)
 

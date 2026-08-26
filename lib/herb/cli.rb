@@ -1205,7 +1205,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.origin ? "#{e.origin} - #{e.message}" : e.message
+        puts e.message
       end
 
       exit(1)
@@ -1307,7 +1307,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.origin ? "#{e.origin} - #{e.message}" : e.message
+        puts e.message
       end
 
       exit(1)

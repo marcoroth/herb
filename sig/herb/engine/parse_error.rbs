@@ -15,6 +15,10 @@ module Herb
 
       # : (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
       def initialize: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
+      attr_reader filename: String?
+
+      # : (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?) -> void
+      def initialize: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?) -> void
 
       # : () -> Integer?
       def line_number: () -> Integer?
