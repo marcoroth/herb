@@ -822,6 +822,20 @@
   background: rgba(245, 158, 11, 0.2);
 }
 
+.herb-dev-tools-element-gone,
+.herb-dev-tools-element-gone:hover {
+  border-color: #d1d5db;
+  border-style: dashed;
+  background: transparent;
+  color: #6b7280;
+  cursor: default;
+}
+
+.herb-dev-tools-element-note {
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
 .herb-dev-tools-element code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.72rem;

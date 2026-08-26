@@ -126,9 +126,18 @@ excerpt, which is a supported state rather than a degraded one.
 [`source`](#source) it is a convenience of the JavaScript API and has no place in the payload.
 
 A card whose entry carries a connected element grows a locate control. Pressing it scrolls the page
-to that element and flashes it, and hovering the control outlines the element where it sits. An
-element that has since left the document is ignored, so a stale reference degrades to a card without
-the control instead of to a broken one.
+to that element and flashes it, and hovering the control outlines the element where it sits.
+
+An element that has since left the document keeps its chip and says so, reading
+`<div#cover-three> no longer on the page` with the control inert. Dropping the chip instead would
+leave a reader unable to tell a diagnostic about markup from one that never named any, and which of
+those it is turns out to be the more useful thing to know. A Turbo navigation, a re-render, or a
+removal all land here.
+
+An element the producer looked for and did not find is a different thing, and the panel cannot see
+it. `document.querySelector` returns `null`, `element` arrives as `null`, and that is
+indistinguishable from a diagnostic that meant to name nothing. A producer that wants to say it went
+looking has to say so in its `message`.
 
 Locating gets the panel out of its own way first. A panel filling the window collapses back to the
 corner, and a dismissible overlay closes, because both of them are covering the thing you just asked

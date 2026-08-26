@@ -1775,8 +1775,34 @@ describe("diagnostics that name an element", () => {
     expect(document.querySelector(".herb-element-flash")).not.toBeNull()
   })
 
-  test("skip the control once the element has left the page", () => {
+  test("says the element has left the page instead of dropping the chip", () => {
     const target = document.createElement("span")
+
+    target.id = "gone-away"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).not.toBeNull()
+
+    target.remove()
+    panel.refresh()
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip).not.toBeNull()
+    expect(chip.tagName).toBe("SPAN")
+    expect(chip.classList.contains("herb-dev-tools-element-gone")).toBe(true)
+    expect(chip.textContent).toContain("<span#gone-away>")
+    expect(chip.textContent).toContain("no longer on the page")
+    expect(chip.title).toBe("This element was on the page when it was reported and is not any more")
+  })
+
+  test("offers no locate control for an element that has left the page", () => {
+    const target = document.createElement("span")
+
     document.body.appendChild(target)
 
     const panel = createPanel()
@@ -1784,6 +1810,15 @@ describe("diagnostics that name an element", () => {
     panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
     target.remove()
     panel.refresh()
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).toBeNull()
+    expect(getComputedStyle(document.querySelector(".herb-dev-tools-element")!).cursor).toBe("default")
+  })
+
+  test("says nothing at all when no element was named", () => {
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "no element here" })
 
     expect(document.querySelector(".herb-dev-tools-element")).toBeNull()
   })

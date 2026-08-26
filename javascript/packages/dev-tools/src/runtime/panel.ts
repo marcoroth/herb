@@ -1350,9 +1350,7 @@ export class RuntimePanel {
     const repeat = entry.count > 1 ? `<span class="herb-dev-tools-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : ''
     const feature = this.featureButtonHTML(entry)
     const suggestion = diagnostic.suggestion === null ? '' : `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`
-    const element = diagnostic.element !== null && diagnostic.element.isConnected
-      ? `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it"><span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span><code>${escapeHTML(describeElement(diagnostic.element))}</code></button>`
-      : ''
+    const element = this.elementHTML(entry)
 
     return [
       `<article class="herb-dev-tools-card" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" data-herb-dev-tools-origin="${escapeHTML(diagnostic.origin)}" data-herb-dev-tools-kind="${escapeHTML(diagnostic.kind)}">`,
@@ -1364,6 +1362,39 @@ export class RuntimePanel {
       this.stackHTML(diagnostic),
       this.fixHTML(diagnostic),
       `</article>`,
+    ].join('')
+  }
+
+  // A diagnostic that named an element says so whether or not the element is still there. Dropping
+  // the chip when the node goes leaves the reader unable to tell a diagnostic about markup from one
+  // that never named any, which is the more useful thing to know.
+  private elementHTML(entry: PanelEntry): string {
+    const element = entry.diagnostic.element
+
+    if (element === null) {
+      return ''
+    }
+
+    const described = escapeHTML(describeElement(element))
+
+    if (!element.isConnected) {
+      const label = 'This element was on the page when it was reported and is not any more'
+
+      return [
+        `<span class="herb-dev-tools-element herb-dev-tools-element-gone" title="${label}">`,
+        `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◌</span>`,
+        `<code>${described}</code>`,
+        `<span class="herb-dev-tools-element-note">no longer on the page</span>`,
+        `</span>`,
+      ].join('')
+    }
+
+    return [
+      `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate"`,
+      ` data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it">`,
+      `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span>`,
+      `<code>${described}</code>`,
+      `</button>`,
     ].join('')
   }
 
