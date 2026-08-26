@@ -718,10 +718,19 @@
   padding: 12px 28px;
 }
 
+.herb-dev-tools-overlay-focused {
+  --herb-dev-tools-gutter: max(28px, calc((100% - 1040px) / 2 + 28px));
+}
+
 .herb-dev-tools-overlay-focused .herb-dev-tools-header {
+  padding-inline: var(--herb-dev-tools-gutter);
   background: color-mix(in srgb, var(--herb-dev-tools-accent) 9%, #ffffff);
   border-bottom: 1px solid color-mix(in srgb, var(--herb-dev-tools-accent) 28%, #ffffff);
   color: color-mix(in srgb, var(--herb-dev-tools-accent) 45%, #111827);
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-filters {
+  padding-inline: var(--herb-dev-tools-gutter);
 }
 
 .herb-dev-tools-overlay-focused .herb-dev-tools-header .herb-dev-tools-dot {
@@ -766,9 +775,7 @@
 .herb-dev-tools-overlay-focused .herb-dev-tools-body {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 28px 28px 72px;
+  padding: 28px var(--herb-dev-tools-gutter) 72px;
 }
 
 .herb-dev-tools-overlay-focused .herb-dev-tools-group {
@@ -815,7 +822,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, max(640px, (100% - 12px) / 2)), 1fr));
   align-items: start;
-  gap: 0 12px;
+  gap: 20px 12px;
+}
+
+.herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-card {
+  margin-bottom: 0;
 }
 
 .herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-group-title {
