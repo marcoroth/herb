@@ -7,6 +7,7 @@ export interface RuntimeDiagnostic {
   location?: { start: { line: number; column: number } }
   suggestion?: string
   value?: string
+  overlay?: "blocking" | "dismissible" | false
   element?: Element | null
 }
 

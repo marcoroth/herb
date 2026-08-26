@@ -112,6 +112,20 @@ describe("parseRuntimeReport", () => {
   })
 })
 
+describe("overlay mode", () => {
+  test("keeps the two modes it understands", () => {
+    expect(diagnostic({ overlay: "blocking" } as never).overlay).toBe("blocking")
+    expect(diagnostic({ overlay: "dismissible" } as never).overlay).toBe("dismissible")
+  })
+
+  test("reads no overlay from an absent, false, or unknown value", () => {
+    expect(diagnostic().overlay).toBeNull()
+    expect(diagnostic({ overlay: false } as never).overlay).toBeNull()
+    expect(diagnostic({ overlay: "modal" } as never).overlay).toBeNull()
+    expect(diagnostic({ overlay: true } as never).overlay).toBeNull()
+  })
+})
+
 describe("normalizeDiagnostic", () => {
   test("requires template and message", () => {
     expect(normalizeDiagnostic({ message: "no template" })).toBeNull()
