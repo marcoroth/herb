@@ -78,8 +78,6 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
       return
     }
 
-    // SVG is valid embedded phrasing content. Traverse its descendants without
-    // classifying SVG-native elements using HTML block/inline element sets.
     if (tagName === "svg") {
       this.visitSVGElement(node)
       return
