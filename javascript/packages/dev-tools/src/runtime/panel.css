@@ -620,6 +620,22 @@
   background: rgba(17, 24, 39, 0.45);
 }
 
+.herb-dev-tools-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 11.5px;
+}
+
+.herb-dev-tools-provenance code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
 .herb-dev-tools-scope {
   flex: none;
   padding: 4px 10px;

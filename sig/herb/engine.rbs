@@ -100,6 +100,9 @@ module Herb
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
+    # : () -> Array[String]
+    def visitor_names: () -> Array[String]
+
     # : (String) -> void
     def report: (String) -> void
 

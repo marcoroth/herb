@@ -54,6 +54,11 @@ module Herb
         # : (Herb::Engine::CompilationError) -> Herb::Engine::Report
         def report_for: (Herb::Engine::CompilationError) -> Herb::Engine::Report
 
+        # Which Herb saw this, and which visitors were on the stack when it did. Both are part of
+        # why a template failed the way it did, and neither can be worked out from the page.
+        # : (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+        def note_provenance: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+
         # : (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
         def diagnostics_for: (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
 
@@ -77,6 +82,9 @@ module Herb
         # path that never matches is a page that never recovers, and re-requesting is cheap.
         # : () -> String
         def script_tag: () -> String
+
+        # : (Hash[Symbol, untyped]) -> String
+        def provenance: (Hash[Symbol, untyped]) -> String
 
         # : (Array[Herb::Diagnostic], Hash[String, String]) -> String
         def fallback: (Array[Herb::Diagnostic], Hash[String, String]) -> String

@@ -141,3 +141,55 @@ describe("the page Herb::Engine::Report::ErrorPage serves", () => {
     expect(fallback.querySelector("pre")!.textContent).toContain("<form>")
   })
 })
+
+describe("what the error page says about the run", () => {
+  test("carries the Herb version and the visitors that ran", () => {
+    document.body.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const report = readRuntimeReport(document)!
+
+    expect(report.meta.herb_version).toMatch(/^\d+\.\d+\.\d+/)
+    expect(report.meta.error_class).toBe("Herb::Engine::ParseError")
+    expect(report.meta.visitors).toEqual([
+      "Herb::Engine::Validators::SecurityValidator",
+      "Herb::Engine::Validators::NestingValidator",
+    ])
+  })
+
+  test("prints it without any JavaScript too", () => {
+    document.body.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const footer = document.querySelector(".herb-error-provenance")!
+
+    expect(footer.textContent).toContain("Compiled by Herb")
+    expect(footer.textContent).toContain("SecurityValidator")
+  })
+
+  test("shows it at the foot of the blocking screen", () => {
+    document.documentElement.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const panel = new RuntimePanel()
+
+    panels.push(panel)
+
+    expect(panel.overlay).toBe("blocking")
+
+    const footer = document.querySelector(".herb-dev-tools-provenance")!
+
+    expect(footer).not.toBeNull()
+    expect(footer.textContent).toContain("Compiled by Herb")
+    expect(footer.textContent).toContain("Herb::Engine::Validators::NestingValidator")
+  })
+
+  test("says nothing about a run it was told nothing about", () => {
+    document.body.innerHTML = fixture
+
+    const panel = new RuntimePanel()
+
+    panels.push(panel)
+    panel.open()
+
+    expect(readRuntimeReport(document)!.meta).toEqual({})
+    expect(document.querySelector(".herb-dev-tools-provenance")).toBeNull()
+  })
+})

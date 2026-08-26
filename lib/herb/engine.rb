@@ -392,8 +392,14 @@ module Herb
           error.to_diagnostic(template: relative_file_path)
         },
         source: input,
-        filename: relative_file_path
+        filename: relative_file_path,
+        visitors: visitor_names
       )
+    end
+
+    #: () -> Array[String]
+    def visitor_names
+      @visitors.map { |visitor| visitor.class.name.to_s }
     end
 
     #: (String) -> void

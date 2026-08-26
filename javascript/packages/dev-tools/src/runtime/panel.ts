@@ -8,7 +8,7 @@ import { flashElement } from '../slots/flash.js'
 import { MAX_RUNTIME_DIAGNOSTICS, RUNTIME_SEVERITIES } from './report.js'
 
 import type { RuntimeHighlighting } from './highlighting.js'
-import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
+import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RuntimeMeta, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
 
 export type BadgeTone = RuntimeSeverity | 'metric'
 
@@ -191,6 +191,7 @@ export class RuntimePanel {
   private entries: PanelEntry[] = []
   private renderTree: RenderTreeNode[] = []
   private sources: Record<string, string> = {}
+  private meta: RuntimeMeta = {}
   private lastCount = 0
   private bumped = false
   private primed = false
@@ -543,6 +544,7 @@ export class RuntimePanel {
   private applyPayload(report: NormalizedRuntimeReport) {
     this.renderTree = report.renderTree
     this.sources = report.sources
+    this.meta = report.meta
 
     for (const diagnostic of report.diagnostics) {
       this.add(diagnostic, true)
@@ -879,7 +881,7 @@ export class RuntimePanel {
       this.resizeHandlesHTML(),
       this.headerHTML(),
       this.filtersHTML(),
-      `<div class="herb-dev-tools-body">${this.bodyHTML()}</div>`,
+      `<div class="herb-dev-tools-body">${this.bodyHTML()}${this.provenanceHTML()}</div>`,
       `</section>`,
     ].join('')
   }
@@ -1334,6 +1336,34 @@ export class RuntimePanel {
     }
 
     return sections.join('')
+  }
+
+  // What produced this page, printed once at the foot of a screen that has taken over. It answers
+  // the question a bug report starts with, and the page it would otherwise be read from is behind
+  // the overlay.
+  private provenanceHTML(): string {
+    if (!this.overlayFocused) {
+      return ''
+    }
+
+    const { herb_version: version, visitors } = this.meta
+    const parts: string[] = []
+
+    if (version !== undefined) {
+      parts.push(`<span>Compiled by Herb ${escapeHTML(version)}</span>`)
+    }
+
+    if (visitors !== undefined && visitors.length > 0) {
+      const names = visitors.map(visitor => `<code>${escapeHTML(visitor)}</code>`).join(', ')
+
+      parts.push(`<span>Visitors: ${names}</span>`)
+    }
+
+    if (parts.length === 0) {
+      return ''
+    }
+
+    return `<footer class="herb-dev-tools-provenance">${parts.join('')}</footer>`
   }
 
   private cardHTML(entry: PanelEntry): string {

@@ -4,6 +4,7 @@
 require "json"
 
 require_relative "../../diagnostic"
+require_relative "../../version"
 require_relative "../parse_error"
 require_relative "../report"
 
@@ -51,6 +52,9 @@ module Herb
                             font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
           .herb-error pre span { display: block; }
           .herb-error .herb-marked { color: #e06c75; }
+          .herb-error .herb-error-provenance { margin-top: 32px; color: #6b7280; font-size: 13px; }
+          .herb-error .herb-error-provenance ul { margin: 6px 0 0; padding-left: 20px; }
+          .herb-error .herb-error-provenance code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
         CSS
 
         #: (untyped, ?dev_tools: String?, ?enabled: bool) -> void
@@ -123,7 +127,21 @@ module Herb
             report.source(template, error.source) if template
           end
 
+          note_provenance(report, error)
+
           report
+        end
+
+        # Which Herb saw this, and which visitors were on the stack when it did. Both are part of
+        # why a template failed the way it did, and neither can be worked out from the page.
+        #: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+        def note_provenance(report, error)
+          report.note(:herb_version, Herb::VERSION)
+          report.note(:error_class, error.class.name)
+
+          return unless error.is_a?(Herb::Engine::ParseError)
+
+          report.note(:visitors, error.visitors) unless error.visitors.empty?
         end
 
         #: (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
@@ -182,6 +200,7 @@ module Herb
             "<style>#{STYLES}</style>",
             "</head><body>",
             fallback(diagnostics, report.sources),
+            provenance(report.meta),
             report.to_html,
             script_tag,
             "</body></html>"
@@ -216,6 +235,28 @@ module Herb
               })
             </script>
           HTML
+        end
+
+        #: (Hash[Symbol, untyped]) -> String
+        def provenance(meta)
+          return "" if meta.empty?
+
+          version = meta[:herb_version]
+          visitors = Array(meta[:visitors]) #: Array[untyped]
+
+          rows = [] #: Array[String]
+
+          rows << %(<p>Compiled by Herb #{escape(version.to_s)}.</p>) if version
+
+          unless visitors.empty?
+            names = visitors.map { |visitor| %(<li><code>#{escape(visitor.to_s)}</code></li>) }
+
+            rows << %(<p>Visitors on the stack when it failed:</p><ul>#{names.join}</ul>)
+          end
+
+          return "" if rows.empty?
+
+          %(<footer class="herb-error-provenance">#{rows.join}</footer>)
         end
 
         #: (Array[Herb::Diagnostic], Hash[String, String]) -> String

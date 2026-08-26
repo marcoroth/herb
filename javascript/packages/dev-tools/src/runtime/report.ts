@@ -76,11 +76,18 @@ export interface RuntimeDiagnostic {
   element?: Element | null;
 }
 
+export interface RuntimeMeta {
+  herb_version?: string;
+  error_class?: string;
+  visitors?: string[];
+}
+
 export interface RuntimeReport {
   version: number;
   renderTree?: RenderTreeNode[];
   diagnostics?: RuntimeDiagnostic[];
   sources?: Record<string, string>;
+  meta?: RuntimeMeta;
 }
 
 export interface NormalizedDiagnostic {
@@ -106,6 +113,7 @@ export interface NormalizedRuntimeReport {
   renderTree: RenderTreeNode[];
   diagnostics: NormalizedDiagnostic[];
   sources: Record<string, string>;
+  meta: RuntimeMeta;
 }
 
 export interface RenderStackFrame {
@@ -290,6 +298,36 @@ function asElement(value: unknown): Element | null {
   return typeof Element !== 'undefined' && value instanceof Element ? value : null;
 }
 
+// Facts about the run rather than about a template. Only the keys the panel knows how to print are
+// kept, so an unrecognized one is dropped instead of rendered as-is.
+function normalizeMeta(value: unknown): RuntimeMeta {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const meta: RuntimeMeta = {};
+  const version = asString(value.herb_version);
+  const errorClass = asString(value.error_class);
+
+  if (version !== null) {
+    meta.herb_version = version;
+  }
+
+  if (errorClass !== null) {
+    meta.error_class = errorClass;
+  }
+
+  if (Array.isArray(value.visitors)) {
+    const visitors = value.visitors.map(asString).filter((name): name is string => name !== null);
+
+    if (visitors.length > 0) {
+      meta.visitors = visitors;
+    }
+  }
+
+  return meta;
+}
+
 function normalizeSources(value: unknown): Record<string, string> {
   if (!isRecord(value)) {
     return {};
@@ -345,6 +383,7 @@ export function normalizeRuntimeReport(value: unknown): NormalizedRuntimeReport 
     renderTree: normalizeRenderTree(value.renderTree),
     diagnostics,
     sources,
+    meta: normalizeMeta(value.meta),
   };
 }
 

@@ -506,6 +506,7 @@ can simply emit a fresh payload.
 | `renderTree` | no | array | Defaults to an empty tree. |
 | `diagnostics` | no | array | Defaults to no diagnostics. |
 | `sources` | no | object | Template path to full template source. |
+| `meta` | no | object | Facts about the run, not about a template. |
 
 ### `version`
 
@@ -658,6 +659,22 @@ case-insensitively. Anything else, including `javascript:` and protocol relative
 `code` as plain text with no link beside it. The payload is untrusted application data and is treated
 as such throughout.
 
+### `meta`
+
+Facts about the run that produced the payload, rather than about any one template. A focused overlay
+prints them once at its foot, because a screen that has taken over is where a bug report starts and
+the page they would otherwise be read from is behind it.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `herb_version` | string | The Herb that compiled the page. |
+| `error_class` | string | The error that produced it, when a failure did. |
+| `visitors` | array of strings | The visitors on the stack, in the order they ran. |
+
+Only these keys are read. An unrecognized one is dropped rather than printed, so a newer producer
+cannot put arbitrary text on the screen. The whole object is optional and is left out entirely when
+there is nothing to say, so a page that notes nothing carries no `meta` at all.
+
 ### `sources`
 
 An optional map from template path to the complete source of that template. Keys must match the
@@ -711,6 +728,10 @@ It rescues a `Herb::Engine::CompilationError`, walking the `cause` chain because
 failure in an error of its own, and answers `500` with a page carrying the same payload every other
 page carries. The diagnostics in it ask for a [blocking overlay](#overlay), so the panel takes the
 screen as soon as it starts.
+
+It reports which Herb compiled the page and which visitors were on the stack when it failed. The
+visitor list comes off the error itself, so it is the stack that actually ran rather than the one the
+app is configured with, and both are printed on the static page and again at the foot of the overlay.
 
 That page says what is wrong on its own, in plain HTML, before any script runs. The `dev_tools`
 option is where the bundle lives and it is optional, so a missing or misconfigured path costs the

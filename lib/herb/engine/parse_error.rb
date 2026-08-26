@@ -13,11 +13,17 @@ module Herb
       attr_reader :source #: String
       attr_reader :filename #: String?
 
-      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?) -> void
-      def initialize(message, diagnostics:, source:, filename: nil)
+      # The visitors that were on the stack when this was raised, by name. Which validators ran is
+      # part of why a template failed the way it did, and it is known only here, so it travels with
+      # the error rather than being asked for again later.
+      attr_reader :visitors #: Array[String]
+
+      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String]) -> void
+      def initialize(message, diagnostics:, source:, filename: nil, visitors: [])
         @diagnostics = diagnostics
         @source = source
         @filename = filename
+        @visitors = visitors
 
         super(message)
       end

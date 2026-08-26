@@ -21,6 +21,9 @@ module Herb
       MAX_DIAGNOSTICS = 200 #: Integer
       ATTRIBUTE = "data-herb-diagnostics" #: String
 
+      # Facts about the run that produced this report, rather than about any one template. The dev
+      # tools print them as provenance, so a bug report can say which Herb saw what.
+      attr_reader :meta #: Hash[Symbol, untyped]
       attr_reader :sources #: Hash[String, String]
       attr_reader :nodes #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
       attr_reader :render_tree #: Array[Hash[Symbol, untyped]]
@@ -29,6 +32,7 @@ module Herb
       def initialize(max_diagnostics: MAX_DIAGNOSTICS)
         @max_diagnostics = max_diagnostics
         @diagnostics = {} #: Hash[Array[untyped], Herb::Diagnostic]
+        @meta = {} #: Hash[Symbol, untyped]
         @sources = {} #: Hash[String, String]
         @nodes = {} #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
         @render_tree = [] #: Array[Hash[Symbol, untyped]]
@@ -59,6 +63,13 @@ module Herb
         Array(diagnostics).each { |diagnostic| add(diagnostic) }
 
         self
+      end
+
+      #: (Symbol, untyped) -> void
+      def note(key, value)
+        @meta[key] = value if value
+
+        nil
       end
 
       #: (String, String?) -> void
@@ -103,6 +114,11 @@ module Herb
       end
 
       #: () -> bool
+      def noted?
+        !@meta.empty?
+      end
+
+      #: () -> bool
       def reportable?
         !(@diagnostics.empty? && @nodes.empty?)
       end
@@ -115,7 +131,7 @@ module Herb
           renderTree: @render_tree,
           nodes: @nodes,
           sources: sources,
-        }
+        }.merge(@meta.empty? ? {} : { meta: @meta })
       end
 
       alias to_hash to_h
