@@ -156,6 +156,26 @@ describe("what the error page says about the run", () => {
     ])
   })
 
+  test("carries the parser options it was actually given", () => {
+    document.body.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const report = readRuntimeReport(document)!
+
+    expect(report.meta.parser_options).toEqual({ track_locations: "true", freeze: "false" })
+  })
+
+  test("prints the parser options on the blocking screen", () => {
+    document.documentElement.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const panel = new RuntimePanel()
+
+    panels.push(panel)
+
+    const footer = document.querySelector(".herb-dev-tools-provenance")!
+
+    expect(footer.textContent).toContain("track_locations: true")
+  })
+
   test("prints it without any JavaScript too", () => {
     document.body.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
 

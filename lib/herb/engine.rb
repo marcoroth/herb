@@ -393,7 +393,8 @@ module Herb
         },
         source: input,
         filename: relative_file_path,
-        visitors: visitor_names
+        visitors: visitor_names,
+        parser_options: @parser_options
       )
     end
 

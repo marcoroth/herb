@@ -1346,11 +1346,21 @@ export class RuntimePanel {
       return ''
     }
 
-    const { herb_version: version, visitors } = this.meta
+    const { herb_version: version, visitors, parser_options: options } = this.meta
     const parts: string[] = []
 
     if (version !== undefined) {
       parts.push(`<span>Compiled by Herb ${escapeHTML(version)}</span>`)
+    }
+
+    if (options !== undefined) {
+      const pairs = Object.entries(options)
+        .map(([key, value]) => `<code>${escapeHTML(key)}: ${escapeHTML(value)}</code>`)
+        .join(', ')
+
+      if (pairs.length > 0) {
+        parts.push(`<span>Parser options: ${pairs}</span>`)
+      }
     }
 
     if (visitors !== undefined && visitors.length > 0) {

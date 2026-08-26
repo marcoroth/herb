@@ -670,6 +670,7 @@ the page they would otherwise be read from is behind it.
 | `herb_version` | string | The Herb that compiled the page. |
 | `error_class` | string | The error that produced it, when a failure did. |
 | `visitors` | array of strings | The visitors on the stack, in the order they ran. |
+| `parser_options` | object | The options the parser was given, values stringified. |
 
 Only these keys are read. An unrecognized one is dropped rather than printed, so a newer producer
 cannot put arbitrary text on the screen. The whole object is optional and is left out entirely when
@@ -729,9 +730,11 @@ failure in an error of its own, and answers `500` with a page carrying the same 
 page carries. The diagnostics in it ask for a [blocking overlay](#overlay), so the panel takes the
 screen as soon as it starts.
 
-It reports which Herb compiled the page and which visitors were on the stack when it failed. The
-visitor list comes off the error itself, so it is the stack that actually ran rather than the one the
-app is configured with, and both are printed on the static page and again at the foot of the overlay.
+It reports which Herb compiled the page, which visitors were on the stack when it failed, and the
+parser options the parse was given. All three come off the error itself, so they describe the compile
+that actually happened rather than the configuration the app holds, which can differ. The parser
+options in particular are the ones left after every visitor has had its say about them. They are
+printed on the static page and again at the foot of the overlay.
 
 That page says what is wrong on its own, in plain HTML, before any script runs. The `dev_tools`
 option is where the bundle lives and it is optional, so a missing or misconfigured path costs the

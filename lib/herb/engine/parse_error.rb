@@ -18,12 +18,17 @@ module Herb
       # the error rather than being asked for again later.
       attr_reader :visitors #: Array[String]
 
-      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String]) -> void
-      def initialize(message, diagnostics:, source:, filename: nil, visitors: [])
+      # The options the parser was actually given, after the visitors on the stack have had their
+      # say about them. What was asked for and what was used are not always the same thing.
+      attr_reader :parser_options #: Hash[Symbol, untyped]
+
+      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
+      def initialize(message, diagnostics:, source:, filename: nil, visitors: [], parser_options: {})
         @diagnostics = diagnostics
         @source = source
         @filename = filename
         @visitors = visitors
+        @parser_options = parser_options
 
         super(message)
       end

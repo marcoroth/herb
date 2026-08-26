@@ -142,6 +142,7 @@ module Herb
           return unless error.is_a?(Herb::Engine::ParseError)
 
           report.note(:visitors, error.visitors) unless error.visitors.empty?
+          report.note(:parser_options, error.parser_options) unless error.parser_options.empty?
         end
 
         #: (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
@@ -243,10 +244,17 @@ module Herb
 
           version = meta[:herb_version]
           visitors = Array(meta[:visitors]) #: Array[untyped]
+          options = meta[:parser_options].is_a?(Hash) ? meta[:parser_options] : {} #: Hash[untyped, untyped]
 
           rows = [] #: Array[String]
 
           rows << %(<p>Compiled by Herb #{escape(version.to_s)}.</p>) if version
+
+          unless options.empty?
+            pairs = options.map { |key, value| %(<li><code>#{escape(key.to_s)}: #{escape(value.inspect)}</code></li>) }
+
+            rows << %(<p>Parser options it was given:</p><ul>#{pairs.join}</ul>)
+          end
 
           unless visitors.empty?
             names = visitors.map { |visitor| %(<li><code>#{escape(visitor.to_s)}</code></li>) }

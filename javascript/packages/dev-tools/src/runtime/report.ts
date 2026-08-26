@@ -80,6 +80,7 @@ export interface RuntimeMeta {
   herb_version?: string;
   error_class?: string;
   visitors?: string[];
+  parser_options?: Record<string, string>;
 }
 
 export interface RuntimeReport {
@@ -315,6 +316,18 @@ function normalizeMeta(value: unknown): RuntimeMeta {
 
   if (errorClass !== null) {
     meta.error_class = errorClass;
+  }
+
+  if (isRecord(value.parser_options)) {
+    const options: Record<string, string> = {};
+
+    for (const [key, option] of Object.entries(value.parser_options)) {
+      options[key] = typeof option === 'string' ? option : JSON.stringify(option) ?? String(option);
+    }
+
+    if (Object.keys(options).length > 0) {
+      meta.parser_options = options;
+    }
   }
 
   if (Array.isArray(value.visitors)) {
