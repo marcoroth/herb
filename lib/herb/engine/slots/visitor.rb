@@ -515,13 +515,13 @@ module Herb
         end
 
         def visit_erb_content_node(node)
-          record_slot(node, erb_output?(node.tag_opening&.value.to_s) ? :child : nil)
+          record_slot(node, erb_outputs?(node) ? :child : nil)
 
           super
         end
 
         def visit_erb_render_node(node)
-          record_slot(node, erb_output?(node.tag_opening&.value.to_s) ? :child : nil)
+          record_slot(node, erb_outputs?(node) ? :child : nil)
 
           super
         end
@@ -576,7 +576,7 @@ module Herb
         end
 
         def visit_erb_block_node(node)
-          record_slot(node, :block) if erb_output?(node.tag_opening&.value.to_s)
+          record_slot(node, :block) if erb_outputs?(node)
 
           @displaced << node if CAPTURING.match?(expression_for(node).to_s)
 
@@ -649,11 +649,6 @@ module Herb
           end
 
           false
-        end
-
-        # TODO: use from utils
-        def erb_output?(opening)
-          opening.include?("=")
         end
 
         #: (untyped) -> untyped
@@ -1138,7 +1133,7 @@ module Herb
           outputs = children.grep(Herb::AST::ERBContentNode)
 
           return nil unless outputs.one?
-          return nil unless erb_output?(outputs.fetch(0).tag_opening&.value.to_s)
+          return nil unless erb_outputs?(outputs.fetch(0))
 
           outputs.fetch(0).content&.value&.strip
         end
@@ -1300,7 +1295,7 @@ module Herb
             when Herb::AST::LiteralNode
               segments.last << child.content.to_s
             when Herb::AST::ERBContentNode
-              return nil unless erb_output?(child.tag_opening&.value.to_s)
+              return nil unless erb_outputs?(child)
 
               segments << +""
             else

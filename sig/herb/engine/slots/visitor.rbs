@@ -275,9 +275,6 @@ module Herb
         # : (untyped) -> bool
         def blank_child?: (untyped) -> bool
 
-        # TODO: use from utils
-        def erb_output?: (untyped opening) -> untyped
-
         # : (untyped) -> untyped
         def continuation_of: (untyped) -> untyped
 

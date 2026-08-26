@@ -6,13 +6,14 @@ module Herb
     module Helpers
       #: (Herb::AST::Node?) -> bool
       def erb_node?(node)
-        node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBRenderNode)
+        !erb_opening(node).empty?
       end
 
       #: (Herb::AST::Node?) -> String
       def erb_opening(node)
         token = case node
-                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode then node.tag_opening
+                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
+                  node.tag_opening
                 end
 
         token&.value.to_s
