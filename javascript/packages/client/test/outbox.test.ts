@@ -166,6 +166,23 @@ describe("Outbox", () => {
     delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
   })
 
+  test("retrying something it never sent says so, rather than doing nothing quietly", () => {
+    const entries: { code: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const outbox = build(() => Promise.reject(new Error("must not be called")))
+
+    expect(outbox.retry("never-sent")).toBeNull()
+    expect(outbox.discard("never-sent")).toBe(false)
+
+    expect(entries.map((entry) => entry.code)).toEqual(["herb-unsent-mutation", "herb-unsent-mutation"])
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
   test("a form naming a slot that is not a collection reports it", () => {
     document.body.innerHTML = PAGE.replace("</ul>", '</ul><p data-herb-name="note"><!--herb-slot:4-->x<!--/herb-slot:4--></p>')
     slots = new Slots()

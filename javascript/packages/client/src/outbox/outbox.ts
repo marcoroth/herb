@@ -51,14 +51,11 @@ export class Outbox {
 
   retry(target: string | Element): Promise<MutationResult> | null {
     const key = this.keyOf(target)
+    const record = key === null ? undefined : this.records.get(key)
 
-    if (key === null) {
-      return null
-    }
+    if (key === null || !record) {
+      this.reportUnsent("retry", target, key)
 
-    const record = this.records.get(key)
-
-    if (!record) {
       return null
     }
 
@@ -73,12 +70,11 @@ export class Outbox {
 
   discard(target: string | Element): boolean {
     const key = this.keyOf(target)
-    if (key === null) {
-      return false
-    }
+    const record = key === null ? undefined : this.records.get(key)
 
-    const record = this.records.get(key)
-    if (!record) {
+    if (key === null || !record) {
+      this.reportUnsent("discard", target, key)
+
       return false
     }
 
@@ -174,6 +170,21 @@ export class Outbox {
     event.stopPropagation()
 
     this.submitForm(form)
+  }
+
+  private reportUnsent(operation: string, target: string | Element, key: string | null): void {
+    const element = target instanceof Element ? target : null
+    const scope = element ? this.state.scopeFor(element) : null
+    const named = key === null ? "names no row this outbox holds" : `names the row \`${key}\`, which this outbox never sent`
+
+    report({
+      template: scope?.region.file ?? "",
+      element,
+      message: `\`outbox.${operation}\` ${named}, so nothing happened.`,
+      code: "herb-unsent-mutation",
+      severity: "warning",
+      suggestion: "send the write through `outbox.submit` so the outbox can retry it, or handle the failure where the request was made",
+    })
   }
 
   private keyOf(target: string | Element): string | null {
