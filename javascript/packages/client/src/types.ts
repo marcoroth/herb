@@ -50,7 +50,16 @@ export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch
 
 export type SlotAnchor = RangeAnchor | ElementAnchor | ContentAnchor
 
-export type SlotListener = (detail: SlotEventDetail) => void
+export interface SlotIndexDelegate {
+  valueWritten?(slot: Slot): void
+  attributeWritten?(slot: Slot): void
+  branchSwitched?(slot: Slot): void
+  itemAdded?(slot: Slot, key: string, item: Item | null): void
+  itemRemoved?(slot: Slot, key: string, item: Item | null): void
+  itemUpdated?(slot: Slot, key: string, item: Item | null): void
+  itemRekeyed?(slot: Slot, key: string, previousKey: string, item: Item | null): void
+  built?(built: Built): void
+}
 
 export interface Bounds {
   start: Comment

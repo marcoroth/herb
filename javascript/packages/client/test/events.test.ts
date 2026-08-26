@@ -143,3 +143,97 @@ describe("saying what changed", () => {
     expect(index.rangeOf(seen[0].slot!).toString()).toBe("there")
   })
 })
+
+describe("telling a delegate what changed", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  test("calls the method for what happened and leaves the others alone", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const called: string[] = []
+
+    index.subscribe({
+      valueWritten: () => called.push("valueWritten"),
+      itemAdded: () => called.push("itemAdded"),
+      built: () => called.push("built"),
+    })
+
+    index.update(index.slot(FILE, 0)!, "there")
+
+    expect(called).toEqual(["valueWritten"])
+  })
+
+  test("hands a delegate the slot itself, not an index to look it up by", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const slot = index.slot(FILE, 0)!
+    const seen: unknown[] = []
+
+    index.subscribe({ valueWritten: (written) => seen.push(written) })
+    index.update(slot, "there")
+
+    expect(seen).toEqual([slot])
+  })
+
+  test("hands a rekey both keys, so a delegate has nothing to null-check", () => {
+    document.body.innerHTML = ITEMS
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen: [string, string][] = []
+
+    index.subscribe({ itemRekeyed: (_slot, key, previousKey) => seen.push([key, previousKey]) })
+    index.rekeyItem(index.slot(FILE, 0)!, "a", "z")
+
+    expect(seen).toEqual([["z", "a"]])
+  })
+
+  test("says nothing to a delegate that named no methods at all", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    index.subscribe({})
+
+    expect(() => index.update(index.slot(FILE, 0)!, "there")).not.toThrow()
+  })
+
+  test("stops telling a delegate that unsubscribed", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const called: string[] = []
+    const unsubscribe = index.subscribe({ valueWritten: () => called.push("valueWritten") })
+
+    unsubscribe()
+    index.update(index.slot(FILE, 0)!, "there")
+
+    expect(called).toEqual([])
+  })
+
+  test("still announces on the document, which is what the dev tools listen to", () => {
+    document.body.innerHTML = CHILD
+
+    const index = new SlotIndex()
+    index.scan(document.body)
+
+    const seen = watch()
+
+    index.subscribe({ valueWritten: () => undefined })
+    index.update(index.slot(FILE, 0)!, "there")
+
+    expect(seen.map((detail) => detail.operation)).toEqual(["value"])
+  })
+})

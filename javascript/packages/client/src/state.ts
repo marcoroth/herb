@@ -41,7 +41,7 @@ export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
 export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
 
 import type { SlotIndex } from "./slot-index"
-import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotEventDetail } from "./types"
+import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotIndexDelegate } from "./types"
 import type { StateKind, StateValue } from "./values"
 import type { Conditional, StateCondition } from "./conditions"
 
@@ -161,7 +161,7 @@ export interface StateReport extends ApplyReport {
   failed: boolean
 }
 
-export class SlotState implements ElementObserverDelegate {
+export class SlotState implements ElementObserverDelegate, SlotIndexDelegate {
   readonly #slots: SlotIndex
   readonly #server: ServerState
   readonly #declared = new Map<string, StateManifest>()
@@ -184,36 +184,23 @@ export class SlotState implements ElementObserverDelegate {
     }
 
     this.#server = new ServerState(slots, this.#options)
-    this.#unsubscribe = slots.subscribe(this.#onSlot)
+    this.#unsubscribe = slots.subscribe(this)
   }
 
   set(key: string | SerializedState, value?: string): Promise<StateReport> {
     return this.#server.set(key, value)
   }
 
-  #onSlot = (detail: SlotEventDetail): void => {
-    switch (detail.operation) {
-      case "built": {
-        this.settle(detail.built ?? { branches: [], items: [] })
-        break
-      }
+  built(built: Built): void {
+    this.settle(built)
+  }
 
-      case "item-rekeyed": {
-        this.#migrateItemState(detail)
-        break
-      }
+  itemAdded(slot: Slot): void {
+    this.#recountItems(slot)
+  }
 
-      case "item-added":
-      case "item-removed": {
-        this.#recountItems(detail)
-        break
-      }
-
-      case "attribute": {
-        this.#syncProperty(detail)
-        break
-      }
-    }
+  itemRemoved(slot: Slot): void {
+    this.#recountItems(slot)
   }
 
   settle(built: Built): void {
@@ -258,7 +245,7 @@ export class SlotState implements ElementObserverDelegate {
       return
     }
 
-    this.#unsubscribe ??= this.#slots.subscribe(this.#onSlot)
+    this.#unsubscribe ??= this.#slots.subscribe(this)
 
     document.addEventListener("input", this.#onBoundInput)
     document.addEventListener("change", this.#onBoundInput)
@@ -1253,16 +1240,8 @@ export class SlotState implements ElementObserverDelegate {
     this.#server.readLocation()
   }
 
-  #recountItems = (detail: SlotEventDetail): void => {
-    if (detail.operation !== "item-added" && detail.operation !== "item-removed") {
-      return
-    }
-
-    if (!detail.slot) {
-      return
-    }
-
-    const region = this.#slots.regionOf(detail.slot)
+  #recountItems(slot: Slot): void {
+    const region = this.#slots.regionOf(slot)
 
     if (!region) {
       return
@@ -1274,7 +1253,7 @@ export class SlotState implements ElementObserverDelegate {
       return
     }
 
-    if (!this.#countDeclarations(manifest).some((declaration) => declaration.count?.collection === detail.index)) {
+    if (!this.#countDeclarations(manifest).some((declaration) => declaration.count?.collection === slot.index)) {
       return
     }
 
@@ -1343,13 +1322,8 @@ export class SlotState implements ElementObserverDelegate {
 
   #recountQueued = new Set<Region>()
 
-  #migrateItemState = (detail: SlotEventDetail): void => {
-
-    if (detail.operation !== "item-rekeyed" || !detail.slot || !detail.key || detail.previousKey === null) {
-      return
-    }
-
-    const region = this.#slots.regionOf(detail.slot)
+  itemRekeyed(slot: Slot, key: string, previousKey: string): void {
+    const region = this.#slots.regionOf(slot)
 
     if (!region) {
       return
@@ -1357,14 +1331,14 @@ export class SlotState implements ElementObserverDelegate {
 
     for (const store of [this.#scoped, this.#seeds]) {
       const buckets = store.get(region)
-      const bucket = buckets?.get(detail.previousKey)
+      const bucket = buckets?.get(previousKey)
 
       if (!buckets || !bucket) {
         continue
       }
 
-      buckets.delete(detail.previousKey)
-      buckets.set(detail.key, bucket)
+      buckets.delete(previousKey)
+      buckets.set(key, bucket)
     }
   }
 
@@ -1468,15 +1442,10 @@ export class SlotState implements ElementObserverDelegate {
     }
   }
 
-  #syncProperty = (detail: SlotEventDetail): void => {
-    if (detail.operation !== "attribute") {
-      return
-    }
+  attributeWritten(slot: Slot): void {
+    const element = elementOf(slot.anchor)
 
-    const slot = detail.slot
-    const element = slot ? elementOf(slot.anchor) : null
-
-    if (!slot || !element || slot.attribute !== "value") {
+    if (!element || slot.attribute !== "value") {
       return
     }
 

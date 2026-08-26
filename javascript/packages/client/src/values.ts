@@ -59,13 +59,15 @@ export function coerceSeed(shipped: unknown, kind: StateKind): StateValue | unde
   }
 
   switch (kind) {
-    case "boolean":
+    case "boolean": {
       if (typeof shipped === "boolean") {
         return shipped
       }
 
       return shipped !== null
-    case "integer":
+    }
+
+    case "integer": {
       if (typeof shipped === "number") {
         if (Number.isInteger(shipped)) {
           return shipped
@@ -79,8 +81,10 @@ export function coerceSeed(shipped: unknown, kind: StateKind): StateValue | unde
       }
 
       return undefined
+    }
+
     case "string":
-    case "symbol":
+    case "symbol": {
       if (typeof shipped === "string") {
         return shipped
       }
@@ -90,8 +94,11 @@ export function coerceSeed(shipped: unknown, kind: StateKind): StateValue | unde
       }
 
       return undefined
-    default:
+    }
+
+    default: {
       return shipped
+    }
   }
 }
 

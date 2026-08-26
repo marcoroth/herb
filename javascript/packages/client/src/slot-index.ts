@@ -18,25 +18,24 @@
  * filling or blanking a detached copy in `fragments.ts`.
  */
 
-import { ElementObserver } from "./element-observer"
-
-import type { ElementObserverDelegate } from "./element-observer"
 import { ITEM_STATICS } from "./markers"
 
-import { Manifests } from "./manifests"
 import { Statics } from "./statics"
+import { Manifests } from "./manifests"
+import { ElementObserver } from "./element-observer"
 
-import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
-import { asList, last, popMatching } from "./arrays"
 import { applyPayload } from "./apply"
+import { asList, last, popMatching } from "./arrays"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } from "./markers"
 import { attributeNames, blankSlots, fillSlots, interpolateParts, withoutMarkers } from "./fragments"
+import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 
 import type { StateManifest } from "./state"
 import type { TemplateManifest } from "./manifests"
+import type { ElementObserverDelegate } from "./element-observer"
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
+import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotIndexDelegate, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -61,7 +60,7 @@ export class SlotIndex implements ElementObserverDelegate {
   #manifests = new Manifests()
   #cause: BuildCause = "client"
   #built: Built | null = null
-  #listeners = new Set<SlotListener>()
+  #delegates = new Set<SlotIndexDelegate>()
   #elements: ElementObserver | null = null
   #unobserve: (() => void) | null = null
 
@@ -293,11 +292,11 @@ export class SlotIndex implements ElementObserverDelegate {
     return this.#building("apply", () => applyPayload(this, payload, options.items ?? "replace"))
   }
 
-  subscribe(listener: SlotListener): () => void {
-    this.#listeners.add(listener)
+  subscribe(delegate: SlotIndexDelegate): () => void {
+    this.#delegates.add(delegate)
 
     return () => {
-      this.#listeners.delete(listener)
+      this.#delegates.delete(delegate)
     }
   }
 
@@ -614,7 +613,7 @@ export class SlotIndex implements ElementObserverDelegate {
       this.#built?.items.push({ slot, item })
     }
 
-    this.#announce(slot, "item-added", slot.index, key, item)
+    this.#announce(slot, "item-added", (delegate) => delegate.itemAdded?.(slot, key, item), { key, item })
   }
 
   #insertionPoint(slot: Slot, anchor?: Node | null): Node | null {
@@ -670,12 +669,16 @@ export class SlotIndex implements ElementObserverDelegate {
         target.parentNode?.insertBefore(copy, target)
 
         this.scan(added, { region: live.region, slot: live, item: live.item })
-        this.#announce(live, "item-added", live.index, item.key, live.items.get(item.key) ?? null)
+
+        this.#announce(live, "item-added", (delegate) => delegate.itemAdded?.(live, item.key, live.items.get(item.key) ?? null), {
+          key: item.key,
+          item: live.items.get(item.key) ?? null,
+        })
       }
     })
 
     this.#keepItem(slot, item)
-    this.#announce(slot, "item-removed", slot.index, item.key, item)
+    this.#announce(slot, "item-removed", (delegate) => delegate.itemRemoved?.(slot, item.key, item), { key: item.key, item })
 
     outerRange(item).deleteContents()
 
@@ -722,7 +725,7 @@ export class SlotIndex implements ElementObserverDelegate {
   #writeFragment(slot: Slot, fragment: DocumentFragment): void {
     this.#forgetChildren(slot)
     this.#rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: slot.item })
-    this.#announce(slot, "branch", slot.index)
+    this.#announce(slot, "branch", (delegate) => delegate.branchSwitched?.(slot))
   }
 
   #owner(slot: Slot): SlotMap {
@@ -763,7 +766,7 @@ export class SlotIndex implements ElementObserverDelegate {
       this.#rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: slot.item })
     }
 
-    this.#announce(slot, "value", slot.index)
+    this.#announce(slot, "value", (delegate) => delegate.valueWritten?.(slot))
 
     return true
   }
@@ -814,13 +817,17 @@ export class SlotIndex implements ElementObserverDelegate {
     return attribute === value
   }
 
-  #announce(slot: Slot | null, operation: SlotOperation, index: number, key: string | null = null, item: Item | null = null, previousKey: string | null = null): void {
-    const region = slot?.region ?? null
+  #announce(slot: Slot, operation: SlotOperation, tell: (delegate: SlotIndexDelegate) => void, { key = null, item = null, previousKey = null }: { key?: string | null; item?: Item | null; previousKey?: string | null } = {}): void {
+    const region = slot.region ?? null
 
-    this.#notify({
+    for (const delegate of [...this.#delegates]) {
+      tell(delegate)
+    }
+
+    this.#dispatch({
       file: region?.file ?? "",
       occurrence: region?.occurrence ?? 0,
-      index,
+      index: slot.index,
       operation,
       key,
       previousKey,
@@ -834,7 +841,11 @@ export class SlotIndex implements ElementObserverDelegate {
     const [slot] = built.branches.length > 0 ? built.branches : built.items.map((entry) => entry.slot)
     const region = slot?.region ?? null
 
-    this.#notify({
+    for (const delegate of [...this.#delegates]) {
+      delegate.built?.(built)
+    }
+
+    this.#dispatch({
       file: region?.file ?? "",
       occurrence: region?.occurrence ?? 0,
       index: slot?.index ?? 0,
@@ -848,11 +859,7 @@ export class SlotIndex implements ElementObserverDelegate {
     })
   }
 
-  #notify(detail: SlotEventDetail): void {
-    for (const listener of [...this.#listeners]) {
-      listener(detail)
-    }
-
+  #dispatch(detail: SlotEventDetail): void {
     if (typeof document === "undefined") {
       return
     }
@@ -893,7 +900,7 @@ export class SlotIndex implements ElementObserverDelegate {
     const range = this.rangeOf(slot)
     const result = this.#rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item: slot.item })
 
-    this.#announce(slot, "value", slot.index)
+    this.#announce(slot, "value", (delegate) => delegate.valueWritten?.(slot))
 
     return result
   }
@@ -916,7 +923,10 @@ export class SlotIndex implements ElementObserverDelegate {
     const range = this.rangeOf(item)
     const result = this.#rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item })
 
-    this.#announce(slot, "item-updated", slot.index, key, slot.items.get(key) ?? null)
+    this.#announce(slot, "item-updated", (delegate) => delegate.itemUpdated?.(slot, key, slot.items.get(key) ?? null), {
+      key,
+      item: slot.items.get(key) ?? null,
+    })
 
     return result
   }
@@ -986,7 +996,7 @@ export class SlotIndex implements ElementObserverDelegate {
       this.rekeyItem(live, to, from)
     })
 
-    this.#announce(slot, "item-rekeyed", slot.index, to, item, from)
+    this.#announce(slot, "item-rekeyed", (delegate) => delegate.itemRekeyed?.(slot, to, from, item), { key: to, item, previousKey: from })
 
     return true
   }
@@ -1059,7 +1069,7 @@ export class SlotIndex implements ElementObserverDelegate {
       element.setAttribute(name, value)
     }
 
-    this.#announce(slot, "attribute", slot.index)
+    this.#announce(slot, "attribute", (delegate) => delegate.attributeWritten?.(slot))
 
     return true
   }
@@ -1093,7 +1103,7 @@ export class SlotIndex implements ElementObserverDelegate {
       ;(element as unknown as Record<string, unknown>)[name] = present
     }
 
-    this.#announce(slot, "attribute", slot.index)
+    this.#announce(slot, "attribute", (delegate) => delegate.attributeWritten?.(slot))
 
     return true
   }

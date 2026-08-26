@@ -75,11 +75,25 @@ export function matches(condition: StateCondition, valueOf: ValueOf): boolean {
   }
 
   switch (operator) {
-    case ">": return value > against
-    case ">=": return value >= against
-    case "<": return value < against
-    case "<=": return value <= against
-    default: return false
+    case ">": {
+      return value > against
+    }
+
+    case ">=": {
+      return value >= against
+    }
+
+    case "<": {
+      return value < against
+    }
+
+    case "<=": {
+      return value <= against
+    }
+
+    default: {
+      return false
+    }
   }
 }
 
