@@ -7,6 +7,7 @@ import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/
 
 const SVG_HTML_INTEGRATION_POINTS = new Set(["foreignobject", "desc", "title"])
 
+// TODO: refactor using ElementStackVisitor
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
   private inlineStack: string[] = []
   private insideSVG = false
