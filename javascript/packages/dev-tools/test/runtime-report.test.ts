@@ -383,7 +383,7 @@ describe("readRuntimeReport", () => {
     const script = document.createElement("script")
 
     script.type = "application/json"
-    script.setAttribute("data-herb-runtime-report", "")
+    script.setAttribute("data-herb-diagnostics", "")
     script.textContent = JSON.stringify({ version: 1, diagnostics: [{ template: "a.html.erb", message: "hi" }] })
 
     document.body.appendChild(script)

@@ -1,5 +1,5 @@
 export const RUNTIME_REPORT_VERSION = 1;
-export const RUNTIME_REPORT_SELECTOR = 'script[type="application/json"][data-herb-runtime-report]';
+export const RUNTIME_REPORT_SELECTOR = 'script[type="application/json"][data-herb-diagnostics]';
 export const MAX_RUNTIME_DIAGNOSTICS = 200;
 export const DEFAULT_ORIGIN = 'unknown';
 export const UNKNOWN_TEMPLATE = '(unknown template)';
@@ -269,7 +269,7 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     origin: trimOrigin(value.origin),
     location: normalizeRange(value.location),
     suggestion: asString(value.suggestion),
-    docsUrl: asString(value.docsUrl),
+    docsUrl: asString(value.docsUrl) ?? asString(value.docs_url),
     value: asString(value.value),
     fix: normalizeFix(value.fix, template, sources),
     overlay: normalizeOverlay(value.overlay),
