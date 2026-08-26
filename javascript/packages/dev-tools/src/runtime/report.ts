@@ -1,5 +1,5 @@
 export const RUNTIME_REPORT_VERSION = 1;
-export const RUNTIME_REPORT_SELECTOR = 'script[type="application/json"][data-herb-runtime-report]';
+export const RUNTIME_REPORT_SELECTOR = 'script[type="application/json"][data-herb-diagnostics]';
 export const MAX_RUNTIME_DIAGNOSTICS = 200;
 export const DEFAULT_ORIGIN = 'unknown';
 export const UNKNOWN_TEMPLATE = '(unknown template)';
@@ -7,12 +7,14 @@ export const DEFAULT_SEVERITY: RuntimeSeverity = 'error';
 export const RENDER_VIA_VALUES = ['layout', 'template', 'partial', 'component'] as const;
 export const RUNTIME_SEVERITIES = ['error', 'warning', 'info', 'hint'] as const;
 export const RUNTIME_KINDS = ['diagnostic', 'metric'] as const;
+export const OVERLAY_MODES = ['blocking', 'dismissible'] as const;
 export const FIX_KINDS = ['safe', 'unsafe'] as const;
 export const DEFAULT_FIX_KIND: FixKind = 'safe';
 
 export type RenderVia = typeof RENDER_VIA_VALUES[number];
 export type RuntimeSeverity = typeof RUNTIME_SEVERITIES[number];
 export type RuntimeKind = typeof RUNTIME_KINDS[number];
+export type OverlayMode = typeof OVERLAY_MODES[number];
 export type FixKind = typeof FIX_KINDS[number];
 
 export function trimOrigin(value: unknown): string {
@@ -66,6 +68,7 @@ export interface RuntimeDiagnostic {
   docsUrl?: string;
   value?: string;
   fix?: RuntimeFix;
+  overlay?: OverlayMode | false;
   source?: string;
   element?: Element | null;
 }
@@ -90,6 +93,7 @@ export interface NormalizedDiagnostic {
   docsUrl: string | null;
   value: string | null;
   fix: NormalizedFix | null;
+  overlay: OverlayMode | null;
   element: Element | null;
 }
 
@@ -171,6 +175,10 @@ function normalizeSeverity(value: unknown): RuntimeSeverity | null {
 
 function normalizeKind(value: unknown): RuntimeKind {
   return RUNTIME_KINDS.includes(value as RuntimeKind) ? (value as RuntimeKind) : 'diagnostic';
+}
+
+function normalizeOverlay(value: unknown): OverlayMode | null {
+  return OVERLAY_MODES.includes(value as OverlayMode) ? (value as OverlayMode) : null;
 }
 
 function normalizeFixKind(value: unknown): FixKind {
@@ -261,9 +269,10 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     origin: trimOrigin(value.origin),
     location: normalizeRange(value.location),
     suggestion: asString(value.suggestion),
-    docsUrl: asString(value.docsUrl),
+    docsUrl: asString(value.docsUrl) ?? asString(value.docs_url),
     value: asString(value.value),
     fix: normalizeFix(value.fix, template, sources),
+    overlay: normalizeOverlay(value.overlay),
     element: asElement(value.element),
   };
 }

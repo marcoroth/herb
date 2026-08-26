@@ -71,10 +71,7 @@ module Herb
         node = { id: id, template: template, parent: parent } #: Hash[Symbol, untyped]
 
         if called_from
-          position = Herb::Position.new(called_from[1], called_from[2]).to_one_based
-
-          node[:line] = position[:line]
-          node[:column] = position[:column]
+          node[:location] = Herb::Position.new(called_from[1], called_from[2]).to_one_based
           node[:via] = called_from[3]
         end
 

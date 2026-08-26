@@ -112,6 +112,20 @@ export class HerbDevTools {
     this.panel?.show(options)
   }
 
+  open(options: { expanded?: boolean } = {}): void {
+    this.panel?.show({ open: true })
+
+    if (options.expanded === true) {
+      this.panel?.expand()
+    } else if (options.expanded === false) {
+      this.panel?.collapse()
+    }
+  }
+
+  close(): void {
+    this.panel?.close()
+  }
+
   private setup(): void {
     this.injectStyles()
 

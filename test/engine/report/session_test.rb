@@ -423,7 +423,7 @@ module Engine
         end
 
         assert_equal(
-          { id: "2", template: "_card.html.erb", parent: "1", line: 3, column: 5 },
+          { id: "2", template: "_card.html.erb", parent: "1", location: { line: 3, column: 5 } },
           session.report.render_tree.last
         )
       end

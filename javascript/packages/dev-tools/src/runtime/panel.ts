@@ -1,14 +1,14 @@
 import panelStyles from './panel.css'
 
 import { injectStyle } from '../styles.js'
-import { loadRuntimeHighlighting } from './highlighting.js'
+import { loadRuntimeHighlighting, CONTEXT_LINES, FOCUSED_CONTEXT_LINES } from './highlighting.js'
 import { buildRenderStack, diagnosticKey, normalizeDiagnostic, trimOrigin, readRuntimeReport, UNKNOWN_TEMPLATE } from './report.js'
 import { flashElement } from '../slots/flash.js'
 
 import { MAX_RUNTIME_DIAGNOSTICS, RUNTIME_SEVERITIES } from './report.js'
 
 import type { RuntimeHighlighting } from './highlighting.js'
-import type { NormalizedDiagnostic, NormalizedRuntimeReport, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
+import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
 
 export type BadgeTone = RuntimeSeverity | 'metric'
 
@@ -40,9 +40,44 @@ interface PanelState {
   open: boolean
   expanded: boolean
   origin: string
+  severity: string
+  width: number | null
+  height: number | null
 }
 
 const ALL_ORIGINS = '*'
+const ALL_SEVERITIES = '*'
+
+const MIN_PANEL_WIDTH = 440
+const MIN_PANEL_HEIGHT = 180
+const VIEWPORT_MARGIN = 24
+
+const RESIZE_EDGES = ['left', 'bottom', 'corner'] as const
+
+type ResizeEdge = typeof RESIZE_EDGES[number]
+
+function clamp(value: number, low: number, high: number): number {
+  return Math.min(Math.max(value, low), Math.max(low, high))
+}
+
+function asSize(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
+}
+
+const SEVERITY_FILTERS: Array<{ value: string, label: string, matches: (diagnostic: NormalizedDiagnostic) => boolean }> = [
+  { value: 'error', label: 'Errors', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'error' },
+  { value: 'warning', label: 'Warnings', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'warning' },
+  { value: 'notice', label: 'Notices', matches: diagnostic => diagnostic.kind === 'diagnostic' && (diagnostic.severity === 'info' || diagnostic.severity === 'hint') },
+  { value: 'metric', label: 'Metrics', matches: diagnostic => diagnostic.kind === 'metric' },
+]
+
+function matchesSeverity(diagnostic: NormalizedDiagnostic, severity: string): boolean {
+  if (severity === ALL_SEVERITIES) {
+    return true
+  }
+
+  return SEVERITY_FILTERS.find(filter => filter.value === severity)?.matches(diagnostic) ?? true
+}
 const STATE_KEY = 'herb-dev-tools-runtime-panel'
 const ROOT_CLASS = 'herb-dev-tools-runtime-root'
 const LINKABLE_SCHEMES = ['http:', 'https:', 'file:']
@@ -53,6 +88,18 @@ const VIA_LABELS: Record<string, string> = {
   partial: 'partial',
   component: 'component',
 }
+
+function cornerIcon(paths: string[]): string {
+  return [
+    `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"`,
+    ` fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">`,
+    paths.map(path => `<path d="${path}"/>`).join(''),
+    `</svg>`,
+  ].join('')
+}
+
+const EXPAND_ICON = cornerIcon(['M6 2H2v4', 'M10 2h4v4', 'M6 14H2v-4', 'M10 14h4v-4'])
+const COLLAPSE_ICON = cornerIcon(['M2 6h4V2', 'M14 6h-4V2', 'M2 10h4v4', 'M14 10h-4v4'])
 
 const BADGE_GLYPHS: Record<BadgeTone, string> = {
   error: '⛔',
@@ -116,6 +163,14 @@ function ansiHTML(ansi: string, className: string, target: OpenTarget | null = n
   return `<herb-ansi class="${className}"${openTargetAttributes(target)}>${escapeHTML(ansi)}</herb-ansi>`
 }
 
+function strongerOverlay(existing: OverlayMode | null, incoming: OverlayMode | null): OverlayMode | null {
+  if (existing === 'blocking' || incoming === 'blocking') {
+    return 'blocking'
+  }
+
+  return existing ?? incoming
+}
+
 function mergeDiagnostics(existing: NormalizedDiagnostic, incoming: NormalizedDiagnostic): NormalizedDiagnostic {
   return {
     ...existing,
@@ -127,6 +182,7 @@ function mergeDiagnostics(existing: NormalizedDiagnostic, incoming: NormalizedDi
     docsUrl: existing.docsUrl ?? incoming.docsUrl,
     value: existing.value ?? incoming.value,
     fix: existing.fix ?? incoming.fix,
+    overlay: strongerOverlay(existing.overlay, incoming.overlay),
     element: incoming.element?.isConnected ? incoming.element : existing.element,
   }
 }
@@ -140,7 +196,7 @@ export class RuntimePanel {
   private primed = false
   private onOpenFile: ((file: string, line: number, column: number) => void) | null = null
   private onOpen: (() => void) | null = null
-  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS }
+  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
   private root: HTMLElement | null = null
   private highlighting: RuntimeHighlighting | null = null
   private hydrating = false
@@ -148,6 +204,10 @@ export class RuntimePanel {
   private escapeHandler: ((event: KeyboardEvent) => void) | null = null
   private styleElement: HTMLStyleElement | null = null
   private cleared = false
+  private overlayDismissed = new Set<string>()
+  private overlayShowAll = false
+  private featuredKey: string | null = null
+  private scrollLock: string | null = null
 
   constructor(options: RuntimePanelOptions = {}) {
     this.onOpenFile = options.onOpenFile ?? null
@@ -167,6 +227,9 @@ export class RuntimePanel {
     this.destroyed = true
 
     this.unbindEscape()
+    this.lockScroll(false)
+
+    document.body.style.userSelect = ''
 
     this.root?.remove()
     this.root = null
@@ -243,18 +306,18 @@ export class RuntimePanel {
       .reduce((total, entry) => total + entry.count, 0)
   }
 
+  public get badgeCount(): number {
+    return this.badgeSeverity === null ? this.metricCount : this.diagnosticCount
+  }
+
   public get badgeSeverity(): RuntimeSeverity | null {
-    for (const severity of RUNTIME_SEVERITIES) {
-      const present = this.entries.some(
-        entry => entry.diagnostic.kind === 'diagnostic' && entry.diagnostic.severity === severity
-      )
+    return severityOf(this.entries)
+  }
 
-      if (present) {
-        return severity
-      }
-    }
+  private get headerTone(): BadgeTone {
+    const scope = this.overlayFocused ? this.visibleEntries() : this.entries
 
-    return null
+    return severityOf(scope) ?? 'metric'
   }
 
   public get element(): HTMLElement | null {
@@ -307,6 +370,115 @@ export class RuntimePanel {
 
   public get dismissed(): boolean {
     return this.state.dismissed
+  }
+
+  public get overlay(): OverlayMode | null {
+    let mode: OverlayMode | null = null
+
+    for (const entry of this.entries) {
+      if (entry.diagnostic.overlay === 'blocking') {
+        return 'blocking'
+      }
+
+      if (entry.diagnostic.overlay === 'dismissible' && !this.overlayDismissed.has(entry.key)) {
+        mode = 'dismissible'
+      }
+    }
+
+    return mode ?? (this.featuredEntry === null ? null : 'dismissible')
+  }
+
+  private get featuredEntry(): PanelEntry | null {
+    if (this.featuredKey === null) {
+      return null
+    }
+
+    return this.entries.find(entry => entry.key === this.featuredKey) ?? null
+  }
+
+  public get featured(): string | null {
+    return this.featuredEntry === null ? null : this.featuredKey
+  }
+
+  public feature(key: string) {
+    if (!this.entries.some(entry => entry.key === key)) {
+      return
+    }
+
+    this.featuredKey = key
+    this.overlayShowAll = false
+    this.state.open = true
+
+    this.onOpen?.()
+
+    this.saveState()
+    this.render()
+  }
+
+  public get overlayShowingAll(): boolean {
+    return this.overlay !== null && this.overlayShowAll
+  }
+
+  public toggleOverlayScope() {
+    if (this.overlay === null) {
+      return
+    }
+
+    this.overlayShowAll = !this.overlayShowAll
+
+    this.render()
+  }
+
+  public dismissOverlay() {
+    if (this.overlay !== 'dismissible') {
+      return
+    }
+
+    const featured = this.visibleEntries()
+    const origins = new Set(featured.map(entry => entry.diagnostic.origin))
+
+    this.featuredKey = null
+
+    for (const entry of this.entries) {
+      if (entry.diagnostic.overlay === 'dismissible') {
+        this.overlayDismissed.add(entry.key)
+      }
+    }
+
+    this.state.open = true
+    this.state.expanded = false
+    this.state.origin = origins.size === 1 ? [...origins][0] : ALL_ORIGINS
+    this.state.severity = ALL_SEVERITIES
+
+    this.onOpen?.()
+
+    this.saveState()
+    this.render()
+    this.revealCard(featured[0]?.key)
+  }
+
+  private revealCard(key: string | undefined) {
+    if (key === undefined || this.root === null) {
+      return
+    }
+
+    const index = this.entries.findIndex(entry => entry.key === key)
+
+    if (index === -1) {
+      return
+    }
+
+    const card = this.root.querySelector(`.herb-dev-tools-card[data-herb-dev-tools-entry="${index}"]`)
+
+    card?.scrollIntoView({ block: 'nearest' })
+  }
+
+  private featureFrom(trigger: HTMLElement) {
+    const entry = this.entryFor(trigger)
+
+    if (entry !== undefined) {
+      this.feature(entry.key)
+    }
   }
 
   public dismiss() {
@@ -381,6 +553,10 @@ export class RuntimePanel {
     const key = diagnosticKey(diagnostic)
     const existing = this.entries.find(entry => entry.key === key)
 
+    if (diagnostic.overlay !== null) {
+      this.overlayDismissed.delete(key)
+    }
+
     if (existing !== undefined) {
       existing.count += 1
       existing.diagnostic = mergeDiagnostics(existing.diagnostic, diagnostic)
@@ -428,9 +604,12 @@ export class RuntimePanel {
         open: parsed?.open === true,
         expanded: parsed?.expanded === true,
         origin: typeof parsed?.origin === 'string' ? parsed.origin : ALL_ORIGINS,
+        severity: typeof parsed?.severity === 'string' ? parsed.severity : ALL_SEVERITIES,
+        width: asSize(parsed?.width),
+        height: asSize(parsed?.height),
       }
     } catch (_error) {
-      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS }
+      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
     }
   }
 
@@ -448,9 +627,17 @@ export class RuntimePanel {
     }
 
     this.escapeHandler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.collapse()
+      if (event.key !== 'Escape') {
+        return
       }
+
+      if (this.overlay === 'dismissible') {
+        this.dismissOverlay()
+
+        return
+      }
+
+      this.close()
     }
 
     document.addEventListener('keydown', this.escapeHandler)
@@ -467,15 +654,87 @@ export class RuntimePanel {
   }
 
   private get showingExpanded(): boolean {
-    return this.state.open && this.state.expanded
+    return this.overlay !== null || (this.state.open && this.state.expanded)
+  }
+
+  private lockScroll(locked: boolean) {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    if (locked) {
+      if (this.scrollLock !== null) {
+        return
+      }
+
+      this.scrollLock = document.documentElement.style.overflow
+      document.documentElement.style.overflow = 'hidden'
+
+      return
+    }
+
+    if (this.scrollLock === null) {
+      return
+    }
+
+    document.documentElement.style.overflow = this.scrollLock
+    this.scrollLock = null
+  }
+
+  private pruneOverlayDismissals() {
+    for (const key of this.overlayDismissed) {
+      if (!this.entries.some(entry => entry.key === key)) {
+        this.overlayDismissed.delete(key)
+      }
+    }
+
+    if (this.featuredEntry === null) {
+      this.featuredKey = null
+    }
+  }
+
+  private overlayEntries(mode: OverlayMode): PanelEntry[] {
+    if (mode === 'blocking') {
+      return this.entries.filter(entry => entry.diagnostic.overlay === 'blocking')
+    }
+
+    const declared = this.entries.filter(
+      entry => entry.diagnostic.overlay === 'dismissible' && !this.overlayDismissed.has(entry.key)
+    )
+
+    if (declared.length > 0) {
+      return declared
+    }
+
+    const featured = this.featuredEntry
+
+    return featured === null ? [] : [featured]
+  }
+
+  private get overlayFocused(): boolean {
+    return this.overlay !== null && !this.overlayShowAll
+  }
+
+  private get overlayEdgeToEdge(): boolean {
+    return this.overlay === 'blocking'
+  }
+
+  private matching(origin: string, severity: string): PanelEntry[] {
+    return this.entries.filter(entry => {
+      const sameOrigin = origin === ALL_ORIGINS || entry.diagnostic.origin === origin
+
+      return sameOrigin && matchesSeverity(entry.diagnostic, severity)
+    })
   }
 
   private visibleEntries(): PanelEntry[] {
-    if (this.state.origin === ALL_ORIGINS) {
-      return this.entries
+    const overlay = this.overlay
+
+    if (overlay !== null && !this.overlayShowAll) {
+      return this.overlayEntries(overlay)
     }
 
-    return this.entries.filter(entry => entry.diagnostic.origin === this.state.origin)
+    return this.matching(this.state.origin, this.state.severity)
   }
 
   private render() {
@@ -489,16 +748,31 @@ export class RuntimePanel {
       this.saveState()
     }
 
+    if (this.state.severity !== ALL_SEVERITIES && this.matching(ALL_ORIGINS, this.state.severity).length === 0) {
+      this.state.severity = ALL_SEVERITIES
+
+      this.saveState()
+    }
+
+    this.pruneOverlayDismissals()
+
     const currentCount = this.diagnosticCount
 
     this.bumped = this.primed && currentCount > this.lastCount
     this.lastCount = currentCount
     this.primed = true
 
+    const overlay = this.overlay
+
+    if (overlay === null) {
+      this.overlayShowAll = false
+    }
+
     const shouldShow = this.entries.length > 0 || (this.cleared && this.state.open)
 
-    if (!shouldShow || this.state.dismissed) {
+    if (overlay === null && (!shouldShow || this.state.dismissed)) {
       this.unbindEscape()
+      this.lockScroll(false)
 
       this.root?.remove()
       this.root = null
@@ -506,7 +780,9 @@ export class RuntimePanel {
       return
     }
 
-    if (this.showingExpanded) {
+    this.lockScroll(overlay === 'blocking')
+
+    if (this.showingExpanded && overlay !== 'blocking') {
       this.bindEscape()
     } else {
       this.unbindEscape()
@@ -529,6 +805,7 @@ export class RuntimePanel {
     this.root.innerHTML = this.rootHTML()
 
     this.bindHandlers()
+    this.bindResizeHandles()
 
     void this.hydrateHighlighting()
   }
@@ -560,25 +837,46 @@ export class RuntimePanel {
   }
 
   private rootHTML(): string {
+    const overlay = this.overlay
     const severity = this.badgeSeverity
     const tone = severity ?? 'metric'
-    const badgeCount = severity === null ? this.metricCount : this.diagnosticCount
-    const openClass = this.state.open ? ' herb-dev-tools-open' : ''
+    const badgeCount = this.badgeCount
+    const openClass = this.state.open || overlay !== null ? ' herb-dev-tools-open' : ''
     const expandedClass = this.showingExpanded ? ' herb-dev-tools-expanded' : ''
+    const overlayClass = overlay === null
+      ? ''
+      : [
+        ` herb-dev-tools-overlay herb-dev-tools-overlay-${overlay}`,
+        this.overlayShowAll ? '' : ` herb-dev-tools-overlay-focused herb-dev-tools-tone-${this.headerTone}`,
+        this.overlayEdgeToEdge ? ' herb-dev-tools-overlay-fullscreen' : '',
+      ].join('')
     const bumpClass = this.bumped ? ' herb-dev-tools-bump' : ''
     const summary = escapeHTML(this.summary())
 
-    const backdrop = this.showingExpanded
-      ? `<div class="herb-dev-tools-backdrop" data-herb-dev-tools-action="collapse" aria-hidden="true"></div>`
+    const backdrop = this.showingExpanded && !this.overlayEdgeToEdge
+      ? [
+        `<div class="herb-dev-tools-backdrop"`,
+        overlay === 'blocking' ? '' : ` data-herb-dev-tools-action="${overlay === null ? 'collapse' : 'dismiss-overlay'}"`,
+        ` aria-hidden="true"></div>`,
+      ].join('')
       : ''
+
+    const badge = overlay === null
+      ? [
+        `<button type="button" class="herb-dev-tools-badge herb-dev-tools-badge-${tone}${openClass}" data-herb-dev-tools-action="toggle" data-herb-dev-tools-tone="${tone}" title="${summary}" aria-label="${summary}" aria-expanded="${this.state.open}">`,
+        `<span class="herb-dev-tools-badge-glyph" aria-hidden="true">${BADGE_GLYPHS[tone]}</span>`,
+        `<span class="herb-dev-tools-badge-count${bumpClass}">${badgeCount}</span>`,
+        `</button>`,
+      ].join('')
+      : ''
+
+    const modal = overlay === null ? '' : ' role="dialog" aria-modal="true"'
 
     return [
       backdrop,
-      `<button type="button" class="herb-dev-tools-badge herb-dev-tools-badge-${tone}${openClass}" data-herb-dev-tools-action="toggle" data-herb-dev-tools-tone="${tone}" title="${summary}" aria-label="${summary}" aria-expanded="${this.state.open}">`,
-      `<span class="herb-dev-tools-badge-glyph" aria-hidden="true">${BADGE_GLYPHS[tone]}</span>`,
-      `<span class="herb-dev-tools-badge-count${bumpClass}">${badgeCount}</span>`,
-      `</button>`,
-      `<section class="herb-dev-tools-panel${openClass}${expandedClass}" aria-label="Herb Runtime Diagnostics">`,
+      badge,
+      `<section class="herb-dev-tools-panel${openClass}${expandedClass}${overlayClass}" aria-label="Herb Runtime Diagnostics"${modal}${this.sizeStyle()}>`,
+      this.resizeHandlesHTML(),
       this.headerHTML(),
       this.filtersHTML(),
       `<div class="herb-dev-tools-body">${this.bodyHTML()}</div>`,
@@ -586,11 +884,123 @@ export class RuntimePanel {
     ].join('')
   }
 
+  private get resizable(): boolean {
+    return this.overlay === null && !this.state.expanded
+  }
+
+  private sizeStyle(): string {
+    if (!this.resizable) {
+      return ''
+    }
+
+    const parts: string[] = []
+
+    if (this.state.width !== null) {
+      parts.push(`width:${this.state.width}px`)
+    }
+
+    if (this.state.height !== null) {
+      parts.push(`height:${this.state.height}px`, 'max-height:none')
+    }
+
+    return parts.length === 0 ? '' : ` style="${parts.join(';')}"`
+  }
+
+  private resizeHandlesHTML(): string {
+    if (!this.resizable) {
+      return ''
+    }
+
+    return RESIZE_EDGES.map(edge => [
+      `<div class="herb-dev-tools-resize herb-dev-tools-resize-${edge}" data-herb-dev-tools-resize="${edge}"`,
+      ` role="separator" aria-label="Resize the panel" title="Drag to resize"></div>`,
+    ].join('')).join('')
+  }
+
+  private bindResizeHandles() {
+    const root = this.root
+
+    if (root === null) {
+      return
+    }
+
+    const element = root.querySelector<HTMLElement>('.herb-dev-tools-panel')
+
+    if (element === null) {
+      return
+    }
+
+    root.querySelectorAll<HTMLElement>('[data-herb-dev-tools-resize]').forEach((handle) => {
+      handle.addEventListener('pointerdown', (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+
+        const edge = handle.getAttribute('data-herb-dev-tools-resize') as ResizeEdge
+        const box = element.getBoundingClientRect()
+        const selection = document.body.style.userSelect
+
+        handle.setPointerCapture(event.pointerId)
+
+        document.body.style.userSelect = 'none'
+
+        const move = (moved: PointerEvent) => {
+          if (edge === 'left' || edge === 'corner') {
+            const room = window.innerWidth - VIEWPORT_MARGIN
+            const width = clamp(box.right - moved.clientX, Math.min(MIN_PANEL_WIDTH, room), room)
+
+            element.style.width = `${Math.round(width)}px`
+          }
+
+          if (edge === 'bottom' || edge === 'corner') {
+            const room = window.innerHeight - VIEWPORT_MARGIN
+            const height = clamp(moved.clientY - box.top, Math.min(MIN_PANEL_HEIGHT, room), room)
+
+            element.style.height = `${Math.round(height)}px`
+            element.style.maxHeight = 'none'
+          }
+        }
+
+        const release = () => {
+          handle.removeEventListener('pointermove', move)
+          handle.removeEventListener('pointerup', release)
+          handle.removeEventListener('pointercancel', release)
+
+          document.body.style.userSelect = selection
+
+          const settled = element.getBoundingClientRect()
+
+          if (edge === 'left' || edge === 'corner') {
+            this.state.width = Math.round(settled.width)
+          }
+
+          if (edge === 'bottom' || edge === 'corner') {
+            this.state.height = Math.round(settled.height)
+          }
+
+          this.saveState()
+        }
+
+        handle.addEventListener('pointermove', move)
+        handle.addEventListener('pointerup', release)
+        handle.addEventListener('pointercancel', release)
+      })
+    })
+  }
+
+  public resetSize() {
+    this.state.width = null
+    this.state.height = null
+
+    this.saveState()
+    this.render()
+  }
+
   private summary(): string {
-    const errors = this.countBy(entry => entry.diagnostic.severity === 'error')
-    const warnings = this.countBy(entry => entry.diagnostic.severity === 'warning')
-    const notices = this.countBy(entry => entry.diagnostic.severity === 'info' || entry.diagnostic.severity === 'hint')
-    const metrics = this.countBy(entry => entry.diagnostic.kind === 'metric')
+    const scope = this.overlayFocused ? this.visibleEntries() : this.entries
+    const errors = this.countBy(scope, entry => entry.diagnostic.severity === 'error')
+    const warnings = this.countBy(scope, entry => entry.diagnostic.severity === 'warning')
+    const notices = this.countBy(scope, entry => entry.diagnostic.severity === 'info' || entry.diagnostic.severity === 'hint')
+    const metrics = this.countBy(scope, entry => entry.diagnostic.kind === 'metric')
     const parts: string[] = []
 
     if (errors > 0) parts.push(`${errors} error${errors === 1 ? '' : 's'}`)
@@ -601,23 +1011,168 @@ export class RuntimePanel {
     return parts.length === 0 ? 'No runtime diagnostics' : parts.join(', ')
   }
 
-  private countBy(predicate: (entry: PanelEntry) => boolean): number {
-    return this.entries.filter(predicate).reduce((total, entry) => total + entry.count, 0)
+  private countBy(entries: PanelEntry[], predicate: (entry: PanelEntry) => boolean): number {
+    return entries.filter(predicate).reduce((total, entry) => total + entry.count, 0)
   }
 
   private headerHTML(): string {
+    const overlay = this.overlay
+
+    if (this.overlayFocused) {
+      return this.focusedHeaderHTML(overlay!)
+    }
+
     return [
       `<header class="herb-dev-tools-header">`,
       `<span class="herb-dev-tools-title">Herb Runtime Diagnostics</span>`,
-      `<span class="herb-dev-tools-summary">${escapeHTML(this.summary())}</span>`,
+      ...this.headerControlsHTML(overlay),
+      `</header>`,
+    ].join('')
+  }
+
+  private toneMarkerHTML(): string {
+    const tone = this.headerTone
+
+    if (tone === 'metric') {
+      return ''
+    }
+
+    return `<span class="herb-dev-tools-dot herb-dev-tools-dot-${tone}" aria-hidden="true"></span>`
+  }
+
+  private focusedHeaderHTML(overlay: OverlayMode): string {
+    const entries = this.visibleEntries()
+    const marker = this.toneMarkerHTML()
+    const label = 'Dismiss this overlay and keep the panel docked'
+
+    const close = overlay === 'blocking'
+      ? ''
+      : `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="dismiss-overlay" aria-label="${label}" title="${label}">×</button>`
+
+    return [
+      `<header class="herb-dev-tools-header">`,
+      marker,
+      `<span class="herb-dev-tools-title">${escapeHTML(this.overlayHeadline(entries))}</span>`,
+      this.overlayLocationHTML(entries),
+      `<div class="herb-dev-tools-window-controls">`,
+      this.overlayScopeButtonHTML(),
+      close,
+      `</div>`,
+      `</header>`,
+    ].join('')
+  }
+
+  private overlayLocationHTML(entries: PanelEntry[]): string {
+    const location = this.overlayLocation(entries)
+
+    if (location === null) {
+      return `<span class="herb-dev-tools-summary">${escapeHTML(this.summary())}</span>`
+    }
+
+    const diagnostic = entries[0].diagnostic
+    const start = diagnostic.location?.start
+
+    if (diagnostic.template === UNKNOWN_TEMPLATE) {
+      return `<span class="herb-dev-tools-summary">${escapeHTML(location)}</span>`
+    }
+
+    return this.pathHTML(
+      location,
+      diagnostic.template,
+      start?.line ?? 1,
+      start?.column ?? 1,
+      'herb-dev-tools-summary',
+    )
+  }
+
+  private overlayHeadline(entries: PanelEntry[]): string {
+    const origins = new Set(entries.map(entry => entry.diagnostic.origin))
+
+    return origins.size === 1 ? [...origins][0] : 'Herb Runtime Diagnostics'
+  }
+
+  private overlayLocation(entries: PanelEntry[]): string | null {
+    if (entries.length !== 1) {
+      return null
+    }
+
+    const diagnostic = entries[0].diagnostic
+    const start = diagnostic.location?.start
+
+    if (start === undefined) {
+      return diagnostic.template
+    }
+
+    return `${diagnostic.template}:${start.line}:${start.column}`
+  }
+
+  private featureButtonHTML(entry: PanelEntry): string {
+    if (this.overlayFocused || this.overlay === 'blocking') {
+      return ''
+    }
+
+    const label = 'Show this on its own screen'
+
+    return [
+      `<button type="button" class="herb-dev-tools-feature" data-herb-dev-tools-action="feature"`,
+      ` data-herb-dev-tools-entry="${this.entries.indexOf(entry)}"`,
+      ` title="${label}" aria-label="${label}">${EXPAND_ICON}</button>`,
+    ].join('')
+  }
+
+  private overlayScopeButtonHTML(): string {
+    if (this.overlay === null) {
+      return ''
+    }
+
+    if (this.overlayShowAll) {
+      const shown = this.overlayEntries(this.overlay).length
+      const label = shown === 1 ? 'Back to the error' : 'Back to the errors'
+
+      return `<button type="button" class="herb-dev-tools-scope" data-herb-dev-tools-action="overlay-scope">${label}</button>`
+    }
+
+    const hidden = this.count - this.visibleCount
+
+    if (hidden <= 0) {
+      return ''
+    }
+
+    const label = 'Show other diagnostics'
+    const description = hidden === 1
+      ? 'Show the one other diagnostic this page reported'
+      : `Show the other ${hidden} diagnostics this page reported`
+
+    return [
+      `<button type="button" class="herb-dev-tools-scope" data-herb-dev-tools-action="overlay-scope"`,
+      ` title="${escapeHTML(description)}" aria-label="${escapeHTML(description)}">${label}</button>`,
+    ].join('')
+  }
+
+  private headerControlsHTML(overlay: OverlayMode | null): string[] {
+    if (overlay === 'blocking') {
+      return [`<div class="herb-dev-tools-window-controls">`, this.overlayScopeButtonHTML(), `</div>`]
+    }
+
+    if (overlay === 'dismissible') {
+      const label = 'Dismiss this overlay and keep the panel docked'
+
+      return [
+        `<div class="herb-dev-tools-window-controls">`,
+        this.overlayScopeButtonHTML(),
+        `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="dismiss-overlay" aria-label="${label}" title="${label}">×</button>`,
+        `</div>`,
+      ]
+    }
+
+    return [
       this.clearButtonHTML(),
       `<button type="button" class="herb-dev-tools-hide" data-herb-dev-tools-action="dismiss">Hide for this session</button>`,
       `<div class="herb-dev-tools-window-controls">`,
       this.expandButtonHTML(),
       `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="close" aria-label="Close panel">×</button>`,
       `</div>`,
-      `</header>`,
-    ].join('')
+    ]
   }
 
   private get visibleCount(): number {
@@ -649,20 +1204,44 @@ export class RuntimePanel {
 
   private expandButtonHTML(): string {
     const label = this.state.expanded ? 'Collapse panel back to the corner' : 'Expand panel to fill the window'
-    const glyph = this.state.expanded ? '⤡' : '⤢'
+    const icon = this.state.expanded ? COLLAPSE_ICON : EXPAND_ICON
 
     return [
       `<button type="button" class="herb-dev-tools-expand" data-herb-dev-tools-action="expand"`,
       ` aria-expanded="${this.state.expanded}" aria-label="${label}" title="${label}">`,
-      `<span aria-hidden="true">${glyph}</span>`,
+      icon,
       `</button>`,
     ].join('')
   }
 
   private filtersHTML(): string {
+    if (this.overlayFocused) {
+      return ''
+    }
+
+    if (this.entries.length === 0) {
+      return ''
+    }
+
+    return `${this.originFiltersHTML()}${this.severityFiltersHTML()}`
+  }
+
+  private countOf(entries: PanelEntry[]): number {
+    return entries.reduce((total, entry) => total + entry.count, 0)
+  }
+
+  private filterButtonHTML(attribute: string, value: string, label: string, count: number, active: boolean): string {
+    return [
+      `<button type="button" class="herb-dev-tools-filter${active ? ' herb-dev-tools-filter-active' : ''}"`,
+      ` data-herb-dev-tools-action="filter" data-herb-dev-tools-${attribute}="${escapeHTML(value)}"`,
+      ` aria-pressed="${active}">${escapeHTML(label)} (${count})</button>`,
+    ].join('')
+  }
+
+  private originFiltersHTML(): string {
     const origins = new Map<string, number>()
 
-    for (const entry of this.entries) {
+    for (const entry of this.matching(ALL_ORIGINS, this.state.severity)) {
       origins.set(entry.diagnostic.origin, (origins.get(entry.diagnostic.origin) ?? 0) + entry.count)
     }
 
@@ -670,15 +1249,43 @@ export class RuntimePanel {
       return ''
     }
 
-    const buttons = [`<button type="button" class="herb-dev-tools-filter${this.state.origin === ALL_ORIGINS ? ' herb-dev-tools-filter-active' : ''}" data-herb-dev-tools-action="filter" data-herb-dev-tools-origin="${ALL_ORIGINS}">All (${this.count})</button>`]
+    const buttons = [this.filterButtonHTML(
+      'origin',
+      ALL_ORIGINS,
+      'All',
+      this.countOf(this.matching(ALL_ORIGINS, this.state.severity)),
+      this.state.origin === ALL_ORIGINS,
+    )]
 
     for (const [origin, count] of origins) {
-      const active = this.state.origin === origin ? ' herb-dev-tools-filter-active' : ''
-
-      buttons.push(`<button type="button" class="herb-dev-tools-filter${active}" data-herb-dev-tools-action="filter" data-herb-dev-tools-origin="${escapeHTML(origin)}">${escapeHTML(origin)} (${count})</button>`)
+      buttons.push(this.filterButtonHTML('origin', origin, origin, count, this.state.origin === origin))
     }
 
     return `<div class="herb-dev-tools-filters">${buttons.join('')}</div>`
+  }
+
+  private severityFiltersHTML(): string {
+    const available = SEVERITY_FILTERS
+      .map(filter => ({ filter, count: this.countOf(this.matching(this.state.origin, filter.value)) }))
+      .filter(candidate => candidate.count > 0)
+
+    if (available.length < 2) {
+      return ''
+    }
+
+    const buttons = [this.filterButtonHTML(
+      'severity',
+      ALL_SEVERITIES,
+      'Any severity',
+      this.countOf(this.matching(this.state.origin, ALL_SEVERITIES)),
+      this.state.severity === ALL_SEVERITIES,
+    )]
+
+    for (const { filter, count } of available) {
+      buttons.push(this.filterButtonHTML('severity', filter.value, filter.label, count, this.state.severity === filter.value))
+    }
+
+    return `<div class="herb-dev-tools-filters herb-dev-tools-filters-severity">${buttons.join('')}</div>`
   }
 
   private bodyHTML(): string {
@@ -741,14 +1348,15 @@ export class RuntimePanel {
       ].join('')
 
     const repeat = entry.count > 1 ? `<span class="herb-dev-tools-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : ''
+    const feature = this.featureButtonHTML(entry)
     const suggestion = diagnostic.suggestion === null ? '' : `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`
     const element = diagnostic.element !== null && diagnostic.element.isConnected
       ? `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it"><span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span><code>${escapeHTML(describeElement(diagnostic.element))}</code></button>`
       : ''
 
     return [
-      `<article class="herb-dev-tools-card" data-herb-dev-tools-origin="${escapeHTML(diagnostic.origin)}" data-herb-dev-tools-kind="${escapeHTML(diagnostic.kind)}">`,
-      `<div class="herb-dev-tools-card-head">${marker}${code}${docs}<span class="herb-dev-tools-origin">${escapeHTML(diagnostic.origin)}</span>${repeat}</div>`,
+      `<article class="herb-dev-tools-card" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" data-herb-dev-tools-origin="${escapeHTML(diagnostic.origin)}" data-herb-dev-tools-kind="${escapeHTML(diagnostic.kind)}">`,
+      `<div class="herb-dev-tools-card-head">${marker}${code}${docs}<span class="herb-dev-tools-origin">${escapeHTML(diagnostic.origin)}</span>${repeat}${feature}</div>`,
       `<p class="herb-dev-tools-message">${inlineCodeHTML(diagnostic.message)}</p>`,
       element,
       suggestion,
@@ -774,7 +1382,10 @@ export class RuntimePanel {
       ? null
       : { file: diagnostic.template, line: diagnostic.location.start.line, column: diagnostic.location.start.column }
 
-    const rendered = this.highlighting.excerpt(source, diagnostic, target === null ? undefined : templateUrl(target.file))
+    const rendered = this.highlighting.excerpt(source, diagnostic, {
+      ...(target === null ? {} : { fileUrl: templateUrl(target.file) }),
+      contextLines: this.overlayFocused ? FOCUSED_CONTEXT_LINES : CONTEXT_LINES,
+    })
 
     if (rendered === null) {
       return ''
@@ -889,12 +1500,31 @@ export class RuntimePanel {
           this.toggleExpanded()
         } else if (action === 'collapse') {
           this.collapse()
+        } else if (action === 'dismiss-overlay') {
+          this.dismissOverlay()
+        } else if (action === 'overlay-scope') {
+          this.toggleOverlayScope()
+        } else if (action === 'feature') {
+          this.featureFrom(element)
         } else if (action === 'dismiss') {
           this.dismiss()
         } else if (action === 'clear') {
           this.clear(this.state.origin === ALL_ORIGINS ? undefined : this.state.origin)
+
+          if (this.entries.length === 0) {
+            this.close()
+          }
         } else if (action === 'filter') {
-          this.state.origin = element.getAttribute('data-herb-dev-tools-origin') ?? ALL_ORIGINS
+          const origin = element.getAttribute('data-herb-dev-tools-origin')
+          const severity = element.getAttribute('data-herb-dev-tools-severity')
+
+          if (origin !== null) {
+            this.state.origin = origin
+          }
+
+          if (severity !== null) {
+            this.state.severity = severity
+          }
 
           this.saveState()
           this.render()
@@ -936,8 +1566,22 @@ export class RuntimePanel {
 
     if (!target || !target.isConnected) return
 
+    this.stepOutOfTheWay()
+
     target.scrollIntoView({ block: 'center', behavior: 'smooth' })
     flashElement(target)
+  }
+
+  private stepOutOfTheWay() {
+    if (this.overlay === 'dismissible') {
+      this.dismissOverlay()
+
+      return
+    }
+
+    if (this.overlay === null && this.state.expanded) {
+      this.collapse()
+    }
   }
 
   private outline: HTMLElement | null = null
@@ -974,6 +1618,20 @@ export class RuntimePanel {
 
     this.onOpenFile(file, Number.isFinite(line) ? line : 1, Number.isFinite(column) ? column : 1)
   }
+}
+
+function severityOf(entries: PanelEntry[]): RuntimeSeverity | null {
+  for (const severity of RUNTIME_SEVERITIES) {
+    const present = entries.some(
+      entry => entry.diagnostic.kind === 'diagnostic' && entry.diagnostic.severity === severity
+    )
+
+    if (present) {
+      return severity
+    }
+  }
+
+  return null
 }
 
 function describeElement(element: Element): string {
