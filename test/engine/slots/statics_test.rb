@@ -169,12 +169,20 @@ module Engine
         assert_includes evaluate_herb_source(compiled, { "@a" => false }), "herb-slot:0:conditional"
       end
 
-      test "parks an interpolated attribute's static segments" do
-        template = %(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>)
-        markup = parked(template, { "@id" => 7, "@kind" => "a", "@size" => "b" })
+      test "parks nothing for an interpolated attribute, whose stretches the manifest carries" do
+        assert_evaluated_snapshot(
+          %(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>),
+          { "@id" => 7, "@kind" => "a", "@size" => "b" },
+          options
+        )
+      end
 
-        assert_includes markup, "<!--herb-branch:0:parts-->message_<!--herb-part-->"
-        assert_includes markup, "<!--herb-branch:1:parts-->row-<!--herb-part-->-of-<!--herb-part-->"
+      test "carries an interpolated attribute's static segments in the manifest" do
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client)
+
+        Herb::Engine.new(%(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>), visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal({ "0" => ["message_", ""], "1" => ["row-", "-of-", ""] }, visitor.manifest["parts"])
       end
 
       test "the values payload carries an interpolated attribute as its dynamic parts" do

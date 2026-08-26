@@ -39,6 +39,7 @@ interface Fixture {
   values: Payload
   expected: string
   schema: { file: string; identifier: string; version: string; slots: SchemaSlot[] }
+  manifest: { file: string; identifier: string; version: string; names: Record<string, number>; parts: Record<string, string[]>; states: unknown }
   dependencies: DependencyMap
 }
 
@@ -68,15 +69,22 @@ const PARKED_REASONS = ["branch", "block", "items", "partial-attribute"]
 
 const UNCHANGED = ["nothing dynamic at all", "a boolean attribute inside a block"]
 
-function mount(markup: string): HTMLElement {
+function mount(markup: string, fixture?: Fixture): HTMLElement {
   document.body.innerHTML = ""
 
   const host = document.createElement("div")
+  const manifest = fixture ? container(fixture) : ""
 
-  host.innerHTML = markup
+  host.innerHTML = markup + manifest
   document.body.appendChild(host)
 
   return host
+}
+
+function container(fixture: Fixture): string {
+  const manifest = fixture.manifest
+
+  return `<template data-herb-manifests>${JSON.stringify({ [`${manifest.identifier}:${manifest.version}`]: manifest })}</template>`
 }
 
 function serialized(markup: string): string {
@@ -131,7 +139,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("indexes only slots the compiler recorded, as the type and attribute it recorded", () => {
-    index.scan(mount(fixture.rendered))
+    index.scan(mount(fixture.rendered, fixture))
 
     for (const [number, slot] of found(index, fixture.file)) {
       const recorded = schema.get(number)
@@ -144,10 +152,10 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
 
   test("indexes the client render the same way and takes the parked statics off the page", () => {
     const server = new SlotIndex()
-    server.scan(mount(fixture.rendered))
+    server.scan(mount(fixture.rendered, fixture))
     const serverSlots = [...found(server, fixture.file).keys()].sort()
 
-    const host = mount(fixture.client)
+    const host = mount(fixture.client, fixture)
     index.scan(host)
 
     expect([...found(index, fixture.file).keys()].sort()).toEqual(serverSlots)
@@ -155,7 +163,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("carries the version the payload names", () => {
-    index.scan(mount(fixture.rendered))
+    index.scan(mount(fixture.rendered, fixture))
 
     for (const region of index.regionsFor(fixture.file)) {
       expect(region.version).toBe(fixture.values.version)
@@ -164,7 +172,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("becomes the server's next render when the values land on the client render", () => {
-    const host = mount(fixture.client)
+    const host = mount(fixture.client, fixture)
     index.scan(host)
 
     const report = index.apply(fixture.values)
@@ -174,7 +182,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("becomes the server's next render on the server render, or defers only what needs parked markup", () => {
-    const host = mount(fixture.rendered)
+    const host = mount(fixture.rendered, fixture)
     index.scan(host)
 
     const report = index.apply(fixture.values)
@@ -189,7 +197,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("is unchanged by applying the same values a second time", () => {
-    const host = mount(fixture.client)
+    const host = mount(fixture.client, fixture)
     index.scan(host)
     index.apply(fixture.values)
 
@@ -201,7 +209,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("can be indexed again from what it became", () => {
-    const host = mount(fixture.client)
+    const host = mount(fixture.client, fixture)
     index.scan(host)
     index.apply(fixture.values)
 

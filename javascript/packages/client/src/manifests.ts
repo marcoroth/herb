@@ -43,6 +43,7 @@ function parse(element: HTMLTemplateElement): unknown {
 
 export class Manifests {
   #held = new Map<string, TemplateManifest>()
+  #byFile = new Map<string, TemplateManifest>()
 
   adopt(root: Node): number {
     let taken = 0
@@ -74,12 +75,17 @@ export class Manifests {
     return this.get(file, version)?.parts[String(index)] ?? null
   }
 
+  partsForFile(file: string, index: number): string[] | null {
+    return this.#byFile.get(file)?.parts[String(index)] ?? null
+  }
+
   statesOf(file: string, version: string): StateManifest | null {
     return this.get(file, version)?.states ?? null
   }
 
   clear(): void {
     this.#held = new Map()
+    this.#byFile = new Map()
   }
 
   #keep(identity: string, manifest: unknown): boolean {
@@ -91,7 +97,11 @@ export class Manifests {
       return false
     }
 
-    this.#held.set(identity, manifest as TemplateManifest)
+    const held = manifest as TemplateManifest
+
+    this.#held.set(identity, held)
+    this.#byFile.set(held.file, held)
+    this.#byFile.set(held.identifier, held)
 
     return true
   }

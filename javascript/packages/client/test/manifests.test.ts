@@ -138,30 +138,6 @@ describe("a page whose templates each wrote their own container", () => {
   })
 })
 
-describe("a page an older server rendered", () => {
-  test("still resolves a name from the attribute the compiler rewrote", () => {
-    mount(
-      `<!--herb-region:${FILE}:${VERSION}:0--><ul data-herb-name="2:rows">` +
-        `<li data-herb-slot="2:child">a</li></ul><!--/herb-region:${FILE}-->`,
-    )
-
-    expect(index.slot(FILE, "rows")?.index).toBe(2)
-  })
-
-  test("still resolves parts from the parked markup", () => {
-    mount(
-      `<!--herb-region:${FILE}:${VERSION}:0-->` +
-        `<li class="row-a-x" data-herb-slot="0:attribute_interpolation:class">a</li>` +
-        `<template data-herb-region="${FILE}:${VERSION}"><!--herb-branch:0:parts-->row-<!--herb-part-->-x</template>` +
-        `<!--/herb-region:${FILE}-->`,
-    )
-
-    const slot = index.slot(FILE, 0)!
-
-    expect(index.setAttribute(slot, ["b"])).toBe(true)
-    expect(document.querySelector("li")!.getAttribute("class")).toBe("row-b-x")
-  })
-})
 
 describe("a manifest that cannot be read", () => {
   test("is ignored rather than thrown over", () => {

@@ -8,8 +8,6 @@ module Herb
 
         ITEM_STATICS: String
 
-        PARTS_STATICS: String
-
         SEED_VALUE_TYPES: String
 
         # : (String) -> String
@@ -32,12 +30,6 @@ module Herb
 
         # : (Integer) -> String
         def item_statics_key: (Integer) -> String
-
-        # : (Integer) -> String
-        def parts_statics_key: (Integer) -> String
-
-        # : () -> String
-        def part: () -> String
 
         # : () -> String
         def seeds_open_prefix: () -> String

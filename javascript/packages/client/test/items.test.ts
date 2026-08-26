@@ -5,20 +5,23 @@ import type { SlotEventDetail } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
 
+const MANIFEST = { file: FILE, identifier: FILE, version: "aaaaaaaa", names: { body: 2, messages: 0 }, parts: {}, states: null }
+const MANIFEST_TAG = `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:aaaaaaaa`]: MANIFEST })}</template>`
+
 const ROWS =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
   `<ul><!--herb-slot:0:collection-->` +
-  `<!--herb-item:0:a--><li id="a" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child">first</span></li><!--/herb-item:0-->` +
-  `<!--herb-item:0:b--><li id="b" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child">second</span></li><!--/herb-item:0-->` +
+  `<!--herb-item:0:a--><li id="a" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child">first</span></li><!--/herb-item:0-->` +
+  `<!--herb-item:0:b--><li id="b" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child">second</span></li><!--/herb-item:0-->` +
   `<!--/herb-slot:0--></ul>` +
-  `<!--/herb-region:${FILE}-->`
+  `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
 const EMPTY =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
   `<ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul>` +
   `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:item-->` +
-  `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0--></template>` +
-  `<!--/herb-region:${FILE}-->`
+  `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child"></span></li><!--/herb-item:0--></template>` +
+  `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
 let index: SlotIndex
 
@@ -79,7 +82,7 @@ describe("addItem", () => {
 
     parked.setAttribute("data-herb-region", `${FILE}:aaaaaaaa`)
     parked.innerHTML =
-      `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->`
+      `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->`
     document.querySelector("ul")!.append(parked)
     index.scan(parked)
 

@@ -94,10 +94,10 @@ describe("a state read in an interpolated attribute", () => {
   const ROW_PAGE =
     `<!--herb-region:${ROW_FILE}:dddddddd:0-->` +
     `<div class="row-" data-herb-slot="0:attribute_interpolation:class">x</div>` +
-    `<template data-herb-region="${ROW_FILE}:dddddddd">` +
-    `<!--herb-branch:0:parts-->row-<!--herb-part-->` +
-    `</template>` +
-    `<!--/herb-region:${ROW_FILE}-->`
+    `<!--/herb-region:${ROW_FILE}-->` +
+    `<template data-herb-manifests>${JSON.stringify({
+      [`${ROW_FILE}:dddddddd`]: { file: ROW_FILE, identifier: ROW_FILE, version: "dddddddd", names: {}, parts: { 0: ["row-", ""] }, states: null },
+    })}</template>`
 
   const ROW_MANIFEST = {
     state: {},

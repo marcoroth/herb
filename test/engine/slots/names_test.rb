@@ -10,6 +10,10 @@ module Engine
     class NamesTest < Minitest::Spec
       include SnapshotUtils
 
+      def options
+        { visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], filename: "app/views/test.html.erb" }
+      end
+
       def compile(template)
         visitor = Herb::Engine::Slots::Visitor.new(mode: :client)
         engine = Herb::Engine.new(template, visitors: [visitor], filename: "app/views/test.html.erb")
@@ -28,13 +32,15 @@ module Engine
         assert_equal :child, named.type
       end
 
-      test "rewrites the attribute to carry the slot index" do
-        visitor, src = compile(%(<p data-herb-name="body"><%= @body %></p>))
-        rendered = evaluate_herb_source(src, { "@body" => "hi" })
+      test "leaves the name the template wrote where the template wrote it" do
+        assert_evaluated_snapshot(%(<p data-herb-name="body"><%= @body %></p>), { "@body" => "hi" }, options)
+      end
+
+      test "says which slot that name is, in the manifest" do
+        visitor, = compile(%(<p data-herb-name="body"><%= @body %></p>))
         index = visitor.slots.find { |slot| slot.name == "body" }.index
 
-        assert_includes rendered, %(data-herb-name="#{index}:body")
-        refute_includes rendered, %(data-herb-name="body")
+        assert_equal({ "body" => index }, visitor.manifest["names"])
       end
 
       test "mixed static text around one slot still resolves" do

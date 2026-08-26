@@ -8,17 +8,20 @@ import type { MutationRequest } from "../src/mutations"
 
 const FILE = "app/views/conversations/show.html.erb"
 
+const NAME_MANIFEST = { file: FILE, identifier: FILE, version: "aaaaaaaa", names: { messages: 0, body: 2, note: 4 }, parts: {}, states: null }
+const MANIFEST_TAG = `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:aaaaaaaa`]: NAME_MANIFEST })}</template>`
+
 const PAGE =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
-  `<ul data-herb-name="0:messages"><!--herb-slot:0:collection-->` +
+  `<ul data-herb-name="messages"><!--herb-slot:0:collection-->` +
   `<!--herb-item:0:message_1--><li id="message_1" data-herb-slot="1:attribute:id">` +
-  `<span data-herb-name="2:body" data-herb-slot="2:child">hello</span>` +
+  `<span data-herb-name="body" data-herb-slot="2:child">hello</span>` +
   `<em><!--herb-slot:3:conditional--><!--herb-branch:3:2-->Sent<!--/herb-slot:3--></em></li><!--/herb-item:0-->` +
   `<!--/herb-slot:0--></ul>` +
   `<template data-herb-region="${FILE}:aaaaaaaa">` +
   `<!--herb-branch:3:0-->Sending…<!--herb-branch:3:1-->Not sent<!--herb-branch:3:2-->Sent` +
   `</template>` +
-  `<!--/herb-region:${FILE}-->` +
+  `<!--/herb-region:${FILE}-->` + MANIFEST_TAG +
   `<template data-herb-dependencies>${JSON.stringify({
     state: {},
     states: {
@@ -164,7 +167,7 @@ describe("SlotMutations", () => {
   })
 
   test("a form naming a slot that is not a collection reports it", () => {
-    document.body.innerHTML = PAGE.replace("</ul>", '</ul><p data-herb-name="4:note"><!--herb-slot:4-->x<!--/herb-slot:4--></p>')
+    document.body.innerHTML = PAGE.replace("</ul>", '</ul><p data-herb-name="note"><!--herb-slot:4-->x<!--/herb-slot:4--></p>')
     slots = new SlotIndex()
     slots.scan(document.body)
     state = new SlotState(slots, { persist: "none" })
@@ -426,13 +429,13 @@ describe("a template that declares no mutation states", () => {
 
   const PLAIN_PAGE =
     `<!--herb-region:${PLAIN_FILE}:bbbbbbbb:0-->` +
-    `<ul data-herb-name="0:messages"><!--herb-slot:0:collection-->` +
+    `<ul data-herb-name="messages"><!--herb-slot:0:collection-->` +
     `<!--herb-item:0:message_1--><li id="message_1" data-herb-slot="1:attribute:id">` +
-    `<span data-herb-name="2:body" data-herb-slot="2:child">hello</span></li><!--/herb-item:0-->` +
+    `<span data-herb-name="body" data-herb-slot="2:child">hello</span></li><!--/herb-item:0-->` +
     `<!--/herb-slot:0--></ul>` +
     `<template data-herb-region="${PLAIN_FILE}:bbbbbbbb">` +
     `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id">` +
-    `<span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->` +
+    `<span data-herb-name="body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->` +
     `</template>` +
     `<!--/herb-region:${PLAIN_FILE}-->` +
     `<template data-herb-dependencies>${JSON.stringify({
@@ -445,6 +448,9 @@ describe("a template that declares no mutation states", () => {
           conditionals: {},
         },
       },
+    })}</template>` +
+    `<template data-herb-manifests>${JSON.stringify({
+      [`${PLAIN_FILE}:bbbbbbbb`]: { file: PLAIN_FILE, identifier: PLAIN_FILE, version: "bbbbbbbb", names: { messages: 0, body: 2 }, parts: {}, states: null },
     })}</template>`
 
   test("sends the row without asking for a state the template does not have", async () => {

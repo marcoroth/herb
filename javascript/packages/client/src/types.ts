@@ -103,7 +103,6 @@ export interface Region {
   occurrence: number
   ranges: RegionRange[]
   slots: SlotMap
-  names: NameMap
   seeds?: Seeds
 }
 

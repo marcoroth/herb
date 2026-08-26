@@ -23,12 +23,12 @@ import { ITEM_STATICS } from "./markers"
 import { Manifests } from "./manifests"
 import { Statics } from "./statics"
 
-import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
+import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
 import { asList, last, popMatching } from "./arrays"
 import { applyPayload } from "./apply"
 import { ancestorsOf, descendantsOf, link } from "./slots"
 import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } from "./markers"
-import { blankSlots, fillSlots, interpolateParts, templateNames, withoutMarkers } from "./fragments"
+import { attributeNames, blankSlots, fillSlots, interpolateParts, withoutMarkers } from "./fragments"
 
 import type { StateManifest } from "./state"
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
@@ -239,9 +239,9 @@ export class SlotIndex {
       return index
     }
 
-    const named = this.#manifests.nameOf(region.file, region.version, index) ?? region.names.get(index)
+    const named = this.#manifests.nameOf(region.file, region.version, index)
 
-    if (named !== undefined && named !== null) {
+    if (named !== null) {
       return named
     }
 
@@ -641,7 +641,7 @@ export class SlotIndex {
   }
 
   #partsFor(region: Region, index: number): AttributeParts | null {
-    return this.#manifests.partsOf(region.file, region.version, index) ?? this.#statics.parts(region.file, index)
+    return this.#manifests.partsOf(region.file, region.version, index)
   }
 
   #partsResolver(slot: Slot): PartsResolver {
@@ -993,7 +993,7 @@ export class SlotIndex {
   }
 
   #itemValues(slot: Slot, template: DocumentFragment, values: ItemValues): SlotValues {
-    const names = templateNames(template)
+    const attributes = attributeNames(template)
     const resolved: SlotValues = {}
 
     for (const [given, value] of Object.entries(values)) {
@@ -1003,9 +1003,9 @@ export class SlotIndex {
         continue
       }
 
-      const index = names.get(given) ?? slot.region.names.get(given)
+      const index = this.#manifests.nameOf(slot.region.file, slot.region.version, given) ?? attributes.get(given) ?? null
 
-      if (index !== undefined) {
+      if (index !== null) {
         resolved[index] = value
       }
     }
@@ -1132,7 +1132,7 @@ export class SlotIndex {
   }
 
   materialize(file: string, key: string, dynamics: SlotValues = {}): DocumentFragment | null {
-    return this.#statics.materialize(file, key, dynamics)
+    return this.#statics.materialize(file, key, dynamics, (index) => this.#manifests.partsForFile(file, index))
   }
 
   switchBranch(slot: Slot, branch: number | null, dynamics: SlotValues = {}): boolean {
@@ -1220,7 +1220,6 @@ export class SlotIndex {
         this.#visited.add(element)
 
         this.#anchorSlots(element, result, state)
-        this.#nameSlot(element, state)
 
         continue
       }
@@ -1347,7 +1346,6 @@ export class SlotIndex {
       occurrence: marker.occurrence,
       ranges: [range],
       slots: new Map(),
-      names: new Map(),
     }
 
     state.openRegions.push({ region, range })
@@ -1500,17 +1498,6 @@ export class SlotIndex {
 
     return null
   }
-
-  #nameSlot(element: Element, state: ParseState): void {
-    const entry = nameEntry(element)
-
-    if (!entry) {
-      return
-    }
-
-    this.#regionAt(state)?.names.set(entry.name, entry.index)
-  }
-
   #anchorSlots(element: Element, result: ScanResult, state: ParseState): void {
     const region = this.#regionAt(state)
 

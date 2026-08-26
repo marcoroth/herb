@@ -9,17 +9,16 @@
 
 import { HERB_ATTRIBUTES } from "./attributes"
 
-import { attributeParts, blankSlots, fillSlots, parkedBranches } from "./fragments"
-import { numericBranch, partsKey } from "./markers"
+import { blankSlots, fillSlots, parkedBranches } from "./fragments"
+import { numericBranch } from "./markers"
 import { staticsElements } from "./anchors"
 import { parseStaticsIdentity } from "./markers"
 
-import type { AttributeParts, FragmentMap, RenderMode, SlotValues, StaticsIdentity } from "./types"
+import type { FragmentMap, PartsResolver, RenderMode, SlotValues, StaticsIdentity } from "./types"
 
 interface Parked {
   version: string
   fragments: FragmentMap
-  parts: Map<number, AttributeParts | null>
 }
 
 export class Statics {
@@ -29,7 +28,7 @@ export class Statics {
     const { file, version } = identity
     const held = this.#held.get(file)
 
-    let parked: Parked = { version, fragments: new Map(), parts: new Map() }
+    let parked: Parked = { version, fragments: new Map() }
 
     if (held && held.version === version) {
       parked = held
@@ -88,27 +87,7 @@ export class Statics {
     return this.branches(file, slot).length > 0 ? "client" : "server"
   }
 
-  parts(file: string, index: number): AttributeParts | null {
-    const held = this.#held.get(file)
-
-    if (!held) {
-      return null
-    }
-
-    const cached = held.parts.get(index)
-
-    if (cached !== undefined) {
-      return cached
-    }
-
-    const parsed = attributeParts(held.fragments.get(partsKey(index)) ?? null)
-
-    held.parts.set(index, parsed)
-
-    return parsed
-  }
-
-  materialize(file: string, key: string, dynamics: SlotValues = {}): DocumentFragment | null {
+  materialize(file: string, key: string, dynamics: SlotValues = {}, parts?: PartsResolver): DocumentFragment | null {
     const parked = this.parked(file, key)
 
     if (!parked) {
@@ -117,7 +96,7 @@ export class Statics {
 
     const copy = parked.cloneNode(true) as DocumentFragment
 
-    fillSlots(copy, dynamics, false, (index) => this.parts(file, index))
+    fillSlots(copy, dynamics, false, parts)
 
     return copy
   }

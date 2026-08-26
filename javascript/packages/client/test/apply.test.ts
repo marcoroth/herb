@@ -302,7 +302,7 @@ describe("applying a value that carries entities", () => {
 
   const INTERPOLATED =
     `<!--herb-region:${FILE}:ffffffff:0--><li class="row-old" data-herb-slot="0:attribute_interpolation:class">x</li>` +
-    `<template data-herb-region="${FILE}:ffffffff"><!--herb-branch:0:parts-->row-<!--herb-part--></template>` +
+    `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:ffffffff`]: { file: FILE, identifier: FILE, version: "ffffffff", names: {}, parts: { 0: ["row-", ""] }, states: null } })}</template>` +
     `<!--/herb-region:${FILE}-->`
 
   test("writes an attribute the way the server's markup reads, not the bytes it sent", () => {

@@ -1,15 +1,13 @@
 import { HERB_ATTRIBUTES } from "./attributes"
 import { CONTENT_SLOT_TYPES, DEFAULT_SLOT_TYPE, isMarker, slotCloseMarker, slotOpenIndex } from "./markers"
 
-const NAME_ENTRY = /^(\d+):(.+)$/
 
 export const ANCHOR_ATTRIBUTE = HERB_ATTRIBUTES.slot
 export const NAME_ATTRIBUTE = HERB_ATTRIBUTES.name
 export const ANCHOR_SELECTOR = `[${ANCHOR_ATTRIBUTE}]`
-export const NAME_SELECTOR = `[${NAME_ATTRIBUTE}]`
 export const STATICS_SELECTOR = `template[${HERB_ATTRIBUTES.region}]`
 
-import type { AnchorEntry, Bounds, Marker, NameEntry, Region, RegionRange, SlotAnchor, SlotType } from "./types"
+import type { AnchorEntry, Bounds, Marker, Region, RegionRange, SlotAnchor, SlotType } from "./types"
 
 export function anchored(element: Element): boolean {
   return element.hasAttribute(ANCHOR_ATTRIBUTE)
@@ -42,17 +40,6 @@ export function* anchoredSlots(root: ParentNode): Generator<[Element, AnchorEntr
     }
   }
 }
-
-export function nameEntry(element: Element): NameEntry | null {
-  const entry = NAME_ENTRY.exec(element.getAttribute(NAME_ATTRIBUTE) ?? "")
-
-  if (!entry) {
-    return null
-  }
-
-  return { index: Number(entry[1]), name: entry[2] }
-}
-
 export function anchorKind(type: SlotType): "content" | "element" {
   if (CONTENT_SLOT_TYPES.includes(type)) {
     return "content"

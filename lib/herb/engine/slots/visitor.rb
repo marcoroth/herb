@@ -393,7 +393,6 @@ module Herb
         def finish(node)
           return unless @mark
 
-          park_attribute_parts
           insert_markers(node)
           wrap_displaced
           wrap_region(node)
@@ -971,8 +970,6 @@ module Herb
 
           scope_names[name] = index
           @slots[index] = @slots[index].with(name: name)
-
-          rewrite_name_attribute(named, index) if @mark
         end
 
         #: (Hash[Symbol, untyped]) -> Integer
@@ -1001,15 +998,6 @@ module Herb
             slot.attribute == name && slot_index != index &&
               @slot_scopes[@slot_nodes[slot_index]]&.fetch(0).equal?(scope)
           }
-        end
-
-        #: (Hash[Symbol, untyped], Integer) -> void
-        def rewrite_name_attribute(named, index)
-          open_tag = named[:open_tag]
-          return unless open_tag.respond_to?(:children)
-
-          open_tag.children.delete(named[:attribute])
-          open_tag.children << attribute_node(NAME_ATTRIBUTE, "#{index}:#{named[:name]}")
         end
 
         #: (untyped) -> [Symbol, String?]
@@ -1061,6 +1049,7 @@ module Herb
         #: (untyped) -> String?
         def key_expression_for(attribute)
           parts = key_parts_for(attribute)
+
           return nil if parts.nil?
           return nil unless parts.any? { |kind, _| kind == :expression }
           return parts.first[1] if parts.one?
@@ -1150,11 +1139,9 @@ module Herb
         #: (untyped) -> String?
         def attribute_expression_for(node)
           children = node.value&.children || []
-
           literal = children.grep(Herb::AST::RubyLiteralNode)
 
           return literal.fetch(0).content.to_s.strip if literal.one? && children.one?
-
           return nil unless children.all? { |child| child.is_a?(Herb::AST::LiteralNode) || child.is_a?(Herb::AST::ERBContentNode) }
 
           outputs = children.grep(Herb::AST::ERBContentNode)
@@ -1248,9 +1235,9 @@ module Herb
           ] #: Array[untyped]
 
           branches.each do |key, markup|
-            ref = "#{COVERED}[#{covered_key(key).inspect}]"
+            reference = "#{COVERED}[#{covered_key(key).inspect}]"
 
-            nodes.push(erb_code_node("unless #{ref}"), text_node(markup), erb_code_node("#{ref} = true"), erb_code_node("end"))
+            nodes.push(erb_code_node("unless #{reference}"), text_node(markup), erb_code_node("#{reference} = true"), erb_code_node("end"))
           end
 
           nodes.push(text_node(@markers.statics_close), erb_code_node("end"))
@@ -1310,22 +1297,6 @@ module Herb
             body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked
 
             body.push(text_node(@markers.item_close(slot_index)))
-          end
-        end
-
-        #: () -> void
-        def park_attribute_parts
-          statics = @statics
-          return unless statics
-
-          @interpolated_attributes.each do |node|
-            index = @indices[node]
-            next unless index
-
-            segments = attribute_segments(node)
-            next unless segments
-
-            statics[@markers.parts_statics_key(index)] = @markers.branch(index, Markers::PARTS_STATICS) + segments.join(@markers.part)
           end
         end
 

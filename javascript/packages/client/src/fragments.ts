@@ -1,10 +1,13 @@
-import { ANCHOR_ATTRIBUTE, NAME_ATTRIBUTE, anchoredSlots, closingFor, markers, nameEntry, slotOpeners } from "./anchors"
+import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
 import { branchKey, branchOf, slotOpenIndex } from "./markers"
 
-import { NAME_SELECTOR } from "./anchors"
+import { ANCHOR_ATTRIBUTE, NAME_ATTRIBUTE } from "./anchors"
 import { DEFAULT_SLOT_TYPE, PART_MARKER } from "./markers"
 
 import type { AnchorEntry, AttributeParts, FragmentMap, NameMap, PartsResolver, SlotValue, SlotValues } from "./types"
+
+const HTML_ESCAPE_PATTERN = /[&<>"']/g
+const HTML_ENTITY_PATTERN = /&(amp|lt|gt|quot|apos|#39|#x27);/g
 
 const HTML_ESCAPES: Record<string, string> = {
   "&": "&amp;",
@@ -13,8 +16,6 @@ const HTML_ESCAPES: Record<string, string> = {
   '"': "&quot;",
   "'": "&#39;",
 }
-
-const HTML_ESCAPE_PATTERN = /[&<>"']/g
 
 const HTML_ENTITIES: Record<string, string> = {
   amp: "&",
@@ -25,8 +26,6 @@ const HTML_ENTITIES: Record<string, string> = {
   "#39": "'",
   "#x27": "'",
 }
-
-const HTML_ENTITY_PATTERN = /&(amp|lt|gt|quot|apos|#39|#x27);/g
 
 export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text = false, parts?: PartsResolver): void {
   for (const open of slotOpeners(fragment)) {
@@ -121,20 +120,12 @@ export function blankSlots(fragment: DocumentFragment): void {
   }
 }
 
-export function templateNames(template: DocumentFragment): NameMap {
+export function attributeNames(template: DocumentFragment): NameMap {
   const names: NameMap = new Map()
 
   for (const [, entry] of anchoredSlots(template)) {
     if (entry.attribute !== null) {
       names.set(entry.attribute, entry.index)
-    }
-  }
-
-  for (const element of template.querySelectorAll(NAME_SELECTOR)) {
-    const entry = nameEntry(element)
-
-    if (entry) {
-      names.set(entry.name, entry.index)
     }
   }
 

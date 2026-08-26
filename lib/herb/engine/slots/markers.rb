@@ -7,7 +7,6 @@ module Herb
       class Markers
         DEFAULT_TYPE = :child #: Symbol
         ITEM_STATICS = "item" #: String
-        PARTS_STATICS = "parts" #: String
         SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
 
         #: (String) -> String
@@ -45,16 +44,6 @@ module Herb
         #: (Integer) -> String
         def item_statics_key(slot_index)
           statics_key(slot_index, ITEM_STATICS)
-        end
-
-        #: (Integer) -> String
-        def parts_statics_key(slot_index)
-          statics_key(slot_index, PARTS_STATICS)
-        end
-
-        #: () -> String
-        def part
-          "<!--herb-part-->"
         end
 
         #: () -> String
