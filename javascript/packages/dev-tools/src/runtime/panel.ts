@@ -1365,9 +1365,6 @@ export class RuntimePanel {
     ].join('')
   }
 
-  // A diagnostic that named an element says so whether or not the element is still there. Dropping
-  // the chip when the node goes leaves the reader unable to tell a diagnostic about markup from one
-  // that never named any, which is the more useful thing to know.
   private elementHTML(entry: PanelEntry): string {
     const element = entry.diagnostic.element
 
@@ -1385,6 +1382,22 @@ export class RuntimePanel {
         `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◌</span>`,
         `<code>${described}</code>`,
         `<span class="herb-dev-tools-element-note">no longer on the page</span>`,
+        `</span>`,
+      ].join('')
+    }
+
+    const hidden = hiddenBy(element)
+
+    if (hidden !== null) {
+      const label = hidden.culprit === null
+        ? 'This element is on the page but nothing is rendered for it, so there is nothing to scroll to'
+        : `This element is on the page but nothing is rendered for it, because ${describeElement(hidden.culprit)} has ${hidden.reason}`
+
+      return [
+        `<span class="herb-dev-tools-element herb-dev-tools-element-hidden" title="${escapeHTML(label)}">`,
+        `<span class="herb-dev-tools-element-glyph" aria-hidden="true">○</span>`,
+        `<code>${described}</code>`,
+        `<span class="herb-dev-tools-element-note">not visible (${escapeHTML(hidden.reason)})</span>`,
         `</span>`,
       ].join('')
     }
@@ -1595,7 +1608,7 @@ export class RuntimePanel {
   private locateFrom(trigger: HTMLElement) {
     const target = this.entryFor(trigger)?.diagnostic.element
 
-    if (!target || !target.isConnected) return
+    if (!target || !target.isConnected || hiddenBy(target) !== null) return
 
     this.stepOutOfTheWay()
 
@@ -1625,7 +1638,7 @@ export class RuntimePanel {
 
     const target = this.entryFor(trigger)?.diagnostic.element
 
-    if (!target || !target.isConnected) return
+    if (!target || !target.isConnected || hiddenBy(target) !== null) return
 
     const rect = target.getBoundingClientRect()
     const box = document.createElement('div')
@@ -1660,6 +1673,40 @@ function severityOf(entries: PanelEntry[]): RuntimeSeverity | null {
     if (present) {
       return severity
     }
+  }
+
+  return null
+}
+
+function hiddenBy(element: Element): { reason: string, culprit: Element | null } | null {
+  let current: Element | null = element
+
+  while (current !== null) {
+    const style = getComputedStyle(current)
+
+    if (style.display === 'none') {
+      return { reason: 'display: none', culprit: current === element ? null : current }
+    }
+
+    if (style.getPropertyValue('content-visibility') === 'hidden') {
+      return { reason: 'content-visibility: hidden', culprit: current === element ? null : current }
+    }
+
+    if (style.opacity === '0') {
+      return { reason: 'opacity: 0', culprit: current === element ? null : current }
+    }
+
+    current = current.parentElement
+  }
+
+  const style = getComputedStyle(element)
+
+  if (style.visibility === 'hidden' || style.visibility === 'collapse') {
+    return { reason: `visibility: ${style.visibility}`, culprit: null }
+  }
+
+  if (style.display === 'contents') {
+    return { reason: 'display: contents', culprit: null }
   }
 
   return null

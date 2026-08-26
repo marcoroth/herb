@@ -1800,6 +1800,90 @@ describe("diagnostics that name an element", () => {
     expect(chip.title).toBe("This element was on the page when it was reported and is not any more")
   })
 
+  test("says an element is not visible when it is on the page with no box", () => {
+    const target = document.createElement("span")
+
+    target.id = "cover-three"
+    target.style.display = "none"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.tagName).toBe("SPAN")
+    expect(chip.classList.contains("herb-dev-tools-element-hidden")).toBe(true)
+    expect(chip.textContent).toContain("<span#cover-three>")
+    expect(chip.textContent).toContain("not visible (display: none)")
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).toBeNull()
+  })
+
+  test("names the ancestor that hides an element the diagnostic named", () => {
+    const parent = document.createElement("div")
+    const target = document.createElement("span")
+
+    parent.id = "modal"
+    parent.style.display = "none"
+    parent.appendChild(target)
+    document.body.appendChild(parent)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.title).toBe("This element is on the page but nothing is rendered for it, because <div#modal> has display: none")
+  })
+
+  test("does not name an ancestor when the element hides itself", () => {
+    const target = document.createElement("span")
+
+    target.style.visibility = "hidden"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.textContent).toContain("not visible (visibility: hidden)")
+    expect(chip.title).toBe("This element is on the page but nothing is rendered for it, so there is nothing to scroll to")
+  })
+
+  test("says an element that has no box of its own is not visible", () => {
+    const target = document.createElement("div")
+
+    target.style.display = "contents"
+    target.textContent = "rendered by its children"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "contents", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.textContent).toContain("not visible (display: contents)")
+  })
+
+  test("keeps the locate control for an element that is merely scrolled out of view", () => {
+    const target = document.createElement("div")
+
+    target.textContent = "below the fold"
+    target.style.marginTop = "300vh"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "offscreen", element: target })
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).not.toBeNull()
+  })
+
   test("offers no locate control for an element that has left the page", () => {
     const target = document.createElement("span")
 

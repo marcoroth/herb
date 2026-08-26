@@ -823,7 +823,9 @@
 }
 
 .herb-dev-tools-element-gone,
-.herb-dev-tools-element-gone:hover {
+.herb-dev-tools-element-gone:hover,
+.herb-dev-tools-element-hidden,
+.herb-dev-tools-element-hidden:hover {
   border-color: #d1d5db;
   border-style: dashed;
   background: transparent;

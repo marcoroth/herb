@@ -134,6 +134,17 @@ leave a reader unable to tell a diagnostic about markup from one that never name
 those it is turns out to be the more useful thing to know. A Turbo navigation, a re-render, or a
 removal all land here.
 
+An element that is still on the page but has nothing rendered for it reads
+`<div#cover-three> not visible (display: none)`, with the control inert for the same reason. There is
+no box to scroll to and none to outline, so a live control would appear to do nothing. The chip names
+the property that hides it, and its tooltip names the ancestor carrying that property when it is not
+the element itself, since that ancestor is the part the card cannot show. `display: none`,
+`content-visibility: hidden`, `opacity: 0` and `visibility: hidden` all land here, as does
+`display: contents`, which renders its children and keeps no box of its own.
+
+An element that is merely scrolled out of view is not this. It has a box, locating it works, and it
+keeps its control.
+
 An element the producer looked for and did not find is a different thing, and the panel cannot see
 it. `document.querySelector` returns `null`, `element` arrives as `null`, and that is
 indistinguishable from a diagnostic that meant to name nothing. A producer that wants to say it went
