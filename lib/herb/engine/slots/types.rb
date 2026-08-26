@@ -15,25 +15,23 @@ module Herb
         NAMEABLE = [:child, :collection, :conditional, :block].freeze #: Array[Symbol]
         VALUED = [:child, :attribute, :attribute_interpolation, :element, :raw_text].freeze #: Array[Symbol]
 
-        class << self
-          #: (Symbol) -> bool
-          def structural?(type) = STRUCTURAL.include?(type)
+        #: (Symbol) -> bool
+        def self.structural?(type) = STRUCTURAL.include?(type)
 
-          #: (Symbol) -> bool
-          def attribute_value?(type) = ATTRIBUTE_VALUES.include?(type)
+        #: (Symbol) -> bool
+        def self.attribute_value?(type) = ATTRIBUTE_VALUES.include?(type)
 
-          #: (Symbol) -> bool
-          def attribute?(type) = attribute_value?(type) || type == :boolean_attribute
+        #: (Symbol) -> bool
+        def self.attribute?(type) = attribute_value?(type) || type == :boolean_attribute
 
-          #: (Symbol) -> bool
-          def element_anchored?(type) = ELEMENT_ANCHORED.include?(type)
+        #: (Symbol) -> bool
+        def self.element_anchored?(type) = ELEMENT_ANCHORED.include?(type)
 
-          #: (Symbol) -> bool
-          def nameable?(type) = NAMEABLE.include?(type)
+        #: (Symbol) -> bool
+        def self.nameable?(type) = NAMEABLE.include?(type)
 
-          #: (Symbol) -> bool
-          def valued?(type) = VALUED.include?(type)
-        end
+        #: (Symbol) -> bool
+        def self.valued?(type) = VALUED.include?(type)
       end
     end
   end

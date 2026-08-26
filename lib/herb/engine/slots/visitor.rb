@@ -5,6 +5,7 @@ require "digest"
 
 require_relative "../../visitor"
 require_relative "../context_aware"
+require_relative "../experimental"
 require_relative "identifier"
 require_relative "manifest/channel"
 require_relative "types"
@@ -33,10 +34,12 @@ module Herb
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       #
       class Visitor < Herb::Visitor
+        extend Experimental
         include ContextAware
 
         recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
         required_parser_option action_view_helpers: true, track_locations: true
+        experimental "Slots are experimental. Their markers, payload and client API may change."
 
         attr_accessor :bufvar #: String
         attr_reader :markers #: Markers
@@ -52,25 +55,24 @@ module Herb
         COVERED = "@_herb_covered" #: String
         OCCURRENCES = "@_herb_region_occurrences" #: String
         OCCURRENCE = "_herb_occurrence" #: String
+        NAME_ATTRIBUTE = "data-herb-name" #: String
 
         CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
         OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[Herb::AST::HTMLOpenTagNode|Herb::AST::ERBOpenTagNode]
         BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
         BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
-        NAME_ATTRIBUTE = "data-herb-name" #: String
-
         Slot = Data.define(
-          :index,      #: Integer
-          :type,       #: Symbol
-          :node_path,  #: Array[Integer]
-          :expression, #: String?
-          :attribute,  #: String?
-          :key_source, #: Symbol?
+          :index,          #: Integer
+          :type,           #: Symbol
+          :node_path,      #: Array[Integer]
+          :expression,     #: String?
+          :attribute,      #: String?
+          :key_source,     #: Symbol?
           :key_expression, #: String?
-          :name, #: String?
-          :tag, #: String?
-          :merged_paths #: Array[Array[Integer]]
+          :name,           #: String?
+          :tag,            #: String?
+          :merged_paths    #: Array[Array[Integer]]
         )
 
         class Slot
@@ -387,6 +389,7 @@ module Herb
 
           collapse_invariant_conditionals
           apply_names
+
           @states.apply_states
         end
 
@@ -648,6 +651,7 @@ module Herb
           false
         end
 
+        # TODO: use from utils
         def erb_output?(opening)
           opening.include?("=")
         end
@@ -873,20 +877,17 @@ module Herb
           return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
 
           children = open_tag.children
-          position = children.index { |child| child.equal?(node) }
 
+          position = children.index { |child| child.equal?(node) }
           return nil unless position
 
           statements = node.statements
-
           return nil unless statements.is_a?(Array) && statements.one?
 
           attribute = statements.fetch(0)
-
           return nil unless attribute.is_a?(Herb::AST::HTMLAttributeNode) && !dynamic?(attribute)
 
           name = attribute_name_for(attribute)
-
           return nil unless name && Herb::HTML::Util.boolean_attribute?(name)
 
           condition = @states.condition_expression(node)
@@ -896,7 +897,6 @@ module Herb
           record_slot(replacement, :attribute)
 
           index = @indices[replacement]
-
           return nil unless index
 
           @slots[index] = @slots[index].with(type: :boolean_attribute, attribute: name, expression: condition)
@@ -910,15 +910,13 @@ module Herb
           name = static_attribute_value(name_attribute)
 
           unless name && !name.empty?
-            raise Herb::Engine::CompilationError,
-                  "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` must be a static, non-empty value; " \
-                  "a slot name is an address, so it cannot be computed"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` must be a static, non-empty value; a slot name is an address, so it cannot be computed"
           end
 
           candidates = @slot_nodes[base..].to_a.select { |slot_node|
             scope, depth = @slot_scopes[slot_node]
-            scope.equal?(base_scope) && depth == base_depth &&
-              @slots[@indices[slot_node]].nameable?
+
+            scope.equal?(base_scope) && depth == base_depth && @slots[@indices[slot_node]].nameable?
           }
 
           @named_elements << {
@@ -953,23 +951,19 @@ module Herb
           index = resolve_named_slot(named)
 
           if scope_names.key?(name)
-            raise Herb::Engine::CompilationError,
-                  "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
+            raise Herb::Engine::CompilationError, "two slots in the same scope are both named `#{name}`; a slot name is an address, so it has to be unique"
           end
 
           if (existing = @slots[index].name)
-            raise Herb::Engine::CompilationError,
-                  "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`; " \
-                  "both elements hold the same slot, so keep one name or wrap what each should address"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`; both elements hold the same slot, so keep one name or wrap what each should address"
           end
 
           if attribute_conflict?(name, index, named[:scope])
-            raise Herb::Engine::CompilationError,
-                  "the name `#{name}` collides with the `#{name}` attribute slot in the same scope; " \
-                  "an attribute slot is already addressable by its attribute"
+            raise Herb::Engine::CompilationError, "the name `#{name}` collides with the `#{name}` attribute slot in the same scope; an attribute slot is already addressable by its attribute"
           end
 
           scope_names[name] = index
+
           @slots[index] = @slots[index].with(name: name)
         end
 
@@ -980,14 +974,11 @@ module Herb
           candidates = named[:candidates].map { |slot_node| @indices[slot_node] }.compact.uniq
 
           if candidates.empty?
-            raise Herb::Engine::CompilationError,
-                  "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot; the element holds nothing dynamic"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot; the element holds nothing dynamic"
           end
 
           unless candidates.one?
-            raise Herb::Engine::CompilationError,
-                  "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots; " \
-                  "wrap the one it should name in its own element"
+            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots; wrap the one it should name in its own element"
           end
 
           candidates.fetch(0)
@@ -996,8 +987,7 @@ module Herb
         #: (String, Integer, untyped) -> bool
         def attribute_conflict?(name, index, scope)
           @slots.each_with_index.any? { |slot, slot_index|
-            slot.attribute == name && slot_index != index &&
-              @slot_scopes[@slot_nodes[slot_index]]&.fetch(0).equal?(scope)
+            slot.attribute == name && slot_index != index && @slot_scopes[@slot_nodes[slot_index]]&.fetch(0).equal?(scope)
           }
         end
 
@@ -1222,7 +1212,7 @@ module Herb
           body.insert(1, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) unless always
         end
 
-        #: (untyped) -> void
+        #: (Herb::AST::DocumentNode) -> void
         def append_statics(document_node)
           statics = @statics
           return if statics.nil? || statics.empty?
@@ -1233,7 +1223,7 @@ module Herb
           nodes = [
             erb_code_node("unless #{seen}"),
             text_node(@markers.statics_open(identifier, version))
-          ] #: Array[untyped]
+          ] #: Array[Herb::AST::Node]
 
           branches.each do |key, markup|
             reference = "#{COVERED}[#{covered_key(key).inspect}]"
@@ -1252,9 +1242,9 @@ module Herb
           "#{identifier}:#{key}"
         end
 
-        #: (untyped) -> Array[Array[untyped]]
+        #: (untyped) -> Array[Array[Herb::AST::Node]]
         def branch_bodies(node)
-          bodies = [] #: Array[Array[untyped]]
+          bodies = [] #: Array[Array[Herb::AST::Node]]
 
           if node.respond_to?(:conditions)
             node.conditions.each { |arm| bodies << arm.statements if arm.respond_to?(:statements) }
@@ -1273,7 +1263,7 @@ module Herb
           bodies
         end
 
-        #: (untyped, Integer?) -> void
+        #: (Herb::AST::Node, Integer?) -> void
         def wrap_items(node, slot_index)
           return unless slot_index
 
@@ -1321,6 +1311,7 @@ module Herb
           segments.size > 1 ? segments : nil
         end
 
+        #: (untyped, untyped) -> Array[untyped]?
         def park_item(key, body)
           statics = @statics
           return unless statics
@@ -1366,7 +1357,7 @@ module Herb
           name
         end
 
-        #: (untyped) { (Array[untyped]) -> void } -> void
+        #: (Herb::AST::Node) { (Array[untyped]) -> void } -> void
         def each_child_array(node)
           BRANCH_BODY_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
@@ -1383,6 +1374,7 @@ module Herb
           end
         end
 
+        #: (Herb::AST::DocumentNode) -> void
         def wrap_region(document_node)
           document_node.children.unshift(
             erb_code_node("#{OCCURRENCE} = #{occurrence_expression}"),
@@ -1392,6 +1384,7 @@ module Herb
           document_node.children.push(comment_node(@markers.region_close(identifier)))
         end
 
+        #: () -> void
         def wrap_displaced
           @displaced.each do |node|
             BRANCH_BODY_PROPERTIES.each do |property|

@@ -19,6 +19,8 @@ module Herb
       #     mode = Herb::Engine::Slots::Visitor.directive_mode(source)
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       class Visitor < Herb::Visitor
+        extend Experimental
+
         include ContextAware
 
         attr_accessor bufvar: String
@@ -47,6 +49,8 @@ module Herb
 
         OCCURRENCE: String
 
+        NAME_ATTRIBUTE: String
+
         CAPTURING: Regexp
 
         OPEN_TAG_TYPES: Array[Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode]
@@ -54,8 +58,6 @@ module Herb
         BRANCH_BODY_PROPERTIES: Array[Symbol]
 
         BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
-
-        NAME_ATTRIBUTE: String
 
         class Slot < Data
           attr_reader index(): Integer
@@ -273,6 +275,7 @@ module Herb
         # : (untyped) -> bool
         def blank_child?: (untyped) -> bool
 
+        # TODO: use from utils
         def erb_output?: (untyped opening) -> untyped
 
         # : (untyped) -> untyped
@@ -375,34 +378,37 @@ module Herb
         # : (String, Array[untyped], ?always: bool) -> void
         def park_branch: (String, Array[untyped], ?always: bool) -> void
 
-        # : (untyped) -> void
-        def append_statics: (untyped) -> void
+        # : (Herb::AST::DocumentNode) -> void
+        def append_statics: (Herb::AST::DocumentNode) -> void
 
         # : (String) -> String
         def covered_key: (String) -> String
 
-        # : (untyped) -> Array[Array[untyped]]
-        def branch_bodies: (untyped) -> Array[Array[untyped]]
+        # : (untyped) -> Array[Array[Herb::AST::Node]]
+        def branch_bodies: (untyped) -> Array[Array[Herb::AST::Node]]
 
-        # : (untyped, Integer?) -> void
-        def wrap_items: (untyped, Integer?) -> void
+        # : (Herb::AST::Node, Integer?) -> void
+        def wrap_items: (Herb::AST::Node, Integer?) -> void
 
         # : (untyped) -> Array[String]?
         def attribute_segments: (untyped) -> Array[String]?
 
-        def park_item: (untyped key, untyped body) -> untyped
+        # : (untyped, untyped) -> Array[untyped]?
+        def park_item: (untyped, untyped) -> Array[untyped]?
 
         def anchor_attributes: (untyped node, ?untyped content_index) -> untyped
 
         # : (Slot) -> String?
         def anchor_name_for: (Slot) -> String?
 
-        # : (untyped) { (Array[untyped]) -> void } -> void
-        def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
+        # : (Herb::AST::Node) { (Array[untyped]) -> void } -> void
+        def each_child_array: (Herb::AST::Node) { (Array[untyped]) -> void } -> void
 
-        def wrap_region: (untyped document_node) -> untyped
+        # : (Herb::AST::DocumentNode) -> void
+        def wrap_region: (Herb::AST::DocumentNode) -> void
 
-        def wrap_displaced: () -> untyped
+        # : () -> void
+        def wrap_displaced: () -> void
 
         def region_open: () -> untyped
 

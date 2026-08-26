@@ -60,6 +60,8 @@ module Herb
       # is collecting into, which writes it once however many times the file renders, and needs
       # `Herb::Engine::Report::Middleware` to put it on the page.
       class Visitor < Herb::Visitor
+        extend Experimental
+
         include ContextAware
 
         include Diagnostics
@@ -76,15 +78,9 @@ module Herb
 
         OPEN_TAGS: Array[untyped]
 
-        DIGEST_LENGTH: Integer
-
-        def self.experimental_warning_issued: () -> bool
-
-        def self.experimental_warning_issued=: (bool) -> bool
-
-        attr_accessor experimental_warning_issued: bool
-
         DELIVERIES: Array[Symbol]
+
+        DIGEST_LENGTH: Integer
 
         class Pending < Data
           attr_reader node(): untyped
