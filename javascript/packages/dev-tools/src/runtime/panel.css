@@ -767,11 +767,6 @@
   margin-top: 0;
 }
 
-.herb-dev-tools-overlay-focused .herb-dev-tools-card {
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
 
 .herb-dev-tools-expanded .herb-dev-tools-close {
   flex: none;
