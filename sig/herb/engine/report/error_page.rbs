@@ -29,9 +29,6 @@ module Herb
 
         UNKNOWN_TEMPLATE: String
 
-        # Every rule is scoped to `.herb-error`. The dev tools mount their own markup into this same
-        # document, and a bare `section` or `pre` here would land on their panel as readily as on
-        # this page.
         STYLES: String
 
         # : (untyped, ?dev_tools: String?, ?enabled: bool) -> void
@@ -54,8 +51,6 @@ module Herb
         # : (Herb::Engine::CompilationError) -> Herb::Engine::Report
         def report_for: (Herb::Engine::CompilationError) -> Herb::Engine::Report
 
-        # Which Herb saw this, and which visitors were on the stack when it did. Both are part of
-        # why a template failed the way it did, and neither can be worked out from the page.
         # : (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
         def note_provenance: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
 
@@ -74,12 +69,6 @@ module Herb
         # : (Array[Herb::Diagnostic]) -> String
         def title: (Array[Herb::Diagnostic]) -> String
 
-        # Nothing in the bundle runs on import, so the page has to start the dev tools itself.
-        #
-        # The dev server connection is the point of doing it here. This page is what you are looking
-        # at while you go and fix the template, so it is the one page that most wants to hear that
-        # the file compiles again. Any `fixed` reloads, without matching the path first, because a
-        # path that never matches is a page that never recovers, and re-requesting is cheap.
         # : () -> String
         def script_tag: () -> String
 

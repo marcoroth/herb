@@ -6,24 +6,8 @@ require "herb/engine/validators"
 require "herb/engine/report/error_page"
 require "herb/engine/report/middleware"
 
-# A stand-in for a Rails app, small enough to read in one sitting.
-#
-#   bundle exec rackup javascript/packages/dev-tools/demo/rack/config.ru -p 9292
-#
-# `/broken` compiles a template that cannot compile, which is the case `ErrorPage` exists for. The
-# engine raises, nothing renders, and the middleware answers with a page of its own carrying the
-# diagnostics payload. `/valid` renders and reports through the session, which is the case
-# `Middleware` exists for.
 module Demo
   VIEWS = File.expand_path("views", __dir__) #: String
-
-  # The dev tools bundle, served from this app so there is one server and no cross origin anything.
-  # Build it first, from the package root:
-  #
-  #   yarn build
-  #
-  # Without it the pages still say what is wrong, which is the point of the fallback, so the demo is
-  # worth running either way.
   DIST = File.expand_path("../../dist", __dir__) #: String
   BUNDLE_PATH = "/herb-dev-tools.js" #: String
   DEV_TOOLS = ENV.fetch("HERB_DEV_TOOLS", BUNDLE_PATH) #: String

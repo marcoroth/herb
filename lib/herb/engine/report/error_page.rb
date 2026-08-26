@@ -26,6 +26,7 @@ module Herb
       #
       # The page says what is wrong without any JavaScript at all. The dev tools are an enhancement
       # on top of that, so a missing or misconfigured bundle costs the overlay and not the message.
+      #
       class ErrorPage
         HTML_REQUEST = %r{text/html|application/xhtml}i #: Regexp
         MAX_CAUSES = 16 #: Integer
@@ -33,23 +34,15 @@ module Herb
         ORIGIN = "Herb Compiler" #: String
         UNKNOWN_TEMPLATE = "(unknown template)" #: String
 
-        # Every rule is scoped to `.herb-error`. The dev tools mount their own markup into this same
-        # document, and a bare `section` or `pre` here would land on their panel as readily as on
-        # this page.
         STYLES = <<~CSS #: String
-          body { margin: 0; background: #f3f4f6; color: #111827;
-                 font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+          body { margin: 0; background: #f3f4f6; color: #111827; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
           .herb-error { max-width: 1040px; margin: 0 auto; padding: 40px 28px; }
           .herb-error h1 { margin: 0 0 24px; font-size: 20px; }
-          .herb-error section { margin-bottom: 24px; padding: 20px; border-radius: 10px; background: #fff;
-                                box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+          .herb-error section { margin-bottom: 24px; padding: 20px; border-radius: 10px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
           .herb-error p { margin: 0 0 8px; }
-          .herb-error .herb-where { color: #6b7280;
-                                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+          .herb-error .herb-where { color: #6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
           .herb-error .herb-hint { color: #065f46; }
-          .herb-error pre { overflow-x: auto; margin: 12px 0 0; padding: 14px; border-radius: 8px;
-                            background: #282c34; color: #abb2bf;
-                            font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+          .herb-error pre { overflow-x: auto; margin: 12px 0 0; padding: 14px; border-radius: 8px; background: #282c34; color: #abb2bf; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
           .herb-error pre span { display: block; }
           .herb-error .herb-marked { color: #e06c75; }
           .herb-error .herb-error-provenance { margin-top: 32px; color: #6b7280; font-size: 13px; }
@@ -132,8 +125,6 @@ module Herb
           report
         end
 
-        # Which Herb saw this, and which visitors were on the stack when it did. Both are part of
-        # why a template failed the way it did, and neither can be worked out from the page.
         #: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
         def note_provenance(report, error)
           report.note(:herb_version, Herb::VERSION)
@@ -217,12 +208,6 @@ module Herb
           [first.template, "could not be compiled"].join(" ")
         end
 
-        # Nothing in the bundle runs on import, so the page has to start the dev tools itself.
-        #
-        # The dev server connection is the point of doing it here. This page is what you are looking
-        # at while you go and fix the template, so it is the one page that most wants to hear that
-        # the file compiles again. Any `fixed` reloads, without matching the path first, because a
-        # path that never matches is a page that never recovers, and re-requesting is cheap.
         #: () -> String
         def script_tag
           return "" unless @dev_tools

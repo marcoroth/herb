@@ -21,8 +21,6 @@ module Herb
       MAX_DIAGNOSTICS = 200 #: Integer
       ATTRIBUTE = "data-herb-diagnostics" #: String
 
-      # Facts about the run that produced this report, rather than about any one template. The dev
-      # tools print them as provenance, so a bug report can say which Herb saw what.
       attr_reader :meta #: Hash[Symbol, untyped]
       attr_reader :sources #: Hash[String, String]
       attr_reader :nodes #: Hash[String, Hash[String, Hash[Symbol, untyped]]]

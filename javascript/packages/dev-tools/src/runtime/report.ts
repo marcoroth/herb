@@ -299,8 +299,6 @@ function asElement(value: unknown): Element | null {
   return typeof Element !== 'undefined' && value instanceof Element ? value : null;
 }
 
-// Facts about the run rather than about a template. Only the keys the panel knows how to print are
-// kept, so an unrecognized one is dropped instead of rendered as-is.
 function normalizeMeta(value: unknown): RuntimeMeta {
   if (!isRecord(value)) {
     return {};

@@ -149,8 +149,6 @@ module Engine
         refute_includes body.first[%r{<pre>.+?</pre>}m], "<form>"
       end
 
-      # The dev tools mount their own markup into this document, so a bare element selector here
-      # lands on their panel too. It showed up as a 20px inset on the overlay's heading band.
       test "scopes every style rule to itself" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 

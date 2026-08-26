@@ -1087,9 +1087,6 @@ export class RuntimePanel {
     )
   }
 
-  // A blocking overlay over compile-phase diagnostics is a page that never rendered, and saying so is
-  // worth more than naming the producer, which is on every card anyway. Anything else keeps the
-  // origin, because only the compile phase carries that meaning.
   private overlayHeadline(entries: PanelEntry[]): string {
     if (entries.length > 0 && entries.every(entry => entry.diagnostic.phase === 'compile')) {
       const templates = new Set(entries.map(entry => entry.diagnostic.template))
@@ -1269,7 +1266,6 @@ export class RuntimePanel {
     )]
 
     for (const [origin, count] of origins) {
-      buttons.push(this.filterButtonHTML('origin', origin, origin, count, this.state.origin === origin))
     }
 
     return `<div class="herb-dev-tools-filters">${buttons.join('')}</div>`
@@ -1338,9 +1334,6 @@ export class RuntimePanel {
     return sections.join('')
   }
 
-  // What produced this page, printed once at the foot of a screen that has taken over. It answers
-  // the question a bug report starts with, and the page it would otherwise be read from is behind
-  // the overlay.
   private provenanceHTML(): string {
     if (!this.overlayFocused) {
       return ''

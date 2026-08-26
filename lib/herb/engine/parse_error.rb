@@ -12,14 +12,7 @@ module Herb
       attr_reader :diagnostics #: Array[Herb::Diagnostic]
       attr_reader :source #: String
       attr_reader :filename #: String?
-
-      # The visitors that were on the stack when this was raised, by name. Which validators ran is
-      # part of why a template failed the way it did, and it is known only here, so it travels with
-      # the error rather than being asked for again later.
       attr_reader :visitors #: Array[String]
-
-      # The options the parser was actually given, after the visitors on the stack have had their
-      # say about them. What was asked for and what was used are not always the same thing.
       attr_reader :parser_options #: Hash[Symbol, untyped]
 
       #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
