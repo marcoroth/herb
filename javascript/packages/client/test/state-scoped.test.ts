@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
-import { STATE_EVENT } from "../src/events"
-import { resetReport } from "../src/report"
-import type { RuntimeDiagnostic } from "../src/report"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+import { STATE_EVENT } from "../src/shared/events"
+import { resetReport } from "../src/shared/report"
+import type { RuntimeDiagnostic } from "../src/shared/types"
 
 const FILE = "app/views/page/chat.html.erb"
 
@@ -69,16 +69,16 @@ function dependencies(): string {
   return `<template data-herb-dependencies>${JSON.stringify(MANIFEST)}</template>`
 }
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 function boot(markup: string): void {
   document.body.innerHTML = markup + dependencies()
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, {
+  state = new State(slots, {
     persist: "none",
     transport: () => {
       throw new Error("a declared state must never reach the transport")
@@ -115,11 +115,11 @@ describe("a state read in an interpolated attribute", () => {
   test("a state write rebuilds the whole attribute from its parts", () => {
     document.body.innerHTML = ROW_PAGE + `<template data-herb-dependencies>${JSON.stringify(ROW_MANIFEST)}</template>`
 
-    const rowSlots = new SlotIndex()
+    const rowSlots = new Slots()
 
     rowSlots.scan(document.body)
 
-    const rowState = new SlotState(rowSlots, {
+    const rowState = new State(rowSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -174,11 +174,11 @@ describe("sibling collections sharing a state name", () => {
   test("a write in one collection leaves the other alone", () => {
     document.body.innerHTML = TWIN_PAGE + `<template data-herb-dependencies>${JSON.stringify(TWIN_MANIFEST)}</template>`
 
-    const twinSlots = new SlotIndex()
+    const twinSlots = new Slots()
 
     twinSlots.scan(document.body)
 
-    const twinState = new SlotState(twinSlots, {
+    const twinState = new State(twinSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -296,9 +296,9 @@ describe("declared state", () => {
 
     manifest.states[FILE].conditionals[0] = { arms: [["attempts", null, 0]], else: 2 }
     document.body.innerHTML = regionMarkup(0) + `<template data-herb-dependencies>${JSON.stringify(manifest)}</template>`
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, { persist: "none" })
     state.adopt()
 
     state.setState({ attempts: 0 })
@@ -351,9 +351,9 @@ describe("declared state", () => {
 
   test("two renders of a template hold independent values", () => {
     document.body.innerHTML = regionMarkup(0) + regionMarkup(1) + dependencies()
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, { persist: "none" })
     state.adopt()
 
     const regions = slots.regionsFor(FILE)
@@ -387,9 +387,9 @@ describe("declared state", () => {
   test("a version mismatch declines rather than resolving stale arms", () => {
     document.body.innerHTML =
       regionMarkup(0).split("aaaaaaaa").join("bbbbbbbb") + dependencies()
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, { persist: "none" })
     state.adopt()
 
     expect(state.setState({ pending: true })).toBe(false)
@@ -398,7 +398,7 @@ describe("declared state", () => {
   test("the transport is never called", () => {
     const transport = vi.fn()
 
-    state = new SlotState(slots, { persist: "none", transport })
+    state = new State(slots, { persist: "none", transport })
     state.adopt()
     state.setState({ pending: true })
 
@@ -458,16 +458,16 @@ describe("combo conditions", () => {
     },
   }
 
-  let comboState: SlotState
+  let comboState: State
 
   beforeEach(() => {
     document.body.innerHTML = COMBO_PAGE + `<template data-herb-dependencies>${JSON.stringify(COMBO_MANIFEST)}</template>`
 
-    const comboSlots = new SlotIndex()
+    const comboSlots = new Slots()
 
     comboSlots.scan(document.body)
 
-    comboState = new SlotState(comboSlots, {
+    comboState = new State(comboSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -564,16 +564,16 @@ describe("derived states", () => {
     },
   }
 
-  let derivedState: SlotState
+  let derivedState: State
 
   beforeEach(() => {
     document.body.innerHTML = DERIVED_PAGE + `<template data-herb-dependencies>${JSON.stringify(DERIVED_MANIFEST)}</template>`
 
-    const derivedSlots = new SlotIndex()
+    const derivedSlots = new Slots()
 
     derivedSlots.scan(document.body)
 
-    derivedState = new SlotState(derivedSlots, {
+    derivedState = new State(derivedSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -681,16 +681,16 @@ describe("counted states", () => {
     },
   }
 
-  let countSlots: SlotIndex
-  let countState: SlotState
+  let countSlots: Slots
+  let countState: State
 
   beforeEach(() => {
     document.body.innerHTML = COUNT_PAGE + `<template data-herb-dependencies>${JSON.stringify(COUNT_MANIFEST)}</template>`
 
-    countSlots = new SlotIndex()
+    countSlots = new Slots()
     countSlots.scan(document.body)
 
-    countState = new SlotState(countSlots, {
+    countState = new State(countSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -700,7 +700,7 @@ describe("counted states", () => {
     countState.adopt()
   })
 
-  function scopeOf(selector: string): NonNullable<ReturnType<SlotState["scopeFor"]>> {
+  function scopeOf(selector: string): NonNullable<ReturnType<State["scopeFor"]>> {
     return countState.scopeFor(document.querySelector(selector)!, "pending")!
   }
 
@@ -798,16 +798,16 @@ describe("shipped seeds", () => {
     },
   }
 
-  let seedSlots: SlotIndex
-  let seedState: SlotState
+  let seedSlots: Slots
+  let seedState: State
 
   beforeEach(() => {
     document.body.innerHTML = SEED_PAGE + `<template data-herb-dependencies>${JSON.stringify(SEED_MANIFEST)}</template>`
 
-    seedSlots = new SlotIndex()
+    seedSlots = new Slots()
     seedSlots.scan(document.body)
 
-    seedState = new SlotState(seedSlots, {
+    seedState = new State(seedSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -865,7 +865,7 @@ describe("shipped seeds that disagree with the declaration", () => {
 
   let devTools: FakeDevTools
 
-  function boot(seeds: string, declarations: Record<string, unknown>[]): SlotState {
+  function boot(seeds: string, declarations: Record<string, unknown>[]): State {
     document.body.innerHTML =
       `<!--herb-region:${ODD_FILE}:0ddc0ffe:0-->` +
       `<!--herb-seeds:${seeds}-->` +
@@ -876,10 +876,10 @@ describe("shipped seeds that disagree with the declaration", () => {
         states: { [ODD_FILE]: { version: "0ddc0ffe", declarations, reads: {}, conditionals: {} } },
       })}</template>`
 
-    const oddSlots = new SlotIndex()
+    const oddSlots = new Slots()
     oddSlots.scan(document.body)
 
-    const oddState = new SlotState(oddSlots, { persist: "none" })
+    const oddState = new State(oddSlots, { persist: "none" })
     oddState.adopt()
 
     return oddState
@@ -989,11 +989,11 @@ describe("a condition reading both a region state and an item state", () => {
   test("resolves each name in its own scope, once per row", () => {
     document.body.innerHTML = MIXED_PAGE
 
-    const mixedSlots = new SlotIndex()
+    const mixedSlots = new Slots()
 
     mixedSlots.scan(document.body)
 
-    const mixedState = new SlotState(mixedSlots, {
+    const mixedState = new State(mixedSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -1026,11 +1026,11 @@ describe("a condition reading both a region state and an item state", () => {
         `</template>`,
     )
 
-    const addedSlots = new SlotIndex()
+    const addedSlots = new Slots()
 
     addedSlots.scan(document.body)
 
-    const addedState = new SlotState(addedSlots, {
+    const addedState = new State(addedSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -1084,16 +1084,16 @@ describe("a collection nested inside another collection", () => {
     },
   }
 
-  let nestedSlots: SlotIndex
-  let nestedState: SlotState
+  let nestedSlots: Slots
+  let nestedState: State
 
   beforeEach(() => {
     document.body.innerHTML = NESTED_PAGE + `<template data-herb-dependencies>${JSON.stringify(NESTED_MANIFEST)}</template>`
 
-    nestedSlots = new SlotIndex()
+    nestedSlots = new Slots()
     nestedSlots.scan(document.body)
 
-    nestedState = new SlotState(nestedSlots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    nestedState = new State(nestedSlots, { persist: "none", transport: () => { throw new Error("no transport") } })
     nestedState.adopt()
   })
 

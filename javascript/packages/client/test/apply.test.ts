@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 import type { Payload } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
@@ -25,10 +25,10 @@ const NESTED =
   `<!--herb-region:${CARD}:dddddddd:0--><p data-herb-slot="0:child">inner</p><!--/herb-region:${CARD}-->` +
   `<!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 
-function mounted(html: string): SlotIndex {
+function mounted(html: string): Slots {
   document.body.innerHTML = html
 
-  const index = new SlotIndex()
+  const index = new Slots()
   index.scan(document.body)
 
   return index

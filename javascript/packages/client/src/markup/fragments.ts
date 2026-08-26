@@ -1,12 +1,11 @@
-import { asList } from "./arrays"
-
-import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
+import { asList } from "../shared/arrays"
 import { branchKey, branchOf, slotOpenIndex } from "./markers"
+import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
 
-import { ANCHOR_ATTRIBUTE, NAME_ATTRIBUTE } from "./anchors"
 import { DEFAULT_SLOT_TYPE, PART_MARKER } from "./markers"
+import { ANCHOR_ATTRIBUTE, NAME_ATTRIBUTE } from "./anchors"
 
-import type { AnchorEntry, AttributeParts, FragmentMap, NameMap, PartsResolver, SlotValue, SlotValues } from "./types"
+import type { AnchorEntry, AttributeParts, FragmentMap, NameMap, PartsResolver, SlotValue, SlotValues } from "../types"
 
 const HTML_ESCAPE_PATTERN = /[&<>"']/g
 const HTML_ENTITY_PATTERN = /&(amp|lt|gt|quot|apos|#39|#x27);/g
@@ -262,4 +261,3 @@ function markup(value: string, text: boolean): string {
 
   return value
 }
-

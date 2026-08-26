@@ -1,7 +1,5 @@
-export const SLOT_EVENT = "herb:slot-update"
-export const STATE_EVENT = "herb:state-change"
-
 export const DIRECT_EVENTS = ["mouseenter", "mouseleave"]
+export const CLICK_INPUT_TYPES = ["submit", "button", "reset"]
 
 const DEFAULT_EVENTS: Record<string, string> = {
   form: "submit",
@@ -12,7 +10,7 @@ const DEFAULT_EVENTS: Record<string, string> = {
 }
 
 export function defaultEventFor(element: Element): string {
-  if (element instanceof HTMLInputElement && ["submit", "button", "reset"].includes(element.type)) {
+  if (element instanceof HTMLInputElement && CLICK_INPUT_TYPES.includes(element.type)) {
     return "click"
   }
 

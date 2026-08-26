@@ -1,7 +1,7 @@
-import { HerbRuntime } from "./runtime"
+import { Runtime } from "../runtime"
 
-import type { ScopedSetOptions, StateScope } from "./state"
 import type { StateValue } from "./values"
+import type { ScopedSetOptions, StateScope } from "./types"
 
 export interface ScopedState {
   scope: StateScope | null
@@ -15,7 +15,7 @@ export interface ScopedState {
 }
 
 export function stateFor(element: Element): ScopedState {
-  const runtime = HerbRuntime.get()
+  const runtime = Runtime.get()
   const state = runtime?.state
 
   const resolve = (name: string): ScopedSetOptions => {

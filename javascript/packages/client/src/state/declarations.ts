@@ -1,55 +1,9 @@
 import { literal } from "./conditions"
 
-export const REGION_SCOPES = new WeakMap<Region, StateScope>()
-export const ITEM_SCOPES = new WeakMap<Item, StateScope>()
-
-import type { DiagnosticSpot } from "./report"
-import type { Item, Region } from "./types"
 import type { StateValue } from "./values"
-import type { StateComparand } from "./conditions"
-
-import type { StateBucket, ScopeStore, DeclaredState, StateManifest, StateScope } from "./state.js"
-
-export function scopeOf(region: Region, item: Item | null = null): StateScope {
-  if (!item) {
-    let scope = REGION_SCOPES.get(region)
-
-    if (!scope) {
-      scope = { region, item: null }
-      REGION_SCOPES.set(region, scope)
-    }
-
-    return scope
-  }
-
-  let scope = ITEM_SCOPES.get(item)
-
-  if (!scope) {
-    scope = { region, item }
-    ITEM_SCOPES.set(item, scope)
-  }
-
-  return scope
-}
-
-export function scoped(store: ScopeStore, scope: StateScope): StateBucket {
-  let regionStore = store.get(scope.region)
-
-  if (!regionStore) {
-    regionStore = new Map()
-    store.set(scope.region, regionStore)
-  }
-
-  const key = scope.item?.key ?? ""
-  let bucket = regionStore.get(key)
-
-  if (!bucket) {
-    bucket = new Map()
-    regionStore.set(key, bucket)
-  }
-
-  return bucket
-}
+import type { StateComparand } from "./types"
+import type { DiagnosticSpot } from "../shared/types"
+import type { DeclaredState, StateManifest } from "./types"
 
 export function declared(manifest: StateManifest, name: string, collection: number | null): DeclaredState | null {
   const exact = manifest.declarations.find((declaration) => {
@@ -73,10 +27,6 @@ export function declared(manifest: StateManifest, name: string, collection: numb
   }
 
   return manifest.declarations.find((declaration) => declaration.name === name && declaration.scope === "region") ?? null
-}
-
-export function collectionIn(scope: StateScope): number | null {
-  return scope.item?.collection.index ?? null
 }
 
 export function declarationSpot(declaration: DeclaredState): DiagnosticSpot {

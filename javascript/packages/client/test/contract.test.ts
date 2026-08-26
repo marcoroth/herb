@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
-import { SlotIndex } from "../src/slot-index"
-import type { DependencyMap } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import type { DependencyMap } from "../src/state/types"
 import type { Item, Payload, Slot, SlotType } from "../src/types"
 
 import aBlockAndWhatFollowsIt from "./fixtures/contract/a-block-and-what-follows-it.json"
@@ -95,7 +95,7 @@ function serialized(markup: string): string {
   return holder.innerHTML
 }
 
-function found(index: SlotIndex, file: string): Map<number, Slot> {
+function found(index: Slots, file: string): Map<number, Slot> {
   const slots = new Map<number, Slot>()
 
   const visit = (slot: Slot): void => {
@@ -132,10 +132,10 @@ describe("the contract table", () => {
 describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture) => {
   const schema = new Map(fixture.schema.slots.map((slot) => [slot.index, slot]))
 
-  let index: SlotIndex
+  let index: Slots
 
   beforeEach(() => {
-    index = new SlotIndex()
+    index = new Slots()
   })
 
   test("indexes only slots the compiler recorded, as the type and attribute it recorded", () => {
@@ -151,7 +151,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
   })
 
   test("indexes the client render the same way and takes the parked statics off the page", () => {
-    const server = new SlotIndex()
+    const server = new Slots()
     server.scan(mount(fixture.rendered, fixture))
     const serverSlots = [...found(server, fixture.file).keys()].sort()
 
@@ -213,7 +213,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
     index.scan(host)
     index.apply(fixture.values)
 
-    const again = new SlotIndex()
+    const again = new Slots()
     again.scan(host)
 
     expect([...found(again, fixture.file).keys()].sort()).toEqual([...found(index, fixture.file).keys()].sort())

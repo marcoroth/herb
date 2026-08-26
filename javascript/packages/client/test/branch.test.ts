@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SLOT_EVENT } from "../src/events"
+import { Slots } from "../src/slots/slots"
+import { SLOT_EVENT } from "../src/shared/events"
 import type { SlotEventDetail } from "../src/types"
 
 function nth(html: string, occurrence: number): string {
@@ -14,7 +14,7 @@ describe("a branch whose markup was never in the DOM", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
   test("an untaken conditional holds an addressable but empty position", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = EMPTY_COND
     index.scan(document.body)
 
@@ -27,7 +27,7 @@ describe("a branch whose markup was never in the DOM", () => {
   })
 
   test("the branch's own markers arrive with its html and become addressable", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = EMPTY_COND
     index.scan(document.body)
 
@@ -46,7 +46,7 @@ describe("markup parked in a template", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
   test("does not index slots inside a template element", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `
       <!--herb-region:${FILE}:aaaaaaaa:0-->
@@ -65,7 +65,7 @@ describe("markup parked in a template", () => {
   })
 
   test("becomes addressable once the parked markup is moved into the document", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `
       <!--herb-region:${FILE}:aaaaaaaa:0-->
@@ -94,7 +94,7 @@ describe("parked statics once they have been read", () => {
   const page = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><b>Hello</b></template><!--/herb-region:${FILE}-->`
 
   test("leaves the document, and leaves the rendered markers alone", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -105,7 +105,7 @@ describe("parked statics once they have been read", () => {
   })
 
   test("cannot be copied into the page by an update that spans it", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -119,7 +119,7 @@ describe("parked statics once they have been read", () => {
   })
 
   test("stays registered when the rendering that carried it is replaced", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -143,7 +143,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
   `
 
   test("parks the statics without making them addressable", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -152,7 +152,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
   })
 
   test("builds the branch from the statics and the values alone", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -168,7 +168,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
   })
 
   test("keeps one copy of the statics however many times the template rendered", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page + nth(page, 1) + nth(page, 2)
     index.scan(document.body)
 
@@ -177,7 +177,7 @@ describe("rendering a branch that never rendered, without a round trip", () => {
   })
 
   test("leaves a slot alone when the server said nothing about it", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -206,7 +206,7 @@ describe("a page where the server chose a different format per template", () => 
   `
 
   test("reports what a template sent, so a caller knows whether to ask the server", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = withStatics + withoutStatics
     index.scan(document.body)
 
@@ -216,13 +216,13 @@ describe("a page where the server chose a different format per template", () => 
   })
 
   test("reports a template the index has never seen as server-rendered", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     expect(index.renderModeFor("app/views/nothing.html.erb")).toBe("server")
   })
 
   test("answers per slot, so one template can be both", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `
       <!--herb-region:${FILE}:aaaaaaaa:0-->
@@ -240,7 +240,7 @@ describe("a page where the server chose a different format per template", () => 
   })
 
   test("takes statics as they arrive rather than as the whole set", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = withStatics
     index.scan(document.body)
 
@@ -262,7 +262,7 @@ describe("a page where the server chose a different format per template", () => 
   })
 
   test("drops what an older version of a template parked", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = withStatics
     index.scan(document.body)
 
@@ -282,7 +282,7 @@ describe("a page where the server chose a different format per template", () => 
   })
 
   test("keeps statics when the rendering that carried them leaves the page", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = withStatics
     index.scan(document.body)
 
@@ -314,7 +314,7 @@ describe("statics parked once for the page", () => {
   const rendering = `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
 
   test("belongs to the template it names rather than to where it sits", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = rendering + nth(rendering, 1) + nth(rendering, 2) + bundle
     index.scan(document.body)
 
@@ -324,7 +324,7 @@ describe("statics parked once for the page", () => {
   })
 
   test("takes the keys from the payload, so nothing can disagree with it", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = bundle
     index.scan(document.body)
 
@@ -334,7 +334,7 @@ describe("statics parked once for the page", () => {
   })
 
   test("carries the branch marker into what it builds, so the slot knows its branch", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = rendering + bundle
     index.scan(document.body)
 
@@ -348,7 +348,7 @@ describe("statics parked once for the page", () => {
   })
 
   test("is indexed without any rendering of its template on the page", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = bundle
     index.scan(document.body)
 
@@ -358,7 +358,7 @@ describe("statics parked once for the page", () => {
   })
 
   test("is ignored when it names nothing that can be read as a region", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<template data-herb-region="no-version-here"><!--herb-branch:0:1--><b>x</b></template>`
     index.scan(document.body)
@@ -375,7 +375,7 @@ describe("output the compiler actually emits", () => {
   const VIEW = "app/views/test.html.erb"
 
   test("an untaken if branch, with the else that rendered not parked beside it", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:73338818:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><i>guest</i><!--/herb-slot:0--></div><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:73338818"><!--herb-branch:0:0--><b>Hi <!--herb-slot:1--><!--/herb-slot:1--></b></template>`
 
@@ -399,7 +399,7 @@ describe("output the compiler actually emits", () => {
   })
 
   test("a conditional nested in a branch, parked on its own", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:bf795402:0--><p><!--herb-slot:0:conditional--><!--/herb-slot:0--></p><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:bf795402"><!--herb-branch:0:0--><!--herb-slot:1:conditional--><!--/herb-slot:1-->outer<!--herb-branch:1:0-->deep</template>`
 
@@ -421,7 +421,7 @@ describe("output the compiler actually emits", () => {
   })
 
   test("an attribute slot and a child slot inside a parked branch", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:cf7db90d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:cf7db90d"><!--herb-branch:0:0--><span class="" data-herb-slot="1:attribute:class 2:child"></span></template>`
 
@@ -450,7 +450,7 @@ describe("keeping a branch that rendered", () => {
   const VIEW = "app/views/test.html.erb"
 
   test("keeps a copy of it, ready to build again", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><i>Hi <!--herb-slot:1-->Marco<!--/herb-slot:1--></i><!--/herb-slot:0--></div><!--/herb-region:${VIEW}-->`
     index.scan(document.body)
@@ -473,7 +473,7 @@ describe("keeping a branch that rendered", () => {
   })
 
   test("takes the values out of the copy, so nothing stale can come back", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><span class="on" data-herb-slot="1:attribute:class 2:child">Marco</span><!--/herb-slot:0--></div><!--/herb-region:${VIEW}-->`
     index.scan(document.body)
@@ -486,7 +486,7 @@ describe("keeping a branch that rendered", () => {
   })
 
   test("empties a slot inside a slot without tripping over what went with it", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><p><!--herb-slot:1--><b><!--herb-slot:2-->deep<!--/herb-slot:2--></b><!--/herb-slot:1--></p><!--/herb-slot:0--></div><!--/herb-region:${VIEW}-->`
     index.scan(document.body)
@@ -500,7 +500,7 @@ describe("keeping a branch that rendered", () => {
   })
 
   test("defers to what the server parked", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = `<!--herb-region:${VIEW}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><i>from the page</i><!--/herb-slot:0--></div><!--/herb-region:${VIEW}--><template data-herb-region="${VIEW}:aaaaaaaa"><!--herb-branch:0:1--><i>from the server</i></template>`
     index.scan(document.body)
@@ -510,7 +510,7 @@ describe("keeping a branch that rendered", () => {
   })
 
   test("has nothing to keep for a slot that is showing no branch", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
 
     document.body.innerHTML = EMPTY_COND
     index.scan(document.body)
@@ -534,7 +534,7 @@ describe("switching a branch from the client", () => {
   }
 
   test("builds the parked branch and says it was a branch that changed", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -551,7 +551,7 @@ describe("switching a branch from the client", () => {
   })
 
   test("parks what it replaces, so switching back needs nothing new", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -563,7 +563,7 @@ describe("switching a branch from the client", () => {
   })
 
   test("does nothing when the branch it is asked for is the one already shown", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -574,7 +574,7 @@ describe("switching a branch from the client", () => {
   })
 
   test("reports that it could not, when the branch was never parked", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = page
     index.scan(document.body)
 
@@ -600,7 +600,7 @@ describe("a conditional inside a collection item", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
   test("remembers the branch the server rendered for each item", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = rendered
     index.scan(document.body)
 
@@ -609,7 +609,7 @@ describe("a conditional inside a collection item", () => {
   })
 
   test("switching to the branch an item already shows keeps its server values", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = rendered
     index.scan(document.body)
 
@@ -636,7 +636,7 @@ describe("a branch written into an item keeps its values", () => {
   beforeEach(() => { document.body.innerHTML = "" })
 
   test("applying the server's branch records it, so a later switch is a no-op", () => {
-    const index = new SlotIndex()
+    const index = new Slots()
     document.body.innerHTML = pendingRow
     index.scan(document.body)
 

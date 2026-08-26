@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 
 const FILE = "app/views/chat/show.html.erb"
 
@@ -26,7 +26,7 @@ const PAGE =
   `</template>` +
   `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
-let slots: SlotIndex
+let slots: Slots
 
 function row(selector: string): HTMLElement | null {
   return document.querySelector(selector)
@@ -35,7 +35,7 @@ function row(selector: string): HTMLElement | null {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 })
 
@@ -97,7 +97,7 @@ describe("interpolated attribute slots", () => {
   test("a slot whose parts the manifest does not carry still defers", () => {
     document.body.innerHTML = PAGE.replace(JSON.stringify(MANIFEST.parts), JSON.stringify({ 2: MANIFEST.parts[2] }))
 
-    const bare = new SlotIndex()
+    const bare = new Slots()
     bare.scan(document.body)
 
     const report = bare.apply({

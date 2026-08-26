@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotMutations } from "../src/mutations"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { Outbox } from "../src/outbox/outbox"
+import { State } from "../src/state/state"
 
 import type { Payload } from "../src/types"
-import type { MutationRequest } from "../src/mutations"
+import type { MutationRequest } from "../src/outbox/types"
 
 const FILE = "app/views/conversations/show.html.erb"
 
@@ -46,24 +46,24 @@ function confirmPayload(key: string, body: string): Payload {
   }
 }
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
-function build(transport: (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>): SlotMutations {
-  return new SlotMutations(slots, state, { transport })
+function build(transport: (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>): Outbox {
+  return new Outbox(slots, state, { transport })
 }
 
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, { persist: "none" })
   state.adopt()
 })
 
-describe("SlotMutations", () => {
+describe("Outbox", () => {
   function insertForm(into: string): HTMLFormElement {
     const form = document.createElement("form")
 
@@ -79,13 +79,13 @@ describe("SlotMutations", () => {
 
   test("a submitted form derives the whole send from itself", async () => {
     let seen: MutationRequest | null = null
-    const mutations = build((request) => {
+    const outbox = build((request) => {
       seen = request
 
       return Promise.resolve(confirmPayload("message_9", "from the server"))
     })
 
-    mutations.observe(document)
+    outbox.observe(document)
 
     const form = insertForm("messages")
 
@@ -102,7 +102,7 @@ describe("SlotMutations", () => {
     expect(seen!.method).toBe("POST")
     expect(document.querySelector("#message_9")?.textContent).toContain("from the server")
 
-    mutations.unobserve()
+    outbox.unobserve()
   })
 
   test("a submitted form returns its bound states to what the server rendered", async () => {
@@ -113,9 +113,9 @@ describe("SlotMutations", () => {
       '"conditionals"',
       '"bound":{"draft":[5]},"conditionals"',
     ).replace('"declarations":[', '"declarations":[{"name":"draft","kind":"string","default":"\\"\\"","scope":"region"},')
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, { persist: "none" })
     state.adopt()
     state.observe()
 
@@ -126,9 +126,9 @@ describe("SlotMutations", () => {
 
     expect(state.getState("draft")).toBe("typed")
 
-    const mutations = build(() => Promise.resolve(confirmPayload("message_9", "sent")))
+    const outbox = build(() => Promise.resolve(confirmPayload("message_9", "sent")))
 
-    mutations.observe(document)
+    outbox.observe(document)
 
     const form = insertForm("messages")
 
@@ -140,7 +140,7 @@ describe("SlotMutations", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    mutations.unobserve()
+    outbox.unobserve()
     state.disconnect()
   })
 
@@ -151,9 +151,9 @@ describe("SlotMutations", () => {
       report: (input: unknown) => entries.push(input as { code: string }),
     }
 
-    const mutations = build(() => Promise.reject(new Error("must not be called")))
+    const outbox = build(() => Promise.reject(new Error("must not be called")))
 
-    mutations.observe(document)
+    outbox.observe(document)
 
     const form = insertForm("missing")
 
@@ -162,15 +162,15 @@ describe("SlotMutations", () => {
     expect(document.querySelectorAll("li")).toHaveLength(1)
     expect(entries.map((entry) => entry.code)).toEqual(["herb-unknown-collection"])
 
-    mutations.unobserve()
+    outbox.unobserve()
     delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
   })
 
   test("a form naming a slot that is not a collection reports it", () => {
     document.body.innerHTML = PAGE.replace("</ul>", '</ul><p data-herb-name="note"><!--herb-slot:4-->x<!--/herb-slot:4--></p>')
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, { persist: "none" })
     state.adopt()
 
     const entries: { code: string }[] = []
@@ -179,9 +179,9 @@ describe("SlotMutations", () => {
       report: (input: unknown) => entries.push(input as { code: string }),
     }
 
-    const mutations = build(() => Promise.reject(new Error("must not be called")))
+    const outbox = build(() => Promise.reject(new Error("must not be called")))
 
-    mutations.observe(document)
+    outbox.observe(document)
 
     const form = insertForm("note")
 
@@ -190,15 +190,15 @@ describe("SlotMutations", () => {
     expect(entries).toHaveLength(1)
     expect((entries[0] as { message?: string }).message).toContain("a send needs a collection")
 
-    mutations.unobserve()
+    outbox.unobserve()
     delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
   })
 
   test("the row appears pending before the request resolves, and the node survives the confirm", async () => {
     let release!: (payload: Payload) => void
-    const mutations = build(() => new Promise((resolve) => (release = resolve)))
+    const outbox = build(() => new Promise((resolve) => (release = resolve)))
 
-    const result = mutations.submit({
+    const result = outbox.submit({
       url: "/messages",
       body: { body: "typed" },
       into: { file: FILE, name: "messages" },
@@ -226,7 +226,7 @@ describe("SlotMutations", () => {
 
   test("two rapid sends both land, in order, with neither aborted", async () => {
     const seen: string[] = []
-    const mutations = build((request) => {
+    const outbox = build((request) => {
       const body = (request.body as Record<string, string>).body
 
       seen.push(body)
@@ -234,8 +234,8 @@ describe("SlotMutations", () => {
       return Promise.resolve(confirmPayload(`message_${body}`, body))
     })
 
-    const first = mutations.submit({ url: "/messages", body: { body: "one" }, into: { file: FILE, name: "messages" }, values: { body: "one" } })
-    const second = mutations.submit({ url: "/messages", body: { body: "two" }, into: { file: FILE, name: "messages" }, values: { body: "two" } })
+    const first = outbox.submit({ url: "/messages", body: { body: "one" }, into: { file: FILE, name: "messages" }, values: { body: "one" } })
+    const second = outbox.submit({ url: "/messages", body: { body: "two" }, into: { file: FILE, name: "messages" }, values: { body: "two" } })
 
     const outcomes = await Promise.all([first, second])
 
@@ -246,7 +246,7 @@ describe("SlotMutations", () => {
 
   test("a failed send keeps the row, marks it, and retry recovers it", async () => {
     let attempts = 0
-    const mutations = build(() => {
+    const outbox = build(() => {
       attempts += 1
 
       if (attempts === 1) return Promise.reject(new Error("boom"))
@@ -254,7 +254,7 @@ describe("SlotMutations", () => {
       return Promise.resolve(confirmPayload("message_9", "recovered"))
     })
 
-    const failed = await mutations.submit({
+    const failed = await outbox.submit({
       url: "/messages",
       body: { body: "flaky" },
       into: { file: FILE, name: "messages" },
@@ -268,7 +268,7 @@ describe("SlotMutations", () => {
     expect(rows).toHaveLength(2)
     expect(rows[1].textContent).toContain("Not sent")
 
-    const retried = await mutations.retry(failed.key)!
+    const retried = await outbox.retry(failed.key)!
 
     expect(retried.status).toBe("confirmed")
     expect(document.querySelector("#message_9")?.textContent).toContain("Sent")
@@ -276,7 +276,7 @@ describe("SlotMutations", () => {
 
   test("retry and discard accept the element inside the row", async () => {
     let attempts = 0
-    const mutations = build(() => {
+    const outbox = build(() => {
       attempts += 1
 
       if (attempts === 1) return Promise.reject(new Error("boom"))
@@ -284,7 +284,7 @@ describe("SlotMutations", () => {
       return Promise.resolve(confirmPayload("message_9", "recovered"))
     })
 
-    const failed = await mutations.submit({
+    const failed = await outbox.submit({
       url: "/messages",
       body: { body: "flaky" },
       into: { file: FILE, name: "messages" },
@@ -292,12 +292,12 @@ describe("SlotMutations", () => {
     })
 
     const row = document.querySelectorAll("li")[1]!
-    const retried = await mutations.retry(row)!
+    const retried = await outbox.retry(row)!
 
     expect(failed.status).toBe("failed")
     expect(retried.status).toBe("confirmed")
 
-    const second = await mutations.submit({
+    const second = await outbox.submit({
       url: "/messages",
       body: {},
       into: { file: FILE, name: "messages" },
@@ -305,26 +305,26 @@ describe("SlotMutations", () => {
     })
 
     expect(second.status).toBe("confirmed")
-    expect(mutations.discard(document.querySelector("section")!)).toBe(false)
+    expect(outbox.discard(document.querySelector("section")!)).toBe(false)
   })
 
   test("discard reverts the optimistic row", async () => {
-    const mutations = build(() => Promise.reject(new Error("down")))
-    const failed = await mutations.submit({
+    const outbox = build(() => Promise.reject(new Error("down")))
+    const failed = await outbox.submit({
       url: "/messages",
       body: {},
       into: { file: FILE, name: "messages" },
       values: { body: "gone" },
     })
 
-    expect(mutations.discard(failed.key)).toBe(true)
+    expect(outbox.discard(failed.key)).toBe(true)
     expect(document.querySelectorAll("li")).toHaveLength(1)
   })
 
   test("the confirm is narrowed to the collection", async () => {
-    const mutations = build(() => Promise.resolve(confirmPayload("message_5", "narrow")))
+    const outbox = build(() => Promise.resolve(confirmPayload("message_5", "narrow")))
 
-    const outcome = await mutations.submit({
+    const outcome = await outbox.submit({
       url: "/messages",
       body: {},
       into: { file: FILE, name: "messages" },
@@ -336,9 +336,9 @@ describe("SlotMutations", () => {
 
   test("a stale version surfaces as its own status", async () => {
     const stale: Payload = { ...confirmPayload("message_6", "old"), version: "bbbbbbbb" }
-    const mutations = build(() => Promise.resolve(stale))
+    const outbox = build(() => Promise.resolve(stale))
 
-    const outcome = await mutations.submit({
+    const outcome = await outbox.submit({
       url: "/messages",
       body: {},
       into: { file: FILE, name: "messages" },
@@ -366,9 +366,9 @@ describe("SlotMutations", () => {
       slots: { 0: { items: { message_1: { 2: "kept" }, message_2: { 2: "also kept" } } } },
     }
 
-    const mutations = build(() => Promise.resolve(wide))
+    const outbox = build(() => Promise.resolve(wide))
 
-    const outcome = await mutations.submit({
+    const outcome = await outbox.submit({
       url: "/messages",
       body: {},
       into: { file: FILE, name: "messages" },
@@ -382,9 +382,9 @@ describe("SlotMutations", () => {
   })
 
   test("an optimistic value renders as text, never as markup", async () => {
-    const mutations = build(() => Promise.resolve(null))
+    const outbox = build(() => Promise.resolve(null))
 
-    await mutations.submit({
+    await outbox.submit({
       url: "/messages",
       body: {},
       into: { file: FILE, name: "messages" },
@@ -398,9 +398,9 @@ describe("SlotMutations", () => {
   })
 
   test("a submit with no reachable collection is detached but still sends", async () => {
-    const mutations = build(() => Promise.resolve(null))
+    const outbox = build(() => Promise.resolve(null))
 
-    const outcome = await mutations.submit({ url: "/messages", body: {}, into: { file: "missing.html.erb", index: 0 } })
+    const outcome = await outbox.submit({ url: "/messages", body: {}, into: { file: "missing.html.erb", index: 0 } })
 
     expect(outcome.status).toBe("detached")
     expect(document.querySelectorAll("li")).toHaveLength(1)
@@ -410,13 +410,13 @@ describe("SlotMutations", () => {
     document.head.innerHTML = `<meta name="csrf-token" content="tok123">`
 
     let captured: MutationRequest | null = null
-    const mutations = build((request) => {
+    const outbox = build((request) => {
       captured = request
 
       return Promise.resolve(null)
     })
 
-    await mutations.submit({ url: "/messages", body: {}, into: { file: FILE, name: "messages" } })
+    await outbox.submit({ url: "/messages", body: {}, into: { file: FILE, name: "messages" } })
 
     expect(captured!.method).toBe("POST")
     expect(captured!.headers.Accept).toBe("application/vnd.herb.slots+json")
@@ -465,13 +465,13 @@ describe("a template that declares no mutation states", () => {
 
     document.body.innerHTML = PLAIN_PAGE
 
-    const plainSlots = new SlotIndex()
+    const plainSlots = new Slots()
     plainSlots.scan(document.body)
 
-    const plainState = new SlotState(plainSlots, { persist: "none", transport: async () => null })
+    const plainState = new State(plainSlots, { persist: "none", transport: async () => null })
     plainState.adopt()
 
-    const plainMutations = new SlotMutations(plainSlots, plainState, {
+    const plainMutations = new Outbox(plainSlots, plainState, {
       transport: async () => ({ template: PLAIN_FILE, version: "bbbbbbbb", occurrence: 0, slots: {} }) as Payload,
     })
 

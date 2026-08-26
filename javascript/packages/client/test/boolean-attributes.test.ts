@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
 
 const FILE = "app/views/chat/show.html.erb"
 
@@ -27,8 +27,8 @@ const PAGE =
     },
   })}</template>`
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 function button(): HTMLButtonElement {
   return document.querySelector("button")!
@@ -41,10 +41,10 @@ function video(): HTMLVideoElement {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, { persist: "none" })
   state.adopt()
   state.observe()
 })
@@ -60,7 +60,7 @@ describe("a row template taken from a live row", () => {
       `<!--/herb-slot:9--></ul>` +
       `<!--/herb-region:${FILE}-->`
 
-    const index = new SlotIndex()
+    const index = new Slots()
 
     index.scan(document.body)
 
@@ -122,10 +122,10 @@ describe("state-driven boolean attributes", () => {
   test("a bare presence seeds from what the page rendered", () => {
     document.body.innerHTML = PAGE.replace("<video ", "<video muted ")
 
-    const freshSlots = new SlotIndex()
+    const freshSlots = new Slots()
     freshSlots.scan(document.body)
 
-    const fresh = new SlotState(freshSlots, { persist: "none" })
+    const fresh = new State(freshSlots, { persist: "none" })
     fresh.adopt()
 
     expect(fresh.getState("sending")).toBe(true)

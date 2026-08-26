@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 
 const FILE = "app/views/posts/index.html.erb"
 const PARTIAL = "app/views/posts/_row.html.erb"
@@ -10,11 +10,11 @@ const page = (name: string) => region(FILE, `<p><!--herb-slot:0-->${name}<!--/he
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe("page navigation and Turbo", () => {
-  let index: SlotIndex
+  let index: Slots
 
   beforeEach(() => {
     document.body.innerHTML = ""
-    index = new SlotIndex()
+    index = new Slots()
   })
 
   test("indexes the new page after the body is replaced", async () => {

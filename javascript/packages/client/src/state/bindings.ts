@@ -1,6 +1,6 @@
-import { elementOf } from "./anchors"
+import { elementOf } from "../markup/anchors"
 
-import type { Slot } from "./types"
+import type { Slot } from "../types"
 
 export const VALUE_ELEMENTS = ["input", "textarea", "select"]
 

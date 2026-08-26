@@ -5,21 +5,21 @@
  * This entry exists for tooling, the linter and the language service consume it, and it never
  * loads in an application: nothing in the runtime imports this module, so the production
  * entries are unaffected. The clause grammar re-exported here is the exact code
- * `SlotActions` runs, which is what keeps the linter and the runtime from drifting.
+ * `Actions` runs, which is what keeps the linter and the runtime from drifting.
  */
 
-export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./parsing"
-export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./attributes"
+export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./grammar/attributes"
+export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
 
-export type { Clause } from "./parsing"
-export type { ActionName, ActionSchema, HerbAttribute } from "./attributes"
+export type { Clause } from "./grammar/parsing"
+export type { ActionName, ActionSchema, HerbAttribute } from "./grammar/attributes"
 
+const SLOTS_MODE = /\b(server|client)\b/
+const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s
 const STATE_DIRECTIVE_PRESENCE = /^\s*herb:state\b/
 const STATE_DIRECTIVE_PATTERN = /^\s*herb:state\s*(\(.*\))\s*$/s
-const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s
-const SLOTS_MODE = /\b(server|client)\b/
-const KEYWORD_SEGMENT = /^(\s*)([a-z_][a-zA-Z0-9_]*):(.*)$/s
 const BARE_IDENTIFIER = /^[a-z_][a-zA-Z0-9_]*$/
+const KEYWORD_SEGMENT = /^(\s*)([a-z_][a-zA-Z0-9_]*):(.*)$/s
 
 export type StateDefaultKind =
   | "boolean"
@@ -56,6 +56,7 @@ export function isStateDirectiveContent(content: string): boolean {
 
 export function slotsDirectiveModeOf(content: string): "server" | "client" | null {
   const match = SLOTS_DIRECTIVE.exec(content)
+
   if (!match) {
     return null
   }

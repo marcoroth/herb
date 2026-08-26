@@ -1,28 +1,4 @@
-export type ConditionValue = string | number | boolean | null
-export type ConditionalArm = Arm | ComboArm | [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
-export type StateComparand = null | { state: string } | { value: ConditionValue } | string
-export type StateCondition = [string, StateComparand] | [string, StateComparand, string] | ComboCondition
-
-export type ValueOf = (name: string) => ConditionValue
-
-export interface ComboCondition {
-  all?: StateCondition[]
-  any?: StateCondition[]
-}
-
-export interface Arm {
-  branch: number | null
-  condition: StateCondition
-}
-
-export interface ComboArm extends ComboCondition {
-  branch: number | null
-}
-
-export interface Conditional {
-  arms: ConditionalArm[]
-  else: number | null
-}
+import type { Arm, ComboCondition, ConditionValue, ConditionalArm, StateComparand, StateCondition, ValueOf } from "./types"
 
 export function armOf(arm: ConditionalArm): Arm {
   if (Array.isArray(arm)) {

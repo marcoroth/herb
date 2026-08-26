@@ -1,10 +1,25 @@
-import { isPayload, leaves } from "./payloads"
-import { attributeValue } from "./fragments"
+import { attributeValue } from "../markup/fragments"
 
-import type { SlotIndex } from "./slot-index"
-import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, Payload, PayloadSlots, SeededSlots, Slot, SlotMap, SlotValue } from "./types"
+import type { Slots } from "./slots"
+import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, Payload, PayloadSlots, PayloadValue, SeededSlots, Slot, SlotMap, SlotValue, SlotValues } from "../types"
 
-export function applyPayload(slots: SlotIndex, payload: Payload, mode: ApplyMode): ApplyReport {
+export function isPayload(value: PayloadValue | unknown): value is Payload {
+  return typeof value === "object" && value !== null && "template" in value
+}
+
+export function leaves(values: PayloadSlots | undefined): SlotValues {
+  const filled: SlotValues = {}
+
+  for (const [key, value] of Object.entries(values ?? {})) {
+    if (typeof value === "string") {
+      filled[Number(key)] = value
+    }
+  }
+
+  return filled
+}
+
+export function applyPayload(slots: Slots, payload: Payload, mode: ApplyMode): ApplyReport {
   const report: ApplyReport = { applied: 0, deferred: [] }
 
   apply(slots, payload, report, mode)
@@ -16,7 +31,7 @@ function owner(slot: Slot): SlotMap {
   return slot.item?.slots ?? slot.region.slots
 }
 
-function apply(slots: SlotIndex, payload: Payload, report: ApplyReport, mode: ApplyMode): void {
+function apply(slots: Slots, payload: Payload, report: ApplyReport, mode: ApplyMode): void {
     const region = slots.region(payload.template, payload.occurrence)
 
     if (!region) {
@@ -38,7 +53,7 @@ function apply(slots: SlotIndex, payload: Payload, report: ApplyReport, mode: Ap
     applySlots(slots, payload, region.slots, payload.slots, report, mode)
   }
 
-function applySlots(slots: SlotIndex, payload: Payload, container: SlotMap, values: PayloadSlots, report: ApplyReport, mode: ApplyMode): void {
+function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: PayloadSlots, report: ApplyReport, mode: ApplyMode): void {
     const blocks: [Slot, number, AppliedValue][] = []
 
     for (const [key, value] of Object.entries(values)) {
@@ -75,7 +90,7 @@ function applySlots(slots: SlotIndex, payload: Payload, container: SlotMap, valu
     }
   }
 
-function applyValue(slots: SlotIndex, payload: Payload, slot: Slot, index: number, value: AppliedValue, report: ApplyReport, mode: ApplyMode): void {
+function applyValue(slots: Slots, payload: Payload, slot: Slot, index: number, value: AppliedValue, report: ApplyReport, mode: ApplyMode): void {
     if (typeof value === "boolean") {
       if (slots.setBooleanAttribute(slot, value)) {
         report.applied += 1
@@ -99,7 +114,7 @@ function applyValue(slots: SlotIndex, payload: Payload, slot: Slot, index: numbe
     }
   }
 
-function applyLeaf(slots: SlotIndex, payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {
+function applyLeaf(slots: Slots, payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {
     if (slot.type === "block" && slot.children.length > 0) {
       if (!slots.covers(slot, value)) {
         defer(report, payload, index, "block")
@@ -133,7 +148,7 @@ function applyLeaf(slots: SlotIndex, payload: Payload, slot: Slot, index: number
     report.applied += 1
   }
 
-function applyBranch(slots: SlotIndex, payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: ApplyMode): void {
+function applyBranch(slots: Slots, payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: ApplyMode): void {
     if (value.branch !== slot.branch) {
       if (!slots.switchBranch(slot, value.branch, leaves(value.slots))) {
         defer(report, payload, slot.index, "branch")
@@ -149,7 +164,7 @@ function applyBranch(slots: SlotIndex, payload: Payload, slot: Slot, value: Bran
     }
   }
 
-function applyItems(slots: SlotIndex, payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
+function applyItems(slots: Slots, payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
     const wanted = value.order ?? Object.keys(value.items)
     const unbuilt = slots.reconcileItems(slot, wanted, mode)
 

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
-import { SlotIndex } from "../src/slot-index"
-import { SLOT_EVENT } from "../src/events"
+import { Slots } from "../src/slots/slots"
+import { SLOT_EVENT } from "../src/shared/events"
 import type { Payload, SlotEventDetail } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
@@ -24,7 +24,7 @@ describe("saying what changed", () => {
   test("announces a value, naming the template it belongs to", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()
@@ -38,7 +38,7 @@ describe("saying what changed", () => {
   test("announces an item it built and an item it dropped, with the key", () => {
     document.body.innerHTML = ITEMS
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()
@@ -61,7 +61,7 @@ describe("saying what changed", () => {
   test("says what a payload built once the payload has landed", () => {
     document.body.innerHTML = ITEMS
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()
@@ -84,7 +84,7 @@ describe("saying what changed", () => {
   test("announces rewriting one item as an update, not as bare markup", () => {
     document.body.innerHTML = ITEMS
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()
@@ -97,7 +97,7 @@ describe("saying what changed", () => {
   test("says nothing when the value written is the value already there", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()
@@ -110,7 +110,7 @@ describe("saying what changed", () => {
   test("an item still exists when its removal is announced, so it can be pointed at", () => {
     document.body.innerHTML = ITEMS
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen: Array<{ key: string | null; connected: boolean }> = []
@@ -134,7 +134,7 @@ describe("saying what changed", () => {
   test("hands over the slot rather than measuring it, since measuring costs a layout", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()
@@ -153,7 +153,7 @@ describe("telling a delegate what changed", () => {
   test("calls the method for what happened and leaves the others alone", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const called: string[] = []
@@ -172,7 +172,7 @@ describe("telling a delegate what changed", () => {
   test("hands a delegate the slot itself, not an index to look it up by", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const slot = index.slot(FILE, 0)!
@@ -187,7 +187,7 @@ describe("telling a delegate what changed", () => {
   test("hands a rekey both keys, so a delegate has nothing to null-check", () => {
     document.body.innerHTML = ITEMS
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen: [string, string][] = []
@@ -201,7 +201,7 @@ describe("telling a delegate what changed", () => {
   test("says nothing to a delegate that named no methods at all", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     index.subscribe({})
@@ -212,7 +212,7 @@ describe("telling a delegate what changed", () => {
   test("stops telling a delegate that unsubscribed", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const called: string[] = []
@@ -227,7 +227,7 @@ describe("telling a delegate what changed", () => {
   test("still announces on the document, which is what the dev tools listen to", () => {
     document.body.innerHTML = CHILD
 
-    const index = new SlotIndex()
+    const index = new Slots()
     index.scan(document.body)
 
     const seen = watch()

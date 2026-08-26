@@ -1,6 +1,6 @@
-import { HERB_ATTRIBUTES } from "./attributes"
+import { HERB_ATTRIBUTES } from "../grammar/attributes"
 
-import type { StateManifest } from "./state"
+import type { StateManifest } from "../state/types"
 
 export interface TemplateManifest {
   file: string
@@ -42,8 +42,8 @@ function parse(element: HTMLTemplateElement): unknown {
 }
 
 export class Manifests {
-  #held = new Map<string, TemplateManifest>()
-  #byFile = new Map<string, TemplateManifest>()
+  private held = new Map<string, TemplateManifest>()
+  private byFile = new Map<string, TemplateManifest>()
 
   adopt(root: Node): number {
     let taken = 0
@@ -52,7 +52,7 @@ export class Manifests {
       const held = parse(element) as Record<string, unknown> | null
 
       for (const [identity, manifest] of Object.entries(held ?? {})) {
-        if (this.#keep(identity, manifest)) {
+        if (this.keep(identity, manifest)) {
           taken += 1
         }
       }
@@ -67,7 +67,7 @@ export class Manifests {
     let taken = 0
 
     for (const [identity, manifest] of Object.entries(manifests)) {
-      if (this.#keep(identity, manifest)) {
+      if (this.keep(identity, manifest)) {
         taken += 1
       }
     }
@@ -76,7 +76,7 @@ export class Manifests {
   }
 
   get(file: string, version: string): TemplateManifest | null {
-    return this.#held.get(`${file}:${version}`) ?? null
+    return this.held.get(`${file}:${version}`) ?? null
   }
 
   nameOf(file: string, version: string, name: string): number | null {
@@ -88,7 +88,7 @@ export class Manifests {
   }
 
   partsForFile(file: string, index: number): string[] | null {
-    return this.#byFile.get(file)?.parts[String(index)] ?? null
+    return this.byFile.get(file)?.parts[String(index)] ?? null
   }
 
   statesOf(file: string, version: string): StateManifest | null {
@@ -96,24 +96,24 @@ export class Manifests {
   }
 
   clear(): void {
-    this.#held = new Map()
-    this.#byFile = new Map()
+    this.held = new Map()
+    this.byFile = new Map()
   }
 
-  #keep(identity: string, manifest: unknown): boolean {
+  private keep(identity: string, manifest: unknown): boolean {
     if (!identity || !manifest || typeof manifest !== "object") {
       return false
     }
 
-    if (this.#held.has(identity)) {
+    if (this.held.has(identity)) {
       return false
     }
 
     const held = manifest as TemplateManifest
 
-    this.#held.set(identity, held)
-    this.#byFile.set(held.file, held)
-    this.#byFile.set(held.identifier, held)
+    this.held.set(identity, held)
+    this.byFile.set(held.file, held)
+    this.byFile.set(held.identifier, held)
 
     return true
   }

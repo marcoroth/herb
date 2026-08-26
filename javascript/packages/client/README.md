@@ -19,15 +19,15 @@ This package is the browser half. The index at its core stays passive. It answer
 Nothing starts on its own. A page that has not asked for the runtime does not get an observer:
 
 ```typescript
-import { HerbRuntime } from "@herb-tools/client"
+import { Runtime } from "@herb-tools/client"
 
-const { slots, state, mutations, actions } = HerbRuntime.start()
+const { slots, state, outbox, actions } = Runtime.start()
 ```
 
 `start` is idempotent and returns the same runtime every time, so anything that needs the runtime can ask for it and get the one already running:
 
 ```typescript
-const runtime = HerbRuntime.get()
+const runtime = Runtime.get()
 ```
 
 Constructing it directly throws. A second runtime would be a second index over the same document, and neither would see the other's updates. To stop watching:
@@ -132,7 +132,7 @@ A branch the server parked is built for you, so a template in client mode toggle
 `apply` answers what to do with values once you have them. `state` is how a page asks for them.
 
 ```typescript
-const { state } = HerbRuntime.start()
+const { state } = Runtime.start()
 
 await state.set({ query: "ruby", page: 1 })
 state.set("query", "")
@@ -144,7 +144,7 @@ By default the query string is where the state lives, so the address bar keeps m
 That default fits a view's inputs, which is what a search box, a filter and a page number are. It does not fit everything. A form about to save a row is a mutation and not a view, a long value runs into what a URL can hold, and anything private has no business in a server log or a `Referer` header. Those pages keep their state in memory:
 
 ```typescript
-HerbRuntime.start({ state: { persist: "none" } })
+Runtime.start({ state: { persist: "none" } })
 ```
 
 A page that keeps state in memory never reads the query string and never writes to it, and everything else is unchanged. It still sends the whole state, and it still writes the slots it can.
@@ -179,7 +179,7 @@ A template reads `@query` and a request carries `query`, and what joins them is 
 Nothing about the transport is assumed. The default asks the same URL for the `slots` format, which is what `ReActionView` serves, and any other protocol is a function:
 
 ```typescript
-HerbRuntime.start({
+Runtime.start({
   state: {
     transport: async (request, signal) => fetch(build(request), { signal }).then((response) => response.json()),
     debounce: 150,
@@ -233,7 +233,7 @@ export default class extends Controller {
 }
 ```
 
-`useState` assigns `this.state`, `this.mutations` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
+`useState` assigns `this.state`, `this.outbox` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
 
 ## Actions in markup
 
@@ -257,10 +257,10 @@ A button that only writes a state does not need a controller. Four attributes co
 
 ## Sending
 
-A mutation is a send that must not lose what the user did. `mutations` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
+A mutation is a send that must not lose what the user did. `outbox` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
 
 ```typescript
-mutations.submit({
+outbox.submit({
   url: form.action,
   body: new FormData(form),
   into: { file: "app/views/chat/show.html.erb", name: "messages" },

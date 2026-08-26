@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
 
-import { ElementObserver } from "../src/element-observer"
-import { HerbRuntime } from "../src/runtime"
+import { ElementObserver } from "../src/shared/element-observer"
+import { Runtime } from "../src/runtime"
 
 const NATIVE = window.MutationObserver
 
@@ -31,18 +31,18 @@ beforeEach(() => {
 
 afterEach(() => {
   window.MutationObserver = NATIVE
-  HerbRuntime.get()?.stop()
+  Runtime.get()?.stop()
 })
 
 describe("the watch a started runtime keeps over the page", () => {
   test("is one observer, however many parts of the runtime care about it", () => {
-    HerbRuntime.start({ state: { persist: "none" } })
+    Runtime.start({ state: { persist: "none" } })
 
     expect(built).toBe(1)
   })
 
   test("is given up once the runtime stops", async () => {
-    const runtime = HerbRuntime.start({ state: { persist: "none" } })
+    const runtime = Runtime.start({ state: { persist: "none" } })
 
     runtime.stop()
 

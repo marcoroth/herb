@@ -1,55 +1,55 @@
-import { clearOnNavigation } from "./report"
+import { clearOnNavigation } from "./shared/report"
 
-import { ACTION_ATTRIBUTES } from "./attributes"
+import { ACTION_ATTRIBUTES } from "./grammar/attributes"
 
-import { SlotActions } from "./actions"
-import { ElementObserver } from "./element-observer"
-import { SlotIndex } from "./slot-index"
-import { SlotMutations } from "./mutations"
-import { SlotState } from "./state"
+import { Slots } from "./slots/slots"
+import { State } from "./state/state"
+import { Outbox } from "./outbox/outbox"
+import { Actions } from "./actions/actions"
+import { ElementObserver } from "./shared/element-observer"
 
-import type { MutationsOptions } from "./mutations"
-import type { TemplateManifest } from "./manifests"
-import type { StateOptions } from "./state"
+import type { StateOptions } from "./state/types"
+import type { OutboxOptions } from "./outbox/types"
+import type { TemplateManifest } from "./slots/manifests"
 
-const CONSTRUCT = Symbol("HerbRuntime.start")
+const CONSTRUCT = Symbol("Runtime.start")
 
-let instance: HerbRuntime | null = null
+let instance: Runtime | null = null
 
 export interface RuntimeOptions {
   state?: StateOptions
-  mutations?: MutationsOptions
+  outbox?: OutboxOptions
   manifests?: Record<string, TemplateManifest>
 }
 
-export class HerbRuntime {
-  public readonly slots: SlotIndex
-  public readonly state: SlotState
-  public readonly mutations: SlotMutations
-  public readonly actions: SlotActions
+export class Runtime {
+  public readonly slots: Slots
+  public readonly state: State
+  public readonly outbox: Outbox
+  public readonly actions: Actions
 
   private elements: ElementObserver | null = null
   private stopClearing: (() => void) | null = null
 
   private constructor(token?: symbol, options: RuntimeOptions = {}) {
     if (token !== CONSTRUCT) {
-      throw new TypeError("HerbRuntime is created by HerbRuntime.start()")
+      throw new TypeError("Runtime is created by Runtime.start()")
     }
 
-    this.slots = new SlotIndex()
-    this.state = new SlotState(this.slots, options.state)
-    this.mutations = new SlotMutations(this.slots, this.state, options.mutations)
-    this.actions = new SlotActions(this.state)
+    this.slots = new Slots()
+    this.state = new State(this.slots, options.state)
+    this.outbox = new Outbox(this.slots, this.state, options.outbox)
+    this.actions = new Actions(this.state)
   }
 
-  static start(options: RuntimeOptions = {}): HerbRuntime {
-    const existing = HerbRuntime.get()
+  static start(options: RuntimeOptions = {}): Runtime {
+    const existing = Runtime.get()
 
     if (existing) {
       return existing
     }
 
-    const runtime = new HerbRuntime(CONSTRUCT, options)
+    const runtime = new Runtime(CONSTRUCT, options)
 
     if (options.manifests) {
       runtime.slots.adoptManifests(options.manifests)
@@ -64,7 +64,7 @@ export class HerbRuntime {
     runtime.state.adopt()
     runtime.state.observe(root, elements)
     runtime.actions.start(document, elements)
-    runtime.mutations.observe()
+    runtime.outbox.observe()
     runtime.stopClearing = clearOnNavigation()
 
     instance = runtime
@@ -72,15 +72,15 @@ export class HerbRuntime {
     return runtime
   }
 
-  static get(): HerbRuntime | null {
+  static get(): Runtime | null {
     return instance
   }
 
   stop(): void {
     this.slots.disconnect()
     this.state.disconnect()
-    this.mutations.unobserve()
-    this.mutations.abort()
+    this.outbox.unobserve()
+    this.outbox.abort()
     this.actions.stop()
     this.elements?.disconnect()
     this.elements = null

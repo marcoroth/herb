@@ -50,7 +50,7 @@ export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch
 
 export type SlotAnchor = RangeAnchor | ElementAnchor | ContentAnchor
 
-export interface SlotIndexDelegate {
+export interface SlotsDelegate {
   valueWritten?(slot: Slot): void
   attributeWritten?(slot: Slot): void
   branchSwitched?(slot: Slot): void

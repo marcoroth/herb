@@ -1,29 +1,28 @@
-import { HerbRuntime } from "./runtime"
+import { Runtime } from "./runtime"
 
-import { stateFor } from "./scoped-state"
+import { stateFor } from "./state/for-element"
 
-import type { ScopedState } from "./scoped-state"
-import type { StateScope } from "./state"
-import type { SlotMutations } from "./mutations"
-import type { SlotIndex } from "./slot-index"
+import type { Slots } from "./slots/slots"
+import type { Outbox } from "./outbox/outbox"
+import type { StateScope } from "./state/types"
+import type { ScopedState } from "./state/for-element"
 
 export interface StateHost {
   element: Element
   state?: ScopedState
-  mutations?: SlotMutations
-  slots?: SlotIndex
+  outbox?: Outbox
+  slots?: Slots
   disconnect?(): void
 }
 
 export function useState(host: StateHost): ScopedState {
   const state = stateFor(host.element)
+  const scope = state.scope
   const unsubscribes: (() => void)[] = []
 
   host.state = state
-  host.mutations = HerbRuntime.get()?.mutations
-  host.slots = HerbRuntime.get()?.slots
-
-  const scope = state.scope
+  host.outbox = Runtime.get()?.outbox
+  host.slots = Runtime.get()?.slots
 
   let names: string[] = []
 
@@ -57,7 +56,7 @@ export function useState(host: StateHost): ScopedState {
 }
 
 function namesFor(scope: StateScope): string[] {
-  const runtime = HerbRuntime.get()
+  const runtime = Runtime.get()
 
   if (!runtime) {
     return []

@@ -1,4 +1,4 @@
-import type { Slot } from "./types"
+import type { Slot } from "../types"
 
 export function link(parent: Slot | null, child: Slot): void {
   if (!parent || parent === child) {

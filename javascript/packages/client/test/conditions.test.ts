@@ -1,8 +1,8 @@
 import { describe, test, expect } from "vitest"
 
-import { armOf, matches, mentions, statesIn } from "../src/conditions"
+import { armOf, matches, mentions, statesIn } from "../src/state/conditions"
 
-import type { ConditionalArm, StateCondition, ConditionValue } from "../src/conditions"
+import type { ConditionalArm, StateCondition, ConditionValue } from "../src/state/types"
 
 const VALUES: Record<string, ConditionValue> = {
   pending: true,

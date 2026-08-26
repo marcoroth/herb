@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
-import { HerbRuntime } from "../src/runtime"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+import { Runtime } from "../src/runtime"
 
 const FILE = "app/views/t.html.erb"
 const VERSION = "9dac1733"
@@ -29,7 +29,7 @@ const PAGE =
 const INLINE = `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:${VERSION}`]: MANIFEST })}</template>`
 const HOISTED = `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:${VERSION}`]: MANIFEST })}</template>`
 
-let index: SlotIndex
+let index: Slots
 
 function mount(markup: string): HTMLElement {
   document.body.innerHTML = ""
@@ -45,7 +45,7 @@ function mount(markup: string): HTMLElement {
 }
 
 beforeEach(() => {
-  index = new SlotIndex()
+  index = new Slots()
 })
 
 describe("a manifest a template wrote beside itself", () => {
@@ -162,7 +162,7 @@ describe("what a page can be typed into, worked out without being told", () => {
     conditionals: {},
   }
 
-  function boot(): SlotState {
+  function boot(): State {
     document.body.innerHTML =
       `<!--herb-region:${BOUND_FILE}:aaaaaaaa:0-->` +
       `<input value="" data-herb-slot="0:attribute:value">` +
@@ -170,10 +170,10 @@ describe("what a page can be typed into, worked out without being told", () => {
       `<!--/herb-region:${BOUND_FILE}-->` +
       `<template data-herb-dependencies>${JSON.stringify({ state: {}, states: { [BOUND_FILE]: MANIFEST_WITHOUT_BOUND } })}</template>`
 
-    const slots = new SlotIndex()
+    const slots = new Slots()
     slots.scan(document.body)
 
-    const state = new SlotState(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    const state = new State(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
     state.adopt()
     state.observe()
 
@@ -232,10 +232,10 @@ describe("the states a template declares, from its own manifest", () => {
   test("is read from the manifest, with no states in the envelope at all", () => {
     document.body.innerHTML = DECLARED_PAGE + MANIFEST_TAG + `<template data-herb-dependencies>${JSON.stringify({ state: {} })}</template>`
 
-    const slots = new SlotIndex()
+    const slots = new Slots()
     slots.scan(document.body)
 
-    const state = new SlotState(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
+    const state = new State(slots, { persist: "none", transport: () => { throw new Error("no transport") } })
     state.adopt()
 
     const region = slots.regionsFor(DECLARED_FILE)[0]
@@ -261,7 +261,7 @@ describe("manifests a project extracted ahead of rendering", () => {
   })
 
   test("are held for a page that carries none of its own", () => {
-    const runtime = HerbRuntime.start({
+    const runtime = Runtime.start({
       state: { persist: "none" },
       manifests: { [`${FILE}:${VERSION}`]: MANIFEST as never },
     })

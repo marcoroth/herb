@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach, vi } from "vitest"
 
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
 
 import type { Payload } from "../src/types"
-import type { StateRequest } from "../src/state"
+import type { StateRequest } from "../src/state/types"
 
 const FILE = "app/views/posts/index.html.erb"
 const VERSION = "aaaaaaaa"
@@ -35,14 +35,14 @@ function payload(slots: Payload["slots"]): Payload {
 function mounted(html: string) {
   document.body.innerHTML = html
 
-  const slots = new SlotIndex()
+  const slots = new Slots()
 
   slots.scan(document.body)
 
   return slots
 }
 
-function text(index: number, slots: SlotIndex): string {
+function text(index: number, slots: Slots): string {
   return slots.rangeOf(slots.slot(FILE, index)!).toString()
 }
 
@@ -58,7 +58,7 @@ describe("adopting the dependency map", () => {
 
   test("reads what the page parked and takes it out of the document", () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     expect(state.adopt()).toBe(1)
     expect(state.names()).toEqual(["@name"])
@@ -67,7 +67,7 @@ describe("adopting the dependency map", () => {
 
   test("survives markup that is not a map", () => {
     const slots = mounted(PAGE + `<template data-herb-dependencies>not json</template>`)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -83,7 +83,7 @@ describe("writing before the server answers", () => {
 
   test("writes every identity slot the state reaches", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -96,7 +96,7 @@ describe("writing before the server answers", () => {
 
   test("leaves a slot it cannot compute to the server", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -107,7 +107,7 @@ describe("writing before the server answers", () => {
 
   test("escapes what it writes, the way the template would have", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -119,7 +119,7 @@ describe("writing before the server answers", () => {
 
   test("writes a value as text, so markup in it never becomes markup", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -134,7 +134,7 @@ describe("writing before the server answers", () => {
 
   test("finds the state a request name feeds", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -144,7 +144,7 @@ describe("writing before the server answers", () => {
 
   test("takes the name the template uses as well" , async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -154,7 +154,7 @@ describe("writing before the server answers", () => {
 
   test("writes nothing for a request name the server said nothing about", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -164,7 +164,7 @@ describe("writing before the server answers", () => {
 
   test("writes nothing for a state no slot reads", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
 
@@ -182,7 +182,7 @@ describe("a page that waits for the server", () => {
 
   test("writes what it can before the debounce, not after it", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { debounce: 50, transport: async () => null })
+    const state = new State(slots, { debounce: 50, transport: async () => null })
 
     state.adopt()
 
@@ -195,7 +195,7 @@ describe("a page that waits for the server", () => {
 
   test("counts every write it made across a debounced burst" , async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { debounce: 50, transport: async () => null })
+    const state = new State(slots, { debounce: 50, transport: async () => null })
 
     state.adopt()
 
@@ -208,7 +208,7 @@ describe("a page that waits for the server", () => {
 
   test("puts back the value the page had before the burst, not the one mid-burst", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, {
+    const state = new State(slots, {
       debounce: 20,
       transport: async () => {
         throw new Error("offline")
@@ -257,7 +257,7 @@ describe("two flushes racing", () => {
       return null
     }
 
-    const state = new SlotState(slots, { debounce: 0, transport })
+    const state = new State(slots, { debounce: 0, transport })
 
     state.adopt()
 
@@ -282,7 +282,7 @@ describe("reconciling with the server", () => {
 
   test("a payload that confirms the write applies nothing", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => payload({ 0: "Ada", 1: "Ada" }) })
+    const state = new State(slots, { transport: async () => payload({ 0: "Ada", 1: "Ada" }) })
 
     state.adopt()
 
@@ -295,7 +295,7 @@ describe("reconciling with the server", () => {
 
   test("a payload that corrects the write overwrites it", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => payload({ 0: "Ada Lovelace", 2: "6" }) })
+    const state = new State(slots, { transport: async () => payload({ 0: "Ada Lovelace", 2: "6" }) })
 
     state.adopt()
 
@@ -308,7 +308,7 @@ describe("reconciling with the server", () => {
 
   test("a request that fails puts back what the page had", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, {
+    const state = new State(slots, {
       transport: async () => {
         throw new Error("offline")
       },
@@ -340,7 +340,7 @@ describe("reconciling with the server", () => {
       })
       .mockImplementationOnce(async () => payload({ 0: "Grace" }))
 
-    const state = new SlotState(slots, { transport })
+    const state = new State(slots, { transport })
 
     state.adopt()
 
@@ -363,7 +363,7 @@ describe("keeping commands out of the address bar", () => {
 
   test("keeps a param that appeared after adoption", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+    const state = new State(slots, { persist: "known", transport: async () => null })
 
     state.adopt()
 
@@ -379,7 +379,7 @@ describe("keeping commands out of the address bar", () => {
 
   test("persists a key the map names", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+    const state = new State(slots, { persist: "known", transport: async () => null })
 
     state.adopt()
 
@@ -390,7 +390,7 @@ describe("keeping commands out of the address bar", () => {
 
   test("leaves out a key the map says nothing about", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+    const state = new State(slots, { persist: "known", transport: async () => null })
 
     state.adopt()
 
@@ -405,7 +405,7 @@ describe("keeping commands out of the address bar", () => {
 
     const slots = mounted(PAGE + DEPENDENCIES)
     const seen: StateRequest[] = []
-    const state = new SlotState(slots, {
+    const state = new State(slots, {
       persist: "known",
       transport: async (request) => {
         seen.push(request)
@@ -428,7 +428,7 @@ describe("keeping commands out of the address bar", () => {
   test("forgets a command once it has been sent, so the next ask does not repeat it", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
     const seen: StateRequest[] = []
-    const state = new SlotState(slots, {
+    const state = new State(slots, {
       persist: "known",
       transport: async (request) => {
         seen.push(request)
@@ -450,7 +450,7 @@ describe("keeping commands out of the address bar", () => {
   test("still sends what it leaves out", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
     const seen: StateRequest[] = []
-    const state = new SlotState(slots, {
+    const state = new State(slots, {
       persist: "known",
       transport: async (request) => {
         seen.push(request)
@@ -469,7 +469,7 @@ describe("keeping commands out of the address bar", () => {
 
   test("writes nothing to the address bar when the page has no map", async () => {
     const slots = mounted(PAGE)
-    const state = new SlotState(slots, { persist: "known", transport: async () => null })
+    const state = new State(slots, { persist: "known", transport: async () => null })
 
     await state.set("name", "Ada")
 
@@ -486,14 +486,14 @@ describe("state that has no business in a URL", () => {
   test("does not read the query string when it is not kept there", () => {
     window.history.replaceState({}, "", "/posts?name=Marco")
 
-    const state = new SlotState(mounted(PAGE), { transport: async () => null, persist: "none" })
+    const state = new State(mounted(PAGE), { transport: async () => null, persist: "none" })
 
     expect(state.get("name")).toBeUndefined()
     expect(state.all()).toEqual({})
   })
 
   test("leaves the address bar alone", async () => {
-    const state = new SlotState(mounted(PAGE), { transport: async () => null, persist: "none" })
+    const state = new State(mounted(PAGE), { transport: async () => null, persist: "none" })
 
     await state.set("name", "Ada")
 
@@ -503,7 +503,7 @@ describe("state that has no business in a URL", () => {
 
   test("still sends what it was given", async () => {
     const seen: StateRequest[] = []
-    const state = new SlotState(mounted(PAGE), {
+    const state = new State(mounted(PAGE), {
       persist: "none",
       transport: async (request) => {
         seen.push(request)
@@ -520,7 +520,7 @@ describe("state that has no business in a URL", () => {
 
   test("still writes the slots it can", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null, persist: "none" })
+    const state = new State(slots, { transport: async () => null, persist: "none" })
 
     state.adopt()
 
@@ -540,7 +540,7 @@ describe("the query string as the state", () => {
   test("reads what the page was asked for", () => {
     window.history.replaceState({}, "", "/posts?name=Marco&page=2")
 
-    const state = new SlotState(mounted(PAGE), { transport: async () => null })
+    const state = new State(mounted(PAGE), { transport: async () => null })
 
     expect(state.get("name")).toBe("Marco")
     expect(state.get("page")).toBe("2")
@@ -549,13 +549,13 @@ describe("the query string as the state", () => {
   test("leaves the format out of the state it carries", () => {
     window.history.replaceState({}, "", "/posts?name=Marco&format=slots")
 
-    const state = new SlotState(mounted(PAGE), { transport: async () => null })
+    const state = new State(mounted(PAGE), { transport: async () => null })
 
     expect(state.all()).toEqual({ name: "Marco" })
   })
 
   test("puts the state it was given back in the address bar", async () => {
-    const state = new SlotState(mounted(PAGE), { transport: async () => null })
+    const state = new State(mounted(PAGE), { transport: async () => null })
 
     await state.set("name", "Ada")
 
@@ -566,7 +566,7 @@ describe("the query string as the state", () => {
     window.history.replaceState({}, "", "/posts?name=Marco&page=2")
 
     const seen: StateRequest[] = []
-    const state = new SlotState(mounted(PAGE), {
+    const state = new State(mounted(PAGE), {
       transport: async (request) => {
         seen.push(request)
 
@@ -582,7 +582,7 @@ describe("the query string as the state", () => {
 
   test("sends one request for everything set together", async () => {
     const transport = vi.fn().mockResolvedValue(null)
-    const state = new SlotState(mounted(PAGE), { transport })
+    const state = new State(mounted(PAGE), { transport })
 
     await state.set({ name: "Ada", page: "3" })
 
@@ -599,7 +599,7 @@ describe("an attribute the DOM property does not follow", () => {
 
   test("moves a written value onto the element that holds it", async () => {
     const slots = mounted(PAGE + DEPENDENCIES)
-    const state = new SlotState(slots, { transport: async () => null })
+    const state = new State(slots, { transport: async () => null })
 
     state.adopt()
     state.observe()

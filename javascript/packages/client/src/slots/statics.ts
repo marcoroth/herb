@@ -7,14 +7,14 @@
  * filled with whatever values it is given.
  */
 
-import { HERB_ATTRIBUTES } from "./attributes"
+import { HERB_ATTRIBUTES } from "../grammar/attributes"
 
-import { blankSlots, fillSlots, parkedBranches } from "./fragments"
-import { numericBranch } from "./markers"
-import { staticsElements } from "./anchors"
-import { parseStaticsIdentity } from "./markers"
+import { blankSlots, fillSlots, parkedBranches } from "../markup/fragments"
+import { numericBranch } from "../markup/markers"
+import { staticsElements } from "../markup/anchors"
+import { parseStaticsIdentity } from "../markup/markers"
 
-import type { FragmentMap, PartsResolver, RenderMode, SlotValues, StaticsIdentity } from "./types"
+import type { FragmentMap, PartsResolver, RenderMode, SlotValues, StaticsIdentity } from "../types"
 
 interface Parked {
   version: string
@@ -22,11 +22,11 @@ interface Parked {
 }
 
 export class Statics {
-  #held = new Map<string, Parked>()
+  private held = new Map<string, Parked>()
 
   park(identity: StaticsIdentity, key: string, fragment: DocumentFragment): boolean {
     const { file, version } = identity
-    const held = this.#held.get(file)
+    const held = this.held.get(file)
 
     let parked: Parked = { version, fragments: new Map() }
 
@@ -34,7 +34,7 @@ export class Statics {
       parked = held
     }
 
-    this.#held.set(file, parked)
+    this.held.set(file, parked)
 
     if (parked.fragments.has(key)) {
       return false
@@ -62,11 +62,11 @@ export class Statics {
   }
 
   parked(file: string, key: string): DocumentFragment | null {
-    return this.#held.get(file)?.fragments.get(key) ?? null
+    return this.held.get(file)?.fragments.get(key) ?? null
   }
 
   keys(file: string): string[] {
-    return [...(this.#held.get(file)?.fragments.keys() ?? [])]
+    return [...(this.held.get(file)?.fragments.keys() ?? [])]
   }
 
   branches(file: string, slot: number): number[] {
@@ -108,6 +108,6 @@ export class Statics {
   }
 
   clear(): void {
-    this.#held = new Map()
+    this.held = new Map()
   }
 }

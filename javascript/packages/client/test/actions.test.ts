@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotActions } from "../src/actions"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
-import { STATE_EVENT } from "../src/events"
+import { Actions } from "../src/actions/actions"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+import { STATE_EVENT } from "../src/shared/events"
 
 const FILE = "app/views/page/panel.html.erb"
 
@@ -61,9 +61,9 @@ const PAGE =
     },
   })}</template>`
 
-let slots: SlotIndex
-let state: SlotState
-let actions: SlotActions
+let slots: Slots
+let state: State
+let actions: Actions
 
 function click(selector: string): void {
   document.querySelector<HTMLElement>(selector)!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -72,13 +72,13 @@ function click(selector: string): void {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, { persist: "none" })
   state.adopt()
 
-  actions = new SlotActions(state)
+  actions = new Actions(state)
   actions.start(document.body)
 })
 
@@ -180,7 +180,7 @@ describe("declarative actions", () => {
     menu.dispatchEvent(new Event("mouseleave"))
     expect(state.getState("open")).toBe(true)
 
-    actions = new SlotActions(state)
+    actions = new Actions(state)
     actions.start(document.body)
   })
 
@@ -256,6 +256,17 @@ describe("declarative actions", () => {
     expect(document.querySelector("#b em")?.textContent).toContain("plain")
   })
 
+  test("a second row's button resolves its own scope, not the one the last run pinned", () => {
+    click("#a .star")
+
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+
+    click("#b .star")
+
+    expect(document.querySelector("#b em")?.textContent).toContain("starred")
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+  })
+
   test("a dynamically added element works through delegation", () => {
     const late = document.createElement("button")
 
@@ -316,7 +327,7 @@ describe("declarative actions", () => {
     }
 
     actions.stop()
-    actions = new SlotActions(state)
+    actions = new Actions(state)
     actions.start(document.body)
 
     expect(entries).toEqual([])
@@ -371,14 +382,14 @@ describe("a tag helper input bound to a state", () => {
   test("a quoted set writes the value into the input", () => {
     document.body.innerHTML = HELPER_PAGE
 
-    const helperSlots = new SlotIndex()
+    const helperSlots = new Slots()
     helperSlots.scan(document.body)
 
-    const helperState = new SlotState(helperSlots, { persist: "none" })
+    const helperState = new State(helperSlots, { persist: "none" })
     helperState.adopt()
     helperState.observe()
 
-    const helperActions = new SlotActions(helperState)
+    const helperActions = new Actions(helperState)
     helperActions.start(document.body)
 
     document.querySelector<HTMLElement>("#quoted")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -425,11 +436,11 @@ describe("an action on an element its own sibling action removes", () => {
   test("the later action still resolves the scope the element had", () => {
     document.body.innerHTML = SWAP_PAGE
 
-    const swapSlots = new SlotIndex()
+    const swapSlots = new Slots()
 
     swapSlots.scan(document.body)
 
-    const swapState = new SlotState(swapSlots, {
+    const swapState = new State(swapSlots, {
       persist: "none",
       transport: () => {
         throw new Error("a declared state must never reach the transport")
@@ -438,7 +449,7 @@ describe("an action on an element its own sibling action removes", () => {
 
     swapState.adopt()
 
-    const actions = new SlotActions(swapState)
+    const actions = new Actions(swapState)
 
     actions.start(document.body)
     swapState.setState({ draft: "typed" })
@@ -458,13 +469,13 @@ describe("an action attribute that is rewritten", () => {
   test("runs what the attribute says now, not what it said when it was scanned", async () => {
     document.body.innerHTML = PAGE
 
-    const rewriteSlots = new SlotIndex()
+    const rewriteSlots = new Slots()
     rewriteSlots.scan(document.body)
 
-    const rewriteState = new SlotState(rewriteSlots, { persist: "none", transport: async () => null })
+    const rewriteState = new State(rewriteSlots, { persist: "none", transport: async () => null })
     rewriteState.adopt()
 
-    const actions = new SlotActions(rewriteState)
+    const actions = new Actions(rewriteState)
     actions.start(document.body)
 
     const button = document.createElement("button")

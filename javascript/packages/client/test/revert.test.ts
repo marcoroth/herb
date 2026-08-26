@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 import type { Payload } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
@@ -18,7 +18,7 @@ const PAGE =
   `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:4:0--><em>hidden</em></template>` +
   `<!--/herb-region:${FILE}-->`
 
-let index: SlotIndex
+let index: Slots
 
 function ids(): string[] {
   return [...document.querySelectorAll("li")].map((li) => li.id)
@@ -27,7 +27,7 @@ function ids(): string[] {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 
@@ -109,7 +109,7 @@ describe("transaction and revert", () => {
       `<!--/herb-slot:9--></ul></li><!--/herb-item:8-->` +
       `<!--/herb-slot:8--></ul><!--/herb-region:${FILE}-->`
 
-    const nested = new SlotIndex()
+    const nested = new Slots()
     nested.scan(document.body)
 
     const outer = nested.slot(FILE, 8)!

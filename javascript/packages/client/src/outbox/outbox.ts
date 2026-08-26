@@ -1,112 +1,62 @@
-import { HERB_ATTRIBUTES } from "./attributes"
+import { HERB_ATTRIBUTES } from "../grammar/attributes"
 
-import { report } from "./report"
-import { scopeOf } from "./state-helpers"
+import { report } from "../shared/report"
+import { scopeOf } from "../state/scopes"
 
-import type { SlotIndex } from "./slot-index"
-import type { ApplyReport, Collected, Item, ItemValues, Payload, Slot } from "./types"
-import type { SlotState, StateValues } from "./state"
+import type { Slots } from "../slots/slots"
+import type { State } from "../state/state"
+import type { StateValues } from "../state/types"
+import type { Collected, Item, Payload, Slot } from "../types"
+import type { HeaderMap, MutationFields, MutationRequest, MutationResult, MutationStatus, MutationTarget, MutationTransport, OutboxOptions, Sending, SubmitOptions } from "./types"
 
-export type MutationStatus = "confirmed" | "failed" | "stale" | "detached"
-export type MutationTransport = (request: MutationRequest, signal: AbortSignal) => Promise<Payload | null>
-export type ConfirmKey = (payload: Payload, temp: string) => string | null
+export class Outbox {
+  private readonly slots: Slots
+  private readonly state: State
+  private readonly options: OutboxOptions
+  private readonly records = new Map<string, Sending>()
 
-export type MutationFields = Record<string, string>
-export type MutationBody = FormData | MutationFields
-export type HeaderMap = Record<string, string>
+  private observed: Document | Element | null = null
+  private queue: Promise<unknown> = Promise.resolve()
+  private controller = new AbortController()
+  private minted = 0
 
-export interface MutationTarget {
-  file: string
-  index?: number
-  name?: string
-  occurrence?: number
-}
-
-export interface SubmitOptions {
-  url: string
-  method?: string
-  body?: MutationBody
-  into: MutationTarget
-  values?: ItemValues
-  key?: string
-  confirmKey?: ConfirmKey
-}
-
-export interface MutationResult {
-  status: MutationStatus
-  key: string
-  report?: ApplyReport
-  error?: Error
-}
-
-export interface MutationRequest {
-  url: string
-  method: string
-  body: MutationBody | undefined
-  headers: HeaderMap
-}
-
-export interface MutationsOptions {
-  transport?: MutationTransport
-  headers?: () => HeaderMap
-  format?: string
-}
-
-interface Sending {
-  options: SubmitOptions
-  key: string
-  slot: Slot | null
-}
-
-export class SlotMutations {
-  readonly #slots: SlotIndex
-  readonly #state: SlotState
-
-  readonly #options: MutationsOptions
-  readonly #records = new Map<string, Sending>()
-
-  #observed: Document | Element | null = null
-  #queue: Promise<unknown> = Promise.resolve()
-  #controller = new AbortController()
-  #minted = 0
-
-  constructor(slots: SlotIndex, state: SlotState, options: MutationsOptions = {}) {
-    this.#slots = slots
-    this.#state = state
-    this.#options = options
+  constructor(slots: Slots, state: State, options: OutboxOptions = {}) {
+    this.slots = slots
+    this.state = state
+    this.options = options
   }
 
   submit(options: SubmitOptions): Promise<MutationResult> {
-    const key = options.key ?? `herb-pending-${(this.#minted += 1)}`
-    const slot = this.#collection(options.into)
+    const key = options.key ?? `herb-pending-${(this.minted += 1)}`
+    const slot = this.collection(options.into)
 
     let item: Item | null = null
 
     if (slot) {
-      item = this.#slots.addItem(slot, key, { values: options.values, text: true })
+      item = this.slots.addItem(slot, key, { values: options.values, text: true })
     }
 
     const record: Sending = { options, key, slot: null }
 
     if (slot && item) {
-      this.#setStates(slot, item, { pending: true, failed: false })
+      this.setStates(slot, item, { pending: true, failed: false })
 
       record.slot = slot
     }
 
-    this.#records.set(key, record)
+    this.records.set(key, record)
 
-    return this.#enqueue(record)
+    return this.enqueue(record)
   }
 
   retry(target: string | Element): Promise<MutationResult> | null {
-    const key = this.#keyOf(target)
+    const key = this.keyOf(target)
 
     if (key === null) {
       return null
     }
 
-    const record = this.#records.get(key)
+    const record = this.records.get(key)
 
     if (!record) {
       return null
@@ -115,27 +65,27 @@ export class SlotMutations {
     const item = record.slot?.items.get(key) ?? null
 
     if (record.slot && item) {
-      this.#setStates(record.slot, item, { pending: true, failed: false })
+      this.setStates(record.slot, item, { pending: true, failed: false })
     }
 
-    return this.#enqueue(record)
+    return this.enqueue(record)
   }
 
   discard(target: string | Element): boolean {
-    const key = this.#keyOf(target)
+    const key = this.keyOf(target)
     if (key === null) {
       return false
     }
 
-    const record = this.#records.get(key)
+    const record = this.records.get(key)
     if (!record) {
       return false
     }
 
-    this.#records.delete(key)
+    this.records.delete(key)
 
     if (record.slot) {
-      return this.#slots.removeItem(record.slot, key)
+      return this.slots.removeItem(record.slot, key)
     }
 
     return true
@@ -146,26 +96,26 @@ export class SlotMutations {
       return
     }
 
-    this.#observed?.removeEventListener("submit", this.#onSubmit, true)
-    this.#observed = root
+    this.observed?.removeEventListener("submit", this.onSubmit, true)
+    this.observed = root
 
-    root.addEventListener("submit", this.#onSubmit, true)
+    root.addEventListener("submit", this.onSubmit, true)
   }
 
   unobserve(): void {
-    this.#observed?.removeEventListener("submit", this.#onSubmit, true)
-    this.#observed = null
+    this.observed?.removeEventListener("submit", this.onSubmit, true)
+    this.observed = null
   }
 
   submitForm(form: HTMLFormElement): Promise<MutationResult> | null {
     const name = form.getAttribute(HERB_ATTRIBUTES.into)
-    const region = this.#state.scopeFor(form)?.region
+    const region = this.state.scopeFor(form)?.region
 
     if (name === null || name === "" || !region) {
       return null
     }
 
-    const collection = this.#slots.slot(region.file, name, region.occurrence)
+    const collection = this.slots.slot(region.file, name, region.occurrence)
 
     if (!collection || collection.type !== "collection") {
       let message = `\`${HERB_ATTRIBUTES.into}="${name}"\` names nothing in this template.`
@@ -204,12 +154,12 @@ export class SlotMutations {
     })
 
     form.reset()
-    this.#state.resetBound(form)
+    this.state.resetBound(form)
 
     return result
   }
 
-  #onSubmit = (event: Event): void => {
+  private onSubmit = (event: Event): void => {
     const form = event.target
 
     if (!(form instanceof HTMLFormElement)) {
@@ -226,48 +176,48 @@ export class SlotMutations {
     this.submitForm(form)
   }
 
-  #keyOf(target: string | Element): string | null {
+  private keyOf(target: string | Element): string | null {
     if (typeof target === "string") {
       return target
     }
 
-    return this.#state.scopeFor(target)?.item?.key ?? null
+    return this.state.scopeFor(target)?.item?.key ?? null
   }
 
   abort(): void {
-    this.#controller.abort()
-    this.#controller = new AbortController()
+    this.controller.abort()
+    this.controller = new AbortController()
   }
 
-  #enqueue(record: Sending): Promise<MutationResult> {
-    const result = this.#queue.then(() => this.#send(record))
+  private enqueue(record: Sending): Promise<MutationResult> {
+    const result = this.queue.then(() => this.send(record))
 
-    this.#queue = result.catch(() => undefined)
+    this.queue = result.catch(() => undefined)
 
     return result
   }
 
-  async #send(record: Sending): Promise<MutationResult> {
+  private async send(record: Sending): Promise<MutationResult> {
     const { options, key } = record
     let payload: Payload | null = null
 
     try {
-      payload = await this.#transport()(this.#request(options), this.#controller.signal)
+      payload = await this.transport()(this.request(options), this.controller.signal)
     } catch (error) {
-      this.#fail(record)
+      this.fail(record)
 
       return { status: statusOf(record.slot, "failed"), key, error: error as Error }
     }
 
-    return this.#confirm(record, payload)
+    return this.confirm(record, payload)
   }
 
-  #confirm(record: Sending, payload: Payload | null): MutationResult {
+  private confirm(record: Sending, payload: Payload | null): MutationResult {
     const { options, key } = record
     const slot = record.slot
 
     if (!payload) {
-      this.#settle(record)
+      this.settle(record)
 
       return { status: statusOf(slot, "confirmed"), key }
     }
@@ -275,13 +225,13 @@ export class SlotMutations {
     let confirmed = key
 
     if (slot) {
-      const real = (options.confirmKey ?? this.#realKey.bind(this))(payload, key)
+      const real = (options.confirmKey ?? this.realKey.bind(this))(payload, key)
 
       if (real && real !== key) {
-        if (this.#slots.rekeyItem(slot, key, real)) {
+        if (this.slots.rekeyItem(slot, key, real)) {
           confirmed = real
         } else {
-          this.#slots.removeItem(slot, key)
+          this.slots.removeItem(slot, key)
         }
       }
     }
@@ -289,72 +239,72 @@ export class SlotMutations {
     let narrowed = payload
 
     if (slot) {
-      narrowed = this.#narrow(payload, slot)
+      narrowed = this.narrow(payload, slot)
     }
 
-    const report = this.#slots.apply(narrowed, { items: "merge" })
+    const report = this.slots.apply(narrowed, { items: "merge" })
 
     if (report.applied === 0 && report.deferred.some((deferred) => deferred.reason === "stale-version")) {
-      this.#settle(record, confirmed)
-      this.#records.delete(key)
+      this.settle(record, confirmed)
+      this.records.delete(key)
 
       return { status: "stale", key: confirmed, report }
     }
 
-    this.#settle(record, confirmed)
-    this.#records.delete(key)
+    this.settle(record, confirmed)
+    this.records.delete(key)
 
     return { status: statusOf(slot, "confirmed"), key: confirmed, report }
   }
 
-  #settle(record: Sending, confirmed?: string): void {
+  private settle(record: Sending, confirmed?: string): void {
     const slot = record.slot
     const item = slot?.items.get(confirmed ?? record.key) ?? null
 
     if (slot && item) {
-      this.#setStates(slot, item, { pending: false, failed: false })
+      this.setStates(slot, item, { pending: false, failed: false })
     }
   }
 
-  #fail(record: Sending): void {
+  private fail(record: Sending): void {
     const slot = record.slot
     const item = slot?.items.get(record.key) ?? null
 
     if (slot && item) {
-      this.#setStates(slot, item, { pending: false, failed: true })
+      this.setStates(slot, item, { pending: false, failed: true })
     }
   }
 
-  #setStates(slot: Slot, item: Item, values: StateValues): void {
-    const region = this.#slots.regionOf(slot)
+  private setStates(slot: Slot, item: Item, values: StateValues): void {
+    const region = this.slots.regionOf(slot)
 
     if (!region) {
       return
     }
 
     const scope = scopeOf(region, item)
-    const declared = Object.fromEntries(Object.entries(values).filter(([name]) => this.#state.declares(scope, name)))
+    const declared = Object.fromEntries(Object.entries(values).filter(([name]) => this.state.declares(scope, name)))
 
     if (Object.keys(declared).length === 0) {
       return
     }
 
-    this.#state.setState(declared, { scope })
+    this.state.setState(declared, { scope })
   }
 
-  #collection(target: MutationTarget): Slot | null {
+  private collection(target: MutationTarget): Slot | null {
     const index = target.name ?? target.index
 
     if (index === undefined) {
       return null
     }
 
-    const slot = this.#slots.slot(target.file, index, target.occurrence ?? 0)
+    const slot = this.slots.slot(target.file, index, target.occurrence ?? 0)
 
     return slot?.type === "collection" ? slot : null
   }
 
-  #realKey(payload: Payload, temp: string): string | null {
+  private realKey(payload: Payload, temp: string): string | null {
     for (const value of Object.values(payload.slots)) {
       if (typeof value !== "object" || value === null || !("items" in value)) {
         continue
@@ -380,7 +330,7 @@ export class SlotMutations {
     return null
   }
 
-  #narrow(payload: Payload, slot: Slot): Payload {
+  private narrow(payload: Payload, slot: Slot): Payload {
     const value = payload.slots[slot.index]
 
     if (value === undefined) {
@@ -390,10 +340,10 @@ export class SlotMutations {
     return { ...payload, slots: { [slot.index]: value } }
   }
 
-  #request(options: SubmitOptions): MutationRequest {
+  private request(options: SubmitOptions): MutationRequest {
     const headers: HeaderMap = {
       Accept: "application/vnd.herb.slots+json",
-      ...this.#options.headers?.(),
+      ...this.options.headers?.(),
     }
 
     const token = typeof document === "undefined" ? null : document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
@@ -410,8 +360,8 @@ export class SlotMutations {
     }
   }
 
-  #transport(): MutationTransport {
-    return this.#options.transport ?? defaultTransport(this.#options.format ?? "slots")
+  private transport(): MutationTransport {
+    return this.options.transport ?? defaultTransport(this.options.format ?? "slots")
   }
 }
 

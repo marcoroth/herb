@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotActions } from "../src/actions"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { Actions } from "../src/actions/actions"
+import { State } from "../src/state/state"
 
-import { clearOnNavigation, report, resetReport, DEV_TOOLS_START_EVENT } from "../src/report"
+import { clearOnNavigation, report, resetReport, DEV_TOOLS_START_EVENT } from "../src/shared/report"
 
-import type { RuntimeDiagnostic } from "../src/report"
+import type { RuntimeDiagnostic } from "../src/shared/types"
 
 const FILE = "app/views/page/chat.html.erb"
 
@@ -51,8 +51,8 @@ function installDevTools(): FakeDevTools {
   return devTools
 }
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 beforeEach(() => {
   resetReport()
@@ -60,10 +60,10 @@ beforeEach(() => {
   document.body.innerHTML = PAGE
   document.head.innerHTML = ""
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, { persist: "none" })
   state.adopt()
 })
 
@@ -94,7 +94,7 @@ describe("runtime diagnostics", () => {
     button.setAttribute("data-herb-toggle", "nope")
     document.body.appendChild(button)
 
-    const actions = new SlotActions(state)
+    const actions = new Actions(state)
 
     actions.start(document.body)
 
@@ -119,9 +119,9 @@ describe("runtime diagnostics", () => {
       `data-herb-region="${FILE}:aaaaaaaa"`,
       `data-herb-region="${FILE}:bbbbbbbb"`,
     )
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, { persist: "none" })
     state.adopt()
 
     const devTools = installDevTools()

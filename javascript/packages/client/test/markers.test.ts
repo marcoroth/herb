@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
 
-import { anchorEntries } from "../src/anchors"
-import { parseMarker, parseStaticsIdentity } from "../src/markers"
+import { anchorEntries } from "../src/markup/anchors"
+import { parseMarker, parseStaticsIdentity } from "../src/markup/markers"
 
 import grammar from "./fixtures/markers.json"
 

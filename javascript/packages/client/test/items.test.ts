@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SLOT_EVENT } from "../src/events"
+import { Slots } from "../src/slots/slots"
+import { SLOT_EVENT } from "../src/shared/events"
 
 import type { SlotEventDetail } from "../src/types"
 
@@ -24,7 +24,7 @@ const EMPTY =
   `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child"></span></li><!--/herb-item:0--></template>` +
   `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
-let index: SlotIndex
+let index: Slots
 
 function watch(): SlotEventDetail[] {
   const seen: SlotEventDetail[] = []
@@ -41,7 +41,7 @@ function keys(): string[] {
 beforeEach(() => {
   document.body.innerHTML = ROWS
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 
@@ -65,7 +65,7 @@ describe("addItem", () => {
 
   test("builds from the parked row into an empty collection", () => {
     document.body.innerHTML = EMPTY
-    index = new SlotIndex()
+    index = new Slots()
     index.scan(document.body)
 
     const collection = index.slot(FILE, 0)!
@@ -98,7 +98,7 @@ describe("addItem", () => {
 
   test("leaves no stray item branch comment in the built row", () => {
     document.body.innerHTML = EMPTY
-    index = new SlotIndex()
+    index = new Slots()
     index.scan(document.body)
 
     index.addItem(index.slot(FILE, 0)!, "x")
@@ -208,7 +208,7 @@ describe("a collection nested inside a collection's row", () => {
   test("keys the row it builds without touching the rows inside it", () => {
     document.body.innerHTML = NESTED
 
-    const nested = new SlotIndex()
+    const nested = new Slots()
     nested.scan(document.body)
 
     const collection = nested.slot(NESTED_FILE, 0)!

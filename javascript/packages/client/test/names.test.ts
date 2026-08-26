@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 
 const FILE = "app/views/posts/index.html.erb"
 
@@ -22,12 +22,12 @@ const PAGE =
   `<!--/herb-region:${FILE}-->` +
   `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:aaaaaaaa`]: MANIFEST })}</template>`
 
-let index: SlotIndex
+let index: Slots
 
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 

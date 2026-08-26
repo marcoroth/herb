@@ -1,4 +1,4 @@
-import type { Seeds, SlotType, StaticsIdentity } from "./types"
+import type { Seeds, SlotType, StaticsIdentity } from "../types"
 
 const REGION_OPEN = /^herb-region:(.*):([0-9a-f]+):(\d+)$/
 const REGION_CLOSE = /^\/herb-region:(.*)$/
