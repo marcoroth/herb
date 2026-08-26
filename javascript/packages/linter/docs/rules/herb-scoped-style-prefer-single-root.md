@@ -35,7 +35,7 @@ This is a preference, so the message says prefer rather than must. A single root
   .title { color: red; }
 </style>
 
-<header>One</header>
+<header class="title">One</header>
 <main>Two</main>
 <footer>Three</footer>
 ```
