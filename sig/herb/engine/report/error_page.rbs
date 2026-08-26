@@ -1,0 +1,98 @@
+# Generated from lib/herb/engine/report/error_page.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class Report
+      # Serves a page the dev tools can boot into when a template refused to compile.
+      #
+      #     config.middleware.use Herb::Engine::Report::ErrorPage, dev_tools: "/assets/herb-dev-tools.js"
+      #
+      # A template that fails to compile takes the whole response with it, so there is no page left
+      # for `Middleware` to inject into and nothing for the dev tools to attach to. This serves a
+      # document of its own carrying the same diagnostics payload, which the panel reads on start and
+      # shows as a blocking overlay.
+      #
+      # Action View wraps the failure in its own error, so what arrives here is an
+      # `ActionView::Template::Error` whose `cause` is the Herb one. The chain is walked rather than
+      # rescued by class for that reason.
+      #
+      # The page says what is wrong without any JavaScript at all. The dev tools are an enhancement
+      # on top of that, so a missing or misconfigured bundle costs the overlay and not the message.
+      class ErrorPage
+        HTML_REQUEST: Regexp
+
+        MAX_CAUSES: Integer
+
+        CONTEXT_LINES: Integer
+
+        ORIGIN: String
+
+        UNKNOWN_TEMPLATE: String
+
+        # Every rule is scoped to `.herb-error`. The dev tools mount their own markup into this same
+        # document, and a bare `section` or `pre` here would land on their panel as readily as on
+        # this page.
+        STYLES: String
+
+        # : (untyped, ?dev_tools: String?, ?enabled: bool) -> void
+        def initialize: (untyped, ?dev_tools: String?, ?enabled: bool) -> void
+
+        # : (untyped) -> untyped
+        def call: (untyped) -> untyped
+
+        private
+
+        # : (Exception) -> Herb::Engine::CompilationError?
+        def compilation_error: (Exception) -> Herb::Engine::CompilationError?
+
+        # : (untyped) -> bool
+        def wants_html?: (untyped) -> bool
+
+        # : (Herb::Engine::CompilationError) -> untyped
+        def respond: (Herb::Engine::CompilationError) -> untyped
+
+        # : (Herb::Engine::CompilationError) -> Herb::Engine::Report
+        def report_for: (Herb::Engine::CompilationError) -> Herb::Engine::Report
+
+        # : (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
+        def diagnostics_for: (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
+
+        # : (Herb::Diagnostic) -> Herb::Diagnostic
+        def blocking: (Herb::Diagnostic) -> Herb::Diagnostic
+
+        # : (Herb::Engine::CompilationError) -> String?
+        def template_for: (Herb::Engine::CompilationError) -> String?
+
+        # : (Herb::Engine::CompilationError) -> String
+        def page: (Herb::Engine::CompilationError) -> String
+
+        # : (Array[Herb::Diagnostic]) -> String
+        def title: (Array[Herb::Diagnostic]) -> String
+
+        # Nothing in the bundle runs on import, so the page has to start the dev tools itself.
+        #
+        # The dev server connection is the point of doing it here. This page is what you are looking
+        # at while you go and fix the template, so it is the one page that most wants to hear that
+        # the file compiles again. Any `fixed` reloads, without matching the path first, because a
+        # path that never matches is a page that never recovers, and re-requesting is cheap.
+        # : () -> String
+        def script_tag: () -> String
+
+        # : (Array[Herb::Diagnostic], Hash[String, String]) -> String
+        def fallback: (Array[Herb::Diagnostic], Hash[String, String]) -> String
+
+        # : (Herb::Diagnostic, String?) -> String
+        def section: (Herb::Diagnostic, String?) -> String
+
+        # : (String?, Integer?) -> String
+        def excerpt: (String?, Integer?) -> String
+
+        # : (String) -> String
+        def escape: (String) -> String
+
+        # : (String) -> String
+        def escape_attribute: (String) -> String
+      end
+    end
+  end
+end

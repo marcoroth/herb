@@ -3839,3 +3839,55 @@ describe("resize drag hygiene", () => {
     expect(document.body.style.userSelect).toBe("")
   })
 })
+
+describe("what a blocking screen calls itself", () => {
+  function title() {
+    return document.querySelector(".herb-dev-tools-title")!.textContent
+  }
+
+  test("says the template could not be compiled", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Parser", phase: "compile", overlay: "blocking" }))
+
+    expect(title()).toBe("This template could not be compiled")
+  })
+
+  test("says templates, plural, when more than one failed", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", template: "a.html.erb", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+      diagnostic({ code: "two", template: "b.html.erb", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+    ])
+
+    expect(title()).toBe("These templates could not be compiled")
+  })
+
+  test("keeps naming the producer for anything that did render", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Client Runtime", phase: "runtime", overlay: "dismissible" }))
+
+    expect(title()).toBe("Herb Client Runtime")
+  })
+
+  test("keeps naming the producer when the phase is not said at all", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Acme Scanner", overlay: "dismissible" }))
+
+    expect(title()).toBe("Acme Scanner")
+  })
+
+  test("will not claim a compile failure for a mixed screen", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+      diagnostic({ code: "two", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    expect(title()).toBe("Herb Parser")
+  })
+})

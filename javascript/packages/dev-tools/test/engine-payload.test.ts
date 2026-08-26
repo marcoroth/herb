@@ -1,8 +1,10 @@
-import { describe, test, expect, beforeEach, vi } from "vitest"
+import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 
 import fixture from "./fixtures/engine-report.html?raw"
+import errorPage from "./fixtures/engine-error-page.html?raw"
 
 import { buildRenderStack, readRuntimeReport, resetRuntimeReportWarnings } from "../src/runtime/report"
+import { RuntimePanel } from "../src/runtime/panel"
 
 import type { NormalizedRuntimeReport } from "../src/runtime/report"
 
@@ -17,11 +19,19 @@ function read(): NormalizedRuntimeReport {
 }
 
 let warned: ReturnType<typeof vi.spyOn>
+let panels: RuntimePanel[] = []
 
 beforeEach(() => {
   resetRuntimeReportWarnings()
 
   warned = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+  document.body.innerHTML = ""
+  panels = []
+})
+
+afterEach(() => {
+  panels.forEach(panel => panel.destroy())
 
   document.body.innerHTML = ""
 })
@@ -85,5 +95,49 @@ describe("a payload written by Herb::Engine::Report", () => {
     })}</script>`
 
     expect(readRuntimeReport(document)!.diagnostics[0].docsUrl).toBe("https://herb-tools.dev/x")
+  })
+})
+
+describe("the page Herb::Engine::Report::ErrorPage serves", () => {
+  function boot() {
+    document.documentElement.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const panel = new RuntimePanel()
+
+    panels.push(panel)
+
+    return panel
+  }
+
+  test("raises a blocking overlay with no JavaScript of its own", () => {
+    const panel = boot()
+
+    expect(panel.overlay).toBe("blocking")
+    expect(document.querySelector(".herb-dev-tools-overlay-fullscreen")).not.toBeNull()
+    expect(document.querySelector(".herb-dev-tools-close")).toBeNull()
+  })
+
+  test("carries the message, the location and the source the engine sent", () => {
+    const panel = boot()
+
+    panel.open()
+
+    const card = document.querySelector(".herb-dev-tools-card")!
+
+    expect(card.querySelector(".herb-dev-tools-code")!.textContent).toBe("missing-closing-tag")
+    expect(card.querySelector(".herb-dev-tools-message")!.textContent)
+      .toBe("Opening tag <form> does not have a matching closing tag.")
+    expect(document.querySelector(".herb-dev-tools-summary")!.textContent)
+      .toBe("app/views/posts/_post.html.erb:2:3")
+  })
+
+  test("says what is wrong before any of that runs", () => {
+    document.documentElement.innerHTML = errorPage.replace(/^[\s\S]*?<body>/i, "").replace(/<\/body>[\s\S]*$/i, "")
+
+    const fallback = document.querySelector(".herb-error")!
+
+    expect(fallback.querySelector("h1")!.textContent).toBe("This template could not be compiled")
+    expect(fallback.textContent).toContain("does not have a matching closing tag")
+    expect(fallback.querySelector("pre")!.textContent).toContain("<form>")
   })
 })

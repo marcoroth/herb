@@ -298,6 +298,7 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
+    webrick (1.9.2)
     yerba (0.9.0-aarch64-linux-gnu)
     yerba (0.9.0-aarch64-linux-musl)
     yerba (0.9.0-arm64-darwin)
@@ -343,6 +344,7 @@ DEPENDENCIES
   sorbet
   steep!
   turbo-rails (~> 2.0)
+  webrick (~> 1.9)
   yerba (~> 0.9)
 
 BUNDLED WITH

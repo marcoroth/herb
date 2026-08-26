@@ -1085,7 +1085,16 @@ export class RuntimePanel {
     )
   }
 
+  // A blocking overlay over compile-phase diagnostics is a page that never rendered, and saying so is
+  // worth more than naming the producer, which is on every card anyway. Anything else keeps the
+  // origin, because only the compile phase carries that meaning.
   private overlayHeadline(entries: PanelEntry[]): string {
+    if (entries.length > 0 && entries.every(entry => entry.diagnostic.phase === 'compile')) {
+      const templates = new Set(entries.map(entry => entry.diagnostic.template))
+
+      return templates.size === 1 ? 'This template could not be compiled' : 'These templates could not be compiled'
+    }
+
     const origins = new Set(entries.map(entry => entry.diagnostic.origin))
 
     return origins.size === 1 ? [...origins][0] : 'Herb Runtime Diagnostics'

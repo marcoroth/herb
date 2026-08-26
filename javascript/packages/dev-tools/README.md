@@ -76,7 +76,7 @@ Set `HERB_DEMO_PORT` to move it. Set `HERB_DEMO_TARGET=dist` to serve the same p
 
 The runtime diagnostics panel docks a badge in the Herb menu and opens a list of diagnostic cards when that badge is clicked. Findings reach it two ways. A page calls the JavaScript API below, or it embeds a JSON payload that the panel reads on start and on every Turbo navigation.
 
-**What ships today is the panel and the JavaScript API.** No producer emits the payload. There is no Ruby or Rails integration. The [payload reference](#runtime-report-payload) is specified so a future producer has something to target, and the demo page hand-writes one to exercise the reader.
+`Herb::Engine::Report` is the producer on the Ruby side. `Report::Middleware` injects its payload into a page that rendered, and [`Report::ErrorPage`](#when-the-page-did-not-render) serves a page of its own for one that did not. The [payload reference](#runtime-report-payload) is the contract between them, and `test/engine-payload.test.ts` holds the reader to it using a fixture the engine generates.
 
 The normative definition of every shape on this page is [`src/runtime/report.ts`](https://github.com/marcoroth/herb/blob/main/javascript/packages/dev-tools/src/runtime/report.ts). Where this prose and those types disagree, the types win.
 
@@ -697,10 +697,40 @@ never throws. Concretely:
 - An `overlay` value the reader does not know becomes no overlay, so a payload from a newer producer
   degrades to a docked entry instead of a screen nothing can dismiss.
 
+### When the page did not render
+
+A template that fails to compile takes the whole response with it, so there is no page for the engine
+to inject a payload into and nothing for the dev tools to attach to. `Herb::Engine::Report::ErrorPage`
+serves a document of its own for that case.
+
+```ruby
+config.middleware.use Herb::Engine::Report::ErrorPage, dev_tools: "/assets/herb-dev-tools.js"
+```
+
+It rescues a `Herb::Engine::CompilationError`, walking the `cause` chain because Action View wraps the
+failure in an error of its own, and answers `500` with a page carrying the same payload every other
+page carries. The diagnostics in it ask for a [blocking overlay](#overlay), so the panel takes the
+screen as soon as it starts.
+
+That page says what is wrong on its own, in plain HTML, before any script runs. The `dev_tools`
+option is where the bundle lives and it is optional, so a missing or misconfigured path costs the
+overlay and not the message.
+
+It connects to the [dev server](#dev-server-client) like any other page, and reloads itself when the
+server says a template compiles again. This is the one page that most wants to hear that, since it is
+what you are looking at while you go and fix the file. It reloads on any `fixed` without matching the
+path first, because a path that never matches is a page that never recovers, and re-requesting costs
+nothing when the answer is the same error.
+
+It stays out of the way of everything it is not for. A request that did not ask for HTML is raised
+on, so an XHR or a JSON endpoint still fails the way it would have. So is every error that is not a
+Herb compilation error, and so is everything at all when the middleware is constructed with
+`enabled: false`.
+
 ### Not built
 
-A server-side producer, an asset pipeline integration, and SQL query attribution are directions this
-format was shaped to allow, and none of them exist.
+An asset pipeline integration and SQL query attribution are directions this format was shaped to
+allow, and neither exists.
 
 ## Dev Server Client
 
