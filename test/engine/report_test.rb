@@ -152,8 +152,25 @@ module Engine
         assert_equal "m", entry["message"]
       end
 
-      # The payload is snake_case throughout, including the one key the published spec spells
-      # `docsUrl`. `runtime-report.ts` has to read `docs_url` for this to survive normalization.
+      test "nests a render tree position the way the reader looks for it" do
+        report.render("2", "app/views/posts/_post.html.erb", "1", called_from: [nil, 6, 10, "partial"])
+
+        node = JSON.parse(report.to_json)["renderTree"].last
+
+        assert_equal({ "line" => 6, "column" => 11 }, node["location"])
+        refute node.key?("line")
+        refute node.key?("column")
+      end
+
+      test "leaves a render tree node without a call site alone" do
+        report.render("1", "app/views/layouts/application.html.erb", nil)
+
+        node = JSON.parse(report.to_json)["renderTree"].last
+
+        refute node.key?("location")
+        refute node.key?("via")
+      end
+
       test "spells the documentation link the way the rest of the payload is spelled" do
         report.add(
           Herb::Diagnostic.new(

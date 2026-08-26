@@ -186,15 +186,22 @@
       <div class="controls">
         <h2>Client-side hook</h2>
         <p>Exercises <code>report()</code>, <code>clear()</code> and <code>show()</code> on the running instance.</p>
+        <p>A blocking overlay covers these controls on purpose. Reload the page to leave it, since entries pushed through <code>report()</code> do not survive a reload. Every card in the panel also carries an expand control that puts that entry on a screen of its own.</p>
 
         <div class="row">
           <button id="report-one">report() one</button>
           <button id="report-batch">report() a batch</button>
           <button id="report-repeat">report() the same finding again</button>
           <button id="report-spaced">report() with a trailing space in origin</button>
+          <button id="report-blocking" title="Covers the page with no way out. Reload to leave it.">report() a blocking overlay</button>
+          <button id="report-dismissible">report() a dismissible overlay</button>
+          <button id="report-located" title="Both entries carry an element, so each card gets a locate control.">report() pointing at DOM elements</button>
           <button id="dismiss-last">dismiss() the last handle</button>
           <button id="clear-origin">clear("Acme Scanner")</button>
           <button id="clear-all">clear()</button>
+          <button id="open-panel">open()</button>
+          <button id="open-expanded">open({ expanded: true })</button>
+          <button id="close-panel">close()</button>
           <button id="unhide">show() after "Hide for this session"</button>
           <button id="toggle-expand">expand() and collapse()</button>
         </div>
@@ -308,12 +315,12 @@
 
       <article class="post">
         <h2>Reading a render stack</h2>
-        <div class="cover three"></div>
+        <div class="cover three" id="cover-three"></div>
         <p>Rendered inline by app/views/posts/index.html.erb.</p>
       </article>
     </main>
 
-    <script type="application/json" data-herb-runtime-report>
+    <script type="application/json" data-herb-diagnostics>
       {
         "version": 1,
         "renderTree": [
