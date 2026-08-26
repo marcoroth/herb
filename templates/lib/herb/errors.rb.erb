@@ -68,11 +68,6 @@ module Herb
       <%- if error.fields.any? -%>
 
       <%- error.fields.each do |field| -%>
-      #|  <%= "#{field.name}: #{field.ruby_type}?," %>
-      <%- end -%>
-      #| }
-
-      <%- error.fields.each do |field| -%>
       attr_reader :<%= field.name %> #: <%= field.ruby_type %>?
       <%- end -%>
 
