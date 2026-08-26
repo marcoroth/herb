@@ -18,6 +18,9 @@
  * filling or blanking a detached copy in `fragments.ts`.
  */
 
+import { ElementObserver } from "./element-observer"
+
+import type { ElementObserverDelegate } from "./element-observer"
 import { ITEM_STATICS } from "./markers"
 
 import { Manifests } from "./manifests"
@@ -48,7 +51,7 @@ function rangeAround(region: Region, node: Node): RegionRange | null {
   return region.ranges.find((range) => withinRegionRange(range, node)) ?? null
 }
 
-export class SlotIndex {
+export class SlotIndex implements ElementObserverDelegate {
   #regions: Region[] = []
   #visited = new WeakSet<Node>()
   #journal = new Map<RevertToken, Inverse[]>()
@@ -59,45 +62,36 @@ export class SlotIndex {
   #cause: BuildCause = "client"
   #built: Built | null = null
   #listeners = new Set<SlotListener>()
-  #observer: MutationObserver | null = null
+  #elements: ElementObserver | null = null
+  #unobserve: (() => void) | null = null
 
   claim(slot: Slot): void {
     slot.claimed = true
   }
 
-  observe(root: Node = document.documentElement): ScanResult {
-    this.#observer?.disconnect()
+  observe(root: Node = document.documentElement, elements?: ElementObserver): ScanResult {
+    this.#unobserve?.()
 
-    this.#observer = new MutationObserver((records) => {
-      const added: Node[] = []
+    this.#elements = elements ?? new ElementObserver()
+    this.#unobserve = this.#elements.add(this)
 
-      let removed = false
-
-      for (const record of records) {
-        added.push(...record.addedNodes)
-
-        if (record.removedNodes.length > 0) {
-          removed = true
-        }
-      }
-
-      if (added.length > 0) {
-        this.scan(added)
-      }
-
-      if (removed) {
-        this.prune()
-      }
-    })
-
-    this.#observer.observe(root, { childList: true, subtree: true })
+    this.#elements.observe(root)
 
     return this.scan(root)
   }
 
+  nodesAdded(nodes: Node[]): void {
+    this.scan(nodes)
+  }
+
+  nodesRemoved(): void {
+    this.prune()
+  }
+
   disconnect(): void {
-    this.#observer?.disconnect()
-    this.#observer = null
+    this.#unobserve?.()
+    this.#unobserve = null
+    this.#elements = null
   }
 
   scan(roots: Node | Node[], context?: ScanContext): ScanResult {

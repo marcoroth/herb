@@ -1,5 +1,6 @@
 export * from "./actions"
 export * from "./attributes"
+export * from "./element-observer"
 export * from "./mutations"
 export * from "./report"
 export * from "./runtime"

@@ -1,3 +1,5 @@
+import { ElementObserver } from "./element-observer"
+
 import { DIRECT_EVENTS } from "./events"
 import { ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "./attributes"
 
@@ -6,10 +8,11 @@ import { boundValue, coerceState } from "./values"
 import { defaultEventFor } from "./events"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "./parsing"
 
-import type { ActionName, ActionSchema } from "./attributes"
 import type { Clause } from "./parsing"
-import type { DeclaredState, SlotState, StateScope, StateValues } from "./state"
 import type { StateValue } from "./values"
+import type { ActionName, ActionSchema } from "./attributes"
+import type { ElementObserverDelegate } from "./element-observer"
+import type { DeclaredState, SlotState, StateScope, StateValues } from "./state"
 
 export type StateGroups = Map<StateScope, StateValues>
 
@@ -24,14 +27,17 @@ interface Instruction {
   rest: string
 }
 
-export class SlotActions {
+export const ACTION_ATTRIBUTES = ACTION_NAMES.map((name) => HERB_ATTRIBUTES[name])
+
+export class SlotActions implements ElementObserverDelegate {
   readonly #state: SlotState
 
   #events = new Set<string>()
   #parsed = new WeakMap<Element, Instruction[]>()
   #direct = new Map<Element, () => void>()
   #validated = new WeakSet<Element>()
-  #observer: MutationObserver | null = null
+  #elements: ElementObserver | null = null
+  #unobserve: (() => void) | null = null
   #pinned: Map<string, StateScope> | null = null
   #listeners: [string, (event: Event) => void][] = []
 
@@ -39,28 +45,13 @@ export class SlotActions {
     this.#state = state
   }
 
-  start(root: ParentNode = document): void {
+  start(root: ParentNode = document, elements?: ElementObserver): void {
     this.scan(root)
 
-    this.#observer?.disconnect()
-    this.#observer = new MutationObserver((records) => {
-      for (const record of records) {
-        if (record.type === "attributes" && record.target instanceof Element) {
-          this.#parsed.delete(record.target)
-          this.#validated.delete(record.target)
+    this.#unobserve?.()
 
-          this.scan(record.target)
-
-          continue
-        }
-
-        for (const node of record.addedNodes) {
-          if (node instanceof Element) {
-            this.scan(node)
-          }
-        }
-      }
-    })
+    this.#elements = elements ?? new ElementObserver(ACTION_ATTRIBUTES)
+    this.#unobserve = this.#elements.add(this)
 
     let observed: Node = document.documentElement
 
@@ -68,17 +59,28 @@ export class SlotActions {
       observed = root
     }
 
-    this.#observer.observe(observed, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ACTION_NAMES.map((name) => HERB_ATTRIBUTES[name]),
-    })
+    this.#elements.observe(observed)
+  }
+
+  nodesAdded(nodes: Node[]): void {
+    for (const node of nodes) {
+      if (node instanceof Element) {
+        this.scan(node)
+      }
+    }
+  }
+
+  attributeChanged(element: Element): void {
+    this.#parsed.delete(element)
+    this.#validated.delete(element)
+
+    this.scan(element)
   }
 
   stop(): void {
-    this.#observer?.disconnect()
-    this.#observer = null
+    this.#unobserve?.()
+    this.#unobserve = null
+    this.#elements = null
 
     for (const [event, listener] of this.#listeners) {
       document.removeEventListener(event, listener, true)

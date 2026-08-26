@@ -1,12 +1,15 @@
+import { ElementObserver } from "./element-observer"
+import { ServerState } from "./server-state"
+
+import { HERB_ATTRIBUTES } from "./attributes"
+
 import { report } from "./report"
 import { elementOf, hostOf } from "./anchors"
 import { armOf, matches, mentions } from "./conditions"
 import { boundValue, coerceSeed, coerceState, kindArticle, printValue } from "./values"
 import { scopeOf, scoped, declared, collectionIn, declarationSpot, declaredValue, comparandLiteral } from "./state-helpers.js"
 
-import { ServerState } from "./server-state"
-
-import { HERB_ATTRIBUTES } from "./attributes"
+import type { ElementObserverDelegate } from "./element-observer"
 
 export const REGION_SCOPES = new WeakMap<Region, StateScope>()
 export const ITEM_SCOPES = new WeakMap<Item, StateScope>()
@@ -158,7 +161,7 @@ export interface StateReport extends ApplyReport {
   failed: boolean
 }
 
-export class SlotState {
+export class SlotState implements ElementObserverDelegate {
   readonly #slots: SlotIndex
   readonly #server: ServerState
   readonly #declared = new Map<string, StateManifest>()
@@ -166,7 +169,8 @@ export class SlotState {
   readonly #seeds: ScopeStore = new Map()
   readonly #options: ResolvedStateOptions
 
-  #observer: MutationObserver | null = null
+  #elements: ElementObserver | null = null
+  #unobserveElements: (() => void) | null = null
   #unsubscribe: (() => void) | null = null
 
   constructor(slots: SlotIndex, options: StateOptions = {}) {
@@ -249,7 +253,7 @@ export class SlotState {
     return templates.length
   }
 
-  observe(root: Node = document.documentElement): void {
+  observe(root: Node = document.documentElement, elements?: ElementObserver): void {
     if (typeof document === "undefined") {
       return
     }
@@ -264,29 +268,32 @@ export class SlotState {
       window.addEventListener("popstate", this.#onPopState)
     }
 
-    this.#observer?.disconnect()
-    this.#observer = new MutationObserver((records) => {
-      for (const record of records) {
-        for (const node of record.addedNodes) {
-          if (!(node instanceof Element)) {
-            continue
-          }
+    this.#unobserveElements?.()
 
-          if (node.matches(DEPENDENCIES_SELECTOR) || node.querySelector(DEPENDENCIES_SELECTOR)) {
-            this.adopt()
+    this.#elements = elements ?? new ElementObserver()
+    this.#unobserveElements = this.#elements.add(this)
 
-            return
-          }
-        }
+    this.#elements.observe(root)
+  }
+
+  nodesAdded(nodes: Node[]): void {
+    for (const node of nodes) {
+      if (!(node instanceof Element)) {
+        continue
       }
-    })
 
-    this.#observer.observe(root, { childList: true, subtree: true })
+      if (node.matches(DEPENDENCIES_SELECTOR) || node.querySelector(DEPENDENCIES_SELECTOR)) {
+        this.adopt()
+
+        return
+      }
+    }
   }
 
   disconnect(): void {
-    this.#observer?.disconnect()
-    this.#observer = null
+    this.#unobserveElements?.()
+    this.#unobserveElements = null
+    this.#elements = null
 
     this.#unsubscribe?.()
     this.#unsubscribe = null

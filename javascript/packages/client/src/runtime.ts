@@ -1,6 +1,9 @@
 import { clearOnNavigation } from "./report"
 
+import { ACTION_ATTRIBUTES } from "./actions"
+
 import { SlotActions } from "./actions"
+import { ElementObserver } from "./element-observer"
 import { SlotIndex } from "./slot-index"
 import { SlotMutations } from "./mutations"
 import { SlotState } from "./state"
@@ -25,6 +28,7 @@ export class HerbRuntime {
   public readonly mutations: SlotMutations
   public readonly actions: SlotActions
 
+  private elements: ElementObserver | null = null
   private stopClearing: (() => void) | null = null
 
   private constructor(token?: symbol, options: RuntimeOptions = {}) {
@@ -51,10 +55,15 @@ export class HerbRuntime {
       runtime.slots.adoptManifests(options.manifests)
     }
 
-    runtime.slots.observe()
+    const elements = new ElementObserver(ACTION_ATTRIBUTES)
+    const root = document.documentElement
+
+    runtime.elements = elements
+
+    runtime.slots.observe(root, elements)
     runtime.state.adopt()
-    runtime.state.observe()
-    runtime.actions.start()
+    runtime.state.observe(root, elements)
+    runtime.actions.start(document, elements)
     runtime.mutations.observe()
     runtime.stopClearing = clearOnNavigation()
 
@@ -73,6 +82,8 @@ export class HerbRuntime {
     this.mutations.unobserve()
     this.mutations.abort()
     this.actions.stop()
+    this.elements?.disconnect()
+    this.elements = null
     this.stopClearing?.()
     this.stopClearing = null
 
