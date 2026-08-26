@@ -23,6 +23,8 @@ module Herb
 
         include ContextAware
 
+        include Diagnostics
+
         attr_accessor bufvar: String
 
         attr_reader markers: Markers
@@ -120,8 +122,17 @@ module Herb
         # : () -> bool
         def self.reads_erb_source?: () -> bool
 
-        # : (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
-        def initialize: (?markers: Markers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool) -> void
+        # : (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
+        def initialize: (?markers: Markers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
+
+        # : () -> bool
+        def fatal?: () -> bool
+
+        # : () -> bool
+        def degraded?: () -> bool
+
+        # : (String, Herb::Location?, Symbol) -> nil
+        def slot_error: (String, Herb::Location?, Symbol) -> nil
 
         # : () -> String
         def version: () -> String
@@ -323,8 +334,11 @@ module Herb
         # : (Hash[Symbol, untyped], Hash[String, Annotation]) -> void
         def bind_name: (Hash[Symbol, untyped], Hash[String, Annotation]) -> void
 
-        # : (Hash[Symbol, untyped]) -> Annotation
-        def resolve_named_slot: (Hash[Symbol, untyped]) -> Annotation
+        # : (Hash[Symbol, untyped]) -> Annotation?
+        def resolve_named_slot: (Hash[Symbol, untyped]) -> Annotation?
+
+        # : (Hash[Symbol, untyped]) -> Herb::Location?
+        def name_location: (Hash[Symbol, untyped]) -> Herb::Location?
 
         # : (String, Annotation, untyped) -> bool
         def attribute_conflict?: (String, Annotation, untyped) -> bool

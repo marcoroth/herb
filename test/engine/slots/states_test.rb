@@ -216,6 +216,21 @@ module Engine
         )
       end
 
+      test "a `when` against a literal of another kind is refused" do
+        refuse(
+          "<%# herb:state (sort: \"name\") %><div><% case sort %><% when 3 %>a<% end %></div>",
+          "`when 3` compares the String state `sort` against a literal of another type, so it can never match. Compare it against a String literal instead."
+        )
+      end
+
+      test "a seeded state may be compared in a `when`, as it may with `==`" do
+        seeded = %(<%# herb:state (filter: @filter) %><div><% case filter %><% when "all" %>a<% else %>b<% end %></div>)
+        equality = %(<%# herb:state (filter: @filter) %><div><% if filter == "all" %>a<% else %>b<% end %></div>)
+
+        assert_equal :seeded, compile(seeded).first.state_declarations[:region].first[:kind]
+        assert_equal :seeded, compile(equality).first.state_declarations[:region].first[:kind]
+      end
+
       test "a mixed conditional refuses the arm that reads no state" do
         refuse(
           "<%# herb:state (pending: false) %><div><% if pending? %>a<% elsif @admin %>b<% else %>c<% end %></div>",

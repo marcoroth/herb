@@ -5,6 +5,7 @@ require "digest"
 
 require_relative "../../visitor"
 require_relative "../context_aware"
+require_relative "../diagnostics"
 require_relative "../experimental"
 require_relative "annotation"
 require_relative "identifier"
@@ -37,6 +38,7 @@ module Herb
       class Visitor < Herb::Visitor
         extend Experimental
         include ContextAware
+        include Diagnostics
 
         recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
         required_parser_option action_view_helpers: true, track_locations: true
@@ -121,8 +123,8 @@ module Herb
           true
         end
 
-        #: (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool) -> void
-        def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist)
+        #: (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
+        def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist, fatal: true)
           super()
 
           raise ArgumentError, "`mode: #{mode.inspect}` is not a slot mode. Pass one of #{MODES.map(&:inspect).join(", ")}." unless MODES.include?(mode)
@@ -130,6 +132,8 @@ module Herb
 
           @markers = markers
           @mark = mark
+          @fatal = fatal
+          @degraded = false
           @deliver = deliver
           @bufvar = "_buf"
           @mode = mode
@@ -173,6 +177,25 @@ module Herb
           @raw_text_depth = 0
           @rcdata_depth = 0
           @current_open_tag = nil
+        end
+
+        #: () -> bool
+        def fatal?
+          @fatal
+        end
+
+        #: () -> bool
+        def degraded?
+          @degraded
+        end
+
+        #: (String, Herb::Location?, Symbol) -> nil
+        def slot_error(message, location, family)
+          error(message, location, code: "slots-#{family}", error_class: Herb::Engine::CompilationError)
+
+          @degraded = true
+
+          nil
         end
 
         #: () -> String
@@ -296,6 +319,7 @@ module Herb
 
           parts << "#{@identify} ids" unless @identify == :path
           parts << "deliver=#{@deliver}" unless @deliver == :hoist
+          parts << "fatal=#{@fatal}" unless @fatal
 
           "#<#{parts.join(" ")}>"
         end
@@ -401,6 +425,7 @@ module Herb
         #: (untyped) -> void
         def finish(node)
           return unless @mark
+          return if @degraded
 
           insert_markers(node)
           wrap_displaced
@@ -893,7 +918,7 @@ module Herb
           name = static_attribute_value(name_attribute)
 
           unless name && !name.empty?
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` is computed or empty. A slot name is an address the browser looks up, so give it a static, non-empty value."
+            return slot_error("`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` is computed or empty. A slot name is an address the browser looks up, so give it a static, non-empty value.", name_attribute.location, :name)
           end
 
           candidates = @annotations[base..].to_a.select { |annotation|
@@ -931,16 +956,18 @@ module Herb
           name = named[:name] #: String
           annotation = resolve_named_slot(named)
 
+          return unless annotation
+
           if scope_names.key?(name)
-            raise Herb::Engine::CompilationError, "Two slots in the same scope are both named `#{name}`. A slot name is an address, so give one of them a different name."
+            return slot_error("Two slots in the same scope are both named `#{name}`. A slot name is an address, so give one of them a different name.", name_location(named), :name)
           end
 
           if (existing = annotation.name)
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`. Both elements hold the same slot, so keep one name or wrap what each should address in its own element."
+            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`. Both elements hold the same slot, so keep one name or wrap what each should address in its own element.", name_location(named), :name)
           end
 
           if attribute_conflict?(name, annotation, named[:scope])
-            raise Herb::Engine::CompilationError, "The name `#{name}` collides with the `#{name}` attribute slot in the same scope. An attribute slot is already addressable by its attribute, so drop the name or rename it."
+            return slot_error("The name `#{name}` collides with the `#{name}` attribute slot in the same scope. An attribute slot is already addressable by its attribute, so drop the name or rename it.", name_location(named), :name)
           end
 
           scope_names[name] = annotation
@@ -948,21 +975,26 @@ module Herb
           annotation.name = name
         end
 
-        #: (Hash[Symbol, untyped]) -> Annotation
+        #: (Hash[Symbol, untyped]) -> Annotation?
         def resolve_named_slot(named)
           name = named[:name]
           tag = named[:node].tag_name&.value
           candidates = named[:candidates].reject(&:dropped).map(&:survivor).uniq
 
           if candidates.empty?
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot, since the element holds nothing dynamic. Move the name onto an element that wraps an ERB output, or remove it."
+            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot, since the element holds nothing dynamic. Move the name onto an element that wraps an ERB output, or remove it.", name_location(named), :name)
           end
 
           unless candidates.one?
-            raise Herb::Engine::CompilationError, "`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots. Wrap the one it should name in its own element."
+            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots. Wrap the one it should name in its own element.", name_location(named), :name)
           end
 
           candidates.fetch(0)
+        end
+
+        #: (Hash[Symbol, untyped]) -> Herb::Location?
+        def name_location(named)
+          named[:attribute]&.location || named[:node]&.location
         end
 
         #: (String, Annotation, untyped) -> bool

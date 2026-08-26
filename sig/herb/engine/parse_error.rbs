@@ -9,8 +9,6 @@ module Herb
 
       attr_reader source: String
 
-      attr_reader filename: String?
-
       attr_reader visitors: Array[String]
 
       attr_reader parser_options: Hash[Symbol, untyped]

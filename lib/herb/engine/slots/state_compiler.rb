@@ -223,7 +223,7 @@ module Herb
           return unless signature
 
           scope = @visitor.current_collection
-          declared = StateDirectives.parse(signature, @strict_locals, enclosing: scope ? @region_states : {})
+          declared = StateDirectives.parse(signature, @strict_locals, visitor: @visitor, location: node.location, enclosing: scope ? @region_states : {})
           empty = {} #: Hash[String, StateDirectives::Declaration]
           bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
@@ -235,17 +235,17 @@ module Herb
 
           declared.each do |declaration|
             if @strict_locals.key?(declaration.name)
-              raise Herb::Engine::CompilationError, "`#{declaration.name}` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two."
+              next @visitor.slot_error("`#{declaration.name}` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two.", node.location, :declaration)
             end
 
             if bucket.key?(declaration.name)
-              raise Herb::Engine::CompilationError, "The state `#{declaration.name}` is declared twice in the same scope. Remove one of the two declarations."
+              next @visitor.slot_error("The state `#{declaration.name}` is declared twice in the same scope. Remove one of the two declarations.", node.location, :declaration)
             end
 
             shadowed = scope ? @region_states.key?(declaration.name) : @item_states.values.any? { |declarations| declarations.key?(declaration.name) }
 
             if shadowed
-              raise Herb::Engine::CompilationError, "The state `#{declaration.name}` is declared in both an item and its region. A later read could mean either one, so give them different names."
+              next @visitor.slot_error("The state `#{declaration.name}` is declared in both an item and its region. A later read could mean either one, so give them different names.", node.location, :declaration)
             end
 
             bucket[declaration.name] = declaration
@@ -285,7 +285,7 @@ module Herb
             scope = directive[:scope]
             bucket = scope ? (@item_states[scope] || {}) : @region_states
             assignments = bucket.values.map { |declaration| state_assignment(declaration) }.join("; ")
-            seeds = directive[:inline] ? nil : seeds_marker(bucket.values)
+            seeds = directive[:inline] || @visitor.degraded? ? nil : seeds_marker(bucket.values)
 
             parent[position] = @visitor.erb_code_node(seeds ? "#{assignments}; #{seeds}" : assignments)
           end
@@ -362,16 +362,18 @@ module Herb
 
           conditions.each_with_index do |arm, branch|
             expression = condition_expression(arm)
-            read = StateDirectives.condition_read(expression, states)
+            read = StateDirectives.condition_read(expression, states, @visitor, arm.location)
+
+            return nil if read == :reported
 
             if read == :computed
-              raise Herb::Engine::CompilationError, "`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."
+              return @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal.", arm.location, :read)
             end
 
             unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
               return nil if arms.empty?
 
-              raise Herb::Engine::CompilationError, "`#{expression}` sits in a state-driven conditional but reads no state. The client resolves every arm, so read a state here or move this branch out of the conditional."
+              return @visitor.slot_error("`#{expression}` sits in a state-driven conditional but reads no state. The client resolves every arm, so read a state here or move this branch out of the conditional.", arm.location, :conditional)
             end
 
             StateDirectives.read_names(read).each { |name| rewrite_predicate(arm, name) }
@@ -398,12 +400,12 @@ module Herb
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_unless_for(node, states)
           expression = condition_expression(node)
-          read = StateDirectives.condition_read(expression, states)
+          read = StateDirectives.condition_read(expression, states, @visitor, node.location)
 
-          return nil if read.nil?
+          return nil if read.nil? || read == :reported
 
           if read == :computed
-            raise Herb::Engine::CompilationError, "`unless #{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."
+            return @visitor.slot_error("`unless #{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal.", node.location, :read)
           end
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
@@ -423,12 +425,12 @@ module Herb
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_case_for(node, states)
           subject_source = condition_expression(node)
-          read = StateDirectives.condition_read(subject_source, states)
+          read = StateDirectives.condition_read(subject_source, states, @visitor, node.location)
 
-          return nil if read.nil?
+          return nil if read.nil? || read == :reported
 
           unless read.is_a?(StateDirectives::Read) && read.comparand.nil?
-            raise Herb::Engine::CompilationError, "`case #{subject_source}` switches on something other than a bare state read. The client resolves a `case` by looking the state up, so switch on the state itself."
+            return @visitor.slot_error("`case #{subject_source}` switches on something other than a bare state read. The client resolves a `case` by looking the state up, so switch on the state itself.", node.location, :conditional)
           end
 
           rewrite_predicate(node, read.name)
@@ -442,11 +444,11 @@ module Herb
             comparands = StateDirectives.when_comparands(list, declaration)
 
             if comparands == :computed
-              raise Herb::Engine::CompilationError, "`when #{list}` on the state `#{read.name}` has a comparand that is not a literal. The client resolves a `when` by lookup, so compare against literals only."
+              return @visitor.slot_error("`when #{list}` on the state `#{read.name}` has a comparand that is not a literal. The client resolves a `when` by lookup, so compare against literals only.", arm.location, :conditional)
             end
 
             if comparands == :mismatched
-              raise Herb::Engine::CompilationError, "`when #{list}` compares the #{declaration.kind.to_s.capitalize} state `#{read.name}` against a literal of another type, so it can never match. Compare it against a #{declaration.kind} literal instead."
+              return @visitor.slot_error("`when #{list}` compares the #{declaration.kind.to_s.capitalize} state `#{read.name}` against a literal of another type, so it can never match. Compare it against #{StateDirectives.kind_article(declaration.kind)} literal instead.", arm.location, :compare)
             end
 
             next unless comparands.is_a?(Array)
@@ -500,11 +502,11 @@ module Herb
 
           return nil unless increment && states.key?(increment.name)
 
-          read = StateDirectives.condition_read(condition_expression(node), states)
+          read = StateDirectives.condition_read(condition_expression(node), states, @visitor, node.location)
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
-          register_count(increment, when_read: read)
+          register_count(increment, when_read: read, location: node.location)
           StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
 
           node
@@ -532,38 +534,38 @@ module Herb
             increment = StateDirectives.fold_increment(content)
 
             if increment && assigned == [increment.name]
-              register_count(increment, when_read: nil)
+              register_count(increment, when_read: nil, location: node.location)
 
               return
             end
           end
 
-          raise Herb::Engine::CompilationError, "`#{content.strip}` assigns the state `#{assigned.first}`. The client never sees a server-side write, so seed the initial value in the declaration, derive it from other states, count items with `#{assigned.first} += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`."
+          @visitor.slot_error("`#{content.strip}` assigns the state `#{assigned.first}`. The client never sees a server-side write, so seed the initial value in the declaration, derive it from other states, count items with `#{assigned.first} += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.", node.location, :assignment)
         end
 
-        #: (StateDirectives::FoldIncrement, when_read: untyped) -> void
-        def register_count(increment, when_read:)
+        #: (StateDirectives::FoldIncrement, when_read: untyped, location: Herb::Location?) -> void
+        def register_count(increment, when_read:, location:)
           name = increment.name
           declaration = @region_states[name]
 
           unless declaration
-            raise Herb::Engine::CompilationError, "`#{name} += #{increment.by}` counts into `#{name}`, which is an item state. A count lives once per region, so declare `#{name}` at the top of the template instead."
+            return @visitor.slot_error("`#{name} += #{increment.by}` counts into `#{name}`, which is an item state. A count lives once per region, so declare `#{name}` at the top of the template instead.", location, :count)
           end
 
           if declaration.derived
-            raise Herb::Engine::CompilationError, "`#{name} += #{increment.by}` counts into `#{name}`, which is derived from `#{declaration.default}`. A state is either derived or counted, so drop the derivation or the count."
+            return @visitor.slot_error("`#{name} += #{increment.by}` counts into `#{name}`, which is derived from `#{declaration.default}`. A state is either derived or counted, so drop the derivation or the count.", location, :count)
           end
 
           unless declaration.kind == :integer
-            raise Herb::Engine::CompilationError, "`#{name} += #{increment.by}` counts into the #{declaration.kind.to_s.capitalize} state `#{name}`. A count is a number, so declare it as an Integer, like `(#{name}: 0)`."
+            return @visitor.slot_error("`#{name} += #{increment.by}` counts into the #{declaration.kind.to_s.capitalize} state `#{name}`. A count is a number, so declare it as an Integer, like `(#{name}: 0)`.", location, :count)
           end
 
           if @state_counts.any? { |count| count[:name] == name }
-            raise Herb::Engine::CompilationError, "`#{name}` is counted twice. One state holds one count, so declare a second state for the second count."
+            return @visitor.slot_error("`#{name}` is counted twice. One state holds one count, so declare a second state for the second count.", location, :count)
           end
 
           if @visitor.recorded_expressions.any? { |expression| StateDirectives.mentions_any?(expression, { name => declaration }) }
-            raise Herb::Engine::CompilationError, "`#{name}` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current, so move the read after the loop."
+            return @visitor.slot_error("`#{name}` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current, so move the read after the loop.", location, :count)
           end
 
           @state_counts << { name: name, by: increment.by, collection: @visitor.current_collection, when: when_read }
@@ -590,7 +592,7 @@ module Herb
 
               next unless StateDirectives.mentions_any?(expression, mentioned)
 
-              raise Herb::Engine::CompilationError, "`#{count[:name]}` is read inside the loop that counts it. The count is complete only after the loop, so move the read below it."
+              next @visitor.slot_error("`#{count[:name]}` is read inside the loop that counts it. The count is complete only after the loop, so move the read below it.", node.location, :count)
             end
           end
         end
@@ -650,7 +652,7 @@ module Herb
 
           return unless read
 
-          raise Herb::Engine::CompilationError, "`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values, so give the state its own attribute or its own output."
+          @visitor.slot_error("`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values, so give the state its own attribute or its own output.", node.location, :read)
         end
 
         #: () -> void
@@ -685,7 +687,7 @@ module Herb
             bare = states.key?(expression) || states.key?(expression.delete_suffix("?"))
 
             unless bare
-              raise Herb::Engine::CompilationError, "`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute."
+              next @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute.", node.location, :read)
             end
 
             rewrite_predicate(node, expression.delete_suffix("?")) if expression.end_with?("?")
@@ -697,12 +699,12 @@ module Herb
           return nil unless slot.type == :attribute || (slot.type == :boolean_attribute && !@state_presence.key?(index))
           return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
 
-          read = StateDirectives.condition_read(expression, states)
+          read = StateDirectives.condition_read(expression, states, @visitor, node.location)
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
           if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
-            raise Herb::Engine::CompilationError, "`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean."
+            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean.", node.location, :read)
           end
 
           open_tag = @visitor.open_tag_for(node)

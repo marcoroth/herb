@@ -3,6 +3,17 @@
 module Herb
   class Engine
     class CompilationError < StandardError
+      attr_reader line: Integer?
+
+      attr_reader column: Integer?
+
+      attr_reader filename: String?
+
+      attr_reader suggestion: String?
+
+      def initialize: (untyped message, ?line: untyped, ?column: untyped, ?filename: untyped, ?suggestion: untyped) -> untyped
+
+      def origin: () -> untyped
     end
 
     class GeneratorTemplateError < CompilationError

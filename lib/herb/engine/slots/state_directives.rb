@@ -52,6 +52,27 @@ module Herb
         ORDERED_OPERATORS = [:>, :>=, :<, :<=].freeze #: Array[Symbol]
         MIRRORED_OPERATORS = { ">" => "<", ">=" => "<=", "<" => ">", "<=" => ">=" }.freeze #: Hash[String, String]
 
+        Parsing = Data.define(
+          :locals,    #: Hash[String, Symbol]
+          :declared,  #: Hash[String, Declaration]
+          :names,     #: Array[String]
+          :enclosing, #: Hash[String, Declaration]
+          :visitor,   #: untyped
+          :location   #: Herb::Location?
+        )
+
+        module Silent
+          #: (String, Herb::Location?, Symbol) -> nil
+          def self.slot_error(_message, _location, _family)
+            nil
+          end
+
+          #: (?Symbol?) -> Integer
+          def self.diagnostic_count(_severity = nil)
+            0
+          end
+        end
+
         class << self
           #: (untyped) -> String?
           def signature_of(node)
@@ -61,54 +82,71 @@ module Herb
             PATTERN.match(node.content&.value.to_s.strip)&.[](:signature)
           end
 
-          #: (String, Hash[String, Symbol], ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
-          def parse(signature, locals, enclosing: {})
+          #: (String, Hash[String, Symbol], visitor: untyped, location: Herb::Location?, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+          def parse(signature, locals, visitor:, location:, enclosing: {})
             result = Prism.parse("def __herb_states#{signature}; end")
 
-            raise Herb::Engine::CompilationError, "`herb:state #{signature}` does not parse as a keyword signature. Declare each state as a keyword parameter with a default, like `(pending: false)`." if result.failure?
+            if result.failure?
+              visitor.slot_error("`herb:state #{signature}` does not parse as a keyword signature. Declare each state as a keyword parameter with a default, like `(pending: false)`.", location, :declaration)
+
+              return []
+            end
 
             definition = result.value.statements.body.first
             parameters = definition.is_a?(Prism::DefNode) ? definition.parameters : nil
 
             unless parameters && parameters.requireds.empty? && parameters.optionals.empty? && parameters.rest.nil? && parameters.posts.empty? && parameters.keyword_rest.nil? && parameters.block.nil? && !parameters.keywords.empty?
-              raise Herb::Engine::CompilationError, "`herb:state #{signature}` declares no keyword parameters. Declare each state with a default, like `(pending: false)`."
+              visitor.slot_error("`herb:state #{signature}` declares no keyword parameters. Declare each state with a default, like `(pending: false)`.", location, :declaration)
+
+              return []
             end
 
-            names = parameters.keywords.map { |keyword| keyword.name.to_s }
             declared = {} #: Hash[String, Declaration]
 
+            parsing = Parsing.new(
+              locals: locals,
+              declared: declared,
+              names: parameters.keywords.map { |keyword| keyword.name.to_s },
+              enclosing: enclosing,
+              visitor: visitor,
+              location: location
+            )
+
             parameters.keywords.map { |keyword|
-              declaration = declaration_for(keyword, locals, declared, names, enclosing)
+              declaration = declaration_for(keyword, parsing)
               declared[declaration.name] = declaration
 
               declaration
             }
           end
 
-          #: (String, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
-          def condition_read(expression, states)
+          #: (String, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
+          def condition_read(expression, states, visitor, location)
             source = expression.strip
             parsed = expression_node(source)
 
             return mentions_any?(source, states) ? :computed : nil if parsed.nil?
 
-            read = tree_read(parsed, states)
+            said = visitor.diagnostic_count
+            read = tree_read(parsed, states, visitor, location)
+
+            return :reported if visitor.diagnostic_count > said
             return read if read
 
             mentions_any?(source, states) ? :computed : nil
           end
 
-          #: (untyped, Hash[String, Declaration]) -> (Read | Combo | Symbol)?
-          def tree_read(node, states)
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
+          def tree_read(node, states, visitor, location)
             node = unwrap_parentheses(node)
 
-            read = bare_read(node, states)
+            read = bare_read(node, states, visitor, location)
             return read if read
 
-            equality = equality_read(node, states)
+            equality = equality_read(node, states, visitor, location)
             return equality if equality
 
-            combo_read(node, states)
+            combo_read(node, states, visitor, location)
           end
 
           #: (untyped) -> untyped
@@ -122,15 +160,15 @@ module Herb
             unwrap_parentheses(body.body.first)
           end
 
-          #: (untyped, Hash[String, Declaration]) -> (Combo | Symbol)?
-          def combo_read(node, states)
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Combo | Symbol)?
+          def combo_read(node, states, visitor, location)
             op = case node
                  when Prism::AndNode then "all"
                  when Prism::OrNode then "any"
                  else return nil
                  end
 
-            parts = flatten_combo(node, node.class).map { |part| tree_read(part, states) }
+            parts = flatten_combo(node, node.class).map { |part| tree_read(part, states, visitor, location) }
 
             return nil if parts.none? { |part| part.is_a?(Read) || part.is_a?(Combo) }
             return :computed if parts.any? { |part| part.nil? || part == :computed }
@@ -283,7 +321,7 @@ module Herb
               kind = KINDS[element.class.name]
 
               return :computed unless kind
-              return :mismatched unless kind == subject.kind || kind == :nil
+              return :mismatched unless kind == subject.kind || kind == :nil || subject.kind == :seeded
 
               element.slice
             }
@@ -314,12 +352,14 @@ module Herb
 
           private
 
-          #: (untyped, Hash[String, Symbol], Hash[String, Declaration], Array[String], Hash[String, Declaration]) -> Declaration
-          def declaration_for(keyword, locals, declared, names, enclosing)
+          #: (untyped, Parsing) -> Declaration
+          def declaration_for(keyword, parsing)
             name = keyword.name.to_s
+            visitor = parsing.visitor
+            location = parsing.location
 
             unless keyword.is_a?(Prism::OptionalKeywordParameterNode)
-              raise Herb::Engine::CompilationError, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`."
+              return refused(name, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`.", visitor, location)
             end
 
             value = keyword.value
@@ -329,37 +369,51 @@ module Herb
 
             case value
             when Prism::FloatNode
-              raise Herb::Engine::CompilationError, "The state `#{name}` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead."
+              refused(name, "The state `#{name}` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead.", visitor, location, value.slice)
             when Prism::ArrayNode
-              raise Herb::Engine::CompilationError, "The state `#{name}` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
+              refused(name, "The state `#{name}` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead.", visitor, location, value.slice)
             when Prism::HashNode, Prism::KeywordHashNode
-              raise Herb::Engine::CompilationError, "The state `#{name}` has a Hash default. Declare each leaf as its own state, like `(#{name}_title: \"\")`."
+              refused(name, "The state `#{name}` has a Hash default. Declare each leaf as its own state, like `(#{name}_title: \"\")`.", visitor, location, value.slice)
             when Prism::CallNode
-              derived_default(name, value, declared, names) || bare_default(name, value, locals, enclosing)
+              derived_default(name, value, parsing) || bare_default(name, value, parsing)
             else
-              derived_default(name, value, declared, names) ||
+              derived_default(name, value, parsing) ||
                 Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)
             end
           end
 
-          #: (String, untyped, Hash[String, Declaration], Array[String]) -> Declaration?
-          def derived_default(name, value, declared, names)
-            read = tree_read(value, declared) #: untyped
+          #: (String, String, untyped, Herb::Location?, ?String) -> Declaration
+          def refused(name, message, visitor, location, default = "nil")
+            visitor.slot_error(message, location, :declaration)
+
+            Declaration.new(name: name, kind: :seeded, default: default, derived: nil, line: nil, column: nil)
+          end
+
+          #: (String, untyped, Parsing) -> Declaration?
+          def derived_default(name, value, parsing)
+            declared = parsing.declared
+            visitor = parsing.visitor
+            location = parsing.location
+
+            said = visitor.diagnostic_count
+            read = tree_read(value, declared, visitor, location) #: untyped
+
+            return Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil) if visitor.diagnostic_count > said
 
             if read == :computed
-              raise Herb::Engine::CompilationError, "The state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart."
+              return refused(name, "The state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, value.slice)
             end
 
             if read.nil?
               later = {} #: Hash[String, untyped]
-              (names - declared.keys - [name]).each { |candidate| later[candidate] = true }
+              (parsing.names - declared.keys - [name]).each { |candidate| later[candidate] = true }
 
               if mentions_any?(value.slice, later)
-                raise Herb::Engine::CompilationError, "The state `#{name}` reads a state declared after it. A derived state reads only states declared before it, so move `#{name}` after the states it reads."
+                return refused(name, "The state `#{name}` reads a state declared after it. A derived state reads only states declared before it, so move `#{name}` after the states it reads.", visitor, location)
               end
 
               if mentions_any?(value.slice, declared)
-                raise Herb::Engine::CompilationError, "The state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart."
+                return refused(name, "The state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, value.slice)
               end
 
               return nil
@@ -375,22 +429,24 @@ module Herb
             :boolean
           end
 
-          #: (String, untyped, Hash[String, Symbol], Hash[String, Declaration]) -> Declaration
-          def bare_default(name, value, locals, enclosing)
+          #: (String, untyped, Parsing) -> Declaration
+          def bare_default(name, value, parsing)
             identifier = value.name.to_s
+            visitor = parsing.visitor
+            location = parsing.location
 
             unless value.receiver.nil? && value.arguments.nil? && value.block.nil? && BARE.match?(identifier)
               return Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)
             end
 
-            if enclosing.key?(identifier)
-              raise Herb::Engine::CompilationError, "The state `#{name}` reads `#{identifier}` from an enclosing scope. A derived state reads only states from its own signature, so declare `#{name}` beside the states it reads."
+            if parsing.enclosing.key?(identifier)
+              return refused(name, "The state `#{name}` reads `#{identifier}` from an enclosing scope. A derived state reads only states from its own signature, so declare `#{name}` beside the states it reads.", visitor, location)
             end
 
-            kind = locals[identifier]
+            kind = parsing.locals[identifier]
 
             unless kind
-              raise Herb::Engine::CompilationError, "The state `#{name}` defaults to `#{identifier}`, which is not a declared strict local. A name that was never passed raises at render, so add `#{identifier}` to the `locals:` signature."
+              return refused(name, "The state `#{name}` defaults to `#{identifier}`, which is not a declared strict local. A name that was never passed raises at render, so add `#{identifier}` to the `locals:` signature.", visitor, location)
             end
 
             Declaration.new(name: name, kind: kind, default: identifier, derived: nil, line: nil, column: nil)
@@ -407,8 +463,8 @@ module Herb
             body.one? ? body.first : nil
           end
 
-          #: (untyped, Hash[String, Declaration]) -> Read?
-          def bare_read(node, states)
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+          def bare_read(node, states, visitor, location)
             if node.is_a?(Prism::LocalVariableReadNode)
               declaration = states[node.name.to_s]
 
@@ -427,14 +483,14 @@ module Herb
             return nil unless declaration
 
             if predicate && declaration.kind != :boolean && declaration.kind != :seeded
-              raise Herb::Engine::CompilationError, "`#{spelled}` reads the #{declaration.kind.to_s.capitalize} state `#{name}` as a predicate. Only a boolean state can be read with a `?`, so drop the `?` or declare `#{name}` as a boolean."
+              return visitor.slot_error("`#{spelled}` reads the #{declaration.kind.to_s.capitalize} state `#{name}` as a predicate. Only a boolean state can be read with a `?`, so drop the `?` or declare `#{name}` as a boolean.", location, :read)
             end
 
             Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil)
           end
 
-          #: (untyped, Hash[String, Declaration]) -> Read?
-          def equality_read(node, states)
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+          def equality_read(node, states, visitor, location)
             return nil unless node.is_a?(Prism::CallNode)
             return nil unless node.name == :== || node.name == :!= || ORDERED_OPERATORS.include?(node.name)
 
@@ -443,53 +499,53 @@ module Herb
 
             return nil unless left && right && node.arguments&.arguments&.one?
 
-            left_read = bare_read(left, states)
-            right_read = bare_read(right, states)
+            left_read = bare_read(left, states, visitor, location)
+            right_read = bare_read(right, states, visitor, location)
             read = left_read || right_read
 
             return nil unless read
 
             if left_read && right_read
-              return state_pair_read(node, left_read, right_read)
+              return state_pair_read(node, left_read, right_read, visitor, location)
             end
 
             literal = left_read ? right : left
             kind = KINDS[literal.class.name]
 
             unless kind
-              raise Herb::Engine::CompilationError, "`#{node.slice}` compares the state `#{read.name}` against something that is not a literal. The client resolves a comparison by lookup, so compare against a literal instead."
+              return visitor.slot_error("`#{node.slice}` compares the state `#{read.name}` against something that is not a literal. The client resolves a comparison by lookup, so compare against a literal instead.", location, :compare)
             end
 
             operator = node.name == :== ? nil : node.name.to_s
-            operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!=" && bare_read(right, states)
+            operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!=" && bare_read(right, states, visitor, location)
             ordered = operator && operator != "!="
 
             if ordered && read.kind != :integer && read.kind != :seeded
-              raise Herb::Engine::CompilationError, "`#{node.slice}` orders the #{read.kind.to_s.capitalize} state `#{read.name}`. Ordering compares numbers, so declare `#{read.name}` as an Integer or compare it with `==` instead."
+              return visitor.slot_error("`#{node.slice}` orders the #{read.kind.to_s.capitalize} state `#{read.name}`. Ordering compares numbers, so declare `#{read.name}` as an Integer or compare it with `==` instead.", location, :compare)
             end
 
             if ordered && kind != :integer
-              raise Herb::Engine::CompilationError, "`#{node.slice}` orders the state `#{read.name}` against #{kind_article(kind)} literal. Ordering compares numbers, so compare it against an Integer literal instead."
+              return visitor.slot_error("`#{node.slice}` orders the state `#{read.name}` against #{kind_article(kind)} literal. Ordering compares numbers, so compare it against an Integer literal instead.", location, :compare)
             end
 
             unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded
-              raise Herb::Engine::CompilationError, "`#{node.slice}` compares the #{read.kind.to_s.capitalize} state `#{read.name}` against #{kind_article(kind)} literal, so it can never match. Compare it against #{kind_article(read.kind)} literal instead."
+              return visitor.slot_error("`#{node.slice}` compares the #{read.kind.to_s.capitalize} state `#{read.name}` against #{kind_article(kind)} literal, so it can never match. Compare it against #{kind_article(read.kind)} literal instead.", location, :compare)
             end
 
             Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil)
           end
 
-          #: (untyped, Read, Read) -> Read
-          def state_pair_read(node, left, right)
+          #: (untyped, Read, Read, untyped, Herb::Location?) -> Read?
+          def state_pair_read(node, left, right, visitor, location)
             operator = node.name == :== ? nil : node.name.to_s
             ordered = operator && operator != "!="
 
             if ordered && (left.kind != :integer || right.kind != :integer) && left.kind != :seeded && right.kind != :seeded
-              raise Herb::Engine::CompilationError, "`#{node.slice}` orders the states `#{left.name}` and `#{right.name}`. Ordering compares numbers, so declare both as Integers."
+              return visitor.slot_error("`#{node.slice}` orders the states `#{left.name}` and `#{right.name}`. Ordering compares numbers, so declare both as Integers.", location, :compare)
             end
 
             if !ordered && left.kind != right.kind && left.kind != :seeded && right.kind != :seeded
-              raise Herb::Engine::CompilationError, "`#{node.slice}` compares the #{left.kind.to_s.capitalize} state `#{left.name}` with the #{right.kind.to_s.capitalize} state `#{right.name}`, so it can never match. Compare states of the same kind."
+              return visitor.slot_error("`#{node.slice}` compares the #{left.kind.to_s.capitalize} state `#{left.name}` with the #{right.kind.to_s.capitalize} state `#{right.name}`, so it can never match. Compare states of the same kind.", location, :compare)
             end
 
             Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name)

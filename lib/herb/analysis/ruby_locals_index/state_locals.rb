@@ -37,9 +37,7 @@ module Herb
         end
 
         def declarations_in(signature, known)
-          Herb::Engine::Slots::StateDirectives.parse(signature, known)
-        rescue StandardError
-          []
+          Herb::Engine::Slots::StateDirectives.parse(signature, known, visitor: Herb::Engine::Slots::StateDirectives::Silent, location: nil)
         end
 
         def usages(name, references, offsets)

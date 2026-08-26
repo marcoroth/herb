@@ -103,8 +103,8 @@ module Herb
         # : (untyped) -> void
         def check_state_assignment: (untyped) -> void
 
-        # : (StateDirectives::FoldIncrement, when_read: untyped) -> void
-        def register_count: (StateDirectives::FoldIncrement, when_read: untyped) -> void
+        # : (StateDirectives::FoldIncrement, when_read: untyped, location: Herb::Location?) -> void
+        def register_count: (StateDirectives::FoldIncrement, when_read: untyped, location: Herb::Location?) -> void
 
         # : () -> void
         def check_state_count_reads: () -> void
