@@ -1,3 +1,5 @@
+import { asList } from "./arrays"
+
 import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
 import { branchKey, branchOf, slotOpenIndex } from "./markers"
 
@@ -261,10 +263,3 @@ function markup(value: string, text: boolean): string {
   return value
 }
 
-function asList(value: SlotValue): string[] {
-  if (Array.isArray(value)) {
-    return value
-  }
-
-  return [value]
-}

@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 import { SlotIndex } from "../src/slot-index"
-import { SlotState, STATE_EVENT } from "../src/state"
+import { SlotState } from "../src/state"
+import { STATE_EVENT } from "../src/events"
 import { resetReport } from "../src/report"
 import type { RuntimeDiagnostic } from "../src/report"
 

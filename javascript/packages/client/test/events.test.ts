@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
-import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
+import { SlotIndex } from "../src/slot-index"
+import { SLOT_EVENT } from "../src/events"
 import type { Payload, SlotEventDetail } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"

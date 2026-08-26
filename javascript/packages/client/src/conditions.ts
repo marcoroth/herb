@@ -111,9 +111,9 @@ export function mentions(condition: StateCondition, changed: string[]): boolean 
   return typeof comparand === "object" && comparand !== null && "state" in comparand && changed.includes(comparand.state)
 }
 
-export function names(condition: StateCondition): string[] {
+export function statesIn(condition: StateCondition): string[] {
   if (!Array.isArray(condition)) {
-    return parts(condition).flatMap((part) => names(part))
+    return parts(condition).flatMap((part) => statesIn(part))
   }
 
   const [name, comparand] = condition

@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
+import { SlotIndex } from "../src/slot-index"
+import { SLOT_EVENT } from "../src/events"
 import type { SlotEventDetail } from "../src/types"
 
 function nth(html: string, occurrence: number): string {

@@ -1,6 +1,6 @@
 import { clearOnNavigation } from "./report"
 
-import { ACTION_ATTRIBUTES } from "./actions"
+import { ACTION_ATTRIBUTES } from "./attributes"
 
 import { SlotActions } from "./actions"
 import { ElementObserver } from "./element-observer"

@@ -1,49 +1,22 @@
+import { DEPENDENCIES_SELECTOR } from "./attributes"
+import { VALUE_ELEMENTS } from "./bindings"
+import { STATE_EVENT } from "./events"
+
 import { ElementObserver } from "./element-observer"
 import { ServerState } from "./server-state"
 
-import { HERB_ATTRIBUTES } from "./attributes"
-
 import { report } from "./report"
+import { bindable } from "./bindings"
 import { elementOf, hostOf } from "./anchors"
 import { armOf, matches, mentions } from "./conditions"
 import { boundValue, coerceSeed, coerceState, kindArticle, printValue } from "./values"
 import { scopeOf, scoped, declared, collectionIn, declarationSpot, declaredValue, comparandLiteral } from "./state-helpers.js"
 
-import type { ElementObserverDelegate } from "./element-observer"
-
-export const REGION_SCOPES = new WeakMap<Region, StateScope>()
-export const ITEM_SCOPES = new WeakMap<Item, StateScope>()
-export const VALUE_ELEMENTS = ["input", "textarea", "select"]
-
-const BINDABLE_ELEMENTS = ["input", "textarea", "select", "option"]
-const BINDABLE_ATTRIBUTES = ["value", "checked", "selected"]
-
-export function bindable(slot: Slot): boolean {
-  if (slot.type === "attribute_interpolation") {
-    return false
-  }
-
-  const element = elementOf(slot.anchor)
-
-  if (!element) {
-    return false
-  }
-
-  if (slot.attribute) {
-    return BINDABLE_ATTRIBUTES.includes(slot.attribute) && BINDABLE_ELEMENTS.includes(element.localName)
-  }
-
-  return element.localName === "textarea"
-}
-
-export const STATE_EVENT = "herb:state-change"
-export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
-export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
-
 import type { SlotIndex } from "./slot-index"
-import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotIndexDelegate } from "./types"
 import type { StateKind, StateValue } from "./values"
+import type { ElementObserverDelegate } from "./element-observer"
 import type { Conditional, StateCondition } from "./conditions"
+import type { ApplyReport, Built, Item, Payload, Region, Slot, SlotIndexDelegate } from "./types"
 
 export type StateMode = "identity" | "structural" | "derived"
 export type StatePersistence = "url" | "known" | "none"

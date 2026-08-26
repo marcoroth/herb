@@ -1,7 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
 import { SlotActions } from "../src/actions"
 import { SlotIndex } from "../src/slot-index"
-import { SlotState, STATE_EVENT } from "../src/state"
+import { SlotState } from "../src/state"
+import { STATE_EVENT } from "../src/events"
 
 const FILE = "app/views/page/panel.html.erb"
 

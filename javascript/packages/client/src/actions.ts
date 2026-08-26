@@ -1,7 +1,7 @@
 import { ElementObserver } from "./element-observer"
 
 import { DIRECT_EVENTS } from "./events"
-import { ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "./attributes"
+import { ACTION_ATTRIBUTES, ACTION_NAMES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "./attributes"
 
 import { report } from "./report"
 import { boundValue, coerceState } from "./values"
@@ -26,8 +26,6 @@ interface Instruction {
   event: string
   rest: string
 }
-
-export const ACTION_ATTRIBUTES = ACTION_NAMES.map((name) => HERB_ATTRIBUTES[name])
 
 export class SlotActions implements ElementObserverDelegate {
   readonly #state: SlotState

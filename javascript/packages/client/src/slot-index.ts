@@ -19,6 +19,7 @@
  */
 
 import { ITEM_STATICS } from "./markers"
+import { SLOT_EVENT } from "./events"
 
 import { Statics } from "./statics"
 import { Manifests } from "./manifests"
@@ -37,7 +38,6 @@ import type { ElementObserverDelegate } from "./element-observer"
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
 import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotIndexDelegate, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
-export const SLOT_EVENT = "herb:slot-update"
 
 const MAX_JOURNAL = 50
 const NUMERIC_NAME = /^\d+$/

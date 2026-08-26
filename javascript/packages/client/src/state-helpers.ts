@@ -1,6 +1,7 @@
 import { literal } from "./conditions"
 
-import { REGION_SCOPES, ITEM_SCOPES } from "./state.js"
+export const REGION_SCOPES = new WeakMap<Region, StateScope>()
+export const ITEM_SCOPES = new WeakMap<Item, StateScope>()
 
 import type { DiagnosticSpot } from "./report"
 import type { Item, Region } from "./types"

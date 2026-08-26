@@ -1,5 +1,7 @@
 export * from "./actions"
 export * from "./attributes"
+export * from "./bindings"
+export * from "./events"
 export * from "./element-observer"
 export * from "./mutations"
 export * from "./report"

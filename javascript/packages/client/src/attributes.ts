@@ -33,3 +33,6 @@ export const ACTION_SCHEMA = {
 
 export const ACTION_NAMES = Object.keys(ACTION_SCHEMA) as ActionName[]
 export const ACTION_SELECTOR = ACTION_NAMES.map((name) => `[${HERB_ATTRIBUTES[name]}]`).join(", ")
+export const ACTION_ATTRIBUTES = ACTION_NAMES.map((name) => HERB_ATTRIBUTES[name])
+export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
+export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`

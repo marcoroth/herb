@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest"
 
-import { armOf, matches, mentions, names } from "../src/conditions"
+import { armOf, matches, mentions, statesIn } from "../src/conditions"
 
 import type { ConditionalArm, StateCondition, ConditionValue } from "../src/conditions"
 
@@ -46,7 +46,7 @@ describe("a condition the compiler wrote", () => {
   })
 
   test("says which states it reads", () => {
-    expect(names(["attempts", { state: "limit" }, ">"])).toEqual(["attempts", "limit"])
+    expect(statesIn(["attempts", { state: "limit" }, ">"])).toEqual(["attempts", "limit"])
     expect(mentions(["attempts", { state: "limit" }, ">"], ["limit"])).toBe(true)
     expect(mentions(["attempts", { value: 3 }, ">"], ["limit"])).toBe(false)
     expect(mentions({ any: [["failed", null], ["pending", null]] }, ["pending"])).toBe(true)
