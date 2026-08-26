@@ -669,7 +669,7 @@ the page they would otherwise be read from is behind it.
 | --- | --- | --- |
 | `herb_version` | string | The Herb that compiled the page. |
 | `error_class` | string | The error that produced it, when a failure did. |
-| `visitors` | array of strings | The visitors on the stack, in the order they ran. |
+| `visitors` | array of strings | The visitors on the stack, in the order they ran, each as it describes itself. |
 | `parser_options` | object | The options the parser was given, values stringified. |
 
 Only these keys are read. An unrecognized one is dropped rather than printed, so a newer producer
@@ -731,7 +731,10 @@ page carries. The diagnostics in it ask for a [blocking overlay](#overlay), so t
 screen as soon as it starts.
 
 It reports which Herb compiled the page, which visitors were on the stack when it failed, and the
-parser options the parse was given. All three come off the error itself, so they describe the compile
+parser options the parse was given. A visitor is printed the way it describes itself rather than by
+class name, so a validator says whether it was fatal, which is half of why a compile ended where it
+did. A visitor that describes itself at length is cut short, so one that defines no `inspect` of its
+own cannot put an object's whole state on the screen. All three come off the error itself, so they describe the compile
 that actually happened rather than the configuration the app holds, which can differ. The parser
 options in particular are the ones left after every visitor has had its say about them. They are
 printed on the static page and again at the foot of the overlay.

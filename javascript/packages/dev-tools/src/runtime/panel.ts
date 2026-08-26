@@ -1364,9 +1364,9 @@ export class RuntimePanel {
     }
 
     if (visitors !== undefined && visitors.length > 0) {
-      const names = visitors.map(visitor => `<code>${escapeHTML(visitor)}</code>`).join(', ')
+      const names = visitors.map(visitor => `<code>${escapeHTML(visitor)}</code>`).join(' ')
 
-      parts.push(`<span>Visitors: ${names}</span>`)
+      parts.push(`<span class="herb-dev-tools-provenance-list">Visitors: ${names}</span>`)
     }
 
     if (parts.length === 0) {

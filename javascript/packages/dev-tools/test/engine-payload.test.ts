@@ -151,8 +151,8 @@ describe("what the error page says about the run", () => {
     expect(report.meta.herb_version).toMatch(/^\d+\.\d+\.\d+/)
     expect(report.meta.error_class).toBe("Herb::Engine::ParseError")
     expect(report.meta.visitors).toEqual([
-      "Herb::Engine::Validators::SecurityValidator",
-      "Herb::Engine::Validators::NestingValidator",
+      "#<Herb::Engine::Validators::SecurityValidator fatal=true>",
+      "#<Herb::Engine::Validators::NestingValidator fatal=true>",
     ])
   })
 
@@ -198,7 +198,7 @@ describe("what the error page says about the run", () => {
 
     expect(footer).not.toBeNull()
     expect(footer.textContent).toContain("Compiled by Herb")
-    expect(footer.textContent).toContain("Herb::Engine::Validators::NestingValidator")
+    expect(footer.textContent).toContain("NestingValidator fatal=true")
   })
 
   test("says nothing about a run it was told nothing about", () => {

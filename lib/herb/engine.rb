@@ -17,6 +17,10 @@ require_relative "engine/parse_error"
 
 module Herb
   class Engine
+    # How much of a visitor's own `inspect` the error page will carry, so a visitor that defines none
+    # cannot put an object's whole state on the screen.
+    VISITOR_DESCRIPTION_LIMIT = 200 #: Integer
+
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -393,14 +397,22 @@ module Herb
         },
         source: input,
         filename: relative_file_path,
-        visitors: visitor_names,
+        visitors: visitor_descriptions,
         parser_options: @parser_options
       )
     end
 
+    # Every visitor in the engine defines its own `inspect`, and those say more than a class name
+    # does. A validator reports whether it was fatal, which is half of why a compile ended where it
+    # did. A visitor that defines none falls back to Ruby's, so the result is capped rather than
+    # letting an object's whole state onto the page.
     #: () -> Array[String]
-    def visitor_names
-      @visitors.map { |visitor| visitor.class.name.to_s }
+    def visitor_descriptions
+      @visitors.map { |visitor|
+        described = visitor.inspect
+
+        described.length > VISITOR_DESCRIPTION_LIMIT ? "#{described[0, VISITOR_DESCRIPTION_LIMIT]}…" : described
+      }
     end
 
     #: (String) -> void

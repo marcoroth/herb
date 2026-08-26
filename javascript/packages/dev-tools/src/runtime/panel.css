@@ -631,7 +631,15 @@
   font-size: 11.5px;
 }
 
+.herb-dev-tools-provenance-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
 .herb-dev-tools-provenance code {
+  white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
 }
