@@ -452,9 +452,9 @@ module Herb
 
           document_node.children.push(
             erb_code_node("unless #{ref}"),
-            text_node(@markers.manifest_open(identifier, version)),
-            text_node(json),
-            text_node(@markers.manifest_close),
+            text_node(@markers.manifests_open),
+            text_node("{#{JSON.generate(key)}:#{json}}"),
+            text_node(@markers.manifests_close),
             erb_code_node("#{ref} = true"),
             erb_code_node("end")
           )

@@ -52,7 +52,7 @@ module Engine
       test "writes the manifest beside the region when asked to inline it" do
         rendered = view(compile(deliver: :inline)).render(1)
 
-        assert_includes rendered, %(<template data-herb-manifest="app/views/posts/_card.html.erb:)
+        assert_includes rendered, %(<template data-herb-manifests>)
         assert_equal 1, rendered.scan("data-herb-manifest").size
       end
 
@@ -64,11 +64,13 @@ module Engine
         assert_equal 1, rendered.scan("data-herb-manifest").size
       end
 
-      test "what it inlines is the manifest, as JSON" do
+      test "what it inlines is the same shape a whole response carries" do
         rendered = view(compile(deliver: :inline)).render(1)
-        json = rendered[%r{<template data-herb-manifest="[^"]+">(.*?)</template>}m, 1]
+        json = rendered[%r{<template data-herb-manifests>(.*?)</template>}m, 1]
+        held = JSON.parse(json)
 
-        assert_equal ["file", "identifier", "version", "slots", "names", "parts", "states"], JSON.parse(json).keys
+        assert_equal 1, held.size
+        assert_equal ["file", "identifier", "version", "slots", "names", "parts", "states"], held.values.fetch(0).keys
       end
 
       test "records the manifest once for a partial rendered many times when it is hoisted" do
@@ -122,6 +124,28 @@ module Engine
         session = Herb::Engine::Report::Session.capture { view(source).render(2) }
 
         assert_equal 1, session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }.manifests.size
+      end
+
+      test "inlining writes one container per template, each holding its own manifest" do
+        page = view(compile(deliver: :inline))
+        partial = view(compile(deliver: :inline, filename: "app/views/posts/_row.html.erb"))
+        rendered = page.render(1) + partial.render(2)
+        containers = rendered.scan(%r{<template data-herb-manifests>(.*?)</template>}m).flatten
+
+        assert_equal 2, containers.size
+        assert_equal([1, 1], containers.map { |json| JSON.parse(json).size })
+        assert_equal(
+          ["app/views/posts/_card.html.erb", "app/views/posts/_row.html.erb"],
+          containers.flat_map { |json| JSON.parse(json).values.map { |manifest| manifest["file"] } }.sort
+        )
+      end
+
+      test "both deliveries carry the same shape, so a page reads them the same way" do
+        inline = view(compile(deliver: :inline)).render(1)
+        inlined = JSON.parse(inline[%r{<template data-herb-manifests>(.*?)</template>}m, 1])
+        hoisted = JSON.parse(channel_after(1, compile(deliver: :hoist)).to_html[%r{data-count="\d+">(\{.*\})</template>}m, 1])
+
+        assert_equal inlined, hoisted
       end
 
       test "an empty channel renders nothing, so a page that says nothing carries nothing" do

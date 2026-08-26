@@ -12,6 +12,27 @@ export const REGION_SCOPES = new WeakMap<Region, StateScope>()
 export const ITEM_SCOPES = new WeakMap<Item, StateScope>()
 export const VALUE_ELEMENTS = ["input", "textarea", "select"]
 
+const BINDABLE_ELEMENTS = ["input", "textarea", "select", "option"]
+const BINDABLE_ATTRIBUTES = ["value", "checked", "selected"]
+
+export function bindable(slot: Slot): boolean {
+  if (slot.type === "attribute_interpolation") {
+    return false
+  }
+
+  const element = elementOf(slot.anchor)
+
+  if (!element) {
+    return false
+  }
+
+  if (slot.attribute) {
+    return BINDABLE_ATTRIBUTES.includes(slot.attribute) && BINDABLE_ELEMENTS.includes(element.localName)
+  }
+
+  return element.localName === "textarea"
+}
+
 export const STATE_EVENT = "herb:state-change"
 export const DEPENDENCIES_ATTRIBUTE = HERB_ATTRIBUTES.dependencies
 export const DEPENDENCIES_SELECTOR = `template[${DEPENDENCIES_ATTRIBUTE}]`
@@ -1200,10 +1221,16 @@ export class SlotState {
       return null
     }
 
-    for (const [name, indices] of Object.entries(manifest.bound ?? {})) {
+    const shipped = manifest.bound
+
+    for (const [name, indices] of Object.entries(shipped ?? manifest.reads ?? {})) {
       for (const index of indices) {
         for (const slot of this.#scopedSlots(scope, index)) {
           if (elementOf(slot.anchor) !== element) {
+            continue
+          }
+
+          if (!shipped && !bindable(slot)) {
             continue
           }
 

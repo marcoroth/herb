@@ -13,6 +13,7 @@ export const HERB_ATTRIBUTES = {
   name: "data-herb-name",
   region: "data-herb-region",
   dependencies: "data-herb-dependencies",
+  manifests: "data-herb-manifests",
   into: "data-herb-into",
   set: "data-herb-set",
   toggle: "data-herb-toggle",

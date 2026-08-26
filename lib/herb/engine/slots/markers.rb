@@ -107,13 +107,13 @@ module Herb
           "</template>"
         end
 
-        #: (String, String) -> String
-        def manifest_open(file, version)
-          %(<template data-herb-manifest="#{file}:#{version}">)
+        #: () -> String
+        def manifests_open
+          %(<template data-herb-manifests>)
         end
 
         #: () -> String
-        def manifest_close
+        def manifests_close
           "</template>"
         end
       end

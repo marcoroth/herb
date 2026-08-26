@@ -20,6 +20,7 @@
 
 import { ITEM_STATICS } from "./markers"
 
+import { Manifests } from "./manifests"
 import { Statics } from "./statics"
 
 import { anchorEntries, anchorKind, connected, currentHTML, currentText, elementOf, htmlOf, innerRange, markers, nameEntry, outerRange, rangeOf as rangeOfAnchor, withinBounds, withinRegion, withinRegionRange } from "./anchors"
@@ -30,7 +31,7 @@ import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } fro
 import { blankSlots, fillSlots, interpolateParts, templateNames, withoutMarkers } from "./fragments"
 
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
-import type { AddItemOptions, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
+import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
 export const SLOT_EVENT = "herb:slot-update"
 
@@ -52,6 +53,7 @@ export class SlotIndex {
   #recording: Inverse[] | null = null
   #nextToken = 1
   #statics = new Statics()
+  #manifests = new Manifests()
   #cause: BuildCause = "client"
   #built: Built | null = null
   #listeners = new Set<SlotListener>()
@@ -113,6 +115,7 @@ export class SlotIndex {
     }
 
     for (const root of list) {
+      this.#manifests.adopt(root)
       this.#statics.adopt(root)
     }
 
@@ -235,10 +238,10 @@ export class SlotIndex {
       return index
     }
 
-    const name = region.names.get(index)
+    const named = this.#manifests.nameOf(region.file, region.version, index) ?? region.names.get(index)
 
-    if (name !== undefined) {
-      return name
+    if (named !== undefined && named !== null) {
+      return named
     }
 
     const owner = item?.slots ?? region.slots
@@ -632,8 +635,12 @@ export class SlotIndex {
     return slot.anchor.end
   }
 
+  #partsFor(region: Region, index: number): AttributeParts | null {
+    return this.#manifests.partsOf(region.file, region.version, index) ?? this.#statics.parts(region.file, index)
+  }
+
   #partsResolver(slot: Slot): PartsResolver {
-    return (index) => this.#statics.parts(slot.region.file, index)
+    return (index) => this.#partsFor(slot.region, index)
   }
 
   #dropItem(slot: Slot, item: Item): void {
@@ -1092,7 +1099,7 @@ export class SlotIndex {
       return null
     }
 
-    return interpolateParts(this.#statics.parts(slot.region.file, slot.index), value)
+    return interpolateParts(this.#partsFor(slot.region, slot.index), value)
   }
 
   capture(slot: Slot): boolean {
@@ -1189,6 +1196,7 @@ export class SlotIndex {
     this.#regions = []
     this.#visited = new WeakSet()
     this.#statics.clear()
+    this.#manifests.clear()
   }
 
   get size(): number {
