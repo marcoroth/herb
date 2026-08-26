@@ -72,36 +72,6 @@
   },
   "dependencies": {
     "state": {},
-    "params": {},
-    "states": {
-      "app/views/contract/a-boolean-attribute-inside-a-block.html.erb": {
-        "version": "a207c872",
-        "declarations": [
-          {
-            "name": "sending",
-            "kind": "boolean",
-            "default": "false",
-            "derived": null,
-            "line": 1,
-            "column": 0,
-            "scope": "region",
-            "value": false
-          }
-        ],
-        "reads": {
-          "sending": [
-            1
-          ]
-        },
-        "bound": {},
-        "conditionals": {},
-        "presence": {
-          "1": [
-            "sending",
-            null
-          ]
-        }
-      }
-    }
+    "params": {}
   }
 }

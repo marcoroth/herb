@@ -74,22 +74,7 @@ module Herb
           {
             "state" => state,
             "params" => request_names(entry_point, state.keys, params),
-            "states" => declared_states(entry_point, reached),
           }
-        end
-
-        #: (String, Hash[String, untyped]) -> Hash[String, untyped]
-        def declared_states(entry_point, reached)
-          files = ([absolute(entry_point)] + reached.values.flatten.map { |slot| slot[:file] } + rendered_files(entry_point)).uniq
-          manifests = {} #: Hash[String, untyped]
-
-          files.each do |file|
-            manifest = template(file)[:states]
-
-            manifests[identifier_for(file)] = manifest if manifest
-          end
-
-          manifests
         end
 
         #: (String, ?params: Hash[String, String]) -> String
@@ -148,63 +133,7 @@ module Herb
             index[slot.index] = { state: state, mode: mode_for(slot, state, expressions, settable) }
           end
 
-          { version: visitor.version, identifier: visitor.identifier, slots: index, states: states_manifest(visitor) }
-        end
-
-        #: (untyped) -> Hash[String, untyped]?
-        def states_manifest(visitor)
-          return nil unless visitor.respond_to?(:states)
-
-          manifest = visitor.states.manifest
-
-          return nil unless manifest
-
-          {
-            "version" => manifest["version"],
-            "declarations" => manifest["declarations"],
-            "reads" => manifest["reads"],
-            "bound" => bound_states(visitor, manifest),
-            "conditionals" => manifest["conditionals"],
-            "presence" => manifest["presence"],
-          }
-        end
-
-        #: (untyped, Hash[String, untyped]) -> Hash[String, Array[Integer]]
-        def bound_states(visitor, manifest)
-          names = manifest["declarations"].map { |declaration| declaration["name"] }
-          bound = {} #: Hash[String, Array[Integer]]
-
-          visitor.slots.each do |slot|
-            next unless slot.valued?
-
-            name = slot.expression.to_s.strip.delete_suffix("?")
-
-            next unless names.include?(name)
-
-            (bound[name] ||= []) << slot.index if bound_slot?(slot)
-          end
-
-          visitor.state_presence.each do |index, read|
-            next unless read.is_a?(StateDirectives::Read)
-
-            (bound[read.name] ||= []) << index if read.comparand.nil? && read.against.nil? && bound_slot?(visitor.slots[index])
-          end
-
-          bound
-        end
-
-        #: (untyped) -> bool
-        def bound_slot?(slot)
-          return false unless slot.respond_to?(:tag)
-          return false if slot.type == :attribute_interpolation
-
-          tag = slot.tag.to_s
-
-          if slot.attribute
-            ["value", "checked", "selected"].include?(slot.attribute) && ["input", "textarea", "select", "option"].include?(tag)
-          else
-            tag == "textarea"
-          end
+          { version: visitor.version, identifier: visitor.identifier, slots: index }
         end
 
         #: (untyped, ?Array[Hash[Symbol, untyped]], ?per_item: bool) -> Array[Hash[Symbol, untyped]]
@@ -259,39 +188,6 @@ module Herb
           }
 
           defaults.reject { |_, name| declared.value?(name) }.merge(declared)
-        end
-
-        #: (String) -> Array[String]
-        def rendered_files(entry_point)
-          partials = partial_paths
-          seen = [absolute(entry_point)]
-          queue = seen.dup
-
-          until queue.empty?
-            file = queue.shift
-
-            @dependencies.analyze(file).render_calls.each do |call|
-              next unless call[:partial]
-
-              name = File.basename(call[:partial].to_s)
-
-              (partials[name] || []).each do |candidate|
-                next if seen.include?(candidate)
-
-                seen << candidate
-                queue << candidate
-              end
-            end
-          end
-
-          seen
-        end
-
-        #: () -> Hash[String, Array[String]]
-        def partial_paths
-          @partial_paths ||= Dir.glob(@project_path.join("app/views/**/_*.erb").to_s).group_by { |path|
-            File.basename(path).delete_prefix("_").split(".").first.to_s
-          }
         end
 
         #: (String) -> String

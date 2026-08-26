@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "state": {},
-    "params": {},
-    "states": {}
+    "params": {}
   }
 }

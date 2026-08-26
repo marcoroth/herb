@@ -47,7 +47,6 @@
     },
     "params": {
       "muted": "@muted"
-    },
-    "states": {}
+    }
   }
 }

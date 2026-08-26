@@ -37,6 +37,14 @@ module Engine
         path
       end
 
+      def states_of(path)
+        visitor = Herb::Engine::Slots::Visitor.new(mark: false)
+
+        Herb::Engine.new(File.read(path), visitors: [visitor], filename: path, project_path: @project_path)
+
+        visitor.manifest["states"]
+      end
+
       def subject
         Herb::Engine::Slots::Dependencies.new(@project_path)
       end
@@ -470,7 +478,7 @@ module Engine
           <video muted="<%= sending %>"></video>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [["draft", { "value" => "" }], ["sending", nil]], manifest["presence"].values
         assert_equal manifest["presence"].keys.map(&:to_i).sort, (manifest["reads"]["draft"] + manifest["reads"]["sending"]).sort - manifest["reads"]["draft"].take(1)
@@ -483,7 +491,7 @@ module Engine
           <div><% if pending? && failed? %>Stuck<% else %>Fine<% end %></div>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [{ "any" => [["pending", nil], ["failed", nil]] }], manifest["presence"].values
 
@@ -503,7 +511,7 @@ module Engine
           <div><% if busy %>Busy<% else %>Idle<% end %></div>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
         declaration = manifest["declarations"].find { |declared| declared["name"] == "busy" }
 
         assert_equal "boolean", declaration["kind"].to_s
@@ -524,26 +532,24 @@ module Engine
           <p><%= pending_count %></p>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
         declaration = manifest["declarations"].find { |declared| declared["name"] == "pending_count" }
 
         assert_equal({ "collection" => 0, "when" => ["pending", nil], "by" => 1 }, declaration["count"])
         assert_includes manifest["reads"]["pending_count"], 3
       end
 
-      test "binds a tag helper input that reads a state" do
+      test "reaches a state read through a tag helper's attributes" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (draft: "", agreed: false) %>
           <%= tag.input value: draft %>
           <%= tag.input type: "checkbox", checked: agreed %>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [0], manifest["reads"]["draft"]
-        assert_equal [0], manifest["bound"]["draft"]
         assert_equal [["agreed", nil]], manifest["presence"].values
-        assert_equal [1], manifest["bound"]["agreed"]
       end
 
       test "carries the states a template declares" do
@@ -554,8 +560,8 @@ module Engine
           <span><% if pending? %>wait<% else %>done<% end %></span>
         ERB
 
-        payload = subject.payload(path)
-        manifest = payload["states"].values.first
+        subject.payload(path)
+        manifest = states_of(path)
 
         names = manifest["declarations"].map { |declaration| declaration["name"] }
 
@@ -570,7 +576,7 @@ module Engine
         assert_equal subject.version_for(path), manifest["version"]
       end
 
-      test "marks a state read into a form control as bound" do
+      test "records every slot a state is read into, and says nothing about which take typing" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (draft: "", agreed: false) %>
           <input value="<%= draft %>">
@@ -578,36 +584,38 @@ module Engine
           <p><%= draft %></p>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal 2, manifest["reads"]["draft"].size
-        assert_equal 1, manifest["bound"]["draft"].size
-        assert_equal 1, manifest["bound"]["agreed"].size
-        refute_includes manifest["bound"]["draft"], manifest["reads"]["draft"].last
+        assert_equal 1, manifest["reads"]["agreed"].size
+        refute manifest.key?("bound"), "a page decides that from the element a slot sits on"
       end
 
       test "counts a state read in an interpolated attribute" do
         path = write("index.html.erb", %(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [0], manifest["reads"]["status"]
-        assert_empty manifest["bound"]
       end
 
-      test "carries the states of a partial no server state reaches" do
-        write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
-        path = write("index.html.erb", %(<div><%= render "menu" %></div>))
+      test "a partial carries the states it declares, whether or not the page reaches them" do
+        partial = write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
+        write("index.html.erb", %(<div><%= render "menu" %></div>))
 
-        manifests = subject.payload(path)["states"]
-
-        assert_equal(["open"], manifests.values.compact.flat_map { |manifest| manifest["declarations"].map { |declaration| declaration["name"] } })
+        assert_equal(["open"], states_of(partial)["declarations"].map { |declaration| declaration["name"] })
       end
 
-      test "carries no states section entry for a template that declares none" do
+      test "a template that declares none says nothing about states" do
         path = write("index.html.erb", "<div><%= @query %></div>")
 
-        assert_empty subject.payload(path)["states"]
+        assert_nil states_of(path)
+      end
+
+      test "the map a page is driven by no longer carries what each template declares" do
+        path = write("index.html.erb", %(<%# herb:state (open: false) %><div><%= @query %></div>))
+
+        refute subject.payload(path).key?("states"), "a template's states travel in its own manifest"
       end
 
       test "hands the map to the response rather than writing it into the body" do

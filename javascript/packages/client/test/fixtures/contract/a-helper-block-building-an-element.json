@@ -63,7 +63,6 @@
     "params": {
       "after": "@after",
       "n": "@n"
-    },
-    "states": {}
+    }
   }
 }

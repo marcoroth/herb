@@ -140,61 +140,6 @@
     },
     "params": {
       "items": "@items"
-    },
-    "states": {
-      "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb": {
-        "version": "ba888992",
-        "declarations": [
-          {
-            "name": "filter",
-            "kind": "string",
-            "default": "\"all\"",
-            "derived": null,
-            "line": 1,
-            "column": 0,
-            "scope": "region",
-            "value": "all"
-          },
-          {
-            "name": "starred",
-            "kind": "boolean",
-            "default": "false",
-            "derived": null,
-            "line": 1,
-            "column": 78,
-            "scope": 0,
-            "value": false
-          }
-        ],
-        "reads": {
-          "filter": [
-            2
-          ],
-          "starred": [
-            2
-          ]
-        },
-        "bound": {},
-        "conditionals": {},
-        "presence": {
-          "2": {
-            "all": [
-              [
-                "filter",
-                {
-                  "value": "starred"
-                }
-              ],
-              [
-                "starred",
-                {
-                  "value": false
-                }
-              ]
-            ]
-          }
-        }
-      }
     }
   }
 }

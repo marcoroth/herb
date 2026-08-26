@@ -91,7 +91,6 @@
     "params": {
       "items": "@items",
       "on": "@on"
-    },
-    "states": {}
+    }
   }
 }
