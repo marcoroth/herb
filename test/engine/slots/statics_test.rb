@@ -97,38 +97,32 @@ module Engine
       end
 
       test "parks nothing when a conditional has no branch left to send" do
-        output = render("<div><% if @a %>x<% end %></div>", { "@a" => true })
-
-        refute_includes output, "<template"
+        assert_evaluated_snapshot("<div><% if @a %>x<% end %></div>", { "@a" => true }, options)
       end
 
       test "parks nothing when a collection covered every branch between its items" do
         template = "<ul><% @items.each do |i| %><li><% if i.odd? %>odd<% else %>even<% end %></li><% end %></ul>"
 
-        refute_includes render(template, { "@items" => [1, 2] }), "<template"
-        assert_equal "<!--herb-branch:1:1-->even", parked(template, { "@items" => [1, 3] })
+        assert_evaluated_snapshot(template, { "@items" => [1, 2] }, options)
+        assert_evaluated_snapshot(template, { "@items" => [1, 3] }, options)
       end
 
       test "parks a keyed collection's item template only when no row rendered" do
         template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
 
-        refute_includes render(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
-        assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
+        assert_evaluated_snapshot(template, { "@items" => ["a", "b"] }, options)
       end
 
-      test "parks the item template with its values blanked" do
-        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
-        markup = parked(template, { "@items" => [] })
-
-        assert_includes markup, %(<li id="")
-        refute_includes markup, ">a<"
-        refute_includes markup, ">b<"
+      test "parks the item template, with its values blanked, when the collection rendered nothing" do
+        assert_evaluated_snapshot(
+          %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>),
+          { "@items" => [] },
+          options
+        )
       end
 
       test "parks no item template for an unkeyed collection, which has no addressable items" do
-        template = "<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>"
-
-        refute_includes render(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+        assert_evaluated_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", { "@items" => ["a", "b"] }, options)
       end
 
       test "parks the branches of one conditional and not of another" do
@@ -138,9 +132,7 @@ module Engine
       end
 
       test "keeps what it counts to itself" do
-        output = render("<div><% if @a %>x<% end %></div>", { "@a" => true })
-
-        refute_includes output, "@_herb_covered"
+        assert_compiled_snapshot("<div><% if @a %>x<% end %></div>", options)
       end
 
       test "parks a branch once for a partial rendered many times in one response" do
@@ -164,9 +156,8 @@ module Engine
           filename: "app/views/test.html.erb"
         ).src
 
-        refute_includes compiled, "@_herb_covered"
-        refute_includes compiled, "<template"
-        assert_includes evaluate_herb_source(compiled, { "@a" => false }), "herb-slot:0:conditional"
+        assert_snapshot_matches(compiled, "compiled in server mode")
+        assert_snapshot_matches(evaluate_herb_source(compiled, { "@a" => false }), "rendered in server mode")
       end
 
       test "parks nothing for an interpolated attribute, whose stretches the manifest carries" do
@@ -194,9 +185,7 @@ module Engine
       end
 
       test "parks no segments for an attribute holding more than outputs" do
-        rendered = render(%(<div class="x<% if @a %>y<% end %>z">c</div>), { "@a" => true })
-
-        refute_includes rendered, ":parts-->"
+        assert_evaluated_snapshot(%(<div class="x<% if @a %>y<% end %>z">c</div>), { "@a" => true }, options)
       end
 
       test "parks nothing at all unless the mode asks for it" do
@@ -206,7 +195,7 @@ module Engine
           filename: "app/views/test.html.erb"
         ).src
 
-        refute_includes evaluate_herb_source(source, { "@a" => false }), "<template"
+        assert_snapshot_matches(evaluate_herb_source(source, { "@a" => false }), "rendered with no delivery asked for")
       end
     end
   end

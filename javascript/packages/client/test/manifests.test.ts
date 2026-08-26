@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach } from "vitest"
 
 import { SlotIndex } from "../src/slot-index"
 import { SlotState } from "../src/state"
+import { HerbRuntime } from "../src/runtime"
 
 const FILE = "app/views/t.html.erb"
 const VERSION = "9dac1733"
@@ -244,5 +245,40 @@ describe("the states a template declares, from its own manifest", () => {
     state.setState({ open: true }, { scope: { region, item: null } })
 
     expect(document.querySelector("div")!.textContent).toContain("open")
+  })
+})
+
+describe("manifests a project extracted ahead of rendering", () => {
+  test("answer the same way as ones a response carried", () => {
+    const host = mount(PAGE)
+
+    expect(index.slot(FILE, "rows")).toBeNull()
+
+    index.adoptManifests({ [`${FILE}:${VERSION}`]: MANIFEST as never })
+
+    expect(index.slot(FILE, "rows")?.index).toBe(2)
+    expect(host.querySelector("template[data-herb-manifests]")).toBeNull()
+  })
+
+  test("are held for a page that carries none of its own", () => {
+    const runtime = HerbRuntime.start({
+      state: { persist: "none" },
+      manifests: { [`${FILE}:${VERSION}`]: MANIFEST as never },
+    })
+
+    document.body.innerHTML = PAGE
+    runtime.slots.scan(document.body)
+
+    expect(runtime.slots.slot(FILE, "rows")?.index).toBe(2)
+
+    runtime.stop()
+  })
+
+  test("do not override what a page already said about the same version", () => {
+    mount(PAGE + INLINE)
+
+    index.adoptManifests({ [`${FILE}:${VERSION}`]: { ...MANIFEST, names: { rows: 99 } } as never })
+
+    expect(index.slot(FILE, "rows")?.index).toBe(2)
   })
 })

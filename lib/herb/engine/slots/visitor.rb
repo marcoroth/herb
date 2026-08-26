@@ -289,6 +289,7 @@ module Herb
           parts = [self.class.name, @mode.to_s] #: Array[String]
 
           parts << "#{@identify} ids" unless @identify == :path
+          parts << "deliver=#{@deliver}" unless @deliver == :hoist
 
           "#<#{parts.join(" ")}>"
         end

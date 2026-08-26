@@ -69,37 +69,7 @@ module Engine
         reached = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).across(entry)["@name"]
         files = reached.map { |slot| File.basename(slot[:file]) }.uniq
 
-        assert_includes files, "index.html.erb"
-        refute_includes files, "_plain.html.erb"
-      end
-
-      test "says nothing at all when the host compiles no slots anywhere" do
-        entry = write("index.html.erb", "<div><%= @name %></div>")
-
-        subject = Herb::Engine::Slots::Dependencies.new(@project_path, compile: ->(_source, _file) {})
-
-        assert_empty subject.across(entry)
-        assert_empty subject.slots_for(entry)
-        assert_nil subject.version_for(entry)
-      end
-
-      test "leaves out a template the host does not compile slots for" do
-        write("_plain.html.erb", "<div><%= card %></div>")
-        entry = write("index.html.erb", %(<div><%= @name %></div><%= render "posts/plain", card: @name %>))
-
-        compile = lambda { |source, file|
-          next nil if File.basename(file).start_with?("_")
-
-          visitor = Herb::Engine::Slots::Visitor.new(mark: false)
-          Herb::Engine.new(source, visitors: [visitor], filename: file)
-          visitor
-        }
-
-        reached = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).across(entry)["@name"]
-        files = reached.map { |slot| File.basename(slot[:file]) }.uniq
-
-        assert_includes files, "index.html.erb"
-        refute_includes files, "_plain.html.erb"
+        assert_equal ["index.html.erb"], files
       end
 
       test "says nothing at all when the host compiles no slots anywhere" do
@@ -250,8 +220,12 @@ module Engine
 
         reached = subject.across(entry)["@query"].map { |slot| [File.basename(slot[:file]), slot[:index], slot[:mode]] }
 
-        assert_includes reached, ["_search.html.erb", 0, :identity]
-        assert_includes reached, ["_search.html.erb", 1, :derived]
+        assert_equal [
+          ["index.html.erb", 0, :identity],
+          ["index.html.erb", 1, :derived],
+          ["_search.html.erb", 0, :identity],
+          ["_search.html.erb", 1, :derived]
+        ], reached
       end
 
       test "keys what it reaches by the name the page knows, not the partial's" do
@@ -259,8 +233,7 @@ module Engine
 
         across = subject.across(entry)
 
-        assert_includes across.keys, "@query"
-        refute_includes across.keys, "term"
+        assert_equal ["@query"], across.keys
       end
 
       test "gives every slot the version of the template it came from" do
@@ -305,8 +278,7 @@ module Engine
 
         files = subject.payload(entry)["state"]["@query"].map { |slot| slot["file"] }.uniq
 
-        assert_includes files, "app/views/posts/index.html.erb"
-        assert_includes files, "app/views/posts/_search.html.erb"
+        assert_equal ["app/views/posts/index.html.erb", "app/views/posts/_search.html.erb"], files
       end
 
       test "sends only the slots a page may write itself" do
@@ -365,7 +337,7 @@ module Engine
 
         files = subject.across(entry)["@posts"].map { |slot| File.basename(slot[:file]) }
 
-        assert_includes files, "_card.html.erb"
+        assert_equal ["index.html.erb", "index.html.erb", "_card.html.erb"], files
       end
 
       test "leaves an item template reached through an each block to the server" do
@@ -497,8 +469,7 @@ module Engine
 
         index = manifest["presence"].keys.first.to_i
 
-        assert_includes manifest["reads"]["pending"], index
-        assert_includes manifest["reads"]["failed"], index
+        assert_equal({ "pending" => [index], "failed" => [index] }, manifest["reads"])
 
         conditional = manifest["conditionals"].values.first
 
@@ -536,7 +507,7 @@ module Engine
         declaration = manifest["declarations"].find { |declared| declared["name"] == "pending_count" }
 
         assert_equal({ "collection" => 0, "when" => ["pending", nil], "by" => 1 }, declaration["count"])
-        assert_includes manifest["reads"]["pending_count"], 3
+        assert_equal({ "pending_count" => [3] }, manifest["reads"])
       end
 
       test "reaches a state read through a tag helper's attributes" do

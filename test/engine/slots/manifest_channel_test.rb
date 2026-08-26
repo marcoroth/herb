@@ -3,6 +3,7 @@
 require "json"
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slots/visitor"
 require_relative "../../../lib/herb/engine/report/session"
@@ -10,7 +11,13 @@ require_relative "../../../lib/herb/engine/report/session"
 module Engine
   module Slots
     class ManifestChannelTest < Minitest::Spec
+      include SnapshotUtils
+
       TEMPLATE = %(<li data-herb-name="row" id="row-<%= @n %>-x"><%= @n %></li>) #: String
+
+      def options(deliver:, filename: "app/views/posts/_card.html.erb")
+        { visitors: [Herb::Engine::Slots::Visitor.new(mode: :client, deliver: deliver)], filename: filename }
+      end
 
       def compile(deliver:, source: TEMPLATE, filename: "app/views/posts/_card.html.erb")
         visitor = Herb::Engine::Slots::Visitor.new(mode: :client, deliver: deliver)
@@ -37,10 +44,7 @@ module Engine
       end
 
       test "writes nothing at all unless a delivery asks for it" do
-        compiled = compile(deliver: :none)
-
-        refute_includes compiled, "data-herb-manifest"
-        refute_includes compiled, "SlotManifest::Channel"
+        assert_compiled_snapshot(TEMPLATE, options(deliver: :none))
       end
 
       test "refuses a delivery it does not have" do
@@ -50,10 +54,7 @@ module Engine
       end
 
       test "writes the manifest beside the region when asked to inline it" do
-        rendered = view(compile(deliver: :inline)).render(1)
-
-        assert_includes rendered, %(<template data-herb-manifests>)
-        assert_equal 1, rendered.scan("data-herb-manifest").size
+        assert_evaluated_snapshot(TEMPLATE, { "@n" => 1 }, options(deliver: :inline))
       end
 
       test "inlines the manifest once for a partial rendered many times in one response" do
@@ -81,16 +82,14 @@ module Engine
       end
 
       test "a hoisted page carries no manifest markup of its own" do
-        rendered = view(compile(deliver: :hoist)).render(1)
-
-        refute_includes rendered, "data-herb-manifest"
+        assert_evaluated_snapshot(TEMPLATE, { "@n" => 1 }, options(deliver: :hoist))
       end
 
       test "the channel anchors where a page ends, and says how many it carries" do
         channel = channel_after(1, compile(deliver: :hoist))
 
         assert_equal :body, channel.anchor
-        assert_includes channel.to_html, %(<template data-herb-manifests data-count="1">)
+        assert_snapshot_matches(channel.to_html, "the container a response carries")
       end
 
       test "what the channel renders is one JSON object keyed by template and version" do
@@ -149,15 +148,11 @@ module Engine
       end
 
       test "a template with nothing of its own to say records nothing" do
-        compiled = compile(deliver: :hoist, source: %(<p><%= @n %></p>))
-
-        refute_includes compiled, "Manifest::Channel"
+        assert_compiled_snapshot(%(<p><%= @n %></p>), options(deliver: :hoist))
       end
 
       test "and inlines nothing either" do
-        compiled = compile(deliver: :inline, source: %(<p><%= @n %></p>))
-
-        refute_includes compiled, "data-herb-manifests"
+        assert_compiled_snapshot(%(<p><%= @n %></p>), options(deliver: :inline))
       end
 
       test "an empty channel renders nothing, so a page that says nothing carries nothing" do

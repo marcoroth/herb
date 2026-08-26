@@ -63,6 +63,18 @@ export class Manifests {
     return taken
   }
 
+  hold(manifests: Record<string, TemplateManifest>): number {
+    let taken = 0
+
+    for (const [identity, manifest] of Object.entries(manifests)) {
+      if (this.#keep(identity, manifest)) {
+        taken += 1
+      }
+    }
+
+    return taken
+  }
+
   get(file: string, version: string): TemplateManifest | null {
     return this.#held.get(`${file}:${version}`) ?? null
   }

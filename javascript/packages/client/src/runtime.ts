@@ -6,6 +6,7 @@ import { SlotMutations } from "./mutations"
 import { SlotState } from "./state"
 
 import type { MutationsOptions } from "./mutations"
+import type { TemplateManifest } from "./manifests"
 import type { StateOptions } from "./state"
 
 const CONSTRUCT = Symbol("HerbRuntime.start")
@@ -15,6 +16,7 @@ let instance: HerbRuntime | null = null
 export interface RuntimeOptions {
   state?: StateOptions
   mutations?: MutationsOptions
+  manifests?: Record<string, TemplateManifest>
 }
 
 export class HerbRuntime {
@@ -38,11 +40,16 @@ export class HerbRuntime {
 
   static start(options: RuntimeOptions = {}): HerbRuntime {
     const existing = HerbRuntime.get()
+
     if (existing) {
       return existing
     }
 
     const runtime = new HerbRuntime(CONSTRUCT, options)
+
+    if (options.manifests) {
+      runtime.slots.adoptManifests(options.manifests)
+    }
 
     runtime.slots.observe()
     runtime.state.adopt()

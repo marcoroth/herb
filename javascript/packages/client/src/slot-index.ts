@@ -31,6 +31,7 @@ import { branchKey, itemMarker, itemStaticsKey, numericBranch, parseMarker } fro
 import { attributeNames, blankSlots, fillSlots, interpolateParts, withoutMarkers } from "./fragments"
 
 import type { StateManifest } from "./state"
+import type { TemplateManifest } from "./manifests"
 import type { BranchMarker, ItemCloseMarker, ItemOpenMarker, MarkerData, RegionCloseMarker, RegionOpenMarker, SeedsMarker, SlotCloseMarker, SlotOpenMarker } from "./markers"
 import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotListener, ApplyOptions, ApplyReport, Inverse, Item, ItemMap, ItemPlan, ItemStep, ItemValues, ParseState, PartsResolver, Payload, Placement, Region, RegionRange, ScanContext, RenderMode, Restore, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, TransactionResult } from "./types"
 
@@ -254,6 +255,10 @@ export class SlotIndex {
     }
 
     return null
+  }
+
+  adoptManifests(manifests: Record<string, TemplateManifest>): number {
+    return this.#manifests.hold(manifests)
   }
 
   statesFor(file: string, version: string): StateManifest | null {
