@@ -579,4 +579,70 @@ describe("@herb-tools/formatter", () => {
       expectFormattedToMatch(result, { passes: 2 })
     })
   })
+
+  describe("Ruby block comments (=begin/=end)", () => {
+    test("keeps `=begin`/`=end` delimiters anchored to column 0", () => {
+      const source = dedent`
+        <%
+        =begin %>
+        commented out
+        <%
+        =end %>
+        <div>Content</div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        <%
+        =begin
+        %>
+        commented out
+        <%
+        =end
+        %>
+        <div>Content</div>
+      `)
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+
+    test("does not collapse a block comment onto a single line", () => {
+      const source = dedent`
+        <%
+        =begin %>
+        <span class="x">x</span>
+        <%
+        =end %>
+      `
+
+      const result = formatter.format(source)
+
+      // Ruby only recognizes `=begin`/`=end` as block-comment delimiters when
+      // they sit in column 0, so they must never be merged inline (which would
+      // produce `<% =begin %>`) nor indented.
+      expect(result).not.toContain("<% =begin %>")
+      expect(result).not.toContain("<% =end %>")
+
+      for (const line of result.split("\n")) {
+        if (/=(begin|end)\b/.test(line)) {
+          expect(line).toMatch(/^=(begin|end)\b/)
+        }
+      }
+
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+    })
+
+    test("an already-expanded block comment is a fixed point", () => {
+      expectFormattedToMatch(dedent`
+        <%
+        =begin
+        %>
+        commented out
+        <%
+        =end
+        %>
+      `, { passes: 2 })
+    })
+  })
 })

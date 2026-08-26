@@ -8,6 +8,7 @@ import {
   isInlineElement,
   isLineBreakingElement,
   isMultilineERBComment,
+  isERBBlockCommentDelimiter,
 } from "./format-helpers.js"
 
 import {
@@ -93,7 +94,7 @@ export class TextFlowAnalyzer {
         }
 
         lastProcessedIndex = i
-      } else if (isMultilineERBComment(child)) {
+      } else if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) {
         result.push({
           unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
           node: child
