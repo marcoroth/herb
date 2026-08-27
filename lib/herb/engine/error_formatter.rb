@@ -20,7 +20,8 @@ module Herb
         column = location&.start&.column
         where = [@filename, location&.start&.line, column && (column + 1)].compact.join(":")
         rest = @errors.length - 1
-        more = rest.positive? ? " (and #{rest} more #{rest == 1 ? "error" : "errors"})" : ""
+        noun = rest == 1 ? "error" : "errors"
+        more = rest.positive? ? " (and #{rest} more #{noun})" : ""
 
         "#{where}: #{first.message}#{more}"
       end

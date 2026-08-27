@@ -17,8 +17,6 @@ module Herb
 
       def error_name: (untyped error) -> untyped
 
-      # One line of source with the span under it, the way esbuild shows a fault. The panel and the
-      # error page carry the wider context, so the terminal only has to say where.
       def format_source_context: (untyped error) -> untyped
 
       def format_error_details: (untyped error) -> untyped
