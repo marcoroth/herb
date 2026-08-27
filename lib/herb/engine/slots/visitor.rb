@@ -750,8 +750,6 @@ module Herb
 
         #: () -> void
         def collapse_invariant_conditionals
-          collapsed = false
-
           @standing.each_value do |annotation|
             next unless annotation.type == :conditional
             next unless exhaustive?(annotation.node)
@@ -770,7 +768,6 @@ module Herb
             shared = positions.fetch(0)
 
             annotation.dropped = true
-            collapsed = true
 
             shared.each { |survivor| survivor.covered << annotation }
 
@@ -784,7 +781,7 @@ module Herb
             end
           end
 
-          @standing.delete_if { |_node, annotation| annotation.dropped } if collapsed
+          @standing.delete_if { |_node, annotation| annotation.dropped }
         end
 
         #: (String) -> bool
