@@ -6,7 +6,11 @@ import { parseMarker, parseStaticsIdentity } from "../src/markup/markers"
 import grammar from "./fixtures/markers.json"
 
 function data(comment: string): string {
-  return comment.replace(/^<!--/, "").replace(/-->$/, "").trim()
+  const holder = document.createElement("div")
+
+  holder.innerHTML = comment
+
+  return (holder.firstChild as Comment).data.trim()
 }
 
 function element(markup: string): Element {
