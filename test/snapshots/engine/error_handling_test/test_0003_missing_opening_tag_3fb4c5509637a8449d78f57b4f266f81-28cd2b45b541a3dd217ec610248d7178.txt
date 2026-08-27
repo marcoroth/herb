@@ -1,0 +1,18 @@
+---
+source: "Engine::ErrorHandlingTest#test_0003_missing opening tag"
+input: |2-
+<div>
+  <p>Some content</p>
+</div>
+</span>
+options: {validators: true}
+---
+[source]:4:1: Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope. (Herb::Engine::ParseError)
+
+✘ [MissingOpeningTag] Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope.
+
+    [source]:4:1:
+      4 │ </span>
+        ╵ ~~~~~~~
+
+  Add the matching opening tag, or remove this closing tag.

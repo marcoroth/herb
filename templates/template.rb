@@ -403,12 +403,14 @@ module Herb
     class ErrorType
       include ConfigType
 
-      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments
+      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments, :suggestion_template, :suggestion_arguments
 
       def initialize(config)
         @name = config.fetch("name")
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
+        @suggestion_template = config.dig("suggestion", "template")
+        @suggestion_arguments = config.dig("suggestion", "arguments") || []
 
         camelized = Template.underscore(@name)
         @type = camelized.upcase
@@ -423,6 +425,14 @@ module Herb
 
           type.new(name: field_name, kind: kind)
         end
+      end
+
+      def ruby_suggestion_arguments
+        suggestion_arguments.map { |argument| argument.gsub("->", ".") }
+      end
+
+      def ruby_suggestion_guards
+        suggestion_arguments.map { |argument| argument.split("->").first }.uniq
       end
 
       def c_type

@@ -17,6 +17,9 @@ module Herb
       # : (String, Location?, String) -> void
       def initialize: (String, Location?, String) -> void
 
+      # : () -> String?
+      def suggestion: () -> String?
+
       # : (template: String, ?origin: String) -> Herb::Diagnostic
       def to_diagnostic: (template: String, ?origin: String) -> Herb::Diagnostic
 
@@ -87,7 +90,11 @@ module Herb
       def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_missing_opening_tag_error
       def to_hash: () -> serialized_missing_opening_tag_error
@@ -105,7 +112,11 @@ module Herb
       def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_missing_closing_tag_error
       def to_hash: () -> serialized_missing_closing_tag_error
@@ -125,7 +136,11 @@ module Herb
       def initialize: (String, Location?, String, Herb::Token, Herb::Token) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_tag_names_mismatch_error
       def to_hash: () -> serialized_tag_names_mismatch_error
@@ -147,7 +162,11 @@ module Herb
       def initialize: (String, Location?, String, Herb::Token, String, String) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_void_element_closing_tag_error
       def to_hash: () -> serialized_void_element_closing_tag_error
@@ -165,7 +184,11 @@ module Herb
       def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_unclosed_element_error
       def to_hash: () -> serialized_unclosed_element_error
@@ -187,7 +210,11 @@ module Herb
       def initialize: (String, Location?, String, String, String, String) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_ruby_parse_error
       def to_hash: () -> serialized_ruby_parse_error
@@ -403,7 +430,11 @@ module Herb
       def initialize: (String, Location?, String, String) -> void
 
       # : () -> String
-      def inspect: () -> String
+      # : () -> String?
+      def suggestion: () -> String
+                    | () -> String?
+
+      def inspect: () -> untyped
 
       # : () -> serialized_missing_attribute_value_error
       def to_hash: () -> serialized_missing_attribute_value_error

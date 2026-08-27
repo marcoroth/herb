@@ -18,6 +18,11 @@ module Herb
         <%- end -%>
       end
 
+      #: () -> String?
+      def suggestion
+        nil
+      end
+
       #: (template: String, ?origin: String) -> Herb::Diagnostic
       def to_diagnostic(template:, origin: "Herb Parser")
         Herb::Diagnostic.new(
@@ -27,6 +32,7 @@ module Herb
           origin: origin,
           code: Herb::Diagnostic.code_for(type),
           location: location,
+          suggestion: suggestion,
           phase: :compile,
           data: { type: type }
         )
@@ -78,6 +84,21 @@ module Herb
         @<%= field.name %> = <%= field.name %>
         <%- end -%>
       end
+      <%- end -%>
+
+      <%- if error.suggestion_template -%>
+
+      #: () -> String?
+      def suggestion
+        <%- if error.suggestion_arguments.any? -%>
+        return nil unless <%= error.ruby_suggestion_guards.join(" && ") %>
+
+        format(<%= error.suggestion_template.inspect %>, <%= error.ruby_suggestion_arguments.join(", ") %>)
+        <%- else -%>
+        <%= error.suggestion_template.inspect %>
+        <%- end -%>
+      end
+
       <%- end -%>
 
       #: () -> String

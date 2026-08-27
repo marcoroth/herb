@@ -3,6 +3,13 @@
 module Herb
   class Engine
     class CompilationError < StandardError
+      attr_reader details: untyped
+
+      def initialize: (untyped message, ?details: untyped) -> untyped
+
+      def detailed_message: (?highlight: untyped, **untyped) -> untyped
+
+      def formatted_errors: (?highlight: untyped) -> untyped
     end
 
     class GeneratorTemplateError < CompilationError

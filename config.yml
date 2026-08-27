@@ -46,6 +46,9 @@ errors:
           type: "token"
 
     - name: "MissingOpeningTagError"
+      suggestion:
+        template: "Add the matching opening tag, or remove this closing tag."
+
       message:
         template: "Found closing tag `</%s>` at (%u:%u) without a matching opening tag in the same scope."
         arguments:
@@ -58,6 +61,9 @@ errors:
           type: "token"
 
     - name: "MissingClosingTagError"
+      suggestion:
+        template: "Add the closing tag, or make it self-closing."
+
       message:
         template: "Opening tag `<%s>` at (%u:%u) doesn't have a matching closing tag `</%s>` in the same scope."
         arguments:
@@ -71,6 +77,11 @@ errors:
           type: "token"
 
     - name: "TagNamesMismatchError"
+      suggestion:
+        template: "Change the closing tag to `</%s>`."
+        arguments:
+          - "opening_tag->value"
+
       message:
         template: "Opening tag `<%s>` at (%u:%u) closed with `</%s>` at (%u:%u)."
         arguments:
@@ -89,6 +100,11 @@ errors:
           type: "token"
 
     - name: "VoidElementClosingTagError"
+      suggestion:
+        template: "A void element cannot have a closing tag. Remove it, or write `<%s />`."
+        arguments:
+          - "tag_name->value"
+
       message:
         template: "`%s` is a void element and should not be used as a closing tag. Use `<%s>` or `<%s />` instead of `</%s>`."
         arguments:
@@ -108,6 +124,9 @@ errors:
           type: "string"
 
     - name: "UnclosedElementError"
+      suggestion:
+        template: "Close this element before the end of the template."
+
       message:
         template: "Tag `<%s>` opened at (%u:%u) was never closed before the end of document."
         arguments:
@@ -120,6 +139,9 @@ errors:
           type: "token"
 
     - name: "RubyParseError"
+      suggestion:
+        template: "Check the Ruby syntax inside the ERB tag."
+
       message:
         template: "%s: %s"
         arguments:
@@ -285,6 +307,11 @@ errors:
           type: "token"
 
     - name: "MissingAttributeValueError"
+      suggestion:
+        template: "Give `%s` a value, or drop the equals sign."
+        arguments:
+          - "attribute_name"
+
       message:
         template: "Attribute `%s` at (%u:%u) is missing a value after the equals sign."
         arguments:

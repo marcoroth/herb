@@ -1190,7 +1190,7 @@ class Herb::CLI
       else
         puts e.compiled_source if e.compiled_source
         puts
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)
@@ -1205,7 +1205,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)
@@ -1307,7 +1307,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)

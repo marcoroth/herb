@@ -32,9 +32,6 @@ module Herb
 
     def self.h: (untyped value) -> untyped
 
-    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
-    # unless the value is already marked safe. A marker the engine generated is markup, so it has
-    # to survive both buffers unchanged.
     # : (untyped) -> String
     def self.raw: (untyped) -> String
 

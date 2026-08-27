@@ -34,6 +34,20 @@ module SnapshotUtils
     result
   end
 
+  def assert_error_snapshot(source, validators: true, **engine_options)
+    require_relative "../lib/herb/engine"
+
+    options = validators ? engine_options.merge(visitors: Herb::Engine::Validators.all) : engine_options
+
+    error = assert_raises(Herb::Engine::CompilationError) do
+      Herb::Engine.new(source, options)
+    end
+
+    assert_snapshot_matches(error.detailed_message, source, engine_options.merge(validators: validators))
+
+    error
+  end
+
   def assert_compiled_snapshot(source, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
     require "prism"

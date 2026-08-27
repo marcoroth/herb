@@ -144,9 +144,6 @@ module Herb
       value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
     end
 
-    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
-    # unless the value is already marked safe. A marker the engine generated is markup, so it has
-    # to survive both buffers unchanged.
     #: (untyped) -> String
     def self.raw(value)
       string = value.to_s
@@ -390,10 +387,11 @@ module Herb
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
-      message = ErrorFormatter.new(input, parser_errors, filename: filename).format_all
+      formatter = ErrorFormatter.new(input, parser_errors, filename: filename)
 
       raise ParseError.new(
-        "\n#{message}",
+        formatter.summary,
+        details: formatter,
         diagnostics: parser_errors.map { |error|
           error.to_diagnostic(template: relative_file_path)
         },
@@ -452,8 +450,8 @@ module Herb
       end
 
       formatter = ErrorFormatter.new(input, errors, filename: filename)
-      message = formatter.format_all
-      raise CompilationError, "\n#{message}"
+
+      raise CompilationError.new(formatter.summary, details: formatter)
     end
 
     def context_options(properties)
