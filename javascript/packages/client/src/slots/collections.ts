@@ -1,7 +1,7 @@
 import { ITEM_STATICS } from "../markup/markers"
 
 import { connected, markers, outerRange } from "../markup/anchors"
-import { attributeNames, blankSlots, fillSlots } from "../markup/fragments"
+import { attributeNames, blankSeeds, blankSlots, fillSlots } from "../markup/fragments"
 import { itemMarker, itemStaticsKey, parseMarker } from "../markup/markers"
 
 import type { Journal } from "./journal"
@@ -132,6 +132,7 @@ export class Collections {
     fragment.append(outerRange(item).cloneContents())
 
     blankSlots(fragment)
+    blankSeeds(fragment)
 
     return fragment
   }

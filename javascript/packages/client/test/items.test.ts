@@ -223,3 +223,46 @@ describe("a collection nested inside a collection's row", () => {
     expect(document.body.innerHTML).not.toContain("herb-item:2:b")
   })
 })
+
+describe("a row built from another row", () => {
+  const FILE_SEEDED = "app/views/chat/show.html.erb"
+
+  const SEEDED =
+    `<!--herb-region:${FILE_SEEDED}:aaaaaaaa:0-->` +
+    `<ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><!--herb-seeds:{"draft":"first row"}--><li><span data-herb-slot="2:child">first row</span></li><!--/herb-item:0-->` +
+    `<!--herb-item:0:b--><!--herb-seeds:{"draft":"second row"}--><li><span data-herb-slot="2:child">second row</span></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<!--/herb-region:${FILE_SEEDED}-->`
+
+  beforeEach(() => { document.body.innerHTML = "" })
+
+  test("does not inherit the seeds of the row it was cloned from", () => {
+    const index = new Slots()
+
+    document.body.innerHTML = SEEDED
+    index.scan(document.body)
+
+    const collection = index.slot(FILE_SEEDED, 0)!
+
+    expect(collection.items.get("a")?.seeds).toEqual({ draft: "first row" })
+
+    index.addItem(collection, "pending-1")
+
+    expect(collection.items.get("pending-1")?.seeds ?? {}).toEqual({})
+  })
+
+  test("leaves the rows that came from the server holding their own", () => {
+    const index = new Slots()
+
+    document.body.innerHTML = SEEDED
+    index.scan(document.body)
+
+    const collection = index.slot(FILE_SEEDED, 0)!
+
+    index.addItem(collection, "pending-1")
+
+    expect(collection.items.get("a")?.seeds).toEqual({ draft: "first row" })
+    expect(collection.items.get("b")?.seeds).toEqual({ draft: "second row" })
+  })
+})

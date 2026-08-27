@@ -1,5 +1,5 @@
 import { asList } from "../shared/arrays"
-import { branchKey, branchOf, slotOpenIndex } from "./markers"
+import { branchKey, branchOf, parseMarker, slotOpenIndex } from "./markers"
 import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
 
 import { DEFAULT_SLOT_TYPE, PART_MARKER } from "./markers"
@@ -120,6 +120,18 @@ function fragmentMarkup(fragment: DocumentFragment): string {
   holder.append(fragment)
 
   return holder.innerHTML
+}
+
+export function blankSeeds(fragment: DocumentFragment): void {
+  for (const marker of markers(fragment)) {
+    if (marker.nodeType !== Node.COMMENT_NODE) {
+      continue
+    }
+
+    if (parseMarker((marker as Comment).data.trim())?.kind === "seeds") {
+      (marker as Comment).remove()
+    }
+  }
 }
 
 export function blankSlots(fragment: DocumentFragment): void {
