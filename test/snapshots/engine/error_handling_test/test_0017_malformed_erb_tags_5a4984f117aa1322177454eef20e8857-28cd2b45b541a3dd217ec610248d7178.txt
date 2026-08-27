@@ -1,0 +1,47 @@
+---
+source: "Engine::ErrorHandlingTest#test_0017_malformed erb tags"
+input: |2-
+<div>
+  <% invalid erb syntax here! @#$%^&*
+</div>
+options: {validators: true}
+---
+[source]:2:31: instance_variable_bare: '@' without identifiers is not allowed as an instance variable name (and 4 more errors) (Herb::Engine::ParseError)
+
+✘ [RubyParse] instance_variable_bare: '@' without identifiers is not allowed as an instance variable name
+
+    [source]:2:31:
+      2 │   <% invalid erb syntax here! @#$%^&*
+        ╵                               ~
+
+  Check the Ruby syntax inside the ERB tag.
+
+✘ [RubyParse] unexpected_token_ignore: unexpected '<', ignoring it
+
+    [source]:3:1:
+      3 │ </div>
+        ╵ ~
+
+  Check the Ruby syntax inside the ERB tag.
+
+✘ [RubyParse] regexp_term: unterminated regexp meets end of file; expected a closing delimiter
+
+    [source]:3:2:
+      3 │ </div>
+        ╵  ~
+
+  Check the Ruby syntax inside the ERB tag.
+
+✘ [MissingClosingTag] Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope.
+
+    [source]:1:1:
+      1 │ <div>
+        ╵ ~~~~~
+
+  Add the closing tag, or make it self-closing.
+
+✘ [UnclosedERBTag] ERB tag `<%` at (2:2) is missing closing `%>`.
+
+    [source]:2:3:
+      2 │   <% invalid erb syntax here! @#$%^&*
+        ╵   ~

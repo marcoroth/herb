@@ -9,21 +9,20 @@ module Herb
     class ParseError < CompilationError
       CONTEXT_LINES = 3 #: Integer
 
-      attr_reader :diagnostics #: Array[Herb::Diagnostic]
       attr_reader :source #: String
       attr_reader :visitors #: Array[String]
       attr_reader :parser_options #: Hash[Symbol, untyped]
       attr_reader :filename #: String?
 
-      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
-      def initialize(message, diagnostics:, source:, filename: nil, visitors: [], parser_options: {})
+      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped], ?details: untyped) -> void
+      def initialize(message, diagnostics:, source:, filename: nil, visitors: [], parser_options: {}, details: nil)
         @diagnostics = diagnostics
         @source = source
         @visitors = visitors
         @parser_options = parser_options
         @filename = filename
 
-        super(message)
+        super(message, details: details, diagnostics: diagnostics)
       end
 
       #: () -> Integer?

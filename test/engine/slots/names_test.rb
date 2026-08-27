@@ -26,7 +26,7 @@ module Engine
       end
 
       def compiler_findings(error)
-        error.message.gsub(/\e\[[0-9;]*m/, "").scan(/slots-\w+: (.+)/).flatten
+        error.diagnostics.map(&:message)
       end
 
       test "records a name against the slot the element holds" do

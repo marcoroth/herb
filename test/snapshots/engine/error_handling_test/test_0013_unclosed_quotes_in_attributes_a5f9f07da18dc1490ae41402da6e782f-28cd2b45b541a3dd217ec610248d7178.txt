@@ -1,0 +1,15 @@
+---
+source: "Engine::ErrorHandlingTest#test_0013_unclosed quotes in attributes"
+input: |2-
+<div class="container unclosed>
+  Content
+</div>
+options: {validators: true}
+---
+[source]:1:12: Attribute value opened with " at (1:11) was never closed. (Herb::Engine::ParseError)
+
+✘ [UnclosedQuote] Attribute value opened with " at (1:11) was never closed.
+
+    [source]:1:12:
+      1 │ <div class="container unclosed>
+        ╵            ~~~~~~~~~~~~~~~~~~~

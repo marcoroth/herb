@@ -17,6 +17,9 @@ module Herb
       # : (String, Location?, String) -> void
       def initialize: (String, Location?, String) -> void
 
+      # : () -> String?
+      def suggestion: () -> String?
+
       # : (template: String, ?origin: String) -> Herb::Diagnostic
       def to_diagnostic: (template: String, ?origin: String) -> Herb::Diagnostic
 
@@ -86,6 +89,9 @@ module Herb
       # : (String, Location?, String, Herb::Token) -> void
       def initialize: (String, Location?, String, Herb::Token) -> void
 
+      # : () -> String?
+      def suggestion: () -> String?
+
       # : () -> String
       def inspect: () -> String
 
@@ -103,6 +109,9 @@ module Herb
 
       # : (String, Location?, String, Herb::Token) -> void
       def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
 
       # : () -> String
       def inspect: () -> String
@@ -123,6 +132,9 @@ module Herb
 
       # : (String, Location?, String, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location?, String, Herb::Token, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
 
       # : () -> String
       def inspect: () -> String
@@ -146,6 +158,9 @@ module Herb
       # : (String, Location?, String, Herb::Token, String, String) -> void
       def initialize: (String, Location?, String, Herb::Token, String, String) -> void
 
+      # : () -> String?
+      def suggestion: () -> String?
+
       # : () -> String
       def inspect: () -> String
 
@@ -163,6 +178,9 @@ module Herb
 
       # : (String, Location?, String, Herb::Token) -> void
       def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
 
       # : () -> String
       def inspect: () -> String
@@ -185,6 +203,9 @@ module Herb
 
       # : (String, Location?, String, String, String, String) -> void
       def initialize: (String, Location?, String, String, String, String) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
 
       # : () -> String
       def inspect: () -> String
@@ -401,6 +422,9 @@ module Herb
 
       # : (String, Location?, String, String) -> void
       def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
 
       # : () -> String
       def inspect: () -> String
