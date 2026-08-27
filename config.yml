@@ -46,24 +46,19 @@ errors:
           type: "token"
 
     - name: "MissingOpeningTagError"
-      suggestion:
-        template: "Add the matching opening tag, or remove this closing tag."
-
       message:
         template: "Found closing tag `</%s>` at (%u:%u) without a matching opening tag in the same scope."
         arguments:
           - "closing_tag->value"
           - "closing_tag->location.start.line"
           - "closing_tag->location.start.column"
-
+      suggestion:
+        template: "Add the matching opening tag, or remove this closing tag."
       fields:
         - name: "closing_tag"
           type: "token"
 
     - name: "MissingClosingTagError"
-      suggestion:
-        template: "Add the closing tag, or make it self-closing."
-
       message:
         template: "Opening tag `<%s>` at (%u:%u) doesn't have a matching closing tag `</%s>` in the same scope."
         arguments:
@@ -71,17 +66,13 @@ errors:
           - "opening_tag->location.start.line"
           - "opening_tag->location.start.column"
           - "opening_tag->value"
-
+      suggestion:
+        template: "Add the closing tag, or make it self-closing."
       fields:
         - name: "opening_tag"
           type: "token"
 
     - name: "TagNamesMismatchError"
-      suggestion:
-        template: "Change the closing tag to `</%s>`."
-        arguments:
-          - "opening_tag->value"
-
       message:
         template: "Opening tag `<%s>` at (%u:%u) closed with `</%s>` at (%u:%u)."
         arguments:
@@ -91,7 +82,10 @@ errors:
           - "closing_tag->value"
           - "closing_tag->location.start.line"
           - "closing_tag->location.start.column"
-
+      suggestion:
+        template: "Change the closing tag to `</%s>`."
+        arguments:
+          - "opening_tag->value"
       fields:
         - name: "opening_tag"
           type: "token"
@@ -100,11 +94,6 @@ errors:
           type: "token"
 
     - name: "VoidElementClosingTagError"
-      suggestion:
-        template: "A void element cannot have a closing tag. Remove it, or write `<%s />`."
-        arguments:
-          - "tag_name->value"
-
       message:
         template: "`%s` is a void element and should not be used as a closing tag. Use `<%s>` or `<%s />` instead of `</%s>`."
         arguments:
@@ -112,7 +101,10 @@ errors:
           - "tag_name->value"
           - "tag_name->value"
           - "tag_name->value"
-
+      suggestion:
+        template: "A void element cannot have a closing tag. Remove it, or write `<%s />`."
+        arguments:
+          - "tag_name->value"
       fields:
         - name: "tag_name"
           type: "token"
@@ -124,30 +116,26 @@ errors:
           type: "string"
 
     - name: "UnclosedElementError"
-      suggestion:
-        template: "Close this element before the end of the template."
-
       message:
         template: "Tag `<%s>` opened at (%u:%u) was never closed before the end of document."
         arguments:
           - "opening_tag->value"
           - "opening_tag->location.start.line"
           - "opening_tag->location.start.column"
-
+      suggestion:
+        template: "Close this element before the end of the template."
       fields:
         - name: "opening_tag"
           type: "token"
 
     - name: "RubyParseError"
-      suggestion:
-        template: "Check the Ruby syntax inside the ERB tag."
-
       message:
         template: "%s: %s"
         arguments:
           - "diagnostic_id"
           - "error_message"
-
+      suggestion:
+        template: "Check the Ruby syntax inside the ERB tag."
       fields:
         - name: "error_message"
           type: "string"
@@ -307,18 +295,16 @@ errors:
           type: "token"
 
     - name: "MissingAttributeValueError"
-      suggestion:
-        template: "Give `%s` a value, or drop the equals sign."
-        arguments:
-          - "attribute_name"
-
       message:
         template: "Attribute `%s` at (%u:%u) is missing a value after the equals sign."
         arguments:
           - "attribute_name"
           - "start.line"
           - "start.column"
-
+      suggestion:
+        template: "Give `%s` a value, or drop the equals sign."
+        arguments:
+          - "attribute_name"
       fields:
         - name: "attribute_name"
           type: "string"
