@@ -62,7 +62,7 @@ The package ships a demo page under `demo/`, a stand-in Rails posts page carryin
 
 A card at the top wires up buttons for `report()`, batching, deduplication, `dismiss()`, both forms of `clear()`, `show()`, `open()`, `close()`, the expand toggle, and both [`overlay`](#overlay) modes, so every part of the API is exercisable without the console.
 
-One of them reports entries carrying an `element`, which is the field the payload cannot express and only the JavaScript API has. Each of those cards gets a locate control that scrolls the page to its element and flashes it, and hovering the control outlines the element in place. The two point at different things on purpose, so the card labels show both shapes the panel can render: an id, as `<div#cover-three>`, and the first `data-herb-` attribute it finds, as `<article data-herb-debug-outline-type="partial">`.
+One of them reports entries carrying an `element`, which is the field the payload cannot express and only the JavaScript API has. Each of those cards gets a locate control that scrolls the page to its element and flashes it, and hovering the control outlines the element in place. They point at different things on purpose. Two of them show the shapes a card label can take, an id as `<div#cover-three>` and the first `data-herb-` attribute it finds as `<article data-herb-debug-outline-type="partial">`. The third names an element inside a hidden `<article>`, so that card carries the inert chip and its tooltip names the ancestor doing the hiding.
 
 `yarn dev` inside `javascript/packages/dev-tools` serves it on `http://localhost:5212` straight from `src/`, so edits hot reload with no build step.
 

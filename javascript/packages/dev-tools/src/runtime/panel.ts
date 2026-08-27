@@ -1266,6 +1266,7 @@ export class RuntimePanel {
     )]
 
     for (const [origin, count] of origins) {
+      buttons.push(this.filterButtonHTML('origin', origin, origin, count, this.state.origin === origin))
     }
 
     return `<div class="herb-dev-tools-filters">${buttons.join('')}</div>`
