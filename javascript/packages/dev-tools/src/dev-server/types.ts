@@ -1,3 +1,5 @@
+import type { RuntimeDiagnostic } from "../runtime/report"
+
 export type DiffOperationType =
   | "text_changed"
   | "whitespace_changed"
@@ -73,15 +75,15 @@ export interface ConnectionOptions {
   onReconnecting?: (attempt: number, maxAttempts: number, delay: number) => void
 }
 
-export interface ErrorOverlayHandle {
-  showErrors(errors: unknown[], filename: string): void
-  clearErrors(): void
+export interface DiagnosticSink {
+  report(diagnostics: RuntimeDiagnostic[]): void
+  clear(): void
 }
 
 export interface HerbClientOptions {
   port?: number
   host?: string
-  errorOverlay?: () => ErrorOverlayHandle | null
+  diagnostics?: () => DiagnosticSink | null
   onPatch?: (message: PatchMessage) => void
   onReload?: (message: ReloadMessage) => void
   onError?: (message: ErrorMessage) => void

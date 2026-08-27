@@ -193,7 +193,7 @@ describe("HerbDevTools", () => {
   test("injects one stylesheet per module on start() and removes them on stop()", () => {
     const instance = startDevTools()
 
-    expect(injectedStyleNames()).toEqual(["base", "overlay", "error-overlay", "runtime-panel"])
+    expect(injectedStyleNames()).toEqual(["base", "overlay", "runtime-panel"])
 
     instance.stop()
 
@@ -203,7 +203,7 @@ describe("HerbDevTools", () => {
   test("leaves the runtime panel stylesheet out when the panel is off", () => {
     const instance = HerbDevTools.start({ devServer: false, runtimePanel: false })!
 
-    expect(injectedStyleNames()).toEqual(["base", "overlay", "error-overlay"])
+    expect(injectedStyleNames()).toEqual(["base", "overlay"])
 
     instance.stop()
   })
@@ -221,7 +221,7 @@ describe("HerbDevTools", () => {
     expect(HerbDevTools.instance).toBe(instance)
     expect(netDocumentListeners()).toEqual(afterFirstStart)
     expect(document.querySelectorAll(".herb-floating-menu")).toHaveLength(1)
-    expect(injectedStyleNames()).toEqual(["base", "overlay", "error-overlay", "runtime-panel"])
+    expect(injectedStyleNames()).toEqual(["base", "overlay", "runtime-panel"])
     expect(warn).toHaveBeenCalledTimes(5)
   })
 
