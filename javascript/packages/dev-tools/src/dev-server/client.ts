@@ -4,9 +4,10 @@ import { ConnectionDot } from "./connection-dot"
 import { MismatchAlert } from "./mismatch-alert"
 
 import { applyPatch } from "./patch"
+import { diagnosticsFromError } from "./diagnostics"
 
 import type {
-  ErrorOverlayHandle,
+  DiagnosticSink,
   HerbClientOptions,
   HerbMessage,
   WelcomeMessage,
@@ -34,6 +35,7 @@ export class HerbClient {
 
     const port = options.port ?? this.detectPort() ?? DEFAULT_PORT
     const host = options.host ?? "localhost"
+
     this.port = port
     this.connectionDot = new ConnectionDot(this)
 
@@ -132,6 +134,7 @@ export class HerbClient {
       this.projectMatch = false
       console.warn(`[herb-client] project mismatch — server: ${message.project}, client: ${clientProject}. Ignoring messages.`)
       this.updateState("disconnected")
+
       MismatchAlert.show(message.project, clientProject)
     } else {
       this.projectMatch = true
@@ -153,27 +156,19 @@ export class HerbClient {
     window.location.reload()
   }
 
-
   private handleError(message: ErrorMessage): void {
     this.options.onError?.(message)
 
-    const overlay = this.getErrorOverlay()
+    const sink = this.getDiagnostics()
+    if (!sink) return
 
-    if (overlay) {
-      const errors = message.errors.map((error) => ({
-        severity: "error" as const,
-        message: error.message,
-        name: error.name,
-        location: { line: error.line, column: error.column },
-      }))
-
-      overlay.showErrors(errors, message.file)
-    }
+    sink.clear()
+    sink.report(diagnosticsFromError(message))
   }
 
   private handleFixed(message: FixedMessage): void {
     this.options.onFixed?.(message)
-    this.getErrorOverlay()?.clearErrors()
+    this.getDiagnostics()?.clear()
   }
 
   private updateState(state: ClientState): void {
@@ -181,8 +176,8 @@ export class HerbClient {
     this.connectionDot.apply()
   }
 
-  private getErrorOverlay(): ErrorOverlayHandle | null {
-    return this.options.errorOverlay?.() ?? null
+  private getDiagnostics(): DiagnosticSink | null {
+    return this.options.diagnostics?.() ?? null
   }
 
   private detectPort(): number | null {
