@@ -658,3 +658,67 @@ describe("a branch written into an item keeps its values", () => {
     expect(index.rangeOf(slot).toString()).toContain("08:15")
   })
 })
+
+describe("a branch that comes back", () => {
+  beforeEach(() => { document.body.innerHTML = "" })
+
+  const page =
+    `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+    `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><b>waiting</b><!--/herb-slot:0--></div>` +
+    `<template data-herb-region="${FILE}:aaaaaaaa">` +
+    `<!--herb-branch:0:0--><i><!--herb-slot:4--><!--/herb-slot:4--></i>` +
+    `</template>` +
+    `<!--/herb-region:${FILE}-->`
+
+  test("shows again what it was showing, without being told a second time", () => {
+    const index = new Slots()
+    document.body.innerHTML = page
+    index.scan(document.body)
+
+    const slot = () => index.slot(FILE, 0)!
+
+    index.switchBranch(slot(), 0, { 4: "sent at noon" })
+
+    expect(index.rangeOf(slot()).toString()).toBe("sent at noon")
+
+    index.switchBranch(slot(), 1)
+
+    expect(index.rangeOf(slot()).toString()).toBe("waiting")
+
+    index.switchBranch(slot(), 0)
+
+    expect(index.rangeOf(slot()).toString()).toBe("sent at noon")
+  })
+
+  test("lets a caller that knows better say so", () => {
+    const index = new Slots()
+    document.body.innerHTML = page
+    index.scan(document.body)
+
+    const slot = () => index.slot(FILE, 0)!
+
+    index.switchBranch(slot(), 0, { 4: "sent at noon" })
+    index.switchBranch(slot(), 1)
+    index.switchBranch(slot(), 0, { 4: "sent at one" })
+
+    expect(index.rangeOf(slot()).toString()).toBe("sent at one")
+  })
+
+  test("keeps each row's own value, since parked markup is shared", () => {
+    const index = new Slots()
+    document.body.innerHTML = page + nth(page, 1)
+    index.scan(document.body)
+
+    const first = index.region(FILE, 0)!.slots.get(0)!
+    const second = index.region(FILE, 1)!.slots.get(0)!
+
+    index.switchBranch(first, 0, { 4: "first row" })
+    index.switchBranch(second, 0, { 4: "second row" })
+
+    index.switchBranch(first, 1)
+    index.switchBranch(first, 0)
+
+    expect(index.rangeOf(first).toString()).toBe("first row")
+    expect(index.rangeOf(second).toString()).toBe("second row")
+  })
+})

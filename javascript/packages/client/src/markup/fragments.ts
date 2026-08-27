@@ -79,6 +79,49 @@ export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text
   }
 }
 
+export function valuesIn(fragment: DocumentFragment): SlotValues {
+  const found: SlotValues = {}
+
+  for (const open of slotOpeners(fragment)) {
+    const index = slotOpenIndex(open.data.trim())
+
+    if (index === null) {
+      continue
+    }
+
+    const close = closingFor(open, index)
+
+    if (!close) {
+      continue
+    }
+
+    const range = document.createRange()
+
+    range.setStartAfter(open)
+    range.setEndBefore(close)
+
+    found[index] = fragmentMarkup(range.cloneContents())
+  }
+
+  for (const [element, entry] of anchoredSlots(fragment)) {
+    if (entry.attribute !== null || entry.type !== DEFAULT_SLOT_TYPE) {
+      continue
+    }
+
+    found[entry.index] = element.innerHTML
+  }
+
+  return found
+}
+
+function fragmentMarkup(fragment: DocumentFragment): string {
+  const holder = document.createElement("div")
+
+  holder.append(fragment)
+
+  return holder.innerHTML
+}
+
 export function blankSlots(fragment: DocumentFragment): void {
   for (const open of slotOpeners(fragment)) {
     if (!fragment.contains(open)) {

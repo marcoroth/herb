@@ -92,6 +92,7 @@ export interface Slot {
   region: Region
   item: Item | null
   claimed: boolean
+  shown: Map<number, SlotValues> | null
 }
 
 export interface Item extends Bounds {

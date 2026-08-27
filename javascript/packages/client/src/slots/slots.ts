@@ -31,7 +31,7 @@ import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
 import { branchKey } from "../markup/markers"
-import { interpolateParts, withoutMarkers } from "../markup/fragments"
+import { interpolateParts, valuesIn, withoutMarkers } from "../markup/fragments"
 import { currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
@@ -251,7 +251,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       return true
     }
 
-    const markup = this.materialize(slot.region.file, branchKey(slot.index, branch), dynamics)
+    const markup = this.materialize(slot.region.file, branchKey(slot.index, branch), { ...(slot.shown?.get(branch) ?? {}), ...dynamics })
 
     if (!markup) {
       return false
@@ -582,7 +582,19 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       return false
     }
 
-    return this.statics.park(slot.region, branchKey(slot.index, slot.branch), this.statics.blanked(this.rangeOf(slot).cloneContents()))
+    const contents = this.rangeOf(slot).cloneContents()
+
+    this.remember(slot, slot.branch, valuesIn(contents))
+
+    return this.statics.park(slot.region, branchKey(slot.index, slot.branch), this.statics.blanked(contents))
+  }
+
+  private remember(slot: Slot, branch: number, values: SlotValues): void {
+    const shown = slot.shown ?? new Map<number, SlotValues>()
+
+    shown.set(branch, values)
+
+    slot.shown = shown
   }
 
   parked(file: string, key: string): DocumentFragment | null {
