@@ -105,5 +105,42 @@ module Engine
       assert_equal 1, location.start.line
       assert_equal 5, location.start.column
     end
+
+    describe "the strict option" do
+      def omitted_closing_tag
+        <<~ERB
+          <div>
+            <span>
+              <p>Text
+            </span>
+          </div>
+        ERB
+      end
+
+      test "reaches the parser through the parser options" do
+        assert_equal false, parse_options_for("<div></div>", parser_options: { strict: false })[:strict]
+        assert_equal true, parse_options_for("<div></div>", parser_options: { strict: true })[:strict]
+      end
+
+      test "says nothing about strict when it was not asked about" do
+        refute parse_options_for("<div></div>").key?(:strict)
+      end
+
+      test "an omitted closing tag is an error under strict" do
+        assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(omitted_closing_tag, parser_options: { strict: true })
+        end
+      end
+
+      test "and is allowed without it" do
+        assert_instance_of Herb::Engine, Herb::Engine.new(omitted_closing_tag, parser_options: { strict: false })
+      end
+
+      test "a strict beside the parser options is not a way to ask for it" do
+        assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(omitted_closing_tag, strict: false)
+        end
+      end
+    end
   end
 end

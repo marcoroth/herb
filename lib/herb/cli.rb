@@ -1143,7 +1143,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? || strict
+      options[:parser_options] = (options[:parser_options] || {}).merge(strict: strict.nil? || strict)
 
       if debug
         options[:debug] = true
@@ -1165,7 +1165,7 @@ class Herb::CLI
           source: engine.src,
           filename: engine.filename,
           bufvar: engine.bufvar,
-          strict: options[:strict],
+          strict: options[:parser_options][:strict],
         }
 
         puts result.to_json
@@ -1256,7 +1256,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? || strict
+      options[:parser_options] = (options[:parser_options] || {}).merge(strict: strict.nil? || strict)
 
       if debug
         options[:debug] = true
@@ -1283,7 +1283,7 @@ class Herb::CLI
           success: true,
           output: rendered_output,
           filename: engine.filename,
-          strict: options[:strict],
+          strict: options[:parser_options][:strict],
         }
 
         result[:slots] = slot_visitor.schema if slot_visitor
