@@ -73,14 +73,17 @@ end
 module Herb
   class << self
     #: (String path, ?arena_stats: bool) -> LexResult
-    def lex_file(path, **)
-      lex(File.read(path), **)
+    def lex_file(path, arena_stats: ParserOptions::DEFAULT_CAPTURE_ARENA_STATS)
+      lex(File.read(path), arena_stats: arena_stats)
     end
 
+    # rubocop:disable Metrics/ParameterLists
+
     #: (String path, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
-    def parse_file(path, **)
-      parse(File.read(path), **)
+    def parse_file(path, track_locations: ParserOptions::DEFAULT_TRACK_LOCATIONS, track_whitespace: ParserOptions::DEFAULT_TRACK_WHITESPACE, analyze: ParserOptions::DEFAULT_ANALYZE, strict: ParserOptions::DEFAULT_STRICT, action_view_helpers: ParserOptions::DEFAULT_ACTION_VIEW_HELPERS, transform_conditionals: ParserOptions::DEFAULT_TRANSFORM_CONDITIONALS, strict_locals: ParserOptions::DEFAULT_STRICT_LOCALS, prism_nodes: ParserOptions::DEFAULT_PRISM_NODES, prism_nodes_deep: ParserOptions::DEFAULT_PRISM_NODES_DEEP, prism_program: ParserOptions::DEFAULT_PRISM_PROGRAM, arena_stats: ParserOptions::DEFAULT_CAPTURE_ARENA_STATS)
+      parse(File.read(path), track_locations: track_locations, track_whitespace: track_whitespace, analyze: analyze, strict: strict, action_view_helpers: action_view_helpers, transform_conditionals: transform_conditionals, strict_locals: strict_locals, prism_nodes: prism_nodes, prism_nodes_deep: prism_nodes_deep, prism_program: prism_program, arena_stats: arena_stats)
     end
+    # rubocop:enable Metrics/ParameterLists
 
     #: (String source) -> Prism::ParseResult
     def parse_ruby(source)
