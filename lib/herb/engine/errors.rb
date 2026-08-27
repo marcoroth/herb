@@ -4,8 +4,7 @@
 module Herb
   class Engine
     class CompilationError < StandardError
-      attr_reader :details
-      attr_reader :diagnostics
+      attr_reader :details, :diagnostics
 
       def initialize(message, details: nil, diagnostics: [])
         @details = details
