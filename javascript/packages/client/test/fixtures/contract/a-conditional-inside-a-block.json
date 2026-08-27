@@ -1,0 +1,76 @@
+{
+  "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
+  "template": "<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>",
+  "rendered": "<!--herb-region:app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d:0--><!--herb-slot:0:block--><form><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->x<!--/herb-slot:2--><!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-inside-a-block.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d:0--><!--herb-slot:0:block--><form><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->x<!--/herb-slot:2--><!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-inside-a-block.html.erb-->",
+  "values": {
+    "template": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "version": "a9e9757d",
+    "occurrence": 0,
+    "slots": {
+      "1": {
+        "branch": 0,
+        "slots": {
+          "2": "X"
+        }
+      },
+      "0": "<form>X</form>"
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d:0--><!--herb-slot:0:block--><form><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->X<!--/herb-slot:2--><!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-inside-a-block.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "identifier": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "version": "a9e9757d",
+    "slots": [
+      {
+        "index": 0,
+        "type": "block",
+        "node_path": [
+          0
+        ]
+      },
+      {
+        "index": 1,
+        "type": "conditional",
+        "node_path": [
+          0,
+          0
+        ]
+      },
+      {
+        "index": 2,
+        "type": "child",
+        "node_path": [
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "identifier": "app/views/contract/a-conditional-inside-a-block.html.erb",
+    "version": "a9e9757d",
+    "names": {},
+    "parts": {},
+    "states": null
+  },
+  "dependencies": {
+    "state": {
+      "@on": [],
+      "@x": [
+        {
+          "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
+          "version": "a9e9757d",
+          "index": 2
+        }
+      ]
+    },
+    "params": {
+      "on": "@on",
+      "x": "@x"
+    }
+  }
+}

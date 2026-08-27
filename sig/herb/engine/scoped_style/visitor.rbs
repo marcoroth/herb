@@ -27,7 +27,7 @@ module Herb
       #
       # A file is scoped as a whole, so markup an inlined partial brought with it belongs to the
       # partial and not to the template it landed in. `Herb::Engine::Origin` is what says so, which
-      # is why this has to run after `InlineRenderVisitor` and before `SlotVisitor`, whose parked
+      # is why this has to run after `InlineRenderVisitor` and before `Slots::Visitor`, whose parked
       # markup a client rebuilds from and which therefore has to already carry the attribute.
       #
       # Rewriting the selectors is somebody else's job. `transform` is anything answering `call` with
@@ -60,6 +60,8 @@ module Herb
       # is collecting into, which writes it once however many times the file renders, and needs
       # `Herb::Engine::Report::Middleware` to put it on the page.
       class Visitor < Herb::Visitor
+        extend Experimental
+
         include ContextAware
 
         include Diagnostics
@@ -76,15 +78,9 @@ module Herb
 
         OPEN_TAGS: Array[untyped]
 
-        DIGEST_LENGTH: Integer
-
-        def self.experimental_warning_issued: () -> bool
-
-        def self.experimental_warning_issued=: (bool) -> bool
-
-        attr_accessor experimental_warning_issued: bool
-
         DELIVERIES: Array[Symbol]
+
+        DIGEST_LENGTH: Integer
 
         class Pending < Data
           attr_reader node(): untyped

@@ -26,6 +26,8 @@ module Herb
 
     ESCAPE_TABLE: untyped
 
+    ATTRIBUTE_ESCAPE_TABLE: untyped
+
     def initialize: (untyped input, ?untyped properties) -> untyped
 
     def self.h: (untyped value) -> untyped

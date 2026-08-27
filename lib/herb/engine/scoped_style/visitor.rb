@@ -4,6 +4,7 @@
 require "digest"
 
 require_relative "../../visitor"
+require_relative "../experimental"
 require_relative "../context_aware"
 require_relative "../diagnostics"
 require_relative "channel"
@@ -36,7 +37,7 @@ module Herb
       #
       # A file is scoped as a whole, so markup an inlined partial brought with it belongs to the
       # partial and not to the template it landed in. `Herb::Engine::Origin` is what says so, which
-      # is why this has to run after `InlineRenderVisitor` and before `SlotVisitor`, whose parked
+      # is why this has to run after `InlineRenderVisitor` and before `Slots::Visitor`, whose parked
       # markup a client rebuilds from and which therefore has to already carry the attribute.
       #
       # Rewriting the selectors is somebody else's job. `transform` is anything answering `call` with
@@ -70,6 +71,7 @@ module Herb
       # `Herb::Engine::Report::Middleware` to put it on the page.
       #
       class Visitor < Herb::Visitor
+        extend Experimental
         include ContextAware
         include Diagnostics
 
@@ -80,22 +82,12 @@ module Herb
         SCOPED_ATTRIBUTE = "scoped" #: String
         UNSCOPABLE_ELEMENTS = ["style", "script"].freeze #: Array[String]
         OPEN_TAGS = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
+        DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
         DIGEST_LENGTH = 8 #: Integer
 
         required_parser_option track_locations: true
         required_parser_option render_nodes: true
-
-        # @rbs!
-        #   def self.experimental_warning_issued: () -> bool
-        #   def self.experimental_warning_issued=: (bool) -> bool
-
-        class << self
-          attr_accessor :experimental_warning_issued #: bool
-        end
-
-        self.experimental_warning_issued = false
-
-        DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
+        experimental "Scoped styles are experimental. Their output and API may change."
 
         Pending = Data.define(:node, :open_tag, :attribute, :css, :file, :container)
 
@@ -103,7 +95,7 @@ module Herb
         def initialize(transform: nil, deliver: :inline)
           super()
 
-          raise ArgumentError, "deliver has to be one of #{DELIVERIES.join(", ")}, got #{deliver.inspect}" unless DELIVERIES.include?(deliver)
+          raise ArgumentError, "`deliver: #{deliver.inspect}` is not a delivery. Pass one of #{DELIVERIES.map(&:inspect).join(", ")}." unless DELIVERIES.include?(deliver)
 
           @deliver = deliver
           @transform = transform
@@ -114,12 +106,6 @@ module Herb
           @depth = {} #: Hash[String, Integer]
           @pending = [] #: Array[Array[untyped]]
           @stack = [] #: Array[String]
-
-          return if self.class.experimental_warning_issued
-
-          self.class.experimental_warning_issued = true
-
-          warn "[Herb] Scoped styles are experimental. Their output and API may change."
         end
 
         #: () -> Hash[String, String]

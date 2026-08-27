@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require "pathname"
-
 require_relative "../../../herb"
+require_relative "../collector"
 require_relative "visitor"
 
 module Herb
@@ -24,36 +23,25 @@ module Herb
       # Which files to give it, and where the stylesheet goes, is the job of whatever integrates Herb
       # with a framework. This knows how to compile and what to keep.
       #
-      class Collector
-        Failure = Data.define(:file, :error)
-
-        attr_reader :failures #: Array[Failure]
-
+      class Collector < Engine::Collector
         #: (transform: untyped, ?project_path: (String | Pathname)?, **untyped) -> void
-        def initialize(transform:, project_path: nil, **options)
+        def initialize(transform:, **)
+          super(**)
+
           @transform = transform
-          @project_path = Pathname.new(project_path || Dir.pwd).expand_path
-          @options = options
           @styles = {} #: Hash[String, String]
           @files = {} #: Hash[String, Array[String]]
-          @failures = [] #: Array[Failure]
         end
 
-        #: ((String | Pathname)) -> Array[String]
+        #: ((String | Pathname), ?String?) -> Array[String]
         def add(file, source = nil)
-          visitor = Visitor.new(transform: @transform, deliver: :none)
+          compile(file, source, Visitor.new(transform: @transform, deliver: :none)) { |visitor|
+            visitor.styles.each { |scope, css| @styles[scope] ||= css }
 
-          Engine.new(source || read(file), **engine_options(file, visitor))
+            @files[file.to_s] = visitor.styles.keys
 
-          visitor.styles.each { |scope, css| @styles[scope] ||= css }
-
-          @files[file.to_s] = visitor.styles.keys
-
-          visitor.styles.keys
-        rescue StandardError => e
-          @failures << Failure.new(file: file.to_s, error: e)
-
-          []
+            visitor.styles.keys
+          } || []
         end
 
         #: () -> Hash[String, String]
@@ -79,22 +67,6 @@ module Herb
         #: () -> String
         def inspect
           "#<#{self.class.name} scopes=#{@styles.size} files=#{@files.size} failures=#{@failures.size}>"
-        end
-
-        private
-
-        #: ((String | Pathname)) -> String
-        def read(file)
-          File.read(file)
-        end
-
-        #: ((String | Pathname), untyped) -> Hash[Symbol, untyped]
-        def engine_options(file, visitor)
-          @options.merge(
-            filename: Pathname.new(file).expand_path.to_s,
-            project_path: @project_path.to_s,
-            visitors: [*@options[:visitors], visitor]
-          )
         end
       end
     end

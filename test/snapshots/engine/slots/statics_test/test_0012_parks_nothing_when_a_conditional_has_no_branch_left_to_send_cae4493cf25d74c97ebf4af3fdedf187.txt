@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0012_parks nothing when a conditional has no branch left to send"
+input: "{source: \"<div><% if @a %>x<% end %></div>\", locals: {\"@a\" => true}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:5c690a9b:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->x<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

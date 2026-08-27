@@ -251,8 +251,7 @@ module Herb
 
         position = erb_node.location&.start&.to_one_based
 
-        escaped_erb = erb_code.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'",
-                                                                                                               "&#39;")
+        escaped_erb = Herb::Engine.h(erb_code)
 
         outline_type = if @top_level_elements.empty?
                          "erb-output #{determine_view_type}"

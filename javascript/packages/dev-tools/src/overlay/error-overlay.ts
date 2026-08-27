@@ -1,6 +1,6 @@
 import errorOverlayStyles from './error-overlay.css';
 
-import { Diagnostic } from '@herb-tools/core';
+import { Diagnostic, escapeHTML } from '@herb-tools/core';
 
 import { injectStyle } from '../styles';
 
@@ -173,7 +173,7 @@ function renderOptimizationBadge() {
     </div>
 
     <div class="herb-optimization-panel-list">
-      ${displayNames.map(f => `<div class="herb-optimization-panel-item">${f.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`).join('')}
+      ${displayNames.map(f => `<div class="herb-optimization-panel-item">${escapeHTML(f)}</div>`).join('')}
     </div>
 
     <div class="herb-optimization-panel-hint">
@@ -497,9 +497,9 @@ export class ErrorOverlay {
               <div class="herb-error-list">
                 ${validationData.validationErrors.map(error => `
                   <div class="herb-error-item ${error.severity}">
-                    <div class="herb-error-message">${this.escapeHtml(error.message)}</div>
+                    <div class="herb-error-message">${escapeHTML(error.message)}</div>
                     ${error.location ? `<div class="herb-error-location">Line ${error.location.line}, Column ${error.location.column}</div>` : ''}
-                    ${error.suggestion ? `<div class="herb-error-suggestion">💡 ${this.escapeHtml(error.suggestion)}</div>` : ''}
+                    ${error.suggestion ? `<div class="herb-error-suggestion">💡 ${escapeHTML(error.suggestion)}</div>` : ''}
                     <div class="herb-error-source">${error.source}${error.code ? ` (${error.code})` : ''}</div>
                   </div>
                 `).join('')}
@@ -594,15 +594,6 @@ export class ErrorOverlay {
     return this.allValidationData.some(data =>
       data.validationErrors.some(error => error.severity === 'error')
     );
-  }
-
-  private escapeHtml(unsafe: string): string {
-    return unsafe
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 
   public show() {
@@ -773,8 +764,8 @@ export class ErrorOverlay {
             All (${totalErrors})
           </button>
           ${Array.from(errorsByFile.entries()).map(([file, errors]) => `
-            <button class="herb-file-tab" data-file="${this.escapeAttr(file)}">
-              ${this.escapeHtml(file)} (${errors.length})
+            <button class="herb-file-tab" data-file="${escapeHTML(file)}">
+              ${escapeHTML(file)} (${errors.length})
             </button>
           `).join('')}
         </div>
@@ -782,13 +773,13 @@ export class ErrorOverlay {
     }
 
     const contentSections = Array.from(errorsBySource.entries()).map(([source, sourceFragments]) => `
-      <div class="herb-validator-section" data-source="${this.escapeAttr(source)}">
+      <div class="herb-validator-section" data-source="${escapeHTML(source)}">
         <div class="herb-validator-header">
-          <h3>${this.escapeHtml(source.replace('Validator', ''))} Issues (${sourceFragments.length})</h3>
+          <h3>${escapeHTML(source.replace('Validator', ''))} Issues (${sourceFragments.length})</h3>
         </div>
         <div class="herb-validator-content">
           ${sourceFragments.map(f => {
-            const fileAttribute = `data-error-file="${this.escapeAttr(f.metadata.filename)}"`;
+            const fileAttribute = `data-error-file="${escapeHTML(f.metadata.filename)}"`;
 
             if (f.count > 1) {
               return `
@@ -1199,7 +1190,4 @@ export class ErrorOverlay {
     });
   }
 
-  private escapeAttr(text: string): string {
-    return this.escapeHtml(text).replace(/"/g, '&quot;');
-  }
 }

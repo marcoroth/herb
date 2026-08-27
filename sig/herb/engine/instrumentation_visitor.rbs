@@ -33,26 +33,20 @@ module Herb
     # wrapped, because wrapping either one would change what the template means: a block would lose
     # its body, and an assignment would bind inside the wrapper instead of the template.
     class InstrumentationVisitor < Herb::Visitor
+      extend Experimental
+
       include ContextAware
 
-      # : () -> bool
-      def self.rewrites_erb_source?: () -> bool
-
       SESSION: ::String
-
-      ASSIGNMENT_NODES: untyped
 
       ARRAY_PROPERTIES: untyped
 
       NODE_PROPERTIES: untyped
 
-      def self.experimental_warning_issued: () -> bool
+      ASSIGNMENT_NODES: untyped
 
-      def self.experimental_warning_issued=: (bool) -> bool
-
-      attr_accessor experimental_warning_issued: bool
-
-      def initialize: () -> untyped
+      # : () -> bool
+      def self.rewrites_erb_source?: () -> bool
 
       def visit_document_node: (untyped node) -> untyped
 

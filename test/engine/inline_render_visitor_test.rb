@@ -386,7 +386,10 @@ module Engine
           compiled(%(<%= render "shared/unsafe" %>), Herb::Engine::Validators.all(fatal: true))
         end
 
-        assert_match(/attribute/i, error.message)
+        assert_equal(
+          "app/views/posts/index.html.erb:1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.",
+          error.message
+        )
       end
 
       test "a transforming visitor transforms what the partial brought with it" do

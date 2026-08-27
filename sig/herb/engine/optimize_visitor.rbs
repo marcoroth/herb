@@ -32,6 +32,8 @@ module Herb
     # development and not in production. Compiling it in is the caller's decision for the same reason
     # the optimization itself is.
     class OptimizeVisitor < Herb::Visitor
+      extend Experimental
+
       include ContextAware
 
       SESSION: String
@@ -42,12 +44,6 @@ module Herb
 
       # : () -> Array[String]
       def self.helper_sources: () -> Array[String]
-
-      def self.experimental_warning_issued: () -> bool
-
-      def self.experimental_warning_issued=: (bool) -> bool
-
-      attr_accessor experimental_warning_issued: bool
 
       # : (?verify: bool) -> void
       def initialize: (?verify: bool) -> void

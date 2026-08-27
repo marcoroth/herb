@@ -3,8 +3,8 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -12,7 +12,7 @@ module Engine
       include SnapshotUtils
 
       def options
-        { visitors: [Herb::Engine::SlotVisitor.new(mode: :client)], filename: "app/views/test.html.erb" }
+        { visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], filename: "app/views/test.html.erb" }
       end
 
       def render(template, locals = {})
@@ -97,38 +97,32 @@ module Engine
       end
 
       test "parks nothing when a conditional has no branch left to send" do
-        output = render("<div><% if @a %>x<% end %></div>", { "@a" => true })
-
-        refute_includes output, "<template"
+        assert_evaluated_snapshot("<div><% if @a %>x<% end %></div>", { "@a" => true }, options)
       end
 
       test "parks nothing when a collection covered every branch between its items" do
         template = "<ul><% @items.each do |i| %><li><% if i.odd? %>odd<% else %>even<% end %></li><% end %></ul>"
 
-        refute_includes render(template, { "@items" => [1, 2] }), "<template"
-        assert_equal "<!--herb-branch:1:1-->even", parked(template, { "@items" => [1, 3] })
+        assert_evaluated_snapshot(template, { "@items" => [1, 2] }, options)
+        assert_evaluated_snapshot(template, { "@items" => [1, 3] }, options)
       end
 
-      test "parks a keyed collection's item template even when the collection rendered rows" do
+      test "parks a keyed collection's item template only when no row rendered" do
         template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
 
-        assert_includes parked(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
-        assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
+        assert_evaluated_snapshot(template, { "@items" => ["a", "b"] }, options)
       end
 
-      test "parks the item template with its values blanked" do
-        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
-        markup = parked(template, { "@items" => ["a", "b"] })
-
-        assert_includes markup, %(<li id="")
-        refute_includes markup, ">a<"
-        refute_includes markup, ">b<"
+      test "parks the item template, with its values blanked, when the collection rendered nothing" do
+        assert_evaluated_snapshot(
+          %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>),
+          { "@items" => [] },
+          options
+        )
       end
 
       test "parks no item template for an unkeyed collection, which has no addressable items" do
-        template = "<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>"
-
-        refute_includes render(template, { "@items" => ["a", "b"] }), "herb-branch:0:item"
+        assert_evaluated_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", { "@items" => ["a", "b"] }, options)
       end
 
       test "parks the branches of one conditional and not of another" do
@@ -138,53 +132,70 @@ module Engine
       end
 
       test "keeps what it counts to itself" do
-        output = render("<div><% if @a %>x<% end %></div>", { "@a" => true })
+        assert_compiled_snapshot("<div><% if @a %>x<% end %></div>", options)
+      end
 
-        refute_includes output, "_herb_covered_branches"
+      test "parks a branch once for a partial rendered many times in one response" do
+        source = Herb::Engine.new("<div><% if @a %>x<% else %>y<% end %></div>", **options).src
+        view = Object.new
+        view.instance_variable_set(:@_herb_covered, {})
+        view.define_singleton_method(:render) do |a|
+          @a = a
+          instance_eval(source, __FILE__, __LINE__)
+        end
+
+        rendered = Array.new(3) { view.render(true) }.join
+
+        assert_equal 1, rendered.scan("<template").size
       end
 
       test "parks nothing at all in server mode, and counts nothing either" do
         compiled = Herb::Engine.new(
           "<div><% if @a %>x<% else %>y<% end %></div>",
-          visitors: [Herb::Engine::SlotVisitor.new(mode: :server)],
+          visitors: [Herb::Engine::Slots::Visitor.new(mode: :server)],
           filename: "app/views/test.html.erb"
         ).src
 
-        refute_includes compiled, "_herb_covered_branches"
-        refute_includes compiled, "<template"
-        assert_includes evaluate_herb_source(compiled, { "@a" => false }), "herb-slot:0:conditional"
+        assert_snapshot_matches(compiled, "compiled in server mode")
+        assert_snapshot_matches(evaluate_herb_source(compiled, { "@a" => false }), "rendered in server mode")
       end
 
-      test "parks an interpolated attribute's static segments" do
-        template = %(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>)
-        markup = parked(template, { "@id" => 7, "@kind" => "a", "@size" => "b" })
+      test "parks nothing for an interpolated attribute, whose stretches the manifest carries" do
+        assert_evaluated_snapshot(
+          %(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>),
+          { "@id" => 7, "@kind" => "a", "@size" => "b" },
+          options
+        )
+      end
 
-        assert_includes markup, "<!--herb-branch:0:parts-->message_<!--herb-part-->"
-        assert_includes markup, "<!--herb-branch:1:parts-->row-<!--herb-part-->-of-<!--herb-part-->"
+      test "carries an interpolated attribute's static segments in the manifest" do
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client)
+
+        Herb::Engine.new(%(<div id="message_<%= @id %>" class="row-<%= @kind %>-of-<%= @size %>">x</div>), visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal({ "0" => ["message_", ""], "1" => ["row-", "-of-", ""] }, visitor.manifest["parts"])
       end
 
       test "the values payload carries an interpolated attribute as its dynamic parts" do
         template = %(<div class="row-<%= @kind %>-of-<%= @size %>">x</div>)
-        source = Herb::Engine::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src
+        source = Herb::Engine::Slots::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src
         payload = evaluate_herb_source(source, { "@kind" => "a", "@size" => "b" })
 
         assert_equal ["a", "b"], payload[:slots][0]
       end
 
       test "parks no segments for an attribute holding more than outputs" do
-        rendered = render(%(<div class="x<% if @a %>y<% end %>z">c</div>), { "@a" => true })
-
-        refute_includes rendered, ":parts-->"
+        assert_evaluated_snapshot(%(<div class="x<% if @a %>y<% end %>z">c</div>), { "@a" => true }, options)
       end
 
       test "parks nothing at all unless the mode asks for it" do
         source = Herb::Engine.new(
           "<div><% if @a %>x<% end %></div>",
-          visitors: [Herb::Engine::SlotVisitor.new],
+          visitors: [Herb::Engine::Slots::Visitor.new],
           filename: "app/views/test.html.erb"
         ).src
 
-        refute_includes evaluate_herb_source(source, { "@a" => false }), "<template"
+        assert_snapshot_matches(evaluate_herb_source(source, { "@a" => false }), "rendered with no delivery asked for")
       end
     end
   end

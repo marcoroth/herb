@@ -1,0 +1,145 @@
+{
+  "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+  "template": "<%# herb:state (filter: \"all\") %><ul><% @items.each do |r| %><%# herb:key r %><%# herb:state (starred: false) %><li id=\"<%= r %>\" hidden=\"<%= filter == \"starred\" && starred == false %>\"><%= r %></li><% end %></ul>",
+  "rendered": "<!--herb-region:app/views/contract/a-keyed-collection-with-declared-item-state.html.erb:ba888992:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li id=\"a\"  data-herb-slot=\"1:attribute:id 2:boolean_attribute:hidden 3:child\">a</li><!--/herb-item:0--><!--herb-item:0:b--><li id=\"b\"  data-herb-slot=\"1:attribute:id 2:boolean_attribute:hidden 3:child\">b</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:app/views/contract/a-keyed-collection-with-declared-item-state.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-keyed-collection-with-declared-item-state.html.erb:ba888992:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li id=\"a\"  data-herb-slot=\"1:attribute:id 2:boolean_attribute:hidden 3:child\">a</li><!--/herb-item:0--><!--herb-item:0:b--><li id=\"b\"  data-herb-slot=\"1:attribute:id 2:boolean_attribute:hidden 3:child\">b</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:app/views/contract/a-keyed-collection-with-declared-item-state.html.erb-->",
+  "values": {
+    "template": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "version": "ba888992",
+    "occurrence": 0,
+    "slots": {
+      "0": {
+        "items": {
+          "b": {
+            "1": "b",
+            "2": false,
+            "3": "b"
+          },
+          "c": {
+            "1": "c",
+            "2": false,
+            "3": "c"
+          }
+        },
+        "order": [
+          "b",
+          "c"
+        ]
+      }
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-keyed-collection-with-declared-item-state.html.erb:ba888992:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:b--><li id=\"b\"  data-herb-slot=\"1:attribute:id 2:boolean_attribute:hidden 3:child\">b</li><!--/herb-item:0--><!--herb-item:0:c--><li id=\"c\"  data-herb-slot=\"1:attribute:id 2:boolean_attribute:hidden 3:child\">c</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:app/views/contract/a-keyed-collection-with-declared-item-state.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "identifier": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "version": "ba888992",
+    "slots": [
+      {
+        "index": 0,
+        "type": "collection",
+        "node_path": [
+          1,
+          0
+        ],
+        "key_source": "directive"
+      },
+      {
+        "index": 1,
+        "type": "attribute",
+        "node_path": [
+          1,
+          0,
+          2
+        ],
+        "attribute": "id"
+      },
+      {
+        "index": 2,
+        "type": "boolean_attribute",
+        "node_path": [
+          1,
+          0,
+          2
+        ],
+        "attribute": "hidden"
+      },
+      {
+        "index": 3,
+        "type": "child",
+        "node_path": [
+          1,
+          0,
+          2,
+          0
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "identifier": "app/views/contract/a-keyed-collection-with-declared-item-state.html.erb",
+    "version": "ba888992",
+    "names": {},
+    "parts": {},
+    "states": {
+      "version": "ba888992",
+      "declarations": [
+        {
+          "name": "filter",
+          "kind": "string",
+          "default": "\"all\"",
+          "derived": null,
+          "line": 1,
+          "column": 0,
+          "scope": "region",
+          "value": "all"
+        },
+        {
+          "name": "starred",
+          "kind": "boolean",
+          "default": "false",
+          "derived": null,
+          "line": 1,
+          "column": 78,
+          "scope": 0,
+          "value": false
+        }
+      ],
+      "reads": {
+        "filter": [
+          2
+        ],
+        "starred": [
+          2
+        ]
+      },
+      "conditionals": {},
+      "presence": {
+        "2": {
+          "all": [
+            [
+              "filter",
+              {
+                "value": "starred"
+              }
+            ],
+            [
+              "starred",
+              {
+                "value": false
+              }
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "state": {
+      "@items": []
+    },
+    "params": {
+      "items": "@items"
+    }
+  }
+}

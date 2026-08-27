@@ -5,7 +5,7 @@ require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/inline_render_visitor"
 require_relative "../../../lib/herb/engine/scoped_style/visitor"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
 require_relative "../../../lib/herb/engine/report/middleware"
 
 module Engine
@@ -211,7 +211,7 @@ module Engine
 
       assert_compiled_snapshot(
         source,
-        options(visitors: [Herb::Engine::SlotVisitor.new(mode: :client)], project_path: PROJECT_PATH)
+        options(visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], project_path: PROJECT_PATH)
       )
     end
 
