@@ -130,4 +130,61 @@ describe("what an observer tells the parts that asked", () => {
 
     expect(heard).toEqual([])
   })
+
+  test("says nothing about markup that was replaced before the batch arrived", async () => {
+    const seen: string[] = []
+
+    observer.add({ nodesAdded: (nodes) => nodes.forEach((node) => seen.push((node as Element).id ?? "?")) })
+
+    const first = document.createElement("div")
+    first.id = "gone"
+    document.body.appendChild(first)
+
+    const second = document.createElement("div")
+    second.id = "stayed"
+    first.replaceWith(second)
+
+    await settle()
+
+    expect(seen).toEqual(["stayed"])
+  })
+
+  test("still says what left, so a part can forget it", async () => {
+    const seen: string[] = []
+
+    const element = document.createElement("div")
+    document.body.appendChild(element)
+
+    await settle()
+
+    observer.add({ nodesRemoved: (nodes) => nodes.forEach(() => seen.push("removed")) })
+
+    element.remove()
+
+    await settle()
+
+    expect(seen).toEqual(["removed"])
+  })
+
+  test("says what left even when it came back, since leaving is only a prompt to look", async () => {
+    const seen: string[] = []
+
+    const element = document.createElement("div")
+    element.id = "flickered"
+    document.body.appendChild(element)
+
+    await settle()
+
+    observer.add({ nodesRemoved: (nodes) => nodes.forEach((node) => seen.push((node as Element).id)) })
+
+    const anchor = document.createElement("span")
+    document.body.appendChild(anchor)
+    element.remove()
+    document.body.appendChild(element)
+
+    await settle()
+
+    expect(seen).toEqual(["flickered"])
+    expect(element.isConnected).toBe(true)
+  })
 })

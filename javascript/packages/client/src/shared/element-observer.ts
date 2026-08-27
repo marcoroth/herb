@@ -61,9 +61,11 @@ export class ElementObserver {
       removed.push(...record.removedNodes)
     }
 
-    if (added.length > 0) {
+    const live = added.filter((node) => node.isConnected)
+
+    if (live.length > 0) {
       for (const delegate of [...this.delegates]) {
-        delegate.nodesAdded?.(added)
+        delegate.nodesAdded?.(live)
       }
     }
 
