@@ -275,6 +275,24 @@ The two rows are faceted, so each one counts against the other's selection. Pick
 
 The severity row appears only when the panel holds more than one of these groups, since a row that can only ever say "all of them" is noise. A selection that stops matching anything is released, and both selections persist for the session the same way.
 
+### One block per file
+
+A card carries one offense, with an excerpt focused on it. A file with several offenses becomes
+several cards, each showing an overlapping slice of the same source.
+
+The panel at full size offers the other reading of that. **One block per file** replaces a file's
+cards with a single rendering of the whole file, every offense marked in place and its message
+printed beside the marker. This is the same view the highlighter's own CLI produces when
+`--diagnostics` is passed without `--split-diagnostics`.
+
+The control is in the header, alongside the expand control, and only while the panel fills the
+window. There is no room for a whole file in the docked corner, and there is nothing to switch to for
+a file the payload carries no [`source`](#sources) for, so the control stays hidden in both cases. A
+file without a source keeps its cards even while the rest of the panel is showing blocks.
+
+Metrics carry no severity and cannot be marked, so they keep their cards too. The choice is
+remembered for the session, next to the open and expanded state.
+
 ### Origins
 
 `origin` names what produced a finding. It is freeform display text. Whatever a producer writes is what the panel shows, on the card and on the filter chip, character for character.

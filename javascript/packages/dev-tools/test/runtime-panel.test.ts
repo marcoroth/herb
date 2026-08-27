@@ -3891,3 +3891,141 @@ describe("what a blocking screen calls itself", () => {
     expect(title()).toBe("Herb Parser")
   })
 })
+
+describe("one block per file", () => {
+  const SOURCE = `<div class="actions">\n  <form action="/posts">\n    <button>Delete</button>\n  </form>\n</div>\n`
+
+  function payload() {
+    return {
+      version: 1,
+      sources: { "app/views/posts/_actions.html.erb": SOURCE },
+      diagnostics: [
+        {
+          template: "app/views/posts/_actions.html.erb",
+          message: "Nested `<form>` elements are not allowed.",
+          code: "html-no-nested-forms",
+          severity: "error",
+          origin: "Herb Linter",
+          location: { start: { line: 2, column: 3 }, end: { line: 2, column: 24 } },
+        },
+        {
+          template: "app/views/posts/_actions.html.erb",
+          message: "Button has no accessible name.",
+          code: "html-button-name",
+          severity: "warning",
+          origin: "Herb Linter",
+          location: { start: { line: 3, column: 5 }, end: { line: 3, column: 26 } },
+        },
+      ],
+    }
+  }
+
+  function viewButton() {
+    return document.querySelector('[data-herb-dev-tools-action="view"]') as HTMLButtonElement | null
+  }
+
+  function combined() {
+    return document.querySelector(".herb-dev-tools-combined")
+  }
+
+  test("offers the toggle once the panel fills the window", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+
+    expect(viewButton()).toBeNull()
+
+    instance.expand()
+
+    await waitForExcerpt()
+
+    expect(viewButton()!.textContent).toBe("One block per file")
+    expect(viewButton()!.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  test("replaces the cards with a single block", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+
+    await waitForExcerpt()
+
+    expect(cards()).toHaveLength(2)
+    expect(combined()).toBeNull()
+
+    instance.toggleView()
+
+    await waitFor(() => combined(), "the combined block")
+
+    expect(cards()).toHaveLength(0)
+    expect(document.querySelectorAll(".herb-dev-tools-combined")).toHaveLength(1)
+    expect(viewButton()!.textContent).toBe("One card per offense")
+  })
+
+  test("marks every offence in the one block", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    instance.toggleView()
+
+    const element = await waitFor(
+      () => document.querySelector(".herb-dev-tools-combined herb-ansi") as HTMLElement | null,
+      "the combined block",
+    )
+
+    const plain = element.textContent!.split("").filter(character => character.charCodeAt(0) !== 27).join("")
+      .replace(/\[[0-9;]*m/g, "")
+
+    expect(plain).toContain("Nested `<form>` elements are not allowed.")
+    expect(plain).toContain("Button has no accessible name.")
+
+    const lines = plain.split("\n")
+
+    expect(lines.some(line => line.includes("1 \u2502 <div class=\"actions\">"))).toBe(true)
+    expect(lines.some(line => line.includes("5 \u2502 </div>"))).toBe(true)
+    expect(lines.filter(line => line.includes("~")).length).toBe(2)
+  })
+
+  test("keeps the cards for a file it has no source for", async () => {
+    embed({ version: 1, diagnostics: payload().diagnostics })
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    instance.toggleView()
+
+    expect(instance.view).toBe("combined")
+    expect(combined()).toBeNull()
+    expect(cards()).toHaveLength(2)
+    expect(viewButton()).toBeNull()
+  })
+
+  test("remembers the choice for the session", async () => {
+    embed(payload())
+
+    const first = createPanel()
+
+    first.open()
+    first.expand()
+    first.toggleView()
+
+    expect(first.view).toBe("combined")
+
+    first.destroy()
+    document.body.innerHTML = ""
+    embed(payload())
+
+    const second = createPanel()
+
+    expect(second.view).toBe("combined")
+  })
+})
