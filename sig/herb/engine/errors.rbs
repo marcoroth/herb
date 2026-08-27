@@ -5,7 +5,9 @@ module Herb
     class CompilationError < StandardError
       attr_reader details: untyped
 
-      def initialize: (untyped message, ?details: untyped) -> untyped
+      attr_reader diagnostics: untyped
+
+      def initialize: (untyped message, ?details: untyped, ?diagnostics: untyped) -> untyped
 
       def detailed_message: (?highlight: untyped, **untyped) -> untyped
 

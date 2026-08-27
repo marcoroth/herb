@@ -5,8 +5,6 @@ module Herb
     class ParseError < CompilationError
       CONTEXT_LINES: Integer
 
-      attr_reader diagnostics: Array[Herb::Diagnostic]
-
       attr_reader source: String
 
       attr_reader visitors: Array[String]
