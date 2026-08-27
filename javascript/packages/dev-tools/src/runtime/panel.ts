@@ -8,7 +8,7 @@ import { flashElement } from '../slots/flash.js'
 import { MAX_RUNTIME_DIAGNOSTICS, RUNTIME_SEVERITIES } from './report.js'
 
 import type { RuntimeHighlighting } from './highlighting.js'
-import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
+import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RuntimeMeta, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
 
 export type BadgeTone = RuntimeSeverity | 'metric'
 
@@ -41,23 +41,28 @@ interface PanelState {
   expanded: boolean
   origin: string
   severity: string
+  view: PanelView
   width: number | null
   height: number | null
 }
 
 const ALL_ORIGINS = '*'
 const ALL_SEVERITIES = '*'
-
 const MIN_PANEL_WIDTH = 440
 const MIN_PANEL_HEIGHT = 180
 const VIEWPORT_MARGIN = 24
-
+const PANEL_VIEWS = ['cards', 'combined'] as const
 const RESIZE_EDGES = ['left', 'bottom', 'corner'] as const
 
 type ResizeEdge = typeof RESIZE_EDGES[number]
+type PanelView = typeof PANEL_VIEWS[number]
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), Math.max(low, high))
+}
+
+function asView(value: unknown): PanelView {
+  return PANEL_VIEWS.includes(value as PanelView) ? (value as PanelView) : 'cards'
 }
 
 function asSize(value: unknown): number | null {
@@ -191,12 +196,13 @@ export class RuntimePanel {
   private entries: PanelEntry[] = []
   private renderTree: RenderTreeNode[] = []
   private sources: Record<string, string> = {}
+  private meta: RuntimeMeta = {}
   private lastCount = 0
   private bumped = false
   private primed = false
   private onOpenFile: ((file: string, line: number, column: number) => void) | null = null
   private onOpen: (() => void) | null = null
-  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
+  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, view: 'cards', width: null, height: null }
   private root: HTMLElement | null = null
   private highlighting: RuntimeHighlighting | null = null
   private hydrating = false
@@ -543,6 +549,7 @@ export class RuntimePanel {
   private applyPayload(report: NormalizedRuntimeReport) {
     this.renderTree = report.renderTree
     this.sources = report.sources
+    this.meta = report.meta
 
     for (const diagnostic of report.diagnostics) {
       this.add(diagnostic, true)
@@ -605,11 +612,12 @@ export class RuntimePanel {
         expanded: parsed?.expanded === true,
         origin: typeof parsed?.origin === 'string' ? parsed.origin : ALL_ORIGINS,
         severity: typeof parsed?.severity === 'string' ? parsed.severity : ALL_SEVERITIES,
+        view: asView(parsed?.view),
         width: asSize(parsed?.width),
         height: asSize(parsed?.height),
       }
     } catch (_error) {
-      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
+      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, view: 'cards', width: null, height: null }
     }
   }
 
@@ -879,7 +887,7 @@ export class RuntimePanel {
       this.resizeHandlesHTML(),
       this.headerHTML(),
       this.filtersHTML(),
-      `<div class="herb-dev-tools-body">${this.bodyHTML()}</div>`,
+      `<div class="herb-dev-tools-body">${this.bodyHTML()}${this.provenanceHTML()}</div>`,
       `</section>`,
     ].join('')
   }
@@ -1055,6 +1063,7 @@ export class RuntimePanel {
       `<span class="herb-dev-tools-title">${escapeHTML(this.overlayHeadline(entries))}</span>`,
       this.overlayLocationHTML(entries),
       `<div class="herb-dev-tools-window-controls">`,
+      this.viewButtonHTML(),
       this.overlayScopeButtonHTML(),
       close,
       `</div>`,
@@ -1086,6 +1095,12 @@ export class RuntimePanel {
   }
 
   private overlayHeadline(entries: PanelEntry[]): string {
+    if (entries.length > 0 && entries.every(entry => entry.diagnostic.phase === 'compile')) {
+      const templates = new Set(entries.map(entry => entry.diagnostic.template))
+
+      return templates.size === 1 ? 'This template could not be compiled' : 'These templates could not be compiled'
+    }
+
     const origins = new Set(entries.map(entry => entry.diagnostic.origin))
 
     return origins.size === 1 ? [...origins][0] : 'Herb Runtime Diagnostics'
@@ -1120,6 +1135,33 @@ export class RuntimePanel {
     ].join('')
   }
 
+  public get view(): 'cards' | 'combined' {
+    return this.state.view
+  }
+
+  public toggleView() {
+    this.state.view = this.state.view === 'combined' ? 'cards' : 'combined'
+
+    this.saveState()
+    this.render()
+  }
+
+  private viewButtonHTML(): string {
+    if (!this.showingExpanded || this.combinableGroups === 0) {
+      return ''
+    }
+
+    const combined = this.state.view === 'combined'
+    const label = combined ? 'One card per offense' : 'One block per file'
+    const description = combined ? 'Show each offense on its own card' : 'Show every offense of a file in one block'
+
+    return [
+      `<button type="button" class="herb-dev-tools-view" data-herb-dev-tools-action="view"`,
+      ` aria-pressed="${combined}" title="${escapeHTML(description)}" aria-label="${escapeHTML(description)}">`,
+      `${escapeHTML(label)}</button>`,
+    ].join('')
+  }
+
   private overlayScopeButtonHTML(): string {
     if (this.overlay === null) {
       return ''
@@ -1151,7 +1193,7 @@ export class RuntimePanel {
 
   private headerControlsHTML(overlay: OverlayMode | null): string[] {
     if (overlay === 'blocking') {
-      return [`<div class="herb-dev-tools-window-controls">`, this.overlayScopeButtonHTML(), `</div>`]
+      return [`<div class="herb-dev-tools-window-controls">`, this.viewButtonHTML(), this.overlayScopeButtonHTML(), `</div>`]
     }
 
     if (overlay === 'dismissible') {
@@ -1159,6 +1201,7 @@ export class RuntimePanel {
 
       return [
         `<div class="herb-dev-tools-window-controls">`,
+        this.viewButtonHTML(),
         this.overlayScopeButtonHTML(),
         `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="dismiss-overlay" aria-label="${label}" title="${label}">×</button>`,
         `</div>`,
@@ -1169,6 +1212,7 @@ export class RuntimePanel {
       this.clearButtonHTML(),
       `<button type="button" class="herb-dev-tools-hide" data-herb-dev-tools-action="dismiss">Hide for this session</button>`,
       `<div class="herb-dev-tools-window-controls">`,
+      this.viewButtonHTML(),
       this.expandButtonHTML(),
       `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="close" aria-label="Close panel">×</button>`,
       `</div>`,
@@ -1319,7 +1363,7 @@ export class RuntimePanel {
       sections.push([
         `<section class="herb-dev-tools-group">`,
         `<h2 class="herb-dev-tools-group-title">${this.pathHTML(template, template, this.firstLineFor(groupEntries), 1, 'herb-dev-tools-group-path')}<span class="herb-dev-tools-group-count">${groupEntries.length}</span></h2>`,
-        groupEntries.map(entry => this.cardHTML(entry)).join(''),
+        this.groupBodyHTML(template, groupEntries),
         `</section>`,
       ].join(''))
     }
@@ -1327,15 +1371,91 @@ export class RuntimePanel {
     return sections.join('')
   }
 
+  private provenanceHTML(): string {
+    if (!this.overlayFocused) {
+      return ''
+    }
+
+    const { herb_version: version, visitors, parser_options: options } = this.meta
+    const parts: string[] = []
+
+    if (version !== undefined) {
+      parts.push(`<span>Compiled by Herb ${escapeHTML(version)}</span>`)
+    }
+
+    if (options !== undefined) {
+      const pairs = Object.entries(options)
+        .map(([key, value]) => `<code>${escapeHTML(key)}: ${escapeHTML(value)}</code>`)
+        .join(', ')
+
+      if (pairs.length > 0) {
+        parts.push(`<span>Parser options: ${pairs}</span>`)
+      }
+    }
+
+    if (visitors !== undefined && visitors.length > 0) {
+      const names = visitors.map(visitor => `<code>${escapeHTML(visitor)}</code>`).join(' ')
+
+      parts.push(`<span class="herb-dev-tools-provenance-list">Visitors: ${names}</span>`)
+    }
+
+    if (parts.length === 0) {
+      return ''
+    }
+
+    return `<footer class="herb-dev-tools-provenance">${parts.join('')}</footer>`
+  }
+
+  private combinable(template: string, entries: PanelEntry[]): boolean {
+    if (this.sources[template] === undefined) {
+      return false
+    }
+
+    return entries.some(entry => entry.diagnostic.location !== null && entry.diagnostic.severity !== null)
+  }
+
+  private get combinableGroups(): number {
+    const groups = new Map<string, PanelEntry[]>()
+
+    for (const entry of this.visibleEntries()) {
+      const existing = groups.get(entry.diagnostic.template) ?? []
+
+      existing.push(entry)
+      groups.set(entry.diagnostic.template, existing)
+    }
+
+    return [...groups].filter(([template, entries]) => this.combinable(template, entries)).length
+  }
+
+  private groupBodyHTML(template: string, entries: PanelEntry[]): string {
+    if (this.state.view !== 'combined' || !this.combinable(template, entries)) {
+      return entries.map(entry => this.cardHTML(entry)).join('')
+    }
+
+    if (this.highlighting === null) {
+      return `<div class="herb-dev-tools-combined" data-herb-dev-tools-excerpt-pending></div>`
+    }
+
+    const rendered = this.highlighting.combined(template, this.sources[template], entries.map(entry => entry.diagnostic))
+
+    if (rendered === null) {
+      return entries.map(entry => this.cardHTML(entry)).join('')
+    }
+
+    const target = this.onOpenFile === null || template === UNKNOWN_TEMPLATE ? null : { file: template, line: this.firstLineFor(entries), column: 1 }
+
+    return `<div class="herb-dev-tools-combined">${ansiHTML(rendered, 'herb-dev-tools-ansi', target)}</div>`
+  }
+
   private cardHTML(entry: PanelEntry): string {
     const diagnostic = entry.diagnostic
     const isMetric = diagnostic.kind === 'metric'
+    const url = safeUrl(diagnostic.docsUrl)
+    const code = diagnostic.code === null ? '' : `<span class="herb-dev-tools-code">${escapeHTML(diagnostic.code)}</span>`
+
     const marker = isMetric
       ? `<span class="herb-dev-tools-metric">${escapeHTML(diagnostic.value ?? 'metric')}</span>`
       : `<span class="herb-dev-tools-dot herb-dev-tools-dot-${escapeHTML(diagnostic.severity ?? 'error')}" aria-hidden="true"></span>`
-
-    const url = safeUrl(diagnostic.docsUrl)
-    const code = diagnostic.code === null ? '' : `<span class="herb-dev-tools-code">${escapeHTML(diagnostic.code)}</span>`
 
     const docs = url === null
       ? ''
@@ -1350,9 +1470,7 @@ export class RuntimePanel {
     const repeat = entry.count > 1 ? `<span class="herb-dev-tools-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : ''
     const feature = this.featureButtonHTML(entry)
     const suggestion = diagnostic.suggestion === null ? '' : `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`
-    const element = diagnostic.element !== null && diagnostic.element.isConnected
-      ? `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it"><span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span><code>${escapeHTML(describeElement(diagnostic.element))}</code></button>`
-      : ''
+    const element = this.elementHTML(entry)
 
     return [
       `<article class="herb-dev-tools-card" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" data-herb-dev-tools-origin="${escapeHTML(diagnostic.origin)}" data-herb-dev-tools-kind="${escapeHTML(diagnostic.kind)}">`,
@@ -1364,6 +1482,52 @@ export class RuntimePanel {
       this.stackHTML(diagnostic),
       this.fixHTML(diagnostic),
       `</article>`,
+    ].join('')
+  }
+
+  private elementHTML(entry: PanelEntry): string {
+    const element = entry.diagnostic.element
+
+    if (element === null) {
+      return ''
+    }
+
+    const described = escapeHTML(describeElement(element))
+
+    if (!element.isConnected) {
+      const label = 'This element was on the page when it was reported and is not any more'
+
+      return [
+        `<span class="herb-dev-tools-element herb-dev-tools-element-gone" title="${label}">`,
+        `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◌</span>`,
+        `<code>${described}</code>`,
+        `<span class="herb-dev-tools-element-note">no longer on the page</span>`,
+        `</span>`,
+      ].join('')
+    }
+
+    const hidden = hiddenBy(element)
+
+    if (hidden !== null) {
+      const label = hidden.culprit === null
+        ? 'This element is on the page but nothing is rendered for it, so there is nothing to scroll to'
+        : `This element is on the page but nothing is rendered for it, because ${describeElement(hidden.culprit)} has ${hidden.reason}`
+
+      return [
+        `<span class="herb-dev-tools-element herb-dev-tools-element-hidden" title="${escapeHTML(label)}">`,
+        `<span class="herb-dev-tools-element-glyph" aria-hidden="true">○</span>`,
+        `<code>${described}</code>`,
+        `<span class="herb-dev-tools-element-note">not visible (${escapeHTML(hidden.reason)})</span>`,
+        `</span>`,
+      ].join('')
+    }
+
+    return [
+      `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate"`,
+      ` data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it">`,
+      `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span>`,
+      `<code>${described}</code>`,
+      `</button>`,
     ].join('')
   }
 
@@ -1502,6 +1666,8 @@ export class RuntimePanel {
           this.collapse()
         } else if (action === 'dismiss-overlay') {
           this.dismissOverlay()
+        } else if (action === 'view') {
+          this.toggleView()
         } else if (action === 'overlay-scope') {
           this.toggleOverlayScope()
         } else if (action === 'feature') {
@@ -1564,7 +1730,7 @@ export class RuntimePanel {
   private locateFrom(trigger: HTMLElement) {
     const target = this.entryFor(trigger)?.diagnostic.element
 
-    if (!target || !target.isConnected) return
+    if (!target || !target.isConnected || hiddenBy(target) !== null) return
 
     this.stepOutOfTheWay()
 
@@ -1594,7 +1760,7 @@ export class RuntimePanel {
 
     const target = this.entryFor(trigger)?.diagnostic.element
 
-    if (!target || !target.isConnected) return
+    if (!target || !target.isConnected || hiddenBy(target) !== null) return
 
     const rect = target.getBoundingClientRect()
     const box = document.createElement('div')
@@ -1629,6 +1795,40 @@ function severityOf(entries: PanelEntry[]): RuntimeSeverity | null {
     if (present) {
       return severity
     }
+  }
+
+  return null
+}
+
+function hiddenBy(element: Element): { reason: string, culprit: Element | null } | null {
+  let current: Element | null = element
+
+  while (current !== null) {
+    const style = getComputedStyle(current)
+
+    if (style.display === 'none') {
+      return { reason: 'display: none', culprit: current === element ? null : current }
+    }
+
+    if (style.getPropertyValue('content-visibility') === 'hidden') {
+      return { reason: 'content-visibility: hidden', culprit: current === element ? null : current }
+    }
+
+    if (style.opacity === '0') {
+      return { reason: 'opacity: 0', culprit: current === element ? null : current }
+    }
+
+    current = current.parentElement
+  }
+
+  const style = getComputedStyle(element)
+
+  if (style.visibility === 'hidden' || style.visibility === 'collapse') {
+    return { reason: `visibility: ${style.visibility}`, culprit: null }
+  }
+
+  if (style.display === 'contents') {
+    return { reason: 'display: contents', culprit: null }
   }
 
   return null

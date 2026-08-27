@@ -5,6 +5,53 @@ require_relative "../../lib/herb/engine"
 
 module Engine
   class ErrorHandlingTest < Minitest::Spec
+    class ChattyVisitor < Herb::Visitor
+      def initialize
+        super
+        @junk = "x" * 500
+      end
+    end
+
+    describe "what a parse error remembers about the compile" do
+      def broken
+        "<div>\n  <form>\n</div>\n"
+      end
+
+      test "describes each visitor the way the visitor describes itself" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(broken, filename: "a.html.erb", visitors: Herb::Engine::Validators.all)
+        end
+
+        assert_equal(
+          [
+            "#<Herb::Engine::Validators::SecurityValidator fatal=true>",
+            "#<Herb::Engine::Validators::NestingValidator fatal=true>",
+            "#<Herb::Engine::Validators::AccessibilityValidator fatal=true>"
+          ],
+          error.visitors
+        )
+      end
+
+      test "caps a visitor that describes itself at length" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(broken, filename: "a.html.erb", visitors: [ChattyVisitor.new])
+        end
+
+        described = error.visitors.first
+
+        assert_equal Herb::Engine::VISITOR_DESCRIPTION_LIMIT + 1, described.length
+        assert described.end_with?("\u2026"), "expected the description to be cut short"
+      end
+
+      test "carries the parser options the parse actually ran under" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(broken, filename: "a.html.erb", visitors: Herb::Engine::Validators.all)
+        end
+
+        assert_equal({ track_locations: true }, error.parser_options)
+      end
+    end
+
     test "mismatched html tags" do
       template = <<~ERB
         <div>

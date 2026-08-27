@@ -1775,8 +1775,118 @@ describe("diagnostics that name an element", () => {
     expect(document.querySelector(".herb-element-flash")).not.toBeNull()
   })
 
-  test("skip the control once the element has left the page", () => {
+  test("says the element has left the page instead of dropping the chip", () => {
     const target = document.createElement("span")
+
+    target.id = "gone-away"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).not.toBeNull()
+
+    target.remove()
+    panel.refresh()
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip).not.toBeNull()
+    expect(chip.tagName).toBe("SPAN")
+    expect(chip.classList.contains("herb-dev-tools-element-gone")).toBe(true)
+    expect(chip.textContent).toContain("<span#gone-away>")
+    expect(chip.textContent).toContain("no longer on the page")
+    expect(chip.title).toBe("This element was on the page when it was reported and is not any more")
+  })
+
+  test("says an element is not visible when it is on the page with no box", () => {
+    const target = document.createElement("span")
+
+    target.id = "cover-three"
+    target.style.display = "none"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.tagName).toBe("SPAN")
+    expect(chip.classList.contains("herb-dev-tools-element-hidden")).toBe(true)
+    expect(chip.textContent).toContain("<span#cover-three>")
+    expect(chip.textContent).toContain("not visible (display: none)")
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).toBeNull()
+  })
+
+  test("names the ancestor that hides an element the diagnostic named", () => {
+    const parent = document.createElement("div")
+    const target = document.createElement("span")
+
+    parent.id = "modal"
+    parent.style.display = "none"
+    parent.appendChild(target)
+    document.body.appendChild(parent)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.title).toBe("This element is on the page but nothing is rendered for it, because <div#modal> has display: none")
+  })
+
+  test("does not name an ancestor when the element hides itself", () => {
+    const target = document.createElement("span")
+
+    target.style.visibility = "hidden"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.textContent).toContain("not visible (visibility: hidden)")
+    expect(chip.title).toBe("This element is on the page but nothing is rendered for it, so there is nothing to scroll to")
+  })
+
+  test("says an element that has no box of its own is not visible", () => {
+    const target = document.createElement("div")
+
+    target.style.display = "contents"
+    target.textContent = "rendered by its children"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "contents", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.textContent).toContain("not visible (display: contents)")
+  })
+
+  test("keeps the locate control for an element that is merely scrolled out of view", () => {
+    const target = document.createElement("div")
+
+    target.textContent = "below the fold"
+    target.style.marginTop = "300vh"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "offscreen", element: target })
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).not.toBeNull()
+  })
+
+  test("offers no locate control for an element that has left the page", () => {
+    const target = document.createElement("span")
+
     document.body.appendChild(target)
 
     const panel = createPanel()
@@ -1784,6 +1894,15 @@ describe("diagnostics that name an element", () => {
     panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
     target.remove()
     panel.refresh()
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).toBeNull()
+    expect(getComputedStyle(document.querySelector(".herb-dev-tools-element")!).cursor).toBe("default")
+  })
+
+  test("says nothing at all when no element was named", () => {
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "no element here" })
 
     expect(document.querySelector(".herb-dev-tools-element")).toBeNull()
   })
@@ -3718,5 +3837,195 @@ describe("resize drag hygiene", () => {
     instance.destroy()
 
     expect(document.body.style.userSelect).toBe("")
+  })
+})
+
+describe("what a blocking screen calls itself", () => {
+  function title() {
+    return document.querySelector(".herb-dev-tools-title")!.textContent
+  }
+
+  test("says the template could not be compiled", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Parser", phase: "compile", overlay: "blocking" }))
+
+    expect(title()).toBe("This template could not be compiled")
+  })
+
+  test("says templates, plural, when more than one failed", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", template: "a.html.erb", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+      diagnostic({ code: "two", template: "b.html.erb", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+    ])
+
+    expect(title()).toBe("These templates could not be compiled")
+  })
+
+  test("keeps naming the producer for anything that did render", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Client Runtime", phase: "runtime", overlay: "dismissible" }))
+
+    expect(title()).toBe("Herb Client Runtime")
+  })
+
+  test("keeps naming the producer when the phase is not said at all", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Acme Scanner", overlay: "dismissible" }))
+
+    expect(title()).toBe("Acme Scanner")
+  })
+
+  test("will not claim a compile failure for a mixed screen", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+      diagnostic({ code: "two", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    expect(title()).toBe("Herb Parser")
+  })
+})
+
+describe("one block per file", () => {
+  const SOURCE = `<div class="actions">\n  <form action="/posts">\n    <button>Delete</button>\n  </form>\n</div>\n`
+
+  function payload() {
+    return {
+      version: 1,
+      sources: { "app/views/posts/_actions.html.erb": SOURCE },
+      diagnostics: [
+        {
+          template: "app/views/posts/_actions.html.erb",
+          message: "Nested `<form>` elements are not allowed.",
+          code: "html-no-nested-forms",
+          severity: "error",
+          origin: "Herb Linter",
+          location: { start: { line: 2, column: 3 }, end: { line: 2, column: 24 } },
+        },
+        {
+          template: "app/views/posts/_actions.html.erb",
+          message: "Button has no accessible name.",
+          code: "html-button-name",
+          severity: "warning",
+          origin: "Herb Linter",
+          location: { start: { line: 3, column: 5 }, end: { line: 3, column: 26 } },
+        },
+      ],
+    }
+  }
+
+  function viewButton() {
+    return document.querySelector('[data-herb-dev-tools-action="view"]') as HTMLButtonElement | null
+  }
+
+  function combined() {
+    return document.querySelector(".herb-dev-tools-combined")
+  }
+
+  test("offers the toggle once the panel fills the window", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+
+    expect(viewButton()).toBeNull()
+
+    instance.expand()
+
+    await waitForExcerpt()
+
+    expect(viewButton()!.textContent).toBe("One block per file")
+    expect(viewButton()!.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  test("replaces the cards with a single block", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+
+    await waitForExcerpt()
+
+    expect(cards()).toHaveLength(2)
+    expect(combined()).toBeNull()
+
+    instance.toggleView()
+
+    await waitFor(() => combined(), "the combined block")
+
+    expect(cards()).toHaveLength(0)
+    expect(document.querySelectorAll(".herb-dev-tools-combined")).toHaveLength(1)
+    expect(viewButton()!.textContent).toBe("One card per offense")
+  })
+
+  test("marks every offence in the one block", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    instance.toggleView()
+
+    const element = await waitFor(
+      () => document.querySelector(".herb-dev-tools-combined herb-ansi") as HTMLElement | null,
+      "the combined block",
+    )
+
+    const plain = element.textContent!.split("").filter(character => character.charCodeAt(0) !== 27).join("")
+      .replace(/\[[0-9;]*m/g, "")
+
+    expect(plain).toContain("Nested `<form>` elements are not allowed.")
+    expect(plain).toContain("Button has no accessible name.")
+
+    const lines = plain.split("\n")
+
+    expect(lines.some(line => line.includes("1 \u2502 <div class=\"actions\">"))).toBe(true)
+    expect(lines.some(line => line.includes("5 \u2502 </div>"))).toBe(true)
+    expect(lines.filter(line => line.includes("~")).length).toBe(2)
+  })
+
+  test("keeps the cards for a file it has no source for", async () => {
+    embed({ version: 1, diagnostics: payload().diagnostics })
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    instance.toggleView()
+
+    expect(instance.view).toBe("combined")
+    expect(combined()).toBeNull()
+    expect(cards()).toHaveLength(2)
+    expect(viewButton()).toBeNull()
+  })
+
+  test("remembers the choice for the session", async () => {
+    embed(payload())
+
+    const first = createPanel()
+
+    first.open()
+    first.expand()
+    first.toggleView()
+
+    expect(first.view).toBe("combined")
+
+    first.destroy()
+    document.body.innerHTML = ""
+    embed(payload())
+
+    const second = createPanel()
+
+    expect(second.view).toBe("combined")
   })
 })

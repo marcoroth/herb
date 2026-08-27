@@ -26,14 +26,16 @@ module Herb
 
     attr_reader value: String?
 
+    attr_reader overlay: Symbol?
+
     attr_reader phase: Symbol
 
     attr_reader data: Hash[Symbol, untyped]
 
     attr_reader error_class: Class?
 
-    # : (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
-    def initialize: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+    # : (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?overlay: Symbol?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+    def initialize: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?overlay: Symbol?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
 
     # : (String, Hash[Symbol, untyped]) -> Diagnostic
     def self.from_compiled: (String, Hash[Symbol, untyped]) -> Diagnostic

@@ -36,6 +36,22 @@ module Engine
       assert_equal({ version: 1, diagnostics: [], renderTree: [], nodes: {}, sources: {} }, report.to_h)
     end
 
+    test "leaves the provenance out until there is any" do
+      refute_predicate report, :noted?
+      refute report.to_h.key?(:meta)
+
+      report.note(:herb_version, "0.10.3")
+
+      assert_predicate report, :noted?
+      assert_equal({ herb_version: "0.10.3" }, report.to_h[:meta])
+    end
+
+    test "ignores a note with nothing in it" do
+      report.note(:visitors, nil)
+
+      refute report.to_h.key?(:meta)
+    end
+
     test "carries the version the reader checks" do
       assert_equal 1, Herb::Engine::Report::VERSION
       assert_equal 1, report.to_h[:version]

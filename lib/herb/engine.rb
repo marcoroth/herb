@@ -17,6 +17,8 @@ require_relative "engine/parse_error"
 
 module Herb
   class Engine
+    VISITOR_DESCRIPTION_LIMIT = 200 #: Integer
+
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -392,8 +394,19 @@ module Herb
           error.to_diagnostic(template: relative_file_path)
         },
         source: input,
-        filename: relative_file_path
+        filename: relative_file_path,
+        visitors: visitor_descriptions,
+        parser_options: @parser_options
       )
+    end
+
+    #: () -> Array[String]
+    def visitor_descriptions
+      @visitors.map { |visitor|
+        described = visitor.inspect
+
+        described.length > VISITOR_DESCRIPTION_LIMIT ? "#{described[0, VISITOR_DESCRIPTION_LIMIT]}…" : described
+      }
     end
 
     #: (String) -> void
