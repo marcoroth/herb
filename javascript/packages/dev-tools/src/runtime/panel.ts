@@ -8,7 +8,7 @@ import { flashElement } from '../slots/flash.js'
 import { MAX_RUNTIME_DIAGNOSTICS, RUNTIME_SEVERITIES } from './report.js'
 
 import type { RuntimeHighlighting } from './highlighting.js'
-import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
+import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, RuntimeMeta, RenderStackFrame, RenderTreeNode, RuntimeDiagnostic, RuntimeSeverity } from './report.js'
 
 export type BadgeTone = RuntimeSeverity | 'metric'
 
@@ -191,6 +191,7 @@ export class RuntimePanel {
   private entries: PanelEntry[] = []
   private renderTree: RenderTreeNode[] = []
   private sources: Record<string, string> = {}
+  private meta: RuntimeMeta = {}
   private lastCount = 0
   private bumped = false
   private primed = false
@@ -543,6 +544,7 @@ export class RuntimePanel {
   private applyPayload(report: NormalizedRuntimeReport) {
     this.renderTree = report.renderTree
     this.sources = report.sources
+    this.meta = report.meta
 
     for (const diagnostic of report.diagnostics) {
       this.add(diagnostic, true)
@@ -879,7 +881,7 @@ export class RuntimePanel {
       this.resizeHandlesHTML(),
       this.headerHTML(),
       this.filtersHTML(),
-      `<div class="herb-dev-tools-body">${this.bodyHTML()}</div>`,
+      `<div class="herb-dev-tools-body">${this.bodyHTML()}${this.provenanceHTML()}</div>`,
       `</section>`,
     ].join('')
   }
@@ -1086,6 +1088,12 @@ export class RuntimePanel {
   }
 
   private overlayHeadline(entries: PanelEntry[]): string {
+    if (entries.length > 0 && entries.every(entry => entry.diagnostic.phase === 'compile')) {
+      const templates = new Set(entries.map(entry => entry.diagnostic.template))
+
+      return templates.size === 1 ? 'This template could not be compiled' : 'These templates could not be compiled'
+    }
+
     const origins = new Set(entries.map(entry => entry.diagnostic.origin))
 
     return origins.size === 1 ? [...origins][0] : 'Herb Runtime Diagnostics'
@@ -1325,6 +1333,41 @@ export class RuntimePanel {
     }
 
     return sections.join('')
+  }
+
+  private provenanceHTML(): string {
+    if (!this.overlayFocused) {
+      return ''
+    }
+
+    const { herb_version: version, visitors, parser_options: options } = this.meta
+    const parts: string[] = []
+
+    if (version !== undefined) {
+      parts.push(`<span>Compiled by Herb ${escapeHTML(version)}</span>`)
+    }
+
+    if (options !== undefined) {
+      const pairs = Object.entries(options)
+        .map(([key, value]) => `<code>${escapeHTML(key)}: ${escapeHTML(value)}</code>`)
+        .join(', ')
+
+      if (pairs.length > 0) {
+        parts.push(`<span>Parser options: ${pairs}</span>`)
+      }
+    }
+
+    if (visitors !== undefined && visitors.length > 0) {
+      const names = visitors.map(visitor => `<code>${escapeHTML(visitor)}</code>`).join(' ')
+
+      parts.push(`<span class="herb-dev-tools-provenance-list">Visitors: ${names}</span>`)
+    }
+
+    if (parts.length === 0) {
+      return ''
+    }
+
+    return `<footer class="herb-dev-tools-provenance">${parts.join('')}</footer>`
   }
 
   private cardHTML(entry: PanelEntry): string {

@@ -18,6 +18,7 @@
     "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
     "dev": "vite",
     "clean": "rimraf dist",
+    "demo": "bundle exec rackup demo/rack/config.ru --port 9292 --server webrick",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

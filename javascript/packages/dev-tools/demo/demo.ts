@@ -120,6 +120,16 @@ on("report-located", () => {
       location: { start: { line: 1, column: 1 } },
       element: posts[1] ?? null,
     },
+    {
+      template: "app/views/posts/_draft.html.erb",
+      node: "6",
+      message: "Draft cover has no alt text.",
+      code: "html-img-require-alt",
+      severity: "warning",
+      origin: "Acme Scanner",
+      location: { start: { line: 1, column: 1 } },
+      element: document.getElementById("cover-four"),
+    },
   ])
 })
 

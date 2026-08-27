@@ -12,12 +12,16 @@ module Herb
       attr_reader :diagnostics #: Array[Herb::Diagnostic]
       attr_reader :source #: String
       attr_reader :filename #: String?
+      attr_reader :visitors #: Array[String]
+      attr_reader :parser_options #: Hash[Symbol, untyped]
 
-      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?) -> void
-      def initialize(message, diagnostics:, source:, filename: nil)
+      #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped]) -> void
+      def initialize(message, diagnostics:, source:, filename: nil, visitors: [], parser_options: {})
         @diagnostics = diagnostics
         @source = source
         @filename = filename
+        @visitors = visitors
+        @parser_options = parser_options
 
         super(message)
       end

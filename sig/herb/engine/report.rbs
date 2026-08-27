@@ -18,6 +18,8 @@ module Herb
 
       ATTRIBUTE: String
 
+      attr_reader meta: Hash[Symbol, untyped]
+
       attr_reader sources: Hash[String, String]
 
       attr_reader nodes: Hash[String, Hash[String, Hash[Symbol, untyped]]]
@@ -39,6 +41,9 @@ module Herb
       # : (untyped) -> Report
       def concat: (untyped) -> Report
 
+      # : (Symbol, untyped) -> void
+      def note: (Symbol, untyped) -> void
+
       # : (String, String?) -> void
       def source: (String, String?) -> void
 
@@ -53,6 +58,9 @@ module Herb
 
       # : () -> bool
       def empty?: () -> bool
+
+      # : () -> bool
+      def noted?: () -> bool
 
       # : () -> bool
       def reportable?: () -> bool
