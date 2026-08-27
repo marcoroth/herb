@@ -2,7 +2,6 @@ import overlayStyles from './overlay.css';
 
 import { injectStyle } from '../styles';
 import { SlotFlash } from '../slots/flash';
-import { ErrorOverlay } from './error-overlay';
 
 export interface HerbOverlayOptions {
   projectPath?: string;
@@ -27,7 +26,6 @@ export class HerbOverlay {
   private preferredEditor = 'auto';
   private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
-  public errorOverlay: ErrorOverlay | null = null;
   private destroyed = false;
   private styleElement: HTMLStyleElement | null = null;
 
@@ -74,7 +72,6 @@ export class HerbOverlay {
     this.setupMenuToggle();
     this.setupToggleSwitches();
     this.setupEditorDropdown();
-    this.initializeErrorOverlay();
     this.setupTurboListeners();
     this.applySettings();
 
@@ -95,8 +92,6 @@ export class HerbOverlay {
 
     this.slotFlash.stop();
 
-    this.errorOverlay?.destroy();
-    this.errorOverlay = null;
 
     document.querySelector('.herb-floating-menu')?.remove();
 
@@ -1248,9 +1243,5 @@ export class HerbOverlay {
     if (toggleERBOutlinesSwitch) toggleERBOutlinesSwitch.checked = false;
     if (toggleERBHoverRevealSwitch) toggleERBHoverRevealSwitch.checked = false;
     if (toggleTooltipsSwitch) toggleTooltipsSwitch.checked = false;
-  }
-
-  private initializeErrorOverlay() {
-    this.errorOverlay = new ErrorOverlay();
   }
 }

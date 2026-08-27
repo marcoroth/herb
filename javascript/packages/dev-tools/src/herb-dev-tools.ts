@@ -1,14 +1,16 @@
 import baseStyles from './base.css'
 
 import { injectStyle } from './styles.js'
+
 import { HerbClient } from './dev-server/client.js'
 import { HerbOverlay } from './overlay/overlay.js'
 import { RuntimePanel } from './runtime/panel.js'
 
-import type { HerbClientOptions } from './dev-server/types.js'
-import type { ErrorOverlay } from './overlay/error-overlay.js'
+import type { DiagnosticSink, HerbClientOptions } from './dev-server/types.js'
 import type { RuntimeReportHandle } from './runtime/panel.js'
 import type { RuntimeDiagnostic } from './runtime/report.js'
+
+import { DEV_SERVER_ORIGIN } from './dev-server/diagnostics.js'
 
 const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
 
@@ -92,10 +94,6 @@ export class HerbDevTools {
     return this.devToolsOverlay
   }
 
-  get errorOverlay(): ErrorOverlay | null {
-    return this.devToolsOverlay?.errorOverlay ?? null
-  }
-
   get runtimePanel(): RuntimePanel | null {
     return this.panel
   }
@@ -134,7 +132,7 @@ export class HerbDevTools {
     if (this.options.devServer !== false) {
       const clientOptions = typeof this.options.devServer === 'object' ? this.options.devServer : {}
 
-      this.devServerClient = new HerbClient({ ...clientOptions, errorOverlay: () => this.errorOverlay })
+      this.devServerClient = new HerbClient({ ...clientOptions, diagnostics: () => this.diagnosticSink() })
       this.devServerClient.connect()
     }
 
@@ -158,6 +156,21 @@ export class HerbDevTools {
       })
 
       this.devToolsOverlay?.syncRuntimePanelToggle()
+    }
+  }
+
+  private diagnosticSink(): DiagnosticSink | null {
+    const panel = this.panel
+
+    if (panel === null) {
+      return null
+    }
+
+    return {
+      report: diagnostics => {
+        panel.report(diagnostics)
+      },
+      clear: () => panel.clear(DEV_SERVER_ORIGIN),
     }
   }
 
