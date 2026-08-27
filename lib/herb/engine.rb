@@ -451,7 +451,7 @@ module Herb
 
       formatter = ErrorFormatter.new(input, errors, filename: filename)
 
-      raise CompilationError.new(formatter.summary, details: formatter)
+      raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end
 
     def context_options(properties)
@@ -489,7 +489,7 @@ module Herb
       syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
 
       if syntax_errors.any?
-        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        details = syntax_errors.map { |error| "  - #{error.message} (line #{error.location.start_line})" }.join("\n")
         raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
       end
     end

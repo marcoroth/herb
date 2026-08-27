@@ -156,16 +156,16 @@ module Engine
           Herb::Engine.new(THREE_BAD_STATES, visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], filename: "app/views/test.html.erb")
         end
 
-        shown = error.message.gsub(/\e\[[0-9;]*m/, "")
+        shown = error.detailed_message.gsub(/\e\[[0-9;]*m/, "")
 
-        assert_equal ["Location: Line 2, Column 0"], shown.scan(/Location: Line \d+, Column \d+/).uniq
+        assert_equal ["app/views/test.html.erb:2:1:"], shown.scan(%r{app/views/test\.html\.erb:\d+:\d+:}).uniq
         assert_equal(
           [
             "slots-declaration: #{FLOAT_DEFAULT}",
             "slots-declaration: The state `draft` has a Hash default. Declare each leaf as its own state, like `(draft_title: \"\")`.",
             "slots-declaration: The state `tally` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
           ],
-          shown.scan(/slots-\w+: .+/)
+          error.diagnostics.map { |diagnostic| "#{diagnostic.code}: #{diagnostic.message}" }
         )
       end
 

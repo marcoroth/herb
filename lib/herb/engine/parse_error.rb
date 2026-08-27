@@ -9,7 +9,6 @@ module Herb
     class ParseError < CompilationError
       CONTEXT_LINES = 3 #: Integer
 
-      attr_reader :diagnostics #: Array[Herb::Diagnostic]
       attr_reader :source #: String
       attr_reader :visitors #: Array[String]
       attr_reader :parser_options #: Hash[Symbol, untyped]
@@ -23,7 +22,7 @@ module Herb
         @parser_options = parser_options
         @filename = filename
 
-        super(message, details: details)
+        super(message, details: details, diagnostics: diagnostics)
       end
 
       #: () -> Integer?

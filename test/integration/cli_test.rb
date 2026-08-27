@@ -291,8 +291,12 @@ module Engine
         json_data = JSON.parse(output)
 
         assert_equal false, json_data["success"]
-        assert_includes json_data["error"], "HTML+ERB Compilation Errors"
         assert_equal File.basename(file_path), File.basename(json_data["filename"])
+
+        assert_equal(
+          "TEMPLATE:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 1 more error)",
+          json_data["error"].gsub(file_path, "TEMPLATE")
+        )
       end
     end
 
@@ -309,9 +313,16 @@ module Engine
         end
 
         output = captured_output
-        assert_includes output, "HTML+ERB Compilation Errors"
-        assert_includes output, "Total errors:"
-        assert output.match?(/\d+:\d+/)
+
+        assert_equal(<<~REPORT, output.gsub(file_path, "TEMPLATE"))
+          \u2718 [MissingClosingTag] Opening tag `<span>` at (2:3) doesn't have a matching closing tag `</span>` in the same scope.
+
+              TEMPLATE:2:3:
+                2 \u2502   <span>Unclosed span
+                  \u2575   ~~~~~~
+
+            Add the closing tag, or make it self-closing.
+        REPORT
       end
     end
 
