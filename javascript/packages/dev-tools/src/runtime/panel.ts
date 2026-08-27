@@ -1350,9 +1350,7 @@ export class RuntimePanel {
     const repeat = entry.count > 1 ? `<span class="herb-dev-tools-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : ''
     const feature = this.featureButtonHTML(entry)
     const suggestion = diagnostic.suggestion === null ? '' : `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`
-    const element = diagnostic.element !== null && diagnostic.element.isConnected
-      ? `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it"><span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span><code>${escapeHTML(describeElement(diagnostic.element))}</code></button>`
-      : ''
+    const element = this.elementHTML(entry)
 
     return [
       `<article class="herb-dev-tools-card" data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" data-herb-dev-tools-origin="${escapeHTML(diagnostic.origin)}" data-herb-dev-tools-kind="${escapeHTML(diagnostic.kind)}">`,
@@ -1364,6 +1362,52 @@ export class RuntimePanel {
       this.stackHTML(diagnostic),
       this.fixHTML(diagnostic),
       `</article>`,
+    ].join('')
+  }
+
+  private elementHTML(entry: PanelEntry): string {
+    const element = entry.diagnostic.element
+
+    if (element === null) {
+      return ''
+    }
+
+    const described = escapeHTML(describeElement(element))
+
+    if (!element.isConnected) {
+      const label = 'This element was on the page when it was reported and is not any more'
+
+      return [
+        `<span class="herb-dev-tools-element herb-dev-tools-element-gone" title="${label}">`,
+        `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◌</span>`,
+        `<code>${described}</code>`,
+        `<span class="herb-dev-tools-element-note">no longer on the page</span>`,
+        `</span>`,
+      ].join('')
+    }
+
+    const hidden = hiddenBy(element)
+
+    if (hidden !== null) {
+      const label = hidden.culprit === null
+        ? 'This element is on the page but nothing is rendered for it, so there is nothing to scroll to'
+        : `This element is on the page but nothing is rendered for it, because ${describeElement(hidden.culprit)} has ${hidden.reason}`
+
+      return [
+        `<span class="herb-dev-tools-element herb-dev-tools-element-hidden" title="${escapeHTML(label)}">`,
+        `<span class="herb-dev-tools-element-glyph" aria-hidden="true">○</span>`,
+        `<code>${described}</code>`,
+        `<span class="herb-dev-tools-element-note">not visible (${escapeHTML(hidden.reason)})</span>`,
+        `</span>`,
+      ].join('')
+    }
+
+    return [
+      `<button type="button" class="herb-dev-tools-element" data-herb-dev-tools-action="locate"`,
+      ` data-herb-dev-tools-entry="${this.entries.indexOf(entry)}" title="Scroll to this element and flash it">`,
+      `<span class="herb-dev-tools-element-glyph" aria-hidden="true">◎</span>`,
+      `<code>${described}</code>`,
+      `</button>`,
     ].join('')
   }
 
@@ -1564,7 +1608,7 @@ export class RuntimePanel {
   private locateFrom(trigger: HTMLElement) {
     const target = this.entryFor(trigger)?.diagnostic.element
 
-    if (!target || !target.isConnected) return
+    if (!target || !target.isConnected || hiddenBy(target) !== null) return
 
     this.stepOutOfTheWay()
 
@@ -1594,7 +1638,7 @@ export class RuntimePanel {
 
     const target = this.entryFor(trigger)?.diagnostic.element
 
-    if (!target || !target.isConnected) return
+    if (!target || !target.isConnected || hiddenBy(target) !== null) return
 
     const rect = target.getBoundingClientRect()
     const box = document.createElement('div')
@@ -1629,6 +1673,40 @@ function severityOf(entries: PanelEntry[]): RuntimeSeverity | null {
     if (present) {
       return severity
     }
+  }
+
+  return null
+}
+
+function hiddenBy(element: Element): { reason: string, culprit: Element | null } | null {
+  let current: Element | null = element
+
+  while (current !== null) {
+    const style = getComputedStyle(current)
+
+    if (style.display === 'none') {
+      return { reason: 'display: none', culprit: current === element ? null : current }
+    }
+
+    if (style.getPropertyValue('content-visibility') === 'hidden') {
+      return { reason: 'content-visibility: hidden', culprit: current === element ? null : current }
+    }
+
+    if (style.opacity === '0') {
+      return { reason: 'opacity: 0', culprit: current === element ? null : current }
+    }
+
+    current = current.parentElement
+  }
+
+  const style = getComputedStyle(element)
+
+  if (style.visibility === 'hidden' || style.visibility === 'collapse') {
+    return { reason: `visibility: ${style.visibility}`, culprit: null }
+  }
+
+  if (style.display === 'contents') {
+    return { reason: 'display: contents', culprit: null }
   }
 
   return null
