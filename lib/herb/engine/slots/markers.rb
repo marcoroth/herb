@@ -8,6 +8,13 @@ module Herb
         DEFAULT_TYPE = :child #: Symbol
         ITEM_STATICS = "item" #: String
         SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
+        PREFIX = "herb-" #: String
+        COMMENT = %r{\A<!--/?#{PREFIX}} #: Regexp
+
+        #: (String) -> bool
+        def self.marker?(text)
+          COMMENT.match?(text)
+        end
 
         #: (String) -> String
         def self.seeds_expression(pairs)
@@ -16,9 +23,9 @@ module Herb
 
         #: (Integer, Symbol) -> String
         def slot_open(index, type)
-          return "<!--herb-slot:#{index}-->" if type == DEFAULT_TYPE
+          return "<!--#{PREFIX}slot:#{index}-->" if type == DEFAULT_TYPE
 
-          "<!--herb-slot:#{index}:#{type}-->"
+          "<!--#{PREFIX}slot:#{index}:#{type}-->"
         end
 
         #: (Array[[Integer, Symbol, String?]]) -> String
@@ -28,12 +35,12 @@ module Herb
 
         #: (Integer) -> String
         def slot_close(index)
-          "<!--/herb-slot:#{index}-->"
+          "<!--/#{PREFIX}slot:#{index}-->"
         end
 
         #: (Integer, Integer | String) -> String
         def branch(slot_index, branch_index)
-          "<!--herb-branch:#{slot_index}:#{branch_index}-->"
+          "<!--#{PREFIX}branch:#{slot_index}:#{branch_index}-->"
         end
 
         #: (Integer, Integer | String) -> String
@@ -48,7 +55,7 @@ module Herb
 
         #: () -> String
         def seeds_open_prefix
-          "<!--herb-seeds:"
+          "<!--#{PREFIX}seeds:"
         end
 
         #: () -> String
@@ -58,7 +65,7 @@ module Herb
 
         #: (Integer) -> String
         def item_open_prefix(slot_index)
-          "<!--herb-item:#{slot_index}:"
+          "<!--#{PREFIX}item:#{slot_index}:"
         end
 
         #: () -> String
@@ -68,12 +75,12 @@ module Herb
 
         #: (Integer) -> String
         def item_close(slot_index)
-          "<!--/herb-item:#{slot_index}-->"
+          "<!--/#{PREFIX}item:#{slot_index}-->"
         end
 
         #: (String, String) -> String
         def region_open_prefix(file, version)
-          "<!--herb-region:#{file}:#{version}:"
+          "<!--#{PREFIX}region:#{file}:#{version}:"
         end
 
         #: () -> String
@@ -83,7 +90,7 @@ module Herb
 
         #: (String) -> String
         def region_close(file)
-          "<!--/herb-region:#{file}-->"
+          "<!--/#{PREFIX}region:#{file}-->"
         end
 
         #: (String, String) -> String

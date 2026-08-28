@@ -102,5 +102,22 @@ module AST
         refute erb_statement?(conditional)
       end
     end
+
+    describe "#erb_comment_node?" do
+      test "recognizes both ways of writing a comment" do
+        assert erb_comment_node?(erb_node("<%# a comment %>"))
+        assert erb_comment_node?(erb_node("<%#= total %>"))
+        assert erb_comment_node?(erb_node("<%#- a comment -%>"))
+        assert erb_comment_node?(erb_node("<%-# a comment %>"))
+        assert erb_comment_node?(erb_node("<% # a comment %>"))
+      end
+
+      test "rejects a tag that is not a comment" do
+        refute erb_comment_node?(erb_node("<%= total %>"))
+        refute erb_comment_node?(erb_node("<% total = 1 %>"))
+        refute erb_comment_node?(erb_node("<div>hi</div>"))
+        refute erb_comment_node?(nil)
+      end
+    end
   end
 end
