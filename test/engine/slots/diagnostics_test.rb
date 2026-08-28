@@ -26,25 +26,22 @@ module Engine
         <p data-herb-name="body"><%= @b %></p>
       ERB
 
-      TWICE_DECLARED = <<~ERB
-        <%# herb:state (open: false) %>
-        <%# herb:state (open: true) %>
+      LOCAL_COLLISION = <<~ERB
+        <%# locals: (open: false) %>
+        <%# herb:state (title: "x", open: false) %>
         <div><%= open %></div>
       ERB
 
-      SPREAD_DIRECTIVE = <<~ERB
-        <%# herb:state (
-          open: false,
-          rate: 1.0
-        ) %>
+      SECOND_LINE_DIRECTIVE = <<~ERB
+        <h1>Report</h1>
+        <%# herb:state (open: false, rate: 1.0) %>
         <div><%= rate %></div>
       ERB
 
       TWO_DIRECTIVES = <<~ERB
-        <%# herb:state (open: false) %>
-        <div><%= open %></div>
-        <%# herb:state (rate: 1.0) %>
-        <div><%= rate %></div>
+        <div>Report</div>
+        <%# herb:state (open: false, rate: 1.0) %>
+        <div><%= open %><%= rate %></div>
       ERB
 
       def options
@@ -117,7 +114,7 @@ module Engine
       test "each diagnostic points at the directive it came from" do
         diagnostics, = report(TWO_DIRECTIVES)
 
-        assert_equal([[3, 22]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal([[2, 35]], diagnostics.map { |diagnostic| at(diagnostic) })
       end
 
       test "a name points at the attribute that spelled it" do
@@ -207,17 +204,17 @@ module Engine
       end
 
       test "a diagnostic about the name points at the name it refused" do
-        diagnostics, = report(TWICE_DECLARED)
+        diagnostics, = report(LOCAL_COLLISION)
 
-        assert_equal([[2, 16]], diagnostics.map { |diagnostic| at(diagnostic) })
-        assert_equal(["open"], diagnostics.map { |diagnostic| spelled(TWICE_DECLARED, diagnostic) })
+        assert_equal([[2, 28]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal(["open"], diagnostics.map { |diagnostic| spelled(LOCAL_COLLISION, diagnostic) })
       end
 
-      test "a diagnostic in a directive spread over lines points at the line it came from" do
-        diagnostics, = report(SPREAD_DIRECTIVE)
+      test "a diagnostic below the first line points at the line it came from" do
+        diagnostics, = report(SECOND_LINE_DIRECTIVE)
 
-        assert_equal([[3, 8]], diagnostics.map { |diagnostic| at(diagnostic) })
-        assert_equal(["1.0"], diagnostics.map { |diagnostic| spelled(SPREAD_DIRECTIVE, diagnostic) })
+        assert_equal([[2, 35]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal(["1.0"], diagnostics.map { |diagnostic| spelled(SECOND_LINE_DIRECTIVE, diagnostic) })
       end
     end
   end

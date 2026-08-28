@@ -13,20 +13,18 @@ module Herb
         def locals(document, references, offsets, declared)
           known = declared.to_h { |name, _location| [name, :seeded] }
 
-          directives(document).flat_map { |node, signature|
-            declarations_in(node, signature, known).map do |declaration|
+          directives(document).flat_map { |node|
+            declarations_in(node, known).map do |declaration|
               Local.new(declaration.name, node.location, usages(declaration.name, references, offsets))
             end
           }
         end
 
         def directives(document)
-          found = [] #: Array[[untyped, String]]
+          found = [] #: Array[untyped]
 
           walk = lambda do |node|
-            signature = Herb::Engine::Slots::StateDirectives.signature_of(node)
-
-            found << [node, signature] if signature
+            found << node if node.is_a?(Herb::AST::HerbStateDirectiveNode)
 
             node.child_nodes.each { |child| walk.call(child) if child } if node.respond_to?(:child_nodes)
           end
@@ -36,8 +34,8 @@ module Herb
           found
         end
 
-        def declarations_in(node, signature, known)
-          Herb::Engine::Slots::StateDirectives.parse(signature, known, visitor: Herb::Engine::Slots::StateDirectives::Silent, node: node)
+        def declarations_in(node, known)
+          Herb::Engine::Slots::StateDirectives.parse(node, known, visitor: Herb::Engine::Slots::StateDirectives::Silent)
         end
 
         def usages(name, references, offsets)

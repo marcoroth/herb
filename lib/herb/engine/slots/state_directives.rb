@@ -10,9 +10,7 @@ module Herb
       # reads the states they declare.
       #
       class StateDirectives
-        PATTERN = /\A-?\s*herb:state\s*(?<signature>\(.*\))\s*-?\z/m #: Regexp
         BARE = /\A[a-z_][a-zA-Z0-9_]*\z/ #: Regexp
-        PREFIX = "def __herb_states" #: String
 
         KINDS = {
           "Prism::TrueNode" => :boolean,
@@ -21,6 +19,14 @@ module Herb
           "Prism::StringNode" => :string,
           "Prism::SymbolNode" => :symbol,
           "Prism::NilNode" => :nil,
+        }.freeze #: Hash[String, Symbol]
+
+        NODE_KINDS = {
+          "boolean" => :boolean,
+          "integer" => :integer,
+          "string" => :string,
+          "symbol" => :symbol,
+          "nil" => :nil,
         }.freeze #: Hash[String, Symbol]
 
         Declaration = Data.define(
@@ -59,9 +65,7 @@ module Herb
           :names,     #: Array[String]
           :enclosing, #: Hash[String, Declaration]
           :visitor,   #: untyped
-          :location,  #: Herb::Location?
-          :signature, #: String
-          :anchor     #: Herb::Position?
+          :location   #: Herb::Location?
         )
 
         module Silent
@@ -77,51 +81,25 @@ module Herb
         end
 
         class << self
-          #: (untyped) -> String?
-          def signature_of(node)
-            return nil unless node.is_a?(Herb::AST::ERBContentNode)
-            return nil unless node.tag_opening&.value == "<%#"
+          #: (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+          def parse(node, locals, visitor:, enclosing: {})
+            states = node.states
 
-            PATTERN.match(node.content&.value.to_s.strip)&.[](:signature)
-          end
-
-          #: (String, Hash[String, Symbol], visitor: untyped, node: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
-          def parse(signature, locals, visitor:, node:, enclosing: {})
-            result = Prism.parse("#{PREFIX}#{signature}; end")
-            location = node&.location
-            anchor = node ? anchor_of(node, signature) : nil
-            whole = anchor ? span(anchor, signature, 0, signature.length) : location
-
-            if result.failure?
-              visitor.slot_error("`herb:state #{signature}` does not parse as a keyword signature. Declare each state as a keyword parameter with a default, like `(pending: false)`.", whole, :declaration)
-
-              return []
-            end
-
-            definition = result.value.statements.body.first
-            parameters = definition.is_a?(Prism::DefNode) ? definition.parameters : nil
-
-            unless parameters && parameters.requireds.empty? && parameters.optionals.empty? && parameters.rest.nil? && parameters.posts.empty? && parameters.keyword_rest.nil? && parameters.block.nil? && !parameters.keywords.empty?
-              visitor.slot_error("`herb:state #{signature}` declares no keyword parameters. Declare each state with a default, like `(pending: false)`.", whole, :declaration)
-
-              return []
-            end
+            return [] if states.empty?
 
             declared = {} #: Hash[String, Declaration]
 
             parsing = Parsing.new(
               locals: locals,
               declared: declared,
-              names: parameters.keywords.map { |keyword| keyword.name.to_s },
+              names: states.map { |state| state.name&.value.to_s },
               enclosing: enclosing,
               visitor: visitor,
-              location: location,
-              signature: signature,
-              anchor: anchor
+              location: node.location
             )
 
-            parameters.keywords.map { |keyword|
-              declaration = declaration_for(keyword, parsing)
+            states.map { |state|
+              declaration = declaration_for(state, parsing)
               declared[declaration.name] = declaration
 
               declaration
@@ -360,90 +338,43 @@ module Herb
 
           private
 
-          #: (untyped, String) -> Herb::Position?
-          def anchor_of(node, signature)
-            content = node.content
-            start = content&.location&.start
-
-            return nil unless start
-
-            offset = content.value.to_s.index(signature)
-
-            offset ? position_at(start, content.value.to_s, offset) : nil
-          end
-
           #: (untyped, Parsing) -> Declaration
-          def declaration_for(keyword, parsing)
-            declaration = classify(keyword, parsing)
-            spot = parsing.anchor ? spelled(keyword, parsing)&.start : nil
+          def declaration_for(state, parsing)
+            spot = state.name&.location&.start
+            declaration = classify(state, parsing)
 
             spot ? declaration.with(line: spot.line, column: spot.column) : declaration
           end
 
           #: (untyped, Parsing) -> Declaration
-          def classify(keyword, parsing)
-            name = keyword.name.to_s
+          def classify(state, parsing)
+            name = state.name&.value.to_s
             visitor = parsing.visitor
+            default = state.default_value
+            location = default&.location || state.name&.location || parsing.location
 
-            unless keyword.is_a?(Prism::OptionalKeywordParameterNode)
-              return refused(name, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`.", visitor, spelled(keyword, parsing))
+            if state.kind == "missing" || default.nil?
+              return refused(name, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`.", visitor, state.name&.location || parsing.location)
             end
 
-            value = keyword.value
-            kind = KINDS[value.class.name]
+            source = default.content.to_s
+            kind = NODE_KINDS[state.kind]
 
-            return Declaration.new(name: name, kind: kind, default: value.slice, derived: nil, line: nil, column: nil) if kind
+            return Declaration.new(name: name, kind: kind, default: source, derived: nil, line: nil, column: nil) if kind
 
-            location = located(value.location, parsing)
-
-            case value
-            when Prism::FloatNode
-              refused(name, "The state `#{name}` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead.", visitor, location, value.slice)
-            when Prism::ArrayNode
-              refused(name, "The state `#{name}` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead.", visitor, location, value.slice)
-            when Prism::HashNode, Prism::KeywordHashNode
-              refused(name, "The state `#{name}` has a Hash default. Declare each leaf as its own state, like `(#{name}_title: \"\")`.", visitor, location, value.slice)
-            when Prism::CallNode
-              derived_default(name, value, parsing) || bare_default(name, value, parsing)
+            case state.kind
+            when "float"
+              refused(name, "The state `#{name}` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead.", visitor, location, source)
+            when "array"
+              refused(name, "The state `#{name}` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead.", visitor, location, source)
+            when "hash"
+              refused(name, "The state `#{name}` has a Hash default. Declare each leaf as its own state, like `(#{name}_title: \"\")`.", visitor, location, source)
+            when "bare"
+              derived_default(name, source, location, parsing) || bare_default(name, source, location, parsing)
             else
-              derived_default(name, value, parsing) ||
-                Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)
+              derived_default(name, source, location, parsing) ||
+                Declaration.new(name: name, kind: :seeded, default: source, derived: nil, line: nil, column: nil)
             end
-          end
-
-          #: (untyped, Parsing) -> Herb::Location?
-          def spelled(keyword, parsing)
-            anchor = parsing.anchor
-
-            return parsing.location unless anchor
-
-            start = keyword.name_loc.start_character_offset - PREFIX.length
-
-            span(anchor, parsing.signature, start, start + keyword.name.to_s.length)
-          end
-
-          #: (untyped, Parsing) -> Herb::Location?
-          def located(location, parsing)
-            anchor = parsing.anchor
-
-            return parsing.location unless anchor && location
-
-            span(anchor, parsing.signature, location.start_character_offset - PREFIX.length, location.end_character_offset - PREFIX.length)
-          end
-
-          #: (Herb::Position, String, Integer, Integer) -> Herb::Location
-          def span(anchor, source, start_offset, end_offset)
-            Herb::Location.new(position_at(anchor, source, start_offset), position_at(anchor, source, end_offset))
-          end
-
-          #: (Herb::Position, String, Integer) -> Herb::Position
-          def position_at(anchor, source, offset)
-            consumed = source.slice(0, offset).to_s
-            last = consumed.rindex("\n")
-
-            return Herb::Position.new(anchor.line, anchor.column + consumed.length) unless last
-
-            Herb::Position.new(anchor.line + consumed.count("\n"), consumed.length - last - 1)
           end
 
           #: (String, String, untyped, Herb::Location?, ?String) -> Declaration
@@ -453,37 +384,39 @@ module Herb
             Declaration.new(name: name, kind: :seeded, default: default, derived: nil, line: nil, column: nil)
           end
 
-          #: (String, untyped, Parsing) -> Declaration?
-          def derived_default(name, value, parsing)
+          #: (String, String, Herb::Location?, Parsing) -> Declaration?
+          def derived_default(name, source, location, parsing)
             declared = parsing.declared
             visitor = parsing.visitor
-            location = located(value.location, parsing)
+            value = expression_node(source)
+
+            return nil if value.nil?
 
             said = visitor.diagnostic_count
             read = tree_read(value, declared, visitor, location) #: untyped
 
-            return Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil) if visitor.diagnostic_count > said
+            return Declaration.new(name: name, kind: :seeded, default: source, derived: nil, line: nil, column: nil) if visitor.diagnostic_count > said
 
             if read == :computed
-              return refused(name, "The state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, value.slice)
+              return refused(name, "The state `#{name}` defaults to `#{source}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, source)
             end
 
             if read.nil?
               later = {} #: Hash[String, untyped]
               (parsing.names - declared.keys - [name]).each { |candidate| later[candidate] = true }
 
-              if mentions_any?(value.slice, later)
+              if mentions_any?(source, later)
                 return refused(name, "The state `#{name}` reads a state declared after it. A derived state reads only states declared before it, so move `#{name}` after the states it reads.", visitor, location)
               end
 
-              if mentions_any?(value.slice, declared)
-                return refused(name, "The state `#{name}` defaults to `#{value.slice}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, value.slice)
+              if mentions_any?(source, declared)
+                return refused(name, "The state `#{name}` defaults to `#{source}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, source)
               end
 
               return nil
             end
 
-            Declaration.new(name: name, kind: derived_kind(read), default: value.slice, derived: read, line: nil, column: nil)
+            Declaration.new(name: name, kind: derived_kind(read), default: source, derived: read, line: nil, column: nil)
           end
 
           #: (Read | Combo) -> Symbol
@@ -493,14 +426,12 @@ module Herb
             :boolean
           end
 
-          #: (String, untyped, Parsing) -> Declaration
-          def bare_default(name, value, parsing)
-            identifier = value.name.to_s
+          #: (String, String, Herb::Location?, Parsing) -> Declaration
+          def bare_default(name, identifier, location, parsing)
             visitor = parsing.visitor
-            location = located(value.location, parsing)
 
-            unless value.receiver.nil? && value.arguments.nil? && value.block.nil? && BARE.match?(identifier)
-              return Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)
+            unless BARE.match?(identifier)
+              return Declaration.new(name: name, kind: :seeded, default: identifier, derived: nil, line: nil, column: nil)
             end
 
             if parsing.enclosing.key?(identifier)

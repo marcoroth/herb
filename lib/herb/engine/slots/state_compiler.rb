@@ -213,12 +213,10 @@ module Herb
 
         #: (untyped, Array[untyped]) -> void
         def register_state_directive(node, parent)
-          signature = StateDirectives.signature_of(node)
-
-          return unless signature
+          return unless node.is_a?(Herb::AST::HerbStateDirectiveNode)
 
           scope = @visitor.current_collection
-          declared = StateDirectives.parse(signature, @strict_locals, visitor: @visitor, node: node, enclosing: scope ? @region_states : {})
+          declared = StateDirectives.parse(node, @strict_locals, visitor: @visitor, enclosing: scope ? @region_states : {})
           empty = {} #: Hash[String, StateDirectives::Declaration]
           bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
