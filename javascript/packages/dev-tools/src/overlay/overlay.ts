@@ -221,7 +221,7 @@ export class HerbOverlay {
         </button>
 
         <div class="herb-menu-panel" id="herbMenuPanel">
-          <div class="herb-menu-header">Herb Debug Tools</div>
+          <div class="herb-menu-header">Herb Dev Tools</div>
 
           <div id="herbDevServerSection" class="herb-dev-server-section">
             <span id="herbDevServerDot" data-herb-dev-server-dot class="herb-dev-server-dot"></span>
