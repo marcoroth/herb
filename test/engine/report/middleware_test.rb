@@ -7,11 +7,11 @@ module Engine
     PAGE = "<html><body><h1>Hello</h1></body></html>"
 
     before do
-      Herb::Engine::Report::Session.reset!
+      Herb::Engine::Runtime::Session.reset!
     end
 
     after do
-      Herb::Engine::Report::Session.reset!
+      Herb::Engine::Runtime::Session.reset!
     end
 
     class Marker
@@ -45,7 +45,7 @@ module Engine
     end
 
     def call(app, inject: true)
-      Herb::Engine::Report::Middleware.new(app, inject: inject).call({})
+      Herb::Engine::Runtime::Middleware.new(app, inject: inject).call({})
     end
 
     def body_of(response)
@@ -60,19 +60,19 @@ module Engine
       test "leaves the session it used in the env" do
         env = {}
 
-        Herb::Engine::Report::Middleware.new(app { Herb::Engine::Report::Session.record(diagnostic) }).call(env)
+        Herb::Engine::Runtime::Middleware.new(app { Herb::Engine::Runtime::Session.record(diagnostic) }).call(env)
 
-        session = env[Herb::Engine::Report::Middleware::ENV_KEY]
+        session = env[Herb::Engine::Runtime::Middleware::ENV_KEY]
 
-        assert_instance_of Herb::Engine::Report::Session, session
+        assert_instance_of Herb::Engine::Runtime::Session, session
         assert_equal ["Something is wrong."], session.diagnostics.map(&:message)
       end
 
       test "collects into a session that was already open rather than one nobody can reach" do
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           call(app {
-            Herb::Engine::Report::Session.at("app/views/a.html.erb", 3, 4) do
-              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+              Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
             end
           })
         end
@@ -82,22 +82,22 @@ module Engine
       end
 
       test "leaves a borrowed session open for whoever opened it" do
-        Herb::Engine::Report::Session.capture do
-          call(app { Herb::Engine::Report::Session.record(diagnostic) })
+        Herb::Engine::Runtime::Session.capture do
+          call(app { Herb::Engine::Runtime::Session.record(diagnostic) })
 
-          assert_predicate Herb::Engine::Report::Session, :scoped?
+          assert_predicate Herb::Engine::Runtime::Session, :scoped?
         end
       end
 
       test "still opens its own session when nobody else has one" do
-        call(app { Herb::Engine::Report::Session.record(diagnostic) })
+        call(app { Herb::Engine::Runtime::Session.record(diagnostic) })
 
-        refute_predicate Herb::Engine::Report::Session, :scoped?
+        refute_predicate Herb::Engine::Runtime::Session, :scoped?
       end
 
       test "survives an env that cannot be written to" do
-        response = Herb::Engine::Report::Middleware.new(
-          app { Herb::Engine::Report::Session.record(diagnostic) }
+        response = Herb::Engine::Runtime::Middleware.new(
+          app { Herb::Engine::Runtime::Session.record(diagnostic) }
         ).call(nil)
 
         assert_includes body_of(response), "data-herb-diagnostics"
@@ -105,7 +105,7 @@ module Engine
     end
 
     test "injects the payload before the closing body tag" do
-      response = call(app { Herb::Engine::Report::Session.record(diagnostic) })
+      response = call(app { Herb::Engine::Runtime::Session.record(diagnostic) })
       body = body_of(response)
 
       assert_includes body, 'data-herb-diagnostics data-count="1"'
@@ -119,21 +119,21 @@ module Engine
     end
 
     test "leaves a response alone when injection is off" do
-      response = call(app { Herb::Engine::Report::Session.record(diagnostic) }, inject: false)
+      response = call(app { Herb::Engine::Runtime::Session.record(diagnostic) }, inject: false)
 
       assert_equal PAGE, body_of(response)
     end
 
     test "leaves a response that is not HTML alone" do
       json = app(body: %({"ok":true}), headers: { "content-type" => "application/json" }) do
-        Herb::Engine::Report::Session.record(diagnostic)
+        Herb::Engine::Runtime::Session.record(diagnostic)
       end
 
       assert_equal %({"ok":true}), body_of(call(json))
     end
 
     test "leaves HTML without a closing body tag alone" do
-      fragment = app(body: "<div>partial</div>") { Herb::Engine::Report::Session.record(diagnostic) }
+      fragment = app(body: "<div>partial</div>") { Herb::Engine::Runtime::Session.record(diagnostic) }
 
       assert_equal "<div>partial</div>", body_of(call(fragment))
     end
@@ -141,7 +141,7 @@ module Engine
     test "finds the content type whatever case the header is in" do
       response = call(
         app(headers: { "Content-Type" => "text/html" }) do
-          Herb::Engine::Report::Session.record(diagnostic)
+          Herb::Engine::Runtime::Session.record(diagnostic)
         end
       )
 
@@ -150,7 +150,7 @@ module Engine
 
     test "corrects the content length it just changed" do
       headers = { "content-type" => "text/html", "content-length" => PAGE.bytesize.to_s }
-      response = call(app(headers: headers) { Herb::Engine::Report::Session.record(diagnostic) })
+      response = call(app(headers: headers) { Herb::Engine::Runtime::Session.record(diagnostic) })
 
       assert_equal body_of(response).bytesize.to_s, response[1]["content-length"]
     end
@@ -168,7 +168,7 @@ module Engine
 
       response = call(
         lambda { |_env|
-          Herb::Engine::Report::Session.record(diagnostic)
+          Herb::Engine::Runtime::Session.record(diagnostic)
 
           [200, { "content-type" => "text/html" }, streamed]
         }
@@ -186,7 +186,7 @@ module Engine
 
       response = call(
         lambda { |_env|
-          Herb::Engine::Report::Session.record(diagnostic)
+          Herb::Engine::Runtime::Session.record(diagnostic)
 
           [200, { "content-type" => "text/html" }, broken]
         }
@@ -196,14 +196,14 @@ module Engine
     end
 
     test "closes the session, so one request's findings do not reach the next" do
-      call(app { Herb::Engine::Report::Session.record(diagnostic) })
+      call(app { Herb::Engine::Runtime::Session.record(diagnostic) })
 
-      assert_empty Herb::Engine::Report::Session.current.diagnostics
+      assert_empty Herb::Engine::Runtime::Session.current.diagnostics
     end
 
     test "keeps each request's findings to itself" do
-      first = call(app { Herb::Engine::Report::Session.record(diagnostic(message: "first")) })
-      second = call(app { Herb::Engine::Report::Session.record(diagnostic(message: "second")) })
+      first = call(app { Herb::Engine::Runtime::Session.record(diagnostic(message: "first")) })
+      second = call(app { Herb::Engine::Runtime::Session.record(diagnostic(message: "second")) })
 
       assert_includes body_of(first), "first"
       refute_includes body_of(second), "first"
@@ -219,12 +219,12 @@ module Engine
           [200, { "content-type" => "text/html" }, [document]]
         }
 
-        Herb::Engine::Report::Middleware.new(app).call({}).last.first
+        Herb::Engine::Runtime::Middleware.new(app).call({}).last.first
       end
 
       test "writes a channel before the tag it asked for" do
         html = respond_with do
-          Herb::Engine::Report::Session.current.channel(:head) { Marker.new(:head, "h") }
+          Herb::Engine::Runtime::Session.current.channel(:head) { Marker.new(:head, "h") }
         end
 
         assert_equal "<html><head><title>t</title><!--h--></head><body><h1>Hello</h1></body></html>", html
@@ -232,7 +232,7 @@ module Engine
 
       test "writes a body channel before the closing body tag" do
         html = respond_with do
-          Herb::Engine::Report::Session.current.channel(:body) { Marker.new(:body, "b") }
+          Herb::Engine::Runtime::Session.current.channel(:body) { Marker.new(:body, "b") }
         end
 
         assert_equal "<html><head><title>t</title></head><body><h1>Hello</h1><!--b--></body></html>", html
@@ -240,8 +240,8 @@ module Engine
 
       test "writes every channel it was given" do
         html = respond_with do
-          Herb::Engine::Report::Session.current.channel(:head) { Marker.new(:head, "h") }
-          Herb::Engine::Report::Session.current.channel(:body) { Marker.new(:body, "b") }
+          Herb::Engine::Runtime::Session.current.channel(:head) { Marker.new(:head, "h") }
+          Herb::Engine::Runtime::Session.current.channel(:body) { Marker.new(:body, "b") }
         end
 
         assert_equal "<html><head><title>t</title><!--h--></head><body><h1>Hello</h1><!--b--></body></html>", html
@@ -249,7 +249,7 @@ module Engine
 
       test "leaves a channel alone when the response has no tag for it" do
         html = respond_with("<div>no document here</div>") do
-          Herb::Engine::Report::Session.current.channel(:head) { Marker.new(:head, "h") }
+          Herb::Engine::Runtime::Session.current.channel(:head) { Marker.new(:head, "h") }
         end
 
         assert_equal "<div>no document here</div>", html
@@ -257,7 +257,7 @@ module Engine
 
       test "leaves a channel alone when it asked for a tag nobody writes before" do
         html = respond_with do
-          Herb::Engine::Report::Session.current.channel(:nowhere) { Marker.new(:nowhere, "n") }
+          Herb::Engine::Runtime::Session.current.channel(:nowhere) { Marker.new(:nowhere, "n") }
         end
 
         assert_equal DOCUMENT, html

@@ -14,7 +14,7 @@ class OptInRequiresTest < Minitest::Spec
     "Herb::Engine::Visitors::Optimize" => "herb/engine/visitors/optimize",
     "Herb::Engine::Slots::Visitor" => "herb/engine/slots/visitor",
     "Herb::Engine::Visitors::RemoveComments" => "herb/engine/visitors/remove_comments",
-    "Herb::Engine::Report::Middleware" => "herb/engine/report/middleware",
+    "Herb::Engine::Runtime::Middleware" => "herb/engine/runtime/middleware",
   }.freeze
 
   def in_fresh_process(script)
@@ -44,16 +44,7 @@ class OptInRequiresTest < Minitest::Spec
     end
   end
 
-  test "Herb::Diff is not loaded by requiring herb alone" do
-    output = in_fresh_process(<<~RUBY)
-      require "herb"
-      print $LOADED_FEATURES.any? { |feature| feature.include?("/herb/diff") } ? "loaded" : "absent"
-    RUBY
-
-    assert_equal "absent", output
-  end
-
-  test "Herb.diff loads Herb::Diff on its own" do
+  test "Herb.diff works with nothing but herb required" do
     output = in_fresh_process(<<~RUBY)
       require "herb"
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")

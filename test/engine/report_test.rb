@@ -18,7 +18,7 @@ module Engine
     end
 
     def report
-      @report ||= Herb::Engine::Report.new
+      @report ||= Herb::Engine::Runtime::Report.new
     end
 
     def diagnostic(template: "app/views/a.html.erb", message: "m", code: "c", line: 1)
@@ -53,7 +53,7 @@ module Engine
     end
 
     test "carries the version the reader checks" do
-      assert_equal 1, Herb::Engine::Report::VERSION
+      assert_equal 1, Herb::Engine::Runtime::Report::VERSION
       assert_equal 1, report.to_h[:version]
     end
 
@@ -88,7 +88,7 @@ module Engine
     end
 
     test "drops the oldest past the cap rather than growing" do
-      capped = Herb::Engine::Report.new(max_diagnostics: 2)
+      capped = Herb::Engine::Runtime::Report.new(max_diagnostics: 2)
 
       capped.add(diagnostic(code: "first"))
       capped.add(diagnostic(code: "second"))
@@ -253,7 +253,7 @@ module Engine
       end
 
       test "knows nothing about what a channel holds" do
-        assert_empty Herb::Engine::Report.instance_methods(false).grep(/marker/)
+        assert_empty Herb::Engine::Runtime::Report.instance_methods(false).grep(/marker/)
       end
     end
   end

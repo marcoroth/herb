@@ -15,10 +15,10 @@ module Herb
       #
       # `<%= @user.bio.html_safe %>` then compiles as if the template had been written as:
       #
-      #     <%= ::Herb::Engine::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 1, source: "<%= @user.bio.html_safe %>", mode: :raise).html_safe %>
+      #     <%= ::Herb::Engine::Runtime::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 1, source: "<%= @user.bio.html_safe %>", mode: :raise).html_safe %>
       #
       # The assertion runs on every render, and the value keeps flowing through `.html_safe`
-      # unchanged. See `Herb::Engine::HTMLSafeAssertions` for what counts as unsafe.
+      # unchanged. See `Herb::Engine::Runtime::HTMLSafeAssertions` for what counts as unsafe.
       #
       # The calls are found in the Prism program the parser attaches to the document, which the
       # engine enables through `required_parser_option`. Parsing an AST for this visitor by hand
@@ -26,7 +26,7 @@ module Herb
       #
       #     Herb.parse(source, prism_program: true)
       class HTMLSafeAssertions < Herb::Visitor
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
         RUNTIME: ::String
 

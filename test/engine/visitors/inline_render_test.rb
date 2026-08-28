@@ -3,9 +3,9 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/inline_render"
+require_relative "../../../lib/herb/engine/inline_render/visitor"
 require_relative "../../../lib/herb/engine/visitors/instrumentation"
-require_relative "../../../lib/herb/engine/visitors/component"
+require_relative "../../../lib/herb/engine/component/visitor"
 require_relative "../../../lib/herb/engine/validators"
 
 module Engine
@@ -13,19 +13,19 @@ module Engine
     include SnapshotUtils
 
     PROJECT_PATH = "test/fixtures/render_inliner"
-    SESSION = Herb::Engine::Report::Session
+    SESSION = Herb::Engine::Runtime::Session
     CARD = "app/views/posts/_card.html.erb"
 
     test "inlines a simple partial" do
-      assert_compiled_snapshot('<%= render "shared/header" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "shared/header" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "inlines partial with locals" do
-      assert_compiled_snapshot('<%= render partial: "posts/card", locals: { title: @post.title } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render partial: "posts/card", locals: { title: @post.title } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "does not inline dynamic render" do
-      assert_compiled_snapshot("<%= render @product %>", filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot("<%= render @product %>", filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "does not inline without the visitor" do
@@ -33,55 +33,55 @@ module Engine
     end
 
     test "does not inline partial with yield" do
-      assert_compiled_snapshot('<%= render "shared/wrapper" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "shared/wrapper" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "does not inline partial with content_for" do
-      assert_compiled_snapshot('<%= render "shared/sidebar" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "shared/sidebar" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "does not inline partial with local_assigns" do
-      assert_compiled_snapshot('<%= render "shared/item" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "shared/item" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "inlines collection renders" do
-      assert_compiled_snapshot('<%= render partial: "posts/post", collection: @posts %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render partial: "posts/post", collection: @posts %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "inlines collection with as: option" do
-      assert_compiled_snapshot('<%= render partial: "posts/post", collection: @posts, as: :item %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render partial: "posts/post", collection: @posts, as: :item %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "does not inline collection with spacer_template" do
-      assert_compiled_snapshot('<%= render partial: "posts/post", collection: @posts, spacer_template: "posts/spacer" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render partial: "posts/post", collection: @posts, spacer_template: "posts/spacer" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "inlines nested partials" do
-      assert_compiled_snapshot('<%= render "shared/outer" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "shared/outer" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "detects circular references and falls back" do
-      assert_compiled_snapshot('<%= render "shared/a" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "shared/a" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "takes the locals it was given as parameters, which is what scopes them" do
-      assert_compiled_snapshot('<%= render partial: "posts/card", locals: { name: "test" } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render partial: "posts/card", locals: { name: "test" } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "falls back for unresolvable partial" do
-      assert_compiled_snapshot('<%= render "nonexistent/missing" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "nonexistent/missing" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "handles Ruby 3.1 shorthand hash locals" do
-      assert_compiled_snapshot('<%= render partial: "posts/card", locals: { title: } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render partial: "posts/card", locals: { title: } %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "inlines shorthand render with inline locals" do
-      assert_compiled_snapshot('<%= render "posts/card", title: "Title" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "posts/card", title: "Title" %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     test "inlines shorthand render with multiple inline locals" do
-      assert_compiled_snapshot('<%= render "posts/card", title: "Title", name: @user.name %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::Visitors::InlineRender.new], escape: false)
+      assert_compiled_snapshot('<%= render "posts/card", title: "Title", name: @user.name %>', filename: "app/views/posts/index.html.erb", project_path: PROJECT_PATH, visitors: [Herb::Engine::InlineRender::Visitor.new], escape: false)
     end
 
     describe "a project that does not keep templates in app/views" do
@@ -107,7 +107,7 @@ module Engine
           filename: filename,
           project_path: Pathname.new(root),
           escape: false,
-          visitors: inline ? [Herb::Engine::Visitors::InlineRender.new] : []
+          visitors: inline ? [Herb::Engine::InlineRender::Visitor.new] : []
         ).src
       end
 
@@ -158,7 +158,7 @@ module Engine
     # one of these is a way the copy would have meant something else, and the copy is only worth
     # having if it means the same.
     describe "what the copy has to keep meaning" do
-      def compile(source, file: "app/views/posts/index.html.erb", visitor: Herb::Engine::Visitors::InlineRender.new)
+      def compile(source, file: "app/views/posts/index.html.erb", visitor: Herb::Engine::InlineRender::Visitor.new)
         Herb::Engine.new(source, filename: file, project_path: PROJECT_PATH, escape: false,
                                  visitors: [visitor]).src
       end
@@ -223,7 +223,7 @@ module Engine
       # The inliner resolves against the directory of the template it was given, so one kept between
       # compiles answers the next template with the last one's directory.
       test "resolves against the template it is compiling rather than the first it ever saw" do
-        visitor = Herb::Engine::Visitors::InlineRender.new
+        visitor = Herb::Engine::InlineRender::Visitor.new
 
         compile(%(<%= render "card" %>), file: "app/views/posts/index.html.erb", visitor: visitor)
         second = compile(%(<%= render "card" %>), file: "app/views/index.html.erb", visitor: visitor)
@@ -252,7 +252,7 @@ module Engine
 
     describe "what an inlined partial still reports" do
       def compiled(inline:)
-        visitors = inline ? [Herb::Engine::Visitors::InlineRender.new] : []
+        visitors = inline ? [Herb::Engine::InlineRender::Visitor.new] : []
         visitors.push(Herb::Engine::Visitors::Instrumentation.new)
 
         Herb::Engine.new(
@@ -315,7 +315,7 @@ module Engine
           filename: "app/views/posts/index.html.erb",
           project_path: PROJECT_PATH, escape: false,
           visitors: [
-            Herb::Engine::Visitors::InlineRender.new,
+            Herb::Engine::InlineRender::Visitor.new,
             Herb::Engine::Visitors::Instrumentation.new
           ]
         ).src
@@ -333,7 +333,7 @@ module Engine
           filename: "app/views/posts/index.html.erb",
           project_path: PROJECT_PATH, escape: false,
           visitors: [
-            Herb::Engine::Visitors::InlineRender.new,
+            Herb::Engine::InlineRender::Visitor.new,
             Herb::Engine::Visitors::Instrumentation.new
           ]
         ).src
@@ -355,7 +355,7 @@ module Engine
           filename: "app/views/posts/index.html.erb",
           project_path: PROJECT_PATH, escape: false,
           visitors: [
-            Herb::Engine::Visitors::InlineRender.new,
+            Herb::Engine::InlineRender::Visitor.new,
             Herb::Engine::Visitors::Instrumentation.new
           ]
         ).src
@@ -376,7 +376,7 @@ module Engine
           project_path: PROJECT_PATH,
           escape: false,
           visitors: [
-            Herb::Engine::Visitors::InlineRender.new, *visitors
+            Herb::Engine::InlineRender::Visitor.new, *visitors
           ]
         ).src
       end
@@ -393,7 +393,7 @@ module Engine
       end
 
       test "a transforming visitor transforms what the partial brought with it" do
-        compiled = compiled(%(<%= render "shared/component" %>), [Herb::Engine::Visitors::Component.new])
+        compiled = compiled(%(<%= render "shared/component" %>), [Herb::Engine::Component::Visitor.new])
 
         assert_includes compiled, %(render Card.new(title: "hi"))
       end

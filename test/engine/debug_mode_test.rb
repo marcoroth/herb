@@ -675,7 +675,7 @@ module Engine
 
         html = [] #: Array[String]
 
-        Herb::Engine::Report::Session.capture do
+        Herb::Engine::Runtime::Session.capture do
           renders.times { html << object.instance_eval(source) }
         end
 

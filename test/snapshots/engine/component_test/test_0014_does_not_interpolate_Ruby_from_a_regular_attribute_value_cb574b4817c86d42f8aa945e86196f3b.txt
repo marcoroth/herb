@@ -1,7 +1,0 @@
----
-source: "Engine::ComponentTest#test_0014_does not interpolate Ruby from a regular attribute value"
-input: "{source: \"<MyComponent name=\\\"\\\#{1 + 1}\\\" />\", options: {visitors: [#<Herb::Engine::Visitors::Component>]}}"
----
-_buf = ::String.new; _buf << (render MyComponent.new(name: "\#{1 + 1}")
-).to_s;
-_buf.to_s

@@ -19,11 +19,11 @@ module Herb
       #     mode = Herb::Engine::Slots::Visitor.directive_mode(source)
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       class Visitor < Herb::Visitor
-        extend Experimental
+        extend Herb::Visitor::Experimental
 
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
-        include Diagnostics
+        include Herb::Visitor::Diagnostics
 
         attr_accessor bufvar: String
 
@@ -124,9 +124,6 @@ module Herb
 
         # : (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
         def initialize: (?markers: Markers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
-
-        # : () -> bool
-        def fatal?: () -> bool
 
         # : () -> bool
         def degraded?: () -> bool

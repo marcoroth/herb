@@ -1,6 +1,0 @@
----
-source: "Engine::ComponentTest#test_0037_a partial with a body is rendered as a layout"
-input: "{source: \"<Shared.Card>Body</Shared.Card>\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::Visitors::Component>]}}"
----
-_buf = ::String.new; _buf << (render layout: "shared/card" do; _buf << 'Body'.freeze; end);
-_buf.to_s

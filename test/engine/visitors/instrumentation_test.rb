@@ -79,7 +79,7 @@ module Engine
       def observed(source)
         compiled = compile(source)
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           Object.new.instance_eval(compiled)
         end
 
@@ -89,7 +89,7 @@ module Engine
       def self.watching_object
         Object.new.tap do |object|
           object.define_singleton_method(:watch) do |value|
-            Herb::Engine::Report::Session.observe(:seen, value)
+            Herb::Engine::Runtime::Session.observe(:seen, value)
             value
           end
         end
@@ -99,7 +99,7 @@ module Engine
         source = "<div><%= watch(1) %></div>\n<%= watch(2) %>"
         compiled = compile(source)
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           self.class.watching_object.instance_eval(compiled)
         end
 
@@ -111,7 +111,7 @@ module Engine
         source = "<%= watch(1) %>"
         compiled = compile(source)
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           self.class.watching_object.instance_eval(compiled)
         end
 
@@ -122,7 +122,7 @@ module Engine
         source = "<ul>\n  <% [1, 2].each do |n| %>\n    <li><%= watch(n) %></li>\n  <% end %>\n</ul>"
         compiled = compile(source)
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           self.class.watching_object.instance_eval(compiled)
         end
 
@@ -140,7 +140,7 @@ module Engine
         source = "<% [1, 2, 3].each do |n| %><%= watch(n) %><% end %>"
         compiled = compile(source)
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           self.class.watching_object.instance_eval(compiled)
         end
 
@@ -154,7 +154,7 @@ module Engine
       test "frames the whole template as one render" do
         compiled = compile("<div><%= 1 + 1 %></div>")
 
-        session = Herb::Engine::Report::Session.capture { Object.new.instance_eval(compiled) }
+        session = Herb::Engine::Runtime::Session.capture { Object.new.instance_eval(compiled) }
 
         assert_equal [{ id: "1", template: FILENAME }], session.report.render_tree
       end
@@ -164,11 +164,11 @@ module Engine
         object = Object.new
 
         object.define_singleton_method(:annotated) do
-          Herb::Engine::Report::Session.annotate(:render_time, 2.5, origin: "reactionview")
+          Herb::Engine::Runtime::Session.annotate(:render_time, 2.5, origin: "reactionview")
           "x"
         end
 
-        session = Herb::Engine::Report::Session.capture { object.instance_eval(compiled) }
+        session = Herb::Engine::Runtime::Session.capture { object.instance_eval(compiled) }
 
         assert_equal({ "1" => { "reactionview" => { render_time: 2.5 } } }, session.report.nodes)
       end

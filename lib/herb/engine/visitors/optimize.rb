@@ -2,8 +2,8 @@
 # typed: true
 
 require_relative "../../visitor"
-require_relative "../experimental"
-require_relative "../context_aware"
+require_relative "../../visitor/experimental"
+require_relative "../../visitor/context_aware"
 require_relative "../../action_view/helper_registry"
 
 module Herb
@@ -40,10 +40,10 @@ module Herb
       # the optimization itself is.
       #
       class Optimize < Herb::Visitor
-        extend Experimental
-        include ContextAware
+        extend Herb::Visitor::Experimental
+        include Herb::Visitor::ContextAware
 
-        SESSION = "::Herb::Engine::Report::Session" #: String
+        SESSION = "::Herb::Engine::Runtime::Session" #: String
         CODE = "overwritten-helper" #: String
         ORIGIN = "Herb Engine" #: String
 

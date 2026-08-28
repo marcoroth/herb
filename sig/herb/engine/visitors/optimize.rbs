@@ -33,9 +33,9 @@ module Herb
       # development and not in production. Compiling it in is the caller's decision for the same reason
       # the optimization itself is.
       class Optimize < Herb::Visitor
-        extend Experimental
+        extend Herb::Visitor::Experimental
 
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
         SESSION: String
 

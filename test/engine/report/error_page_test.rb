@@ -65,7 +65,7 @@ module Engine
     end
 
     def middleware(app, **)
-      Herb::Engine::Report::ErrorPage.new(app, **)
+      Herb::Engine::Runtime::ErrorPage.new(app, **)
     end
 
     def payload(body)

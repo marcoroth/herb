@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/inline_render"
+require_relative "../../../lib/herb/engine/inline_render/visitor"
 require_relative "../../../lib/herb/engine/scoped_style/visitor"
 
 require "lightningcss"
@@ -16,7 +16,7 @@ module Engine
     TEMPLATE = "app/views/posts/index.html.erb"
 
     def options(inline: false, **overrides)
-      visitors = inline ? [Herb::Engine::Visitors::InlineRender.new] : []
+      visitors = inline ? [Herb::Engine::InlineRender::Visitor.new] : []
 
       visitors << Herb::Engine::ScopedStyle::Visitor.new(
         transform: LightningCSS::Transformer.new(minify: true),

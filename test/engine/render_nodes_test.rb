@@ -41,7 +41,7 @@ module Engine
       validator = Herb::Engine::Validators::RenderValidator.new
 
       validator.inherit_context(
-        Herb::Engine::VisitorContext.new(
+        Herb::Visitor::Context.new(
           file_path: "app/views/posts/show.html.erb",
           project_path: @project_path
         )
@@ -63,7 +63,7 @@ module Engine
         validator = Herb::Engine::Validators::RenderValidator.new
 
         validator.inherit_context(
-          Herb::Engine::VisitorContext.new(
+          Herb::Visitor::Context.new(
             file_path: "posts/show.html.erb",
             project_path: Pathname.new(root)
           )
@@ -146,7 +146,7 @@ module Engine
 
       validator = Herb::Engine::Validators::RenderValidator.new
 
-      validator.inherit_context(Herb::Engine::VisitorContext.new(project_path: @project_path))
+      validator.inherit_context(Herb::Visitor::Context.new(project_path: @project_path))
 
       result.value.accept(validator)
 

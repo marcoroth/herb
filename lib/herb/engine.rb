@@ -5,15 +5,14 @@ require "json"
 require "time"
 require "pathname"
 
-require_relative "engine/visitor_context"
-require_relative "engine/visitor_stack"
-require_relative "engine/report/session"
-require_relative "engine/context_aware"
-require_relative "engine/diagnostics"
+require_relative "visitor/context"
+require_relative "visitor/stack"
+require_relative "engine/runtime/session"
+require_relative "visitor/context_aware"
+require_relative "visitor/diagnostics"
 require_relative "engine/compiler"
-require_relative "engine/error_formatter"
 require_relative "engine/errors"
-require_relative "engine/parse_error"
+require_relative "engine/error_formatter"
 
 module Herb
   class Engine
@@ -56,7 +55,7 @@ module Herb
     ).freeze
 
     def initialize(input, properties = {})
-      @context = VisitorContext.new(
+      @context = Visitor::Context.new(
         file_path: properties[:filename],
         project_path: properties[:project_path],
         options: context_options(properties),
@@ -74,7 +73,7 @@ module Herb
       @buffer_on_stack = false
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
-      @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
+      @visitors = Visitor::Stack.build(properties.fetch(:visitors, Visitor::Stack.new))
       @visitors.validate_order!
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
@@ -96,7 +95,7 @@ module Herb
         handle_parser_errors(parser_errors, input, parse_result.value)
       else
         @visitors.each do |visitor|
-          visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
+          visitor.inherit_context(@context) if visitor.is_a?(Visitor::ContextAware)
           visitor.bufvar = @bufvar if visitor.respond_to?(:bufvar=)
 
           parse_result.value.accept(visitor)
@@ -364,7 +363,7 @@ module Herb
 
     #: () -> Array[Herb::Diagnostic]
     def collected_diagnostics
-      @visitors.grep(Diagnostics).flat_map(&:diagnostics)
+      @visitors.grep(Visitor::Diagnostics).flat_map(&:diagnostics)
     end
 
     #: (Hash[Symbol, untyped], String) -> void
@@ -413,7 +412,7 @@ module Herb
 
     #: (String) -> void
     def report(input)
-      reporters = @visitors.grep(Diagnostics)
+      reporters = @visitors.grep(Visitor::Diagnostics)
       diagnostics = reporters.flat_map(&:diagnostics)
 
       return if diagnostics.empty?
@@ -429,7 +428,7 @@ module Herb
     def emit_compile_diagnostics(diagnostics)
       entries = diagnostics.map(&:to_ruby).join(", ")
 
-      @src << " ::Herb::Engine::Report::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
+      @src << " ::Herb::Engine::Runtime::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
     end
 
     #: (Array[Herb::Diagnostic], String) -> void

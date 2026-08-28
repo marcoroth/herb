@@ -1,0 +1,187 @@
+# Generated from lib/herb/engine/runtime/session.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Runtime
+      # Where everything found while a page renders collects, so that findings from separate
+      # producers end up in one payload rather than one channel each.
+      #
+      # Anything can record into the session that is open, without knowing whether one is open or who
+      # else is recording:
+      #
+      #     Herb::Engine::Runtime::Session.record(diagnostic)
+      #
+      # A scoped session is one somebody opened deliberately, which is what a request or a test does.
+      # Outside of one, recording still works and collects into a session nobody reads, so a producer
+      # never has to guard its own calls.
+      class Session
+        STATE_KEY: Symbol
+
+        RACTOR_KEY: Symbol
+
+        THREAD_KEY: Symbol
+
+        attr_reader report: Herb::Engine::Runtime::Report
+
+        attr_reader previous: Session?
+
+        # : () -> Session?
+        def self.stored: () -> Session?
+
+        # : (Session?) -> void
+        def self.store: (Session?) -> void
+
+        # : () -> Session
+        def self.current: () -> Session
+
+        # : [T] () { () -> T } -> Session
+        def self.capture: [T] () { () -> T } -> Session
+
+        # : () -> Session
+        def self.open: () -> Session
+
+        # : () -> Session?
+        def self.close: () -> Session?
+
+        # : (Herb::Diagnostic) -> Herb::Diagnostic
+        def self.record: (Herb::Diagnostic) -> Herb::Diagnostic
+
+        def self.record_compile_diagnostics: (untyped template, untyped entries) -> untyped
+
+        # : (String) -> void
+        def self.read_source: (String) -> void
+
+        # : [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
+        def self.at: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
+
+        # : (String?, Integer, Integer, ?Symbol?) -> void
+        def self.enter: (String?, Integer, Integer, ?Symbol?) -> void
+
+        # : () -> void
+        def self.leave: () -> void
+
+        # : [T] (String?) { () -> T } -> T
+        def self.render: [T] (String?) { () -> T } -> T
+
+        # : (String?) -> String
+        def self.enter_render: (String?) -> String
+
+        # : () -> void
+        def self.leave_render: () -> void
+
+        # : () -> String?
+        def self.current_node: () -> String?
+
+        # : (Symbol, untyped, origin: String) -> void
+        def self.annotate: (Symbol, untyped, origin: String) -> void
+
+        # : (Symbol, untyped) -> void
+        def self.observe: (Symbol, untyped) -> void
+
+        # : () -> Array[Array[untyped]]
+        def self.stack: () -> Array[Array[untyped]]
+
+        # : (String, String?) -> void
+        def self.source: (String, String?) -> void
+
+        # : () -> bool
+        def self.scoped?: () -> bool
+
+        # : () -> void
+        def self.reset!: () -> void
+
+        # : (?scoped: bool, ?report: Herb::Engine::Runtime::Report?, ?previous: Session?) -> void
+        def initialize: (?scoped: bool, ?report: Herb::Engine::Runtime::Report?, ?previous: Session?) -> void
+
+        # : () -> bool
+        def scoped?: () -> bool
+
+        # : (Herb::Diagnostic) -> Herb::Diagnostic
+        def record: (Herb::Diagnostic) -> Herb::Diagnostic
+
+        # : (String, String?) -> void
+        def source: (String, String?) -> void
+
+        # : (Symbol) { () -> untyped } -> untyped
+        def channel: (Symbol) { () -> untyped } -> untyped
+
+        # : () -> Array[Herb::Diagnostic]
+        def diagnostics: () -> Array[Herb::Diagnostic]
+
+        # : () -> bool
+        def empty?: () -> bool
+
+        # : (String?, Integer, Integer, ?Symbol?) -> void
+        def enter: (String?, Integer, Integer, ?Symbol?) -> void
+
+        # : () -> void
+        def leave: () -> void
+
+        # Every tag still rendering, innermost first, the way `caller` reads.
+        #
+        # A tag that renders a partial is still open while the partial renders, so once more than one
+        # template is instrumented this is a render stack across all of them and not just within one.
+        # Only the innermost frame is what an observation is filed under, so anything wanting the rest
+        # has to take it while it still exists:
+        #
+        #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+        #       Herb::Engine::Runtime::Session.observe(:queries, { sql: payload[:sql], stack: Herb::Engine::Runtime::Session.stack })
+        #     end
+        #
+        # Taking it costs an array per observation, which is why it is offered rather than recorded.
+        # : () -> Array[Array[untyped]]
+        def stack: () -> Array[Array[untyped]]
+
+        # Filed under the render it happened in, not only the position it happened at.
+        #
+        # A partial rendered three times has one tag at one position, so keying on position alone
+        # merges all three into one entry reading "3 queries" at one place. That reads as one slow
+        # tag when the finding is a tag that runs once per item, which is the thing worth noticing.
+        # : (Symbol, untyped) -> void
+        def observe: (Symbol, untyped) -> void
+
+        # One render of one template, which is what a node in the payload is.
+        #
+        # A template rendered three times is three nodes, because what gets said about it is said
+        # about an occurrence and not about the file. The id is minted here so there is exactly one
+        # of them per occurrence, rather than one per producer that wants to name it.
+        #
+        # The tag that is open when a render starts is the tag that started it, so the call site
+        # comes for free. Without it the tree would say a partial rendered twice under one parent but
+        # not from where, which `stack` can say and a payload built from the tree alone could not.
+        # : (String?) -> String
+        def enter_render: (String?) -> String
+
+        # : () -> void
+        def leave_render: () -> void
+
+        # : () -> String?
+        def current_node: () -> String?
+
+        # : (Symbol, untyped, origin: String) -> void
+        def annotate: (Symbol, untyped, origin: String) -> void
+
+        # : () -> Array[Herb::Engine::Runtime::Entry]
+        def entries: () -> Array[Herb::Engine::Runtime::Entry]
+
+        # Turns what was observed under one key into one diagnostic per tag that saw any.
+        #
+        #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+        #       Herb::Engine::Runtime::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+        #     end
+        #
+        #     session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+        #       "#{queries.size} SQL queries"
+        #     end
+        #
+        # A count is a measurement rather than a fault, so what comes out carries a badge and no
+        # severity. Three queries at one tag is worth showing every time and worth worrying about
+        # only sometimes, and which of those it is depends on what the tag is for. Reporting it as a
+        # warning would make that call on the reader's behalf and get it wrong often enough to train
+        # them to ignore it.
+        # : (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+        def measure: (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+      end
+    end
+  end
+end

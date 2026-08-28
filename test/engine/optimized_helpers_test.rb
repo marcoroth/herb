@@ -38,7 +38,7 @@ module Engine
     end
 
     def diagnostics_from(context, compiled = compile)
-      Herb::Engine::Report::Session.capture { context.instance_eval(compiled) }.diagnostics
+      Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }.diagnostics
     end
 
     describe "what it compiles in" do
@@ -121,7 +121,7 @@ module Engine
         compiled = compile
         context = overriding_context
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           5.times { context.instance_eval(compiled) }
         end
 
@@ -133,7 +133,7 @@ module Engine
         context = overriding_context
 
         counts = 3.times.map do
-          Herb::Engine::Report::Session.capture { context.instance_eval(compiled) }.diagnostics.length
+          Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }.diagnostics.length
         end
 
         assert_equal [1, 1, 1], counts

@@ -2,7 +2,7 @@
 # typed: false
 
 require_relative "../../../herb"
-require_relative "../html_safe_assertions"
+require_relative "../runtime/html_safe_assertions"
 
 begin
   require "prism"
@@ -27,10 +27,10 @@ module Herb
       #
       # `<%= @user.bio.html_safe %>` then compiles as if the template had been written as:
       #
-      #     <%= ::Herb::Engine::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 1, source: "<%= @user.bio.html_safe %>", mode: :raise).html_safe %>
+      #     <%= ::Herb::Engine::Runtime::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 1, source: "<%= @user.bio.html_safe %>", mode: :raise).html_safe %>
       #
       # The assertion runs on every render, and the value keeps flowing through `.html_safe`
-      # unchanged. See `Herb::Engine::HTMLSafeAssertions` for what counts as unsafe.
+      # unchanged. See `Herb::Engine::Runtime::HTMLSafeAssertions` for what counts as unsafe.
       #
       # The calls are found in the Prism program the parser attaches to the document, which the
       # engine enables through `required_parser_option`. Parsing an AST for this visitor by hand
@@ -39,11 +39,11 @@ module Herb
       #     Herb.parse(source, prism_program: true)
       #
       class HTMLSafeAssertions < Herb::Visitor
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
         required_parser_option track_locations: true
 
-        RUNTIME = "::Herb::Engine::HTMLSafeAssertions"
+        RUNTIME = "::Herb::Engine::Runtime::HTMLSafeAssertions"
 
         MAX_SOURCE_LENGTH = 120
 
@@ -60,7 +60,7 @@ module Herb
           @ignore = validated_ignore(ignore)
           @erb_nodes = [] #: Array[untyped]
 
-          self.context = VisitorContext.new(file_path: file_path) if file_path
+          self.context = Context.new(file_path: file_path) if file_path
         end
 
         #: (Herb::AST::DocumentNode) -> void
@@ -86,21 +86,21 @@ module Herb
 
         #: (Symbol) -> Symbol
         def validated_mode(mode)
-          return mode if Engine::HTMLSafeAssertions::MODES.include?(mode)
+          return mode if Engine::Runtime::HTMLSafeAssertions::MODES.include?(mode)
 
           raise ArgumentError,
-                "mode must be one of #{Engine::HTMLSafeAssertions::MODES.map(&:inspect).join(", ")}, got #{mode.inspect}"
+                "mode must be one of #{Engine::Runtime::HTMLSafeAssertions::MODES.map(&:inspect).join(", ")}, got #{mode.inspect}"
         end
 
         #: (Array[Symbol]) -> Array[Symbol]
         def validated_ignore(ignore)
           names = ignore.map(&:to_sym)
-          unknown = names - Engine::HTMLSafeAssertions::CHECK_NAMES
+          unknown = names - Engine::Runtime::HTMLSafeAssertions::CHECK_NAMES
 
           return names if unknown.empty?
 
           raise ArgumentError,
-                "unknown check #{unknown.map(&:inspect).join(", ")}, expected one of #{Engine::HTMLSafeAssertions::CHECK_NAMES.map(&:inspect).join(", ")}"
+                "unknown check #{unknown.map(&:inspect).join(", ")}, expected one of #{Engine::Runtime::HTMLSafeAssertions::CHECK_NAMES.map(&:inspect).join(", ")}"
         end
 
         #: (Herb::AST::DocumentNode) -> void

@@ -2,13 +2,13 @@
 
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
-require_relative "../../../lib/herb/engine/visitors/component"
+require_relative "../../../lib/herb/engine/component/visitor"
 
 module Engine
   class ComponentTest < Minitest::Spec
     include SnapshotUtils
 
-    class IconResolver < Herb::Engine::Visitors::Component::Resolver
+    class IconResolver < Herb::Engine::Component::Resolver
       def handles?(tag_name)
         tag_name.start_with?("Icon")
       end
@@ -19,7 +19,7 @@ module Engine
     end
 
     def setup
-      @visitor = Herb::Engine::Visitors::Component.new
+      @visitor = Herb::Engine::Component::Visitor.new
     end
 
     test "transforms simple Vue component to ERB render call" do
@@ -86,7 +86,7 @@ module Engine
     test "component visitor transforms Vue components to ERB" do
       html = '<MyComponent :prop="@value" />'
 
-      component_visitor = Herb::Engine::Visitors::Component.new
+      component_visitor = Herb::Engine::Component::Visitor.new
 
       visitors = [component_visitor]
 
@@ -99,7 +99,7 @@ module Engine
     test "multiple visitors can work together" do
       html = '<TestComponent name="test" />'
 
-      component_visitor = Herb::Engine::Visitors::Component.new
+      component_visitor = Herb::Engine::Component::Visitor.new
       debug_visitor = Herb::Engine::Visitors::Debug.new
 
       visitors = [component_visitor, debug_visitor]
@@ -127,7 +127,7 @@ module Engine
         end
       end.new
 
-      component_visitor = Herb::Engine::Visitors::Component.new
+      component_visitor = Herb::Engine::Component::Visitor.new
 
       visitors = [test_visitor, component_visitor]
 
@@ -270,18 +270,18 @@ module Engine
     private
 
     def component_options
-      { visitors: [Herb::Engine::Visitors::Component.new] }
+      { visitors: [Herb::Engine::Component::Visitor.new] }
     end
 
     def dot_notation_options
       {
         parser_options: { dot_notation_tags: true },
-        visitors: [Herb::Engine::Visitors::Component.new],
+        visitors: [Herb::Engine::Component::Visitor.new],
       }
     end
 
     def custom_resolver_options
-      { visitors: [Herb::Engine::Visitors::Component.new(resolvers: [IconResolver.new])] }
+      { visitors: [Herb::Engine::Component::Visitor.new(resolvers: [IconResolver.new])] }
     end
 
     def parse_and_transform(html)

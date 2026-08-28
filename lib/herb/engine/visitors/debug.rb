@@ -2,13 +2,13 @@
 # typed: false
 
 require_relative "../../visitor"
-require_relative "../context_aware"
+require_relative "../../visitor/context_aware"
 
 module Herb
   class Engine
     module Visitors
       class Debug < Herb::Visitor
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
         required_parser_option track_locations: true
 
@@ -30,7 +30,6 @@ module Herb
           super()
 
           @node = node
-
           @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
           @element_stack = [] #: Array[String]
           @erb_block_stack = [] #: Array[(Herb::AST::ERBBlockNode | Herb::AST::ERBIterationBlockNode)]
@@ -218,7 +217,7 @@ module Herb
         def current_node_erb
           Herb::AST::ERBContentNode.build(
             tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
-            content: Herb::Token.from("TOKEN_ERB_CONTENT", " ::Herb::Engine::Report::Session.current_node "),
+            content: Herb::Token.from("TOKEN_ERB_CONTENT", " ::Herb::Engine::Runtime::Session.current_node "),
             tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
             valid: true
           )

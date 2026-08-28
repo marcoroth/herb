@@ -14,12 +14,6 @@ module Herb
     # : () -> Array[Herb::Errors::Error]
     def errors: () -> Array[Herb::Errors::Error]
 
-    # : () -> bool
-    def failed?: () -> bool
-
-    # : () -> bool
-    def success?: () -> bool
-
     # : () -> String
     def pretty_errors: () -> String
 

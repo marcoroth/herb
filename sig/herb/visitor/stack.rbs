@@ -1,0 +1,65 @@
+# Generated from lib/herb/visitor/stack.rb with RBS::Inline
+
+module Herb
+  class Visitor
+    # The ordered list of passes the engine runs over a template before it compiles.
+    #
+    # Order is part of the contract rather than an implementation detail. A pass that injects nodes
+    # has to run after one that assigns positions to the nodes already there, and a pass that
+    # annotates the final tree has to run last. An array expresses that only by luck, so this adds
+    # the vocabulary to say it:
+    #
+    #     stack.insert_after(Herb::Engine::Slots::Visitor, MyVisitor.new)
+    #
+    # @rbs inherits Array[untyped]
+    class Stack < Array[untyped]
+      class UnknownVisitorError < ArgumentError
+      end
+
+      class OrderError < ArgumentError
+      end
+
+      # : (untyped) -> Stack
+      def self.build: (untyped) -> Stack
+
+      # : () -> void
+      def validate_order!: () -> void
+
+      private
+
+      # : (untyped, Integer) -> void
+      def validate_inlining!: (untyped, Integer) -> void
+
+      # : (untyped, Integer) -> void
+      def validate_reading!: (untyped, Integer) -> void
+
+      # : (untyped, Symbol) -> bool
+      def answers?: (untyped, Symbol) -> bool
+
+      public
+
+      # : (untyped) -> Stack
+      def use: (untyped) -> Stack
+
+      # Takes an index, the way `Array#insert` does, or a visitor class to place against.
+      # : ((Integer | Module), *untyped) -> Stack
+      def insert: (Integer | Module, *untyped) -> Stack
+
+      alias insert_before insert
+
+      # : ((Integer | Module), *untyped) -> Stack
+      def insert_after: (Integer | Module, *untyped) -> Stack
+
+      # : (Module) -> bool
+      def include_visitor?: (Module) -> bool
+
+      private
+
+      # : ((Integer | Module)) -> Integer
+      def position_of: (Integer | Module) -> Integer
+
+      # : (Module) -> Integer
+      def index_of: (Module) -> Integer
+    end
+  end
+end

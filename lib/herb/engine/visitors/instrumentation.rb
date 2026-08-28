@@ -2,9 +2,9 @@
 # typed: false
 
 require_relative "../../visitor"
-require_relative "../experimental"
-require_relative "../context_aware"
-require_relative "../origin"
+require_relative "../../visitor/experimental"
+require_relative "../../visitor/context_aware"
+require_relative "../../visitor/context/origin"
 
 module Herb
   class Engine
@@ -15,17 +15,17 @@ module Herb
       # This is half of a mechanism and does nothing by itself. It supplies where, and something else
       # has to supply what. A template compiled with it and rendered with nothing watching records no
       # entries at all, and only costs a call per tag. What makes it worth having is anything that
-      # calls `Herb::Engine::Report::Session.observe` while a tag is rendering:
+      # calls `Herb::Engine::Runtime::Session.observe` while a tag is rendering:
       #
       #     require "herb/engine/visitors/instrumentation"
       #
       #     engine = Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Instrumentation.new])
       #
       #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
-      #       Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+      #       Herb::Engine::Runtime::Session.observe(:queries, payload[:sql]) unless payload[:cached]
       #     end
       #
-      #     session = Herb::Engine::Report::Session.capture { render(engine.src) }
+      #     session = Herb::Engine::Runtime::Session.capture { render(engine.src) }
       #
       #     session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
       #       "#{queries.size} SQL queries"
@@ -41,14 +41,14 @@ module Herb
       # its body, and an assignment would bind inside the wrapper instead of the template.
       #
       class Instrumentation < Herb::Visitor
-        extend Experimental
-        include ContextAware
+        extend Herb::Visitor::Experimental
+        include Herb::Visitor::ContextAware
 
         recommended_parser_option render_nodes: true
         required_parser_option track_locations: true
         experimental "Instrumentation is experimental as it instruments every ERB tag."
 
-        SESSION = "::Herb::Engine::Report::Session"
+        SESSION = "::Herb::Engine::Runtime::Session"
         ARRAY_PROPERTIES = [:children, :body, :statements].freeze
         NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze
 
@@ -108,7 +108,7 @@ module Herb
           nodes.replace(nodes.flat_map { |node| rewrite_node(node) })
         end
 
-        #: (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+        #: (Herb::AST::Node, Herb::Visitor::Context::Origin::Entry) -> Array[Herb::AST::Node]
         def rewrite_import(node, entry)
           outer = @file
           @file = entry.file

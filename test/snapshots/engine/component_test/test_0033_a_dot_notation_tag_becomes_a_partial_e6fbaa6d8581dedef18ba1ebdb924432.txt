@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentTest#test_0033_a dot notation tag becomes a partial"
+input: "{source: \"<Users.Card />\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::Component::Visitor>]}}"
+---
+_buf = ::String.new; _buf << (render "users/card").to_s;
+_buf.to_s

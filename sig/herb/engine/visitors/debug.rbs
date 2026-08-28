@@ -4,7 +4,7 @@ module Herb
   class Engine
     module Visitors
       class Debug < Herb::Visitor
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
         # : () -> bool
         def self.reads_erb_source?: () -> bool

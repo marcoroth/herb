@@ -3,8 +3,8 @@
 require "stringio"
 
 require_relative "../test_helper"
-require_relative "../../lib/herb/engine/experimental"
-require_relative "../../lib/herb/engine/visitors/component"
+require_relative "../../lib/herb/visitor/experimental"
+require_relative "../../lib/herb/engine/component/visitor"
 require_relative "../../lib/herb/engine/visitors/instrumentation"
 require_relative "../../lib/herb/engine/visitors/optimize"
 require_relative "../../lib/herb/engine/scoped_style/visitor"
@@ -13,7 +13,7 @@ require_relative "../../lib/herb/engine/slots/visitor"
 module Engine
   class ExperimentalTest < Minitest::Spec
     ANNOUNCED = [
-      Herb::Engine::Visitors::Component,
+      Herb::Engine::Component::Visitor,
       Herb::Engine::Visitors::Instrumentation,
       Herb::Engine::Visitors::Optimize,
       Herb::Engine::ScopedStyle::Visitor,
@@ -22,7 +22,7 @@ module Engine
 
     def announcing(notice = "Nothing here is settled yet.")
       Class.new do
-        extend Herb::Engine::Experimental
+        extend Herb::Visitor::Experimental
 
         experimental notice
       end
@@ -51,7 +51,7 @@ module Engine
     end
 
     test "says nothing for a class that never declared one" do
-      klass = Class.new { extend Herb::Engine::Experimental }
+      klass = Class.new { extend Herb::Visitor::Experimental }
 
       assert_empty(said { klass.new })
     end
@@ -66,7 +66,7 @@ module Engine
 
     test "hands the arguments a class was built with straight through" do
       klass = Class.new do
-        extend Herb::Engine::Experimental
+        extend Herb::Visitor::Experimental
 
         experimental "Built anyway."
 
@@ -84,7 +84,7 @@ module Engine
     end
 
     test "every experimental visitor says so through the same mechanism" do
-      assert_equal(ANNOUNCED, ANNOUNCED.select { |klass| klass.singleton_class.include?(Herb::Engine::Experimental) })
+      assert_equal(ANNOUNCED, ANNOUNCED.select { |klass| klass.singleton_class.include?(Herb::Visitor::Experimental) })
     end
   end
 end

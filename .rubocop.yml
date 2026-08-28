@@ -156,13 +156,14 @@ Metrics/BlockLength:
 
 Metrics/ParameterLists:
   Exclude:
+    - lib/herb.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/dev/runner.rb
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb
-    - lib/herb/engine/diagnostics.rb
-    - lib/herb/engine/parse_error.rb
+    - lib/herb/visitor/diagnostics.rb
+    - lib/herb/engine/errors.rb
     - lib/herb/engine/slots/visitor.rb
     - lib/herb/errors.rb
     - lib/herb/parse_result.rb

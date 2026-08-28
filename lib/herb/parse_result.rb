@@ -31,16 +31,6 @@ module Herb
       super + value.recursive_errors
     end
 
-    #: () -> bool
-    def failed?
-      errors.any?
-    end
-
-    #: () -> bool
-    def success?
-      !failed?
-    end
-
     #: () -> String
     def pretty_errors
       JSON.pretty_generate(errors)

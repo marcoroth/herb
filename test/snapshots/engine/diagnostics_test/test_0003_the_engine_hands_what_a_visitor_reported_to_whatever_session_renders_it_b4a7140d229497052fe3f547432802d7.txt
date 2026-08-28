@@ -2,5 +2,5 @@
 source: "Engine::DiagnosticsTest#test_0003_the engine hands what a visitor reported to whatever session renders it"
 input: "{source: \"<marquee>Hello</marquee>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::Validators::SecurityValidator fatal=false>, #<Herb::Engine::Validators::NestingValidator fatal=false>, #<Herb::Engine::Validators::AccessibilityValidator fatal=false>, #<Engine::DiagnosticsTest::RewritingReporter>]}}"
 ---
-_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "The `<marquee>` element is obsolete.", severity: :warning, code: "obsolete-element", origin: "Herb Compiler", suggestion: "Use CSS animations instead.", line: 1, column: 0, end_line: 1, end_column: 24 }].freeze); _buf << '<div>Hello</div>'.freeze;
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "The `<marquee>` element is obsolete.", severity: :warning, code: "obsolete-element", origin: "Herb Compiler", suggestion: "Use CSS animations instead.", line: 1, column: 0, end_line: 1, end_column: 24 }].freeze); _buf << '<div>Hello</div>'.freeze;
 _buf.to_s

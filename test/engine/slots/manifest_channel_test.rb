@@ -6,7 +6,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slots/visitor"
-require_relative "../../../lib/herb/engine/report/session"
+require_relative "../../../lib/herb/engine/runtime/session"
 
 module Engine
   module Slots
@@ -38,7 +38,7 @@ module Engine
       end
 
       def channel_after(renders, source)
-        session = Herb::Engine::Report::Session.capture { renders.times { |n| view(source).render(n) } }
+        session = Herb::Engine::Runtime::Session.capture { renders.times { |n| view(source).render(n) } }
 
         session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }
       end
@@ -105,7 +105,7 @@ module Engine
         first = compile(deliver: :hoist)
         second = compile(deliver: :hoist, filename: "app/views/posts/_row.html.erb")
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           view(first).render(1)
           view(second).render(2)
         end
@@ -120,7 +120,7 @@ module Engine
 
         view(source).render(1)
 
-        session = Herb::Engine::Report::Session.capture { view(source).render(2) }
+        session = Herb::Engine::Runtime::Session.capture { view(source).render(2) }
 
         assert_equal 1, session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }.manifests.size
       end

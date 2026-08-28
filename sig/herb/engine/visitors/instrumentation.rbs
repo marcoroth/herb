@@ -9,17 +9,17 @@ module Herb
       # This is half of a mechanism and does nothing by itself. It supplies where, and something else
       # has to supply what. A template compiled with it and rendered with nothing watching records no
       # entries at all, and only costs a call per tag. What makes it worth having is anything that
-      # calls `Herb::Engine::Report::Session.observe` while a tag is rendering:
+      # calls `Herb::Engine::Runtime::Session.observe` while a tag is rendering:
       #
       #     require "herb/engine/visitors/instrumentation"
       #
       #     engine = Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Instrumentation.new])
       #
       #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
-      #       Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+      #       Herb::Engine::Runtime::Session.observe(:queries, payload[:sql]) unless payload[:cached]
       #     end
       #
-      #     session = Herb::Engine::Report::Session.capture { render(engine.src) }
+      #     session = Herb::Engine::Runtime::Session.capture { render(engine.src) }
       #
       #     session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
       #       "#{queries.size} SQL queries"
@@ -34,9 +34,9 @@ module Herb
       # wrapped, because wrapping either one would change what the template means: a block would lose
       # its body, and an assignment would bind inside the wrapper instead of the template.
       class Instrumentation < Herb::Visitor
-        extend Experimental
+        extend Herb::Visitor::Experimental
 
-        include ContextAware
+        include Herb::Visitor::ContextAware
 
         SESSION: ::String
 
@@ -61,8 +61,8 @@ module Herb
 
         def rewrite: (untyped nodes) -> untyped
 
-        # : (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
-        def rewrite_import: (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+        # : (Herb::AST::Node, Herb::Visitor::Context::Origin::Entry) -> Array[Herb::AST::Node]
+        def rewrite_import: (Herb::AST::Node, Herb::Visitor::Context::Origin::Entry) -> Array[Herb::AST::Node]
 
         # : (Herb::AST::Node) -> Array[Herb::AST::Node]
         def rewrite_node: (Herb::AST::Node) -> Array[Herb::AST::Node]

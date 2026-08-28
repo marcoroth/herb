@@ -4,7 +4,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slots/visitor"
-require_relative "../../../lib/herb/engine/report/session"
+require_relative "../../../lib/herb/engine/runtime/session"
 
 module Engine
   module Slots
@@ -59,14 +59,14 @@ module Engine
       end
 
       def recorded(src)
-        session = Herb::Engine::Report::Session.open
+        session = Herb::Engine::Runtime::Session.open
 
         begin
           evaluate_herb_source(src, {})
 
           session.report.diagnostics
         ensure
-          Herb::Engine::Report::Session.close
+          Herb::Engine::Runtime::Session.close
         end
       end
 
@@ -138,14 +138,14 @@ module Engine
 
       test "hands the page its findings so they reach the browser" do
         _, src = report(THREE_BAD_STATES)
-        session = Herb::Engine::Report::Session.open
+        session = Herb::Engine::Runtime::Session.open
 
         begin
           evaluate_herb_source(src, {})
 
           assert_equal [FLOAT_DEFAULT], session.report.diagnostics.map(&:message).first(1)
         ensure
-          Herb::Engine::Report::Session.close
+          Herb::Engine::Runtime::Session.close
         end
       end
 

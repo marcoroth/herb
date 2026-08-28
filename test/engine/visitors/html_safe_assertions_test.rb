@@ -36,7 +36,7 @@ module Engine
     end
 
     def teardown
-      Herb::Engine::HTMLSafeAssertions.on_violation = nil
+      Herb::Engine::Runtime::HTMLSafeAssertions.on_violation = nil
     end
 
     test "visitor is not loaded when only requiring herb" do
@@ -167,7 +167,7 @@ module Engine
     test "unsafe value raises" do
       template = "<div><%= bio.html_safe %></div>"
 
-      error = assert_raises(Herb::Engine::HTMLSafeAssertions::UnsafeHTMLError) do
+      error = assert_raises(Herb::Engine::Runtime::HTMLSafeAssertions::UnsafeHTMLError) do
         render(template, bio: SCRIPT)
       end
 
@@ -182,7 +182,7 @@ module Engine
     test "error message points at the template and the value" do
       template = %(<div>\n  <%= bio.html_safe %>\n</div>)
 
-      error = assert_raises(Herb::Engine::HTMLSafeAssertions::UnsafeHTMLError) do
+      error = assert_raises(Herb::Engine::Runtime::HTMLSafeAssertions::UnsafeHTMLError) do
         render(template, bio: SCRIPT)
       end
 
@@ -217,7 +217,7 @@ module Engine
       template = "<div><%= bio.html_safe %></div>"
       reported = []
 
-      Herb::Engine::HTMLSafeAssertions.on_violation = ->(error) { reported << error }
+      Herb::Engine::Runtime::HTMLSafeAssertions.on_violation = ->(error) { reported << error }
 
       assert_equal "<div>#{SCRIPT}</div>", render(template, bio: SCRIPT)
       assert_equal 1, reported.length
@@ -239,7 +239,7 @@ module Engine
     test "unsafe element passed as a block argument raises" do
       template = "<div><%= items.map(&:html_safe).join %></div>"
 
-      error = assert_raises(Herb::Engine::HTMLSafeAssertions::UnsafeHTMLError) do
+      error = assert_raises(Herb::Engine::Runtime::HTMLSafeAssertions::UnsafeHTMLError) do
         render(template, items: ["<p>fine</p>", SCRIPT])
       end
 
