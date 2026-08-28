@@ -81,6 +81,32 @@ class OptInRequiresTest < Minitest::Spec
     assert_equal "extracted", output
   end
 
+  test "Herb::Project compiles with nothing but herb and herb/project required" do
+    output = in_fresh_process(<<~RUBY)
+      require "tmpdir"
+      require "stringio"
+      require "herb"
+      require "herb/project"
+
+      Dir.mktmpdir do |directory|
+        File.write(File.join(directory, "index.html.erb"), "<div><%= user.name %></div>\n")
+
+        project = Herb::Project.new(directory)
+        project.no_log_file = true
+        project.no_timing = true
+
+        stdout = $stdout
+        $stdout = StringIO.new
+        issues = project.analyze!
+        $stdout = stdout
+
+        print issues ? "issues" : "clean"
+      end
+    RUBY
+
+    assert_equal "clean", output
+  end
+
   test "compiling works after requiring herb/engine" do
     output = in_fresh_process(<<~RUBY)
       require "herb"
