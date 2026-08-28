@@ -22,9 +22,6 @@ module Herb
         # : () -> bool
         def any?: () -> bool
 
-        # : (untyped) -> bool
-        def always_taken?: (untyped) -> bool
-
         # : () -> Array[String]
         def count_signatures: () -> Array[String]
 

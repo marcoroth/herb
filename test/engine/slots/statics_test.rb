@@ -23,7 +23,7 @@ module Engine
         render(template, locals)[%r{<template data-herb-region="[^"]+">(.*)</template>}m, 1]
       end
 
-      test "parks the branch that did not render" do
+      test "parks both branches when only one of them rendered" do
         assert_evaluated_snapshot(
           "<div><% if @admin %><b>Hi <%= @name %></b><% else %><i>guest</i><% end %></div>",
           { "@admin" => false, "@name" => "Marco" },
@@ -31,7 +31,7 @@ module Engine
         )
       end
 
-      test "parks the arms of a case that did not run" do
+      test "parks every arm of a case, including the one that ran" do
         assert_evaluated_snapshot(
           "<div><% case @s %><% when 1 %>one<% when 2 %>two<% else %>other<% end %></div>",
           { "@s" => 3 },
@@ -39,7 +39,7 @@ module Engine
         )
       end
 
-      test "parks the other branch when the first one ran" do
+      test "parks both branches whichever one ran first" do
         assert_evaluated_snapshot(
           "<div><% if @admin %><b>Hi <%= @name %></b><% else %><i>guest</i><% end %></div>",
           { "@admin" => true, "@name" => "Marco" },
@@ -96,11 +96,11 @@ module Engine
         assert_equal ["0:0", "1:0", "2:0"], markup.scan(/herb-branch:(\d+:\d+)/).flatten
       end
 
-      test "parks nothing when a conditional has no branch left to send" do
+      test "parks a conditional's only branch even once it has rendered" do
         assert_evaluated_snapshot("<div><% if @a %>x<% end %></div>", { "@a" => true }, options)
       end
 
-      test "parks nothing when a collection covered every branch between its items" do
+      test "parks every branch a collection's rows might need, whatever they covered between them" do
         template = "<ul><% @items.each do |i| %><li><% if i.odd? %>odd<% else %>even<% end %></li><% end %></ul>"
 
         assert_evaluated_snapshot(template, { "@items" => [1, 2] }, options)
@@ -125,10 +125,10 @@ module Engine
         assert_evaluated_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", { "@items" => ["a", "b"] }, options)
       end
 
-      test "parks the branches of one conditional and not of another" do
+      test "parks the branches of every conditional, taken or not" do
         markup = parked("<% if @a %>a<% end %><% if @b %>b<% end %>", { "@a" => true, "@b" => false })
 
-        assert_equal ["1:0"], markup.scan(/herb-branch:(\d+:\d+)/).flatten
+        assert_equal ["0:0", "1:0"], markup.scan(/herb-branch:(\d+:\d+)/).flatten
       end
 
       test "keeps what it counts to itself" do

@@ -2,7 +2,7 @@
   "file": "app/views/contract/a-conditional-that-branches.html.erb",
   "template": "<% if @on %><b><%= @x %></b><% else %><%= @y %><% end %><%= @z %>",
   "rendered": "<!--herb-region:app/views/contract/a-conditional-that-branches.html.erb:15f51fc3:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot=\"1:child\">x</b><!--/herb-slot:0--><!--herb-slot:3-->z<!--/herb-slot:3--><!--/herb-region:app/views/contract/a-conditional-that-branches.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-conditional-that-branches.html.erb:15f51fc3:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot=\"1:child\">x</b><!--/herb-slot:0--><!--herb-slot:3-->z<!--/herb-slot:3--><!--/herb-region:app/views/contract/a-conditional-that-branches.html.erb--><template data-herb-region=\"app/views/contract/a-conditional-that-branches.html.erb:15f51fc3\"><!--herb-branch:0:1--><!--herb-slot:2--><!--/herb-slot:2--></template>",
+  "client": "<!--herb-region:app/views/contract/a-conditional-that-branches.html.erb:15f51fc3:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot=\"1:child\">x</b><!--/herb-slot:0--><!--herb-slot:3-->z<!--/herb-slot:3--><!--/herb-region:app/views/contract/a-conditional-that-branches.html.erb--><template data-herb-region=\"app/views/contract/a-conditional-that-branches.html.erb:15f51fc3\"><!--herb-branch:0:0--><b data-herb-slot=\"1:child\"></b><!--herb-branch:0:1--><!--herb-slot:2--><!--/herb-slot:2--></template>",
   "values": {
     "template": "app/views/contract/a-conditional-that-branches.html.erb",
     "version": "15f51fc3",

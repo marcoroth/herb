@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0013_parks nothing when a collection covered every branch between its items"
-input: "{source: \"<ul><% @items.each do |i| %><li><% if i.odd? %>odd<% else %>even<% end %></li><% end %></ul>\", locals: {\"@items\" => [1, 2]}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:05e51203:0--><ul><!--herb-slot:0:collection--><li><!--herb-slot:1:conditional--><!--herb-branch:1:0-->odd<!--/herb-slot:1--></li><li><!--herb-slot:1:conditional--><!--herb-branch:1:1-->even<!--/herb-slot:1--></li><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->
