@@ -10,7 +10,7 @@ module Herb
 
         def self?.directives: (untyped document) -> untyped
 
-        def self?.declarations_in: (untyped node, untyped signature, untyped known) -> untyped
+        def self?.declarations_in: (untyped node, untyped known) -> untyped
 
         def self?.usages: (untyped name, untyped references, untyped offsets) -> untyped
       end
