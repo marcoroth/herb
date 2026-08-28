@@ -59,10 +59,10 @@ export interface WelcomeMessage {
   project: string
 }
 
+export const DEV_SERVER_FIXED_EVENT = "herb:dev-server-fixed"
+
 export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | ErrorMessage | FixedMessage
-
 export type ConnectionState = "connected" | "disconnected" | "given-up"
-
 export type MessageHandler = (message: HerbMessage) => void
 
 export interface ConnectionOptions {

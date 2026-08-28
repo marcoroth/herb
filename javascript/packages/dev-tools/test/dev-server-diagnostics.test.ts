@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { stripAnsiColors } from "@herb-tools/highlighter"
 import { diagnosticsFromError } from "../src/dev-server/diagnostics"
 
+import { HerbClient } from "../src/dev-server/client"
 import { RuntimePanel } from "../src/runtime/panel"
 
 import type { ErrorMessage } from "../src/dev-server/types"
@@ -150,6 +151,41 @@ describe("a dev server error in the panel", () => {
     )
 
     expect(stripAnsiColors(excerpt.textContent ?? "")).toContain("<form>")
+  })
+
+  test("shows the dev server connection in its own header, not only in the badge", async () => {
+    const panel = createPanel()
+
+    panel.report(diagnosticsFromError(errorMessage()))
+
+    const dot = document.querySelector(".herb-dev-tools-connection-dot") as HTMLElement | null
+    const status = document.querySelector(".herb-dev-tools-connection-status") as HTMLElement | null
+
+    expect(dot).not.toBeNull()
+    expect(status).not.toBeNull()
+    expect(status!.textContent).toBe("Dev Server")
+  })
+
+  test("keeps that indicator through a re-render, since the panel rewrites its own header", () => {
+    const panel = createPanel()
+
+    panel.report(diagnosticsFromError(errorMessage()))
+    panel.report(diagnosticsFromError(errorMessage({ line: 9 })))
+
+    expect(document.querySelectorAll(".herb-dev-tools-connection-dot")).toHaveLength(1)
+  })
+
+  test("announces a fix on the document, for a page that did not start the dev tools", async () => {
+    const client = new HerbClient({})
+    const heard: string[] = []
+
+    document.addEventListener("herb:dev-server-fixed", (event) => {
+      heard.push((event as CustomEvent).detail.file)
+    })
+
+    client["handleFixed"]({ type: "fixed", file: "app/views/posts/index.html.erb" })
+
+    expect(heard).toEqual(["app/views/posts/index.html.erb"])
   })
 
   test("renders no excerpt when the server sent no source", () => {

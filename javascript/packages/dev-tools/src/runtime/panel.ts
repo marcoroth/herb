@@ -21,6 +21,7 @@ export interface RuntimePanelOptions {
   autoInit?: boolean
   onOpenFile?: (file: string, line: number, column: number) => void
   onOpen?: () => void
+  onRender?: () => void
 }
 
 interface OpenTarget {
@@ -193,6 +194,7 @@ export class RuntimePanel {
   private bumped = false
   private primed = false
   private onOpenFile: ((file: string, line: number, column: number) => void) | null = null
+  private onRender: (() => void) | null = null
   private onOpen: (() => void) | null = null
   private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, view: 'cards', width: null, height: null }
   private root: HTMLElement | null = null
@@ -210,6 +212,7 @@ export class RuntimePanel {
   constructor(options: RuntimePanelOptions = {}) {
     this.onOpenFile = options.onOpenFile ?? null
     this.onOpen = options.onOpen ?? null
+    this.onRender = options.onRender ?? null
     this.styleElement = injectStyle('runtime-panel', panelStyles)
 
     if (options.autoInit !== false) {
@@ -807,6 +810,8 @@ export class RuntimePanel {
     this.bindHandlers()
     this.bindResizeHandles()
 
+    this.onRender?.()
+
     void this.hydrateHighlighting()
   }
 
@@ -1030,6 +1035,15 @@ export class RuntimePanel {
     ].join('')
   }
 
+  private connectionHTML(): string {
+    return [
+      `<span class="herb-dev-tools-connection">`,
+      `<span class="herb-dev-tools-connection-dot" data-herb-dev-server-dot></span>`,
+      `<span class="herb-dev-tools-connection-status" data-herb-dev-server-status>Dev Server</span>`,
+      `</span>`,
+    ].join('')
+  }
+
   private toneMarkerHTML(): string {
     const tone = this.headerTone
 
@@ -1054,6 +1068,7 @@ export class RuntimePanel {
       marker,
       `<span class="herb-dev-tools-title">${escapeHTML(this.overlayHeadline(entries))}</span>`,
       this.overlayLocationHTML(entries),
+      this.connectionHTML(),
       `<div class="herb-dev-tools-window-controls">`,
       this.viewButtonHTML(),
       this.overlayScopeButtonHTML(),
@@ -1185,7 +1200,12 @@ export class RuntimePanel {
 
   private headerControlsHTML(overlay: OverlayMode | null): string[] {
     if (overlay === 'blocking') {
-      return [`<div class="herb-dev-tools-window-controls">`, this.viewButtonHTML(), this.overlayScopeButtonHTML(), `</div>`]
+      return [
+        `<div class="herb-dev-tools-window-controls">`,
+        this.viewButtonHTML(),
+        this.overlayScopeButtonHTML(),
+        `</div>`,
+      ]
     }
 
     if (overlay === 'dismissible') {
