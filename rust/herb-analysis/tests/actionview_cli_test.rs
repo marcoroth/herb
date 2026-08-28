@@ -15,6 +15,7 @@ impl Project {
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(root.join("app/views/posts")).expect("create project");
     fs::create_dir_all(root.join("app/views/layouts")).expect("create layouts");
+    fs::write(root.join(".herb.yml"), "framework: actionview\n").expect("configure project");
 
     Self { root }
   }

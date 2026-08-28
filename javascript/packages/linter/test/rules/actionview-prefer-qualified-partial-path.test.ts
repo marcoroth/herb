@@ -13,7 +13,7 @@ function declaration(file: string): PartialDeclaration {
   return { file, hasDeclaration: false, hasKeywordRest: false, locals: [] }
 }
 
-const partials = new PartialIndex("app/views", new Map([
+const partials = new PartialIndex(["app/views"], new Map([
   ["posts/card", declaration("app/views/posts/_card.html.erb")],
   ["application/flash", declaration("app/views/application/_flash.html.erb")],
 ]))
@@ -70,7 +70,7 @@ describe("actionview-prefer-qualified-partial-path", () => {
   test("falls back to the generic advice when the partial does not resolve", () => {
     expectInfo(GENERIC)
 
-    assertOffenses(`<%= render "card" %>`, { fileName: "app/views/nowhere/index.html.erb", partials: new PartialIndex("app/views", new Map()) })
+    assertOffenses(`<%= render "card" %>`, { fileName: "app/views/nowhere/index.html.erb", partials: new PartialIndex(["app/views"], new Map()) })
   })
 
   test("does not flag a qualified path in the shorthand form", () => {

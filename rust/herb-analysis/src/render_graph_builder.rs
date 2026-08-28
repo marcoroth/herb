@@ -6,7 +6,7 @@ use herb::nodes::{AnyNode, ERBCaseNode, ERBIfNode, ERBRenderNode, ERBUnlessNode,
 use herb::visitor::Visitor;
 
 use crate::partial_index::PartialIndex;
-use crate::partial_resolution::{layout_candidates_for, outranks_template, partial_path, template_name_for, LAYOUTS_DIRECTORY};
+use crate::partial_resolution::{layout_candidates_for_roots, outranks_template, partial_path, template_name_for_roots, LAYOUTS_DIRECTORY};
 use crate::render_graph::{CallSiteLocation, PartialCallSite, RenderGraph, StaticAttributeMap, TemplateRoots};
 
 const RENDER_MARKER: &str = "render";
@@ -179,14 +179,12 @@ impl<'a> Builder<'a> {
   }
 
   fn add_layout_call_sites(&self, files: &[String], layout_yields: &BTreeMap<String, Vec<YieldSite>>, graph: &mut RenderGraph) {
-    let Some(view_root) = self.partials.view_root().to_str() else {
-      return;
-    };
+    let view_roots: Vec<String> = self.partials.view_roots().iter().filter_map(|root| root.to_str().map(str::to_string)).collect();
 
     let mut layouts: BTreeMap<String, String> = BTreeMap::new();
 
     for file in files {
-      let Some(name) = template_name_for(file, view_root) else {
+      let Some(name) = template_name_for_roots(file, &view_roots) else {
         continue;
       };
 
@@ -203,7 +201,7 @@ impl<'a> Builder<'a> {
     }
 
     for file in files {
-      for candidate in layout_candidates_for(file, view_root) {
+      for candidate in layout_candidates_for_roots(file, &view_roots) {
         let Some(layout) = layouts.get(&candidate) else {
           continue;
         };

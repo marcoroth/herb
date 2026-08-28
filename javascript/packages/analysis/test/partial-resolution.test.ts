@@ -1,6 +1,8 @@
 import { describe, test, expect } from "vitest"
 
 import {
+  formatOf,
+  variantOf,
   isPartialPath,
   partialNameForFile,
   resolvePartial,
@@ -126,45 +128,118 @@ describe("@herb-tools/core", () => {
     ])
 
     test("resolves a fully qualified name", () => {
-      expect(resolvePartial("users/card", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
 
     test("resolves a bare name against the rendering template's directory", () => {
-      expect(resolvePartial("avatar", "app/views/users/show.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_avatar.html.erb")
+      expect(resolvePartial("avatar", "app/views/users/show.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_avatar.html.erb")
     })
 
     test("falls back to the application directory for a bare name", () => {
-      expect(resolvePartial("flash", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBe("app/views/application/_flash.html.erb")
+      expect(resolvePartial("flash", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/application/_flash.html.erb")
     })
 
     test("prefers the exact name over the relative one", () => {
-      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
 
     test("resolves a qualified name relative to the rendering template's directory", () => {
       const nested = paths(["app/views/admin/users/_card.html.erb"])
 
-      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", nested, VIEW_ROOT)).toBe("app/views/admin/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/views/admin/index.html.erb", nested, [VIEW_ROOT])).toBe("app/views/admin/users/_card.html.erb")
     })
 
     test("does not fall back to the application directory for a qualified name", () => {
-      expect(resolvePartial("users/flash", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBeNull()
+      expect(resolvePartial("users/flash", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBeNull()
     })
 
     test("returns null for an unknown partial", () => {
-      expect(resolvePartial("users/missing", "app/views/posts/index.html.erb", index, VIEW_ROOT)).toBeNull()
+      expect(resolvePartial("users/missing", "app/views/posts/index.html.erb", index, [VIEW_ROOT])).toBeNull()
     })
 
     test("resolves from a template at the view root", () => {
-      expect(resolvePartial("flash", "app/views/index.html.erb", index, VIEW_ROOT)).toBe("app/views/application/_flash.html.erb")
+      expect(resolvePartial("flash", "app/views/index.html.erb", index, [VIEW_ROOT])).toBe("app/views/application/_flash.html.erb")
     })
 
     test("resolves from a source file outside the view root", () => {
-      expect(resolvePartial("users/card", "app/components/card_component.html.erb", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "app/components/card_component.html.erb", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
 
     test("resolves without a known source file", () => {
-      expect(resolvePartial("users/card", "", index, VIEW_ROOT)).toBe("app/views/users/_card.html.erb")
+      expect(resolvePartial("users/card", "", index, [VIEW_ROOT])).toBe("app/views/users/_card.html.erb")
     })
+  })
+})
+
+describe("formatOf", () => {
+  test("reads the format out of a filename", () => {
+    expect(formatOf("app/views/posts/_row.html.erb")).toBe("html")
+    expect(formatOf("app/views/posts/_row.turbo_stream.erb")).toBe("turbo_stream")
+    expect(formatOf("app/views/posts/_row.html.herb")).toBe("html")
+    expect(formatOf("app/views/posts/_row.en.html.erb")).toBe("html")
+  })
+
+  test("returns null when the filename carries no format", () => {
+    expect(formatOf("app/views/posts/_row.erb")).toBeNull()
+    expect(formatOf("app/views/posts/_row.herb")).toBeNull()
+  })
+})
+
+describe("variantOf", () => {
+  test("reads the variant out of a filename", () => {
+    expect(variantOf("app/views/posts/_row.html+mobile.erb")).toBe("mobile")
+    expect(variantOf("app/views/posts/_row.html+tablet.herb")).toBe("tablet")
+  })
+
+  test("returns null when the filename carries no variant", () => {
+    expect(variantOf("app/views/posts/_row.html.erb")).toBeNull()
+    expect(variantOf("app/views/posts/_row.erb")).toBeNull()
+  })
+
+  test("a variant keeps the format of its base template", () => {
+    expect(formatOf("app/views/posts/_row.html+mobile.erb")).toBe("html")
+    expect(formatOf("app/views/posts/_row.turbo_stream+mobile.erb")).toBe("turbo_stream")
+  })
+})
+
+describe("format-aware resolution", () => {
+  const HTML_CALLER = "app/views/posts/index.html.erb"
+  const TURBO_CALLER = "app/views/posts/index.turbo_stream.erb"
+
+  test("a caller reaches the partial matching its own format", () => {
+    const index: PartialPaths = new Map([
+      ["posts/row", ["app/views/posts/_row.html.erb", "app/views/posts/_row.turbo_stream.erb"]],
+    ])
+
+    expect(resolvePartial("posts/row", HTML_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.html.erb")
+    expect(resolvePartial("posts/row", TURBO_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.turbo_stream.erb")
+  })
+
+  test("a formatless partial serves any caller", () => {
+    const index: PartialPaths = new Map([["posts/row", ["app/views/posts/_row.erb"]]])
+
+    expect(resolvePartial("posts/row", TURBO_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.erb")
+  })
+
+  test("a formatless partial loses to an exact format match", () => {
+    const index: PartialPaths = new Map([
+      ["posts/row", ["app/views/posts/_row.erb", "app/views/posts/_row.turbo_stream.erb"]],
+    ])
+
+    expect(resolvePartial("posts/row", TURBO_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.turbo_stream.erb")
+  })
+
+  test("the plain template is preferred over a variant", () => {
+    const index: PartialPaths = new Map([
+      ["posts/row", ["app/views/posts/_row.html+mobile.erb", "app/views/posts/_row.html.erb"]],
+    ])
+
+    expect(resolvePartial("posts/row", HTML_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.html.erb")
+  })
+
+  test("a single file still resolves", () => {
+    const index: PartialPaths = new Map([["posts/row", "app/views/posts/_row.html.erb"]])
+
+    expect(resolvePartial("posts/row", HTML_CALLER, index, [VIEW_ROOT])).toBe("app/views/posts/_row.html.erb")
   })
 })

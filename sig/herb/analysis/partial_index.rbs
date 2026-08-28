@@ -5,8 +5,6 @@ module Herb
     class PartialIndex
       APPLICATION_DIRECTORY: String
 
-      attr_reader view_root: Pathname
-
       attr_reader templates: Array[String]
 
       # : (String | Pathname, ?templates: Array[String]?) -> PartialIndex
@@ -15,14 +13,22 @@ module Herb
       # : (String | Pathname) -> Pathname
       def self.resolve_view_root: (String | Pathname) -> Pathname
 
-      # : (String | Pathname, Array[String]) -> void
-      def initialize: (String | Pathname, Array[String]) -> void
+      # : (Array[String | Pathname], Array[String]) -> void
+      def initialize: (Array[String | Pathname], Array[String]) -> void
+
+      # : () -> Array[Pathname]
+      attr_reader view_roots: untyped
 
       # : (String?) -> Array[String]
       def files_for: (String?) -> Array[String]
 
       # : (String?, String?) -> Array[String]
+      # : (String?, String?) -> Array[String]
       def resolve: (String?, String?) -> Array[String]
+                 | (String?, String?) -> Array[String]
+
+      # : (String?, String?) -> Array[String]
+      def candidates_for: (String?, String?) -> Array[String]
 
       # : (String, String | Pathname) -> String?
       def self.partial_name_for: (String, String | Pathname) -> String?

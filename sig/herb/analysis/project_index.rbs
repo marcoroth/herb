@@ -21,8 +21,8 @@ module Herb
       # : () -> void
       def index_call_sites: () -> void
 
-      # : () -> Pathname?
-      def view_root: () -> Pathname?
+      # : () -> Array[Pathname]?
+      def view_roots: () -> Array[Pathname]?
 
       # : (String, ?String?) -> bool
       def handle_change: (String, ?String?) -> bool

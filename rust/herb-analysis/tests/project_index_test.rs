@@ -151,5 +151,5 @@ fn exposes_the_view_root_it_resolved() {
   let project = Project::new("view_root");
   project.write("app/views/posts/index.html.erb", "<div></div>");
 
-  assert_eq!(project.indexed().view_root().expect("view root"), project.root.join("app/views"));
+  assert_eq!(project.indexed().view_roots().expect("view roots"), [project.root.join("app/views")]);
 }

@@ -361,11 +361,17 @@ fn dynamic_prefix_of(value: &str) -> Option<String> {
   let value = value.trim_start_matches(['"', '\'']);
   let head = value.split("#{").next()?.trim_end_matches('/');
 
-  if head.is_empty() {
+  if head.is_empty() || !partial_path_segment(head) {
     None
   } else {
     Some(head.to_string())
   }
+}
+
+fn partial_path_segment(value: &str) -> bool {
+  value
+    .chars()
+    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '/' || c == '-')
 }
 
 fn interpolated_render_prefix(node: &herb::prism::PrismNode) -> Option<String> {

@@ -41,6 +41,65 @@ module Herb
           candidates.find(&:directory?) || root
         end
 
+        #: (String) -> String?
+        def format_of(file)
+          base = File.basename(file)
+          dot = base.index(".")
+
+          return nil unless dot
+
+          extension = base[dot..].to_s
+          stripped = extension.delete_suffix(".erb")
+          stripped = stripped.delete_suffix(".herb") if stripped == extension
+
+          return nil if stripped == extension
+
+          format = stripped.delete_prefix(".").split(".").last.to_s.split("+").first.to_s
+
+          format.empty? ? nil : format
+        end
+
+        #: (String) -> bool
+        def has_locale?(file)
+          base = File.basename(file)
+          dot = base.index(".")
+
+          return false unless dot
+
+          extension = base[dot..].to_s
+          stripped = extension.delete_suffix(".erb")
+          stripped = stripped.delete_suffix(".herb") if stripped == extension
+
+          return false if stripped == extension
+
+          stripped.delete_prefix(".").split(".").size > 1
+        end
+
+        #: (String) -> String?
+        def variant_of(file)
+          base = File.basename(file)
+          dot = base.index(".")
+
+          return nil unless dot
+
+          extension = base[dot..].to_s
+          stripped = extension.delete_suffix(".erb")
+          stripped = stripped.delete_suffix(".herb") if stripped == extension
+
+          return nil if stripped == extension
+
+          _, variant = stripped.split("+", 2)
+
+          variant.to_s.empty? ? nil : variant
+        end
+
+        #: (String) -> String
+        def without_template_extension(partial_name)
+          extension = EXTENSIONS.find { |candidate| partial_name.end_with?(candidate) }
+
+          extension ? partial_name.delete_suffix(extension) : partial_name
+        end
+
         #: (String) -> bool
         def template_path?(file)
           name = File.basename(file)
@@ -100,6 +159,11 @@ module Herb
           directory == "." ? name : "#{directory}/#{name}"
         end
 
+        #: (String, Array[String | Pathname]) -> Array[String]
+        def layout_candidates_for_roots(template_file, view_roots)
+          view_roots.lazy.map { |root| layout_candidates_for(template_file, root) }.find { |candidates| candidates.any? } || []
+        end
+
         #: (String, String | Pathname) -> Array[String]
         def layout_candidates_for(template_file, view_root)
           relative = relative_to_view_root(template_file, view_root)
@@ -140,6 +204,34 @@ module Herb
           return nil if name.empty?
 
           directory == "." ? name : "#{directory}/#{name}"
+        end
+
+        #: (String, Array[String | Pathname]) -> [Integer, String]?
+        def relative_to_view_roots(file, view_roots)
+          view_roots.each_with_index do |root, index|
+            relative = relative_to_view_root(file, root)
+
+            return [index, relative] if relative
+          end
+
+          nil
+        end
+
+        #: (String, Array[String | Pathname]) -> String?
+        def partial_name_for_roots(file, view_roots)
+          view_roots.filter_map { |root| partial_name_for(file, root) }.first
+        end
+
+        #: (String, Array[String | Pathname]) -> String?
+        def template_name_for_roots(file, view_roots)
+          view_roots.filter_map { |root| template_name_for(file, root) }.first
+        end
+
+        #: (String, Array[String | Pathname]) -> Integer
+        def root_index_for(file, view_roots)
+          found = relative_to_view_roots(file, view_roots)
+
+          found ? found[0] : view_roots.size
         end
 
         private

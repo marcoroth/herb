@@ -3,7 +3,7 @@ import { ParserRule } from "../types.js"
 import { renderPartialExpression } from "@herb-tools/analysis"
 
 import { isERBOutputNode, isPrismNodeType, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
-import { partialNameForFile } from "@herb-tools/analysis"
+import { partialNameForRoots } from "@herb-tools/analysis"
 
 import type { ERBRenderNode, ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { BaseAutofixContext, FullRuleConfig, LintContext, LintOffense, Mutable, UnboundLintOffense } from "../types.js"
@@ -106,7 +106,7 @@ class ActionViewPreferQualifiedPartialPathVisitor extends BaseRuleVisitor<Prefer
 
     if (!declaration) return null
 
-    const qualified = partialNameForFile(declaration.file, partials.viewRoot)
+    const qualified = partialNameForRoots(declaration.file, partials.viewRoots)
 
     if (!qualified) return null
 

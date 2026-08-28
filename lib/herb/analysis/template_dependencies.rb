@@ -104,7 +104,6 @@ module Herb
       end
 
       # @rbs!
-      #   KERNEL_METHODS: Array[String]
       KERNEL_METHODS = [
         "rand", "srand", "format", "sprintf", "raise", "loop", "sleep", "catch", "throw",
         "block_given?", "caller", "binding", "frozen?", "freeze", "dup", "clone", "tap", "then",
@@ -344,7 +343,6 @@ module Herb
       end
 
       # @rbs!
-      #   UNCOUNTABLE: Array[String]
       UNCOUNTABLE = ["series", "species", "news", "information", "equipment", "money"].freeze
 
       #: (String, String) -> String?
@@ -380,7 +378,7 @@ module Herb
         return nil unless entry_result
         return nil unless entry_result.instance_variables.include?(state) || entry_result.constants.include?(state)
 
-        index = PartialIndex.new(@view_root, reachable)
+        index = PartialIndex.new([@view_root], reachable)
         affected = Set.new([entry_point]) #: Set[String]
 
         state_locals = {} #: Hash[String, Set[String]]

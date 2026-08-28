@@ -135,6 +135,6 @@ class ProjectIndexTest < Minitest::Spec
   test "exposes the view root it resolved" do
     write("index.html.erb", "<div></div>")
 
-    assert_equal File.join(@project_path, "app", "views"), indexed.view_root.to_s
+    assert_equal [File.join(@project_path, "app", "views")], indexed.view_roots.map(&:to_s)
   end
 end

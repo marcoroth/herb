@@ -84,7 +84,7 @@ describe("buildPartialIndex", () => {
 
     const index = await buildPartialIndex(Herb, root)
 
-    expect(index.viewRoot).toBe("app/views")
+    expect(index.viewRoots).toEqual(["app/views"])
     expect(index.size).toBe(2)
 
     expect(index.lookup("users/card", "app/views/posts/index.html.erb")).toEqual({
@@ -126,7 +126,7 @@ describe("buildPartialIndex", () => {
 
     const index = await buildPartialIndex(Herb, root)
 
-    expect(index.viewRoot).toBe(".")
+    expect(index.viewRoots).toEqual(["."])
     expect(index.lookup("views/card", "index.html.erb")?.file).toBe("views/_card.html.erb")
   })
 

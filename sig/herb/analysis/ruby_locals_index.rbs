@@ -24,7 +24,6 @@ module Herb
       # : (String) -> Local?
       def find: (String) -> Local?
 
-      # Every name the template binds, regardless of where.
       # : () -> Set[String]
       def names: () -> Set[String]
 

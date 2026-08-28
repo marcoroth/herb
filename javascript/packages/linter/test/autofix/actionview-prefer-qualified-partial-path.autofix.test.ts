@@ -11,7 +11,7 @@ function declaration(file: string): PartialDeclaration {
   return { file, hasDeclaration: false, hasKeywordRest: false, locals: [] }
 }
 
-const partials = new PartialIndex("app/views", new Map([
+const partials = new PartialIndex(["app/views"], new Map([
   ["posts/card", declaration("app/views/posts/_card.html.erb")],
   ["posts/row", declaration("app/views/posts/_row.html.erb")],
   ["application/flash", declaration("app/views/application/_flash.html.erb")],
