@@ -59,6 +59,22 @@ describe("HerbStateValidDeclarationRule", () => {
     `)
   })
 
+  test("flags a Float default written with an exponent", () => {
+    expectError("The state `rate` has a Float default. Use an Integer or a String instead, since Ruby and JavaScript print floats differently.", [1, 22])
+
+    assertOffenses(dedent`
+      <%# herb:state (rate: 1e3) %>
+      <div></div>
+    `)
+  })
+
+  test("allows an Integer default written in another radix", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (mask: 0b1010, color: 0xff, mode: 0o17) %>
+      <div></div>
+    `)
+  })
+
   test("flags an Array default", () => {
     expectError("The state `selected` has an Array default. Declare a per-row boolean inside the loop instead, like `selected: false`. A list on the page is a collection of items, not a state.")
 

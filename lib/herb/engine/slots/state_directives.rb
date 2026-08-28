@@ -375,7 +375,7 @@ module Herb
           #: (untyped, Parsing) -> Declaration
           def declaration_for(keyword, parsing)
             declaration = classify(keyword, parsing)
-            spot = spelled(keyword, parsing)&.start
+            spot = parsing.anchor ? spelled(keyword, parsing)&.start : nil
 
             spot ? declaration.with(line: spot.line, column: spot.column) : declaration
           end

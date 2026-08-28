@@ -149,11 +149,11 @@ export function classifyDefault(source: string): StateDefaultKind {
     return "nil"
   }
 
-  if (/^-?\d[\d_]*\.\d/.test(source)) {
+  if (/^-?\d[\d_]*(?:\.\d[\d_]*(?:[eE][-+]?\d[\d_]*)?|[eE][-+]?\d[\d_]*)$/.test(source)) {
     return "float"
   }
 
-  if (/^-?\d[\d_]*$/.test(source)) {
+  if (/^-?(?:\d[\d_]*|0[xX][\da-fA-F][\da-fA-F_]*|0[oO][0-7][0-7_]*|0[bB][01][01_]*|0[dD]\d[\d_]*)$/.test(source)) {
     return "integer"
   }
 
@@ -162,6 +162,10 @@ export function classifyDefault(source: string): StateDefaultKind {
   }
 
   if (/^'(?:[^'\\]|\\.)*'$/s.test(source)) {
+    return "string"
+  }
+
+  if (/^\?(?:\\[a-zA-Z0-9\\]|[^\s\\])$/.test(source)) {
     return "string"
   }
 
