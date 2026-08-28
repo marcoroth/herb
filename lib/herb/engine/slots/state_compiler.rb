@@ -227,11 +227,7 @@ module Herb
           empty = {} #: Hash[String, StateDirectives::Declaration]
           bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
-          location = node.location&.start
-
-          declared = declared.map { |declaration|
-            declaration.line ? declaration : declaration.with(line: location&.line, column: location&.column)
-          }
+          start = node.location&.start
 
           declared.each do |declaration|
             spelled = declaration_location(declaration) || node.location
@@ -250,7 +246,7 @@ module Herb
               next @visitor.slot_error("The state `#{declaration.name}` is declared in both an item and its region. A later read could mean either one, so give them different names.", spelled, :declaration)
             end
 
-            bucket[declaration.name] = declaration
+            bucket[declaration.name] = declaration.line ? declaration : declaration.with(line: start&.line, column: start&.column)
           end
 
           @state_directives << { node: node, parent: parent, scope: scope, inline: @visitor.inline? }
