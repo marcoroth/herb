@@ -40,6 +40,9 @@ export interface ParseError {
   message: string
   line: number
   column: number
+  code?: string
+  origin?: string
+  suggestion?: string | null
 }
 
 export interface ErrorMessage {

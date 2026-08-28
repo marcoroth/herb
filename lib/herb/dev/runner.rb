@@ -293,9 +293,14 @@ module Herb
             file: relative_path,
             source: current_content,
             errors: current_errors.map { |error|
+              diagnostic = error.to_diagnostic(template: relative_path)
+
               {
                 name: error.error_name,
-                message: error.message,
+                code: diagnostic.code,
+                origin: diagnostic.origin,
+                message: diagnostic.message,
+                suggestion: diagnostic.suggestion,
                 line: error.location.start.line,
                 column: error.location.start.column,
               }

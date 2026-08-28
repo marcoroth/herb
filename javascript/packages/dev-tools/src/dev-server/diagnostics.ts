@@ -7,12 +7,13 @@ export function diagnosticsFromError(message: ErrorMessage): RuntimeDiagnostic[]
   return message.errors.map((error) => ({
     template: message.file,
     message: error.message,
-    code: error.name,
+    code: error.code ?? error.name,
     severity: "error" as const,
-    origin: DEV_SERVER_ORIGIN,
+    origin: error.origin ?? DEV_SERVER_ORIGIN,
     phase: "compile" as const,
     overlay: "dismissible" as const,
     location: { start: { line: error.line, column: error.column + 1 } },
+    ...(error.suggestion ? { suggestion: error.suggestion } : {}),
     ...(message.source === undefined ? {} : { source: message.source }),
   }))
 }

@@ -92,10 +92,31 @@ describe("diagnostics from a dev server error", () => {
     expect(diagnostic.severity).toBe("error")
   })
 
-  test("carries an origin the client can clear on its own", () => {
+  test("names whoever found it, not the road it took here", () => {
+    const message = errorMessage()
+
+    message.errors[0].origin = "Herb Parser"
+    message.errors[0].code = "missing-closing-tag"
+    message.errors[0].suggestion = "Close the `<form>` before the `</div>`."
+
+    const [diagnostic] = diagnosticsFromError(message)
+
+    expect(diagnostic.origin).toBe("Herb Parser")
+    expect(diagnostic.code).toBe("missing-closing-tag")
+    expect(diagnostic.suggestion).toBe("Close the `<form>` before the `</div>`.")
+  })
+
+  test("falls back to the dev server when it did not say who found it", () => {
     const [diagnostic] = diagnosticsFromError(errorMessage())
 
     expect(diagnostic.origin).toBe(DEV_SERVER_ORIGIN)
+    expect(diagnostic.code).toBe("missing-closing-tag")
+  })
+
+  test("leaves the suggestion off when there is none", () => {
+    const [diagnostic] = diagnosticsFromError(errorMessage())
+
+    expect("suggestion" in diagnostic).toBe(false)
   })
 
   test("carries the source the server sent, so the panel can draw a frame", () => {
@@ -133,6 +154,25 @@ describe("a dev server error in the panel", () => {
     expect(document.querySelector(".herb-dev-tools-card")?.textContent).toContain("missing-closing-tag")
 
     panel.clear(DEV_SERVER_ORIGIN)
+
+    expect(document.querySelector(".herb-dev-tools-card")).toBeNull()
+  })
+
+  test("is cleared by what was reported, since it no longer answers to the dev server's name", () => {
+    const panel = createPanel()
+    const message = errorMessage()
+
+    message.errors[0].origin = "Herb Parser"
+
+    const handle = panel.report(diagnosticsFromError(message))
+
+    expect(document.querySelector(".herb-dev-tools-card")).not.toBeNull()
+
+    panel.clear(DEV_SERVER_ORIGIN)
+
+    expect(document.querySelector(".herb-dev-tools-card")).not.toBeNull()
+
+    handle.dismiss()
 
     expect(document.querySelector(".herb-dev-tools-card")).toBeNull()
   })
