@@ -25,9 +25,8 @@ module Herb
       HIDE_CURSOR = "\e[?25l"
       SHOW_CURSOR = "\e[?25h"
 
-      def initialize(path: ".", cli: nil)
+      def initialize(path: ".")
         @path = path
-        @cli = cli
       end
 
       def run

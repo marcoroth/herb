@@ -15,7 +15,7 @@ module Herb
 
       SHOW_CURSOR: ::String
 
-      def initialize: (?path: untyped, ?cli: untyped) -> untyped
+      def initialize: (?path: untyped) -> untyped
 
       def run: () -> untyped
 
