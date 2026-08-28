@@ -170,6 +170,12 @@ describe("SyntaxRenderer", () => {
 
       expect(result).toMatchSnapshot()
     })
+
+    it("highlights ERB comments as comments", async () => {
+      const result = renderer.highlight("<%# if true %>")
+
+      expect(result).toMatchSnapshot()
+    })
   })
 
   describe("comment state tracking", () => {

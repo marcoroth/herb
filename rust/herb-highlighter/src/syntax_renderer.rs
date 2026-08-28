@@ -23,6 +23,7 @@ struct SyntaxRenderState {
   expecting_attribute_name: bool,
   expecting_attribute_value: bool,
   in_comment: bool,
+  in_erb_comment: bool,
 }
 
 pub struct SyntaxRenderer {
@@ -95,9 +96,17 @@ impl SyntaxRenderer {
       let color = self.contextual_color(&state, token, token_text);
 
       if token.token_type == "TOKEN_ERB_CONTENT" {
-        highlighted.push_str(&self.highlight_ruby_code(token_text));
+        if state.in_erb_comment {
+          highlighted.push_str(&self.apply_color(token_text, Some(self.colors.token_html_comment_start)));
+        } else {
+          highlighted.push_str(&self.highlight_ruby_code(token_text));
+        }
       } else {
         highlighted.push_str(&self.apply_color(token_text, color));
+      }
+
+      if token.token_type == "TOKEN_ERB_END" && state.in_erb_comment {
+        state.in_erb_comment = false;
       }
 
       last_end = token.range.to;
@@ -174,6 +183,8 @@ impl SyntaxRenderer {
       "TOKEN_HTML_COMMENT_START" => state.in_comment = true,
       "TOKEN_HTML_COMMENT_END" => state.in_comment = false,
 
+      "TOKEN_ERB_START" => state.in_erb_comment = token_text.starts_with("<%#"),
+
       _ => {}
     }
   }
@@ -188,6 +199,10 @@ impl SyntaxRenderer {
       && token_type != "TOKEN_ERB_CONTENT"
       && token_type != "TOKEN_ERB_END"
     {
+      return Some(self.colors.token_html_comment_start);
+    }
+
+    if state.in_erb_comment && token_type != "TOKEN_ERB_CONTENT" {
       return Some(self.colors.token_html_comment_start);
     }
 

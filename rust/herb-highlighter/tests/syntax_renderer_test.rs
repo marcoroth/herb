@@ -91,6 +91,13 @@ fn highlights_ruby_keywords_in_erb_blocks() {
 }
 
 #[test]
+fn highlights_erb_comments_as_comments() {
+  with_color();
+
+  insta::assert_snapshot!(renderer(Theme::OneDark).highlight("<%# if true %>"));
+}
+
+#[test]
 fn tracks_html_comment_state() {
   with_color();
 
