@@ -264,13 +264,29 @@ linter:
       enabled: false
 ```
 
+`all` also accepts `severity`, which sets the default severity for every rule that doesn't specify its own:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    all:
+      severity: warning
+
+    # Individual rules can still set their own
+    html-img-require-alt:
+      severity: error
+```
+
+This is the shortest way to make a whole project report at one level. It supports the split form too, so `severity: { editor: hint, cli: error }` keeps the editor quiet while CI still fails.
+
 A few details worth knowing:
 
 - **Explicit configuration always wins.** A rule that appears in `rules` follows its own `enabled` setting, no matter what `all` says.
 - **Listing a rule without `enabled` enables it.** `html-img-require-alt: { severity: warning }` under `all: enabled: false` turns the rule on, the same way it would without `all`.
 - **`all: enabled: true` bypasses version gating.** Normally the `version` in your `.herb.yml` holds back rules introduced in later releases. Enabling everything means exactly that, so nothing gets held back. Under `all: enabled: false` version gating makes no difference either way, since those rules are off regardless.
 - **`--only` and `--all-rules` still take precedence**, since both flags ignore the rule configuration entirely.
-- Only `enabled` is meaningful on `all`. Other rule options like `severity` or `exclude` aren't inherited by the individual rules.
+- **`severity` on `all` sets the default severity.** Every rule that doesn't set its own `severity` reports at the one `all` gives, overriding the rule's built-in default.
+- Only `enabled` and `severity` are meaningful on `all`. Other rule options like `include`, `only`, `exclude`, and `frameworks` aren't inherited by the individual rules. Use `linter.include` and `linter.exclude` to scope the whole linter.
 
 ::: warning
 `all` is a reserved name inside `rules`, it's never treated as an actual rule.

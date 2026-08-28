@@ -612,7 +612,8 @@ export class Linter {
    *
    * Priority:
    * 1. User config severity override (if specified in config)
-   * 2. Rule's default severity (from defaultConfig.severity)
+   * 2. The `all` pseudo rule's severity (if specified in config)
+   * 3. Rule's default severity (from defaultConfig.severity)
    *
    * @param unboundOffenses - Array of offenses without severity
    * @param ruleName - Name of the rule that produced the offenses
@@ -632,7 +633,8 @@ export class Linter {
     const defaultSeverityConfig = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
 
     const userRuleConfig = this.config?.linter?.rules?.[ruleName]
-    const severityConfig = userRuleConfig?.severity ?? defaultSeverityConfig
+    const allSeverityConfig = this.config?.linter?.rules?.[ALL_RULES_KEY]?.severity
+    const severityConfig = userRuleConfig?.severity ?? allSeverityConfig ?? defaultSeverityConfig
     const severity = resolveSeverity(severityConfig, this.mode)
 
     return unboundOffenses.map(offense => ({
