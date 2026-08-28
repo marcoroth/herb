@@ -18,6 +18,9 @@ module Herb
       # : (String) -> bool
       def erb_comment?: (String) -> bool
 
+      # : (Herb::AST::Node?) -> bool
+      def erb_comment_node?: (Herb::AST::Node?) -> bool
+
       # : (String) -> bool
       def erb_graphql?: (String) -> bool
 

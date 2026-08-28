@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsVisitorTest#test_0027_keeps the markers the slots visitor leaves behind, running after it - render"
+input: "{source: \"<!-- a note --><p>Hi <%= @name %>!</p>\", locals: {\"@name\" => \"Marco\"}, options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::Slots::Visitor server>, #<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<!--herb-region:app/views/test.html.erb:fb7c3406:0--><p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->!</p><!--/herb-region:app/views/test.html.erb-->

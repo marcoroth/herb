@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsVisitorTest#test_0008_conditional comment - render"
+input: "{source: \"<!--[if lt IE 9]><script src=\\\"html5shiv.js\\\"></script><![endif]--><p>Content</p>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<p>Content</p>

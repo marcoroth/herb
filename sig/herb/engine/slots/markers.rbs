@@ -10,6 +10,13 @@ module Herb
 
         SEED_VALUE_TYPES: String
 
+        PREFIX: String
+
+        COMMENT: Regexp
+
+        # : (String) -> bool
+        def self.marker?: (String) -> bool
+
         # : (String) -> String
         def self.seeds_expression: (String) -> String
 

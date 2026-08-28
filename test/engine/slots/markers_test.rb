@@ -504,6 +504,42 @@ module Engine
         assert_empty rewriter.seen
         assert_includes evaluate_herb_source(source, { "@name" => "Marco" }), "herb-slot"
       end
+
+      test "recognizes every marker it writes as a comment" do
+        markers = Herb::Engine::Slots::Markers.new
+
+        comments = [
+          markers.slot_open(0, :child),
+          markers.slot_open(0, :attribute),
+          markers.slot_close(0),
+          markers.branch(0, 1),
+          markers.seeds_open_prefix,
+          markers.item_open_prefix(0),
+          markers.item_close(0),
+          markers.region_open_prefix("app/views/test.html.erb", "0417e5d5"),
+          markers.region_close("app/views/test.html.erb")
+        ]
+
+        recognized = comments.select { |text| Herb::Engine::Slots::Markers.marker?(text) }
+
+        assert_equal comments, recognized
+      end
+
+      test "recognizes nothing else" do
+        markers = Herb::Engine::Slots::Markers.new
+
+        others = [
+          "<!-- a note -->",
+          "<!--herbivore-->",
+          "<!-- herb-slot:0 -->",
+          markers.statics_open("app/views/test.html.erb", "0417e5d5"),
+          markers.manifests_open
+        ]
+
+        recognized = others.select { |text| Herb::Engine::Slots::Markers.marker?(text) }
+
+        assert_equal [], recognized
+      end
     end
   end
 end

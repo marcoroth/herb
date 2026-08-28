@@ -40,6 +40,13 @@ module Herb
         opening.start_with?("<%#")
       end
 
+      #: (Herb::AST::Node?) -> bool
+      def erb_comment_node?(node)
+        return false unless node.is_a?(Herb::AST::ERBContentNode)
+
+        erb_comment?(erb_opening(node)) || inline_ruby_comment?(node)
+      end
+
       #: (String) -> bool
       def erb_graphql?(opening)
         opening.start_with?("<%graphql")
