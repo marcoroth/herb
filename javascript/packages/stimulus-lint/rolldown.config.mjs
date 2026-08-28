@@ -1,10 +1,15 @@
 // Bundle the CLI entry point into a single CommonJS file.
 // Exclude Node built-in so they remain as externals.
+import { createRequire } from "module"
+
+const { dependencies } = createRequire(import.meta.url)("./package.json")
+
 const external = [
   "path",
   "url",
   "fs",
   "module",
+  ...Object.keys(dependencies ?? {}),
 ]
 
 // Enable sourcemaps for local builds and release builds
@@ -40,13 +45,13 @@ export default [
       format: "esm",
       sourcemap: enableSourcemaps,
     },
-    external: ["@herb-tools/core", "@herb-tools/highlighter", "@herb-tools/linter", "@herb-tools/node-wasm", "stimulus-parser"],
+    external: isExternal,
   },
 
   // Library exports (CommonJS)
   {
     input: "src/index.ts",
-    external: ["@herb-tools/core", "@herb-tools/highlighter", "@herb-tools/linter", "@herb-tools/node-wasm", "stimulus-parser"],
+    external: isExternal,
     output: {
       file: "dist/index.cjs",
       format: "cjs",
