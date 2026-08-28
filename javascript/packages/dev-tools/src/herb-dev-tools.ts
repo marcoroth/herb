@@ -10,7 +10,6 @@ import type { DiagnosticSink, HerbClientOptions } from './dev-server/types.js'
 import type { RuntimeReportHandle } from './runtime/panel.js'
 import type { RuntimeDiagnostic } from './runtime/report.js'
 
-import { DEV_SERVER_ORIGIN } from './dev-server/diagnostics.js'
 
 const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
 
@@ -58,6 +57,7 @@ export class HerbDevTools {
   }
 
   private devServerClient: HerbClient | null = null
+  private devServerReport: RuntimeReportHandle | null = null
   private devToolsOverlay: HerbOverlay | null = null
   private panel: RuntimePanel | null = null
   private styleElement: HTMLStyleElement | null = null
@@ -71,6 +71,7 @@ export class HerbDevTools {
 
     this.devServerClient?.disconnect()
     this.devServerClient = null
+    this.devServerReport = null
 
     this.devToolsOverlay?.destroy()
     this.devToolsOverlay = null
@@ -169,9 +170,12 @@ export class HerbDevTools {
 
     return {
       report: diagnostics => {
-        panel.report(diagnostics)
+        this.devServerReport = panel.report(diagnostics)
       },
-      clear: () => panel.clear(DEV_SERVER_ORIGIN),
+      clear: () => {
+        this.devServerReport?.dismiss()
+        this.devServerReport = null
+      },
     }
   }
 

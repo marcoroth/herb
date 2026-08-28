@@ -45,6 +45,23 @@ module Dev
       websocket.messages.first
     end
 
+    test "names the parser as what found the error, not itself as what delivered it" do
+      error = broadcast_for(BROKEN, "")[:errors].first
+      parsed = Herb.parse(BROKEN, strict: true, analyze: true).errors.first.to_diagnostic(template: "app/views/posts/index.html.erb")
+
+      assert_equal "Herb Parser", error[:origin]
+      assert_equal parsed.origin, error[:origin]
+    end
+
+    test "sends the code and suggestion the same error would carry off the page" do
+      error = broadcast_for(BROKEN, "")[:errors].first
+      parsed = Herb.parse(BROKEN, strict: true, analyze: true).errors.first.to_diagnostic(template: "app/views/posts/index.html.erb")
+
+      assert_equal parsed.code, error[:code]
+      assert_equal parsed.suggestion, error[:suggestion]
+      assert_equal parsed.message, error[:message]
+    end
+
     test "sends the whole file with the errors, so the panel can highlight it" do
       assert_equal BROKEN, broadcast_for(BROKEN, "")[:source]
     end
