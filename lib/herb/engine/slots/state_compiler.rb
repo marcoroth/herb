@@ -42,11 +42,6 @@ module Herb
           !(@region_states.empty? && @item_states.empty?)
         end
 
-        #: (untyped) -> bool
-        def always_taken?(node)
-          @state_conditionals.key?(node)
-        end
-
         #: () -> Array[String]
         def count_signatures
           @state_counts.filter_map { |count|

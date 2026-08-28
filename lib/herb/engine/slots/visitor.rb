@@ -1201,17 +1201,15 @@ module Herb
           return unless slot_index
           return unless @slots[slot_index].type == :conditional
 
-          always = @states.always_taken?(node)
-
           branch_bodies(node).each_with_index do |body, branch_index|
             body.unshift(text_node(@markers.branch(slot_index, branch_index)))
 
-            park_branch(@markers.statics_key(slot_index, branch_index), body, always: always)
+            park_branch(@markers.statics_key(slot_index, branch_index), body)
           end
         end
 
-        #: (String, Array[untyped], ?always: bool) -> void
-        def park_branch(key, body, always: false)
+        #: (String, Array[untyped]) -> void
+        def park_branch(key, body)
           statics = @statics
           return unless statics
 
@@ -1219,8 +1217,6 @@ module Herb
           return unless markup
 
           statics[key] = markup
-
-          body.insert(1, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) unless always
         end
 
         #: (Herb::AST::DocumentNode) -> void

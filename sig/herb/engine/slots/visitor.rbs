@@ -386,8 +386,8 @@ module Herb
         # : (untyped, Integer?) -> void
         def mark_branches: (untyped, Integer?) -> void
 
-        # : (String, Array[untyped], ?always: bool) -> void
-        def park_branch: (String, Array[untyped], ?always: bool) -> void
+        # : (String, Array[untyped]) -> void
+        def park_branch: (String, Array[untyped]) -> void
 
         # : (Herb::AST::DocumentNode) -> void
         def append_statics: (Herb::AST::DocumentNode) -> void

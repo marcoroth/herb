@@ -2,7 +2,7 @@
   "file": "app/views/contract/a-conditional-inside-a-block.html.erb",
   "template": "<%= form_with(model: 1) do |f| %><% if @on %><%= @x %><% end %><% end %>",
   "rendered": "<!--herb-region:app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d:0--><!--herb-slot:0:block--><form><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->x<!--/herb-slot:2--><!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-inside-a-block.html.erb-->",
-  "client": "<!--herb-region:app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d:0--><!--herb-slot:0:block--><form><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->x<!--/herb-slot:2--><!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-inside-a-block.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d:0--><!--herb-slot:0:block--><form><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->x<!--/herb-slot:2--><!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:app/views/contract/a-conditional-inside-a-block.html.erb--><template data-herb-region=\"app/views/contract/a-conditional-inside-a-block.html.erb:a9e9757d\"><!--herb-branch:1:0--><!--herb-slot:2--><!--/herb-slot:2--></template>",
   "values": {
     "template": "app/views/contract/a-conditional-inside-a-block.html.erb",
     "version": "a9e9757d",
