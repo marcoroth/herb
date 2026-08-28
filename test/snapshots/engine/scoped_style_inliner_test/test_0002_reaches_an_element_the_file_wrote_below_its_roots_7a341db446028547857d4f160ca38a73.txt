@@ -1,0 +1,5 @@
+---
+source: "Engine::ScopedStyleInlinerTest#test_0002_reaches an element the file wrote below its roots"
+input: "{source: \"<style scoped>.title { color: #ff0000 }</style><div><h1 class=\\\"title\\\">Hi</h1></div>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer deliver=style_attributes>]}}"
+---
+<div data-herb-scope-2940ba8a=""><h1 class="title" data-herb-scope-2940ba8a="" style="color: red;">Hi</h1></div>

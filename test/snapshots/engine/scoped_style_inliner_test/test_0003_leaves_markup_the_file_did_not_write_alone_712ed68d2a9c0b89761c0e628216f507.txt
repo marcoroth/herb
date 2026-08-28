@@ -1,0 +1,5 @@
+---
+source: "Engine::ScopedStyleInlinerTest#test_0003_leaves markup the file did not write alone"
+input: "{source: \"<style scoped>.title { color: #ff0000 }</style><h1 class=\\\"title\\\">Hi</h1><%= render \\\"posts/plain\\\" %>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::InlineRenderVisitor>, #<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer deliver=style_attributes>]}}"
+---
+<h1 class="title" data-herb-scope-2940ba8a="" style="color: red;">Hi</h1><span class="plain">Plain</span>

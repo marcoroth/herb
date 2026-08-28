@@ -108,11 +108,15 @@ module Herb
           visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
         end
 
+        wrapping = wrap_postamble(postamble)
+        wrapped = !wrapping.equal?(postamble)
+        postamble = wrapping
+
         compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
 
-        static_body = buffer_required?(properties) ? nil : compile_static_body(compiler)
+        static_body = buffer_required?(properties) || wrapped ? nil : compile_static_body(compiler)
 
         if static_body
           @src << static_body
@@ -347,6 +351,13 @@ module Herb
       return true if properties[:ensure] || properties[:preamble] || properties[:postamble] || properties[:bufval]
 
       collected_diagnostics.any?
+    end
+
+    #: (String) -> String
+    def wrap_postamble(postamble)
+      @visitors.reduce(postamble) do |carried, visitor|
+        visitor.respond_to?(:postamble) ? visitor.postamble(carried) : carried
+      end
     end
 
     #: (untyped) -> String?

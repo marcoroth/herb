@@ -6,6 +6,7 @@
 require "optparse"
 
 require_relative "../herb"
+require_relative "engine/scoped_style/visitor"
 require_relative "engine/slots/visitor"
 
 class Herb::CLI
@@ -341,8 +342,15 @@ class Herb::CLI
         self.optimize = true
       end
 
-      parser.on("--scoped-styles", "Scope each `<style scoped>` block to its file with Lightning CSS (for compile/render commands) (default: false)") do
-        self.scoped_styles = true
+      parser.on("--scoped-styles [DELIVERY]", "Scope each `<style scoped>` block to its file with Lightning CSS, delivered inline (default), style_attributes, hoist or none (for compile/render commands) (default: false)") do |delivery|
+        self.scoped_styles = (delivery || "inline").to_sym
+
+        unless Herb::Engine::ScopedStyle::Visitor::DELIVERIES.include?(scoped_styles)
+          puts "Unknown --scoped-styles delivery: #{delivery}"
+          puts "Expected one of: #{Herb::Engine::ScopedStyle::Visitor::DELIVERIES.join(", ")}"
+
+          exit(1)
+        end
       end
 
       parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
@@ -1123,7 +1131,14 @@ class Herb::CLI
     require_relative "engine/scoped_style/visitor"
     Herb.ensure_installed("lightningcss")
 
-    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new, deliver: scoped_styles)
+  end
+
+  def install_scoped_style_inliner
+    require_relative "engine/scoped_style/inliner"
+    Herb.ensure_installed("css_inline")
+
+    Herb::Engine::ScopedStyle.inliner = Herb::Engine::ScopedStyle::Inliner.new
   end
 
   def compile_template
@@ -1273,6 +1288,8 @@ class Herb::CLI
 
       engine = Herb::Engine.new(source, options)
       compiled_code = engine.src
+
+      install_scoped_style_inliner if scoped_styles == :style_attributes
 
       rendered_output = eval(compiled_code)
 

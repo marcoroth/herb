@@ -87,6 +87,9 @@ module Herb
     # : (Hash[Symbol, untyped]) -> bool
     def buffer_required?: (Hash[Symbol, untyped]) -> bool
 
+    # : (String) -> String
+    def wrap_postamble: (String) -> String
+
     # : (untyped) -> String?
     def compile_static_body: (untyped) -> String?
 

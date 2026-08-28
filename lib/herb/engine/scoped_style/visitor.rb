@@ -8,6 +8,7 @@ require_relative "../experimental"
 require_relative "../context_aware"
 require_relative "../diagnostics"
 require_relative "channel"
+require_relative "inliner"
 require_relative "../visitor_context"
 
 module Herb
@@ -70,6 +71,17 @@ module Herb
       # is collecting into, which writes it once however many times the file renders, and needs
       # `Herb::Engine::Report::Middleware` to put it on the page.
       #
+      # `:style_attributes` leaves the block where `:inline` would and writes the CSS onto the markup it
+      # applies to once the file has rendered, which is what an email wants and what a `style` attribute
+      # is the only way to say. It needs `Herb::Engine::ScopedStyle.inliner` installed, and is correct
+      # without one: the block is still in the output, so the CSS applies as it was written and
+      # installing an inliner is what turns it into attributes rather than what makes it work.
+      #
+      # A file's scoped CSS and the markup it applies to are the same file and arrive in the same
+      # buffer, so this needs nothing to know about the page the file landed in. What keeps it from
+      # reaching markup the file does not own is what already scoped it: the selectors were narrowed to
+      # an attribute only this file's elements carry.
+      #
       class Visitor < Herb::Visitor
         extend Experimental
         include ContextAware
@@ -82,7 +94,11 @@ module Herb
         SCOPED_ATTRIBUTE = "scoped" #: String
         UNSCOPABLE_ELEMENTS = ["style", "script"].freeze #: Array[String]
         OPEN_TAGS = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
-        DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
+        DELIVERIES = [:inline, :style_attributes, :hoist, :none].freeze #: Array[Symbol]
+        LOCAL = [:inline, :style_attributes].freeze #: Array[Symbol]
+        AT_RULES = /@(?:media|supports|keyframes|font-face|container|layer)\b/ #: Regexp
+        STATEFUL = /::?(?:hover|focus|active|visited|target|before|after|placeholder|marker|selection)\b/ #: Regexp
+
         DIGEST_LENGTH = 8 #: Integer
 
         required_parser_option track_locations: true
@@ -151,7 +167,7 @@ module Herb
           if attributes && scope
             @elements[file] += 1
 
-            attributes << attribute_node(scope) if @depth[file].zero? || @openings[file].positive?
+            attributes << attribute_node(scope) if @depth[file].zero? || narrowing_each_element?(file)
           end
 
           @depth[file] += 1
@@ -159,6 +175,14 @@ module Herb
           super
         ensure
           @depth[file] -= 1
+        end
+
+        #: (String) -> String
+        def postamble(carried)
+          return carried unless @deliver == :style_attributes
+          return carried if @styles.empty?
+
+          "::Herb::Engine::ScopedStyle.inline((#{carried.strip}), keep: #{keeping?})\n"
         end
 
         #: () -> String
@@ -173,6 +197,11 @@ module Herb
         end
 
         private
+
+        #: () -> bool
+        def keeping?
+          @styles.each_value.any? { |css| css.match?(AT_RULES) || css.match?(STATEFUL) }
+        end
 
         #: () -> String
         def current_file
@@ -297,7 +326,7 @@ module Herb
 
         #: (Pending, String, String) -> void
         def place(pending, scope, narrowed)
-          index = @deliver == :inline ? nil : position_of(pending)
+          index = LOCAL.include?(@deliver) ? nil : position_of(pending)
 
           if index.nil?
             pending.node.body.replace([literal_node(narrowed)])
@@ -443,9 +472,14 @@ module Herb
 
         #: (String, String) -> String
         def scope_selector(file, scope)
-          return "[#{scope}]" if @openings[file].positive?
+          return "[#{scope}]" if narrowing_each_element?(file)
 
           ":where([#{scope}], [#{scope}] *)"
+        end
+
+        #: (String) -> bool
+        def narrowing_each_element?(file)
+          @openings[file].positive? || @deliver == :style_attributes
         end
 
         #: (String) -> String

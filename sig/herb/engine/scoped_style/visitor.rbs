@@ -59,6 +59,17 @@ module Herb
       # was written in. `:hoist` takes the block out and registers the CSS with the session the page
       # is collecting into, which writes it once however many times the file renders, and needs
       # `Herb::Engine::Report::Middleware` to put it on the page.
+      #
+      # `:style_attributes` leaves the block where `:inline` would and writes the CSS onto the markup it
+      # applies to once the file has rendered, which is what an email wants and what a `style` attribute
+      # is the only way to say. It needs `Herb::Engine::ScopedStyle.inliner` installed, and is correct
+      # without one: the block is still in the output, so the CSS applies as it was written and
+      # installing an inliner is what turns it into attributes rather than what makes it work.
+      #
+      # A file's scoped CSS and the markup it applies to are the same file and arrive in the same
+      # buffer, so this needs nothing to know about the page the file landed in. What keeps it from
+      # reaching markup the file does not own is what already scoped it: the selectors were narrowed to
+      # an attribute only this file's elements carry.
       class Visitor < Herb::Visitor
         extend Experimental
 
@@ -79,6 +90,12 @@ module Herb
         OPEN_TAGS: Array[untyped]
 
         DELIVERIES: Array[Symbol]
+
+        LOCAL: Array[Symbol]
+
+        AT_RULES: Regexp
+
+        STATEFUL: Regexp
 
         DIGEST_LENGTH: Integer
 
@@ -118,10 +135,16 @@ module Herb
         # : (Herb::AST::HTMLElementNode) -> void
         def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 
+        # : (String) -> String
+        def postamble: (String) -> String
+
         # : () -> String
         def inspect: () -> String
 
         private
+
+        # : () -> bool
+        def keeping?: () -> bool
 
         # : () -> String
         def current_file: () -> String
@@ -188,6 +211,9 @@ module Herb
 
         # : (String, String) -> String
         def scope_selector: (String, String) -> String
+
+        # : (String) -> bool
+        def narrowing_each_element?: (String) -> bool
 
         # : (String) -> String
         def scope_for: (String) -> String

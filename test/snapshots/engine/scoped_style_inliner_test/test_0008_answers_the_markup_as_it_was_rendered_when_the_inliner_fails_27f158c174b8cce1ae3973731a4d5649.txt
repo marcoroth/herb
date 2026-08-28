@@ -1,0 +1,5 @@
+---
+source: "Engine::ScopedStyleInlinerTest#test_0008_answers the markup as it was rendered when the inliner fails"
+input: "{source: \"<style scoped>.failing { color: #ff0000 }</style><h1 class=\\\"failing\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer deliver=style_attributes>]}}"
+---
+<style>.failing[data-herb-scope-2940ba8a]{color:red}</style><h1 class="failing" data-herb-scope-2940ba8a>Hi</h1>

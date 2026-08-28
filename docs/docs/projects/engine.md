@@ -798,7 +798,7 @@ Herb::Engine.new(source, filename: path, visitors: [
 ])
 ```
 
-The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there.
+The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there. Both take the delivery as an argument, as in `herb render --scoped-styles style_attributes`.
 
 Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
 
@@ -809,12 +809,33 @@ Given no `transform`, the block is left as it was written and a diagnostic repor
 | `:inline` | Leaves the block where it was written. This is the default. It needs nothing else installed, and writes the block again on every render of the file. |
 | `:hoist`  | Takes the block out and registers the CSS on a [channel](#delivering-something-other-than-diagnostics) of the session the page is collecting into, so it is written once however many times the file renders. Needs `Herb::Engine::Report::Middleware` to put it on the page. |
 | `:none`   | Takes the block out and puts nothing in its place, for when the CSS was already gathered into an asset. The markup still carries its scope attribute. |
+| `:style_attributes` | Leaves the block where `:inline` would and writes the CSS onto the markup it applies to once the file has rendered, which is what an email wants. Needs an [inliner](#writing-the-css-into-style-attributes) installed to do anything, and is correct without one. |
 
 It is set alongside `transform`:
 
 ```ruby
 Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: :hoist)
 ```
+
+#### Writing the CSS into style attributes
+
+A `style` attribute is the only way to say something an email client will read, and `deliver: :style_attributes` is how a scoped block gets there. The CSS is written onto the markup once the file has rendered, not at compile time, because that is the first moment the markup exists.
+
+Nothing about the page the file landed in has to be known to do it. A file's scoped CSS and the markup it applies to are the same file and arrive in the same buffer, and what keeps the CSS from reaching markup the file does not own is what already scoped it: the selectors were narrowed to an attribute only this file's elements carry.
+
+What does the writing is installed once:
+
+```ruby
+require "herb/engine/scoped_style/inliner"
+
+Herb::Engine::ScopedStyle.inliner = Herb::Engine::ScopedStyle::Inliner.new
+```
+
+`Inliner` reaches for the [`css_inline`](https://github.com/Stranger6667/css-inline) gem, and anything answering `inline_fragment` with the markup and a stylesheet can stand in for it. Without one installed, or if one fails, the markup is answered as it was rendered: the block is still in it, so the CSS applies as it was written. Installing an inliner is what turns the block into attributes, not what makes it work.
+
+An inliner drops the rules a `style` attribute cannot express (`@media`, `:hover`, `::before`) so a block holding any of them is written out again alongside the attributes, and the CSS is said twice. Which blocks those are is decided when the template is compiled.
+
+A file delivering this way carries its scope attribute on every element it wrote, not on its roots alone. An inliner matches the selectors itself, where a browser would otherwise have done it, and the ancestor form is written with `:where`, which is not a selector `css_inline` can answer.
 
 #### Supplying your own transform
 

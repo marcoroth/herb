@@ -1,0 +1,5 @@
+---
+source: "Engine::ScopedStyleInlinerTest#test_0004_holds a file whose roots are table rows together"
+input: "{source: \"<style scoped>.cell { color: #008000 }</style><tr class=\\\"row\\\"><td class=\\\"cell\\\">Cell</td></tr>\", locals: {}, options: {filename: \"app/views/posts/_row.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer deliver=style_attributes>]}}"
+---
+<tr class="row" data-herb-scope-33b3dd63=""><td class="cell" data-herb-scope-33b3dd63="" style="color: green;">Cell</td></tr>

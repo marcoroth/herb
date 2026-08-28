@@ -16,6 +16,8 @@ module Engine
     TEMPLATE = "app/views/posts/index.html.erb"
     CARD = "app/views/posts/_card.html.erb"
     SESSION = Herb::Engine::Report::Session
+    STYLED = %(<style scoped>.a { color: red; }</style><h1 class="a">Hi</h1>) #: String
+    HOVERED = %(<style scoped>.a { color: red; }\n.a:hover { color: blue; }</style><h1 class="a">Hi</h1>) #: String
 
     class Transform
       attr_reader :calls #: Array[Array[untyped]]
@@ -48,6 +50,27 @@ module Engine
 
       def call(css, **)
         Narrowed.new(css: "#{css}/* narrowed */", warnings: ["it kept `:deep()` without acting on it"])
+      end
+    end
+
+    class Narrowing
+      def call(css, scope:)
+        css.gsub(/([^{}]+)\{([^{}]*)\}/) { "#{Regexp.last_match(1).strip}#{scope}{#{Regexp.last_match(2).strip}}" }
+      end
+    end
+
+    class Recording
+      attr_reader :calls #: Array[Array[untyped]]
+
+      def initialize(answer: "inlined")
+        @answer = answer
+        @calls = []
+      end
+
+      def call(html, keep: false)
+        @calls << [html, keep]
+
+        @answer
       end
     end
 
@@ -286,6 +309,72 @@ module Engine
         _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
 
         assert_equal 0, response.first.scan("<style").length
+      end
+    end
+
+    describe "delivering the CSS as style attributes" do
+      def settings(**overrides)
+        options(transform: Narrowing.new, deliver: :style_attributes, **overrides)
+      end
+
+      after do
+        Herb::Engine::ScopedStyle.inliner = nil
+      end
+
+      test "writes the CSS onto the markup once the file has rendered" do
+        assert_compiled_snapshot(STYLED, settings)
+      end
+
+      test "keeps the block when the CSS holds something a `style` attribute cannot say" do
+        assert_compiled_snapshot(HOVERED, settings)
+      end
+
+      test "narrows by an attribute on every element, because an inliner cannot answer `:where`" do
+        compiled, = compile(STYLED, transform: Narrowing.new, deliver: :style_attributes)
+
+        assert_includes compiled, "[data-herb-scope-"
+        refute_includes compiled, ":where("
+      end
+
+      test "leaves the markup as it was rendered when no inliner is installed" do
+        compiled, = compile(STYLED, transform: Narrowing.new, deliver: :style_attributes)
+
+        assert_includes eval(compiled), "<style>"
+      end
+
+      test "hands what the file rendered to the inliner" do
+        recording = Recording.new
+        Herb::Engine::ScopedStyle.inliner = recording
+
+        compiled, = compile(STYLED, transform: Narrowing.new, deliver: :style_attributes)
+        answer = eval(compiled)
+
+        html, keep = recording.calls.first
+
+        assert_equal 1, recording.calls.length
+        assert_includes html, %(<h1 class="a" data-herb-scope-)
+        refute keep
+        assert_equal "inlined", answer
+      end
+
+      test "tells the inliner to keep the block when the CSS holds more than it can write" do
+        recording = Recording.new
+        Herb::Engine::ScopedStyle.inliner = recording
+
+        compiled, = compile(HOVERED, transform: Narrowing.new, deliver: :style_attributes)
+        eval(compiled)
+
+        assert recording.calls.first.last
+      end
+
+      test "asks for nothing when the file scoped nothing" do
+        recording = Recording.new
+        Herb::Engine::ScopedStyle.inliner = recording
+
+        compiled, = compile(%(<h1 class="a">Hi</h1>), transform: Narrowing.new, deliver: :style_attributes)
+        eval(compiled)
+
+        assert_empty recording.calls
       end
     end
 
