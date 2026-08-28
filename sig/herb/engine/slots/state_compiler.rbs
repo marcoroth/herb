@@ -61,6 +61,9 @@ module Herb
         # : (untyped, Array[untyped]) -> void
         def register_state_directive: (untyped, Array[untyped]) -> void
 
+        # : (StateDirectives::Declaration) -> Herb::Location?
+        def declaration_location: (StateDirectives::Declaration) -> Herb::Location?
+
         # : (String?) -> Symbol
         def local_kind: (String?) -> Symbol
 

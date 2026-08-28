@@ -223,35 +223,48 @@ module Herb
           return unless signature
 
           scope = @visitor.current_collection
-          declared = StateDirectives.parse(signature, @strict_locals, visitor: @visitor, location: node.location, enclosing: scope ? @region_states : {})
+          declared = StateDirectives.parse(signature, @strict_locals, visitor: @visitor, node: node, enclosing: scope ? @region_states : {})
           empty = {} #: Hash[String, StateDirectives::Declaration]
           bucket = scope ? (@item_states[scope] ||= empty) : @region_states
 
           location = node.location&.start
 
           declared = declared.map { |declaration|
-            declaration.with(line: location&.line, column: location&.column)
+            declaration.line ? declaration : declaration.with(line: location&.line, column: location&.column)
           }
 
           declared.each do |declaration|
+            spelled = declaration_location(declaration) || node.location
+
             if @strict_locals.key?(declaration.name)
-              next @visitor.slot_error("`#{declaration.name}` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two.", node.location, :declaration)
+              next @visitor.slot_error("`#{declaration.name}` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two.", spelled, :declaration)
             end
 
             if bucket.key?(declaration.name)
-              next @visitor.slot_error("The state `#{declaration.name}` is declared twice in the same scope. Remove one of the two declarations.", node.location, :declaration)
+              next @visitor.slot_error("The state `#{declaration.name}` is declared twice in the same scope. Remove one of the two declarations.", spelled, :declaration)
             end
 
             shadowed = scope ? @region_states.key?(declaration.name) : @item_states.values.any? { |declarations| declarations.key?(declaration.name) }
 
             if shadowed
-              next @visitor.slot_error("The state `#{declaration.name}` is declared in both an item and its region. A later read could mean either one, so give them different names.", node.location, :declaration)
+              next @visitor.slot_error("The state `#{declaration.name}` is declared in both an item and its region. A later read could mean either one, so give them different names.", spelled, :declaration)
             end
 
             bucket[declaration.name] = declaration
           end
 
           @state_directives << { node: node, parent: parent, scope: scope, inline: @visitor.inline? }
+        end
+
+        #: (StateDirectives::Declaration) -> Herb::Location?
+        def declaration_location(declaration)
+          line = declaration.line
+
+          return nil unless line
+
+          column = declaration.column || 0
+
+          Herb::Location.from(line, column, line, column + declaration.name.length)
         end
 
         #: (String?) -> Symbol

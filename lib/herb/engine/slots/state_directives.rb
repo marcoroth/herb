@@ -12,6 +12,7 @@ module Herb
       class StateDirectives
         PATTERN = /\A-?\s*herb:state\s*(?<signature>\(.*\))\s*-?\z/m #: Regexp
         BARE = /\A[a-z_][a-zA-Z0-9_]*\z/ #: Regexp
+        PREFIX = "def __herb_states" #: String
 
         KINDS = {
           "Prism::TrueNode" => :boolean,
@@ -58,7 +59,9 @@ module Herb
           :names,     #: Array[String]
           :enclosing, #: Hash[String, Declaration]
           :visitor,   #: untyped
-          :location   #: Herb::Location?
+          :location,  #: Herb::Location?
+          :signature, #: String
+          :anchor     #: Herb::Position?
         )
 
         module Silent
@@ -82,12 +85,15 @@ module Herb
             PATTERN.match(node.content&.value.to_s.strip)&.[](:signature)
           end
 
-          #: (String, Hash[String, Symbol], visitor: untyped, location: Herb::Location?, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
-          def parse(signature, locals, visitor:, location:, enclosing: {})
-            result = Prism.parse("def __herb_states#{signature}; end")
+          #: (String, Hash[String, Symbol], visitor: untyped, node: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+          def parse(signature, locals, visitor:, node:, enclosing: {})
+            result = Prism.parse("#{PREFIX}#{signature}; end")
+            location = node&.location
+            anchor = node ? anchor_of(node, signature) : nil
+            whole = anchor ? span(anchor, signature, 0, signature.length) : location
 
             if result.failure?
-              visitor.slot_error("`herb:state #{signature}` does not parse as a keyword signature. Declare each state as a keyword parameter with a default, like `(pending: false)`.", location, :declaration)
+              visitor.slot_error("`herb:state #{signature}` does not parse as a keyword signature. Declare each state as a keyword parameter with a default, like `(pending: false)`.", whole, :declaration)
 
               return []
             end
@@ -96,7 +102,7 @@ module Herb
             parameters = definition.is_a?(Prism::DefNode) ? definition.parameters : nil
 
             unless parameters && parameters.requireds.empty? && parameters.optionals.empty? && parameters.rest.nil? && parameters.posts.empty? && parameters.keyword_rest.nil? && parameters.block.nil? && !parameters.keywords.empty?
-              visitor.slot_error("`herb:state #{signature}` declares no keyword parameters. Declare each state with a default, like `(pending: false)`.", location, :declaration)
+              visitor.slot_error("`herb:state #{signature}` declares no keyword parameters. Declare each state with a default, like `(pending: false)`.", whole, :declaration)
 
               return []
             end
@@ -109,7 +115,9 @@ module Herb
               names: parameters.keywords.map { |keyword| keyword.name.to_s },
               enclosing: enclosing,
               visitor: visitor,
-              location: location
+              location: location,
+              signature: signature,
+              anchor: anchor
             )
 
             parameters.keywords.map { |keyword|
@@ -352,20 +360,41 @@ module Herb
 
           private
 
+          #: (untyped, String) -> Herb::Position?
+          def anchor_of(node, signature)
+            content = node.content
+            start = content&.location&.start
+
+            return nil unless start
+
+            offset = content.value.to_s.index(signature)
+
+            offset ? position_at(start, content.value.to_s, offset) : nil
+          end
+
           #: (untyped, Parsing) -> Declaration
           def declaration_for(keyword, parsing)
+            declaration = classify(keyword, parsing)
+            spot = spelled(keyword, parsing)&.start
+
+            spot ? declaration.with(line: spot.line, column: spot.column) : declaration
+          end
+
+          #: (untyped, Parsing) -> Declaration
+          def classify(keyword, parsing)
             name = keyword.name.to_s
             visitor = parsing.visitor
-            location = parsing.location
 
             unless keyword.is_a?(Prism::OptionalKeywordParameterNode)
-              return refused(name, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`.", visitor, location)
+              return refused(name, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`.", visitor, spelled(keyword, parsing))
             end
 
             value = keyword.value
             kind = KINDS[value.class.name]
 
             return Declaration.new(name: name, kind: kind, default: value.slice, derived: nil, line: nil, column: nil) if kind
+
+            location = located(value.location, parsing)
 
             case value
             when Prism::FloatNode
@@ -382,6 +411,41 @@ module Herb
             end
           end
 
+          #: (untyped, Parsing) -> Herb::Location?
+          def spelled(keyword, parsing)
+            anchor = parsing.anchor
+
+            return parsing.location unless anchor
+
+            start = keyword.name_loc.start_character_offset - PREFIX.length
+
+            span(anchor, parsing.signature, start, start + keyword.name.to_s.length)
+          end
+
+          #: (untyped, Parsing) -> Herb::Location?
+          def located(location, parsing)
+            anchor = parsing.anchor
+
+            return parsing.location unless anchor && location
+
+            span(anchor, parsing.signature, location.start_character_offset - PREFIX.length, location.end_character_offset - PREFIX.length)
+          end
+
+          #: (Herb::Position, String, Integer, Integer) -> Herb::Location
+          def span(anchor, source, start_offset, end_offset)
+            Herb::Location.new(position_at(anchor, source, start_offset), position_at(anchor, source, end_offset))
+          end
+
+          #: (Herb::Position, String, Integer) -> Herb::Position
+          def position_at(anchor, source, offset)
+            consumed = source.slice(0, offset).to_s
+            last = consumed.rindex("\n")
+
+            return Herb::Position.new(anchor.line, anchor.column + consumed.length) unless last
+
+            Herb::Position.new(anchor.line + consumed.count("\n"), consumed.length - last - 1)
+          end
+
           #: (String, String, untyped, Herb::Location?, ?String) -> Declaration
           def refused(name, message, visitor, location, default = "nil")
             visitor.slot_error(message, location, :declaration)
@@ -393,7 +457,7 @@ module Herb
           def derived_default(name, value, parsing)
             declared = parsing.declared
             visitor = parsing.visitor
-            location = parsing.location
+            location = located(value.location, parsing)
 
             said = visitor.diagnostic_count
             read = tree_read(value, declared, visitor, location) #: untyped
@@ -433,7 +497,7 @@ module Herb
           def bare_default(name, value, parsing)
             identifier = value.name.to_s
             visitor = parsing.visitor
-            location = parsing.location
+            location = located(value.location, parsing)
 
             unless value.receiver.nil? && value.arguments.nil? && value.block.nil? && BARE.match?(identifier)
               return Declaration.new(name: name, kind: :seeded, default: value.slice, derived: nil, line: nil, column: nil)

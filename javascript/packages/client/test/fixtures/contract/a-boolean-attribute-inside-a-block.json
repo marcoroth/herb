@@ -51,7 +51,7 @@
           "default": "false",
           "derived": null,
           "line": 1,
-          "column": 0,
+          "column": 16,
           "scope": "region",
           "value": false
         }

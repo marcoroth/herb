@@ -26,6 +26,20 @@ module Engine
         <p data-herb-name="body"><%= @b %></p>
       ERB
 
+      TWICE_DECLARED = <<~ERB
+        <%# herb:state (open: false) %>
+        <%# herb:state (open: true) %>
+        <div><%= open %></div>
+      ERB
+
+      SPREAD_DIRECTIVE = <<~ERB
+        <%# herb:state (
+          open: false,
+          rate: 1.0
+        ) %>
+        <div><%= rate %></div>
+      ERB
+
       TWO_DIRECTIVES = <<~ERB
         <%# herb:state (open: false) %>
         <div><%= open %></div>
@@ -58,6 +72,12 @@ module Engine
 
       def at(diagnostic)
         [diagnostic.location.start.line, diagnostic.location.start.column]
+      end
+
+      def spelled(template, diagnostic)
+        location = diagnostic.location
+
+        template.lines[location.start.line - 1].to_s[location.start.column...location.end.column]
       end
 
       test "one directive reports every state it got wrong" do
@@ -97,7 +117,7 @@ module Engine
       test "each diagnostic points at the directive it came from" do
         diagnostics, = report(TWO_DIRECTIVES)
 
-        assert_equal([[3, 0]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal([[3, 22]], diagnostics.map { |diagnostic| at(diagnostic) })
       end
 
       test "a name points at the attribute that spelled it" do
@@ -158,7 +178,7 @@ module Engine
 
         shown = error.detailed_message.gsub(/\e\[[0-9;]*m/, "")
 
-        assert_equal ["app/views/test.html.erb:2:1:"], shown.scan(%r{app/views/test\.html\.erb:\d+:\d+:}).uniq
+        assert_equal ["app/views/test.html.erb:2:23:", "app/views/test.html.erb:2:35:", "app/views/test.html.erb:2:57:"], shown.scan(%r{app/views/test\.html\.erb:\d+:\d+:}).uniq
         assert_equal(
           [
             "slots-declaration: #{FLOAT_DEFAULT}",
@@ -177,6 +197,27 @@ module Engine
         diagnostics, = report(%(<%# herb:state (open: false) %><div><% if open %>a<% else %>b<% end %></div>))
 
         assert_empty diagnostics
+      end
+
+      test "a diagnostic points at the default it refused, not the whole directive" do
+        diagnostics, = report(THREE_BAD_STATES)
+
+        assert_equal([[2, 22], [2, 34], [2, 56]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal(["1.0", "{ title: \"\" }", "[]"], diagnostics.map { |diagnostic| spelled(THREE_BAD_STATES, diagnostic) })
+      end
+
+      test "a diagnostic about the name points at the name it refused" do
+        diagnostics, = report(TWICE_DECLARED)
+
+        assert_equal([[2, 16]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal(["open"], diagnostics.map { |diagnostic| spelled(TWICE_DECLARED, diagnostic) })
+      end
+
+      test "a diagnostic in a directive spread over lines points at the line it came from" do
+        diagnostics, = report(SPREAD_DIRECTIVE)
+
+        assert_equal([[3, 8]], diagnostics.map { |diagnostic| at(diagnostic) })
+        assert_equal(["1.0"], diagnostics.map { |diagnostic| spelled(SPREAD_DIRECTIVE, diagnostic) })
       end
     end
   end
