@@ -14,6 +14,7 @@
 #include "../../include/location/position.h"
 #include "../../include/parser/parser_helpers.h"
 #include "../../include/util/html_util.h"
+#include "../../include/util/utf8.h"
 #include "../../include/util/util.h"
 #include "../../include/visitor.h"
 
@@ -255,7 +256,7 @@ position_T byte_offset_to_position(const char* source, size_t offset) {
     if (source[i] == '\n') {
       position.line++;
       position.column = 1;
-    } else {
+    } else if (!utf8_is_valid_continuation_byte((unsigned char) source[i])) {
       position.column++;
     }
   }
@@ -295,7 +296,7 @@ size_t calculate_byte_offset_from_position(const char* source, position_T positi
     if (source[offset] == '\n') {
       line++;
       column = 1;
-    } else {
+    } else if (!utf8_is_valid_continuation_byte((unsigned char) source[offset])) {
       column++;
     }
 
