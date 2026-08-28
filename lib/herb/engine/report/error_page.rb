@@ -114,15 +114,22 @@ module Herb
 
           diagnostics_for(error).each { |diagnostic| report.add(diagnostic) }
 
-          if error.is_a?(Herb::Engine::ParseError)
-            template = error.filename
-
-            report.source(template, error.source) if template
-          end
-
+          note_source(report, error)
           note_provenance(report, error)
 
           report
+        end
+
+        #: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+        def note_source(report, error)
+          template = template_for(error)
+
+          return unless template
+          return report.source(template, error.source) if error.is_a?(Herb::Engine::ParseError)
+
+          details = error.details
+
+          report.source(template, details.source) if details.is_a?(Herb::Engine::ErrorFormatter)
         end
 
         #: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
@@ -138,9 +145,7 @@ module Herb
 
         #: (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
         def diagnostics_for(error)
-          if error.is_a?(Herb::Engine::ParseError) && !error.diagnostics.empty?
-            return error.diagnostics.map { |diagnostic| blocking(diagnostic) }
-          end
+          return error.diagnostics.map { |diagnostic| blocking(diagnostic) } unless error.diagnostics.empty?
 
           [
             Herb::Diagnostic.new(
@@ -175,7 +180,15 @@ module Herb
 
         #: (Herb::Engine::CompilationError) -> String?
         def template_for(error)
-          error.is_a?(Herb::Engine::ParseError) ? error.filename : nil
+          return error.filename if error.is_a?(Herb::Engine::ParseError)
+
+          template = error.diagnostics.first&.template
+
+          return template if template
+
+          details = error.details
+
+          details.filename.to_s if details.is_a?(Herb::Engine::ErrorFormatter)
         end
 
         #: (Herb::Engine::CompilationError) -> String

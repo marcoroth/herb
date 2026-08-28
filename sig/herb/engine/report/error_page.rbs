@@ -52,6 +52,9 @@ module Herb
         def report_for: (Herb::Engine::CompilationError) -> Herb::Engine::Report
 
         # : (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+        def note_source: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+
+        # : (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
         def note_provenance: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
 
         # : (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
