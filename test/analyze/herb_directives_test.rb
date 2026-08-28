@@ -376,5 +376,17 @@ module Analyze
         <%# herb:state (open: false) %>
       HTML
     end
+
+    test "state directive with multi-byte characters in a state name" do
+      assert_parsed_snapshot(<<~HTML, herb_directives: true)
+        <%# herb:state (ünïcode: false, after: 0) %>
+      HTML
+    end
+
+    test "state directive with a multi-byte character in a default" do
+      assert_parsed_snapshot(<<~HTML, herb_directives: true)
+        <%# herb:state (greeting: "grüß", after: 0) %>
+      HTML
+    end
   end
 end
