@@ -2212,5 +2212,146 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    # : type serialized_herb_directive_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  key: Herb::Token?,
+    # |  arguments: Herb::Token?,
+    # | }
+    class HerbDirectiveNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader key: Herb::Token?
+
+      attr_reader arguments: Herb::Token?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?) -> void
+
+      # : () -> String
+      def self.type: () -> String
+
+      # : (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?key: Herb::Token?, ?arguments: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HerbDirectiveNode
+      def self.build: (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?key: Herb::Token?, ?arguments: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HerbDirectiveNode
+
+      # : () -> serialized_herb_directive_node
+      def to_hash: () -> serialized_herb_directive_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_herb_state_declaration_node = {
+    # |  name: Herb::Token?,
+    # |  default_value: Herb::AST::RubyLiteralNode?,
+    # |  kind: String?,
+    # | }
+    class HerbStateDeclarationNode < Node
+      include Colors
+
+      attr_reader name: Herb::Token?
+
+      attr_reader default_value: Herb::AST::RubyLiteralNode?
+
+      attr_reader kind: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::AST::RubyLiteralNode?, String?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::AST::RubyLiteralNode?, String?) -> void
+
+      # : () -> String
+      def self.type: () -> String
+
+      # : (?name: Herb::Token?, ?default_value: Herb::AST::RubyLiteralNode?, ?kind: String?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HerbStateDeclarationNode
+      def self.build: (?name: Herb::Token?, ?default_value: Herb::AST::RubyLiteralNode?, ?kind: String?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HerbStateDeclarationNode
+
+      # : () -> serialized_herb_state_declaration_node
+      def to_hash: () -> serialized_herb_state_declaration_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_herb_state_directive_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  key: Herb::Token?,
+    # |  signature: Herb::Token?,
+    # |  states: Array[Herb::AST::HerbStateDeclarationNode]?,
+    # | }
+    class HerbStateDirectiveNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader key: Herb::Token?
+
+      attr_reader signature: Herb::Token?
+
+      attr_reader states: Array[Herb::AST::HerbStateDeclarationNode]?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::HerbStateDeclarationNode]?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::HerbStateDeclarationNode]?) -> void
+
+      # : () -> String
+      def self.type: () -> String
+
+      # : (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?key: Herb::Token?, ?signature: Herb::Token?, ?states: Array[Herb::AST::HerbStateDeclarationNode]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HerbStateDirectiveNode
+      def self.build: (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?key: Herb::Token?, ?signature: Herb::Token?, ?states: Array[Herb::AST::HerbStateDeclarationNode]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HerbStateDirectiveNode
+
+      # : () -> serialized_herb_state_directive_node
+      def to_hash: () -> serialized_herb_state_directive_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end

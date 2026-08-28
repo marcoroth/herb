@@ -555,6 +555,16 @@
                     <span class="select-none">Strict locals</span>
                   </label>
 
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Parse Herb comment directives (<%# herb:state (...) %>, <%# herb:disable ... %>, <%# herb:slots ... %>, …) and transform them into HerbDirectiveNode, or HerbStateDirectiveNode with structured state declarations">
+                    <input
+                      type="checkbox"
+                      data-option="herb_directives"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Herb directives</span>
+                  </label>
+
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">
                     <input
                       type="checkbox"

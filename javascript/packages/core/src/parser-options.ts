@@ -7,6 +7,7 @@ export interface ParseOptions {
   transform_conditionals?: boolean
   render_nodes?: boolean
   strict_locals?: boolean
+  herb_directives?: boolean
   iteration_nodes?: boolean
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
@@ -28,6 +29,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   transform_conditionals: false,
   render_nodes: false,
   strict_locals: false,
+  herb_directives: false,
   iteration_nodes: false,
   prism_nodes: false,
   prism_nodes_deep: false,
@@ -65,6 +67,7 @@ export class ParserOptions {
 
   /** Whether strict locals analysis was enabled during parsing. */
   readonly strict_locals: boolean
+  readonly herb_directives: boolean
   readonly iteration_nodes: boolean
 
   /** Whether Prism node serialization was enabled during parsing. */
@@ -101,6 +104,7 @@ export class ParserOptions {
     this.transform_conditionals = options.transform_conditionals ?? DEFAULT_PARSER_OPTIONS.transform_conditionals
     this.render_nodes = options.render_nodes ?? DEFAULT_PARSER_OPTIONS.render_nodes
     this.strict_locals = options.strict_locals ?? DEFAULT_PARSER_OPTIONS.strict_locals
+    this.herb_directives = options.herb_directives ?? DEFAULT_PARSER_OPTIONS.herb_directives
     this.iteration_nodes = options.iteration_nodes ?? DEFAULT_PARSER_OPTIONS.iteration_nodes
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep

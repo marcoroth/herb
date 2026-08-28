@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0057_ERB comment mentioning herb without a directive word"
+input: |2-
+<%# herb: %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:12))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb: " (location: (1:3)-(1:10))
+    │   ├── tag_closing: "%>" (location: (1:10)-(1:12))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:12)-(2:0))
+        └── content: "\n"

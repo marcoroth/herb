@@ -702,6 +702,72 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class HerbStateMissingParenthesisError < Error
+      include Colors
+
+      attr_reader rest: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_herb_state_missing_parenthesis_error
+      def to_hash: () -> serialized_herb_state_missing_parenthesis_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class HerbStateNonCanonicalDirectiveError < Error
+      include Colors
+
+      attr_reader found: String?
+
+      attr_reader expected: String?
+
+      # : (String, Location?, String, String, String) -> void
+      def initialize: (String, Location?, String, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_herb_state_non_canonical_directive_error
+      def to_hash: () -> serialized_herb_state_non_canonical_directive_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class HerbStateInvalidParameterError < Error
+      include Colors
+
+      attr_reader parameter: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_herb_state_invalid_parameter_error
+      def to_hash: () -> serialized_herb_state_invalid_parameter_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class HerbStateDuplicateDeclarationError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class VoidElementContentError < Error
       include Colors
 

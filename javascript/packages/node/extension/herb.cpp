@@ -183,6 +183,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         parser_options.strict_locals = strict_locals_value;
       }
 
+      napi_value herb_directives_prop;
+      bool has_herb_directives_prop;
+      napi_has_named_property(env, args[1], "herb_directives", &has_herb_directives_prop);
+
+      if (has_herb_directives_prop) {
+        napi_get_named_property(env, args[1], "herb_directives", &herb_directives_prop);
+        bool herb_directives_value;
+        napi_get_value_bool(env, herb_directives_prop, &herb_directives_value);
+        parser_options.herb_directives = herb_directives_value;
+      }
+
       napi_value prism_nodes_prop;
       bool has_prism_nodes_prop;
       napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);

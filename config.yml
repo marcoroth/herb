@@ -490,6 +490,47 @@ errors:
 
       fields: []
 
+    - name: "HerbStateMissingParenthesisError"
+      message:
+        template: "The `herb:state` directive requires parentheses. Expected `herb:state (...)` but got `herb:state %s`."
+        arguments:
+          - "rest"
+
+      fields:
+        - name: "rest"
+          type: "string"
+
+    - name: "HerbStateNonCanonicalDirectiveError"
+      message:
+        template: "The `herb:state` directive has to be spelled `<%%# herb:state (...) %%>`. Found `%s` where `%s` was expected."
+        arguments:
+          - "found"
+          - "expected"
+
+      fields:
+        - name: "found"
+          type: "string"
+
+        - name: "expected"
+          type: "string"
+
+    - name: "HerbStateInvalidParameterError"
+      message:
+        template: "The `herb:state` directive only declares keyword arguments with defaults. `%s` is not one. Declare each state with a default, like `(pending: false)`."
+        arguments:
+          - "parameter"
+
+      fields:
+        - name: "parameter"
+          type: "string"
+
+    - name: "HerbStateDuplicateDeclarationError"
+      message:
+        template: "This scope already declares its states. Merge these states into the first `<%# herb:state (...) %>` directive of the scope, so every state of the scope reads from one declaration."
+        arguments: []
+
+      fields: []
+
     - name: "VoidElementContentError"
       message:
         template: "Void element `%s` cannot have content. `%s` does not accept %s for content."
@@ -1472,3 +1513,54 @@ nodes:
         - name: "statements"
           type: "array"
           kind: "Node"
+
+    - name: "HerbDirectiveNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "key"
+          type: "token"
+
+        - name: "arguments"
+          type: "token"
+
+    - name: "HerbStateDeclarationNode"
+      fields:
+        - name: "name"
+          type: "token"
+
+        - name: "default_value"
+          type: "node"
+          kind: "RubyLiteralNode"
+
+        - name: "kind"
+          type: "string"
+
+    - name: "HerbStateDirectiveNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "key"
+          type: "token"
+
+        - name: "signature"
+          type: "token"
+
+        - name: "states"
+          type: "array"
+          kind:
+            - "HerbStateDeclarationNode"
