@@ -160,7 +160,7 @@ module Engine
       test "compile errors" do
         refuse(
           "<%# herb:state (open:) %><p><%= open %></p>",
-          "The state `open` has no default. Give it one, since the server renders a value for every state, like `(open: false)`."
+          "The `herb:state` directive only declares keyword arguments with defaults. `open:` is not one. Declare each state with a default, like `(pending: false)`."
         )
 
         refuse(
@@ -191,11 +191,6 @@ module Engine
         refuse(
           "<%# locals: (open: false) %>\n<%# herb:state (open: false) %><p><%= open %></p>",
           "`open` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two."
-        )
-
-        refuse(
-          "<%# herb:state (open: false) %><%# herb:state (open: true) %><p><%= open %></p>",
-          "The state `open` is declared twice in the same scope. Remove one of the two declarations."
         )
 
         refuse(
@@ -296,10 +291,20 @@ module Engine
         )
       end
 
-      test "a trim-marker state directive still declares" do
-        rendered = render(%(<%#- herb:state (open: false) -%><span><%= open %></span>))
+      test "a second directive in the same scope is refused, since one declaration owns the scope" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          compile("<%# herb:state (open: false) %><%# herb:state (other: true) %><p><%= open %></p>")
+        end
 
-        assert_includes rendered, "<span"
+        assert_includes error.message, "This scope already declares its states."
+      end
+
+      test "a trim-marker state directive is refused, since one spelling declares states" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          compile(%(<%#- herb:state (open: false) -%><span><%= open %></span>))
+        end
+
+        assert_includes error.message, "The `herb:state` directive has to be spelled `<%# herb:state (...) %>`."
       end
 
       test "a state read compiles as an interpolated attribute's only output" do
