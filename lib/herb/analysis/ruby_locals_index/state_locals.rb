@@ -14,7 +14,7 @@ module Herb
           known = declared.to_h { |name, _location| [name, :seeded] }
 
           directives(document).flat_map { |node, signature|
-            declarations_in(signature, known).map do |declaration|
+            declarations_in(node, signature, known).map do |declaration|
               Local.new(declaration.name, node.location, usages(declaration.name, references, offsets))
             end
           }
@@ -36,8 +36,8 @@ module Herb
           found
         end
 
-        def declarations_in(signature, known)
-          Herb::Engine::Slots::StateDirectives.parse(signature, known, visitor: Herb::Engine::Slots::StateDirectives::Silent, location: nil)
+        def declarations_in(node, signature, known)
+          Herb::Engine::Slots::StateDirectives.parse(signature, known, visitor: Herb::Engine::Slots::StateDirectives::Silent, node: node)
         end
 
         def usages(name, references, offsets)
