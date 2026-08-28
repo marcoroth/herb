@@ -13,5 +13,6 @@ export function diagnosticsFromError(message: ErrorMessage): RuntimeDiagnostic[]
     phase: "compile" as const,
     overlay: "dismissible" as const,
     location: { start: { line: error.line, column: error.column + 1 } },
+    ...(message.source === undefined ? {} : { source: message.source }),
   }))
 }

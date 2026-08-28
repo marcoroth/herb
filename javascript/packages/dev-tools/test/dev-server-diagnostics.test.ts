@@ -1,9 +1,51 @@
-import { describe, expect, test } from "vitest"
+import { DEV_SERVER_ORIGIN } from "../src/dev-server/diagnostics"
 
-import { DEV_SERVER_ORIGIN, diagnosticsFromError } from "../src/dev-server/diagnostics"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { stripAnsiColors } from "@herb-tools/highlighter"
+import { diagnosticsFromError } from "../src/dev-server/diagnostics"
+
 import { RuntimePanel } from "../src/runtime/panel"
 
 import type { ErrorMessage } from "../src/dev-server/types"
+
+let panels: RuntimePanel[] = []
+
+beforeEach(() => {
+  document.body.innerHTML = ""
+  sessionStorage.clear()
+  panels = []
+})
+
+afterEach(() => {
+  panels.forEach(panel => panel.destroy())
+
+  document.body.innerHTML = ""
+  sessionStorage.clear()
+})
+
+function createPanel() {
+  const panel = new RuntimePanel()
+
+  panels.push(panel)
+
+  return panel
+}
+
+async function waitFor<T>(read: () => T | null, what: string): Promise<T> {
+  const deadline = Date.now() + 30000
+
+  while (Date.now() < deadline) {
+    const found = read()
+
+    if (found !== null) {
+      return found
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 25))
+  }
+
+  throw new Error(`Timed out waiting for ${what}`)
+}
 
 function errorMessage(overrides: Partial<ErrorMessage["errors"][number]> = {}): ErrorMessage {
   return {
@@ -55,6 +97,22 @@ describe("diagnostics from a dev server error", () => {
     expect(diagnostic.origin).toBe(DEV_SERVER_ORIGIN)
   })
 
+  test("carries the source the server sent, so the panel can draw a frame", () => {
+    const message = errorMessage()
+
+    message.source = "<div>\n  <form>\n</div>\n"
+
+    const [diagnostic] = diagnosticsFromError(message)
+
+    expect(diagnostic.source).toBe("<div>\n  <form>\n</div>\n")
+  })
+
+  test("leaves the source off when the server sent none", () => {
+    const [diagnostic] = diagnosticsFromError(errorMessage())
+
+    expect("source" in diagnostic).toBe(false)
+  })
+
   test("carries every error the message holds", () => {
     const message = errorMessage()
 
@@ -66,7 +124,7 @@ describe("diagnostics from a dev server error", () => {
 
 describe("a dev server error in the panel", () => {
   test("opens a dismissible screen and clears again by origin", () => {
-    const panel = new RuntimePanel()
+    const panel = createPanel()
 
     panel.report(diagnosticsFromError(errorMessage()))
 
@@ -76,7 +134,29 @@ describe("a dev server error in the panel", () => {
     panel.clear(DEV_SERVER_ORIGIN)
 
     expect(document.querySelector(".herb-dev-tools-card")).toBeNull()
+  })
 
-    panel.destroy()
+  test("renders a highlighted excerpt from the source the server sent", async () => {
+    const panel = createPanel()
+    const message = errorMessage()
+
+    message.source = "<div>\n  <form>\n</div>\n"
+
+    panel.report(diagnosticsFromError(message))
+
+    const excerpt = await waitFor(
+      () => document.querySelector(".herb-dev-tools-excerpt herb-ansi") as HTMLElement | null,
+      "the excerpt to hydrate",
+    )
+
+    expect(stripAnsiColors(excerpt.textContent ?? "")).toContain("<form>")
+  })
+
+  test("renders no excerpt when the server sent no source", () => {
+    const panel = createPanel()
+
+    panel.report(diagnosticsFromError(errorMessage()))
+
+    expect(document.querySelector(".herb-dev-tools-excerpt")).toBeNull()
   })
 })

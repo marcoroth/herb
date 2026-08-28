@@ -252,7 +252,7 @@ module Herb
         current_parse = Herb.parse(current_content, strict: true, analyze: true)
 
         if current_parse.errors.any?
-          broadcast_errors(file_path, relative_path, current_parse, previous_content, errored_files, websocket, timestamp, display_path)
+          broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, errored_files, websocket, timestamp, display_path)
           return
         end
 
@@ -264,7 +264,7 @@ module Herb
         handle_diff(file_path, relative_path, current_content, previous_content, file_states, websocket, timestamp, display_path)
       end
 
-      def broadcast_errors(file_path, relative_path, current_parse, previous_content, errored_files, websocket, timestamp, display_path)
+      def broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, errored_files, websocket, timestamp, display_path)
         current_errors = current_parse.errors
 
         previous_parse = Herb.parse(previous_content, strict: true, analyze: true)
@@ -291,6 +291,7 @@ module Herb
           websocket.broadcast({
             type: "error",
             file: relative_path,
+            source: current_content,
             errors: current_errors.map { |error|
               {
                 name: error.error_name,

@@ -46,6 +46,7 @@ export interface ErrorMessage {
   type: "error"
   file: string
   errors: ParseError[]
+  source?: string
 }
 
 export interface FixedMessage {
