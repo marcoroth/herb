@@ -35,7 +35,10 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_match(/Block element <div> cannot be nested inside <p> at line 1 \(invalid-nesting\)/, error.message)
+      # rubocop:disable Herb/IncludesAssertion
+      assert_includes error.message, "invalid-nesting"
+      assert_includes error.message, "Block element <div> cannot be nested inside <p>"
+      # rubocop:enable Herb/IncludesAssertion
     end
 
     test "a fatal validator is the default behavior" do

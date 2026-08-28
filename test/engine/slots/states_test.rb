@@ -772,7 +772,7 @@ module Engine
           ERB
         end
 
-        assert_match(/computes with a state/, error.message)
+        assert_equal "`draft.empty?` computes with a state; the client cannot evaluate Ruby, so a state is read bare, compared to a literal inside a conditional, or compared to a literal in a boolean attribute", error.message
       end
 
       test "a mismatched comparand in a boolean attribute still raises" do
@@ -783,7 +783,7 @@ module Engine
           ERB
         end
 
-        assert_match(/Integer literal/, error.message)
+        assert_equal "`draft == 3` compares the String state `draft` against a Integer literal", error.message
       end
     end
   end
