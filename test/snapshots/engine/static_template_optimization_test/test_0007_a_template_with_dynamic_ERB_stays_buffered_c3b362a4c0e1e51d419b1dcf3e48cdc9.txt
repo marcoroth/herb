@@ -1,6 +1,0 @@
----
-source: "Engine::StaticTemplateOptimizationTest#test_0007_a template with dynamic ERB stays buffered"
-input: "{source: \"<div><%= name %></div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
----
-_buf = ::String.new; _buf << '<div>'.freeze; _buf << (name).to_s; _buf << '</div>'.freeze;
-_buf.to_s

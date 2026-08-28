@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
 require_relative "../../../lib/herb/analysis/template_dependencies"
 
 require "tmpdir"
@@ -15,7 +15,7 @@ module Engine
       include SnapshotUtils
 
       def slots_for(template, file_path: "app/views/test.html.erb")
-        visitor = Herb::Engine::SlotVisitor.new
+        visitor = Herb::Engine::Slots::Visitor.new
 
         Herb::Engine.new(template, visitors: [visitor], filename: file_path)
 
@@ -64,7 +64,6 @@ module Engine
             fields = ["index=#{slot.index}", "type=#{slot.type}", "node_path=#{slot.node_path.inspect}"]
 
             fields << "expression=#{slot.expression.inspect}" unless slot.expression.nil?
-            fields << "location=#{slot.location}" unless slot.location.nil?
             fields << "attribute=#{slot.attribute.inspect}" unless slot.attribute.nil?
             fields << "key_source=#{slot.key_source}" unless slot.key_source.nil?
             fields << "key_expression=#{slot.key_expression.inspect}" unless slot.key_expression.nil?
@@ -110,11 +109,13 @@ module Engine
 
           refute_empty reported, template
 
-          assert_empty reported - recorded, template
+          reported.each do |node_path|
+            assert_includes recorded, node_path, template
+          end
         end
       end
 
-      test "records source location" do
+      test "records an output that stands on a line of its own" do
         assert_slots_snapshot("<p>\n  <%= @name %>\n</p>")
       end
 
@@ -151,7 +152,7 @@ module Engine
         assert_slots_snapshot("<div><%= form_with model: @user do |f| %><input><% end %></div>")
       end
 
-      test "classifies a non-iteration method block as a plain block" do
+      test "does not record a block whose value is not output" do
         assert_slots_snapshot("<div><% @user.tap do |u| %><b>x</b><% end %></div>")
       end
 
@@ -338,7 +339,7 @@ module Engine
 
       test "assigns no slots when the template has parser errors" do
         ["<div><p><%= @a %></div>", "</div><p><%= @a %></p>"].each do |template|
-          visitor = Herb::Engine::SlotVisitor.new
+          visitor = Herb::Engine::Slots::Visitor.new
 
           assert_raises(Herb::Engine::ParseError, "expected a parse error for: #{template}") do
             Herb::Engine.new(template, visitors: [visitor], filename: "t.html.erb")
@@ -349,43 +350,46 @@ module Engine
       end
 
       test "a herb:slots directive opts a single template in" do
-        assert Herb::Engine::SlotVisitor.directive?("<%# herb:slots %>\n<p><%= @a %></p>")
+        assert Herb::Engine::Slots::Visitor.directive?("<%# herb:slots %>\n<p><%= @a %></p>")
       end
 
       test "recognises the trimming and unspaced forms of the directive" do
         ["<%#- herb:slots -%>", "<%#herb:slots%>", "<%#   herb:slots   %>"].each do |directive|
-          assert Herb::Engine::SlotVisitor.directive?("#{directive}<p><%= @a %></p>"), "expected slots for: #{directive}"
+          assert Herb::Engine::Slots::Visitor.directive?("#{directive}<p><%= @a %></p>"), "expected slots for: #{directive}"
         end
       end
 
       test "a template says who renders its branches" do
-        assert_equal :client, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots client %>\n<p><%= @a %></p>")
-        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots server %>\n<p><%= @a %></p>")
+        assert_equal :client, Herb::Engine::Slots::Visitor.directive_mode("<%# herb:slots client %>\n<p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::Slots::Visitor.directive_mode("<%# herb:slots server %>\n<p><%= @a %></p>")
       end
 
       test "asking for slots and nothing else means the server renders the branches" do
-        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%# herb:slots %>\n<p><%= @a %></p>")
-        assert_equal :server, Herb::Engine::SlotVisitor.directive_mode("<%#- herb:slots -%><p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::Slots::Visitor.directive_mode("<%# herb:slots %>\n<p><%= @a %></p>")
+        assert_equal :server, Herb::Engine::Slots::Visitor.directive_mode("<%#- herb:slots -%><p><%= @a %></p>")
       end
 
       test "no directive is not a mode at all" do
-        assert_nil Herb::Engine::SlotVisitor.directive_mode("<p><%= @a %></p>")
+        assert_nil Herb::Engine::Slots::Visitor.directive_mode("<p><%= @a %></p>")
       end
 
       test "refuses a mode it does not know" do
-        error = assert_raises(ArgumentError) { Herb::Engine::SlotVisitor.new(mode: :nonsense) }
+        error = assert_raises(ArgumentError) { Herb::Engine::Slots::Visitor.new(mode: :nonsense) }
 
-        assert_match(/unknown slot mode/, error.message)
+        assert_equal "`mode: :nonsense` is not a slot mode. Pass one of :server, :client.", error.message
       end
 
       test "leaves other ERB comments alone" do
         ["<%# just a note %>", "<%# herb:key u.id %>", "<%# slots %>"].each do |comment|
-          refute Herb::Engine::SlotVisitor.directive?("#{comment}<p><%= @a %></p>"), "expected no slots for: #{comment}"
+          refute Herb::Engine::Slots::Visitor.directive?("#{comment}<p><%= @a %></p>"), "expected no slots for: #{comment}"
         end
       end
 
       test "the engine emits no markers unless the visitor is in the stack" do
-        assert_compiled_snapshot("<%# herb:slots %><p><%= @a %></p>")
+        engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>")
+
+        refute_includes engine.src, "herb-slot"
+        refute_includes engine.src, "herb-region"
       end
 
       test "a slot written on an element names the attribute it stands for" do
@@ -399,15 +403,16 @@ module Engine
       end
 
       test "names a template by a digest of its path when asked" do
-        visitor = Herb::Engine::SlotVisitor.new(identifier: :digest)
+        visitor = Herb::Engine::Slots::Visitor.new(identifier: :digest)
 
         Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
 
         assert_match(/\A[0-9a-f]{12}\z/, visitor.identifier)
+        refute_includes visitor.identifier, "views"
       end
 
       test "lets a caller name a template however it likes" do
-        visitor = Herb::Engine::SlotVisitor.new(identifier: ->(path) { "v1/#{path.length}" })
+        visitor = Herb::Engine::Slots::Visitor.new(identifier: ->(path) { "v1/#{path.length}" })
 
         Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
 
@@ -415,7 +420,7 @@ module Engine
       end
 
       test "keeps the real path for the server, whatever the markers say" do
-        visitor = Herb::Engine::SlotVisitor.new(identifier: :digest)
+        visitor = Herb::Engine::Slots::Visitor.new(identifier: :digest)
 
         Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
 
@@ -484,6 +489,10 @@ module Engine
           [[0, :conditional], [1, :conditional], [2, :child], [3, :conditional], [4, :child]],
           types_for("<% if @c %><p><% if @d %><%= @x %><% end %></p><% else %><p><% if @e %><%= @y %><% end %></p><% end %>")
         )
+      end
+
+      test "records what a block whose value is not output contains" do
+        assert_slots_snapshot("<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>")
       end
     end
   end

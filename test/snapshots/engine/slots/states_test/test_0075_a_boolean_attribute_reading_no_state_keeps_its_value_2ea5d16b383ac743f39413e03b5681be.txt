@@ -1,8 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0075_a boolean attribute reading no state keeps its value"
-input: "states rendered 43"
----
-<!--herb-region:app/views/test.html.erb:33cd5faa:0-->
-<p data-herb-slot="0:child"></p>
-<button disabled="false" data-herb-slot="1:attribute:disabled">Send</button>
-<!--/herb-region:app/views/test.html.erb-->

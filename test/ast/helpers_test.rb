@@ -66,6 +66,58 @@ module AST
         refute erb_outputs?(comment)
         refute erb_statement?(comment)
       end
+
+      test "calls a block that writes its value an output" do
+        block = erb_node("<%= form_with do %>x<% end %>")
+
+        assert_instance_of Herb::AST::ERBBlockNode, block
+        assert erb_outputs?(block)
+        refute erb_statement?(block)
+      end
+
+      test "calls a block that writes nothing a statement" do
+        block = erb_node("<% items.each do |item| %>x<% end %>")
+
+        assert_instance_of Herb::AST::ERBBlockNode, block
+        assert erb_statement?(block)
+        refute erb_outputs?(block)
+      end
+
+      test "reads the opening of an iteration block the parser told apart" do
+        block = Herb.parse("<% items.each do |item| %>x<% end %>", iteration_nodes: true).value.children.first
+
+        assert_instance_of Herb::AST::ERBIterationBlockNode, block
+        assert_equal "<%", erb_opening(block)
+        assert erb_statement?(block)
+      end
+
+      test "leaves control flow and terminators out, since their openings carry no expression" do
+        source = "<% if a %>x<% else %>y<% end %>"
+        conditional = Herb.parse(source).value.children.first
+
+        assert_instance_of Herb::AST::ERBIfNode, conditional
+        assert_empty erb_opening(conditional)
+        refute erb_node?(conditional)
+        refute erb_outputs?(conditional)
+        refute erb_statement?(conditional)
+      end
+    end
+
+    describe "#erb_comment_node?" do
+      test "recognizes both ways of writing a comment" do
+        assert erb_comment_node?(erb_node("<%# a comment %>"))
+        assert erb_comment_node?(erb_node("<%#= total %>"))
+        assert erb_comment_node?(erb_node("<%#- a comment -%>"))
+        assert erb_comment_node?(erb_node("<%-# a comment %>"))
+        assert erb_comment_node?(erb_node("<% # a comment %>"))
+      end
+
+      test "rejects a tag that is not a comment" do
+        refute erb_comment_node?(erb_node("<%= total %>"))
+        refute erb_comment_node?(erb_node("<% total = 1 %>"))
+        refute erb_comment_node?(erb_node("<div>hi</div>"))
+        refute erb_comment_node?(nil)
+      end
     end
   end
 end

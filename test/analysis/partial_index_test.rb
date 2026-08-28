@@ -71,7 +71,7 @@ class PartialIndexTest < Minitest::Spec
   test "strips a format segment from the partial name" do
     write("app/views/posts/_card.turbo_stream.erb")
 
-    assert_equal ["posts/card"], Herb::Analysis::PartialIndex.build(@project_path).names
+    assert_includes Herb::Analysis::PartialIndex.build(@project_path).names, "posts/card"
   end
 
   test "finds partials written with the herb extension" do

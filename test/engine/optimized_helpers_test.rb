@@ -10,6 +10,7 @@ module Engine
     include SnapshotUtils
 
     FILENAME = "app/views/posts/index.html.erb"
+    TAG_OWNER = "ActionView::Helpers::TagHelper"
 
     module OverriddenTag
       def tag(*) = "whatever this application wanted instead"
@@ -74,20 +75,26 @@ module Engine
         assert_equal :warning, diagnostic.severity
         assert_equal FILENAME, diagnostic.template
         assert_equal 1, diagnostic.location.start.line
-        assert_snapshot_matches(diagnostic.message, DEFAULT_SOURCE)
+        assert_includes diagnostic.message, "`tag` was compiled away as #{TAG_OWNER}"
       end
 
       test "names the module that took the helper over" do
         diagnostic = diagnostics_from(overriding_context).first
 
-        assert_match(/defined by \S*OverriddenTag\z/, diagnostic.message)
+        assert_equal(
+          "`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag",
+          diagnostic.message
+        )
       end
 
       test "still names an override that has no name of its own" do
         anonymous = Module.new { def tag(*) = "anonymous" }
         context = Class.new { include ::ActionView::Helpers::TagHelper }.tap { |k| k.include(anonymous) }.new
 
-        assert_match(/defined by #<Module:0x[0-9a-f]+>\z/, diagnostics_from(context).first.message)
+        assert_match(
+          /\A`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by #<Module:0x[0-9a-f]+>\z/,
+          diagnostics_from(context).first.message
+        )
       end
 
       test "stays quiet when the helper is still Action View's" do

@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0003_a default that selects an arm still parks every arm"
-input: "states markup 4"
----
-<!--herb-branch:0:0-->Profile<!--herb-branch:0:1-->Settings<!--herb-branch:0:2-->None

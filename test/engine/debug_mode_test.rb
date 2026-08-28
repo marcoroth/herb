@@ -640,11 +640,15 @@ module Engine
     end
 
     test "annotates a generated node with the first line rather than line zero" do
-      assert_compiled_snapshot(
+      compiled = Herb::Engine.new(
         "<div>Hello</div>",
         filename: "app/views/test.html.erb",
         visitors: [ZeroLocationInjector.new, Herb::Engine::DebugVisitor.new]
-      )
+      ).src
+
+      assert_includes compiled, %(data-herb-debug-line="1")
+      assert_includes compiled, %(data-herb-debug-column="1")
+      refute_includes compiled, %(data-herb-debug-line="0")
     end
 
     describe "marking which render a tag came from" do

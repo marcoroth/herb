@@ -1,8 +1,0 @@
----
-source: "Engine::InstrumentationVisitorTest::what it says a render was reached by#test_0008_keeps the body of a render that takes a block"
-input: "keeps a render block body"
----
-_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
- ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0, :layout) 
- _buf << (render layout: "box" do; _buf << 'inner'.freeze; end); ::Herb::Engine::Report::Session.leave; ensure; ::Herb::Engine::Report::Session.leave_render; end;
-_buf.to_s

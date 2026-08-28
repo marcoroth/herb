@@ -1,7 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0062_a template with only literal defaults ships no seeds"
-input: "states render 34"
----
-<!--herb-region:app/views/test.html.erb:549790a2:0-->
-<div><!--herb-slot:0:conditional--><!--herb-branch:0:2-->Sent<!--/herb-slot:0--></div>
-<!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:549790a2"><!--herb-branch:0:0-->Sending…<!--herb-branch:0:1-->Not sent<!--herb-branch:0:2-->Sent</template>

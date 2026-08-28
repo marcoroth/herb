@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0016_a state declared inside a when arm is registered"
-input: "states rendered 9"
----
-<!--herb-region:app/views/test.html.erb:4323a520:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-slot="1:child">false</span><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

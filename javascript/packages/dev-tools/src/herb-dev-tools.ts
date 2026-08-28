@@ -1,14 +1,15 @@
 import baseStyles from './base.css'
 
 import { injectStyle } from './styles.js'
+
 import { HerbClient } from './dev-server/client.js'
 import { HerbOverlay } from './overlay/overlay.js'
 import { RuntimePanel } from './runtime/panel.js'
 
-import type { HerbClientOptions } from './dev-server/types.js'
-import type { ErrorOverlay } from './overlay/error-overlay.js'
+import type { DiagnosticSink, HerbClientOptions } from './dev-server/types.js'
 import type { RuntimeReportHandle } from './runtime/panel.js'
 import type { RuntimeDiagnostic } from './runtime/report.js'
+
 
 const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
 
@@ -56,6 +57,7 @@ export class HerbDevTools {
   }
 
   private devServerClient: HerbClient | null = null
+  private devServerReport: RuntimeReportHandle | null = null
   private devToolsOverlay: HerbOverlay | null = null
   private panel: RuntimePanel | null = null
   private styleElement: HTMLStyleElement | null = null
@@ -69,6 +71,7 @@ export class HerbDevTools {
 
     this.devServerClient?.disconnect()
     this.devServerClient = null
+    this.devServerReport = null
 
     this.devToolsOverlay?.destroy()
     this.devToolsOverlay = null
@@ -92,10 +95,6 @@ export class HerbDevTools {
     return this.devToolsOverlay
   }
 
-  get errorOverlay(): ErrorOverlay | null {
-    return this.devToolsOverlay?.errorOverlay ?? null
-  }
-
   get runtimePanel(): RuntimePanel | null {
     return this.panel
   }
@@ -112,6 +111,20 @@ export class HerbDevTools {
     this.panel?.show(options)
   }
 
+  open(options: { expanded?: boolean } = {}): void {
+    this.panel?.show({ open: true })
+
+    if (options.expanded === true) {
+      this.panel?.expand()
+    } else if (options.expanded === false) {
+      this.panel?.collapse()
+    }
+  }
+
+  close(): void {
+    this.panel?.close()
+  }
+
   private setup(): void {
     this.injectStyles()
 
@@ -120,7 +133,7 @@ export class HerbDevTools {
     if (this.options.devServer !== false) {
       const clientOptions = typeof this.options.devServer === 'object' ? this.options.devServer : {}
 
-      this.devServerClient = new HerbClient({ ...clientOptions, errorOverlay: () => this.errorOverlay })
+      this.devServerClient = new HerbClient({ ...clientOptions, diagnostics: () => this.diagnosticSink() })
       this.devServerClient.connect()
     }
 
@@ -141,9 +154,28 @@ export class HerbDevTools {
       this.panel = new RuntimePanel({
         onOpenFile: (file, line, column) => this.devToolsOverlay?.openFileInEditor(file, line, column),
         onOpen: () => this.devToolsOverlay?.closeMenu(),
+        onRender: () => this.devServerClient?.refreshConnection(),
       })
 
       this.devToolsOverlay?.syncRuntimePanelToggle()
+    }
+  }
+
+  private diagnosticSink(): DiagnosticSink | null {
+    const panel = this.panel
+
+    if (panel === null) {
+      return null
+    }
+
+    return {
+      report: diagnostics => {
+        this.devServerReport = panel.report(diagnostics)
+      },
+      clear: () => {
+        this.devServerReport?.dismiss()
+        this.devServerReport = null
+      },
     }
   }
 

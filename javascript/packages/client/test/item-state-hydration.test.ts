@@ -1,8 +1,9 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
 
-import type { PayloadSlots } from "../src/slot-index"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+
+import type { PayloadSlots } from "../src/types"
 
 const FILE = "app/views/chat/show.html.erb"
 
@@ -28,23 +29,22 @@ const MANIFEST = {
   },
 }
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 function textOf(key: string): string {
   const item = slots.regionsFor(FILE)[0].slots.get(0)!.items.get(key)!
 
-  return slots.rangeFor(item.slots.get(2)!).toString()
+  return slots.rangeOf(item.slots.get(2)!).toString()
 }
 
 beforeEach(() => {
   document.body.innerHTML = PAGE + `<template data-herb-dependencies>${JSON.stringify(MANIFEST)}</template>`
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, {
-    persist: "none",
+  state = new State(slots, {
     transport: () => {
       throw new Error("a declared state must never reach the transport")
     },
@@ -85,6 +85,21 @@ describe("a region state read inside a collection item", () => {
     expect(textOf("1")).toBe("3")
     expect(textOf("2")).toBe("3")
   })
+
+  test("a row the payload built holds the value the client owns", () => {
+    const region = slots.regionsFor(FILE)[0]
+
+    state.setState({ count: 3 }, { scope: { region, item: null } })
+
+    slots.apply({
+      template: FILE,
+      version: "eeeeeeee",
+      occurrence: 0,
+      slots: { 0: { items: { 1: { 2: "0" }, 2: { 2: "0" } } } },
+    })
+
+    expect(textOf("2")).toBe("3")
+  })
 })
 
 const BRANCH_FILE = "app/views/chat/edit.html.erb"
@@ -116,12 +131,11 @@ describe("a state read inside a branch that was never on the page", () => {
   test("materializing the branch fills it with the value the client holds", () => {
     document.body.innerHTML = BRANCH_PAGE + `<template data-herb-dependencies>${JSON.stringify(BRANCH_MANIFEST)}</template>`
 
-    const branchSlots = new SlotIndex()
+    const branchSlots = new Slots()
 
     branchSlots.scan(document.body)
 
-    const branchState = new SlotState(branchSlots, {
-      persist: "none",
+    const branchState = new State(branchSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -163,12 +177,11 @@ describe("a seeded item state on a row the client built", () => {
   test("takes its value from the response, since the row carries no seeds comment", () => {
     document.body.innerHTML = SEEDED_PAGE
 
-    const seededSlots = new SlotIndex()
+    const seededSlots = new Slots()
 
     seededSlots.scan(document.body)
 
-    const seededState = new SlotState(seededSlots, {
-      persist: "none",
+    const seededState = new State(seededSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -227,12 +240,11 @@ describe("markup that materializes with a conditional and a boolean attribute in
   test("settles both from the states in scope", () => {
     document.body.innerHTML = NESTED_PAGE
 
-    const nestedSlots = new SlotIndex()
+    const nestedSlots = new Slots()
 
     nestedSlots.scan(document.body)
 
-    const nestedState = new SlotState(nestedSlots, {
-      persist: "none",
+    const nestedState = new State(nestedSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },

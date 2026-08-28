@@ -333,7 +333,7 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     if (is_newline(lexer->current_character)) {
       lexer->current_line++;
       lexer->current_column = 0;
-    } else {
+    } else if (!utf8_is_valid_continuation_byte((unsigned char) lexer->current_character)) {
       lexer->current_column++;
     }
 

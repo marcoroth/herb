@@ -1,6 +1,0 @@
----
-source: "Engine::DebugModeTest#test_0071_annotates a generated node with the first line rather than line zero"
-input: "{source: \"<div>Hello</div>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<ZeroLocationInjector>, #<Herb::Engine::DebugVisitor>]}}"
----
-_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="app/views/test.html.erb" data-herb-debug-file-full-path="app/views/test.html.erb">Hello</div><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= generated %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="app/views/test.html.erb" data-herb-debug-file-full-path="app/views/test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="1" style="display: contents;">'.freeze; _buf << (generated).to_s; _buf << '</span>'.freeze;
-_buf.to_s

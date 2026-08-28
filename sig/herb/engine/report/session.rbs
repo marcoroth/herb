@@ -48,6 +48,9 @@ module Herb
 
         def self.record_compile_diagnostics: (untyped template, untyped entries) -> untyped
 
+        # : (String) -> void
+        def self.read_source: (String) -> void
+
         # : [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
         def self.at: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
 
@@ -98,6 +101,9 @@ module Herb
 
         # : (String, String?) -> void
         def source: (String, String?) -> void
+
+        # : (Symbol) { () -> untyped } -> untyped
+        def channel: (Symbol) { () -> untyped } -> untyped
 
         # : () -> Array[Herb::Diagnostic]
         def diagnostics: () -> Array[Herb::Diagnostic]

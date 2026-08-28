@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0015_parks the item template with its values blanked"
-input: "statics parks item template blanked"
----
-<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id 2:child"></li><!--/herb-item:0-->

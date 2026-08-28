@@ -18,6 +18,10 @@ module Herb
 
         BODY_END_TAG: Regexp
 
+        HEAD_END_TAG: Regexp
+
+        ANCHORS: Hash[Symbol, Regexp]
+
         # Where the session for this request is left, so that anything holding the env can read what
         # the page collected.
         #
@@ -36,6 +40,12 @@ module Herb
 
         # : (untyped, Herb::Engine::Report) -> untyped
         def inject: (untyped, Herb::Engine::Report) -> untyped
+
+        # : (String, Herb::Engine::Report) -> String
+        def inject_channels: (String, Herb::Engine::Report) -> String
+
+        # : (String, Herb::Engine::Report) -> String
+        def inject_report: (String, Herb::Engine::Report) -> String
 
         # : (untyped) -> bool
         def html?: (untyped) -> bool

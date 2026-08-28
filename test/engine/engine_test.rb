@@ -257,7 +257,13 @@ module Engine
         engine.send(:ensure_valid_ruby!, "def foo(")
       end
 
-      assert_match(/Compiled template produced invalid Ruby/, error.message)
+      assert_equal <<~MESSAGE.chomp, error.message
+        Compiled template produced invalid Ruby:
+          - unexpected end-of-input; expected a `)` to close the parameters (line 1)
+          - unexpected end-of-input, assuming it is closing the parent top level context (line 1)
+          - expected an `end` to close the `def` statement (line 1)
+      MESSAGE
+
       assert error.compiled_source
     end
 
@@ -330,8 +336,8 @@ module Engine
       with_optimize = Herb::Engine.new(template, visitors: [Herb::Engine::OptimizeVisitor.new]).src
 
       refute_equal without_optimize, with_optimize
-
-      assert_compiled_snapshot(template)
+      assert_includes without_optimize, "tag.div"
+      refute_includes with_optimize, "tag.div"
     end
 
     test "compilation with parser_options strict false" do

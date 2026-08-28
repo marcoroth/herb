@@ -1,25 +1,30 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex, SLOT_EVENT } from "../src/slot-index"
-import type { SlotEventDetail } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
+import { SLOT_EVENT } from "../src/shared/events"
+
+import type { SlotEventDetail } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
+
+const MANIFEST = { file: FILE, identifier: FILE, version: "aaaaaaaa", names: { body: 2, messages: 0 }, parts: {}, states: null }
+const MANIFEST_TAG = `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:aaaaaaaa`]: MANIFEST })}</template>`
 
 const ROWS =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
   `<ul><!--herb-slot:0:collection-->` +
-  `<!--herb-item:0:a--><li id="a" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child">first</span></li><!--/herb-item:0-->` +
-  `<!--herb-item:0:b--><li id="b" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child">second</span></li><!--/herb-item:0-->` +
+  `<!--herb-item:0:a--><li id="a" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child">first</span></li><!--/herb-item:0-->` +
+  `<!--herb-item:0:b--><li id="b" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child">second</span></li><!--/herb-item:0-->` +
   `<!--/herb-slot:0--></ul>` +
-  `<!--/herb-region:${FILE}-->`
+  `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
 const EMPTY =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
   `<ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul>` +
   `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:item-->` +
-  `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0--></template>` +
-  `<!--/herb-region:${FILE}-->`
+  `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child"></span></li><!--/herb-item:0--></template>` +
+  `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
-let index: SlotIndex
+let index: Slots
 
 function watch(): SlotEventDetail[] {
   const seen: SlotEventDetail[] = []
@@ -36,7 +41,7 @@ function keys(): string[] {
 beforeEach(() => {
   document.body.innerHTML = ROWS
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 
@@ -58,9 +63,9 @@ describe("addItem", () => {
     expect(keys()).toEqual(["a", "c", "b"])
   })
 
-  test("builds from the parked skeleton into an empty collection", () => {
+  test("builds from the parked row into an empty collection", () => {
     document.body.innerHTML = EMPTY
-    index = new SlotIndex()
+    index = new Slots()
     index.scan(document.body)
 
     const collection = index.slot(FILE, 0)!
@@ -71,14 +76,14 @@ describe("addItem", () => {
     expect(document.querySelector("#x")).not.toBeNull()
   })
 
-  test("prefers the skeleton over cloning a live row", () => {
+  test("prefers the parked row over cloning a live row", () => {
     document.querySelector("#a")!.setAttribute("data-decorated", "yes")
 
     const parked = document.createElement("template")
 
-    parked.setAttribute("data-herb-statics", "0:item")
+    parked.setAttribute("data-herb-region", `${FILE}:aaaaaaaa`)
     parked.innerHTML =
-      `<!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->`
+      `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child"></span></li><!--/herb-item:0-->`
     document.querySelector("ul")!.append(parked)
     index.scan(parked)
 
@@ -93,7 +98,7 @@ describe("addItem", () => {
 
   test("leaves no stray item branch comment in the built row", () => {
     document.body.innerHTML = EMPTY
-    index = new SlotIndex()
+    index = new Slots()
     index.scan(document.body)
 
     index.addItem(index.slot(FILE, 0)!, "x")
@@ -115,8 +120,9 @@ describe("addItem", () => {
 
     index.addItem(index.slot(FILE, 0)!, "c")
 
-    expect(seen.map((event) => event.operation)).toEqual(["item-added"])
+    expect(seen.map((event) => event.operation)).toEqual(["item-added", "built"])
     expect(seen[0].key).toBe("c")
+    expect(seen[1].cause).toBe("client")
   })
 })
 
@@ -186,5 +192,77 @@ describe("removeItem", () => {
 
     expect(index.addItem(collection, "again", { values: { body: "back" } })).not.toBeNull()
     expect(index.currentText(index.slotInItem(FILE, 0, "again", "body")!)).toBe("back")
+  })
+})
+
+describe("a collection nested inside a collection's row", () => {
+  const NESTED_FILE = "app/views/posts/nested.html.erb"
+
+  const NESTED =
+    `<!--herb-region:${NESTED_FILE}:aaaaaaaa:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><li><span data-herb-slot="1:child">a</span><ol><!--herb-slot:2:collection-->` +
+    `<!--herb-item:2:x--><li data-herb-slot="3:child">x</li><!--/herb-item:2-->` +
+    `<!--/herb-slot:2--></ol></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul><!--/herb-region:${NESTED_FILE}-->`
+
+  test("keys the row it builds without touching the rows inside it", () => {
+    document.body.innerHTML = NESTED
+
+    const nested = new Slots()
+    nested.scan(document.body)
+
+    const collection = nested.slot(NESTED_FILE, 0)!
+
+    nested.addItem(collection, "b")
+
+    const built = collection.items.get("b")!
+
+    expect([...collection.items.keys()]).toEqual(["a", "b"])
+    expect(built.slots.get(2)!.type).toBe("collection")
+    expect([...built.slots.get(2)!.items.keys()]).toEqual([])
+    expect(document.body.innerHTML).not.toContain("herb-item:2:b")
+  })
+})
+
+describe("a row built from another row", () => {
+  const FILE_SEEDED = "app/views/chat/show.html.erb"
+
+  const SEEDED =
+    `<!--herb-region:${FILE_SEEDED}:aaaaaaaa:0-->` +
+    `<ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><!--herb-seeds:{"draft":"first row"}--><li><span data-herb-slot="2:child">first row</span></li><!--/herb-item:0-->` +
+    `<!--herb-item:0:b--><!--herb-seeds:{"draft":"second row"}--><li><span data-herb-slot="2:child">second row</span></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul>` +
+    `<!--/herb-region:${FILE_SEEDED}-->`
+
+  beforeEach(() => { document.body.innerHTML = "" })
+
+  test("does not inherit the seeds of the row it was cloned from", () => {
+    const index = new Slots()
+
+    document.body.innerHTML = SEEDED
+    index.scan(document.body)
+
+    const collection = index.slot(FILE_SEEDED, 0)!
+
+    expect(collection.items.get("a")?.seeds).toEqual({ draft: "first row" })
+
+    index.addItem(collection, "pending-1")
+
+    expect(collection.items.get("pending-1")?.seeds ?? {}).toEqual({})
+  })
+
+  test("leaves the rows that came from the server holding their own", () => {
+    const index = new Slots()
+
+    document.body.innerHTML = SEEDED
+    index.scan(document.body)
+
+    const collection = index.slot(FILE_SEEDED, 0)!
+
+    index.addItem(collection, "pending-1")
+
+    expect(collection.items.get("a")?.seeds).toEqual({ draft: "first row" })
+    expect(collection.items.get("b")?.seeds).toEqual({ draft: "second row" })
   })
 })

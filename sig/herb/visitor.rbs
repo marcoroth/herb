@@ -157,5 +157,14 @@ module Herb
 
     # : (Herb::AST::ERBInNode) -> void
     def visit_erb_in_node: (Herb::AST::ERBInNode) -> void
+
+    # : (Herb::AST::HerbDirectiveNode) -> void
+    def visit_herb_directive_node: (Herb::AST::HerbDirectiveNode) -> void
+
+    # : (Herb::AST::HerbStateDeclarationNode) -> void
+    def visit_herb_state_declaration_node: (Herb::AST::HerbStateDeclarationNode) -> void
+
+    # : (Herb::AST::HerbStateDirectiveNode) -> void
+    def visit_herb_state_directive_node: (Herb::AST::HerbStateDirectiveNode) -> void
   end
 end

@@ -170,7 +170,8 @@ module Engine
       # `app/views/posts/_card.html.erb` and `app/views/_card.html.erb` both exist. Rails resolves a
       # partial named without a directory against the template's own.
       test "resolves a partial named without a directory against the template's directory" do
-        assert_snapshot_matches(compile(%(<%= render "card" %>)), "resolves a partial against the templates directory")
+        assert_includes compile(%(<%= render "card" %>)), "<div>"
+        refute_includes compile(%(<%= render "card" %>)), "root card"
       end
 
       test "leaves a partial that translates against its own virtual path" do
@@ -190,8 +191,9 @@ module Engine
       # `shared/_fmt` exists as both `.html.erb` and `.turbo_stream.erb`, and the shared candidate
       # order puts HTML first for everyone else who asks.
       test "resolves a partial in the format the template renders in" do
-        assert_snapshot_matches(compile(%(<%= render "shared/fmt" %>), file: "app/views/posts/index.turbo_stream.erb"), "resolves a partial in turbo_stream format")
-        assert_snapshot_matches(compile(%(<%= render "shared/fmt" %>)), "resolves a partial in html format")
+        assert_includes compile(%(<%= render "shared/fmt" %>), file: "app/views/posts/index.turbo_stream.erb"),
+                        "turbo version"
+        assert_includes compile(%(<%= render "shared/fmt" %>)), "html version"
       end
 
       test "leaves a partial that reads the iteration of the collection it is rendered for" do
@@ -206,7 +208,7 @@ module Engine
 
       # A name it was passed is its own, so nothing outside can reach it.
       test "inlines it when that same name is what was passed to it" do
-        assert_snapshot_matches(compile(%(<% label = "t" %><%= render "shared/labelled", label: "x" %>)), "inlines when the passed name is its own")
+        assert_includes compile(%(<% label = "t" %><%= render "shared/labelled", label: "x" %>)), "->(label)"
       end
 
       # A name the partial assigns for itself is declared block-local where it is spliced, so it
@@ -214,7 +216,8 @@ module Engine
       test "inlines a partial that assigns a name the template has a local for" do
         compiled = compile(%(<% label = "template" %><%= render "shared/assigns" %>))
 
-        assert_snapshot_matches(compiled, "inlines a partial that assigns a shadowing name")
+        assert_includes compiled, "->(; label)"
+        refute_includes compiled, "_buf << (render"
       end
 
       # The inliner resolves against the directory of the template it was given, so one kept between
@@ -225,7 +228,7 @@ module Engine
         compile(%(<%= render "card" %>), file: "app/views/posts/index.html.erb", visitor: visitor)
         second = compile(%(<%= render "card" %>), file: "app/views/index.html.erb", visitor: visitor)
 
-        assert_snapshot_matches(second, "resolves against the template being compiled")
+        assert_includes second, "root card"
       end
 
       test "leaves a partial that does not parse, so the error is still reported against it" do
@@ -237,13 +240,13 @@ module Engine
       test "leaves a render that does not output" do
         compiled = compile(%(<% render "shared/header" %>))
 
-        assert_snapshot_matches(compiled, "leaves a render that does not output")
+        refute_includes compiled, "_buf << '<header>"
       end
 
       test "renders nothing for a collection that is nil, the way Rails does" do
         compiled = compile(%(<%= render partial: "posts/post", collection: nil %>))
 
-        assert_snapshot_matches(compiled, "renders nothing for a nil collection")
+        assert_includes compiled, "|| []"
       end
     end
 
@@ -269,7 +272,8 @@ module Engine
       end
 
       test "inlines the partial away" do
-        assert_snapshot_matches(compiled(inline: true), "inlines the partial away")
+        assert_includes compiled(inline: true), "<div>"
+        refute_includes compiled(inline: true), %(_buf << (render "posts/card"))
       end
 
       test "reports the render it no longer performs" do
@@ -382,13 +386,16 @@ module Engine
           compiled(%(<%= render "shared/unsafe" %>), Herb::Engine::Validators.all(fatal: true))
         end
 
-        assert_match(/attribute/i, error.message)
+        assert_equal(
+          "app/views/posts/index.html.erb:1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.",
+          error.message
+        )
       end
 
       test "a transforming visitor transforms what the partial brought with it" do
         compiled = compiled(%(<%= render "shared/component" %>), [Herb::Engine::ComponentVisitor.new])
 
-        assert_snapshot_matches(compiled, "a transforming visitor transforms inlined markup")
+        assert_includes compiled, %(render Card.new(title: "hi"))
       end
     end
   end

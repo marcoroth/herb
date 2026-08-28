@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0022_parks no segments for an attribute holding more than outputs"
-input: "statics parks no segments for a mixed attribute"
----
-<!--herb-region:app/views/test.html.erb:0861a400:0--><div class="xyz" data-herb-slot="0:attribute_interpolation:class">c</div><!--/herb-region:app/views/test.html.erb-->

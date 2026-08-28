@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0026_an ordered presence carries its operator"
-input: "states rendered 15"
----
-<!--herb-region:app/views/test.html.erb:2d66be75:0--><video muted data-herb-slot="0:boolean_attribute:muted"></video><!--/herb-region:app/views/test.html.erb-->

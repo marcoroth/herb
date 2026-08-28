@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0032_a conjunction compiles as an all combo"
-input: "states markup 19"
----
-<!--herb-branch:0:0-->In<!--herb-branch:0:1-->Out

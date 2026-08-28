@@ -1,6 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 
-import { RuntimePanel, escapeHTML, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
+import { stripAnsiColors } from "@herb-tools/highlighter"
+
+import { RuntimePanel, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
 import { dropLeadingBlocks, resetRuntimeHighlighting } from "../src/runtime/highlighting"
 import { MAX_RUNTIME_DIAGNOSTICS, resetRuntimeReportWarnings } from "../src/runtime/report"
 
@@ -89,10 +91,8 @@ function waitForFix() {
   return waitFor(() => document.querySelector(".herb-dev-tools-fix") as HTMLDetailsElement | null, "the fix diff to hydrate")
 }
 
-const ANSI_ESCAPES = /\u001b\[[0-9;]*m/g
-
 function plain(element: HTMLElement) {
-  return (element.textContent ?? "").replace(ANSI_ESCAPES, "")
+  return stripAnsiColors(element.textContent ?? "")
 }
 
 function waitForExcerpt() {
@@ -105,7 +105,7 @@ function embed(payload: unknown) {
   const script = document.createElement("script")
 
   script.type = "application/json"
-  script.setAttribute("data-herb-runtime-report", "")
+  script.setAttribute("data-herb-diagnostics", "")
   script.textContent = typeof payload === "string" ? payload : JSON.stringify(payload)
 
   document.body.appendChild(script)
@@ -255,13 +255,39 @@ describe("clear control", () => {
     expect(JSON.parse(sessionStorage.getItem("herb-dev-tools-runtime-panel")!).dismissed).toBe(false)
   })
 
-  test("explains itself instead of vanishing when everything goes", () => {
+  test("closes the panel when the control empties it", () => {
     embed(PAYLOAD)
 
     const panel = createPanel()
 
     panel.open()
     clearButton()!.click()
+
+    expect(panel.count).toBe(0)
+    expect(root()).toBeNull()
+    expect(panel.dismissed).toBe(false)
+  })
+
+  test("stays open when the control only clears one origin", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    panel.open()
+    ;(document.querySelector('[data-herb-dev-tools-origin="Herb Linter"]') as HTMLButtonElement).click()
+    clearButton()!.click()
+
+    expect(root()).not.toBeNull()
+    expect(panel.count).toBe(2)
+  })
+
+  test("still explains itself when the API empties it", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    panel.open()
+    panel.clear()
 
     expect(root()).not.toBeNull()
     expect(document.querySelector(".herb-dev-tools-empty")!.textContent)
@@ -610,10 +636,6 @@ describe("inline code", () => {
   test("leaves an unpaired backtick alone", () => {
     expect(inlineCodeHTML("a ` b")).toBe("a ` b")
   })
-
-  test("escapes every HTML significant character", () => {
-    expect(escapeHTML(`<&>"'`)).toBe("&lt;&amp;&gt;&quot;&#39;")
-  })
 })
 
 describe("dropLeadingBlocks", () => {
@@ -960,19 +982,16 @@ describe("expanded presentation", () => {
 
     const header = document.querySelector(".herb-dev-tools-header") as HTMLElement
     const title = document.querySelector(".herb-dev-tools-title") as HTMLElement
-    const summary = document.querySelector(".herb-dev-tools-summary") as HTMLElement
 
     const neutral = {
       band: getComputedStyle(header).backgroundColor,
       border: getComputedStyle(header).borderBottomColor,
       title: getComputedStyle(title).color,
-      summary: getComputedStyle(summary).color,
     }
 
     expect(neutral.band).toBe("rgb(249, 250, 251)")
     expect(neutral.border).toBe("rgb(229, 231, 235)")
     expect(neutral.title).toBe("rgb(17, 24, 39)")
-    expect(neutral.summary).toBe("rgb(107, 114, 128)")
 
     instance.clear()
     instance.report(diagnostic({ kind: "metric", value: "3 SQL queries", code: "two" }))
@@ -1016,7 +1035,7 @@ describe("expanded presentation", () => {
     expect(parseFloat(getComputedStyle(expandButton()).fontSize)).toBeGreaterThan(15)
   })
 
-  test("keeps the summary readable in the anchored header", () => {
+  test("keeps every control reachable in the anchored header", () => {
     embed(PAYLOAD)
 
     const instance = createPanel()
@@ -1027,15 +1046,64 @@ describe("expanded presentation", () => {
     const headerElement = document.querySelector(".herb-dev-tools-header") as HTMLElement
     const header = headerElement.getBoundingClientRect()
     const close = document.querySelector(".herb-dev-tools-close")!.getBoundingClientRect()
-    const summary = document.querySelector(".herb-dev-tools-summary")!.getBoundingClientRect()
 
     expect(headerElement.scrollWidth).toBeLessThanOrEqual(headerElement.clientWidth)
     expect(close.right).toBeLessThanOrEqual(header.right + 1)
-    expect(summary.right).toBeLessThanOrEqual(header.right)
-    expect(summary.width).toBeGreaterThan(60)
+
+    for (const control of Array.from(headerElement.querySelectorAll("button"))) {
+      const box = control.getBoundingClientRect()
+
+      expect(box.left).toBeGreaterThanOrEqual(header.left)
+      expect(box.right).toBeLessThanOrEqual(header.right + 1)
+    }
   })
 
-  test("gives the summary away before the controls when the panel is narrow", () => {
+  test("spends the header's width on controls, not on counts", () => {
+    embed(PAYLOAD)
+
+    const instance = createPanel()
+
+    instance.open()
+
+    expect(document.querySelector(".herb-dev-tools-summary")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-clear")).not.toBeNull()
+    expect(document.querySelector(".herb-dev-tools-hide")).not.toBeNull()
+
+    instance.expand()
+
+    expect(document.querySelector(".herb-dev-tools-summary")).toBeNull()
+  })
+
+  test("leaves the counts to the filter chips and the badge", () => {
+    embed(PAYLOAD)
+
+    const instance = createPanel()
+
+    instance.open()
+
+    const badge = document.querySelector(".herb-dev-tools-badge") as HTMLElement
+
+    expect(badge.title).toBe("1 error, 1 warning, 1 metric")
+
+    const chips = Array.from(document.querySelectorAll(".herb-dev-tools-filter")).map(node => node.textContent)
+
+    expect(chips).toContain("All (3)")
+    expect(chips.every(label => /\(\d+\)$/.test(label!))).toBe(true)
+  })
+
+  test("still counts what a focused overlay shows, where there are no chips", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", origin: "Herb Parser", overlay: "blocking" }),
+      diagnostic({ code: "two", origin: "Herb Validator", overlay: "blocking" }),
+    ])
+
+    expect(document.querySelector(".herb-dev-tools-filters")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-summary")!.textContent).toBe("2 errors")
+  })
+
+  test("gives the action labels away before the controls when the panel is narrow", () => {
     embed(PAYLOAD)
 
     const instance = createPanel()
@@ -1048,10 +1116,14 @@ describe("expanded presentation", () => {
     expect(headerElement.scrollWidth).toBeLessThanOrEqual(headerElement.clientWidth)
 
     const close = document.querySelector(".herb-dev-tools-close")!.getBoundingClientRect()
+    const expand = document.querySelector(".herb-dev-tools-expand")!.getBoundingClientRect()
     const clear = document.querySelector(".herb-dev-tools-clear")!.getBoundingClientRect()
+    const title = document.querySelector(".herb-dev-tools-title")!.getBoundingClientRect()
 
     expect(close.width).toBe(26)
+    expect(expand.width).toBe(26)
     expect(clear.width).toBeGreaterThan(0)
+    expect(title.width).toBeGreaterThan(0)
   })
 
   test("toggles the expanded surface on and off", () => {
@@ -1157,7 +1229,7 @@ describe("expanded presentation", () => {
     expect(instance.expanded).toBe(false)
   })
 
-  test("collapses on Escape and stops listening once collapsed", () => {
+  test("closes on Escape, the way the close button does, and stops listening", () => {
     embed(PAYLOAD)
 
     const instance = createPanel()
@@ -1167,14 +1239,40 @@ describe("expanded presentation", () => {
 
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
 
-    expect(instance.expanded).toBe(false)
+    expect(document.querySelector(".herb-dev-tools-panel.herb-dev-tools-open")).toBeNull()
+    expect(badge()).not.toBeNull()
+    expect(instance.dismissed).toBe(false)
 
     const remove = vi.spyOn(document, "removeEventListener")
 
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
 
-    expect(instance.expanded).toBe(false)
     expect(remove).not.toHaveBeenCalledWith("keydown", expect.anything())
+  })
+
+  test("leaves Escape and the close button in the same place", () => {
+    embed(PAYLOAD)
+
+    const escaped = createPanel()
+
+    escaped.open()
+    escaped.expand()
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
+
+    const afterEscape = { open: escaped.element?.querySelector(".herb-dev-tools-open") ?? null, expanded: escaped.expanded, dismissed: escaped.dismissed }
+
+    escaped.destroy()
+    document.body.innerHTML = ""
+    embed(PAYLOAD)
+
+    const clicked = createPanel()
+
+    clicked.open()
+    clicked.expand()
+    ;(document.querySelector('[data-herb-dev-tools-action="close"]') as HTMLButtonElement).click()
+
+    expect({ open: clicked.element?.querySelector(".herb-dev-tools-open") ?? null, expanded: clicked.expanded, dismissed: clicked.dismissed })
+      .toEqual(afterEscape)
   })
 
   test("releases the Escape listener on destroy", () => {
@@ -1231,7 +1329,8 @@ describe("filters", () => {
     embed(PAYLOAD)
     createPanel()
 
-    const labels = Array.from(document.querySelectorAll(".herb-dev-tools-filter")).map(node => node.textContent)
+    const labels = Array.from(document.querySelectorAll("[data-herb-dev-tools-origin].herb-dev-tools-filter"))
+      .map(node => node.textContent)
 
     expect(labels).toEqual(["All (3)", "Herb Linter (1)", "Acme Scanner (1)", "Herb Engine Runtime (1)"])
   })
@@ -1672,8 +1771,118 @@ describe("diagnostics that name an element", () => {
     expect(document.querySelector(".herb-element-flash")).not.toBeNull()
   })
 
-  test("skip the control once the element has left the page", () => {
+  test("says the element has left the page instead of dropping the chip", () => {
     const target = document.createElement("span")
+
+    target.id = "gone-away"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).not.toBeNull()
+
+    target.remove()
+    panel.refresh()
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip).not.toBeNull()
+    expect(chip.tagName).toBe("SPAN")
+    expect(chip.classList.contains("herb-dev-tools-element-gone")).toBe(true)
+    expect(chip.textContent).toContain("<span#gone-away>")
+    expect(chip.textContent).toContain("no longer on the page")
+    expect(chip.title).toBe("This element was on the page when it was reported and is not any more")
+  })
+
+  test("says an element is not visible when it is on the page with no box", () => {
+    const target = document.createElement("span")
+
+    target.id = "cover-three"
+    target.style.display = "none"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.tagName).toBe("SPAN")
+    expect(chip.classList.contains("herb-dev-tools-element-hidden")).toBe(true)
+    expect(chip.textContent).toContain("<span#cover-three>")
+    expect(chip.textContent).toContain("not visible (display: none)")
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).toBeNull()
+  })
+
+  test("names the ancestor that hides an element the diagnostic named", () => {
+    const parent = document.createElement("div")
+    const target = document.createElement("span")
+
+    parent.id = "modal"
+    parent.style.display = "none"
+    parent.appendChild(target)
+    document.body.appendChild(parent)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.title).toBe("This element is on the page but nothing is rendered for it, because <div#modal> has display: none")
+  })
+
+  test("does not name an ancestor when the element hides itself", () => {
+    const target = document.createElement("span")
+
+    target.style.visibility = "hidden"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "hidden", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.textContent).toContain("not visible (visibility: hidden)")
+    expect(chip.title).toBe("This element is on the page but nothing is rendered for it, so there is nothing to scroll to")
+  })
+
+  test("says an element that has no box of its own is not visible", () => {
+    const target = document.createElement("div")
+
+    target.style.display = "contents"
+    target.textContent = "rendered by its children"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "contents", element: target })
+
+    const chip = document.querySelector(".herb-dev-tools-element") as HTMLElement
+
+    expect(chip.textContent).toContain("not visible (display: contents)")
+  })
+
+  test("keeps the locate control for an element that is merely scrolled out of view", () => {
+    const target = document.createElement("div")
+
+    target.textContent = "below the fold"
+    target.style.marginTop = "300vh"
+    document.body.appendChild(target)
+
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "offscreen", element: target })
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).not.toBeNull()
+  })
+
+  test("offers no locate control for an element that has left the page", () => {
+    const target = document.createElement("span")
+
     document.body.appendChild(target)
 
     const panel = createPanel()
@@ -1681,6 +1890,15 @@ describe("diagnostics that name an element", () => {
     panel.report({ template: "app/views/a.html.erb", message: "gone", element: target })
     target.remove()
     panel.refresh()
+
+    expect(document.querySelector('[data-herb-dev-tools-action="locate"]')).toBeNull()
+    expect(getComputedStyle(document.querySelector(".herb-dev-tools-element")!).cursor).toBe("default")
+  })
+
+  test("says nothing at all when no element was named", () => {
+    const panel = createPanel()
+
+    panel.report({ template: "app/views/a.html.erb", message: "no element here" })
 
     expect(document.querySelector(".herb-dev-tools-element")).toBeNull()
   })
@@ -1707,7 +1925,7 @@ describe("refresh", () => {
 
     expect(cards()).toHaveLength(4)
 
-    document.querySelector("script[data-herb-runtime-report]")!.remove()
+    document.querySelector("script[data-herb-diagnostics]")!.remove()
 
     embed({ version: 1, diagnostics: [{ template: "app/views/new.html.erb", message: "fresh" }] })
 
@@ -1761,5 +1979,2049 @@ describe("highlighting cache", () => {
 
     expect(cards()).toHaveLength(1)
     expect(warn).not.toHaveBeenCalled()
+  })
+})
+
+describe("overlay", () => {
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement | null
+  }
+
+  function backdrop() {
+    return document.querySelector(".herb-dev-tools-backdrop") as HTMLElement | null
+  }
+
+  function escape() {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
+  }
+
+  test("stays docked when nothing asks for an overlay", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+
+    expect(instance.overlay).toBeNull()
+    expect(backdrop()).toBeNull()
+    expect(badge()).not.toBeNull()
+  })
+
+  test("takes over the screen when a diagnostic asks to block", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+
+    expect(instance.overlay).toBe("blocking")
+    expect(panel()!.classList.contains("herb-dev-tools-overlay-blocking")).toBe(true)
+    expect(panel()!.classList.contains("herb-dev-tools-overlay-focused")).toBe(true)
+    expect(panel()!.getAttribute("aria-modal")).toBe("true")
+    expect(backdrop()).toBeNull()
+  })
+
+  test("offers no way out of a blocking overlay", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+
+    expect(badge()).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-close")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-hide")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-expand")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-clear")).toBeNull()
+
+    escape()
+
+    expect(instance.overlay).toBe("blocking")
+    expect(panel()).not.toBeNull()
+  })
+
+  test("ignores dismissOverlay while blocking", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+    instance.dismissOverlay()
+
+    expect(instance.overlay).toBe("blocking")
+  })
+
+  test("shows a blocking overlay over a panel hidden for the session", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "one" }))
+    instance.dismiss()
+
+    expect(panel()).toBeNull()
+
+    instance.report(diagnostic({ code: "two", overlay: "blocking" }))
+
+    expect(instance.dismissed).toBe(true)
+    expect(panel()).not.toBeNull()
+    expect(instance.overlay).toBe("blocking")
+  })
+
+  test("locks page scroll while blocking and gives it back afterwards", () => {
+    const instance = createPanel()
+    const before = document.documentElement.style.overflow
+
+    const handle = instance.report(diagnostic({ overlay: "blocking" }))
+
+    expect(document.documentElement.style.overflow).toBe("hidden")
+
+    handle.dismiss()
+
+    expect(instance.overlay).toBeNull()
+    expect(document.documentElement.style.overflow).toBe(before)
+  })
+
+  test("gives page scroll back on destroy", () => {
+    const instance = createPanel()
+    const before = document.documentElement.style.overflow
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+    instance.destroy()
+
+    expect(document.documentElement.style.overflow).toBe(before)
+  })
+
+  test("lets the reporter take a blocking overlay down through its handle", () => {
+    const instance = createPanel()
+
+    const handle = instance.report(diagnostic({ overlay: "blocking" }))
+
+    handle.dismiss()
+
+    expect(instance.overlay).toBeNull()
+    expect(panel()).toBeNull()
+  })
+
+  test("leaves only the full-screen mode behind, keeping the panel open", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "unhydrated", overlay: "dismissible" }),
+    ])
+
+    const close = document.querySelector('[data-herb-dev-tools-action="dismiss-overlay"]') as HTMLButtonElement
+
+    expect(close).not.toBeNull()
+
+    close.click()
+
+    expect(instance.overlay).toBeNull()
+    expect(backdrop()).toBeNull()
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+    expect(panel()!.classList.contains("herb-dev-tools-overlay-focused")).toBe(false)
+    expect(cards()).toHaveLength(2)
+  })
+
+  test("keeps the error it just featured visible in the panel", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "unhydrated", origin: "Herb Client Runtime", overlay: "dismissible" }),
+    ])
+
+    instance.dismissOverlay()
+
+    const featured = Array.from(document.querySelectorAll(".herb-dev-tools-card"))
+      .find(card => card.querySelector(".herb-dev-tools-code")?.textContent === "unhydrated") as HTMLElement
+
+    expect(featured).toBeDefined()
+    expect(featured.offsetParent).not.toBeNull()
+    expect(featured.getBoundingClientRect().height).toBeGreaterThan(0)
+  })
+
+  test("selects the featured error's own filter chip on the way out", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "unhydrated", origin: "Herb Client Runtime", overlay: "dismissible" }),
+    ])
+
+    instance.dismissOverlay()
+
+    const active = document.querySelector(".herb-dev-tools-filter-active") as HTMLButtonElement
+
+    expect(active.getAttribute("data-herb-dev-tools-origin")).toBe("Herb Client Runtime")
+    expect(Array.from(document.querySelectorAll(".herb-dev-tools-code")).map(node => node.textContent))
+      .toEqual(["unhydrated"])
+  })
+
+  test("overrides a filter that would have hidden the featured error", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }))
+
+    ;(document.querySelector('[data-herb-dev-tools-origin="Herb Linter"]') as HTMLButtonElement).click()
+
+    instance.report(diagnostic({ code: "unhydrated", origin: "Herb Client Runtime", overlay: "dismissible" }))
+    instance.dismissOverlay()
+
+    expect(Array.from(document.querySelectorAll(".herb-dev-tools-code")).map(node => node.textContent))
+      .toContain("unhydrated")
+  })
+
+  test("falls back to All when the featured errors span origins", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", origin: "Herb Client Runtime", overlay: "dismissible" }),
+      diagnostic({ code: "two", origin: "Herb Parser", overlay: "dismissible" }),
+    ])
+
+    instance.dismissOverlay()
+
+    const active = document.querySelector(".herb-dev-tools-filter-active") as HTMLButtonElement
+
+    expect(active.getAttribute("data-herb-dev-tools-origin")).toBe("*")
+    expect(cards()).toHaveLength(2)
+  })
+
+  test("drops to the open panel when the overlay is escaped away", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "dismissible" }))
+
+    escape()
+
+    expect(instance.overlay).toBeNull()
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+    expect(instance.count).toBe(1)
+  })
+
+  test("closes a widened dismissible overlay by its backdrop", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "unhydrated", overlay: "dismissible" }),
+    ])
+
+    expect(backdrop()!.getAttribute("data-herb-dev-tools-action")).toBe("dismiss-overlay")
+
+    instance.toggleOverlayScope()
+
+    expect(backdrop()!.getAttribute("data-herb-dev-tools-action")).toBe("dismiss-overlay")
+
+    backdrop()!.click()
+
+    expect(instance.overlay).toBeNull()
+  })
+
+  test("gives a dismissible overlay the same chrome inside a box, plus a way out", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Client Runtime", overlay: "dismissible" }))
+
+    const element = panel()!
+    const box = element.getBoundingClientRect()
+
+    expect(element.classList.contains("herb-dev-tools-overlay-focused")).toBe(true)
+    expect(element.classList.contains("herb-dev-tools-overlay-fullscreen")).toBe(false)
+    expect(parseFloat(getComputedStyle(element).borderRadius)).toBeGreaterThan(0)
+    expect(box.width).toBeLessThan(window.innerWidth)
+    expect(box.height).toBeLessThan(window.innerHeight)
+    expect(backdrop()).not.toBeNull()
+
+    expect(document.querySelector(".herb-dev-tools-title")!.textContent).toBe("Herb Client Runtime")
+
+    const close = document.querySelector('[data-herb-dev-tools-action="dismiss-overlay"]') as HTMLButtonElement
+
+    close.click()
+
+    expect(instance.overlay).toBeNull()
+    expect(panel()!.classList.contains("herb-dev-tools-overlay-focused")).toBe(false)
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+  })
+
+  test("keeps the blocking screen edge to edge and the dismissible one inside a box", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "unhydrated", overlay: "dismissible" }))
+
+    const boxed = panel()!.getBoundingClientRect()
+
+    instance.report(diagnostic({ code: "broke", overlay: "blocking" }))
+
+    const full = panel()!.getBoundingClientRect()
+
+    expect(boxed.width).toBeLessThan(full.width)
+    expect(full.width).toBe(window.innerWidth)
+    expect(backdrop()).toBeNull()
+  })
+
+  test("sizes the header path to its content and keeps the controls flush right", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({
+      template: "app/components/post_actions_component.html.erb",
+      origin: "Herb Client Runtime",
+      location: { start: { line: 2, column: 3 } },
+      overlay: "dismissible",
+    }))
+
+    const header = document.querySelector(".herb-dev-tools-header") as HTMLElement
+    const path = header.querySelector(".herb-dev-tools-summary") as HTMLElement
+    const close = header.querySelector(".herb-dev-tools-close") as HTMLElement
+
+    expect(getComputedStyle(path).flexGrow).toBe("0")
+
+    const padding = parseFloat(getComputedStyle(header).paddingRight)
+
+    expect(close.getBoundingClientRect().right).toBeCloseTo(header.getBoundingClientRect().right - padding, 0)
+  })
+
+  test("accents the screen with the severity it is showing", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "one", severity: "warning", overlay: "dismissible" }))
+
+    const header = () => getComputedStyle(document.querySelector(".herb-dev-tools-header") as HTMLElement).backgroundColor
+    const warning = header()
+
+    instance.report(diagnostic({ code: "two", severity: "error", overlay: "dismissible" }))
+
+    expect(header()).not.toBe(warning)
+  })
+
+  test("takes down every overlay it was showing, and no future one", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", overlay: "dismissible" }),
+      diagnostic({ code: "two", overlay: "dismissible" }),
+    ])
+
+    instance.dismissOverlay()
+
+    expect(instance.overlay).toBeNull()
+
+    instance.report(diagnostic({ code: "three", overlay: "dismissible" }))
+
+    expect(instance.overlay).toBe("dismissible")
+    expect(cards()).toHaveLength(1)
+  })
+
+  test("lets a blocking diagnostic override a dismissed overlay", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "one", overlay: "dismissible" }))
+    instance.dismissOverlay()
+    instance.report(diagnostic({ code: "two", overlay: "blocking" }))
+
+    expect(instance.overlay).toBe("blocking")
+  })
+
+  test("escalates to blocking when a repeat of the same diagnostic blocks", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "one", overlay: "dismissible" }))
+    instance.report(diagnostic({ code: "one", overlay: "blocking" }))
+
+    expect(instance.overlay).toBe("blocking")
+  })
+
+  test("reads an overlay out of the embedded report payload", () => {
+    embed({
+      version: 1,
+      diagnostics: [{
+        template: "app/views/posts/_actions.html.erb",
+        message: "Nested `<form>` elements are not allowed.",
+        overlay: "blocking",
+      }],
+    })
+
+    const instance = createPanel()
+
+    expect(instance.overlay).toBe("blocking")
+    expect(panel()!.classList.contains("herb-dev-tools-overlay-blocking")).toBe(true)
+  })
+
+  test("shows only the blocking entry, not the rest of the panel", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "measured", kind: "metric", value: "3 SQL queries", origin: "Herb Engine Runtime" }),
+    ])
+
+    expect(cards()).toHaveLength(2)
+
+    instance.report(diagnostic({ code: "broke", origin: "Herb Parser", overlay: "blocking" }))
+
+    expect(cards()).toHaveLength(1)
+    expect(cards()[0].querySelector(".herb-dev-tools-code")!.textContent).toBe("broke")
+    expect(instance.count).toBe(3)
+  })
+
+  test("shows only the dismissible entry while its overlay is up", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "unhydrated", overlay: "dismissible" }),
+    ])
+
+    expect(cards()).toHaveLength(1)
+    expect(cards()[0].querySelector(".herb-dev-tools-code")!.textContent).toBe("unhydrated")
+
+    instance.dismissOverlay()
+
+    expect(cards()).toHaveLength(2)
+  })
+
+  test("leaves the dismissible entries out of a blocking overlay", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "unhydrated", overlay: "dismissible" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    expect(instance.overlay).toBe("blocking")
+    expect(cards()).toHaveLength(1)
+    expect(cards()[0].querySelector(".herb-dev-tools-code")!.textContent).toBe("broke")
+  })
+
+  test("hides the origin filters while an overlay is up", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", origin: "Herb Linter" }),
+      diagnostic({ code: "broke", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    expect(document.querySelector(".herb-dev-tools-filters")).toBeNull()
+
+    instance.clear("Herb Parser")
+
+    expect(document.querySelector(".herb-dev-tools-filters")).not.toBeNull()
+  })
+
+  test("heads a single blocking error with its origin and location", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", severity: "warning" }),
+      diagnostic({ code: "two", severity: "warning" }),
+    ])
+
+    instance.report(diagnostic({
+      code: "broke",
+      severity: "error",
+      origin: "Herb Parser",
+      location: { start: { line: 11, column: 3 } },
+      overlay: "blocking",
+    }))
+
+    expect(document.querySelector(".herb-dev-tools-title")!.textContent).toBe("Herb Parser")
+    expect(document.querySelector(".herb-dev-tools-summary")!.textContent)
+      .toBe("app/views/posts/_actions.html.erb:11:3")
+  })
+
+  test("carries no glyph in the blocking header", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+
+    const header = document.querySelector(".herb-dev-tools-header")!
+
+    expect(header.querySelector(".herb-dev-tools-blocking-glyph")).toBeNull()
+    expect(header.querySelector(".herb-dev-tools-badge-glyph")).toBeNull()
+    expect(header.textContent).not.toMatch(/\p{Extended_Pictographic}/u)
+  })
+
+  test("opens the file from the blocking header path", () => {
+    const opened: unknown[] = []
+    const instance = createPanel({ onOpenFile: (file, line, column) => opened.push([file, line, column]) })
+
+    instance.report(diagnostic({
+      origin: "Herb Parser",
+      location: { start: { line: 11, column: 3 } },
+      overlay: "blocking",
+    }))
+
+    const path = document.querySelector(".herb-dev-tools-summary") as HTMLButtonElement
+
+    expect(path.tagName).toBe("BUTTON")
+
+    path.click()
+
+    expect(opened).toEqual([["app/views/posts/_actions.html.erb", 11, 3]])
+  })
+
+  test("leaves the header path as text with no editor handler", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ location: { start: { line: 11, column: 3 } }, overlay: "blocking" }))
+
+    expect((document.querySelector(".herb-dev-tools-summary") as HTMLElement).tagName).toBe("SPAN")
+  })
+
+  test("widens the excerpt and enlarges the code in a focused overlay", async () => {
+    const longSource = Array.from({ length: 40 }, (_, index) => `  <p>line ${index + 1}</p>`).join("\n")
+
+    embed({
+      version: 1,
+      sources: { "app/views/posts/_actions.html.erb": longSource },
+      diagnostics: [{
+        template: "app/views/posts/_actions.html.erb",
+        message: "Nested `<form>` elements are not allowed.",
+        code: "html-no-nested-forms",
+        severity: "error",
+        origin: "Herb Parser",
+        location: { start: { line: 20, column: 3 }, end: { line: 20, column: 10 } },
+        overlay: "blocking",
+      }],
+    })
+
+    const instance = createPanel()
+
+    const element = await waitForExcerpt()
+
+    expect(parseFloat(getComputedStyle(element).fontSize)).toBeGreaterThan(12)
+
+    const focused = element.textContent!.split("\n").length
+
+    instance.toggleOverlayScope()
+
+    const widened = await waitFor(
+      () => document.querySelector(".herb-dev-tools-ansi") as HTMLElement | null,
+      "the excerpt to re-render",
+    )
+
+    expect(focused).toBeGreaterThan(widened.textContent!.split("\n").length)
+    expect(parseFloat(getComputedStyle(widened).fontSize)).toBeLessThan(12)
+  })
+
+  test("falls back to a count when blocking entries disagree on origin", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", origin: "Herb Parser", overlay: "blocking" }),
+      diagnostic({ code: "two", origin: "Herb Validator", overlay: "blocking" }),
+    ])
+
+    expect(document.querySelector(".herb-dev-tools-title")!.textContent).toBe("Herb Runtime Diagnostics")
+    expect(document.querySelector(".herb-dev-tools-summary")!.textContent).toBe("2 errors")
+  })
+
+  test("gives a blocking screen its own full-screen chrome", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+
+    const element = document.querySelector(".herb-dev-tools-panel") as HTMLElement
+    const styles = getComputedStyle(element)
+    const box = element.getBoundingClientRect()
+
+    expect(element.classList.contains("herb-dev-tools-overlay-focused")).toBe(true)
+    expect(styles.borderRadius).toBe("0px")
+    expect(box.width).toBe(window.innerWidth)
+    expect(box.height).toBe(window.innerHeight)
+  })
+
+  test("keeps the blocking screen from scrolling sideways", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "blocking" }))
+
+    const body = document.querySelector(".herb-dev-tools-body") as HTMLElement
+    const card = document.querySelector(".herb-dev-tools-card") as HTMLElement
+
+    expect(body.getBoundingClientRect().width).toBeLessThanOrEqual(window.innerWidth)
+    expect(card.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth)
+  })
+
+  test("relaxes the chrome but stays edge to edge when a blocking overlay widens", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    instance.toggleOverlayScope()
+
+    const element = document.querySelector(".herb-dev-tools-panel") as HTMLElement
+    const box = element.getBoundingClientRect()
+
+    expect(element.classList.contains("herb-dev-tools-overlay-focused")).toBe(false)
+    expect(element.classList.contains("herb-dev-tools-overlay-fullscreen")).toBe(true)
+    expect(box.width).toBe(window.innerWidth)
+    expect(box.height).toBe(window.innerHeight)
+    expect(backdrop()).toBeNull()
+  })
+
+  test("puts a widened dismissible overlay back in its box", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "unhydrated", overlay: "dismissible" }),
+    ])
+
+    instance.toggleOverlayScope()
+
+    const element = document.querySelector(".herb-dev-tools-panel") as HTMLElement
+
+    expect(element.classList.contains("herb-dev-tools-overlay-fullscreen")).toBe(false)
+    expect(element.getBoundingClientRect().width).toBeLessThan(window.innerWidth)
+  })
+
+  test("offers no Clear control inside a dismissible overlay", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ overlay: "dismissible" }))
+
+    expect(document.querySelector(".herb-dev-tools-clear")).toBeNull()
+
+    instance.dismissOverlay()
+
+    expect(document.querySelector(".herb-dev-tools-clear")).not.toBeNull()
+  })
+
+  test("offers the widen control only when the overlay is hiding something", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "broke", overlay: "blocking" }))
+
+    expect(document.querySelector('[data-herb-dev-tools-action="overlay-scope"]')).toBeNull()
+
+    instance.report(diagnostic({ code: "linted", severity: "warning" }))
+
+    const scope = document.querySelector('[data-herb-dev-tools-action="overlay-scope"]') as HTMLButtonElement
+
+    expect(scope).not.toBeNull()
+    expect(scope.textContent).toBe("Show other diagnostics")
+  })
+
+  test("shows everything behind a blocking overlay and comes back", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "broke", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    expect(cards()).toHaveLength(1)
+
+    const scope = () => document.querySelector('[data-herb-dev-tools-action="overlay-scope"]') as HTMLButtonElement
+
+    scope().click()
+
+    expect(instance.overlayShowingAll).toBe(true)
+    expect(cards()).toHaveLength(2)
+    expect(document.querySelector(".herb-dev-tools-filters")).not.toBeNull()
+    expect(scope().textContent).toBe("Back to the error")
+
+    scope().click()
+
+    expect(instance.overlayShowingAll).toBe(false)
+    expect(cards()).toHaveLength(1)
+  })
+
+  test("keeps a blocking overlay blocking while it shows everything", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    instance.toggleOverlayScope()
+
+    expect(document.querySelector(".herb-dev-tools-close")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-hide")).toBeNull()
+    expect(document.documentElement.style.overflow).toBe("hidden")
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
+
+    expect(instance.overlay).toBe("blocking")
+  })
+
+  test("forgets the widened scope once the overlay goes", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "broke", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    instance.toggleOverlayScope()
+    instance.clear("Herb Parser")
+
+    expect(instance.overlayShowingAll).toBe(false)
+  })
+
+  test("forgets a dismissal once the diagnostic is cleared", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "one", overlay: "dismissible" }))
+    instance.dismissOverlay()
+    instance.clear()
+    instance.report(diagnostic({ code: "one", overlay: "dismissible" }))
+
+    expect(instance.overlay).toBe("dismissible")
+  })
+})
+
+describe("re-raising a dismissed overlay", () => {
+  test("raises again when the same diagnostic is reported again", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "unhydrated", overlay: "dismissible" }))
+    instance.dismissOverlay()
+
+    expect(instance.overlay).toBeNull()
+
+    instance.report(diagnostic({ code: "unhydrated", overlay: "dismissible" }))
+
+    expect(instance.overlay).toBe("dismissible")
+    expect(instance.count).toBe(2)
+  })
+
+  test("stays down across renders that report nothing", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "unhydrated", overlay: "dismissible" }))
+    instance.dismissOverlay()
+
+    instance.report(diagnostic({ code: "linted", severity: "warning" }))
+    instance.open()
+    instance.expand()
+    instance.collapse()
+
+    expect(instance.overlay).toBeNull()
+  })
+
+  test("raises again when a fresh payload carries the overlay", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "unhydrated", overlay: "dismissible" }))
+    instance.dismissOverlay()
+
+    embed({
+      version: 1,
+      diagnostics: [{
+        template: "app/views/posts/_actions.html.erb",
+        message: "Nested `<form>` elements are not allowed.",
+        code: "unhydrated",
+        overlay: "dismissible",
+      }],
+    })
+
+    instance.refresh()
+
+    expect(instance.overlay).toBe("dismissible")
+  })
+})
+
+describe("featuring an entry from the panel", () => {
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement | null
+  }
+
+  function featureButtons() {
+    return Array.from(document.querySelectorAll('[data-herb-dev-tools-action="feature"]')) as HTMLButtonElement[]
+  }
+
+  function seed(instance: RuntimePanel) {
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "measured", kind: "metric", value: "3 SQL queries", origin: "Herb Engine Runtime" }),
+    ])
+  }
+
+  test("offers a control on every card in the docked panel", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+
+    expect(featureButtons()).toHaveLength(2)
+  })
+
+  test("puts a plain entry on its own dismissible screen", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+
+    featureButtons()[0].click()
+
+    expect(instance.overlay).toBe("dismissible")
+    expect(instance.featured).not.toBeNull()
+    expect(panel()!.classList.contains("herb-dev-tools-overlay-focused")).toBe(true)
+    expect(cards()).toHaveLength(1)
+    expect(document.querySelector(".herb-dev-tools-code")!.textContent).toBe("linted")
+    expect(document.querySelector(".herb-dev-tools-title")!.textContent).toBe("Herb Linter")
+  })
+
+  test("leaves the diagnostic itself untouched", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+    featureButtons()[0].click()
+    instance.dismissOverlay()
+
+    expect(instance.overlay).toBeNull()
+    expect(instance.featured).toBeNull()
+
+    instance.open()
+    featureButtons()[0].click()
+
+    expect(instance.overlay).toBe("dismissible")
+  })
+
+  test("hides its own control while a screen is featured", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+    featureButtons()[0].click()
+
+    expect(featureButtons()).toHaveLength(0)
+  })
+
+  test("offers no control while a blocking overlay outranks it", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.report(diagnostic({ code: "broke", overlay: "blocking" }))
+    instance.toggleOverlayScope()
+
+    expect(featureButtons()).toHaveLength(0)
+  })
+
+  test("gives way to a declared overlay", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+    featureButtons()[0].click()
+
+    instance.report(diagnostic({ code: "unhydrated", origin: "Herb Client Runtime", overlay: "dismissible" }))
+
+    expect(document.querySelector(".herb-dev-tools-code")!.textContent).toBe("unhydrated")
+  })
+
+  test("forgets a featured entry once it is cleared", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+    featureButtons()[0].click()
+
+    instance.clear("Herb Linter")
+
+    expect(instance.featured).toBeNull()
+    expect(instance.overlay).toBeNull()
+  })
+
+  test("ignores a key that names nothing", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.feature("not a key")
+
+    expect(instance.overlay).toBeNull()
+  })
+})
+
+describe("overlay heading bar", () => {
+  function header() {
+    return document.querySelector(".herb-dev-tools-header") as HTMLElement
+  }
+
+  function metrics(element: HTMLElement) {
+    const styles = getComputedStyle(element)
+
+    return { padding: styles.padding, gap: styles.gap }
+  }
+
+  test("puts no count on the widen control, since none of them is the right one", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "measured", kind: "metric", value: "3 SQL queries" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    const scope = document.querySelector('[data-herb-dev-tools-action="overlay-scope"]') as HTMLButtonElement
+
+    expect(scope.textContent).toBe("Show other diagnostics")
+    expect(scope.textContent).not.toMatch(/\d/)
+  })
+
+  test("names the hidden count where there is room to be exact", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "measured", kind: "metric", value: "3 SQL queries" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    const scope = () => document.querySelector('[data-herb-dev-tools-action="overlay-scope"]') as HTMLButtonElement
+
+    expect(scope().title).toBe("Show the other 2 diagnostics this page reported")
+
+    instance.clear("unknown")
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    expect(scope().title).toBe("Show the one other diagnostic this page reported")
+  })
+
+  test("keeps one bar layout across the focused and widened views", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    const focused = metrics(header())
+    const focusedTitle = getComputedStyle(document.querySelector(".herb-dev-tools-title") as HTMLElement).fontSize
+
+    instance.toggleOverlayScope()
+
+    const widened = metrics(header())
+    const widenedTitle = getComputedStyle(document.querySelector(".herb-dev-tools-title") as HTMLElement).fontSize
+
+    expect(widened).toEqual(focused)
+    expect(widenedTitle).toBe(focusedTitle)
+  })
+
+  test("groups the controls to the right in both views", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "unhydrated", overlay: "dismissible" }),
+    ])
+
+    const controls = () => header().querySelector(".herb-dev-tools-window-controls") as HTMLElement
+
+    expect(controls()).toBe(header().lastElementChild)
+    expect(Array.from(controls().children).map(node => node.getAttribute("data-herb-dev-tools-action")))
+      .toEqual(["overlay-scope", "dismiss-overlay"])
+
+    instance.toggleOverlayScope()
+
+    expect(controls()).toBe(header().lastElementChild)
+    expect(Array.from(controls().children).map(node => node.getAttribute("data-herb-dev-tools-action")))
+      .toEqual(["overlay-scope", "dismiss-overlay"])
+  })
+
+  test("lines the filter chips up with the heading bar", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning" }),
+      diagnostic({ code: "broke", overlay: "blocking" }),
+    ])
+
+    instance.toggleOverlayScope()
+
+    const filters = document.querySelector(".herb-dev-tools-filters") as HTMLElement
+
+    expect(getComputedStyle(filters).paddingLeft).toBe(getComputedStyle(header()).paddingLeft)
+  })
+})
+
+describe("overlay severity accent", () => {
+  function band() {
+    const header = document.querySelector(".herb-dev-tools-header") as HTMLElement
+
+    return getComputedStyle(header)
+  }
+
+  test("tints instead of filling, keeping the text dark", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ severity: "error", overlay: "dismissible" }))
+
+    const styles = band()
+
+    expect(styles.backgroundColor).not.toBe("rgb(220, 38, 38)")
+    expect(styles.color).not.toBe("rgb(255, 255, 255)")
+    expect(styles.backgroundColor).not.toBe("rgb(249, 250, 251)")
+    expect(styles.borderBottomColor).not.toBe("rgb(229, 231, 235)")
+    expect(styles.boxShadow).toBe("none")
+  })
+
+  test("takes the accent from the severity it is showing", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "warned", severity: "warning", overlay: "dismissible" }))
+
+    const warning = band().backgroundColor
+
+    instance.dismissOverlay()
+    instance.report(diagnostic({ code: "errored", severity: "error", overlay: "dismissible" }))
+
+    expect(band().backgroundColor).not.toBe(warning)
+  })
+
+  test("follows the featured entry, not the loudest entry in the panel", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "errored", severity: "error" }))
+    instance.report(diagnostic({ code: "warned", severity: "warning", overlay: "dismissible" }))
+
+    const featured = band().backgroundColor
+
+    instance.dismissOverlay()
+    instance.clear()
+    instance.report(diagnostic({ code: "warned", severity: "warning", overlay: "dismissible" }))
+
+    expect(band().backgroundColor).toBe(featured)
+  })
+
+  test("carries a severity dot, not an emoji", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ severity: "warning", overlay: "dismissible" }))
+
+    const header = document.querySelector(".herb-dev-tools-header")!
+
+    expect(header.querySelector(".herb-dev-tools-dot-warning")).not.toBeNull()
+    expect(header.textContent).not.toMatch(/\p{Extended_Pictographic}/u)
+  })
+})
+
+describe("heading bar across the overlay toggle", () => {
+  function header() {
+    return document.querySelector(".herb-dev-tools-header") as HTMLElement
+  }
+
+  function chrome() {
+    const styles = getComputedStyle(header())
+
+    return {
+      background: styles.backgroundColor,
+      border: styles.borderBottomColor,
+      shadow: styles.boxShadow,
+      color: styles.color,
+      padding: styles.padding,
+    }
+  }
+
+  test("keeps the bar's size but drops the colour when the view widens", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "error", origin: "Herb Linter" }),
+      diagnostic({ code: "broke", severity: "error", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    const featured = chrome()
+
+    expect(header().querySelector(".herb-dev-tools-dot-error")).not.toBeNull()
+
+    instance.toggleOverlayScope()
+
+    const widened = chrome()
+
+    expect(widened.padding).toBe(featured.padding)
+    expect(widened.background).not.toBe(featured.background)
+    expect(widened.background).toBe("rgb(249, 250, 251)")
+    expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
+  })
+
+  test("does the same for a dismissible overlay", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "unhydrated", severity: "warning", origin: "Herb Client Runtime", overlay: "dismissible" }),
+    ])
+
+    const featured = chrome()
+
+    instance.toggleOverlayScope()
+
+    expect(chrome().padding).toBe(featured.padding)
+    expect(chrome().background).toBe("rgb(249, 250, 251)")
+  })
+
+  test("leaves the docked panel header untinted", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ severity: "error" }))
+    instance.open()
+
+    const docked = chrome()
+
+    expect(docked.background).toBe("rgb(249, 250, 251)")
+    expect(docked.shadow).toBe("none")
+    expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
+  })
+})
+
+describe("expanding the docked panel", () => {
+  function header() {
+    return document.querySelector(".herb-dev-tools-header") as HTMLElement
+  }
+
+  function chrome() {
+    const styles = getComputedStyle(header())
+
+    return {
+      background: styles.backgroundColor,
+      border: styles.borderBottomColor,
+      color: styles.color,
+      padding: styles.padding,
+      title: getComputedStyle(document.querySelector(".herb-dev-tools-title") as HTMLElement).fontSize,
+    }
+  }
+
+  test("uses the widened overlay's heading bar, not the docked one", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "linted", severity: "error", origin: "Herb Linter" }),
+      diagnostic({ code: "broke", severity: "error", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    instance.toggleOverlayScope()
+
+    const widened = chrome()
+
+    instance.clear("Herb Parser")
+    instance.open()
+
+    const docked = chrome()
+
+    instance.expand()
+
+    expect(chrome()).toEqual(widened)
+    expect(docked).not.toEqual(widened)
+  })
+
+  test("stays neutral, since nothing is featured", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "warned", severity: "warning" }))
+    instance.open()
+    instance.expand()
+
+    const warning = chrome().background
+
+    instance.report(diagnostic({ code: "errored", severity: "error" }))
+
+    expect(chrome().background).toBe(warning)
+    expect(chrome().background).toBe("rgb(249, 250, 251)")
+    expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
+  })
+
+  test("goes back to the compact bar when collapsed", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ severity: "error" }))
+    instance.open()
+
+    const docked = chrome()
+
+    instance.expand()
+    instance.collapse()
+
+    expect(chrome()).toEqual(docked)
+    expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
+  })
+})
+
+describe("severity filter", () => {
+  function severityChips() {
+    return Array.from(document.querySelectorAll("[data-herb-dev-tools-severity]")) as HTMLButtonElement[]
+  }
+
+  function chip(value: string) {
+    return document.querySelector(`[data-herb-dev-tools-severity="${value}"]`) as HTMLButtonElement
+  }
+
+  function originChip(value: string) {
+    return document.querySelector(`[data-herb-dev-tools-origin="${value}"]`) as HTMLButtonElement
+  }
+
+  function codes() {
+    return Array.from(document.querySelectorAll(".herb-dev-tools-code")).map(node => node.textContent)
+  }
+
+  function seed(instance: RuntimePanel) {
+    instance.report([
+      diagnostic({ code: "broke", severity: "error", origin: "Herb Parser" }),
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "styled", severity: "warning", origin: "Acme Scanner" }),
+      diagnostic({ code: "noted", severity: "info", origin: "Herb Linter" }),
+      diagnostic({ code: "hinted", severity: "hint", origin: "Herb Linter" }),
+      diagnostic({ code: "measured", kind: "metric", value: "3 SQL queries", origin: "Herb Engine Runtime" }),
+    ])
+
+    instance.open()
+  }
+
+  test("offers a chip per severity present, counting each", () => {
+    const instance = createPanel()
+
+    seed(instance)
+
+    expect(severityChips().map(node => node.textContent))
+      .toEqual(["Any severity (6)", "Errors (1)", "Warnings (2)", "Notices (2)", "Metrics (1)"])
+  })
+
+  test("folds info and hint together the way the summary does", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    chip("notice").click()
+
+    expect(codes()).toEqual(["noted", "hinted"])
+  })
+
+  test("narrows the list and marks the chip active", () => {
+    const instance = createPanel()
+
+    seed(instance)
+
+    expect(cards()).toHaveLength(6)
+
+    chip("warning").click()
+
+    expect(codes()).toEqual(["linted", "styled"])
+    expect(chip("warning").getAttribute("aria-pressed")).toBe("true")
+    expect(chip("*").getAttribute("aria-pressed")).toBe("false")
+
+    chip("*").click()
+
+    expect(cards()).toHaveLength(6)
+  })
+
+  test("separates metrics from diagnostics", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    chip("metric").click()
+
+    expect(codes()).toEqual(["measured"])
+
+    chip("error").click()
+
+    expect(codes()).toEqual(["broke"])
+  })
+
+  test("combines with the origin filter", () => {
+    const instance = createPanel()
+
+    seed(instance)
+
+    originChip("Herb Linter").click()
+    chip("warning").click()
+
+    expect(codes()).toEqual(["linted"])
+  })
+
+  test("recounts each group against the other filter", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    originChip("Herb Linter").click()
+
+    expect(severityChips().map(node => node.textContent))
+      .toEqual(["Any severity (3)", "Warnings (1)", "Notices (2)"])
+
+    chip("notice").click()
+
+    expect(Array.from(document.querySelectorAll(".herb-dev-tools-filter[data-herb-dev-tools-origin]"))
+      .map(node => node.textContent)).toEqual(["All (2)", "Herb Linter (2)"])
+  })
+
+  test("stays out of the way when everything shares one severity", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", severity: "error" }),
+      diagnostic({ code: "two", severity: "error" }),
+    ])
+
+    instance.open()
+
+    expect(severityChips()).toHaveLength(0)
+  })
+
+  test("releases a filter whose entries are all gone", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    chip("metric").click()
+
+    expect(cards()).toHaveLength(1)
+
+    instance.clear("Herb Engine Runtime")
+
+    expect(chip("metric")).toBeNull()
+    expect(chip("*").getAttribute("aria-pressed")).toBe("true")
+    expect(cards()).toHaveLength(5)
+  })
+
+  test("drops the whole row when one severity is left", () => {
+    const instance = createPanel()
+
+    seed(instance)
+
+    instance.clear("Herb Engine Runtime")
+    instance.clear("Herb Linter")
+    instance.clear("Acme Scanner")
+
+    expect(severityChips()).toHaveLength(0)
+    expect(cards()).toHaveLength(1)
+  })
+
+  test("is cleared when an overlay hands back to the panel", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    chip("metric").click()
+
+    instance.report(diagnostic({ code: "unhydrated", severity: "error", origin: "Herb Client Runtime", overlay: "dismissible" }))
+    instance.dismissOverlay()
+
+    expect(codes()).toEqual(["unhydrated"])
+  })
+
+  test("survives a reload the way the origin filter does", () => {
+    embed(PAYLOAD)
+
+    const first = createPanel()
+
+    first.open()
+    chip("warning").click()
+
+    const before = Array.from(document.querySelectorAll(".herb-dev-tools-code")).map(node => node.textContent)
+
+    first.destroy()
+    document.body.innerHTML = ""
+    embed(PAYLOAD)
+
+    const second = createPanel()
+
+    second.open()
+
+    expect(chip("warning").getAttribute("aria-pressed")).toBe("true")
+    expect(Array.from(document.querySelectorAll(".herb-dev-tools-code")).map(node => node.textContent)).toEqual(before)
+  })
+})
+
+describe("leaving a featured overlay", () => {
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement | null
+  }
+
+  function state(instance: RuntimePanel) {
+    return {
+      overlay: instance.overlay,
+      featured: instance.featured,
+      expanded: instance.expanded,
+      open: panel()!.classList.contains("herb-dev-tools-open"),
+      focused: panel()!.classList.contains("herb-dev-tools-overlay-focused"),
+      backdrop: document.querySelector(".herb-dev-tools-backdrop") !== null,
+    }
+  }
+
+  function seed(instance: RuntimePanel) {
+    instance.report([
+      diagnostic({ code: "linted", severity: "warning", origin: "Herb Linter" }),
+      diagnostic({ code: "measured", kind: "metric", value: "3 SQL queries", origin: "Herb Engine Runtime" }),
+    ])
+  }
+
+  function click(action: string) {
+    ;(document.querySelector(`[data-herb-dev-tools-action="${action}"]`) as HTMLButtonElement).click()
+  }
+
+  test("lands in the docked panel, whatever it was expanded to before", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+    instance.expand()
+
+    expect(instance.expanded).toBe(true)
+
+    click("feature")
+
+    expect(state(instance)).toMatchObject({ overlay: "dismissible", focused: true, expanded: true })
+
+    click("dismiss-overlay")
+
+    expect(state(instance)).toEqual({
+      overlay: null,
+      featured: null,
+      expanded: false,
+      open: true,
+      focused: false,
+      backdrop: false,
+    })
+  })
+
+  test("lands in the same place whether or not it was expanded first", () => {
+    const collapsed = createPanel()
+
+    seed(collapsed)
+    collapsed.open()
+    click("feature")
+    click("dismiss-overlay")
+
+    const withoutExpanding = state(collapsed)
+
+    collapsed.destroy()
+    document.body.innerHTML = ""
+    sessionStorage.clear()
+
+    const expanded = createPanel()
+
+    seed(expanded)
+    expanded.open()
+    expanded.expand()
+    click("feature")
+    click("dismiss-overlay")
+
+    expect(state(expanded)).toEqual(withoutExpanding)
+  })
+
+  test("collapses a reported dismissible overlay out of full screen too", () => {
+    const instance = createPanel()
+
+    seed(instance)
+    instance.open()
+    instance.expand()
+
+    instance.report(diagnostic({ code: "unhydrated", origin: "Herb Client Runtime", overlay: "dismissible" }))
+    instance.dismissOverlay()
+
+    expect(instance.expanded).toBe(false)
+    expect(document.querySelector(".herb-dev-tools-backdrop")).toBeNull()
+  })
+})
+
+describe("header control alignment", () => {
+  function header() {
+    return document.querySelector(".herb-dev-tools-header") as HTMLElement
+  }
+
+  function measure() {
+    const element = header()
+    const box = element.getBoundingClientRect()
+    const gap = parseFloat(getComputedStyle(element).gap)
+    const padding = parseFloat(getComputedStyle(element).paddingRight)
+
+    return {
+      element,
+      box,
+      gap,
+      padding,
+      title: element.querySelector(".herb-dev-tools-title")!.getBoundingClientRect(),
+      clear: element.querySelector(".herb-dev-tools-clear")!.getBoundingClientRect(),
+      hide: element.querySelector(".herb-dev-tools-hide")!.getBoundingClientRect(),
+      controls: element.querySelector(".herb-dev-tools-window-controls")!.getBoundingClientRect(),
+    }
+  }
+
+  test("groups every action on the right, with the title alone on the left", () => {
+    embed(PAYLOAD)
+
+    createPanel().open()
+    ;(document.querySelector(".herb-dev-tools-panel") as HTMLElement).style.width = "640px"
+
+    const { box, gap, padding, title, clear, hide, controls } = measure()
+
+    expect(title.left).toBeCloseTo(box.left + padding, 0)
+    expect(clear.left).toBeGreaterThan(box.left + box.width / 2)
+    expect(title.right).toBeGreaterThan(box.left + box.width / 2)
+
+    expect(hide.left - clear.right).toBeCloseTo(gap, 0)
+    expect(controls.left - hide.right).toBeCloseTo(gap, 0)
+    expect(controls.right).toBeCloseTo(box.right - padding, 0)
+  })
+
+  test("does the same once the panel fills the window", () => {
+    embed(PAYLOAD)
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    ;(document.querySelector(".herb-dev-tools-panel") as HTMLElement).style.width = "640px"
+
+    const { element, box, gap, padding, title, clear, hide, controls } = measure()
+
+    expect(clear.left).toBeGreaterThan(box.left + box.width / 2)
+    expect(title.right).toBeGreaterThan(box.left + box.width / 2)
+    expect(hide.left - clear.right).toBeCloseTo(gap, 0)
+    expect(controls.left - hide.right).toBeCloseTo(gap, 0)
+    expect(controls.right).toBeCloseTo(box.right - padding, 0)
+    expect(element.scrollWidth).toBeLessThanOrEqual(element.clientWidth)
+  })
+})
+
+describe("locating an element from a full-size view", () => {
+  function target() {
+    const element = document.createElement("section")
+
+    element.id = "locate-target"
+    element.style.cssText = "height:200px;margin-top:3000px;background:#eee"
+
+    document.body.appendChild(element)
+
+    return element
+  }
+
+  function locateButton() {
+    return document.querySelector('[data-herb-dev-tools-action="locate"]') as HTMLButtonElement
+  }
+
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement | null
+  }
+
+  test("collapses the expanded panel so the element is visible", () => {
+    const element = target()
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "sized", severity: "warning", element }))
+    instance.open()
+    instance.expand()
+
+    expect(instance.expanded).toBe(true)
+
+    locateButton().click()
+
+    expect(instance.expanded).toBe(false)
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+    expect(document.querySelector(".herb-slot-flash")).not.toBeNull()
+  })
+
+  test("leaves a dismissible overlay so the element is visible", () => {
+    const element = target()
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "sized", severity: "warning", element, overlay: "dismissible" }))
+
+    expect(instance.overlay).toBe("dismissible")
+
+    locateButton().click()
+
+    expect(instance.overlay).toBeNull()
+    expect(instance.expanded).toBe(false)
+    expect(document.querySelector(".herb-dev-tools-backdrop")).toBeNull()
+  })
+
+  test("never lets a blocking overlay be escaped this way", () => {
+    const element = target()
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "broke", element, overlay: "blocking" }))
+
+    locateButton().click()
+
+    expect(instance.overlay).toBe("blocking")
+    expect(document.documentElement.style.overflow).toBe("hidden")
+  })
+
+  test("leaves a docked panel exactly where it was", () => {
+    const element = target()
+    const instance = createPanel()
+
+    instance.report(diagnostic({ code: "sized", severity: "warning", element }))
+    instance.open()
+
+    locateButton().click()
+
+    expect(instance.expanded).toBe(false)
+    expect(panel()!.classList.contains("herb-dev-tools-open")).toBe(true)
+    expect(document.querySelector(".herb-slot-flash")).not.toBeNull()
+  })
+})
+
+describe("resizing the docked panel", () => {
+  function attach() {
+    const slot = document.createElement("div")
+
+    slot.setAttribute("data-herb-dev-tools-badge-slot", "")
+    document.body.appendChild(slot)
+  }
+
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement
+  }
+
+  function handle(edge: string) {
+    return document.querySelector(`[data-herb-dev-tools-resize="${edge}"]`) as HTMLElement | null
+  }
+
+  function drag(edge: string, to: { x?: number, y?: number }) {
+    const element = handle(edge)!
+    const box = panel().getBoundingClientRect()
+
+    element.setPointerCapture = () => {}
+    element.releasePointerCapture = () => {}
+
+    element.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientX: box.left, clientY: box.top }))
+    element.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 1, clientX: to.x ?? box.left, clientY: to.y ?? box.top }))
+    element.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1, clientX: to.x ?? box.left, clientY: to.y ?? box.top }))
+  }
+
+  test("offers a handle on each grabbable edge while docked", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    expect(handle("left")).not.toBeNull()
+    expect(handle("bottom")).not.toBeNull()
+    expect(handle("corner")).not.toBeNull()
+    expect(handle("top")).toBeNull()
+
+    const corner = getComputedStyle(handle("corner")!)
+
+    expect(corner.bottom).toBe("0px")
+    expect(corner.left).toBe("0px")
+    expect(corner.cursor).toBe("nesw-resize")
+  })
+
+  test("holds the right anchor while the left edge moves", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const before = panel().getBoundingClientRect()
+
+    drag("left", { x: before.left + 60 })
+
+    const after = panel().getBoundingClientRect()
+
+    expect(Math.round(after.right)).toBe(Math.round(before.right))
+  })
+
+  test("never asks for more width than the viewport has", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    drag("left", { x: -400 })
+
+    expect(panel().getBoundingClientRect().width).toBeLessThanOrEqual(window.innerWidth)
+  })
+
+  test("grows the panel downward when the bottom edge is dragged down", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const before = panel().getBoundingClientRect()
+
+    drag("bottom", { y: before.top + 260 })
+
+    const after = panel().getBoundingClientRect()
+
+    expect(Math.round(after.height)).toBe(260)
+    expect(Math.round(after.top)).toBe(Math.round(before.top))
+    expect(Math.round(after.width)).toBe(Math.round(before.width))
+  })
+
+  test("resizes both axes from the corner", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const before = panel().getBoundingClientRect()
+
+    drag("corner", { x: before.left + 40, y: before.top + 240 })
+
+    const after = panel().getBoundingClientRect()
+
+    expect(Math.round(after.height)).toBe(240)
+    expect(Math.round(after.right)).toBe(Math.round(before.right))
+  })
+
+  test("keeps the size across a re-render and a reload", () => {
+    attach()
+    const first = createPanel()
+
+    first.report(diagnostic())
+    first.open()
+
+    const start = panel().getBoundingClientRect()
+
+    drag("bottom", { y: start.top + 240 })
+
+    const height = Math.round(panel().getBoundingClientRect().height)
+
+    expect(height).toBe(240)
+
+    first.report(diagnostic({ code: "another" }))
+
+    expect(Math.round(panel().getBoundingClientRect().height)).toBe(height)
+
+    first.destroy()
+    document.body.innerHTML = ""
+
+    attach()
+    const second = createPanel()
+
+    second.report(diagnostic())
+    second.open()
+
+    expect(Math.round(panel().getBoundingClientRect().height)).toBe(height)
+
+    second.resetSize()
+
+    expect(Math.round(panel().getBoundingClientRect().height)).not.toBe(height)
+  })
+
+  test("refuses to shrink below a usable size, or below what the viewport allows", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    drag("left", { x: window.innerWidth })
+
+    const floor = Math.min(435, window.innerWidth - 24)
+
+    expect(Math.round(panel().getBoundingClientRect().width)).toBe(floor)
+
+    drag("bottom", { y: 0 })
+
+    expect(Math.round(panel().getBoundingClientRect().height)).toBe(180)
+  })
+
+  test("offers no handles once the panel fills the window or an overlay is up", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+    instance.expand()
+
+    expect(handle("left")).toBeNull()
+
+    instance.collapse()
+
+    expect(handle("left")).not.toBeNull()
+
+    instance.report(diagnostic({ code: "unhydrated", overlay: "dismissible" }))
+
+    expect(handle("left")).toBeNull()
+  })
+})
+
+describe("resize round trips", () => {
+  function attach() {
+    const slot = document.createElement("div")
+
+    slot.setAttribute("data-herb-dev-tools-badge-slot", "")
+    document.body.appendChild(slot)
+  }
+
+  function panel() {
+    return document.querySelector(".herb-dev-tools-panel") as HTMLElement
+  }
+
+  test("does not drift when the same size is stored and reapplied", () => {
+    attach()
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const widths: number[] = []
+
+    for (let round = 0; round < 4; round += 1) {
+      const element = document.querySelector('[data-herb-dev-tools-resize="left"]') as HTMLElement
+
+      element.setPointerCapture = () => {}
+
+      const box = panel().getBoundingClientRect()
+      const target = box.left + 10
+
+      element.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientX: box.left, clientY: box.top }))
+      element.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 1, clientX: target, clientY: box.top }))
+      element.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1, clientX: target, clientY: box.top }))
+
+      instance.report(diagnostic({ code: `round-${round}` }))
+
+      widths.push(Math.round(panel().getBoundingClientRect().width))
+    }
+
+    for (let index = 1; index < widths.length; index += 1) {
+      expect(widths[index]).toBeLessThanOrEqual(widths[index - 1])
+    }
+
+    expect(new Set(widths).size).toBeGreaterThan(0)
+    expect(Math.max(...widths)).toBeLessThanOrEqual(window.innerWidth)
+  })
+})
+
+describe("resize drag hygiene", () => {
+  test("suppresses text selection for the length of the drag", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const handle = document.querySelector('[data-herb-dev-tools-resize="left"]') as HTMLElement
+
+    handle.setPointerCapture = () => {}
+
+    expect(document.body.style.userSelect).toBe("")
+
+    handle.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientX: 100, clientY: 100 }))
+
+    expect(document.body.style.userSelect).toBe("none")
+
+    handle.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1, clientX: 200, clientY: 100 }))
+
+    expect(document.body.style.userSelect).toBe("")
+  })
+
+  test("gives selection back when a drag is cancelled", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const handle = document.querySelector('[data-herb-dev-tools-resize="left"]') as HTMLElement
+
+    handle.setPointerCapture = () => {}
+
+    handle.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientX: 100, clientY: 100 }))
+    handle.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerId: 1, clientX: 100, clientY: 100 }))
+
+    expect(document.body.style.userSelect).toBe("")
+  })
+
+  test("gives selection back when the panel is destroyed mid-drag", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic())
+    instance.open()
+
+    const handle = document.querySelector('[data-herb-dev-tools-resize="left"]') as HTMLElement
+
+    handle.setPointerCapture = () => {}
+    handle.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientX: 100, clientY: 100 }))
+
+    instance.destroy()
+
+    expect(document.body.style.userSelect).toBe("")
+  })
+})
+
+describe("what a blocking screen calls itself", () => {
+  function title() {
+    return document.querySelector(".herb-dev-tools-title")!.textContent
+  }
+
+  test("says the template could not be compiled", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Parser", phase: "compile", overlay: "blocking" }))
+
+    expect(title()).toBe("This template could not be compiled")
+  })
+
+  test("says templates, plural, when more than one failed", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", template: "a.html.erb", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+      diagnostic({ code: "two", template: "b.html.erb", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+    ])
+
+    expect(title()).toBe("These templates could not be compiled")
+  })
+
+  test("keeps naming the producer for anything that did render", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Herb Client Runtime", phase: "runtime", overlay: "dismissible" }))
+
+    expect(title()).toBe("Herb Client Runtime")
+  })
+
+  test("keeps naming the producer when the phase is not said at all", () => {
+    const instance = createPanel()
+
+    instance.report(diagnostic({ origin: "Acme Scanner", overlay: "dismissible" }))
+
+    expect(title()).toBe("Acme Scanner")
+  })
+
+  test("will not claim a compile failure for a mixed screen", () => {
+    const instance = createPanel()
+
+    instance.report([
+      diagnostic({ code: "one", origin: "Herb Parser", phase: "compile", overlay: "blocking" }),
+      diagnostic({ code: "two", origin: "Herb Parser", overlay: "blocking" }),
+    ])
+
+    expect(title()).toBe("Herb Parser")
+  })
+})
+
+describe("one block per file", () => {
+  const SOURCE = `<div class="actions">\n  <form action="/posts">\n    <button>Delete</button>\n  </form>\n</div>\n`
+
+  function payload() {
+    return {
+      version: 1,
+      sources: { "app/views/posts/_actions.html.erb": SOURCE },
+      diagnostics: [
+        {
+          template: "app/views/posts/_actions.html.erb",
+          message: "Nested `<form>` elements are not allowed.",
+          code: "html-no-nested-forms",
+          severity: "error",
+          origin: "Herb Linter",
+          location: { start: { line: 2, column: 3 }, end: { line: 2, column: 24 } },
+        },
+        {
+          template: "app/views/posts/_actions.html.erb",
+          message: "Button has no accessible name.",
+          code: "html-button-name",
+          severity: "warning",
+          origin: "Herb Linter",
+          location: { start: { line: 3, column: 5 }, end: { line: 3, column: 26 } },
+        },
+      ],
+    }
+  }
+
+  function viewButton() {
+    return document.querySelector('[data-herb-dev-tools-action="view"]') as HTMLButtonElement | null
+  }
+
+  function combined() {
+    return document.querySelector(".herb-dev-tools-combined")
+  }
+
+  test("offers the toggle once the panel fills the window", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+
+    expect(viewButton()).toBeNull()
+
+    instance.expand()
+
+    await waitForExcerpt()
+
+    expect(viewButton()!.textContent).toBe("One block per file")
+    expect(viewButton()!.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  test("replaces the cards with a single block", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+
+    await waitForExcerpt()
+
+    expect(cards()).toHaveLength(2)
+    expect(combined()).toBeNull()
+
+    instance.toggleView()
+
+    await waitFor(() => combined(), "the combined block")
+
+    expect(cards()).toHaveLength(0)
+    expect(document.querySelectorAll(".herb-dev-tools-combined")).toHaveLength(1)
+    expect(viewButton()!.textContent).toBe("One card per offense")
+  })
+
+  test("marks every offence in the one block", async () => {
+    embed(payload())
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    instance.toggleView()
+
+    const element = await waitFor(
+      () => document.querySelector(".herb-dev-tools-combined herb-ansi") as HTMLElement | null,
+      "the combined block",
+    )
+
+    const plain = element.textContent!.split("").filter(character => character.charCodeAt(0) !== 27).join("")
+      .replace(/\[[0-9;]*m/g, "")
+
+    expect(plain).toContain("Nested `<form>` elements are not allowed.")
+    expect(plain).toContain("Button has no accessible name.")
+
+    const lines = plain.split("\n")
+
+    expect(lines.some(line => line.includes("1 \u2502 <div class=\"actions\">"))).toBe(true)
+    expect(lines.some(line => line.includes("5 \u2502 </div>"))).toBe(true)
+    expect(lines.filter(line => line.includes("~")).length).toBe(2)
+  })
+
+  test("keeps the cards for a file it has no source for", async () => {
+    embed({ version: 1, diagnostics: payload().diagnostics })
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+    instance.toggleView()
+
+    expect(instance.view).toBe("combined")
+    expect(combined()).toBeNull()
+    expect(cards()).toHaveLength(2)
+    expect(viewButton()).toBeNull()
+  })
+
+  test("remembers the choice for the session", async () => {
+    embed(payload())
+
+    const first = createPanel()
+
+    first.open()
+    first.expand()
+    first.toggleView()
+
+    expect(first.view).toBe("combined")
+
+    first.destroy()
+    document.body.innerHTML = ""
+    embed(payload())
+
+    const second = createPanel()
+
+    expect(second.view).toBe("combined")
   })
 })

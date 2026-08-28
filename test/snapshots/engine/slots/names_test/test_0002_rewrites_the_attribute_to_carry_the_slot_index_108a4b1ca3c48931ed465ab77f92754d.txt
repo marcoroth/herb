@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::NamesTest#test_0002_rewrites the attribute to carry the slot index"
-input: "<p data-herb-name=\"body\"><%= @body %></p>"
----
-<!--herb-region:app/views/test.html.erb:0adb31a9:0--><p data-herb-name="0:body" data-herb-slot="0:child">hi</p><!--/herb-region:app/views/test.html.erb-->

@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0018_a predicate read in a textarea rewrites for the server"
-input: "states rendered 11"
----
-<!--herb-region:app/views/test.html.erb:272b3ffd:0--><textarea data-herb-slot="0:raw_text">false</textarea><!--/herb-region:app/views/test.html.erb-->

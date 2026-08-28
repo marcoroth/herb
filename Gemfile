@@ -13,6 +13,7 @@ gem "cruise"
 gem "digest", "~> 3.2"
 gem "erubi"
 gem "irb", "~> 1.18"
+gem "lightningcss", "~> 0.1"
 gem "lz_string"
 gem "maxitest", "~> 6.0"
 gem "minitest-difftastic", "~> 0.2"
@@ -27,6 +28,7 @@ gem "reline", "~> 0.7"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
 gem "turbo-rails", "~> 2.0", require: false
+gem "webrick", "~> 1.9", require: false
 gem "yerba", "~> 0.9"
 
 # TODO: remove once https://github.com/soutaro/steep/pull/2255 ships

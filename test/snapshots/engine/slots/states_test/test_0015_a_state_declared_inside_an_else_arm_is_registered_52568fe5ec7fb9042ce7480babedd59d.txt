@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0015_a state declared inside an else arm is registered"
-input: "states rendered 8"
----
-<!--herb-region:app/views/test.html.erb:a2577f19:0--><!--herb-slot:0:conditional--><!--herb-branch:0:1--><span data-herb-slot="1:child">false</span><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:a2577f19"><!--herb-branch:0:0-->x</template>

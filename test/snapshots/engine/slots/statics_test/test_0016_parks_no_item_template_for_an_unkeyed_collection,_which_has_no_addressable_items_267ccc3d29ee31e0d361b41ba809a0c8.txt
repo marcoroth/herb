@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0016_parks no item template for an unkeyed collection, which has no addressable items"
-input: "statics unkeyed collection parks no item template"
----
-<!--herb-region:app/views/test.html.erb:939caffd:0--><ul><!--herb-slot:0:collection--><li data-herb-slot="1:child">a</li><li data-herb-slot="1:child">b</li><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->

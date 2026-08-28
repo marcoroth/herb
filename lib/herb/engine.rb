@@ -17,6 +17,8 @@ require_relative "engine/parse_error"
 
 module Herb
   class Engine
+    VISITOR_DESCRIPTION_LIMIT = 200 #: Integer
+
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -46,6 +48,12 @@ module Herb
       '"' => "&quot;",
       "'" => "&#39;",
     }.freeze
+
+    ATTRIBUTE_ESCAPE_TABLE = ESCAPE_TABLE.merge(
+      "\n" => "&#10;",
+      "\r" => "&#13;",
+      "\t" => "&#9;"
+    ).freeze
 
     def initialize(input, properties = {})
       @context = VisitorContext.new(
@@ -94,6 +102,12 @@ module Herb
           parse_result.value.accept(visitor)
         end
 
+        # A visitor that writes into the tree writes after every visitor has read it, so what one
+        # of them adds is never something another one reads as if the template had written it.
+        @visitors.each do |visitor| # rubocop:disable Style/CombinableLoops
+          visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
+        end
+
         compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
@@ -130,9 +144,6 @@ module Herb
       value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
     end
 
-    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
-    # unless the value is already marked safe. A marker the engine generated is markup, so it has
-    # to survive both buffers unchanged.
     #: (untyped) -> String
     def self.raw(value)
       string = value.to_s
@@ -141,15 +152,7 @@ module Herb
     end
 
     def self.attr(value)
-      value.to_s
-           .gsub("&", "&amp;")
-           .gsub('"', "&quot;")
-           .gsub("'", "&#39;")
-           .gsub("<", "&lt;")
-           .gsub(">", "&gt;")
-           .gsub("\n", "&#10;")
-           .gsub("\r", "&#13;")
-           .gsub("\t", "&#9;")
+      value.to_s.gsub(/[&<>"'\n\r\t]/, ATTRIBUTE_ESCAPE_TABLE)
     end
 
     def self.js(value)
@@ -384,16 +387,28 @@ module Herb
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
-      message = ErrorFormatter.new(input, parser_errors, filename: filename).format_all
+      formatter = ErrorFormatter.new(input, parser_errors, filename: filename)
 
       raise ParseError.new(
-        "\n#{message}",
+        formatter.summary,
+        details: formatter,
         diagnostics: parser_errors.map { |error|
           error.to_diagnostic(template: relative_file_path)
         },
         source: input,
-        filename: relative_file_path
+        filename: relative_file_path,
+        visitors: visitor_descriptions,
+        parser_options: @parser_options
       )
+    end
+
+    #: () -> Array[String]
+    def visitor_descriptions
+      @visitors.map { |visitor|
+        described = visitor.inspect
+
+        described.length > VISITOR_DESCRIPTION_LIMIT ? "#{described[0, VISITOR_DESCRIPTION_LIMIT]}…" : described
+      }
     end
 
     #: (String) -> void
@@ -435,8 +450,8 @@ module Herb
       end
 
       formatter = ErrorFormatter.new(input, errors, filename: filename)
-      message = formatter.format_all
-      raise CompilationError, "\n#{message}"
+
+      raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end
 
     def context_options(properties)
@@ -474,7 +489,7 @@ module Herb
       syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
 
       if syntax_errors.any?
-        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        details = syntax_errors.map { |error| "  - #{error.message} (line #{error.location.start_line})" }.join("\n")
         raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
       end
     end

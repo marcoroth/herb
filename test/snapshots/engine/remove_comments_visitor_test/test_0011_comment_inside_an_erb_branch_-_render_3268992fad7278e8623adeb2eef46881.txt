@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsVisitorTest#test_0011_comment inside an erb branch - render"
+input: "{source: \"<% if admin? %><!-- admin only --><p>Admin</p><% else %><!-- everyone --><p>User</p><% end %>\", locals: {admin?: false}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<p>User</p>

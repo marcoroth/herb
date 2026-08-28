@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::DisplacedTest#test_0004_the slots inside it keep the numbering of the template that wrote them"
-input: "<% content_for :title do %><h1><%= @title %></h1><% end %><p><%= @body %></p>"
----
-<!--herb-region:app/views/page/show.html.erb:7eb975e3:0--><!--herb-slot:0:block--><!--herb-region:app/views/page/show.html.erb:7eb975e3:0--><h1 data-herb-slot="1:child">T</h1><!--/herb-region:app/views/page/show.html.erb--><!--/herb-slot:0--><p data-herb-slot="2:child">B</p><!--/herb-region:app/views/page/show.html.erb-->

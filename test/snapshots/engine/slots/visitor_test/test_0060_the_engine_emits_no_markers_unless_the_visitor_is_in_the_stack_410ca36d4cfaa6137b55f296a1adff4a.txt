@@ -1,6 +1,0 @@
----
-source: "Engine::Slots::VisitorTest#test_0060_the engine emits no markers unless the visitor is in the stack"
-input: "{source: \"<%# herb:slots %><p><%= @a %></p>\", options: {}}"
----
-_buf = ::String.new; _buf << '<p>'.freeze; _buf << (@a).to_s; _buf << '</p>'.freeze;
-_buf.to_s

@@ -2,6 +2,8 @@
 
 module Herb
   class Engine
+    VISITOR_DESCRIPTION_LIMIT: Integer
+
     attr_reader src: untyped
 
     attr_reader context: untyped
@@ -24,13 +26,12 @@ module Herb
 
     ESCAPE_TABLE: untyped
 
+    ATTRIBUTE_ESCAPE_TABLE: untyped
+
     def initialize: (untyped input, ?untyped properties) -> untyped
 
     def self.h: (untyped value) -> untyped
 
-    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
-    # unless the value is already marked safe. A marker the engine generated is markup, so it has
-    # to survive both buffers unchanged.
     # : (untyped) -> String
     def self.raw: (untyped) -> String
 
@@ -99,6 +100,9 @@ module Herb
     def insert_herb_alias!: () -> void
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
+
+    # : () -> Array[String]
+    def visitor_descriptions: () -> Array[String]
 
     # : (String) -> void
     def report: (String) -> void

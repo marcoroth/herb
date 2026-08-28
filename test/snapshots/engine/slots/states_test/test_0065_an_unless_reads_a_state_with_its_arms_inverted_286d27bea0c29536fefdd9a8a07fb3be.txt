@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0065_an unless reads a state with its arms inverted"
-input: "states markup 37"
----
-<!--herb-branch:0:0-->Idle<!--herb-branch:0:1-->Busy

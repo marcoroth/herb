@@ -1,6 +1,0 @@
----
-source: "Engine::HerbAliasOmissionTest#test_0003_the alias is kept for an escaped attribute value"
-input: "alias kept for escaped attribute"
----
-__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div class="'.freeze; _buf << __herb.attr((value)); _buf << '">x</div>'.freeze;
-_buf.to_s

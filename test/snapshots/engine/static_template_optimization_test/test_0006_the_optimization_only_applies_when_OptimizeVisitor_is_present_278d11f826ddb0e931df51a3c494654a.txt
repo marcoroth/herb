@@ -1,6 +1,0 @@
----
-source: "Engine::StaticTemplateOptimizationTest#test_0006_the optimization only applies when OptimizeVisitor is present"
-input: "{source: \"<div>Static</div>\", options: {}}"
----
-_buf = ::String.new; _buf << '<div>Static</div>'.freeze;
-_buf.to_s

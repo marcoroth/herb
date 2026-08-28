@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0023_parks nothing at all unless the mode asks for it"
-input: "statics parks nothing unless the mode asks"
----
-<!--herb-region:app/views/test.html.erb:a6ef770d:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

@@ -232,16 +232,18 @@ The `visitors` option accepts [visitors](/bindings/ruby/reference#visitors) that
 
 Herb ships the following transform visitors:
 
-| Visitor                       | Description                                                             |
-|-------------------------------|-------------------------------------------------------------------------|
-| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                        |
-| `ContentForVisitor`           | Appends HTML to the end of every matching element                       |
-| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                               |
-| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental)            |
-| `DebugVisitor`                | Annotates output with the template and position it came from            |
-| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)       |
-| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental) |
-| `InlineRenderVisitor`         | Replaces a `render` of a static partial with the partial (experimental) |
+| Visitor                       | Description                                                                  |
+|-------------------------------|------------------------------------------------------------------------------|
+| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                             |
+| `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
+| `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
+| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
+| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental)                 |
+| `DebugVisitor`                | Annotates output with the template and position it came from                 |
+| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
+| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
+| `InlineRenderVisitor`         | Replaces a `render` of a static partial with the partial (experimental)      |
+| `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
@@ -375,6 +377,55 @@ The engine renders:
 ```
 
 The closing tag is inserted where the parser determined the element ends, which keeps the surrounding whitespace (and therefore the rendering of `inline-block` elements) identical to the template without the visitor.
+
+### `RemoveCommentsVisitor`
+
+Removes comments, so that the compiled output never contains one.
+
+An HTML comment is served to the browser and is readable by anyone who looks at the page source, so a note the template author wrote for other developers ends up in production.
+
+```ruby
+require "herb/engine/remove_comments_visitor"
+
+Herb::Engine.new(source, visitors: [Herb::Engine::RemoveCommentsVisitor.new])
+```
+
+Given this template:
+
+```html+erb
+<div>
+  <p><%= product.name %></p><!-- TODO: drop this once the new checkout ships -->
+</div>
+```
+
+The engine renders:
+
+```html
+<div>
+  <p>Coffee</p>
+</div>
+```
+
+Everything nested inside a comment goes with it, so ERB written inside one is removed before it is compiled and never runs. A conditional comment is an HTML comment too, which means the markup it guards is removed along with it.
+
+ERB comments go as well. The compiler already leaves `<%# comment %>` and `<% # comment %>` out of the output on its own, so removing them makes it something the template is guaranteed instead of something the compiler happens to do.
+
+What Herb writes to itself is not a comment. A directive is an ERB comment whose content starts with `herb:` or `locals:`, which makes it an instruction to Herb or to Action View instead of a note for people, so `<%# herb:state (pending: false) %>`, `<%# herb:key user.id %>`, `<%# herb:disable html-tag-name-lowercase %>` and `<%# locals: (title:) %>` all stay where they are. The compiler leaves them out of the output the way it leaves any ERB comment out.
+
+A marker is an HTML comment naming `herb-`, which is how a pass hands something to the browser, the way `Slots::Visitor` writes `<!--herb-slot:0-->` around a slot. Markers stay, in the output as well, so the visitor can go anywhere in the stack:
+
+```ruby
+Herb::Engine.new(source, visitors: [
+  Herb::Engine::RemoveCommentsVisitor.new,
+  Herb::Engine::Slots::Visitor.new
+])
+```
+
+Either order renders the same markup, with the template's own comments gone and every slot marker left in place.
+
+The whitespace around a comment is left where it was, so removing one never changes how the elements next to it are laid out. A comment on a line of its own leaves that line's whitespace behind. That includes an ERB comment, where the compiler on its own would have trimmed the line away.
+
+Comment syntax inside a `<script>` or `<style>` element is part of that element's text instead of an HTML comment, so it stays.
 
 ### `ContentForVisitor`
 
@@ -758,6 +809,106 @@ Herb::Engine.new(source, visitors: [
 
 A query issued inside an inlined partial is filed under the partial, not under the template it landed in, and a collection reports one render per item rather than one for all of them. The lines and columns need no adjusting, because the nodes came from the partial's own source.
 
+### `ScopedStyle::Visitor` <Badge type="warning" text="experimental" />
+
+`ScopedStyle::Visitor` scopes a `<style scoped>` block to the markup written in the same file, similar to how Vue and Svelte scope a component's styles. It marks the file's elements with a scope attribute derived from its path, and narrows the block's selectors to require it, so the block styles those elements and nothing else.
+
+It transforms this:
+
+```html
+<style scoped>
+  .title { color: red; }
+</style>
+
+<h1 class="title">Hi</h1>
+```
+
+into this:
+
+```html
+<style>
+  .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+    color: red;
+  }
+</style>
+
+<h1 class="title" data-herb-scope-1a2b3c4d>Hi</h1>
+```
+
+Here the scope sits on the root alone. `:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)` matches the root and everything inside it, so nested elements need no attribute of their own. A file that renders a partial is scoped differently. Every element the file wrote carries the scope, and the selector narrows to `[data-herb-scope-1a2b3c4d]` alone, so the scope stays on that markup and never reaches into the partial.
+
+The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is one. Give the visitor a `LightningCSS::Transformer`, and each rule in the block is narrowed to the scope.
+
+```ruby
+require "herb/engine/scoped_style/visitor"
+require "lightningcss"
+
+Herb::Engine.new(source, filename: path, visitors: [
+  Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+])
+```
+
+The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there.
+
+Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
+
+`deliver` says where the narrowed CSS goes.
+
+| Value     | Description                                                                             |
+|-----------|-----------------------------------------------------------------------------------------|
+| `:inline` | Leaves the block where it was written. This is the default. It needs nothing else installed, and writes the block again on every render of the file. |
+| `:hoist`  | Takes the block out and registers the CSS on a [channel](#delivering-something-other-than-diagnostics) of the session the page is collecting into, so it is written once however many times the file renders. Needs `Herb::Engine::Report::Middleware` to put it on the page. |
+| `:none`   | Takes the block out and puts nothing in its place, for when the CSS was already gathered into an asset. The markup still carries its scope attribute. |
+
+It is set alongside `transform`:
+
+```ruby
+Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: :hoist)
+```
+
+#### Supplying your own transform
+
+Lightning CSS is one way to narrow the CSS, and not the only one. `transform` is any object that answers `call`. The visitor hands it the block's CSS and the scope, and reads a narrowed stylesheet back, so a different CSS engine or a hand-written rewriter fits the same slot.
+
+| Argument       | Type     | Description                                              |
+|----------------|----------|----------------------------------------------------------|
+| `css`          | `String` | The block's CSS, exactly as it was written               |
+| `scope:`       | `String` | A selector fragment every rule has to be narrowed by     |
+| *return value* | any      | Anything whose `to_s` is the narrowed CSS                |
+
+```ruby
+transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
+#=> ".title[data-herb-scope-1a2b3c4d] { color: red }"
+```
+
+A return value answering `warnings` has each of them reported as a diagnostic, which is how a `LightningCSS::Result` surfaces what Lightning CSS kept without acting on. CSS a transform could not act on is CSS that does nothing once the page renders, so it is worth saying so at compile time. A transform answering with a plain string reports nothing.
+
+#### Gathering the CSS ahead of time
+
+A scope and its CSS are decided when a file is compiled, so everything a stylesheet needs is knowable before anything renders. `ScopedStyle::Collector` compiles a set of files for that and nothing else:
+
+```ruby
+require "herb/engine/scoped_style/collector"
+
+collector = Herb::Engine::ScopedStyle::Collector.new(transform: transform, project_path: root)
+
+collector.add("app/views/posts/_card.html.erb")
+collector.add("app/views/posts/index.html.erb")
+
+collector.to_css   #=> the one stylesheet those files add up to
+collector.styles   #=> { "data-herb-scope-1a2b3c4d" => "..." }
+collector.files    #=> which scopes each file contributed
+collector.failures #=> the files it could not compile, and why
+```
+
+Paths are expanded before they are compiled, so the scopes it gathers are the ones the same files carry when your application compiles them. A file it cannot compile is recorded in `failures` and skipped, so one broken template does not take a build down.
+
+Templates then compile with `deliver: :none` and emit no CSS at all, because the stylesheet already has it.
+
+Which files to gather, where the stylesheet goes, and how it reaches the page is the job of whatever integrates Herb with a framework.
+
+It has to run after `InlineRenderVisitor`, so that markup an inlined partial brought with it takes the partial's own scope, and before `SlotVisitor`, because the markup `SlotVisitor` parks for a client to rebuild has to carry the attribute already.
+
 ## Diagnostics
 
 Anything the engine or a visitor finds is a `Herb::Diagnostic`, whoever found it and whenever they found it. One value object means a parse error, a security violation, and a measurement taken while the page rendered all reach the browser through the same channel, so a new checker gets delivery without inventing one.
@@ -823,6 +974,39 @@ Wrapping a request works too. A session that is already open is one somebody mea
 ```ruby
 session = Herb::Engine::Report::Session.capture { get "/posts" }
 ```
+
+### Delivering something other than diagnostics
+
+Diagnostics are not the only thing a page collects. A `Herb::Engine::Report` also keeps **channels**, which is where a producer other than the compiler puts what it found, and it knows nothing about what any of them hold.
+
+A channel is anything answering three methods:
+
+| Method     | Returns  | Description                                                        |
+|------------|----------|--------------------------------------------------------------------|
+| `empty?`   | `bool`   | Whether it collected anything. An empty channel is never written.  |
+| `to_html`  | `String` | The markup to put on the page.                                     |
+| `anchor`   | `Symbol` | `:head` or `:body`, the tag it wants to be written before.         |
+
+The block builds one the first time its name is asked for, so a producer registers itself as it records and nothing has to be wired up in advance:
+
+```ruby
+Herb::Engine::Report::Session.current.channel(:query_log) { QueryLog.new }.add(sql)
+```
+
+A channel that collects queries and writes them at the end of the body looks like this:
+
+```ruby
+class QueryLog
+  def initialize = @queries = []
+  def add(sql) = @queries << sql
+
+  def anchor = :body
+  def empty? = @queries.empty?
+  def to_html = %(<script type="application/json" data-query-log>#{JSON.generate(@queries)}</script>)
+end
+```
+
+The middleware writes every non-empty channel before the tag it asked for, and a channel asking for a tag the response does not have is left alone. Adding a producer needs nothing in `Report`, `Session`, or `Middleware`.
 
 ## Instrumentation <Badge type="warning" text="experimental" />
 

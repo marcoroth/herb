@@ -1,9 +1,0 @@
----
-source: "Engine::StaticTemplateOptimizationTest#test_0011_the ensure wrapper keeps the buffer"
-input: "{source: \"<div>hi</div>\", options: {ensure: true, visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
----
-begin; __original_outvar = _buf if defined?(_buf); _buf = ::String.new; _buf << '<div>hi</div>'.freeze;
-_buf.to_s
-; ensure
-  _buf = __original_outvar
-end

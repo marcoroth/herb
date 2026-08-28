@@ -1,6 +1,0 @@
----
-source: "Engine::StaticTemplateOptimizationTest#test_0009_a custom preamble keeps the buffer"
-input: "{source: \"<div>hi</div>\", options: {preamble: \"@output = +''\", visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
----
-@output = +'';  _buf << '<div>hi</div>'.freeze;
-_buf.to_s

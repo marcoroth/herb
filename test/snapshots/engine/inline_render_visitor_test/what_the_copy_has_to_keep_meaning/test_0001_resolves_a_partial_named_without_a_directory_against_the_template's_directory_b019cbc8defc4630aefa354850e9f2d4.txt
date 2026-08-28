@@ -1,8 +1,0 @@
----
-source: "Engine::InlineRenderVisitorTest::what the copy has to keep meaning#test_0001_resolves a partial named without a directory against the template's directory"
-input: "resolves a partial against the templates directory"
----
-_buf = ::String.new; ->() { 
- _buf << '<div>'.freeze; _buf << (title).to_s; _buf << '</div>
-'.freeze; }.call() 
-_buf.to_s

@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0037_disable directive written with a Ruby comment instead of an ERB comment"
+input: |2-
+<% # herb:disable html-tag-name-lowercase %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:44))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " # herb:disable html-tag-name-lowercase " (location: (1:2)-(1:42))
+    │   ├── tag_closing: "%>" (location: (1:42)-(1:44))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:44)-(2:0))
+        └── content: "\n"

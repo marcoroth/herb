@@ -1,7 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotActions } from "../src/actions"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState, STATE_EVENT } from "../src/state"
+import { Actions } from "../src/actions/actions"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+import { STATE_EVENT } from "../src/shared/events"
+import { resetReport } from "../src/shared/report"
 
 const FILE = "app/views/page/panel.html.erb"
 
@@ -60,9 +62,9 @@ const PAGE =
     },
   })}</template>`
 
-let slots: SlotIndex
-let state: SlotState
-let actions: SlotActions
+let slots: Slots
+let state: State
+let actions: Actions
 
 function click(selector: string): void {
   document.querySelector<HTMLElement>(selector)!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -71,13 +73,13 @@ function click(selector: string): void {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
 
-  actions = new SlotActions(state)
+  actions = new Actions(state)
   actions.start(document.body)
 })
 
@@ -179,7 +181,7 @@ describe("declarative actions", () => {
     menu.dispatchEvent(new Event("mouseleave"))
     expect(state.getState("open")).toBe(true)
 
-    actions = new SlotActions(state)
+    actions = new Actions(state)
     actions.start(document.body)
   })
 
@@ -255,6 +257,17 @@ describe("declarative actions", () => {
     expect(document.querySelector("#b em")?.textContent).toContain("plain")
   })
 
+  test("a second row's button resolves its own scope, not the one the last run pinned", () => {
+    click("#a .star")
+
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+
+    click("#b .star")
+
+    expect(document.querySelector("#b em")?.textContent).toContain("starred")
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+  })
+
   test("a dynamically added element works through delegation", () => {
     const late = document.createElement("button")
 
@@ -315,7 +328,7 @@ describe("declarative actions", () => {
     }
 
     actions.stop()
-    actions = new SlotActions(state)
+    actions = new Actions(state)
     actions.start(document.body)
 
     expect(entries).toEqual([])
@@ -370,14 +383,14 @@ describe("a tag helper input bound to a state", () => {
   test("a quoted set writes the value into the input", () => {
     document.body.innerHTML = HELPER_PAGE
 
-    const helperSlots = new SlotIndex()
+    const helperSlots = new Slots()
     helperSlots.scan(document.body)
 
-    const helperState = new SlotState(helperSlots, { persist: "none" })
+    const helperState = new State(helperSlots, {})
     helperState.adopt()
     helperState.observe()
 
-    const helperActions = new SlotActions(helperState)
+    const helperActions = new Actions(helperState)
     helperActions.start(document.body)
 
     document.querySelector<HTMLElement>("#quoted")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -424,12 +437,11 @@ describe("an action on an element its own sibling action removes", () => {
   test("the later action still resolves the scope the element had", () => {
     document.body.innerHTML = SWAP_PAGE
 
-    const swapSlots = new SlotIndex()
+    const swapSlots = new Slots()
 
     swapSlots.scan(document.body)
 
-    const swapState = new SlotState(swapSlots, {
-      persist: "none",
+    const swapState = new State(swapSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -437,7 +449,7 @@ describe("an action on an element its own sibling action removes", () => {
 
     swapState.adopt()
 
-    const actions = new SlotActions(swapState)
+    const actions = new Actions(swapState)
 
     actions.start(document.body)
     swapState.setState({ draft: "typed" })
@@ -450,5 +462,99 @@ describe("an action on an element its own sibling action removes", () => {
     expect(swapState.getState("draft", { scope })).toBe("original")
 
     actions.stop()
+  })
+})
+
+describe("an action attribute that is rewritten", () => {
+  test("runs what the attribute says now, not what it said when it was scanned", async () => {
+    document.body.innerHTML = PAGE
+
+    const rewriteSlots = new Slots()
+    rewriteSlots.scan(document.body)
+
+    const rewriteState = new State(rewriteSlots, { transport: async () => null })
+    rewriteState.adopt()
+
+    const actions = new Actions(rewriteState)
+    actions.start(document.body)
+
+    const button = document.createElement("button")
+
+    button.setAttribute("data-herb-set", "sort=date")
+    document.querySelector("section")!.appendChild(button)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    button.click()
+
+    expect(rewriteState.getState("sort")).toBe("date")
+
+    button.setAttribute("data-herb-set", "sort=name")
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    button.click()
+
+    expect(rewriteState.getState("sort")).toBe("name")
+
+    actions.stop()
+  })
+})
+
+describe("a template the compiler refused", () => {
+  const REFUSED = "app/views/page/refused.html.erb"
+
+  const REFUSED_PAGE =
+    `<!--herb-region:${REFUSED}:bbbbbbbb:0-->` +
+    `<section>` +
+    `<button id="refused-toggle" data-herb-toggle="open">Details</button>` +
+    `<button id="refused-reset" data-herb-reset="sort">Reset</button>` +
+    `</section>` +
+    `<!--/herb-region:${REFUSED}-->`
+
+  let refusedActions: Actions
+  let entries: { code: string }[]
+
+  beforeEach(() => {
+    actions.stop()
+    resetReport()
+
+    document.body.innerHTML = REFUSED_PAGE
+    entries = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const refusedSlots = new Slots()
+
+    refusedSlots.scan(document.body)
+
+    const refusedState = new State(refusedSlots, {})
+
+    refusedState.adopt()
+
+    refusedActions = new Actions(refusedState)
+    refusedActions.start(document.body)
+  })
+
+  afterEach(() => {
+    refusedActions.stop()
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("the page still says which template the markup came from", () => {
+    const slots = new Slots()
+
+    slots.scan(document.body)
+
+    expect(slots.regions().map((region) => region.file)).toEqual([REFUSED])
+  })
+
+  test("says nothing about the controls inside it, because the compiler already did", () => {
+    document.querySelector<HTMLElement>("#refused-toggle")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    document.querySelector<HTMLElement>("#refused-reset")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(entries.map((entry) => entry.code)).toEqual([])
   })
 })

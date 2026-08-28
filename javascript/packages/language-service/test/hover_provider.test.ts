@@ -866,3 +866,45 @@ describe("HoverProvider", () => {
     })
   })
 })
+
+describe("scoped style hover", () => {
+  let service: HoverProvider
+
+  beforeAll(async () => {
+    await Herb.load()
+    service = new HoverProvider(new ParserService(Herb))
+  })
+
+  function hover(content: string, line: number, character: number): string {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const result = service.getHover(document, Position.create(line, character))
+    const contents = result?.contents
+
+    return contents && typeof contents === "object" && "value" in contents ? contents.value : ""
+  }
+
+  const TEMPLATE = dedent`
+    <style scoped>
+      .card { color: red; }
+    </style>
+
+    <div class="card">Hi</div>
+  `
+
+  it("documents the scoped attribute on a style block", () => {
+    const value = hover(TEMPLATE, 0, 9)
+
+    expect(value).toContain("**`<style scoped>`** · Herb Engine")
+    expect(value).toContain("applies only to the markup in this file")
+    expect(value).toContain(".title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)")
+    expect(value).toContain("https://herb-tools.dev/projects/engine#scopedstyle-visitor")
+  })
+
+  it("does not hover on the style tag name", () => {
+    expect(hover(TEMPLATE, 0, 3)).toBe("")
+  })
+
+  it("does not hover on a plain style block", () => {
+    expect(hover("<style>\n  .card {}\n</style>", 0, 3)).toBe("")
+  })
+})

@@ -1,5 +1,0 @@
----
-source: "Engine::OptimizedHelpersTest::what it reports#test_0001_reports a helper the application has overwritten"
-input: "<%= tag.div do %>Content<% end %>"
----
-`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag

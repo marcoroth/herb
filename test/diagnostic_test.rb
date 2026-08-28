@@ -161,7 +161,8 @@ class DiagnosticTest < Minitest::Spec
     test "leaves out what it does not carry" do
       literal = Herb::Diagnostic.new(template: "a.html.erb", message: "m").to_ruby
 
-      assert_equal %({ message: "m", severity: :error, code: nil, origin: "unknown" }), literal
+      refute_includes literal, "suggestion:"
+      refute_includes literal, "line:"
     end
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/slot_dependencies"
+require_relative "../../../lib/herb/engine/slots/dependencies"
 require_relative "../../../lib/herb/engine/debug_visitor"
 
 require "tmpdir"
@@ -26,7 +26,7 @@ module Engine
 
         File.write(path, template)
 
-        Herb::Engine::SlotDependencies.new(@project_path).for(path)
+        Herb::Engine::Slots::Dependencies.new(@project_path).slots_for(path)
       end
 
       def write(name, template)
@@ -37,8 +37,16 @@ module Engine
         path
       end
 
+      def states_of(path)
+        visitor = Herb::Engine::Slots::Visitor.new(mark: false)
+
+        Herb::Engine.new(File.read(path), visitors: [visitor], filename: path, project_path: @project_path)
+
+        visitor.manifest["states"]
+      end
+
       def subject
-        Herb::Engine::SlotDependencies.new(@project_path)
+        Herb::Engine::Slots::Dependencies.new(@project_path)
       end
 
       def page_with_partial
@@ -53,12 +61,12 @@ module Engine
         compile = lambda { |source, file|
           next nil if File.basename(file).start_with?("_")
 
-          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          visitor = Herb::Engine::Slots::Visitor.new(mark: false)
           Herb::Engine.new(source, visitors: [visitor], filename: file)
           visitor
         }
 
-        reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
+        reached = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).across(entry)["@name"]
         files = reached.map { |slot| File.basename(slot[:file]) }.uniq
 
         assert_equal ["index.html.erb"], files
@@ -67,38 +75,10 @@ module Engine
       test "says nothing at all when the host compiles no slots anywhere" do
         entry = write("index.html.erb", "<div><%= @name %></div>")
 
-        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
+        subject = Herb::Engine::Slots::Dependencies.new(@project_path, compile: ->(_source, _file) {})
 
         assert_empty subject.across(entry)
-        assert_empty subject.for(entry)
-        assert_nil subject.version_for(entry)
-      end
-
-      test "leaves out a template the host does not compile slots for" do
-        write("_plain.html.erb", "<div><%= card %></div>")
-        entry = write("index.html.erb", %(<div><%= @name %></div><%= render "posts/plain", card: @name %>))
-
-        compile = lambda { |source, file|
-          next nil if File.basename(file).start_with?("_")
-
-          visitor = Herb::Engine::SlotVisitor.new(mark: false)
-          Herb::Engine.new(source, visitors: [visitor], filename: file)
-          visitor
-        }
-
-        reached = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).across(entry)["@name"]
-        files = reached.map { |slot| File.basename(slot[:file]) }.uniq
-
-        assert_equal ["index.html.erb"], files
-      end
-
-      test "says nothing at all when the host compiles no slots anywhere" do
-        entry = write("index.html.erb", "<div><%= @name %></div>")
-
-        subject = Herb::Engine::SlotDependencies.new(@project_path, compile: ->(_source, _file) {})
-
-        assert_empty subject.across(entry)
-        assert_empty subject.for(entry)
+        assert_empty subject.slots_for(entry)
         assert_nil subject.version_for(entry)
       end
 
@@ -109,13 +89,13 @@ module Engine
         File.write(path, template)
 
         compile = lambda { |source, file|
-          visitor = Herb::Engine::SlotVisitor.new(mark: false)
+          visitor = Herb::Engine::Slots::Visitor.new(mark: false)
           Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
           visitor
         }
 
-        rewritten = Herb::Engine::SlotDependencies.new(@project_path, compile: compile).for(path)
-        plain = Herb::Engine::SlotDependencies.new(@project_path).for(path)
+        rewritten = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile).slots_for(path)
+        plain = Herb::Engine::Slots::Dependencies.new(@project_path).slots_for(path)
 
         assert_equal plain.keys.sort, rewritten.keys.sort
         assert_equal(plain.values.map { |slot| slot[:state] }, rewritten.values.map { |slot| slot[:state] })
@@ -128,17 +108,17 @@ module Engine
 
         File.write(path, template)
 
-        marker = Herb::Engine::SlotVisitor.new
+        marker = Herb::Engine::Slots::Visitor.new
         Herb::Engine.new(template, visitors: [Herb::Engine::DebugVisitor.new, marker], filename: path)
 
         compile = lambda { |source, file|
-          visitor = Herb::Engine::SlotVisitor.new
+          visitor = Herb::Engine::Slots::Visitor.new
           Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
           visitor
         }
 
-        matching = Herb::Engine::SlotDependencies.new(@project_path, compile: compile)
-        bare = Herb::Engine::SlotDependencies.new(@project_path)
+        matching = Herb::Engine::Slots::Dependencies.new(@project_path, compile: compile)
+        bare = Herb::Engine::Slots::Dependencies.new(@project_path)
 
         assert_equal marker.schema[:version], matching.version_for(path)
         refute_equal marker.schema[:version], bare.version_for(path)
@@ -182,6 +162,18 @@ module Engine
 
         assert_equal ["@admin"], dependencies[0][:state]
         assert_equal :structural, dependencies[0][:mode]
+      end
+
+      test "gives a collapsed conditional the state of every branch it stands for" do
+        dependencies = dependencies_for("<% if @admin %><h1><%= @name %></h1><% else %><h1><%= @guest %></h1><% end %>")
+
+        assert_equal ["@admin", "@guest", "@name"], dependencies[0][:state]
+      end
+
+      test "never calls a collapsed conditional an identity, since the condition picks the value" do
+        dependencies = dependencies_for("<% if @admin %><h1><%= @name %></h1><% else %><h1><%= @guest %></h1><% end %>")
+
+        assert_equal :derived, dependencies[0][:mode]
       end
 
       test "gives a slot inside a branch the state that branch's body reads" do
@@ -228,7 +220,12 @@ module Engine
 
         reached = subject.across(entry)["@query"].map { |slot| [File.basename(slot[:file]), slot[:index], slot[:mode]] }
 
-        assert_equal [["index.html.erb", 0, :identity], ["index.html.erb", 1, :derived], ["_search.html.erb", 0, :identity], ["_search.html.erb", 1, :derived]], reached
+        assert_equal [
+          ["index.html.erb", 0, :identity],
+          ["index.html.erb", 1, :derived],
+          ["_search.html.erb", 0, :identity],
+          ["_search.html.erb", 1, :derived]
+        ], reached
       end
 
       test "keys what it reaches by the name the page knows, not the partial's" do
@@ -249,6 +246,33 @@ module Engine
         refute_equal versions["index.html.erb"], versions["_search.html.erb"]
       end
 
+      def named_by(strategy)
+        Herb::Engine::Slots::Dependencies.new(
+          @project_path,
+          compile: lambda { |source, path|
+            visitor = Herb::Engine::Slots::Visitor.new(mark: false, identifier: strategy)
+
+            Herb::Engine.new(source, visitors: [visitor], filename: path, project_path: @project_path)
+
+            visitor
+          }
+        )
+      end
+
+      test "names a template the way the markers do when they carry a digest" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        files = named_by(:digest).payload(entry)["state"]["@query"].map { |slot| slot["file"] }
+
+        assert_equal [Digest::SHA256.hexdigest("app/views/posts/index.html.erb").slice(0, 12)], files
+      end
+
+      test "names a template the way the markers do when a caller names them" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        files = named_by(->(path) { "v1/#{path}" }).payload(entry)["state"]["@query"].map { |slot| slot["file"] }
+
+        assert_equal ["v1/app/views/posts/index.html.erb"], files
+      end
+
       test "names a template the way the page does" do
         entry = page_with_partial
 
@@ -257,12 +281,12 @@ module Engine
         assert_equal ["app/views/posts/index.html.erb", "app/views/posts/_search.html.erb"], files
       end
 
-      test "reports a mode as a string once it travels" do
+      test "sends only the slots a page may write itself" do
         entry = page_with_partial
+        indices = subject.payload(entry)["state"]["@query"]
 
-        modes = subject.payload(entry)["state"]["@query"].map { |slot| slot["mode"] }.uniq.sort
-
-        assert_equal ["derived", "identity"], modes
+        assert_equal subject.across(entry)["@query"].count { |slot| slot[:mode] == :identity }, indices.size
+        assert(indices.none? { |slot| slot.key?("mode") })
       end
 
       test "says what a request calls a template's state" do
@@ -288,8 +312,8 @@ module Engine
       test "carries the declared names into the parked map" do
         entry = write("index.html.erb", "<ul><% @posts.each do |post| %><li><%= post %></li><% end %></ul>")
 
-        element = subject.element(entry, params: { "p" => "@posts" })
-        json = element.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
+        tag = subject.dependencies_tag(entry, params: { "p" => "@posts" })
+        json = tag.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
 
         assert_equal({ "p" => "@posts" }, JSON.parse(json)["params"])
       end
@@ -297,12 +321,12 @@ module Engine
       test "parks the map the way statics are parked" do
         entry = page_with_partial
 
-        element = subject.element(entry)
+        tag = subject.dependencies_tag(entry)
 
-        assert_match(/\A<template data-herb-dependencies>/, element)
-        assert_match(%r{</template>\z}, element)
+        assert_match(/\A<template data-herb-dependencies>/, tag)
+        assert_match(%r{</template>\z}, tag)
 
-        json = element.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
+        json = tag.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
 
         assert_equal subject.payload(entry), JSON.parse(json)
       end
@@ -313,7 +337,7 @@ module Engine
 
         files = subject.across(entry)["@posts"].map { |slot| File.basename(slot[:file]) }
 
-        assert_equal ["index.html.erb", "_card.html.erb"], files.uniq
+        assert_equal ["index.html.erb", "index.html.erb", "_card.html.erb"], files
       end
 
       test "leaves an item template reached through an each block to the server" do
@@ -400,11 +424,11 @@ module Engine
         assert_empty subject.subtree_slots(entry, ["@nothing"])
       end
 
-      test "never calls a constant an identity once the map travels" do
+      test "never calls a constant an identity, so a page is never sent one to write" do
         entry = write("index.html.erb", "<div><%= Post.count %></div>")
 
         assert_equal([:derived], subject.across(entry)["Post.count"].map { |slot| slot[:mode] })
-        assert_equal(["derived"], subject.payload(entry)["state"]["Post.count"].map { |slot| slot["mode"] })
+        assert_empty subject.payload(entry)["state"]["Post.count"]
       end
 
       test "leaves a constant out of the names a request can set" do
@@ -426,9 +450,9 @@ module Engine
           <video muted="<%= sending %>"></video>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
-        assert_equal [["draft", %("")], ["sending", nil]], manifest["presence"].values
+        assert_equal [["draft", { "value" => "" }], ["sending", nil]], manifest["presence"].values
         assert_equal manifest["presence"].keys.map(&:to_i).sort, (manifest["reads"]["draft"] + manifest["reads"]["sending"]).sort - manifest["reads"]["draft"].take(1)
       end
 
@@ -439,18 +463,17 @@ module Engine
           <div><% if pending? && failed? %>Stuck<% else %>Fine<% end %></div>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [{ "any" => [["pending", nil], ["failed", nil]] }], manifest["presence"].values
 
         index = manifest["presence"].keys.first.to_i
 
-        assert_equal [index], manifest["reads"]["pending"]
-        assert_equal [index], manifest["reads"]["failed"]
+        assert_equal({ "pending" => [index], "failed" => [index] }, manifest["reads"])
 
         conditional = manifest["conditionals"].values.first
 
-        assert_equal [{ "branch" => 0, "all" => [["pending", nil], ["failed", nil]] }], conditional["arms"]
+        assert_equal [{ "branch" => 0, "condition" => { "all" => [["pending", nil], ["failed", nil]] } }], conditional["arms"]
       end
 
       test "carries a derived state with its condition" do
@@ -459,7 +482,7 @@ module Engine
           <div><% if busy %>Busy<% else %>Idle<% end %></div>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
         declaration = manifest["declarations"].find { |declared| declared["name"] == "busy" }
 
         assert_equal "boolean", declaration["kind"].to_s
@@ -480,26 +503,24 @@ module Engine
           <p><%= pending_count %></p>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
         declaration = manifest["declarations"].find { |declared| declared["name"] == "pending_count" }
 
         assert_equal({ "collection" => 0, "when" => ["pending", nil], "by" => 1 }, declaration["count"])
-        assert_equal [3], manifest["reads"]["pending_count"]
+        assert_equal({ "pending_count" => [3] }, manifest["reads"])
       end
 
-      test "binds a tag helper input that reads a state" do
+      test "reaches a state read through a tag helper's attributes" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (draft: "", agreed: false) %>
           <%= tag.input value: draft %>
           <%= tag.input type: "checkbox", checked: agreed %>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [0], manifest["reads"]["draft"]
-        assert_equal [0], manifest["bound"]["draft"]
         assert_equal [["agreed", nil]], manifest["presence"].values
-        assert_equal [1], manifest["bound"]["agreed"]
       end
 
       test "carries the states a template declares" do
@@ -510,8 +531,8 @@ module Engine
           <span><% if pending? %>wait<% else %>done<% end %></span>
         ERB
 
-        payload = subject.payload(path)
-        manifest = payload["states"].values.first
+        subject.payload(path)
+        manifest = states_of(path)
 
         names = manifest["declarations"].map { |declaration| declaration["name"] }
 
@@ -521,12 +542,12 @@ module Engine
 
         conditional = manifest["conditionals"].values.first
 
-        assert_equal [["pending", nil, 0]], conditional["arms"]
+        assert_equal [{ "branch" => 0, "condition" => ["pending", nil] }], conditional["arms"]
         assert_equal 1, conditional["else"]
         assert_equal subject.version_for(path), manifest["version"]
       end
 
-      test "marks a state read into a form control as bound" do
+      test "records every slot a state is read into, and says nothing about which take typing" do
         path = write("index.html.erb", <<~ERB)
           <%# herb:state (draft: "", agreed: false) %>
           <input value="<%= draft %>">
@@ -534,36 +555,61 @@ module Engine
           <p><%= draft %></p>
         ERB
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal 2, manifest["reads"]["draft"].size
-        assert_equal 1, manifest["bound"]["draft"].size
-        assert_equal 1, manifest["bound"]["agreed"].size
-        refute_operator manifest["bound"]["draft"], :include?, manifest["reads"]["draft"].last
+        assert_equal 1, manifest["reads"]["agreed"].size
+        refute manifest.key?("bound"), "a page decides that from the element a slot sits on"
       end
 
       test "counts a state read in an interpolated attribute" do
         path = write("index.html.erb", %(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
 
-        manifest = subject.payload(path)["states"].values.first
+        manifest = states_of(path)
 
         assert_equal [0], manifest["reads"]["status"]
-        assert_empty manifest["bound"]
       end
 
-      test "carries the states of a partial no server state reaches" do
-        write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
-        path = write("index.html.erb", %(<div><%= render "menu" %></div>))
+      test "a partial carries the states it declares, whether or not the page reaches them" do
+        partial = write("_menu.html.erb", %(<%# herb:state (open: false) %><nav><%= open %></nav>))
+        write("index.html.erb", %(<div><%= render "menu" %></div>))
 
-        manifests = subject.payload(path)["states"]
-
-        assert_equal(["open"], manifests.values.compact.flat_map { |manifest| manifest["declarations"].map { |declaration| declaration["name"] } })
+        assert_equal(["open"], states_of(partial)["declarations"].map { |declaration| declaration["name"] })
       end
 
-      test "carries no states section entry for a template that declares none" do
+      test "a template that declares none says nothing about states" do
         path = write("index.html.erb", "<div><%= @query %></div>")
 
-        assert_empty subject.payload(path)["states"]
+        assert_nil states_of(path)
+      end
+
+      test "the map a page is driven by no longer carries what each template declares" do
+        path = write("index.html.erb", %(<%# herb:state (open: false) %><div><%= @query %></div>))
+
+        refute subject.payload(path).key?("states"), "a template's states travel in its own manifest"
+      end
+
+      test "hands the map to the response rather than writing it into the body" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        session = Herb::Engine::Report::Session.capture { subject.deliver(entry) }
+        channel = session.channel(Herb::Engine::Slots::Dependencies::Channel::NAME) { nil }
+
+        assert_equal :body, channel.anchor
+        assert_equal subject.dependencies_tag(entry), channel.to_html
+      end
+
+      test "carries one map for a response however many times it is handed over" do
+        entry = write("index.html.erb", %(<input value="<%= @query %>">))
+        session = Herb::Engine::Report::Session.capture { 3.times { subject.deliver(entry) } }
+        channel = session.channel(Herb::Engine::Slots::Dependencies::Channel::NAME) { nil }
+
+        assert_equal 1, channel.to_html.scan("data-herb-dependencies").size
+      end
+
+      test "a response nobody handed a map to carries nothing" do
+        session = Herb::Engine::Report::Session.capture { nil }
+
+        assert_nil session.channel(Herb::Engine::Slots::Dependencies::Channel::NAME) { nil }
       end
     end
   end

@@ -79,6 +79,8 @@
 
 .herb-dev-tools-panel {
   order: 1;
+  position: relative;
+  box-sizing: border-box;
   display: none;
   flex-direction: column;
   width: min(560px, calc(100vw - 24px));
@@ -96,6 +98,64 @@
   display: flex;
 }
 
+.herb-dev-tools-resize {
+  position: absolute;
+  z-index: 1;
+  touch-action: none;
+}
+
+.herb-dev-tools-resize::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+
+.herb-dev-tools-resize:hover::after,
+.herb-dev-tools-resize:active::after {
+  background: rgba(59, 130, 246, 0.55);
+}
+
+.herb-dev-tools-resize-left {
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.herb-dev-tools-resize-left::after {
+  left: 2px;
+  right: 2px;
+}
+
+.herb-dev-tools-resize-bottom {
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.herb-dev-tools-resize-bottom::after {
+  top: 2px;
+  bottom: 2px;
+}
+
+.herb-dev-tools-resize-corner {
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+}
+
+.herb-dev-tools-resize-corner::after {
+  inset: 3px;
+}
+
 .herb-dev-tools-header {
   display: flex;
   align-items: center;
@@ -106,8 +166,39 @@
 }
 
 .herb-dev-tools-title {
+  flex: 1;
+  min-width: 0;
   font-weight: 600;
   color: #111827;
+}
+
+.herb-dev-tools-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f9fafb;
+  font-size: 11px;
+}
+
+.herb-dev-tools-connection-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
+  flex: none;
+}
+
+.herb-dev-tools-connection-status {
+  color: #6b7280;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .herb-dev-tools-summary {
@@ -143,15 +234,18 @@
 
 .herb-dev-tools-clear,
 .herb-dev-tools-hide {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .herb-dev-tools-window-controls {
   display: flex;
   align-items: center;
   gap: 2px;
-  flex-shrink: 0;
+  flex: none;
 }
 
 .herb-dev-tools-expand,
@@ -173,6 +267,11 @@
   padding: 8px 12px;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
+}
+
+.herb-dev-tools-filters-severity {
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
 }
 
 .herb-dev-tools-filter {
@@ -292,6 +391,30 @@
   margin-left: auto;
   color: #9ca3af;
   font-size: 10px;
+}
+
+.herb-dev-tools-icon {
+  display: block;
+  flex: none;
+}
+
+.herb-dev-tools-feature {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.herb-dev-tools-feature:hover {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #111827;
 }
 
 .herb-dev-tools-repeat {
@@ -526,6 +649,216 @@
   background: rgba(17, 24, 39, 0.45);
 }
 
+.herb-dev-tools-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 11.5px;
+}
+
+.herb-dev-tools-provenance-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.herb-dev-tools-provenance code {
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.herb-dev-tools-view {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.herb-dev-tools-view:hover {
+  opacity: 1;
+}
+
+.herb-dev-tools-combined {
+  margin: 10px 0 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.herb-dev-tools-scope {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.herb-dev-tools-scope:hover {
+  opacity: 1;
+}
+
+.herb-dev-tools-runtime-root .herb-dev-tools-panel.herb-dev-tools-overlay.herb-dev-tools-overlay-fullscreen,
+.herb-dev-tools-runtime-root.herb-dev-tools-attached .herb-dev-tools-panel.herb-dev-tools-overlay.herb-dev-tools-overlay-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #f3f4f6;
+  z-index: 2147483642;
+}
+
+.herb-dev-tools-panel {
+  --herb-dev-tools-accent: var(--herb-dev-tools-severity-error);
+}
+
+.herb-dev-tools-tone-error {
+  --herb-dev-tools-accent: var(--herb-dev-tools-severity-error);
+}
+
+.herb-dev-tools-tone-warning {
+  --herb-dev-tools-accent: var(--herb-dev-tools-severity-warning);
+}
+
+.herb-dev-tools-tone-info {
+  --herb-dev-tools-accent: var(--herb-dev-tools-severity-info);
+}
+
+.herb-dev-tools-tone-hint {
+  --herb-dev-tools-accent: var(--herb-dev-tools-severity-hint);
+}
+
+.herb-dev-tools-tone-metric {
+  --herb-dev-tools-accent: #374151;
+}
+
+.herb-dev-tools-expanded .herb-dev-tools-header {
+  gap: 12px;
+  padding: 18px 28px;
+}
+
+.herb-dev-tools-expanded .herb-dev-tools-title {
+  font-size: 16px;
+}
+
+.herb-dev-tools-expanded .herb-dev-tools-summary {
+  font-size: 12.5px;
+}
+
+.herb-dev-tools-expanded .herb-dev-tools-filters {
+  gap: 8px;
+  padding: 12px 28px;
+}
+
+.herb-dev-tools-overlay-focused {
+  --herb-dev-tools-gutter: max(28px, calc((100% - 1040px) / 2 + 28px));
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-header {
+  padding-inline: var(--herb-dev-tools-gutter);
+  background: color-mix(in srgb, var(--herb-dev-tools-accent) 9%, #ffffff);
+  border-bottom: 1px solid color-mix(in srgb, var(--herb-dev-tools-accent) 28%, #ffffff);
+  color: color-mix(in srgb, var(--herb-dev-tools-accent) 45%, #111827);
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-filters {
+  padding-inline: var(--herb-dev-tools-gutter);
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-header .herb-dev-tools-dot {
+  width: 9px;
+  height: 9px;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-title {
+  color: inherit;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-title {
+  flex: none;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-summary {
+  color: color-mix(in srgb, var(--herb-dev-tools-accent) 30%, #4b5563);
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-summary {
+  flex: 0 1 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.herb-dev-tools-expanded .herb-dev-tools-window-controls {
+  gap: 8px;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-window-controls {
+  margin-left: auto;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-summary.herb-dev-tools-path:hover {
+  color: color-mix(in srgb, var(--herb-dev-tools-accent) 55%, #111827);
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-ansi {
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 28px var(--herb-dev-tools-gutter) 72px;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-group {
+  margin-top: 0;
+}
+
+
+.herb-dev-tools-expanded .herb-dev-tools-close {
+  flex: none;
+  font-size: 15px;
+  line-height: 1;
+  padding: 3px 8px;
+}
+
+.herb-dev-tools-expanded .herb-dev-tools-scope {
+  opacity: 1;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-close,
+.herb-dev-tools-overlay-focused .herb-dev-tools-scope {
+  border-color: color-mix(in srgb, var(--herb-dev-tools-accent) 32%, #ffffff);
+  color: inherit;
+}
+
+.herb-dev-tools-overlay-focused .herb-dev-tools-close:hover,
+.herb-dev-tools-overlay-focused .herb-dev-tools-scope:hover {
+  background: color-mix(in srgb, var(--herb-dev-tools-accent) 16%, #ffffff);
+  color: inherit;
+}
+
 .herb-dev-tools-runtime-root .herb-dev-tools-panel.herb-dev-tools-expanded,
 .herb-dev-tools-runtime-root.herb-dev-tools-attached .herb-dev-tools-panel.herb-dev-tools-expanded {
   position: fixed;
@@ -542,7 +875,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, max(640px, (100% - 12px) / 2)), 1fr));
   align-items: start;
-  gap: 0 12px;
+  gap: 20px 12px;
+}
+
+.herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-card {
+  margin-bottom: 0;
 }
 
 .herb-dev-tools-panel.herb-dev-tools-expanded .herb-dev-tools-group-title {
@@ -566,6 +903,22 @@
 
 .herb-dev-tools-element:hover {
   background: rgba(245, 158, 11, 0.2);
+}
+
+.herb-dev-tools-element-gone,
+.herb-dev-tools-element-gone:hover,
+.herb-dev-tools-element-hidden,
+.herb-dev-tools-element-hidden:hover {
+  border-color: #d1d5db;
+  border-style: dashed;
+  background: transparent;
+  color: #6b7280;
+  cursor: default;
+}
+
+.herb-dev-tools-element-note {
+  font-size: 0.72rem;
+  font-style: italic;
 }
 
 .herb-dev-tools-element code {

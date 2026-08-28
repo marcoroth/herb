@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../engine/state_directives"
+require_relative "../../engine/slots/state_directives"
 
 module Herb
   module Analysis
@@ -14,7 +14,7 @@ module Herb
           known = declared.to_h { |name, _location| [name, :seeded] }
 
           directives(document).flat_map { |node, signature|
-            declarations_in(signature, known).map do |declaration|
+            declarations_in(node, signature, known).map do |declaration|
               Local.new(declaration.name, node.location, usages(declaration.name, references, offsets))
             end
           }
@@ -24,7 +24,7 @@ module Herb
           found = [] #: Array[[untyped, String]]
 
           walk = lambda do |node|
-            signature = Herb::Engine::StateDirectives.signature_of(node)
+            signature = Herb::Engine::Slots::StateDirectives.signature_of(node)
 
             found << [node, signature] if signature
 
@@ -36,10 +36,8 @@ module Herb
           found
         end
 
-        def declarations_in(signature, known)
-          Herb::Engine::StateDirectives.parse(signature, known)
-        rescue StandardError
-          []
+        def declarations_in(node, signature, known)
+          Herb::Engine::Slots::StateDirectives.parse(signature, known, visitor: Herb::Engine::Slots::StateDirectives::Silent, node: node)
         end
 
         def usages(name, references, offsets)

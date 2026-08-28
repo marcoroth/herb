@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 
 const FILE = "app/views/posts/index.html.erb"
 const PARTIAL = "app/views/posts/_row.html.erb"
@@ -10,11 +10,11 @@ const page = (name: string) => region(FILE, `<p><!--herb-slot:0-->${name}<!--/he
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe("page navigation and Turbo", () => {
-  let index: SlotIndex
+  let index: Slots
 
   beforeEach(() => {
     document.body.innerHTML = ""
-    index = new SlotIndex()
+    index = new Slots()
   })
 
   test("indexes the new page after the body is replaced", async () => {
@@ -22,7 +22,7 @@ describe("page navigation and Turbo", () => {
 
     document.body.innerHTML = page("before")
     await settle()
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("before")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("before")
 
     const next = document.createElement("body")
     next.innerHTML = page("after")
@@ -30,7 +30,7 @@ describe("page navigation and Turbo", () => {
     await settle()
 
     expect(index.regionsFor(FILE)).toHaveLength(1)
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("after")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("after")
 
     index.disconnect()
   })
@@ -46,7 +46,7 @@ describe("page navigation and Turbo", () => {
     }
 
     expect(index.regionsFor(FILE)).toHaveLength(1)
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("three")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("three")
 
     index.disconnect()
   })
@@ -60,7 +60,7 @@ describe("page navigation and Turbo", () => {
     await settle()
 
     expect(index.regionsFor(PARTIAL)).toHaveLength(1)
-    expect(index.rangeFor(index.slot(PARTIAL, 0)!).toString()).toBe("row")
+    expect(index.rangeOf(index.slot(PARTIAL, 0)!).toString()).toBe("row")
 
     index.disconnect()
   })
@@ -107,7 +107,7 @@ describe("page navigation and Turbo", () => {
 
     expect(index.regionsFor(FILE)).toHaveLength(1)
     expect(after).not.toBe(before)
-    expect(index.rangeFor(after).toString()).toBe("live")
+    expect(index.rangeOf(after).toString()).toBe("live")
 
     index.disconnect()
   })

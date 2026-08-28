@@ -1,5 +1,0 @@
----
-source: "Engine::ReportTest::the script tag#test_0002_counts what it carries, so a test need not parse it"
-input: "report data-count"
----
-<script type="application/json" data-herb-diagnostics data-count="1">{"version":1,"diagnostics":[{"template":"app/views/a.html.erb","message":"m","code":"c","severity":"error","kind":"diagnostic","origin":"Herb Compiler","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":5}}}],"renderTree":[],"nodes":{},"sources":{}}</script>

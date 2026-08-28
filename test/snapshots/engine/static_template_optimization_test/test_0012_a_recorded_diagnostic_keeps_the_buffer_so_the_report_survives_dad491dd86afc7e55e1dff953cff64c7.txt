@@ -1,6 +1,0 @@
----
-source: "Engine::StaticTemplateOptimizationTest#test_0012_a recorded diagnostic keeps the buffer so the report survives"
-input: "{source: \"<div>hi</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>, #<Engine::StaticTemplateOptimizationTest::AlwaysWarns>]}}"
----
-_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("unknown", [{ message: "noticed an element", severity: :warning, code: "noticed-element", origin: "Herb Compiler", line: 1, column: 0, end_line: 1, end_column: 13 }].freeze); _buf << '<div>hi</div>'.freeze;
-_buf.to_s

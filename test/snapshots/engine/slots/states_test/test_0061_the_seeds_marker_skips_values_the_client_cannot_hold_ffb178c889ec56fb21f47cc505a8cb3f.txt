@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0061_the seeds marker skips values the client cannot hold"
-input: "states only_shape 33"
----
-<!--herb-region:app/views/test.html.erb:3e1dae66:0--><!--herb-seeds:{}--><p data-herb-slot="0:child">[1, 2]</p><!--/herb-region:app/views/test.html.erb-->

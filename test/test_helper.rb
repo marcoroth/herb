@@ -19,6 +19,7 @@ require "herb/engine/validators"
 require "herb/engine/debug_visitor"
 require "herb/engine/optimize_visitor"
 require "herb/engine/report/middleware"
+require "herb/engine/report/error_page"
 
 require_relative "snapshot_utils"
 

@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::ManifestCollectorTest#test_0006_a project that extracts its manifests sends none with the page"
+input: "{source: \"<p data-herb-name=\\\"body\\\"><%= @a %></p>\", options: {visitors: [#<Herb::Engine::Slots::Visitor client deliver=none>], filename: \"app/views/posts/index.html.erb\"}}"
+---
+_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/posts/index.html.erb"] += 1) - 1 
+ _buf << '<!--herb-region:app/views/posts/index.html.erb:7eaaf7b2:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '--><p data-herb-name="body" data-herb-slot="0:child">'.freeze; _buf << (@a).to_s; _buf << '</p><!--/herb-region:app/views/posts/index.html.erb-->'.freeze;
+_buf.to_s

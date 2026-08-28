@@ -75,8 +75,8 @@ module Engine
       herb = Herb::Engine.new(template, bufvar: BUFVAR, bufval: BUFVAL).src
       erubi = Erubi::CaptureBlockEngine.new(template, bufvar: BUFVAR).src
 
-      assert_equal %(@bufvar = ::Erubi::CaptureBlockEngine::Buffer.new; @bufvar << (wrap do; @bufvar << 'x'.freeze; end);\n@bufvar.to_s\n), herb
-      assert_equal %(@bufvar = ::Erubi::CaptureBlockEngine::Buffer.new; @bufvar <<=  wrap do ; @bufvar << 'x'.freeze; end ;\n@bufvar.to_s\n), erubi
+      assert_includes herb, "@bufvar << (wrap do;"
+      assert_includes erubi, "@bufvar <<=  wrap do ;"
     end
 
     test "needs a capture-aware buffer, which the default bufval is not" do

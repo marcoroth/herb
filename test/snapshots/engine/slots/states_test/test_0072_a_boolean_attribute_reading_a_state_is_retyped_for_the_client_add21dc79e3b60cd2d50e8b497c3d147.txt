@@ -1,9 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0072_a boolean attribute reading a state is retyped for the client"
-input: "states rendered 42"
----
-<!--herb-region:app/views/test.html.erb:5f946098:0-->
-<button disabled data-herb-slot="0:boolean_attribute:disabled">Send</button>
-<video  data-herb-slot="1:boolean_attribute:muted"></video>
-<audio  data-herb-slot="2:boolean_attribute:loop"></audio>
-<!--/herb-region:app/views/test.html.erb-->

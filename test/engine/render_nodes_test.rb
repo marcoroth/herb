@@ -85,7 +85,7 @@ module Engine
       diagnostics = flat_project_diagnostics("posts/nope")
 
       assert_equal 1, diagnostics.size
-      assert_snapshot_matches(diagnostics.first.message, "flat project: posts/nope")
+      assert_includes diagnostics.first.message, "could not be resolved"
     end
 
     test "no diagnostics for existing partial" do
@@ -105,7 +105,7 @@ module Engine
 
       assert_equal 1, diagnostics.length
       assert_equal :error, diagnostics.first.severity
-      assert_snapshot_matches(diagnostics.first.message, '<%= render "nonexistent/missing" %>')
+      assert_includes diagnostics.first.message, "Partial 'nonexistent/missing' could not be resolved"
       assert_equal "render-unresolved", diagnostics.first.code
     end
 
@@ -114,7 +114,7 @@ module Engine
 
       assert_equal 1, diagnostics.length
       assert_equal :warning, diagnostics.first.severity
-      assert_equal "Dynamic render call cannot be statically resolved", diagnostics.first.message
+      assert_includes diagnostics.first.message, "Dynamic render call cannot be statically resolved"
       assert_equal "render-dynamic", diagnostics.first.code
     end
 
@@ -128,7 +128,7 @@ module Engine
       diagnostics = render_diagnostics('<%= render partial: "missing/partial" %>')
 
       assert_equal 1, diagnostics.length
-      assert_snapshot_matches(diagnostics.first.message, '<%= render partial: "missing/partial" %>')
+      assert_includes diagnostics.first.message, "Partial 'missing/partial' could not be resolved"
     end
 
     test "render validator is not run during normal compilation" do

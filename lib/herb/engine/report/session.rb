@@ -89,6 +89,21 @@ module Herb
         def self.record_compile_diagnostics(template, entries)
           entries.each { |entry| record(Herb::Diagnostic.from_compiled(template, entry)) }
 
+          read_source(template)
+
+          nil
+        end
+
+        #: (String) -> void
+        def self.read_source(template)
+          return unless scoped?
+
+          session = current
+
+          return if session.report.sources.key?(template)
+
+          session.source(template, File.read(template))
+        rescue SystemCallError, IOError
           nil
         end
 
@@ -191,6 +206,11 @@ module Herb
         #: (String, String?) -> void
         def source(template, source)
           report.source(template, source)
+        end
+
+        #: (Symbol) { () -> untyped } -> untyped
+        def channel(name, &)
+          report.channel(name, &)
         end
 
         #: () -> Array[Herb::Diagnostic]

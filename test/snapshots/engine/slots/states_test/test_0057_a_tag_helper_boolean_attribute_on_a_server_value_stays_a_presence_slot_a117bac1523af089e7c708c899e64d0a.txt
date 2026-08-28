@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StatesTest#test_0057_a tag helper boolean attribute on a server value stays a presence slot"
-input: "states render 31"
----
-<!--herb-region:app/views/test.html.erb:4e9d7ffb:0--><input data-herb-slot="0:boolean_attribute:disabled"><!--/herb-region:app/views/test.html.erb-->

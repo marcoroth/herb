@@ -2,6 +2,7 @@
 # typed: true
 
 require_relative "../visitor"
+require_relative "experimental"
 require_relative "context_aware"
 require_relative "../action_view/helper_registry"
 
@@ -36,29 +37,22 @@ module Herb
     # It costs a call per render and reports rather than corrects, so it earns its place in
     # development and not in production. Compiling it in is the caller's decision for the same reason
     # the optimization itself is.
+    #
     class OptimizeVisitor < Herb::Visitor
+      extend Experimental
       include ContextAware
-
-      required_parser_option action_view_helpers: true, transform_conditionals: true
 
       SESSION = "::Herb::Engine::Report::Session" #: String
       CODE = "overwritten-helper" #: String
       ORIGIN = "Herb Engine" #: String
 
+      required_parser_option action_view_helpers: true, transform_conditionals: true
+      experimental "Compile-time optimizations are experimental. Output may differ from standard Action View rendering."
+
       #: () -> Array[String]
       def self.helper_sources
         @helper_sources ||= Herb::ActionView::HelperRegistry.supported.map(&:source).freeze
       end
-
-      # @rbs!
-      #   def self.experimental_warning_issued: () -> bool
-      #   def self.experimental_warning_issued=: (bool) -> bool
-
-      class << self
-        attr_accessor :experimental_warning_issued #: bool
-      end
-
-      self.experimental_warning_issued = false
 
       #: (?verify: bool) -> void
       def initialize(verify: false)
@@ -66,12 +60,6 @@ module Herb
 
         @verify = verify
         @sources = {} #: Hash[String, Herb::Location?]
-
-        return if self.class.experimental_warning_issued
-
-        self.class.experimental_warning_issued = true
-
-        warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
       end
 
       #: () -> Hash[Symbol, untyped]

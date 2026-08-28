@@ -1,6 +1,0 @@
----
-source: "Engine::StaticTemplateOptimizationTest#test_0010_a custom postamble keeps the buffer"
-input: "{source: \"<div>hi</div>\", options: {postamble: \"@output_buffer\", visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
----
-_buf = ::String.new; _buf << '<div>hi</div>'.freeze;
-@output_buffer

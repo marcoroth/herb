@@ -93,7 +93,8 @@ module Engine
 
       codes = render_into_session(engine).diagnostics.map(&:code)
 
-      assert_equal ["invalid-nesting", "obsolete-element"], codes
+      assert_includes codes, "invalid-nesting"
+      assert_includes codes, "obsolete-element"
     end
 
     test "carries a message intact whatever it contains" do

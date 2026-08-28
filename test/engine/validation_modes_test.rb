@@ -35,10 +35,8 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      # rubocop:disable Herb/IncludesAssertion
-      assert_includes error.message, "invalid-nesting"
-      assert_includes error.message, "Block element <div> cannot be nested inside <p>"
-      # rubocop:enable Herb/IncludesAssertion
+      assert_equal ["invalid-nesting"], error.diagnostics.map(&:code)
+      assert_equal ["Block element <div> cannot be nested inside <p> at line 1"], error.diagnostics.map(&:message)
     end
 
     test "a fatal validator is the default behavior" do
@@ -105,8 +103,7 @@ module Engine
         Herb::Engine.new("<div>\n<span>Content\n</div>", filename: "app/views/broken.html.erb")
       end
 
-      assert_equal "    1  <div>\n    2  <span>Content\n    3  </div>", error.annotated_source_code.join("\n")
-      assert_match(/\A\s+\d+\s{2}/, error.annotated_source_code.first)
+      assert_equal ["    1  <div>", "    2  <span>Content", "    3  </div>"], error.annotated_source_code
     end
 
     test "reports a parse error in a process that only loads herb" do

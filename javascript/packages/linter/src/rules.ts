@@ -97,6 +97,10 @@ import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states
 import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
 import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
+import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
+import { HerbScopedStylePreferSingleRootRule } from "./rules/herb-scoped-style-prefer-single-root.js"
+import { HerbScopedStyleRequireTopLevelRule } from "./rules/herb-scoped-style-require-top-level.js"
+import { HerbScopedStyleSingleDeclarationRule } from "./rules/herb-scoped-style-single-declaration.js"
 import { HerbStateSingleDeclarationRule } from "./rules/herb-state-single-declaration.js"
 import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
 import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
@@ -129,6 +133,7 @@ import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attribu
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
+import { HTMLNoEmptyCSSRuleRule } from "./rules/html-no-empty-css-rule.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoEventHandlerAttributesRule } from "./rules/html-no-event-handler-attributes.js"
 import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-elements.js"
@@ -261,6 +266,10 @@ export const rules: RuleClass[] = [
   HerbStateRequiresClientModeRule,
   HerbStateValidActionsRule,
   HerbStateValidBindingsRule,
+  HerbScopedStyleNoUnusedSelectorRule,
+  HerbScopedStylePreferSingleRootRule,
+  HerbScopedStyleRequireTopLevelRule,
+  HerbScopedStyleSingleDeclarationRule,
   HerbStateSingleDeclarationRule,
   HerbStateValidDeclarationRule,
   HerbStateValidReadsRule,
@@ -293,6 +302,7 @@ export const rules: RuleClass[] = [
   HTMLNoDuplicateIdsRule,
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
+  HTMLNoEmptyCSSRuleRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoEventHandlerAttributesRule,
   HTMLNoInlineScriptElementsRule,

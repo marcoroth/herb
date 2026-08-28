@@ -1,6 +1,0 @@
----
-source: "Engine::HerbAliasOmissionTest#test_0002_the alias is kept when an escaped expression calls it"
-input: "alias kept for escaped expression"
----
-__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div>'.freeze; _buf << __herb.h((value)); _buf << '</div>'.freeze;
-_buf.to_s
