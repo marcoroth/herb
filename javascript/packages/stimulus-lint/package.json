@@ -12,7 +12,7 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "bin": {
     "stimulus-lint": "bin/stimulus-lint"
   },
