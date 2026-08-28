@@ -27,8 +27,7 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "prebuild": "yarn run clean",
-    "build": "yarn generate:node-tests && tsc --emitDeclarationOnly && rolldown -c",
+    "build": "yarn clean && yarn generate:node-tests && tsc --emitDeclarationOnly && rolldown -c",
     "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run --typecheck",
     "test:watch": "vitest --watch --typecheck",

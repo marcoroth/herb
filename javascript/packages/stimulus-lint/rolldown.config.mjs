@@ -1,5 +1,3 @@
-// Bundle the CLI entry point into a single CommonJS file.
-// Exclude Node built-in so they remain as externals.
 import { createRequire } from "module"
 
 const { dependencies } = createRequire(import.meta.url)("./package.json")
@@ -12,8 +10,6 @@ const external = [
   ...Object.keys(dependencies ?? {}),
 ]
 
-// Enable sourcemaps for local builds and release builds
-// Disable for CI non-release builds (PR previews, etc.)
 const isCI = process.env.CI === "true"
 const isReleaseBuild = process.env.RELEASE_BUILD === "true"
 const enableSourcemaps = !isCI || isReleaseBuild

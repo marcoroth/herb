@@ -37,7 +37,7 @@
     "./cli": {
       "types": "./dist/types/cli.d.ts",
       "import": "./dist/cli.js",
-      "require": "./dist/cli.js",
+      "require": "./dist/cli.cjs",
       "default": "./dist/cli.js"
     },
     "./loader": {

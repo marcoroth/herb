@@ -15,7 +15,6 @@
     "directory": "javascript/packages/herb-language-server"
   },
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
@@ -29,9 +28,8 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "default": "./dist/index.cjs"
     }
   },
   "bin": {
