@@ -7,6 +7,7 @@
 #include "../include/analyze/conditional_open_tags.h"
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
+#include "../include/analyze/herb_directives.h"
 #include "../include/analyze/invalid_structures.h"
 #include "../include/analyze/iteration_nodes.h"
 #include "../include/analyze/postfix_conditionals.h"
@@ -1110,6 +1111,10 @@ void herb_analyze_parse_tree(
 
   if (options && options->strict_locals) {
     herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);
+  }
+
+  if (options && options->herb_directives) {
+    herb_visit_node((AST_NODE_T*) document, transform_herb_directive_nodes, &context);
   }
 
   if (options && options->action_view_helpers) {

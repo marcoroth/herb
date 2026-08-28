@@ -162,6 +162,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
     if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
 
+    VALUE herb_directives = rb_hash_lookup(options, rb_utf8_str_new_cstr("herb_directives"));
+    if (NIL_P(herb_directives)) { herb_directives = rb_hash_lookup(options, ID2SYM(rb_intern("herb_directives"))); }
+    if (!NIL_P(herb_directives) && RTEST(herb_directives)) { parser_options.herb_directives = true; }
+
     VALUE iteration_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("iteration_nodes"));
     if (NIL_P(iteration_nodes)) { iteration_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("iteration_nodes"))); }
     if (!NIL_P(iteration_nodes) && RTEST(iteration_nodes)) { parser_options.iteration_nodes = true; }

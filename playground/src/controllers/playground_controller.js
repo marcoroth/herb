@@ -1802,6 +1802,7 @@ export default class extends Controller {
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,

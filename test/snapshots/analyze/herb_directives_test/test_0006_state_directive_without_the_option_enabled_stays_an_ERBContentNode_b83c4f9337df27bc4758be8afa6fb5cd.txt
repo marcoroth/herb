@@ -1,0 +1,16 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0006_state directive without the option enabled stays an ERBContentNode"
+input: |2-
+<%# herb:state (open: false) %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state (open: false) " (location: (1:3)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

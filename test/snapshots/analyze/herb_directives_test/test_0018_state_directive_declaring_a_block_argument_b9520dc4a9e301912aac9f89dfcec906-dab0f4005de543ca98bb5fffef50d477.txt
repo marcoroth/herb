@@ -1,0 +1,23 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0018_state directive declaring a block argument"
+input: |2-
+<%# herb:state (&block) %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbStateDirectiveNode (location: (1:0)-(1:26))
+    │   ├── errors: (1 error)
+    │   │   └── @ HerbStateInvalidParameterError (location: (1:16)-(1:22))
+    │   │       ├── message: "The `herb:state` directive only declares keyword arguments with defaults. `&block` is not one. Declare each state with a default, like `(pending: false)`."
+    │   │       └── parameter: "&block"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state (&block) " (location: (1:3)-(1:24))
+    │   ├── tag_closing: "%>" (location: (1:24)-(1:26))
+    │   ├── key: "state" (location: (1:9)-(1:14))
+    │   ├── signature: "(&block)" (location: (1:15)-(1:23))
+    │   └── states: []
+    │
+    └── @ HTMLTextNode (location: (1:26)-(2:0))
+        └── content: "\n"
