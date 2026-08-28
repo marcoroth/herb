@@ -172,6 +172,35 @@
   color: #111827;
 }
 
+.herb-dev-tools-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f9fafb;
+  font-size: 11px;
+}
+
+.herb-dev-tools-connection-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
+  flex: none;
+}
+
+.herb-dev-tools-connection-status {
+  color: #6b7280;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .herb-dev-tools-summary {
   flex: 1;
   min-width: 0;

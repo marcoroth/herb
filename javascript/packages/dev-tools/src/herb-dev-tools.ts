@@ -153,6 +153,7 @@ export class HerbDevTools {
       this.panel = new RuntimePanel({
         onOpenFile: (file, line, column) => this.devToolsOverlay?.openFileInEditor(file, line, column),
         onOpen: () => this.devToolsOverlay?.closeMenu(),
+        onRender: () => this.devServerClient?.refreshConnection(),
       })
 
       this.devToolsOverlay?.syncRuntimePanelToggle()

@@ -224,9 +224,9 @@ export class HerbOverlay {
           <div class="herb-menu-header">Herb Debug Tools</div>
 
           <div id="herbDevServerSection" class="herb-dev-server-section">
-            <span id="herbDevServerDot" class="herb-dev-server-dot"></span>
-            <span id="herbDevServerStatus" class="herb-dev-server-status">Dev Server</span>
-            <button id="herbDevServerRetry" class="herb-dev-server-retry">Retry</button>
+            <span id="herbDevServerDot" data-herb-dev-server-dot class="herb-dev-server-dot"></span>
+            <span id="herbDevServerStatus" data-herb-dev-server-status class="herb-dev-server-status">Dev Server</span>
+            <button id="herbDevServerRetry" data-herb-dev-server-retry class="herb-dev-server-retry">Retry</button>
           </div>
 
           <div class="herb-toggle-item">

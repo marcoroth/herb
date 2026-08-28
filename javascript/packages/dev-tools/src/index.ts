@@ -1,4 +1,7 @@
-export { HerbDevTools, DEV_TOOLS_START_EVENT } from './herb-dev-tools.js'
+export { DEV_SERVER_FIXED_EVENT } from './dev-server/types.js'
+export { DEV_TOOLS_START_EVENT } from './herb-dev-tools.js'
+
+export { HerbDevTools } from './herb-dev-tools.js'
 export { RuntimePanel } from './runtime/panel.js'
 
 export type { HerbDevToolsOptions } from './herb-dev-tools.js'

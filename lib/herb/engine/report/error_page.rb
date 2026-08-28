@@ -50,10 +50,11 @@ module Herb
           .herb-error .herb-error-provenance code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
         CSS
 
-        #: (untyped, ?dev_tools: String?, ?enabled: bool) -> void
-        def initialize(app, dev_tools: nil, enabled: true)
+        #: (untyped, ?dev_tools: (String | ^() -> String?)?, ?dev_server_port: (Integer | String | ^() -> untyped)?, ?enabled: bool) -> void
+        def initialize(app, dev_tools: nil, dev_server_port: nil, enabled: true)
           @app = app
           @dev_tools = dev_tools
+          @dev_server_port = dev_server_port
           @enabled = enabled
         end
 
@@ -201,6 +202,7 @@ module Herb
             %(<html lang="en"><head><meta charset="utf-8">),
             %(<meta name="viewport" content="width=device-width, initial-scale=1">),
             %(<meta name="herb-debug-mode" content="true">),
+            dev_server_port_meta_tag,
             "<title>#{escape(title(diagnostics))}</title>",
             "<style>#{STYLES}</style>",
             "</head><body>",
@@ -222,17 +224,44 @@ module Herb
 
         #: () -> String
         def script_tag
-          return "" unless @dev_tools
+          path = dev_tools_path
+
+          return "" unless path
 
           <<~HTML
             <script type="module">
-              import { HerbDevTools } from #{JSON.generate(@dev_tools)}
+              import { HerbDevTools } from #{JSON.generate(path)}
+
+              document.addEventListener("herb:dev-server-fixed", () => window.location.reload())
 
               HerbDevTools.start({
                 devServer: { onFixed: () => window.location.reload() }
               })
             </script>
           HTML
+        end
+
+        #: () -> String?
+        def dev_tools_path
+          path = resolved(@dev_tools)
+
+          path.is_a?(String) && !path.empty? ? path : nil
+        end
+
+        #: () -> String
+        def dev_server_port_meta_tag
+          port = resolved(@dev_server_port).to_s
+
+          return "" if port.empty?
+
+          %(<meta name="herb-dev-server-port" content="#{escape(port)}">)
+        end
+
+        #: (untyped) -> untyped
+        def resolved(value)
+          value.respond_to?(:call) ? value.call : value
+        rescue StandardError
+          nil
         end
 
         #: (Hash[Symbol, untyped]) -> String

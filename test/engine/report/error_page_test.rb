@@ -281,6 +281,51 @@ module Engine
         refute_includes body.first, "devServer: false"
       end
 
+      test "hears that even when something else started the dev tools first" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
+
+        assert_includes body.first, %(document.addEventListener("herb:dev-server-fixed", () => window.location.reload()))
+      end
+
+      test "names the dev server port, so the tools reach a project that moved it" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: 9999).call(HTML_ENV)
+
+        assert_includes body.first, %(<meta name="herb-dev-server-port" content="9999">)
+      end
+
+      test "asks for that port at the time it serves too" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: -> { 4321 }).call(HTML_ENV)
+
+        assert_includes body.first, %(<meta name="herb-dev-server-port" content="4321">)
+      end
+
+      test "leaves the port out when nobody named one, so the default still applies" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        refute_includes body.first, "herb-dev-server-port"
+      end
+
+      test "asks for the path at the time it serves, for a pipeline that boots later" do
+        resolved = -> { "/assets/herb-abc123.js" }
+
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: resolved).call(HTML_ENV)
+
+        assert_includes body.first, %(import { HerbDevTools } from "/assets/herb-abc123.js")
+      end
+
+      test "costs the overlay and not the page when it cannot answer" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> { raise "no pipeline" }).call(HTML_ENV)
+
+        refute_includes body.first, "HerbDevTools"
+        assert_includes body.first, "This template could not be compiled"
+      end
+
+      test "leaves the script out when it names nothing yet" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> {}).call(HTML_ENV)
+
+        refute_includes body.first, "HerbDevTools"
+      end
+
       test "leaves the script out when it is not" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 

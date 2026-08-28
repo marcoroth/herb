@@ -5,6 +5,7 @@ import { MismatchAlert } from "./mismatch-alert"
 
 import { applyPatch } from "./patch"
 import { diagnosticsFromError } from "./diagnostics"
+import { DEV_SERVER_FIXED_EVENT } from "./types"
 
 import type {
   DiagnosticSink,
@@ -68,6 +69,10 @@ export class HerbClient {
 
   getPort(): number {
     return this.port
+  }
+
+  refreshConnection(): void {
+    this.connectionDot.apply()
   }
 
   applyConnectionDot(): void {
@@ -169,6 +174,8 @@ export class HerbClient {
   private handleFixed(message: FixedMessage): void {
     this.options.onFixed?.(message)
     this.getDiagnostics()?.clear()
+
+    document.dispatchEvent(new CustomEvent(DEV_SERVER_FIXED_EVENT, { detail: message }))
   }
 
   private updateState(state: ClientState): void {
