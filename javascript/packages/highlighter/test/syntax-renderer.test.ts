@@ -4,7 +4,15 @@ import { themes } from "../src/themes.js"
 import { Range } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
-import { ANSI_REGEX } from "../src/ansi.js"
+import { ANSI_REGEX, stripAnsiColors } from "../src/ansi.js"
+import { colorize } from "../src/color.js"
+
+/** A stub backend that lexes to a fixed token list. */
+const rendererFor = (value: unknown[]) => ({
+  isLoaded: true,
+  load: async () => {},
+  lex: () => ({ errors: [], value }),
+})
 
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer
@@ -225,6 +233,71 @@ describe("SyntaxRenderer", () => {
       const result = erbCommentRenderer.highlight(content)
 
       expect(result).toMatchSnapshot()
+    })
+
+    it("should highlight an ERB comment tag and its content as a comment", async () => {
+      const content = "<%# note %>"
+      const commentRenderer = new SyntaxRenderer(
+        themes.onedark,
+        rendererFor([
+          { type: "TOKEN_ERB_START", range: Range.from(0, 3) },
+          { type: "TOKEN_ERB_CONTENT", range: Range.from(3, 9) },
+          { type: "TOKEN_ERB_END", range: Range.from(9, 11) },
+        ]) as any,
+      )
+      await commentRenderer.initialize()
+
+      const result = commentRenderer.highlight(content)
+      const comment = themes.onedark.TOKEN_HTML_COMMENT_START
+
+      expect(result).toContain(colorize("<%#", comment))
+      expect(result).toContain(colorize(" note ", comment))
+      expect(result).toContain(colorize("%>", comment))
+      expect(result).not.toContain(colorize("<%#", themes.onedark.TOKEN_ERB_START))
+      expect(stripAnsiColors(result)).toBe(content)
+    })
+
+    it("should not highlight Ruby keywords inside an ERB comment", async () => {
+      const content = "<%# if end %>"
+      const commentRenderer = new SyntaxRenderer(
+        themes.onedark,
+        rendererFor([
+          { type: "TOKEN_ERB_START", range: Range.from(0, 3) },
+          { type: "TOKEN_ERB_CONTENT", range: Range.from(3, 11) },
+          { type: "TOKEN_ERB_END", range: Range.from(11, 13) },
+        ]) as any,
+      )
+      await commentRenderer.initialize()
+
+      const result = commentRenderer.highlight(content)
+
+      expect(result).not.toContain(colorize("if", themes.onedark.RUBY_KEYWORD))
+      expect(result).not.toContain(colorize("end", themes.onedark.RUBY_KEYWORD))
+      expect(result).toContain(colorize(" if end ", themes.onedark.TOKEN_HTML_COMMENT_START))
+      expect(stripAnsiColors(result)).toBe(content)
+    })
+
+    it("should still highlight a regular ERB tag that follows a comment", async () => {
+      const content = "<%# note %><% if x %>"
+      const commentRenderer = new SyntaxRenderer(
+        themes.onedark,
+        rendererFor([
+          { type: "TOKEN_ERB_START", range: Range.from(0, 3) },
+          { type: "TOKEN_ERB_CONTENT", range: Range.from(3, 9) },
+          { type: "TOKEN_ERB_END", range: Range.from(9, 11) },
+          { type: "TOKEN_ERB_START", range: Range.from(11, 13) },
+          { type: "TOKEN_ERB_CONTENT", range: Range.from(13, 19) },
+          { type: "TOKEN_ERB_END", range: Range.from(19, 21) },
+        ]) as any,
+      )
+      await commentRenderer.initialize()
+
+      const result = commentRenderer.highlight(content)
+
+      expect(result).toContain(colorize("<%#", themes.onedark.TOKEN_HTML_COMMENT_START))
+      expect(result).toContain(colorize("<%", themes.onedark.TOKEN_ERB_START))
+      expect(result).toContain(colorize("if", themes.onedark.RUBY_KEYWORD))
+      expect(stripAnsiColors(result)).toBe(content)
     })
   })
 })

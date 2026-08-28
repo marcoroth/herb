@@ -8,6 +8,8 @@ import type { ColorScheme } from "./themes.js"
 const HIGHLIGHTED_METHODS = ["raise"]
 const HIGHLIGHTED_WORDS = new Set([...RUBY_KEYWORDS, ...HIGHLIGHTED_METHODS])
 
+const ERB_COMMENT_TAG_OPENING = "<%#"
+
 type SyntaxRenderState = {
   inTag: boolean
   inQuotes: boolean
@@ -17,6 +19,7 @@ type SyntaxRenderState = {
   expectingAttributeName: boolean
   expectingAttributeValue: boolean
   inComment: boolean
+  inERBComment: boolean
 }
 
 export class SyntaxRenderer {
@@ -97,6 +100,7 @@ export class SyntaxRenderer {
       expectingAttributeName: false,
       expectingAttributeValue: false,
       inComment: false,
+      inERBComment: false,
     }
 
     for (let i = 0; i < tokens.length; i++) {
@@ -114,7 +118,7 @@ export class SyntaxRenderer {
 
       const color = this.getContextualColor(state, token, tokenText)
 
-      if (token.type === "TOKEN_ERB_CONTENT") {
+      if (token.type === "TOKEN_ERB_CONTENT" && !state.inERBComment) {
         const highlightedRuby = this.highlightRubyCode(tokenText)
         highlighted += highlightedRuby
       } else if (color !== undefined) {
@@ -204,6 +208,12 @@ export class SyntaxRenderer {
       case "TOKEN_HTML_COMMENT_END":
         state.inComment = false
         break
+
+      // Every ERB tag re-decides this, so the flag never has to be cleared on
+      // `TOKEN_ERB_END` — which keeps the closing `%>` inside the comment.
+      case "TOKEN_ERB_START":
+        state.inERBComment = tokenText === ERB_COMMENT_TAG_OPENING
+        break
     }
   }
 
@@ -212,6 +222,15 @@ export class SyntaxRenderer {
     token: Token,
     tokenText: string,
   ): Color | null {
+    if (
+      state.inERBComment &&
+      (token.type === "TOKEN_ERB_START" ||
+        token.type === "TOKEN_ERB_CONTENT" ||
+        token.type === "TOKEN_ERB_END")
+    ) {
+      return this.colors.TOKEN_HTML_COMMENT_START
+    }
+
     if (
       state.inComment &&
       token.type !== "TOKEN_HTML_COMMENT_START" &&

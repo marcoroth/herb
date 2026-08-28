@@ -8,6 +8,7 @@ use crate::ruby_keywords::RUBY_KEYWORDS;
 use crate::themes::ColorScheme;
 
 const HIGHLIGHTED_METHODS: &[&str] = &["raise"];
+const ERB_COMMENT_TAG_OPENING: &str = "<%#";
 
 fn is_highlighted_word(word: &str) -> bool {
   RUBY_KEYWORDS.contains(&word) || HIGHLIGHTED_METHODS.contains(&word)
@@ -23,6 +24,7 @@ struct SyntaxRenderState {
   expecting_attribute_name: bool,
   expecting_attribute_value: bool,
   in_comment: bool,
+  in_erb_comment: bool,
 }
 
 pub struct SyntaxRenderer {
@@ -94,7 +96,7 @@ impl SyntaxRenderer {
 
       let color = self.contextual_color(&state, token, token_text);
 
-      if token.token_type == "TOKEN_ERB_CONTENT" {
+      if token.token_type == "TOKEN_ERB_CONTENT" && !state.in_erb_comment {
         highlighted.push_str(&self.highlight_ruby_code(token_text));
       } else {
         highlighted.push_str(&self.apply_color(token_text, color));
@@ -174,12 +176,22 @@ impl SyntaxRenderer {
       "TOKEN_HTML_COMMENT_START" => state.in_comment = true,
       "TOKEN_HTML_COMMENT_END" => state.in_comment = false,
 
+      // Every ERB tag re-decides this, so the flag never has to be cleared on
+      // `TOKEN_ERB_END` — which keeps the closing `%>` inside the comment.
+      "TOKEN_ERB_START" => state.in_erb_comment = token_text == ERB_COMMENT_TAG_OPENING,
+
       _ => {}
     }
   }
 
   fn contextual_color(&self, state: &SyntaxRenderState, token: &Token, token_text: &str) -> Option<Color> {
     let token_type = token.token_type.as_str();
+
+    if state.in_erb_comment
+      && matches!(token_type, "TOKEN_ERB_START" | "TOKEN_ERB_CONTENT" | "TOKEN_ERB_END")
+    {
+      return Some(self.colors.token_html_comment_start);
+    }
 
     if state.in_comment
       && token_type != "TOKEN_HTML_COMMENT_START"

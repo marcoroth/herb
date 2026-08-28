@@ -3,11 +3,12 @@ mod common;
 use std::sync::Arc;
 
 use herb_highlighter::ansi::find_ansi_sequences;
+use herb_highlighter::color::colorize;
 use herb_highlighter::herb_backend::Herb;
 use herb_highlighter::syntax_renderer::SyntaxRenderer;
 use herb_highlighter::themes::{get_theme, Theme};
 
-use common::{no_color, token, with_color, StubBackend};
+use common::{no_color, strip_ansi_colors, token, with_color, StubBackend};
 
 fn renderer(theme: Theme) -> SyntaxRenderer {
   SyntaxRenderer::with_backend(get_theme(theme).clone(), Arc::new(Herb))
@@ -122,4 +123,87 @@ fn preserves_erb_highlighting_in_comments() {
   );
 
   insta::assert_snapshot!(erb_comment_renderer.highlight("<!-- <% code %> -->"));
+}
+
+#[test]
+fn highlights_an_erb_comment_tag_and_its_content_as_a_comment() {
+  with_color();
+
+  let theme = get_theme(Theme::OneDark).clone();
+  let comment = theme.token_html_comment_start;
+  let erb_start = theme.token_erb_start;
+
+  let renderer = SyntaxRenderer::with_backend(
+    theme,
+    StubBackend::with_tokens(vec![
+      token("TOKEN_ERB_START", 0, 3),
+      token("TOKEN_ERB_CONTENT", 3, 9),
+      token("TOKEN_ERB_END", 9, 11),
+    ]),
+  );
+
+  let content = "<%# note %>";
+  let result = renderer.highlight(content);
+
+  assert!(result.contains(&colorize("<%#", comment)));
+  assert!(result.contains(&colorize(" note ", comment)));
+  assert!(result.contains(&colorize("%>", comment)));
+  assert!(!result.contains(&colorize("<%#", erb_start)));
+  assert_eq!(strip_ansi_colors(&result), content);
+}
+
+#[test]
+fn does_not_highlight_ruby_keywords_inside_an_erb_comment() {
+  with_color();
+
+  let theme = get_theme(Theme::OneDark).clone();
+  let comment = theme.token_html_comment_start;
+  let keyword = theme.ruby_keyword;
+
+  let renderer = SyntaxRenderer::with_backend(
+    theme,
+    StubBackend::with_tokens(vec![
+      token("TOKEN_ERB_START", 0, 3),
+      token("TOKEN_ERB_CONTENT", 3, 11),
+      token("TOKEN_ERB_END", 11, 13),
+    ]),
+  );
+
+  let content = "<%# if end %>";
+  let result = renderer.highlight(content);
+
+  assert!(!result.contains(&colorize("if", keyword)));
+  assert!(!result.contains(&colorize("end", keyword)));
+  assert!(result.contains(&colorize(" if end ", comment)));
+  assert_eq!(strip_ansi_colors(&result), content);
+}
+
+#[test]
+fn still_highlights_a_regular_erb_tag_that_follows_a_comment() {
+  with_color();
+
+  let theme = get_theme(Theme::OneDark).clone();
+  let comment = theme.token_html_comment_start;
+  let erb_start = theme.token_erb_start;
+  let keyword = theme.ruby_keyword;
+
+  let renderer = SyntaxRenderer::with_backend(
+    theme,
+    StubBackend::with_tokens(vec![
+      token("TOKEN_ERB_START", 0, 3),
+      token("TOKEN_ERB_CONTENT", 3, 9),
+      token("TOKEN_ERB_END", 9, 11),
+      token("TOKEN_ERB_START", 11, 13),
+      token("TOKEN_ERB_CONTENT", 13, 19),
+      token("TOKEN_ERB_END", 19, 21),
+    ]),
+  );
+
+  let content = "<%# note %><% if x %>";
+  let result = renderer.highlight(content);
+
+  assert!(result.contains(&colorize("<%#", comment)));
+  assert!(result.contains(&colorize("<%", erb_start)));
+  assert!(result.contains(&colorize("if", keyword)));
+  assert_eq!(strip_ansi_colors(&result), content);
 }
