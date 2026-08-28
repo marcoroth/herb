@@ -169,6 +169,11 @@ module Engine
         )
 
         refuse(
+          "<%# herb:state (rate: 1e3) %><p><%= rate %></p>",
+          "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead."
+        )
+
+        refuse(
           "<%# herb:state (selected: []) %><p><%= selected %></p>",
           "The state `selected` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
         )
