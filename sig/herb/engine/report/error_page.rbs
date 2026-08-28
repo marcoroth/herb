@@ -31,8 +31,8 @@ module Herb
 
         STYLES: String
 
-        # : (untyped, ?dev_tools: String?, ?enabled: bool) -> void
-        def initialize: (untyped, ?dev_tools: String?, ?enabled: bool) -> void
+        # : (untyped, ?dev_tools: (String | ^() -> String?)?, ?dev_server_port: (Integer | String | ^() -> untyped)?, ?enabled: bool) -> void
+        def initialize: (untyped, ?dev_tools: (String | ^() -> String?)?, ?dev_server_port: (Integer | String | ^() -> untyped)?, ?enabled: bool) -> void
 
         # : (untyped) -> untyped
         def call: (untyped) -> untyped
@@ -74,6 +74,15 @@ module Herb
 
         # : () -> String
         def script_tag: () -> String
+
+        # : () -> String?
+        def dev_tools_path: () -> String?
+
+        # : () -> String
+        def dev_server_port_meta_tag: () -> String
+
+        # : (untyped) -> untyped
+        def resolved: (untyped) -> untyped
 
         # : (Hash[Symbol, untyped]) -> String
         def provenance: (Hash[Symbol, untyped]) -> String
