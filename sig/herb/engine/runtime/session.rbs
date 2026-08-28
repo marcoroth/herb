@@ -102,8 +102,8 @@ module Herb
         # : (String, String?) -> void
         def source: (String, String?) -> void
 
-        # : (Symbol) { () -> untyped } -> untyped
-        def channel: (Symbol) { () -> untyped } -> untyped
+        # @rbs params(Symbol, "&": T.proc.untyped).untyped
+        def channel: (untyped name) ?{ (?) -> untyped } -> untyped
 
         # : () -> Array[Herb::Diagnostic]
         def diagnostics: () -> Array[Herb::Diagnostic]

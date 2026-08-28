@@ -209,7 +209,7 @@ module Herb
           report.source(template, source)
         end
 
-        #: (Symbol) { () -> untyped } -> untyped
+        # @rbs params(Symbol, "&": T.proc.untyped).untyped
         def channel(name, &)
           report.channel(name, &)
         end
