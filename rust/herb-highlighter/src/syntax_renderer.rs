@@ -183,7 +183,7 @@ impl SyntaxRenderer {
       "TOKEN_HTML_COMMENT_START" => state.in_comment = true,
       "TOKEN_HTML_COMMENT_END" => state.in_comment = false,
 
-      "TOKEN_ERB_START" => state.in_erb_comment = token_text.starts_with("<%#"),
+      "TOKEN_ERB_START" => state.in_erb_comment = state.in_erb_comment || token_text.starts_with("<%#"),
 
       _ => {}
     }

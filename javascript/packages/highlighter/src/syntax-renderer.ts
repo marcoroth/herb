@@ -213,7 +213,7 @@ export class SyntaxRenderer {
         break
 
       case "TOKEN_ERB_START":
-        state.inErbComment = tokenText.startsWith("<%#")
+        state.inErbComment = state.inErbComment || tokenText.startsWith("<%#")
         break
     }
   }
