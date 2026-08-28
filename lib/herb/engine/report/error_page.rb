@@ -204,8 +204,7 @@ module Herb
             "<title>#{escape(title(diagnostics))}</title>",
             "<style>#{STYLES}</style>",
             "</head><body>",
-            fallback(diagnostics, report.sources),
-            provenance(report.meta),
+            fallback(diagnostics, report.sources, provenance(report.meta)),
             report.to_html,
             script_tag,
             "</body></html>"
@@ -265,11 +264,11 @@ module Herb
           %(<footer class="herb-error-provenance">#{rows.join}</footer>)
         end
 
-        #: (Array[Herb::Diagnostic], Hash[String, String]) -> String
-        def fallback(diagnostics, sources)
+        #: (Array[Herb::Diagnostic], Hash[String, String], String) -> String
+        def fallback(diagnostics, sources, provenance)
           sections = diagnostics.map { |diagnostic| section(diagnostic, sources[diagnostic.template]) }
 
-          %(<main class="herb-error"><h1>This template could not be compiled</h1>#{sections.join}</main>)
+          %(<main class="herb-error"><h1>This template could not be compiled</h1>#{sections.join}#{provenance}</main>)
         end
 
         #: (Herb::Diagnostic, String?) -> String
@@ -302,7 +301,7 @@ module Herb
             %(<span class="#{"herb-marked" if number == line}">#{marker} #{number.to_s.rjust(4)}  #{text}</span>)
           }
 
-          "<pre>#{rows.join("\n")}</pre>"
+          "<pre>#{rows.join}</pre>"
         end
 
         #: (String) -> String

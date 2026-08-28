@@ -199,11 +199,29 @@ module Engine
         assert_includes body.first, "Close the `&lt;form&gt;` before"
       end
 
+      test "prints one row per source line, with no blank line between them" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        pre = body.first[%r{<pre>(.+?)</pre>}m, 1]
+
+        assert_equal 4, pre.scan("<span").size
+        assert_equal 0, pre.scan("\n").size
+      end
+
       test "escapes the source it prints" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
         assert_includes body.first, "&lt;form&gt;"
         refute_includes body.first[%r{<pre>.+?</pre>}m], "<form>"
+      end
+
+      test "keeps the provenance footer inside the container its rules are scoped to" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        main = body.first[%r{<main class="herb-error">.+?</main>}m]
+
+        assert_includes main, %(<footer class="herb-error-provenance">)
+        assert_equal 1, body.first.scan("herb-error-provenance\"").size
       end
 
       test "scopes every style rule to itself" do

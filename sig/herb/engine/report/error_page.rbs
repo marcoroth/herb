@@ -78,8 +78,8 @@ module Herb
         # : (Hash[Symbol, untyped]) -> String
         def provenance: (Hash[Symbol, untyped]) -> String
 
-        # : (Array[Herb::Diagnostic], Hash[String, String]) -> String
-        def fallback: (Array[Herb::Diagnostic], Hash[String, String]) -> String
+        # : (Array[Herb::Diagnostic], Hash[String, String], String) -> String
+        def fallback: (Array[Herb::Diagnostic], Hash[String, String], String) -> String
 
         # : (Herb::Diagnostic, String?) -> String
         def section: (Herb::Diagnostic, String?) -> String
