@@ -63,7 +63,7 @@ class RenderAnalyzerTest < Minitest::Spec
     result = check(directory)
 
     assert_equal 1, result.unused.count
-    assert_includes result.unused.keys, "shared/orphan"
+    assert_equal ["shared/orphan"], result.unused.keys
   end
 
   test "partial rendered from another partial is reachable" do
@@ -104,8 +104,7 @@ class RenderAnalyzerTest < Minitest::Spec
     result = check(directory)
 
     assert_equal 2, result.unused.count
-    assert_includes result.unused.keys, "shared/orphan"
-    assert_includes result.unused.keys, "shared/orphan_child"
+    assert_equal ["shared/orphan", "shared/orphan_child"], result.unused.keys.sort
   end
 
   test "partial only rendered from unreachable partial is unused" do
@@ -119,9 +118,7 @@ class RenderAnalyzerTest < Minitest::Spec
     result = check(directory)
 
     assert_equal 2, result.unused.count
-    assert_includes result.unused.keys, "shared/unused_parent"
-    assert_includes result.unused.keys, "shared/unused_child"
-    refute_includes result.unused.keys, "shared/used"
+    assert_equal ["shared/unused_child", "shared/unused_parent"], result.unused.keys.sort
   end
 
   test "multiple entry points can reach different partials" do
@@ -215,7 +212,7 @@ class RenderAnalyzerTest < Minitest::Spec
 
     result = check(directory)
 
-    refute_includes result.unused.keys, "shared/from_controller"
+    assert_empty result.unused.keys
   end
 
   test "dynamic render from Ruby controller marks prefix partials as reachable" do
@@ -228,8 +225,7 @@ class RenderAnalyzerTest < Minitest::Spec
 
     result = check(directory)
 
-    refute_includes result.unused.keys, "cards/basic"
-    refute_includes result.unused.keys, "cards/premium"
+    assert_empty result.unused.keys
   end
 
   test "render in non-output ERB tag is detected via regex fallback" do
@@ -279,7 +275,7 @@ class RenderAnalyzerTest < Minitest::Spec
     assert_equal 1, result.unresolved.count
     assert_equal "shared/missing", result.unresolved.first[:partial]
     assert_equal 1, result.unused.count
-    assert_includes result.unused.keys, "shared/unused"
+    assert_equal ["shared/unused"], result.unused.keys
   end
 
   test "resolves partials with various extensions" do
@@ -343,7 +339,7 @@ class RenderAnalyzerTest < Minitest::Spec
     assert result.issues?
     assert_empty result.unresolved
     assert_equal 1, result.unused.count
-    assert_includes result.unused.keys, "shared/orphan"
+    assert_equal ["shared/orphan"], result.unused.keys
   end
 
   test "fully_resolvable? returns true when all partials resolve statically" do

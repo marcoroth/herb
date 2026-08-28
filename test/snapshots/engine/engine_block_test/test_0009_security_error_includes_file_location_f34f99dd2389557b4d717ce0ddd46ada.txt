@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineBlockTest#test_0009_security error includes file location"
+input: "<div <%= \"class=btn\" %>>Test</div>"
+---
+app/views/test.erb:1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.

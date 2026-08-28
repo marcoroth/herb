@@ -1,0 +1,6 @@
+---
+source: "Engine::HTMLSafeAssertionsVisitorTest#test_0025_a block argument for another method is left alone"
+input: "a block argument for another method is left alone"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (items.map(&:upcase).join).to_s; _buf << '</div>'.freeze;
+_buf.to_s

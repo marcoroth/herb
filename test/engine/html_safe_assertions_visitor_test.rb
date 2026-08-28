@@ -85,9 +85,7 @@ module Engine
     test "html_safe in an ERB comment is left alone" do
       template = "<%# @user.bio.html_safe %><div>x</div>"
 
-      engine = Herb::Engine.new(template, assertion_options)
-
-      refute_includes engine.src, "HTMLSafeAssertions"
+      assert_snapshot_matches(Herb::Engine.new(template, assertion_options).src, "html_safe in a comment is left alone")
     end
 
     test "every call is wrapped once when the visitor is passed twice" do
@@ -112,7 +110,7 @@ module Engine
         visitors: [Herb::Engine::HTMLSafeAssertionsVisitor.new]
       )
 
-      assert_includes engine.src, "HTMLSafeAssertions.check"
+      assert_snapshot_matches(engine.src, "prism_program option wraps the call")
     end
 
     test "a document parsed without the prism_program option raises" do
@@ -136,7 +134,7 @@ module Engine
 
       engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::HTMLSafeAssertionsVisitor.new])
 
-      assert_includes engine.src, "file: __FILE__"
+      assert_snapshot_matches(engine.src, "file comes from the compiled template")
     end
 
     test "safe value passes through unchanged - render" do
@@ -250,9 +248,7 @@ module Engine
     test "a block argument for another method is left alone" do
       template = "<div><%= items.map(&:upcase).join %></div>"
 
-      engine = Herb::Engine.new(template, assertion_options)
-
-      refute_includes engine.src, "HTMLSafeAssertions"
+      assert_snapshot_matches(Herb::Engine.new(template, assertion_options).src, "a block argument for another method is left alone")
     end
 
     test "a block argument is wrapped whatever method it is passed to" do

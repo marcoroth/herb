@@ -61,8 +61,7 @@ module Engine
       html = '<div class="container">Regular HTML</div>'
       result = parse_and_transform(html)
 
-      refute_includes(extract_all_text(result.value), "render")
-      refute_includes(extract_all_text(result.value), "<%=")
+      assert_equal "Regular HTML", extract_all_text(result.value)
     end
 
     test "transforms only components in mixed HTML" do
@@ -78,9 +77,7 @@ module Engine
       result = parse_and_transform(html)
 
       erb_content = extract_erb_from_ast(result.value)
-      assert_includes erb_content, "user: @user"
-      assert_includes erb_content, "settings: @settings"
-      assert_includes erb_content, "active: true"
+      assert_equal %(<%= render ComplexComponent.new(user: @user, settings: @settings, active: true) %>), erb_content
     end
 
     test "component visitor transforms Vue components to ERB" do

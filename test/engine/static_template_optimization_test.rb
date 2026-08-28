@@ -27,6 +27,8 @@ module Engine
     class AlwaysWarns < Herb::Visitor
       include Herb::Engine::Diagnostics
 
+      def inspect = "#<#{self.class.name}>"
+
       def visit_html_element_node(node)
         warning("noticed an element", node.location, code: "noticed-element")
 
@@ -53,7 +55,7 @@ module Engine
     test "a nested multi-line document collapses to the string it renders" do
       collapsed = optimize(HTML_ONLY_TEMPLATE)
 
-      refute_includes collapsed, "_buf"
+      assert_compiled_snapshot(HTML_ONLY_TEMPLATE, visitors: [Herb::Engine::OptimizeVisitor.new])
       assert_equal HTML_ONLY_TEMPLATE, eval(collapsed)
     end
 
@@ -85,15 +87,12 @@ module Engine
     test "the optimization only applies when OptimizeVisitor is present" do
       source = "<div>Static</div>"
 
-      assert_includes Herb::Engine.new(source).src, "_buf"
-      refute_includes optimize(source), "_buf"
+      assert_compiled_snapshot(source)
+      assert_compiled_snapshot(source, visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "a template with dynamic ERB stays buffered" do
-      collapsed = optimize("<div><%= name %></div>")
-
-      assert_includes collapsed, "_buf"
-      assert_includes collapsed, "(name).to_s"
+      assert_compiled_snapshot("<div><%= name %></div>", visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "a helper that resolves to static markup collapses too" do
@@ -103,28 +102,19 @@ module Engine
     end
 
     test "a custom preamble keeps the buffer" do
-      assert_includes optimize("<div>hi</div>", preamble: "@output = +''"), "@output"
+      assert_compiled_snapshot("<div>hi</div>", preamble: "@output = +''", visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "a custom postamble keeps the buffer" do
-      assert_includes optimize("<div>hi</div>", postamble: "@output_buffer"), "_buf"
+      assert_compiled_snapshot("<div>hi</div>", postamble: "@output_buffer", visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "the ensure wrapper keeps the buffer" do
-      collapsed = optimize("<div>hi</div>", ensure: true)
-
-      assert_includes collapsed, "__original_outvar"
-      assert_includes collapsed, "_buf"
+      assert_compiled_snapshot("<div>hi</div>", ensure: true, visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "a recorded diagnostic keeps the buffer so the report survives" do
-      compiled = Herb::Engine.new(
-        "<div>hi</div>",
-        visitors: [Herb::Engine::OptimizeVisitor.new, AlwaysWarns.new]
-      ).src
-
-      assert_includes compiled, "record_compile_diagnostics"
-      assert_includes compiled, "_buf"
+      assert_compiled_snapshot("<div>hi</div>", visitors: [Herb::Engine::OptimizeVisitor.new, AlwaysWarns.new])
     end
 
     test "a fatal diagnostic still raises instead of collapsing" do
