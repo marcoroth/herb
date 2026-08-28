@@ -52,7 +52,7 @@ jobject CreateRange(JNIEnv* env, range_T range) {
   return (*env)->NewObject(env, rangeClass, constructor, (jint) range.from, (jint) range.to);
 }
 
-jobject CreateToken(JNIEnv* env, token_T* token) {
+jobject CreateToken(JNIEnv* env, token_T* token, const parser_options_T* options) {
   if (!token) { return NULL; }
 
   jclass tokenClass = (*env)->FindClass(env, "org/herb/Token");
@@ -61,8 +61,8 @@ jobject CreateToken(JNIEnv* env, token_T* token) {
 
   jstring type = CreateStringFromHbString(env, token_type_to_string(token->type));
   jstring value = CreateStringFromHbString(env, token->value);
-  jobject location = CreateLocation(env, token->location);
-  jobject range = CreateRange(env, token->range);
+  jobject location = options->track_locations ? CreateLocation(env, token->location) : NULL;
+  jobject range = options->track_locations ? CreateRange(env, token->range) : NULL;
 
   return (*env)->NewObject(env, tokenClass, constructor, type, value, location, range);
 }
@@ -76,8 +76,8 @@ jobject CreateLexResult(JNIEnv* env, hb_array_T* tokens, jstring source) {
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     token_T* token = (token_T*) hb_array_get(tokens, i);
-    jobject tokenObj = CreateToken(env, token);
-    (*env)->CallBooleanMethod(env, tokensList, addMethod, tokenObj);
+    jobject tokenObject = CreateToken(env, token, &HERB_DEFAULT_PARSER_OPTIONS);
+    (*env)->CallBooleanMethod(env, tokensList, addMethod, tokenObject);
   }
 
   jclass lexResultClass = (*env)->FindClass(env, "org/herb/LexResult");
@@ -87,26 +87,29 @@ jobject CreateLexResult(JNIEnv* env, hb_array_T* tokens, jstring source) {
   return (*env)->NewObject(env, lexResultClass, constructor, tokensList, source);
 }
 
-jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source) {
-  jobject value = CreateDocumentNode(env, root);
+jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source, const parser_options_T* options) {
+  jobject value = CreateDocumentNode(env, root, options);
 
   jclass arrayListClass = (*env)->FindClass(env, "java/util/ArrayList");
   jmethodID arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "()V");
-  jmethodID addMethod = (*env)->GetMethodID(env, arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
   jobject errorsList = (*env)->NewObject(env, arrayListClass, arrayListConstructor);
 
-  if (root->base.errors) {
-    for (size_t i = 0; i < hb_array_size(root->base.errors); i++) {
-      AST_NODE_T* error_node = (AST_NODE_T*) hb_array_get(root->base.errors, i);
-      jobject errorObj = CreateErrorNode(env, error_node);
-      (*env)->CallBooleanMethod(env, errorsList, addMethod, errorObj);
-    }
+  jobject errorCount = NULL;
+
+  if (options->error_count != NULL) {
+    jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+    jmethodID valueOf = (*env)->GetStaticMethodID(env, integerClass, "valueOf", "(I)Ljava/lang/Integer;");
+    errorCount = (*env)->CallStaticObjectMethod(env, integerClass, valueOf, (jint) *options->error_count);
   }
 
   jclass parseResultClass = (*env)->FindClass(env, "org/herb/ParseResult");
   jmethodID constructor = (*env)->GetMethodID(
-      env, parseResultClass, "<init>", "(Lorg/herb/ast/Node;Ljava/util/List;Ljava/lang/String;)V");
+      env,
+      parseResultClass,
+      "<init>",
+      "(Lorg/herb/ast/Node;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V"
+  );
 
-  return (*env)->NewObject(env, parseResultClass, constructor, value, errorsList, source);
+  return (*env)->NewObject(env, parseResultClass, constructor, value, errorsList, source, errorCount);
 }

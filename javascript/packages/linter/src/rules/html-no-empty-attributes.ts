@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "../utils/rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { Visitor, isERBOutputNode, isERBEscapedNode, isERBOpenTagNode } from "@herb-tools/core"
 

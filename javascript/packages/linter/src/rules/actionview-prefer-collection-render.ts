@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { isERBOutputNode, isNode, HTMLTextNode } from "@herb-tools/core"
 
 import type { ERBIterationBlockNode, ERBRenderNode, Node, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -98,7 +98,8 @@ export class ActionViewPreferCollectionRenderRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

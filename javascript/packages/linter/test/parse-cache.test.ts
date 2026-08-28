@@ -68,6 +68,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: true,
+        track_locations: true,
         analyze: true,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -75,6 +76,7 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: true,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
@@ -91,6 +93,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: true,
+        track_locations: true,
         analyze: true,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -98,6 +101,7 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: false,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
@@ -114,6 +118,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: false,
+        track_locations: true,
         analyze: true,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -121,6 +126,7 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: true,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
@@ -137,6 +143,7 @@ describe("ParseCache", () => {
 
       expect(options).toEqual({
         track_whitespace: true,
+        track_locations: true,
         analyze: false,
         prism_nodes: false,
         prism_nodes_deep: false,
@@ -144,6 +151,7 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: false,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,

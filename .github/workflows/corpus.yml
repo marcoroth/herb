@@ -18,7 +18,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
@@ -152,7 +152,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMBER: ${{ github.event.pull_request.number }}
+          FROM_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
         run: |-
+          if [ "$FROM_FORK" = "true" ]; then
+            echo "Pull request comes from a fork, so the token cannot comment. Report follows."
+            echo
+
+            cat comment.md
+
+            exit 0
+          fi
+
           existing=$(gh api "repos/${{ github.repository }}/issues/$NUMBER/comments" \
             --jq 'map(select(.body | contains("<!-- corpus-report -->"))) | .[0].id // empty')
 
@@ -185,9 +195,74 @@ jobs:
           path: corpus/runs/*.json
           retention-days: 30
 
+  allocations:
+    name: Allocations
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: Build the allocation benchmark
+        run: make bench_allocs
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Check allocations over the corpus
+        id: check
+        run: ./bin/check_corpus_allocations corpus/erb
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Allocations"
+            echo
+            echo '```'
+            tail -n 3 corpus-allocations.txt 2>/dev/null || echo "the check did not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: corpus-allocations
+          path: corpus-allocations.txt
+          if-no-files-found: ignore
+          retention-days: 30
+
   printer:
     name: Printer Roundtrip
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     # Comparing the Rust and JavaScript printers against each other only needs

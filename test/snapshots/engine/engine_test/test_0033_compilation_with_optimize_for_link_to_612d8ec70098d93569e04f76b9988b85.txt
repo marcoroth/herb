@@ -2,5 +2,4 @@
 source: "Engine::EngineTest#test_0033_compilation with optimize for link_to"
 input: "{source: \"<%= link_to \\\"Home\\\", \\\"/\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
 ---
-_buf = ::String.new; _buf << '<a href="/">Home</a>'.freeze;
-_buf.to_s
+'<a href="/">Home</a>'.freeze

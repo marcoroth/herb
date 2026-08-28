@@ -115,4 +115,21 @@ class RubyLocalsIndexTest < Minitest::Spec
     assert_equal 3, local.usages.first.start.line
     assert_equal "title", text_at(source, local.declaration)
   end
+  test "declares herb:state names, so a state read is not an unknown name" do
+    source = "<%# herb:state (pending: false, attempts: 0) %>\n<p><%= attempts %></p>\n<% if pending? %><b>x</b><% end %>\n"
+    index = index_for(source)
+
+    assert_includes index.names, "pending"
+    assert_includes index.names, "attempts"
+    assert_equal 1, index.locals.find { |local| local.name == "attempts" }.usages.size
+    assert_equal 1, index.locals.find { |local| local.name == "pending" }.usages.size
+  end
+
+  test "a state seeded from a strict local indexes both names" do
+    source = "<%# locals: (open_initially: false) %>\n<%# herb:state (open: open_initially) %>\n<div><% if open %>a<% end %></div>\n"
+    index = index_for(source)
+
+    assert_includes index.names, "open_initially"
+    assert_includes index.names, "open"
+  end
 end

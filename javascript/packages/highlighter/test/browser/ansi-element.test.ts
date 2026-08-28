@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest"
 
+import { ANSI_ESCAPE } from "../../src/ansi.js"
 import { ANSI_PALETTE } from "../../src/ansi-html.js"
 import { HERB_ANSI_SURFACE, HerbANSIElement } from "../../src/ansi-element.js"
+
+import linterOutput from "../fixtures/terminal-linter.txt?raw"
+
+const CSI_REGEX = new RegExp(`${ANSI_ESCAPE}\\[[0-9;?]*[a-zA-Z]`, "g")
+const OSC_REGEX = new RegExp(`${ANSI_ESCAPE}\\]\\d*;[^\\x07${ANSI_ESCAPE}]*(?:${ANSI_ESCAPE}\\\\|\\x07)`, "g")
 
 const channels = (hex: string): number[] => [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16))
 const rgb = (hex: string): string => `rgb(${channels(hex).join(", ")})`
@@ -128,6 +134,15 @@ describe("HerbANSIElement in a browser", () => {
     })
   })
 
+  describe("real captured CLI output", () => {
+    it("keeps every visible character of the captured linter output", () => {
+      const element = mount(linterOutput)
+      const stripped = linterOutput.replace(OSC_REGEX, "").replace(CSI_REGEX, "")
+
+      expect(shadowOf(element).textContent).toBe(stripped)
+    })
+  })
+
   describe("hyperlinks", () => {
     it("renders an OSC 8 link as a safe anchor", () => {
       const element = mount(`\x1b]8;;https://herb-tools.dev\x1b\\docs\x1b]8;;\x1b\\`)
@@ -143,6 +158,39 @@ describe("HerbANSIElement in a browser", () => {
 
       expect(output.querySelector("a")).toBe(null)
       expect(output.textContent).toBe("click")
+    })
+  })
+
+  describe("linkResolver", () => {
+    it("rewrites a file target into a linkable one", () => {
+      const element = mount(`\x1b]8;;file:///workspace/app/views/page.html.erb\x1b\\page.html.erb\x1b]8;;\x1b\\`)
+
+      element.linkResolver = url => url.replace("file:///workspace/", "https://herb-tools.dev/")
+
+      const anchor = shadowOf(element).querySelector("a") as HTMLAnchorElement
+
+      expect(anchor.href).toBe("https://herb-tools.dev/app/views/page.html.erb")
+    })
+
+    it("restores the original target when the resolver is removed", () => {
+      const element = mount(`\x1b]8;;https://herb-tools.dev\x1b\\docs\x1b]8;;\x1b\\`)
+
+      element.linkResolver = () => "https://example.com"
+
+      expect((shadowOf(element).querySelector("a") as HTMLAnchorElement).href).toBe("https://example.com/")
+
+      element.linkResolver = null
+
+      expect((shadowOf(element).querySelector("a") as HTMLAnchorElement).href).toBe("https://herb-tools.dev/")
+    })
+
+    it("drops the anchor when the resolver returns null", () => {
+      const element = mount(`\x1b]8;;https://herb-tools.dev\x1b\\docs\x1b]8;;\x1b\\`)
+
+      element.linkResolver = () => null
+
+      expect(shadowOf(element).querySelector("a")).toBe(null)
+      expect(shadowOf(element).textContent).toBe("docs")
     })
   })
 

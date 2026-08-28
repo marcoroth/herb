@@ -53,6 +53,10 @@ val Herb_parse(const std::string& source, val options) {
       }
     }
 
+    if (options.hasOwnProperty("track_locations")) {
+      parser_options.track_locations = options["track_locations"].as<bool>();
+    }
+
     if (options.hasOwnProperty("analyze")) {
       bool analyze = options["analyze"].as<bool>();
       if (!analyze) {
@@ -78,6 +82,10 @@ val Herb_parse(const std::string& source, val options) {
 
     if (options.hasOwnProperty("iteration_nodes")) {
       parser_options.iteration_nodes = options["iteration_nodes"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("herb_directives")) {
+      parser_options.herb_directives = options["herb_directives"].as<bool>();
     }
 
     if (options.hasOwnProperty("strict_locals")) {
@@ -113,6 +121,9 @@ val Herb_parse(const std::string& source, val options) {
       parser_options.max_errors = max_errors_val.isNull() ? 0 : (uint32_t) max_errors_val.as<int>();
     }
   }
+
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
@@ -264,13 +275,13 @@ val Herb_diff(const std::string& old_source, const std::string& new_source, val 
     operation_object.set("path", path);
 
     if (operation->old_node != NULL) {
-      operation_object.set("oldNode", NodeFromCStruct((AST_NODE_T*) operation->old_node));
+      operation_object.set("oldNode", NodeFromCStruct((AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       operation_object.set("oldNode", val::null());
     }
 
     if (operation->new_node != NULL) {
-      operation_object.set("newNode", NodeFromCStruct((AST_NODE_T*) operation->new_node));
+      operation_object.set("newNode", NodeFromCStruct((AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS));
     } else {
       operation_object.set("newNode", val::null());
     }

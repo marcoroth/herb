@@ -2,7 +2,6 @@
 source: "Engine::ActionView::ContentTagTest#test_0001_content_tag with block"
 input: "{source: \"<%= content_tag :div do %>\\n  Content\\n<% end %>\\n\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
 ---
-_buf = ::String.new; _buf << '<div>
+'<div>
   Content
-</div>'.freeze;
-_buf.to_s
+</div>'.freeze

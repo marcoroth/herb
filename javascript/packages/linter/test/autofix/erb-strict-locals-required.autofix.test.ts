@@ -14,7 +14,7 @@ describe("erb-strict-locals-required autofix", () => {
     const input = '<div>Content</div>'
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_partial.html.erb' })
+    const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -26,7 +26,7 @@ describe("erb-strict-locals-required autofix", () => {
     const expected = '<%# locals: (**) %>\n\n<div>Content</div>'
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_partial.html.erb' }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -40,7 +40,7 @@ describe("erb-strict-locals-required autofix", () => {
     `
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_partial.html.erb' }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -51,7 +51,7 @@ describe("erb-strict-locals-required autofix", () => {
     const input = '<div>Content</div>'
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: 'show.html.erb' }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: 'show.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -69,7 +69,7 @@ describe("erb-strict-locals-required autofix", () => {
     const expected = `<%# locals: (**) %>\n\n${input}`
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_card.html.erb' }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(input, { fileName: '_card.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -84,7 +84,7 @@ describe("erb-strict-locals-required autofix", () => {
       { caller: "app/views/home/show.html.erb", locals: ["title", "footer"] },
     ])
 
-    const result = linter.autofix("<h1><%= title %></h1>", { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix("<h1><%= title %></h1>", { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe('<%# locals: (footer: nil, title: nil) %>\n\n<h1><%= title %></h1>')
   })
@@ -95,7 +95,7 @@ describe("erb-strict-locals-required autofix", () => {
 
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: ["title"] }])
 
-    const result = linter.autofix("<h1><%= title %></h1><p><%= subtitle %></p>", { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix("<h1><%= title %></h1><p><%= subtitle %></p>", { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (subtitle: nil, title: nil) %>")
   })
@@ -107,7 +107,7 @@ describe("erb-strict-locals-required autofix", () => {
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: [] }])
 
     const source = '<%= link_to "x", posts_path %><% if admin? %><span><%= title %></span><% end %>'
-    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(source, { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (title: nil) %>")
   })
@@ -119,7 +119,7 @@ describe("erb-strict-locals-required autofix", () => {
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: [] }])
 
     const source = '<%= link_to button.title, button.path %><%= submit %>'
-    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(source, { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (button: nil, submit: nil) %>")
   })
@@ -131,7 +131,7 @@ describe("erb-strict-locals-required autofix", () => {
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: [] }])
 
     const source = '<%= button_tag "Save" %><%= submit_tag "Go" %><span><%= title %></span>'
-    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(source, { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (title: nil) %>")
   })
@@ -143,7 +143,7 @@ describe("erb-strict-locals-required autofix", () => {
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: ["posts"] }])
 
     const source = '<% posts.each do |post| %><span><%= post %></span><% end %>'
-    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(source, { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (posts: nil) %>")
   })
@@ -155,7 +155,7 @@ describe("erb-strict-locals-required autofix", () => {
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: ["title"] }])
 
     const source = '<%= title %><%= local_assigns[:extra] %>'
-    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix(source, { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (title: nil, **) %>")
   })
@@ -166,7 +166,7 @@ describe("erb-strict-locals-required autofix", () => {
 
     const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: ["title"] }], 1)
 
-    const result = linter.autofix("<h1><%= title %></h1>", { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+    const result = linter.autofix("<h1><%= title %></h1>", { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
     expect(result.source).toContain("<%# locals: (title: nil, **) %>")
   })

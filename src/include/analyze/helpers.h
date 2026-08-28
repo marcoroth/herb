@@ -8,6 +8,7 @@
 #include "../ast/ast_nodes.h"
 #include "../lib/hb_allocator.h"
 #include "../lib/hb_array.h"
+#include "../parser/parser.h"
 #include "analyzed_ruby.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed);
@@ -62,7 +63,7 @@ bool search_unexpected_in_nodes(analyzed_ruby_T* analyzed);
 bool search_unexpected_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_unexpected_when_nodes(analyzed_ruby_T* analyzed);
 
-void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator);
+void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator, const parser_options_T* options);
 
 hb_array_T* extract_parameters_from_prism(
   pm_parameters_node_t* parameters,
@@ -70,6 +71,23 @@ hb_array_T* extract_parameters_from_prism(
   const char* source,
   size_t source_base_offset,
   const uint8_t* prism_source_start,
+  hb_allocator_T* allocator
+);
+
+bool is_erb_output_tag(const AST_ERB_CONTENT_NODE_T* erb_node);
+
+typedef enum {
+  STATIC_OUTPUT_NODE_NONE,
+  STATIC_OUTPUT_NODE_HTML_TEXT,
+  STATIC_OUTPUT_NODE_LITERAL,
+} static_output_node_type_T;
+
+bool append_static_output_node(
+  hb_array_T* statements,
+  const pm_statements_node_t* body,
+  const analyzed_ruby_T* analyzed,
+  position_T content_start,
+  static_output_node_type_T node_type,
   hb_allocator_T* allocator
 );
 

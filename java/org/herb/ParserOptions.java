@@ -14,6 +14,7 @@ public class ParserOptions {
   private boolean prismProgram = false;
   private boolean dotNotationTags = false;
   private boolean html = true;
+  private boolean trackLocations = true;
   private int timeout = 1000;
   private Integer maxErrors = 25;
 
@@ -134,6 +135,15 @@ public class ParserOptions {
 
   public boolean isHtml() {
     return html;
+  }
+
+  public ParserOptions trackLocations(boolean value) {
+    this.trackLocations = value;
+    return this;
+  }
+
+  public boolean isTrackLocations() {
+    return trackLocations;
   }
 
   public ParserOptions timeout(int value) {

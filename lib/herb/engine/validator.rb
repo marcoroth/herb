@@ -21,6 +21,7 @@ module Herb
     #
     # Reporting itself lives in `Herb::Engine::Diagnostics` and is open to any visitor, so a
     # validator from somewhere else can include the mixins rather than subclass this.
+    #
     class Validator < Herb::Visitor
       include ContextAware
       include Diagnostics

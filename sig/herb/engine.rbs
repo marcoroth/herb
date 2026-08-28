@@ -2,6 +2,8 @@
 
 module Herb
   class Engine
+    VISITOR_DESCRIPTION_LIMIT: Integer
+
     attr_reader src: untyped
 
     attr_reader context: untyped
@@ -19,11 +21,19 @@ module Herb
     # : () -> String
     def relative_file_path: () -> String
 
+    # : (String) -> String
+    def string_literal: (String) -> String
+
     ESCAPE_TABLE: untyped
+
+    ATTRIBUTE_ESCAPE_TABLE: untyped
 
     def initialize: (untyped input, ?untyped properties) -> untyped
 
     def self.h: (untyped value) -> untyped
+
+    # : (untyped) -> String
+    def self.raw: (untyped) -> String
 
     def self.attr: (untyped value) -> untyped
 
@@ -36,6 +46,9 @@ module Herb
     def self.comment?: (untyped code) -> untyped
 
     def self.heredoc?: (untyped code) -> untyped
+
+    # : () -> untyped
+    def compiler_class: () -> untyped
 
     def add_text: (untyped text) -> untyped
 
@@ -71,7 +84,25 @@ module Herb
 
     private
 
+    # : (Hash[Symbol, untyped]) -> bool
+    def buffer_required?: (Hash[Symbol, untyped]) -> bool
+
+    # : (untyped) -> String?
+    def compile_static_body: (untyped) -> String?
+
+    # : () -> Array[Herb::Diagnostic]
+    def collected_diagnostics: () -> Array[Herb::Diagnostic]
+
+    # : (Hash[Symbol, untyped], String) -> void
+    def write_buffer_prelude: (Hash[Symbol, untyped], String) -> void
+
+    # : () -> void
+    def insert_herb_alias!: () -> void
+
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
+
+    # : () -> Array[String]
+    def visitor_descriptions: () -> Array[String]
 
     # : (String) -> void
     def report: (String) -> void
@@ -83,6 +114,9 @@ module Herb
     def raise_for: (Array[Herb::Diagnostic], String) -> void
 
     def context_options: (untyped properties) -> untyped
+
+    # : () -> Hash[Symbol, untyped]
+    def parse_options: () -> Hash[Symbol, untyped]
 
     # : () -> Hash[Symbol, untyped]
     def default_parser_options: () -> Hash[Symbol, untyped]

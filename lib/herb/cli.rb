@@ -8,12 +8,12 @@ require "optparse"
 require_relative "../herb"
 require_relative "project"
 require_relative "configuration"
-require_relative "engine/visitors/slots"
+require_relative "engine/slots/visitor"
 
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :file_timeout
 
   def initialize(args)
     @args = args
@@ -173,7 +173,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, track_locations: track_locations.nil? || track_locations, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
                 when "compile"
                   compile_template
                 when "render"
@@ -323,6 +323,14 @@ class Herb::CLI
         self.track_whitespace = true
       end
 
+      parser.on("--track-locations", "Enable source location tracking (for parse command) (default: true)") do
+        self.track_locations = true
+      end
+
+      parser.on("--no-track-locations", "Disable source location tracking (for parse command)") do
+        self.track_locations = false
+      end
+
       parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do
         self.action_view_helpers = true
       end
@@ -335,8 +343,19 @@ class Herb::CLI
         self.optimize = true
       end
 
-      parser.on("--slots", "Emit slot markers for reactive rendering (for compile/render commands) (default: false)") do
-        self.slots = true
+      parser.on("--scoped-styles", "Scope each `<style scoped>` block to its file with Lightning CSS (for compile/render commands) (default: false)") do
+        self.scoped_styles = true
+      end
+
+      parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
+        self.slots = (mode || "server").to_sym
+
+        unless Herb::Engine::Slots::Visitor::MODES.include?(slots)
+          puts "Unknown --slots mode: #{mode}"
+          puts "Expected one of: #{Herb::Engine::Slots::Visitor::MODES.join(", ")}"
+
+          exit(1)
+        end
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -467,7 +486,6 @@ class Herb::CLI
             puts ""
           end
 
-          # Show node-level dependency index
           index = dep_analyzer.dependency_index(path)
 
           if index.any?
@@ -480,7 +498,7 @@ class Herb::CLI
               nodes.each_with_index do |n, i|
                 connector = i == nodes.size - 1 ? "\u2514\u2500\u2500" : "\u251c\u2500\u2500"
                 attr = n[:attribute] ? " #{dimmed("attr=#{n[:attribute]}")}" : ""
-                puts "     #{connector} #{dimmed("[#{n[:node_path].join(",")}]")} #{n[:type]}#{attr} #{dimmed(n[:expression].to_s[0..60])}"
+                puts "     #{connector} #{dimmed("[#{n[:node_path].join(",")}]")} #{n[:type]}#{attr} #{dimmed(one_line(n[:expression], 60))}"
               end
 
               puts ""
@@ -728,7 +746,34 @@ class Herb::CLI
     puts ""
   end
 
+  def nesting_depths(nodes)
+    stack = [] #: Array[Array[Integer]]
+
+    nodes.map do |node|
+      path = node[:node_path] || []
+
+      stack.pop while stack.any? && !path_contains?(stack.last, path)
+
+      depth = stack.size
+      stack.push(path)
+
+      depth
+    end
+  end
+
+  def path_contains?(outer, inner)
+    outer.length < inner.length && inner[0, outer.length] == outer
+  end
+
+  def one_line(expression, limit = 72)
+    text = expression.to_s.gsub(/\s+/, " ").strip
+
+    text.length > limit ? "#{text[0, limit - 1]}\u2026" : text
+  end
+
   def print_flow_node(node, project_root, prefix, last, root)
+    puts " #{prefix}\u2502" unless root
+
     relative = Pathname.new(node.file).relative_path_from(Pathname.new(project_root)).to_s
     connector = if root
                   ""
@@ -751,8 +796,12 @@ class Herb::CLI
                      prefix + (last ? "    " : "\u2502   ")
                    end
 
-    node.nodes.each do |affected|
-      puts " #{child_prefix}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(affected[:expression].to_s)} #{dimmed("(#{affected[:location]})")}"
+    depths = nesting_depths(node.nodes)
+
+    node.nodes.each_with_index do |affected, index|
+      nesting = "  " * depths[index]
+
+      puts " #{child_prefix}#{nesting}#{dimmed("\u00b7")} #{affected[:type]} #{dimmed(one_line(affected[:expression]))} #{dimmed("(#{affected[:location]})")}"
     end
 
     node.children.each_with_index do |child, index|
@@ -1072,6 +1121,13 @@ class Herb::CLI
     exit(0)
   end
 
+  def scoped_style_visitor
+    require_relative "engine/scoped_style/visitor"
+    Herb.ensure_installed("lightningcss")
+
+    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -1079,12 +1135,17 @@ class Herb::CLI
       source = file_content
       options = {}
 
-      slot_visitor = Herb::Engine::Visitors::Slots.new if slots || Herb::Engine::Visitors::Slots.directive?(source)
+      slot_mode = slots || Herb::Engine::Slots::Visitor.directive_mode(source)
+      slot_visitor = Herb::Engine::Slots::Visitor.new(mode: slot_mode) if slot_mode
+      visitors = []
+
+      visitors << slot_visitor if slot_visitor
+      visitors << scoped_style_visitor if scoped_styles
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? || strict
+      options[:parser_options] = (options[:parser_options] || {}).merge(strict: strict.nil? || strict)
 
       if debug
         options[:debug] = true
@@ -1094,7 +1155,7 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
       options[:validate_ruby] = true
-      options[:visitors] = [slot_visitor] if slot_visitor
+      options[:visitors] = visitors unless visitors.empty?
 
       engine = Herb::Engine.new(source, options)
 
@@ -1106,7 +1167,7 @@ class Herb::CLI
           source: engine.src,
           filename: engine.filename,
           bufvar: engine.bufvar,
-          strict: options[:strict],
+          strict: options[:parser_options][:strict],
         }
 
         puts result.to_json
@@ -1131,7 +1192,7 @@ class Herb::CLI
       else
         puts e.compiled_source if e.compiled_source
         puts
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)
@@ -1146,7 +1207,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)
@@ -1188,11 +1249,16 @@ class Herb::CLI
     require_relative "engine"
 
     begin
+      source = file_content
       options = {}
+
+      slot_mode = slots || Herb::Engine::Slots::Visitor.directive_mode(source)
+      slot_visitor = Herb::Engine::Slots::Visitor.new(mode: slot_mode) if slot_mode
+
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? || strict
+      options[:parser_options] = (options[:parser_options] || {}).merge(strict: strict.nil? || strict)
 
       if debug
         options[:debug] = true
@@ -1202,18 +1268,27 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
 
-      engine = Herb::Engine.new(file_content, options)
+      visitors = []
+      visitors << slot_visitor if slot_visitor
+      visitors << scoped_style_visitor if scoped_styles
+      options[:visitors] = visitors unless visitors.empty?
+
+      engine = Herb::Engine.new(source, options)
       compiled_code = engine.src
 
       rendered_output = eval(compiled_code)
+
+      print_warnings(slot_visitor&.warnings || []) unless json
 
       if json
         result = {
           success: true,
           output: rendered_output,
           filename: engine.filename,
-          strict: options[:strict],
+          strict: options[:parser_options][:strict],
         }
+
+        result[:slots] = slot_visitor.schema if slot_visitor
 
         puts result.to_json
       elsif silent
@@ -1234,7 +1309,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)

@@ -9,7 +9,7 @@ module Herb
     # annotates the final tree has to run last. An array expresses that only by luck, so this adds
     # the vocabulary to say it:
     #
-    #     stack.insert_after(Herb::Engine::Visitors::Slots, MyVisitor.new)
+    #     stack.insert_after(Herb::Engine::Slots::Visitor, MyVisitor.new)
     #
     # @rbs inherits Array[untyped]
     class VisitorStack < Array[untyped]

@@ -16,6 +16,7 @@ import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynami
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
+import { ActionViewNoMistypedLocalsRule } from "./rules/actionview-no-mistyped-locals.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
@@ -88,6 +89,22 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
+import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
+import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
+import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
+import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
+import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
+import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
+import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
+import { HerbScopedStylePreferSingleRootRule } from "./rules/herb-scoped-style-prefer-single-root.js"
+import { HerbScopedStyleRequireTopLevelRule } from "./rules/herb-scoped-style-require-top-level.js"
+import { HerbScopedStyleSingleDeclarationRule } from "./rules/herb-scoped-style-single-declaration.js"
+import { HerbStateSingleDeclarationRule } from "./rules/herb-state-single-declaration.js"
+import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
+import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
+import { HerbValidSlotNamesRule } from "./rules/herb-valid-slot-names.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
@@ -116,6 +133,7 @@ import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attribu
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
+import { HTMLNoEmptyCSSRuleRule } from "./rules/html-no-empty-css-rule.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoEventHandlerAttributesRule } from "./rules/html-no-event-handler-attributes.js"
 import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-elements.js"
@@ -167,6 +185,7 @@ export const rules: RuleClass[] = [
   ActionViewNoHelperShadowingRule,
   ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
+  ActionViewNoMistypedLocalsRule,
   ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoRenderOptionShadowingRule,
   ActionViewNoSilentHelperRule,
@@ -239,6 +258,22 @@ export const rules: RuleClass[] = [
   HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
+  HerbIntoRequiresCollectionRule,
+  HerbSlotsValidModeRule,
+  HerbStateNoSilentReadsRule,
+  HerbStateNoServerWritesRule,
+  HerbStateNoUnusedStatesRule,
+  HerbStateRequiresClientModeRule,
+  HerbStateValidActionsRule,
+  HerbStateValidBindingsRule,
+  HerbScopedStyleNoUnusedSelectorRule,
+  HerbScopedStylePreferSingleRootRule,
+  HerbScopedStyleRequireTopLevelRule,
+  HerbScopedStyleSingleDeclarationRule,
+  HerbStateSingleDeclarationRule,
+  HerbStateValidDeclarationRule,
+  HerbStateValidReadsRule,
+  HerbValidSlotNamesRule,
 
   HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,
@@ -267,6 +302,7 @@ export const rules: RuleClass[] = [
   HTMLNoDuplicateIdsRule,
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
+  HTMLNoEmptyCSSRuleRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoEventHandlerAttributesRule,
   HTMLNoInlineScriptElementsRule,

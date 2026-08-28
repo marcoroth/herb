@@ -1,4 +1,4 @@
-import { HerbANSIElement } from "@herb-tools/highlighter/browser"
+import { HerbANSIElement } from "@herb-tools/highlighter"
 
 import "./controllers"
 

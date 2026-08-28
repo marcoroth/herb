@@ -4,6 +4,26 @@
 module Herb
   class Engine
     class CompilationError < StandardError
+      attr_reader :details, :diagnostics
+
+      def initialize(message, details: nil, diagnostics: [])
+        @details = details
+        @diagnostics = diagnostics
+
+        super(message)
+      end
+
+      def detailed_message(highlight: false, **)
+        report = formatted_errors(highlight: highlight)
+
+        return super unless report
+
+        "#{super}\n\n#{report}"
+      end
+
+      def formatted_errors(highlight: false)
+        @details&.format_all(highlight: highlight)
+      end
     end
 
     class GeneratorTemplateError < CompilationError

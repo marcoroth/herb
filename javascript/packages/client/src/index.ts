@@ -1,63 +1,16 @@
-export { Connection } from "./connection"
-export { HerbClient } from "./client"
-export { Toast } from "./toast"
-export { MismatchAlert } from "./mismatch-alert"
-export { ConnectionDot } from "./connection-dot"
-export { applyPatch } from "./patch"
-
-export type {
-  ConnectionOptions,
-  ConnectionState,
-  HerbClientOptions,
-  HerbMessage,
-  WelcomeMessage,
-  PatchMessage,
-  ReloadMessage,
-  ErrorMessage,
-  FixedMessage,
-  DiffOperation,
-  ParseError,
-} from "./types"
-
-import { HerbClient } from "./client"
-import type { HerbClientOptions } from "./types"
-
-declare global {
-  interface Window {
-    __herbClient?: HerbClient
-  }
-}
-
-let instance: HerbClient | null = null
-
-export function initHerbClient(options: HerbClientOptions = {}): HerbClient {
-  if (instance) {
-    instance.disconnect()
-  }
-
-  instance = new HerbClient(options)
-  window.__herbClient = instance
-  instance.connect()
-
-  return instance
-}
-
-export function getHerbClient(): HerbClient | null {
-  return instance
-}
-
-function autoInitialize(): void {
-  const debugMeta = document.querySelector('meta[name="herb-debug-mode"]')
-
-  if (!debugMeta || debugMeta.getAttribute("content") !== "true") return
-
-  initHerbClient()
-}
-
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoInitialize)
-  } else {
-    autoInitialize()
-  }
-}
+export * from "./actions/actions"
+export * from "./actions/types"
+export * from "./grammar/attributes"
+export * from "./state/bindings"
+export * from "./shared/events"
+export * from "./shared/element-observer"
+export * from "./outbox/outbox"
+export * from "./outbox/types"
+export * from "./shared/report"
+export * from "./shared/types"
+export * from "./runtime"
+export * from "./state/for-element"
+export * from "./slots/slots"
+export * from "./state/state"
+export * from "./state/types"
+export * from "./types"

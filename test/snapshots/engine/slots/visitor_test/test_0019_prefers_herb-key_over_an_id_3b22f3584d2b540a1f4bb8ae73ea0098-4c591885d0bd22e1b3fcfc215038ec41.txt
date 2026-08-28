@@ -4,8 +4,8 @@ input: "<% @u.each do |u| %><li id=\"a\" herb-key=\"<%= u.id %>\">x</li><% end %
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 0cff4095
+version: b93f6dcb
 
 slots:
-  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  location=1:0  key_source=herb_key  key_expression="u.id"
-  index=1  type=attribute  node_path=[0, 0]  location=1:31  attribute="herb-key"
+  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  key_source=herb_key  key_expression="u.id"
+  index=1  type=attribute  node_path=[0, 0]  expression="u.id"  attribute="herb-key"

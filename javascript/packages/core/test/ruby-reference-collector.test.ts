@@ -6,7 +6,7 @@ import { substringFromByteOffset } from "../src/index.js"
 
 import { RubyReferenceCollector, isProbableLocal, isValidLocalName } from "../src/ruby-reference-collector.js"
 
-import type { RubyReference } from "../src/ruby_reference_collector"
+import type { RubyReference } from "../src/ruby-reference-collector.js"
 
 describe("RubyReferenceCollector", () => {
   beforeAll(async () => {

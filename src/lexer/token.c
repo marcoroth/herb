@@ -25,6 +25,7 @@ token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) 
   }
 
   token->value = value;
+  token->owns_value = false;
 
   token->type = type;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
@@ -53,6 +54,7 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("TOKEN_HTML_DOCTYPE");
     case TOKEN_XML_DECLARATION: return hb_string("TOKEN_XML_DECLARATION");
     case TOKEN_XML_DECLARATION_END: return hb_string("TOKEN_XML_DECLARATION_END");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("TOKEN_XML_PROCESSING_INSTRUCTION_START");
     case TOKEN_CDATA_START: return hb_string("TOKEN_CDATA_START");
     case TOKEN_CDATA_END: return hb_string("TOKEN_CDATA_END");
     case TOKEN_HTML_TAG_START: return hb_string("TOKEN_HTML_TAG_START");
@@ -94,6 +96,7 @@ hb_string_T token_type_to_friendly_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("`<!DOCTYPE`");
     case TOKEN_XML_DECLARATION: return hb_string("`<?xml`");
     case TOKEN_XML_DECLARATION_END: return hb_string("`?>`");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("`<?`");
     case TOKEN_CDATA_START: return hb_string("`<![CDATA[`");
     case TOKEN_CDATA_END: return hb_string("`]]>`");
     case TOKEN_HTML_TAG_START: return hb_string("`<`");
@@ -215,7 +218,8 @@ token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
 
   if (!new_token) { return NULL; }
 
-  new_token->value = token->value;
+  new_token->value = token->owns_value ? hb_string_copy(token->value, allocator) : token->value;
+  new_token->owns_value = token->owns_value;
 
   new_token->type = token->type;
   new_token->range = token->range;
@@ -236,6 +240,8 @@ bool token_is_escaped_erb_tag_opening(const token_T* token) {
 
 void token_free(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return; }
+
+  if (token->owns_value) { hb_allocator_dealloc(allocator, (void*) token->value.data); }
 
   hb_allocator_dealloc(allocator, token);
 }

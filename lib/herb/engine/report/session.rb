@@ -18,15 +18,39 @@ module Herb
       # A scoped session is one somebody opened deliberately, which is what a request or a test does.
       # Outside of one, recording still works and collects into a session nobody reads, so a producer
       # never has to guard its own calls.
+      #
       class Session
         STATE_KEY = :herb_engine_report_session #: Symbol
+        RACTOR_KEY = :herb_engine_report_session_ractor #: Symbol
+        THREAD_KEY = :herb_engine_report_session_thread #: Symbol
 
         attr_reader :report #: Herb::Engine::Report
         attr_reader :previous #: Session?
 
+        #: () -> Session?
+        def self.stored
+          return nil unless Fiber[RACTOR_KEY].equal?(Ractor.current)
+          return nil unless Fiber[THREAD_KEY] == Thread.current.object_id
+
+          Fiber[STATE_KEY]
+        end
+
+        #: (Session?) -> void
+        def self.store(session)
+          Fiber[STATE_KEY] = session
+          Fiber[RACTOR_KEY] = session && Ractor.current
+          Fiber[THREAD_KEY] = session && Thread.current.object_id
+
+          nil
+        end
+
         #: () -> Session
         def self.current
-          Thread.current[STATE_KEY] ||= new
+          session = stored || new
+
+          store(session)
+
+          session
         end
 
         #: [T] () { () -> T } -> Session
@@ -42,18 +66,18 @@ module Herb
 
         #: () -> Session
         def self.open
-          session = new(scoped: true, previous: Thread.current[STATE_KEY])
+          session = new(scoped: true, previous: stored)
 
-          Thread.current[STATE_KEY] = session
+          store(session)
 
           session
         end
 
         #: () -> Session?
         def self.close
-          session = Thread.current[STATE_KEY]
+          session = stored
 
-          Thread.current[STATE_KEY] = session.is_a?(Session) ? session.previous : nil
+          store(session&.previous)
 
           session
         end
@@ -66,6 +90,21 @@ module Herb
         def self.record_compile_diagnostics(template, entries)
           entries.each { |entry| record(Herb::Diagnostic.from_compiled(template, entry)) }
 
+          read_source(template)
+
+          nil
+        end
+
+        #: (String) -> void
+        def self.read_source(template)
+          return unless scoped?
+
+          session = current
+
+          return if session.report.sources.key?(template)
+
+          session.source(template, File.read(template))
+        rescue SystemCallError, IOError
           nil
         end
 
@@ -139,7 +178,9 @@ module Herb
 
         #: () -> void
         def self.reset!
-          Thread.current[STATE_KEY] = nil
+          store(nil)
+
+          nil
         end
 
         #: (?scoped: bool, ?report: Herb::Engine::Report?, ?previous: Session?) -> void
@@ -166,6 +207,11 @@ module Herb
         #: (String, String?) -> void
         def source(template, source)
           report.source(template, source)
+        end
+
+        #: (Symbol) { () -> untyped } -> untyped
+        def channel(name, &)
+          report.channel(name, &)
         end
 
         #: () -> Array[Herb::Diagnostic]

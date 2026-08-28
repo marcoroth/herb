@@ -41,6 +41,21 @@ module Engine
           { condition: false }
         )
       end
+
+      test "string literal with postfix if condition" do
+        assert_optimized_snapshot(
+          '<%= "Notice" if condition %>',
+          { condition: true }
+        )
+      end
+
+      test "string literal that would be HTML-escaped with postfix if condition" do
+        assert_compiled_snapshot(
+          '<%= "5 > 3" if condition %>',
+          escape: true,
+          visitors: [Herb::Engine::Visitors::Optimize.new]
+        )
+      end
     end
   end
 end

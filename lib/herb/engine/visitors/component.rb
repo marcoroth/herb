@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../herb"
+require_relative "../experimental"
 require_relative "component/component_resolver"
 require_relative "component/partial_resolver"
 
@@ -8,33 +9,22 @@ module Herb
   class Engine
     module Visitors
       class Component < Herb::Visitor
+        extend Experimental
+
         TAG_NAME_SEPARATOR = /::|\./
         KEYWORD_NAME = /\A[a-z_][A-Za-z0-9_]*\z/
 
         ARRAY_PROPERTIES = [:children, :body, :statements].freeze
         NODE_PROPERTIES = [:subsequent, :else_clause, :end_node, :rescue_clause, :ensure_clause].freeze
 
-        # @rbs!
-        #   def self.experimental_warning_issued: () -> bool
-        #   def self.experimental_warning_issued=: (bool) -> bool
-
-        class << self
-          attr_accessor :experimental_warning_issued #: bool
-        end
-
-        self.experimental_warning_issued = false
+        required_parser_option track_locations: true
+        experimental "The Component-Transform Visitor is experimental. Its output and API may change."
 
         #: (?resolvers: Array[Herb::Engine::Visitors::Component::Resolver]) -> void
         def initialize(resolvers: [ComponentResolver.new, PartialResolver.new])
           super()
 
           @resolvers = resolvers
-
-          return if self.class.experimental_warning_issued
-
-          self.class.experimental_warning_issued = true
-
-          warn "[Herb] The Component-Transform Visitor is experimental. Its output and API may change."
         end
 
         def visit_document_node(node)

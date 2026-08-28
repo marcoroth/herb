@@ -8,6 +8,7 @@ import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
 import { deserializePrismParseResult } from "./prism/index.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
+import type { ParseResultFor } from "./parse-result.js"
 import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { PrismParseResult } from "./prism/index.js"
@@ -70,12 +71,12 @@ export abstract class HerbBackend {
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse(source: string, options?: ParseOptions): ParseResult {
+  parse<const Options extends ParseOptions>(source: string, options?: Options): ParseResultFor<Options> {
     this.ensureBackend()
 
     const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
 
-    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions))
+    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions)) as ParseResultFor<Options>
   }
 
   /**

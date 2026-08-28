@@ -327,7 +327,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   size_t erb_content_offset,
   const uint8_t* erb_content_source,
   render_block_fields_T* block_fields,
-  hb_allocator_T* allocator
+  hb_allocator_T* allocator,
+  const parser_options_T* options
 ) {
 
   pm_arguments_node_t* arguments = call_node->arguments;
@@ -488,7 +489,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       };
 
       for (size_t index = 0; index < sizeof(keyword_fields) / sizeof(keyword_fields[0]); index++) {
-        *keyword_fields[index].target = extract_keyword_token(
+        token_T* keyword_token = extract_keyword_token(
           keyword_hash,
           keyword_fields[index].name,
           source,
@@ -496,6 +497,11 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
           erb_content_source,
           allocator
         );
+
+        if (keyword_token) {
+          token_free(*keyword_fields[index].target, allocator);
+          *keyword_fields[index].target = keyword_token;
+        }
       }
 
       if (partial) { has_keyword_partial = true; }
@@ -523,7 +529,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        &errors
+        &errors,
+        options
       );
 
       hb_allocator_dealloc(allocator, locals_keyword.value);
@@ -596,7 +603,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        &errors
+        &errors,
+        options
       );
 
       hb_allocator_dealloc(allocator, keywords_buffer);
@@ -605,7 +613,13 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (!partial && !template_path && !layout && !file && !inline_template && !body && !plain && !html && !renderable
       && !has_positional_partial && !object) {
-    append_render_no_arguments_error(erb_node->base.location.start, erb_node->base.location.end, allocator, &errors);
+    append_render_no_arguments_error(
+      erb_node->base.location.start,
+      erb_node->base.location.end,
+      allocator,
+      &errors,
+      options
+    );
   }
 
   if (has_positional_partial && has_keyword_partial && keyword_hash) {
@@ -617,7 +631,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      &errors
+      &errors,
+      options
     );
 
     if (keyword_partial.value) { hb_allocator_dealloc(allocator, keyword_partial.value); }
@@ -645,7 +660,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        &errors
+        &errors,
+        options
       );
     }
   }
@@ -655,7 +671,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      &errors
+      &errors,
+      options
     );
   }
 
@@ -665,7 +682,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      &errors
+      &errors,
+      options
     );
   }
 
@@ -679,9 +697,6 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   AST_ERB_ENSURE_NODE_T* render_ensure_clause = block_fields ? block_fields->ensure_clause : NULL;
   AST_ERB_END_NODE_T* render_end_node = block_fields ? block_fields->end_node : NULL;
 
-  if (!render_block_body) { render_block_body = hb_array_init(0, allocator); }
-  if (!render_block_arguments) { render_block_arguments = hb_array_init(0, allocator); }
-
   if (!block_fields) {
     pm_block_node_t* inline_block = find_block_on_render_call(call_node);
 
@@ -690,6 +705,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
       if (inline_block->parameters && inline_block->parameters->type == PM_BLOCK_PARAMETERS_NODE) {
         pm_block_parameters_node_t* block_parameters = (pm_block_parameters_node_t*) inline_block->parameters;
+
+        hb_array_free(&render_block_arguments);
 
         render_block_arguments = extract_parameters_from_prism(
           block_parameters->parameters,
@@ -724,6 +741,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
           allocator
         );
 
+        hb_array_free(&render_block_body);
+
         render_block_body = hb_array_init(1, allocator);
         hb_array_append(render_block_body, body_node);
 
@@ -757,10 +776,13 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     allocator
   );
 
-  AST_ERB_RENDER_NODE_T* render_node = ast_erb_render_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
+  if (!render_block_body) { render_block_body = hb_array_init(0, allocator); }
+  if (!render_block_arguments) { render_block_arguments = hb_array_init(0, allocator); }
+
+  return ast_erb_render_node_init(
+    token_copy(erb_node->tag_opening, allocator),
+    token_copy(erb_node->content, allocator),
+    token_copy(erb_node->tag_closing, allocator),
     erb_node->analyzed_ruby,
     prism_node,
     keywords_node,
@@ -775,8 +797,6 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     errors,
     allocator
   );
-
-  return render_node;
 }
 
 static size_t calculate_byte_offset_from_pos(const char* source, position_T position) {
@@ -836,7 +856,8 @@ static AST_ERB_RENDER_NODE_T* try_transform_content_node(
     erb_content_offset,
     erb_content_source,
     NULL,
-    context->allocator
+    context->allocator,
+    context->options
   );
 }
 
@@ -898,13 +919,33 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
     erb_content_offset,
     erb_content_source,
     &block_fields,
-    context->allocator
+    context->allocator,
+    context->options
   );
 
   pm_node_destroy(&parser, root);
   pm_parser_free(&parser);
 
   return render_node;
+}
+
+static void release_replaced_node(AST_NODE_T* child, AST_ERB_RENDER_NODE_T* render_node, hb_allocator_T* allocator) {
+  if (child->type == AST_ERB_CONTENT_NODE) {
+    AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
+
+    if (render_node->analyzed_ruby == erb_node->analyzed_ruby) { erb_node->analyzed_ruby = NULL; }
+  } else if (child->type == AST_ERB_BLOCK_NODE) {
+    AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) child;
+
+    if (render_node->body == block_node->body) { block_node->body = NULL; }
+    if (render_node->block_arguments == block_node->block_arguments) { block_node->block_arguments = NULL; }
+    if (render_node->rescue_clause == block_node->rescue_clause) { block_node->rescue_clause = NULL; }
+    if (render_node->else_clause == block_node->else_clause) { block_node->else_clause = NULL; }
+    if (render_node->ensure_clause == block_node->ensure_clause) { block_node->ensure_clause = NULL; }
+    if (render_node->end_node == block_node->end_node) { block_node->end_node = NULL; }
+  }
+
+  ast_node_free(child, allocator);
 }
 
 static void transform_render_nodes_in_array(hb_array_T* array, analyze_ruby_context_T* context) {
@@ -922,7 +963,10 @@ static void transform_render_nodes_in_array(hb_array_T* array, analyze_ruby_cont
       render_node = try_transform_block_node((AST_ERB_BLOCK_NODE_T*) child, context);
     }
 
-    if (render_node) { hb_array_set(array, index, render_node); }
+    if (render_node) {
+      hb_array_set(array, index, render_node);
+      release_replaced_node(child, render_node, context->allocator);
+    }
   }
 }
 

@@ -80,7 +80,7 @@ Every tool tailors itself to that answer. It decides what Herb may assume about 
 | `hanami` | Hanami views, with their parts and helpers |
 | `sinatra` | Sinatra templates, with their helpers |
 
-Rules that only make sense for one framework check this option and stay quiet otherwise, which is why `erb-prefer-image-tag-helper` never suggests `image_tag` in a project that doesn't render through Action View.
+Rules that only make sense for one framework declare which frameworks they apply to and stay quiet everywhere else. A rule that says nothing about frameworks applies to all of them. See the [`frameworks`](#rule-configuration-options) rule option for widening or narrowing that per rule.
 
 When the option isn't set, Herb falls back to `ruby` and treats every template as plain ERB, which is the most conservative behavior it has. The [`herb-config-framework-option`](/linter/rules/herb-config-framework-option.md) rule reports that, and suggests a value when a template shows what renders it:
 

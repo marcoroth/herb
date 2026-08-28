@@ -1465,6 +1465,7 @@ export default class extends Controller {
     }
 
     if (this.hasPrinterViewerTarget && result.printed !== undefined) {
+      const trackLocations = this.getParserOptions().track_locations
       const printedContent = result.printed || 'No printed output available'
 
       if (typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')) {
@@ -1483,7 +1484,13 @@ export default class extends Controller {
         const trackWhitespace = options.track_whitespace
         const isError = typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')
 
-        if (isError) {
+        if (!trackLocations) {
+          this.printerVerificationTarget.textContent = '⚠ Enable "Track locations"'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+          this.tooltips.setText("printerVerification", 'The printer needs source locations. Enable "Track locations" to print the parsed document.')
+          this.hidePrinterDiff()
+          this.hidePrinterLegend()
+        } else if (isError) {
           this.printerVerificationTarget.textContent = '⚠ Round-trip Failed'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
           this.tooltips.setText("printerVerification", 'Source → Parse → AST → Print → Source failed due to printer error - unable to verify document preservation. Try enabling "Ignore errors" to attempt printing anyway.')
@@ -1505,7 +1512,7 @@ export default class extends Controller {
           this.printerVerificationTarget.textContent = '✗ Round-trip Differences'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
           this.tooltips.setText("printerVerification", '⚠ Document details lost during parsing - differences below show what was lost in Source → Parse → AST → Print → Source')
-          this.showPrinterDiff(currentSource, result.printed)
+          this.showPrinterDiff(result.printedDiff)
           this.showPrinterLegend()
         }
       }
@@ -1788,12 +1795,14 @@ export default class extends Controller {
   setOptionsInURL(options) {
     const defaults = {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
@@ -2450,7 +2459,7 @@ export default class extends Controller {
       .replace(/'/g, "&#039;")
   }
 
-  showPrinterDiff(original, printed) {
+  showPrinterDiff(diff) {
     if (!this.hasPrinterDiffTarget || !this.hasPrinterDiffContentTarget) {
       return
     }
@@ -2458,8 +2467,7 @@ export default class extends Controller {
     this.printerOutputTarget.classList.add('hidden')
     this.printerDiffTarget.classList.remove('hidden')
 
-    const diff = this.computeCharDiff(original, printed)
-    this.printerDiffContentTarget.innerHTML = diff.replace(/^(\s*\n)+/, '')
+    this.printerDiffContentTarget.textContent = diff || 'No differences to display'
   }
 
   hidePrinterDiff() {
@@ -2483,78 +2491,5 @@ export default class extends Controller {
     }
   }
 
-  computeCharDiff(original, printed) {
-    const originalChars = Array.from(original)
-    const printedChars = Array.from(printed)
-
-    const dp = this.computeEditDistance(originalChars, printedChars)
-    const diff = this.backtrackDiff(originalChars, printedChars, dp)
-
-    let result = ''
-    for (const op of diff) {
-      if (op.type === 'equal') {
-        result += this.escapeHtml(op.char)
-      } else if (op.type === 'delete') {
-        result += `<span class="bg-yellow-400 text-black">${this.escapeHtml(op.char)}</span>`
-      } else if (op.type === 'insert') {
-        result += `<span class="bg-green-500 text-black">${this.escapeHtml(op.char)}</span>`
-      }
-    }
-
-    return result
-  }
-
-  computeEditDistance(str1, str2) {
-    const m = str1.length
-    const n = str2.length
-    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0))
-
-    for (let i = 0; i <= m; i++) dp[i][0] = i
-    for (let j = 0; j <= n; j++) dp[0][j] = j
-
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        if (str1[i - 1] === str2[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1]
-        } else {
-          dp[i][j] = Math.min(
-            dp[i - 1][j] + 1,     // deletion
-            dp[i][j - 1] + 1,     // insertion
-            dp[i - 1][j - 1] + 1  // substitution
-          )
-        }
-      }
-    }
-
-    return dp
-  }
-
-  backtrackDiff(str1, str2, dp) {
-    const diff = []
-    let i = str1.length
-    let j = str2.length
-
-    while (i > 0 || j > 0) {
-      if (i > 0 && j > 0 && str1[i - 1] === str2[j - 1]) {
-        diff.unshift({ type: 'equal', char: str1[i - 1] })
-        i--
-        j--
-      } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
-        // Substitution - show as delete + insert
-        diff.unshift({ type: 'delete', char: str1[i - 1] })
-        diff.unshift({ type: 'insert', char: str2[j - 1] })
-        i--
-        j--
-      } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
-        diff.unshift({ type: 'delete', char: str1[i - 1] })
-        i--
-      } else if (j > 0 && dp[i][j] === dp[i][j - 1] + 1) {
-        diff.unshift({ type: 'insert', char: str2[j - 1] })
-        j--
-      }
-    }
-
-    return diff
-  }
 
 }

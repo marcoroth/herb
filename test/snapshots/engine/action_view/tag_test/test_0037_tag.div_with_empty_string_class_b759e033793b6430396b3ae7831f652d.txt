@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0037_tag.div with empty string class"
 input: "{source: \"<%= tag.div class: \\\"\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
 ---
-_buf = ::String.new; _buf << '<div class=""></div>'.freeze;
-_buf.to_s
+'<div class=""></div>'.freeze

@@ -18,6 +18,7 @@ module Herb
     #
     # Reading which ones are switched on lives here rather than in the engine, so that a caller
     # that already knows what it wants never has to consult configuration at all.
+    #
     module Validators
       ALL = {
         security: SecurityValidator,

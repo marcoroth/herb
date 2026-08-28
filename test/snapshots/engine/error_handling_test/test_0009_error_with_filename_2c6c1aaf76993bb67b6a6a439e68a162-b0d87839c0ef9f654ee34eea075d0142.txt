@@ -1,0 +1,25 @@
+---
+source: "Engine::ErrorHandlingTest#test_0009_error with filename"
+input: |2-
+<div>
+  <h1>Title</h1>
+</span>
+options: {filename: "test_template.erb", validators: false}
+---
+test_template.erb:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 1 more error) (Herb::Engine::ParseError)
+
+✘ [MissingClosingTag] Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope.
+
+    test_template.erb:1:1:
+      1 │ <div>
+        ╵ ~~~~~
+
+  Add the closing tag, or make it self-closing.
+
+✘ [MissingOpeningTag] Found closing tag `</span>` at (3:2) without a matching opening tag in the same scope.
+
+    test_template.erb:3:1:
+      3 │ </span>
+        ╵ ~~~~~~~
+
+  Add the matching opening tag, or remove this closing tag.

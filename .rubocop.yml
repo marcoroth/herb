@@ -162,7 +162,10 @@ Metrics/ParameterLists:
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb
     - lib/herb/engine/diagnostics.rb
+    - lib/herb/engine/parse_error.rb
+    - lib/herb/engine/slots/visitor.rb
     - lib/herb/errors.rb
+    - lib/herb/parse_result.rb
     - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
 

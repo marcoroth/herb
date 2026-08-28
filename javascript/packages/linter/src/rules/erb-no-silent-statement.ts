@@ -1,5 +1,5 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
-import { isAssignmentNode, isControlFlowNode, isSideEffectCall, unwrapModifierStatement } from "./prism-rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { isAssignmentNode, isControlFlowNode, isSideEffectCall, unwrapModifierStatement } from "../utils/prism-rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isERBOutputNode } from "@herb-tools/core"

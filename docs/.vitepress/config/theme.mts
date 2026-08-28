@@ -21,13 +21,13 @@ const defaultSidebar = [
       { text: "CLI", link: "/projects/cli" },
       { text: "Dev Server", link: "/projects/dev-server" },
       { text: "Dev Tools", link: "/projects/dev-tools" },
+      { text: "Client Runtime", link: "/projects/client" },
     ],
   },
   {
     text: "Utility Libraries",
     collapsed: false,
     items: [
-      { text: "Dev Server Client", link: "/projects/client" },
       { text: "Language Service", link: "/projects/language-service" },
       { text: "Highlighter", link: "/projects/highlighter" },
       { text: "Syntax Tree Printer", link: "/projects/printer" },

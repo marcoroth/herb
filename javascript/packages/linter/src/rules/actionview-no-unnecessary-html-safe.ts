@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { ERBStringToDirectOutputRewriter, isSafeToInline } from "@herb-tools/rewriter"
 
@@ -99,6 +99,7 @@ export class ActionViewNoUnnecessaryHTMLSafeRule extends ParserRule<UnnecessaryH
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

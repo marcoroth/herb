@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsTest#test_0007_html comment containing markup - render"
+input: "{source: \"<div><!-- <p>disabled</p> --><p>Content</p></div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::Visitors::RemoveComments>]}}"
+---
+<div><p>Content</p></div>

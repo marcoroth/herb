@@ -52,6 +52,14 @@ Escaped ERB tags (`<%%` and `<%%=`) are ignored. They render as the literal text
 <% render @product %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 \-

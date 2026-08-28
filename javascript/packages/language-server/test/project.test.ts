@@ -15,6 +15,14 @@ import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
 import type { SharedServices } from "../src/project"
 
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
+  }
+}
+
 describe("Project", () => {
   let root: string
 
@@ -48,13 +56,58 @@ describe("Project", () => {
     const shared: SharedServices = {
       documents: { documents: {}, get: () => undefined } as unknown as Documents,
       parserService,
-      definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
+      definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
       userSettings: userSettings ?? new UserSettings(connection, capabilities),
       capabilities,
+      readFile,
     }
 
     return new Project(connection, root, shared)
   }
+
+  describe("framework", () => {
+    test("exposes the framework a checked-in config sets", async () => {
+      writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBe("actionview")
+    })
+
+    test("is undefined when the project has no config file", async () => {
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBeUndefined()
+    })
+
+    test("picks up a framework that is added to the config while the server runs", async () => {
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBeUndefined()
+
+      writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")
+      await project.refreshConfig()
+
+      expect(project.framework).toBe("actionview")
+    })
+
+    test("picks up a framework that changes while the server runs", async () => {
+      writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.framework).toBe("actionview")
+
+      writeFileSync(join(root, ".herb.yml"), "framework: sinatra\n")
+      await project.refreshConfig()
+
+      expect(project.framework).toBe("sinatra")
+    })
+  })
 
   describe("settingsFor", () => {
     test("lets a checked-in config turn the formatter on when the user never opted in", async () => {
@@ -93,6 +146,35 @@ describe("Project", () => {
 
       expect(settings.formatter?.indentWidth).toBe(8)
       expect(settings.formatter?.maxLineLength).toBe(120)
+    })
+
+    test("carries the config's indent style through", async () => {
+      writeFileSync(join(root, ".herb.yml"), "formatter:\n  enabled: true\n  indentStyle: tab\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      const settings = await project.settingsFor(`file://${join(root, "app/views/posts/index.html.erb")}`)
+
+      expect(settings.formatter?.indentStyle).toBe("tab")
+    })
+
+    test("reads an unset indent style as space, not as an opening for the user's preference", async () => {
+      writeFileSync(join(root, ".herb.yml"), "formatter:\n  enabled: true\n")
+
+      const capabilities = new Capabilities(params)
+      const userSettings = new UserSettings(connection, capabilities)
+
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({
+        formatter: { indentStyle: "tab" }
+      })
+
+      const project = projectFor(userSettings, capabilities)
+      await project.loadConfig()
+
+      const settings = await project.settingsFor(`file://${join(root, "app/views/posts/index.html.erb")}`)
+
+      expect(settings.formatter?.indentStyle).toBe("space")
     })
 
     test("leaves personal settings alone, since a project can't have an opinion on them", async () => {

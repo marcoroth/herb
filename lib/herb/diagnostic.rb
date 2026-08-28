@@ -19,12 +19,13 @@ module Herb
     attr_reader :suggestion #: String?
     attr_reader :docs_url #: String?
     attr_reader :value #: String?
+    attr_reader :overlay #: Symbol?
     attr_reader :phase #: Symbol
     attr_reader :data #: Hash[Symbol, untyped]
     attr_reader :error_class #: Class?
 
-    #: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
-    def initialize(template:, message:, severity: :error, kind: :diagnostic, origin: UNKNOWN_ORIGIN, node: nil, code: nil, location: nil, suggestion: nil, docs_url: nil, value: nil, phase: :runtime, data: {}, error_class: nil)
+    #: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?overlay: Symbol?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+    def initialize(template:, message:, severity: :error, kind: :diagnostic, origin: UNKNOWN_ORIGIN, node: nil, code: nil, location: nil, suggestion: nil, docs_url: nil, value: nil, overlay: nil, phase: :runtime, data: {}, error_class: nil)
       @template = template
       @message = message
       @node = node
@@ -36,6 +37,7 @@ module Herb
       @suggestion = suggestion
       @docs_url = docs_url
       @value = value
+      @overlay = overlay
       @phase = phase
       @data = data
       @error_class = error_class
@@ -115,6 +117,8 @@ module Herb
         suggestion: suggestion,
         docs_url: docs_url,
         value: value,
+        overlay: overlay,
+        phase: phase,
       }.compact
     end
 

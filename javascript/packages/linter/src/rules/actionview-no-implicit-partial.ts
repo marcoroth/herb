@@ -1,6 +1,6 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { constructsObject, isStaticPartialPath, rootReceiver } from "./prism-rule-utils.js"
+import { constructsObject, isStaticPartialPath, rootReceiver } from "../utils/prism-rule-utils.js"
 import { renderPartialExpression } from "@herb-tools/analysis"
 
 import { isERBOutputNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
@@ -55,6 +55,7 @@ export class ActionViewNoImplicitPartialRule extends ParserRule {
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

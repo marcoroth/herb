@@ -12,6 +12,7 @@ module Herb
       def initialize(identical, operations)
         @identical = identical
         @operations = operations.freeze
+
         freeze
       end
 

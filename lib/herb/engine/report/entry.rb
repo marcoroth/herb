@@ -8,6 +8,7 @@ module Herb
       #
       # A collector puts things here by name, so several can share a position without knowing about
       # each other: a query count and a render time sit side by side under different keys.
+      #
       class Entry
         attr_reader :template #: String?
         attr_reader :line #: Integer

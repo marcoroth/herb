@@ -6,12 +6,14 @@ use std::ffi::{CStr, CString};
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
   pub track_whitespace: bool,
+  pub track_locations: bool,
   pub analyze: bool,
   pub strict: bool,
   pub action_view_helpers: bool,
   pub transform_conditionals: bool,
   pub render_nodes: bool,
   pub strict_locals: bool,
+  pub herb_directives: bool,
   pub iteration_nodes: bool,
   pub prism_nodes: bool,
   pub prism_nodes_deep: bool,
@@ -26,12 +28,14 @@ impl Default for ParserOptions {
   fn default() -> Self {
     Self {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_nodes: false,
       prism_nodes_deep: false,
@@ -106,6 +110,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
 
     let mut allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
+    let mut error_count: u32 = 0;
 
     if !crate::ffi::hb_allocator_init(&mut allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
       return Err("Failed to initialize allocator".to_string());
@@ -113,12 +118,14 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
 
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
+      track_locations: options.track_locations,
       analyze: options.analyze,
       strict: options.strict,
       action_view_helpers: options.action_view_helpers,
       transform_conditionals: options.transform_conditionals,
       render_nodes: options.render_nodes,
       strict_locals: options.strict_locals,
+      herb_directives: options.herb_directives,
       iteration_nodes: options.iteration_nodes,
       prism_program: options.prism_program,
       prism_nodes: options.prism_nodes,
@@ -129,7 +136,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       start_column: 0,
       timeout_ms: options.timeout,
       max_errors: options.max_errors.unwrap_or(0),
-      error_count: std::ptr::null_mut(),
+      error_count: &mut error_count,
       deadline_ms: 0,
     };
 
@@ -148,7 +155,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       "Failed to convert AST".to_string()
     })?;
 
-    let result = ParseResult::new(document_node, source.to_string(), Vec::new(), options);
+    let result = ParseResult::with_error_count(document_node, source.to_string(), Vec::new(), options, Some(error_count));
 
     crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T, &mut allocator);
     crate::ffi::hb_allocator_destroy(&mut allocator);
@@ -354,6 +361,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       action_view_helpers: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
@@ -361,6 +369,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       dot_notation_tags: false,
       transform_conditionals: false,
       html: true,
+      track_locations: true,
       start_line: 0,
       start_column: 0,
       timeout_ms: 1000,

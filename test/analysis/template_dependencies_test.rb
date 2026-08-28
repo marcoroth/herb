@@ -423,6 +423,142 @@ class TemplateDependenciesTest < Minitest::Spec
     assert_equal "class", attr_node[:attribute]
   end
 
+  test "traces state into a partial rendered inside an each block" do
+    write_template("posts/_card.html.erb", "<div><%= card.title %></div>")
+    entry = write_template("posts/index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+    affected = analyzer.affected_templates(entry, "@posts")
+
+    assert_includes affected, File.join(@view_root, "posts/_card.html.erb")
+  end
+
+  test "names the local an each block's partial received the state as" do
+    write_template("posts/_card.html.erb", "<div><%= card.title %></div>")
+    entry = write_template("posts/index.html.erb", %(<% @posts.each do |post| %><%= render "posts/card", card: post %><% end %>))
+
+    flow = analyzer.state_flow(entry, "@posts")
+    child = flow.children.find { |node| File.basename(node.file) == "_card.html.erb" }
+
+    assert child
+    assert_includes child.names.to_a, "card"
+  end
+
+  test "does not trace a block parameter used after its block closed" do
+    write_template("posts/_card.html.erb", "<div><%= card.title %></div>")
+    entry = write_template("posts/index.html.erb", %(<% @posts.each do |post| %><% end %><%= render "posts/card", card: post %>))
+
+    affected = analyzer.affected_templates(entry, "@posts")
+
+    refute_includes affected, File.join(@view_root, "posts/_card.html.erb")
+  end
+
+  test "does not trace state through a block that runs once" do
+    write_template("posts/_field.html.erb", "<div><%= card %></div>")
+    entry = write_template("posts/index.html.erb", %(<% form_with model: @post do |f| %><%= render "posts/field", card: f %><% end %>))
+
+    affected = analyzer.affected_templates(entry, "@post")
+
+    refute_includes affected, File.join(@view_root, "posts/_field.html.erb")
+  end
+
+  test "affected_nodes tells a loop apart from a block that runs once" do
+    loop_path = write_template("posts/index.html.erb", "<ul><% @items.each do |i| %><li><%= i %></li><% end %></ul>")
+    form_path = write_template("posts/form.html.erb", "<% form_with model: @post do |f| %><%= f.label %><% end %>")
+
+    assert_equal :iteration, analyzer.affected_nodes(loop_path, "@items").first[:type]
+    assert_equal :expression, analyzer.affected_nodes(form_path, "@post").first[:type]
+  end
+
+  test "affected_nodes follows state into a local assigned from it" do
+    path = write_template("posts/index.html.erb", "<% total = @items.size %><p><%= total %></p>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    assert_equal ["total = @items.size", "total"], expressions
+  end
+
+  test "affected_nodes follows state through a chain of assignments" do
+    path = write_template("posts/index.html.erb", "<% a = @items.size %><% b = a * 2 %><p><%= b %></p>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    assert_equal ["a = @items.size", "b = a * 2", "b"], expressions
+  end
+
+  test "affected_nodes leaves a local assigned from something else" do
+    path = write_template("posts/index.html.erb", "<% other = 5 %><p><%= other %></p>")
+
+    assert_empty analyzer.affected_nodes(path, "@items")
+  end
+
+  test "affected_nodes does not take a comparison for an assignment" do
+    path = write_template("posts/index.html.erb", "<% if @items == other %><p><%= other %></p><% end %>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    assert_equal ["if @items == other"], expressions
+  end
+
+  test "affected_nodes stops a local assigned inside a block at the end of it" do
+    path = write_template("posts/index.html.erb", "<% @rows.each do |r| %><% inner = r.x %><%= inner %><% end %><%= inner %>")
+
+    expressions = analyzer.affected_nodes(path, "@rows").map { |node| node[:expression] }
+
+    assert_equal ["@rows.each do |r|", "inner = r.x", "inner"], expressions
+  end
+
+  test "dependency_index reports what a partial's declared locals reach" do
+    path = write_template("posts/_card.html.erb", "<%# locals: (query:, page: 1) %>\n<p><%= query %></p><span><%= page %></span>")
+
+    index = analyzer.dependency_index(path)
+
+    assert_equal ["page", "query"], index.keys.sort
+  end
+
+  test "affected_nodes follows state through a block parameter" do
+    path = write_template("posts/index.html.erb", "<ul><% @items.each do |item| %><li><%= item.name %></li><% end %></ul>")
+
+    nodes = analyzer.affected_nodes(path, "@items")
+    expressions = nodes.map { |node| node[:expression] }
+
+    assert_includes expressions, "item.name"
+  end
+
+  test "affected_nodes follows state through every parameter a block binds" do
+    path = write_template("posts/index.html.erb", "<ul><% @rows.each_with_index do |row, i| %><li><%= i %>: <%= row.title %></li><% end %></ul>")
+
+    expressions = analyzer.affected_nodes(path, "@rows").map { |node| node[:expression] }
+
+    assert_includes expressions, "i"
+    assert_includes expressions, "row.title"
+  end
+
+  test "affected_nodes leaves an expression a block parameter does not reach" do
+    path = write_template("posts/index.html.erb", "<div><% @items.each do |item| %><%= other %><% end %></div>")
+
+    expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
+
+    refute_includes expressions, "other"
+  end
+
+  test "affected_nodes stops a block parameter at the end of its block" do
+    path = write_template("posts/index.html.erb", "<div><% @items.each do |item| %><%= item.name %><% end %><%= item %></div>")
+
+    nodes = analyzer.affected_nodes(path, "@items")
+
+    assert_equal(1, nodes.count { |node| node[:expression] == "item.name" })
+    assert_equal(0, nodes.count { |node| node[:expression] == "item" })
+  end
+
+  test "affected_nodes does not confuse a state name with a longer one" do
+    path = write_template("posts/show.html.erb", "<div><%= @post.title %></div><div><%= @posts.count %></div>")
+
+    expressions = analyzer.affected_nodes(path, "@post").map { |node| node[:expression] }
+
+    assert_includes expressions, "@post.title"
+    refute_includes expressions, "@posts.count"
+  end
+
   test "dependency_index marks if-blocks containing state as conditional" do
     path = write_template("posts/show.html.erb", "<div><% if @admin %><%= @post.name %><% end %></div>")
 

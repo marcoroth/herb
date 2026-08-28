@@ -1,0 +1,36 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0016_ternary with symbol branches"
+input: |2-
+<%= cond ? :active : :inactive %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:33))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if cond " (location: (1:0)-(1:33))
+    │   ├── tag_closing: "%>" (location: (1:33)-(1:33))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:11)-(1:18))
+    │   │       └── content: "active"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (1:33)-(1:33))
+    │   │       ├── tag_opening: "<%" (location: (1:33)-(1:33))
+    │   │       ├── content: " else " (location: (1:33)-(1:33))
+    │   │       ├── tag_closing: "%>" (location: (1:33)-(1:33))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (1:21)-(1:30))
+    │   │               └── content: "inactive"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:33)-(1:33))
+    │           ├── tag_opening: "<%" (location: (1:33)-(1:33))
+    │           ├── content: " end " (location: (1:33)-(1:33))
+    │           └── tag_closing: "%>" (location: (1:33)-(1:33))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:33)-(2:0))
+        └── content: "\n"

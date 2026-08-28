@@ -1,7 +1,7 @@
 {
   "name": "@herb-tools/client",
   "version": "0.10.3",
-  "description": "HMR client for Herb templates - connects to herb dev server and applies live DOM patches",
+  "description": "Browser runtime for indexing and updating the slots an HTML+ERB template renders",
   "type": "module",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/client"
   },
-  "main": "./dist/herb-client.umd.js",
+  "main": "./dist/herb-client.esm.js",
   "module": "./dist/herb-client.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
@@ -19,6 +19,7 @@
     "dev": "rolldown -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
@@ -26,14 +27,24 @@
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/herb-client.esm.js",
-      "default": "./dist/herb-client.umd.js"
+      "default": "./dist/herb-client.esm.js"
+    },
+    "./stimulus": {
+      "types": "./dist/types/stimulus.d.ts",
+      "import": "./dist/herb-client-stimulus.esm.js",
+      "default": "./dist/herb-client-stimulus.esm.js"
+    },
+    "./directives": {
+      "types": "./dist/types/directives.d.ts",
+      "import": "./dist/herb-client-directives.esm.js",
+      "require": "./dist/herb-client-directives.cjs",
+      "default": "./dist/herb-client-directives.esm.js"
     }
   },
   "dependencies": {},
   "files": [
     "package.json",
     "README.md",
-    "dist/",
-    "src/"
+    "dist/"
   ]
 }

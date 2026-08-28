@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isPrismNodeType, isRubyRenderLocalNode } from "@herb-tools/core"
@@ -141,6 +141,7 @@ export class ActionViewNoStrictLocalsErrorRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

@@ -39,8 +39,8 @@ module Herb
     # : () -> String
     def colorize_range: () -> String
 
-    # : (Position) -> String
-    def colorize_position: (Position) -> String
+    # : (Position?) -> String
+    def colorize_position: (Position?) -> String
 
     # : () -> String
     def inspect: () -> String

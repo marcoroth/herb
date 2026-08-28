@@ -1,13 +1,14 @@
 import { ParserRule } from "../types.js"
-import { Location, ERBStrictLocalsNode, RubyReferenceCollector, createLiteral, isProbableLocal } from "@herb-tools/core"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { Location, ERBStrictLocalsNode, RubyReferenceCollector } from "@herb-tools/core"
+
+import { isPartialFile } from "../utils/file-utils.js"
 import { strictLocalsDeclaration } from "@herb-tools/analysis"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { createLiteral, isProbableLocal } from "@herb-tools/core"
 
-import { isPartialFile } from "./file-utils.js"
-
-import type { BaseAutofixContext, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, DocumentNode } from "@herb-tools/core"
 import type { InferredSignature, StrictLocal } from "@herb-tools/analysis"
+import type { BaseAutofixContext, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 const LOCAL_ASSIGNS = "local_assigns"
 
@@ -76,6 +77,7 @@ function mergeLocals(fromCallSites: StrictLocal[], fromBody: string[]): StrictLo
   return locals.sort((left, right) => left.name.localeCompare(right.name))
 }
 
+// TODO: Strict locals is an Action View feature, so this rule belongs under the `actionview-` prefix next to the four rules that already validate it. The rename waits on a rule-alias mechanism, since it breaks every `.herb.yml` and `herb:disable` comment naming it.
 export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequiredAutofixContext> {
   static unsafeAutocorrectable = true
   static ruleName = "erb-strict-locals-required"
@@ -92,6 +94,7 @@ export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequired
     return {
       enabled: false,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

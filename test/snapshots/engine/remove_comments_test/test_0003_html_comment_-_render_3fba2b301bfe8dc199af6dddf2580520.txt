@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsTest#test_0003_html comment - render"
+input: "{source: \"<div><!-- secret --></div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::Visitors::RemoveComments>]}}"
+---
+<div></div>

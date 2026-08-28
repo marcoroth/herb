@@ -1,0 +1,20 @@
+---
+source: "Parser::XMLProcessingInstructionTest#test_0010_two processing instructions"
+input: "<?start name=\"a\"><?end>"
+---
+@ DocumentNode (location: (1:0)-(1:23))
+└── children: (2 items)
+    ├── @ XMLProcessingInstructionNode (location: (1:0)-(1:17))
+    │   ├── tag_opening: "<?" (location: (1:0)-(1:2))
+    │   ├── target: "start" (location: (1:2)-(1:7))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:7)-(1:16))
+    │   │       └── content: " name=\"a\""
+    │   │
+    │   └── tag_closing: ">" (location: (1:16)-(1:17))
+    │
+    └── @ XMLProcessingInstructionNode (location: (1:17)-(1:23))
+        ├── tag_opening: "<?" (location: (1:17)-(1:19))
+        ├── target: "end" (location: (1:19)-(1:22))
+        ├── children: []
+        └── tag_closing: ">" (location: (1:22)-(1:23))

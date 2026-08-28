@@ -1,47 +1,9 @@
-import './styles.css';
-import { HerbOverlay, type HerbDevToolsOptions } from './herb-overlay.js';
-import { ErrorOverlay, type ValidationError, type ValidationData } from './error-overlay.js';
+export { DEV_SERVER_FIXED_EVENT } from './dev-server/types.js'
+export { DEV_TOOLS_START_EVENT } from './herb-dev-tools.js'
 
-export { HerbOverlay, ErrorOverlay };
-export type { HerbDevToolsOptions, ValidationError, ValidationData };
+export { HerbDevTools } from './herb-dev-tools.js'
+export { RuntimePanel } from './runtime/panel.js'
 
-export function initHerbDevTools(options: HerbDevToolsOptions = {}): HerbOverlay {
-  if (typeof window !== 'undefined') {
-    const existingOverlay = (window as any).HerbDevTools?._overlay as HerbOverlay | undefined;
-
-    existingOverlay?.destroy();
-  }
-
-  const overlay = new HerbOverlay(options);
-
-  if (typeof window !== 'undefined') {
-    (window as any).HerbDevTools._overlay = overlay;
-    (window as any).HerbDevTools._errorOverlay = (overlay as any).errorOverlay;
-  }
-
-  return overlay;
-}
-
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  const hasDebugMode = document.querySelector('meta[name="herb-debug-mode"]')?.getAttribute('content') === 'true';
-  const hasDebugErb = document.querySelector('[data-herb-debug-erb]') !== null;
-  const hasValidationErrors = document.querySelector('template[data-herb-validation-errors]') !== null;
-  const hasValidationError = document.querySelector('template[data-herb-validation-error]') !== null;
-  const hasParserErrors = document.querySelector('template[data-herb-parser-error]') !== null;
-  const hasOptimizationMismatches = document.querySelector('template[data-herb-optimization-mismatch]') !== null;
-  const shouldAutoInit = hasDebugMode || hasDebugErb || hasValidationErrors || hasValidationError || hasParserErrors || hasOptimizationMismatches;
-
-  if (shouldAutoInit) {
-    document.addEventListener('DOMContentLoaded', () => {
-      initHerbDevTools();
-    });
-  }
-}
-
-if (typeof window !== 'undefined') {
-  (window as any).HerbDevTools = {
-    init: initHerbDevTools,
-    HerbOverlay,
-    ErrorOverlay
-  };
-}
+export type { HerbDevToolsOptions } from './herb-dev-tools.js'
+export type { RuntimePanelOptions, RuntimeReportHandle } from './runtime/panel.js'
+export type { OverlayMode, RenderTreeNode, RuntimeDiagnostic, RuntimeReport } from './runtime/report.js'

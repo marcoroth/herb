@@ -18,6 +18,8 @@ module Herb
 
       ATTRIBUTE: String
 
+      attr_reader meta: Hash[Symbol, untyped]
+
       attr_reader sources: Hash[String, String]
 
       attr_reader nodes: Hash[String, Hash[String, Hash[Symbol, untyped]]]
@@ -27,11 +29,20 @@ module Herb
       # : (?max_diagnostics: Integer) -> void
       def initialize: (?max_diagnostics: Integer) -> void
 
+      # : (Symbol) { () -> untyped } -> untyped
+      def channel: (Symbol) { () -> untyped } -> untyped
+
+      # : () -> Array[untyped]
+      def channels: () -> Array[untyped]
+
       # : (Herb::Diagnostic) -> Herb::Diagnostic
       def add: (Herb::Diagnostic) -> Herb::Diagnostic
 
       # : (untyped) -> Report
       def concat: (untyped) -> Report
+
+      # : (Symbol, untyped) -> void
+      def note: (Symbol, untyped) -> void
 
       # : (String, String?) -> void
       def source: (String, String?) -> void
@@ -47,6 +58,12 @@ module Herb
 
       # : () -> bool
       def empty?: () -> bool
+
+      # : () -> bool
+      def noted?: () -> bool
+
+      # : () -> bool
+      def reportable?: () -> bool
 
       # : () -> Hash[Symbol, untyped]
       def to_h: () -> Hash[Symbol, untyped]

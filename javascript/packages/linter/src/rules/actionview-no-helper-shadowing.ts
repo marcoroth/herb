@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { PrismVisitor } from "@herb-tools/core"
 
 import { getHelperEntries, getHelpersByReceiver, isRubyParameterNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
@@ -130,7 +130,8 @@ export class ActionViewNoHelperShadowingRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

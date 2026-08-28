@@ -30,10 +30,11 @@
     "prebuild": "yarn run clean",
     "build": "yarn generate:node-tests && tsc -b && rolldown -c",
     "watch": "tsc -b -w",
-    "test": "vitest run",
-    "test:watch": "vitest --watch",
+    "test": "vitest run --typecheck",
+    "test:watch": "vitest --watch --typecheck",
     "test:nodes": "vitest run test/nodes",
     "generate:node-tests": "node scripts/generate-node-tests.mjs",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "dependencies": {

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0011_delimits slots nested inside another slot"
+input: "{source: \"<div><% if @admin %><b><%= @secret %></b><% end %></div>\", locals: {\"@admin\" => true, \"@secret\" => \"s\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:643ed88c:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot="1:child">s</b><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

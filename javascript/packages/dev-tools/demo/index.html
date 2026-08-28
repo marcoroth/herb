@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Herb Dev Tools demo</title>
+
+    <meta name="herb-project-path" content="/Users/marcoroth/Development/example-app">
+    <meta name="herb-default-editor" content="vscode">
+
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #111827;
+        background: #f3f4f6;
+      }
+
+      main {
+        max-width: 720px;
+        margin: 32px auto 0;
+        padding: 16px 24px 200px;
+      }
+
+      h1 {
+        font-size: 28px;
+        margin-bottom: 4px;
+      }
+
+      p.lede {
+        color: #4b5563;
+        margin-top: 0;
+      }
+
+      article.post {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+
+      article.post h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      article.post p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      .cover {
+        height: 120px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #a5b4fc, #6ee7b7);
+        margin-bottom: 12px;
+      }
+
+      .cover.two {
+        background: linear-gradient(135deg, #fbcfe8, #fcd34d);
+      }
+
+      .cover.three {
+        background: linear-gradient(135deg, #93c5fd, #c4b5fd);
+      }
+
+      .cover.four {
+        background: linear-gradient(135deg, #fcd34d, #fca5a5);
+      }
+
+      .controls {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+
+      .controls h2 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+
+      .controls p {
+        margin: 0 0 12px;
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      .controls .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .controls button {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #f9fafb;
+        padding: 6px 10px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .controls button:hover {
+        border-color: #9ca3af;
+      }
+
+      p.toolbar {
+        margin: 0 0 24px;
+      }
+
+      .button {
+        display: inline-block;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: #111827;
+        text-decoration: none;
+      }
+
+      .byline {
+        margin: 0 0 12px;
+        color: #4b5563;
+        font-size: 14px;
+      }
+
+      .actions {
+        display: inline-flex;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .actions button {
+        border: 1px solid #fca5a5;
+        border-radius: 6px;
+        background: #fef2f2;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: #b91c1c;
+        cursor: pointer;
+      }
+
+      code {
+        background: rgba(120, 130, 150, 0.16);
+        border-radius: 3px;
+        padding: 1px 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main
+      data-herb-debug-outline-type="view"
+      data-herb-debug-file-name="index.html.erb"
+      data-herb-debug-file-relative-path="app/views/posts/index.html.erb"
+      data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/index.html.erb"
+      data-herb-debug-line="1"
+      data-herb-debug-column="1"
+    >
+      <h1>Posts</h1>
+      <p class="lede">
+        A stand-in for a Rails page. The runtime report at the bottom of this document describes what
+        the page rendered and what is wrong with it. The badge docks into the Herb menu in the top
+        right corner and blocks nothing.
+      </p>
+
+      <p class="lede">
+        The markup carries the same <code>data-herb-debug-*</code> attributes the Herb engine emits,
+        so the View, Partial, Component and ERB Output Outlines toggles in the Herb menu all have
+        something to act on, and the paths they show match the render stacks in the panel.
+      </p>
+
+      <p class="toolbar">
+        <span
+          data-herb-debug-outline-type="erb-output"
+          data-herb-debug-erb="&lt;%= link_to &quot;New post&quot;, new_post_path, class: &quot;button&quot; %&gt;"
+          data-herb-debug-file-name="index.html.erb"
+          data-herb-debug-file-relative-path="app/views/posts/index.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/index.html.erb"
+          data-herb-debug-line="6"
+          data-herb-debug-column="3"
+        ><a class="button" href="#">New post</a></span>
+      </p>
+
+      <div class="controls">
+        <h2>Client-side hook</h2>
+        <p>Exercises <code>report()</code>, <code>clear()</code> and <code>show()</code> on the running instance.</p>
+        <p>A blocking overlay covers these controls on purpose. Reload the page to leave it, since entries pushed through <code>report()</code> do not survive a reload. Every card in the panel also carries an expand control that puts that entry on a screen of its own.</p>
+
+        <div class="row">
+          <button id="report-one">report() one</button>
+          <button id="report-batch">report() a batch</button>
+          <button id="report-repeat">report() the same finding again</button>
+          <button id="report-spaced">report() with a trailing space in origin</button>
+          <button id="report-blocking" title="Covers the page with no way out. Reload to leave it.">report() a blocking overlay</button>
+          <button id="report-dismissible">report() a dismissible overlay</button>
+          <button id="report-located" title="Every entry carries an element. Two are on the page and one is inside a hidden article.">report() pointing at DOM elements</button>
+          <button id="dismiss-last">dismiss() the last handle</button>
+          <button id="clear-origin">clear("Acme Scanner")</button>
+          <button id="clear-all">clear()</button>
+          <button id="open-panel">open()</button>
+          <button id="open-expanded">open({ expanded: true })</button>
+          <button id="close-panel">close()</button>
+          <button id="unhide">show() after "Hide for this session"</button>
+          <button id="toggle-expand">expand() and collapse()</button>
+        </div>
+      </div>
+
+      <article
+        class="post"
+        data-herb-debug-outline-type="partial"
+        data-herb-debug-file-name="_post.html.erb"
+        data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
+        data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/_post.html.erb"
+        data-herb-debug-line="1"
+        data-herb-debug-column="1"
+      >
+        <h2><span
+          data-herb-debug-outline-type="erb-output"
+          data-herb-debug-erb="&lt;%= post.title %&gt;"
+          data-herb-debug-file-name="_post.html.erb"
+          data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/_post.html.erb"
+          data-herb-debug-line="3"
+          data-herb-debug-column="9"
+        >Shipping the Herb engine</span></h2>
+
+        <div class="cover"></div>
+
+        <p class="byline">by <span
+          data-herb-debug-outline-type="erb-output"
+          data-herb-debug-inserted
+          data-herb-debug-erb="&lt;%= post.author.name %&gt;"
+          data-herb-debug-file-name="_post.html.erb"
+          data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/_post.html.erb"
+          data-herb-debug-line="10"
+          data-herb-debug-column="24"
+        >Marco Roth</span></p>
+
+        <span
+          class="actions"
+          data-herb-debug-outline-type="component"
+          data-herb-debug-file-name="post_actions_component.html.erb"
+          data-herb-debug-file-relative-path="app/components/post_actions_component.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/components/post_actions_component.html.erb"
+          data-herb-debug-line="1"
+          data-herb-debug-column="1"
+        ><span
+            data-herb-debug-outline-type="erb-output"
+            data-herb-debug-erb="&lt;%= link_to &quot;Edit&quot;, edit_post_path(post), class: &quot;button&quot; %&gt;"
+            data-herb-debug-file-name="post_actions_component.html.erb"
+            data-herb-debug-file-relative-path="app/components/post_actions_component.html.erb"
+            data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/components/post_actions_component.html.erb"
+            data-herb-debug-line="2"
+            data-herb-debug-column="3"
+          ><a class="button" href="#">Edit</a></span><button type="button">Delete</button></span>
+
+        <p>Rendered by app/views/posts/_post.html.erb, occurrence one.</p>
+      </article>
+
+      <article
+        class="post"
+        data-herb-debug-outline-type="partial"
+        data-herb-debug-file-name="_post.html.erb"
+        data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
+        data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/_post.html.erb"
+        data-herb-debug-line="1"
+        data-herb-debug-column="1"
+      >
+        <h2><span
+          data-herb-debug-outline-type="erb-output"
+          data-herb-debug-erb="&lt;%= post.title %&gt;"
+          data-herb-debug-file-name="_post.html.erb"
+          data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/_post.html.erb"
+          data-herb-debug-line="3"
+          data-herb-debug-column="9"
+        >What the linter learned</span></h2>
+
+        <div class="cover two"></div>
+
+        <p class="byline">by <span
+          data-herb-debug-outline-type="erb-output"
+          data-herb-debug-inserted
+          data-herb-debug-erb="&lt;%= post.author.name %&gt;"
+          data-herb-debug-file-name="_post.html.erb"
+          data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/views/posts/_post.html.erb"
+          data-herb-debug-line="10"
+          data-herb-debug-column="24"
+        >Marco Roth</span></p>
+
+        <span
+          class="actions"
+          data-herb-debug-outline-type="component"
+          data-herb-debug-file-name="post_actions_component.html.erb"
+          data-herb-debug-file-relative-path="app/components/post_actions_component.html.erb"
+          data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/components/post_actions_component.html.erb"
+          data-herb-debug-line="1"
+          data-herb-debug-column="1"
+        ><span
+            data-herb-debug-outline-type="erb-output"
+            data-herb-debug-erb="&lt;%= link_to &quot;Edit&quot;, edit_post_path(post), class: &quot;button&quot; %&gt;"
+            data-herb-debug-file-name="post_actions_component.html.erb"
+            data-herb-debug-file-relative-path="app/components/post_actions_component.html.erb"
+            data-herb-debug-file-full-path="/Users/marcoroth/Development/example-app/app/components/post_actions_component.html.erb"
+            data-herb-debug-line="2"
+            data-herb-debug-column="3"
+          ><a class="button" href="#">Edit</a></span><button type="button">Delete</button></span>
+
+        <p>Rendered by app/views/posts/_post.html.erb, occurrence two.</p>
+      </article>
+
+      <article class="post">
+        <h2>Reading a render stack</h2>
+        <div class="cover three" id="cover-three"></div>
+        <p>Rendered inline by app/views/posts/index.html.erb.</p>
+      </article>
+
+      <article class="post" id="draft-post" hidden>
+        <h2>An unpublished draft</h2>
+        <div class="cover four" id="cover-four"></div>
+        <p>Still in the document, and rendering nothing until it is published.</p>
+      </article>
+    </main>
+
+    <script type="application/json" data-herb-diagnostics>
+      {
+        "version": 1,
+        "renderTree": [
+          {
+            "id": "0",
+            "template": "app/views/layouts/application.html.erb",
+            "parent": null,
+            "via": "layout"
+          },
+          {
+            "id": "1",
+            "template": "app/views/posts/index.html.erb",
+            "parent": "0",
+            "via": "template",
+            "location": {
+              "line": 15,
+              "column": 7
+            }
+          },
+          {
+            "id": "2",
+            "template": "app/views/posts/_post.html.erb",
+            "parent": "1",
+            "via": "partial",
+            "location": {
+              "line": 10,
+              "column": 3
+            }
+          },
+          {
+            "id": "3",
+            "template": "app/views/posts/_post.html.erb",
+            "parent": "1",
+            "via": "partial",
+            "location": {
+              "line": 10,
+              "column": 3
+            }
+          },
+          {
+            "id": "4",
+            "template": "app/components/post_actions_component.html.erb",
+            "parent": "2",
+            "via": "component",
+            "location": {
+              "line": 12,
+              "column": 3
+            }
+          },
+          {
+            "id": "5",
+            "template": "app/components/post_actions_component.html.erb",
+            "parent": "3",
+            "via": "component",
+            "location": {
+              "line": 12,
+              "column": 3
+            }
+          },
+          {
+            "id": "6",
+            "template": "app/views/posts/_draft.html.erb",
+            "parent": "1",
+            "via": "partial",
+            "location": {
+              "line": 18,
+              "column": 3
+            }
+          }
+        ],
+        "diagnostics": [
+          {
+            "template": "app/views/posts/_post.html.erb",
+            "node": "2",
+            "message": "Nested `<form>` elements are not allowed.",
+            "code": "html-no-nested-forms",
+            "severity": "error",
+            "kind": "diagnostic",
+            "origin": "Herb Linter",
+            "location": {
+              "start": {
+                "line": 5,
+                "column": 5
+              },
+              "end": {
+                "line": 7,
+                "column": 12
+              }
+            },
+            "suggestion": "Move the inner `<form>` out so the two submit targets are siblings.",
+            "docsUrl": "https://herb-tools.dev/linter/rules/html-no-nested-forms",
+            "fix": {
+              "kind": "safe",
+              "source": "<article class=\"post\" id=\"<%= dom_id(post) %>\">\n  <form action=\"/posts/<%= post.id %>\" method=\"post\">\n    <h3><%= post.title %></h3>\n  </form>\n\n  <form action=\"/posts/<%= post.id %>/publish\" method=\"post\">\n    <button type=\"submit\">Publish</button>\n  </form>\n\n  <p class=\"byline\">by <%= post.author.name %></p>\n</article>\n"
+            }
+          },
+          {
+            "template": "app/views/posts/index.html.erb",
+            "node": "1",
+            "message": "`<img>` is missing a required `alt` attribute.",
+            "code": "html-img-require-alt",
+            "severity": "warning",
+            "kind": "diagnostic",
+            "origin": "Herb Linter",
+            "location": {
+              "start": {
+                "line": 4,
+                "column": 3
+              },
+              "end": {
+                "line": 4,
+                "column": 29
+              }
+            },
+            "suggestion": "Add `alt=\"\"` when the image is decorative.",
+            "docsUrl": "https://herb-tools.dev/linter/rules/html-img-require-alt"
+          },
+          {
+            "template": "app/views/posts/_post.html.erb",
+            "node": "3",
+            "message": "This partial issued 3 SQL queries while rendering.",
+            "kind": "metric",
+            "origin": "Herb Engine Runtime",
+            "value": "3 SQL queries",
+            "location": {
+              "start": {
+                "line": 10,
+                "column": 3
+              },
+              "end": {
+                "line": 10,
+                "column": 43
+              }
+            }
+          },
+          {
+            "template": "app/components/post_actions_component.html.erb",
+            "node": "4",
+            "message": "This component rendered twice on this page.",
+            "kind": "metric",
+            "origin": "Herb Engine Runtime",
+            "value": "2 renders",
+            "location": {
+              "start": {
+                "line": 1,
+                "column": 1
+              },
+              "end": {
+                "line": 1,
+                "column": 22
+              }
+            }
+          }
+        ],
+        "sources": {
+          "app/views/layouts/application.html.erb": "<!DOCTYPE html>\n<html>\n  <head>\n    <title><%= content_for?(:title) ? yield(:title) : \"Posts\" %></title>\n    <%= csrf_meta_tags %>\n    <%= stylesheet_link_tag \"application\" %>\n  </head>\n\n  <body class=\"posts\">\n    <header class=\"masthead\">\n      <h1>Herb</h1>\n    </header>\n\n    <main>\n      <%= yield %>\n    </main>\n  </body>\n</html>\n",
+          "app/views/posts/index.html.erb": "<h2>Latest posts</h2>\n\n<div class=\"toolbar\">\n  <img src=\"/icons/new.svg\">\n\n  <%= link_to \"New post\", new_post_path, class: \"button\" %>\n</div>\n\n<section class=\"posts\">\n  <%= render partial: \"posts/post\", collection: @posts, as: :post %>\n</section>\n",
+          "app/views/posts/_post.html.erb": "<article class=\"post\" id=\"<%= dom_id(post) %>\">\n  <form action=\"/posts/<%= post.id %>\" method=\"post\">\n    <h3><%= post.title %></h3>\n\n    <form action=\"/posts/<%= post.id %>/publish\" method=\"post\">\n      <button type=\"submit\">Publish</button>\n    </form>\n  </form>\n\n  <p class=\"byline\">by <%= post.author.name %></p>\n\n  <%= render PostActionsComponent.new(post: post) %>\n</article>\n",
+          "app/components/post_actions_component.html.erb": "<div class=\"actions\">\n  <%= link_to \"Edit\", edit_post_path(post), class: \"button\" %>\n  <%= button_to \"Delete\", post_path(post), method: :delete %>\n</div>\n"
+        }
+      }
+    </script>
+
+    <script type="module" src="./demo.ts"></script>
+  </body>
+</html>

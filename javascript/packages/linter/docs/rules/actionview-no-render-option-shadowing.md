@@ -63,6 +63,14 @@ Locals already written inside a `locals:` hash are never reported.
 <%= render "card", layout: "wide" %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [Action View - Rendering partials](https://guides.rubyonrails.org/layouts_and_rendering.html#using-partials)

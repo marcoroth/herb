@@ -1,10 +1,10 @@
 import picomatch from "picomatch"
 
-import { Location, semverGreaterThan } from "@herb-tools/core"
+import { DEFAULT_FRAMEWORK, Location, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
-import { findNodeByLocation } from "./rules/rule-utils.js"
+import { findNodeByLocation } from "./utils/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
@@ -14,8 +14,8 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config/schema"
 
-import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
-import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework } from "./types.js"
+import type { ParseResult, LexResult, HerbBackend, ParserOptions } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
 export interface LinterOptions {
@@ -299,6 +299,56 @@ export class Linter {
   }
 
   /**
+   * Whether a rule applies to the framework the template is linted as.
+   *
+   * A rule that leaves `frameworks` open applies everywhere. One that narrows it
+   * only runs when the framework it is linted against is listed, and since an
+   * unset `framework` means `ruby`, a rule scoped to `actionview` stays quiet
+   * until a project sets `framework: actionview` in its `.herb.yml`.
+   *
+   * `--only` and `--all-rules` skip this the same way they skip the path
+   * filters, since asking for a rule by name is answer enough about whether it
+   * should run.
+   *
+   * @param rule - The rule instance to check
+   * @param framework - The framework from the lint context, if any
+   * @returns true when the rule applies to the framework
+   */
+  protected appliesToFramework(rule: Rule, framework: Framework | undefined): boolean {
+    const userFrameworks = this.config?.linter?.rules?.[rule.ruleName]?.frameworks
+    const frameworks = userFrameworks ?? rule.defaultConfig?.frameworks
+
+    if (!frameworks) return true
+
+    return frameworks.includes(framework ?? DEFAULT_FRAMEWORK)
+  }
+
+  /**
+   * The parser options a rule is run with.
+   *
+   * A rule asking for `action_view_helpers` is saying it wants to see Action
+   * View helpers as the elements they render, which only makes sense where
+   * those helpers exist. Outside Action View a call like `tag.ubid` is an
+   * ordinary method call, so the transform is turned off and the rule sees the
+   * ERB it was actually given.
+   *
+   * @param ruleClass - The rule class being run
+   * @param rule - The rule instance being run
+   * @param framework - The framework from the lint context, if any
+   * @returns The parser options to parse the source with
+   */
+  protected parserOptionsFor(ruleClass: RuleClass, rule: Rule, framework: Framework | undefined): Partial<ParserOptions> {
+    if (!this.isParserRuleClass(ruleClass)) return {}
+
+    const parserOptions = (rule as ParserRule).parserOptions ?? {}
+
+    if (!parserOptions.action_view_helpers) return parserOptions
+    if ((framework ?? DEFAULT_FRAMEWORK) === "actionview") return parserOptions
+
+    return { ...parserOptions, action_view_helpers: false }
+  }
+
+  /**
    * Execute a single rule and return its unbound offenses.
    * Handles rule type checking (Lexer/Parser/Source) and isEnabled checks.
    */
@@ -311,6 +361,10 @@ export class Linter {
     context?: Partial<LintContext>
   ): UnboundLintOffense[] {
     const ruleName = rule.ruleName
+
+    if (!this.onlyRules && !this.allRules && !this.appliesToFramework(rule, context?.framework)) {
+      return []
+    }
 
     if (this.config && context?.fileName && !this.onlyRules && !this.allRules) {
       if (!this.config.isRuleEnabledForPath(ruleName, context.fileName)) {
@@ -494,7 +548,7 @@ export class Linter {
 
     for (const ruleClass of regularRules) {
       const rule = new ruleClass()
-      const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
+      const parserOptions = this.parserOptionsFor(ruleClass, rule, context?.framework)
       const parseResult = this.parseCache.get(source, parserOptions)
 
       if (this.isParserRuleClass(ruleClass)) {

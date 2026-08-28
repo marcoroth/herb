@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0008_ternary with literals that would be HTML-escaped"
+input: "{source: \"<%= active ? \\\"5 > 3\\\" : \\\"a & b\\\" %>\", options: {escape: true, visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; if active 
+ _buf << __herb.h(("5 > 3")); else; _buf << __herb.h(("a & b")); end;
+_buf.to_s

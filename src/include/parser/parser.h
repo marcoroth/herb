@@ -27,12 +27,14 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool transform_conditionals;
   bool render_nodes;
   bool strict_locals;
+  bool herb_directives;
   bool iteration_nodes;
   bool prism_program;
   bool prism_nodes;
   bool prism_nodes_deep;
   bool dot_notation_tags;
   bool html;
+  bool track_locations;
   uint32_t start_line;
   uint32_t start_column;
   uint32_t timeout_ms;

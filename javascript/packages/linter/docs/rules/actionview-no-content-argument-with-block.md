@@ -102,6 +102,14 @@ Helpers whose first argument is not content are unaffected. `field_set_tag "Acco
 <% end %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [Rails API - `ActionView::Helpers::TagHelper#content_tag`](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)

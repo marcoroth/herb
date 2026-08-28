@@ -2,9 +2,59 @@
 
 require_relative "../test_helper"
 require_relative "../../lib/herb/engine"
+require_relative "../snapshot_utils"
 
 module Engine
   class ErrorHandlingTest < Minitest::Spec
+    include SnapshotUtils
+
+    class ChattyVisitor < Herb::Visitor
+      def initialize
+        super
+        @junk = "x" * 500
+      end
+    end
+
+    describe "what a parse error remembers about the compile" do
+      def broken
+        "<div>\n  <form>\n</div>\n"
+      end
+
+      test "describes each visitor the way the visitor describes itself" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(broken, filename: "a.html.erb", visitors: Herb::Engine::Validators.all)
+        end
+
+        assert_equal(
+          [
+            "#<Herb::Engine::Validators::SecurityValidator fatal=true>",
+            "#<Herb::Engine::Validators::NestingValidator fatal=true>",
+            "#<Herb::Engine::Validators::AccessibilityValidator fatal=true>"
+          ],
+          error.visitors
+        )
+      end
+
+      test "caps a visitor that describes itself at length" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(broken, filename: "a.html.erb", visitors: [ChattyVisitor.new])
+        end
+
+        described = error.visitors.first
+
+        assert_equal Herb::Engine::VISITOR_DESCRIPTION_LIMIT + 1, described.length
+        assert described.end_with?("\u2026"), "expected the description to be cut short"
+      end
+
+      test "carries the parser options the parse actually ran under" do
+        error = assert_raises(Herb::Engine::ParseError) do
+          Herb::Engine.new(broken, filename: "a.html.erb", visitors: Herb::Engine::Validators.all)
+        end
+
+        assert_equal({ track_locations: true }, error.parser_options)
+      end
+    end
+
     test "mismatched html tags" do
       template = <<~ERB
         <div>
@@ -13,15 +63,7 @@ module Engine
         </span>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "HTML+ERB Compilation Errors"
-      assert_includes error.message, "MissingClosingTag"
-      assert_includes error.message, "Opening tag `<section>`"
-      assert_includes error.message, "MissingOpeningTag"
-      assert_includes error.message, "Found closing tag `</span>`"
+      assert_error_snapshot(template)
     end
 
     test "unclosed html element" do
@@ -33,12 +75,7 @@ module Engine
         <!-- Missing </section> -->
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "MissingClosingTag"
-      assert_includes error.message, "doesn't have a matching closing tag"
+      assert_error_snapshot(template)
     end
 
     test "missing opening tag" do
@@ -49,12 +86,7 @@ module Engine
         </span>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "MissingOpeningTag"
-      assert_includes error.message, "without a matching opening tag"
+      assert_error_snapshot(template)
     end
 
     test "void element with closing tag" do
@@ -65,12 +97,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "VoidElementClosingTag"
-      assert_includes error.message, "void element"
+      assert_error_snapshot(template)
     end
 
     test "missing erb end" do
@@ -82,12 +109,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "Compilation Errors"
-      assert_instance_of String, error.message
+      assert_error_snapshot(template)
     end
 
     test "ruby syntax error" do
@@ -97,12 +119,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "Compilation Errors"
-      assert_instance_of String, error.message
+      assert_error_snapshot(template)
     end
 
     test "nested anchor tags" do
@@ -113,11 +130,7 @@ module Engine
         </a>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_instance_of String, error.message
+      assert_error_snapshot(template)
     end
 
     test "block element in paragraph" do
@@ -129,11 +142,7 @@ module Engine
         </p>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_instance_of String, error.message
+      assert_error_snapshot(template)
     end
 
     test "error with filename" do
@@ -143,14 +152,7 @@ module Engine
         </span>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, filename: "test_template.erb")
-      end
-
-      assert_includes error.message, "MissingClosingTag"
-      assert_includes error.message, "Opening tag `<div>`"
-      assert_includes error.message, "MissingOpeningTag"
-      assert_includes error.message, "Found closing tag `</span>`"
+      assert_error_snapshot(template, validators: false, filename: "test_template.erb")
     end
 
     test "multiple errors reported" do
@@ -161,13 +163,7 @@ module Engine
         </span>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "Total errors:"
-      assert_instance_of String, error.message
-      assert error.message.length > 100
+      assert_error_snapshot(template)
     end
 
     test "error with line numbers" do
@@ -178,17 +174,10 @@ module Engine
         </span>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, ":"
-      assert error.message.match?(/\d+:\d+/)
+      assert_error_snapshot(template)
     end
 
     test "error with source context" do
-      skip "Skipping in CI due to formatting differences" if ENV["CI"]
-
       template = <<~ERB
         <div>
           <h1>Working title</h1>
@@ -196,21 +185,7 @@ module Engine
         </wrong_tag>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "HTML+ERB Compilation Errors:"
-
-      assert_includes error.message, "MissingClosingTag"
-      assert_includes error.message, "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
-      assert_includes error.message, "Opening tag `<section>` at (3:3) doesn't have a matching closing tag `</section>` in the same scope."
-
-      assert_includes error.message, "MissingOpeningTag"
-      assert_includes error.message, "Found closing tag `</wrong_tag>` at (4:2) without a matching opening tag in the same scope."
-
-      assert_includes error.message, "Total errors: 3"
-      assert_includes error.message, "Compilation failed. Please fix the errors above."
+      assert_error_snapshot(template)
     end
 
     test "unclosed quotes in attributes" do
@@ -220,11 +195,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_instance_of String, error.message
+      assert_error_snapshot(template)
     end
 
     test "invalid html structure" do
@@ -274,12 +245,7 @@ module Engine
         </div>
       ERB
 
-      begin
-        engine = Herb::Engine.new(template)
-        assert_instance_of Herb::Engine, engine
-      rescue Herb::Engine::CompilationError => e
-        assert_includes e.message, "Empty"
-      end
+      assert_instance_of Herb::Engine, Herb::Engine.new(template)
     end
 
     test "malformed erb tags" do
@@ -289,11 +255,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_instance_of String, error.message
+      assert_error_snapshot(template)
     end
 
     test "case sensitivity in tag names" do
@@ -330,11 +292,7 @@ module Engine
         <% if true # some comment %> true <% else %> false <% end %>
       ERB
 
-      begin
-        Herb::Engine.new(template)
-      rescue Herb::Engine::CompilationError => e
-        assert_includes e.message, "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
-      end
+      assert_error_snapshot(template, validators: false)
     end
 
     test "tags spanning erb control flow boundaries are recognized as conditional elements" do
@@ -363,14 +321,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "ERBControlFlowScope"
-      assert_includes error.message, "`<% else %>`"
-      assert_includes error.message, "outside its control flow block"
-      assert_includes error.message, "Keep ERB control flow statements together"
+      assert_error_snapshot(template)
     end
 
     test "invalid erb control flow structure - end outside scope" do
@@ -378,19 +329,14 @@ module Engine
         <div
           <% if some_condition %>
             class="a"
-        >
           <% else %>
+            class="b"
+        >
           <% end %>
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "ERBControlFlowScope"
-      assert_includes error.message, "`<% end %>`"
-      assert_includes error.message, "outside its control flow block"
+      assert_error_snapshot(template)
     end
 
     test "invalid erb control flow structure - elsif outside scope" do
@@ -403,12 +349,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "ERBControlFlowScope"
-      assert_includes error.message, "`<% elsif %>`"
+      assert_error_snapshot(template)
     end
 
     test "invalid erb structure - else outside scope before tag closing" do
@@ -423,12 +364,7 @@ module Engine
         </div>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
-      end
-
-      assert_includes error.message, "ERBControlFlowScope"
-      assert_includes error.message, "`<% end %>`"
+      assert_error_snapshot(template)
     end
 
     test "valid erb structure - if/else/end inside tag attributes" do
@@ -446,6 +382,63 @@ module Engine
 
       assert_instance_of Herb::Engine, engine
       assert_instance_of String, engine.src
+    end
+
+    describe "what the message says and what it holds back" do
+      def broken
+        <<~ERB
+          <article class="post">
+            <form action="/posts" method="post">
+          </article>
+        ERB
+      end
+
+      def error_for(template = broken, filename: "app/views/posts/index.html.erb")
+        assert_raises(Herb::Engine::CompilationError) do
+          Herb::Engine.new(template, filename: filename, visitors: Herb::Engine::Validators.all)
+        end
+      end
+
+      test "keeps the message to a single line, so a log line stays a log line" do
+        assert_equal 1, error_for.message.lines.length
+      end
+
+      test "names where the fault is, the way a compiler does" do
+        assert_match(%r{\Aapp/views/posts/index\.html\.erb:\d+:\d+: }, error_for.message)
+      end
+
+      test "counts the errors it held back" do
+        template = <<~ERB
+          <div>
+            <section>
+          </wrong_tag>
+        ERB
+
+        assert_includes error_for(template).message, "more error"
+      end
+
+      test "puts the rendered source in the detailed message instead" do
+        error = error_for
+
+        refute_includes error.message, "\u2502"
+        assert_includes error.detailed_message, "\u2502"
+        assert_includes error.detailed_message, "~"
+      end
+
+      test "leaves the detailed message plain unless asked to highlight" do
+        refute_includes error_for.detailed_message, "\e["
+      end
+
+      test "colors the detailed message when asked" do
+        assert_includes error_for.detailed_message(highlight: true), "\e["
+      end
+
+      test "still says the whole message when there is nothing held back" do
+        error = Herb::Engine::CompilationError.new("plain")
+
+        assert_equal "plain", error.message
+        assert_includes error.detailed_message, "plain"
+      end
     end
   end
 end

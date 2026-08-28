@@ -2,5 +2,4 @@
 source: "Engine::OptimizedHelpersTest::what it compiles in#test_0003_compiles nothing in when the template optimized no helpers"
 input: "{source: \"<div>Written as HTML</div>\", options: {filename: \"app/views/posts/index.html.erb\", visitors: [#<Herb::Engine::Visitors::Optimize verify=true>]}}"
 ---
-_buf = ::String.new; _buf << '<div>Written as HTML</div>'.freeze;
-_buf.to_s
+'<div>Written as HTML</div>'.freeze

@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0007_tag.img with attributes"
 input: "{source: \"<%= tag.img src: \\\"image.png\\\", alt: \\\"Photo\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
 ---
-_buf = ::String.new; _buf << '<img src="image.png" alt="Photo">'.freeze;
-_buf.to_s
+'<img src="image.png" alt="Photo">'.freeze

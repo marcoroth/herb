@@ -3,6 +3,8 @@ import { describe, test, expect } from "vitest"
 import { Position } from "../src/index.js"
 import { setupHerb, createService, createDocument } from "./helpers.js"
 
+import type { Framework } from "@herb-tools/core"
+
 describe("doComplete", () => {
   setupHerb()
 
@@ -32,6 +34,31 @@ describe("doComplete", () => {
       const labels = completions.items.map(item => item.label)
       expect(labels).toContain("data-controller")
       expect(labels).toContain("data-action")
+    })
+  })
+
+  describe("herb attributes", () => {
+    test("offers the herb attribute names on a plain element", () => {
+      const service = createService()
+      const document = createDocument("<div ></div>")
+      const html = service.parseHTMLDocument(document)
+      const completions = service.doComplete(document, Position.create(0, 5), html)
+      const labels = completions.items.map(item => item.label)
+
+      expect(labels).toContain("data-herb-toggle")
+      expect(labels).toContain("data-herb-into")
+    })
+
+    test("offers the herb attribute names inside a tag helper's data hash", () => {
+      const service = createService()
+      const source = '<%= tag.button data: { controller: "x",  } %>'
+      const document = createDocument(source)
+      const html = service.parseHTMLDocument(document)
+      const completions = service.doComplete(document, Position.create(0, source.indexOf('"x",') + 5), html)
+      const labels = completions.items.map(item => String(item.label))
+
+      expect(labels).toContain("herb_toggle")
+      expect(labels).toContain("herb_into")
     })
   })
 
@@ -195,7 +222,7 @@ describe("block argument completions", () => {
 describe("iteration block argument completions", () => {
   setupHerb()
 
-  function labelsFor(source: string, options?: { framework?: string }) {
+  function labelsFor(source: string, options?: { framework?: Framework }) {
     const service = createService(options)
     const document = createDocument(source)
 

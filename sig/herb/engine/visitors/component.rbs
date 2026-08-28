@@ -4,6 +4,8 @@ module Herb
   class Engine
     module Visitors
       class Component < Herb::Visitor
+        extend Experimental
+
         TAG_NAME_SEPARATOR: ::Regexp
 
         KEYWORD_NAME: ::Regexp
@@ -11,12 +13,6 @@ module Herb
         ARRAY_PROPERTIES: untyped
 
         NODE_PROPERTIES: untyped
-
-        def self.experimental_warning_issued: () -> bool
-
-        def self.experimental_warning_issued=: (bool) -> bool
-
-        attr_accessor experimental_warning_issued: bool
 
         # : (?resolvers: Array[Herb::Engine::Visitors::Component::Resolver]) -> void
         def initialize: (?resolvers: Array[Herb::Engine::Visitors::Component::Resolver]) -> void

@@ -16,9 +16,19 @@ export const FilesConfigSchema = z.object({
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
 }).strict().optional()
 
+export const FRAMEWORKS = {
+  ruby: "Ruby",
+  actionview: "Action View",
+  hanami: "Hanami",
+  sinatra: "Sinatra",
+} as const
+
+export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
+
 const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
+  frameworks: z.array(z.enum(FRAMEWORK_NAMES)).optional().describe("Frameworks this rule applies to (defaults to every framework)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
@@ -49,15 +59,6 @@ export const FormatterConfigSchema = z.object({
   maxLineLength: z.number().int().positive().optional().describe("Maximum line length before wrapping"),
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
-
-export const FRAMEWORKS = {
-  ruby: "Ruby",
-  actionview: "Action View",
-  hanami: "Hanami",
-  sinatra: "Sinatra",
-} as const
-
-export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
 
 export const FrameworkSchema = z.enum(FRAMEWORK_NAMES).optional()
   .describe("Framework context (default: 'ruby')")

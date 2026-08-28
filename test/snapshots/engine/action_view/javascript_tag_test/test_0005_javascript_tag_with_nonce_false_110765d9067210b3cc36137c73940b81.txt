@@ -2,11 +2,10 @@
 source: "Engine::ActionView::JavascriptTagTest#test_0005_javascript_tag with nonce false"
 input: "{source: \"<%= javascript_tag nonce: false do %>\\n  alert('Hello')\\n<% end %>\\n\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
 ---
-_buf = ::String.new; _buf << '<script>
+'<script>
 //<![CDATA[
 
   alert(\'Hello\')
 
 //]]>
-</script>'.freeze;
-_buf.to_s
+</script>'.freeze

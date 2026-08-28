@@ -21,6 +21,7 @@ module Herb
       MAX_DIAGNOSTICS = 200 #: Integer
       ATTRIBUTE = "data-herb-diagnostics" #: String
 
+      attr_reader :meta #: Hash[Symbol, untyped]
       attr_reader :sources #: Hash[String, String]
       attr_reader :nodes #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
       attr_reader :render_tree #: Array[Hash[Symbol, untyped]]
@@ -29,9 +30,21 @@ module Herb
       def initialize(max_diagnostics: MAX_DIAGNOSTICS)
         @max_diagnostics = max_diagnostics
         @diagnostics = {} #: Hash[Array[untyped], Herb::Diagnostic]
+        @meta = {} #: Hash[Symbol, untyped]
         @sources = {} #: Hash[String, String]
         @nodes = {} #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
         @render_tree = [] #: Array[Hash[Symbol, untyped]]
+        @channels = {} #: Hash[Symbol, untyped]
+      end
+
+      #: (Symbol) { () -> untyped } -> untyped
+      def channel(name, &build)
+        @channels[name] ||= build.call
+      end
+
+      #: () -> Array[untyped]
+      def channels
+        @channels.each_value.reject(&:empty?)
       end
 
       #: (Herb::Diagnostic) -> Herb::Diagnostic
@@ -50,6 +63,13 @@ module Herb
         self
       end
 
+      #: (Symbol, untyped) -> void
+      def note(key, value)
+        @meta[key] = value if value
+
+        nil
+      end
+
       #: (String, String?) -> void
       def source(template, source)
         @sources[template] = source if source
@@ -60,10 +80,7 @@ module Herb
         node = { id: id, template: template, parent: parent } #: Hash[Symbol, untyped]
 
         if called_from
-          position = Herb::Position.new(called_from[1], called_from[2]).to_one_based
-
-          node[:line] = position[:line]
-          node[:column] = position[:column]
+          node[:location] = Herb::Position.new(called_from[1], called_from[2]).to_one_based
           node[:via] = called_from[3]
         end
 
@@ -91,7 +108,17 @@ module Herb
 
       #: () -> bool
       def empty?
-        @diagnostics.empty? && @nodes.empty?
+        !reportable? && channels.empty?
+      end
+
+      #: () -> bool
+      def noted?
+        !@meta.empty?
+      end
+
+      #: () -> bool
+      def reportable?
+        !(@diagnostics.empty? && @nodes.empty?)
       end
 
       #: () -> Hash[Symbol, untyped]
@@ -102,7 +129,7 @@ module Herb
           renderTree: @render_tree,
           nodes: @nodes,
           sources: sources,
-        }
+        }.merge(@meta.empty? ? {} : { meta: @meta })
       end
 
       alias to_hash to_h

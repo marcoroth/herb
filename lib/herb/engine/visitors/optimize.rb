@@ -2,6 +2,7 @@
 # typed: true
 
 require_relative "../../visitor"
+require_relative "../experimental"
 require_relative "../context_aware"
 require_relative "../../action_view/helper_registry"
 
@@ -19,6 +20,13 @@ module Herb
       # Inserting it is the whole opt-in. There is no check first for whether a template looks like
       # it contains helpers, because a caller that added this has already answered that question.
       #
+      # Its presence also lets the engine collapse a template that carries no Ruby into the single
+      # string literal it renders, skipping the buffer the compiler would otherwise build up. A
+      # template that was HTML to begin with qualifies, and so does one left fully static once the
+      # helpers above resolved to markup. The collapse is held back when the caller drives the buffer
+      # itself through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a
+      # diagnostic that the compiled template still needs to report.
+      #
       # Replacing a helper call with its markup is only the same thing as calling it while the helper
       # is the one it was resolved against. An application that defines its own `content_tag` gets the
       # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
@@ -30,29 +38,22 @@ module Herb
       # It costs a call per render and reports rather than corrects, so it earns its place in
       # development and not in production. Compiling it in is the caller's decision for the same reason
       # the optimization itself is.
+      #
       class Optimize < Herb::Visitor
+        extend Experimental
         include ContextAware
-
-        required_parser_option action_view_helpers: true, transform_conditionals: true
 
         SESSION = "::Herb::Engine::Report::Session" #: String
         CODE = "overwritten-helper" #: String
         ORIGIN = "Herb Engine" #: String
 
+        required_parser_option action_view_helpers: true, transform_conditionals: true
+        experimental "Compile-time optimizations are experimental. Output may differ from standard Action View rendering."
+
         #: () -> Array[String]
         def self.helper_sources
           @helper_sources ||= Herb::ActionView::HelperRegistry.supported.map(&:source).freeze
         end
-
-        # @rbs!
-        #   def self.experimental_warning_issued: () -> bool
-        #   def self.experimental_warning_issued=: (bool) -> bool
-
-        class << self
-          attr_accessor :experimental_warning_issued #: bool
-        end
-
-        self.experimental_warning_issued = false
 
         #: (?verify: bool) -> void
         def initialize(verify: false)
@@ -60,12 +61,13 @@ module Herb
 
           @verify = verify
           @sources = {} #: Hash[String, Herb::Location?]
+        end
 
-          return if self.class.experimental_warning_issued
+        #: () -> Hash[Symbol, untyped]
+        def required_parser_options
+          return super unless @verify
 
-          self.class.experimental_warning_issued = true
-
-          warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
+          super.merge(track_locations: true)
         end
 
         #: (Herb::AST::DocumentNode) -> void
@@ -92,6 +94,15 @@ module Herb
           collect(node.element_source, node.location)
 
           super
+        end
+
+        #: (Herb::Engine, untyped) -> String?
+        def compile_static_body(engine, compiler)
+          text = compiler.static_template_text
+
+          return unless text
+
+          engine.string_literal(text)
         end
 
         #: () -> String
@@ -145,7 +156,7 @@ module Herb
             "severity: :warning",
             "code: #{CODE.dump}",
             "origin: #{ORIGIN.dump}",
-            "suggestion: #{"Remove the override, or compile this template without `Visitors::Optimize`.".dump}"
+            "suggestion: #{"Remove the override, or compile this template without `OptimizeVisitor`.".dump}"
           ]
 
           if location

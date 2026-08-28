@@ -25,6 +25,10 @@ function createMockAnalyzerDelegate(): TextFlowAnalyzerDelegate {
 
       return `${opening}${content}${closing}`
     },
+
+    tryRenderControlFlowInline(): string | null {
+      return null
+    },
   }
 }
 
@@ -125,6 +129,7 @@ describe("TextFlowAnalyzer", () => {
       const delegate: TextFlowAnalyzerDelegate = {
         tryRenderInlineElement() { return null },
         renderERBAsString() { return "<%= erb %>" },
+        tryRenderControlFlowInline() { return null },
       }
 
       const analyzer = new TextFlowAnalyzer(delegate)
@@ -412,6 +417,9 @@ describe("TextFlowAnalyzer", () => {
         renderERBAsString(): string {
           calls.push("renderERBAsString")
           return "<%= erb %>"
+        },
+        tryRenderControlFlowInline(): string | null {
+          return null
         },
       }
       const analyzer = new TextFlowAnalyzer(delegate)

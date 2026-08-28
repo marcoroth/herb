@@ -180,6 +180,7 @@ export class ActionViewNoImplicitPolymorphicURLRule extends ParserRule {
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

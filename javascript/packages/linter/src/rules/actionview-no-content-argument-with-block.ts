@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { PrismVisitor, getHelper, isPrismNodeType, isRubyIntrospectionMethod, substringFromByteOffset, locationFromByteOffset } from "@herb-tools/core"
 
-import { isActionViewHelperCall, isTagBuilderCall } from "./action-view-utils.js"
+import { isActionViewHelperCall, isTagBuilderCall } from "../utils/action-view-utils.js"
 
 import type { HelperEntry, ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -88,6 +88,7 @@ export class ActionViewNoContentArgumentWithBlockRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

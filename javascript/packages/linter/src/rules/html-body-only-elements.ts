@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor, isBodyOnlyTag } from "./rule-utils.js"
+import { ElementStackVisitor, isBodyOnlyTag } from "../utils/rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

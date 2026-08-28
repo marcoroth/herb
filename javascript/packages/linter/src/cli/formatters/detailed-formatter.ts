@@ -5,7 +5,8 @@ import { colorize, hyperlink } from "@herb-tools/highlighter"
 import { fileUrl } from "../file-url.js"
 import { ruleDocumentationUrl } from "../../urls.js"
 
-import { Highlighter } from "@herb-tools/highlighter"
+import { Herb } from "@herb-tools/node-wasm"
+import { Highlighter, resolveThemeInput } from "@herb-tools/highlighter"
 import { BaseFormatter } from "./base-formatter.js"
 import { LineWrapper } from "@herb-tools/highlighter"
 
@@ -81,6 +82,7 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
         contextLines: 0,
         wrapLines: this.wrapLines,
         truncateLines: this.truncateLines,
+        fileUrl: fileUrl(this.absolutePath(frame.file)),
       })
 
       const gutterLines = rendered.split("\n").filter(line => line.includes("│"))
@@ -163,7 +165,7 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
     this.previewsRendered = allOffenses.some(offense => offense.fixedContent !== undefined)
 
     if (!this.highlighter) {
-      this.highlighter = new Highlighter(this.theme)
+      this.highlighter = new Highlighter(resolveThemeInput(this.theme), Herb)
       await this.highlighter.initialize()
     }
 

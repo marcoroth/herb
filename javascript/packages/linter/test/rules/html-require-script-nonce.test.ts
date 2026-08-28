@@ -60,33 +60,89 @@ describe("html-require-script-nonce", () => {
     })
   })
 
+  describe("external script tags", () => {
+    test("passes when src is present", () => {
+      expectNoOffenses('<script src="/application.js"></script>')
+    })
+
+    test("passes when src has no value", () => {
+      expectNoOffenses("<script src></script>")
+    })
+
+    test("passes when src is empty", () => {
+      expectNoOffenses('<script src=""></script>')
+    })
+
+    test("passes when src is an ERB value", () => {
+      expectNoOffenses(`<script src="<%= asset_path('application.js') %>"></script>`)
+    })
+
+    test("passes when src is uppercased", () => {
+      expectNoOffenses('<script SRC="/application.js"></script>')
+    })
+
+    test("passes when src is combined with a JavaScript type", () => {
+      expectNoOffenses('<script type="text/javascript" src="/application.js"></script>')
+    })
+
+    test("fails when integrity is present without src", () => {
+      expectError("Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`.")
+
+      assertOffenses('<script integrity="sha384-abc123">alert("Hello, world!")</script>')
+    })
+  })
+
+  describe("framework-specific recommendations", () => {
+    test("recommends a generic nonce for Ruby", () => {
+      expectError("Missing a `nonce` attribute on `<script>` tag. Use a dynamically generated nonce.")
+
+      assertOffenses("<script></script>", { framework: "ruby" })
+    })
+
+    test("recommends a generic nonce for Hanami", () => {
+      expectError("Missing a `nonce` attribute on `<script>` tag. Use a dynamically generated nonce.")
+
+      assertOffenses("<script></script>", { framework: "hanami" })
+    })
+
+    test("recommends a generic nonce for Sinatra", () => {
+      expectError("Missing a `nonce` attribute on `<script>` tag. Use a dynamically generated nonce.")
+
+      assertOffenses("<script></script>", { framework: "sinatra" })
+    })
+
+    test("recommends content_security_policy_nonce for Action View", () => {
+      expectError("Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`.")
+
+      assertOffenses("<script></script>", { framework: "actionview" })
+    })
+  })
+
   describe("ERB javascript helpers", () => {
     test("fails when javascript_tag is used without nonce", () => {
       expectError("Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`.")
 
       assertOffenses(dedent`
         <%= javascript_tag %>
-      `)
+      `, { framework: "actionview" })
     })
 
-    test("fails when javascript_include_tag is used without nonce", () => {
-      expectError("Missing a `nonce` attribute on `<script>` tag. Use `request.content_security_policy_nonce`.")
-
-      assertOffenses(dedent`
+    test("passes when javascript_include_tag is used without nonce", () => {
+      expectNoOffenses(dedent`
         <%= javascript_include_tag "script" %>
-      `)
+      `, { framework: "actionview" })
     })
 
     test("passes when javascript_tag is used with nonce", () => {
       expectNoOffenses(dedent`
         <%= javascript_tag nonce: true %>
-      `)
+      `, { framework: "actionview" })
     })
 
     test("passes when javascript_include_tag is used with nonce", () => {
       expectNoOffenses(dedent`
         <%= javascript_include_tag "script", nonce: true %>
-      `)
+      `, { framework: "actionview" })
     })
 
   })
@@ -97,7 +153,7 @@ describe("html-require-script-nonce", () => {
 
       assertOffenses(dedent`
         <%= tag.script %>
-      `)
+      `, { framework: "actionview" })
     })
 
     test("warns when tag.script is used with nonce: true", () => {
@@ -107,7 +163,7 @@ describe("html-require-script-nonce", () => {
 
       assertOffenses(dedent`
         <%= tag.script nonce: true %>
-      `)
+      `, { framework: "actionview" })
     })
   })
 

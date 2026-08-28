@@ -1,6 +1,9 @@
 import { describe, test, expect, vi } from "vitest"
 
 import { UserSettings } from "../src/user_settings"
+import { defaultPersonalSettings } from "@herb-tools/config"
+import { defaultFormatOptions } from "@herb-tools/formatter"
+import { defaultInlayHintOptions } from "@herb-tools/language-service"
 import { Capabilities } from "../src/capabilities"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
@@ -29,6 +32,17 @@ describe("UserSettings", () => {
   }
 
   describe("defaults", () => {
+    test("agree with the formatter's own defaults", () => {
+      expect(defaultPersonalSettings.formatter?.indentWidth).toBe(defaultFormatOptions.indentWidth)
+      expect(defaultPersonalSettings.formatter?.indentStyle).toBe(defaultFormatOptions.indentStyle)
+      expect(defaultPersonalSettings.formatter?.maxLineLength).toBe(defaultFormatOptions.maxLineLength)
+    })
+
+    test("agree with the inlay hint provider's own defaults", () => {
+      expect(defaultPersonalSettings.inlayHints?.minimumLines).toBe(defaultInlayHintOptions.minimumLines)
+      expect(defaultPersonalSettings.inlayHints?.maximumClasses).toBe(defaultInlayHintOptions.maximumClasses)
+    })
+
     test("enable the linter and fixing on save", () => {
       const settings = settingsFor(mockParams)
 

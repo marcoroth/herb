@@ -23,6 +23,7 @@ module Herb
     # Only nodes that hold content from elsewhere are recorded, so an untouched tree costs nothing.
     # This lives on the compile rather than on a visitor, because the visitor that needs the answer
     # is never the one that knows it.
+    #
     class Origin
       Entry = Data.define(:file, :from)
 

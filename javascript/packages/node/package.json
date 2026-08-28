@@ -42,6 +42,7 @@
     "clean": "node-pre-gyp clean && rimraf dist/ && rimraf build/ && rimraf extension/libherb/ && rimraf extension/prism/",
     "test": "vitest run",
     "test:watch": "vitest --watch",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "binary": {

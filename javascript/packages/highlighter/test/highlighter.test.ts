@@ -13,7 +13,8 @@ import dedent from "dedent"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { ANSI_REGEX } from "../src/ansi.js"
-import { Highlighter, highlightContent, highlightFile } from "../src/highlighter.js"
+import { Highlighter } from "../src/highlighter.js"
+import { highlightContent, highlightFile, highlightFileFromPath } from "../src/index.js"
 
 describe("Highlighter", () => {
   let highlighter: Highlighter
@@ -23,7 +24,7 @@ describe("Highlighter", () => {
   })
 
   beforeEach(async () => {
-    highlighter = new Highlighter("onedark")
+    highlighter = new Highlighter("onedark", Herb)
     await highlighter.initialize()
   })
 
@@ -81,7 +82,7 @@ describe("Highlighter", () => {
 
   test("should not add colors when NO_COLOR is set", async () => {
     process.env.NO_COLOR = "1"
-    const disabledHighlighter = new Highlighter("onedark")
+    const disabledHighlighter = new Highlighter("onedark", Herb)
     await disabledHighlighter.initialize()
 
     const input = "<% if true %>"
@@ -173,14 +174,14 @@ describe("Highlighter", () => {
     })
 
     test("should highlight a file", () => {
-      const result = highlighter.highlightFileFromPath(testFile)
+      const result = highlightFileFromPath(highlighter, testFile)
 
       expect(result.replaceAll(__dirname, "<test-dir>")).toMatchSnapshot()
     })
 
     test("should throw error for non-existent file", () => {
       expect(() =>
-        highlighter.highlightFileFromPath("non-existent-file.erb"),
+        highlightFileFromPath(highlighter, "non-existent-file.erb"),
       ).toThrow("Failed to read file")
     })
   })
@@ -212,32 +213,32 @@ describe("Standalone utility functions", () => {
 
   test("highlightContent should work with default theme", async () => {
     const content = `<% def hello %><span>Hi</span><% end %>`
-    const result = await highlightContent(content)
+    const result = await highlightContent(content, Herb)
 
     expect(result).toMatchSnapshot()
   })
 
   test("highlightContent should work with github-light theme", async () => {
     const content = "<% true %>"
-    const result = await highlightContent(content, "github-light")
+    const result = await highlightContent(content, Herb, "github-light")
 
     expect(result).toMatchSnapshot()
   })
 
   test("highlightFile should work with default theme", async () => {
-    const result = await highlightFile(testFile)
+    const result = await highlightFile(testFile, Herb)
 
     expect(result.replaceAll(testFile, "<test-file>")).toMatchSnapshot()
   })
 
   test("highlightFile should work with simple theme", async () => {
-    const result = await highlightFile(testFile, "simple")
+    const result = await highlightFile(testFile, Herb, "simple")
 
     expect(result.replaceAll(testFile, "<test-file>")).toMatchSnapshot()
   })
 
   test("highlightFile should throw error for non-existent file", async () => {
-    await expect(highlightFile("non-existent-file.erb")).rejects.toThrow(
+    await expect(highlightFile("non-existent-file.erb", Herb)).rejects.toThrow(
       "Failed to read file",
     )
   })
@@ -252,7 +253,7 @@ describe("Standalone utility functions", () => {
       </div>
     `
 
-    const highlighter = new Highlighter("onedark")
+    const highlighter = new Highlighter("onedark", Herb)
     await highlighter.initialize()
 
     const result = highlighter.highlight("test.erb", content, {
@@ -269,7 +270,7 @@ describe("Standalone utility functions", () => {
       <span>Short line</span>
     `
 
-    const highlighter = new Highlighter("onedark")
+    const highlighter = new Highlighter("onedark", Herb)
     await highlighter.initialize()
 
     const result = highlighter.highlight("test.erb", longLineContent, {

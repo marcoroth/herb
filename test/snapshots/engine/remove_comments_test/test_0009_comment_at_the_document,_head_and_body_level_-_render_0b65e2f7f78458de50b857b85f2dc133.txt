@@ -1,0 +1,10 @@
+---
+source: "Engine::RemoveCommentsTest#test_0009_comment at the document, head and body level - render"
+input: "{source: \"<!DOCTYPE html>\\n<!-- a note -->\\n<html>\\n  <head><!-- a note --><title>Title</title></head>\\n  <body><!-- a note --><p>Content</p></body>\\n</html>\\n\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::Visitors::RemoveComments>]}}"
+---
+<!DOCTYPE html>
+
+<html>
+  <head><title>Title</title></head>
+  <body><p>Content</p></body>
+</html>

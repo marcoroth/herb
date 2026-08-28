@@ -17,6 +17,8 @@ require_relative "engine/parse_error"
 
 module Herb
   class Engine
+    VISITOR_DESCRIPTION_LIMIT = 200 #: Integer
+
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -34,6 +36,11 @@ module Herb
       @context.relative_file_path
     end
 
+    #: (String) -> String
+    def string_literal(text)
+      "'#{text.gsub(/['\\]/, '\\\\\&')}#{@text_end}"
+    end
+
     ESCAPE_TABLE = {
       "&" => "&amp;",
       "<" => "&lt;",
@@ -41,6 +48,12 @@ module Herb
       '"' => "&quot;",
       "'" => "&#39;",
     }.freeze
+
+    ATTRIBUTE_ESCAPE_TABLE = ESCAPE_TABLE.merge(
+      "\n" => "&#10;",
+      "\r" => "&#13;",
+      "\t" => "&#9;"
+    ).freeze
 
     def initialize(input, properties = {})
       @context = VisitorContext.new(
@@ -76,15 +89,7 @@ module Herb
 
       @src << "# frozen_string_literal: true\n" if @freeze
 
-      if properties[:ensure]
-        @src << "begin; __original_outvar = #{@bufvar}"
-        @src << (/\A@[^@]/ =~ @bufvar ? "; " : " if defined?(#{@bufvar}); ")
-      end
-
-      @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
-      @src << preamble
-
-      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
+      parse_result = ::Herb.parse(input, **parse_options, track_whitespace: true)
       parser_errors = parse_result.errors
 
       if parser_errors.any?
@@ -92,23 +97,40 @@ module Herb
       else
         @visitors.each do |visitor|
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
+          visitor.bufvar = @bufvar if visitor.respond_to?(:bufvar=)
 
           parse_result.value.accept(visitor)
         end
 
-        report(input)
+        # A visitor that writes into the tree writes after every visitor has read it, so what one
+        # of them adds is never something another one reads as if the template had written it.
+        @visitors.each do |visitor| # rubocop:disable Style/CombinableLoops
+          visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
+        end
 
-        compiler = Compiler.new(self, properties)
+        compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
 
-        compiler.generate_output
+        static_body = buffer_required?(properties) ? nil : compile_static_body(compiler)
+
+        if static_body
+          @src << static_body
+        else
+          write_buffer_prelude(properties, preamble)
+
+          report(input)
+
+          compiler.generate_output
+
+          @src << "\n" unless @src.end_with?("\n")
+          add_postamble(postamble)
+
+          @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
+
+          insert_herb_alias!
+        end
       end
-
-      @src << "\n" unless @src.end_with?("\n")
-      add_postamble(postamble)
-
-      @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       if properties.fetch(:validate_ruby, false)
         ensure_valid_ruby!(@src)
@@ -122,16 +144,15 @@ module Herb
       value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
     end
 
+    #: (untyped) -> String
+    def self.raw(value)
+      string = value.to_s
+
+      string.respond_to?(:html_safe) ? string.html_safe : string
+    end
+
     def self.attr(value)
-      value.to_s
-           .gsub("&", "&amp;")
-           .gsub('"', "&quot;")
-           .gsub("'", "&#39;")
-           .gsub("<", "&lt;")
-           .gsub(">", "&gt;")
-           .gsub("\n", "&#10;")
-           .gsub("\r", "&#13;")
-           .gsub("\t", "&#9;")
+      value.to_s.gsub(/[&<>"'\n\r\t]/, ATTRIBUTE_ESCAPE_TABLE)
     end
 
     def self.js(value)
@@ -167,6 +188,11 @@ module Herb
     end
 
     protected
+
+    #: () -> untyped
+    def compiler_class
+      Compiler
+    end
 
     def add_text(text)
       return if text.empty?
@@ -316,17 +342,73 @@ module Herb
 
     private
 
+    #: (Hash[Symbol, untyped]) -> bool
+    def buffer_required?(properties)
+      return true if properties[:ensure] || properties[:preamble] || properties[:postamble] || properties[:bufval]
+
+      collected_diagnostics.any?
+    end
+
+    #: (untyped) -> String?
+    def compile_static_body(compiler)
+      @visitors.each do |visitor|
+        next unless visitor.respond_to?(:compile_static_body)
+
+        body = visitor.compile_static_body(self, compiler)
+
+        return body if body
+      end
+
+      nil
+    end
+
+    #: () -> Array[Herb::Diagnostic]
+    def collected_diagnostics
+      @visitors.grep(Diagnostics).flat_map(&:diagnostics)
+    end
+
+    #: (Hash[Symbol, untyped], String) -> void
+    def write_buffer_prelude(properties, preamble)
+      if properties[:ensure]
+        @src << "begin; __original_outvar = #{@bufvar}"
+        @src << (/\A@[^@]/ =~ @bufvar ? "; " : " if defined?(#{@bufvar}); ")
+      end
+
+      @herb_alias_index = (@src.length if @escape && @escapefunc == "__herb.h")
+      @src << preamble
+    end
+
+    #: () -> void
+    def insert_herb_alias!
+      return unless @herb_alias_index
+      return unless @src.include?("__herb.")
+
+      @src.insert(@herb_alias_index, "__herb = ::Herb::Engine; ")
+    end
+
     def handle_parser_errors(parser_errors, input, _ast)
-      message = ErrorFormatter.new(input, parser_errors, filename: filename).format_all
+      formatter = ErrorFormatter.new(input, parser_errors, filename: filename)
 
       raise ParseError.new(
-        "\n#{message}",
+        formatter.summary,
+        details: formatter,
         diagnostics: parser_errors.map { |error|
           error.to_diagnostic(template: relative_file_path)
         },
         source: input,
-        filename: relative_file_path
+        filename: relative_file_path,
+        visitors: visitor_descriptions,
+        parser_options: @parser_options
       )
+    end
+
+    #: () -> Array[String]
+    def visitor_descriptions
+      @visitors.map { |visitor|
+        described = visitor.inspect
+
+        described.length > VISITOR_DESCRIPTION_LIMIT ? "#{described[0, VISITOR_DESCRIPTION_LIMIT]}…" : described
+      }
     end
 
     #: (String) -> void
@@ -368,12 +450,19 @@ module Herb
       end
 
       formatter = ErrorFormatter.new(input, errors, filename: filename)
-      message = formatter.format_all
-      raise CompilationError, "\n#{message}"
+
+      raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end
 
     def context_options(properties)
       properties.except(:visitors, :src, :context)
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def parse_options
+      return @parser_options if @parser_options.key?(:track_locations)
+
+      @parser_options.merge(track_locations: false)
     end
 
     #: () -> Hash[Symbol, untyped]
@@ -400,7 +489,7 @@ module Herb
       syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
 
       if syntax_errors.any?
-        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        details = syntax_errors.map { |error| "  - #{error.message} (line #{error.location.start_line})" }.join("\n")
         raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
       end
     end

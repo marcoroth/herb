@@ -1,0 +1,32 @@
+---
+source: "Engine::ErrorHandlingTest#test_0011_error with line numbers"
+input: |2-
+<div class="container">
+  <h1>Title</h1>
+  <p>Some text
+</span>
+options: {validators: true}
+---
+[source]:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 2 more errors) (Herb::Engine::ParseError)
+
+✘ [MissingClosingTag] Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope.
+
+    [source]:1:1:
+      1 │ <div class="container">
+        ╵ ~~~~~~~~~~~~~~~~~~~~~~~
+
+  Add the closing tag, or make it self-closing.
+
+✘ [OmittedClosingTag] Element `<p>` at (3:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (5:0) for clarity, or set `strict: false` to allow this.
+
+    [source]:3:3:
+      3 │   <p>Some text
+        ╵   ~~~
+
+✘ [MissingOpeningTag] Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope.
+
+    [source]:4:1:
+      4 │ </span>
+        ╵ ~~~~~~~
+
+  Add the matching opening tag, or remove this closing tag.

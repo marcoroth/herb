@@ -111,7 +111,8 @@ void parser_append_unexpected_error_impl(
     token->location.start,
     token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   hb_allocator_dealloc(parser->allocator, expected);
@@ -133,7 +134,8 @@ void parser_append_unexpected_error_string(
     token->location.start,
     token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   token_free(token, parser->allocator);
@@ -146,7 +148,8 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
     parser->current_token->location.start,
     parser->current_token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 }
 
@@ -192,7 +195,8 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
       token->location.start,
       token->location.end,
       parser->allocator,
-      array
+      array,
+      &parser->options
     );
   }
 
@@ -210,12 +214,13 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     open_tag->tag_name->location.start,
     open_tag->tag_name->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   return ast_html_element_node_init(
     (AST_NODE_T*) open_tag,
-    open_tag->tag_name,
+    token_copy(open_tag->tag_name, parser->allocator),
     body,
     NULL,
     false,
@@ -242,7 +247,8 @@ void parser_handle_mismatched_tags(
       actual_tag->location.start,
       actual_tag->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   } else {
     append_missing_opening_tag_error(
@@ -250,7 +256,8 @@ void parser_handle_mismatched_tags(
       close_tag->tag_name->location.start,
       close_tag->tag_name->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   }
 }

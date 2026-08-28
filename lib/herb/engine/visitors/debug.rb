@@ -10,12 +10,14 @@ module Herb
       class Debug < Herb::Visitor
         include ContextAware
 
+        required_parser_option track_locations: true
+
         #: () -> bool
         def self.reads_erb_source?
           true
         end
 
-        # `node` adds the render occurrence to every marker, which needs `Visitors::Instrumentation` in the
+        # `node` adds the render occurrence to every marker, which needs `InstrumentationVisitor` in the
         # same stack to have anything to report. Without it the value is empty on every tag, so it is
         # asked for rather than assumed.
         #
@@ -250,8 +252,7 @@ module Herb
 
           position = erb_node.location&.start&.to_one_based
 
-          escaped_erb = erb_code.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'",
-                                                                                                                 "&#39;")
+          escaped_erb = Herb::Engine.h(erb_code)
 
           outline_type = if @top_level_elements.empty?
                            "erb-output #{determine_view_type}"

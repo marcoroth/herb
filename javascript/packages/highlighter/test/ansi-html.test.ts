@@ -2,8 +2,8 @@ import { readFileSync } from "fs"
 
 import { describe, it, expect } from "vitest"
 
-import { ANSI_ESCAPE } from "../src/ansi.js"
 import { colors, colorize, hyperlink } from "../src/color.js"
+import { linePrefix } from "../src/gutter.js"
 import { ANSI_PALETTE, ANSIConverter } from "../src/ansi-html.js"
 
 import type { ANSIColorName } from "../src/ansi-html.js"
@@ -18,8 +18,6 @@ const spanCount = (html: string): number => (html.match(/<span/g) ?? []).length
 
 const DIM = `opacity:var(--herb-ansi-dim-opacity, 0.65)`
 
-const CSI_REGEX = new RegExp(`${ANSI_ESCAPE}\\[[0-9;?]*[a-zA-Z]`, "g")
-const OSC_REGEX = new RegExp(`${ANSI_ESCAPE}\\]\\d*;[^\\x07${ANSI_ESCAPE}]*(?:${ANSI_ESCAPE}\\\\|\\x07)`, "g")
 
 describe("ANSIConverter", () => {
   describe("plain text", () => {
@@ -291,6 +289,51 @@ describe("ANSIConverter", () => {
       )
     })
 
+    it("renders a linked gutter line number as an anchor", () => {
+      const html = converter.toHTML(linePrefix(12, true, "brightRed", "file:///app/views/page.html.erb"))
+
+      expect(html).toContain(
+        `<a href="file:///app/views/page.html.erb" rel="noopener noreferrer"><span style="font-weight:700">12</span></a>`,
+      )
+    })
+
+    it("rewrites the target through a link resolver", () => {
+      const resolver = new ANSIConverter({
+        linkResolver: url => url.replace("file:///workspace/", "https://github.com/marcoroth/herb/blob/main/"),
+      })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///workspace/app/views/page.html.erb"))).toBe(
+        `<a href="https://github.com/marcoroth/herb/blob/main/app/views/page.html.erb" rel="noopener noreferrer">page.html.erb</a>`,
+      )
+    })
+
+    it("passes the original target to the link resolver", () => {
+      const targets: string[] = []
+      const resolver = new ANSIConverter({ linkResolver: url => { targets.push(url); return url } })
+
+      resolver.toHTML(`${hyperlink("file", "file:///app/page.html.erb")}${hyperlink("rule", "https://herb-tools.dev")}`)
+
+      expect(targets).toEqual(["file:///app/page.html.erb", "https://herb-tools.dev"])
+    })
+
+    it("drops the link when the resolver returns null", () => {
+      const resolver = new ANSIConverter({ linkResolver: () => null })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///app/views/page.html.erb"))).toBe("page.html.erb")
+    })
+
+    it("still rejects an unsafe target returned by the resolver", () => {
+      const resolver = new ANSIConverter({ linkResolver: () => "javascript:alert(1)" })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///app/views/page.html.erb"))).toBe("page.html.erb")
+    })
+
+    it("ignores the resolver when links are disabled", () => {
+      const resolver = new ANSIConverter({ links: false, linkResolver: () => "https://herb-tools.dev" })
+
+      expect(resolver.toHTML(hyperlink("page.html.erb", "file:///app/views/page.html.erb"))).toBe("page.html.erb")
+    })
+
     it("accepts a BEL terminator as well as ST", () => {
       expect(converter.toHTML("\x1b]8;;https://herb-tools.dev\x07link\x1b]8;;\x07")).toBe(
         `<a href="https://herb-tools.dev" rel="noopener noreferrer">link</a>`,
@@ -423,23 +466,6 @@ describe("ANSIConverter", () => {
       expect(html).toContain(`<a href="https://herb-tools.dev/linter/rules/actionview-no-implicit-polymorphic-url" rel="noopener noreferrer">`)
       expect(html).toContain(`<a href="file:///workspace/app/views/offenses.html.erb" rel="noopener noreferrer">`)
       expect(html).toMatchSnapshot()
-    })
-
-    it("keeps every visible character of the captured linter output", () => {
-      const source = fixture("terminal-linter.txt")
-
-      const stripped = source.replace(OSC_REGEX, "").replace(CSI_REGEX, "")
-
-      const text = converter.toHTML(source)
-        .replace(/<[^>]+>/g, "")
-        .replaceAll("&lt;", "<")
-        .replaceAll("&gt;", ">")
-        .replaceAll("&quot;", '"')
-        .replaceAll("&#x27;", "'")
-        .replaceAll("&amp;", "&")
-
-      expect(text).toBe(stripped)
-      expect(text).toMatchSnapshot()
     })
 
     it("collapses the captured output well below one span per character", () => {

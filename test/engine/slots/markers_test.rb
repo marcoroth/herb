@@ -5,7 +5,8 @@ require "nokogiri"
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/slots"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -13,18 +14,18 @@ module Engine
       include SnapshotUtils
 
       def options
-        { visitors: [Herb::Engine::Visitors::Slots.new], filename: "app/views/test.html.erb" }
+        { visitors: [Herb::Engine::Slots::Visitor.new], filename: "app/views/test.html.erb" }
       end
 
       def parse_slotted(template, locals)
         Nokogiri::HTML5.fragment(evaluate_herb_source(Herb::Engine.new(template, **options).src, locals))
       end
 
-      def row_marker_parents(document)
+      def item_marker_parents(document)
         parents = []
 
         document.traverse do |node|
-          parents << [node.text, node.parent.name] if node.comment? && node.text.include?("herb-row")
+          parents << [node.text, node.parent.name] if node.comment? && node.text.include?("herb-item")
         end
 
         parents
@@ -49,7 +50,7 @@ module Engine
       test "distinguishes an element's attribute slot from its content slot" do
         assert_evaluated_snapshot(
           %(<li class="<%= @c %>"><%= @name %></li>),
-          { "@c" => "row", "@name" => "Marco" },
+          { "@c" => "item", "@name" => "Marco" },
           options
         )
       end
@@ -184,8 +185,8 @@ module Engine
 
       test "delimits nested collections" do
         assert_evaluated_snapshot(
-          "<% @rows.each do |row| %><% row.each do |cell| %><%= cell %><% end %><% end %>",
-          { "@rows" => [[1, 2]] },
+          "<% @items.each do |item| %><% item.each do |cell| %><%= cell %><% end %><% end %>",
+          { "@items" => [[1, 2]] },
           options
         )
       end
@@ -300,7 +301,7 @@ module Engine
         )
       end
 
-      test "delimits each row of a keyed collection" do
+      test "delimits each item of a keyed collection" do
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><li herb-key="<%= user[:id] %>"><%= user[:name] %></li><% end %>),
           { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
@@ -308,7 +309,7 @@ module Engine
         )
       end
 
-      test "does not delimit rows of an unkeyed collection" do
+      test "does not delimit items of an unkeyed collection" do
         assert_evaluated_snapshot(
           "<% @users.each do |user| %><li><%= user[:name] %></li><% end %>",
           { "@users" => [{ id: 1, name: "Marco" }] },
@@ -316,7 +317,7 @@ module Engine
         )
       end
 
-      test "delimits rows of a body with several roots via the herb:key directive" do
+      test "delimits items of a body with several roots via the herb:key directive" do
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><%# herb:key user[:id] %><dt><%= user[:name] %></dt><dd><%= user[:email] %></dd><% end %>),
           { "@users" => [{ id: 1, name: "Marco", email: "marco@example.com" }] },
@@ -324,7 +325,7 @@ module Engine
         )
       end
 
-      test "delimits rows of a body with no element at all" do
+      test "delimits items of a body with no element at all" do
         assert_evaluated_snapshot(
           %(<% @users.each do |user| %><%# herb:key user[:id] %><%= user[:name] %><% end %>),
           { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
@@ -360,10 +361,10 @@ module Engine
         assert_evaluated_snapshot("<% if @a %>A<% end %>", { "@a" => false }, options)
       end
 
-      test "keeps nested collection rows distinguishable" do
+      test "keeps nested collection items distinguishable" do
         assert_evaluated_snapshot(
-          %(<% @rows.each do |row| %><tr id="<%= row[:id] %>"><% row[:cells].each do |cell| %><td id="<%= cell %>"><%= cell %></td><% end %></tr><% end %>),
-          { "@rows" => [{ id: 1, cells: [11, 12] }] },
+          %(<% @items.each do |item| %><tr id="<%= item[:id] %>"><% item[:cells].each do |cell| %><td id="<%= cell %>"><%= cell %></td><% end %></tr><% end %>),
+          { "@items" => [{ id: 1, cells: [11, 12] }] },
           options
         )
       end
@@ -376,28 +377,168 @@ module Engine
         plain = evaluate_herb_source(Herb::Engine.new(template).src, locals)
 
         unmarked = slotted
-                   .gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")
+                   .gsub(%r{<!--/?herb-(slot|region|item|branch)[^>]*-->}, "")
                    .gsub(/ data-herb-(child|slot)="[^"]*"/, "")
 
         assert_equal plain, unmarked
       end
 
-      test "a table collection has its row markers split across table and tbody" do
+      test "a table collection has its item markers split across table and tbody" do
         document = parse_slotted(
-          %(<table><% @rows.each do |row| %><tr id="<%= row %>"><td>x</td></tr><% end %></table>),
-          { "@rows" => [1] }
+          %(<table><% @items.each do |item| %><tr id="<%= item %>"><td>x</td></tr><% end %></table>),
+          { "@items" => [1] }
         )
 
-        assert_equal [["herb-row:0:1", "table"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
+        assert_equal [["herb-item:0:1", "table"], ["/herb-item:0", "tbody"]], item_marker_parents(document)
       end
 
-      test "an explicit tbody keeps a row's markers under one parent" do
+      test "an explicit tbody keeps an item's markers under one parent" do
         document = parse_slotted(
-          %(<table><tbody><% @rows.each do |row| %><tr id="<%= row %>"><td>x</td></tr><% end %></tbody></table>),
-          { "@rows" => [1] }
+          %(<table><tbody><% @items.each do |item| %><tr id="<%= item %>"><td>x</td></tr><% end %></tbody></table>),
+          { "@items" => [1] }
         )
 
-        assert_equal [["herb-row:0:1", "tbody"], ["/herb-row:0", "tbody"]], row_marker_parents(document)
+        assert_equal [["herb-item:0:1", "tbody"], ["/herb-item:0", "tbody"]], item_marker_parents(document)
+      end
+
+      def rendered(template, locals)
+        evaluate_herb_source(Herb::Engine.new(template, **options).src, locals)
+      end
+
+      test "renders the same markers whichever branch of a same-shaped conditional runs" do
+        template = "<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>"
+        locals = { "@today" => "Mon", "@tomorrow" => "Tue" }
+
+        taken = rendered(template, locals.merge("@c" => true))
+        untaken = rendered(template, locals.merge("@c" => false))
+
+        assert_equal taken.sub("Mon", "?"), untaken.sub("Tue", "?")
+        refute_includes taken, "herb-branch"
+      end
+
+      test "collapses a same-shaped conditional to one slot" do
+        assert_evaluated_snapshot(
+          "<% if @c %><h1><%= @today %></h1><% else %><h1><%= @tomorrow %></h1><% end %>",
+          { "@c" => false, "@today" => "Mon", "@tomorrow" => "Tue" },
+          options
+        )
+      end
+
+      test "keeps the conditional when the branches do not lay out the same" do
+        assert_evaluated_snapshot(
+          "<% if @c %><h1><%= @today %></h1><% else %><h2><%= @tomorrow %></h2><% end %>",
+          { "@c" => false, "@today" => "Mon", "@tomorrow" => "Tue" },
+          options
+        )
+      end
+
+      class CapturingView
+        def initialize
+          @output_buffer = +""
+        end
+
+        def grab
+          outer = @output_buffer
+          @output_buffer = +""
+
+          yield
+
+          captured = @output_buffer
+          @output_buffer = outer
+
+          captured
+        end
+      end
+
+      test "puts no marker around a block whose value is not output" do
+        template = %(<% link = ->(label) do %><% grab do %><b><%= label %></b><% end %><% end %><div><%= link.call("hi") %></div>)
+        source = Herb::Engine.new(template, **options, bufvar: "@output_buffer").src
+        rendered = CapturingView.new.instance_eval(source)
+
+        refute_includes source.split("link.call").first, "<!--herb-slot"
+        assert_equal 1, rendered.scan("<b").size
+        refute_includes rendered, "&lt;!--"
+        assert_includes rendered, %(<div data-herb-slot="1:child"><b data-herb-slot="0:child">hi</b></div>)
+      end
+
+      test "writes an item key the same way the values payload does, under either escaping" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+        key = %(a&b<c>"d")
+        payload = evaluate_herb_source(Herb::Engine::Slots::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src, { "@items" => [key] })
+
+        [false, true].each do |escape|
+          markup = evaluate_herb_source(Herb::Engine.new(template, **options, escape: escape).src, { "@items" => [key] })
+
+          assert_includes markup, "<!--herb-item:0:#{payload[:slots][0][:order].first}-->", "escape: #{escape}"
+        end
+      end
+
+      test "leaves a block's value as the block's own last expression" do
+        template = "<% data = fetch do %><% { count: 7 } %><% end %><p><%= data[:count] %></p>"
+        source = Herb::Engine.new(template, **options).src
+
+        refute_match(/herb-slot:\d+:block/, source)
+        refute_match(%r{/herb-slot:\d+-->'.freeze;\s*end}, source)
+      end
+      test "a visitor that rewrites the template never sees a marker" do
+        seen = []
+
+        rewriter = Class.new(Herb::Visitor) do
+          define_method(:seen) { seen }
+
+          def self.rewrites_erb_source? = true
+
+          def visit_html_comment_node(node)
+            seen << node.to_s
+
+            super
+          end
+        end.new
+
+        source = Herb::Engine.new(
+          "<div><%= @name %></div>",
+          visitors: [Herb::Engine::Slots::Visitor.new, rewriter],
+          filename: "app/views/test.html.erb"
+        ).src
+
+        assert_empty rewriter.seen
+        assert_includes evaluate_herb_source(source, { "@name" => "Marco" }), "herb-slot"
+      end
+
+      test "recognizes every marker it writes as a comment" do
+        markers = Herb::Engine::Slots::Markers.new
+
+        comments = [
+          markers.slot_open(0, :child),
+          markers.slot_open(0, :attribute),
+          markers.slot_close(0),
+          markers.branch(0, 1),
+          markers.seeds_open_prefix,
+          markers.item_open_prefix(0),
+          markers.item_close(0),
+          markers.region_open_prefix("app/views/test.html.erb", "0417e5d5"),
+          markers.region_close("app/views/test.html.erb")
+        ]
+
+        recognized = comments.select { |text| Herb::Engine::Slots::Markers.marker?(text) }
+
+        assert_equal comments, recognized
+      end
+
+      test "recognizes nothing else" do
+        markers = Herb::Engine::Slots::Markers.new
+
+        others = [
+          "<!-- a note -->",
+          "<!--herbivore-->",
+          "<!-- herb-slot:0 -->",
+          markers.statics_open("app/views/test.html.erb", "0417e5d5"),
+          markers.manifests_open
+        ]
+
+        recognized = others.select { |text| Herb::Engine::Slots::Markers.marker?(text) }
+
+        assert_equal [], recognized
       end
     end
   end

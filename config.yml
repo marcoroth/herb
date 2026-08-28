@@ -52,7 +52,8 @@ errors:
           - "closing_tag->value"
           - "closing_tag->location.start.line"
           - "closing_tag->location.start.column"
-
+      suggestion:
+        template: "Add the matching opening tag, or remove this closing tag."
       fields:
         - name: "closing_tag"
           type: "token"
@@ -65,7 +66,8 @@ errors:
           - "opening_tag->location.start.line"
           - "opening_tag->location.start.column"
           - "opening_tag->value"
-
+      suggestion:
+        template: "Add the closing tag, or make it self-closing."
       fields:
         - name: "opening_tag"
           type: "token"
@@ -80,7 +82,10 @@ errors:
           - "closing_tag->value"
           - "closing_tag->location.start.line"
           - "closing_tag->location.start.column"
-
+      suggestion:
+        template: "Change the closing tag to `</%s>`."
+        arguments:
+          - "opening_tag->value"
       fields:
         - name: "opening_tag"
           type: "token"
@@ -96,7 +101,10 @@ errors:
           - "tag_name->value"
           - "tag_name->value"
           - "tag_name->value"
-
+      suggestion:
+        template: "A void element cannot have a closing tag. Remove it, or write `<%s />`."
+        arguments:
+          - "tag_name->value"
       fields:
         - name: "tag_name"
           type: "token"
@@ -114,7 +122,8 @@ errors:
           - "opening_tag->value"
           - "opening_tag->location.start.line"
           - "opening_tag->location.start.column"
-
+      suggestion:
+        template: "Close this element before the end of the template."
       fields:
         - name: "opening_tag"
           type: "token"
@@ -125,7 +134,8 @@ errors:
         arguments:
           - "diagnostic_id"
           - "error_message"
-
+      suggestion:
+        template: "Check the Ruby syntax inside the ERB tag."
       fields:
         - name: "error_message"
           type: "string"
@@ -291,7 +301,10 @@ errors:
           - "attribute_name"
           - "start.line"
           - "start.column"
-
+      suggestion:
+        template: "Give `%s` a value, or drop the equals sign."
+        arguments:
+          - "attribute_name"
       fields:
         - name: "attribute_name"
           type: "string"
@@ -473,6 +486,47 @@ errors:
     - name: "StrictLocalsDuplicateDeclarationError"
       message:
         template: "Duplicate strict locals declaration. Only the first `<%# locals: (...) %>` declaration is used by Rails."
+        arguments: []
+
+      fields: []
+
+    - name: "HerbStateMissingParenthesisError"
+      message:
+        template: "The `herb:state` directive requires parentheses. Expected `herb:state (...)` but got `herb:state %s`."
+        arguments:
+          - "rest"
+
+      fields:
+        - name: "rest"
+          type: "string"
+
+    - name: "HerbStateNonCanonicalDirectiveError"
+      message:
+        template: "The `herb:state` directive has to be spelled `<%%# herb:state (...) %%>`. Found `%s` where `%s` was expected."
+        arguments:
+          - "found"
+          - "expected"
+
+      fields:
+        - name: "found"
+          type: "string"
+
+        - name: "expected"
+          type: "string"
+
+    - name: "HerbStateInvalidParameterError"
+      message:
+        template: "The `herb:state` directive only declares keyword arguments with defaults. `%s` is not one. Declare each state with a default, like `(pending: false)`."
+        arguments:
+          - "parameter"
+
+      fields:
+        - name: "parameter"
+          type: "string"
+
+    - name: "HerbStateDuplicateDeclarationError"
+      message:
+        template: "This scope already declares its states. Merge these states into the first `<%# herb:state (...) %>` directive of the scope, so every state of the scope reads from one declaration."
         arguments: []
 
       fields: []
@@ -783,6 +837,21 @@ nodes:
     - name: "XMLDeclarationNode"
       fields:
         - name: "tag_opening"
+          type: "token"
+
+        - name: "children"
+          type: "array"
+          kind: "Node"
+
+        - name: "tag_closing"
+          type: "token"
+
+    - name: "XMLProcessingInstructionNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "target"
           type: "token"
 
         - name: "children"
@@ -1444,3 +1513,54 @@ nodes:
         - name: "statements"
           type: "array"
           kind: "Node"
+
+    - name: "HerbDirectiveNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "key"
+          type: "token"
+
+        - name: "arguments"
+          type: "token"
+
+    - name: "HerbStateDeclarationNode"
+      fields:
+        - name: "name"
+          type: "token"
+
+        - name: "default_value"
+          type: "node"
+          kind: "RubyLiteralNode"
+
+        - name: "kind"
+          type: "string"
+
+    - name: "HerbStateDirectiveNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "key"
+          type: "token"
+
+        - name: "signature"
+          type: "token"
+
+        - name: "states"
+          type: "array"
+          kind:
+            - "HerbStateDeclarationNode"

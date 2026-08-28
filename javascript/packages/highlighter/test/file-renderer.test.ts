@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest"
 import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
-import { stripAnsiColors } from "./util.js"
+import { stripAnsiColors } from "../src/ansi.js"
 
 import { FileRenderer } from "../src/file-renderer.js"
+import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
 describe("FileRenderer", () => {
@@ -12,7 +13,7 @@ describe("FileRenderer", () => {
   let syntaxRenderer: SyntaxRenderer
 
   beforeEach(async () => {
-    syntaxRenderer = new SyntaxRenderer(themes.onedark)
+    syntaxRenderer = new SyntaxRenderer(themes.onedark, Herb)
     await syntaxRenderer.initialize()
     renderer = new FileRenderer(syntaxRenderer)
   })
@@ -167,6 +168,36 @@ describe("FileRenderer", () => {
     })
   })
 
+  describe("fileUrl", () => {
+    const content = dedent`
+      line 1
+      line 2
+      line 3
+    `
+
+    const hyperlinks = (output: string) => {
+      return [...output.matchAll(/\x1b\]8;;(.*?)\x1b\\(.*?)\x1b\]8;;\x1b\\/g)].map(([, url, text]) => ({
+        url,
+        text: stripAnsiColors(text),
+      }))
+    }
+
+    it("links the file path and the focused line number to the file", () => {
+      const result = renderer.renderWithFocusLine("/test/file.erb", content, 2, 1, true, 80, false, false, "file:///test/file.erb")
+
+      expect(hyperlinks(result)).toEqual([
+        { url: "file:///test/file.erb", text: "/test/file.erb" },
+        { url: "file:///test/file.erb", text: "2" },
+      ])
+    })
+
+    it("leaves the file path and the line numbers unlinked without a fileUrl", () => {
+      const result = renderer.renderWithFocusLine("/test/file.erb", content, 2, 1, true)
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+  })
+
   describe("renderPlain", () => {
     it("should render content without line numbers or file headers", () => {
       const content = dedent`
@@ -209,7 +240,7 @@ describe("FileRenderer", () => {
 
   describe("theme support", () => {
     it("should work with different themes", async () => {
-      const githubLightSyntaxRenderer = new SyntaxRenderer(themes["github-light"])
+      const githubLightSyntaxRenderer = new SyntaxRenderer(themes["github-light"], Herb)
       await githubLightSyntaxRenderer.initialize()
       const githubLightFileRenderer = new FileRenderer(githubLightSyntaxRenderer)
 
@@ -223,7 +254,7 @@ describe("FileRenderer", () => {
     })
 
     it("should work with simple theme", async () => {
-      const simpleSyntaxRenderer = new SyntaxRenderer(themes.simple)
+      const simpleSyntaxRenderer = new SyntaxRenderer(themes.simple, Herb)
       await simpleSyntaxRenderer.initialize()
       const simpleFileRenderer = new FileRenderer(simpleSyntaxRenderer)
 

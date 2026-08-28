@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { PrismVisitor, Visitor } from "@herb-tools/core"
 
 import { isPrismNodeType, isRubyParameterNode, locationFromByteOffset } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 
 import type { DocumentNode, ERBStrictLocalsNode, ParseResult, ParserOptions, PrismNodes, RubyParameterNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
@@ -106,6 +106,7 @@ export class ActionViewNoRedundantLocalAssignsRule extends ParserRule {
         cli: "error",
         editor: "info",
       },
+      frameworks: ["actionview"],
     }
   }
 

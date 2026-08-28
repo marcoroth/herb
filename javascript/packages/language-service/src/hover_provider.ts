@@ -4,11 +4,16 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, cloneNode } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, getTagLocalName, hasAttribute, getAttribute, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
-import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation } from "./range_utils"
+import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation, nodeToRange } from "./range_utils"
+import { RubyLocalsIndex } from "./ruby_locals_index"
+import { collectStateDirectives } from "./herb_attribute_links"
+
+import type { DocumentNode } from "@herb-tools/core"
 
 import type { Node, HTMLElementNode, ERBOpenTagNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
+import type { FrameworkOptions } from "./types.js"
 
 class ActionViewElementCollector extends Visitor {
   public elements: { node: HTMLElementNode; openTag: ERBOpenTagNode; range: Range }[] = []
@@ -123,6 +128,182 @@ function dedent(text: string): string {
   return lines.map(line => line.slice(minIndent)).join("\n")
 }
 
+function blockParameter(scope: Node): string | null {
+  const content = (scope as { content?: { value?: string } }).content?.value ?? ""
+  const match = content.match(/\|\s*([A-Za-z_][A-Za-z0-9_]*)/)
+
+  return match ? match[1] : null
+}
+
+function declaredStateKind(kind: string): string {
+  return ["boolean", "integer", "string", "symbol", "nil"].includes(kind) ? kind : "seeded"
+}
+
+function stateUsageLines(name: string, kind: string, defaultSource: string, derived = false): string[] {
+  const fence = (language: string, ...lines: string[]) => ["```" + language, ...lines, "```"]
+
+  if (derived) {
+    const read = kind === "boolean" ? `<% if ${name} %>` : `<% if ${name} == ${defaultSource || "..."} %>`
+
+    return [
+      ...fence("erb", `<%= ${name} %>`, read),
+      "",
+      ...fence("javascript", `stateFor(element).get("${name}")`),
+    ]
+  }
+
+  if (kind === "boolean") {
+    return [
+      ...fence("erb", `<%= ${name} %>`, `<% if ${name}? %>`, `<button data-herb-toggle="${name}">`),
+      "",
+      ...fence("javascript", `stateFor(element).set({ ${name}: true })`),
+    ]
+  }
+
+  if (kind === "integer") {
+    return [
+      ...fence("erb", `<%= ${name} %>`, `<% if ${name} == ${defaultSource || "0"} %>`, `<button data-herb-increment="${name}">`),
+      "",
+      ...fence("javascript", `stateFor(element).set({ ${name}: ${defaultSource || "0"} })`),
+    ]
+  }
+
+  if (kind === "string" || kind === "symbol") {
+    return [
+      ...fence("erb", `<%= ${name} %>`, `<% if ${name} == ${defaultSource || '""'} %>`, `<button data-herb-set="${name}=...">`, `<button data-herb-reset="${name}">`),
+      "",
+      ...fence("javascript", `stateFor(element).set({ ${name}: ${defaultSource || '"..."'} })`),
+    ]
+  }
+
+  return [
+    ...fence("erb", `<%= ${name} %>`, `<% if ${name} %>`),
+    "",
+    ...fence("javascript", `stateFor(element).set({ ${name}: value })`),
+  ]
+}
+
+const SCOPED_STYLE_DOC = dedent(`
+  **\`<style scoped>\`** · Herb Engine
+
+  This block's CSS applies only to the markup in this file, like scoped styles in Vue and Svelte components. Herb marks the file's elements with a scope attribute and narrows the block's selectors to require it.
+
+  Example:
+
+  \`\`\`html
+  <style scoped>
+    .title {
+      color: red;
+    }
+  </style>
+
+  <h1 class="title">Hi</h1>
+  \`\`\`
+
+  becomes
+
+  \`\`\`html
+  <style>
+    .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+      color: red;
+    }
+  </style>
+
+  <h1 class="title" data-herb-scope-1a2b3c4d>Hi</h1>
+  \`\`\`
+
+  [Scoped styles](https://herb-tools.dev/projects/engine#scopedstyle-visitor)
+`).trim()
+
+class ScopedStyleCollector extends Visitor {
+  readonly found: Range[] = []
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (getTagLocalName(node) === "style" && hasAttribute(node, "scoped")) {
+      const attribute = getAttribute(node, "scoped")
+
+      if (attribute && hasSourceLocation(attribute.location)) {
+        this.found.push(nodeToRange(attribute))
+      }
+    }
+
+    this.visitChildNodes(node)
+  }
+}
+
+const DIRECTIVE_DOCS: Record<string, string> = {
+  "herb:slots": [
+    "**herb:slots** · Herb directive",
+    "",
+    "Chooses who renders this template's dynamic parts. `server` keeps every update a round trip. `client` also ships the markup that did not render, untaken branches and an empty collection row, parked in a `<template>`, so a branch can switch or a row can be inserted without asking the server.",
+    "",
+    "Example usage:",
+    "",
+    "```erb",
+    "<%# herb:slots client %>",
+    "```",
+  ].join("\n"),
+  "herb:state": [
+    "**herb:state** · Herb directive",
+    "",
+    "Declares client-owned state with the strict-locals signature. The server renders each default, and every read updates in place when the client writes. Placement scopes it, at the top of the template it is one value per rendering, inside a keyed loop one value per item.",
+    "",
+    "Example usage:",
+    "",
+    "```erb",
+    '<%# herb:state (pending: false, draft: "") %>',
+    "```",
+  ].join("\n"),
+  "herb:key": [
+    "**herb:key** · Herb directive",
+    "",
+    "Keys each item of the enclosing collection by an expression, so the client can add, remove, re-key, and reorder rows without rebuilding them. A dynamic \`id\` or \`herb-key\` attribute on the item's root element keys it the same way, so the directive is only needed when the row has neither.",
+    "",
+    "Example usage:",
+    "",
+    "```erb",
+    "<%# herb:key message.id %>",
+    "```",
+    "",
+    "Keyed by its \`id\` instead, with no directive:",
+    "",
+    "```erb",
+    '<li id="<%= dom_id(message) %>">',
+    "```",
+  ].join("\n"),
+}
+
+const DIRECTIVE_KEYWORD = /herb:(?:state|slots|key)\b/
+
+class DirectiveKeywordCollector extends Visitor {
+  readonly found: { node: ERBContentNode, keyword: string, offset: number }[] = []
+
+  visitChildNodes(node: Node): void {
+    if (isERBContentNode(node) && node.tag_opening?.value === "<%#") {
+      const content = node.content?.value ?? ""
+      const match = DIRECTIVE_KEYWORD.exec(content)
+
+      if (match) this.found.push({ node, keyword: match[0], offset: match.index })
+    }
+
+    super.visitChildNodes(node)
+  }
+}
+
+function contentTokenRange(node: ERBContentNode, offset: number, length: number): Range {
+  const content = node.content
+
+  if (!content) return Range.create(lspPosition(node.location.start), lspPosition(node.location.end))
+
+  const before = content.value.slice(0, offset)
+  const lines = before.split("\n")
+  const line = content.location.start.line + lines.length - 1
+  const column = lines.length === 1 ? content.location.start.column + before.length : lines[lines.length - 1].length
+  const from = lspPosition({ line, column })
+
+  return Range.create(from, Position.create(from.line, from.character + length))
+}
+
 export class HoverProvider {
   private parserService: ParserService
 
@@ -133,7 +314,105 @@ export class HoverProvider {
     this.baseDir = baseDir
   }
 
-  getHover(textDocument: TextDocument, position: Position): Hover | null {
+  private getDirectiveHover(textDocument: TextDocument, position: Position): Hover | null {
+    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true })
+    const collector = new DirectiveKeywordCollector()
+
+    collector.visit(parsed.value)
+
+    for (const { node, keyword, offset } of collector.found) {
+      const range = contentTokenRange(node, offset, keyword.length)
+
+      if (!isPositionInRange(position, range)) continue
+
+      const documentation = DIRECTIVE_DOCS[keyword]
+
+      if (!documentation) continue
+
+      return { contents: { kind: MarkupKind.Markdown, value: documentation }, range }
+    }
+
+    return null
+  }
+
+  private getStateHover(textDocument: TextDocument, position: Position): Hover | null {
+    const index = RubyLocalsIndex.build(this.parserService, textDocument)
+    const local = index.at(position)
+
+    if (!local) return null
+
+    const parsed = this.parserService.parseContent(textDocument.getText(), { prism_program: true, strict_locals: true })
+    const entries = collectStateDirectives(parsed.value as DocumentNode).filter(entry =>
+      entry.signature.declarations.some(declaration => declaration.name === local.name),
+    )
+
+    if (entries.length === 0) return null
+
+    const scoped = entries.find(entry => entry.scope !== null && isPositionInRange(position, nodeToRange(entry.scope)))
+    const entry = scoped ?? entries.find(candidate => candidate.scope === null) ?? entries[0]
+    const declaration = entry.signature.declarations.find(candidate => candidate.name === local.name)
+
+    if (!declaration) return null
+
+    const derived = declaration.derived !== undefined && declaration.derived !== null && typeof declaration.derived === "object" ? declaration.derived : null
+    const kind = derived ? derived.kind : declaredStateKind(declaration.kind)
+    const parameter = entry.scope === null ? null : blockParameter(entry.scope)
+    const scope = entry.scope === null
+      ? "one value per rendering"
+      : `one value for each \`${parameter ?? "item"}\``
+
+    const source = derived
+      ? `derived from \`${declaration.defaultSource}\``
+      : `default \`${declaration.defaultSource || "(none)"}\``
+
+    const lines = [
+      `**${declaration.name}** · Herb Client State`,
+      "",
+      `\`${kind}\` · ${source} · ${scope}`,
+      "",
+      "Example usage:",
+      "",
+      ...stateUsageLines(declaration.name, kind, derived ? "" : declaration.defaultSource, derived !== null),
+    ]
+
+    const range = [local.declaration, ...(local.defaultValue ? [local.defaultValue] : []), ...local.usages]
+      .find(candidate => isPositionInRange(position, candidate))
+
+    return {
+      contents: { kind: MarkupKind.Markdown, value: lines.join("\n") },
+      range,
+    }
+  }
+
+  private getScopedStyleHover(textDocument: TextDocument, position: Position): Hover | null {
+    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true })
+    const collector = new ScopedStyleCollector()
+
+    collector.visit(parsed.value)
+
+    for (const range of collector.found) {
+      if (isPositionInRange(position, range)) {
+        return { contents: { kind: MarkupKind.Markdown, value: SCOPED_STYLE_DOC }, range }
+      }
+    }
+
+    return null
+  }
+
+  getHover(textDocument: TextDocument, position: Position, options?: FrameworkOptions): Hover | null {
+    const state = this.getStateHover(textDocument, position)
+    if (state) return state
+
+    const directive = this.getDirectiveHover(textDocument, position)
+    if (directive) return directive
+
+    const scopedStyle = this.getScopedStyleHover(textDocument, position)
+    if (scopedStyle) return scopedStyle
+
+    if (options?.framework !== "actionview") {
+      return this.getEntityHover(textDocument, position)
+    }
+
     const parseResult = this.parserService.parseContent(textDocument.getText(), {
       action_view_helpers: true,
       track_whitespace: true,

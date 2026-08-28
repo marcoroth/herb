@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, ABSTRACT_ARIA_ROLES, StaticAttributeStaticValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, ABSTRACT_ARIA_ROLES, StaticAttributeStaticValueParams } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions } from "@herb-tools/core"

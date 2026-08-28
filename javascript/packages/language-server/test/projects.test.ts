@@ -17,6 +17,14 @@ import { DefinitionProvider } from "@herb-tools/language-service"
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
 
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
+  }
+}
+
 const roots: string[] = []
 
 const connection = {
@@ -68,9 +76,10 @@ function registryWith(_folder: string, workspaceFolders: WorkspaceFolders): Proj
   return new Projects(connection, workspaceFolders, {
     documents: { documents: {}, get: () => undefined } as unknown as Documents,
     parserService,
-    definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
+    definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
     userSettings: new UserSettings(connection, capabilities),
     capabilities,
+    readFile,
   })
 }
 

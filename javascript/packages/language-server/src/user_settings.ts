@@ -1,53 +1,11 @@
-import { defaultFormatOptions } from "@herb-tools/formatter"
-import { defaultInlayHintOptions } from "@herb-tools/language-service"
+import { defaultPersonalSettings } from "@herb-tools/config"
 
+import type { PersonalHerbSettings } from "@herb-tools/config"
 import type { Connection } from "vscode-languageserver/node"
 import type { Capabilities } from "./capabilities"
 
-// TODO: ideally we could just Config all the way through
-export interface PersonalHerbSettings {
-  trace?: {
-    server?: string
-  }
-  linter?: {
-    enabled?: boolean
-    fixOnSave?: boolean
-  }
-  formatter?: {
-    enabled?: boolean
-    indentWidth?: number
-    indentStyle?: "space" | "tab"
-    maxLineLength?: number
-  }
-  inlayHints?: {
-    enabled?: boolean
-    minimumLines?: number
-    maximumClasses?: number
-  }
-}
-
-/**
- * What every one of these settings falls back to. Editors that surface them as
- * their own preferences read from here rather than restating the values, so
- * there is one place to change a default.
- */
-export const defaultPersonalSettings: PersonalHerbSettings = {
-  linter: {
-    enabled: true,
-    fixOnSave: true
-  },
-  formatter: {
-    enabled: false,
-    indentWidth: defaultFormatOptions.indentWidth,
-    indentStyle: defaultFormatOptions.indentStyle,
-    maxLineLength: defaultFormatOptions.maxLineLength
-  },
-  inlayHints: {
-    enabled: true,
-    minimumLines: defaultInlayHintOptions.minimumLines,
-    maximumClasses: defaultInlayHintOptions.maximumClasses
-  }
-}
+export { defaultPersonalSettings }
+export type { PersonalHerbSettings }
 
 /**
  * The editor-level preferences a user sets for themselves, which are per-document

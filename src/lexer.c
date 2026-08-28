@@ -333,7 +333,7 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     if (is_newline(lexer->current_character)) {
       lexer->current_line++;
       lexer->current_column = 0;
-    } else {
+    } else if (!utf8_is_valid_continuation_byte((unsigned char) lexer->current_character)) {
       lexer->current_column++;
     }
 
@@ -397,6 +397,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
 
       if (lexer_peek_for_xml_declaration(lexer, 0)) {
         return lexer_advance_with_next(lexer, strlen("<?xml"), TOKEN_XML_DECLARATION);
+      }
+
+      if (lexer_peek_for_xml_processing_instruction(lexer, 0)) {
+        return lexer_advance_with(lexer, hb_string("<?"), TOKEN_XML_PROCESSING_INSTRUCTION_START);
       }
 
       if (lexer_peek_for_cdata_start(lexer, 0)) {

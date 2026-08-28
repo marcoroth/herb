@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { ERBEndNode, ERBOpenTagNode, HTMLVirtualCloseTagNode, Token, getAttribute, getAttributeName, getTagLocalName, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, isPrismNodeType, isWhitespaceNode } from "@herb-tools/core"
 
@@ -97,7 +97,6 @@ class ActionViewPreferLinkToHelperVisitor extends BaseRuleVisitor<PreferLinkToHe
   }
 
   private checkAnchor(node: HTMLElementNode): void {
-    if (this.context.framework !== "actionview") return
     if (getTagLocalName(node) !== "a") return
 
     const openTag = node.open_tag
@@ -148,6 +147,7 @@ export class ActionViewPreferLinkToHelperRule extends ParserRule<PreferLinkToHel
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

@@ -1,6 +1,6 @@
 import { Location } from "@herb-tools/core"
 
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { BaseSourceRuleVisitor } from "../utils/rule-utils.js"
 import { positionFromOffset } from "@herb-tools/core"
 import { convertIndentation, LEADING_BLANKS } from "@herb-tools/printer"
 import { SourceRule } from "../types.js"

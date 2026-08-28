@@ -1,0 +1,74 @@
+{
+  "file": "app/views/contract/an-empty-collection.html.erb",
+  "template": "<% @items.each do |r| %><li id=\"<%= r %>\"><%= r %></li><% end %>",
+  "rendered": "<!--herb-region:app/views/contract/an-empty-collection.html.erb:7700cd32:0--><!--herb-slot:0:collection--><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-empty-collection.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/an-empty-collection.html.erb:7700cd32:0--><!--herb-slot:0:collection--><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-empty-collection.html.erb--><template data-herb-region=\"app/views/contract/an-empty-collection.html.erb:7700cd32\"><!--herb-branch:0:item--><!--herb-item:0:--><li id=\"\" data-herb-slot=\"1:attribute:id 2:child\"></li><!--/herb-item:0--></template>",
+  "values": {
+    "template": "app/views/contract/an-empty-collection.html.erb",
+    "version": "7700cd32",
+    "occurrence": 0,
+    "slots": {
+      "0": {
+        "items": {
+          "1": {
+            "1": "1",
+            "2": "1"
+          }
+        },
+        "order": [
+          "1"
+        ]
+      }
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/an-empty-collection.html.erb:7700cd32:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id=\"1\" data-herb-slot=\"1:attribute:id 2:child\">1</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/contract/an-empty-collection.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/an-empty-collection.html.erb",
+    "identifier": "app/views/contract/an-empty-collection.html.erb",
+    "version": "7700cd32",
+    "slots": [
+      {
+        "index": 0,
+        "type": "collection",
+        "node_path": [
+          0
+        ],
+        "key_source": "id"
+      },
+      {
+        "index": 1,
+        "type": "attribute",
+        "node_path": [
+          0,
+          0
+        ],
+        "attribute": "id"
+      },
+      {
+        "index": 2,
+        "type": "child",
+        "node_path": [
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/an-empty-collection.html.erb",
+    "identifier": "app/views/contract/an-empty-collection.html.erb",
+    "version": "7700cd32",
+    "names": {},
+    "parts": {},
+    "states": null
+  },
+  "dependencies": {
+    "state": {
+      "@items": []
+    },
+    "params": {
+      "items": "@items"
+    }
+  }
+}

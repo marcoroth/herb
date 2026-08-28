@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { hasAttribute, getAttribute, hasAttributeValue, getTagLocalName, isHTMLOpenTagNode, isERBOpenTagNode, filterHTMLAttributeNodes, findAttributeByName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"

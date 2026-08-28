@@ -20,6 +20,54 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 const DEFAULT_VERSION = packageJson.version
 const PARSED_DEFAULTS = parse(defaultsYaml) as Omit<HerbConfig, 'version'>
 
+/**
+ * The preferences an editor owns rather than the project. Whether the linter
+ * runs is a decision a team makes in `.herb.yml`, but whether fixes apply on
+ * save, or how far apart two tags have to be before a hint appears, is nobody's
+ * business but the person typing.
+ *
+ * They live here so that an editor integration can read them without depending
+ * on the language server, which would pull the whole server into its bundle.
+ */
+export interface PersonalHerbSettings {
+  trace?: {
+    server?: string
+  }
+  linter?: {
+    enabled?: boolean
+    fixOnSave?: boolean
+  }
+  formatter?: {
+    enabled?: boolean
+    indentWidth?: number
+    indentStyle?: "space" | "tab"
+    maxLineLength?: number
+  }
+  inlayHints?: {
+    enabled?: boolean
+    minimumLines?: number
+    maximumClasses?: number
+  }
+}
+
+export const defaultPersonalSettings: PersonalHerbSettings = {
+  linter: {
+    enabled: PARSED_DEFAULTS.linter?.enabled ?? true,
+    fixOnSave: true
+  },
+  formatter: {
+    enabled: PARSED_DEFAULTS.formatter?.enabled ?? false,
+    indentWidth: PARSED_DEFAULTS.formatter?.indentWidth ?? 2,
+    indentStyle: PARSED_DEFAULTS.formatter?.indentStyle ?? "space",
+    maxLineLength: PARSED_DEFAULTS.formatter?.maxLineLength ?? 80
+  },
+  inlayHints: {
+    enabled: true,
+    minimumLines: 10,
+    maximumClasses: 2
+  }
+}
+
 export interface ConfigValidationError {
   message: string
   path: (string | number | symbol)[]
@@ -45,6 +93,7 @@ export type { SeverityConfig, LinterMode }
 export type RuleConfig = {
   enabled?: boolean
   severity?: SeverityConfig
+  frameworks?: Framework[]
   autoCorrect?: boolean
   include?: string[]
   only?: string[]

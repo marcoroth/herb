@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, HEADING_TAGS } from "./rule-utils.js"
+import { BaseRuleVisitor, HEADING_TAGS } from "../utils/rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 import { isLiteralNode, isHTMLTextNode, isHTMLElementNode, isERBOutputNode, isERBControlFlowNode, getStaticAttributeValue } from "@herb-tools/core"
 

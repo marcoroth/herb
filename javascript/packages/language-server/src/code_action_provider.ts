@@ -1,10 +1,11 @@
-import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 import { Linter } from "@herb-tools/linter"
 import { Project } from "./project"
+import { OPEN_DOCUMENT_COMMAND } from "./commands"
 
 import { isValidFramework } from "@herb-tools/core"
 import { getFullDocumentRange, lspRangeFromLocation } from "@herb-tools/language-service"
@@ -86,18 +87,30 @@ export class CodeActionProvider {
     return actions.concat(disableAllActions)
   }
 
-  autofixCodeActions(params: CodeActionParams, document: TextDocument): CodeAction[] {
+  private async formatterContextFor(uri: string) {
+    const settings = await this.project.settingsFor(uri)
+
+    return {
+      indentWidth: settings?.formatter?.indentWidth,
+      indentStyle: settings?.formatter?.indentStyle
+    }
+  }
+
+  async autofixCodeActions(params: CodeActionParams, document: TextDocument): Promise<CodeAction[]> {
     if (this.config && !this.config.isLinterEnabled) {
       return []
     }
 
     const codeActions: CodeAction[] = []
     const text = document.getText()
+    const formatterContext = await this.formatterContextFor(document.uri)
+    const autofixContext = { fileName: document.uri, ...formatterContext }
 
     const lintResult = this.linter.lint(text, {
       fileName: this.index?.relativePathFor(document.uri) ?? document.uri,
       partials: this.index?.partials,
       partialCallers: this.index?.callers,
+      ...formatterContext,
     })
 
     const offenses = lintResult.offenses
@@ -113,7 +126,7 @@ export class CodeActionProvider {
         continue
       }
 
-      const fixResult = this.linter.autofix(text, { fileName: document.uri }, [offense])
+      const fixResult = this.linter.autofix(text, autofixContext, [offense])
 
       if (fixResult.fixed.length > 0 && fixResult.source !== text) {
         const codeAction: CodeAction = {
@@ -125,7 +138,7 @@ export class CodeActionProvider {
 
         codeActions.push(codeAction)
       } else {
-        const unsafeFixResult = this.linter.autofix(text, { fileName: document.uri }, [offense], { includeUnsafe: true })
+        const unsafeFixResult = this.linter.autofix(text, autofixContext, [offense], { includeUnsafe: true })
 
         if (unsafeFixResult.fixed.length > 0 && unsafeFixResult.source !== text) {
           const codeAction: CodeAction = {
@@ -141,13 +154,13 @@ export class CodeActionProvider {
     }
 
     const allFixableOffenses = offenses.filter(offense => {
-      const fixResult = this.linter.autofix(text, { fileName: document.uri }, [offense])
+      const fixResult = this.linter.autofix(text, autofixContext, [offense])
 
       return fixResult.fixed.length > 0
     })
 
     if (allFixableOffenses.length > 0) {
-      const fixAllResult = this.linter.autofix(text, { fileName: document.uri }, allFixableOffenses)
+      const fixAllResult = this.linter.autofix(text, autofixContext, allFixableOffenses)
 
       if (fixAllResult.fixed.length > 0 && fixAllResult.source !== text) {
         const fixAllAction: CodeAction = {
@@ -263,11 +276,7 @@ export class CodeActionProvider {
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
-      command: {
-        title: 'Open .herb.yml',
-        command: 'vscode.open',
-        arguments: [configUri]
-      }
+      command: this.openDocumentCommand(configUri)
     }
 
     return action
@@ -295,15 +304,19 @@ export class CodeActionProvider {
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
         edit,
-        command: {
-          title: 'Open .herb.yml',
-          command: 'vscode.open',
-          arguments: [configUri]
-        }
+        command: this.openDocumentCommand(configUri)
       }
 
       return [action]
     })
+  }
+
+  private openDocumentCommand(uri: string): Command {
+    return {
+      title: 'Open .herb.yml',
+      command: OPEN_DOCUMENT_COMMAND,
+      arguments: [uri]
+    }
   }
 
   private suggestedFramework(diagnostic: Diagnostic): Framework | undefined {

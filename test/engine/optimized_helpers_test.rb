@@ -81,14 +81,20 @@ module Engine
       test "names the module that took the helper over" do
         diagnostic = diagnostics_from(overriding_context).first
 
-        assert_match(/defined by \S*OverriddenTag\z/, diagnostic.message)
+        assert_equal(
+          "`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag",
+          diagnostic.message
+        )
       end
 
       test "still names an override that has no name of its own" do
         anonymous = Module.new { def tag(*) = "anonymous" }
         context = Class.new { include ::ActionView::Helpers::TagHelper }.tap { |k| k.include(anonymous) }.new
 
-        assert_match(/defined by #<Module:0x[0-9a-f]+>\z/, diagnostics_from(context).first.message)
+        assert_match(
+          /\A`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by #<Module:0x[0-9a-f]+>\z/,
+          diagnostics_from(context).first.message
+        )
       end
 
       test "stays quiet when the helper is still Action View's" do

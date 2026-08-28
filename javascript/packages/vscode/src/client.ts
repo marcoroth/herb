@@ -2,8 +2,7 @@ import * as path from "path"
 
 import { workspace, ExtensionContext, Disposable, window } from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, WorkspaceEdit } from "vscode-languageclient/node"
-import { Config } from "@herb-tools/config"
-import { defaultPersonalSettings } from "@herb-tools/language-server"
+import { Config, defaultPersonalSettings } from "@herb-tools/config"
 
 const inlayHintDefaults = defaultPersonalSettings.inlayHints!
 

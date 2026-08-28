@@ -14,6 +14,7 @@ module Herb
     #
     # The checks are heuristics over the string. They catch the payloads that reach templates
     # through unescaped user input, not every possible way to write HTML that executes.
+    #
     module HTMLSafeAssertions
       MODES = [:raise, :warn].freeze
 

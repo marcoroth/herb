@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "tmpdir"
+
 require_relative "../../test_helper"
 
 module Engine
@@ -87,6 +90,62 @@ module Engine
       assert_equal({ "app/views/a.html.erb" => "<div></div>\n" }, session.report.to_h[:sources])
     end
 
+    def compiled_entry
+      { message: "m", code: "slots-declaration", severity: :error, origin: "Herb Compiler", phase: :compile }
+    end
+
+    def in_project(contents = "<div>\n  <span>\n</div>\n")
+      Dir.mktmpdir do |directory|
+        Dir.chdir(directory) do
+          FileUtils.mkdir_p("app/views")
+          File.write("app/views/a.html.erb", contents)
+
+          yield
+        end
+      end
+    end
+
+    test "reads the template off disk, so a finding can be shown in context" do
+      in_project do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+        end
+
+        assert_equal({ "app/views/a.html.erb" => "<div>\n  <span>\n</div>\n" }, session.report.sources)
+      end
+    end
+
+    test "reads it once, however many times the template renders" do
+      in_project do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+
+          File.write("app/views/a.html.erb", "<p>rewritten after the first read</p>\n")
+
+          Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+        end
+
+        assert_equal({ "app/views/a.html.erb" => "<div>\n  <span>\n</div>\n" }, session.report.sources)
+      end
+    end
+
+    test "reads nothing when nobody opened a session to read it" do
+      in_project do
+        Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+
+        assert_empty Herb::Engine::Report::Session.current.report.sources
+      end
+    end
+
+    test "records the findings even when the template leads nowhere on disk" do
+      session = Herb::Engine::Report::Session.capture do
+        Herb::Engine::Report::Session.record_compile_diagnostics("app/views/gone.html.erb", [compiled_entry])
+      end
+
+      assert_equal ["slots-declaration"], session.report.diagnostics.map(&:code)
+      assert_empty session.report.sources
+    end
+
     test "is empty until something is recorded" do
       session = Herb::Engine::Report::Session.capture { nil }
 
@@ -130,6 +189,54 @@ module Engine
 
       assert_equal 0, other
       assert_equal 1, Herb::Engine::Report::Session.current.diagnostics.length
+    end
+
+    test "a thread spawned while a session is open records into its own" do
+      session = Herb::Engine::Report::Session.open
+
+      Thread.new { Herb::Engine::Report::Session.record(diagnostic(code: "background")) }.join
+
+      assert_empty session.diagnostics
+    end
+
+    test "reaches a render happening in a fiber, the way a streaming response renders" do
+      session = Herb::Engine::Report::Session.open
+
+      Fiber.new { Herb::Engine::Report::Session.record(diagnostic(code: "streamed")) }.resume
+
+      assert_equal ["streamed"], session.diagnostics.map(&:code)
+      refute_predicate session, :empty?
+    end
+
+    test "a session opened inside a fiber does not escape it" do
+      session = Herb::Engine::Report::Session.open
+
+      Fiber.new { Herb::Engine::Report::Session.open }.resume
+
+      assert_same session, Herb::Engine::Report::Session.current
+    end
+
+    test "a ractor collects into its own, even reaching the one in fiber storage" do
+      session = Herb::Engine::Report::Session.open
+      Herb::Engine::Report::Session.record(diagnostic(code: "main"))
+
+      ractor = Ractor.new do
+        klass = Herb::Engine::Report::Session
+
+        reached = !Fiber[klass::STATE_KEY].nil?
+        refused = klass.stored.nil?
+
+        klass.record(Herb::Diagnostic.new(template: "app/views/a.html.erb", message: "m", code: "ractor"))
+
+        [reached, refused, klass.current.diagnostics.map(&:code)]
+      end
+
+      reached, refused, collected = ractor.value
+
+      assert reached, "expected fiber storage to still be inherited into the ractor"
+      assert refused, "expected the inherited session to be refused"
+      assert_equal ["ractor"], collected
+      assert_equal ["main"], session.diagnostics.map(&:code)
     end
 
     describe "attributing what happens to the tag that caused it" do
@@ -375,7 +482,7 @@ module Engine
         end
 
         assert_equal(
-          { id: "2", template: "_card.html.erb", parent: "1", line: 3, column: 5 },
+          { id: "2", template: "_card.html.erb", parent: "1", location: { line: 3, column: 5 } },
           session.report.render_tree.last
         )
       end
@@ -516,6 +623,14 @@ module Engine
         assert_empty session.diagnostics
         refute_predicate session, :empty?
       end
+    end
+
+    test "hands a channel through to the report it is collecting into" do
+      session = Herb::Engine::Report::Session.open
+      channel = Object.new
+
+      assert_same channel, session.channel(:thing) { channel }
+      assert_same channel, session.report.channel(:thing) { Object.new }
     end
   end
 end

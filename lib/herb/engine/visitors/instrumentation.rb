@@ -2,6 +2,7 @@
 # typed: false
 
 require_relative "../../visitor"
+require_relative "../experimental"
 require_relative "../context_aware"
 require_relative "../origin"
 
@@ -38,17 +39,18 @@ module Herb
       # A tag that opens a block, or that assigns to a local, is framed from the outside rather than
       # wrapped, because wrapping either one would change what the template means: a block would lose
       # its body, and an assignment would bind inside the wrapper instead of the template.
+      #
       class Instrumentation < Herb::Visitor
+        extend Experimental
         include ContextAware
 
         recommended_parser_option render_nodes: true
-
-        #: () -> bool
-        def self.rewrites_erb_source?
-          true
-        end
+        required_parser_option track_locations: true
+        experimental "Instrumentation is experimental as it instruments every ERB tag."
 
         SESSION = "::Herb::Engine::Report::Session"
+        ARRAY_PROPERTIES = [:children, :body, :statements].freeze
+        NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze
 
         ASSIGNMENT_NODES = [
           :LocalVariableWriteNode,
@@ -58,27 +60,9 @@ module Herb
           :MultiWriteNode
         ].freeze
 
-        ARRAY_PROPERTIES = [:children, :body, :statements].freeze
-        NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze
-
-        # @rbs!
-        #   def self.experimental_warning_issued: () -> bool
-        #   def self.experimental_warning_issued=: (bool) -> bool
-
-        class << self
-          attr_accessor :experimental_warning_issued #: bool
-        end
-
-        self.experimental_warning_issued = false
-
-        def initialize
-          super
-
-          return if self.class.experimental_warning_issued
-
-          self.class.experimental_warning_issued = true
-
-          warn "[Herb] Instrumentation is experimental as it instruments every ERB tag."
+        #: () -> bool
+        def self.rewrites_erb_source?
+          true
         end
 
         def visit_document_node(node)

@@ -2,9 +2,8 @@
 source: "Engine::ActionView::JavascriptTagTest#test_0003_javascript_tag with type attribute"
 input: "{source: \"<%= javascript_tag \\\"alert('Hello')\\\", type: \\\"application/javascript\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
 ---
-_buf = ::String.new; _buf << '<script type="application/javascript">
+'<script type="application/javascript">
 //<![CDATA[
 alert(\'Hello\')
 //]]>
-</script>'.freeze;
-_buf.to_s
+</script>'.freeze

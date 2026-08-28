@@ -1,0 +1,6 @@
+---
+source: "Engine::RemoveCommentsTest#test_0002_html comment - compilation"
+input: "{source: \"<div><!-- secret --></div>\", options: {escape: false, visitors: [#<Herb::Engine::Visitors::RemoveComments>]}}"
+---
+_buf = ::String.new; _buf << '<div></div>'.freeze;
+_buf.to_s
