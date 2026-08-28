@@ -19,8 +19,13 @@ module Herb
       class OrderError < ArgumentError
       end
 
+      DESCRIPTION_LIMIT: Integer
+
       # : (untyped) -> Stack
       def self.build: (untyped) -> Stack
+
+      # : () -> Array[String]
+      def descriptions: () -> Array[String]
 
       # : () -> void
       def validate_order!: () -> void

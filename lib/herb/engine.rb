@@ -16,8 +16,6 @@ require_relative "engine/error_formatter"
 
 module Herb
   class Engine
-    VISITOR_DESCRIPTION_LIMIT = 200 #: Integer
-
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -101,8 +99,6 @@ module Herb
           parse_result.value.accept(visitor)
         end
 
-        # A visitor that writes into the tree writes after every visitor has read it, so what one
-        # of them adds is never something another one reads as if the template had written it.
         @visitors.each do |visitor| # rubocop:disable Style/CombinableLoops
           visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
         end
@@ -396,18 +392,9 @@ module Herb
         },
         source: input,
         filename: relative_file_path,
-        visitors: visitor_descriptions,
+        visitors: @visitors.descriptions,
         parser_options: @parser_options
       )
-    end
-
-    #: () -> Array[String]
-    def visitor_descriptions
-      @visitors.map { |visitor|
-        described = visitor.inspect
-
-        described.length > VISITOR_DESCRIPTION_LIMIT ? "#{described[0, VISITOR_DESCRIPTION_LIMIT]}…" : described
-      }
     end
 
     #: (String) -> void

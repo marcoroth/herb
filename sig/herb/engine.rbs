@@ -2,8 +2,6 @@
 
 module Herb
   class Engine
-    VISITOR_DESCRIPTION_LIMIT: Integer
-
     attr_reader src: untyped
 
     attr_reader context: untyped
@@ -100,9 +98,6 @@ module Herb
     def insert_herb_alias!: () -> void
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
-
-    # : () -> Array[String]
-    def visitor_descriptions: () -> Array[String]
 
     # : (String) -> void
     def report: (String) -> void

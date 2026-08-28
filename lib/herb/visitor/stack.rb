@@ -17,11 +17,22 @@ module Herb
       class UnknownVisitorError < ArgumentError; end
       class OrderError < ArgumentError; end
 
+      DESCRIPTION_LIMIT = 200 #: Integer
+
       #: (untyped) -> Stack
       def self.build(visitors)
         stack = new
         stack.replace(Array(visitors))
         stack
+      end
+
+      #: () -> Array[String]
+      def descriptions
+        map { |visitor|
+          described = visitor.inspect
+
+          described.length > DESCRIPTION_LIMIT ? "#{described[0, DESCRIPTION_LIMIT]}…" : described
+        }
       end
 
       #: () -> void
