@@ -101,6 +101,7 @@ import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-n
 import { HerbScopedStylePreferSingleRootRule } from "./rules/herb-scoped-style-prefer-single-root.js"
 import { HerbScopedStyleRequireTopLevelRule } from "./rules/herb-scoped-style-require-top-level.js"
 import { HerbScopedStyleSingleDeclarationRule } from "./rules/herb-scoped-style-single-declaration.js"
+import { HerbStateDirectiveSyntaxRule } from "./rules/herb-state-directive-syntax.js"
 import { HerbStateSingleDeclarationRule } from "./rules/herb-state-single-declaration.js"
 import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
 import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
@@ -270,6 +271,7 @@ export const rules: RuleClass[] = [
   HerbScopedStylePreferSingleRootRule,
   HerbScopedStyleRequireTopLevelRule,
   HerbScopedStyleSingleDeclarationRule,
+  HerbStateDirectiveSyntaxRule,
   HerbStateSingleDeclarationRule,
   HerbStateValidDeclarationRule,
   HerbStateValidReadsRule,
