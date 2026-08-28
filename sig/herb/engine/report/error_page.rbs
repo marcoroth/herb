@@ -52,6 +52,9 @@ module Herb
         def report_for: (Herb::Engine::CompilationError) -> Herb::Engine::Report
 
         # : (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+        def note_source: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
+
+        # : (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
         def note_provenance: (Herb::Engine::Report, Herb::Engine::CompilationError) -> void
 
         # : (Herb::Engine::CompilationError) -> Array[Herb::Diagnostic]
@@ -75,8 +78,8 @@ module Herb
         # : (Hash[Symbol, untyped]) -> String
         def provenance: (Hash[Symbol, untyped]) -> String
 
-        # : (Array[Herb::Diagnostic], Hash[String, String]) -> String
-        def fallback: (Array[Herb::Diagnostic], Hash[String, String]) -> String
+        # : (Array[Herb::Diagnostic], Hash[String, String], String) -> String
+        def fallback: (Array[Herb::Diagnostic], Hash[String, String], String) -> String
 
         # : (Herb::Diagnostic, String?) -> String
         def section: (Herb::Diagnostic, String?) -> String

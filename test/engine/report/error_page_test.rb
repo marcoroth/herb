@@ -30,6 +30,24 @@ module Engine
       )
     end
 
+    def second_diagnostic
+      Herb::Diagnostic.new(
+        template: "app/views/posts/_post.html.erb",
+        message: "The state `rate` has a Float default.",
+        code: "slots-declaration",
+        origin: "Herb Compiler",
+        location: Herb::Location.from(3, 4, 3, 9),
+        suggestion: "Declare it as an Integer or a String instead."
+      )
+    end
+
+    def compile_error(filename: "app/views/posts/_post.html.erb")
+      errors = [diagnostic, second_diagnostic]
+      formatter = Herb::Engine::ErrorFormatter.new(SOURCE, errors, filename: filename)
+
+      Herb::Engine::CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
+    end
+
     def ok_app
       ->(_env) { [200, { "content-type" => "text/html" }, [PAGE]] }
     end
@@ -120,6 +138,45 @@ module Engine
         )
       end
 
+      test "carries every diagnostic a compile error collected, not just its summary" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        entries = payload(body.first)["diagnostics"]
+
+        assert_equal(["missing-closing-tag", "slots-declaration"], entries.map { |entry| entry["code"] })
+        assert_equal(["blocking", "blocking"], entries.map { |entry| entry["overlay"] })
+      end
+
+      test "keeps the template and location a compile error's diagnostics carry" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        entry = payload(body.first)["diagnostics"].last
+
+        assert_equal "app/views/posts/_post.html.erb", entry["template"]
+        assert_equal 3, entry["location"]["start"]["line"]
+        assert_equal "Declare it as an Integer or a String instead.", entry["suggestion"]
+      end
+
+      test "carries the source of a compile error that is not a parse error" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        assert_equal(
+          { "app/views/posts/_post.html.erb" => SOURCE },
+          payload(body.first)["sources"]
+        )
+      end
+
+      test "keys that source by the template its diagnostics name, not the path it compiled" do
+        error = compile_error(filename: "/Users/me/app/app/views/posts/_post.html.erb")
+
+        _status, _headers, body = middleware(raising_app(error)).call(HTML_ENV)
+
+        assert_equal(
+          { "app/views/posts/_post.html.erb" => SOURCE },
+          payload(body.first)["sources"]
+        )
+      end
+
       test "makes one up for an error carrying no diagnostics" do
         error = Herb::Engine::CompilationError.new("Something went wrong.")
 
@@ -142,11 +199,29 @@ module Engine
         assert_includes body.first, "Close the `&lt;form&gt;` before"
       end
 
+      test "prints one row per source line, with no blank line between them" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        pre = body.first[%r{<pre>(.+?)</pre>}m, 1]
+
+        assert_equal 4, pre.scan("<span").size
+        assert_equal 0, pre.scan("\n").size
+      end
+
       test "escapes the source it prints" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
         assert_includes body.first, "&lt;form&gt;"
         refute_includes body.first[%r{<pre>.+?</pre>}m], "<form>"
+      end
+
+      test "keeps the provenance footer inside the container its rules are scoped to" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        main = body.first[%r{<main class="herb-error">.+?</main>}m]
+
+        assert_includes main, %(<footer class="herb-error-provenance">)
+        assert_equal 1, body.first.scan("herb-error-provenance\"").size
       end
 
       test "scopes every style rule to itself" do
@@ -182,6 +257,14 @@ module Engine
         assert_equal 2, body.first.scan("<section>").size
         assert_equal 2, payload(body.first)["diagnostics"].size
         assert_includes body.first, "without a matching opening tag"
+      end
+
+      test "shows a section with an excerpt for every diagnostic a compile error collected" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        assert_equal 2, body.first.scan("<section>").size
+        assert_equal 2, body.first.scan("<pre>").size
+        assert_includes body.first, "app/views/posts/_post.html.erb:3:5"
       end
 
       test "starts the dev tools when it is told where they are" do

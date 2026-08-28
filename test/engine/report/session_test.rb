@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "tmpdir"
+
 require_relative "../../test_helper"
 
 module Engine
@@ -85,6 +88,62 @@ module Engine
       end
 
       assert_equal({ "app/views/a.html.erb" => "<div></div>\n" }, session.report.to_h[:sources])
+    end
+
+    def compiled_entry
+      { message: "m", code: "slots-declaration", severity: :error, origin: "Herb Compiler", phase: :compile }
+    end
+
+    def in_project(contents = "<div>\n  <span>\n</div>\n")
+      Dir.mktmpdir do |directory|
+        Dir.chdir(directory) do
+          FileUtils.mkdir_p("app/views")
+          File.write("app/views/a.html.erb", contents)
+
+          yield
+        end
+      end
+    end
+
+    test "reads the template off disk, so a finding can be shown in context" do
+      in_project do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+        end
+
+        assert_equal({ "app/views/a.html.erb" => "<div>\n  <span>\n</div>\n" }, session.report.sources)
+      end
+    end
+
+    test "reads it once, however many times the template renders" do
+      in_project do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+
+          File.write("app/views/a.html.erb", "<p>rewritten after the first read</p>\n")
+
+          Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+        end
+
+        assert_equal({ "app/views/a.html.erb" => "<div>\n  <span>\n</div>\n" }, session.report.sources)
+      end
+    end
+
+    test "reads nothing when nobody opened a session to read it" do
+      in_project do
+        Herb::Engine::Report::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+
+        assert_empty Herb::Engine::Report::Session.current.report.sources
+      end
+    end
+
+    test "records the findings even when the template leads nowhere on disk" do
+      session = Herb::Engine::Report::Session.capture do
+        Herb::Engine::Report::Session.record_compile_diagnostics("app/views/gone.html.erb", [compiled_entry])
+      end
+
+      assert_equal ["slots-declaration"], session.report.diagnostics.map(&:code)
+      assert_empty session.report.sources
     end
 
     test "is empty until something is recorded" do

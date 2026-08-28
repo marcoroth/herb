@@ -1,5 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 
+import { stripAnsiColors } from "@herb-tools/highlighter"
+
 import { RuntimePanel, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
 import { dropLeadingBlocks, resetRuntimeHighlighting } from "../src/runtime/highlighting"
 import { MAX_RUNTIME_DIAGNOSTICS, resetRuntimeReportWarnings } from "../src/runtime/report"
@@ -89,10 +91,8 @@ function waitForFix() {
   return waitFor(() => document.querySelector(".herb-dev-tools-fix") as HTMLDetailsElement | null, "the fix diff to hydrate")
 }
 
-const ANSI_ESCAPES = /\u001b\[[0-9;]*m/g
-
 function plain(element: HTMLElement) {
-  return (element.textContent ?? "").replace(ANSI_ESCAPES, "")
+  return stripAnsiColors(element.textContent ?? "")
 }
 
 function waitForExcerpt() {

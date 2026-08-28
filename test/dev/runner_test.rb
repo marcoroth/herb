@@ -5,6 +5,54 @@ require_relative "../../lib/herb/dev/runner"
 
 module Dev
   class RunnerTest < Minitest::Spec
+    class FakeWebSocket
+      attr_reader :messages #: Array[Hash[Symbol, untyped]]
+
+      def initialize
+        @messages = []
+      end
+
+      def client_count
+        1
+      end
+
+      def broadcast(message)
+        @messages << message
+      end
+    end
+
+    BROKEN = "<div>\n  <form>\n</div>\n" #: String
+
+    def broadcast_for(current_content, previous_content)
+      websocket = FakeWebSocket.new
+      parse = Herb.parse(current_content, strict: true, analyze: true)
+
+      capture_io do
+        Herb::Dev::Runner.new.send(
+          :broadcast_errors,
+          "/app/views/posts/index.html.erb",
+          "app/views/posts/index.html.erb",
+          parse,
+          current_content,
+          previous_content,
+          Set.new,
+          websocket,
+          "12:00:00",
+          "index.html.erb"
+        )
+      end
+
+      websocket.messages.first
+    end
+
+    test "sends the whole file with the errors, so the panel can highlight it" do
+      assert_equal BROKEN, broadcast_for(BROKEN, "")[:source]
+    end
+
+    test "sends the content it just read, not the content it replaced" do
+      assert_equal BROKEN, broadcast_for(BROKEN, "<div>\n</div>\n")[:source]
+    end
+
     test "text_changed is patchable" do
       diff_result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 

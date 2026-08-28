@@ -3,6 +3,10 @@
 module Herb
   class Engine
     class ErrorFormatter
+      attr_reader source: String
+
+      attr_reader filename: String | Pathname
+
       def initialize: (untyped source, untyped errors, ?untyped options) -> untyped
 
       # : () -> String

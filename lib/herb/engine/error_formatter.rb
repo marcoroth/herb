@@ -4,6 +4,9 @@
 module Herb
   class Engine
     class ErrorFormatter
+      attr_reader :source #: String
+      attr_reader :filename #: (String | Pathname)
+
       def initialize(source, errors, options = {})
         @source = source
         @errors = errors
