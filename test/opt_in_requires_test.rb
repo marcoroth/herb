@@ -10,10 +10,10 @@ class OptInRequiresTest < Minitest::Spec
     "Herb::HTML::Util" => "herb/html/util",
     "Herb::Engine" => "herb/engine",
     "Herb::Engine::Validators" => "herb/engine/validators",
-    "Herb::Engine::Visitors::Debug" => "herb/engine/visitors/debug",
-    "Herb::Engine::Visitors::Optimize" => "herb/engine/visitors/optimize",
+    "Herb::Engine::DebugVisitor" => "herb/engine/visitors/debug_visitor",
+    "Herb::Engine::OptimizeVisitor" => "herb/engine/visitors/optimize_visitor",
     "Herb::Engine::Slots::Visitor" => "herb/engine/slots/visitor",
-    "Herb::Engine::Visitors::RemoveComments" => "herb/engine/visitors/remove_comments",
+    "Herb::Engine::RemoveCommentsVisitor" => "herb/engine/visitors/remove_comments_visitor",
     "Herb::Engine::Runtime::Middleware" => "herb/engine/runtime/middleware",
   }.freeze
 

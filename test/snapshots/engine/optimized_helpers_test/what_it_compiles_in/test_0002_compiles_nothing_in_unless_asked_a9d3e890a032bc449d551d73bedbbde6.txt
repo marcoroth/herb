@@ -1,5 +1,0 @@
----
-source: "Engine::OptimizedHelpersTest::what it compiles in#test_0002_compiles nothing in unless asked"
-input: "{source: \"<%= tag.div do %>Content<% end %>\", options: {filename: \"app/views/posts/index.html.erb\", visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<div>Content</div>'.freeze

@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require "action_view"
-require "herb/engine/visitors/optimize"
+require "herb/engine/visitors/optimize_visitor"
 
 module Engine
   class OptimizedHelpersTest < Minitest::Spec
@@ -30,11 +30,11 @@ module Engine
     DEFAULT_SOURCE = "<%= tag.div do %>Content<% end %>"
 
     def compile(source = DEFAULT_SOURCE, verify: true)
-      Herb::Engine.new(source, filename: FILENAME, visitors: [Herb::Engine::Visitors::Optimize.new(verify: verify)]).src
+      Herb::Engine.new(source, filename: FILENAME, visitors: [Herb::Engine::OptimizeVisitor.new(verify: verify)]).src
     end
 
     def assert_optimized_snapshot(source = DEFAULT_SOURCE, verify: true)
-      assert_compiled_snapshot(source, filename: FILENAME, visitors: [Herb::Engine::Visitors::Optimize.new(verify: verify)])
+      assert_compiled_snapshot(source, filename: FILENAME, visitors: [Herb::Engine::OptimizeVisitor.new(verify: verify)])
     end
 
     def diagnostics_from(context, compiled = compile)

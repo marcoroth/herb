@@ -4,7 +4,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/inline_render/visitor"
-require_relative "../../../lib/herb/engine/visitors/instrumentation"
+require_relative "../../../lib/herb/engine/visitors/instrumentation_visitor"
 require_relative "../../../lib/herb/engine/component/visitor"
 require_relative "../../../lib/herb/engine/validators"
 
@@ -253,7 +253,7 @@ module Engine
     describe "what an inlined partial still reports" do
       def compiled(inline:)
         visitors = inline ? [Herb::Engine::InlineRender::Visitor.new] : []
-        visitors.push(Herb::Engine::Visitors::Instrumentation.new)
+        visitors.push(Herb::Engine::InstrumentationVisitor.new)
 
         Herb::Engine.new(
           %(<%= render "posts/card" %>),
@@ -316,7 +316,7 @@ module Engine
           project_path: PROJECT_PATH, escape: false,
           visitors: [
             Herb::Engine::InlineRender::Visitor.new,
-            Herb::Engine::Visitors::Instrumentation.new
+            Herb::Engine::InstrumentationVisitor.new
           ]
         ).src
 
@@ -334,7 +334,7 @@ module Engine
           project_path: PROJECT_PATH, escape: false,
           visitors: [
             Herb::Engine::InlineRender::Visitor.new,
-            Herb::Engine::Visitors::Instrumentation.new
+            Herb::Engine::InstrumentationVisitor.new
           ]
         ).src
 
@@ -356,7 +356,7 @@ module Engine
           project_path: PROJECT_PATH, escape: false,
           visitors: [
             Herb::Engine::InlineRender::Visitor.new,
-            Herb::Engine::Visitors::Instrumentation.new
+            Herb::Engine::InstrumentationVisitor.new
           ]
         ).src
 

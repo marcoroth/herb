@@ -211,7 +211,7 @@ module Engine
       test "optimized block trims trailing whitespace" do
         template = "<%= tag.div do %>\n  Content\n<% end %>\n"
 
-        engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::Visitors::Optimize.new])
+        engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::OptimizeVisitor.new])
         result = eval(engine.src)
 
         assert_equal "<div>\n  Content\n</div>", result

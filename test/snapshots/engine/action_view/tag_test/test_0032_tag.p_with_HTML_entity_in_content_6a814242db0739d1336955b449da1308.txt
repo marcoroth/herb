@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0032_tag.p with HTML entity in content"
-input: "{source: \"<%= tag.p \\\"&copy; 2024 Example Corp\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<p>&copy; 2024 Example Corp</p>'.freeze

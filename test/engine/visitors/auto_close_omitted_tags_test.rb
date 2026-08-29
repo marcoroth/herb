@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/auto_close_omitted_tags"
+require_relative "../../../lib/herb/engine/visitors/auto_close_omitted_tags_visitor"
 
 module Engine
   class AutoCloseOmittedTagsTest < Minitest::Spec
@@ -13,13 +13,13 @@ module Engine
       {
         escape: false,
         parser_options: { strict: false },
-        visitors: [Herb::Engine::Visitors::AutoCloseOmittedTags.new],
+        visitors: [Herb::Engine::AutoCloseOmittedTagsVisitor.new],
       }
     end
 
     test "visitor is not loaded when only requiring herb" do
       load_path = $LOAD_PATH.map { |path| "-I#{path}" }.join(" ")
-      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::Visitors::AutoCloseOmittedTags).inspect' 2>&1`
+      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::AutoCloseOmittedTagsVisitor).inspect' 2>&1`
 
       assert_equal "nil", output
     end
@@ -329,7 +329,7 @@ module Engine
     test "the visitor replaces the omitted close tag node in the AST" do
       result = Herb.parse("<ul><li>One<li>Two</ul>", strict: false)
 
-      result.value.accept(Herb::Engine::Visitors::AutoCloseOmittedTags.new)
+      result.value.accept(Herb::Engine::AutoCloseOmittedTagsVisitor.new)
 
       close_tags = []
 

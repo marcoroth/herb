@@ -1,9 +1,0 @@
----
-source: "Engine::DebugModeTest::marking which render a tag came from#test_0001_says nothing about the render unless asked"
-input: "{source: \"<li><%= link_to \\\"Abc\\\", \\\"\\\" %></li>\", options: {filename: \"app/views/posts/_card.html.erb\", visitors: [#<Herb::Engine::Visitors::Debug>, #<Herb::Engine::Visitors::Instrumentation>]}}"
----
-_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/posts/_card.html.erb"); begin 
- _buf << '<li data-herb-debug-outline-type="partial" data-herb-debug-file-name="_card.html.erb" data-herb-debug-file-relative-path="app/views/posts/_card.html.erb" data-herb-debug-file-full-path="app/views/posts/_card.html.erb"><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= link_to &quot;Abc&quot;, &quot;&quot; %&gt;" data-herb-debug-file-name="_card.html.erb" data-herb-debug-file-relative-path="app/views/posts/_card.html.erb" data-herb-debug-file-full-path="app/views/posts/_card.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="5" style="display: contents;">'.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/posts/_card.html.erb", 1, 4) {
-link_to "Abc", ""
-}).to_s; _buf << '</span></li>'.freeze; ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
-_buf.to_s

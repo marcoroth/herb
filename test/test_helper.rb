@@ -18,8 +18,8 @@ end
 require "herb/cli"
 require "herb/engine"
 require "herb/engine/validators"
-require "herb/engine/visitors/debug"
-require "herb/engine/visitors/optimize"
+require "herb/engine/visitors/debug_visitor"
+require "herb/engine/visitors/optimize_visitor"
 require "herb/engine/runtime/middleware"
 require "herb/engine/runtime/error_page"
 

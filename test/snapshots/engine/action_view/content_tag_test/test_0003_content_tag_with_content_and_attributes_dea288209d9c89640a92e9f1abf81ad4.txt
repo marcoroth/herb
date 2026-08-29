@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::ContentTagTest#test_0003_content_tag with content and attributes"
-input: "{source: \"<%= content_tag :div, \\\"Content\\\", class: \\\"example\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<div class="example">Content</div>'.freeze

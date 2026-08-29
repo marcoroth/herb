@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0007_tag.img with attributes"
-input: "{source: \"<%= tag.img src: \\\"image.png\\\", alt: \\\"Photo\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<img src="image.png" alt="Photo">'.freeze

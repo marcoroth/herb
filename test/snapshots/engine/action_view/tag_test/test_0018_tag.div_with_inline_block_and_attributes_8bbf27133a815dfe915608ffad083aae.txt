@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0018_tag.div with inline block and attributes"
-input: "{source: \"<%= tag.div(class: \\\"container\\\") { \\\"Hello\\\" } %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<div class="container">Hello</div>'.freeze

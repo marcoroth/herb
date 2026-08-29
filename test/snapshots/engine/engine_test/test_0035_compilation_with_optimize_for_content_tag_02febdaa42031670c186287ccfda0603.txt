@@ -1,5 +1,0 @@
----
-source: "Engine::EngineTest#test_0035_compilation with optimize for content_tag"
-input: "{source: \"<%= content_tag :div, \\\"Content\\\", class: \\\"box\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<div class="box">Content</div>'.freeze

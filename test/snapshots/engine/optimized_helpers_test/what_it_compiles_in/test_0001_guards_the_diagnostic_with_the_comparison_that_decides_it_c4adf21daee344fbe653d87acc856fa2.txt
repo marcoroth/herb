@@ -1,6 +1,0 @@
----
-source: "Engine::OptimizedHelpersTest::what it compiles in#test_0001_guards the diagnostic with the comparison that decides it"
-input: "{source: \"<%= tag.div do %>Content<% end %>\", options: {filename: \"app/views/posts/index.html.erb\", visitors: [#<Herb::Engine::Visitors::Optimize verify=true>]}}"
----
-_buf = ::String.new; _buf << '<div>Content</div>'.freeze; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/posts/index.html.erb", [{ message: "`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by " + method(:tag).owner.to_s, severity: :warning, code: "overwritten-helper", origin: "Herb Engine", suggestion: "Remove the override, or compile this template without `OptimizeVisitor`.", line: 1, column: 0, end_line: 1, end_column: 33 }].freeze) if respond_to?(:tag, true) && method(:tag).owner.to_s != "ActionView::Helpers::TagHelper";
-_buf.to_s

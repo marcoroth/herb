@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0017_tag.details with inline block"
-input: "{source: \"<%= tag.details { \\\"Some content\\\" } %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<details>Some content</details>'.freeze

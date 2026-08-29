@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TurboFrameTagTest#test_0003_turbo_frame_tag with src"
-input: "{source: \"<%= turbo_frame_tag \\\"tray\\\", src: \\\"/path\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<turbo-frame id="tray" src="/path"></turbo-frame>'.freeze

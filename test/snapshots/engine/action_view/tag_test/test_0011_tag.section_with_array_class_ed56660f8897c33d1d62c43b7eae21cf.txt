@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0011_tag.section with array class"
-input: "{source: \"<%= tag.section class: [\\\"kitties\\\", \\\"puppies\\\"] %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<section class="kitties puppies"></section>'.freeze

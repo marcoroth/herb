@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TernaryConditionalTest#test_0007_ternary with string literals inside an attribute value"
-input: "{source: \"<div class=\\\"<%= active ? \\\"on\\\" : \\\"off\\\" %>\\\">Body</div>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>], locals: {active: true}}}"
----
-_buf = ::String.new; _buf << '<div class="'.freeze; if active; _buf << 'on'.freeze; else; _buf << 'off'.freeze; end; _buf << '">Body</div>'.freeze;
-_buf.to_s

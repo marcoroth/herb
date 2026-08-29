@@ -285,19 +285,19 @@ module Engine
     end
 
     test "compilation with optimize for tag helper" do
-      assert_compiled_snapshot('<%= tag.div class: "container" do %>Content<% end %>', visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot('<%= tag.div class: "container" do %>Content<% end %>', visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation with optimize for void element" do
-      assert_compiled_snapshot("<%= tag.br %>", visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot("<%= tag.br %>", visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation with optimize for tag with data attributes" do
-      assert_compiled_snapshot('<%= tag.div data: { controller: "content", count: 42 } %>', visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot('<%= tag.div data: { controller: "content", count: 42 } %>', visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation with optimize for nested tag helpers" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::OptimizeVisitor.new])
         <%= tag.div class: "outer" do %>
           <%= tag.span "Inner" %>
         <% end %>
@@ -305,19 +305,19 @@ module Engine
     end
 
     test "compilation with optimize for link_to" do
-      assert_compiled_snapshot('<%= link_to "Home", "/" %>', visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot('<%= link_to "Home", "/" %>', visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation with optimize for image_tag" do
-      assert_compiled_snapshot('<%= image_tag "photo.jpg", alt: "Photo" %>', visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot('<%= image_tag "photo.jpg", alt: "Photo" %>', visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation with optimize for content_tag" do
-      assert_compiled_snapshot('<%= content_tag :div, "Content", class: "box" %>', visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot('<%= content_tag :div, "Content", class: "box" %>', visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation with optimize preserves non-helper ERB" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::OptimizeVisitor.new])
         <h1><%= title %></h1>
         <%= tag.div class: "content" do %>
           <p><%= body %></p>
@@ -326,14 +326,14 @@ module Engine
     end
 
     test "compilation with optimize for tag with dynamic attribute" do
-      assert_compiled_snapshot("<%= tag.div class: css_class %>", visitors: [Herb::Engine::Visitors::Optimize.new])
+      assert_compiled_snapshot("<%= tag.div class: css_class %>", visitors: [Herb::Engine::OptimizeVisitor.new])
     end
 
     test "compilation without optimize leaves tag helpers as Ruby calls" do
       template = '<%= tag.div class: "container" do %>Content<% end %>'
 
       without_optimize = Herb::Engine.new(template).src
-      with_optimize = Herb::Engine.new(template, visitors: [Herb::Engine::Visitors::Optimize.new]).src
+      with_optimize = Herb::Engine.new(template, visitors: [Herb::Engine::OptimizeVisitor.new]).src
 
       refute_equal without_optimize, with_optimize
       assert_includes without_optimize, "tag.div"

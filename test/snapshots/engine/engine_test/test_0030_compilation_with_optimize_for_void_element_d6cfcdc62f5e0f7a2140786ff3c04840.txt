@@ -1,5 +1,0 @@
----
-source: "Engine::EngineTest#test_0030_compilation with optimize for void element"
-input: "{source: \"<%= tag.br %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<br>'.freeze

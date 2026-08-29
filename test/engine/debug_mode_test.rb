@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
-require_relative "../../lib/herb/engine/visitors/instrumentation"
+require_relative "../../lib/herb/engine/visitors/instrumentation_visitor"
 
 module Engine
   class DebugModeTest < Minitest::Spec
@@ -39,31 +39,31 @@ module Engine
     test "debug mode enabled" do
       template = "<h1>Hello <%= @name %>!</h1>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "debug mode options" do
       template = "<div>Test</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/views/test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/test.html.erb")
     end
 
     test "visible erb expression gets debug span" do
       template = "<h1>Welcome <%= @user.name %>!</h1>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "multiple visible erb expressions get debug spans" do
       template = "<h1>Hello <%= @name %> on <%= Date.today %>!</h1>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "attribute erb expressions do NOT get debug spans" do
       template = '<div class="<%= css_class %>" data-id="<%= @user.id %>">Content</div>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "script content erb expressions do NOT get debug spans" do
@@ -74,7 +74,7 @@ module Engine
         </script>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "style content erb expressions do NOT get debug spans" do
@@ -85,37 +85,37 @@ module Engine
         </style>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "render calls get outline boundaries" do
       template = '<%= render "shared/header" %>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "partial render calls get partial outline boundaries" do
       template = '<%= render partial: "user_card", locals: { user: @user } %>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "top-level element with only ERB output as child" do
       template = "<h1><%= hello %></h1>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "top-level element with only ERB output as child for partial" do
       template = "<h1><%= hello %></h1>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "_test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "_test.html.erb")
     end
 
     test "collection render calls get outline boundaries" do
       template = "<%= render @posts %>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "erb control flow does NOT get debug markup" do
@@ -127,7 +127,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "erb comments do NOT get debug markup" do
@@ -137,7 +137,7 @@ module Engine
         <p>More content</p>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "block expressions get debug spans" do
@@ -147,7 +147,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "render block expressions get outline boundaries" do
@@ -157,7 +157,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "mixed content and attributes" do
@@ -168,7 +168,7 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "nested erb expressions with render calls" do
@@ -182,25 +182,25 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/views/welcome.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/welcome.html.erb")
     end
 
     test "debug mode with escape enabled" do
       template = "<p>User input: <%= user_content %></p>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], escape: true, filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], escape: true, filename: "test.html.erb")
     end
 
     test "debug mode with escape disabled" do
       template = "<p>Safe content: <%= safe_html %></p>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], escape: false, filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], escape: false, filename: "test.html.erb")
     end
 
     test "erb yield expressions get debug spans" do
       template = "<div><%= yield :sidebar %></div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "layout.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "layout.erb")
     end
 
     test "complex nested template with all features" do
@@ -233,7 +233,7 @@ module Engine
         </html>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/views/layouts/application.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/layouts/application.html.erb")
     end
 
     test "zero overhead when debug disabled" do
@@ -248,43 +248,43 @@ module Engine
     test "turbo_frame_tag does NOT get erb-output outline type" do
       template = '<%= turbo_frame_tag "posts" do %><p>Content</p><% end %>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "content_for with block does NOT get erb-output outline type" do
       template = "<%= content_for :sidebar do %><div>Sidebar content</div><% end %>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "content_tag with block does NOT get erb-output outline type" do
       template = '<%= content_tag :div, class: "wrapper" do %>Content<% end %>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "link_to with block does NOT get erb-output outline type" do
       template = '<%= link_to "/users" do %>View Users<% end %>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "tag helper with block does NOT get erb-output outline type" do
       template = '<%= tag.div class: "container" do %>Content<% end %>'
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "form_with block does NOT get erb-output outline type" do
       template = "<%= form_with model: @user do |f| %>Form content<% end %>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "yield expressions get NOT erb-output outline type" do
       template = "<h1><%= yield :title %></h1>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "layout.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "layout.html.erb")
     end
 
     test "if with elements" do
@@ -305,19 +305,19 @@ module Engine
         </div>
       HTML
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "layout.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "layout.html.erb")
     end
 
     test "gets view and erb output view type for just output tag" do
-      assert_compiled_snapshot("<%= hello %>", visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot("<%= hello %>", visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "puts debug span on parent if HTMLTextContent is only spaces" do
-      assert_compiled_snapshot(" <h1>           <%= hello %>              </h1>", { visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb" })
+      assert_compiled_snapshot(" <h1>           <%= hello %>              </h1>", { visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb" })
     end
 
     test "puts debug span on parent if HTMLTextContent is only whitespace" do
-      assert_compiled_snapshot(<<~HTML, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(<<~HTML, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
         <h1>
           <%= hello %>
         </h1>
@@ -325,14 +325,14 @@ module Engine
     end
 
     test "mulitple top-level elements should be wrapped in type=view div" do
-      assert_compiled_snapshot(<<~HTML, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(<<~HTML, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
         <h1>Hello</h1>
         <p>World</p>
       HTML
     end
 
     test "non HTML-element top-level node should be wrapped in type=view div" do
-      assert_compiled_snapshot(<<~HTML, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(<<~HTML, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
         <%= content_tag :div do %>
           Content
         <% end %>
@@ -340,7 +340,7 @@ module Engine
     end
 
     test "head content erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <head>
           <title><%= @page_title %></title>
           <meta name="description" content="<%= @meta_description %>">
@@ -349,7 +349,7 @@ module Engine
     end
 
     test "textarea content erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <textarea>
           <%= @user_input %>
           Default text with <%= @placeholder %>
@@ -358,7 +358,7 @@ module Engine
     end
 
     test "pre content erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <pre>
           Code block:
           <%= @code_sample %>
@@ -369,7 +369,7 @@ module Engine
     end
 
     test "nested excluded contexts do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <div>
           <script>
             var nested = <%= @nested_value %>;
@@ -382,14 +382,14 @@ module Engine
     end
 
     test "html comment erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <!-- Comment with <%= @dynamic_content %> -->
         <!-- Another comment: <%= @more_content %> -->
       ERB
     end
 
     test "html doctype erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "<%= @dtd_url %>">
         <!DOCTYPE html <%= @some_attr %>>
       ERB
@@ -407,11 +407,11 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "regular div content still gets debug spans after excluded context tests" do
-      assert_compiled_snapshot("<div><%= @content %></div>", visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot("<div><%= @content %></div>", visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "javascript_tag content erb expressions do NOT get debug spans" do
@@ -422,7 +422,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "svg content erb expressions do NOT get debug spans" do
@@ -433,7 +433,7 @@ module Engine
         </svg>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "svg with defs and style erb expressions do NOT get debug spans" do
@@ -450,7 +450,7 @@ module Engine
         </svg>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "nested svg inside div erb expressions do NOT get debug spans inside svg" do
@@ -465,7 +465,7 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "math content erb expressions do NOT get debug spans" do
@@ -479,7 +479,7 @@ module Engine
         </math>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "nested math inside div erb expressions do NOT get debug spans inside math" do
@@ -495,79 +495,79 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "test.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "test.html.erb")
     end
 
     test "sidecar component displays component name instead of component.html.erb" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/example/component.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/example/component.html.erb")
     end
 
     test "sidecar component with snake_case name converts to PascalCase" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/user_card/component.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/user_card/component.html.erb")
     end
 
     test "sidecar component with nested namespace" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/admin/user_card/component.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/admin/user_card/component.html.erb")
     end
 
     test "sidecar component with deeply nested namespace" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/admin/settings/user_card/component.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/admin/settings/user_card/component.html.erb")
     end
 
     test "regular component file converts to PascalCase" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/button_component.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/button_component.html.erb")
     end
 
     test "sidecar component with erb extension" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/example/component.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/example/component.erb")
     end
 
     test "sidecar component with herb extension" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/example/component.herb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/example/component.herb")
     end
 
     test "sidecar component with html.herb extension" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/example/component.html.herb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/example/component.html.herb")
     end
 
     test "namespaced regular component includes namespace" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/components/ui/avatar_component.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/components/ui/avatar_component.html.erb")
     end
 
     test "regular view keeps original basename" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/views/users/show.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/users/show.html.erb")
     end
 
     test "partial keeps original basename with underscore" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/views/users/_card.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/users/_card.html.erb")
     end
 
     test "partial in components subfolder is not treated as component" do
       template = "<div>Hello</div>"
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new], filename: "app/views/page/components/_dropdowns.html.erb")
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/page/components/_dropdowns.html.erb")
     end
 
     test "block without debug disable comment content erb expressions get debug spans" do
@@ -577,7 +577,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "block with debug disable comment content erb expressions do NOT get debug spans" do
@@ -587,7 +587,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "block with debug disable comment suppresses debug spans for multiple expressions" do
@@ -598,7 +598,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "block with debug disable comment suppresses debug spans in nested html" do
@@ -610,7 +610,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "debug disable comment works on non-content_for blocks" do
@@ -620,7 +620,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "debug disable comment with extra whitespace" do
@@ -630,11 +630,11 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "standalone title content erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::Visitors::Debug.new])
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
         <title><%= @page_title %></title>
       ERB
     end
@@ -643,7 +643,7 @@ module Engine
       compiled = Herb::Engine.new(
         "<div>Hello</div>",
         filename: "app/views/test.html.erb",
-        visitors: [ZeroLocationInjector.new, Herb::Engine::Visitors::Debug.new]
+        visitors: [ZeroLocationInjector.new, Herb::Engine::DebugVisitor.new]
       ).src
 
       assert_includes compiled, %(data-herb-debug-line="1")
@@ -653,8 +653,8 @@ module Engine
 
     describe "marking which render a tag came from" do
       def visitors_for(node:, instrument: true)
-        visitors = [Herb::Engine::Visitors::Debug.new(node: node)]
-        visitors << Herb::Engine::Visitors::Instrumentation.new if instrument
+        visitors = [Herb::Engine::DebugVisitor.new(node: node)]
+        visitors << Herb::Engine::InstrumentationVisitor.new if instrument
 
         visitors
       end

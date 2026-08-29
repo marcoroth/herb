@@ -1,6 +1,0 @@
----
-source: "Engine::AutoCloseOmittedTagsTest#test_0004_multiple p elements without closing tags - compilation"
-input: "{source: \"<p>First<p>Second<p>Third\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::Visitors::AutoCloseOmittedTags>]}}"
----
-_buf = ::String.new; _buf << '<p>First</p><p>Second</p><p>Third</p>'.freeze;
-_buf.to_s

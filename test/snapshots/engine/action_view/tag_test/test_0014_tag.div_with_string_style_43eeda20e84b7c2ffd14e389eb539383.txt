@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0014_tag.div with string style"
-input: "{source: \"<%= tag.div style: \\\"color: red\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<div style="color: red"></div>'.freeze

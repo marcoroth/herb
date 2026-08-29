@@ -60,7 +60,7 @@ module Engine
         assert_compiled_snapshot(
           '<%= active ? "5 > 3" : "a & b" %>',
           escape: true,
-          visitors: [Herb::Engine::Visitors::Optimize.new]
+          visitors: [Herb::Engine::OptimizeVisitor.new]
         )
       end
     end

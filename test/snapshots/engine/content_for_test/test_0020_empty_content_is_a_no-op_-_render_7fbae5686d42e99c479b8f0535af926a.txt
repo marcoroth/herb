@@ -1,5 +1,0 @@
----
-source: "Engine::ContentForTest#test_0020_empty content is a no-op - render"
-input: "{source: \"<section>Content</section>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::Visitors::ContentFor tag_name=\"section\" attributes={} content=\"\">]}}"
----
-<section>Content</section>

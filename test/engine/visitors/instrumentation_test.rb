@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
-require "herb/engine/visitors/instrumentation"
+require "herb/engine/visitors/instrumentation_visitor"
 
 module Engine
   class InstrumentationTest < Minitest::Spec
@@ -28,11 +28,11 @@ module Engine
     }.freeze
 
     def instrumented(source)
-      assert_compiled_snapshot(source, filename: FILENAME, visitors: [Herb::Engine::Visitors::Instrumentation.new])
+      assert_compiled_snapshot(source, filename: FILENAME, visitors: [Herb::Engine::InstrumentationVisitor.new])
     end
 
     def compile(source, instrument: true)
-      visitors = instrument ? [Herb::Engine::Visitors::Instrumentation.new] : []
+      visitors = instrument ? [Herb::Engine::InstrumentationVisitor.new] : []
 
       Herb::Engine.new(source, filename: FILENAME, visitors: visitors).src
     end

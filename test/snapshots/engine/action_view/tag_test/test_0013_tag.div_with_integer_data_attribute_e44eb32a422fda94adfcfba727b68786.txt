@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0013_tag.div with integer data attribute"
-input: "{source: \"<%= tag.div data: { count: 42 } %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<div data-count="42"></div>'.freeze

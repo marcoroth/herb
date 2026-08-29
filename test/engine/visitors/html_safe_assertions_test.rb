@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/html_safe_assertions"
+require_relative "../../../lib/herb/engine/visitors/html_safe_assertions_visitor"
 
 module Engine
   class HTMLSafeAssertionsTest < Minitest::Spec
@@ -12,7 +12,7 @@ module Engine
     SCRIPT = "<script>alert(1)</script>"
 
     def assertion_options(visitor_options = {})
-      visitor = Herb::Engine::Visitors::HTMLSafeAssertions.new(file_path: "app/views/test.html.erb", **visitor_options)
+      visitor = Herb::Engine::HTMLSafeAssertionsVisitor.new(file_path: "app/views/test.html.erb", **visitor_options)
 
       {
         escape: false,
@@ -41,7 +41,7 @@ module Engine
 
     test "visitor is not loaded when only requiring herb" do
       load_path = $LOAD_PATH.map { |path| "-I#{path}" }.join(" ")
-      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::Visitors::HTMLSafeAssertions).inspect' 2>&1`
+      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::HTMLSafeAssertionsVisitor).inspect' 2>&1`
 
       assert_equal "nil", output
     end
@@ -93,8 +93,8 @@ module Engine
     test "every call is wrapped once when the visitor is passed twice" do
       template = "<div><%= a.html_safe %></div>"
       visitors = [
-        Herb::Engine::Visitors::HTMLSafeAssertions.new,
-        Herb::Engine::Visitors::HTMLSafeAssertions.new
+        Herb::Engine::HTMLSafeAssertionsVisitor.new,
+        Herb::Engine::HTMLSafeAssertionsVisitor.new
       ]
 
       engine = Herb::Engine.new(template, escape: false, visitors: visitors)
@@ -109,7 +109,7 @@ module Engine
         template,
         escape: false,
         parser_options: { strict: false },
-        visitors: [Herb::Engine::Visitors::HTMLSafeAssertions.new]
+        visitors: [Herb::Engine::HTMLSafeAssertionsVisitor.new]
       )
 
       assert_includes engine.src, "HTMLSafeAssertions.check"
@@ -118,8 +118,8 @@ module Engine
     test "a document parsed without the prism_program option raises" do
       document = Herb.parse("<div><%= @user.bio.html_safe %></div>").value
 
-      error = assert_raises(Herb::Engine::Visitors::HTMLSafeAssertions::MissingPrismProgramError) do
-        document.accept(Herb::Engine::Visitors::HTMLSafeAssertions.new)
+      error = assert_raises(Herb::Engine::HTMLSafeAssertionsVisitor::MissingPrismProgramError) do
+        document.accept(Herb::Engine::HTMLSafeAssertionsVisitor.new)
       end
 
       assert_includes error.message, "`prism_program` parser option"
@@ -134,7 +134,7 @@ module Engine
     test "the file is taken from the compiled template when no file path is given" do
       template = "<div><%= @user.bio.html_safe %></div>"
 
-      engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::Visitors::HTMLSafeAssertions.new])
+      engine = Herb::Engine.new(template, escape: false, visitors: [Herb::Engine::HTMLSafeAssertionsVisitor.new])
 
       assert_includes engine.src, "file: __FILE__"
     end
@@ -296,7 +296,7 @@ module Engine
 
       cases.each do |name, (template, locals)|
         without = outcome(template, locals, [])
-        with = outcome(template, locals, [Herb::Engine::Visitors::HTMLSafeAssertions.new])
+        with = outcome(template, locals, [Herb::Engine::HTMLSafeAssertionsVisitor.new])
 
         assert_equal without, with, name
       end
@@ -304,7 +304,7 @@ module Engine
 
     test "unknown mode raises" do
       error = assert_raises(ArgumentError) do
-        Herb::Engine::Visitors::HTMLSafeAssertions.new(mode: :overlay)
+        Herb::Engine::HTMLSafeAssertionsVisitor.new(mode: :overlay)
       end
 
       assert_equal "mode must be one of :raise, :warn, got :overlay", error.message
@@ -312,7 +312,7 @@ module Engine
 
     test "unknown check raises" do
       error = assert_raises(ArgumentError) do
-        Herb::Engine::Visitors::HTMLSafeAssertions.new(ignore: [:scripts])
+        Herb::Engine::HTMLSafeAssertionsVisitor.new(ignore: [:scripts])
       end
 
       assert_includes error.message, "unknown check :scripts"
@@ -322,7 +322,7 @@ module Engine
 
     describe "which file the assertion names" do
       def file_argument(**properties)
-        visitor = Herb::Engine::Visitors::HTMLSafeAssertions.new(**properties.delete(:visitor).to_h)
+        visitor = Herb::Engine::HTMLSafeAssertionsVisitor.new(**properties.delete(:visitor).to_h)
         engine = Herb::Engine.new(
           HTML_SAFE_TEMPLATE, parser_options: { strict: false }, visitors: [visitor], **properties
         )

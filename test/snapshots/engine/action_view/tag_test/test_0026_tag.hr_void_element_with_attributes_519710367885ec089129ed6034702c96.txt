@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0026_tag.hr void element with attributes"
-input: "{source: \"<%= tag.hr class: \\\"divider\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<hr class="divider">'.freeze

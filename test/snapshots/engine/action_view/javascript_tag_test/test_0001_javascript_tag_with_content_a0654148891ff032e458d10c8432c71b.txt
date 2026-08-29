@@ -1,9 +1,0 @@
----
-source: "Engine::ActionView::JavascriptTagTest#test_0001_javascript_tag with content"
-input: "{source: \"<%= javascript_tag \\\"alert('Hello')\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<script>
-//<![CDATA[
-alert(\'Hello\')
-//]]>
-</script>'.freeze

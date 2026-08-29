@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::ContentTagTest#test_0005_content_tag br void element"
-input: "{source: \"<%= content_tag :br %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<br />'.freeze

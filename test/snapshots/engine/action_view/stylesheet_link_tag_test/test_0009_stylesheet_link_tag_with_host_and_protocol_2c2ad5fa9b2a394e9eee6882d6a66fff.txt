@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::StylesheetLinkTagTest#test_0009_stylesheet_link_tag with host and protocol"
-input: "{source: \"<%= stylesheet_link_tag \\\"style\\\", host: \\\"localhost\\\", protocol: \\\"https\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("style", host: "localhost", protocol: "https"))); _buf << '" />'.freeze;
-_buf.to_s

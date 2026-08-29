@@ -1,9 +1,0 @@
----
-source: "Engine::RemoveCommentsTest#test_0015_erb comment - render"
-input: "{source: \"<div>\\n  <%# a comment %>\\n  <% # another comment %>\\n  <p>Content</p>\\n</div>\\n\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::Visitors::RemoveComments>]}}"
----
-<div>
-  
-  
-  <p>Content</p>
-</div>

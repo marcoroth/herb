@@ -1,7 +1,0 @@
----
-source: "Engine::ActionView::PostfixConditionalTest#test_0006_string literal with postfix if condition"
-input: "{source: \"<%= \\\"Notice\\\" if condition %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>], locals: {condition: true}}}"
----
-_buf = ::String.new; if condition 
- _buf << 'Notice'.freeze; end;
-_buf.to_s

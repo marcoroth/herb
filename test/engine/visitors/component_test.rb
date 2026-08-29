@@ -100,7 +100,7 @@ module Engine
       html = '<TestComponent name="test" />'
 
       component_visitor = Herb::Engine::Component::Visitor.new
-      debug_visitor = Herb::Engine::Visitors::Debug.new
+      debug_visitor = Herb::Engine::DebugVisitor.new
 
       visitors = [component_visitor, debug_visitor]
 

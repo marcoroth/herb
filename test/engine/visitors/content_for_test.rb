@@ -3,8 +3,8 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/auto_close_omitted_tags"
-require_relative "../../../lib/herb/engine/visitors/content_for"
+require_relative "../../../lib/herb/engine/visitors/auto_close_omitted_tags_visitor"
+require_relative "../../../lib/herb/engine/visitors/content_for_visitor"
 
 module Engine
   class ContentForTest < Minitest::Spec
@@ -16,7 +16,7 @@ module Engine
       {
         escape: false,
         parser_options: { strict: false },
-        visitors: [Herb::Engine::Visitors::ContentFor.new(content, tag_name: tag_name, attributes: attributes)],
+        visitors: [Herb::Engine::ContentForVisitor.new(content, tag_name: tag_name, attributes: attributes)],
       }
     end
 
@@ -25,15 +25,15 @@ module Engine
         escape: false,
         parser_options: { strict: false },
         visitors: [
-          Herb::Engine::Visitors::ContentFor.new(%(<meta name="first" content="1">), tag_name: "head"),
-          Herb::Engine::Visitors::ContentFor.new(%(<meta name="second" content="2">), tag_name: "head")
+          Herb::Engine::ContentForVisitor.new(%(<meta name="first" content="1">), tag_name: "head"),
+          Herb::Engine::ContentForVisitor.new(%(<meta name="second" content="2">), tag_name: "head")
         ],
       }
     end
 
     test "visitor is not loaded when only requiring herb" do
       load_path = $LOAD_PATH.map { |path| "-I#{path}" }.join(" ")
-      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::Visitors::ContentFor).inspect' 2>&1`
+      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::ContentForVisitor).inspect' 2>&1`
 
       assert_equal "nil", output
     end
@@ -212,15 +212,15 @@ module Engine
       assert_evaluated_snapshot(template, {}, two_visitor_options)
     end
 
-    test "composes with Visitors::AutoCloseOmittedTags - render" do
+    test "composes with AutoCloseOmittedTagsVisitor - render" do
       template = "<head><title>Hello</title></head><ul><li>One<li>Two</ul>"
 
       assert_evaluated_snapshot(template, {}, {
         escape: false,
         parser_options: { strict: false },
         visitors: [
-          Herb::Engine::Visitors::ContentFor.new(%(<meta name="herb" content="1">), tag_name: "head"),
-          Herb::Engine::Visitors::AutoCloseOmittedTags.new
+          Herb::Engine::ContentForVisitor.new(%(<meta name="herb" content="1">), tag_name: "head"),
+          Herb::Engine::AutoCloseOmittedTagsVisitor.new
         ],
       })
     end

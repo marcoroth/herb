@@ -1,6 +1,0 @@
----
-source: "Engine::ContentForTest#test_0002_content is appended to an arbitrary tag - compilation"
-input: "{source: \"<body><h1>Title</h1></body>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::Visitors::ContentFor tag_name=\"body\" attributes={} content=\"<p>Appended</p>\">]}}"
----
-_buf = ::String.new; _buf << '<body><h1>Title</h1>'.freeze; _buf << ("<p>Appended</p>".html_safe).to_s; _buf << '</body>'.freeze;
-_buf.to_s

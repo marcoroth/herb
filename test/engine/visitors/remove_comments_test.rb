@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/visitors/remove_comments"
+require_relative "../../../lib/herb/engine/visitors/remove_comments_visitor"
 require_relative "../../../lib/herb/engine/slots/visitor"
 
 module Engine
@@ -13,13 +13,13 @@ module Engine
     def remove_comments_options
       {
         escape: false,
-        visitors: [Herb::Engine::Visitors::RemoveComments.new],
+        visitors: [Herb::Engine::RemoveCommentsVisitor.new],
       }
     end
 
     test "visitor is not loaded when only requiring herb" do
       load_path = $LOAD_PATH.map { |path| "-I#{path}" }.join(" ")
-      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::Visitors::RemoveComments).inspect' 2>&1`
+      output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::RemoveCommentsVisitor).inspect' 2>&1`
 
       assert_equal "nil", output
     end
@@ -230,7 +230,7 @@ module Engine
 
       result = Herb.parse(template)
 
-      result.value.accept(Herb::Engine::Visitors::RemoveComments.new)
+      result.value.accept(Herb::Engine::RemoveCommentsVisitor.new)
 
       contents = []
 
@@ -267,7 +267,7 @@ module Engine
         { "@name" => "Marco" },
         {
           filename: "app/views/test.html.erb",
-          visitors: [Herb::Engine::Visitors::RemoveComments.new, Herb::Engine::Slots::Visitor.new],
+          visitors: [Herb::Engine::RemoveCommentsVisitor.new, Herb::Engine::Slots::Visitor.new],
         }
       )
     end
@@ -280,7 +280,7 @@ module Engine
         { "@name" => "Marco" },
         {
           filename: "app/views/test.html.erb",
-          visitors: [Herb::Engine::Slots::Visitor.new, Herb::Engine::Visitors::RemoveComments.new],
+          visitors: [Herb::Engine::Slots::Visitor.new, Herb::Engine::RemoveCommentsVisitor.new],
         }
       )
     end
@@ -305,7 +305,7 @@ module Engine
 
       result = Herb.parse(template)
 
-      result.value.accept(Herb::Engine::Visitors::RemoveComments.new)
+      result.value.accept(Herb::Engine::RemoveCommentsVisitor.new)
 
       comments = []
 

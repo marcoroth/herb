@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0008_tag.input with boolean attribute"
-input: "{source: \"<%= tag.input type: \\\"text\\\", disabled: true %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<input type="text" disabled>'.freeze

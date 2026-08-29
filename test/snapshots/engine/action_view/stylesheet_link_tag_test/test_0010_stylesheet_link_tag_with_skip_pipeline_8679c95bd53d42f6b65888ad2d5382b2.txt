@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::StylesheetLinkTagTest#test_0010_stylesheet_link_tag with skip_pipeline"
-input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", skip_pipeline: true %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application", skip_pipeline: true))); _buf << '" />'.freeze;
-_buf.to_s

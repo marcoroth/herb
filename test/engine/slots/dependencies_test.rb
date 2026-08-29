@@ -2,7 +2,7 @@
 
 require_relative "../../test_helper"
 require_relative "../../../lib/herb/engine/slots/dependencies"
-require_relative "../../../lib/herb/engine/visitors/debug"
+require_relative "../../../lib/herb/engine/visitors/debug_visitor"
 
 require "tmpdir"
 require "fileutils"
@@ -90,7 +90,7 @@ module Engine
 
         compile = lambda { |source, file|
           visitor = Herb::Engine::Slots::Visitor.new(mark: false)
-          Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Debug.new, visitor], filename: file)
+          Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
           visitor
         }
 
@@ -109,11 +109,11 @@ module Engine
         File.write(path, template)
 
         marker = Herb::Engine::Slots::Visitor.new
-        Herb::Engine.new(template, visitors: [Herb::Engine::Visitors::Debug.new, marker], filename: path)
+        Herb::Engine.new(template, visitors: [Herb::Engine::DebugVisitor.new, marker], filename: path)
 
         compile = lambda { |source, file|
           visitor = Herb::Engine::Slots::Visitor.new
-          Herb::Engine.new(source, visitors: [Herb::Engine::Visitors::Debug.new, visitor], filename: file)
+          Herb::Engine.new(source, visitors: [Herb::Engine::DebugVisitor.new, visitor], filename: file)
           visitor
         }
 

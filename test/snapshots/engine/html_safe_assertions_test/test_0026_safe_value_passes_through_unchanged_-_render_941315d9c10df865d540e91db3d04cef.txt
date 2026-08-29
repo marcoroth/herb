@@ -1,5 +1,0 @@
----
-source: "Engine::HTMLSafeAssertionsTest#test_0026_safe value passes through unchanged - render"
-input: "{source: \"<div><%= bio.html_safe %></div>\", locals: {bio: \"<p>About me</p>\"}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::Visitors::HTMLSafeAssertions mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
----
-<div><p>About me</p></div>

@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::StylesheetLinkTagTest#test_0005_stylesheet_link_tag with media all"
-input: "{source: \"<%= stylesheet_link_tag \\\"style\\\", media: \\\"all\\\" %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("style"))); _buf << '" media="all" />'.freeze;
-_buf.to_s

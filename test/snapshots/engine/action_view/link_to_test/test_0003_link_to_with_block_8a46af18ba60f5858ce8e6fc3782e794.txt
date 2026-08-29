@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::LinkToTest#test_0003_link_to with block"
-input: "{source: \"<%= link_to \\\"#\\\" do %>Click me<% end %>\", options: {visitors: [#<Herb::Engine::Visitors::Optimize>]}}"
----
-'<a href="#">Click me</a>'.freeze
