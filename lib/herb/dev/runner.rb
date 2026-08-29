@@ -418,7 +418,7 @@ module Herb
           return node.content&.to_s
         end
 
-        if node.is_a?(Herb::AST::ERBContentNode)
+        if node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::HerbDirectiveNode) || node.is_a?(Herb::AST::HerbStateDirectiveNode)
           return node.content&.value&.to_s
         end
 

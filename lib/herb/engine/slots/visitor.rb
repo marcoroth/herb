@@ -41,7 +41,7 @@ module Herb
         include Diagnostics
 
         recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
-        required_parser_option action_view_helpers: true, track_locations: true
+        required_parser_option action_view_helpers: true, track_locations: true, herb_directives: true
         experimental "Slots are experimental. Their markers, payload and client API may change."
 
         attr_accessor :bufvar #: String
@@ -1038,11 +1038,12 @@ module Herb
         #: (Array[untyped]) -> String?
         def key_directive_in(body)
           body.each do |child|
-            next unless child.is_a?(Herb::AST::ERBContentNode)
-            next unless child.tag_opening&.value == "<%#"
+            next unless child.is_a?(Herb::AST::HerbDirectiveNode)
+            next unless child.key&.value == "key"
 
-            match = child.content&.value.to_s.strip.match(/\Aherb:key\s+(?<expression>.+)\z/)
-            return match[:expression].strip if match
+            expression = child.arguments&.value.to_s.strip
+
+            return expression unless expression.empty?
           end
 
           nil

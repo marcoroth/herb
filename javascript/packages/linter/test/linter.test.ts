@@ -995,6 +995,97 @@ describe("@herb-tools/linter", () => {
       expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
     })
 
+    test("`all: severity` applies to rules without an explicit severity", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: "warning" }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(2)
+      expect(lintResult.offenses.map(offense => offense.severity)).toEqual(["warning", "warning"])
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(2)
+    })
+
+    test("an explicit rule severity wins over `all: severity`", () => {
+      const html = '<DIV id=\'1\'>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: "warning" },
+            "html-attribute-double-quotes": { severity: "info" }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule, HTMLAttributeDoubleQuotesRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(2)
+      expect(lintResult.info).toBe(1)
+    })
+
+    test("`all: severity` overrides a rule's own default severity", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: "hint" }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses.map(offense => offense.severity)).toEqual(["hint", "hint"])
+      expect(lintResult.hints).toBe(2)
+    })
+
+    test("`all: severity` supports the editor and cli split form", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: { editor: "hint", cli: "error" } }
+          }
+        }
+      })
+
+      const cliLinter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+
+      const editorLinter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      editorLinter.mode = "editor"
+
+      expect(cliLinter.lint(html).offenses.map(offense => offense.severity)).toEqual(["error", "error"])
+      expect(editorLinter.lint(html).offenses.map(offense => offense.severity)).toEqual(["hint", "hint"])
+    })
+
+    test("rules keep their own default severity when `all` sets only `enabled`", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { enabled: true }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses.map(offense => offense.severity)).toEqual(["error", "error"])
+      expect(lintResult.errors).toBe(2)
+    })
+
     test("`--all-rules` takes precedence over the `all` pseudo rule", () => {
       const { enabled } = Linter.filterRulesByConfig(
         [EnabledRule, DisabledRule],

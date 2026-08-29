@@ -1,7 +1,5 @@
 import { createRequire } from "module"
 
-// Bundle the CLI entry point into a single CommonJS file.
-// Exclude Node built-in so they remain as externals.
 const external = [
   "path",
   "url",
@@ -64,6 +62,28 @@ export default [
     input: "src/index.ts",
     output: {
       file: "dist/index.cjs",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+  },
+
+  // CLI library exports (ESM)
+  {
+    input: "src/cli.ts",
+    output: {
+      file: "dist/cli.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external: isExternal,
+  },
+
+  // CLI library exports (CommonJS)
+  {
+    input: "src/cli.ts",
+    output: {
+      file: "dist/cli.cjs",
       format: "cjs",
       sourcemap: true,
     },

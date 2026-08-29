@@ -26,7 +26,7 @@ module Herb
         class Unprintable < StandardError
         end
 
-        SKIPPED_PREFIXES = ["AST_ERB_", "AST_RUBY_"].freeze #: Array[String]
+        SKIPPED_PREFIXES = ["AST_ERB_", "AST_RUBY_", "AST_HERB_"].freeze #: Array[String]
 
         #: (Hash[untyped, Annotation], ?Hash[untyped, Array[Annotation]]) -> void
         def initialize(standing, anchored = {})

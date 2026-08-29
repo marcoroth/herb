@@ -1,9 +1,3 @@
-# Offenses that predate the cops listed below.
-#
-# Burn this list down instead of adding to it. Once a file no longer trips the
-# cop, drop it from the Exclude list.
-
-# Offense count: 316
 Herb/IncludesAssertion:
   Exclude:
     - "test/analysis/partial_resolution_test.rb"

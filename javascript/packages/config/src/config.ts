@@ -6,7 +6,7 @@ import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
 import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
-import { promises as fs } from "fs"
+import { promises as fs, accessSync, readFileSync, readdirSync, statSync } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
@@ -603,7 +603,7 @@ export class Config {
         configPath = this.configPathFromProjectPath(pathOrFile)
       }
 
-      require('fs').statSync(configPath)
+      statSync(configPath)
 
       return true
     } catch {
@@ -672,11 +672,10 @@ export class Config {
    * @returns The project root directory path
    */
   static findProjectRootSync(startPath: string): string {
-    const fsSync = require('fs')
     let currentPath = path.resolve(startPath)
 
     try {
-      const stats = fsSync.statSync(currentPath)
+      const stats = statSync(currentPath)
 
       if (stats.isFile()) {
         currentPath = path.dirname(currentPath)
@@ -691,7 +690,7 @@ export class Config {
       const configPath = path.join(currentPath, this.configPath)
 
       try {
-        fsSync.accessSync(configPath)
+        accessSync(configPath)
 
         return currentPath
       } catch {
@@ -724,7 +723,7 @@ export class Config {
       ? pathOrFile
       : this.configPathFromProjectPath(pathOrFile)
 
-    return require('fs').readFileSync(configPath, 'utf-8')
+    return readFileSync(configPath, 'utf-8')
   }
 
   /**
@@ -1172,12 +1171,11 @@ export class Config {
    * it to `access` would look for a file named `*.gemspec` literally.
    */
   private static isProjectRootSync(dirPath: string): boolean {
-    const fsSync = require('fs')
 
     for (const indicator of this.PROJECT_INDICATORS) {
       if (indicator.startsWith("*")) {
         try {
-          const entries: string[] = fsSync.readdirSync(dirPath)
+          const entries: string[] = readdirSync(dirPath)
 
           if (entries.some(entry => entry.endsWith(indicator.slice(1)))) return true
         } catch {
@@ -1188,7 +1186,7 @@ export class Config {
       }
 
       try {
-        fsSync.accessSync(path.join(dirPath, indicator))
+        accessSync(path.join(dirPath, indicator))
 
         return true
       } catch {

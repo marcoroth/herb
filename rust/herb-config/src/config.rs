@@ -124,6 +124,10 @@ impl Config {
     self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.enabled)
   }
 
+  pub fn default_rule_severity(&self) -> Option<SeverityConfig> {
+    self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.severity)
+  }
+
   pub fn is_rule_disabled(&self, rule_name: &str) -> bool {
     match self.get_rule_config(rule_name) {
       Some(rule) => rule.enabled == Some(false),
@@ -291,7 +295,11 @@ impl Config {
   }
 
   pub fn get_configured_severity(&self, rule_name: &str, default_severity: SeverityConfig, mode: LinterMode) -> Severity {
-    let severity = self.get_rule_config(rule_name).and_then(|rule| rule.severity).unwrap_or(default_severity);
+    let severity = self
+      .get_rule_config(rule_name)
+      .and_then(|rule| rule.severity)
+      .or_else(|| self.default_rule_severity())
+      .unwrap_or(default_severity);
 
     resolve_severity(severity, mode)
   }
@@ -302,7 +310,11 @@ impl Config {
     }
 
     for offense in offenses {
-      if let Some(severity) = self.get_rule_config(offense.rule()).and_then(|rule| rule.severity) {
+      if let Some(severity) = self
+        .get_rule_config(offense.rule())
+        .and_then(|rule| rule.severity)
+        .or_else(|| self.default_rule_severity())
+      {
         offense.set_severity(resolve_severity(severity, mode));
       }
     }

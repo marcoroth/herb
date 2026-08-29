@@ -6,13 +6,11 @@ module Herb
       # Parses `<%# herb:state (name: default, …) %>` directives and classifies how the body
       # reads the states they declare.
       class StateDirectives
-        PATTERN: Regexp
-
         BARE: Regexp
 
-        PREFIX: String
-
         KINDS: Hash[String, Symbol]
+
+        NODE_KINDS: Hash[String, Symbol]
 
         class Declaration < Data
           attr_reader name(): String
@@ -97,16 +95,12 @@ module Herb
 
           attr_reader location(): Herb::Location?
 
-          attr_reader signature(): String
+          def self.new: (Hash[String, Symbol] locals, Hash[String, Declaration] declared, Array[String] names, Hash[String, Declaration] enclosing, untyped visitor, Herb::Location? location) -> instance
+                      | (locals: Hash[String, Symbol], declared: Hash[String, Declaration], names: Array[String], enclosing: Hash[String, Declaration], visitor: untyped, location: Herb::Location?) -> instance
 
-          attr_reader anchor(): Herb::Position?
+          def self.members: () -> [ :locals, :declared, :names, :enclosing, :visitor, :location ]
 
-          def self.new: (Hash[String, Symbol] locals, Hash[String, Declaration] declared, Array[String] names, Hash[String, Declaration] enclosing, untyped visitor, Herb::Location? location, String signature, Herb::Position? anchor) -> instance
-                      | (locals: Hash[String, Symbol], declared: Hash[String, Declaration], names: Array[String], enclosing: Hash[String, Declaration], visitor: untyped, location: Herb::Location?, signature: String, anchor: Herb::Position?) -> instance
-
-          def self.members: () -> [ :locals, :declared, :names, :enclosing, :visitor, :location, :signature, :anchor ]
-
-          def members: () -> [ :locals, :declared, :names, :enclosing, :visitor, :location, :signature, :anchor ]
+          def members: () -> [ :locals, :declared, :names, :enclosing, :visitor, :location ]
         end
 
         module Silent
@@ -117,11 +111,8 @@ module Herb
           def self.diagnostic_count: (?Symbol?) -> Integer
         end
 
-        # : (untyped) -> String?
-        def self.signature_of: (untyped) -> String?
-
-        # : (String, Hash[String, Symbol], visitor: untyped, node: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
-        def self.parse: (String, Hash[String, Symbol], visitor: untyped, node: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+        # : (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+        def self.parse: (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
 
         # : (String, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
         def self.condition_read: (String, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
@@ -174,38 +165,23 @@ module Herb
         # : (String, Hash[String, Declaration]) -> bool
         def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
 
-        # : (untyped, String) -> Herb::Position?
-        private def self.anchor_of: (untyped, String) -> Herb::Position?
-
         # : (untyped, Parsing) -> Declaration
         private def self.declaration_for: (untyped, Parsing) -> Declaration
 
         # : (untyped, Parsing) -> Declaration
         private def self.classify: (untyped, Parsing) -> Declaration
 
-        # : (untyped, Parsing) -> Herb::Location?
-        private def self.spelled: (untyped, Parsing) -> Herb::Location?
-
-        # : (untyped, Parsing) -> Herb::Location?
-        private def self.located: (untyped, Parsing) -> Herb::Location?
-
-        # : (Herb::Position, String, Integer, Integer) -> Herb::Location
-        private def self.span: (Herb::Position, String, Integer, Integer) -> Herb::Location
-
-        # : (Herb::Position, String, Integer) -> Herb::Position
-        private def self.position_at: (Herb::Position, String, Integer) -> Herb::Position
-
         # : (String, String, untyped, Herb::Location?, ?String) -> Declaration
         private def self.refused: (String, String, untyped, Herb::Location?, ?String) -> Declaration
 
-        # : (String, untyped, Parsing) -> Declaration?
-        private def self.derived_default: (String, untyped, Parsing) -> Declaration?
+        # : (String, String, Herb::Location?, Parsing) -> Declaration?
+        private def self.derived_default: (String, String, Herb::Location?, Parsing) -> Declaration?
 
         # : (Read | Combo) -> Symbol
         private def self.derived_kind: (Read | Combo) -> Symbol
 
-        # : (String, untyped, Parsing) -> Declaration
-        private def self.bare_default: (String, untyped, Parsing) -> Declaration
+        # : (String, String, Herb::Location?, Parsing) -> Declaration
+        private def self.bare_default: (String, String, Herb::Location?, Parsing) -> Declaration
 
         # : (String) -> untyped
         private def self.expression_node: (String) -> untyped
