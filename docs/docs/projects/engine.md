@@ -238,18 +238,18 @@ The `visitors` option accepts [visitors](/bindings/ruby/reference#visitors) that
 
 Herb ships the following transform visitors:
 
-| Visitor                          | Description                                                                  |
-|----------------------------------|------------------------------------------------------------------------------|
+| Visitor                       | Description                                                                  |
+|-------------------------------|------------------------------------------------------------------------------|
 | `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                             |
 | `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
 | `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
 | `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
-| `Component::Visitor`            | Rewrites capitalized tags into `render` calls (experimental)                 |
+| `Component::Visitor`          | Rewrites capitalized tags into `render` calls (experimental)                 |
 | `DebugVisitor`                | Annotates output with the template and position it came from                 |
 | `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
 | `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
-| `InlineRender::Visitor`         | Replaces a `render` of a static partial with the partial (experimental)      |
-| `ScopedStyle::Visitor`           | Scopes a `<style scoped>` block to the file it was written in (experimental) |
+| `InlineRender::Visitor`       | Replaces a `render` of a static partial with the partial (experimental)      |
+| `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 

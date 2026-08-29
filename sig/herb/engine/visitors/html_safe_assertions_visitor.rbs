@@ -1,4 +1,4 @@
-# Generated from lib/herb/engine/visitors/html_safe_assertions.rb with RBS::Inline
+# Generated from lib/herb/engine/visitors/html_safe_assertions_visitor.rb with RBS::Inline
 
 module Herb
   class Engine

@@ -1,4 +1,4 @@
-# Generated from lib/herb/engine/visitors/remove_comments.rb with RBS::Inline
+# Generated from lib/herb/engine/visitors/remove_comments_visitor.rb with RBS::Inline
 
 module Herb
   class Engine

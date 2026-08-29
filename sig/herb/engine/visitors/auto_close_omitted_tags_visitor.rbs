@@ -1,4 +1,4 @@
-# Generated from lib/herb/engine/visitors/auto_close_omitted_tags.rb with RBS::Inline
+# Generated from lib/herb/engine/visitors/auto_close_omitted_tags_visitor.rb with RBS::Inline
 
 module Herb
   class Engine

@@ -1,4 +1,4 @@
-# Generated from lib/herb/engine/visitors/optimize.rb with RBS::Inline
+# Generated from lib/herb/engine/visitors/optimize_visitor.rb with RBS::Inline
 
 module Herb
   class Engine
