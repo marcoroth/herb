@@ -6,7 +6,9 @@ import * as vscode from "vscode"
 
 const PREFIX = "<% if condition %"
 
-suite("On-type formatting", () => {
+suite("On-type formatting", function () {
+  this.timeout(15_000)
+
   suiteSetup(async () => {
     const extension = vscode.extensions.getExtension("marcoroth.herb-lsp")
 

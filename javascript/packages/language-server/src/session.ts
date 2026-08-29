@@ -9,20 +9,7 @@ import { Capabilities } from "./capabilities"
 import { WorkspaceFolders } from "./workspace_folders"
 import { Documents } from "./documents"
 import { DiagnosticsPublisher } from "./diagnostics_publisher"
-import {
-  CommentProvider,
-  DefinitionProvider,
-  DocumentHighlightProvider,
-  DocumentSymbolProvider,
-  ExtractCodeActionProvider,
-  FoldingRangeProvider,
-  HoverProvider,
-  InlayHintProvider,
-  OnTypeFormattingProvider,
-  ParserService,
-  RewriteCodeActionProvider,
-  SelectionRangeProvider,
-} from "@herb-tools/language-service"
+import { ParserService, FoldingRangeProvider, SelectionRangeProvider, DocumentHighlightProvider, InlayHintProvider, HoverProvider, RewriteCodeActionProvider, CommentProvider, DocumentSymbolProvider, ExtractCodeActionProvider, DefinitionProvider, OnTypeFormattingProvider } from "@herb-tools/language-service"
 import { ConfigService } from "./config_service"
 import { SaveOrchestrator } from "./save_orchestrator"
 

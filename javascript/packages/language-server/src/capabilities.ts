@@ -40,6 +40,10 @@ export class Capabilities {
     return this.client.textDocument?.definition?.linkSupport === true
   }
 
+  get supportsSnippetEdits(): boolean {
+    return this.client.workspace?.applyEdit === true && this.client.workspace?.workspaceEdit?.snippetEditSupport === true
+  }
+
   get supportsResourceCreation(): boolean {
     return this.client.workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKind.Create) ?? false
   }

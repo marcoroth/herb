@@ -17,8 +17,8 @@ const connectionState = vi.hoisted(() => ({
 }))
 
 vi.mock("vscode-languageserver/node", async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import("vscode-languageserver/node")>()
+  const original = await importOriginal<typeof import("vscode-languageserver/node")>()
+
   const connection = new Proxy(
     {},
     {
@@ -56,10 +56,39 @@ vi.mock("vscode-languageserver/node", async (importOriginal) => {
   }
 })
 
+import { OnTypeFormattingProvider } from "@herb-tools/language-service"
+
 import { ON_TYPE_FORMATTING_OPTIONS } from "../src/on_type_formatting"
 import { Server } from "../src/server"
 
+const SOURCE = "  <% if user.admin? %>"
+
+function serverWith(supportsSnippetEdits: boolean, document: TextDocument) {
+  const server = new Server()
+
+  Object.assign(server, {
+    session: {
+      capabilities: { supportsSnippetEdits },
+      documents: { get: vi.fn().mockReturnValue(document) },
+      onTypeFormattingProvider: new OnTypeFormattingProvider(),
+    },
+  })
+
+  return server
+}
+
+function request(document: TextDocument) {
+  return {
+    textDocument: { uri: document.uri },
+    position: { line: 0, character: SOURCE.length },
+    ch: ">",
+    options: { tabSize: 2, insertSpaces: true },
+  }
+}
+
 describe("on-type formatting", () => {
+  const document = TextDocument.create("file:///test.html.erb", "erb", 7, SOURCE)
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -70,79 +99,74 @@ describe("on-type formatting", () => {
     })
   })
 
-  it("routes requests through the provider stored in Session", async () => {
-    const source = "<% if user.admin? %>"
-    const document = TextDocument.create(
-      "file:///test.html.erb",
-      "erb",
-      1,
-      source,
-    )
-    const getTextEdits = vi.fn().mockReturnValue([{ newText: "expected" }])
-    const server = new Server()
+  it("returns plain text edits when the client cannot apply snippet edits", async () => {
+    serverWith(false, document)
 
-    Object.assign(server, {
-      session: {
-        capabilities: { hasApplyEdit: false, hasShowDocument: false },
-        documents: { get: vi.fn().mockReturnValue(document) },
-        onTypeFormattingProvider: { getTextEdits },
+    expect(await connectionState.onTypeFormatting?.(request(document))).toEqual([
+      {
+        range: {
+          start: { line: 0, character: SOURCE.length },
+          end: { line: 0, character: SOURCE.length },
+        },
+        newText: "\n    \n  <% end %>",
       },
-    })
-
-    const params = {
-      textDocument: { uri: document.uri },
-      position: { line: 0, character: source.length },
-      ch: ">",
-      options: { tabSize: 4, insertSpaces: true },
-    }
-
-    expect(connectionState.onTypeFormatting?.(params)).toEqual([
-      { newText: "expected" },
     ])
-    expect(getTextEdits).toHaveBeenCalledWith(
-      document,
-      params.position,
-      params.ch,
-      params.options,
-    )
+
+    expect(connectionState.applyEdit).not.toHaveBeenCalled()
   })
 
-  it("returns edits without issuing nested client requests", async () => {
-    const source = "<% if user.admin? %>"
-    const document = TextDocument.create(
-      "file:///test.html.erb",
-      "erb",
-      1,
-      source,
-    )
-    const edit = {
-      range: {
-        start: { line: 0, character: source.length },
-        end: { line: 0, character: source.length },
-      },
-      newText: "\n  \n<% end %>",
-    }
-    const server = new Server()
+  it("applies a snippet edit when the client supports snippet edits", async () => {
+    serverWith(true, document)
 
-    Object.assign(server, {
-      session: {
-        capabilities: { hasApplyEdit: true, hasShowDocument: true },
-        documents: { get: vi.fn().mockReturnValue(document) },
-        onTypeFormattingProvider: {
-          getTextEdits: vi.fn().mockReturnValue([edit]),
-        },
+    expect(await connectionState.onTypeFormatting?.(request(document))).toEqual([])
+
+    expect(connectionState.applyEdit).toHaveBeenCalledWith({
+      label: "Close ERB block",
+      edit: {
+        documentChanges: [
+          {
+            textDocument: { uri: document.uri, version: 7 },
+            edits: [
+              {
+                range: {
+                  start: { line: 0, character: 0 },
+                  end: { line: 0, character: SOURCE.length },
+                },
+                snippet: {
+                  kind: "snippet",
+                  value: "  <% if user.admin? %>\n    $0\n  <% end %>",
+                },
+              },
+            ],
+          },
+        ],
       },
     })
+  })
 
-    const result = await connectionState.onTypeFormatting?.({
-      textDocument: { uri: document.uri },
-      position: { line: 0, character: source.length },
-      ch: ">",
-      options: { tabSize: 2, insertSpaces: true },
-    })
+  it("does not reach for the client when there is nothing to close", async () => {
+    const output = TextDocument.create("file:///output.html.erb", "erb", 1, "<%= user.name %>")
 
-    expect(result).toEqual([edit])
+    serverWith(true, output)
+
+    expect(
+      await connectionState.onTypeFormatting?.({
+        textDocument: { uri: output.uri },
+        position: { line: 0, character: 16 },
+        ch: ">",
+        options: { tabSize: 2, insertSpaces: true },
+      }),
+    ).toEqual([])
+
     expect(connectionState.applyEdit).not.toHaveBeenCalled()
-    expect(connectionState.showDocument).not.toHaveBeenCalled()
+  })
+
+  it("reports a failing apply without rejecting the request", async () => {
+    connectionState.applyEdit.mockRejectedValueOnce(new Error("no editor"))
+
+    serverWith(true, document)
+
+    expect(await connectionState.onTypeFormatting?.(request(document))).toEqual([])
+    expect(connectionState.error).toHaveBeenCalledWith("Failed to close ERB block: Error: no editor")
   })
 })

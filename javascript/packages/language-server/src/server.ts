@@ -23,6 +23,7 @@ import {
   DefinitionParams,
   ReferenceParams,
   TextDocumentIdentifier,
+  OptionalVersionedTextDocumentIdentifier,
   Range,
   FileChangeType,
   ExecuteCommandParams,
@@ -207,17 +208,36 @@ export class Server {
       return this.session.projects.get(params.textDocument.uri)?.formattingProvider.formatRange(params) ?? []
     })
 
-    this.connection.onDocumentOnTypeFormatting((params: DocumentOnTypeFormattingParams) => {
+    this.connection.onDocumentOnTypeFormatting(async (params: DocumentOnTypeFormattingParams) => {
       const document = this.session.documents.get(params.textDocument.uri)
 
       if (!document) return []
 
-      return this.session.onTypeFormattingProvider.getTextEdits(
-        document,
-        params.position,
-        params.ch,
-        params.options,
-      )
+      const provider = this.session.onTypeFormattingProvider
+
+      if (!this.session.capabilities.supportsSnippetEdits) {
+        return provider.getTextEdits(document, params.position, params.ch, params.options)
+      }
+
+      const edits = provider.getSnippetTextEdits(document, params.position, params.ch, params.options)
+
+      if (edits.length === 0) return []
+
+      try {
+        await this.connection.workspace.applyEdit({
+          label: "Close ERB block",
+          edit: {
+            documentChanges: [{
+              textDocument: OptionalVersionedTextDocumentIdentifier.create(document.uri, document.version),
+              edits
+            }]
+          }
+        })
+      } catch (error) {
+        this.connection.console.error(`Failed to close ERB block: ${error}`)
+      }
+
+      return []
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
