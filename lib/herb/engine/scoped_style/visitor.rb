@@ -89,6 +89,11 @@ module Herb
 
         Pending = Data.define(:node, :open_tag, :attribute, :css, :file, :container)
 
+        #: () -> bool
+        def self.rewrites_style_blocks?
+          true
+        end
+
         #: (?transform: untyped, ?deliver: Symbol) -> void
         def initialize(transform: nil, deliver: :inline)
           super()

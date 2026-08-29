@@ -13,7 +13,7 @@ require_relative "engine/slots/visitor"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :inline_css, :file_timeout
 
   def initialize(args)
     @args = args
@@ -345,6 +345,10 @@ class Herb::CLI
 
       parser.on("--scoped-styles", "Scope each `<style scoped>` block to its file with Lightning CSS (for compile/render commands) (default: false)") do
         self.scoped_styles = true
+      end
+
+      parser.on("--inline-css [STYLESHEET]", "Write every stylesheet the template renders into `style` attributes, reading one from a file first if given (for compile/render commands) (default: false)") do |stylesheet|
+        self.inline_css = Array(inline_css) + Array(stylesheet)
       end
 
       parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
@@ -1128,6 +1132,13 @@ class Herb::CLI
     Herb::Engine::ScopedStyle::Visitor.new
   end
 
+  def css_inliner_visitor
+    require_relative "engine/css_inliner/visitor"
+    Herb.ensure_installed("css_inline")
+
+    Herb::Engine::CSSInliner::Visitor.new(stylesheets: inline_css)
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -1141,6 +1152,7 @@ class Herb::CLI
 
       visitors << slot_visitor if slot_visitor
       visitors << scoped_style_visitor if scoped_styles
+      visitors << css_inliner_visitor if inline_css
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
@@ -1271,6 +1283,7 @@ class Herb::CLI
       visitors = []
       visitors << slot_visitor if slot_visitor
       visitors << scoped_style_visitor if scoped_styles
+      visitors << css_inliner_visitor if inline_css
       options[:visitors] = visitors unless visitors.empty?
 
       engine = Herb::Engine.new(source, options)
