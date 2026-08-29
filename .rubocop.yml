@@ -133,6 +133,7 @@ Metrics/ClassLength:
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/project.rb
+    - lib/herb/source_path.rb
     - lib/herb/visitor.rb
     - templates/template.rb
     - test/**/*_test.rb

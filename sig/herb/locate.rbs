@@ -1,0 +1,85 @@
+# Generated from lib/herb/locate.rb with RBS::Inline
+
+module Herb
+  # Finds the most specific node at a position, and the nodes it sits inside.
+  #
+  #     result = Herb::Locate.call(document, Herb::Position[2, 7])
+  #
+  #     result.node      #=> the innermost node whose location contains the position
+  #     result.ancestors #=> every node it sits inside, nearest first
+  #
+  # Everything that reads a position back from a rendered page, an editor, or a diagnostic needs
+  # this, and every caller was writing its own descent. A finding at `2:7` is a node before it is
+  # anything a person can act on.
+  #
+  # `ancestors` reads nearest first, the way `caller` does, so the enclosing element a caller wants
+  # is the first one that answers:
+  #
+  #     result.ancestors.find { |node| node.is_a?(Herb::AST::HTMLElementNode) }
+  #
+  # A node's location contains its start and stops short of its end, so two nodes sitting next to
+  # each other never both answer for the character between them. A position past the end of the
+  # source belongs to no node, and `call` answers `nil`.
+  #
+  # Columns are 0-based character offsets into their line, which is what the parser reports.
+  # `Herb::Position#to_one_based` is what turns one into what an editor shows.
+  #
+  # `Herb::Locate::Result` holds what was found, and what it was found inside.
+  #
+  #     result.node      #=> #<Herb::AST::LiteralNode>
+  #     result.ancestors #=> [#<...HTMLAttributeNameNode>, #<...HTMLAttributeNode>, ...]
+  class Locate
+    class Result
+      attr_reader node: Herb::AST::Node
+
+      attr_reader ancestors: Array[Herb::AST::Node]
+
+      # : (Herb::AST::Node, Array[Herb::AST::Node]) -> void
+      def initialize: (Herb::AST::Node, Array[Herb::AST::Node]) -> void
+
+      # : (untyped) -> Herb::AST::Node?
+      def innermost: (untyped) -> Herb::AST::Node?
+
+      # : () -> Array[Herb::AST::Node]
+      def path: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+    end
+
+    # : ((Herb::AST::Node | Herb::ParseResult), Herb::Position) -> Result?
+    def self.call: (Herb::AST::Node | Herb::ParseResult, Herb::Position) -> Result?
+
+    # : ((Herb::AST::Node | Herb::ParseResult), Herb::Position) -> bool
+    def self.locatable?: (Herb::AST::Node | Herb::ParseResult, Herb::Position) -> bool
+
+    # : ((Herb::AST::Node | Herb::ParseResult)) -> Herb::AST::Node
+    def self.root: (Herb::AST::Node | Herb::ParseResult) -> Herb::AST::Node
+
+    # : (Herb::Position) -> void
+    def initialize: (Herb::Position) -> void
+
+    # : ((Herb::AST::Node | Herb::ParseResult)) -> Result?
+    def call: (Herb::AST::Node | Herb::ParseResult) -> Result?
+
+    # : ((Herb::AST::Node | Herb::ParseResult)) -> bool
+    def locatable?: (Herb::AST::Node | Herb::ParseResult) -> bool
+
+    private
+
+    # : (Herb::AST::Node, Array[Herb::AST::Node]) -> Result?
+    def descend: (Herb::AST::Node, Array[Herb::AST::Node]) -> Result?
+
+    # : (Herb::AST::Node) -> bool
+    def contains?: (Herb::AST::Node) -> bool
+
+    # : (Herb::AST::Node) -> bool
+    def within_extent?: (Herb::AST::Node) -> bool
+
+    # : (Herb::AST::Node) -> Herb::Location?
+    def extent: (Herb::AST::Node) -> Herb::Location?
+
+    # : (Herb::Location?, Herb::Location) -> Herb::Location
+    def union: (Herb::Location?, Herb::Location) -> Herb::Location
+  end
+end
