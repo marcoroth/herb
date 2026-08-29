@@ -1,5 +1,7 @@
 export type StateValue = string | number | boolean | null
-export type StateKind = "boolean" | "integer" | "string" | "symbol" | "nil" | "seeded"
+import type { StateValueKind } from "../state-kinds"
+
+export type StateKind = StateValueKind
 
 export function printValue(value: StateValue): string {
   if (value === null) {

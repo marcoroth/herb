@@ -11,8 +11,17 @@
 export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./grammar/attributes"
 export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
 
+export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, stateKindArticle } from "./state-kinds"
+export { MIRRORED_COMPARISONS, NEGATED_COMPARISONS, ORDERED_COMPARISONS, COMPARISON_OPERATORS } from "./state-operators"
+
 export type { Clause } from "./grammar/parsing"
 export type { ActionName, ActionSchema, HerbAttribute } from "./grammar/attributes"
+export type { StateDefaultKind, StateValueKind } from "./state-kinds"
+
+import { LITERAL_STATE_KINDS } from "./state-kinds"
+import { MIRRORED_COMPARISONS } from "./state-operators"
+
+import type { StateDefaultKind } from "./state-kinds"
 
 const SLOTS_MODE = /\b(server|client)\b/
 const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s
@@ -20,19 +29,6 @@ const STATE_DIRECTIVE_PRESENCE = /^\s*herb:state\b/
 const STATE_DIRECTIVE_PATTERN = /^\s*herb:state\s*(\(.*\))\s*$/s
 const BARE_IDENTIFIER = /^[a-z_][a-zA-Z0-9_]*$/
 const KEYWORD_SEGMENT = /^(\s*)([a-z_][a-zA-Z0-9_]*):(.*)$/s
-
-export type StateDefaultKind =
-  | "boolean"
-  | "integer"
-  | "string"
-  | "symbol"
-  | "nil"
-  | "float"
-  | "array"
-  | "hash"
-  | "bare"
-  | "seeded"
-  | "missing"
 
 export interface StateDeclaration {
   name: string
@@ -201,8 +197,6 @@ export interface DerivedDefault {
   sources: string[]
 }
 
-const MIRRORED_COMPARISONS: Record<string, string> = { ">": "<", ">=": "<=", "<": ">", "<=": ">=" }
-const LITERAL_DEFAULT_KINDS = new Set(["boolean", "integer", "string", "symbol", "nil"])
 
 export function classifyDerivedDefault(source: string, declared: ReadonlyMap<string, string>): DerivedDefault | "mixed" | null {
   const parsed = parseDerivedCondition(source.trim(), declared)
@@ -261,7 +255,7 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
 
     const literal = (leftState ? right : left).trim()
 
-    if (!LITERAL_DEFAULT_KINDS.has(classifyDefault(literal))) {
+    if (!LITERAL_STATE_KINDS.has(classifyDefault(literal))) {
       return null
     }
 
@@ -294,7 +288,7 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
       : "mixed"
   }
 
-  const resolved = LITERAL_DEFAULT_KINDS.has(kind) ? kind as DerivedDefault["kind"] : "seeded"
+  const resolved = LITERAL_STATE_KINDS.has(kind) ? kind as DerivedDefault["kind"] : "seeded"
 
   return { kind: resolved, condition: [bare, null], sources: [bare] }
 }

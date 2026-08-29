@@ -107,6 +107,8 @@ java/org/herb/ast/HelperType.java
 java/org/herb/ast/Nodes.java
 java/org/herb/ast/NodeVisitor.java
 java/org/herb/ast/Visitor.java
+javascript/packages/client/src/state-kinds.ts
+javascript/packages/client/src/state-operators.ts
 javascript/packages/core/src/action-view-helpers.ts
 javascript/packages/core/src/config.ts
 javascript/packages/core/src/errors.ts
@@ -119,6 +121,8 @@ javascript/packages/node/extension/error_helpers.h
 javascript/packages/node/extension/nodes.cpp
 javascript/packages/node/extension/nodes.h
 lib/herb/action_view/helper_registry.rb
+lib/herb/engine/slots/state_kinds.rb
+lib/herb/engine/slots/state_operators.rb
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
 lib/herb/visitor.rb
@@ -146,6 +150,7 @@ src/diff/herb_diff_nodes.c
 src/diff/herb_hash_tree.c
 src/errors.c
 src/include/analyze/action_view/helper_registry.h
+src/include/analyze/herb_directive_kinds.h
 src/include/ast/ast_nodes.h
 src/include/ast/ast_pretty_print.h
 src/include/errors.h

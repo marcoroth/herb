@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { StateScopeMap, declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
-import { bareReadName, classifyDerivedDefault, mentionsAnyState } from "@herb-tools/client/directives"
+import { COMPARISON_OPERATORS, PRISM_LITERAL_KINDS, bareReadName, classifyDerivedDefault, mentionsAnyState } from "@herb-tools/client/directives"
 
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
@@ -9,15 +9,6 @@ import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@her
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode, RubyLiteralNode } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
-
-const LITERAL_KINDS: Record<string, string> = {
-  TrueNode: "boolean",
-  FalseNode: "boolean",
-  IntegerNode: "integer",
-  StringNode: "string",
-  SymbolNode: "symbol",
-  NilNode: "nil",
-}
 
 interface BareRead {
   name: string
@@ -42,8 +33,6 @@ function prismBareRead(node: PrismNode | null | undefined): BareRead | null {
 
   return { name: predicate ? spelled.slice(0, -1) : spelled, predicate }
 }
-
-const COMPARISON_OPERATORS = new Set(["==", "!=", ">", ">=", "<", "<="])
 
 function equalitySides(node: PrismNode): [PrismNode, PrismNode, string] | null {
   if (prismType(node) !== "CallNode") return null
@@ -324,7 +313,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (declaration) {
         const comparand = leftDeclaration ? right : left
-        const comparandKind = LITERAL_KINDS[prismType(comparand)]
+        const comparandKind = PRISM_LITERAL_KINDS[prismType(comparand)]
         const kind = declaredKind(declaration)
 
         if (!comparandKind) {
@@ -420,7 +409,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       const list = (when.conditions ?? []).map((condition: PrismNode) => this.sliceOf(condition)).join(", ")
 
       for (const condition of when.conditions ?? []) {
-        const comparandKind = LITERAL_KINDS[prismType(condition)]
+        const comparandKind = PRISM_LITERAL_KINDS[prismType(condition)]
 
         if (!comparandKind) {
           this.addOffense(
