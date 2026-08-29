@@ -24,6 +24,23 @@ module Herb
       def members: () -> [ :name, :kind, :content, :nodes ]
     end
 
+    class ChildNodeField < Data
+      attr_reader name(): Symbol
+
+      attr_reader kind(): Array[String]
+
+      attr_reader continuation(): bool
+
+      attr_reader node(): Herb::AST::Node?
+
+      def self.new: (Symbol name, Array[String] kind, bool continuation, Herb::AST::Node? node) -> instance
+                  | (name: Symbol, kind: Array[String], continuation: bool, node: Herb::AST::Node?) -> instance
+
+      def self.members: () -> [ :name, :kind, :continuation, :node ]
+
+      def members: () -> [ :name, :kind, :continuation, :node ]
+    end
+
     class Node
       attr_reader type: String
 
@@ -83,6 +100,12 @@ module Herb
 
       # : () -> Array[Herb::AST::ChildNodeList]
       def content_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
+      # : () -> Array[Herb::AST::ChildNodeField]
+      def child_node_fields: () -> Array[Herb::AST::ChildNodeField]
+
+      # : () -> Array[Herb::AST::Node]
+      def continuation_nodes: () -> Array[Herb::AST::Node]
 
       # : () -> Array[Herb::Errors::Error]
       def recursive_errors: () -> Array[Herb::Errors::Error]

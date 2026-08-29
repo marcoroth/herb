@@ -102,6 +102,20 @@ module Herb
         <%- end -%>
       end
 
+      #: () -> Array[Herb::AST::ChildNodeField]
+      def child_node_fields
+        <%- single_node_fields = node.fields.select { |f| f.is_a?(Herb::Template::NodeField) || f.is_a?(Herb::Template::BorrowedNodeField) } -%>
+        <%- if single_node_fields.any? -%>
+        [
+          <%- single_node_fields.each_with_index do |field, index| -%>
+          ChildNodeField.new(name: :<%= field.name %>, kind: <%= Array(field.union_kind || field.specific_kind).inspect %>, continuation: <%= field.continuation? %>, node: <%= field.name %>)<%= index == single_node_fields.size - 1 ? "" : "," %>
+          <%- end -%>
+        ]
+        <%- else -%>
+        []
+        <%- end -%>
+      end
+
       #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")

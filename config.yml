@@ -956,6 +956,7 @@ nodes:
           kind:
             - "ERBIfNode"
             - "ERBElseNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -994,14 +995,17 @@ nodes:
         - name: "rescue_clause"
           type: "node"
           kind: "ERBRescueNode"
+          continuation: true
 
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "ensure_clause"
           type: "node"
           kind: "ERBEnsureNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -1052,14 +1056,17 @@ nodes:
         - name: "rescue_clause"
           type: "node"
           kind: "ERBRescueNode"
+          continuation: true
 
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "ensure_clause"
           type: "node"
           kind: "ERBEnsureNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -1115,6 +1122,7 @@ nodes:
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -1148,6 +1156,7 @@ nodes:
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -1256,6 +1265,7 @@ nodes:
         - name: "subsequent"
           type: "node"
           kind: "ERBRescueNode"
+          continuation: true
 
     - name: "ERBEnsureNode"
       fields:
@@ -1293,14 +1303,17 @@ nodes:
         - name: "rescue_clause"
           type: "node"
           kind: "ERBRescueNode"
+          continuation: true
 
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "ensure_clause"
           type: "node"
           kind: "ERBEnsureNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -1333,6 +1346,7 @@ nodes:
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"
@@ -1440,14 +1454,17 @@ nodes:
         - name: "rescue_clause"
           type: "node"
           kind: "ERBRescueNode"
+          continuation: true
 
         - name: "else_clause"
           type: "node"
           kind: "ERBElseNode"
+          continuation: true
 
         - name: "ensure_clause"
           type: "node"
           kind: "ERBEnsureNode"
+          continuation: true
 
         - name: "end_node"
           type: "node"

@@ -494,6 +494,10 @@ module Engine
       test "records what a block whose value is not output contains" do
         assert_slots_snapshot("<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>")
       end
+
+      test "numbers begin/rescue/else/ensure bodies in source order" do
+        assert_slots_snapshot("<% begin %><p><%= @a %></p><% rescue %><p><%= @b %></p><% else %><p><%= @c %></p><% ensure %><p><%= @d %></p><% end %>")
+      end
     end
   end
 end

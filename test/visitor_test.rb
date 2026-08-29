@@ -278,4 +278,16 @@ class VisitorTest < Minitest::Spec
     assert_equal [["Node"], ["RubyParameterNode"]], block.child_node_lists.map(&:kind)
     assert_equal [true, false], block.child_node_lists.map(&:content)
   end
+
+  test "child_node_fields exposes every single node field and marks continuations" do
+    result = Herb.parse(%(<div><% if true %>a<% else %>b<% end %></div>))
+    conditional = result.value.children.first.body.first
+
+    assert_equal "ERBIfNode", conditional.node_name
+    assert_equal [:subsequent, :end_node], conditional.child_node_fields.map(&:name)
+    assert_equal [true, false], conditional.child_node_fields.map(&:continuation)
+    node_names = conditional.child_node_fields.map { |field| field.node.node_name }
+
+    assert_equal ["ERBElseNode", "ERBEndNode"], node_names
+  end
 end

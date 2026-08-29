@@ -199,16 +199,29 @@ pub struct ChildNodeList<'a> {
   pub nodes: &'a [AnyNode],
 }
 
+#[derive(Clone, Copy)]
+pub struct ChildNodeField<'a> {
+  pub name: &'static str,
+  pub kind: &'static [&'static str],
+  pub continuation: bool,
+  pub node: Option<&'a dyn Node>,
+}
+
 pub trait Node {
   fn node_type(&self) -> &str;
   fn location(&self) -> &Location;
   fn errors(&self) -> &[AnyError];
   fn child_nodes(&self) -> Vec<&dyn Node>;
   fn child_node_lists(&self) -> Vec<ChildNodeList<'_>>;
+  fn child_node_fields(&self) -> Vec<ChildNodeField<'_>>;
   fn recursive_errors(&self) -> Vec<&dyn ErrorNode>;
 
   fn content_node_lists(&self) -> Vec<ChildNodeList<'_>> {
     self.child_node_lists().into_iter().filter(|list| list.content).collect()
+  }
+
+  fn continuation_nodes(&self) -> Vec<&dyn Node> {
+    self.child_node_fields().into_iter().filter(|field| field.continuation).filter_map(|field| field.node).collect()
   }
 
   fn collect_errors<'a>(&'a self, accumulator: &mut Vec<&'a dyn ErrorNode>);
@@ -278,6 +291,14 @@ impl AnyNode {
     }
   }
 
+  pub fn child_node_fields(&self) -> Vec<ChildNodeField<'_>> {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.child_node_fields(),
+      <%- end -%>
+    }
+  }
+
   pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
     let mut accumulator: Vec<&dyn ErrorNode> = Vec::new();
     self.collect_errors(&mut accumulator);
@@ -312,6 +333,10 @@ impl Node for AnyNode {
 
   fn child_node_lists(&self) -> Vec<ChildNodeList<'_>> {
     self.child_node_lists()
+  }
+
+  fn child_node_fields(&self) -> Vec<ChildNodeField<'_>> {
+    self.child_node_fields()
   }
 
   fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
@@ -430,6 +455,20 @@ impl Node for <%= node.name %> {
     <%- end -%>
     <%- end -%>
     children
+    <%- else -%>
+    Vec::new()
+    <%- end -%>
+  }
+
+  fn child_node_fields(&self) -> Vec<ChildNodeField<'_>> {
+    <%- single_node_fields = node.fields.select { |f| f.is_a?(Herb::Template::NodeField) || f.is_a?(Herb::Template::BorrowedNodeField) } -%>
+    <%- if single_node_fields.any? -%>
+    vec![
+      <%- single_node_fields.each do |field| -%>
+      <%- accessor = field.union_kind ? "n.as_node()" : "n.as_ref() as &dyn Node" -%>
+      ChildNodeField { name: "<%= field.name %>", kind: &[<%= Array(field.union_kind || field.specific_kind).map(&:inspect).join(", ") %>], continuation: <%= field.continuation? %>, node: self.<%= field.name %>.as_ref().map(|n| <%= accessor %>) },
+      <%- end -%>
+    ]
     <%- else -%>
     Vec::new()
     <%- end -%>

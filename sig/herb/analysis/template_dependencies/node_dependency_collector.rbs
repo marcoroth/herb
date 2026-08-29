@@ -4,8 +4,6 @@ module Herb
   module Analysis
     class TemplateDependencies
       class NodeDependencyCollector < ::Herb::Visitor
-        BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
-
         ASSIGNMENT_NODES: Array[untyped]
 
         attr_reader affected: untyped

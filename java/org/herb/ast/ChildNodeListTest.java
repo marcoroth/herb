@@ -42,6 +42,19 @@ public class ChildNodeListTest {
   }
 
   @Test
+  void testChildNodeFieldsExposesEverySingleNodeFieldAndMarksContinuations() {
+    ParseResult result = Herb.parse("<div><% if true %>a<% else %>b<% end %></div>");
+    Node element = result.value.childNodeLists().get(0).getNodes().get(0);
+    Node conditional = element.childNodeLists().get(0).getNodes().get(0);
+
+    List<ChildNodeField> fields = conditional.childNodeFields();
+
+    assertEquals("ERBIfNode", conditional.getType());
+    assertEquals(Arrays.asList("subsequent", "end_node"), fields.stream().map(ChildNodeField::getName).collect(Collectors.toList()));
+    assertEquals(Arrays.asList(true, false), fields.stream().map(ChildNodeField::isContinuation).collect(Collectors.toList()));
+  }
+
+  @Test
   void testChildNodeListsExposesNameAndKindOfEveryArrayField() {
     ParseResult result = Herb.parse("<% items.each do |item| %><%= item %><% end %>");
     Node block = result.value.childNodeLists().get(0).getNodes().get(0);

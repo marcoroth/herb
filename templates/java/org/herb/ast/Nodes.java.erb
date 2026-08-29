@@ -173,6 +173,22 @@ class <%= node.name %> extends BaseNode {
   }
 
   @Override
+  public List<ChildNodeField> childNodeFields() {
+    <%- node_fields = node.fields.select { |f| f.is_a?(Herb::Template::NodeField) || f.is_a?(Herb::Template::BorrowedNodeField) } -%>
+    <%- if node_fields.any? -%>
+    List<ChildNodeField> fields = new ArrayList<>();
+
+    <%- node_fields.each do |field| -%>
+    fields.add(new ChildNodeField("<%= field.name %>", Arrays.asList(<%= Array(field.union_kind || field.specific_kind).map(&:inspect).join(", ") %>), <%= field.continuation? %>, <%= field.name %>));
+    <%- end -%>
+
+    return fields;
+    <%- else -%>
+    return Collections.emptyList();
+    <%- end -%>
+  }
+
+  @Override
   public String inspect() {
     return inspect(null);
   }

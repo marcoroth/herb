@@ -52,3 +52,22 @@ fn test_child_node_lists_exposes_the_name_and_kind_of_every_array_field() {
   assert_eq!(kinds, vec![&["Node"][..], &["RubyParameterNode"][..]]);
   assert_eq!(lists.iter().map(|list| list.content).collect::<Vec<bool>>(), vec![true, false]);
 }
+
+#[test]
+fn test_child_node_fields_exposes_every_single_node_field() {
+  common::no_color();
+
+  let source = "<div><% if true %>a<% else %>b<% end %></div>";
+  let result = parse(source).unwrap();
+
+  let element = &result.value.children[0];
+  let conditional = &element.child_node_lists()[0].nodes[0];
+
+  let fields = conditional.child_node_fields();
+  let names: Vec<&str> = fields.iter().map(|field| field.name).collect();
+  let continuations: Vec<bool> = fields.iter().map(|field| field.continuation).collect();
+
+  assert_eq!(conditional.node_type(), "AST_ERB_IF_NODE");
+  assert_eq!(names, vec!["subsequent", "end_node"]);
+  assert_eq!(continuations, vec![true, false]);
+}

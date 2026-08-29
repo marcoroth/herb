@@ -66,6 +66,27 @@ describe("Visitor", () => {
     ])
   })
 
+  test("childNodeFields exposes every single node field and marks continuations", () => {
+    const position = new Position(1, 0)
+    const location = new Location(position, position)
+
+    const element = new HTMLElementNode({
+      type: "AST_HTML_ELEMENT_NODE",
+      location,
+      errors: [],
+      open_tag: null,
+      tag_name: null,
+      body: [],
+      close_tag: null,
+      is_void: false,
+    })
+
+    expect(element.childNodeFields().map(field => [field.name, field.continuation])).toEqual([
+      ["open_tag", false],
+      ["close_tag", false],
+    ])
+  })
+
   test("accept does not crash when visitor is missing a visit method", () => {
     const position = new Position(1, 0)
     const location = new Location(position, position)

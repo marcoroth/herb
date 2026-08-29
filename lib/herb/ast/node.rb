@@ -15,6 +15,13 @@ module Herb
       :nodes #: Array[Herb::AST::Node]
     )
 
+    ChildNodeField = Data.define(
+      :name, #: Symbol
+      :kind, #: Array[String]
+      :continuation, #: bool
+      :node #: Herb::AST::Node?
+    )
+
     class Node
       attr_reader :type #: String
       attr_reader :location #: Location
@@ -130,6 +137,16 @@ module Herb
       #: () -> Array[Herb::AST::ChildNodeList]
       def content_node_lists
         child_node_lists.select(&:content)
+      end
+
+      #: () -> Array[Herb::AST::ChildNodeField]
+      def child_node_fields
+        []
+      end
+
+      #: () -> Array[Herb::AST::Node]
+      def continuation_nodes
+        child_node_fields.filter_map { |field| field.node if field.continuation }
       end
 
       #: () -> Array[Herb::Errors::Error]

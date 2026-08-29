@@ -62,7 +62,8 @@ module Herb
 
         CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
         OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[Herb::AST::HTMLOpenTagNode|Herb::AST::ERBOpenTagNode]
-        BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
+
+        MARKED_NODE_FIELDS = [:end_node, :open_tag].freeze #: Array[Symbol]
 
         Slot = Data.define(
           :index,          #: Integer
@@ -719,12 +720,7 @@ module Herb
 
           node.content_node_lists.each { |list| visit_children_with_paths(list.nodes) }
 
-          BRANCH_CONTINUATION_PROPERTIES.each do |property|
-            next unless node.respond_to?(property)
-
-            child = node.send(property)
-            next unless child
-
+          node.continuation_nodes.each do |child|
             @continuations[child] = true
             visit(child)
           end
@@ -1349,7 +1345,9 @@ module Herb
         def each_child_array(node)
           node.content_node_lists.each { |list| yield list.nodes }
 
-          (BRANCH_CONTINUATION_PROPERTIES + [:end_node, :open_tag]).each do |property|
+          node.continuation_nodes.each { |child| insert_markers(child) }
+
+          MARKED_NODE_FIELDS.each do |property|
             next unless node.respond_to?(property)
 
             child = node.send(property)

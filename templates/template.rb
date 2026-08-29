@@ -184,6 +184,10 @@ module Herb
         union_kind.sort.join("Or")
       end
 
+      def continuation?
+        options.fetch(:continuation, false)
+      end
+
       def rust_type
         if specific_kind && specific_kind != "Node"
           "Option<Box<#{specific_kind}>>"
@@ -462,7 +466,7 @@ module Herb
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
 
-          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false), content: field.fetch("content", true))
+          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false), content: field.fetch("content", true), continuation: field.fetch("continuation", false))
         end
       end
 

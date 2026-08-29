@@ -57,7 +57,7 @@ module Herb
 
         OPEN_TAG_TYPES: Array[Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode]
 
-        BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
+        MARKED_NODE_FIELDS: Array[Symbol]
 
         class Slot < Data
           attr_reader index(): Integer

@@ -35,6 +35,18 @@ public interface Node {
     return childNodeLists().stream().filter(ChildNodeList::isContent).collect(java.util.stream.Collectors.toList());
   }
 
+  default List<ChildNodeField> childNodeFields() {
+    return java.util.Collections.emptyList();
+  }
+
+  default List<Node> continuationNodes() {
+    return childNodeFields().stream()
+      .filter(ChildNodeField::isContinuation)
+      .map(ChildNodeField::getNode)
+      .filter(java.util.Objects::nonNull)
+      .collect(java.util.stream.Collectors.toList());
+  }
+
   /**
    * Return a tree-like string representation of this node with all its fields.
    */

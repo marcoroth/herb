@@ -29,6 +29,13 @@ export interface ChildNodeList {
   nodes: Node[]
 }
 
+export interface ChildNodeField {
+  name: string
+  kind: string[]
+  continuation: boolean
+  node: Node | null
+}
+
 export abstract class Node implements BaseNodeProps {
   readonly type: NodeType
   readonly location: Location
@@ -90,9 +97,14 @@ export abstract class Node implements BaseNodeProps {
   abstract childNodes(): (Node | null | undefined)[]
   abstract compactChildNodes(): Node[]
   abstract childNodeLists(): ChildNodeList[]
+  abstract childNodeFields(): ChildNodeField[]
 
   contentNodeLists(): ChildNodeList[] {
     return this.childNodeLists().filter(list => list.content)
+  }
+
+  continuationNodes(): Node[] {
+    return this.childNodeFields().flatMap(field => (field.continuation && field.node ? [field.node] : []))
   }
 
   protected inspectArray(
@@ -389,6 +401,14 @@ export class <%= node.name %> extends Node {
     return [
       <%- node.fields.grep(Herb::Template::ArrayField).each do |field| -%>
       { name: "<%= field.name %>", kind: <%= Array(field.union_kind || field.specific_kind).inspect %>, content: <%= field.content? %>, nodes: this.<%= field.name %> },
+      <%- end -%>
+    ];
+  }
+
+  childNodeFields(): ChildNodeField[] {
+    return [
+      <%- node.fields.select { |f| f.is_a?(Herb::Template::NodeField) || f.is_a?(Herb::Template::BorrowedNodeField) }.each do |field| -%>
+      { name: "<%= field.name %>", kind: <%= Array(field.union_kind || field.specific_kind).inspect %>, continuation: <%= field.continuation? %>, node: this.<%= field.name %> },
       <%- end -%>
     ];
   }
