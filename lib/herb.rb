@@ -33,12 +33,12 @@ begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
 
   if RUBY_PATCHLEVEL == -1
-    require "herb/herb"
+    require_relative "herb/herb"
   else
     begin
-      require "herb/#{major}.#{minor}/herb"
+      require_relative "herb/#{major}.#{minor}/herb"
     rescue LoadError
-      require "herb/herb"
+      require_relative "herb/herb"
     end
   end
 rescue LoadError => e
