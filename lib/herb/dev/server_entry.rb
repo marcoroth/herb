@@ -82,6 +82,12 @@ module Herb
           all.find { |entry| entry.project == project_path }
         end
 
+        def port_for(project_path = nil)
+          find_by_project(project_path || Dir.pwd)&.port
+        rescue StandardError
+          nil
+        end
+
         def stop_all
           all.each(&:stop!)
         end

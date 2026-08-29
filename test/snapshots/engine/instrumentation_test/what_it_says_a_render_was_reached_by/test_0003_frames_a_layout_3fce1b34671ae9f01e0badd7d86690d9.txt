@@ -1,0 +1,8 @@
+---
+source: "Engine::InstrumentationTest::what it says a render was reached by#test_0003_frames a layout"
+input: "{source: \"<%= render layout: \\\"box\\\" do %>inner<% end %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin 
+ ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 1, 0, :layout) 
+ _buf << (render layout: "box" do; _buf << 'inner'.freeze; end); ::Herb::Engine::Runtime::Session.leave; ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
+_buf.to_s

@@ -3,12 +3,12 @@
 
 # rbs_inline: disabled
 
-require_relative "../validator"
+require_relative "base"
 
 module Herb
   class Engine
     module Validators
-      class NestingValidator < Validator
+      class NestingValidator < Base
         def visit_html_element_node(node)
           validate_html_nesting(node)
           super

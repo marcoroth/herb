@@ -429,7 +429,7 @@ describe("html-no-unknown-tag", () => {
     })
   })
 
-  describe("component elements (uppercase) are skipped", () => {
+  describe("component tags (uppercase) are skipped", () => {
     test("PascalCase element", () => {
       expectNoOffenses(`<Button></Button>`)
     })
@@ -446,7 +446,7 @@ describe("html-no-unknown-tag", () => {
       expectNoOffenses(`<Card></Card>`)
     })
 
-    test("nested component elements", () => {
+    test("nested component tags", () => {
       expectNoOffenses(`
         <Layout>
           <Header></Header>

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../report/session"
+require_relative "../../runtime/session"
 
 module Herb
   class Engine
@@ -32,7 +32,7 @@ module Herb
 
           #: (String) -> void
           def self.record(json)
-            Report::Session.current.channel(NAME) { new }.add(json)
+            Runtime::Session.current.channel(NAME) { new }.add(json)
 
             nil
           end

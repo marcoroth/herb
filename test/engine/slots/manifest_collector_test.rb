@@ -8,7 +8,7 @@ require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slots/manifest/collector"
-require_relative "../../../lib/herb/engine/report/session"
+require_relative "../../../lib/herb/engine/runtime/session"
 
 module Engine
   module Slots
@@ -89,7 +89,7 @@ module Engine
         view.instance_variable_set(:@_herb_covered, {})
         view.define_singleton_method(:render) { instance_eval(src, __FILE__, __LINE__) }
 
-        session = Herb::Engine::Report::Session.capture { view.render }
+        session = Herb::Engine::Runtime::Session.capture { view.render }
         channel = session.channel(Herb::Engine::Slots::Manifest::Channel::NAME) { nil }
         delivered = JSON.parse(channel.to_html[%r{data-count="\d+">(\{.*\})</template>}m, 1])
 

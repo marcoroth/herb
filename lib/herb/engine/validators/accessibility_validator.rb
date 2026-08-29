@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 # typed: true
 
-require_relative "../validator"
+require_relative "base"
 
 module Herb
   class Engine
     module Validators
-      class AccessibilityValidator < Validator
+      class AccessibilityValidator < Base
         def visit_html_attribute_node(node)
           validate_attribute(node)
           super

@@ -37,6 +37,8 @@ module Herb
 
       def self.find_by_project: (untyped project_path) -> untyped
 
+      def self.port_for: (?untyped project_path) -> untyped
+
       def self.stop_all: () -> untyped
 
       def self.process_alive?: (untyped pid) -> untyped

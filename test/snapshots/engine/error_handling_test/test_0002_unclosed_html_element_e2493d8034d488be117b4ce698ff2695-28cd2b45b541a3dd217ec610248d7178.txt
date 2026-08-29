@@ -10,7 +10,7 @@ options: {validators: true}
 ---
 [source]:1:1: Opening tag `<section>` at (1:1) doesn't have a matching closing tag `</section>` in the same scope. (and 1 more error) (Herb::Engine::ParseError)
 
-✘ [MissingClosingTag] Opening tag `<section>` at (1:1) doesn't have a matching closing tag `</section>` in the same scope.
+✘ [MissingClosingTagError] Opening tag `<section>` at (1:1) doesn't have a matching closing tag `</section>` in the same scope.
 
     [source]:1:1:
       1 │ <section>
@@ -18,7 +18,7 @@ options: {validators: true}
 
   Add the closing tag, or make it self-closing.
 
-✘ [OmittedClosingTag] Element `<p>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (4:2) for clarity, or set `strict: false` to allow this.
+✘ [OmittedClosingTagError] Element `<p>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (4:2) for clarity, or set `strict: false` to allow this.
 
     [source]:3:5:
       3 │     <p>This div is never closed

@@ -38,5 +38,26 @@ module Herb
 
       def build_error_message: (untyped message) -> untyped
     end
+
+    class ParseError < CompilationError
+      CONTEXT_LINES: Integer
+
+      attr_reader source: String
+
+      attr_reader visitors: Array[String]
+
+      attr_reader parser_options: Hash[Symbol, untyped]
+
+      attr_reader filename: String?
+
+      # : (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped], ?details: untyped) -> void
+      def initialize: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped], ?details: untyped) -> void
+
+      # : () -> Integer?
+      def line_number: () -> Integer?
+
+      # : () -> Array[String]
+      def annotated_source_code: () -> Array[String]
+    end
   end
 end

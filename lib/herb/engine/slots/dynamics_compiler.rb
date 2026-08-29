@@ -587,10 +587,6 @@ module Herb
         end
 
         #: (Integer) -> void
-        # An unkeyed collection emits no item markers, so nothing on the page can receive an item's
-        # values. Its interior is still compiled into a scope, so what it wrote is discarded here
-        # rather than landing in the scope around the collection.
-        #: (Integer) -> void
         def scope_item_end(index)
           leave_scope(index)
 

@@ -6,7 +6,7 @@ options: {validators: false}
 ---
 [source]:1:61: unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context (and 1 more error) (Herb::Engine::ParseError)
 
-✘ [RubyParse] unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context
+✘ [RubyParseError] unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context
 
     [source]:1:61:
       1 │ <% if true # some comment %> true <% else %> false <% end %>
@@ -14,7 +14,7 @@ options: {validators: false}
 
   Check the Ruby syntax inside the ERB tag.
 
-✘ [RubyParse] conditional_term: expected an `end` to close the conditional clause
+✘ [RubyParseError] conditional_term: expected an `end` to close the conditional clause
 
     [source]:1:4:
       1 │ <% if true # some comment %> true <% else %> false <% end %>

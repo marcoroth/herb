@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative "../validator"
+require_relative "base"
 require_relative "../../analysis/partial_resolution"
 
 module Herb
   class Engine
     module Validators
-      class RenderValidator < Validator
+      class RenderValidator < Base
         def visit_erb_render_node(node)
           if node.dynamic?
             warning(

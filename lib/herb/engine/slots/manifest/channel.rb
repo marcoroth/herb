@@ -2,7 +2,7 @@
 
 require "json"
 
-require_relative "../../report/session"
+require_relative "../../runtime/session"
 
 module Herb
   class Engine
@@ -27,7 +27,7 @@ module Herb
 
           #: (String, String) -> void
           def self.record(key, json)
-            Report::Session.current.channel(NAME) { new }.add(key, json)
+            Runtime::Session.current.channel(NAME) { new }.add(key, json)
 
             nil
           end

@@ -42,7 +42,7 @@ module Engine
 
         described = error.visitors.first
 
-        assert_equal Herb::Engine::VISITOR_DESCRIPTION_LIMIT + 1, described.length
+        assert_equal Herb::Visitor::Stack::DESCRIPTION_LIMIT + 1, described.length
         assert described.end_with?("\u2026"), "expected the description to be cut short"
       end
 

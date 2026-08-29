@@ -4,11 +4,11 @@
 require "digest"
 
 require_relative "../../visitor"
-require_relative "../experimental"
-require_relative "../context_aware"
-require_relative "../diagnostics"
+require_relative "../../visitor/experimental"
+require_relative "../../visitor/context_aware"
+require_relative "../../visitor/diagnostics"
 require_relative "channel"
-require_relative "../visitor_context"
+require_relative "../../visitor/context"
 
 module Herb
   class Engine
@@ -36,7 +36,7 @@ module Herb
       # itself distinguishes them.
       #
       # A file is scoped as a whole, so markup an inlined partial brought with it belongs to the
-      # partial and not to the template it landed in. `Herb::Engine::Origin` is what says so, which
+      # partial and not to the template it landed in. `Herb::Visitor::Context::Origin` is what says so, which
       # is why this has to run after `InlineRenderVisitor` and before `Slots::Visitor`, whose parked
       # markup a client rebuilds from and which therefore has to already carry the attribute.
       #
@@ -68,12 +68,12 @@ module Herb
       # which needs nothing else installed and writes the block again on every render of the file it
       # was written in. `:hoist` takes the block out and registers the CSS with the session the page
       # is collecting into, which writes it once however many times the file renders, and needs
-      # `Herb::Engine::Report::Middleware` to put it on the page.
+      # `Herb::Engine::Runtime::Middleware` to put it on the page.
       #
       class Visitor < Herb::Visitor
-        extend Experimental
-        include ContextAware
-        include Diagnostics
+        extend Herb::Visitor::Experimental
+        include Herb::Visitor::ContextAware
+        include Herb::Visitor::Diagnostics
 
         ARRAY_PROPERTIES = [:children, :body, :statements].freeze #: Array[Symbol]
         NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
@@ -179,7 +179,7 @@ module Herb
           @stack.last #: as String
         end
 
-        #: (Herb::AST::Node) -> Herb::Engine::Origin::Entry?
+        #: (Herb::AST::Node) -> Herb::Visitor::Context::Origin::Entry?
         def enter(node)
           entry = origin.of(node)
 
@@ -382,7 +382,7 @@ module Herb
 
         #: (Herb::AST::HTMLElementNode) -> bool
         def scopable_file?(node)
-          return true unless current_file == VisitorContext::UNKNOWN_FILE_PATH
+          return true unless current_file == Herb::Visitor::Context::UNKNOWN_FILE_PATH
 
           warning(
             "A `<style scoped>` block needs the path of the file it was written in, and this template was compiled without one. Compile it with `filename:` to scope it.",

@@ -5,20 +5,17 @@ require "json"
 require "time"
 require "pathname"
 
-require_relative "engine/visitor_context"
-require_relative "engine/visitor_stack"
-require_relative "engine/report/session"
-require_relative "engine/context_aware"
-require_relative "engine/diagnostics"
+require_relative "visitor/context"
+require_relative "visitor/stack"
+require_relative "engine/runtime/session"
+require_relative "visitor/context_aware"
+require_relative "visitor/diagnostics"
 require_relative "engine/compiler"
-require_relative "engine/error_formatter"
 require_relative "engine/errors"
-require_relative "engine/parse_error"
+require_relative "diagnostic/formatter"
 
 module Herb
   class Engine
-    VISITOR_DESCRIPTION_LIMIT = 200 #: Integer
-
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -56,7 +53,7 @@ module Herb
     ).freeze
 
     def initialize(input, properties = {})
-      @context = VisitorContext.new(
+      @context = Visitor::Context.new(
         file_path: properties[:filename],
         project_path: properties[:project_path],
         options: context_options(properties),
@@ -74,7 +71,7 @@ module Herb
       @buffer_on_stack = false
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
-      @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
+      @visitors = Visitor::Stack.build(properties.fetch(:visitors, Visitor::Stack.new))
       @visitors.validate_order!
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
@@ -96,14 +93,12 @@ module Herb
         handle_parser_errors(parser_errors, input, parse_result.value)
       else
         @visitors.each do |visitor|
-          visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
+          visitor.inherit_context(@context) if visitor.is_a?(Visitor::ContextAware)
           visitor.bufvar = @bufvar if visitor.respond_to?(:bufvar=)
 
           parse_result.value.accept(visitor)
         end
 
-        # A visitor that writes into the tree writes after every visitor has read it, so what one
-        # of them adds is never something another one reads as if the template had written it.
         @visitors.each do |visitor| # rubocop:disable Style/CombinableLoops
           visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
         end
@@ -364,7 +359,7 @@ module Herb
 
     #: () -> Array[Herb::Diagnostic]
     def collected_diagnostics
-      @visitors.grep(Diagnostics).flat_map(&:diagnostics)
+      @visitors.grep(Visitor::Diagnostics).flat_map(&:diagnostics)
     end
 
     #: (Hash[Symbol, untyped], String) -> void
@@ -387,33 +382,23 @@ module Herb
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
-      formatter = ErrorFormatter.new(input, parser_errors, filename: filename)
+      diagnostics = Diagnostic.from_errors(parser_errors, template: relative_file_path)
+      formatter = Diagnostic::Formatter.new(input, diagnostics, filename: filename)
 
       raise ParseError.new(
         formatter.summary,
         details: formatter,
-        diagnostics: parser_errors.map { |error|
-          error.to_diagnostic(template: relative_file_path)
-        },
+        diagnostics: diagnostics,
         source: input,
         filename: relative_file_path,
-        visitors: visitor_descriptions,
+        visitors: @visitors.descriptions,
         parser_options: @parser_options
       )
     end
 
-    #: () -> Array[String]
-    def visitor_descriptions
-      @visitors.map { |visitor|
-        described = visitor.inspect
-
-        described.length > VISITOR_DESCRIPTION_LIMIT ? "#{described[0, VISITOR_DESCRIPTION_LIMIT]}…" : described
-      }
-    end
-
     #: (String) -> void
     def report(input)
-      reporters = @visitors.grep(Diagnostics)
+      reporters = @visitors.grep(Visitor::Diagnostics)
       diagnostics = reporters.flat_map(&:diagnostics)
 
       return if diagnostics.empty?
@@ -429,7 +414,7 @@ module Herb
     def emit_compile_diagnostics(diagnostics)
       entries = diagnostics.map(&:to_ruby).join(", ")
 
-      @src << " ::Herb::Engine::Report::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
+      @src << " ::Herb::Engine::Runtime::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
     end
 
     #: (Array[Herb::Diagnostic], String) -> void
@@ -449,7 +434,7 @@ module Herb
         )
       end
 
-      formatter = ErrorFormatter.new(input, errors, filename: filename)
+      formatter = Diagnostic::Formatter.new(input, errors, filename: filename)
 
       raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end
