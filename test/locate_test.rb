@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class LocateTest < Minitest::Spec
   def locate(source, line, column)
-    Herb::Locate.call(Herb.parse(source).value, Herb::Position[line, column])
+    Herb.parse(source).value.locate(Herb::Position.from(line, column))
   end
 
   def types(nodes)
@@ -67,7 +67,7 @@ class LocateTest < Minitest::Spec
     test "are empty when the node the walk started from is the answer" do
       document = Herb.parse("x").value
       text = document.children.first
-      result = Herb::Locate.call(text, Herb::Position[1, 0])
+      result = text.locate(Herb::Position[1, 0])
 
       assert_equal [], result.ancestors
       assert_same text, result.node
@@ -140,7 +140,7 @@ class LocateTest < Minitest::Spec
       node = Herb::AST::HTMLTextNode.build(content: +"x")
 
       assert_predicate node.location, :empty?
-      assert_nil Herb::Locate.call(node, Herb::Position[0, 0])
+      assert_nil node.locate(Herb::Position[0, 0])
     end
   end
 
@@ -148,7 +148,7 @@ class LocateTest < Minitest::Spec
     test "starts the walk at whatever node it is given" do
       document = Herb.parse("<div><span>hi</span></div>").value
       element = document.children.first
-      result = Herb::Locate.call(element, Herb::Position[1, 12])
+      result = element.locate(Herb::Position[1, 12])
 
       assert_equal ["HTMLElementNode", "HTMLElementNode"], types(result.ancestors)
     end
@@ -157,7 +157,7 @@ class LocateTest < Minitest::Spec
       document = Herb.parse("<b>one</b><i>two</i>").value
       first = document.children.first
 
-      assert_nil Herb::Locate.call(first, Herb::Position[1, 15])
+      assert_nil first.locate(Herb::Position[1, 15])
     end
   end
 
@@ -189,30 +189,37 @@ class LocateTest < Minitest::Spec
 
   describe "a parse result" do
     test "answers for the document it parsed" do
-      result = Herb::Locate.call(Herb.parse("<div>x</div>"), Herb::Position[1, 2])
+      result = Herb.parse("<div><span>hi</span></div>").locate(Herb::Position[1, 12])
 
-      assert_equal "HTMLOpenTagNode", types([result.node]).first
+      assert_equal "HTMLTextNode", types([result.node]).first
     end
 
-    test "answers the same way the document does" do
+    test "answers the same way the document it holds does" do
       parsed = Herb.parse("<div><span>hi</span></div>")
       position = Herb::Position[1, 12]
 
-      assert_same Herb::Locate.call(parsed, position).node, Herb::Locate.call(parsed.value, position).node
+      assert_same parsed.locate(position).node, parsed.value.locate(position).node
+    end
+
+    test "says whether a position falls inside it at all" do
+      parsed = Herb.parse("<div>x</div>")
+
+      assert parsed.locatable?(Herb::Position[1, 2])
+      refute parsed.locatable?(Herb::Position[1, 999])
     end
   end
 
-  describe ".locatable?" do
+  describe "#locatable?" do
     test "answers for a position the node covers" do
-      assert Herb::Locate.locatable?(Herb.parse("<div>x</div>"), Herb::Position[1, 2])
+      assert Herb.parse("<div>x</div>").value.locatable?(Herb::Position[1, 2])
     end
 
     test "does not answer for a position past the end" do
-      refute Herb::Locate.locatable?(Herb.parse("<div>x</div>"), Herb::Position[1, 999])
+      refute Herb.parse("<div>x</div>").value.locatable?(Herb::Position[1, 999])
     end
 
     test "answers for a position only a branch covers" do
-      assert Herb::Locate.locatable?(Herb.parse("<% if a %>A<% else %>C<% end %>").value, Herb::Position[1, 21])
+      assert Herb.parse("<% if a %>A<% else %>C<% end %>").value.locatable?(Herb::Position[1, 21])
     end
   end
 end

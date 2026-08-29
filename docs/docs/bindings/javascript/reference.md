@@ -295,7 +295,7 @@ Columns are 0-based character offsets into their line, which is what the parser 
 import { locate, Position, isHTMLElementNode } from "@herb-tools/core"
 
 const result = Herb.parse("<div><span>hi</span></div>")
-const found = locate(result.value, Position.from(1, 12))
+const found = result.locate(Position.from(1, 12))
 
 found.node
 // => HTMLTextNode
@@ -313,7 +313,7 @@ found.path.map((node) => node.constructor.name)
 
 `innermost` takes a predicate and starts with the node itself, so it answers with the node when the node already matches. Passing a type guard such as `isHTMLElementNode` narrows the result. `path` reads the other way around, outermost first, and ends with the node that was found. A position that belongs to no node answers `null`.
 
-A parse result answers for the document it parsed, so the result a caller already has can be handed over directly. ``locatable`` asks the same question without walking, and answers whether a position falls anywhere inside a node or what it holds.
+Every node answers too, so a walk can start from the node a caller already holds. `result.locate(position)` and `node.locate(position)` are the same walk from different starting points, and the `locate` function takes either. `locatable` asks the same question without walking, and answers whether a position falls anywhere inside a node or what it holds.
 
 The walk goes by how much source a node and everything it holds cover together, which is not the same as the node's own location. A branch of an `if` holds the branch after it, and each branch is positioned where it was written, so the node holding the chain ends before what it holds. Walking by a node's own location would leave every branch but the first unreachable. `ancestors` is therefore the walk that was taken, whether or not each node along it covers the position itself, and a caller that wants only the nodes the position is really inside filters on `location.contains`.
 

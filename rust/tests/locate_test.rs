@@ -225,3 +225,36 @@ fn test_locatable_answers_for_a_position_only_a_branch_covers() {
 
   assert!(locatable(&result.value, Position::new(1, 35)));
 }
+
+#[test]
+fn test_a_parse_result_answers_for_itself() {
+  let result = parse(SOURCE).unwrap();
+
+  assert_eq!(result.locate(Position::new(1, 12)).unwrap().node.node_type(), "AST_HTML_TEXT_NODE");
+
+  assert!(result.locatable(Position::new(1, 12)));
+  assert!(!result.locatable(Position::new(1, 999)));
+}
+
+#[test]
+fn test_a_node_answers_for_itself() {
+  use herb::locate::NodeLocate;
+
+  let result = parse(SOURCE).unwrap();
+
+  assert_eq!(result.value.locate(Position::new(1, 12)).unwrap().node.node_type(), "AST_HTML_TEXT_NODE");
+
+  assert!(result.value.locatable(Position::new(1, 12)));
+  assert!(!result.value.locatable(Position::new(1, 999)));
+}
+
+#[test]
+fn test_a_node_reached_through_a_walk_answers_for_itself_too() {
+  use herb::locate::NodeLocate;
+
+  let result = parse(SOURCE).unwrap();
+  let found = result.value.locate(Position::new(1, 12)).unwrap();
+  let span = found.innermost(|node| node.node_type() == "AST_HTML_ELEMENT_NODE").unwrap();
+
+  assert_eq!(span.locate(Position::new(1, 12)).unwrap().node.node_type(), "AST_HTML_TEXT_NODE");
+}

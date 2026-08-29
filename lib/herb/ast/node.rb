@@ -115,6 +115,16 @@ module Herb
         child_nodes.compact
       end
 
+      #: (Herb::Position) -> Herb::Locate::Result?
+      def locate(position)
+        Herb::Locate.call(self, position)
+      end
+
+      #: (Herb::Position) -> bool
+      def locatable?(position)
+        Herb::Locate.locatable?(self, position)
+      end
+
       #: () -> Array[Herb::Errors::Error]
       def recursive_errors
         accumulator = [] #: Array[Herb::Errors::Error]

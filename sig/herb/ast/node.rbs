@@ -61,6 +61,12 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : (Herb::Position) -> Herb::Locate::Result?
+      def locate: (Herb::Position) -> Herb::Locate::Result?
+
+      # : (Herb::Position) -> bool
+      def locatable?: (Herb::Position) -> bool
+
       # : () -> Array[Herb::Errors::Error]
       def recursive_errors: () -> Array[Herb::Errors::Error]
 
