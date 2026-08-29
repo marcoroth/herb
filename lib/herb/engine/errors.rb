@@ -6,11 +6,13 @@ require_relative "../diagnostic"
 module Herb
   class Engine
     class CompilationError < StandardError
-      attr_reader :details, :diagnostics
+      attr_reader :details, :diagnostics, :visitors, :parser_options
 
-      def initialize(message, details: nil, diagnostics: [])
+      def initialize(message, details: nil, diagnostics: [], visitors: [], parser_options: {})
         @details = details
         @diagnostics = diagnostics
+        @visitors = visitors
+        @parser_options = parser_options
 
         super(message)
       end
@@ -79,19 +81,14 @@ module Herb
       CONTEXT_LINES = 3 #: Integer
 
       attr_reader :source #: String
-      attr_reader :visitors #: Array[String]
-      attr_reader :parser_options #: Hash[Symbol, untyped]
       attr_reader :filename #: String?
 
       #: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped], ?details: untyped) -> void
       def initialize(message, diagnostics:, source:, filename: nil, visitors: [], parser_options: {}, details: nil)
-        @diagnostics = diagnostics
         @source = source
-        @visitors = visitors
-        @parser_options = parser_options
         @filename = filename
 
-        super(message, details: details, diagnostics: diagnostics)
+        super(message, details: details, diagnostics: diagnostics, visitors: visitors, parser_options: parser_options)
       end
 
       #: () -> Integer?

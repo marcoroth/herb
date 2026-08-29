@@ -72,11 +72,11 @@ yarn dev
 
 Set `HERB_DEMO_PORT` to move it. Set `HERB_DEMO_TARGET=dist` to serve the same page against `dist/herb-dev-tools.esm.js`, which is how to check the published artifact instead of the working tree. Run `yarn build` first in that case.
 
-## Runtime Diagnostics
+## Diagnostics
 
-The runtime diagnostics panel docks a badge in the Herb menu and opens a list of diagnostic cards when that badge is clicked. Findings reach it two ways. A page calls the JavaScript API below, or it embeds a JSON payload that the panel reads on start and on every Turbo navigation.
+The diagnostics panel docks a badge in the Herb menu and opens a list of diagnostic cards when that badge is clicked. Findings reach it two ways. A page calls the JavaScript API below, or it embeds a JSON payload that the panel reads on start and on every Turbo navigation.
 
-`Herb::Engine::Report` is the producer on the Ruby side. `Report::Middleware` injects its payload into a page that rendered, and [`Report::ErrorPage`](#when-the-page-did-not-render) serves a page of its own for one that did not. The [payload reference](#runtime-report-payload) is the contract between them, and `test/engine-payload.test.ts` holds the reader to it using a fixture the engine generates.
+`Herb::Engine::Runtime` is the producer on the Ruby side. `Runtime::Middleware` injects its payload into a page that rendered, and [`Runtime::ErrorPage`](#when-the-page-did-not-render) serves a page of its own for one that did not. The [payload reference](#runtime-report-payload) is the contract between them, and `test/engine-payload.test.ts` holds the reader to it using a fixture the engine generates.
 
 The normative definition of every shape on this page is [`src/runtime/report.ts`](https://github.com/marcoroth/herb/blob/main/javascript/packages/dev-tools/src/runtime/report.ts). Where this prose and those types disagree, the types win.
 
@@ -251,7 +251,7 @@ window.HerbDevTools.close()
 
 `close()` closes the panel and leaves the badge in place, which is what the panel's own × does. Neither one touches the stored "hidden for this session" state, and neither can close an overlay. Use [`overlay`](#overlay) for that.
 
-The Herb menu carries a **Runtime Diagnostics** toggle that does the same thing without the console. Switching it off is the panel header's "Hide for this session", and switching it back on is `show()`. Both write the same stored state, so the two can never disagree. Neither one brings back entries that were cleared, because clearing discards them for good.
+The Herb menu carries a **Diagnostics** toggle that does the same thing without the console. Switching it off is the panel header's "Hide for this session", and switching it back on is `show()`. Both write the same stored state, so the two can never disagree. Neither one brings back entries that were cleared, because clearing discards them for good.
 
 #### When the panel is off
 
@@ -323,7 +323,7 @@ The header ends with a control that expands the panel to fill the window, which 
 
 `Escape` does what the close button does, so it closes the panel and leaves the badge. It does not collapse an expanded panel back into the corner, because closing is what a reader reaches for Escape to do. It is only listened for while the panel fills the window, so a docked panel never takes the key away from the page.
 
-The panel header's "Hide for this session" and the Herb menu's **Runtime Diagnostics** toggle are the same switch. Either one hides the badge for the session, and the toggle or `show()` brings it back.
+The panel header's "Hide for this session" and the Herb menu's **Diagnostics** toggle are the same switch. Either one hides the badge for the session, and the toggle or `show()` brings it back.
 
 Every class and data attribute the panel owns is prefixed `herb-dev-tools-`.
 
@@ -527,10 +527,10 @@ Every part of the payload is optional-tolerant. A malformed or partial payload s
 
 ### When the page did not render
 
-A template that fails to compile takes the whole response with it, so there is no page for the engine to inject a payload into and nothing for the dev tools to attach to. `Herb::Engine::Report::ErrorPage` serves a document of its own for that case.
+A template that fails to compile takes the whole response with it, so there is no page for the engine to inject a payload into and nothing for the dev tools to attach to. `Herb::Engine::Runtime::ErrorPage` serves a document of its own for that case.
 
 ```ruby
-config.middleware.use Herb::Engine::Report::ErrorPage, dev_tools: "/assets/herb-dev-tools.js"
+config.middleware.use Herb::Engine::Runtime::ErrorPage, dev_tools: "/assets/herb-dev-tools.js"
 ```
 
 It rescues a `Herb::Engine::CompilationError`, walking the `cause` chain because Action View wraps the failure in an error of its own, and answers `500` with a page carrying the same payload every other page carries. The diagnostics in it ask for a [blocking overlay](#overlay), so the panel takes the screen as soon as it starts.

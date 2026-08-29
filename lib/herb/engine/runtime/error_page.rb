@@ -138,8 +138,6 @@ module Herb
           report.note(:herb_version, Herb::VERSION)
           report.note(:error_class, error.class.name)
 
-          return unless error.is_a?(Herb::Engine::ParseError)
-
           report.note(:visitors, error.visitors) unless error.visitors.empty?
           report.note(:parser_options, error.parser_options) unless error.parser_options.empty?
         end
@@ -274,7 +272,7 @@ module Herb
 
           rows = [] #: Array[String]
 
-          rows << %(<p>Compiled by Herb #{escape(version.to_s)}.</p>) if version
+          rows << %(<p>Compiled by Herb::Engine #{escape(version.to_s)}.</p>) if version
 
           unless options.empty?
             pairs = options.map { |key, value| %(<li><code>#{escape(key.to_s)}: #{escape(value.inspect)}</code></li>) }
