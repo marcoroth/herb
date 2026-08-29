@@ -41,10 +41,6 @@ module Herb
     # is invalid markup, and it would be Herb's own markup tripping the structural rules this exists
     # to run. An unstamped element is a worse answer that stays true. A wrong one would not.
     #
-    # An element whose tag name is built at runtime, as in `<<%= tag %>>`, is not an element in the
-    # tree, so it is stamped no more than an unresolved helper is. Dynamic attributes are a different
-    # thing, and `<div <%= attrs %>>` is a `<div>` that gets stamped like any other.
-    #
     # A partial that `InlineRender::Visitor` brought into this template is stamped with the file it
     # was written in, not the file it was inlined into.
     #
