@@ -897,7 +897,13 @@ into this:
 
 Every element the file wrote carries the scope, and every rule is narrowed by that attribute. Markup the file rendered carries a scope of its own or none, so a scoped block reaches what the file wrote and nothing else, whatever is nested inside it. That holds without the file having to know whether it renders anything.
 
-The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is one. Give the visitor a `LightningCSS::Transformer`, and each rule in the block is narrowed to the scope.
+The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is the one it reaches for unless something else is given, so each rule in a block is narrowed to the scope without anything being said:
+
+```ruby
+Herb::Engine::ScopedStyle::Visitor.new
+```
+
+Herb does not depend on `lightningcss`, so a machine without it gets a block left as it was written and a diagnostic saying so. Pass a `transform` to narrow the CSS some other way.
 
 ```ruby
 require "herb/engine/scoped_style/visitor"
@@ -910,7 +916,7 @@ Herb::Engine.new(source, filename: path, visitors: [
 
 The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there.
 
-Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
+With no `transform` at all, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
 
 `deliver` says where the narrowed CSS goes.
 

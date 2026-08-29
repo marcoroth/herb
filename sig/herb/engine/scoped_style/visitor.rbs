@@ -44,7 +44,9 @@ module Herb
       # `scope` is the selector each rule has to be narrowed by, appended to what the rule already
       # matches.
       #
-      # Without one, a block is left exactly as it was written and reported. Scoping the markup while
+      # Lightning CSS is what narrows a block unless something else is given, so `transform` is for
+      # narrowing it some other way. Without one at all, which is a machine with no `lightningcss` on
+      # it, a block is left exactly as it was written and reported. Scoping the markup while
       # leaving the CSS alone would turn a scoped block into a global one. A `transform` that raises
       # is treated the same way, so CSS nobody can read costs the block it was written in and not the
       # whole template.
@@ -171,6 +173,9 @@ module Herb
 
         # : (Herb::AST::HTMLElementNode) -> void
         def untransformed_style: (Herb::AST::HTMLElementNode) -> void
+
+        # : () -> untyped
+        def default_transform: () -> untyped
 
         # : (Herb::AST::HTMLElementNode, StandardError) -> nil
         def untransformable_style: (Herb::AST::HTMLElementNode, StandardError) -> nil
