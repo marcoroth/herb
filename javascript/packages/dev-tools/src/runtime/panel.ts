@@ -1419,7 +1419,7 @@ export class RuntimePanel {
     return [
       `<button type="button" class="herb-dev-tools-feature" data-herb-dev-tools-action="feature"`,
       ` data-herb-dev-tools-entry="${this.entries.indexOf(entry)}"`,
-      ` title="${label}" aria-label="${label}">${EXPAND_ICON}</button>`,
+      `${tip(label)}>${EXPAND_ICON}</button>`,
     ].join('')
   }
 
@@ -1880,11 +1880,12 @@ export class RuntimePanel {
         `<section class="herb-dev-tools-group${collapsed ? ' herb-dev-tools-group-collapsed' : ''}">`,
         `<h2 class="herb-dev-tools-group-title" data-herb-dev-tools-action="collapse-group"`,
         ` data-herb-dev-tools-template="${escapeHTML(template)}">`,
-        this.pathHTML(template, template, this.firstLineFor(groupEntries), 1, 'herb-dev-tools-group-path'),
-        `<span class="herb-dev-tools-group-count">${groupEntries.length}</span>`,
         `<button type="button" class="herb-dev-tools-group-toggle" data-herb-dev-tools-action="collapse-group"`,
         ` data-herb-dev-tools-template="${escapeHTML(template)}" aria-expanded="${!collapsed}"`,
-        `${tip(label)}>${CHEVRON_ICON}</button>`,
+        ` aria-label="${escapeHTML(label)}">${CHEVRON_ICON}</button>`,
+        `<span class="herb-dev-tools-group-icon" aria-hidden="true"></span>`,
+        this.pathHTML(template, template, this.firstLineFor(groupEntries), 1, 'herb-dev-tools-group-path'),
+        `<span class="herb-dev-tools-group-count">${groupEntries.length}</span>`,
         `</h2>`,
         this.groupBodyHTML(groupEntries),
         `</section>`,
@@ -1939,11 +1940,15 @@ export class RuntimePanel {
     const diagnostic = entry.diagnostic
     const isMetric = diagnostic.kind === 'metric'
     const url = safeUrl(diagnostic.docsUrl)
-    const code = diagnostic.code === null ? '' : `<span class="herb-dev-tools-code">${escapeHTML(diagnostic.code)}</span>`
+    const codeTone = isMetric ? 'metric' : (diagnostic.severity ?? 'error')
+    const codeLabel = diagnostic.code ?? (isMetric ? null : sentenceCase(diagnostic.severity ?? 'error'))
+    const code = codeLabel === null
+      ? ''
+      : `<span class="herb-dev-tools-code herb-dev-tools-code-${escapeHTML(codeTone)}">${escapeHTML(codeLabel)}</span>`
 
     const marker = isMetric
       ? `<span class="herb-dev-tools-metric">${escapeHTML(diagnostic.value ?? 'metric')}</span>`
-      : `<span class="herb-dev-tools-dot herb-dev-tools-dot-${escapeHTML(diagnostic.severity ?? 'error')}" aria-hidden="true"></span>`
+      : ''
 
     const docs = url === null
       ? ''

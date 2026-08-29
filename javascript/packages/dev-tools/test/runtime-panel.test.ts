@@ -518,20 +518,21 @@ describe("cards", () => {
     expect(cards()).toHaveLength(3)
   })
 
-  test("renders a severity dot, the rule code, and the suggestion", () => {
+  test("renders the rule code as a severity pill, and the suggestion", () => {
     embed(PAYLOAD)
     createPanel()
 
     const card = cards()[0]
 
-    expect(card.querySelector(".herb-dev-tools-dot-error")).not.toBeNull()
+    expect(card.querySelector(".herb-dev-tools-dot")).toBeNull()
+    expect(card.querySelector(".herb-dev-tools-code-error")).not.toBeNull()
     expect(card.querySelector(".herb-dev-tools-code")!.textContent).toBe("html-no-nested-forms")
     expect(card.querySelector(".herb-dev-tools-code")!.getAttribute("href")).toBeNull()
     expect(card.querySelector(".herb-dev-tools-docs")!.getAttribute("href")).toBe("https://herb-tools.dev/linter/rules/html-no-nested-forms")
     expect(card.querySelector(".herb-dev-tools-suggestion")!.textContent).toBe("Remove the inner form.")
   })
 
-  test("never renders a severity dot for a metric", () => {
+  test("never renders a severity pill for a metric", () => {
     embed(PAYLOAD)
     createPanel()
 
@@ -540,14 +541,14 @@ describe("cards", () => {
     expect(metric).not.toBeNull()
     expect(metric.querySelector(".herb-dev-tools-dot")).toBeNull()
     expect(metric.querySelector(".herb-dev-tools-metric")!.textContent).toBe("3 SQL queries")
-    expect(document.querySelectorAll(".herb-dev-tools-dot-error, .herb-dev-tools-dot-warning")).toHaveLength(2)
+    expect(document.querySelectorAll(".herb-dev-tools-code-error, .herb-dev-tools-code-warning")).toHaveLength(2)
   })
 
-  test("keeps a metric free of a severity dot even when the payload sends one", () => {
+  test("keeps a metric free of a severity pill even when the payload sends one", () => {
     embed({ version: 1, diagnostics: [{ template: "a.html.erb", message: "m", kind: "metric", severity: "error" }] })
     createPanel()
 
-    expect(document.querySelector(".herb-dev-tools-dot")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-code-error")).toBeNull()
     expect(document.querySelector(".herb-dev-tools-metric")!.textContent).toBe("metric")
   })
 
@@ -1502,7 +1503,7 @@ describe("report", () => {
     panel.report(diagnostic({ origin: "Acme Scanner", severity: "warning" }))
 
     expect(cards()).toHaveLength(1)
-    expect(document.querySelector(".herb-dev-tools-dot-warning")).not.toBeNull()
+    expect(document.querySelector(".herb-dev-tools-code-warning")).not.toBeNull()
   })
 
   test("accepts a batch", () => {
