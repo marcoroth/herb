@@ -20,7 +20,13 @@ module Herb
 
     #: (Herb::AST::Node) -> void
     def visit_child_nodes(node)
-      node.compact_child_nodes.each { |node| node.accept(self) }
+      node.child_node_lists.each { |list| visit_child_node_list(list, node) }
+      node.compact_child_nodes.each { |child| child.accept(self) }
+    end
+
+    #: (Herb::AST::ChildNodeList, Herb::AST::Node) -> void
+    def visit_child_node_list(list, parent)
+      # Default implementation does nothing
     end
 
     #: (Herb::AST::Node) -> void

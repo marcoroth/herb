@@ -8,12 +8,28 @@ class VisitorTest < Minitest::Spec
 
     def initialize
       super
+
       @visited_nodes = []
     end
 
     def visit_child_nodes(node)
       @visited_nodes << node
+
       super
+    end
+  end
+
+  class ChildNodeListVisitor < Herb::Visitor
+    attr_reader :lists
+
+    def initialize
+      super
+
+      @lists = []
+    end
+
+    def visit_child_node_list(list, parent)
+      @lists << [parent.node_name, list.name, list.kind, list.content, list.nodes.count]
     end
   end
 
@@ -221,5 +237,45 @@ class VisitorTest < Minitest::Spec
     assert_equal({ strict: false }, visitor.recommended_parser_options)
     assert_equal({ prism_program: true, strict: false }, Herb::Visitor.parser_options_for([visitor]))
     assert_equal({ prism_program: true, strict: false }, klass.parser_options_for([visitor]))
+  end
+
+  test "visits each child node list of every node" do
+    visitor = ChildNodeListVisitor.new
+
+    result = Herb.parse(%(<div><% if true %>a<% else %>b<% end %></div>))
+    result.visit(visitor)
+
+    expected_lists = [
+      ["DocumentNode", :children, ["Node"], true, 1],
+      ["HTMLElementNode", :body, ["Node"], true, 1],
+      ["HTMLOpenTagNode", :children, ["Node"], true, 0],
+      ["ERBIfNode", :statements, ["Node"], true, 1],
+      ["ERBElseNode", :statements, ["Node"], true, 1],
+      ["HTMLCloseTagNode", :children, ["WhitespaceNode"], true, 0]
+    ]
+
+    assert result.success?
+    assert_equal expected_lists, visitor.lists
+  end
+
+  test "child_node_lists hands back the array the node holds" do
+    result = Herb.parse(%(<div><% if true %>a<% end %></div>))
+    element = result.value.children.first
+    list = element.child_node_lists.first
+
+    list.nodes.unshift(Herb::AST::HTMLTextNode.build(content: +"prefix"))
+
+    assert_same element.body, list.nodes
+    assert_equal "prefix", element.body.first.content
+  end
+
+  test "child_node_lists exposes the name and kind of every array field" do
+    result = Herb.parse(%(<% items.each do |item| %><%= item %><% end %>))
+    block = result.value.children.first
+
+    assert_equal "ERBBlockNode", block.node_name
+    assert_equal [:body, :block_arguments], block.child_node_lists.map(&:name)
+    assert_equal [["Node"], ["RubyParameterNode"]], block.child_node_lists.map(&:kind)
+    assert_equal [true, false], block.child_node_lists.map(&:content)
   end
 end

@@ -40,6 +40,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -75,6 +78,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -124,6 +130,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -165,6 +174,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -211,6 +223,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -247,6 +262,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -282,6 +300,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -333,6 +354,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -391,6 +415,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -436,6 +463,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -471,6 +501,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -514,6 +547,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -549,6 +585,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -588,6 +627,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -637,6 +679,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -672,6 +717,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -715,6 +763,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -757,6 +808,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -798,6 +852,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -844,6 +901,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -886,6 +946,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -921,6 +984,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -979,6 +1045,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1020,6 +1089,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1065,6 +1137,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1125,6 +1200,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1191,6 +1269,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1273,6 +1354,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1320,6 +1404,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1381,6 +1468,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1441,6 +1531,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1494,6 +1587,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1549,6 +1645,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1603,6 +1702,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1651,6 +1753,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1695,6 +1800,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1759,6 +1867,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1819,6 +1930,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -1857,6 +1971,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -1945,6 +2062,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -2017,6 +2137,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -2061,6 +2184,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -2116,6 +2242,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -2157,6 +2286,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -2206,6 +2338,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -2254,6 +2389,9 @@ module Herb
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
       # : () -> String
       def inspect: () -> String
 
@@ -2295,6 +2433,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String
@@ -2346,6 +2487,9 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> String
       def inspect: () -> String

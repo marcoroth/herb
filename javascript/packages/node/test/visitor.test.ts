@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb, Visitor } from "../src"
-import type { ChildNodeList, Node, HTMLTextNode } from "../src/index.js"
+import { Herb, Visitor } from "../src/index.ts"
+
+import type { ChildNodeList, Node, HTMLTextNode } from "../src/index.ts"
 
 class RecordingVisitor extends Visitor {
   visited: string[] = []
@@ -35,7 +36,7 @@ describe("Visitor", () => {
   test("traverses nodes", () => {
     const visitor = new RecordingVisitor()
 
-    const result = Herb.parse("<p>Hello</p>");
+    const result = Herb.parse("<p>Hello</p>")
     result.visit(visitor)
 
     expect(visitor.visited).toEqual([
@@ -50,7 +51,7 @@ describe("Visitor", () => {
   test("text content visitor", () => {
     const visitor = new TextNodeVisitor()
 
-    const result = Herb.parse("<p>Hello</p>");
+    const result = Herb.parse("<p>Hello</p>")
     result.visit(visitor)
 
     expect(visitor.textNodes).toEqual([

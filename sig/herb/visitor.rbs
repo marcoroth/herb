@@ -17,6 +17,9 @@ module Herb
     # : (Herb::AST::Node) -> void
     def visit_child_nodes: (Herb::AST::Node) -> void
 
+    # : (Herb::AST::ChildNodeList, Herb::AST::Node) -> void
+    def visit_child_node_list: (Herb::AST::ChildNodeList, Herb::AST::Node) -> void
+
     # : (Herb::AST::Node) -> void
     def visit_node: (Herb::AST::Node) -> void
 

@@ -27,6 +27,14 @@ public interface Node {
    */
   <R, C> void visitChildren(NodeVisitor<R, C> visitor, C context);
 
+  default List<ChildNodeList> childNodeLists() {
+    return java.util.Collections.emptyList();
+  }
+
+  default List<ChildNodeList> contentNodeLists() {
+    return childNodeLists().stream().filter(ChildNodeList::isContent).collect(java.util.stream.Collectors.toList());
+  }
+
   /**
    * Return a tree-like string representation of this node with all its fields.
    */

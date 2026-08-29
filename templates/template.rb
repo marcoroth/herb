@@ -140,6 +140,10 @@ module Herb
       def union_kind
         @kind if @kind.is_a?(Array)
       end
+
+      def content?
+        options.fetch(:content, true)
+      end
     end
 
     class NodeField < Field
@@ -458,7 +462,7 @@ module Herb
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
 
-          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
+          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false), content: field.fetch("content", true))
         end
       end
 

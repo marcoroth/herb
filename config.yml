@@ -989,6 +989,7 @@ nodes:
           type: "array"
           kind:
             - "RubyParameterNode"
+          content: false
 
         - name: "rescue_clause"
           type: "node"
@@ -1033,6 +1034,7 @@ nodes:
           type: "array"
           kind:
             - "RubyLiteralNode"
+          content: false
 
         - name: "block_opening"
           type: "token"
@@ -1045,6 +1047,7 @@ nodes:
           type: "array"
           kind:
             - "RubyParameterNode"
+          content: false
 
         - name: "rescue_clause"
           type: "node"
@@ -1401,6 +1404,7 @@ nodes:
           type: "array"
           kind:
             - "RubyRenderLocalNode"
+          content: false
 
     - name: "ERBRenderNode"
       fields:
@@ -1431,6 +1435,7 @@ nodes:
           type: "array"
           kind:
             - "RubyParameterNode"
+          content: false
 
         - name: "rescue_clause"
           type: "node"
@@ -1484,6 +1489,7 @@ nodes:
           type: "array"
           kind:
             - "RubyParameterNode"
+          content: false
 
     - name: "ERBYieldNode"
       fields:
@@ -1564,3 +1570,4 @@ nodes:
           type: "array"
           kind:
             - "HerbStateDeclarationNode"
+          content: false

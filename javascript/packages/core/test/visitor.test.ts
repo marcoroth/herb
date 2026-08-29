@@ -9,17 +9,22 @@ import {
   RubyParameterNode,
 } from "../src/index.js"
 
-import type { Node } from "../src/index.js"
+import type { ChildNodeList, Node } from "../src/index.js"
 
 import { Position } from "../src/position.js"
 import { Location } from "../src/location.js"
 
 class RecordingVisitor extends Visitor {
   visited: string[] = []
+  lists: [string, string, string[], boolean, number][] = []
 
   visitChildNodes(node: Node): void {
     this.visited.push(node.constructor.name)
     super.visitChildNodes(node)
+  }
+
+  visitChildNodeList(list: ChildNodeList, parent: Node): void {
+    this.lists.push([parent.constructor.name, list.name, list.kind, list.content, list.nodes.length])
   }
 }
 
@@ -53,6 +58,11 @@ describe("Visitor", () => {
       "HTMLElementNode",
       "HTMLTextNode",
       "ERBContentNode",
+    ])
+
+    expect(visitor.lists).toEqual([
+      ["DocumentNode", "children", ["Node"], true, 1],
+      ["HTMLElementNode", "body", ["Node"], true, 2],
     ])
   })
 

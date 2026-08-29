@@ -27,8 +27,16 @@ public abstract class Visitor<R, C> implements NodeVisitor<R, C> {
    */
   protected void visitChildNodes(Node node, C context) {
     if (node != null) {
+      for (ChildNodeList list : node.childNodeLists()) {
+        visitChildNodeList(list, node, context);
+      }
+
       node.visitChildren(this, context);
     }
+  }
+
+  protected void visitChildNodeList(ChildNodeList list, Node parent, C context) {
+    // Default implementation does nothing
   }
 
   /**

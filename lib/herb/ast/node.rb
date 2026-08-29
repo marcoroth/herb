@@ -8,6 +8,13 @@ module Herb
   #|  errors: Array[serialized_error]
   #| }
   module AST
+    ChildNodeList = Data.define(
+      :name, #: Symbol
+      :kind, #: Array[String]
+      :content, #: bool
+      :nodes #: Array[Herb::AST::Node]
+    )
+
     class Node
       attr_reader :type #: String
       attr_reader :location #: Location
@@ -113,6 +120,16 @@ module Herb
       #: () -> Array[Herb::AST::Node]
       def compact_child_nodes
         child_nodes.compact
+      end
+
+      #: () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists
+        []
+      end
+
+      #: () -> Array[Herb::AST::ChildNodeList]
+      def content_node_lists
+        child_node_lists.select(&:content)
       end
 
       #: () -> Array[Herb::Errors::Error]

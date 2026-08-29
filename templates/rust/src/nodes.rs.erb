@@ -191,12 +191,26 @@ fn inspect_node_field<T: Node + ?Sized>(node: &T, prefix: &str) -> String {
   result
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct ChildNodeList<'a> {
+  pub name: &'static str,
+  pub kind: &'static [&'static str],
+  pub content: bool,
+  pub nodes: &'a [AnyNode],
+}
+
 pub trait Node {
   fn node_type(&self) -> &str;
   fn location(&self) -> &Location;
   fn errors(&self) -> &[AnyError];
   fn child_nodes(&self) -> Vec<&dyn Node>;
+  fn child_node_lists(&self) -> Vec<ChildNodeList<'_>>;
   fn recursive_errors(&self) -> Vec<&dyn ErrorNode>;
+
+  fn content_node_lists(&self) -> Vec<ChildNodeList<'_>> {
+    self.child_node_lists().into_iter().filter(|list| list.content).collect()
+  }
+
   fn collect_errors<'a>(&'a self, accumulator: &mut Vec<&'a dyn ErrorNode>);
   fn tree_inspect(&self) -> String;
 }
@@ -256,6 +270,14 @@ impl AnyNode {
     }
   }
 
+  pub fn child_node_lists(&self) -> Vec<ChildNodeList<'_>> {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.child_node_lists(),
+      <%- end -%>
+    }
+  }
+
   pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
     let mut accumulator: Vec<&dyn ErrorNode> = Vec::new();
     self.collect_errors(&mut accumulator);
@@ -286,6 +308,10 @@ impl Node for AnyNode {
 
   fn child_nodes(&self) -> Vec<&dyn Node> {
     self.child_nodes()
+  }
+
+  fn child_node_lists(&self) -> Vec<ChildNodeList<'_>> {
+    self.child_node_lists()
   }
 
   fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
@@ -404,6 +430,19 @@ impl Node for <%= node.name %> {
     <%- end -%>
     <%- end -%>
     children
+    <%- else -%>
+    Vec::new()
+    <%- end -%>
+  }
+
+  fn child_node_lists(&self) -> Vec<ChildNodeList<'_>> {
+    <%- array_fields = node.fields.grep(Herb::Template::ArrayField) -%>
+    <%- if array_fields.any? -%>
+    vec![
+      <%- array_fields.each do |field| -%>
+      ChildNodeList { name: "<%= field.name %>", kind: &[<%= Array(field.union_kind || field.specific_kind).map(&:inspect).join(", ") %>], content: <%= field.content? %>, nodes: &self.<%= field.name %> },
+      <%- end -%>
+    ]
     <%- else -%>
     Vec::new()
     <%- end -%>

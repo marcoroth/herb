@@ -28,6 +28,10 @@ pub trait Visitor {
     // Default implementation does nothing
   }
 
+  fn visit_child_node_list(&mut self, _list: &ChildNodeList, _parent: &dyn Node) {
+    // Default implementation does nothing
+  }
+
   <%- nodes.each do |node| -%>
   fn visit_<%= node.human %>(&mut self, node: &<%= node.name %>) {
     <%- if node.name.start_with?("ERB") -%>
@@ -37,6 +41,9 @@ pub trait Visitor {
   }
 
   fn walk_<%= node.human %>(&mut self, node: &<%= node.name %>) {
+    <%- node.fields.grep(Herb::Template::ArrayField).each do |field| -%>
+    self.visit_child_node_list(&ChildNodeList { name: "<%= field.name %>", kind: &[<%= Array(field.union_kind || field.specific_kind).map(&:inspect).join(", ") %>], content: <%= field.content? %>, nodes: &node.<%= field.name %> }, node);
+    <%- end -%>
     <%- children_fields = node.fields.select { |field|
       case field
       when Herb::Template::ArrayField

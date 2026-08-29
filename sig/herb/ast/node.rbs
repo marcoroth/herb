@@ -7,6 +7,23 @@ module Herb
   # |  errors: Array[serialized_error]
   # | }
   module AST
+    class ChildNodeList < Data
+      attr_reader name(): Symbol
+
+      attr_reader kind(): Array[String]
+
+      attr_reader content(): bool
+
+      attr_reader nodes(): Array[Herb::AST::Node]
+
+      def self.new: (Symbol name, Array[String] kind, bool content, Array[Herb::AST::Node] nodes) -> instance
+                  | (name: Symbol, kind: Array[String], content: bool, nodes: Array[Herb::AST::Node]) -> instance
+
+      def self.members: () -> [ :name, :kind, :content, :nodes ]
+
+      def members: () -> [ :name, :kind, :content, :nodes ]
+    end
+
     class Node
       attr_reader type: String
 
@@ -60,6 +77,12 @@ module Herb
 
       # : () -> Array[Herb::AST::Node]
       def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def child_node_lists: () -> Array[Herb::AST::ChildNodeList]
+
+      # : () -> Array[Herb::AST::ChildNodeList]
+      def content_node_lists: () -> Array[Herb::AST::ChildNodeList]
 
       # : () -> Array[Herb::Errors::Error]
       def recursive_errors: () -> Array[Herb::Errors::Error]
