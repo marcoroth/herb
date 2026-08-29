@@ -3,6 +3,9 @@
 
 require "prism"
 
+require_relative "state_kinds"
+require_relative "state_operators"
+
 module Herb
   class Engine
     module Slots
@@ -12,22 +15,9 @@ module Herb
       class StateDirectives
         BARE = /\A[a-z_][a-zA-Z0-9_]*\z/ #: Regexp
 
-        KINDS = {
-          "Prism::TrueNode" => :boolean,
-          "Prism::FalseNode" => :boolean,
-          "Prism::IntegerNode" => :integer,
-          "Prism::StringNode" => :string,
-          "Prism::SymbolNode" => :symbol,
-          "Prism::NilNode" => :nil,
-        }.freeze #: Hash[String, Symbol]
+        KINDS = StateKinds::PRISM #: Hash[String, Symbol]
 
-        NODE_KINDS = {
-          "boolean" => :boolean,
-          "integer" => :integer,
-          "string" => :string,
-          "symbol" => :symbol,
-          "nil" => :nil,
-        }.freeze #: Hash[String, Symbol]
+        NODE_KINDS = StateKinds::NODE #: Hash[String, Symbol]
 
         Declaration = Data.define(
           :name,    #: String
@@ -56,8 +46,8 @@ module Herb
           :by    #: Integer
         )
 
-        ORDERED_OPERATORS = [:>, :>=, :<, :<=].freeze #: Array[Symbol]
-        MIRRORED_OPERATORS = { ">" => "<", ">=" => "<=", "<" => ">", "<=" => ">=" }.freeze #: Hash[String, String]
+        ORDERED_OPERATORS = StateOperators::ORDERED #: Array[Symbol]
+        MIRRORED_OPERATORS = StateOperators::MIRRORED #: Hash[String, String]
 
         Parsing = Data.define(
           :locals,    #: Hash[String, Symbol]
@@ -324,6 +314,10 @@ module Herb
 
           #: ((Symbol | String)?) -> String
           def kind_article(kind)
+            known = StateKinds::ARTICLES[kind.to_s]
+
+            return known if known
+
             spelled = kind.to_s.capitalize
 
             return "a value" if spelled.empty?

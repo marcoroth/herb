@@ -1,0 +1,35 @@
+module Herb
+  class Engine
+    module Slots
+      # The kinds a `herb:state` default can have, and what each one means to the compiler.
+      #
+      module StateKinds
+        PRISM = {
+<%- state_kinds.select(&:literal?).each do |kind| -%>
+<%- kind.prism_nodes.each do |node| -%>
+          "Prism::<%= node %>" => :<%= kind.name %>,
+<%- end -%>
+<%- end -%>
+        }.freeze #: Hash[String, Symbol]
+
+        NODE = {
+<%- state_kinds.select(&:literal?).each do |kind| -%>
+          <%= kind.name.inspect %> => :<%= kind.name %>,
+<%- end -%>
+        }.freeze #: Hash[String, Symbol]
+
+        LITERAL = [<%= state_kinds.select(&:literal?).map { |kind| ":#{kind.name}" }.join(", ") %>].freeze #: Array[Symbol]
+
+        UNKNOWN = [<%= state_kinds.select(&:unknown?).map { |kind| ":#{kind.name}" }.join(", ") %>].freeze #: Array[Symbol]
+
+        FALSY = [<%= state_kinds.select(&:falsy?).map { |kind| ":#{kind.name}" }.join(", ") %>].freeze #: Array[Symbol]
+
+        ARTICLES = {
+<%- state_kinds.each do |kind| -%>
+          <%= kind.name.inspect %> => <%= kind.article.inspect %>,
+<%- end -%>
+        }.freeze #: Hash[String, String]
+      end
+    end
+  end
+end

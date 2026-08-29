@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyze.h"
+#include "../include/analyze/herb_directive_kinds.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/lexer/token.h"
@@ -135,29 +136,17 @@ static size_t find_signature_close(const directive_content_T* content, const siz
 static hb_string_T directive_kind_for_prism_node(const pm_node_t* node) {
   if (!node) { return hb_string("missing"); }
 
-  switch (node->type) {
-    case PM_TRUE_NODE:
-    case PM_FALSE_NODE: return hb_string("boolean");
-    case PM_INTEGER_NODE: return hb_string("integer");
-    case PM_FLOAT_NODE: return hb_string("float");
-    case PM_STRING_NODE: return hb_string("string");
-    case PM_SYMBOL_NODE: return hb_string("symbol");
-    case PM_NIL_NODE: return hb_string("nil");
-    case PM_ARRAY_NODE: return hb_string("array");
-    case PM_HASH_NODE:
-    case PM_KEYWORD_HASH_NODE: return hb_string("hash");
-    case PM_LOCAL_VARIABLE_READ_NODE: return hb_string("bare");
+  const char* mapped = herb_directive_kind_for_prism_type(node->type);
 
-    case PM_CALL_NODE: {
-      const pm_call_node_t* call = (const pm_call_node_t*) node;
+  if (mapped) { return hb_string(mapped); }
 
-      if (!call->receiver && !call->arguments && !call->block) { return hb_string("bare"); }
+  if (node->type == PM_CALL_NODE) {
+    const pm_call_node_t* call = (const pm_call_node_t*) node;
 
-      return hb_string("seeded");
-    }
-
-    default: return hb_string("seeded");
+    if (!call->receiver && !call->arguments && !call->block) { return hb_string("bare"); }
   }
+
+  return hb_string("seeded");
 }
 
 typedef struct {

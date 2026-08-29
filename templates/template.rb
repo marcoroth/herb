@@ -681,6 +681,55 @@ module Herb
       end
     end
 
+    class StateKind
+      attr_reader :name, :article, :prism_nodes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @article = config.fetch("article")
+        @prism_nodes = config.fetch("prism_nodes", [])
+        @literal = config.fetch("literal", false)
+        @value = config.fetch("value", false)
+        @unknown = config.fetch("unknown", false)
+        @falsy = config.fetch("falsy", false)
+      end
+
+      def literal?
+        @literal
+      end
+
+      def value?
+        @value
+      end
+
+      def unknown?
+        @unknown
+      end
+
+      def falsy?
+        @falsy
+      end
+
+      def prism_constants
+        prism_nodes.map { |node| "PM_#{Template.underscore(node).upcase}" }
+      end
+    end
+
+    class StateOperator
+      attr_reader :operator, :mirrored, :negated
+
+      def initialize(config)
+        @operator = config.fetch("operator")
+        @mirrored = config.fetch("mirrored", nil)
+        @negated = config.fetch("negated")
+        @ordered = config.fetch("ordered", false)
+      end
+
+      def ordered?
+        @ordered
+      end
+    end
+
     class HelperType
       attr_reader :name, :source, :gem, :output, :visibility, :receiver, :supports_block,
                   :supported, :description, :signature, :documentation_url, :tag,
@@ -951,7 +1000,7 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_kinds: state_kinds, state_operators: state_operators }
       )
       content = heading_for(name, template_file) + rendered_template
 
@@ -1019,6 +1068,18 @@ module Herb
       Dir.glob("config/action_view_helpers/**/*.yml").map do |file|
         HelperType.new(YAML.load_file(file))
       end
+    end
+
+    def self.state_kinds
+      config = YAML.load_file("config/state/kind.yml")
+
+      (config["kinds"] || []).map { |kind| StateKind.new(kind) }
+    end
+
+    def self.state_operators
+      config = YAML.load_file("config/state/operators.yml")
+
+      (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
     end
 
     def self.config

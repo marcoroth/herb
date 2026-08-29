@@ -705,7 +705,7 @@ module Herb
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
-          if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
+          if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && !StateKinds::FALSY.include?(read.kind)
             return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean.", node.location, :read)
           end
 

@@ -65,11 +65,7 @@ export function declaredKind(declaration: StateDeclaration): "boolean" | "intege
   }
 }
 
-export function kindWithArticle(kind: string): string {
-  const capitalized = kind.charAt(0).toUpperCase() + kind.slice(1)
-
-  return kind === "integer" ? `an ${capitalized}` : `a ${capitalized}`
-}
+export { stateKindArticle as kindWithArticle } from "@herb-tools/client/directives"
 
 export class StateScopeMap {
   #scopes = new Map<unknown, Map<string, StateDeclaration>>()
