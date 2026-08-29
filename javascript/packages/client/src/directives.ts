@@ -9,17 +9,23 @@
  */
 
 export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./grammar/attributes"
-export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
-
-export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, stateKindArticle } from "./state-kinds"
+export { STATE_PREDICATES, STATE_PREDICATE_NAMES } from "./state-predicates"
+export { STATE_TRANSFORMS, STATE_TRANSFORM_NAMES } from "./state-transforms"
 export { MIRRORED_COMPARISONS, NEGATED_COMPARISONS, ORDERED_COMPARISONS, COMPARISON_OPERATORS } from "./state-operators"
+export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, stateKindArticle } from "./state-kinds"
+
+export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
 
 export type { Clause } from "./grammar/parsing"
 export type { ActionName, ActionSchema, HerbAttribute } from "./grammar/attributes"
+export type { StatePredicate } from "./state-predicates"
+export type { StateTransform } from "./state-transforms"
 export type { StateDefaultKind, StateValueKind } from "./state-kinds"
 
-import { LITERAL_STATE_KINDS } from "./state-kinds"
-import { MIRRORED_COMPARISONS } from "./state-operators"
+import { STATE_PREDICATES } from "./state-predicates"
+import { STATE_TRANSFORMS } from "./state-transforms"
+import { MIRRORED_COMPARISONS, NEGATED_COMPARISONS } from "./state-operators"
+import { LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS } from "./state-kinds"
 
 import type { StateDefaultKind } from "./state-kinds"
 
@@ -189,6 +195,7 @@ export type DerivedComparand = string | null | { state: string }
 export type DerivedCondition =
   | [string, DerivedComparand]
   | [string, DerivedComparand, string]
+  | [string, DerivedComparand, string | null, string]
   | { all?: DerivedCondition[]; any?: DerivedCondition[] }
 
 export interface DerivedDefault {
@@ -197,6 +204,69 @@ export interface DerivedDefault {
   sources: string[]
 }
 
+
+export interface PredicateRead {
+  name: string
+  predicate: string
+}
+
+const PREDICATE_READ = /^([a-z_][a-zA-Z0-9_]*)\.([a-z_]+\?)$/
+const TRANSFORM_READ = /^([a-z_][a-zA-Z0-9_]*)\.([a-z_]+)$/
+
+export interface TransformRead {
+  name: string
+  transform: string
+}
+
+export function transformReadName(expression: string): TransformRead | null {
+  const match = TRANSFORM_READ.exec(expression.trim())
+
+  if (!match || !(match[2] in STATE_TRANSFORMS)) {
+    return null
+  }
+
+  return { name: match[1], transform: match[2] }
+}
+
+export function transformApplies(transform: string, kind: string): boolean {
+  const spec = STATE_TRANSFORMS[transform]
+
+  if (!spec || spec.kinds === null || UNKNOWN_STATE_KINDS.has(kind)) {
+    return true
+  }
+
+  return spec.kinds.includes(kind)
+}
+
+export function predicateReadName(expression: string): PredicateRead | null {
+  const match = PREDICATE_READ.exec(expression.trim())
+
+  if (!match || !(match[2] in STATE_PREDICATES)) {
+    return null
+  }
+
+  return { name: match[1], predicate: match[2] }
+}
+
+export function predicateAnswers(predicate: string, kind: string): boolean {
+  const spec = STATE_PREDICATES[predicate]
+
+  if (!spec || spec.kinds === null || UNKNOWN_STATE_KINDS.has(kind)) {
+    return true
+  }
+
+  return spec.kinds.includes(kind)
+}
+
+export function predicateCondition(read: PredicateRead): DerivedCondition {
+  const spec = STATE_PREDICATES[read.predicate]
+
+  if (spec.comparand === undefined) {
+    return [read.name, null, spec.operator as string]
+  }
+
+  return spec.operator ? [read.name, spec.comparand, spec.operator] : [read.name, spec.comparand]
+}
 
 export function classifyDerivedDefault(source: string, declared: ReadonlyMap<string, string>): DerivedDefault | "mixed" | null {
   const parsed = parseDerivedCondition(source.trim(), declared)
@@ -233,6 +303,18 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
     }
   }
 
+  if (trimmed.startsWith("!")) {
+    const inner = parseDerivedCondition(unwrapParentheses(trimmed.slice(1).trim()), declared)
+
+    if (inner === null || inner === "mixed") {
+      return inner
+    }
+
+    const negated = negateCondition(inner.condition)
+
+    return negated === null ? "mixed" : { kind: "boolean", condition: negated, sources: inner.sources }
+  }
+
   const comparison = splitTopLevelComparison(trimmed)
 
   if (comparison) {
@@ -241,15 +323,19 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
     const rightState = derivedStateSide(right, declared)
 
     if (leftState && rightState) {
-      const spelled = operator === "==" ? undefined : operator
-      const condition: DerivedCondition = spelled ? [leftState, { state: rightState }, spelled] : [leftState, { state: rightState }]
+      if (leftState.transform || rightState.transform) {
+        return "mixed"
+      }
 
-      return { kind: "boolean", condition, sources: [...new Set([leftState, rightState])] }
+      const spelled = operator === "==" ? undefined : operator
+      const condition: DerivedCondition = spelled ? [leftState.state, { state: rightState.state }, spelled] : [leftState.state, { state: rightState.state }]
+
+      return { kind: "boolean", condition, sources: [...new Set([leftState.state, rightState.state])] }
     }
 
-    const state = leftState ?? rightState
+    const side = leftState ?? rightState
 
-    if (!state) {
+    if (!side) {
       return null
     }
 
@@ -265,9 +351,45 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
       spelled = MIRRORED_COMPARISONS[spelled]
     }
 
-    const condition: DerivedCondition = spelled ? [state, literal, spelled] : [state, literal]
+    if (side.transform) {
+      return { kind: "boolean", condition: [side.state, literal, spelled ?? "==", side.transform], sources: [side.state] }
+    }
 
-    return { kind: "boolean", condition, sources: [state] }
+    const condition: DerivedCondition = spelled ? [side.state, literal, spelled] : [side.state, literal]
+
+    return { kind: "boolean", condition, sources: [side.state] }
+  }
+
+  const transform = transformReadName(trimmed)
+
+  if (transform) {
+    const kind = declared.get(transform.name)
+
+    if (kind === undefined) {
+      return null
+    }
+
+    if (!transformApplies(transform.transform, kind)) {
+      return "mixed"
+    }
+
+    const spec = STATE_TRANSFORMS[transform.transform]
+
+    return { kind: spec.returns as DerivedDefault["kind"], condition: [transform.name, null, null, spec.operation], sources: [transform.name] }
+  }
+
+  const predicate = predicateReadName(trimmed)
+
+  if (predicate) {
+    const kind = declared.get(predicate.name)
+
+    if (kind === undefined) {
+      return null
+    }
+
+    return predicateAnswers(predicate.predicate, kind)
+      ? { kind: "boolean", condition: predicateCondition(predicate), sources: [predicate.name] }
+      : "mixed"
   }
 
   const bare = bareReadName(trimmed)
@@ -283,9 +405,7 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
   }
 
   if (trimmed.endsWith("?")) {
-    return kind === "boolean" || kind === "seeded" || kind === "bare"
-      ? { kind: "boolean", condition: [bare, null], sources: [bare] }
-      : "mixed"
+    return { kind: "boolean", condition: [bare, null], sources: [bare] }
   }
 
   const resolved = LITERAL_STATE_KINDS.has(kind) ? kind as DerivedDefault["kind"] : "seeded"
@@ -293,14 +413,72 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
   return { kind: resolved, condition: [bare, null], sources: [bare] }
 }
 
-function derivedStateSide(side: string, declared: ReadonlyMap<string, string>): string | null {
-  const bare = bareReadName(side.trim())
+interface DerivedSide {
+  state: string
+  transform: string | null
+}
 
-  if (bare === null || !declared.has(bare)) {
+const NEGATED_UNARY: Record<string, string> = { blank: "present", present: "blank" }
+
+function negateCondition(condition: DerivedCondition): DerivedCondition | null {
+  if (!Array.isArray(condition)) {
+    const parts = condition.all ?? condition.any
+
+    if (!parts) {
+      return null
+    }
+
+    const negated = parts.map((part) => negateCondition(part))
+
+    if (negated.some((part) => part === null)) {
+      return null
+    }
+
+    return condition.all ? { any: negated as DerivedCondition[] } : { all: negated as DerivedCondition[] }
+  }
+
+  const [name, comparand, operator, transform] = condition
+  const spelled = typeof operator === "string" ? operator : null
+
+  const flipped =
+    spelled === null
+      ? (comparand === null ? "falsy" : "!=")
+      : spelled === "falsy"
+        ? null
+        : (NEGATED_UNARY[spelled] ?? NEGATED_COMPARISONS[spelled] ?? null)
+
+  if (spelled !== null && spelled !== "falsy" && flipped === null) {
     return null
   }
 
-  return bare
+  if (typeof transform === "string") {
+    return [name, comparand, flipped, transform]
+  }
+
+  return flipped === null ? [name, comparand] : [name, comparand, flipped]
+}
+
+function derivedStateSide(side: string, declared: ReadonlyMap<string, string>): DerivedSide | null {
+  const source = side.trim()
+  const bare = bareReadName(source)
+
+  if (bare !== null && declared.has(bare)) {
+    return { state: bare, transform: null }
+  }
+
+  const transform = transformReadName(source)
+
+  if (transform === null) {
+    return null
+  }
+
+  const kind = declared.get(transform.name)
+
+  if (kind === undefined || !transformApplies(transform.transform, kind)) {
+    return null
+  }
+
+  return { state: transform.name, transform: STATE_TRANSFORMS[transform.transform].operation }
 }
 
 function unwrapParentheses(source: string): string {

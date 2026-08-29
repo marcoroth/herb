@@ -1,0 +1,18 @@
+---
+transforms:
+  - name: "length"
+    operation: "length"
+    kinds: ["string", "symbol"]
+    returns: "integer"
+    only: "a String or a Symbol state"
+
+  - name: "size"
+    operation: "length"
+    kinds: ["string", "symbol"]
+    returns: "integer"
+    only: "a String or a Symbol state"
+
+  - name: "to_s"
+    operation: "to_s"
+    returns: "string"
+    only: "every state"

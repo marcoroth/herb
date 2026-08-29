@@ -29,8 +29,20 @@ export function matches(condition: StateCondition, valueOf: ValueOf): boolean {
     return parts(condition).some((part) => matches(part, valueOf))
   }
 
-  const [name, comparand, operator] = condition
-  const value = valueOf(name)
+  const [name, comparand, operator, transform] = condition
+  const value = typeof transform === "string" ? transformed(transform, valueOf(name)) : valueOf(name)
+
+  if (operator === "blank") {
+    return blank(value)
+  }
+
+  if (operator === "present") {
+    return !blank(value)
+  }
+
+  if (operator === "falsy") {
+    return !truthy(value)
+  }
 
   if (comparand === null) {
     return truthy(value)
@@ -103,6 +115,42 @@ export function statesIn(condition: StateCondition): string[] {
 
 export function truthy(value: ConditionValue): boolean {
   return value !== false && value !== null
+}
+
+export function transformed(operation: string, value: ConditionValue): ConditionValue {
+  if (operation === "to_s") {
+    return value === null ? "" : String(value)
+  }
+
+  if (operation !== "length") {
+    return value
+  }
+
+  if (typeof value !== "string") {
+    return 0
+  }
+
+  return [...value].length
+}
+
+export function evaluate(condition: StateCondition, valueOf: ValueOf): ConditionValue {
+  if (Array.isArray(condition)) {
+    const [name, comparand, operator, transform] = condition
+
+    if (typeof transform === "string" && comparand === null && !operator) {
+      return transformed(transform, valueOf(name))
+    }
+  }
+
+  return matches(condition, valueOf)
+}
+
+export function blank(value: ConditionValue): boolean {
+  if (value === null || value === false) {
+    return true
+  }
+
+  return typeof value === "string" && /^\s*$/.test(value)
 }
 
 export function literal(source: string): ConditionValue | undefined {

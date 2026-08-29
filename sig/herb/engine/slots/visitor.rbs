@@ -152,6 +152,9 @@ module Herb
         # : () -> Hash[Integer, untyped]
         def state_presence: () -> Hash[Integer, untyped]
 
+        # : () -> Hash[Integer, untyped]
+        def state_values: () -> Hash[Integer, untyped]
+
         # : () -> Array[String]
         def seeded_region_states: () -> Array[String]
 

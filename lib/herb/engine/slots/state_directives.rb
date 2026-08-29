@@ -5,6 +5,8 @@ require "prism"
 
 require_relative "state_kinds"
 require_relative "state_operators"
+require_relative "state_predicates"
+require_relative "state_transforms"
 
 module Herb
   class Engine
@@ -33,7 +35,8 @@ module Herb
           :comparand, #: String?
           :kind,      #: Symbol?
           :operator,  #: String?
-          :against    #: String?
+          :against,   #: String?
+          :transform  #: String?
         )
 
         Combo = Data.define(
@@ -48,6 +51,19 @@ module Herb
 
         ORDERED_OPERATORS = StateOperators::ORDERED #: Array[Symbol]
         MIRRORED_OPERATORS = StateOperators::MIRRORED #: Hash[String, String]
+        NEGATED_OPERATORS = StateOperators::NEGATED #: Hash[String, String]
+
+        FALSY_OPERATOR = "falsy" #: String
+
+        PREDICATES = StatePredicates::TABLE #: Hash[String, Hash[Symbol, untyped]]
+
+        UNARY_OPERATORS = StatePredicates::UNARY #: Hash[String, String]
+
+        NEGATED_UNARY = StatePredicates::NEGATED #: Hash[String, String]
+
+        TRANSFORMS = StateTransforms::TABLE #: Hash[String, Hash[Symbol, untyped]]
+
+        TRANSFORM_SPELLINGS = StateTransforms::SPELLINGS #: Hash[String, String]
 
         Parsing = Data.define(
           :locals,    #: Hash[String, Symbol]
@@ -119,6 +135,15 @@ module Herb
             read = bare_read(node, states, visitor, location)
             return read if read
 
+            predicate = predicate_read(node, states, visitor, location)
+            return predicate if predicate
+
+            transform = transform_read(node, states, visitor, location)
+            return transform if transform
+
+            negated = negated_read(node, states, visitor, location)
+            return negated if negated
+
             equality = equality_read(node, states, visitor, location)
             return equality if equality
 
@@ -172,6 +197,10 @@ module Herb
 
             comparand = comparand_entry(read)
 
+            if read.transform
+              return [read.name, comparand, read.operator || (comparand ? "==" : nil), read.transform]
+            end
+
             read.operator ? [read.name, comparand, read.operator] : [read.name, comparand]
           end
 
@@ -206,9 +235,14 @@ module Herb
           #: (Read | Combo) -> String
           def condition_source(read)
             if read.is_a?(Read)
-              return read.name if read.comparand.nil? && read.against.nil?
+              spelled = UNARY_OPERATORS[read.operator.to_s]
+              subject = read.transform ? "#{read.name}.#{TRANSFORM_SPELLINGS.fetch(read.transform)}" : read.name
 
-              "#{read.name} #{read.operator || "=="} #{read.against || read.comparand}"
+              return "#{subject}.#{spelled}" if spelled
+              return "!#{subject}" if read.operator == FALSY_OPERATOR
+              return subject if read.comparand.nil? && read.against.nil?
+
+              "#{subject} #{read.operator || "=="} #{read.against || read.comparand}"
             else
               joiner = read.op == "all" ? " && " : " || "
 
@@ -312,6 +346,13 @@ module Herb
             node.nil? || !KINDS.key?(node.class.name)
           end
 
+          #: (Read) -> String
+          def subject_phrase(read)
+            return "the #{TRANSFORM_SPELLINGS.fetch(read.transform)} of the state `#{read.name}`" if read.transform
+
+            "the #{read.kind.to_s.capitalize} state `#{read.name}`"
+          end
+
           #: ((Symbol | String)?) -> String
           def kind_article(kind)
             known = StateKinds::ARTICLES[kind.to_s]
@@ -323,6 +364,21 @@ module Herb
             return "a value" if spelled.empty?
 
             spelled.start_with?("A", "E", "I", "O", "U") ? "an #{spelled}" : "a #{spelled}"
+          end
+
+          #: (String, String) -> String
+          def rewrite_reads(source, name)
+            rewritten = source
+
+            PREDICATES.each do |spelled, predicate|
+              rewrite = predicate[:rewrite]
+
+              next unless rewrite
+
+              rewritten = rewritten.gsub(/(?<![\w?!])#{Regexp.escape(name)}\.#{Regexp.escape(spelled)}(?![\w?!])/) { "(#{name} #{rewrite})" }
+            end
+
+            rewritten.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
           end
 
           #: (String, Hash[String, Declaration]) -> bool
@@ -415,7 +471,7 @@ module Herb
 
           #: (Read | Combo) -> Symbol
           def derived_kind(read)
-            return read.kind || :seeded if read.is_a?(Read) && read.comparand.nil? && read.against.nil?
+            return read.kind || :seeded if read.is_a?(Read) && read.comparand.nil? && read.against.nil? && read.operator.nil?
 
             :boolean
           end
@@ -453,13 +509,13 @@ module Herb
           end
 
           #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-          def bare_read(node, states, visitor, location)
+          def bare_read(node, states, _visitor, _location)
             if node.is_a?(Prism::LocalVariableReadNode)
               declaration = states[node.name.to_s]
 
               return nil unless declaration
 
-              return Read.new(name: node.name.to_s, comparand: nil, kind: declaration.kind, operator: nil, against: nil)
+              return Read.new(name: node.name.to_s, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil)
             end
 
             return nil unless node.is_a?(Prism::CallNode) && node.receiver.nil? && node.arguments.nil? && node.block.nil?
@@ -471,11 +527,87 @@ module Herb
 
             return nil unless declaration
 
-            if predicate && declaration.kind != :boolean && declaration.kind != :seeded
-              return visitor.slot_error("`#{spelled}` reads the #{declaration.kind.to_s.capitalize} state `#{name}` as a predicate. Only a boolean state can be read with a `?`, so drop the `?` or declare `#{name}` as a boolean.", location, :read)
+            Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil)
+          end
+
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+          def operand_read(node, states, visitor, location)
+            bare_read(node, states, visitor, location) || transform_read(node, states, visitor, location)
+          end
+
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+          def transform_read(node, states, visitor, location)
+            return nil unless node.is_a?(Prism::CallNode)
+
+            transform = TRANSFORMS[node.name.to_s]
+
+            return nil unless transform
+            return nil unless node.arguments.nil? && node.block.nil?
+
+            receiver = node.receiver
+
+            return nil unless receiver
+
+            read = bare_read(receiver, states, visitor, location)
+
+            return nil unless read.is_a?(Read)
+
+            kinds = transform.fetch(:kinds)
+
+            if kinds && read.kind != :seeded && !kinds.include?(read.kind)
+              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{transform.fetch(:only)} can be read with `#{node.name}`, so compare `#{read.name}` itself instead.", location, :read)
             end
 
-            Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil)
+            Read.new(name: read.name, comparand: nil, kind: transform.fetch(:returns), operator: nil, against: nil, transform: transform.fetch(:operation))
+          end
+
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+          def predicate_read(node, states, visitor, location)
+            return nil unless node.is_a?(Prism::CallNode)
+
+            predicate = PREDICATES[node.name.to_s]
+
+            return nil unless predicate
+            return nil unless node.arguments.nil? && node.block.nil?
+
+            receiver = node.receiver
+
+            return nil unless receiver
+
+            read = bare_read(receiver, states, visitor, location)
+
+            return nil unless read.is_a?(Read)
+
+            kinds = predicate[:kinds]
+
+            if kinds && read.kind != :seeded && !kinds.include?(read.kind)
+              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{predicate.fetch(:only)} can be read with `#{node.name}`, so compare `#{read.name}` to a literal instead.", location, :read)
+            end
+
+            Read.new(name: read.name, comparand: predicate[:comparand], kind: read.kind, operator: predicate[:operator], against: nil, transform: nil)
+          end
+
+          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
+          def negated_read(node, states, visitor, location)
+            return nil unless node.is_a?(Prism::CallNode) && node.name == :!
+            return nil unless node.receiver && node.arguments.nil? && node.block.nil?
+
+            inner = tree_read(unwrap_parentheses(node.receiver), states, visitor, location)
+
+            return nil unless inner.is_a?(Read) || inner.is_a?(Combo)
+
+            negate(inner)
+          end
+
+          #: (Read | Combo) -> (Read | Combo)
+          def negate(read)
+            return Combo.new(op: read.op == "all" ? "any" : "all", parts: read.parts.map { |part| negate(part) }) if read.is_a?(Combo)
+
+            return read.with(operator: NEGATED_UNARY.fetch(read.operator), kind: :boolean) if NEGATED_UNARY.key?(read.operator.to_s)
+            return read.with(operator: nil, kind: :boolean) if read.operator == FALSY_OPERATOR
+            return read.with(operator: FALSY_OPERATOR, kind: :boolean) if read.operator.nil? && read.comparand.nil? && read.against.nil?
+
+            read.with(operator: NEGATED_OPERATORS.fetch(read.operator || "=="), kind: :boolean)
           end
 
           #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
@@ -488,8 +620,8 @@ module Herb
 
             return nil unless left && right && node.arguments&.arguments&.one?
 
-            left_read = bare_read(left, states, visitor, location)
-            right_read = bare_read(right, states, visitor, location)
+            left_read = operand_read(left, states, visitor, location)
+            right_read = operand_read(right, states, visitor, location)
             read = left_read || right_read
 
             return nil unless read
@@ -506,11 +638,11 @@ module Herb
             end
 
             operator = node.name == :== ? nil : node.name.to_s
-            operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!=" && bare_read(right, states, visitor, location)
+            operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!=" && right_read
             ordered = operator && operator != "!="
 
             if ordered && read.kind != :integer && read.kind != :seeded
-              return visitor.slot_error("`#{node.slice}` orders the #{read.kind.to_s.capitalize} state `#{read.name}`. Ordering compares numbers, so declare `#{read.name}` as an Integer or compare it with `==` instead.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` orders #{subject_phrase(read)}. Ordering compares numbers, so declare `#{read.name}` as an Integer or compare it with `==` instead.", location, :compare)
             end
 
             if ordered && kind != :integer
@@ -518,26 +650,36 @@ module Herb
             end
 
             unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded
-              return visitor.slot_error("`#{node.slice}` compares the #{read.kind.to_s.capitalize} state `#{read.name}` against #{kind_article(kind)} literal, so it can never match. Compare it against #{kind_article(read.kind)} literal instead.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, so it can never match. Compare it against #{kind_article(read.kind)} literal instead.", location, :compare)
             end
 
-            Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil)
+            Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil, transform: read.transform)
           end
 
           #: (untyped, Read, Read, untyped, Herb::Location?) -> Read?
           def state_pair_read(node, left, right, visitor, location)
+            if left.transform && right.transform
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(left)} against #{subject_phrase(right)}. One condition carries one transform, so declare a state for one of the two sides and compare that.", location, :compare)
+            end
+
             operator = node.name == :== ? nil : node.name.to_s
+
+            if right.transform
+              left, right = right, left
+              operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!="
+            end
+
             ordered = operator && operator != "!="
 
             if ordered && (left.kind != :integer || right.kind != :integer) && left.kind != :seeded && right.kind != :seeded
-              return visitor.slot_error("`#{node.slice}` orders the states `#{left.name}` and `#{right.name}`. Ordering compares numbers, so declare both as Integers.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` orders #{subject_phrase(left)} against #{subject_phrase(right)}. Ordering compares numbers, so both sides have to be Integers.", location, :compare)
             end
 
             if !ordered && left.kind != right.kind && left.kind != :seeded && right.kind != :seeded
-              return visitor.slot_error("`#{node.slice}` compares the #{left.kind.to_s.capitalize} state `#{left.name}` with the #{right.kind.to_s.capitalize} state `#{right.name}`, so it can never match. Compare states of the same kind.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(left)} with #{subject_phrase(right)}, so it can never match. Compare values of the same kind.", location, :compare)
             end
 
-            Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name)
+            Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name, transform: left.transform)
           end
         end
       end

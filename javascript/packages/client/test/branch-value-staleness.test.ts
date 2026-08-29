@@ -20,6 +20,7 @@ const MANIFEST = {
         0: { arms: [{ branch: 0, condition: ["draft", { value: "hello" }] }], else: null },
       },
       presence: {},
+      computed: {},
     },
   },
 }

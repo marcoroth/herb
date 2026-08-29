@@ -1,7 +1,7 @@
 export type ConditionValue = string | number | boolean | null
 export type ConditionalArm = Arm | ComboArm | [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
 export type StateComparand = null | { state: string } | { value: ConditionValue } | string
-export type StateCondition = [string, StateComparand] | [string, StateComparand, string] | ComboCondition
+export type StateCondition = [string, StateComparand] | [string, StateComparand, string] | [string, StateComparand, string | null, string] | ComboCondition
 export type ValueOf = (name: string) => ConditionValue
 
 export interface ComboCondition {
@@ -36,6 +36,7 @@ export type SerializedState = Record<string, string>
 export type StateIndices = Record<string, number[]>
 export type ConditionalMap = Record<string, Conditional>
 export type PresenceMap = Record<string, StateCondition>
+export type ComputedMap = Record<string, StateCondition>
 export type ResolvedStateOptions = Required<Omit<StateOptions, "transport">> & { transport: StateTransport }
 
 export type StateBucket = Map<string, StateValue>
@@ -66,6 +67,7 @@ export interface StateManifest {
   bound?: StateIndices
   conditionals: ConditionalMap
   presence?: PresenceMap
+  computed?: ComputedMap
 }
 
 export interface StateScope {

@@ -131,7 +131,8 @@
             ]
           ]
         }
-      }
+      },
+      "computed": {}
     }
   },
   "dependencies": {
