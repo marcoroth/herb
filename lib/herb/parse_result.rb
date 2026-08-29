@@ -36,6 +36,16 @@ module Herb
       JSON.pretty_generate(errors)
     end
 
+    #: (Herb::Position) -> Herb::Locate::Result?
+    def locate(position)
+      Locate.call(self, position)
+    end
+
+    #: (Herb::Position) -> bool
+    def locatable?(position)
+      Locate.locatable?(self, position)
+    end
+
     #: (Visitor) -> void
     def visit(visitor)
       value.accept(visitor)

@@ -4,10 +4,14 @@
 module Herb
   # Finds the most specific node at a position, and the nodes it sits inside.
   #
-  #     result = Herb::Locate.call(document, Herb::Position[2, 7])
+  #     result = document.locate(Herb::Position.from(2, 7))
   #
   #     result.node      #=> the innermost node whose location contains the position
   #     result.ancestors #=> every node it sits inside, nearest first
+  #
+  # A node and a parse result both answer, so a walk starts from whichever one a caller already
+  # holds. `Herb::AST::Node#locate` and `Herb::ParseResult#locate` are the same walk from different
+  # starting points.
   #
   # Everything that reads a position back from a rendered page, an editor, or a diagnostic needs
   # this, and every caller was writing its own descent. A finding at `2:7` is a node before it is
@@ -20,7 +24,7 @@ module Herb
   #
   # A node's location contains its start and stops short of its end, so two nodes sitting next to
   # each other never both answer for the character between them. A position past the end of the
-  # source belongs to no node, and `call` answers `nil`.
+  # source belongs to no node, and the answer is `nil`.
   #
   # Columns are 0-based character offsets into their line, which is what the parser reports.
   # `Herb::Position#to_one_based` is what turns one into what an editor shows.

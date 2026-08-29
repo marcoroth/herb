@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest"
 import { locate, locatable } from "../src/locate.js"
+import { ParseResult } from "../src/parse-result.js"
 
 import { Location } from "../src/location.js"
 import { Position } from "../src/position.js"
@@ -296,6 +297,49 @@ describe("locate", () => {
       })
 
       expect(locatable(holder, Position.from(1, 20))).toBe(true)
+    })
+  })
+
+  describe("a parse result answering for itself", () => {
+    test("delegates to locate", () => {
+      const { document, text } = tree()
+      const result = { value: document, locate: undefined } as any
+
+      result.locate = ParseResult.prototype.locate
+      result.locatable = ParseResult.prototype.locatable
+
+      expect(result.locate(Position.from(1, 12)).node).toBe(text)
+      expect(result.locatable(Position.from(1, 12))).toBe(true)
+      expect(result.locatable(Position.from(1, 999))).toBe(false)
+    })
+  })
+
+  describe("a node answering for itself", () => {
+    test("finds the most specific node at a position", () => {
+      const { document, text } = tree()
+
+      expect(document.locate(Position.from(1, 12))!.node).toBe(text)
+    })
+
+    test("answers the same way the free function does", () => {
+      const { document } = tree()
+      const position = Position.from(1, 12)
+
+      expect(document.locate(position)!.node).toBe(locate(document, position)!.node)
+    })
+
+    test("works on a node reached through a walk", () => {
+      const { document, text } = tree()
+      const span = document.locate(Position.from(1, 12))!.ancestors[0]
+
+      expect(span.locate(Position.from(1, 12))!.node).toBe(text)
+    })
+
+    test("says whether a position falls inside it at all", () => {
+      const { document } = tree()
+
+      expect(document.locatable(Position.from(1, 12))).toBe(true)
+      expect(document.locatable(Position.from(1, 999))).toBe(false)
     })
   })
 })

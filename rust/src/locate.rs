@@ -15,7 +15,7 @@ impl<T: Node> LocateSource for T {
   }
 }
 
-impl LocateSource for dyn Node {
+impl<'n> LocateSource for dyn Node + 'n {
   fn locate_root(&self) -> &dyn Node {
     self
   }
@@ -131,5 +131,31 @@ pub fn locate<S: LocateSource + ?Sized>(source: &S, position: Position) -> Optio
         });
       }
     }
+  }
+}
+
+pub trait NodeLocate {
+  fn locate(&self, position: Position) -> Option<LocateResult<'_>>;
+
+  fn locatable(&self, position: Position) -> bool;
+}
+
+impl<T: Node> NodeLocate for T {
+  fn locate(&self, position: Position) -> Option<LocateResult<'_>> {
+    locate(self, position)
+  }
+
+  fn locatable(&self, position: Position) -> bool {
+    locatable(self, position)
+  }
+}
+
+impl<'n> NodeLocate for dyn Node + 'n {
+  fn locate(&self, position: Position) -> Option<LocateResult<'_>> {
+    locate(self, position)
+  }
+
+  fn locatable(&self, position: Position) -> bool {
+    locatable(self, position)
   }
 }

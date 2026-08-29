@@ -21,7 +21,7 @@ pub mod visitor;
 pub(crate) mod style;
 
 pub use lex_result::LexResult;
-pub use locate::{locatable, locate, LocateResult, LocateSource};
+pub use locate::{locatable, locate, LocateResult, LocateSource, NodeLocate};
 pub use location::Location;
 pub use nodes::{AnyNode, ERBNode, Node};
 pub use parse_result::ParseResult;
