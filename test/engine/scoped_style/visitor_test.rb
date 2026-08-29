@@ -51,6 +51,27 @@ module Engine
       end
     end
 
+    class Narrowing
+      def call(css, scope:)
+        css.gsub(/([^{}]+)\{([^{}]*)\}/) { "#{Regexp.last_match(1).strip}#{scope}{#{Regexp.last_match(2).strip}}" }
+      end
+    end
+
+    class Recording
+      attr_reader :calls #: Array[Array[untyped]]
+
+      def initialize(answer: "inlined")
+        @answer = answer
+        @calls = []
+      end
+
+      def call(html, keep: false)
+        @calls << [html, keep]
+
+        @answer
+      end
+    end
+
     def options(transform: Transform.new, filename: TEMPLATE, visitors: [], deliver: :inline, **overrides)
       visitor = Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: deliver)
 
@@ -77,20 +98,20 @@ module Engine
 
       scope = visitor.styles.keys.first
 
-      assert_equal [[".title { color: red; }", ":where([#{scope}], [#{scope}] *)"]], transform.calls
+      assert_equal [[".title { color: red; }", "[#{scope}]"]], transform.calls
     end
 
     test "takes the scoped attribute back out with the space that separated it" do
       assert_compiled_snapshot(%(<style scoped>.a { color: red; }</style><h1>Hi</h1>), options)
     end
 
-    test "puts the attribute on the roots alone when a file renders nothing" do
+    test "puts the attribute on every element the file wrote" do
       source = %(<style scoped>.a { color: red; }</style>\n<div class="card"><h1 class="title">Hi</h1></div>)
 
       assert_compiled_snapshot(source, options)
     end
 
-    test "puts the attribute on every element when a file renders something" do
+    test "puts it on every element it wrote and none it rendered" do
       source = %(<style scoped>.a { color: red; }</style>\n<div class="card"><h1 class="title">Hi</h1><%= render "posts/plain" %></div>)
 
       assert_compiled_snapshot(source, options(project_path: PROJECT_PATH))

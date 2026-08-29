@@ -1,6 +1,6 @@
 ---
-source: "Engine::ScopedStyleLightningCSSTest#test_0001_narrows by ancestor when the file renders nothing"
+source: "Engine::ScopedStyleLightningCSSTest#test_0001_narrows by the attribute when the file renders nothing"
 input: "{source: \"<style scoped>.title { color: #ff0000 }</style><h1 class=\\\"title\\\">Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
 ---
-_buf = ::String.new; _buf << '<style>.title:where([data-herb-scope-2940ba8a],[data-herb-scope-2940ba8a] *){color:red}</style><h1 class="title" data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf = ::String.new; _buf << '<style>.title[data-herb-scope-2940ba8a]{color:red}</style><h1 class="title" data-herb-scope-2940ba8a>Hi</h1>'.freeze;
 _buf.to_s

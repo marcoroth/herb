@@ -25,15 +25,13 @@ module Herb
       # rewritten to require it. There is no single root element to write, because a file is scoped
       # as a whole. A file with five sibling roots and a file with none behave the same way.
       #
-      # Where the attribute goes depends on what the file can be sure of. A file that renders nothing
-      # owns everything under its roots, so the attribute goes on the roots alone and the selectors
-      # match within them. A file that renders something does not, so every element it wrote carries
-      # the attribute and the selectors match only those.
+      # Every element the file wrote carries the attribute, and every rule is narrowed by it. Markup the
+      # file rendered carries a scope of its own or none, so a block reaches what the file wrote and
+      # nothing else, whatever is nested inside it.
       #
-      # The second form is not a fallback that could be avoided with a better selector. Narrowing by
-      # ancestor cannot stop at a nested scope, because an element inside one is still a descendant
-      # of the one outside it, and CSS has no way to say otherwise. Only an attribute on the element
-      # itself distinguishes them.
+      # Narrowing by ancestor would cost fewer attributes, and cannot be had. An element inside a nested
+      # scope is still a descendant of the one outside it, and CSS has no way to say otherwise, so only
+      # an attribute on the element itself tells them apart.
       #
       # A file is scoped as a whole, so markup an inlined partial brought with it belongs to the
       # partial and not to the template it landed in. `Herb::Visitor::Context::Origin` is what says so, which
@@ -54,10 +52,7 @@ module Herb
       #     Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new(minify: true))
       #
       # `scope` is the selector each rule has to be narrowed by, appended to what the rule already
-      # matches. A file that renders nothing is given the ancestor form instead, which is the same
-      # operation on the transform's side:
-      #
-      #     scope: ":where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)"
+      # matches.
       #
       # Without one, a block is left exactly as it was written and reported. Scoping the markup while
       # leaving the CSS alone would turn a scoped block into a global one. A `transform` that raises
@@ -83,6 +78,7 @@ module Herb
         UNSCOPABLE_ELEMENTS = ["style", "script"].freeze #: Array[String]
         OPEN_TAGS = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
         DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
+
         DIGEST_LENGTH = 8 #: Integer
 
         required_parser_option track_locations: true
@@ -102,8 +98,6 @@ module Herb
           @scopes = {} #: Hash[String, String]
           @styles = {} #: Hash[String, String]
           @elements = {} #: Hash[String, Integer]
-          @openings = {} #: Hash[String, Integer]
-          @depth = {} #: Hash[String, Integer]
           @pending = [] #: Array[Array[untyped]]
           @stack = [] #: Array[String]
         end
@@ -119,8 +113,6 @@ module Herb
           @scopes = {} #: Hash[String, String]
           @styles = {} #: Hash[String, String]
           @elements = Hash.new(0) #: Hash[String, Integer]
-          @openings = Hash.new(0) #: Hash[String, Integer]
-          @depth = Hash.new(0) #: Hash[String, Integer]
           @pending = [] #: Array[Array[untyped]]
 
           collect(node)
@@ -151,14 +143,10 @@ module Herb
           if attributes && scope
             @elements[file] += 1
 
-            attributes << attribute_node(scope) if @depth[file].zero? || @openings[file].positive?
+            attributes << attribute_node(scope)
           end
 
-          @depth[file] += 1
-
           super
-        ensure
-          @depth[file] -= 1
         end
 
         #: () -> String
@@ -197,11 +185,7 @@ module Herb
 
         #: (Herb::AST::Node, ?Array[untyped]?) -> void
         def collect(node, container = nil)
-          @openings[current_file] += 1 if origin.of(node)
-
           entered = enter(node)
-
-          @openings[current_file] += 1 if opens_the_file?(node)
 
           scope_style(node, container) if node.is_a?(Herb::AST::HTMLElementNode)
 
@@ -222,11 +206,6 @@ module Herb
           leave if entered
 
           nil
-        end
-
-        #: (Herb::AST::Node) -> bool
-        def opens_the_file?(node)
-          node.is_a?(Herb::AST::ERBRenderNode) || node.is_a?(Herb::AST::ERBYieldNode)
         end
 
         #: (Herb::AST::Node, Symbol) -> untyped
@@ -286,7 +265,7 @@ module Herb
 
         #: (Pending, String) -> String?
         def narrowed_css(pending, scope)
-          result = @transform.call(pending.css, scope: scope_selector(pending.file, scope))
+          result = @transform.call(pending.css, scope: scope_selector(scope))
 
           warned_style(pending.node, result)
 
@@ -441,11 +420,9 @@ module Herb
           nil
         end
 
-        #: (String, String) -> String
-        def scope_selector(file, scope)
-          return "[#{scope}]" if @openings[file].positive?
-
-          ":where([#{scope}], [#{scope}] *)"
+        #: (String) -> String
+        def scope_selector(scope)
+          "[#{scope}]"
         end
 
         #: (String) -> String

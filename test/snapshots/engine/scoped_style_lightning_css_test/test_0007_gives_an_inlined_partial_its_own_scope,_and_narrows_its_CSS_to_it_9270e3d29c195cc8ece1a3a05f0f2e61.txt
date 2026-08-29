@@ -2,10 +2,10 @@
 source: "Engine::ScopedStyleLightningCSSTest#test_0007_gives an inlined partial its own scope, and narrows its CSS to it"
 input: "{source: \"<style scoped>.page { color: #ff0000 }</style><section class=\\\"page\\\"><%= render \\\"posts/card\\\" %></section>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::InlineRender::Visitor>, #<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
 ---
-_buf = ::String.new; _buf << '<style>.page[data-herb-scope-2940ba8a]{color:red}</style><section class="page" data-herb-scope-2940ba8a>'.freeze; ->() {; _buf << '<style>.title:where([data-herb-scope-bf0ebc68],[data-herb-scope-bf0ebc68] *){color:#00f}</style>
+_buf = ::String.new; _buf << '<style>.page[data-herb-scope-2940ba8a]{color:red}</style><section class="page" data-herb-scope-2940ba8a>'.freeze; ->() {; _buf << '<style>.title[data-herb-scope-bf0ebc68]{color:#00f}</style>
 
 <article class="card" data-herb-scope-bf0ebc68>
-  <h2 class="title">Card</h2>
+  <h2 class="title" data-herb-scope-bf0ebc68>Card</h2>
 </article>
 '.freeze; }.call() 
  _buf << '</section>'.freeze;

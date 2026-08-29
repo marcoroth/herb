@@ -887,7 +887,7 @@ into this:
 
 ```html
 <style>
-  .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+  .title[data-herb-scope-1a2b3c4d] {
     color: red;
   }
 </style>
@@ -895,7 +895,7 @@ into this:
 <h1 class="title" data-herb-scope-1a2b3c4d>Hi</h1>
 ```
 
-Here the scope sits on the root alone. `:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)` matches the root and everything inside it, so nested elements need no attribute of their own. A file that renders a partial is scoped differently. Every element the file wrote carries the scope, and the selector narrows to `[data-herb-scope-1a2b3c4d]` alone, so the scope stays on that markup and never reaches into the partial.
+Every element the file wrote carries the scope, and every rule is narrowed by that attribute. Markup the file rendered carries a scope of its own or none, so a scoped block reaches what the file wrote and nothing else, whatever is nested inside it. That holds without the file having to know whether it renders anything.
 
 The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is one. Give the visitor a `LightningCSS::Transformer`, and each rule in the block is narrowed to the scope.
 

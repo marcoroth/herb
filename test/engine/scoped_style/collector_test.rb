@@ -48,7 +48,7 @@ module Engine
 
       scope = collected.styles.keys.first
 
-      assert_equal ".title { color: blue; }/* :where([#{scope}], [#{scope}] *) */", collected.to_css
+      assert_equal ".title { color: blue; }/* [#{scope}] */", collected.to_css
     end
 
     test "records which scopes came from which file" do
@@ -100,7 +100,7 @@ module Engine
       scope = scopes.first
 
       assert_equal 1, scopes.length
-      assert_equal ".given { color: red; }/* :where([#{scope}], [#{scope}] *) */", collected.to_css
+      assert_equal ".given { color: red; }/* [#{scope}] */", collected.to_css
     end
 
     test "prints what it gathered" do

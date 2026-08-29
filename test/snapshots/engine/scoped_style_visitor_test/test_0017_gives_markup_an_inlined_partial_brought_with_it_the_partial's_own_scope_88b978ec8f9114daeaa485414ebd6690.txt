@@ -7,7 +7,7 @@ _buf = ::String.new; _buf << '<style>.page { padding: 1rem; }/* narrowed */</sty
 /* narrowed */</style>
 
 <article class="card" data-herb-scope-bf0ebc68>
-  <h2 class="title">Card</h2>
+  <h2 class="title" data-herb-scope-bf0ebc68>Card</h2>
 </article>
 '.freeze; }.call() 
  _buf << '</section>'.freeze;
