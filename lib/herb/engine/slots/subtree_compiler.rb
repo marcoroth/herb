@@ -43,14 +43,12 @@ module Herb
       # The path indexes a document's children, an element's body, and the bodies of the ERB nodes
       # that branch or repeat. It does not descend into an open tag, so an attribute is not
       # addressable, and the body of an `else` or a `when` is indexed as part of the node it hangs
-      # off rather than on its own. Both match `Visitor`, and both are worth changing in the two
-      # places at once rather than in either alone.
+      # off rather than on its own. Both match `Visitor`, which walks the same lists: the ones
+      # `config.yml` marks as content.
       #
       class SubtreeCompiler < Herb::Engine
         BUFFER = "__herb_subtree" #: String
         SINK = "__herb_sink" #: String
-
-        INDEXED_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
 
         class TargetNotFound < Herb::Engine::CompilationError
           #: (Array[Integer]) -> void
@@ -79,23 +77,23 @@ module Herb
 
           #: (untyped) -> void
           def visit_document_node(node)
-            return indexing(node.children) { super } unless @target.empty?
+            return branching(node) { super } unless @target.empty?
 
             @found = true
 
             @tokens << [:subtree, "", nil, :enter]
-            indexing(node.children) { super }
+            branching(node) { super }
             @tokens << [:subtree, "", nil, :leave]
           end
 
           #: (untyped) -> void
           def visit_html_element_node(node)
-            indexing(node.body) { super }
+            branching(node) { super }
           end
 
           #: (untyped) -> void
           def visit_html_conditional_element_node(node)
-            indexing(node.body) { super }
+            branching(node) { super }
           end
 
           #: (untyped) -> void
@@ -194,9 +192,7 @@ module Herb
 
           #: (untyped) { () -> void } -> void
           def branching(node, &)
-            arrays = INDEXED_PROPERTIES.filter_map { |property|
-              node.send(property) if node.respond_to?(property)
-            }
+            arrays = node.content_node_lists.map(&:nodes)
 
             indexing(*arrays, &)
           end

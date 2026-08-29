@@ -39,14 +39,12 @@ module Herb
       # The path indexes a document's children, an element's body, and the bodies of the ERB nodes
       # that branch or repeat. It does not descend into an open tag, so an attribute is not
       # addressable, and the body of an `else` or a `when` is indexed as part of the node it hangs
-      # off rather than on its own. Both match `Visitor`, and both are worth changing in the two
-      # places at once rather than in either alone.
+      # off rather than on its own. Both match `Visitor`, which walks the same lists: the ones
+      # `config.yml` marks as content.
       class SubtreeCompiler < Herb::Engine
         BUFFER: String
 
         SINK: String
-
-        INDEXED_PROPERTIES: Array[Symbol]
 
         class TargetNotFound < Herb::Engine::CompilationError
           # : (Array[Integer]) -> void

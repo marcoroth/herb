@@ -62,7 +62,6 @@ module Herb
 
         CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
         OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[Herb::AST::HTMLOpenTagNode|Herb::AST::ERBOpenTagNode]
-        BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
         BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
         Slot = Data.define(
@@ -584,13 +583,8 @@ module Herb
 
         #: (untyped) -> void
         def register_branch_directives(node)
-          BRANCH_BODY_PROPERTIES.each do |property|
-            next unless node.respond_to?(property)
-
-            body = node.send(property)
-            next unless body.is_a?(Array)
-
-            body.each { |child| @states.register_state_directive(child, body) }
+          node.content_node_lists.each do |list|
+            list.nodes.each { |child| @states.register_state_directive(child, list.nodes) }
           end
         end
 
@@ -723,11 +717,7 @@ module Herb
         def visit_branching_node(node)
           @container_depth += 1
 
-          BRANCH_BODY_PROPERTIES.each do |property|
-            next unless node.respond_to?(property)
-
-            visit_children_with_paths(node.send(property))
-          end
+          node.content_node_lists.each { |list| visit_children_with_paths(list.nodes) }
 
           BRANCH_CONTINUATION_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
@@ -1090,9 +1080,7 @@ module Herb
 
         #: (untyped) -> Array[untyped]
         def collection_body(node)
-          BRANCH_BODY_PROPERTIES.filter_map { |property|
-            node.send(property) if node.respond_to?(property)
-          }.flatten
+          node.content_node_lists.flat_map(&:nodes)
         end
 
         #: (untyped) -> Array[Herb::AST::HTMLAttributeNode]
@@ -1272,11 +1260,9 @@ module Herb
           slot = @slots[slot_index]
           return unless slot.type == :collection && slot.key_expression
 
-          BRANCH_BODY_PROPERTIES.each do |property|
-            next unless node.respond_to?(property)
-
-            body = node.send(property)
-            next unless body.is_a?(Array) && !body.empty?
+          node.content_node_lists.each do |list|
+            body = list.nodes
+            next if body.empty?
 
             key = @markers.item_statics_key(slot_index)
             parked = park_item(key, body)
@@ -1361,12 +1347,7 @@ module Herb
 
         #: (Herb::AST::Node) { (Array[untyped]) -> void } -> void
         def each_child_array(node)
-          BRANCH_BODY_PROPERTIES.each do |property|
-            next unless node.respond_to?(property)
-
-            array = node.send(property)
-            yield array if array.is_a?(Array)
-          end
+          node.content_node_lists.each { |list| yield list.nodes }
 
           (BRANCH_CONTINUATION_PROPERTIES + [:end_node, :open_tag]).each do |property|
             next unless node.respond_to?(property)
@@ -1389,11 +1370,9 @@ module Herb
         #: () -> void
         def wrap_displaced
           @displaced.each do |node|
-            BRANCH_BODY_PROPERTIES.each do |property|
-              next unless node.respond_to?(property)
-
-              body = node.send(property)
-              next unless body.is_a?(Array) && !body.empty?
+            node.content_node_lists.each do |list|
+              body = list.nodes
+              next if body.empty?
 
               body.unshift(*region_open)
               body.push(comment_node(@markers.region_close(identifier)))
