@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0004_an element that already carries attributes"
+input: "{source: \"<a href=\\\"/\\\" class=\\\"link\\\">Home</a>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<a href="/" class="link" data-herb-source="app/views/posts/_card.html.erb:1:1">Home</a>
