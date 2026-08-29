@@ -6,6 +6,8 @@
 require "optparse"
 
 require_relative "../herb"
+require_relative "project"
+require_relative "configuration"
 require_relative "engine/slots/visitor"
 
 class Herb::CLI

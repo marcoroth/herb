@@ -1,0 +1,6 @@
+---
+source: "Engine::HTMLSafeAssertionsTest#test_0002_output tag is wrapped in an assertion - compilation"
+input: "{source: \"<div><%= @user.bio.html_safe %></div>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (::Herb::Engine::Runtime::HTMLSafeAssertions.check(@user.bio, file: "app/views/test.html.erb".freeze, line: 1, column: 6, source: "<%= @user.bio.html_safe %>".freeze, mode: :raise).html_safe).to_s; _buf << '</div>'.freeze;
+_buf.to_s

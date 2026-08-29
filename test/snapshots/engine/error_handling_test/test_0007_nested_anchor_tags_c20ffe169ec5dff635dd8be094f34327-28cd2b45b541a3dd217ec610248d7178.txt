@@ -9,7 +9,7 @@ options: {validators: true}
 ---
 [source]:3:3: Anchor <a> cannot be nested inside another anchor at line 3 (Herb::Engine::CompilationError)
 
-✘ [nested-anchor] Anchor <a> cannot be nested inside another anchor at line 3
+✘ [NestedAnchorError] Anchor <a> cannot be nested inside another anchor at line 3
 
     [source]:3:3:
       3 │   <a href="/page2">Nested link</a>

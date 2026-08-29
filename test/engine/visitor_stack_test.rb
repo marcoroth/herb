@@ -21,7 +21,7 @@ module Engine
     end
 
     def stack
-      @stack ||= Herb::Engine::VisitorStack.build([FirstVisitor.new, SecondVisitor.new])
+      @stack ||= Herb::Visitor::Stack.build([FirstVisitor.new, SecondVisitor.new])
     end
 
     def classes(stack)
@@ -92,7 +92,7 @@ module Engine
     end
 
     test "refuses to place against an anchor that is not there" do
-      error = assert_raises(Herb::Engine::VisitorStack::UnknownVisitorError) do
+      error = assert_raises(Herb::Visitor::Stack::UnknownVisitorError) do
         stack.insert_after(ThirdVisitor, FirstVisitor.new)
       end
 
@@ -132,7 +132,7 @@ module Engine
       test "lets a caller build on the defaults rather than instead of them" do
         engine = compile(visitors: Herb::Engine::Validators.all.use(ThirdVisitor.new))
 
-        assert_equal(3, engine.visitors.count { |visitor| visitor.is_a?(Herb::Engine::Validator) })
+        assert_equal(3, engine.visitors.count { |visitor| visitor.is_a?(Herb::Engine::Validators::Base) })
         assert_equal ThirdVisitor, classes(engine.visitors).last
       end
 
@@ -170,11 +170,11 @@ module Engine
 
     describe "#validate_order!" do
       def order(*visitors)
-        Herb::Engine::VisitorStack.build(visitors)
+        Herb::Visitor::Stack.build(visitors)
       end
 
       test "refuses a reader that runs after a rewriter" do
-        error = assert_raises(Herb::Engine::VisitorStack::OrderError) do
+        error = assert_raises(Herb::Visitor::Stack::OrderError) do
           order(RewritingVisitor.new, ReadingVisitor.new).validate_order!
         end
 
@@ -195,7 +195,7 @@ module Engine
       end
 
       test "looks past visitors in between" do
-        error = assert_raises(Herb::Engine::VisitorStack::OrderError) do
+        error = assert_raises(Herb::Visitor::Stack::OrderError) do
           order(RewritingVisitor.new, FirstVisitor.new, ReadingVisitor.new).validate_order!
         end
 
@@ -203,7 +203,7 @@ module Engine
       end
 
       test "refuses an inlining visitor that runs after anything else" do
-        error = assert_raises(Herb::Engine::VisitorStack::OrderError) do
+        error = assert_raises(Herb::Visitor::Stack::OrderError) do
           order(FirstVisitor.new, InliningVisitor.new).validate_order!
         end
 
@@ -215,7 +215,7 @@ module Engine
       end
 
       test "is what the engine checks before it compiles anything" do
-        assert_raises(Herb::Engine::VisitorStack::OrderError) do
+        assert_raises(Herb::Visitor::Stack::OrderError) do
           Herb::Engine.new("<div>x</div>", visitors: [RewritingVisitor.new, ReadingVisitor.new])
         end
       end

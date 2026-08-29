@@ -4,9 +4,9 @@
 require "digest"
 
 require_relative "../../visitor"
-require_relative "../context_aware"
-require_relative "../diagnostics"
-require_relative "../experimental"
+require_relative "../../visitor/context_aware"
+require_relative "../../visitor/diagnostics"
+require_relative "../../visitor/experimental"
 require_relative "annotation"
 require_relative "identifier"
 require_relative "manifest/channel"
@@ -36,9 +36,9 @@ module Herb
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       #
       class Visitor < Herb::Visitor
-        extend Experimental
-        include ContextAware
-        include Diagnostics
+        extend Herb::Visitor::Experimental
+        include Herb::Visitor::ContextAware
+        include Herb::Visitor::Diagnostics
 
         recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
         required_parser_option action_view_helpers: true, track_locations: true, herb_directives: true
@@ -125,14 +125,13 @@ module Herb
 
         #: (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
         def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist, fatal: true)
-          super()
+          super(fatal: fatal)
 
           raise ArgumentError, "`mode: #{mode.inspect}` is not a slot mode. Pass one of #{MODES.map(&:inspect).join(", ")}." unless MODES.include?(mode)
           raise ArgumentError, "`deliver: #{deliver.inspect}` is not a delivery. Pass one of #{DELIVERIES.map(&:inspect).join(", ")}." unless DELIVERIES.include?(deliver)
 
           @markers = markers
           @mark = mark
-          @fatal = fatal
           @degraded = false
           @deliver = deliver
           @bufvar = "_buf"
@@ -177,11 +176,6 @@ module Herb
           @raw_text_depth = 0
           @rcdata_depth = 0
           @current_open_tag = nil
-        end
-
-        #: () -> bool
-        def fatal?
-          @fatal
         end
 
         #: () -> bool
@@ -319,7 +313,7 @@ module Herb
 
           parts << "#{@identify} ids" unless @identify == :path
           parts << "deliver=#{@deliver}" unless @deliver == :hoist
-          parts << "fatal=#{@fatal}" unless @fatal
+          parts << "fatal=#{fatal?}" unless fatal?
 
           "#<#{parts.join(" ")}>"
         end

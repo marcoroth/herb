@@ -3,10 +3,10 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/inline_render_visitor"
+require_relative "../../../lib/herb/engine/inline_render/visitor"
 require_relative "../../../lib/herb/engine/scoped_style/visitor"
 require_relative "../../../lib/herb/engine/slots/visitor"
-require_relative "../../../lib/herb/engine/report/middleware"
+require_relative "../../../lib/herb/engine/runtime/middleware"
 
 module Engine
   class ScopedStyleVisitorTest < Minitest::Spec
@@ -15,7 +15,7 @@ module Engine
     PROJECT_PATH = "test/fixtures/scoped_styles"
     TEMPLATE = "app/views/posts/index.html.erb"
     CARD = "app/views/posts/_card.html.erb"
-    SESSION = Herb::Engine::Report::Session
+    SESSION = Herb::Engine::Runtime::Session
 
     class Transform
       attr_reader :calls #: Array[Array[untyped]]
@@ -170,13 +170,13 @@ module Engine
     test "gives markup an inlined partial brought with it the partial's own scope" do
       source = %(<style scoped>.page { padding: 1rem; }</style><section class="page"><%= render "posts/card" %></section>)
 
-      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRenderVisitor.new], project_path: PROJECT_PATH))
+      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH))
     end
 
     test "leaves a partial that has no scoped block of its own unattributed" do
       source = %(<style scoped>.page { padding: 1rem; }</style><section class="page"><%= render "posts/plain" %></section>)
 
-      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRenderVisitor.new], project_path: PROJECT_PATH))
+      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH))
     end
 
     test "attributes an element a helper produced, when the parser was told about helpers" do
@@ -262,7 +262,7 @@ module Engine
           [200, { "content-type" => "text/html" }, [body]]
         }
 
-        _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
+        _, _, response = Herb::Engine::Runtime::Middleware.new(app).call({})
 
         assert_equal 1, response.first.scan("<style").length
         assert_equal 5, response.first.scan("<h1").length
@@ -271,7 +271,7 @@ module Engine
       test "puts nothing on a page that registered nothing" do
         app = ->(_env) { [200, { "content-type" => "text/html" }, ["<html><head></head><body></body></html>"]] }
 
-        _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
+        _, _, response = Herb::Engine::Runtime::Middleware.new(app).call({})
 
         assert_equal "<html><head></head><body></body></html>", response.first
       end
@@ -283,7 +283,7 @@ module Engine
           [200, { "content-type" => "text/html" }, ["<div>#{eval(compiled)}</div>"]]
         }
 
-        _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
+        _, _, response = Herb::Engine::Runtime::Middleware.new(app).call({})
 
         assert_equal 0, response.first.scan("<style").length
       end

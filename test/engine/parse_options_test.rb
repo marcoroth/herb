@@ -47,7 +47,7 @@ module Engine
 
     test "reporting diagnostics is enough to need locations" do
       reporter = Class.new(Herb::Visitor) do
-        include Herb::Engine::Diagnostics
+        include Herb::Visitor::Diagnostics
       end
 
       options = parse_options_for("<div></div>", visitors: [reporter.new])

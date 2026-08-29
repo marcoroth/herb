@@ -315,7 +315,7 @@ module Engine
         output = captured_output
 
         assert_equal(<<~REPORT, output.gsub(file_path, "TEMPLATE"))
-          \u2718 [MissingClosingTag] Opening tag `<span>` at (2:3) doesn't have a matching closing tag `</span>` in the same scope.
+          \u2718 [MissingClosingTagError] Opening tag `<span>` at (2:3) doesn't have a matching closing tag `</span>` in the same scope.
 
               TEMPLATE:2:3:
                 2 \u2502   <span>Unclosed span

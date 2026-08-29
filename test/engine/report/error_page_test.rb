@@ -14,7 +14,7 @@ module Engine
       Herb::Diagnostic.new(
         template: "app/views/posts/_post.html.erb",
         message: "Opening tag `<form>` does not have a matching closing tag.",
-        code: "missing-closing-tag",
+        code: "MissingClosingTagError",
         origin: "Herb Parser",
         location: Herb::Location.from(2, 2, 2, 8),
         suggestion: "Close the `<form>` before the `</div>` on line 4."
@@ -43,7 +43,7 @@ module Engine
 
     def compile_error(filename: "app/views/posts/_post.html.erb")
       errors = [diagnostic, second_diagnostic]
-      formatter = Herb::Engine::ErrorFormatter.new(SOURCE, errors, filename: filename)
+      formatter = Herb::Diagnostic::Formatter.new(SOURCE, errors, filename: filename)
 
       Herb::Engine::CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end
@@ -65,7 +65,7 @@ module Engine
     end
 
     def middleware(app, **)
-      Herb::Engine::Report::ErrorPage.new(app, **)
+      Herb::Engine::Runtime::ErrorPage.new(app, **)
     end
 
     def payload(body)
@@ -126,7 +126,7 @@ module Engine
 
         assert_equal 1, entries.size
         assert_equal "blocking", entries.first["overlay"]
-        assert_equal "missing-closing-tag", entries.first["code"]
+        assert_equal "MissingClosingTagError", entries.first["code"]
       end
 
       test "carries the template source so the panel can show an excerpt" do
@@ -143,7 +143,7 @@ module Engine
 
         entries = payload(body.first)["diagnostics"]
 
-        assert_equal(["missing-closing-tag", "slots-declaration"], entries.map { |entry| entry["code"] })
+        assert_equal(["MissingClosingTagError", "slots-declaration"], entries.map { |entry| entry["code"] })
         assert_equal(["blocking", "blocking"], entries.map { |entry| entry["overlay"] })
       end
 

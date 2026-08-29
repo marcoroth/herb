@@ -1,7 +1,0 @@
----
-source: "Engine::RemoveCommentsVisitorTest#test_0010_comment inside an erb branch - compilation"
-input: "{source: \"<% if admin? %><!-- admin only --><p>Admin</p><% else %><!-- everyone --><p>User</p><% end %>\", options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
----
-_buf = ::String.new; if admin? 
- _buf << '<p>Admin</p>'.freeze; else; _buf << '<p>User</p>'.freeze; end;
-_buf.to_s

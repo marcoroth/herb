@@ -2,5 +2,5 @@
 source: "Engine::DiagnosticsTest#test_0006_carries a message intact whatever it contains"
 input: "{source: \"<div>x</div>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::Validators::SecurityValidator fatal=false>, #<Herb::Engine::Validators::NestingValidator fatal=false>, #<Herb::Engine::Validators::AccessibilityValidator fatal=false>, #<Engine::DiagnosticsTest::AwkwardReporter>]}}"
 ---
-_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "A \"quoted\" and a\nnewline and \#{interpolation}", severity: :warning, code: "awkward-message", origin: "Herb Compiler", line: 1, column: 0, end_line: 1, end_column: 12 }].freeze); _buf << '<div>x</div>'.freeze;
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "A \"quoted\" and a\nnewline and \#{interpolation}", severity: :warning, code: "AwkwardMessage", origin: "Herb Compiler", line: 1, column: 0, end_line: 1, end_column: 12 }].freeze); _buf << '<div>x</div>'.freeze;
 _buf.to_s

@@ -2,7 +2,7 @@
 
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
-require "herb/engine/optimize_visitor"
+require "herb/engine/visitors/optimize_visitor"
 
 module Engine
   class StaticTemplateOptimizationTest < Minitest::Spec
@@ -25,7 +25,7 @@ module Engine
     end
 
     class AlwaysWarns < Herb::Visitor
-      include Herb::Engine::Diagnostics
+      include Herb::Visitor::Diagnostics
 
       def inspect = "#<#{self.class.name}>"
 
@@ -37,7 +37,7 @@ module Engine
     end
 
     class AlwaysErrors < Herb::Visitor
-      include Herb::Engine::Diagnostics
+      include Herb::Visitor::Diagnostics
 
       def fatal? = true
 

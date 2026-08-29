@@ -9,7 +9,7 @@ options: {validators: true}
 ---
 [source]:4:1: Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope. (Herb::Engine::ParseError)
 
-✘ [MissingOpeningTag] Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope.
+✘ [MissingOpeningTagError] Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope.
 
     [source]:4:1:
       4 │ </span>

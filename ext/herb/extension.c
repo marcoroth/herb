@@ -412,7 +412,9 @@ static VALUE Herb_leak_check(VALUE self, VALUE source) {
 }
 
 static VALUE Herb_version(VALUE self) {
-  VALUE gem_version = rb_const_get(self, rb_intern("VERSION"));
+  (void) self;
+
+  VALUE gem_version = rb_const_get(mHerb, rb_intern("VERSION"));
   VALUE libherb_version = rb_utf8_str_new_cstr(herb_version());
   VALUE libprism_version = rb_utf8_str_new_cstr(herb_prism_version());
 
@@ -452,7 +454,8 @@ typedef struct {
 } diff_args_T;
 
 static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
-  VALUE cDiffOperation = rb_const_get(mHerb, rb_intern("DiffOperation"));
+  VALUE mDiff = rb_const_get(mHerb, rb_intern("Diff"));
+  VALUE cDiffOperation = rb_const_get(mDiff, rb_intern("Operation"));
 
   VALUE type = ID2SYM(rb_intern(herb_diff_operation_type_to_string(operation->type)));
 
@@ -485,7 +488,8 @@ static VALUE diff_convert_body(VALUE arg) {
   diff_args_T* args = (diff_args_T*) arg;
   herb_diff_result_T* diff_result = args->diff_result;
 
-  VALUE cDiffResult = rb_const_get(mHerb, rb_intern("DiffResult"));
+  VALUE mDiff = rb_const_get(mHerb, rb_intern("Diff"));
+  VALUE cDiffResult = rb_const_get(mDiff, rb_intern("Result"));
 
   size_t operation_count = herb_diff_operation_count(diff_result);
   VALUE operations_array = rb_ary_new_capa((long) operation_count);
@@ -578,12 +582,14 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_init_node_classes();
   rb_init_error_classes();
 
-  rb_define_singleton_method(mHerb, "parse", Herb_parse, -1);
-  rb_define_singleton_method(mHerb, "lex", Herb_lex, -1);
-  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
-  rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
-  rb_define_singleton_method(mHerb, "arena_stats", Herb_arena_stats, -1);
-  rb_define_singleton_method(mHerb, "leak_check", Herb_leak_check, 1);
-  rb_define_singleton_method(mHerb, "version", Herb_version, 0);
-  rb_define_singleton_method(mHerb, "diff", Herb_diff, -1);
+  VALUE mBackend = rb_define_module_under(mHerb, "Backend");
+
+  rb_define_singleton_method(mBackend, "parse", Herb_parse, -1);
+  rb_define_singleton_method(mBackend, "lex", Herb_lex, -1);
+  rb_define_singleton_method(mBackend, "extract_ruby", Herb_extract_ruby, -1);
+  rb_define_singleton_method(mBackend, "extract_html", Herb_extract_html, 1);
+  rb_define_singleton_method(mBackend, "arena_stats", Herb_arena_stats, -1);
+  rb_define_singleton_method(mBackend, "leak_check", Herb_leak_check, 1);
+  rb_define_singleton_method(mBackend, "version", Herb_version, 0);
+  rb_define_singleton_method(mBackend, "diff", Herb_diff, -1);
 }

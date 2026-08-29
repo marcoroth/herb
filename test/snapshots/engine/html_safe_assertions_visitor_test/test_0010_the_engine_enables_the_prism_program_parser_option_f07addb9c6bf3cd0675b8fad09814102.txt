@@ -1,6 +1,0 @@
----
-source: "Engine::HTMLSafeAssertionsVisitorTest#test_0010_the engine enables the prism_program parser option"
-input: "prism_program option wraps the call"
----
-_buf = ::String.new; _buf << '<div>'.freeze; _buf << (::Herb::Engine::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 6, source: "<%= @user.bio.html_safe %>".freeze, mode: :raise).html_safe).to_s; _buf << '</div>'.freeze;
-_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::HTMLSafeAssertionsTest#test_0005_html_safe inside a block tag is wrapped - compilation"
+input: "{source: \"<%= link_to \\\"Home\\\", root_path(query.html_safe) do %>Home<% end %>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+_buf = ::String.new; _buf << (link_to "Home", root_path(::Herb::Engine::Runtime::HTMLSafeAssertions.check(query, file: "app/views/test.html.erb".freeze, line: 1, column: 1, source: "<%= link_to \"Home\", root_path(query.html_safe) do %>".freeze, mode: :raise).html_safe) do; _buf << 'Home'.freeze; end);
+_buf.to_s
