@@ -1,5 +1,7 @@
 import postcss from "rollup-plugin-postcss"
 
+import pkg from "./package.json" with { type: "json" }
+
 // rolldown rejects `.css` in the module graph outright, so `moduleTypes` hands
 // the file over as JavaScript and lets the postcss plugin's transform, which
 // returns the stylesheet as an injected JS module, be what rolldown parses.
@@ -13,6 +15,7 @@ export const browserDefines = {
   "process.env.NO_COLOR": "undefined",
   "process.stdout.isTTY": "false",
   "process.stdout.columns": "0",
+  __HERB_DEV_TOOLS_VERSION__: JSON.stringify(pkg.version),
 }
 
 export default [

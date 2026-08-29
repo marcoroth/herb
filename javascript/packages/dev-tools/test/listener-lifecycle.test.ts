@@ -303,7 +303,7 @@ describe("runtime diagnostics menu toggle", () => {
 
     expect(toggle()).not.toBeNull()
     expect(toggle()!.closest(".herb-toggle-item")).not.toBeNull()
-    expect(toggle()!.parentElement!.querySelector(".herb-toggle-text")!.textContent).toBe("Runtime Diagnostics")
+    expect(toggle()!.parentElement!.querySelector(".herb-toggle-text")!.textContent).toBe("Diagnostics")
     expect(toggle()!.checked).toBe(true)
   })
 

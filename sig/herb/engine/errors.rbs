@@ -7,7 +7,11 @@ module Herb
 
       attr_reader diagnostics: untyped
 
-      def initialize: (untyped message, ?details: untyped, ?diagnostics: untyped) -> untyped
+      attr_reader visitors: untyped
+
+      attr_reader parser_options: untyped
+
+      def initialize: (untyped message, ?details: untyped, ?diagnostics: untyped, ?visitors: untyped, ?parser_options: untyped) -> untyped
 
       def detailed_message: (?highlight: untyped, **untyped) -> untyped
 
@@ -43,10 +47,6 @@ module Herb
       CONTEXT_LINES: Integer
 
       attr_reader source: String
-
-      attr_reader visitors: Array[String]
-
-      attr_reader parser_options: Hash[Symbol, untyped]
 
       attr_reader filename: String?
 

@@ -193,10 +193,10 @@ describe("a dev server error in the panel", () => {
     expect(stripAnsiColors(excerpt.textContent ?? "")).toContain("<form>")
   })
 
-  test("shows the dev server connection in its own header, not only in the badge", async () => {
+  test("shows the dev server connection on a blocking screen, not only in the badge", async () => {
     const panel = createPanel()
 
-    panel.report(diagnosticsFromError(errorMessage()))
+    panel.report(diagnosticsFromError(errorMessage()).map(diagnostic => ({ ...diagnostic, overlay: "blocking" as const })))
 
     const dot = document.querySelector(".herb-dev-tools-connection-dot") as HTMLElement | null
     const status = document.querySelector(".herb-dev-tools-connection-status") as HTMLElement | null
@@ -206,11 +206,19 @@ describe("a dev server error in the panel", () => {
     expect(status!.textContent).toBe("Dev Server")
   })
 
-  test("keeps that indicator through a re-render, since the panel rewrites its own header", () => {
+  test("leaves it off a dismissible overlay, where the page underneath still works", () => {
     const panel = createPanel()
 
     panel.report(diagnosticsFromError(errorMessage()))
-    panel.report(diagnosticsFromError(errorMessage({ line: 9 })))
+
+    expect(document.querySelector(".herb-dev-tools-connection-dot")).toBeNull()
+  })
+
+  test("keeps that indicator through a re-render, since the panel rewrites its own header", () => {
+    const panel = createPanel()
+
+    panel.report(diagnosticsFromError(errorMessage()).map(diagnostic => ({ ...diagnostic, overlay: "blocking" as const })))
+    panel.report(diagnosticsFromError(errorMessage({ line: 9 })).map(diagnostic => ({ ...diagnostic, overlay: "blocking" as const })))
 
     expect(document.querySelectorAll(".herb-dev-tools-connection-dot")).toHaveLength(1)
   })

@@ -10,7 +10,6 @@ import type { DiagnosticSink, HerbClientOptions } from './dev-server/types.js'
 import type { RuntimeReportHandle } from './runtime/panel.js'
 import type { RuntimeDiagnostic } from './runtime/report.js'
 
-
 const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
 
 export const DEV_TOOLS_START_EVENT = 'herb:dev-tools-start'
@@ -144,9 +143,8 @@ export class HerbDevTools {
         onMenuOpen: () => this.panel?.close(),
         onReinitialize: () => this.panel?.refresh(),
         isRuntimePanelVisible: runtimePanelEnabled ? () => this.panel === null || !this.panel.dismissed : undefined,
-        onRuntimePanelToggle: runtimePanelEnabled
-          ? visible => (visible ? this.panel?.show() : this.panel?.dismiss())
-          : undefined,
+        onRuntimePanelToggle: runtimePanelEnabled ? visible => (visible ? this.panel?.show() : this.panel?.dismiss()) : undefined,
+        reportedFor: runtimePanelEnabled ? template => this.panel?.reportedFor(template) ?? null : undefined,
       })
     }
 

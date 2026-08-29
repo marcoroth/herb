@@ -436,7 +436,13 @@ module Herb
 
       formatter = Diagnostic::Formatter.new(input, errors, filename: filename)
 
-      raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
+      raise CompilationError.new(
+        formatter.summary,
+        details: formatter,
+        diagnostics: errors,
+        visitors: @visitors.descriptions,
+        parser_options: @parser_options
+      )
     end
 
     def context_options(properties)

@@ -2,6 +2,8 @@ import type { HerbMessage, ConnectionOptions } from "./types"
 
 const DEFAULT_RECONNECT_INTERVAL = 1000
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
+const RECONNECT_BACKOFF_FACTOR = 2
+const MAX_RECONNECT_DELAY = 15000
 
 export class Connection {
   private socket: WebSocket | null = null
@@ -118,8 +120,8 @@ export class Connection {
     this.reconnectAttempts++
 
     const delay = Math.min(
-      this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts - 1),
-      10000
+      this.reconnectInterval * Math.pow(RECONNECT_BACKOFF_FACTOR, this.reconnectAttempts - 1),
+      MAX_RECONNECT_DELAY
     )
 
     this.options.onReconnecting?.(this.reconnectAttempts, this.maxReconnectAttempts, delay)

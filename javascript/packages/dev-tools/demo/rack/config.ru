@@ -3,8 +3,9 @@
 require "herb"
 require "herb/engine"
 require "herb/engine/validators"
-require "herb/engine/report/error_page"
-require "herb/engine/report/middleware"
+require "herb/engine/runtime/error_page"
+require "herb/engine/runtime/middleware"
+require "herb/engine/runtime/session"
 
 module Demo
   VIEWS = File.expand_path("views", __dir__) #: String
@@ -60,7 +61,7 @@ module Demo
 
     #: () -> untyped
     def valid
-      Herb::Engine::Report::Session.record(
+      Herb::Engine::Runtime::Session.record(
         Herb::Diagnostic.new(
           template: "demo/rack/views/valid.html.erb",
           message: "This byline was rendered without checking that the author is present.",
@@ -120,7 +121,7 @@ module Demo
   end
 end
 
-use Herb::Engine::Report::ErrorPage, dev_tools: Demo::DEV_TOOLS
-use Herb::Engine::Report::Middleware
+use Herb::Engine::Runtime::ErrorPage, dev_tools: Demo::DEV_TOOLS
+use Herb::Engine::Runtime::Middleware
 
 run Demo::App.new
