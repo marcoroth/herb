@@ -289,13 +289,13 @@ module SnapshotUtils
   end
 
   def should_compare_with_erubi?
-    return false if class_name.include?("DebugMode")
+    return false if class_name.include?("DebugMode") || class_name.include?("SourceAttribution")
 
     !ENV["COMPARE_WITH_ERUBI"].nil?
   end
 
   def should_compare_with_actionview_erubi?
-    return false if class_name.include?("DebugMode")
+    return false if class_name.include?("DebugMode") || class_name.include?("SourceAttribution")
 
     !ENV["COMPARE_WITH_ACTIONVIEW_ERUBI"].nil?
   end

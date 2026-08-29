@@ -1,0 +1,8 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0002_each element with its own position"
+input: "{source: \"<div class=\\\"card\\\">\\n  <h1>Title</h1>\\n  <p>Body</p>\\n</div>\\n\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div class="card" data-herb-source="app/views/posts/_card.html.erb:1:1">
+  <h1 data-herb-source="app/views/posts/_card.html.erb:2:3">Title</h1>
+  <p data-herb-source="app/views/posts/_card.html.erb:3:3">Body</p>
+</div>

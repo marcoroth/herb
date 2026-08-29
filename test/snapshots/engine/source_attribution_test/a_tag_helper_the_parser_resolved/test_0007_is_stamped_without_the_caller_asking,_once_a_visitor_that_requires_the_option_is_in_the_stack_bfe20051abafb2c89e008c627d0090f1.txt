@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::a tag helper the parser resolved#test_0007_is stamped without the caller asking, once a visitor that requires the option is in the stack"
+input: "{source: \"<nav><%= link_to \\\"Home\\\", \\\"/\\\" %></nav>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::OptimizeVisitor>, #<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<nav data-herb-source="app/views/posts/_card.html.erb:1:1"><a href="/" data-herb-source="app/views/posts/_card.html.erb:1:6">Home</a></nav>
