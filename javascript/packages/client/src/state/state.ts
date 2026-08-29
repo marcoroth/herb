@@ -878,23 +878,14 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return
     }
 
-    const element = hostOf(slot.anchor)
-
-    if (!element) {
-      return
-    }
+    const at = scopeOf(region, slot.item)
 
     for (const [name, reads] of Object.entries(manifest.reads)) {
       if (reads.length === 0) {
         continue
       }
 
-      const scope = this.scopeFor(element, name)
-
-      if (!scope) {
-        continue
-      }
-
+      const scope = this.scopeFor(at, name) ?? at
       const value = this.getState(name, { scope })
 
       if (value === undefined) {
@@ -902,12 +893,6 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
 
       this.writeValueSlots(manifest, scope, name, value)
-    }
-
-    const at = this.scopeFor(element)
-
-    if (!at) {
-      return
     }
 
     const declared = manifest.declarations.map((declaration) => declaration.name)
