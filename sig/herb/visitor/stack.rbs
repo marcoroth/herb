@@ -36,6 +36,9 @@ module Herb
       def validate_inlining!: (untyped, Integer) -> void
 
       # : (untyped, Integer) -> void
+      def validate_style_blocks!: (untyped, Integer) -> void
+
+      # : (untyped, Integer) -> void
       def validate_reading!: (untyped, Integer) -> void
 
       # : (untyped, Symbol) -> bool

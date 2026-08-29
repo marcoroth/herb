@@ -109,6 +109,12 @@ GEM
     cruise (0.2.0-x86_64-darwin)
     cruise (0.2.0-x86_64-linux-gnu)
     cruise (0.2.0-x86_64-linux-musl)
+    css_inline (0.21.3-aarch64-linux)
+    css_inline (0.21.3-aarch64-linux-musl)
+    css_inline (0.21.3-arm64-darwin)
+    css_inline (0.21.3-x86_64-darwin)
+    css_inline (0.21.3-x86_64-linux)
+    css_inline (0.21.3-x86_64-linux-musl)
     csv (3.3.5)
     date (3.5.1)
     difftastic (0.8.0-aarch64-linux)
@@ -323,6 +329,7 @@ DEPENDENCIES
   benchmark
   charm
   cruise
+  css_inline (~> 0.21)
   digest (~> 3.2)
   erubi
   herb!

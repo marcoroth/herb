@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0004_reads stylesheets in the order it was given them, so the last one said wins"
+input: "{source: \"<div class=\\\"card\\\">Hi</div>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor stylesheets=email.css, theme.css>]}}"
+---
+<div class="card" style="padding: 4px;color: #0000ff;">Hi</div>
