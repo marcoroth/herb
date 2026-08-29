@@ -44,12 +44,14 @@ module Herb
 
           attr_reader against(): String?
 
-          def self.new: (String name, String? comparand, Symbol? kind, String? operator, String? against) -> instance
-                      | (name: String, comparand: String?, kind: Symbol?, operator: String?, against: String?) -> instance
+          attr_reader transform(): String?
 
-          def self.members: () -> [ :name, :comparand, :kind, :operator, :against ]
+          def self.new: (String name, String? comparand, Symbol? kind, String? operator, String? against, String? transform) -> instance
+                      | (name: String, comparand: String?, kind: Symbol?, operator: String?, against: String?, transform: String?) -> instance
 
-          def members: () -> [ :name, :comparand, :kind, :operator, :against ]
+          def self.members: () -> [ :name, :comparand, :kind, :operator, :against, :transform ]
+
+          def members: () -> [ :name, :comparand, :kind, :operator, :against, :transform ]
         end
 
         class Combo < Data
@@ -81,6 +83,20 @@ module Herb
         ORDERED_OPERATORS: Array[Symbol]
 
         MIRRORED_OPERATORS: Hash[String, String]
+
+        NEGATED_OPERATORS: Hash[String, String]
+
+        FALSY_OPERATOR: String
+
+        PREDICATES: Hash[String, Hash[Symbol, untyped]]
+
+        UNARY_OPERATORS: Hash[String, String]
+
+        NEGATED_UNARY: Hash[String, String]
+
+        TRANSFORMS: Hash[String, Hash[Symbol, untyped]]
+
+        TRANSFORM_SPELLINGS: Hash[String, String]
 
         class Parsing < Data
           attr_reader locals(): Hash[String, Symbol]
@@ -159,8 +175,14 @@ module Herb
         # : (Declaration) -> bool
         def self.seeded?: (Declaration) -> bool
 
+        # : (Read) -> String
+        def self.subject_phrase: (Read) -> String
+
         # : ((Symbol | String)?) -> String
         def self.kind_article: ((Symbol | String)?) -> String
+
+        # : (String, String) -> String
+        def self.rewrite_reads: (String, String) -> String
 
         # : (String, Hash[String, Declaration]) -> bool
         def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
@@ -188,6 +210,21 @@ module Herb
 
         # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
         private def self.bare_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        private def self.operand_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        private def self.transform_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        private def self.predicate_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
+        private def self.negated_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
+
+        # : (Read | Combo) -> (Read | Combo)
+        private def self.negate: (Read | Combo) -> (Read | Combo)
 
         # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
         private def self.equality_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?

@@ -201,17 +201,12 @@ module Engine
 
         refuse(
           "<%# herb:state (attempts: 0) %><p><%= attempts + 1 %></p>",
-          "`attempts + 1` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute."
+          "`attempts + 1` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."
         )
 
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% if sort == 3 %>a<% end %></div>",
           "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match. Compare it against a String literal instead."
-        )
-
-        refuse(
-          "<%# herb:state (attempts: 0) %><div><% if attempts? %>a<% end %></div>",
-          "`attempts?` reads the Integer state `attempts` as a predicate. Only a boolean state can be read with a `?`, so drop the `?` or declare `attempts` as a boolean."
         )
 
         refuse(
@@ -280,13 +275,288 @@ module Engine
         assert_includes rendered, "false</textarea>"
       end
 
+      test "the `?` spelling reads any state for its truth, the way the bare name does" do
+        {
+          %(<%# herb:state (message: "hi") %><div><% if message? %>x<% end %></div>) => ["message", nil],
+          %(<%# herb:state (attempts: 0) %><div><% if attempts? %>x<% end %></div>) => ["attempts", nil],
+          %(<%# herb:state (tab: :first) %><div><% if tab? %>x<% end %></div>) => ["tab", nil],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
+      test "the `?` spelling drops off the source the server runs" do
+        rendered = render(%(<%# herb:state (message: "hi") %><div><% if message? %>Present<% else %>None<% end %></div>))
+
+        assert_includes rendered, "Present"
+      end
+
+      test "a predicate compiles into the comparison it stands for" do
+        {
+          %(<%# herb:state (draft: "") %><div><% if draft.empty? %>x<% end %></div>) => ["draft", { "value" => "" }],
+          %(<%# herb:state (draft: "") %><div><% if draft.nil? %>x<% end %></div>) => ["draft", { "value" => nil }],
+          %(<%# herb:state (count: 0) %><div><% if count.zero? %>x<% end %></div>) => ["count", { "value" => 0 }],
+          %(<%# herb:state (count: 0) %><div><% if count.one? %>x<% end %></div>) => ["count", { "value" => 1 }],
+          %(<%# herb:state (count: 0) %><div><% if count.positive? %>x<% end %></div>) => ["count", { "value" => 0 }, ">"],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
+      test "blank? and present? compile into operators the client resolves" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><div><% if draft.blank? %>x<% end %></div>))
+
+        assert_equal({ arms: [arm(0, ["draft", nil, "blank"])], else: nil }, visitor.state_conditional_entries.fetch(0))
+
+        visitor, = compile(%(<%# herb:state (draft: "") %><div><% if draft.present? %>x<% end %></div>))
+
+        assert_equal({ arms: [arm(0, ["draft", nil, "present"])], else: nil }, visitor.state_conditional_entries.fetch(0))
+      end
+
+      test "one? rewrites for the server, since Ruby defines it on Enumerable" do
+        rendered = render(%(<%# herb:state (count: 1) %><div><% if count.one? %>one<% else %>many<% end %></div>))
+
+        assert_includes rendered, "one"
+      end
+
+      test "a predicate on a state of another kind is refused" do
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft.zero? %>x<% end %></div>),
+          "`draft.zero?` reads the String state `draft` with `zero?`. Only an Integer state can be read with `zero?`, so compare `draft` to a literal instead."
+        )
+
+        refuse(
+          %(<%# herb:state (count: 0) %><div><% if count.empty? %>x<% end %></div>),
+          "`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`, so compare `count` to a literal instead."
+        )
+
+        refuse(
+          %(<%# herb:state (count: 0) %><div><% if count.blank? %>x<% end %></div>),
+          "`count.blank?` reads the Integer state `count` with `blank?`. Only a Boolean, a String or a Nil state can be read with `blank?`, so compare `count` to a literal instead."
+        )
+
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft.positive? %>x<% end %></div>),
+          "`draft.positive?` reads the String state `draft` with `positive?`. Only an Integer state can be read with `positive?`, so compare `draft` to a literal instead."
+        )
+
+        refuse(
+          %(<%# herb:state (tab: :first) %><div><% if tab.present? %>x<% end %></div>),
+          "`tab.present?` reads the Symbol state `tab` with `present?`. Only a Boolean, a String or a Nil state can be read with `present?`, so compare `tab` to a literal instead."
+        )
+      end
+
+      test "length and size compile into one transform on the read" do
+        {
+          %(<%# herb:state (draft: "") %><div><% if draft.length > 3 %>x<% end %></div>) => ["draft", { "value" => 3 }, ">", "length"],
+          %(<%# herb:state (draft: "") %><div><% if draft.size > 3 %>x<% end %></div>) => ["draft", { "value" => 3 }, ">", "length"],
+          %(<%# herb:state (draft: "") %><div><% if 3 < draft.length %>x<% end %></div>) => ["draft", { "value" => 3 }, ">", "length"],
+          %(<%# herb:state (draft: "") %><div><% if draft.length == 0 %>x<% end %></div>) => ["draft", { "value" => 0 }, "==", "length"],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
+      test "to_s reads a state of any kind as a String" do
+        {
+          %(<%# herb:state (draft: 3) %><div><% if draft.to_s == "3" %>x<% end %></div>) => ["draft", { "value" => "3" }, "==", "to_s"],
+          %(<%# herb:state (open: false) %><div><% if open.to_s == "false" %>x<% end %></div>) => ["open", { "value" => "false" }, "==", "to_s"],
+          %(<%# herb:state (note: nil) %><div><% if note.to_s == "" %>x<% end %></div>) => ["note", { "value" => "" }, "==", "to_s"],
+          %(<%# herb:state (draft: "hi") %><div><% if draft.to_s == "hi" %>x<% end %></div>) => ["draft", { "value" => "hi" }, "==", "to_s"],
+          %(<%# herb:state (tab: :first) %><div><% if tab.to_s == "first" %>x<% end %></div>) => ["tab", { "value" => "first" }, "==", "to_s"],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
+      test "to_s renders what Ruby renders, for every kind" do
+        {
+          %(<%# herb:state (flag: true) %><p><%= flag.to_s %></p>) => ">true<",
+          %(<%# herb:state (flag: false) %><p><%= flag.to_s %></p>) => ">false<",
+          %(<%# herb:state (note: nil) %><p>[<%= note.to_s %>]</p>) => ">[<",
+          %(<%# herb:state (draft: "hi") %><p><%= draft.to_s %></p>) => ">hi<",
+          %(<%# herb:state (count: -5) %><p><%= count.to_s %></p>) => ">-5<",
+          %(<%# herb:state (tab: :first) %><p><%= tab.to_s %></p>) => ">first<",
+        }.each do |template, expected|
+          assert_includes render(template), expected
+        end
+      end
+
+      test "a transform compares against another state when only one side carries it" do
+        visitor, = compile(%(<%# herb:state (draft: 3, filter: "all") %><div><% if draft.to_s == filter %>x<% end %></div>))
+
+        assert_equal({ arms: [arm(0, ["draft", { "state" => "filter" }, "==", "to_s"])], else: nil }, visitor.state_conditional_entries.fetch(0))
+
+        visitor, = compile(%(<%# herb:state (draft: 3, filter: "all") %><div><% if filter == draft.to_s %>x<% end %></div>))
+
+        assert_equal({ arms: [arm(0, ["draft", { "state" => "filter" }, "==", "to_s"])], else: nil }, visitor.state_conditional_entries.fetch(0))
+
+        visitor, = compile(%(<%# herb:state (draft: "", count: 0) %><div><% if count < draft.length %>x<% end %></div>))
+
+        assert_equal({ arms: [arm(0, ["draft", { "state" => "count" }, ">", "length"])], else: nil }, visitor.state_conditional_entries.fetch(0))
+      end
+
+      test "a length read stands alone as a computed value slot" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><p><%= draft.length %></p>))
+
+        assert_equal ["draft", nil, nil, "length"], encoded(visitor.state_values.fetch(0))
+      end
+
+      test "a length read derives an Integer state" do
+        visitor, = compile(%(<%# herb:state (draft: "", width: draft.length) %><p><%= width %></p>))
+        entries = visitor.state_entries.to_h { |entry| [entry[:name], entry] }
+
+        assert_equal :integer, entries.fetch("width")[:kind]
+        assert_equal ["draft", nil, nil, "length"], encoded(entries.fetch("width")[:derived])
+      end
+
+      test "length renders the server's answer" do
+        rendered = render(%(<%# herb:state (draft: "hello") %><p><%= draft.length %></p>))
+
+        assert_includes rendered, ">5<"
+      end
+
+      test "length on a state of another kind is refused" do
+        refuse(
+          %(<%# herb:state (count: 0) %><div><% if count.length > 3 %>x<% end %></div>),
+          "`count.length` reads the Integer state `count` with `length`. Only a String or a Symbol state can be read with `length`, so compare `count` itself instead."
+        )
+
+        refuse(
+          %(<%# herb:state (count: 0) %><div><% if count.size > 3 %>x<% end %></div>),
+          "`count.size` reads the Integer state `count` with `size`. Only a String or a Symbol state can be read with `size`, so compare `count` itself instead."
+        )
+      end
+
+      test "a transform on both sides of a comparison is refused" do
+        refuse(
+          %(<%# herb:state (draft: "", other: "") %><div><% if draft.length > other.length %>x<% end %></div>),
+          "`draft.length > other.length` compares the length of the state `draft` against the length of the state `other`. One condition carries one transform, so declare a state for one of the two sides and compare that."
+        )
+
+        refuse(
+          %(<%# herb:state (draft: "", filter: "all") %><div><% if draft.length > filter %>x<% end %></div>),
+          "`draft.length > filter` orders the length of the state `draft` against the String state `filter`. Ordering compares numbers, so both sides have to be Integers."
+        )
+      end
+
+      test "`!` negates the read it wraps" do
+        {
+          %(<%# herb:state (open: false) %><div><% if !open %>x<% end %></div>) => ["open", nil, "falsy"],
+          %(<%# herb:state (open: false) %><div><% if not open %>x<% end %></div>) => ["open", nil, "falsy"],
+          %(<%# herb:state (open: false) %><div><% if !open? %>x<% end %></div>) => ["open", nil, "falsy"],
+          %(<%# herb:state (open: false) %><div><% if !!open %>x<% end %></div>) => ["open", nil],
+          %(<%# herb:state (draft: "") %><div><% if !(draft == "hi") %>x<% end %></div>) => ["draft", { "value" => "hi" }, "!="],
+          %(<%# herb:state (count: 0) %><div><% if !(count > 3) %>x<% end %></div>) => ["count", { "value" => 3 }, "<="],
+          %(<%# herb:state (draft: "") %><div><% if !draft.blank? %>x<% end %></div>) => ["draft", nil, "present"],
+          %(<%# herb:state (draft: "") %><div><% if !draft.present? %>x<% end %></div>) => ["draft", nil, "blank"],
+          %(<%# herb:state (count: 0) %><div><% if !count.zero? %>x<% end %></div>) => ["count", { "value" => 0 }, "!="],
+          %(<%# herb:state (draft: "") %><div><% if !(draft.length > 3) %>x<% end %></div>) => ["draft", { "value" => 3 }, "<=", "length"],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
+      test "a negated read renders for the server" do
+        rendered = render(%(<%# herb:state (open: false) %><button disabled="<%= !open %>">Send</button>))
+
+        assert_includes rendered, "<button disabled"
+      end
+
+      test "a negated combination distributes over its parts" do
+        visitor, = compile(%(<%# herb:state (open: false, draft: "") %><div><% if !(open && draft == "hi") %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [arm(0, { "any" => [["open", nil, "falsy"], ["draft", { "value" => "hi" }, "!="]] })], else: nil },
+          visitor.state_conditional_entries.fetch(0)
+        )
+
+        visitor, = compile(%(<%# herb:state (open: false, draft: "") %><div><% if !(open || draft == "hi") %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [arm(0, { "all" => [["open", nil, "falsy"], ["draft", { "value" => "hi" }, "!="]] })], else: nil },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a negation nests through a combination" do
+        visitor, = compile(%(<%# herb:state (message: "", count: 0) %><div><% if !((message.length > count) && !(message == "abc" || count == 0)) %>x<% end %></div>))
+
+        assert_equal(
+          {
+            arms: [arm(0, {
+              "any" => [
+                ["message", { "state" => "count" }, "<=", "length"],
+                { "any" => [["message", { "value" => "abc" }, "=="], ["count", { "value" => 0 }, "=="]] }
+              ],
+            })],
+            else: nil,
+          },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a predicate combines with a comparison in one condition" do
+        visitor, = compile(%(<%# herb:state (sending: false, draft: "") %><div><% if sending? && draft == "hello" %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [arm(0, { "all" => [["sending", nil], ["draft", { "value" => "hello" }]] })], else: nil },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "a combo of predicates derives a state" do
+        visitor, = compile(%(<%# herb:state (sending: false, draft: "", ready: sending? && draft.present?) %><div><% if ready %>x<% end %></div>))
+        entries = visitor.state_entries.to_h { |entry| [entry[:name], entry] }
+
+        assert_equal :boolean, entries.fetch("ready")[:kind]
+        assert_equal({ "all" => [["sending", nil], ["draft", nil, "present"]] }, encoded(entries.fetch("ready")[:derived]))
+      end
+
+      test "a predicate derives a state from the one it reads" do
+        visitor, = compile(%(<%# herb:state (draft: "", empty: draft.blank?) %><div><% if empty %>x<% end %></div>))
+        entries = visitor.state_entries.to_h { |entry| [entry[:name], entry] }
+
+        assert_equal :boolean, entries.fetch("empty")[:kind]
+        assert_equal ["draft", nil, "blank"], encoded(entries.fetch("empty")[:derived])
+      end
+
+      test "a predicate in a boolean attribute becomes a presence" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><button disabled="<%= draft.blank? %>">Send</button>))
+
+        assert_equal :boolean_attribute, visitor.slots.fetch(0).type
+        assert_equal ["draft", nil, "blank"], encoded(visitor.state_presence.fetch(0))
+      end
+
+      test "a comparison in an output becomes a computed value slot" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><p><%= draft == "hello" %></p>))
+
+        assert_equal ["draft", { "value" => "hello" }], encoded(visitor.state_values.fetch(0))
+      end
+
+      test "a computed value slot renders the answer the server computed" do
+        rendered = render(%(<%# herb:state (draft: "") %><p><%= draft == "" %></p>))
+
+        assert_includes rendered, ">true<"
+      end
+
       test "a computed read in a textarea still raises" do
         error = assert_raises(Herb::Engine::CompilationError) do
           compile(%(<%# herb:state (draft: "") %><textarea><%= draft.upcase %></textarea>))
         end
 
         assert_equal(
-          ["`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute."],
+          ["`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."],
           compiler_findings(error)
         )
       end
@@ -378,12 +648,12 @@ module Engine
       test "a state pair keeps its kinds compatible" do
         refuse(
           "<%# herb:state (sort: \"name\", attempts: 0) %><div><% if sort == attempts %>x<% end %></div>",
-          "`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match. Compare states of the same kind."
+          "`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match. Compare values of the same kind."
         )
 
         refuse(
           "<%# herb:state (sort: \"name\", other: \"x\") %><div><% if sort > other %>x<% end %></div>",
-          "`sort > other` orders the states `sort` and `other`. Ordering compares numbers, so declare both as Integers."
+          "`sort > other` orders the String state `sort` against the String state `other`. Ordering compares numbers, so both sides have to be Integers."
         )
       end
 
@@ -453,7 +723,7 @@ module Engine
       test "a combo mixing a state with server code raises" do
         refuse(
           "<%# herb:state (pending: false) %><div><% if pending? && current_user.admin? %>x<% else %>y<% end %></div>",
-          "`pending? && current_user.admin?` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."
+          "`pending? && current_user.admin?` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."
         )
       end
 
@@ -735,7 +1005,7 @@ module Engine
       test "a computed tag helper attribute raises" do
         refuse(
           %(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft.upcase %>),
-          "`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute."
+          "`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."
         )
       end
 
@@ -842,18 +1112,7 @@ module Engine
         end
 
         assert_equal(
-          ["`unless attempts * 2 > 3` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."],
-          compiler_findings(error)
-        )
-      end
-
-      test "a negated state read in a conditional is refused" do
-        error = assert_raises(Herb::Engine::CompilationError) do
-          compile(%(<%# herb:state (open: false) %><% if !open %>x<% end %>))
-        end
-
-        assert_equal(
-          ["`!open` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal."],
+          ["`unless attempts * 2 > 3` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."],
           compiler_findings(error)
         )
       end
@@ -933,7 +1192,7 @@ module Engine
         error = assert_raises(Herb::Engine::CompilationError) do
           compile(<<~ERB)
             <%# herb:state (draft: "") %>
-            <button disabled="<%= draft.empty? %>">Send</button>
+            <button disabled="<%= draft.upcase %>">Send</button>
           ERB
         end
 

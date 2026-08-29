@@ -35,11 +35,11 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("still flags a state read beside an action attribute", () => {
-    expectError("`count.to_s` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
+    expectError("`count + 1` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (count: 0) %>
-      <%= tag.button "More", data: { herb_increment: "count" }, title: count.to_s %>
+      <%= tag.button "More", data: { herb_increment: "count" }, title: count + 1 %>
     `)
   })
 
@@ -65,15 +65,6 @@ describe("HerbStateValidReadsRule", () => {
     assertOffenses(dedent`
       <%# herb:state (status: "") %>
       <div class="row-<%= status %>-<%= @kind %>">x</div>
-    `)
-  })
-
-  test("flags a negated condition the way it flags not", () => {
-    expectError("`!open` computes with the state `open`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if open %>`, or as `open?`.")
-
-    assertOffenses(dedent`
-      <%# herb:state (open: false) %>
-      <% if !open %>Closed<% end %>
     `)
   })
 
@@ -170,12 +161,13 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a predicate on a non-boolean state", () => {
-    expectError("`attempts?` reads the Integer state `attempts` as a predicate. Write `attempts` bare, or declare a boolean flag. Only a boolean state reads with a `?`.")
-
-    assertOffenses(dedent`
-      <%# herb:state (attempts: 0) %>
+  test("allows the `?` spelling on a state of any kind", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (attempts: 0, draft: "", tab: :first, shown: draft?) %>
       <% if attempts? %>Tried<% end %>
+      <% if draft? %>Drafted<% end %>
+      <% if tab? %>Tabbed<% end %>
+      <% if shown %>Shown<% end %>
     `)
   })
 
@@ -250,11 +242,11 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags the invalid condition inside a combo once", () => {
-    expectError("`attempts?` reads the Integer state `attempts` as a predicate. Write `attempts` bare, or declare a boolean flag. Only a boolean state reads with a `?`.")
+    expectError("`attempts.empty?` reads the Integer state `attempts` with `empty?`. Only a String or a Symbol state can be read with `empty?`, so compare `attempts` to a literal instead.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, attempts: 0) %>
-      <% if pending? && attempts? %>x<% end %>
+      <% if pending? && attempts.empty? %>x<% end %>
     `)
   })
 
@@ -362,22 +354,218 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed read in a boolean attribute", () => {
-    expectError('`draft.empty?` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == ""`.')
+    expectError('`draft.upcase` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == ""`.')
 
     assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft %></p>
+      <button disabled="<%= draft.upcase %>">Send</button>
+    `)
+  })
+
+  test("allows a predicate read in a boolean attribute", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (draft: "") %>
       <p><%= draft %></p>
       <button disabled="<%= draft.empty? %>">Send</button>
     `)
   })
 
-  test("still flags equality in an attribute that is not boolean", () => {
-    expectError('`draft == ""` computes with the state `draft`, and the client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.')
-
-    assertOffenses(dedent`
+  test("allows equality in an attribute that is not boolean", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (draft: "") %>
       <p><%= draft %></p>
       <button title="<%= draft == "" %>">Send</button>
+    `)
+  })
+
+  test("allows a comparison as an output", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft == "hello" %></p>
+    `)
+  })
+
+  test("allows a negated read", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (sending: false, draft: "", count: 0, idle: !sending) %>
+      <% if !sending %>a<% end %>
+      <% if !sending? %>b<% end %>
+      <% if not sending %>c<% end %>
+      <% if !draft.blank? %>d<% end %>
+      <% if !(count > 3) %>e<% end %>
+      <% if !count.zero? %>f<% end %>
+      <% if !sending && count.zero? %>g<% end %>
+      <% if idle %>h<% end %>
+      <button disabled="<%= !sending %>">Send</button>
+      <p><%= !sending %></p>
+    `)
+  })
+
+  test("allows a negated combination", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (sending: false, draft: "", count: 0) %>
+      <% if !(sending && draft == "hi") %>a<% end %>
+      <% if !(sending || draft == "hi") %>b<% end %>
+      <% if !((draft.length > count) && !(draft == "abc" || count == 0)) %>c<% end %>
+    `)
+  })
+
+  test("allows a predicate combined with a comparison", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (sending: false, draft: "", count: 0) %>
+      <% if sending? && draft == "hello" %>a<% end %>
+      <% if sending? || draft.blank? %>b<% end %>
+      <% if sending? && draft.present? && count.zero? %>c<% end %>
+      <% if sending? && (draft == "hello" || count.one?) %>d<% end %>
+      <button disabled="<%= sending? && draft == "hello" %>">Send</button>
+      <p><%= sending? && draft == "hello" %></p>
+    `)
+  })
+
+  test("allows a default derived from a predicate combined with a comparison", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (sending: false, draft: "", ready: sending? && draft == "hello") %>
+      <% if ready %>Ready<% end %>
+    `)
+  })
+
+  test("allows to_s on a state of any kind", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: 3, filter: "all", open: false, note: nil, tab: :first, text: draft.to_s) %>
+      <% if draft.to_s == filter %>a<% end %>
+      <% if filter == draft.to_s %>b<% end %>
+      <% if open.to_s == "true" %>c<% end %>
+      <% if note.to_s == "" %>d<% end %>
+      <% if tab.to_s == "first" %>e<% end %>
+      <p><%= draft.to_s %></p>
+      <p><%= text %></p>
+    `)
+  })
+
+  test("allows a transform compared against another state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", count: 0) %>
+      <% if draft.length > count %>a<% end %>
+      <% if count < draft.length %>b<% end %>
+    `)
+  })
+
+  test("flags a transform on both sides of a comparison", () => {
+    expectError("`draft.length > other.length` compares the length of the state `draft` against the length of the state `other`. One condition carries one transform, so declare a state for one of the two sides and compare that.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "", other: "") %>
+      <% if draft.length > other.length %>a<% end %>
+    `)
+  })
+
+  test("flags a transform compared against a state of another kind", () => {
+    expectError("`draft.length > filter` compares the length of the state `draft` with the String state `filter`, so it can never match. Compare values of the same kind.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "", filter: "all") %>
+      <% if draft.length > filter %>a<% end %>
+    `)
+  })
+
+  test("allows length and size compared against an Integer", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", tab: :first, count: 0, width: draft.length) %>
+      <% if draft.length > 3 %>a<% end %>
+      <% if draft.size == 0 %>b<% end %>
+      <% if 3 < draft.length %>c<% end %>
+      <% if tab.length > 2 %>d<% end %>
+      <% if draft.length > 3 && count.zero? %>e<% end %>
+      <p><%= draft.length %></p>
+      <p><%= width %></p>
+      <button disabled="<%= draft.length > 3 %>">Send</button>
+    `)
+  })
+
+  test("flags length on a state that is not a String or a Symbol", () => {
+    expectError("`count.length` reads the Integer state `count` with `length`. Only a String or a Symbol state can be read with `length`, so compare `count` itself instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <% if count.length > 3 %>a<% end %>
+    `)
+  })
+
+  test("flags a length compared against a literal of another type", () => {
+    expectError('`draft.length == "x"` compares the length of the state `draft` against a String literal, so it can never match. Compare it against an Integer literal instead.')
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft.length == "x" %>a<% end %>
+    `)
+  })
+
+  test("allows every supported predicate on a state of its kind", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", count: 0, open: false, note: nil) %>
+      <% if count.positive? %>Some<% end %>
+      <% if draft.blank? %>Blank<% end %>
+      <% if draft.present? %>Present<% end %>
+      <% if draft.empty? %>Empty<% end %>
+      <% if count.zero? %>None<% end %>
+      <% if count.one? %>One<% end %>
+      <% if open.nil? %>Unset<% end %>
+      <% if note.blank? %>No note<% end %>
+    `)
+  })
+
+  test("flags zero? on a state that is not an Integer", () => {
+    expectError("`draft.zero?` reads the String state `draft` with `zero?`. Only an Integer state can be read with `zero?`, so compare `draft` to a literal instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft.zero? %>None<% end %>
+    `)
+  })
+
+  test("flags one? on a state that is not an Integer", () => {
+    expectError("`draft.one?` reads the String state `draft` with `one?`. Only an Integer state can be read with `one?`, so compare `draft` to a literal instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft.one? %>One<% end %>
+    `)
+  })
+
+  test("flags empty? on a state that is not a String or a Symbol", () => {
+    expectError("`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`, so compare `count` to a literal instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <% if count.empty? %>None<% end %>
+    `)
+  })
+
+  test("flags blank? on a state that is never blank", () => {
+    expectError("`count.blank?` reads the Integer state `count` with `blank?`. Only a Boolean, a String or a Nil state can be read with `blank?`, so compare `count` to a literal instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <% if count.blank? %>None<% end %>
+    `)
+  })
+
+  test("flags present? on a state that is always present", () => {
+    expectError("`tab.present?` reads the Symbol state `tab` with `present?`. Only a Boolean, a String or a Nil state can be read with `present?`, so compare `tab` to a literal instead.")
+
+    assertOffenses(dedent`
+      <%# herb:state (tab: :first) %>
+      <% if tab.present? %>Tab<% end %>
+    `)
+  })
+
+  test("flags a method that is not a supported predicate", () => {
+    expectError("`draft.upcase?` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == \"\"`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft.upcase? %>Loud<% end %>
     `)
   })
 

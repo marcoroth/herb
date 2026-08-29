@@ -227,6 +227,11 @@ module Herb
           @states.state_presence
         end
 
+        #: () -> Hash[Integer, untyped]
+        def state_values
+          @states.state_values
+        end
+
         #: () -> Array[String]
         def seeded_region_states
           @states.seeded_region_states
