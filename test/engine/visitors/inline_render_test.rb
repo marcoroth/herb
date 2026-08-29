@@ -5,7 +5,7 @@ require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/inline_render/visitor"
 require_relative "../../../lib/herb/engine/visitors/instrumentation_visitor"
-require_relative "../../../lib/herb/engine/component/visitor"
+require_relative "../../../lib/herb/engine/component_tags/visitor"
 require_relative "../../../lib/herb/engine/validators"
 
 module Engine
@@ -393,7 +393,7 @@ module Engine
       end
 
       test "a transforming visitor transforms what the partial brought with it" do
-        compiled = compiled(%(<%= render "shared/component" %>), [Herb::Engine::Component::Visitor.new])
+        compiled = compiled(%(<%= render "shared/component" %>), [Herb::Engine::ComponentTags::Visitor.new])
 
         assert_includes compiled, %(render Card.new(title: "hi"))
       end

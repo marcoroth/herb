@@ -1,6 +1,0 @@
----
-source: "Engine::ComponentTest#test_0012_escapes double quotes in attribute values"
-input: "{source: \"<MyComponent name='He said \\\"hi\\\"' />\", options: {visitors: [#<Herb::Engine::Component::Visitor>]}}"
----
-_buf = ::String.new; _buf << (render MyComponent.new(name: "He said \"hi\"")).to_s;
-_buf.to_s

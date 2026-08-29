@@ -244,7 +244,7 @@ Herb ships the following transform visitors:
 | `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
 | `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
 | `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
-| `Component::Visitor`          | Rewrites capitalized tags into `render` calls (experimental)                 |
+| `ComponentTags::Visitor`      | Rewrites capitalized tags into `render` calls (experimental)                 |
 | `DebugVisitor`                | Annotates output with the template and position it came from                 |
 | `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
 | `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
@@ -345,8 +345,10 @@ Pass `context` to the engine to add your own keys, reachable with `#[]` and `#fe
 
 ```ruby
 Herb::Engine.new(source, context: { theme: "dark" }, visitors: [MyVisitor.new])
+```
 
-# inside the visitor
+and inside the visitor:
+```ruby
 context[:theme]              #=> "dark"
 context.fetch(:missing, 1)   #=> 1
 ```
@@ -573,17 +575,17 @@ end
 
 Since the assertions run on every render, this visitor is meant for development and test environments. In production, either leave it out or run it with `mode: :warn`.
 
-### `Component::Visitor`
+### `ComponentTags::Visitor`
 
 > [!WARNING]
-> `Component::Visitor` is experimental and a proof of concept. The generated `render` calls, the attribute mapping, and the class itself may change or be removed without a major version bump. It prints a warning the first time it is instantiated in a process.
+> `ComponentTags::Visitor` is experimental and a proof of concept. The generated `render` calls, the attribute mapping, and the class itself may change or be removed without a major version bump. It prints a warning the first time it is instantiated in a process.
 
 Rewrites capitalized tags into `render` calls, so a component can be written as a tag instead of an ERB expression.
 
 ```ruby
-require "herb/engine/component/visitor"
+require "herb/engine/component_tags/visitor"
 
-Herb::Engine.new(source, visitors: [Herb::Engine::Component::Visitor.new])
+Herb::Engine.new(source, visitors: [Herb::Engine::ComponentTags::Visitor.new])
 ```
 
 A tag is transformed when its name is CamelCase in every segment. `<DIV>`, `<BR>` and `<My-Component />` are left alone, since uppercase HTML tags are valid HTML.
@@ -603,7 +605,7 @@ Dot notation needs the [`dot_notation_tags`](/parser-options) parser option for 
 ```ruby
 Herb::Engine.new(source,
   parser_options: { dot_notation_tags: true },
-  visitors: [Herb::Engine::Component::Visitor.new],
+  visitors: [Herb::Engine::ComponentTags::Visitor.new],
 )
 ```
 
