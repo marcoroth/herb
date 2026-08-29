@@ -23,7 +23,7 @@ module Engine
         Herb::Engine.new(template, parser_options: { strict: true })
       end
 
-      assert_equal ["erb-case-with-conditions"], error.diagnostics.map(&:code)
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
 
       assert_evaluated_snapshot(template, { status: "pending" }, { escape: false, parser_options: { strict: false } })
       assert_evaluated_snapshot(template, { status: "approved" }, { escape: false, parser_options: { strict: false } })
@@ -45,7 +45,7 @@ module Engine
         Herb::Engine.new(template, parser_options: { strict: true })
       end
 
-      assert_equal ["erb-case-with-conditions"], error.diagnostics.map(&:code)
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
     end
 
     test "case when on newline in same ERB tag" do
@@ -62,7 +62,7 @@ module Engine
         Herb::Engine.new(template, parser_options: { strict: true })
       end
 
-      assert_equal ["erb-case-with-conditions"], error.diagnostics.map(&:code)
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
 
       assert_evaluated_snapshot(template, { status: "pending" }, { escape: false, parser_options: { strict: false } })
       assert_evaluated_snapshot(template, { status: "approved" }, { escape: false, parser_options: { strict: false } })
@@ -82,7 +82,7 @@ module Engine
         Herb::Engine.new(template, parser_options: { strict: true })
       end
 
-      assert_equal ["erb-case-with-conditions"], error.diagnostics.map(&:code)
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
 
       assert_evaluated_snapshot(template, { count: 1 }, { escape: false, parser_options: { strict: false } })
       assert_evaluated_snapshot(template, { count: 2 }, { escape: false, parser_options: { strict: false } })

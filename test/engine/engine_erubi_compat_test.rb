@@ -257,7 +257,7 @@ module Engine
         Herb::Engine.new(template)
       end
 
-      assert_equal ["erb-case-with-conditions"], error.diagnostics.map(&:code)
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
     end
   end
 end

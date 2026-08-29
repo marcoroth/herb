@@ -8,7 +8,7 @@ options: {validators: true}
 ---
 [source]:2:3: argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments (and 1 more error) (Herb::Engine::ParseError)
 
-✘ [RubyParse] argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments
+✘ [RubyParseError] argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments
 
     [source]:2:3:
       2 │   <%= user.name.upcase( %>
@@ -16,7 +16,7 @@ options: {validators: true}
 
   Check the Ruby syntax inside the ERB tag.
 
-✘ [RubyParse] argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments
+✘ [RubyParseError] argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments
 
     [source]:2:3:
       2 │   <%= user.name.upcase( %>

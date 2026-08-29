@@ -55,7 +55,7 @@ module Engine
 
       diagnostic = visitor.diagnostics.first
 
-      assert_equal "obsolete-element", diagnostic.code
+      assert_equal "ObsoleteElement", diagnostic.code
       assert_equal :warning, diagnostic.severity
       assert_equal FILENAME, diagnostic.template
       assert_equal "Use CSS animations instead.", diagnostic.suggestion
@@ -72,7 +72,7 @@ module Engine
 
       diagnostic = render_into_session(engine).diagnostics.first
 
-      assert_equal "obsolete-element", diagnostic.code
+      assert_equal "ObsoleteElement", diagnostic.code
       assert_equal :warning, diagnostic.severity
       assert_equal FILENAME, diagnostic.template
       assert_equal "Use CSS animations instead.", diagnostic.suggestion
@@ -93,8 +93,8 @@ module Engine
 
       codes = render_into_session(engine).diagnostics.map(&:code)
 
-      assert_includes codes, "invalid-nesting"
-      assert_includes codes, "obsolete-element"
+      assert_includes codes, "InvalidNestingError"
+      assert_includes codes, "ObsoleteElement"
     end
 
     test "carries a message intact whatever it contains" do

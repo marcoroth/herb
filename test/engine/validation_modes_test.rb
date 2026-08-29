@@ -35,7 +35,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_equal ["invalid-nesting"], error.diagnostics.map(&:code)
+      assert_equal ["InvalidNestingError"], error.diagnostics.map(&:code)
       assert_equal ["Block element <div> cannot be nested inside <p> at line 1"], error.diagnostics.map(&:message)
     end
 
@@ -92,7 +92,7 @@ module Engine
         Herb::Engine.new("<div><span>Content</div>", filename: "app/views/broken.html.erb")
       end
 
-      assert_equal ["missing-closing-tag"], error.diagnostics.map(&:code)
+      assert_equal ["MissingClosingTagError"], error.diagnostics.map(&:code)
       assert_equal "app/views/broken.html.erb", error.filename
       assert_equal "<div><span>Content</div>", error.source
       assert_equal 1, error.line_number

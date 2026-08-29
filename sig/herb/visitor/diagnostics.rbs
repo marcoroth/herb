@@ -14,7 +14,7 @@ module Herb
     #       include Herb::Visitor::Diagnostics
     #
     #       def visit_html_element_node(node)
-    #         warning("This element is suspicious.", node.location, code: "suspicious-element")
+    #         warning("This element is suspicious.", node.location, code: "SuspiciousElement")
     #
     #         super
     #       end

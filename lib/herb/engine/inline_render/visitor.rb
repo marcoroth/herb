@@ -30,6 +30,7 @@ module Herb
       # original did. Some of what a partial means is answered by where it is rather than by what it
       # says, and none of that survives being copied, so `Inliner` reads the partial and leaves it
       # alone when it finds any of it. Anything left alone stays the `render` call it was written as.
+      #
       class Visitor < Herb::Visitor
         include Herb::Visitor::ContextAware
 

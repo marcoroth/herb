@@ -12,7 +12,7 @@ require_relative "visitor/context_aware"
 require_relative "visitor/diagnostics"
 require_relative "engine/compiler"
 require_relative "engine/errors"
-require_relative "engine/error_formatter"
+require_relative "diagnostic/formatter"
 
 module Herb
   class Engine
@@ -382,14 +382,13 @@ module Herb
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
-      formatter = ErrorFormatter.new(input, parser_errors, filename: filename)
+      diagnostics = Diagnostic.from_errors(parser_errors, template: relative_file_path)
+      formatter = Diagnostic::Formatter.new(input, diagnostics, filename: filename)
 
       raise ParseError.new(
         formatter.summary,
         details: formatter,
-        diagnostics: parser_errors.map { |error|
-          error.to_diagnostic(template: relative_file_path)
-        },
+        diagnostics: diagnostics,
         source: input,
         filename: relative_file_path,
         visitors: @visitors.descriptions,
@@ -435,7 +434,7 @@ module Herb
         )
       end
 
-      formatter = ErrorFormatter.new(input, errors, filename: filename)
+      formatter = Diagnostic::Formatter.new(input, errors, filename: filename)
 
       raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end

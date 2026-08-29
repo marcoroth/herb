@@ -30,7 +30,7 @@ module Herb
           message: message,
           severity: :error,
           origin: origin,
-          code: Herb::Diagnostic.code_for(type),
+          code: error_name,
           location: location,
           suggestion: suggestion,
           phase: :compile,

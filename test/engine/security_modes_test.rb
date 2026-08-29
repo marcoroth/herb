@@ -35,7 +35,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_equal ["invalid-nesting"], error.diagnostics.map(&:code)
+      assert_equal ["InvalidNestingError"], error.diagnostics.map(&:code)
     end
 
     test "nesting validator can be disabled" do
@@ -49,7 +49,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all(security: false))
       end
 
-      assert_equal ["invalid-nesting"], error.diagnostics.map(&:code)
+      assert_equal ["InvalidNestingError"], error.diagnostics.map(&:code)
     end
 
     test "disabling nesting does not disable security" do

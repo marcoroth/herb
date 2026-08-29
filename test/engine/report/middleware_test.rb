@@ -30,7 +30,7 @@ module Engine
       Herb::Diagnostic.new(
         template: "app/views/a.html.erb",
         message: message,
-        code: "invalid-nesting",
+        code: "InvalidNestingError",
         origin: "Herb Compiler",
         location: Herb::Location.from(1, 0, 1, 4)
       )

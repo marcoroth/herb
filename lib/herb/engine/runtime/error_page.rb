@@ -130,7 +130,7 @@ module Herb
 
           details = error.details
 
-          report.source(template, details.source) if details.is_a?(Herb::Engine::ErrorFormatter)
+          report.source(template, details.source) if details.is_a?(Herb::Diagnostic::Formatter)
         end
 
         #: (Herb::Engine::Runtime::Report, Herb::Engine::CompilationError) -> void
@@ -189,7 +189,7 @@ module Herb
 
           details = error.details
 
-          details.filename.to_s if details.is_a?(Herb::Engine::ErrorFormatter)
+          details.filename.to_s if details.is_a?(Herb::Diagnostic::Formatter)
         end
 
         #: (Herb::Engine::CompilationError) -> String

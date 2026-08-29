@@ -106,7 +106,7 @@ module Engine
       assert_equal 1, diagnostics.length
       assert_equal :error, diagnostics.first.severity
       assert_includes diagnostics.first.message, "Partial 'nonexistent/missing' could not be resolved"
-      assert_equal "render-unresolved", diagnostics.first.code
+      assert_equal "RenderUnresolved", diagnostics.first.code
     end
 
     test "warns for dynamic render calls" do
@@ -115,7 +115,7 @@ module Engine
       assert_equal 1, diagnostics.length
       assert_equal :warning, diagnostics.first.severity
       assert_includes diagnostics.first.message, "Dynamic render call cannot be statically resolved"
-      assert_equal "render-dynamic", diagnostics.first.code
+      assert_equal "RenderDynamic", diagnostics.first.code
     end
 
     test "no diagnostics for keyword partial that exists" do

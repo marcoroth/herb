@@ -100,6 +100,7 @@ Metrics/AbcSize:
     - bench/**/*
     - bin/**/*
     - lib/herb/ast/erb_render_node.rb
+    - lib/herb/diagnostic/formatter.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
