@@ -39,6 +39,18 @@ export class Location {
     this.end = end
   }
 
+  contains(position: Position): boolean {
+    return position.compare(this.start) >= 0 && position.compare(this.end) < 0
+  }
+
+  covers(other: Location): boolean {
+    return this.start.compare(other.start) <= 0 && other.end.compare(this.end) <= 0
+  }
+
+  isEmpty(): boolean {
+    return this.start.equals(this.end)
+  }
+
   toHash(): SerializedLocation {
     return {
       start: this.start.toHash(),
