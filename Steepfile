@@ -13,6 +13,7 @@ target :lib do
   library "tempfile"
   library "yaml"
   library "prism"
+  library "lightningcss"
 
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/project.rb"

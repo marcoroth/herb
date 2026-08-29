@@ -1125,7 +1125,7 @@ class Herb::CLI
     require_relative "engine/scoped_style/visitor"
     Herb.ensure_installed("lightningcss")
 
-    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+    Herb::Engine::ScopedStyle::Visitor.new
   end
 
   def compile_template

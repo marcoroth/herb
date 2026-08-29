@@ -54,7 +54,9 @@ module Herb
       # `scope` is the selector each rule has to be narrowed by, appended to what the rule already
       # matches.
       #
-      # Without one, a block is left exactly as it was written and reported. Scoping the markup while
+      # Lightning CSS is what narrows a block unless something else is given, so `transform` is for
+      # narrowing it some other way. Without one at all, which is a machine with no `lightningcss` on
+      # it, a block is left exactly as it was written and reported. Scoping the markup while
       # leaving the CSS alone would turn a scoped block into a global one. A `transform` that raises
       # is treated the same way, so CSS nobody can read costs the block it was written in and not the
       # whole template.
@@ -94,7 +96,7 @@ module Herb
           raise ArgumentError, "`deliver: #{deliver.inspect}` is not a delivery. Pass one of #{DELIVERIES.map(&:inspect).join(", ")}." unless DELIVERIES.include?(deliver)
 
           @deliver = deliver
-          @transform = transform
+          @transform = transform || default_transform
           @scopes = {} #: Hash[String, String]
           @styles = {} #: Hash[String, String]
           @elements = {} #: Hash[String, Integer]
@@ -385,11 +387,24 @@ module Herb
 
         #: (Herb::AST::HTMLElementNode) -> void
         def untransformed_style(node)
+          reason = @unavailable ? " Loading `lightningcss` failed with `#{@unavailable}`." : ""
+
           warning(
-            "A `<style scoped>` block was found, and #{self.class.name} was given no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page.",
+            "A `<style scoped>` block was found, and there is no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page.#{reason} Install `lightningcss`, or give #{self.class.name} a `transform` of its own.",
             node.location,
             code: "scoped-style-without-a-transform"
           )
+
+          nil
+        end
+
+        #: () -> untyped
+        def default_transform
+          require "lightningcss"
+
+          ::LightningCSS::Transformer.new
+        rescue LoadError => e
+          @unavailable = e.message
 
           nil
         end

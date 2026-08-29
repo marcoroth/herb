@@ -72,6 +72,14 @@ module Engine
       end
     end
 
+    class Untransformable < Herb::Engine::ScopedStyle::Visitor
+      private
+
+      def require(*)
+        raise LoadError, "cannot load such file -- lightningcss"
+      end
+    end
+
     def options(transform: Transform.new, filename: TEMPLATE, visitors: [], deliver: :inline, **overrides)
       visitor = Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: deliver)
 
@@ -160,11 +168,12 @@ module Engine
       assert_empty visitor.styles
     end
 
-    test "leaves a block alone when it was given no transform to narrow it with" do
-      _, visitor = compile(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), transform: nil)
+    test "narrows with Lightning CSS when it was given no transform of its own" do
+      _, visitor = compile(%(<style scoped>.title { color: red; }</style><h1 class="title">Hi</h1>), transform: nil)
 
-      assert_equal ["scoped-style-without-a-transform"], visitor.diagnostics.map(&:code)
-      assert_empty visitor.styles
+      assert_empty visitor.diagnostics
+      assert_equal 1, visitor.styles.length
+      assert_includes visitor.styles.values.first, "[data-herb-scope-"
     end
 
     test "refuses a template compiled without a path, because a scope would not be stable" do
@@ -349,6 +358,20 @@ module Engine
       output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::ScopedStyle::Visitor).inspect' 2>&1`
 
       assert_equal "nil", output
+    end
+    test "leaves a block alone when there is no transform to narrow it with" do
+      visitor = Untransformable.new
+      Herb::Engine.new(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), filename: TEMPLATE, escape: false, visitors: [visitor])
+
+      assert_equal ["scoped-style-without-a-transform"], visitor.diagnostics.map(&:code)
+      assert_empty visitor.styles
+    end
+
+    test "says why there is no transform, so that a broken install is not read as a missing one" do
+      visitor = Untransformable.new
+      Herb::Engine.new(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), filename: TEMPLATE, escape: false, visitors: [visitor])
+
+      assert_includes visitor.diagnostics.first.message, "cannot load such file -- lightningcss"
     end
   end
 end
