@@ -6,7 +6,6 @@ module Herb
   module Analysis
     class TemplateDependencies
       class NodeDependencyCollector < ::Herb::Visitor
-        BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
         BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
         ASSIGNMENT_NODES = [
           Prism::LocalVariableWriteNode,
@@ -137,11 +136,7 @@ module Herb
 
           @aliases.merge(bindings_for(node))
 
-          BRANCH_BODY_PROPERTIES.each do |property|
-            next unless node.respond_to?(property)
-
-            visit_children_with_paths(node.send(property))
-          end
+          node.content_node_lists.each { |list| visit_children_with_paths(list.nodes) }
 
           BRANCH_CONTINUATION_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
