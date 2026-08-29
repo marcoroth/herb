@@ -1,8 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`SyntaxRenderer > ERB content highlighting > should highlight Ruby keywords in ERB blocks 1`] = `"[38;2;190;80;70m<%[0m [38;2;198;120;221mif[0m [38;2;198;120;221mtrue[0m %[38;2;190;80;70m>[0m"`;
-
 exports[`SyntaxRenderer > ERB content highlighting > highlights ERB comments as comments 1`] = `"[38;2;92;99;112m<%#[0m[38;2;92;99;112m if true [0m[38;2;92;99;112m%>[0m"`;
+
+exports[`SyntaxRenderer > ERB content highlighting > highlights trim mode ERB comments as comments 1`] = `"[38;2;92;99;112m<%-[0m[38;2;92;99;112m# if true [0m[38;2;92;99;112m-%>[0m"`;
+
+exports[`SyntaxRenderer > ERB content highlighting > keeps Ruby colors for escaped ERB tags starting with a hash 1`] = `"[38;2;190;80;70m<%%[0m# [38;2;198;120;221mif[0m [38;2;198;120;221mtrue[0m [38;2;190;80;70m%>[0m"`;
+
+exports[`SyntaxRenderer > ERB content highlighting > should highlight Ruby keywords in ERB blocks 1`] = `"[38;2;190;80;70m<%[0m [38;2;198;120;221mif[0m [38;2;198;120;221mtrue[0m %[38;2;190;80;70m>[0m"`;
 
 exports[`SyntaxRenderer > color disabled mode > should return plain text when NO_COLOR is set 1`] = `"<div>test</div>"`;
 

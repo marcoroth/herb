@@ -98,6 +98,20 @@ fn highlights_erb_comments_as_comments() {
 }
 
 #[test]
+fn highlights_trim_mode_erb_comments_as_comments() {
+  with_color();
+
+  insta::assert_snapshot!(renderer(Theme::OneDark).highlight("<%-# if true -%>"));
+}
+
+#[test]
+fn keeps_ruby_colors_for_escaped_erb_tags_starting_with_a_hash() {
+  with_color();
+
+  insta::assert_snapshot!(renderer(Theme::OneDark).highlight("<%%# if true %>"));
+}
+
+#[test]
 fn preserves_erb_comment_state_across_nested_openers_and_resets_after_the_closing_delimiter() {
   with_color();
 

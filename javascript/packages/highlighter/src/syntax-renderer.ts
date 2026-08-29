@@ -112,7 +112,7 @@ export class SyntaxRenderer {
 
       const tokenText = content.slice(token.range.from, token.range.to)
 
-      this.updateState(state, token, tokenText, nextToken, prevToken)
+      this.updateState(state, token, tokenText, content, nextToken, prevToken)
 
       const color = this.getContextualColor(state, token, tokenText)
 
@@ -140,11 +140,20 @@ export class SyntaxRenderer {
     return highlighted
   }
 
+  private isErbCommentTag(tagText: string, content: string, nextToken?: Token): boolean {
+    if (tagText.startsWith("<%#")) return true
+    if (tagText !== "<%-") return false
+    if (nextToken?.type !== "TOKEN_ERB_CONTENT") return false
+
+    return content.slice(nextToken.range.from, nextToken.range.to).startsWith("#")
+  }
+
   private updateState(
     state: SyntaxRenderState,
     token: Token,
     tokenText: string,
-    _nextToken?: Token,
+    content: string,
+    nextToken?: Token,
     _prevToken?: Token,
   ) {
     switch (token.type) {
@@ -213,7 +222,7 @@ export class SyntaxRenderer {
         break
 
       case "TOKEN_ERB_START":
-        state.inErbComment = state.inErbComment || tokenText.startsWith("<%#")
+        state.inErbComment = state.inErbComment || this.isErbCommentTag(tokenText, content, nextToken)
         break
     }
   }

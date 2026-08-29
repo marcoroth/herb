@@ -178,6 +178,18 @@ describe("SyntaxRenderer", () => {
       expect(result).toMatchSnapshot()
     })
 
+    it("highlights trim mode ERB comments as comments", async () => {
+      const result = renderer.highlight("<%-# if true -%>")
+
+      expect(result).toMatchSnapshot()
+    })
+
+    it("keeps Ruby colors for escaped ERB tags starting with a hash", async () => {
+      const result = renderer.highlight("<%%# if true %>")
+
+      expect(result).toMatchSnapshot()
+    })
+
     it("preserves ERB comment state across nested openers and resets after the closing delimiter", () => {
       const nestedHerb = {
         isLoaded: true,
