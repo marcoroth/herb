@@ -46,12 +46,14 @@ module Herb
 
           attr_reader transform(): String?
 
-          def self.new: (String name, String? comparand, Symbol? kind, String? operator, String? against, String? transform) -> instance
-                      | (name: String, comparand: String?, kind: Symbol?, operator: String?, against: String?, transform: String?) -> instance
+          attr_reader against_transform(): String?
 
-          def self.members: () -> [ :name, :comparand, :kind, :operator, :against, :transform ]
+          def self.new: (String name, String? comparand, Symbol? kind, String? operator, String? against, String? transform, String? against_transform) -> instance
+                      | (name: String, comparand: String?, kind: Symbol?, operator: String?, against: String?, transform: String?, against_transform: String?) -> instance
 
-          def members: () -> [ :name, :comparand, :kind, :operator, :against, :transform ]
+          def self.members: () -> [ :name, :comparand, :kind, :operator, :against, :transform, :against_transform ]
+
+          def members: () -> [ :name, :comparand, :kind, :operator, :against, :transform, :against_transform ]
         end
 
         class Combo < Data

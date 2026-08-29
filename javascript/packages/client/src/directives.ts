@@ -190,7 +190,7 @@ export function classifyDefault(source: string): StateDefaultKind {
   return "seeded"
 }
 
-export type DerivedComparand = string | null | { state: string }
+export type DerivedComparand = string | null | { state: string, transform?: string }
 
 export type DerivedCondition =
   | [string, DerivedComparand]
@@ -323,14 +323,26 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
     const rightState = derivedStateSide(right, declared)
 
     if (leftState && rightState) {
-      if (leftState.transform || rightState.transform) {
-        return "mixed"
+      let left = leftState
+      let right = rightState
+      let mirrored = operator === "==" ? undefined : operator
+
+      if (right.transform && !left.transform) {
+        [left, right] = [right, left]
+
+        if (mirrored && mirrored !== "!=") {
+          mirrored = MIRRORED_COMPARISONS[mirrored]
+        }
       }
 
-      const spelled = operator === "==" ? undefined : operator
-      const condition: DerivedCondition = spelled ? [leftState.state, { state: rightState.state }, spelled] : [leftState.state, { state: rightState.state }]
+      const comparand: DerivedComparand = right.transform ? { state: right.state, transform: right.transform } : { state: right.state }
+      const sources = [...new Set([left.state, right.state])]
 
-      return { kind: "boolean", condition, sources: [...new Set([leftState.state, rightState.state])] }
+      if (left.transform) {
+        return { kind: "boolean", condition: [left.state, comparand, mirrored ?? "==", left.transform], sources }
+      }
+
+      return { kind: "boolean", condition: mirrored ? [left.state, comparand, mirrored] : [left.state, comparand], sources }
     }
 
     const side = leftState ?? rightState

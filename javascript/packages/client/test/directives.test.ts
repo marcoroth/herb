@@ -108,6 +108,20 @@ describe("classifyDerivedDefault", () => {
     expect(classifyDerivedDefault('count.to_s == "3"', declared)).toEqual({ kind: "boolean", condition: ["count", '"3"', "==", "to_s"], sources: ["count"] })
   })
 
+  test("carries a transform on each side of a comparison", () => {
+    expect(classifyDerivedDefault("draft.length > count", declared)).toEqual({
+      kind: "boolean",
+      condition: ["draft", { state: "count" }, ">", "length"],
+      sources: ["draft", "count"],
+    })
+
+    expect(classifyDerivedDefault("count < draft.length", declared)).toEqual({
+      kind: "boolean",
+      condition: ["draft", { state: "count" }, ">", "length"],
+      sources: ["draft", "count"],
+    })
+  })
+
   test("stays out of expressions that are not predicates", () => {
     expect(classifyDerivedDefault("draft.upcase", declared)).toBe("mixed")
     expect(classifyDerivedDefault("other.blank?", declared)).toBeNull()

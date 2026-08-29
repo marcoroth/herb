@@ -26,7 +26,7 @@ An expression the client can resolve also stands on its own as an output, so `<%
 
 `to_s` reads a state of any kind as a String, matching Ruby down to `nil.to_s` being `""`. `length` and `size` read the character count of a String or a Symbol state, either compared to an Integer literal (`draft.length > 3`) or printed on its own (`<%= draft.length %>`). Both spell the same thing, so `size` compiles exactly like `length`.
 
-A transform compares against a literal or against another declared state, so `draft.to_s == filter` works. Only one side of a comparison may carry a transform.
+A transform compares against a literal or against another declared state, so `draft.to_s == filter` and `draft.length > filter.length` both work. Each side carries its own transform, and the two have to end up the same kind.
 
 `count` is not supported. Unlike `Array#count`, `String#count` takes a character set (`"hello".count("a-z")`) and raises without one, so there is nothing to resolve on the client.
 
