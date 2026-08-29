@@ -1,5 +1,5 @@
 ---
-source: "Engine::ScopedStyleVisitorTest#test_0005_puts the attribute on every element when a file renders something"
+source: "Engine::ScopedStyleVisitorTest#test_0005_puts it on every element it wrote and none it rendered"
 input: "{source: \"<style scoped>.a { color: red; }</style>\\n<div class=\\\"card\\\"><h1 class=\\\"title\\\">Hi</h1><%= render \\\"posts/plain\\\" %></div>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>], project_path: \"test/fixtures/scoped_styles\"}}"
 ---
 _buf = ::String.new; _buf << '<style>.a { color: red; }/* narrowed */</style>
