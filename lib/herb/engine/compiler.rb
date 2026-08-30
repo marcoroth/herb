@@ -314,7 +314,7 @@ module Herb
 
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
-          code = node.content.value.strip
+          code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 
           @tokens << if should_escape
                        [:expr_block_escaped, code, current_context]
@@ -351,7 +351,7 @@ module Herb
       def visit_erb_block_end_node(node, escaped: false)
         remove_trailing_whitespace_from_last_token! if @trim && left_trim?(node)
 
-        code = node.content.value.strip
+        code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 
         if @trim && at_line_start?
           leading_space = extract_and_remove_leading_space!
