@@ -5,6 +5,8 @@ require_relative "../html/util"
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
+      PADDING_NEWLINES = Array.new(17) { |count| ("\n" * count).freeze }.freeze #: Array[String]
+
       EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze
 
       TRAILING_WHITESPACE = /[ \t]+\z/
@@ -23,7 +25,7 @@ module Herb
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @tokens = [] #: Array[untyped]
-        @padding_before = Hash.new(0) #: Hash[Integer, Integer]
+        @padding_before = nil #: Hash[Integer, Integer]?
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
         @trim_next_whitespace = false
@@ -458,7 +460,10 @@ module Herb
       def keep_line_count(node, extra: 0)
         lines = node.content.value.count("\n") - node.content.value.strip.count("\n") + extra
 
-        @padding_before[@tokens.length] += lines if lines.positive?
+        return unless lines.positive?
+
+        @padding_before ||= Hash.new(0)
+        @padding_before[@tokens.length] += lines
       end
 
       def add_text(text)
@@ -497,49 +502,85 @@ module Herb
 
       def optimize_tokens(tokens)
         return tokens if tokens.empty?
+        return optimize_tokens_with_padding(tokens) if @padding_before
 
         optimized = [] #: Array[untyped]
         current_text = nil #: String?
         current_context = nil
 
-        pending_padding = 0
+        tokens.each do |token|
+          type = token[0]
 
-        flush = lambda do
-          if current_text
-            optimized << [:text, current_text, current_context]
+          if type == :text
+            value = token[1]
 
-            current_text = nil
-            current_context = nil
-          end
+            if current_text
+              current_text << value
+              current_context ||= token[2]
+            else
+              current_text = value.dup
+              current_context = token[2]
+            end
+          else
+            if current_text
+              optimized << [:text, current_text, current_context]
 
-          if pending_padding.positive?
-            optimized << [:code, "\n" * pending_padding, nil]
-            pending_padding = 0
+              current_text = nil
+              current_context = nil
+            end
+
+            optimized << [type, token[1], token[2], token[3]]
           end
         end
+
+        optimized << [:text, current_text, current_context] if current_text
+
+        optimized
+      end
+
+      def padding_newlines(count)
+        PADDING_NEWLINES[count] || ("\n" * count)
+      end
+
+      def optimize_tokens_with_padding(tokens)
+        optimized = [] #: Array[untyped]
+        current_text = nil #: String?
+        current_context = nil
+        pending_padding = 0
 
         tokens.each_with_index do |token, index|
           pending_padding += @padding_before[index]
 
-          unless token[0] == :text
-            flush.call
-            optimized << [token[0], token[1], token[2], token[3]]
+          if token[0] == :text
+            if current_text
+              current_text << token[1]
+              current_context ||= token[2]
+            else
+              current_text = token[1].dup
+              current_context = token[2]
+            end
 
             next
           end
 
           if current_text
-            current_text << token[1]
-            current_context ||= token[2]
-          else
-            current_text = token[1].dup
-            current_context = token[2]
+            optimized << [:text, current_text, current_context]
+            current_text = nil
+            current_context = nil
           end
+
+          if pending_padding.positive?
+            optimized << [:code, padding_newlines(pending_padding), nil]
+            pending_padding = 0
+          end
+
+          optimized << [token[0], token[1], token[2], token[3]]
         end
 
-        pending_padding += @padding_before[tokens.length]
+        optimized << [:text, current_text, current_context] if current_text
 
-        flush.call
+        pending_padding += @padding_before[tokens.length]
+        optimized << [:code, padding_newlines(pending_padding), nil] if pending_padding.positive?
 
         optimized
       end
