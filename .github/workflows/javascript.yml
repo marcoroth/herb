@@ -264,7 +264,16 @@ jobs:
           path: javascript/packages/
 
       - name: Publish preview packages
-        run: npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server' './javascript/packages/dev-tools' './javascript/packages/client' './javascript/packages/core'
+        run: |
+          packages=$(for directory in ./javascript/packages/*/; do
+            [ -f "$directory/package.json" ] || continue
+            [ "$(jq -r '.private // false' "$directory/package.json")" = "true" ] && continue
+            printf '%s ' "$directory"
+          done)
+
+          echo "Publishing: $packages"
+
+          npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template $packages
 
   publish-vscode:
     name: Publish VSCode extension
