@@ -11,7 +11,7 @@ module Engine
     class DiagnosticsTest < Minitest::Spec
       include SnapshotUtils
 
-      FLOAT_DEFAULT = "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead." #: String
+      FLOAT_DEFAULT = "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text." #: String
 
       THREE_BAD_STATES = <<~ERB
         <h1>Report</h1>
@@ -83,8 +83,8 @@ module Engine
         assert_equal(
           [
             FLOAT_DEFAULT,
-            "The state `draft` has a Hash default. Declare each leaf as its own state, like `(draft_title: \"\")`.",
-            "The state `tally` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
+            "The state `draft` has a Hash default. A state holds one value the client can write and read back.",
+            "The state `tally` has an Array default. A list on the page is a collection of items, not one state holding many values."
           ],
           diagnostics.map(&:message)
         )
@@ -93,13 +93,13 @@ module Engine
       test "one template reports problems from unrelated parts of itself" do
         diagnostics, = report(THREE_FAMILIES)
 
-        assert_equal ["slots-declaration", "slots-name", "slots-compare"], diagnostics.map(&:code)
+        assert_equal ["herb-state-declaration", "slots-name", "herb-state-compare"], diagnostics.map(&:code)
 
         assert_equal(
           [
             FLOAT_DEFAULT,
-            "Two slots in the same scope are both named `body`. A slot name is an address, so give one of them a different name.",
-            "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match. Compare it against a String literal instead."
+            "Two slots in the same scope are both named `body`. A slot name is an address, and two slots cannot share one.",
+            "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match."
           ],
           diagnostics.map(&:message)
         )
@@ -130,7 +130,7 @@ module Engine
         assert_equal "app/views/test.html.erb", diagnostic.template
         assert_equal :error, diagnostic.severity
         assert_equal :compile, diagnostic.phase
-        assert_equal "slots-declaration", diagnostic.code
+        assert_equal "herb-state-declaration", diagnostic.code
       end
 
       test "hands the page its findings so they reach the browser" do
@@ -149,7 +149,7 @@ module Engine
       test "findings from different families both reach the page" do
         _, src = report(THREE_FAMILIES)
 
-        assert_equal ["slots-declaration", "slots-name", "slots-compare"], recorded(src).map(&:code)
+        assert_equal ["herb-state-declaration", "slots-name", "herb-state-compare"], recorded(src).map(&:code)
       end
 
       test "findings of one family on one line reach the page as one" do
@@ -178,9 +178,9 @@ module Engine
         assert_equal ["app/views/test.html.erb:2:23:", "app/views/test.html.erb:2:35:", "app/views/test.html.erb:2:57:"], shown.scan(%r{app/views/test\.html\.erb:\d+:\d+:}).uniq
         assert_equal(
           [
-            "slots-declaration: #{FLOAT_DEFAULT}",
-            "slots-declaration: The state `draft` has a Hash default. Declare each leaf as its own state, like `(draft_title: \"\")`.",
-            "slots-declaration: The state `tally` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
+            "herb-state-declaration: #{FLOAT_DEFAULT}",
+            "herb-state-declaration: The state `draft` has a Hash default. A state holds one value the client can write and read back.",
+            "herb-state-declaration: The state `tally` has an Array default. A list on the page is a collection of items, not one state holding many values."
           ],
           error.diagnostics.map { |diagnostic| "#{diagnostic.code}: #{diagnostic.message}" }
         )

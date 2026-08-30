@@ -19,6 +19,8 @@ module Herb
       #     mode = Herb::Engine::Slots::Visitor.directive_mode(source)
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       class Visitor < Herb::Visitor
+        STATE_FAMILIES: Array[Symbol]
+
         extend Herb::Visitor::Experimental
 
         include Herb::Visitor::ContextAware
@@ -128,8 +130,11 @@ module Herb
         # : () -> bool
         def degraded?: () -> bool
 
-        # : (String, Herb::Location?, Symbol) -> nil
-        def slot_error: (String, Herb::Location?, Symbol) -> nil
+        # : (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
+        def slot_error: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
+
+        # : (Symbol) -> String
+        def diagnostic_code_for: (Symbol) -> String
 
         # : () -> String
         def version: () -> String

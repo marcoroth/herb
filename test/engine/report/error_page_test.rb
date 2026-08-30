@@ -34,7 +34,7 @@ module Engine
       Herb::Diagnostic.new(
         template: "app/views/posts/_post.html.erb",
         message: "The state `rate` has a Float default.",
-        code: "slots-declaration",
+        code: "herb-state-declaration",
         origin: "Herb Compiler",
         location: Herb::Location.from(3, 4, 3, 9),
         suggestion: "Declare it as an Integer or a String instead."
@@ -143,7 +143,7 @@ module Engine
 
         entries = payload(body.first)["diagnostics"]
 
-        assert_equal(["MissingClosingTagError", "slots-declaration"], entries.map { |entry| entry["code"] })
+        assert_equal(["MissingClosingTagError", "herb-state-declaration"], entries.map { |entry| entry["code"] })
         assert_equal(["blocking", "blocking"], entries.map { |entry| entry["overlay"] })
       end
 
