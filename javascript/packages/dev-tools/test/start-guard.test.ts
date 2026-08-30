@@ -3,7 +3,7 @@ import { describe, test, expect, afterEach, vi } from "vitest"
 import { HerbDevTools } from "../src/herb-dev-tools.js"
 
 afterEach(() => {
-  HerbDevTools.current?.stop()
+  HerbDevTools.instance?.stop()
   delete (window as any).HerbDevTools
   vi.restoreAllMocks()
 })

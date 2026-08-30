@@ -4,13 +4,13 @@ import { HerbDevTools } from "../src/herb-dev-tools.js"
 
 afterEach(() => {
   localStorage.clear()
-  HerbDevTools.current?.stop()
+  HerbDevTools.instance?.stop()
   delete (window as any).HerbDevTools
   document.querySelector(".herb-floating-menu")?.remove()
   vi.restoreAllMocks()
 })
 
-const overlayOf = () => (HerbDevTools.current as any).overlay
+const overlayOf = () => (HerbDevTools.instance as any).overlay
 const trigger = () => document.getElementById("herbMenuTrigger") as HTMLElement
 const isOpen = () => document.getElementById("herbMenuPanel")!.classList.contains("open")
 
