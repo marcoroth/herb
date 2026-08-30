@@ -32,6 +32,7 @@ module Herb
         @context_stack = [:html_content]
         @trim_next_whitespace = false
         @last_trim_consumed_newline = false
+        @pending_trim_newline_index = nil #: Integer?
         @pending_leading_whitespace = nil
         @pending_leading_whitespace_insert_index = 0
         @current_element_source = nil
@@ -72,6 +73,8 @@ module Herb
 
       def visit_document_node(node)
         visit_all(node.children)
+
+        settle_pending_trim_newline!(false)
       end
 
       def visit_html_element_node(node)
@@ -497,9 +500,12 @@ module Herb
           text = text.sub(/\A[ \t]*\r?\n/, "")
           @trim_next_whitespace = false
 
+          settle_pending_trim_newline!(@last_trim_consumed_newline)
           restore_pending_leading_whitespace! unless @last_trim_consumed_newline
         else
           @last_trim_consumed_newline = false
+
+          settle_pending_trim_newline!(false)
         end
 
         @pending_leading_whitespace = nil
@@ -609,6 +615,8 @@ module Herb
       end
 
       def process_erb_output(node, opening, code)
+        settle_pending_trim_newline!(false)
+
         if @trim_next_whitespace && @pending_leading_whitespace
           restore_pending_leading_whitespace!
           @pending_leading_whitespace = nil
@@ -759,15 +767,16 @@ module Herb
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
           right_space = if Herb::Engine::Helpers.heredoc?(code)
                           "\n"
-                        elsif newline_follows?(node)
-                          " \n"
-                        else
+                        elsif without_source?(node)
                           " "
+                        else
+                          " \n"
                         end
 
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
           @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
+          @pending_trim_newline_index = @tokens.length - 1 if right_space.end_with?(" \n")
           @trim_next_whitespace = true
         else
           @tokens << [:code, code, current_context]
@@ -775,21 +784,23 @@ module Herb
       end
 
       #: (untyped) -> bool
-      def newline_follows?(node)
+      def without_source?(node)
         position = node.tag_closing&.location&.end || node.location&.end
 
-        return false if position && !position.line.positive?
-        return true unless position && @source_lines
+        !position.nil? && !position.line.positive?
+      end
 
-        line = @source_lines[position.line - 1]
+      #: (bool) -> void
+      def settle_pending_trim_newline!(keep)
+        index = @pending_trim_newline_index
 
-        return false unless line
+        return unless index
 
-        rest = line[position.column..]
+        @pending_trim_newline_index = nil
 
-        return false unless rest
+        return if keep
 
-        rest.match?(/\A[ \t]*\r?\n\z/)
+        @tokens[index][1] = @tokens[index][1].chomp
       end
 
       def save_pending_leading_whitespace!(whitespace)

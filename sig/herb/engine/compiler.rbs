@@ -182,7 +182,10 @@ module Herb
       def apply_trim: (untyped node, untyped code) -> untyped
 
       # : (untyped) -> bool
-      def newline_follows?: (untyped) -> bool
+      def without_source?: (untyped) -> bool
+
+      # : (bool) -> void
+      def settle_pending_trim_newline!: (bool) -> void
 
       def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
 

@@ -3,7 +3,6 @@ source: "Engine::WhitespaceTrimmingTest#test_0038_leading whitespace with else b
 input: "{source: \"<p>\\n  <% if false %>nope<% else %>text<% end %>\\n</p>\", options: {}}"
 ---
 _buf = ::String.new; _buf << '<p>
-  '.freeze;   if false 
- _buf << 'nope'.freeze; else; _buf << 'text'.freeze; end; _buf << '
+  '.freeze;   if false ; _buf << 'nope'.freeze; else; _buf << 'text'.freeze; end; _buf << '
 </p>'.freeze;
 _buf.to_s

@@ -2,5 +2,5 @@
 source: "Engine::GraphQLTest#test_0009_method call starting with graphql is compiled as Ruby"
 input: "{source: \"<%graphql_helper %>\", options: {parser_options: {erb_openers: [\"graphql\"]}}}"
 ---
-_buf = ::String.new; graphql_helper 
+_buf = ::String.new; graphql_helper ;
 _buf.to_s
