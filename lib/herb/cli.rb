@@ -13,7 +13,7 @@ require_relative "engine/slots/visitor"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :inline_css, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :no_trim, :optimize, :slots, :scoped_styles, :inline_css, :file_timeout
 
   def initialize(args)
     @args = args
@@ -335,8 +335,8 @@ class Herb::CLI
         self.action_view_helpers = true
       end
 
-      parser.on("--trim", "Enable trimming of leading/trailing whitespace (for compile/render commands)") do
-        self.trim = true
+      parser.on("--no-trim", "Disable whitespace trimming around standalone ERB tags (for compile/render commands)") do
+        self.no_trim = true
       end
 
       parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
@@ -1165,7 +1165,7 @@ class Herb::CLI
       end
 
       options[:optimize] = true if optimize
-      options[:trim] = true if trim
+      options[:trim] = false if no_trim
       options[:validate_ruby] = true
       options[:visitors] = visitors unless visitors.empty?
 
@@ -1278,7 +1278,7 @@ class Herb::CLI
       end
 
       options[:optimize] = true if optimize
-      options[:trim] = true if trim
+      options[:trim] = false if no_trim
 
       visitors = []
       visitors << slot_visitor if slot_visitor

@@ -217,14 +217,13 @@ module Engine
       assert_raises(SyntaxError) { RubyVM::InstructionSequence.compile(erubi) }
     end
 
-    test "ignores trim: false and keeps trimming" do
-      template = "<% a = 1 %>\ntext\n"
+    test "compiles a case split across tags with trim: false where Erubi produces invalid Ruby" do
+      template = "<% case a %>\n<% when 1 %>\nA\n<% end %>\n"
       herb, erubi = assert_diverges_from_erubi(template, { trim: false })
 
-      assert_equal Herb::Engine.new(template).src, herb
-      assert_includes erubi, "_buf << '\n'.freeze;"
+      assert_equal "\nA\n\n", evaluate(herb, { a: 1 })
 
-      refute_equal evaluate(erubi, {}), evaluate(herb, {})
+      assert_raises(SyntaxError) { RubyVM::InstructionSequence.compile(erubi) }
     end
 
     test "refuses an escaped ERB tag that Erubi passes through" do

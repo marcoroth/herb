@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0034_keeps the whitespace around control flow with trim: false"
+input: "{source: \"<% if a == 1 %>\\n  yes\\n<% else %>\\n  no\\n<% end %>\\n\", locals: {a: 1}, options: {trim: false}}"
+---
+
+  yes
+

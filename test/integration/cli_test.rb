@@ -102,6 +102,19 @@ module Engine
       end
     end
 
+    test "compile with --no-trim" do
+      template = "<% a = 1 %>\ntext\n"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--no-trim"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "a = 1; _buf << '\ntext\n'"
+      end
+    end
+
     test "compile with json output" do
       template = "<div>Hello World</div>"
 

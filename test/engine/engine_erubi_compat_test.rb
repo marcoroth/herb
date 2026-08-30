@@ -259,5 +259,63 @@ module Engine
 
       assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
     end
+
+    test "keeps the whitespace around a standalone code tag with trim: false" do
+      template = <<~ERB
+        <% a = 1 %>
+        text
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation in front of a code tag with trim: false" do
+      template = "before\n  <% a = 1 %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the whitespace around a comment with trim: false" do
+      template = "before\n  <%# comment %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "leaves whitespace before a <%- tag alone with trim: false" do
+      template = "before\n  <%- a = 1 %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the newline after a code tag ending in -%> with trim: false" do
+      template = "<% a = 1 -%>\ntext\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "drops the newline after an expression ending in -%> with trim: false" do
+      template = "<%= a -%>\ntext\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the whitespace around control flow with trim: false" do
+      template = <<~ERB
+        <% if a == 1 %>
+          yes
+        <% else %>
+          no
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
+    end
   end
 end
