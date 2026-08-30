@@ -77,6 +77,7 @@ module Herb
 
         ATTRIBUTE_PREFIX = "data-herb-scope-" #: String
         SCOPED_ATTRIBUTE = "scoped" #: String
+        ANCHOR_ATTRIBUTE = "data-herb-style-scoped" #: String
         UNSCOPABLE_ELEMENTS = ["style", "script"].freeze #: Array[String]
         OPEN_TAGS = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
         DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
@@ -287,7 +288,7 @@ module Herb
 
           if index.nil?
             pending.node.body.replace([literal_node(narrowed)])
-            remove_attribute(pending.open_tag, pending.attribute)
+            replace_attribute(pending.open_tag, pending.attribute, anchor_node(scope))
           elsif @deliver == :hoist
             pending.container[index] = register_node(scope, narrowed)
           else
@@ -317,6 +318,36 @@ module Herb
             tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
             valid: true
           )
+        end
+
+        #: (String) -> Herb::AST::HTMLAttributeNode
+        def anchor_node(scope)
+          name_node = Herb::AST::HTMLAttributeNameNode.build(children: [literal_node(ANCHOR_ATTRIBUTE)])
+
+          value_node = Herb::AST::HTMLAttributeValueNode.build(
+            open_quote: Herb::Token.from("TOKEN_QUOTE", '"'),
+            children: [literal_node(scope)],
+            close_quote: Herb::Token.from("TOKEN_QUOTE", '"'),
+            quoted: true
+          )
+
+          Herb::AST::HTMLAttributeNode.build(
+            name: name_node,
+            equals: Herb::Token.from("TOKEN_EQUALS", "="),
+            value: value_node
+          )
+        end
+
+        #: (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode, Herb::AST::HTMLAttributeNode) -> void
+        def replace_attribute(open_tag, attribute, replacement)
+          children = open_tag.children
+          index = children.index(attribute)
+
+          return unless index
+
+          children[index] = replacement
+
+          nil
         end
 
         #: (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode) -> void
