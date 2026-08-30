@@ -23,7 +23,7 @@
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n\u2717 Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
-    "typecheck": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.test.json && tsc -p tsconfig.browser-test.json",
     "prepublishOnly": "yarn check:rule-versions && yarn clean && yarn build && yarn test"
   },
   "exports": {
