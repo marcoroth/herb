@@ -10,7 +10,7 @@ import { ElementObserver } from "../shared/element-observer"
 import { report } from "../shared/report"
 import { printValue } from "./values"
 import { elementOf, hostOf } from "../markup/anchors"
-import { armOf, matches, mentions } from "./conditions"
+import { armOf, evaluate, matches, mentions } from "./conditions"
 import { collectionIn, scopeOf, scoped } from "./scopes"
 import { declarationSpot, declared, declaredValue } from "./declarations"
 
@@ -393,6 +393,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
       this.writeConditionals(manifest, scope, changed)
       this.writePresence(manifest, scope, changed)
+      this.writeComputed(manifest, scope, changed)
     }
 
     const recounted: string[] = []
@@ -411,6 +412,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     if (recounted.length > 0) {
       this.writeConditionals(manifest, regionScope, recounted)
       this.writePresence(manifest, regionScope, recounted)
+      this.writeComputed(manifest, regionScope, recounted)
     }
 
     for (const [name, value] of Object.entries(values)) {
@@ -699,8 +701,13 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
   private writeValueSlots(manifest: StateManifest, scope: StateScope, name: string, value: StateValue): void {
     const text = printValue(value)
+    const computed = manifest.computed ?? {}
 
     for (const index of manifest.reads[name] ?? []) {
+      if (computed[String(index)]) {
+        continue
+      }
+
       for (const slot of this.scopedSlots(scope, index)) {
         if (slot.type === "boolean_attribute") {
           continue
@@ -722,6 +729,19 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
         const present = matches(entry, (name) => this.valueAt(name, placed.scope))
 
         this.slots.setBooleanAttribute(placed.slot, present)
+        this.slots.claim(placed.slot)
+      }
+    }
+  }
+
+  private writeComputed(manifest: StateManifest, scope: StateScope, changed: string[]): void {
+    for (const [indexKey, entry] of Object.entries(manifest.computed ?? {})) {
+      if (!mentions(entry, changed)) {
+        continue
+      }
+
+      for (const placed of this.placedSlots(scope, Number(indexKey))) {
+        this.write(placed.slot, printValue(evaluate(entry, (name) => this.valueAt(name, placed.scope))))
         this.slots.claim(placed.slot)
       }
     }
@@ -782,6 +802,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
     this.writeConditionals(manifest, scope, names)
     this.writePresence(manifest, scope, names)
+    this.writeComputed(manifest, scope, names)
 
     for (const entry of changes) {
       this.announceState(scope, entry.name, entry.value, entry.previous)
@@ -878,23 +899,14 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return
     }
 
-    const element = hostOf(slot.anchor)
-
-    if (!element) {
-      return
-    }
+    const at = scopeOf(region, slot.item)
 
     for (const [name, reads] of Object.entries(manifest.reads)) {
       if (reads.length === 0) {
         continue
       }
 
-      const scope = this.scopeFor(element, name)
-
-      if (!scope) {
-        continue
-      }
-
+      const scope = this.scopeFor(at, name) ?? at
       const value = this.getState(name, { scope })
 
       if (value === undefined) {
@@ -904,15 +916,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       this.writeValueSlots(manifest, scope, name, value)
     }
 
-    const at = this.scopeFor(element)
-
-    if (!at) {
-      return
-    }
-
     const declared = manifest.declarations.map((declaration) => declaration.name)
 
     this.writePresence(manifest, at, declared)
+    this.writeComputed(manifest, at, declared)
     this.writeConditionals(manifest, at, declared)
   }
 
@@ -944,7 +951,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       for (const index of indices) {
         const slot = item.slots.get(index)
 
-        if (!slot || slot.type === "boolean_attribute") {
+        if (!slot || slot.type === "boolean_attribute" || manifest.computed?.[String(index)]) {
           continue
         }
 
@@ -961,6 +968,17 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
 
       this.slots.setBooleanAttribute(slot, matches(entry, (name) => this.valueAt(name, at)))
+      this.slots.claim(slot)
+    }
+
+    for (const [indexKey, entry] of Object.entries(manifest.computed ?? {})) {
+      const slot = item.slots.get(Number(indexKey))
+
+      if (!slot) {
+        continue
+      }
+
+      this.write(slot, printValue(evaluate(entry, (name) => this.valueAt(name, at))))
       this.slots.claim(slot)
     }
   }

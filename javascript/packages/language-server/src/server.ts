@@ -10,6 +10,7 @@ import {
   Connection,
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
+  DocumentOnTypeFormattingParams,
   CodeActionParams,
   CodeActionKind,
   FoldingRangeParams,
@@ -22,6 +23,7 @@ import {
   DefinitionParams,
   ReferenceParams,
   TextDocumentIdentifier,
+  OptionalVersionedTextDocumentIdentifier,
   Range,
   FileChangeType,
   ExecuteCommandParams,
@@ -34,6 +36,7 @@ import { isPartialPath } from "@herb-tools/analysis"
 import { isConfigDocument, isPathInside } from "./utils"
 import { OPEN_DOCUMENT_COMMAND, SERVER_COMMANDS } from "./commands"
 import { serverVersion } from "./build_info"
+import { ON_TYPE_FORMATTING_OPTIONS } from "./on_type_formatting"
 
 import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "@herb-tools/language-service"
@@ -75,6 +78,7 @@ export class Server {
           },
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
+          documentOnTypeFormattingProvider: ON_TYPE_FORMATTING_OPTIONS,
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
           },
@@ -202,6 +206,38 @@ export class Server {
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.session.projects.get(params.textDocument.uri)?.formattingProvider.formatRange(params) ?? []
+    })
+
+    this.connection.onDocumentOnTypeFormatting(async (params: DocumentOnTypeFormattingParams) => {
+      const document = this.session.documents.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const provider = this.session.onTypeFormattingProvider
+
+      if (!this.session.capabilities.supportsSnippetEdits) {
+        return provider.getTextEdits(document, params.position, params.ch, params.options)
+      }
+
+      const edits = provider.getSnippetTextEdits(document, params.position, params.ch, params.options)
+
+      if (edits.length === 0) return []
+
+      try {
+        await this.connection.workspace.applyEdit({
+          label: "Close ERB block",
+          edit: {
+            documentChanges: [{
+              textDocument: OptionalVersionedTextDocumentIdentifier.create(document.uri, document.version),
+              edits
+            }]
+          }
+        })
+      } catch (error) {
+        this.connection.console.error(`Failed to close ERB block: ${error}`)
+      }
+
+      return []
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {

@@ -26,11 +26,11 @@ module Engine
       { filename: TEMPLATE, project_path: PROJECT_PATH, escape: false, visitors: visitors }
     end
 
-    test "narrows by ancestor when the file renders nothing" do
+    test "narrows by the attribute when the file renders nothing" do
       assert_compiled_snapshot(%(<style scoped>.title { color: #ff0000 }</style><h1 class="title">Hi</h1>), options)
     end
 
-    test "narrows by the element itself when the file renders something" do
+    test "narrows by the attribute when the file renders something" do
       source = %(<style scoped>.title { color: #ff0000 }</style><h1 class="title">Hi</h1><%= render "posts/plain" %>)
 
       assert_compiled_snapshot(source, options)

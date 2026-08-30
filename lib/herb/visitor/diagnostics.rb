@@ -50,24 +50,24 @@ module Herb
         @diagnostics ||= [] #: Array[Herb::Diagnostic]
       end
 
-      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
-      def error(message, location, code: nil, suggestion: nil, docs_url: nil, error_class: nil)
-        add_diagnostic(message, location, :error, code: code, suggestion: suggestion, docs_url: docs_url, error_class: error_class)
+      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?template: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def error(message, location, code: nil, suggestion: nil, docs_url: nil, template: nil, error_class: nil)
+        add_diagnostic(message, location, :error, code: code, suggestion: suggestion, docs_url: docs_url, template: template, error_class: error_class)
       end
 
-      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def warning(message, location, code: nil, suggestion: nil, docs_url: nil)
-        add_diagnostic(message, location, :warning, code: code, suggestion: suggestion, docs_url: docs_url)
+      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?template: String?) -> Herb::Diagnostic
+      def warning(message, location, code: nil, suggestion: nil, docs_url: nil, template: nil)
+        add_diagnostic(message, location, :warning, code: code, suggestion: suggestion, docs_url: docs_url, template: template)
       end
 
-      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def info(message, location, code: nil, suggestion: nil, docs_url: nil)
-        add_diagnostic(message, location, :info, code: code, suggestion: suggestion, docs_url: docs_url)
+      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?template: String?) -> Herb::Diagnostic
+      def info(message, location, code: nil, suggestion: nil, docs_url: nil, template: nil)
+        add_diagnostic(message, location, :info, code: code, suggestion: suggestion, docs_url: docs_url, template: template)
       end
 
-      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?) -> Herb::Diagnostic
-      def hint(message, location, code: nil, suggestion: nil, docs_url: nil)
-        add_diagnostic(message, location, :hint, code: code, suggestion: suggestion, docs_url: docs_url)
+      #: (String, Herb::Location?, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?template: String?) -> Herb::Diagnostic
+      def hint(message, location, code: nil, suggestion: nil, docs_url: nil, template: nil)
+        add_diagnostic(message, location, :hint, code: code, suggestion: suggestion, docs_url: docs_url, template: template)
       end
 
       #: () -> Array[Herb::Diagnostic]
@@ -104,10 +104,10 @@ module Herb
 
       private
 
-      #: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?error_class: Class?) -> Herb::Diagnostic
-      def add_diagnostic(message, location, severity, code: nil, suggestion: nil, docs_url: nil, error_class: nil)
+      #: (String, Herb::Location?, Symbol, ?code: String?, ?suggestion: String?, ?docs_url: String?, ?template: String?, ?error_class: Class?) -> Herb::Diagnostic
+      def add_diagnostic(message, location, severity, code: nil, suggestion: nil, docs_url: nil, template: nil, error_class: nil)
         diagnostic = Herb::Diagnostic.new(
-          template: diagnostic_template,
+          template: template || diagnostic_template,
           message: message,
           severity: severity,
           origin: diagnostic_origin,

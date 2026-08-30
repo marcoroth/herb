@@ -1,27 +1,58 @@
-import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { StateScopeMap, declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
-import { bareReadName, classifyDerivedDefault, mentionsAnyState } from "@herb-tools/client/directives"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { StateScopeMap } from "../utils/state-directives-utils.js"
 
+import { COMPARISON_OPERATORS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
+
+import { declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
+import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
 
+import type { StateDeclaration } from "@herb-tools/client/directives"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode, RubyLiteralNode } from "@herb-tools/core"
-import type { StateDeclaration } from "@herb-tools/client/directives"
-
-const LITERAL_KINDS: Record<string, string> = {
-  TrueNode: "boolean",
-  FalseNode: "boolean",
-  IntegerNode: "integer",
-  StringNode: "string",
-  SymbolNode: "symbol",
-  NilNode: "nil",
-}
 
 interface BareRead {
   name: string
   predicate: boolean
+}
+
+interface PredicateCall {
+  name: string
+  predicate: string
+}
+
+interface TransformCall {
+  name: string
+  transform: string
+}
+
+type ReadContext = "branch" | "value"
+
+function prismNegation(node: PrismNode | null | undefined): PrismNode | null {
+  if (prismType(node) !== "CallNode") return null
+  if (String(node.name) !== "!") return null
+  if (!node.receiver || node.block) return null
+  if (node.arguments_?.arguments_?.length) return null
+
+  const inner = node.receiver
+
+  return prismType(inner) === "ParenthesesNode" && inner.body?.body?.length === 1 ? inner.body.body[0] : inner
+}
+
+function prismTransformRead(node: PrismNode | null | undefined): TransformCall | null {
+  if (prismType(node) !== "CallNode") return null
+  if (!node.receiver || node.block) return null
+  if (node.arguments_?.arguments_?.length) return null
+
+  const transform = String(node.name)
+  if (!(transform in STATE_TRANSFORMS)) return null
+
+  const receiver = prismBareRead(node.receiver)
+  if (!receiver || receiver.predicate) return null
+
+  return { name: receiver.name, transform }
 }
 
 function prismType(node: PrismNode | null | undefined): string {
@@ -43,7 +74,25 @@ function prismBareRead(node: PrismNode | null | undefined): BareRead | null {
   return { name: predicate ? spelled.slice(0, -1) : spelled, predicate }
 }
 
-const COMPARISON_OPERATORS = new Set(["==", "!=", ">", ">=", "<", "<="])
+function prismPredicateRead(node: PrismNode | null | undefined): PredicateCall | null {
+  if (prismType(node) !== "CallNode") return null
+  if (!node.receiver || node.block) return null
+  if (node.arguments_?.arguments_?.length) return null
+
+  const predicate = String(node.name)
+
+  if (!(predicate in STATE_PREDICATES)) {
+    return null
+  }
+
+  const receiver = prismBareRead(node.receiver)
+
+  if (!receiver || receiver.predicate) {
+    return null
+  }
+
+  return { name: receiver.name, predicate }
+}
 
 function equalitySides(node: PrismNode): [PrismNode, PrismNode, string] | null {
   if (prismType(node) !== "CallNode") return null
@@ -131,12 +180,13 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (bare && this.resolve(bare)) return
 
+    const prism = node.prismNode
+
+    if (prism && this.classifyPredicate(prism, names, "value") !== "other") return
+
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
-    this.addOffense(
-      `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`,
-      node.location,
-    )
+    this.addOffense(this.computedValueOffense(expression, name), node.location)
   }
 
   visitRubyLiteralNode(node: RubyLiteralNode): void {
@@ -154,14 +204,15 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       const bare = bareReadName(expression)
 
       if (bare && this.resolve(bare)) return
+
+      const declared = new Map(names.map((name) => [name, declaredKind(this.resolve(name)!)]))
+
+      if (classifyDerivedDefault(expression, declared) !== "mixed") return
     }
 
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
-    this.addOffense(
-      `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`,
-      node.location,
-    )
+    this.addOffense(this.computedValueOffense(expression, name), node.location)
   }
 
   visitERBUnlessNode(node: ERBUnlessNode): void {
@@ -230,22 +281,28 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
   }
 
-  private classifyPredicate(predicate: PrismNode, names: readonly string[]): "state" | "other" | "reported" {
+  private classifyPredicate(predicate: PrismNode, names: readonly string[], context: ReadContext = "branch"): "state" | "other" | "reported" {
     const type = prismType(predicate)
 
     if (type === "ParenthesesNode") {
       const statements = predicate.body?.body
 
       if (Array.isArray(statements) && statements.length === 1) {
-        return this.classifyPredicate(statements[0], names)
+        return this.classifyPredicate(statements[0], names, context)
       }
     }
 
+    const negated = prismNegation(predicate)
+
+    if (negated) {
+      return this.classifyPredicate(negated, names, context)
+    }
+
     if ((type === "AndNode" || type === "OrNode") && predicate.left && predicate.right) {
-      const left = this.classifyPredicate(predicate.left, names)
+      const left = this.classifyPredicate(predicate.left, names, context)
       if (left === "reported") return "reported"
 
-      const right = this.classifyPredicate(predicate.right, names)
+      const right = this.classifyPredicate(predicate.right, names, context)
       if (right === "reported") return "reported"
       if (left === "state" && right === "state") return "state"
 
@@ -269,17 +326,45 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       const declaration = this.resolve(bare.name)
       if (!declaration) return "other"
 
-      if (bare.predicate) {
-        const kind = declaredKind(declaration)
+      return "state"
+    }
 
-        if (kind !== "boolean" && kind !== "seeded") {
-          this.addOffense(
-            `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${bare.name}\` as a predicate. Write \`${bare.name}\` bare, or declare a boolean flag. Only a boolean state reads with a \`?\`.`,
-            this.locationOf(predicate),
-          )
+    const transformCall = prismTransformRead(predicate)
 
-          return "reported"
-        }
+    if (transformCall) {
+      const declaration = this.resolve(transformCall.name)
+
+      if (!declaration) return "other"
+
+      const kind = declaredKind(declaration)
+
+      if (!transformApplies(transformCall.transform, kind)) {
+        this.addOffense(
+          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${transformCall.name}\` with \`${transformCall.transform}\`. Only ${STATE_TRANSFORMS[transformCall.transform].only} can be read with \`${transformCall.transform}\`, so compare \`${transformCall.name}\` itself instead.`,
+          this.locationOf(predicate),
+        )
+
+        return "reported"
+      }
+
+      return "state"
+    }
+
+    const call = prismPredicateRead(predicate)
+
+    if (call) {
+      const declaration = this.resolve(call.name)
+      if (!declaration) return "other"
+
+      const kind = declaredKind(declaration)
+
+      if (!predicateAnswers(call.predicate, kind)) {
+        this.addOffense(
+          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.predicate}\`. Only ${STATE_PREDICATES[call.predicate].only} can be read with \`${call.predicate}\`, so compare \`${call.name}\` to a literal instead.`,
+          this.locationOf(predicate),
+        )
+
+        return "reported"
       }
 
       return "state"
@@ -289,6 +374,101 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (sides) {
       const [left, right, operator] = sides
+
+      const leftTransform = prismTransformRead(left)
+      const rightTransform = prismTransformRead(right)
+
+      for (const [side, call] of [[left, leftTransform], [right, rightTransform]] as [PrismNode, TransformCall | null][]) {
+        if (!call) continue
+
+        const declaration = this.resolve(call.name)
+
+        if (!declaration) continue
+
+        const kind = declaredKind(declaration)
+
+        if (!transformApplies(call.transform, kind)) {
+          this.addOffense(
+            `\`${this.sliceOf(side)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.transform}\`. Only ${STATE_TRANSFORMS[call.transform].only} can be read with \`${call.transform}\`, so compare \`${call.name}\` itself instead.`,
+            this.locationOf(side),
+          )
+
+          return "reported"
+        }
+      }
+
+      if (leftTransform && rightTransform) {
+        const leftReturns = STATE_TRANSFORMS[leftTransform.transform].returns
+        const rightReturns = STATE_TRANSFORMS[rightTransform.transform].returns
+        const ordered = operator !== "==" && operator !== "!="
+
+        if (ordered && (leftReturns !== "integer" || rightReturns !== "integer")) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` orders the ${leftTransform.transform} of the state \`${leftTransform.name}\` against the ${rightTransform.transform} of the state \`${rightTransform.name}\`. Ordering compares numbers, so both sides have to be Integers.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        if (!ordered && leftReturns !== rightReturns) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` compares the ${leftTransform.transform} of the state \`${leftTransform.name}\` with the ${rightTransform.transform} of the state \`${rightTransform.name}\`, so it can never match. Compare values of the same kind.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        return "state"
+      }
+
+      const transformed = leftTransform ?? rightTransform
+
+      if (transformed) {
+        const returns = STATE_TRANSFORMS[transformed.transform].returns
+        const other = leftTransform ? right : left
+        const otherTransform = prismBareRead(other)
+        const otherDeclaration = otherTransform ? this.resolve(otherTransform.name) : undefined
+
+        if (otherDeclaration) {
+          const otherKind = declaredKind(otherDeclaration)
+
+          if (otherKind !== "seeded" && otherKind !== returns) {
+            this.addOffense(
+              `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` with the ${capitalize(otherKind)} state \`${otherTransform!.name}\`, so it can never match. Compare values of the same kind.`,
+              this.locationOf(predicate),
+            )
+
+            return "reported"
+          }
+
+          return "state"
+        }
+
+        const otherKind = PRISM_LITERAL_KINDS[prismType(other)]
+
+        if (!otherKind) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` against something that is not a literal or another declared state. Compare against a literal, since the client resolves a comparison by lookup.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        if (otherKind !== returns) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` against ${kindWithArticle(otherKind)} literal, so it can never match. Compare it against ${kindWithArticle(returns)} literal instead.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        return "state"
+      }
+
       const leftRead = prismBareRead(left)
       const rightRead = prismBareRead(right)
       const leftDeclaration = leftRead ? this.resolve(leftRead.name) : undefined
@@ -324,7 +504,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (declaration) {
         const comparand = leftDeclaration ? right : left
-        const comparandKind = LITERAL_KINDS[prismType(comparand)]
+        const comparandKind = PRISM_LITERAL_KINDS[prismType(comparand)]
         const kind = declaredKind(declaration)
 
         if (!comparandKind) {
@@ -377,7 +557,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       const name = names.find(candidate => mentionsAnyState(this.sliceOf(predicate), [candidate])) ?? names[0]
 
       this.addOffense(
-        `\`${this.sliceOf(predicate)}\` computes with the state \`${name}\`, and the client cannot run Ruby to pick the branch. ${this.conditionAdvice(name)}`,
+        context === "value" ? this.computedValueOffense(this.sliceOf(predicate), name) : `\`${this.sliceOf(predicate)}\` computes with the state \`${name}\`, and the client cannot run Ruby to pick the branch. ${this.conditionAdvice(name)}`,
         this.locationOf(predicate),
       )
 
@@ -385,6 +565,10 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
 
     return "other"
+  }
+
+  private computedValueOffense(expression: string, name: string): string {
+    return `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`
   }
 
   private checkCase(prism: PrismNode): void {
@@ -420,7 +604,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       const list = (when.conditions ?? []).map((condition: PrismNode) => this.sliceOf(condition)).join(", ")
 
       for (const condition of when.conditions ?? []) {
-        const comparandKind = LITERAL_KINDS[prismType(condition)]
+        const comparandKind = PRISM_LITERAL_KINDS[prismType(condition)]
 
         if (!comparandKind) {
           this.addOffense(

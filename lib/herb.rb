@@ -28,6 +28,8 @@ require_relative "herb/diagnostic"
 
 require_relative "herb/version"
 require_relative "herb/visitor"
+require_relative "herb/locate"
+require_relative "herb/source_path"
 
 begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]

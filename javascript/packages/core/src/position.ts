@@ -26,6 +26,24 @@ export class Position {
     this.column = column
   }
 
+  compare(other: Position): number {
+    if (this.line !== other.line) return this.line - other.line
+
+    return this.column - other.column
+  }
+
+  isBefore(other: Position): boolean {
+    return this.compare(other) < 0
+  }
+
+  isAfter(other: Position): boolean {
+    return this.compare(other) > 0
+  }
+
+  equals(other: Position): boolean {
+    return this.compare(other) === 0
+  }
+
   toHash(): SerializedPosition {
     return { line: this.line, column: this.column }
   }

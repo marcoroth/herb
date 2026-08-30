@@ -21,6 +21,8 @@ module Herb
 
         attr_reader :state_presence #: Hash[Integer, untyped]
 
+        attr_reader :state_values #: Hash[Integer, untyped]
+
         #: (untyped) -> void
         def initialize(visitor)
           @visitor = visitor
@@ -35,6 +37,7 @@ module Herb
           @state_signatures = state_signatures.compare_by_identity
           @state_counts = [] #: Array[Hash[Symbol, untyped]]
           @state_presence = {} #: Hash[Integer, untyped]
+          @state_values = {} #: Hash[Integer, untyped]
         end
 
         #: () -> bool
@@ -80,6 +83,13 @@ module Herb
             StateDirectives.read_names(read).each { |name| (reads[name] ||= []) << index }
           end
 
+          computed = {} #: Hash[String, untyped]
+
+          state_values.each do |index, read|
+            computed[index.to_s] = StateDirectives.condition_entry(read)
+            StateDirectives.read_names(read).each { |name| (reads[name] ||= []) << index }
+          end
+
           conditionals = {} #: Hash[String, Hash[String, untyped]]
 
           state_conditional_entries.each do |index, info|
@@ -100,6 +110,7 @@ module Herb
             "reads" => reads,
             "conditionals" => conditionals,
             "presence" => presence,
+            "computed" => computed,
           }
         end
 
@@ -318,7 +329,7 @@ module Herb
 
           if declaration.derived
             StateDirectives.read_names(declaration.derived).each do |name|
-              source = source.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+              source = StateDirectives.rewrite_reads(source, name)
             end
           end
 
@@ -369,7 +380,7 @@ module Herb
             return nil if read == :reported
 
             if read == :computed
-              return @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal.", arm.location, :read)
+              return @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal.", arm.location, :read)
             end
 
             unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
@@ -407,7 +418,7 @@ module Herb
           return nil if read.nil? || read == :reported
 
           if read == :computed
-            return @visitor.slot_error("`unless #{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, as a predicate, or compared to a literal.", node.location, :read)
+            return @visitor.slot_error("`unless #{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal.", node.location, :read)
           end
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
@@ -431,7 +442,7 @@ module Herb
 
           return nil if read.nil? || read == :reported
 
-          unless read.is_a?(StateDirectives::Read) && read.comparand.nil?
+          unless read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.operator.nil? && read.transform.nil?
             return @visitor.slot_error("`case #{subject_source}` switches on something other than a bare state read. The client resolves a `case` by looking the state up, so switch on the state itself.", node.location, :conditional)
           end
 
@@ -607,7 +618,7 @@ module Herb
 
           return unless token
 
-          token.value.gsub!(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+          token.value.replace(StateDirectives.rewrite_reads(token.value, name))
         rescue FrozenError
           nil
         end
@@ -625,7 +636,7 @@ module Herb
           return nil unless position
 
           literal = children.fetch(position) #: untyped
-          rewritten = literal.content.to_s.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+          rewritten = StateDirectives.rewrite_reads(literal.content.to_s, name)
           replacement = Herb::AST::RubyLiteralNode.build(content: rewritten, location: literal.location)
 
           children[position] = replacement
@@ -686,14 +697,29 @@ module Herb
 
             next if convert_boolean_attribute(node, index, slot, expression, states)
 
-            bare = states.key?(expression) || states.key?(expression.delete_suffix("?"))
+            if states.key?(expression) || states.key?(expression.delete_suffix("?"))
+              rewrite_predicate(node, expression.delete_suffix("?")) if expression.end_with?("?")
 
-            unless bare
-              next @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, or compare it to a literal in a conditional or a boolean attribute.", node.location, :read)
+              next
             end
 
-            rewrite_predicate(node, expression.delete_suffix("?")) if expression.end_with?("?")
+            register_state_value(node, index, slot, expression, states)
           end
+        end
+
+        #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+        def register_state_value(node, index, slot, expression, states)
+          read = slot.valued? ? StateDirectives.condition_read(expression, states, @visitor, node.location) : nil
+
+          return if read == :reported
+
+          unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
+            return @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal.", node.location, :read)
+          end
+
+          StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
+
+          @state_values[index] = read
         end
 
         #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
@@ -705,8 +731,8 @@ module Herb
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
-          if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && ![:boolean, :nil, :seeded].include?(read.kind)
-            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads the #{read.kind.to_s.capitalize} state `#{read.name}` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean.", node.location, :read)
+          if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && read.operator.nil? && !StateKinds::FALSY.include?(read.kind)
+            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean.", node.location, :read)
           end
 
           open_tag = @visitor.open_tag_for(node)

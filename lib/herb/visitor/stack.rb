@@ -40,6 +40,7 @@ module Herb
         each_with_index do |visitor, position|
           validate_inlining!(visitor, position)
           validate_reading!(visitor, position)
+          validate_style_blocks!(visitor, position)
         end
 
         nil
@@ -55,6 +56,17 @@ module Herb
         earlier = self[position - 1]
 
         raise OrderError, "#{visitor.class} brings markup from other templates into this one, so it has to run first. #{earlier.class} would otherwise never see what it brought in. Put it first in `visitors:`."
+      end
+
+      #: (untyped, Integer) -> void
+      def validate_style_blocks!(visitor, position)
+        return unless answers?(visitor, :reads_style_blocks?)
+
+        rewriter = drop(position + 1).find { |later| answers?(later, :rewrites_style_blocks?) }
+
+        return unless rewriter
+
+        raise OrderError, "#{visitor.class} reads the `<style>` blocks a template holds, so it has to run after #{rewriter.class}, which rewrites them. It would otherwise decide what to do about a block #{rewriter.class} goes on to take out. Put it later in `visitors:`."
       end
 
       #: (untyped, Integer) -> void

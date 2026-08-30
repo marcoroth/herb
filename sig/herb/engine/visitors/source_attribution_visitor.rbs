@@ -1,0 +1,87 @@
+# Generated from lib/herb/engine/visitors/source_attribution_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Stamps every element with the template and the position it was written at, so that something
+    # found on the rendered page can be pointed back at the line that produced it.
+    #
+    # Some things are only visible once a page is rendered. Two partials can each be valid on their
+    # own and still collide on an `id`, a heading order only exists once a layout and everything it
+    # renders are composed, and a `<form>` inside another `<form>` is usually two templates that
+    # never see each other. Linting the response is what answers those, and the positions it reports
+    # are offsets into the response, which is not a place anyone can go and fix anything. This is
+    # what turns them back into a file and a line.
+    #
+    #     require "herb/engine/visitors/source_attribution_visitor"
+    #
+    #     Herb::Engine.new(source, filename: path, visitors: [
+    #       Herb::Engine::SourceAttributionVisitor.new
+    #     ])
+    #
+    #     #=> <div data-herb-source="app/views/posts/_card.html.erb:8:3">
+    #
+    # A tag helper is stamped too. The `action_view_helpers` parser option turns
+    # `<%= link_to "Home", "/" %>` into an `<a>` that the compiler writes out as markup, and that
+    # `<a>` is stamped at the position of the `<%=` that asked for it.
+    #
+    #     #=> <a href="/" data-herb-source="app/views/posts/_card.html.erb:4:5">Home</a>
+    #
+    # That option is recommended here, so a stack that says nothing about it gets it. It is worth
+    # knowing that it decides more than attribution does. It is also what makes the compiler write
+    # a helper out as markup instead of calling it while the page renders, which is the same thing
+    # `OptimizeVisitor` and `Slots::Visitor` require it for. A host that wants its helpers called at
+    # render time sets `action_view_helpers: false` and takes the warning that comes with it, and
+    # everything written as literal markup is stamped either way.
+    #
+    # A helper the parser cannot resolve to a tag stays an ERB node with no element around it, so
+    # `form_with` and anything the host defined itself reach the response carrying nothing, and the
+    # nearest stamped ancestor is what places them.
+    #
+    # Nothing is wrapped to close that gap. A wrapper element inside `<ul>`, `<table>` or `<select>`
+    # is invalid markup, and it would be Herb's own markup tripping the structural rules this exists
+    # to run. An unstamped element is a worse answer that stays true. A wrong one would not.
+    #
+    # A partial that `InlineRender::Visitor` brought into this template is stamped with the file it
+    # was written in, not the file it was inlined into.
+    #
+    # The stamp is markup Herb added, so a consumer is expected to strip it before reporting
+    # positions back, and to leave the visitor out of anything but a development build.
+    class SourceAttributionVisitor < Herb::Visitor
+      include Herb::Visitor::ContextAware
+
+      ATTRIBUTE: String
+
+      # : (?attribute: String) -> void
+      def initialize: (?attribute: String) -> void
+
+      # : (Herb::AST::HTMLElementNode) -> void
+      def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
+
+      # : (Herb::AST::Node) -> void
+      def visit_child_nodes: (Herb::AST::Node) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      private
+
+      # : () -> String
+      def current_file: () -> String
+
+      # : (Herb::AST::Node?) -> void
+      def stamp: (Herb::AST::Node?) -> void
+
+      # : ((Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode)) -> Herb::serialized_position?
+      def position_of: (Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode) -> Herb::serialized_position?
+
+      # : ((Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode)) -> bool
+      def stamped?: (Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode) -> bool
+
+      # : (Herb::AST::HTMLAttributeNode) -> String?
+      def attribute_name: (Herb::AST::HTMLAttributeNode) -> String?
+
+      # : (String, String) -> Herb::AST::HTMLAttributeNode
+      def attribute_node: (String, String) -> Herb::AST::HTMLAttributeNode
+    end
+  end
+end

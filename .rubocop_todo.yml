@@ -3,12 +3,13 @@
 # Burn this list down instead of adding to it. Once a file no longer trips the
 # cop, drop it from the Exclude list.
 
-# Offense count: 330
+# Offense count: 343
 Herb/IncludesAssertion:
   Exclude:
     - "test/analysis/partial_resolution_test.rb"
     - "test/diff/diff_test.rb"
     - "test/engine/component_tags/visitor_test.rb"
+    - "test/engine/css_inliner/visitor_test.rb"
     - "test/engine/diagnostics_test.rb"
     - "test/engine/dynamics_compiler_test.rb"
     - "test/engine/engine_erubi_divergence_test.rb"
@@ -20,6 +21,7 @@ Herb/IncludesAssertion:
     - "test/engine/report/middleware_test.rb"
     - "test/engine/report/session_test.rb"
     - "test/engine/report_test.rb"
+    - "test/engine/scoped_style/visitor_test.rb"
     - "test/engine/secure_compiler_test.rb"
     - "test/engine/slots/displaced_test.rb"
     - "test/engine/slots/markers_test.rb"

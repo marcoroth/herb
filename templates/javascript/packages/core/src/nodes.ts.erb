@@ -1,4 +1,5 @@
 import { Location } from "./location.js"
+import { locate, locatable } from "./locate.js"
 import { Token, SerializedToken } from "./token.js"
 import { HerbError } from "./errors.js"
 import { deserializePrismNode, inspectPrismSerialized } from "./prism/index.js"
@@ -7,6 +8,8 @@ import type { PrismNode } from "./prism/index.js"
 import type { SerializedLocation } from "./location.js"
 import type { SerializedHerbError } from "./errors.js"
 import type { Visitor } from "./visitor.js"
+import type { Position } from "./position.js"
+import type { LocateResult } from "./locate.js"
 
 export type SerializedNodeType = string
 
@@ -40,6 +43,14 @@ export abstract class Node implements BaseNodeProps {
     this.type = type
     this.location = location
     this.errors = errors
+  }
+
+  locate(position: Position): LocateResult | null {
+    return locate(this, position)
+  }
+
+  locatable(position: Position): boolean {
+    return locatable(this, position)
   }
 
   setSource(source: string): void {

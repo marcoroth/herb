@@ -1,0 +1,7 @@
+---
+source: "Engine::SourceAttributionTest::what it leaves alone#test_0001_markup that arrives from Ruby, the way a helper builds it"
+input: "{source: \"<div>\\n  <%= button %>\\n</div>\\n\", locals: {button: \"<button type=\\\"submit\\\">Go</button>\"}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div data-herb-source="app/views/posts/_card.html.erb:1:1">
+  <button type="submit">Go</button>
+</div>

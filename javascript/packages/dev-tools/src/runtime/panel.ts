@@ -13,6 +13,33 @@ import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, Runtim
 
 export type BadgeTone = RuntimeSeverity | 'metric'
 
+const ALL_ORIGINS = '*'
+const ALL_SEVERITIES = '*'
+const MIN_PANEL_WIDTH = 440
+const MIN_PANEL_HEIGHT = 180
+const VIEWPORT_MARGIN = 24
+const RESIZE_EDGES = ['left', 'bottom', 'corner'] as const
+const STATE_KEY = 'herb-dev-tools-runtime-panel'
+const ROOT_CLASS = 'herb-dev-tools-runtime-root'
+const LINKABLE_SCHEMES = ['http:', 'https:', 'file:']
+const MARKDOWN_CONTEXT_LINES = 3
+
+declare const __HERB_DEV_TOOLS_VERSION__: string
+
+const VIA_LABELS: Record<string, string> = {
+  layout: 'layout',
+  template: 'view',
+  partial: 'partial',
+  component: 'component',
+}
+
+const SEVERITY_FILTERS: Array<{ value: string, label: string, matches: (diagnostic: NormalizedDiagnostic) => boolean }> = [
+  { value: 'error', label: 'Errors', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'error' },
+  { value: 'warning', label: 'Warnings', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'warning' },
+  { value: 'notice', label: 'Notices', matches: diagnostic => diagnostic.kind === 'diagnostic' && (diagnostic.severity === 'info' || diagnostic.severity === 'hint') },
+  { value: 'metric', label: 'Metrics', matches: diagnostic => diagnostic.kind === 'metric' },
+]
+
 export interface RuntimeReportHandle {
   dismiss(): void
 }
@@ -43,40 +70,19 @@ interface PanelState {
   expanded: boolean
   origin: string
   severity: string
-  view: PanelView
   width: number | null
   height: number | null
 }
 
-const ALL_ORIGINS = '*'
-const ALL_SEVERITIES = '*'
-const MIN_PANEL_WIDTH = 440
-const MIN_PANEL_HEIGHT = 180
-const VIEWPORT_MARGIN = 24
-const PANEL_VIEWS = ['cards', 'combined'] as const
-const RESIZE_EDGES = ['left', 'bottom', 'corner'] as const
-
 type ResizeEdge = typeof RESIZE_EDGES[number]
-type PanelView = typeof PANEL_VIEWS[number]
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), Math.max(low, high))
 }
 
-function asView(value: unknown): PanelView {
-  return PANEL_VIEWS.includes(value as PanelView) ? (value as PanelView) : 'cards'
-}
-
 function asSize(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : null
 }
-
-const SEVERITY_FILTERS: Array<{ value: string, label: string, matches: (diagnostic: NormalizedDiagnostic) => boolean }> = [
-  { value: 'error', label: 'Errors', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'error' },
-  { value: 'warning', label: 'Warnings', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'warning' },
-  { value: 'notice', label: 'Notices', matches: diagnostic => diagnostic.kind === 'diagnostic' && (diagnostic.severity === 'info' || diagnostic.severity === 'hint') },
-  { value: 'metric', label: 'Metrics', matches: diagnostic => diagnostic.kind === 'metric' },
-]
 
 function matchesSeverity(diagnostic: NormalizedDiagnostic, severity: string): boolean {
   if (severity === ALL_SEVERITIES) {
@@ -85,15 +91,9 @@ function matchesSeverity(diagnostic: NormalizedDiagnostic, severity: string): bo
 
   return SEVERITY_FILTERS.find(filter => filter.value === severity)?.matches(diagnostic) ?? true
 }
-const STATE_KEY = 'herb-dev-tools-runtime-panel'
-const ROOT_CLASS = 'herb-dev-tools-runtime-root'
-const LINKABLE_SCHEMES = ['http:', 'https:', 'file:']
 
-const VIA_LABELS: Record<string, string> = {
-  layout: 'layout',
-  template: 'template',
-  partial: 'partial',
-  component: 'component',
+function devToolsVersion(): string | null {
+  return typeof __HERB_DEV_TOOLS_VERSION__ === 'string' ? __HERB_DEV_TOOLS_VERSION__ : null
 }
 
 function cornerIcon(paths: string[]): string {
@@ -105,8 +105,29 @@ function cornerIcon(paths: string[]): string {
   ].join('')
 }
 
+const CHECK_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">`,
+  `<path d="M3 8.5 6.5 12 13 4.5"/>`,
+  `</svg>`,
+].join('')
+
+const CHEVRON_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">`,
+  `<path d="M4 6.5 8 10.5 12 6.5"/>`,
+  `</svg>`,
+].join('')
+
+const COPY_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`,
+  `<rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/>`,
+  `<path d="M10.5 5.5v-2a1.5 1.5 0 0 0-1.5-1.5H4a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 4 12h1.5"/>`,
+  `</svg>`,
+].join('')
+
 const EXPAND_ICON = cornerIcon(['M6 2H2v4', 'M10 2h4v4', 'M6 14H2v-4', 'M10 14h4v-4'])
-const COLLAPSE_ICON = cornerIcon(['M2 6h4V2', 'M14 6h-4V2', 'M2 10h4v4', 'M14 10h-4v4'])
 
 const BADGE_GLYPHS: Record<BadgeTone, string> = {
   error: '⛔',
@@ -157,6 +178,131 @@ function openTargetAttributes(target: OpenTarget | null): string {
   return ` data-herb-dev-tools-file="${escapeHTML(target.file)}" data-herb-dev-tools-line="${target.line}" data-herb-dev-tools-column="${target.column}"`
 }
 
+function fence(language: string, body: string): string[] {
+  return ['```' + language, body, '```']
+}
+
+function excerptWindow(source: string, line: number, context: number, mark: number | null = null): string[] {
+  const lines = source.split('\n')
+  const first = Math.max(1, line - context)
+  const last = Math.min(lines.length, line + context)
+
+  if (last < first) {
+    return []
+  }
+
+  const width = String(last).length
+
+  return lines.slice(first - 1, last).map((text, index) => {
+    const number = first + index
+    const marker = number === mark ? '>' : ' '
+
+    return `${marker} ${String(number).padStart(width, ' ')} | ${text}`
+  })
+}
+
+async function copyInto(element: HTMLElement, text: string, label: string) {
+  const original = element.innerHTML
+
+  try {
+    await navigator.clipboard.writeText(text)
+
+    element.innerHTML = CHECK_ICON
+    element.setAttribute('data-herb-dev-tools-tip', 'Copied')
+  } catch {
+    element.setAttribute('data-herb-dev-tools-tip', 'Copy failed')
+  }
+
+  window.setTimeout(() => {
+    element.innerHTML = original
+    element.setAttribute('data-herb-dev-tools-tip', label)
+  }, 1600)
+}
+
+async function copyCommand(element: HTMLElement) {
+  const command = element.getAttribute('data-herb-dev-tools-command')
+
+  if (command === null) {
+    return
+  }
+
+  await copyInto(element, command, 'Copy this command')
+}
+
+function fixCommand(diagnostic: NormalizedDiagnostic, unsafe: boolean): string {
+  const flag = unsafe ? '--fix-unsafely' : '--fix'
+  const parts = ['npx @herb-tools/linter']
+
+  if (diagnostic.template !== UNKNOWN_TEMPLATE) {
+    parts.push(diagnostic.template)
+  }
+
+  parts.push(flag)
+
+  if (diagnostic.code !== null) {
+    parts.push(`--only ${diagnostic.code}`)
+  }
+
+  return parts.join(' ')
+}
+
+function sentenceCase(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function fixKey(diagnostic: NormalizedDiagnostic): string {
+  return diagnosticKey(diagnostic).replace(/\u0000/g, '|')
+}
+
+function tip(text: string, label: string = text): string {
+  return ` aria-label="${escapeHTML(label)}" data-herb-dev-tools-tip="${escapeHTML(text)}"`
+}
+
+function hideButtonHTML(): string {
+  const label = 'Hide the panel for the rest of this browser session'
+
+  return `<button type="button" class="herb-dev-tools-hide" data-herb-dev-tools-action="dismiss"${tip(label)}>Hide for this session</button>`
+}
+
+function closeButtonHTML(action: string, label: string): string {
+  return `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="${action}"${tip(label)}>×</button>`
+}
+
+function heroPairHTML(key: string, value: string): string {
+  return [
+    `<span class="herb-dev-tools-hero-pair">`,
+    `<span class="herb-dev-tools-hero-key">${escapeHTML(key)}</span>`,
+    `<span class="herb-dev-tools-hero-value">${escapeHTML(value)}</span>`,
+    `</span>`,
+  ].join('')
+}
+
+function visitorLabel(visitor: string): string {
+  const unwrapped = visitor.replace(/^#</, '').replace(/>$/, '')
+
+  return unwrapped.replace(/^(?:[A-Za-z_][A-Za-z0-9_]*::)+/, '')
+}
+
+function provenanceListHTML(key: string, items: string[]): string {
+  const chips = items.map(item => `<code class="herb-dev-tools-provenance-item">${escapeHTML(item)}</code>`).join('')
+
+  return [
+    `<div class="herb-dev-tools-provenance-block">`,
+    `<span class="herb-dev-tools-provenance-key">${escapeHTML(key)}</span>`,
+    `<span class="herb-dev-tools-provenance-items">${chips}</span>`,
+    `</div>`,
+  ].join('')
+}
+
+function provenanceRowHTML(key: string, value: string): string {
+  return [
+    `<div class="herb-dev-tools-provenance-row">`,
+    `<span class="herb-dev-tools-provenance-key">${escapeHTML(key)}</span>`,
+    `<span class="herb-dev-tools-provenance-value">${value}</span>`,
+    `</div>`,
+  ].join('')
+}
+
 function ansiHTML(ansi: string, className: string, target: OpenTarget | null = null): string {
   return `<herb-ansi class="${className}"${openTargetAttributes(target)}>${escapeHTML(ansi)}</herb-ansi>`
 }
@@ -186,6 +332,9 @@ function mergeDiagnostics(existing: NormalizedDiagnostic, incoming: NormalizedDi
 }
 
 export class RuntimePanel {
+  private collapsed = new Set<string>()
+  private fixViews = new Map<string, 'diff' | 'file'>()
+  private openFixes = new Set<string>()
   private entries: PanelEntry[] = []
   private renderTree: RenderTreeNode[] = []
   private sources: Record<string, string> = {}
@@ -196,7 +345,7 @@ export class RuntimePanel {
   private onOpenFile: ((file: string, line: number, column: number) => void) | null = null
   private onRender: (() => void) | null = null
   private onOpen: (() => void) | null = null
-  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, view: 'cards', width: null, height: null }
+  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
   private root: HTMLElement | null = null
   private highlighting: RuntimeHighlighting | null = null
   private hydrating = false
@@ -280,6 +429,7 @@ export class RuntimePanel {
   public clear(origin?: string) {
     if (origin === undefined) {
       this.entries = []
+      this.collapsed.clear()
     } else {
       const wanted = trimOrigin(origin)
 
@@ -337,6 +487,7 @@ export class RuntimePanel {
 
   public close() {
     this.state.open = false
+    this.state.expanded = false
     this.cleared = false
 
     this.saveState()
@@ -504,6 +655,103 @@ export class RuntimePanel {
     this.render()
   }
 
+  private async copyFixed(element: HTMLElement) {
+    const key = element.getAttribute('data-herb-dev-tools-fix-key')
+
+    if (key === null) {
+      return
+    }
+
+    const entry = this.entries.find(candidate => fixKey(candidate.diagnostic) === key)
+    const source = entry?.diagnostic.fix?.source
+
+    if (source === undefined) {
+      return
+    }
+
+    await copyInto(element, source, 'Copy the fixed template')
+  }
+
+  private showFixView(key: string | null, view: string | null) {
+    if (key === null || (view !== 'diff' && view !== 'file')) {
+      return
+    }
+
+    if (this.fixViews.get(key) === view) {
+      return
+    }
+
+    this.fixViews.set(key, view)
+    this.render()
+  }
+
+  private get visibleTemplates(): string[] {
+    return [...new Set(this.visibleEntries().map(entry => entry.diagnostic.template))]
+  }
+
+  private get allGroupsCollapsed(): boolean {
+    const templates = this.visibleTemplates
+
+    return templates.length > 0 && templates.every(template => this.collapsed.has(template))
+  }
+
+  private toggleAllGroups() {
+    const templates = this.visibleTemplates
+
+    if (this.allGroupsCollapsed) {
+      for (const template of templates) {
+        this.collapsed.delete(template)
+      }
+    } else {
+      for (const template of templates) {
+        this.collapsed.add(template)
+      }
+    }
+
+    this.render()
+  }
+
+  private collapseAllButtonHTML(): string {
+    if (this.visibleTemplates.length < 2) {
+      return ''
+    }
+
+    const collapsed = this.allGroupsCollapsed
+    const label = collapsed ? 'Expand all' : 'Collapse all'
+    const description = collapsed ? 'Show the diagnostics for every file' : 'Hide the diagnostics for every file'
+
+    return [
+      `<button type="button" class="herb-dev-tools-collapse-all" data-herb-dev-tools-action="collapse-all"`,
+      `${tip(description, label)}>${label}</button>`,
+    ].join('')
+  }
+
+  private toggleGroup(template: string | null) {
+    if (template === null) {
+      return
+    }
+
+    if (this.collapsed.has(template)) {
+      this.collapsed.delete(template)
+    } else {
+      this.collapsed.add(template)
+    }
+
+    this.render()
+  }
+
+  public reportedFor(template: string): { count: number, tone: BadgeTone } | null {
+    const matching = this.entries.filter(entry => entry.diagnostic.template === template)
+
+    if (matching.length === 0) {
+      return null
+    }
+
+    const count = matching.reduce((total, entry) => total + entry.count, 0)
+
+    return { count, tone: severityOf(matching) ?? 'metric' }
+  }
+
   public refresh() {
     if (this.destroyed) {
       return
@@ -607,12 +855,11 @@ export class RuntimePanel {
         expanded: parsed?.expanded === true,
         origin: typeof parsed?.origin === 'string' ? parsed.origin : ALL_ORIGINS,
         severity: typeof parsed?.severity === 'string' ? parsed.severity : ALL_SEVERITIES,
-        view: asView(parsed?.view),
         width: asSize(parsed?.width),
         height: asSize(parsed?.height),
       }
     } catch (_error) {
-      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, view: 'cards', width: null, height: null }
+      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
     }
   }
 
@@ -805,7 +1052,18 @@ export class RuntimePanel {
       this.root.className = slot ? `${ROOT_CLASS} herb-dev-tools-attached` : ROOT_CLASS
     }
 
+    const scroller = this.root.querySelector<HTMLElement>('.herb-dev-tools-body')
+    const scrollTop = scroller === null ? null : scroller.scrollTop
+
     this.root.innerHTML = this.rootHTML()
+
+    if (scrollTop !== null && scrollTop > 0) {
+      const restored = this.root.querySelector<HTMLElement>('.herb-dev-tools-body')
+
+      if (restored !== null) {
+        restored.scrollTop = scrollTop
+      }
+    }
 
     this.bindHandlers()
     this.bindResizeHandles()
@@ -853,6 +1111,7 @@ export class RuntimePanel {
       : [
         ` herb-dev-tools-overlay herb-dev-tools-overlay-${overlay}`,
         this.overlayShowAll ? '' : ` herb-dev-tools-overlay-focused herb-dev-tools-tone-${this.headerTone}`,
+        this.heroEntry === null ? '' : ' herb-dev-tools-overlay-hero',
         this.overlayEdgeToEdge ? ' herb-dev-tools-overlay-fullscreen' : '',
       ].join('')
     const bumpClass = this.bumped ? ' herb-dev-tools-bump' : ''
@@ -880,7 +1139,7 @@ export class RuntimePanel {
     return [
       backdrop,
       badge,
-      `<section class="herb-dev-tools-panel${openClass}${expandedClass}${overlayClass}" aria-label="Herb Runtime Diagnostics"${modal}${this.sizeStyle()}>`,
+      `<section class="herb-dev-tools-panel${openClass}${expandedClass}${overlayClass}" aria-label="Herb Diagnostics"${modal}${this.sizeStyle()}>`,
       this.resizeHandlesHTML(),
       this.headerHTML(),
       this.filtersHTML(),
@@ -934,6 +1193,22 @@ export class RuntimePanel {
     if (element === null) {
       return
     }
+
+    root.querySelectorAll<HTMLDetailsElement>('details[data-herb-dev-tools-fix-key]').forEach((details) => {
+      details.addEventListener('toggle', () => {
+        const key = details.getAttribute('data-herb-dev-tools-fix-key')
+
+        if (key === null) {
+          return
+        }
+
+        if (details.open) {
+          this.openFixes.add(key)
+        } else {
+          this.openFixes.delete(key)
+        }
+      })
+    })
 
     root.querySelectorAll<HTMLElement>('[data-herb-dev-tools-resize]').forEach((handle) => {
       handle.addEventListener('pointerdown', (event) => {
@@ -1029,15 +1304,21 @@ export class RuntimePanel {
 
     return [
       `<header class="herb-dev-tools-header">`,
-      `<span class="herb-dev-tools-title">Herb Runtime Diagnostics</span>`,
+      `<span class="herb-dev-tools-title">Herb Diagnostics</span>`,
       ...this.headerControlsHTML(overlay),
       `</header>`,
     ].join('')
   }
 
   private connectionHTML(): string {
+    if (this.overlay !== 'blocking') {
+      return ''
+    }
+
+    const label = 'Whether this page is connected to the Herb dev server, which recompiles the template and clears this screen once it builds'
+
     return [
-      `<span class="herb-dev-tools-connection">`,
+      `<span class="herb-dev-tools-connection"${tip(label, 'Herb dev server connection')}>`,
       `<span class="herb-dev-tools-connection-dot" data-herb-dev-server-dot></span>`,
       `<span class="herb-dev-tools-connection-status" data-herb-dev-server-status>Dev Server</span>`,
       `</span>`,
@@ -1061,7 +1342,7 @@ export class RuntimePanel {
 
     const close = overlay === 'blocking'
       ? ''
-      : `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="dismiss-overlay" aria-label="${label}" title="${label}">×</button>`
+      : closeButtonHTML('dismiss-overlay', label)
 
     return [
       `<header class="herb-dev-tools-header">`,
@@ -1070,7 +1351,7 @@ export class RuntimePanel {
       this.overlayLocationHTML(entries),
       this.connectionHTML(),
       `<div class="herb-dev-tools-window-controls">`,
-      this.viewButtonHTML(),
+      this.copyButtonHTML(),
       this.overlayScopeButtonHTML(),
       close,
       `</div>`,
@@ -1110,7 +1391,7 @@ export class RuntimePanel {
 
     const origins = new Set(entries.map(entry => entry.diagnostic.origin))
 
-    return origins.size === 1 ? [...origins][0] : 'Herb Runtime Diagnostics'
+    return origins.size === 1 ? [...origins][0] : 'Herb Diagnostics'
   }
 
   private overlayLocation(entries: PanelEntry[]): string | null {
@@ -1138,47 +1419,24 @@ export class RuntimePanel {
     return [
       `<button type="button" class="herb-dev-tools-feature" data-herb-dev-tools-action="feature"`,
       ` data-herb-dev-tools-entry="${this.entries.indexOf(entry)}"`,
-      ` title="${label}" aria-label="${label}">${EXPAND_ICON}</button>`,
-    ].join('')
-  }
-
-  public get view(): 'cards' | 'combined' {
-    return this.state.view
-  }
-
-  public toggleView() {
-    this.state.view = this.state.view === 'combined' ? 'cards' : 'combined'
-
-    this.saveState()
-    this.render()
-  }
-
-  private viewButtonHTML(): string {
-    if (!this.showingExpanded || this.combinableGroups === 0) {
-      return ''
-    }
-
-    const combined = this.state.view === 'combined'
-    const label = combined ? 'One card per offense' : 'One block per file'
-    const description = combined ? 'Show each offense on its own card' : 'Show every offense of a file in one block'
-
-    return [
-      `<button type="button" class="herb-dev-tools-view" data-herb-dev-tools-action="view"`,
-      ` aria-pressed="${combined}" title="${escapeHTML(description)}" aria-label="${escapeHTML(description)}">`,
-      `${escapeHTML(label)}</button>`,
+      `${tip(label)}>${EXPAND_ICON}</button>`,
     ].join('')
   }
 
   private overlayScopeButtonHTML(): string {
-    if (this.overlay === null) {
+    if (this.overlay === null || !this.overlayShowAll) {
       return ''
     }
 
-    if (this.overlayShowAll) {
-      const shown = this.overlayEntries(this.overlay).length
-      const label = shown === 1 ? 'Back to the error' : 'Back to the errors'
+    const shown = this.overlayEntries(this.overlay).length
+    const label = shown === 1 ? 'Back to the error' : 'Back to the errors'
 
-      return `<button type="button" class="herb-dev-tools-scope" data-herb-dev-tools-action="overlay-scope">${label}</button>`
+    return `<button type="button" class="herb-dev-tools-scope" data-herb-dev-tools-action="overlay-scope">${label}</button>`
+  }
+
+  private overlayMoreButtonHTML(): string {
+    if (this.overlay === null || this.overlayShowAll) {
+      return ''
     }
 
     const hidden = this.count - this.visibleCount
@@ -1193,8 +1451,10 @@ export class RuntimePanel {
       : `Show the other ${hidden} diagnostics this page reported`
 
     return [
+      `<div class="herb-dev-tools-more">`,
       `<button type="button" class="herb-dev-tools-scope" data-herb-dev-tools-action="overlay-scope"`,
-      ` title="${escapeHTML(description)}" aria-label="${escapeHTML(description)}">${label}</button>`,
+      `${tip(description)}>${label}</button>`,
+      `</div>`,
     ].join('')
   }
 
@@ -1202,7 +1462,6 @@ export class RuntimePanel {
     if (overlay === 'blocking') {
       return [
         `<div class="herb-dev-tools-window-controls">`,
-        this.viewButtonHTML(),
         this.overlayScopeButtonHTML(),
         `</div>`,
       ]
@@ -1213,20 +1472,18 @@ export class RuntimePanel {
 
       return [
         `<div class="herb-dev-tools-window-controls">`,
-        this.viewButtonHTML(),
         this.overlayScopeButtonHTML(),
-        `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="dismiss-overlay" aria-label="${label}" title="${label}">×</button>`,
+        closeButtonHTML('dismiss-overlay', label),
         `</div>`,
       ]
     }
 
     return [
-      this.clearButtonHTML(),
-      `<button type="button" class="herb-dev-tools-hide" data-herb-dev-tools-action="dismiss">Hide for this session</button>`,
+      hideButtonHTML(),
       `<div class="herb-dev-tools-window-controls">`,
-      this.viewButtonHTML(),
+      this.copyButtonHTML(),
       this.expandButtonHTML(),
-      `<button type="button" class="herb-dev-tools-close" data-herb-dev-tools-action="close" aria-label="Close panel">×</button>`,
+      closeButtonHTML('close', 'Close the panel'),
       `</div>`,
     ]
   }
@@ -1236,37 +1493,19 @@ export class RuntimePanel {
   }
 
   private clearButtonHTML(): string {
-    const count = this.visibleCount
+    const count = this.count
 
     if (count === 0) {
       return ''
     }
 
-    const scoped = this.state.origin !== ALL_ORIGINS
-    const label = scoped ? `Clear ${this.state.origin}` : 'Clear all'
     const entries = `${count} ${count === 1 ? 'entry' : 'entries'}`
-
-    const description = scoped
-      ? `Clear the ${entries} from ${this.state.origin}`
-      : `Clear all ${entries} and empty the panel`
+    const description = `Clear all ${entries} and empty the panel`
 
     return [
       `<button type="button" class="herb-dev-tools-clear" data-herb-dev-tools-action="clear"`,
-      ` aria-label="${escapeHTML(description)}"`,
-      ` title="${escapeHTML(description)}. Reload the page to read its report again.">`,
-      `${escapeHTML(label)}</button>`,
-    ].join('')
-  }
-
-  private expandButtonHTML(): string {
-    const label = this.state.expanded ? 'Collapse panel back to the corner' : 'Expand panel to fill the window'
-    const icon = this.state.expanded ? COLLAPSE_ICON : EXPAND_ICON
-
-    return [
-      `<button type="button" class="herb-dev-tools-expand" data-herb-dev-tools-action="expand"`,
-      ` aria-expanded="${this.state.expanded}" aria-label="${label}" title="${label}">`,
-      icon,
-      `</button>`,
+      tip(`${description}. Reload the page to read its report again`, description),
+      `>Clear</button>`,
     ].join('')
   }
 
@@ -1317,7 +1556,10 @@ export class RuntimePanel {
       buttons.push(this.filterButtonHTML('origin', origin, origin, count, this.state.origin === origin))
     }
 
-    return `<div class="herb-dev-tools-filters">${buttons.join('')}</div>`
+    const actions = `${this.collapseAllButtonHTML()}${this.clearButtonHTML()}`
+    const trailing = actions === '' ? '' : `<div class="herb-dev-tools-filters-actions">${actions}</div>`
+
+    return `<div class="herb-dev-tools-filters">${buttons.join('')}${trailing}</div>`
   }
 
   private severityFiltersHTML(): string {
@@ -1342,6 +1584,265 @@ export class RuntimePanel {
     }
 
     return `<div class="herb-dev-tools-filters herb-dev-tools-filters-severity">${buttons.join('')}</div>`
+  }
+
+  private get heroEntry(): PanelEntry | null {
+    if (!this.overlayFocused) {
+      return null
+    }
+
+    const entries = this.visibleEntries()
+
+    return entries.length === 1 ? entries[0] : null
+  }
+
+  private heroChipsHTML(diagnostic: NormalizedDiagnostic): string {
+    const pairs: string[] = []
+    const version = this.meta.herb_version
+
+    if (version !== undefined) {
+      pairs.push(heroPairHTML('Herb', version))
+    }
+
+    if (diagnostic.phase !== null) {
+      pairs.push(heroPairHTML('Phase', diagnostic.phase))
+    }
+
+    const group = pairs.length === 0 ? '' : `<div class="herb-dev-tools-hero-group">${pairs.join('')}</div>`
+
+    const mode = diagnostic.overlay === null
+      ? ''
+      : `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-soft">${escapeHTML(sentenceCase(diagnostic.overlay))}</span>`
+
+    const marker = diagnostic.kind === 'metric'
+      ? `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(diagnostic.value ?? 'metric')}</span>`
+      : `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(sentenceCase(diagnostic.severity ?? 'error'))}</span>`
+
+    const chips = `${marker}${mode}${group}`
+
+    return chips.length === 0 ? '' : `<div class="herb-dev-tools-hero-chips">${chips}</div>`
+  }
+
+  private markdownExcerpt(diagnostic: NormalizedDiagnostic): string[] {
+    const source = this.sources[diagnostic.template]
+    const start = diagnostic.location?.start
+
+    if (source === undefined || start === undefined) {
+      return []
+    }
+
+    const body = excerptWindow(source, start.line, MARKDOWN_CONTEXT_LINES, start.line)
+
+    return body.length === 0 ? [] : ['', ...fence('erb', body.join('\n'))]
+  }
+
+  private markdownFix(diagnostic: NormalizedDiagnostic): string[] {
+    const fix = diagnostic.fix
+
+    if (fix === null) {
+      return []
+    }
+
+    const unsafe = fix.kind === 'unsafe'
+    const lead = unsafe ? 'Not applied, and this fix is unsafe. Applying it:' : 'Not applied. Applying it:'
+    const window = excerptWindow(fix.source, diagnostic.location?.start.line ?? 1, MARKDOWN_CONTEXT_LINES)
+    const after = window.length === 0 ? [] : ['', 'The template would become:', '', ...fence('erb', window.join('\n'))]
+
+    return [
+      '',
+      `### Fix (${fix.kind})`,
+      '',
+      lead,
+      '',
+      ...fence('bash', fixCommand(diagnostic, unsafe)),
+      ...after,
+    ]
+  }
+
+  private markdownFor(entry: PanelEntry): string[] {
+    const diagnostic = entry.diagnostic
+    const start = diagnostic.location?.start
+    const location = start === undefined ? diagnostic.template : `${diagnostic.template}:${start.line}:${start.column}`
+    const facts: string[] = [`- Origin: ${diagnostic.origin}`]
+
+    if (diagnostic.severity !== null) {
+      facts.push(`- Severity: ${diagnostic.severity}`)
+    }
+
+    if (diagnostic.phase !== null) {
+      facts.push(`- Phase: ${diagnostic.phase}`)
+    }
+
+    if (entry.count > 1) {
+      facts.push(`- Reported: ${entry.count} times`)
+    }
+
+    const suggestion = diagnostic.suggestion === null ? [] : ['', `> ${diagnostic.suggestion}`]
+    const frames = buildRenderStack(this.renderTree, diagnostic).map((frame) => {
+      const role = frame.via === null ? '' : ` (${VIA_LABELS[frame.via] ?? frame.via})`
+
+      return `- \`${frameLabel(frame)}\`${role}`
+    })
+
+    const stack = frames.length === 0 ? [] : ['', '### Render stack', '', ...frames]
+
+    return [
+      `## ${diagnostic.code ?? diagnostic.origin}`,
+      '',
+      `\`${location}\``,
+      '',
+      diagnostic.message,
+      ...suggestion,
+      '',
+      ...facts,
+      ...this.markdownExcerpt(diagnostic),
+      ...stack,
+      ...this.markdownFix(diagnostic),
+    ]
+  }
+
+  public markdown(): string {
+    const entries = this.visibleEntries()
+    const sections = entries.map(entry => this.markdownFor(entry).join('\n'))
+    const { herb_version: version, parser_options: options, visitors } = this.meta
+    const provenance: string[] = []
+
+    if (version !== undefined) {
+      provenance.push(`- Compiled by Herb::Engine ${version}`)
+    }
+
+    if (options !== undefined) {
+      const pairs = Object.entries(options).map(([key, value]) => `\`${key}: ${value}\``).join(', ')
+
+      if (pairs.length > 0) {
+        provenance.push(`- Parser options: ${pairs}`)
+      }
+    }
+
+    if (visitors !== undefined && visitors.length > 0) {
+      provenance.push(`- Visitors: ${visitors.map(visitor => `\`${visitorLabel(visitor)}\``).join(', ')}`)
+    }
+
+    const devTools = devToolsVersion()
+
+    if (devTools !== null) {
+      provenance.push(`- Herb Dev Tools ${devTools}`)
+    }
+
+    const footer = provenance.length === 0 ? [] : [['---', '', ...provenance].join('\n')]
+
+    return [...sections, ...footer].join('\n\n').replace(/\n{3,}/g, '\n\n') + '\n'
+  }
+
+  private async copyMarkdown(element: HTMLElement) {
+    const label = element.querySelector('.herb-dev-tools-copy-label')
+    const icon = element.querySelector('.herb-dev-tools-icon')
+    const original = icon === null ? null : icon.outerHTML
+    const restore = element.getAttribute('data-herb-dev-tools-tip')
+
+    const settle = (text: string) => {
+      if (label !== null) {
+        label.textContent = text
+      }
+
+      if (restore !== null) {
+        element.setAttribute('data-herb-dev-tools-tip', text)
+      }
+
+      window.setTimeout(() => {
+        if (label !== null) {
+          label.textContent = 'Copy as Markdown'
+        }
+
+        const current = element.querySelector('.herb-dev-tools-icon')
+
+        if (current !== null && original !== null) {
+          current.outerHTML = original
+        }
+
+        if (restore !== null) {
+          element.setAttribute('data-herb-dev-tools-tip', restore)
+        }
+      }, 1600)
+    }
+
+    try {
+      await navigator.clipboard.writeText(this.markdown())
+
+      if (icon !== null) {
+        icon.outerHTML = CHECK_ICON
+      }
+
+      settle('Copied')
+    } catch {
+      settle('Copy failed')
+    }
+  }
+
+  private expandButtonHTML(): string {
+    if (this.state.expanded) {
+      return ''
+    }
+
+    const label = 'Expand the panel to fill the window'
+
+    return [
+      `<button type="button" class="herb-dev-tools-expand" data-herb-dev-tools-action="expand"`,
+      ` aria-expanded="false"${tip(label)}>`,
+      EXPAND_ICON,
+      `</button>`,
+    ].join('')
+  }
+
+  private copyButtonHTML(): string {
+    if (this.visibleEntries().length === 0) {
+      return ''
+    }
+
+    if (this.overlayFocused) {
+      return [
+        `<button type="button" class="herb-dev-tools-copy" data-herb-dev-tools-action="copy-markdown">`,
+        COPY_ICON,
+        `<span class="herb-dev-tools-copy-label">Copy as Markdown</span>`,
+        `</button>`,
+      ].join('')
+    }
+
+    return [
+      `<button type="button" class="herb-dev-tools-copy herb-dev-tools-copy-compact"`,
+      ` data-herb-dev-tools-action="copy-markdown"${tip('Copy this page as Markdown')}>`,
+      COPY_ICON,
+      `</button>`,
+    ].join('')
+  }
+
+  private heroHTML(): string {
+    const entry = this.heroEntry
+
+    if (entry === null) {
+      return ''
+    }
+
+    const diagnostic = entry.diagnostic
+    const start = diagnostic.location?.start
+    const title = diagnostic.code ?? diagnostic.origin
+
+    const location = start === undefined
+      ? diagnostic.template
+      : `${diagnostic.template}:${start.line}:${start.column}`
+
+    const path = diagnostic.template === UNKNOWN_TEMPLATE
+      ? `<span class="herb-dev-tools-hero-path">${escapeHTML(location)}</span>`
+      : this.pathHTML(location, diagnostic.template, start?.line ?? 1, start?.column ?? 1, 'herb-dev-tools-hero-path')
+
+    return [
+      `<header class="herb-dev-tools-hero">`,
+      `<h1 class="herb-dev-tools-hero-title">${escapeHTML(title)}</h1>`,
+      path,
+      `<p class="herb-dev-tools-hero-message">${inlineCodeHTML(diagnostic.message)}</p>`,
+      this.heroChipsHTML(diagnostic),
+      `</header>`,
+    ].join('')
   }
 
   private bodyHTML(): string {
@@ -1372,15 +1873,26 @@ export class RuntimePanel {
     const sections: string[] = []
 
     for (const [template, groupEntries] of groups) {
+      const collapsed = this.collapsed.has(template)
+      const label = collapsed ? `Show the diagnostics for ${template}` : `Hide the diagnostics for ${template}`
+
       sections.push([
-        `<section class="herb-dev-tools-group">`,
-        `<h2 class="herb-dev-tools-group-title">${this.pathHTML(template, template, this.firstLineFor(groupEntries), 1, 'herb-dev-tools-group-path')}<span class="herb-dev-tools-group-count">${groupEntries.length}</span></h2>`,
-        this.groupBodyHTML(template, groupEntries),
+        `<section class="herb-dev-tools-group${collapsed ? ' herb-dev-tools-group-collapsed' : ''}">`,
+        `<h2 class="herb-dev-tools-group-title" data-herb-dev-tools-action="collapse-group"`,
+        ` data-herb-dev-tools-template="${escapeHTML(template)}">`,
+        `<button type="button" class="herb-dev-tools-group-toggle" data-herb-dev-tools-action="collapse-group"`,
+        ` data-herb-dev-tools-template="${escapeHTML(template)}" aria-expanded="${!collapsed}"`,
+        ` aria-label="${escapeHTML(label)}">${CHEVRON_ICON}</button>`,
+        `<span class="herb-dev-tools-group-icon" aria-hidden="true"></span>`,
+        this.pathHTML(template, template, this.firstLineFor(groupEntries), 1, 'herb-dev-tools-group-path'),
+        `<span class="herb-dev-tools-group-count">${groupEntries.length}</span>`,
+        `</h2>`,
+        this.groupBodyHTML(groupEntries),
         `</section>`,
       ].join(''))
     }
 
-    return sections.join('')
+    return `${this.heroHTML()}${sections.join('')}${this.overlayMoreButtonHTML()}`
   }
 
   private provenanceHTML(): string {
@@ -1392,23 +1904,25 @@ export class RuntimePanel {
     const parts: string[] = []
 
     if (version !== undefined) {
-      parts.push(`<span>Compiled by Herb ${escapeHTML(version)}</span>`)
+      parts.push(provenanceRowHTML('Compiled by Herb::Engine', escapeHTML(version)))
     }
 
     if (options !== undefined) {
-      const pairs = Object.entries(options)
-        .map(([key, value]) => `<code>${escapeHTML(key)}: ${escapeHTML(value)}</code>`)
-        .join(', ')
+      const pairs = Object.entries(options).map(([key, value]) => `${key}: ${value}`)
 
       if (pairs.length > 0) {
-        parts.push(`<span>Parser options: ${pairs}</span>`)
+        parts.push(provenanceListHTML('Parser options', pairs))
       }
     }
 
     if (visitors !== undefined && visitors.length > 0) {
-      const names = visitors.map(visitor => `<code>${escapeHTML(visitor)}</code>`).join(' ')
+      parts.push(provenanceListHTML('Visitors', visitors.map(visitorLabel)))
+    }
 
-      parts.push(`<span class="herb-dev-tools-provenance-list">Visitors: ${names}</span>`)
+    const devTools = devToolsVersion()
+
+    if (devTools !== null) {
+      parts.push(provenanceRowHTML('Herb Dev Tools', escapeHTML(devTools)))
     }
 
     if (parts.length === 0) {
@@ -1418,56 +1932,23 @@ export class RuntimePanel {
     return `<footer class="herb-dev-tools-provenance">${parts.join('')}</footer>`
   }
 
-  private combinable(template: string, entries: PanelEntry[]): boolean {
-    if (this.sources[template] === undefined) {
-      return false
-    }
-
-    return entries.some(entry => entry.diagnostic.location !== null && entry.diagnostic.severity !== null)
-  }
-
-  private get combinableGroups(): number {
-    const groups = new Map<string, PanelEntry[]>()
-
-    for (const entry of this.visibleEntries()) {
-      const existing = groups.get(entry.diagnostic.template) ?? []
-
-      existing.push(entry)
-      groups.set(entry.diagnostic.template, existing)
-    }
-
-    return [...groups].filter(([template, entries]) => this.combinable(template, entries)).length
-  }
-
-  private groupBodyHTML(template: string, entries: PanelEntry[]): string {
-    if (this.state.view !== 'combined' || !this.combinable(template, entries)) {
-      return entries.map(entry => this.cardHTML(entry)).join('')
-    }
-
-    if (this.highlighting === null) {
-      return `<div class="herb-dev-tools-combined" data-herb-dev-tools-excerpt-pending></div>`
-    }
-
-    const rendered = this.highlighting.combined(template, this.sources[template], entries.map(entry => entry.diagnostic))
-
-    if (rendered === null) {
-      return entries.map(entry => this.cardHTML(entry)).join('')
-    }
-
-    const target = this.onOpenFile === null || template === UNKNOWN_TEMPLATE ? null : { file: template, line: this.firstLineFor(entries), column: 1 }
-
-    return `<div class="herb-dev-tools-combined">${ansiHTML(rendered, 'herb-dev-tools-ansi', target)}</div>`
+  private groupBodyHTML(entries: PanelEntry[]): string {
+    return entries.map(entry => this.cardHTML(entry)).join('')
   }
 
   private cardHTML(entry: PanelEntry): string {
     const diagnostic = entry.diagnostic
     const isMetric = diagnostic.kind === 'metric'
     const url = safeUrl(diagnostic.docsUrl)
-    const code = diagnostic.code === null ? '' : `<span class="herb-dev-tools-code">${escapeHTML(diagnostic.code)}</span>`
+    const codeTone = isMetric ? 'metric' : (diagnostic.severity ?? 'error')
+    const codeLabel = diagnostic.code ?? (isMetric ? null : sentenceCase(diagnostic.severity ?? 'error'))
+    const code = codeLabel === null
+      ? ''
+      : `<span class="herb-dev-tools-code herb-dev-tools-code-${escapeHTML(codeTone)}">${escapeHTML(codeLabel)}</span>`
 
     const marker = isMetric
       ? `<span class="herb-dev-tools-metric">${escapeHTML(diagnostic.value ?? 'metric')}</span>`
-      : `<span class="herb-dev-tools-dot herb-dev-tools-dot-${escapeHTML(diagnostic.severity ?? 'error')}" aria-hidden="true"></span>`
+      : ''
 
     const docs = url === null
       ? ''
@@ -1481,7 +1962,14 @@ export class RuntimePanel {
 
     const repeat = entry.count > 1 ? `<span class="herb-dev-tools-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : ''
     const feature = this.featureButtonHTML(entry)
-    const suggestion = diagnostic.suggestion === null ? '' : `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`
+    const suggestion = diagnostic.suggestion === null
+      ? ''
+      : [
+        `<div class="herb-dev-tools-hint">`,
+        `<p class="herb-dev-tools-hint-title">Suggestion</p>`,
+        `<p class="herb-dev-tools-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`,
+        `</div>`,
+      ].join('')
     const element = this.elementHTML(entry)
 
     return [
@@ -1587,21 +2075,64 @@ export class RuntimePanel {
       return `<div class="herb-dev-tools-fix-pending" data-herb-dev-tools-fix-pending hidden></div>`
     }
 
-    const rendered = this.highlighting.diff(diagnostic.template, source, fix)
+    const key = fixKey(diagnostic)
+    const view = this.fixViews.get(key) ?? 'diff'
+    const open = this.openFixes.has(key)
+
+    const rendered = view === 'file'
+      ? this.highlighting.file(fix.source)
+      : this.highlighting.diff(diagnostic.template, source, fix)
 
     if (rendered === null) {
       return ''
     }
 
     const unsafe = fix.kind === 'unsafe'
-    const lead = unsafe ? 'Not applied. This fix is unsafe. Running' : 'Not applied. Running'
-    const command = unsafe ? 'herb lint --fix-unsafely' : 'herb lint --fix'
+    const note = unsafe ? 'not applied, unsafe' : 'not applied, safe'
+    const command = fixCommand(diagnostic, unsafe)
+    const copy = 'Copy this command'
+
+    const tab = (value: 'diff' | 'file', label: string, description: string) => [
+      `<button type="button" class="herb-dev-tools-fix-tab${view === value ? ' herb-dev-tools-fix-tab-active' : ''}"`,
+      ` data-herb-dev-tools-action="fix-view" data-herb-dev-tools-fix-view="${value}"`,
+      ` data-herb-dev-tools-fix-key="${escapeHTML(key)}"`,
+      ` aria-pressed="${view === value}"${tip(description, label)}>${label}</button>`,
+    ].join('')
+
+    const copyFixed = view === 'file'
+      ? [
+        `<button type="button" class="herb-dev-tools-fix-copy" data-herb-dev-tools-action="copy-fixed"`,
+        ` data-herb-dev-tools-fix-key="${escapeHTML(key)}"${tip('Copy the fixed template')}>`,
+        COPY_ICON,
+        `</button>`,
+      ].join('')
+      : ''
+
+    const tabs = [
+      `<div class="herb-dev-tools-fix-tabs">`,
+      tab('diff', 'Diff', 'Show only the lines the fix changes'),
+      tab('file', 'Fixed file', 'Show the whole template as the fix would leave it'),
+      `</div>`,
+    ].join('')
 
     return [
-      `<details class="herb-dev-tools-fix" data-herb-dev-tools-fix="${escapeHTML(fix.kind)}">`,
-      `<summary class="herb-dev-tools-fix-summary">${escapeHTML(lead)} <code class="herb-dev-tools-fix-command">${escapeHTML(command)}</code> would change this template to</summary>`,
-      `<div class="herb-dev-tools-fix-diff">${ansiHTML(rendered, 'herb-dev-tools-ansi')}</div>`,
+      `<div class="herb-dev-tools-autofix">`,
+      `<p class="herb-dev-tools-autofix-title">Autofix<span class="herb-dev-tools-autofix-note">${escapeHTML(note)}</span></p>`,
+      `<details class="herb-dev-tools-fix" data-herb-dev-tools-fix="${escapeHTML(fix.kind)}"`,
+      ` data-herb-dev-tools-fix-key="${escapeHTML(key)}"${open ? ' open' : ''}>`,
+      `<summary class="herb-dev-tools-fix-summary">Preview the change</summary>`,
+      tabs,
+      `<div class="herb-dev-tools-fix-diff">${copyFixed}${ansiHTML(rendered, 'herb-dev-tools-ansi')}</div>`,
       `</details>`,
+      `<p class="herb-dev-tools-command-lead">Run this to fix it:</p>`,
+      `<div class="herb-dev-tools-command">`,
+      `<code class="herb-dev-tools-fix-command">${escapeHTML(command)}</code>`,
+      `<button type="button" class="herb-dev-tools-command-copy" data-herb-dev-tools-action="copy-command"`,
+      ` data-herb-dev-tools-command="${escapeHTML(command)}"${tip(copy)}>`,
+      COPY_ICON,
+      `</button>`,
+      `</div>`,
+      `</div>`,
     ].join('')
   }
 
@@ -1613,7 +2144,13 @@ export class RuntimePanel {
     }
 
     const items = frames.map((frame) => {
-      const via = frame.via === null ? '' : `<span class="herb-dev-tools-frame-via">${escapeHTML(VIA_LABELS[frame.via] ?? frame.via)}</span>`
+      const via = frame.via === null
+        ? ''
+        : [
+          `<span class="herb-dev-tools-frame-via herb-dev-tools-frame-via-${escapeHTML(frame.via)}">`,
+          escapeHTML(VIA_LABELS[frame.via] ?? frame.via),
+          `</span>`,
+        ].join('')
 
       return `<li class="herb-dev-tools-frame">${via}${this.pathHTML(frameLabel(frame), frame.template, frame.line ?? 1, frame.column ?? 1, 'herb-dev-tools-frame-target')}</li>`
     })
@@ -1672,26 +2209,33 @@ export class RuntimePanel {
           }
         } else if (action === 'close') {
           this.close()
-        } else if (action === 'expand') {
-          this.toggleExpanded()
         } else if (action === 'collapse') {
           this.collapse()
+        } else if (action === 'expand') {
+          this.expand()
         } else if (action === 'dismiss-overlay') {
           this.dismissOverlay()
-        } else if (action === 'view') {
-          this.toggleView()
         } else if (action === 'overlay-scope') {
           this.toggleOverlayScope()
+        } else if (action === 'copy-markdown') {
+          void this.copyMarkdown(element)
+        } else if (action === 'copy-command') {
+          void copyCommand(element)
+        } else if (action === 'copy-fixed') {
+          void this.copyFixed(element)
+        } else if (action === 'collapse-group') {
+          this.toggleGroup(element.getAttribute('data-herb-dev-tools-template'))
+        } else if (action === 'collapse-all') {
+          this.toggleAllGroups()
+        } else if (action === 'fix-view') {
+          this.showFixView(element.getAttribute('data-herb-dev-tools-fix-key'), element.getAttribute('data-herb-dev-tools-fix-view'))
         } else if (action === 'feature') {
           this.featureFrom(element)
         } else if (action === 'dismiss') {
           this.dismiss()
         } else if (action === 'clear') {
-          this.clear(this.state.origin === ALL_ORIGINS ? undefined : this.state.origin)
-
-          if (this.entries.length === 0) {
-            this.close()
-          }
+          this.clear()
+          this.close()
         } else if (action === 'filter') {
           const origin = element.getAttribute('data-herb-dev-tools-origin')
           const severity = element.getAttribute('data-herb-dev-tools-severity')

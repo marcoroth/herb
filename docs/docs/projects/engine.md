@@ -241,15 +241,16 @@ Herb ships the following transform visitors:
 | Visitor                       | Description                                                                  |
 |-------------------------------|------------------------------------------------------------------------------|
 | `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                             |
-| `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
-| `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
-| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
 | `ComponentTags::Visitor`      | Rewrites capitalized tags into `render` calls (experimental)                 |
+| `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
 | `DebugVisitor`                | Annotates output with the template and position it came from                 |
-| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
-| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
+| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
 | `InlineRender::Visitor`       | Replaces a `render` of a static partial with the partial (experimental)      |
+| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
+| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
+| `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
 | `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
+| `SourceAttributionVisitor`    | Stamps every element with the template and position it was written at        |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
@@ -732,6 +733,57 @@ Without it the markers say only where in a file something was written, so a part
 
 The wrapper is a real cost. A `<span>` is not valid everywhere an ERB tag can appear, `<ul>` being the obvious case, so a strict linter reading the rendered page will have findings about Herb's own instrumentation.
 
+### `SourceAttributionVisitor`
+
+Stamps every element with the template and the position it was written at, so a finding about the rendered page can be pointed back at the line that produced it.
+
+```ruby
+require "herb/engine/visitors/source_attribution_visitor"
+
+Herb::Engine.new(source, filename: path, visitors: [Herb::Engine::SourceAttributionVisitor.new])
+```
+
+```html+erb
+<div class="card">
+  <h1>Title</h1>
+</div>
+```
+
+```html
+<div class="card" data-herb-source="app/views/posts/_card.html.erb:1:1">
+  <h1 data-herb-source="app/views/posts/_card.html.erb:2:3">Title</h1>
+</div>
+```
+
+The attribute is `data-herb-source` unless `attribute:` names another one.
+
+Some things are only visible once a page is rendered. Two partials can each be valid on their own and still collide on an `id`, a heading order only exists once a layout and everything it renders are composed, and a `<form>` inside another `<form>` is usually two templates that never see each other. A linter reading the response answers those, and the positions it reports are offsets into the response, which is not a place anyone can go and fix anything. The stamp is what turns them back into a file and a line.
+
+An element that renders many times carries the line it was written at, not the line it rendered at, so the answer to a duplicate `id` is the line that renders more than once:
+
+```html
+<ul data-herb-source="app/views/posts/_card.html.erb:1:1">
+  <li data-herb-source="app/views/posts/_card.html.erb:3:5">a</li>
+  <li data-herb-source="app/views/posts/_card.html.erb:3:5">b</li>
+</ul>
+```
+
+A partial that `InlineRender::Visitor` brought into the template is stamped with the file it was written in, not the file it was inlined into.
+
+### Tag helpers and the parser option
+
+A tag helper is stamped too. The `action_view_helpers` parser option turns `<%= link_to "Home", "/" %>` into an `<a>` that the compiler writes out as markup, and that `<a>` is stamped at the position of the `<%=` that asked for it:
+
+```html
+<nav data-herb-source="app/views/posts/_card.html.erb:1:1">
+  <a href="/" data-herb-source="app/views/posts/_card.html.erb:2:3">Home</a>
+</nav>
+```
+
+This visitor declares that option with `recommended_parser_option`, so a stack that says nothing about it gets it.
+
+The stamp is markup Herb added, so strip it before reporting positions back, and leave the visitor out of anything but a development build.
+
 ### `OptimizeVisitor` <Badge type="warning" text="experimental" />
 
 Asks the parser to resolve Action View helpers into the markup they produce, so the compiler emits that markup instead of a call the renderer has to make.
@@ -835,7 +887,7 @@ into this:
 
 ```html
 <style>
-  .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+  .title[data-herb-scope-1a2b3c4d] {
     color: red;
   }
 </style>
@@ -843,9 +895,15 @@ into this:
 <h1 class="title" data-herb-scope-1a2b3c4d>Hi</h1>
 ```
 
-Here the scope sits on the root alone. `:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)` matches the root and everything inside it, so nested elements need no attribute of their own. A file that renders a partial is scoped differently. Every element the file wrote carries the scope, and the selector narrows to `[data-herb-scope-1a2b3c4d]` alone, so the scope stays on that markup and never reaches into the partial.
+Every element the file wrote carries the scope, and every rule is narrowed by that attribute. Markup the file rendered carries a scope of its own or none, so a scoped block reaches what the file wrote and nothing else, whatever is nested inside it. That holds without the file having to know whether it renders anything.
 
-The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is one. Give the visitor a `LightningCSS::Transformer`, and each rule in the block is narrowed to the scope.
+The visitor does not rewrite the CSS itself. It passes the CSS to a `transform`, and the [`lightningcss`](https://github.com/marcoroth/lightningcss-ruby) gem is the one it reaches for unless something else is given, so each rule in a block is narrowed to the scope without anything being said:
+
+```ruby
+Herb::Engine::ScopedStyle::Visitor.new
+```
+
+Herb does not depend on `lightningcss`, so a machine without it gets a block left as it was written and a diagnostic saying so. Pass a `transform` to narrow the CSS some other way.
 
 ```ruby
 require "herb/engine/scoped_style/visitor"
@@ -858,7 +916,7 @@ Herb::Engine.new(source, filename: path, visitors: [
 
 The `herb compile --scoped-styles` and `herb render --scoped-styles` commands wire the same thing up from the command line, installing `lightningcss` the first time if it is not already there.
 
-Given no `transform`, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
+With no `transform` at all, the block is left as it was written and a diagnostic reports it, because scoping the markup while leaving the CSS untouched would turn a scoped block into a global one. The same holds for a block built with ERB, which has no CSS to read at compile time, and for a template compiled without a `filename`, which has no stable scope to derive. A `transform` that raises is treated the same way, so CSS nobody can read costs the block it was written in and not the whole template.
 
 `deliver` says where the narrowed CSS goes.
 
@@ -890,6 +948,81 @@ transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
 ```
 
 A return value answering `warnings` has each of them reported as a diagnostic, which is how a `LightningCSS::Result` surfaces what Lightning CSS kept without acting on. CSS a transform could not act on is CSS that does nothing once the page renders, so it is worth saying so at compile time. A transform answering with a plain string reports nothing.
+
+### Writing CSS into style attributes
+
+A `style` attribute is the only way to say something an email client reads, and `CSSInliner::Visitor` is how a stylesheet gets there.
+
+A stylesheet, and a template that never mentions it:
+
+:::code-group
+```css [app/assets/style.css]
+h1 {
+  color: #1a1a1a;
+  font-family: Helvetica, Arial, sans-serif;
+}
+```
+
+```erb [app/views/mail.html.erb]
+<h1>Welcome, <%= name %></h1>
+
+<p>Thanks for signing up.</p>
+```
+:::
+
+Compiled with the visitor, and given the stylesheet to read:
+
+```ruby
+require "herb/engine/css_inliner/visitor"
+
+Herb::Engine.new(
+  source,
+  filename: "app/views/mail.html.erb",
+  project_path: root,
+  visitors: [
+    Herb::Engine::CSSInliner::Visitor.new(
+      stylesheets: ["app/assets/style.css"]
+    )
+  ]
+)
+```
+
+What renders:
+
+```html
+<h1 style="color: #1a1a1a;font-family: Helvetica, Arial, sans-serif;">Welcome, Marco</h1>
+
+<p>Thanks for signing up.</p>
+```
+
+The `<h1>` carries what the stylesheet said about it, the `<p>` carries nothing because nothing was said about it, and there is no `<style>` block left for a mail client to throw away.
+
+The CSS is matched against the markup once the file has rendered, not when it is compiled, because that is the first moment the markup exists. Nothing about the page the file landed in has to be known to do it: the CSS and the markup it applies to arrive in the same buffer.
+
+Every `<style>` block the template rendered is inlined, whoever wrote it. A block the author wrote by hand, and a block `ScopedStyle::Visitor` narrowed, are both read out of the markup. `stylesheets` are files read when the template is compiled and written into it as a block of their own, so nothing reads a file to render one and the CSS a template was compiled against cannot change under it.
+
+Because it inlines every block it finds, this belongs in a stack that wants all of its CSS on the elements. That is what an email wants. A page that meant a `<style>` block to stay one does not.
+
+`stylesheets` are read in the order they are given, so the last one to say something is the one that says it:
+
+```ruby
+Herb::Engine::CSSInliner::Visitor.new(stylesheets: ["app/assets/base.css", "app/assets/theme.css"])
+```
+
+What does the writing is built the first time a template renders, so putting the visitor in a stack is the only thing that has to be said. It reaches for the [`css_inline`](https://github.com/Stranger6667/css-inline) gem, which Herb does not depend on, and reports it when a template is compiled if it is not there.
+
+Something else can be put in its place, and anything answering `inline_fragment` with the markup and a stylesheet fits:
+
+```ruby
+Herb::Engine::CSSInliner.inliner = MyInliner.new
+```
+
+If an inliner fails, the markup is answered as it was rendered: the blocks are still in it, so the CSS applies as it was written and a page is never worse off for asking.
+
+Rules a `style` attribute cannot say, such as `@media`, `:hover` and `::before`, are dropped by an inliner instead of kept, so a template holding any keeps its blocks and says the rest twice. A block built with ERB is treated the same way, because what it holds is not knowable when the template is compiled. Which it is, is decided then.
+
+What a template holds when this runs is what it decides about, so it has to run after anything that rewrites the blocks, and the stack raises if it does not. A `ScopedStyle::Visitor` delivering anywhere other than `:inline` takes its block out of the markup, and a template read before that happens is a template holding a block that will not be there to inline.
+
 
 #### Gathering the CSS ahead of time
 

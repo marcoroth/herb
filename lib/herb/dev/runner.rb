@@ -3,6 +3,8 @@
 
 require_relative "../colors"
 require_relative "../configuration"
+require_relative "../diagnostic"
+require_relative "../diagnostic/formatter"
 
 module Herb
   module Dev
@@ -30,6 +32,8 @@ module Herb
       end
 
       def run
+        $stdout.sync = true
+
         require_cruise
         require_relative "server"
 
@@ -44,8 +48,8 @@ module Herb
         check_existing_server(expanded_path)
         port = find_port
 
-        print CLEAR_SCREEN
-        print HIDE_CURSOR
+        terminal(CLEAR_SCREEN)
+        terminal(HIDE_CURSOR)
         print_header(config, expanded_path)
 
         file_states = index_files(config, @path)
@@ -61,13 +65,13 @@ module Herb
         watch_files(config, expanded_path, websocket, file_states)
       rescue Interrupt
         websocket&.stop
-        print SHOW_CURSOR
+        terminal(SHOW_CURSOR)
         puts
         puts "Stopped."
         exit(0)
       ensure
         websocket&.stop
-        print SHOW_CURSOR
+        terminal(SHOW_CURSOR)
       end
 
       def stop
@@ -113,6 +117,26 @@ module Herb
       end
 
       private
+
+      def interactive?
+        $stdout.tty?
+      end
+
+      def terminal(sequence)
+        print sequence if interactive?
+      end
+
+      def print_diagnostics(source, diagnostics, filename)
+        return if diagnostics.empty?
+
+        formatter = Herb::Diagnostic::Formatter.new(source, diagnostics, filename: filename)
+
+        formatter.format_all(highlight: enabled?).each_line do |line|
+          stripped = line.chomp
+
+          puts stripped.empty? ? "" : "  #{stripped}"
+        end
+      end
 
       def pluralize(count, word)
         "#{count} #{word}#{"s" unless count == 1}"
@@ -176,7 +200,7 @@ module Herb
       end
 
       def index_files(config, path)
-        puts "  #{fg("Indexing files...", 241)}"
+        puts "  #{fg("Indexing files...", 241)}" if interactive?
 
         file_states = {}
         initial_files = config.find_files(path)
@@ -187,7 +211,7 @@ module Herb
           # skip files that can't be read
         end
 
-        print "\e[1A\e[2K"
+        terminal("\e[1A\e[2K")
         puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{file_states.size} templates indexed", 250)}"
 
         file_states
@@ -214,7 +238,7 @@ module Herb
           next unless config.path_included?(relative_path, include_patterns)
 
           if first_change
-            print "\e[2A\e[J"
+            terminal("\e[2A\e[J")
             puts "  #{fg("Recent changes:", 245)}"
             puts
             first_change = false
@@ -247,12 +271,12 @@ module Herb
           return
         end
 
-        return if previous_content == current_content && !errored_files.include?(file_path)
+        return if previous_content == current_content
 
         current_parse = Herb.parse(current_content, strict: true, analyze: true)
 
         if current_parse.errors.any?
-          broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, errored_files, websocket, timestamp, display_path)
+          broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, file_states, errored_files, websocket, timestamp)
           return
         end
 
@@ -264,7 +288,7 @@ module Herb
         handle_diff(file_path, relative_path, current_content, previous_content, file_states, websocket, timestamp, display_path)
       end
 
-      def broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, errored_files, websocket, timestamp, display_path)
+      def broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, file_states, errored_files, websocket, timestamp)
         current_errors = current_parse.errors
 
         previous_parse = Herb.parse(previous_content, strict: true, analyze: true)
@@ -276,15 +300,12 @@ module Herb
           }
         }
 
-        badge = bold(fg("\u{2717} error  ", 196))
-        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{pluralize(current_errors.size, "error")})", 241)}"
+        badge = bold(fg("\u{2717} error", 196))
+        print "    #{timestamp} #{badge}"
 
-        new_errors.each do |error|
-          location = fg("#{relative_path}:#{error.location.start.line}:#{error.location.start.column}", 241)
-          puts "                        #{fg(error.error_name, 196)} #{location}"
-          puts "                        #{fg(error.message, 250)}" if error.message && !error.message.empty?
-        end
+        print_diagnostics(current_content, Herb::Diagnostic.from_errors(new_errors, template: relative_path), relative_path)
 
+        file_states[file_path] = current_content
         errored_files.add(file_path)
 
         if websocket.client_count.positive?

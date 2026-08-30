@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest"
-import { classifyDefault, mentionsAnyState } from "../src/directives"
+import { classifyDefault, classifyDerivedDefault, mentionsAnyState } from "../src/directives"
 
 describe("mentionsAnyState", () => {
   test("a bare read mentions the state", () => {
@@ -57,5 +57,73 @@ describe("classifyDefault", () => {
     expect(classifyDefault("[]")).toBe("array")
     expect(classifyDefault("{ a: 1 }")).toBe("hash")
     expect(classifyDefault("open_initially")).toBe("bare")
+  })
+})
+
+describe("classifyDerivedDefault", () => {
+  const declared = new Map([["draft", "string"], ["count", "integer"], ["open", "boolean"]])
+
+  test("derives a boolean from a predicate the state kind answers", () => {
+    expect(classifyDerivedDefault("draft.blank?", declared)).toEqual({ kind: "boolean", condition: ["draft", null, "blank"], sources: ["draft"] })
+    expect(classifyDerivedDefault("draft.present?", declared)).toEqual({ kind: "boolean", condition: ["draft", null, "present"], sources: ["draft"] })
+    expect(classifyDerivedDefault("draft.empty?", declared)).toEqual({ kind: "boolean", condition: ["draft", '""'], sources: ["draft"] })
+    expect(classifyDerivedDefault("count.zero?", declared)).toEqual({ kind: "boolean", condition: ["count", "0"], sources: ["count"] })
+    expect(classifyDerivedDefault("count.one?", declared)).toEqual({ kind: "boolean", condition: ["count", "1"], sources: ["count"] })
+    expect(classifyDerivedDefault("open.nil?", declared)).toEqual({ kind: "boolean", condition: ["open", "nil"], sources: ["open"] })
+  })
+
+  test("refuses a predicate the state kind cannot answer", () => {
+    expect(classifyDerivedDefault("count.empty?", declared)).toBe("mixed")
+    expect(classifyDerivedDefault("count.blank?", declared)).toBe("mixed")
+    expect(classifyDerivedDefault("draft.zero?", declared)).toBe("mixed")
+  })
+
+  test("negates the condition it wraps", () => {
+    expect(classifyDerivedDefault("!open", declared)).toEqual({ kind: "boolean", condition: ["open", null, "falsy"], sources: ["open"] })
+    expect(classifyDerivedDefault("!open?", declared)).toEqual({ kind: "boolean", condition: ["open", null, "falsy"], sources: ["open"] })
+    expect(classifyDerivedDefault("!!open", declared)).toEqual({ kind: "boolean", condition: ["open", null], sources: ["open"] })
+    expect(classifyDerivedDefault("!draft.blank?", declared)).toEqual({ kind: "boolean", condition: ["draft", null, "present"], sources: ["draft"] })
+    expect(classifyDerivedDefault("!count.zero?", declared)).toEqual({ kind: "boolean", condition: ["count", "0", "!="], sources: ["count"] })
+    expect(classifyDerivedDefault('!(draft == "hi")', declared)).toEqual({ kind: "boolean", condition: ["draft", '"hi"', "!="], sources: ["draft"] })
+    expect(classifyDerivedDefault("!(count > 3)", declared)).toEqual({ kind: "boolean", condition: ["count", "3", "<="], sources: ["count"] })
+  })
+
+  test("distributes a negated combination over its parts", () => {
+    expect(classifyDerivedDefault("!(open && draft.blank?)", declared)).toEqual({
+      kind: "boolean",
+      condition: { any: [["open", null, "falsy"], ["draft", null, "present"]] },
+      sources: ["open", "draft"],
+    })
+
+    expect(classifyDerivedDefault("!(open || count.zero?)", declared)).toEqual({
+      kind: "boolean",
+      condition: { all: [["open", null, "falsy"], ["count", "0", "!="]] },
+      sources: ["open", "count"],
+    })
+  })
+
+  test("reads to_s on a state of any kind", () => {
+    expect(classifyDerivedDefault("count.to_s", declared)).toEqual({ kind: "string", condition: ["count", null, null, "to_s"], sources: ["count"] })
+    expect(classifyDerivedDefault("open.to_s", declared)).toEqual({ kind: "string", condition: ["open", null, null, "to_s"], sources: ["open"] })
+    expect(classifyDerivedDefault('count.to_s == "3"', declared)).toEqual({ kind: "boolean", condition: ["count", '"3"', "==", "to_s"], sources: ["count"] })
+  })
+
+  test("carries a transform on each side of a comparison", () => {
+    expect(classifyDerivedDefault("draft.length > count", declared)).toEqual({
+      kind: "boolean",
+      condition: ["draft", { state: "count" }, ">", "length"],
+      sources: ["draft", "count"],
+    })
+
+    expect(classifyDerivedDefault("count < draft.length", declared)).toEqual({
+      kind: "boolean",
+      condition: ["draft", { state: "count" }, ">", "length"],
+      sources: ["draft", "count"],
+    })
+  })
+
+  test("stays out of expressions that are not predicates", () => {
+    expect(classifyDerivedDefault("draft.upcase", declared)).toBe("mixed")
+    expect(classifyDerivedDefault("other.blank?", declared)).toBeNull()
   })
 })

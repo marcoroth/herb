@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0006_an element carrying a whole attribute list from ERB"
+input: "{source: \"<div <%= attributes %>>x</div>\", locals: {attributes: \"id=\\\"one\\\"\"}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div id="one" data-herb-source="app/views/posts/_card.html.erb:1:1">x</div>

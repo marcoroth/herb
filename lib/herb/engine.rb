@@ -103,11 +103,15 @@ module Herb
           visitor.finish(parse_result.value) if visitor.respond_to?(:finish)
         end
 
+        wrapping = wrap_postamble(postamble)
+        wrapped = !wrapping.equal?(postamble)
+        postamble = wrapping
+
         compiler = compiler_class.new(self, properties)
 
         parse_result.value.accept(compiler)
 
-        static_body = buffer_required?(properties) ? nil : compile_static_body(compiler)
+        static_body = buffer_required?(properties) || wrapped ? nil : compile_static_body(compiler)
 
         if static_body
           @src << static_body
@@ -344,6 +348,13 @@ module Herb
       collected_diagnostics.any?
     end
 
+    #: (String) -> String
+    def wrap_postamble(postamble)
+      @visitors.reduce(postamble) do |carried, visitor|
+        visitor.respond_to?(:postamble) ? visitor.postamble(carried) : carried
+      end
+    end
+
     #: (untyped) -> String?
     def compile_static_body(compiler)
       @visitors.each do |visitor|
@@ -436,7 +447,13 @@ module Herb
 
       formatter = Diagnostic::Formatter.new(input, errors, filename: filename)
 
-      raise CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
+      raise CompilationError.new(
+        formatter.summary,
+        details: formatter,
+        diagnostics: errors,
+        visitors: @visitors.descriptions,
+        parser_options: @parser_options
+      )
     end
 
     def context_options(properties)

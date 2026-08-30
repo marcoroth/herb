@@ -16,6 +16,8 @@ module Herb
 
         attr_reader state_presence: Hash[Integer, untyped]
 
+        attr_reader state_values: Hash[Integer, untyped]
+
         # : (untyped) -> void
         def initialize: (untyped) -> void
 
@@ -123,6 +125,9 @@ module Herb
 
         # : () -> void
         def check_state_value_reads: () -> void
+
+        # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+        def register_state_value: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
 
         # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
         def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
