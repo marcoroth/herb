@@ -457,22 +457,28 @@ module Herb
 
         code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 
+        code_index = @tokens.length
+
         if erb_output?(opening)
           process_erb_output(node, opening, code)
         else
           apply_trim(node, code)
         end
 
-        keep_line_count(node)
+        keep_line_count(node, at: code_index)
       end
 
-      def keep_line_count(node, extra: 0)
-        lines = node.content.value.count("\n") - node.content.value.strip.count("\n") + extra
+      def keep_line_count(node, extra: 0, at: nil)
+        raw = node.content.value
 
-        return unless lines.positive?
+        return if raw.include?("=begin") || raw.include?("=end")
+
+        leading = raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
+        trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra
 
         @padding_before ||= Hash.new(0)
-        @padding_before[@tokens.length] += lines
+        @padding_before[at] += leading if at && leading.positive?
+        @padding_before[@tokens.length] += trailing if trailing.positive?
       end
 
       def add_text(text)
