@@ -446,7 +446,7 @@ module Herb
         end
         return if erb_graphql?(opening)
 
-        code = node.content.value.strip
+        code = ::Herb::Engine.strip_trailing_comment(node.content.value.strip)
 
         if erb_output?(opening)
           process_erb_output(node, opening, code)

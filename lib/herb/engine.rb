@@ -189,6 +189,19 @@ module Herb
       true
     end
 
+    def self.strip_trailing_comment(code)
+      return code unless code.include?("#")
+      return code unless prism_available?
+
+      comment = Prism.parse(code).comments.find { |found| found.location.end_offset >= code.bytesize }
+
+      return code unless comment
+
+      code.byteslice(0, comment.location.start_offset).to_s.rstrip
+    rescue StandardError
+      code
+    end
+
     def self.prism_available?
       return @prism_available unless @prism_available.nil?
 
