@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { StateScopeMap } from "../utils/state-directives-utils.js"
 
-import { COMPARISON_OPERATORS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
+import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
 
 import { declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
 import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
@@ -111,6 +111,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   private source: string
   private stack: (ERBBlockNode | null)[] = [null]
   private booleanAttribute = false
+  private attributeName: string | null = null
 
   constructor(ruleName: string, states: StateScopeMap, source: string, context?: Partial<LintContext>) {
     super(ruleName, context)
@@ -130,14 +131,17 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     const name = getAttributeName(node)
     const previous = this.booleanAttribute
+    const previousName = this.attributeName
 
     this.booleanAttribute = name !== null && isBooleanAttribute(name)
+    this.attributeName = name
 
     this.checkMixedInterpolation(node)
 
     super.visitHTMLAttributeNode(node)
 
     this.booleanAttribute = previous
+    this.attributeName = previousName
   }
 
   private checkMixedInterpolation(node: HTMLAttributeNode): void {
@@ -154,7 +158,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     if (!read) return
 
     this.addOffense(
-      `\`${read}\` reads a state inside an interpolated attribute that mixes other dynamic parts. Give the state its own attribute or its own output, since a state write cannot supply the other values.`,
+      `\`${read}\` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values. Give the state its own attribute, or its own output outside this one.`,
       node.location,
     )
   }
@@ -170,6 +174,8 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (this.booleanAttribute) {
       const prism = node.prismNode
+
+      if (this.checkPresenceRead(expression, node)) return
 
       if (prism) this.classifyPredicate(prism, names)
 
@@ -272,7 +278,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (stateDriven) {
         this.addOffense(
-          `\`${this.sliceOf(predicate)}\` sits in a state-driven conditional but reads no state. Move it into its own conditional, or read a state in this arm, since the client resolves every arm itself.`,
+          `\`${this.sliceOf(predicate)}\` sits in a state-driven conditional but reads no state. The client resolves every arm, so an arm it cannot answer would never be chosen. Read a state in this arm, or move this branch into its own conditional.`,
           this.locationOf(predicate),
         )
       }
@@ -308,10 +314,15 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (left === "state" || right === "state") {
         const server = left === "state" ? predicate.right : predicate.left
+        const reader = left === "state" ? predicate.left : predicate.right
+        const read = names.find(candidate => mentionsAnyState(this.sliceOf(reader), [candidate]))
+        const reads = read ? `the state \`${read}\`` : "a state"
+        const joiner = type === "AndNode" ? "&&" : "||"
+        const offending = this.sliceOf(server)
 
         this.addOffense(
-          `\`${this.sliceOf(predicate)}\` combines a state with \`${this.sliceOf(server)}\`, which the client cannot evaluate. Split the server condition into its own conditional, or compute it into a second state set from app code.`,
-          this.locationOf(predicate),
+          `\`${offending}\` is server Ruby inside a condition that also reads ${reads}. The client resolves each side of \`${joiner}\` itself and has no value for this one. Move \`${offending}\` into its own conditional around this one, or declare a state for it and set it from app code.`,
+          this.locationOf(server),
         )
 
         return "reported"
@@ -340,7 +351,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (!transformApplies(transformCall.transform, kind)) {
         this.addOffense(
-          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${transformCall.name}\` with \`${transformCall.transform}\`. Only ${STATE_TRANSFORMS[transformCall.transform].only} can be read with \`${transformCall.transform}\`, so compare \`${transformCall.name}\` itself instead.`,
+          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${transformCall.name}\` with \`${transformCall.transform}\`. Only ${STATE_TRANSFORMS[transformCall.transform].only} can be read with \`${transformCall.transform}\`. Compare \`${transformCall.name}\` itself instead, like \`${transformCall.name} == ${declaration.defaultSource}\`.`,
           this.locationOf(predicate),
         )
 
@@ -360,7 +371,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (!predicateAnswers(call.predicate, kind)) {
         this.addOffense(
-          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.predicate}\`. Only ${STATE_PREDICATES[call.predicate].only} can be read with \`${call.predicate}\`, so compare \`${call.name}\` to a literal instead.`,
+          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.predicate}\`. Only ${STATE_PREDICATES[call.predicate].only} can be read with \`${call.predicate}\`. Compare \`${call.name}\` to a literal instead, or declare it as ${kindWithArticle(STATE_PREDICATES[call.predicate].kinds?.[0] ?? "seeded")} state.`,
           this.locationOf(predicate),
         )
 
@@ -389,7 +400,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!transformApplies(call.transform, kind)) {
           this.addOffense(
-            `\`${this.sliceOf(side)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.transform}\`. Only ${STATE_TRANSFORMS[call.transform].only} can be read with \`${call.transform}\`, so compare \`${call.name}\` itself instead.`,
+            `\`${this.sliceOf(side)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.transform}\`. Only ${STATE_TRANSFORMS[call.transform].only} can be read with \`${call.transform}\`. Compare \`${call.name}\` itself instead, like \`${call.name} == ${declaration.defaultSource}\`.`,
             this.locationOf(side),
           )
 
@@ -404,7 +415,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (ordered && (leftReturns !== "integer" || rightReturns !== "integer")) {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` orders the ${leftTransform.transform} of the state \`${leftTransform.name}\` against the ${rightTransform.transform} of the state \`${rightTransform.name}\`. Ordering compares numbers, so both sides have to be Integers.`,
+            `\`${this.sliceOf(predicate)}\` orders the ${leftTransform.transform} of the state \`${leftTransform.name}\` against the ${rightTransform.transform} of the state \`${rightTransform.name}\`. Ordering compares numbers. Make both sides Integers, or compare them with \`==\` instead.`,
             this.locationOf(predicate),
           )
 
@@ -413,7 +424,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!ordered && leftReturns !== rightReturns) {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the ${leftTransform.transform} of the state \`${leftTransform.name}\` with the ${rightTransform.transform} of the state \`${rightTransform.name}\`, so it can never match. Compare values of the same kind.`,
+            `\`${this.sliceOf(predicate)}\` compares the ${leftTransform.transform} of the state \`${leftTransform.name}\` with the ${rightTransform.transform} of the state \`${rightTransform.name}\`, so it can never match. Compare values of the same kind, or redeclare one of the two states.`,
             this.locationOf(predicate),
           )
 
@@ -436,7 +447,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
           if (otherKind !== "seeded" && otherKind !== returns) {
             this.addOffense(
-              `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` with the ${capitalize(otherKind)} state \`${otherTransform!.name}\`, so it can never match. Compare values of the same kind.`,
+              `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` with the ${capitalize(otherKind)} state \`${otherTransform!.name}\`, so it can never match. Compare values of the same kind, or redeclare one of the two states.`,
               this.locationOf(predicate),
             )
 
@@ -450,7 +461,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!otherKind) {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` against something that is not a literal or another declared state. Compare against a literal, since the client resolves a comparison by lookup.`,
+            `\`${this.sliceOf(predicate)}\` compares the ${transformed.transform} of the state \`${transformed.name}\` against \`${this.sliceOf(other)}\`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side. Compare it to a literal instead, or declare a state for \`${this.sliceOf(other)}\` and set it from app code.`,
             this.locationOf(predicate),
           )
 
@@ -481,7 +492,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (ordered && leftKind !== "seeded" && rightKind !== "seeded" && (leftKind !== "integer" || rightKind !== "integer")) {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` orders the states \`${leftRead.name}\` and \`${rightRead.name}\`. Ordering compares numbers, so both have to be Integer states.`,
+            `\`${this.sliceOf(predicate)}\` orders the ${capitalize(leftKind)} state \`${leftRead.name}\` against the ${capitalize(rightKind)} state \`${rightRead.name}\`. Ordering compares numbers. Make both sides Integers, or compare them with \`==\` instead.`,
             this.locationOf(predicate),
           )
 
@@ -490,7 +501,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!ordered && leftKind !== "seeded" && rightKind !== "seeded" && leftKind !== rightKind) {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(leftKind)} state \`${leftRead.name}\` with the ${capitalize(rightKind)} state \`${rightRead.name}\`, so it can never match. Compare states of one kind, or redeclare one.`,
+            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(leftKind)} state \`${leftRead.name}\` with the ${capitalize(rightKind)} state \`${rightRead.name}\`, so it can never match. Compare values of the same kind, or redeclare one of the two states.`,
             this.locationOf(predicate),
           )
 
@@ -511,7 +522,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
           const example = kind === "seeded" ? "" : `, like \`${declaration.name} == ${declaration.defaultSource}\``
 
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the state \`${declaration.name}\` against something that is not a literal or another declared state. Compare against a literal${example}, since the client resolves a comparison by lookup.`,
+            `\`${this.sliceOf(predicate)}\` compares the state \`${declaration.name}\` against \`${this.sliceOf(comparand)}\`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side. Compare \`${declaration.name}\` to a literal${example}, or declare a state for \`${this.sliceOf(comparand)}\` and set it from app code.`,
             this.locationOf(predicate),
           )
 
@@ -522,7 +533,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (ordered && kind !== "seeded" && kind !== "integer") {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` orders the ${capitalize(kind)} state \`${declaration.name}\`. Ordering compares numbers, so only an Integer state takes \`${operator}\`.`,
+            `\`${this.sliceOf(predicate)}\` orders the ${capitalize(kind)} state \`${declaration.name}\`. Ordering compares numbers. Declare \`${declaration.name}\` as an Integer, like \`(${declaration.name}: 0)\`, or compare it with \`==\` instead.`,
             this.locationOf(predicate),
           )
 
@@ -531,7 +542,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (ordered && comparandKind !== "integer") {
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` orders the state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal. Ordering compares numbers, so the comparand has to be an Integer.`,
+            `\`${this.sliceOf(predicate)}\` orders the state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal. Ordering compares numbers. Compare \`${declaration.name}\` against an Integer literal, like \`${declaration.name} > 0\`.`,
             this.locationOf(predicate),
           )
 
@@ -542,7 +553,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
           const consequence = operator === "==" ? "so it can never match" : "so it always matches"
 
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal, ${consequence}. Compare against a ${capitalize(kind)}, or redeclare the state.`,
+            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal, ${consequence}. Compare it against ${kindWithArticle(kind)} literal, like \`${declaration.name} == ${declaration.defaultSource}\`.`,
             this.locationOf(predicate),
           )
 
@@ -557,7 +568,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       const name = names.find(candidate => mentionsAnyState(this.sliceOf(predicate), [candidate])) ?? names[0]
 
       this.addOffense(
-        context === "value" ? this.computedValueOffense(this.sliceOf(predicate), name) : `\`${this.sliceOf(predicate)}\` computes with the state \`${name}\`, and the client cannot run Ruby to pick the branch. ${this.conditionAdvice(name)}`,
+        context === "value" ? this.computedValueOffense(this.sliceOf(predicate), name) : `\`${this.sliceOf(predicate)}\` computes with the state \`${name}\`. The client resolves each condition itself and cannot run Ruby to pick a branch. ${this.conditionAdvice(name)}`,
         this.locationOf(predicate),
       )
 
@@ -567,8 +578,26 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     return "other"
   }
 
+  private checkPresenceRead(expression: string, node: ERBContentNode): boolean {
+    const bare = bareReadName(expression)
+    const declaration = bare ? this.resolve(bare) : null
+
+    if (!declaration) return false
+
+    const kind = declaredKind(declaration)
+
+    if (FALSY_STATE_KINDS.has(kind)) return false
+
+    this.addOffense(
+      `\`${this.attributeName}="<%= ${expression} %>"\` reads the ${capitalize(kind)} state \`${bare}\` as a presence. Only \`nil\` and \`false\` are falsy in Ruby, so the attribute could never turn off. Compare \`${bare}\` to a literal, like \`${bare} == ${declaration.defaultSource}\`, or declare it as a boolean.`,
+      node.location,
+    )
+
+    return true
+  }
+
   private computedValueOffense(expression: string, name: string): string {
-    return `\`${expression}\` computes with the state \`${name}\`, and the client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`
+    return `\`${expression}\` computes with the state \`${name}\`. The client cannot run Ruby to keep the result current. Show the value with \`<%= ${name} %>\`, or declare a second state for the computed answer and set it from app code.`
   }
 
   private checkCase(prism: PrismNode): void {
@@ -586,10 +615,11 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     const declaration = bare && !bare.predicate ? this.resolve(bare.name) : null
 
     if (!declaration) {
-      const example = bare ? `, like \`case ${bare.name}\`` : ""
+      const mentioned = bare?.name ?? names.find(candidate => mentionsAnyState(subjectText, [candidate]))
+      const example = mentioned ? `, like \`case ${mentioned}\`` : ""
 
       this.addOffense(
-        `\`case ${subjectText}\` does not switch on a bare state read. Write the state alone${example}, or compute the value into its own state.`,
+        `\`case ${subjectText}\` switches on something other than a bare state read. The client resolves a \`case\` by looking the state up. Switch on the state itself${example}.`,
         this.locationOf(subject),
       )
 
@@ -608,7 +638,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!comparandKind) {
           this.addOffense(
-            `\`when ${list}\` on the state \`${declaration.name}\` has a comparand that is not a literal. List literals, like \`when "name", "date"\`, since the client resolves a \`when\` by lookup.`,
+            `\`when ${list}\` on the state \`${declaration.name}\` has a comparand that is not a literal. The client resolves a \`when\` by lookup. List literals instead, like \`when ${declaration.defaultSource}\`.`,
             this.locationOf(condition),
           )
 
@@ -617,7 +647,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (kind !== "seeded" && comparandKind !== "nil" && comparandKind !== kind) {
           this.addOffense(
-            `\`when ${list}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against a literal of another type, so it can never match. Use ${capitalize(kind)} literals in every arm.`,
+            `\`when ${list}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against a literal of another type, so it can never match. Use ${kindWithArticle(kind)} literal in every arm, like \`when ${declaration.defaultSource}\`.`,
             this.locationOf(condition),
           )
 
@@ -631,15 +661,13 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     const declaration = this.resolve(name)
     const kind = declaration ? declaredKind(declaration) : "seeded"
 
+    if (!declaration) return "Read the state bare, or compare it to a literal."
+
     if (kind === "boolean") {
-      return `Read it bare, \`<% if ${name} %>\`, or as \`${name}?\`.`
+      return `Read \`${name}\` bare, like \`<% if ${name} %>\`, or as \`${name}?\`.`
     }
 
-    if ((kind === "string" || kind === "integer" || kind === "symbol") && declaration) {
-      return `Read it bare, \`<% if ${name} %>\`, or compare it to a literal, \`${name} == ${declaration.defaultSource}\`.`
-    }
-
-    return `Read it bare, \`<% if ${name} %>\`, or compare it to a literal.`
+    return `Read \`${name}\` bare, like \`<% if ${name} %>\`, or compare it to a literal, like \`${name} == ${declaration.defaultSource}\`.`
   }
 
   private resolve(name: string): StateDeclaration | undefined {

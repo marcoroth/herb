@@ -696,7 +696,7 @@ module Engine
 
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% if sort != 3 %>x<% end %></div>",
-          "`sort != 3` compares the String state `sort` against an Integer literal, so it can never match."
+          "`sort != 3` compares the String state `sort` against an Integer literal, so it always matches."
         )
       end
 

@@ -689,7 +689,9 @@ module Herb
             end
 
             unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded
-              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, so it can never match.", anchor.locate(literal), :compare, suggestion: "Compare it against #{kind_article(read.kind)} literal, like `#{read.name} == #{states.fetch(read.name).default}`.")
+              consequence = operator == "!=" ? "so it always matches" : "so it can never match"
+
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, #{consequence}.", anchor.locate(literal), :compare, suggestion: "Compare it against #{kind_article(read.kind)} literal, like `#{read.name} == #{states.fetch(read.name).default}`.")
             end
 
             Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil, transform: read.transform, against_transform: nil)
