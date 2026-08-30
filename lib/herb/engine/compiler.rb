@@ -431,9 +431,9 @@ module Herb
 
         check_for_escaped_erb_tag!(opening)
 
-        if !skip_comment_check && erb_comment?(opening)
+        if !skip_comment_check && erb_omitted?(opening)
           unless @trim
-            keep_line_count(node)
+            keep_span_line_count(node)
 
             return
           end
@@ -448,12 +448,10 @@ module Herb
             save_pending_leading_whitespace!(leading_space) if !leading_space.empty? && follows_newline
           end
 
-          keep_line_count(node, extra: swallows_newline ? 1 : 0)
+          keep_span_line_count(node, extra: swallows_newline ? 1 : 0)
 
           return
         end
-
-        return if erb_custom_opening?(opening)
 
         code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 
@@ -466,6 +464,16 @@ module Herb
         end
 
         keep_line_count(node, at: code_index)
+      end
+
+      #: (untyped, ?extra: Integer) -> void
+      def keep_span_line_count(node, extra: 0)
+        lines = node.content.value.count("\n") + extra
+
+        return unless lines.positive?
+
+        @padding_before ||= Hash.new(0)
+        @padding_before[@tokens.length] += lines
       end
 
       def keep_line_count(node, extra: 0, at: nil)
@@ -768,11 +776,10 @@ module Herb
 
       #: (untyped) -> bool
       def newline_follows?(node)
-        return true unless @source_lines
-
         position = node.tag_closing&.location&.end || node.location&.end
 
-        return true unless position
+        return false if position && !position.line.positive?
+        return true unless position && @source_lines
 
         line = @source_lines[position.line - 1]
 

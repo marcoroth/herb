@@ -65,6 +65,10 @@ module Engine
       test "reaches into a conditional" do
         instrumented("<% if admin? %><%= secret %><% end %>")
       end
+
+      test "wraps an output tag in a template that ends with a blank line" do
+        instrumented("<div><%= title %></div>\n\n")
+      end
     end
 
     describe "what it must not change" do

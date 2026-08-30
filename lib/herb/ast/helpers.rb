@@ -53,6 +53,11 @@ module Herb
       end
 
       #: (String) -> bool
+      def erb_omitted?(opening)
+        erb_comment?(opening) || erb_custom_opening?(opening)
+      end
+
+      #: (String) -> bool
       def erb_output?(opening)
         opening.include?("=") && !erb_comment?(opening)
       end
@@ -63,7 +68,9 @@ module Herb
 
         close_tag = node.close_tag
 
-        close_tag if close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+        return unless close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+
+        close_tag
       end
 
       #: (Herb::AST::Node?) -> bool
