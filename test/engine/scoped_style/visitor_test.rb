@@ -109,7 +109,7 @@ module Engine
       assert_equal [[".title { color: red; }", "[#{scope}]"]], transform.calls
     end
 
-    test "takes the scoped attribute back out with the space that separated it" do
+    test "swaps the scoped attribute for the anchor that says what it narrowed to" do
       assert_compiled_snapshot(%(<style scoped>.a { color: red; }</style><h1>Hi</h1>), options)
     end
 

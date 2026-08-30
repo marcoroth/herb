@@ -71,6 +71,8 @@ module Herb
 
         SCOPED_ATTRIBUTE: String
 
+        ANCHOR_ATTRIBUTE: String
+
         UNSCOPABLE_ELEMENTS: Array[String]
 
         OPEN_TAGS: Array[untyped]
@@ -155,6 +157,12 @@ module Herb
 
         # : (String, String) -> Herb::AST::ERBContentNode
         def register_node: (String, String) -> Herb::AST::ERBContentNode
+
+        # : (String) -> Herb::AST::HTMLAttributeNode
+        def anchor_node: (String) -> Herb::AST::HTMLAttributeNode
+
+        # : (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode, Herb::AST::HTMLAttributeNode) -> void
+        def replace_attribute: (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode, Herb::AST::HTMLAttributeNode) -> void
 
         # : (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode) -> void
         def remove_attribute: (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode) -> void

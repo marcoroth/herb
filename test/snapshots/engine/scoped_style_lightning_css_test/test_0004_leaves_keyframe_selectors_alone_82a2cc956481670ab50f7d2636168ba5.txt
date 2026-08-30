@@ -2,5 +2,5 @@
 source: "Engine::ScopedStyleLightningCSSTest#test_0004_leaves keyframe selectors alone"
 input: "{source: \"<style scoped>@keyframes spin { from { opacity: 0 } } .a { animation: spin 1s }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
 ---
-_buf = ::String.new; _buf << '<style>@keyframes spin{0%{opacity:0}}.a[data-herb-scope-2940ba8a]{animation:1s spin}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">@keyframes spin{0%{opacity:0}}.a[data-herb-scope-2940ba8a]{animation:1s spin}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
 _buf.to_s

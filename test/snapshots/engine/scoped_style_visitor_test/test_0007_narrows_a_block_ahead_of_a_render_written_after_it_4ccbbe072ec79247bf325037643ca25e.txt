@@ -2,5 +2,5 @@
 source: "Engine::ScopedStyleVisitorTest#test_0007_narrows a block ahead of a render written after it"
 input: "{source: \"<style scoped>.a { color: red; }</style><div>Hi</div><%= render \\\"posts/plain\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>], project_path: \"test/fixtures/scoped_styles\"}}"
 ---
-_buf = ::String.new; _buf << '<style>.a { color: red; }/* narrowed */</style><div data-herb-scope-2940ba8a>Hi</div>'.freeze; _buf << (render "posts/plain").to_s;
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.a { color: red; }/* narrowed */</style><div data-herb-scope-2940ba8a>Hi</div>'.freeze; _buf << (render "posts/plain").to_s;
 _buf.to_s

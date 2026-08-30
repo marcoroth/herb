@@ -2,6 +2,6 @@
 source: "Engine::ScopedStyleVisitorTest#test_0005_puts it on every element it wrote and none it rendered"
 input: "{source: \"<style scoped>.a { color: red; }</style>\\n<div class=\\\"card\\\"><h1 class=\\\"title\\\">Hi</h1><%= render \\\"posts/plain\\\" %></div>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>], project_path: \"test/fixtures/scoped_styles\"}}"
 ---
-_buf = ::String.new; _buf << '<style>.a { color: red; }/* narrowed */</style>
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.a { color: red; }/* narrowed */</style>
 <div class="card" data-herb-scope-2940ba8a><h1 class="title" data-herb-scope-2940ba8a>Hi</h1>'.freeze; _buf << (render "posts/plain").to_s; _buf << '</div>'.freeze;
 _buf.to_s

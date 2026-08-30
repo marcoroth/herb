@@ -2,7 +2,7 @@
 source: "Engine::ScopedStyleVisitorTest#test_0018_leaves a partial that has no scoped block of its own unattributed"
 input: "{source: \"<style scoped>.page { padding: 1rem; }</style><section class=\\\"page\\\"><%= render \\\"posts/plain\\\" %></section>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::InlineRender::Visitor>, #<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>], project_path: \"test/fixtures/scoped_styles\"}}"
 ---
-_buf = ::String.new; _buf << '<style>.page { padding: 1rem; }/* narrowed */</style><section class="page" data-herb-scope-2940ba8a>'.freeze; ->() {; _buf << '<span class="plain">Plain</span>
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.page { padding: 1rem; }/* narrowed */</style><section class="page" data-herb-scope-2940ba8a>'.freeze; ->() {; _buf << '<span class="plain">Plain</span>
 '.freeze; }.call() 
  _buf << '</section>'.freeze;
 _buf.to_s
