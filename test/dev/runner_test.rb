@@ -37,10 +37,10 @@ module Dev
           parse,
           current_content,
           previous_content,
+          {},
           Set.new,
           websocket,
-          "12:00:00",
-          "index.html.erb"
+          "12:00:00"
         )
       end
 
@@ -163,6 +163,96 @@ module Dev
     ensure
       FileUtils.rm_rf(directory)
       Herb.reset_configuration!
+    end
+
+    test "prints the diagnostic with its source context and suggestion" do
+      output, = capture_io do
+        Herb::Dev::Runner.new.send(
+          :broadcast_errors,
+          "/app/views/posts/index.html.erb",
+          "app/views/posts/index.html.erb",
+          Herb.parse(BROKEN, strict: true, analyze: true),
+          BROKEN,
+          "",
+          {},
+          Set.new,
+          FakeWebSocket.new,
+          "12:00:00"
+        )
+      end
+
+      expected = [
+        "    12:00:00 \u2717 error  \u2718 [MissingClosingTagError] Opening tag `<form>` at (2:3) doesn't have a matching closing tag `</form>` in the same scope.",
+        "",
+        "      app/views/posts/index.html.erb:2:3:",
+        "        2 \u2502   <form>",
+        "          \u2575   ~~~~~~",
+        "",
+        "    Add the closing tag, or make it self-closing.",
+        "",
+        ""
+      ].join("\n")
+
+      assert_equal expected, output
+    end
+
+    test "a repeated event for unchanged content reports the error only once" do
+      runner = Herb::Dev::Runner.new
+      websocket = FakeWebSocket.new
+      file_states = { "/app/views/posts/index.html.erb" => "<div>\n</div>\n" }
+      errored_files = Set.new
+      directory = Dir.mktmpdir("herb_dev_runner_test")
+      path = File.join(directory, "index.html.erb")
+
+      File.write(path, BROKEN)
+      file_states[path] = "<div>\n</div>\n"
+
+      first, = capture_io do
+        runner.send(:handle_file_change, path, "index.html.erb", file_states, errored_files, websocket, "12:00:00", "index.html.erb")
+      end
+
+      second, = capture_io do
+        runner.send(:handle_file_change, path, "index.html.erb", file_states, errored_files, websocket, "12:00:01", "index.html.erb")
+      end
+
+      refute_equal "", first
+      assert_equal "", second
+    ensure
+      FileUtils.rm_rf(directory)
+    end
+
+    test "an error already reported is not repeated when a new one joins it" do
+      broken_once = "<div>\n  <form>\n</div>\n"
+      broken_twice = "<div>\n  <form>\n  <span>\n</div>\n"
+
+      output, = capture_io do
+        Herb::Dev::Runner.new.send(
+          :broadcast_errors,
+          "/app/views/posts/index.html.erb",
+          "app/views/posts/index.html.erb",
+          Herb.parse(broken_twice, strict: true, analyze: true),
+          broken_twice,
+          broken_once,
+          {},
+          Set.new,
+          FakeWebSocket.new,
+          "12:00:00"
+        )
+      end
+
+      expected = [
+        "    12:00:00 \u2717 error  \u2718 [MissingClosingTagError] Opening tag `<span>` at (3:3) doesn't have a matching closing tag `</span>` in the same scope.",
+        "",
+        "      app/views/posts/index.html.erb:3:3:",
+        "        3 \u2502   <span>",
+        "          \u2575   ~~~~~~",
+        "",
+        "    Add the closing tag, or make it self-closing.",
+        "",
+        ""
+      ].join("\n")
+
+      assert_equal expected, output
     end
   end
 end
