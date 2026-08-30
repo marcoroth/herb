@@ -15,12 +15,14 @@ export { MIRRORED_COMPARISONS, NEGATED_COMPARISONS, ORDERED_COMPARISONS, COMPARI
 export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, stateKindArticle } from "./state-kinds"
 
 export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
+export { isMarker, parseMarker } from "./markup/markers"
 
 export type { Clause } from "./grammar/parsing"
-export type { ActionName, ActionSchema, HerbAttribute } from "./grammar/attributes"
 export type { StatePredicate } from "./state-predicates"
 export type { StateTransform } from "./state-transforms"
 export type { StateDefaultKind, StateValueKind } from "./state-kinds"
+export type { ActionName, ActionSchema, HerbAttribute } from "./grammar/attributes"
+export type { MarkerData, RegionOpenMarker, RegionCloseMarker } from "./markup/markers"
 
 import { STATE_PREDICATES } from "./state-predicates"
 import { STATE_TRANSFORMS } from "./state-transforms"

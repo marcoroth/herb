@@ -35,7 +35,7 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
-      exclude: ["**/*.xml", "**/*.xml.erb"]
+      exclude: ["**/*.xml", "**/*.xml.erb"],
     }
   }
 

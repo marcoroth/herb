@@ -1,6 +1,6 @@
 import picomatch from "picomatch"
 
-import { DEFAULT_FRAMEWORK, Location, semverGreaterThan } from "@herb-tools/core"
+import { DEFAULT_FRAMEWORK, Location, ParseResult, ParserOptions, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
@@ -8,14 +8,20 @@ import { findNodeByLocation } from "./utils/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
+import { domToAST, sourcePathsIn } from "./browser/dom-to-ast.js"
+import { browserRules } from "./browser/rules.js"
+
+import type { DOMNodeLike } from "./browser/dom-to-ast.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
-import { DEFAULT_RULE_CONFIG } from "./types.js"
+import { DEFAULT_RULE_CONFIG, DEFAULT_ENVIRONMENT } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config/schema"
 
-import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework } from "./types.js"
-import type { ParseResult, LexResult, HerbBackend, ParserOptions } from "@herb-tools/core"
+import type { DocumentNode } from "@herb-tools/core"
+import type { Environment } from "@herb-tools/config"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework, FullRuleConfig } from "./types.js"
+import type { LexResult, HerbBackend } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
 export interface LinterOptions {
@@ -324,6 +330,25 @@ export class Linter {
   }
 
   /**
+   * Whether a rule answers in the environment it is being run in.
+   *
+   * The rule says where it applies, config overrides that, and a rule that says nothing runs only
+   * where templates are read from source. That last part is where this differs from
+   * `appliesToFramework`, which treats silence as "everywhere": most rules have never considered a
+   * rendered page, so silence there has to mean no.
+   */
+  appliesTo(rule: { ruleName: string; defaultConfig?: FullRuleConfig }, environment: Environment | undefined): boolean {
+    return this.appliesToEnvironment(rule as Rule, environment)
+  }
+
+  protected appliesToEnvironment(rule: Rule, environment: Environment | undefined): boolean {
+    const userEnvironments = this.config?.linter?.rules?.[rule.ruleName]?.environments
+    const environments = userEnvironments ?? rule.defaultConfig?.environments ?? [DEFAULT_ENVIRONMENT]
+
+    return environments.includes(environment ?? DEFAULT_ENVIRONMENT)
+  }
+
+  /**
    * The parser options a rule is run with.
    *
    * A rule asking for `action_view_helpers` is saying it wants to see Action
@@ -363,6 +388,10 @@ export class Linter {
     const ruleName = rule.ruleName
 
     if (!this.onlyRules && !this.allRules && !this.appliesToFramework(rule, context?.framework)) {
+      return []
+    }
+
+    if (!this.appliesToEnvironment(rule, context?.environment)) {
       return []
     }
 
@@ -446,7 +475,10 @@ export class Linter {
 
     if (ignoreDisableComments) {
       for (const offense of ruleOffenses) {
-        const line = offense.location.start.line
+        const line = offense.location?.start?.line ?? null
+
+        if (line === null) continue
+
         const disabledRules = herbDisableCache?.get(line) || []
 
         if (disabledRules.includes(ruleName) || disabledRules.includes("all")) {
@@ -458,7 +490,13 @@ export class Linter {
     }
 
     for (const offense of ruleOffenses) {
-      const line = offense.location.start.line
+      const line = offense.location?.start?.line ?? null
+
+      if (line === null) {
+        kept.push(offense)
+        continue
+      }
+
       const disabledRules = herbDisableCache?.get(line) || []
 
       if (disabledRules.includes(ruleName) || disabledRules.includes("all")) {
@@ -485,10 +523,14 @@ export class Linter {
 
   /**
    * Lint source code using Parser/AST, Lexer, and Source rules.
-   * @param source - The source code to lint
+   * @param source - The source code to lint, or a DOM node to lint as a rendered page
    * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
-  lint(source: string, context?: Partial<LintContext>): LintResult {
+  lint(source: string | DOMNodeLike, context?: Partial<LintContext>): LintResult {
+    if (typeof source !== "string") {
+      return this.lintElement(source, context)
+    }
+
     this.offenses = []
     this.parseCache.clear()
 
@@ -541,6 +583,7 @@ export class Linter {
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework,
+      environment: context?.environment ?? this.backendEnvironment,
       herb: context?.herb ?? this.herb
     }
 
@@ -605,6 +648,109 @@ export class Linter {
     }
 
     return result
+  }
+
+  /**
+   * The environment a backend puts the linter in, when it is one that says so.
+   *
+   * `HerbDOMBackend` parses with the browser, so a tree it produced carries what a DOM carries and
+   * not what a template does. Rules that have not said they answer on a rendered page would be
+   * reading locations that are not there, whether the markup arrived as a string or as an element.
+   */
+  protected get backendEnvironment(): Environment | undefined {
+    return (this.herb as Partial<{ lintEnvironment: Environment }>).lintEnvironment
+  }
+
+  /**
+   * Lints what the browser built for a page, after every template behind it has run.
+   *
+   * Takes anything the DOM calls a node: a `Document`, a `DocumentFragment`, or a single element
+   * such as `document.body`. Both the rules that read an AST and the rules that can only be
+   * answered against a live DOM run, each one filtered by the environment it declares.
+   *
+   *     const linter = Linter.from(new HerbDOMBackend())
+   *
+   *     linter.lintElement(document.body)
+   *
+   * `lint` accepts the same thing, so `linter.lint(document.body)` reaches here too.
+   *
+   * An offense comes back carrying the template it was written in whenever the element it points
+   * at was stamped, or sits inside a region the engine marked.
+   */
+  lintElement(root: DOMNodeLike, context?: Partial<LintContext>): LintResult {
+    const document = domToAST(root)
+    const result = this.lintDocument(document, context)
+    const sources = sourcePathsIn(document)
+
+    const offenses = result.offenses.map(offense => {
+      const file = sources.get(offense.location)
+
+      return file ? { ...offense, file } : offense
+    })
+
+    for (const ruleClass of browserRules) {
+      const rule = new ruleClass()
+
+      if (!this.appliesTo(rule, context?.environment ?? "browser")) continue
+
+      for (const offense of rule.check(root, context)) {
+        offenses.push({ ...offense, severity: offense.severity ?? "error" })
+      }
+    }
+
+    return {
+      ...result,
+      offenses,
+      errors: offenses.filter((offense) => offense.severity === "error").length,
+      warnings: offenses.filter((offense) => offense.severity === "warning").length,
+      info: offenses.filter((offense) => offense.severity === "info").length,
+      hints: offenses.filter((offense) => offense.severity === "hint").length,
+    }
+  }
+
+  /**
+   * Lints a document that did not come from source text.
+   *
+   * A tree built from a live DOM has no source behind it, so the parts of `lint` that read one are
+   * left out: there are no `herb:disable` comments to honour, no lexing, and no autofix. Only
+   * parser rules run, and the rules that can only be answered against a live DOM are not among
+   * them, so `lintElement` is what a caller holding a DOM wants.
+   *
+   * Positions are whatever the tree carries. A tree from `domToAST` has the ones its stamps named,
+   * and one built by hand has none.
+   */
+  lintDocument(document: DocumentNode, context?: Partial<LintContext>): LintResult {
+    this.offenses = []
+
+    const parseResult = new ParseResult(document, "", [], [], new ParserOptions(), null)
+
+    const fullContext: Partial<LintContext> = {
+      ...context,
+      validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
+      framework: context?.framework ?? this.config?.framework,
+      environment: context?.environment ?? "browser",
+      herb: context?.herb ?? this.herb
+    }
+
+    for (const ruleClass of this.rules) {
+      if (!this.isParserRuleClass(ruleClass)) continue
+
+      const rule = new ruleClass() as ParserRule
+      const unboundOffenses = this.executeRule(ruleClass, rule, parseResult, null as unknown as LexResult, "", fullContext)
+
+      this.offenses.push(...this.bindSeverity(unboundOffenses, ruleClass.ruleName))
+    }
+
+    const offenses = this.offenses
+
+    return {
+      offenses,
+      errors: offenses.filter(offense => offense.severity === "error").length,
+      warnings: offenses.filter(offense => offense.severity === "warning").length,
+      info: offenses.filter(offense => offense.severity === "info").length,
+      hints: offenses.filter(offense => offense.severity === "hint").length,
+      ignored: 0
+    }
   }
 
   /**

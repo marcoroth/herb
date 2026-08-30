@@ -96,7 +96,8 @@ export class HTMLHeadOnlyElementsRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
-      exclude: ["**/*.xml", "**/*.xml.erb"]
+      exclude: ["**/*.xml", "**/*.xml.erb"],
+      environments: ["cli", "browser"],
     }
   }
 
