@@ -119,6 +119,7 @@ module Herb
 
     alias to_hash to_h
 
+    #: (?String?) -> String
     def to_ruby(compiled = nil)
       parts = [
         "message: #{message.inspect}",
