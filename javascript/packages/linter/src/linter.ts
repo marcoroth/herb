@@ -8,7 +8,7 @@ import { findNodeByLocation } from "./utils/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
-import { domToAST, sourcePathsIn } from "./browser/dom-to-ast.js"
+import { domToAST, sourcePathsIn, domNodesIn } from "./browser/dom-to-ast.js"
 import { browserRules } from "./browser/rules.js"
 
 import type { DOMNodeLike } from "./browser/dom-to-ast.js"
@@ -681,11 +681,15 @@ export class Linter {
     const document = domToAST(root)
     const result = this.lintDocument(document, context)
     const sources = sourcePathsIn(document)
+    const elements = domNodesIn(document)
 
     const offenses = result.offenses.map(offense => {
       const file = sources.get(offense.location)
+      const element = elements.get(offense.location)
 
-      return file ? { ...offense, file } : offense
+      if (!file && !element) return offense
+
+      return { ...offense, ...(file ? { file } : {}), ...(element ? { element } : {}) }
     })
 
     for (const ruleClass of browserRules) {
@@ -693,9 +697,7 @@ export class Linter {
 
       if (!this.appliesTo(rule, context?.environment ?? "browser")) continue
 
-      for (const offense of rule.check(root, context)) {
-        offenses.push({ ...offense, severity: offense.severity ?? "error" })
-      }
+      offenses.push(...this.bindSeverity(rule.check(root, context), ruleClass.ruleName, rule))
     }
 
     return {
@@ -765,17 +767,17 @@ export class Linter {
    * @param ruleName - Name of the rule that produced the offenses
    * @returns Array of offenses with severity bound
    */
-  protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string): LintOffense[] {
+  protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string, rule?: { defaultConfig?: FullRuleConfig }): LintOffense[] {
     const ruleClass = this.findRuleClass(ruleName)
 
-    if (!ruleClass) {
+    if (!ruleClass && !rule) {
       return unboundOffenses.map(offense => ({
         ...offense,
         severity: "error" as const
       }))
     }
 
-    const ruleInstance = new ruleClass()
+    const ruleInstance = rule ?? new ruleClass!()
     const defaultSeverityConfig = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
 
     const userRuleConfig = this.config?.linter?.rules?.[ruleName]

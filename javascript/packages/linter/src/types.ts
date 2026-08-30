@@ -4,6 +4,7 @@ import type { DiagnosticTag, HerbError, SourcePath } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
 import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
+import type { DOMNodeLike } from "./browser/dom-to-ast.js"
 import type { Framework, Environment, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
@@ -57,6 +58,8 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   renderedFrom?: AncestorChain
   /** The template the offense was written in */
   file?: SourcePath
+  /** The element the offense is about, when what was linted is a live DOM */
+  element?: DOMNodeLike
 }
 
 /**

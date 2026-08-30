@@ -20,6 +20,7 @@ export interface DOMAttributeLike {
 
 export interface DOMElementLike extends DOMNodeLike {
   tagName: string
+  localName: string
   attributes: ArrayLike<DOMAttributeLike>
   childNodes: ArrayLike<DOMNodeLike>
 }
@@ -65,9 +66,31 @@ function locationFrom(source: SourcePath | null): Location {
   return position ? new Location(position, position) : NO_LOCATION
 }
 
-function sourceOn(element: DOMElementLike): SourcePath | null {
+function attributeOn(element: DOMElementLike, name: string): string | null {
   for (const attribute of Array.from(element.attributes)) {
-    if (attribute.name === SOURCE_ATTRIBUTE) return SourcePath.parse(attribute.value)
+    if (attribute.name === name) return attribute.value
+  }
+
+  return null
+}
+
+function sourceOn(element: DOMElementLike): SourcePath | null {
+  const stamp = attributeOn(element, SOURCE_ATTRIBUTE)
+
+  return stamp === null ? null : SourcePath.parse(stamp)
+}
+
+export function sourcePathForElement(element: DOMNodeLike | null | undefined, projectPath: string | null = null): SourcePath | null {
+  let current: DOMNodeLike | null | undefined = element
+
+  while (current) {
+    if (current.nodeType === ELEMENT_NODE) {
+      const stamp = attributeOn(current as DOMElementLike, SOURCE_ATTRIBUTE)
+
+      if (stamp !== null) return SourcePath.parse(stamp, projectPath)
+    }
+
+    current = (current as { parentNode?: DOMNodeLike | null }).parentNode ?? null
   }
 
   return null
@@ -78,15 +101,23 @@ export function sourcePathOf(node: object): SourcePath | null {
 }
 
 export function sourcePathsIn(root: Node): Map<Location, SourcePath> {
-  const found = new Map<Location, SourcePath>()
+  return collect(root, sourcePathOf)
+}
+
+export function domNodesIn(root: Node): Map<Location, DOMNodeLike> {
+  return collect(root, (node) => (node as WithDOMNode)[DOM_NODE] ?? null)
+}
+
+function collect<T>(root: Node, of: (node: Node) => T | null): Map<Location, T> {
+  const found = new Map<Location, T>()
 
   const walk = (node: Node | null | undefined) => {
     if (!node) return
 
-    const source = sourcePathOf(node)
+    const value = of(node)
 
-    if (source && node.location) {
-      found.set(node.location, source)
+    if (value !== null && node.location) {
+      found.set(node.location, value)
     }
 
     for (const child of node.childNodes()) {

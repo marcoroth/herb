@@ -10,6 +10,19 @@ describe("html-head-only-elements in the browser", () => {
     expectNoOffenses(`<div><p>fine</p></div>`)
   })
 
+  test("passes for a scoped style block, which the page renders in the body on purpose", () => {
+    expectNoOffenses(`
+      <style data-herb-style-scoped="data-herb-scope-2940ba8a">.card[data-herb-scope-2940ba8a] { color: red }</style>
+      <div class="card" data-herb-scope-2940ba8a>Hi</div>
+    `)
+  })
+
+  test("fails for a style block the page rendered in the body with no scope behind it", () => {
+    expectError(`Element \`<style>\` must be placed inside the \`<head>\` tag.`)
+
+    assertOffenses(`<div>content</div><style>.card { color: red }</style>`)
+  })
+
   test("fails for a head-only element the page rendered in the body", () => {
     expectError(`Element \`<title>\` must be placed inside the \`<head>\` tag.`)
 
