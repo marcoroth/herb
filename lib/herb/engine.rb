@@ -290,7 +290,7 @@ module Herb
         trailing_newline = code.end_with?("\n")
         code_stripped = code.chomp
 
-        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ") && !trailing_newline
 
         @src << " " << code_stripped
         @src << "\n" if Helpers.comment?(code_stripped)
