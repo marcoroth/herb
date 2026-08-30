@@ -140,7 +140,7 @@ module Herb
         relative_path = relative_for(path)
 
         return handle_asset(path, relative_path) if @config.path_included?(relative_path, Assets::PATTERNS)
-        return if @config.path_excluded?(relative_path, @exclude_patterns)
+        return if @config.path_excluded?(relative_path, @exclude_patterns, @include_patterns)
         return unless @config.path_included?(relative_path, @include_patterns)
 
         event = normalize(raw.kind, path, relative_path)

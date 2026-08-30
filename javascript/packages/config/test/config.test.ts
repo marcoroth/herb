@@ -954,6 +954,97 @@ describe("@herb-tools/config", () => {
       expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "generated/output.html.erb")).toBe(false)
     })
 
+    test("a more specific files.include overrides a default exclude", () => {
+      const config = new Config("/project", {
+        files: {
+          include: ["**/*.html.erb", "vendor/keep/**/*.html.erb"],
+          exclude: ["vendor/**/*"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("vendor/keep/kept.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("vendor/skip/skipped.html.erb", "linter")).toBe(false)
+    })
+
+    test("files.include naming a default-excluded directory opts the whole tree back in", () => {
+      const config = new Config("/project", {
+        files: {
+          include: ["**/*.html.erb", "vendor/**/*.html.erb"],
+          exclude: ["vendor/**/*", "node_modules/**/*"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("vendor/gems/primer/button.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("node_modules/pkg/dep.html.erb", "linter")).toBe(false)
+    })
+
+    test("a broad files.include does not override excludes", () => {
+      const config = new Config("/project", {
+        files: {
+          include: ["**/*.html.erb"],
+          exclude: ["vendor/**/*", "node_modules/**/*"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("app/views/index.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("vendor/bundle/gem.html.erb", "linter")).toBe(false)
+      expect(config.isEnabledForPath("node_modules/pkg/dep.html.erb", "linter")).toBe(false)
+    })
+
+    test("files.include does not override a more specific exclude", () => {
+      const config = new Config("/project", {
+        files: {
+          include: ["app/views/**/*.html.erb"],
+          exclude: ["app/views/legacy/**/*"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("app/views/index.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("app/views/legacy/old.html.erb", "linter")).toBe(false)
+    })
+
+    test("files.include does not override an exclude that is not directory scoped", () => {
+      const config = new Config("/project", {
+        files: {
+          include: ["app/views/**/*.html.erb"],
+          exclude: ["**/*.generated.html.erb"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("app/views/index.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("app/views/index.generated.html.erb", "linter")).toBe(false)
+    })
+
+    test("files.include must override every matching exclude to win", () => {
+      const config = new Config("/project", {
+        files: {
+          include: ["vendor/keep/**/*.html.erb"],
+          exclude: ["vendor/**/*"]
+        },
+        linter: {
+          exclude: ["vendor/keep/legacy/**/*"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("vendor/keep/kept.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("vendor/keep/legacy/old.html.erb", "linter")).toBe(false)
+    })
+
+    test("a more specific linter.include overrides a files.exclude", () => {
+      const config = new Config("/project", {
+        files: {
+          exclude: ["vendor/**/*"]
+        },
+        linter: {
+          include: ["vendor/special/**/*"]
+        }
+      } as any)
+
+      expect(config.isEnabledForPath("vendor/special/file.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("vendor/bundle/file.html.erb", "linter")).toBe(false)
+      expect(config.isEnabledForPath("vendor/special/file.html.erb", "formatter")).toBe(false)
+    })
+
     test("rule.include can override parent-level excludes", () => {
       const configOptions: HerbConfigOptions = {
         files: {
@@ -1416,6 +1507,47 @@ describe("@herb-tools/config", () => {
       const files = await config.findFilesForTool("formatter", testDir)
 
       expect(files.sort()).toEqual([file1, file2].sort())
+    })
+
+    test("findFilesForTool walks into a directory a specific include opts back in", async () => {
+      const kept = createTestFile(testDir, "vendor/keep/kept.html.erb")
+      createTestFile(testDir, "vendor/skip/skipped.html.erb")
+      createTestFile(testDir, "node_modules/pkg/dep.html.erb")
+
+      const config = Config.fromObject({
+        files: { include: ["vendor/keep/**/*.html.erb"] }
+      } as HerbConfigOptions, { projectPath: testDir })
+
+      const files = await config.findFilesForTool("linter", testDir)
+
+      expect(files).toEqual([kept])
+    })
+
+    test("findFilesForTool resolves the override against the search directory", async () => {
+      const kept = createTestFile(testDir, "vendor/keep/kept.html.erb")
+      createTestFile(testDir, "vendor/skip/skipped.html.erb")
+
+      const config = Config.fromObject({
+        files: { include: ["vendor/keep/**/*.html.erb"] }
+      } as HerbConfigOptions, { projectPath: "/somewhere/else" })
+
+      const files = await config.findFilesForTool("linter", testDir)
+
+      expect(files).toEqual([kept])
+    })
+
+    test("findFilesForTool keeps pruning defaults for a broad include", async () => {
+      const kept = createTestFile(testDir, "app/views/index.html.erb")
+      createTestFile(testDir, "vendor/bundle/gem.html.erb")
+      createTestFile(testDir, "node_modules/pkg/dep.html.erb")
+
+      const config = Config.fromObject({
+        files: { include: ["**/*.html.erb"] }
+      } as HerbConfigOptions, { projectPath: testDir })
+
+      const files = await config.findFilesForTool("linter", testDir)
+
+      expect(files).toEqual([kept])
     })
 
     test("findFilesForLinter finds linter files", async () => {

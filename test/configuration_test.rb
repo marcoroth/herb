@@ -531,6 +531,120 @@ class ConfigurationTest < Minitest::Spec
     refute(files.any? { |f| f.end_with?("node_modules/pkg/excluded.html.erb") })
   end
 
+  test "user files.include naming a default-excluded directory opts the whole tree back in" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "gems", "primer"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "node_modules", "pkg"))
+    File.write(File.join(@temp_dir, "vendor", "gems", "primer", "button.html.erb"), "")
+    File.write(File.join(@temp_dir, "node_modules", "pkg", "dep.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("vendor/gems/primer/button.html.erb") })
+    refute(files.any? { |f| f.end_with?("node_modules/pkg/dep.html.erb") })
+
+    assert config.enabled_for_path?("vendor/gems/primer/button.html.erb", :linter)
+    refute config.enabled_for_path?("node_modules/pkg/dep.html.erb", :linter)
+  end
+
+  test "broad user files.include does not override default excludes" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "app", "views"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "node_modules", "pkg"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "bundle"))
+    File.write(File.join(@temp_dir, "app", "views", "index.html.erb"), "")
+    File.write(File.join(@temp_dir, "node_modules", "pkg", "dep.html.erb"), "")
+    File.write(File.join(@temp_dir, "vendor", "bundle", "gem.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("app/views/index.html.erb") })
+    refute(files.any? { |f| f.end_with?("node_modules/pkg/dep.html.erb") })
+    refute(files.any? { |f| f.end_with?("vendor/bundle/gem.html.erb") })
+
+    refute config.enabled_for_path?("node_modules/pkg/dep.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/bundle/gem.html.erb", :linter)
+  end
+
+  test "user files.include does not override a more specific user files.exclude" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "app/views/**/*.html.erb"
+        exclude:
+          - "app/views/legacy/**/*"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "app", "views", "legacy"))
+    File.write(File.join(@temp_dir, "app", "views", "index.html.erb"), "")
+    File.write(File.join(@temp_dir, "app", "views", "legacy", "old.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("app/views/index.html.erb") })
+    refute(files.any? { |f| f.end_with?("app/views/legacy/old.html.erb") })
+
+    refute config.enabled_for_path?("app/views/legacy/old.html.erb", :linter)
+  end
+
+  test "user files.include overrides a less specific user files.exclude" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "app/views/legacy/keep/**/*.html.erb"
+        exclude:
+          - "app/views/legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("app/views/legacy/keep/kept.html.erb", :linter)
+    refute config.enabled_for_path?("app/views/legacy/old.html.erb", :linter)
+  end
+
+  test "user files.include does not override an exclude that is not directory scoped" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "app/views/**/*.html.erb"
+        exclude:
+          - "**/*.generated.html.erb"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("app/views/index.html.erb", :linter)
+    refute config.enabled_for_path?("app/views/index.generated.html.erb", :linter)
+  end
+
+  test "user files.include must override every matching exclude to win" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*.html.erb"
+        exclude:
+          - "vendor/keep/legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("vendor/keep/kept.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/keep/legacy/old.html.erb", :linter)
+  end
+
   test "find_files_for_tool uses tool-specific patterns" do
     write_config(<<~YAML)
       linter:

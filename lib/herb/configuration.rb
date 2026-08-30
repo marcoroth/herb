@@ -29,6 +29,8 @@ module Herb
     DEFAULTS_PATH = File.expand_path("defaults.yml", __dir__ || __FILE__).freeze
     DEFAULTS = YAML.safe_load_file(DEFAULTS_PATH).freeze
 
+    GLOB_CHARACTERS = /[*?\[\]{}]/ #: Regexp
+
     attr_reader :config, :user_config, :config_path, :project_root, :misnamed_config_paths
 
     def initialize(project_path = nil)
@@ -87,14 +89,6 @@ module Herb
 
     def file_exclude_patterns
       files["exclude"] || DEFAULTS.dig("files", "exclude") || []
-    end
-
-    def user_file_include_patterns
-      @user_config.dig("files", "include") || []
-    end
-
-    def user_tool_include_patterns(tool)
-      @user_config.dig(tool.to_s, "include") || []
     end
 
     def parser
@@ -170,20 +164,7 @@ module Herb
     end
 
     def enabled_for_path?(path, tool)
-      tool_config = send(tool.to_s)
-      tool_include = tool_config["include"] || []
-      tool_exclude = tool_config["exclude"] || []
-
-      return !path_excluded?(path, tool_exclude) if include_override?(path, tool_include, user_file_include_patterns)
-
-      !path_excluded?(path, exclude_patterns_for(tool))
-    end
-
-    def include_override?(path, tool_include, user_includes)
-      return true if tool_include.any? && path_included?(path, tool_include)
-      return true if user_includes.any? && path_included?(path, user_includes)
-
-      false
+      !path_excluded?(path, exclude_patterns_for(tool), include_patterns_for(tool))
     end
 
     def linter_enabled_for_path?(path)
@@ -194,35 +175,51 @@ module Herb
       enabled_for_path?(path, :formatter)
     end
 
-    def path_excluded?(path, patterns)
-      patterns.any? { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) }
+    def path_excluded?(path, patterns, include_patterns = [])
+      matching_excludes = patterns.select { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) }
+      return false if matching_excludes.empty?
+
+      matching_includes = include_patterns.select { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) }
+      return true if matching_includes.empty?
+
+      matching_excludes.any? do |exclude_pattern|
+        matching_includes.none? { |include_pattern| include_overrides_exclude?(include_pattern, exclude_pattern) }
+      end
     end
 
     def path_included?(path, patterns)
       patterns.any? { |pattern| File.fnmatch?(pattern, path, File::FNM_PATHNAME) }
     end
 
+    def include_overrides_exclude?(include_pattern, exclude_pattern)
+      exclude_prefix = literal_prefix_segments(exclude_pattern)
+      return false if exclude_prefix.empty?
+
+      include_prefix = literal_prefix_segments(include_pattern)
+
+      include_prefix.length >= exclude_prefix.length && include_prefix.first(exclude_prefix.length) == exclude_prefix
+    end
+
+    def literal_prefix_segments(pattern)
+      pattern.split("/").take_while { |segment| !segment.match?(GLOB_CHARACTERS) }
+    end
+
     def find_files(search_path = nil)
-      collect_files(search_path, file_include_patterns, file_exclude_patterns, user_file_include_patterns)
+      collect_files(search_path, file_include_patterns, file_exclude_patterns)
     end
 
     def find_files_for_tool(tool, search_path = nil)
-      override_includes = user_file_include_patterns + user_tool_include_patterns(tool)
-      tool_exclude = send(tool.to_s)["exclude"] || []
-
-      collect_files(search_path, include_patterns_for(tool), exclude_patterns_for(tool), override_includes, tool_exclude)
+      collect_files(search_path, include_patterns_for(tool), exclude_patterns_for(tool))
     end
 
-    def collect_files(search_path, include_patterns, exclude_patterns, override_includes, override_excludes = [])
+    def collect_files(search_path, include_patterns, exclude_patterns)
       search_path ||= @project_root || @start_path
       expanded_path = File.expand_path(search_path.to_s)
 
       all_files = include_patterns.flat_map { |pattern| Dir[File.join(expanded_path, pattern)] }.uniq
 
       all_files.reject do |file|
-        relative = file.sub("#{expanded_path}/", "")
-        excludes = path_included?(relative, override_includes) ? override_excludes : exclude_patterns
-        path_excluded?(relative, excludes)
+        path_excluded?(file.sub("#{expanded_path}/", ""), exclude_patterns, include_patterns)
       end.sort
     end
 
