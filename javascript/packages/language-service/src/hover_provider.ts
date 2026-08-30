@@ -205,7 +205,7 @@ const SCOPED_STYLE_DOC = dedent(`
 
   \`\`\`html
   <style>
-    .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+    .title[data-herb-scope-1a2b3c4d] {
       color: red;
     }
   </style>
