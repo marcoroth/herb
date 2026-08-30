@@ -446,7 +446,7 @@ module Herb
         end
         return if erb_graphql?(opening)
 
-        code = ::Herb::Engine.strip_trailing_comment(node.content.value.strip)
+        code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 
         if erb_output?(opening)
           process_erb_output(node, opening, code)
@@ -732,7 +732,7 @@ module Herb
         if at_line_start?
           leading_space = extract_and_remove_leading_space!
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
-          right_space = Herb::Engine.heredoc?(code) ? "\n" : " \n"
+          right_space = Herb::Engine::Helpers.heredoc?(code) ? "\n" : " \n"
 
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline

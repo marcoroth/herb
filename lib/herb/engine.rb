@@ -10,6 +10,7 @@ require_relative "visitor/stack"
 require_relative "engine/runtime/session"
 require_relative "visitor/context_aware"
 require_relative "visitor/diagnostics"
+require_relative "engine/helpers"
 require_relative "engine/compiler"
 require_relative "engine/errors"
 require_relative "diagnostic/formatter"
@@ -178,45 +179,6 @@ module Herb
       value.is_a?(::String) || value.is_a?(::Symbol) ? value.to_s : value.to_json
     end
 
-    def self.comment?(code)
-      stripped = code.rstrip
-
-      return false unless stripped.include?("#")
-      return true unless prism_available?
-
-      Prism.parse(stripped).comments.any? { |comment| comment.location.end_offset >= stripped.bytesize }
-    rescue StandardError
-      true
-    end
-
-    def self.strip_trailing_comment(code)
-      return code unless code.include?("#")
-      return code unless prism_available?
-
-      comment = Prism.parse(code).comments.find { |found| found.location.end_offset >= code.bytesize }
-
-      return code unless comment
-
-      code.byteslice(0, comment.location.start_offset).to_s.rstrip
-    rescue StandardError
-      code
-    end
-
-    def self.prism_available?
-      return @prism_available unless @prism_available.nil?
-
-      @prism_available = begin
-        require "prism"
-        true
-      rescue LoadError
-        false
-      end
-    end
-
-    def self.heredoc?(code)
-      code.match?(/<<[~-]?\s*['"`]?\w/)
-    end
-
     protected
 
     #: () -> untyped
@@ -242,8 +204,7 @@ module Herb
 
         @src << " " << code
 
-        # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
-        if self.class.comment?(code) || self.class.heredoc?(code)
+        if Helpers.comment?(code) || Helpers.heredoc?(code)
           @src << "\n" unless code[-1] == "\n"
         else
           @src << ";" unless code[-1] == "\n"
@@ -332,7 +293,7 @@ module Herb
         @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
 
         @src << " " << code_stripped
-        @src << "\n" if self.class.comment?(code_stripped)
+        @src << "\n" if Helpers.comment?(code_stripped)
         @src << (escaped ? "))" : ")")
         @src << (trailing_newline ? "\n" : ";")
 
@@ -343,8 +304,8 @@ module Herb
     end
 
     def trailing_newline(code)
-      return "\n" if self.class.comment?(code)
-      return "\n" if self.class.heredoc?(code)
+      return "\n" if Helpers.comment?(code)
+      return "\n" if Helpers.heredoc?(code)
 
       ""
     end
