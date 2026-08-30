@@ -436,12 +436,36 @@ module Engine
         )
       end
 
-      test "a transform on both sides of a comparison is refused" do
-        refuse(
-          %(<%# herb:state (draft: "", other: "") %><div><% if draft.length > other.length %>x<% end %></div>),
-          "`draft.length > other.length` compares the length of the state `draft` against the length of the state `other`. One condition carries one transform, so declare a state for one of the two sides and compare that."
+      test "a transform on both sides carries one on the comparand" do
+        visitor, = compile(%(<%# herb:state (draft: "", other: "") %><div><% if draft.length > other.length %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [arm(0, ["draft", { "state" => "other", "transform" => "length" }, ">", "length"])], else: nil },
+          visitor.state_conditional_entries.fetch(0)
         )
 
+        visitor, = compile(%(<%# herb:state (draft: "", other: "") %><div><% if draft.to_s == other.to_s %>x<% end %></div>))
+
+        assert_equal(
+          { arms: [arm(0, ["draft", { "state" => "other", "transform" => "to_s" }, "==", "to_s"])], else: nil },
+          visitor.state_conditional_entries.fetch(0)
+        )
+      end
+
+      test "two transformed sides render for the server" do
+        rendered = render(%(<%# herb:state (draft: "abc", other: "ab") %><div><% if draft.length > other.length %>longer<% end %></div>))
+
+        assert_includes rendered, "longer"
+      end
+
+      test "two transformed sides keep their kinds compatible" do
+        refuse(
+          %(<%# herb:state (draft: "", other: "") %><div><% if draft.length > other.to_s %>x<% end %></div>),
+          "`draft.length > other.to_s` orders the length of the state `draft` against the to_s of the state `other`. Ordering compares numbers, so both sides have to be Integers."
+        )
+      end
+
+      test "a transform compared against a state of another kind is refused" do
         refuse(
           %(<%# herb:state (draft: "", filter: "all") %><div><% if draft.length > filter %>x<% end %></div>),
           "`draft.length > filter` orders the length of the state `draft` against the String state `filter`. Ordering compares numbers, so both sides have to be Integers."

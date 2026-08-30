@@ -97,6 +97,24 @@ describe("a condition the compiler wrote", () => {
     expect(matches(["sort", { state: "draft" }, "==", "to_s"], valueOf)).toBe(false)
   })
 
+  test("transforms both sides of a comparison, matching Ruby", () => {
+    const rows: [string, string, boolean, boolean][] = [
+      ["", "", false, true],
+      ["abc", "ab", true, false],
+      ["ab", "abc", false, false],
+      ["ab", "ab", false, true],
+      ["\u{1F44B}a", "abc", false, false],
+      ["\u{1F44B}\u{1F44B}", "ab", false, true],
+    ]
+
+    for (const [draft, filter, ordered, equal] of rows) {
+      const sides = (name: string): ConditionValue => (name === "draft" ? draft : filter)
+
+      expect(matches(["draft", { state: "filter", transform: "length" }, ">", "length"], sides)).toBe(ordered)
+      expect(matches(["draft", { state: "filter", transform: "length" }, "==", "length"], sides)).toBe(equal)
+    }
+  })
+
   test("negates a read the way `!` does", () => {
     expect(matches(["pending", null, "falsy"], valueOf)).toBe(false)
     expect(matches(["failed", null, "falsy"], valueOf)).toBe(true)

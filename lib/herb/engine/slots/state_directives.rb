@@ -31,12 +31,13 @@ module Herb
         )
 
         Read = Data.define(
-          :name,      #: String
-          :comparand, #: String?
-          :kind,      #: Symbol?
-          :operator,  #: String?
-          :against,   #: String?
-          :transform  #: String?
+          :name,             #: String
+          :comparand,        #: String?
+          :kind,             #: Symbol?
+          :operator,         #: String?
+          :against,          #: String?
+          :transform,        #: String?
+          :against_transform #: String?
         )
 
         Combo = Data.define(
@@ -206,7 +207,13 @@ module Herb
 
           #: (Read) -> untyped
           def comparand_entry(read)
-            return { "state" => read.against } if read.against
+            if read.against
+              entry = { "state" => read.against } #: Hash[String, untyped]
+              entry["transform"] = read.against_transform if read.against_transform
+
+              return entry
+            end
+
             return nil unless read.comparand
 
             { "value" => literal_value(read.comparand) }
@@ -242,7 +249,9 @@ module Herb
               return "!#{subject}" if read.operator == FALSY_OPERATOR
               return subject if read.comparand.nil? && read.against.nil?
 
-              "#{subject} #{read.operator || "=="} #{read.against || read.comparand}"
+              against = read.against && read.against_transform ? "#{read.against}.#{TRANSFORM_SPELLINGS.fetch(read.against_transform)}" : read.against
+
+              "#{subject} #{read.operator || "=="} #{against || read.comparand}"
             else
               joiner = read.op == "all" ? " && " : " || "
 
@@ -515,7 +524,7 @@ module Herb
 
               return nil unless declaration
 
-              return Read.new(name: node.name.to_s, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil)
+              return Read.new(name: node.name.to_s, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil, against_transform: nil)
             end
 
             return nil unless node.is_a?(Prism::CallNode) && node.receiver.nil? && node.arguments.nil? && node.block.nil?
@@ -527,7 +536,7 @@ module Herb
 
             return nil unless declaration
 
-            Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil)
+            Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil, against_transform: nil)
           end
 
           #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
@@ -558,7 +567,7 @@ module Herb
               return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{transform.fetch(:only)} can be read with `#{node.name}`, so compare `#{read.name}` itself instead.", location, :read)
             end
 
-            Read.new(name: read.name, comparand: nil, kind: transform.fetch(:returns), operator: nil, against: nil, transform: transform.fetch(:operation))
+            Read.new(name: read.name, comparand: nil, kind: transform.fetch(:returns), operator: nil, against: nil, transform: transform.fetch(:operation), against_transform: nil)
           end
 
           #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
@@ -584,7 +593,7 @@ module Herb
               return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{predicate.fetch(:only)} can be read with `#{node.name}`, so compare `#{read.name}` to a literal instead.", location, :read)
             end
 
-            Read.new(name: read.name, comparand: predicate[:comparand], kind: read.kind, operator: predicate[:operator], against: nil, transform: nil)
+            Read.new(name: read.name, comparand: predicate[:comparand], kind: read.kind, operator: predicate[:operator], against: nil, transform: nil, against_transform: nil)
           end
 
           #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
@@ -653,18 +662,14 @@ module Herb
               return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, so it can never match. Compare it against #{kind_article(read.kind)} literal instead.", location, :compare)
             end
 
-            Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil, transform: read.transform)
+            Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil, transform: read.transform, against_transform: nil)
           end
 
           #: (untyped, Read, Read, untyped, Herb::Location?) -> Read?
           def state_pair_read(node, left, right, visitor, location)
-            if left.transform && right.transform
-              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(left)} against #{subject_phrase(right)}. One condition carries one transform, so declare a state for one of the two sides and compare that.", location, :compare)
-            end
-
             operator = node.name == :== ? nil : node.name.to_s
 
-            if right.transform
+            if right.transform && !left.transform
               left, right = right, left
               operator = MIRRORED_OPERATORS.fetch(operator) if operator && operator != "!="
             end
@@ -679,7 +684,7 @@ module Herb
               return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(left)} with #{subject_phrase(right)}, so it can never match. Compare values of the same kind.", location, :compare)
             end
 
-            Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name, transform: left.transform)
+            Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name, transform: left.transform, against_transform: right.transform)
           end
         end
       end

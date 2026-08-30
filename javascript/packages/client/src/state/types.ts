@@ -1,6 +1,6 @@
 export type ConditionValue = string | number | boolean | null
 export type ConditionalArm = Arm | ComboArm | [string, StateComparand, number | null] | [string, StateComparand, number | null, string]
-export type StateComparand = null | { state: string } | { value: ConditionValue } | string
+export type StateComparand = null | { state: string, transform?: string } | { value: ConditionValue } | string
 export type StateCondition = [string, StateComparand] | [string, StateComparand, string] | [string, StateComparand, string | null, string] | ComboCondition
 export type ValueOf = (name: string) => ConditionValue
 

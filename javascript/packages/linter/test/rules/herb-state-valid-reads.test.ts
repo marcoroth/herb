@@ -451,12 +451,23 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a transform on both sides of a comparison", () => {
-    expectError("`draft.length > other.length` compares the length of the state `draft` against the length of the state `other`. One condition carries one transform, so declare a state for one of the two sides and compare that.")
+  test("allows a transform on both sides of a comparison", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (draft: "", other: "", longer: draft.length > other.length) %>
+      <% if draft.length > other.length %>a<% end %>
+      <% if draft.to_s == other.to_s %>b<% end %>
+      <% if !(draft.length > other.length) %>c<% end %>
+      <% if longer %>d<% end %>
+      <p><%= draft.length > other.length %></p>
+    `)
+  })
+
+  test("flags two transformed sides whose kinds disagree", () => {
+    expectError("`draft.length > other.to_s` orders the length of the state `draft` against the to_s of the state `other`. Ordering compares numbers, so both sides have to be Integers.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "", other: "") %>
-      <% if draft.length > other.length %>a<% end %>
+      <% if draft.length > other.to_s %>a<% end %>
     `)
   })
 

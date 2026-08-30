@@ -189,7 +189,9 @@ function comparandValue(comparand: Exclude<StateComparand, null>, valueOf: Value
   }
 
   if ("state" in comparand) {
-    return valueOf(comparand.state)
+    const value = valueOf(comparand.state)
+
+    return comparand.transform ? transformed(comparand.transform, value) : value
   }
 
   return comparand.value

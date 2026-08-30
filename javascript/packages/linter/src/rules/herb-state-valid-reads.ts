@@ -398,12 +398,29 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       }
 
       if (leftTransform && rightTransform) {
-        this.addOffense(
-          `\`${this.sliceOf(predicate)}\` compares the ${leftTransform.transform} of the state \`${leftTransform.name}\` against the ${rightTransform.transform} of the state \`${rightTransform.name}\`. One condition carries one transform, so declare a state for one of the two sides and compare that.`,
-          this.locationOf(predicate),
-        )
+        const leftReturns = STATE_TRANSFORMS[leftTransform.transform].returns
+        const rightReturns = STATE_TRANSFORMS[rightTransform.transform].returns
+        const ordered = operator !== "==" && operator !== "!="
 
-        return "reported"
+        if (ordered && (leftReturns !== "integer" || rightReturns !== "integer")) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` orders the ${leftTransform.transform} of the state \`${leftTransform.name}\` against the ${rightTransform.transform} of the state \`${rightTransform.name}\`. Ordering compares numbers, so both sides have to be Integers.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        if (!ordered && leftReturns !== rightReturns) {
+          this.addOffense(
+            `\`${this.sliceOf(predicate)}\` compares the ${leftTransform.transform} of the state \`${leftTransform.name}\` with the ${rightTransform.transform} of the state \`${rightTransform.name}\`, so it can never match. Compare values of the same kind.`,
+            this.locationOf(predicate),
+          )
+
+          return "reported"
+        }
+
+        return "state"
       }
 
       const transformed = leftTransform ?? rightTransform
