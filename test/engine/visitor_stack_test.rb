@@ -96,7 +96,7 @@ module Engine
         stack.insert_after(ThirdVisitor, FirstVisitor.new)
       end
 
-      assert_includes error.message, "ThirdVisitor"
+      assert_equal "no visitor in the stack is a Engine::VisitorStackTest::ThirdVisitor", error.message
     end
 
     test "reports whether an anchor is present" do
@@ -178,9 +178,7 @@ module Engine
           order(RewritingVisitor.new, ReadingVisitor.new).validate_order!
         end
 
-        assert_includes error.message, "ReadingVisitor"
-        assert_includes error.message, "RewritingVisitor"
-        assert_includes error.message, "has to run before"
+        assert_equal "Engine::VisitorStackTest::ReadingVisitor reads the ERB a template was written with, so it has to run before Engine::VisitorStackTest::RewritingVisitor, which rewrites it. Put it earlier in `visitors:`.", error.message
       end
 
       test "accepts a reader that runs before a rewriter" do
@@ -201,7 +199,7 @@ module Engine
           order(RewritingVisitor.new, FirstVisitor.new, ReadingVisitor.new).validate_order!
         end
 
-        assert_includes error.message, "ReadingVisitor"
+        assert_equal "Engine::VisitorStackTest::ReadingVisitor reads the ERB a template was written with, so it has to run before Engine::VisitorStackTest::RewritingVisitor, which rewrites it. Put it earlier in `visitors:`.", error.message
       end
 
       test "refuses an inlining visitor that runs after anything else" do
@@ -209,8 +207,7 @@ module Engine
           order(FirstVisitor.new, InliningVisitor.new).validate_order!
         end
 
-        assert_includes error.message, "InliningVisitor"
-        assert_includes error.message, "has to run first"
+        assert_equal "Engine::VisitorStackTest::InliningVisitor brings markup from other templates into this one, so it has to run first. Engine::VisitorStackTest::FirstVisitor would otherwise never see what it brought in. Put it first in `visitors:`.", error.message
       end
 
       test "accepts an inlining visitor that runs first" do

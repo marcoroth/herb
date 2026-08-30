@@ -64,8 +64,7 @@ module Engine
         Herb::Engine.new(template, filename: "app/views/test.erb", visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "app/views/test.erb"
-      assert_includes error.message, "ERB output tags"
+      assert_snapshot_matches(error.message, template)
       assert_equal "app/views/test.erb", error.filename.to_s
       assert_equal 1, error.line
       assert_equal 5, error.column

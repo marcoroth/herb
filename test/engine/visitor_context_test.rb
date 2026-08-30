@@ -149,7 +149,6 @@ module Engine
       subject = context(file_path: "app/x.erb", project_path: "/proj")
 
       assert_equal %(#<Herb::Visitor::Context file_path="app/x.erb" relative_file_path="app/x.erb">), subject.inspect
-      refute_includes subject.inspect, "/proj"
     end
 
     test "to_hash exposes every part" do

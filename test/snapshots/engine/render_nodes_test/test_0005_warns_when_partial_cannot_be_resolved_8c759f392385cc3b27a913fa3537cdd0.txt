@@ -1,0 +1,12 @@
+---
+source: "Engine::RenderNodesTest#test_0005_warns when partial cannot be resolved"
+input: "<%= render \"nonexistent/missing\" %>"
+---
+Partial 'nonexistent/missing' could not be resolved.
+     Looked in:
+       - app/views/nonexistent/_missing.html.erb
+       - app/views/nonexistent/_missing.html.herb
+       - app/views/nonexistent/_missing.erb
+       - app/views/nonexistent/_missing.herb
+       - app/views/nonexistent/_missing.turbo_stream.erb
+       - app/views/nonexistent/_missing.turbo_stream.herb

@@ -1,5 +1,5 @@
 ---
-source: "Engine::HTMLSafeAssertionsTest#test_0018_html_safe in a control flow fragment is wrapped - compilation"
+source: "Engine::HTMLSafeAssertionsTest#test_0006_html_safe in a control flow fragment is wrapped - compilation"
 input: "{source: \"<% if a %>A<% elsif b.html_safe %>B<% end %>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
 ---
 _buf = ::String.new; if a 
