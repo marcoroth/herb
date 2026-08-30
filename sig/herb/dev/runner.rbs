@@ -31,6 +31,8 @@ module Herb
 
       def terminal: (untyped sequence) -> untyped
 
+      def print_diagnostics: (untyped source, untyped diagnostics, untyped filename) -> untyped
+
       def pluralize: (untyped count, untyped word) -> untyped
 
       def require_cruise: () -> untyped
@@ -47,7 +49,7 @@ module Herb
 
       def handle_file_change: (untyped file_path, untyped relative_path, untyped file_states, untyped errored_files, untyped websocket, untyped timestamp, untyped display_path) -> untyped
 
-      def broadcast_errors: (untyped file_path, untyped relative_path, untyped current_parse, untyped current_content, untyped previous_content, untyped errored_files, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+      def broadcast_errors: (untyped file_path, untyped relative_path, untyped current_parse, untyped current_content, untyped previous_content, untyped file_states, untyped errored_files, untyped websocket, untyped timestamp) -> untyped
 
       def broadcast_fixed: (untyped file_path, untyped relative_path, untyped current_content, untyped file_states, untyped websocket, untyped timestamp, untyped display_path) -> untyped
 
