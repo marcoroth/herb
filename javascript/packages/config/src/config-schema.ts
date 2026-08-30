@@ -25,6 +25,8 @@ export const FRAMEWORKS = {
 
 export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
 
+export const ENVIRONMENT_NAMES = ["cli", "browser"] as const
+
 const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
@@ -32,6 +34,7 @@ const RuleConfigBaseSchema = z.object({
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
+  environments: z.array(z.enum(ENVIRONMENT_NAMES)).optional().describe("Where this rule runs: 'cli' for templates read from source, 'browser' for a rendered page read from a live DOM. Defaults to ['cli'], so a rule only runs against a rendered page when it says it can"),
 })
 
 export const RuleConfigSchema = RuleConfigBaseSchema.optional()
@@ -61,6 +64,8 @@ export const FormatterConfigSchema = z.object({
 }).strict().optional()
 
 export const FrameworkSchema = z.enum(FRAMEWORK_NAMES).optional()
+
+export const EnvironmentSchema = z.enum(ENVIRONMENT_NAMES)
   .describe("Framework context (default: 'ruby')")
 
 export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()

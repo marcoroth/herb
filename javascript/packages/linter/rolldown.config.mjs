@@ -46,6 +46,17 @@ export default [
     external: isExternal,
   },
 
+  // Browser entry point (ESM only, carries no `@herb-tools/browser` parser)
+  {
+    input: "src/browser/index.ts",
+    output: {
+      file: "dist/browser/index.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external: isExternal,
+  },
+
   // Library exports (ESM)
   {
     input: "src/index.ts",

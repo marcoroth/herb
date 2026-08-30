@@ -189,7 +189,8 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

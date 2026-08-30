@@ -4,7 +4,7 @@ import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
-import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
+import { stringify, parse, parseDocument, isMap, isScalar, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
 import { promises as fs, accessSync, readFileSync, readdirSync, statSync } from "fs"
 import { fromZodError } from "zod-validation-error"
@@ -13,7 +13,7 @@ import { deepMerge } from "./merge.js"
 import { ZodError, z } from "zod"
 import { HerbConfigSchema } from "./config-schema.js"
 
-import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+import type { FrameworkSchema, EnvironmentSchema, TemplateEngineSchema } from "./config-schema.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -98,6 +98,7 @@ export type RuleConfig = {
   include?: string[]
   only?: string[]
   exclude?: string[]
+  environments?: Environment[]
 }
 
 export type LinterConfig = {
@@ -134,6 +135,7 @@ export type HerbConfigOptions = {
 }
 
 export type Framework = z.infer<typeof FrameworkSchema>
+export type Environment = z.infer<typeof EnvironmentSchema>
 export type TemplateEngine = z.infer<typeof TemplateEngineSchema>
 
 export type HerbConfig = HerbConfigOptions & {

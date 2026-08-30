@@ -40,6 +40,11 @@
       "require": "./dist/cli.cjs",
       "default": "./dist/cli.js"
     },
+    "./browser": {
+      "types": "./dist/types/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "default": "./dist/browser/index.js"
+    },
     "./loader": {
       "types": "./dist/types/loader.d.ts",
       "import": "./dist/loader.js",
