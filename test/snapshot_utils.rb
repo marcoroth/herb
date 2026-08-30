@@ -647,6 +647,7 @@ module SnapshotUtils
 
   def erb_tags_off_their_line(source, compiled)
     lines = compiled.lines
+    source_lines = source.lines
 
     erb_content_nodes(Herb.parse(source).value).filter_map do |node|
       opening = node.tag_opening&.value.to_s
@@ -662,6 +663,7 @@ module SnapshotUtils
       first = code.lines.first.to_s.strip
 
       next if lines[line - 1].to_s.include?(first)
+      next if source_lines[line - 2].to_s.match?(/-%>[ \t]*\r?\n?\z/)
       next unless compiled.include?(first)
 
       [line, first]
