@@ -43,6 +43,8 @@ module Herb
 
     def self.comment?: (untyped code) -> untyped
 
+    def self.prism_available?: () -> untyped
+
     def self.heredoc?: (untyped code) -> untyped
 
     # : () -> untyped

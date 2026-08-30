@@ -179,7 +179,25 @@ module Herb
     end
 
     def self.comment?(code)
-      code.include?("#")
+      stripped = code.rstrip
+
+      return false unless stripped.include?("#")
+      return true unless prism_available?
+
+      Prism.parse(stripped).comments.any? { |comment| comment.location.end_offset >= stripped.bytesize }
+    rescue StandardError
+      true
+    end
+
+    def self.prism_available?
+      return @prism_available unless @prism_available.nil?
+
+      @prism_available = begin
+        require "prism"
+        true
+      rescue LoadError
+        false
+      end
     end
 
     def self.heredoc?(code)
