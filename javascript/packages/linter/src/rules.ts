@@ -98,7 +98,6 @@ import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-cli
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
 import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
 import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
-import { HerbScopedStylePreferSingleRootRule } from "./rules/herb-scoped-style-prefer-single-root.js"
 import { HerbScopedStyleRequireTopLevelRule } from "./rules/herb-scoped-style-require-top-level.js"
 import { HerbScopedStyleSingleDeclarationRule } from "./rules/herb-scoped-style-single-declaration.js"
 import { HerbStateDirectiveSyntaxRule } from "./rules/herb-state-directive-syntax.js"
@@ -268,7 +267,6 @@ export const rules: RuleClass[] = [
   HerbStateValidActionsRule,
   HerbStateValidBindingsRule,
   HerbScopedStyleNoUnusedSelectorRule,
-  HerbScopedStylePreferSingleRootRule,
   HerbScopedStyleRequireTopLevelRule,
   HerbScopedStyleSingleDeclarationRule,
   HerbStateDirectiveSyntaxRule,
