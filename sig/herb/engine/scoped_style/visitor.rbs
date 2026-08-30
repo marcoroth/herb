@@ -180,11 +180,11 @@ module Herb
         # : () -> untyped
         def default_transform: () -> untyped
 
-        # : (Herb::AST::HTMLElementNode, StandardError) -> nil
-        def untransformable_style: (Herb::AST::HTMLElementNode, StandardError) -> nil
+        # : (Herb::AST::HTMLElementNode, StandardError, String) -> nil
+        def untransformable_style: (Herb::AST::HTMLElementNode, StandardError, String) -> nil
 
-        # : (Herb::AST::HTMLElementNode, untyped) -> void
-        def warned_style: (Herb::AST::HTMLElementNode, untyped) -> void
+        # : (Herb::AST::HTMLElementNode, untyped, String) -> void
+        def warned_style: (Herb::AST::HTMLElementNode, untyped, String) -> void
 
         # : (String) -> String
         def scope_selector: (String) -> String

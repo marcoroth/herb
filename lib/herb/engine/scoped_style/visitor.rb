@@ -274,11 +274,11 @@ module Herb
         def narrowed_css(pending, scope)
           result = @transform.call(pending.css, scope: scope_selector(scope))
 
-          warned_style(pending.node, result)
+          warned_style(pending.node, result, pending.file)
 
           result.to_s
         rescue StandardError => e
-          untransformable_style(pending.node, e)
+          untransformable_style(pending.node, e, pending.file)
         end
 
         #: (Pending, String, String) -> void
@@ -373,7 +373,8 @@ module Herb
           warning(
             "A `<style scoped>` block needs the path of the file it was written in, and this template was compiled without one. Compile it with `filename:` to scope it.",
             node.location,
-            code: "scoped-style-without-a-file"
+            code: "scoped-style-without-a-file",
+            template: current_file
           )
 
           false
@@ -384,7 +385,8 @@ module Herb
           warning(
             "A `<style scoped>` block built with ERB has no CSS to read at compile time, so it was left as it was written and still applies to the whole page.",
             node.location,
-            code: "scoped-style-built-with-erb"
+            code: "scoped-style-built-with-erb",
+            template: current_file
           )
 
           nil
@@ -397,7 +399,8 @@ module Herb
           warning(
             "A `<style scoped>` block was found, and there is no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page.#{reason} Install `lightningcss`, or give #{self.class.name} a `transform` of its own.",
             node.location,
-            code: "scoped-style-without-a-transform"
+            code: "scoped-style-without-a-transform",
+            template: current_file
           )
 
           nil
@@ -414,26 +417,28 @@ module Herb
           nil
         end
 
-        #: (Herb::AST::HTMLElementNode, StandardError) -> nil
-        def untransformable_style(node, error)
+        #: (Herb::AST::HTMLElementNode, StandardError, String) -> nil
+        def untransformable_style(node, error, file)
           warning(
             "A `<style scoped>` block could not be narrowed by the `transform` #{self.class.name} was given, so it was left as it was written and still applies to the whole page. It failed with `#{error.message}`.",
             node.location,
-            code: "scoped-style-that-could-not-be-narrowed"
+            code: "scoped-style-that-could-not-be-narrowed",
+            template: file
           )
 
           nil
         end
 
-        #: (Herb::AST::HTMLElementNode, untyped) -> void
-        def warned_style(node, result)
+        #: (Herb::AST::HTMLElementNode, untyped, String) -> void
+        def warned_style(node, result, file)
           return unless result.respond_to?(:warnings)
 
           result.warnings.each do |message|
             warning(
               "The `transform` could not act on something in this `<style scoped>` block, so that part of the CSS was kept as it was written and does nothing. It reported `#{message}`.",
               node.location,
-              code: "scoped-style-with-a-warning"
+              code: "scoped-style-with-a-warning",
+              template: file
             )
           end
 
@@ -484,7 +489,8 @@ module Herb
             warning(
               "The `<style scoped>` block in #{file} has no markup to apply to, because nothing in the file it was written in is an element.",
               nil,
-              code: "scoped-style-without-markup"
+              code: "scoped-style-without-markup",
+              template: file
             )
           end
 

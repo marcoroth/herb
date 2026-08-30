@@ -373,5 +373,15 @@ module Engine
 
       assert_includes visitor.diagnostics.first.message, "cannot load such file -- lightningcss"
     end
+
+    test "files what it found in an inlined partial under the partial, not the file it landed in" do
+      source = %(<h1>Page</h1><%= render "posts/dynamic" %>)
+      _, visitor = compile(source, visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH)
+
+      diagnostic = visitor.diagnostics.find { |found| found.code == "scoped-style-built-with-erb" }
+
+      refute_nil diagnostic
+      assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
+    end
   end
 end
