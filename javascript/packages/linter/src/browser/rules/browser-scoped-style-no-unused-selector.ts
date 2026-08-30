@@ -1,7 +1,10 @@
+import { HERB_ATTRIBUTES } from "@herb-tools/client/directives"
+
 import { BrowserRule } from "../rule.js"
 
 import type { DOMNodeLike, DOMElementLike } from "../dom-to-ast.js"
 import type { UnboundLintOffense, LintContext } from "../../types.js"
+import type { FullRuleConfig } from "../../types.js"
 
 interface CSSRuleLike {
   selectorText?: string
@@ -16,16 +19,24 @@ interface StyleElementLike extends DOMElementLike {
   sheet?: StyleSheetLike | null
 }
 
+interface ScopedStyleElement extends StyleElementLike {
+  tagName: "style"
+  localName: "style"
+}
+
 interface QueryableLike extends DOMNodeLike {
   querySelectorAll(selectors: string): ArrayLike<unknown>
   matches?(selectors: string): boolean
 }
 
 const ELEMENT_NODE = 1
-export const ANCHOR_ATTRIBUTE = "data-herb-style-scoped"
 
 function isElement(node: DOMNodeLike): node is DOMElementLike {
   return node.nodeType === ELEMENT_NODE
+}
+
+function isStyleElement(node: DOMElementLike): node is StyleElementLike {
+  return node.localName == "style"
 }
 
 function attributeValue(element: DOMElementLike, name: string): string | null {
@@ -91,33 +102,42 @@ function matches(scope: QueryableLike, selector: string): boolean {
   }
 }
 
-function isScoped(element: DOMElementLike): boolean {
-  return hasAttribute(element, "scoped") || attributeValue(element, ANCHOR_ATTRIBUTE) !== null
+function isScoped(element: DOMElementLike): element is ScopedStyleElement {
+  return isStyleElement(element) && hasAttribute(element, "scoped") || attributeValue(element, HERB_ATTRIBUTES.styleScoped) !== null
 }
 
 export class BrowserScopedStyleNoUnusedSelectorRule extends BrowserRule {
   static ruleName = "browser-scoped-style-no-unused-selector"
 
+  get defaultConfig(): FullRuleConfig {
+    return {
+      ...super.defaultConfig,
+      severity: "info"
+    }
+  }
+
   check(root: DOMNodeLike, _context?: Partial<LintContext>): UnboundLintOffense[] {
     const scope = root as QueryableLike
 
-    if (typeof scope.querySelectorAll !== "function") return []
+    if (typeof scope.querySelectorAll !== "function") {
+      return []
+    }
 
     const offenses: UnboundLintOffense[] = []
 
     for (const element of elements(root)) {
-      if (element.tagName.toLowerCase() !== "style") continue
       if (!isScoped(element)) continue
+      if (!element.sheet) continue
 
-      const sheet = (element as StyleElementLike).sheet
-      if (!sheet) continue
-
-      for (const selector of selectors(sheet.cssRules)) {
-        if (matches(scope, selector)) continue
+      for (const selector of selectors(element.sheet.cssRules)) {
+        if (matches(scope, selector)) {
+          continue
+        }
 
         offenses.push(
           this.createOffense(
-            `Selector \`${selector}\` matches nothing on the rendered page. Remove it, or check whether the markup it was written for still exists.`
+            `Selector \`${selector}\` matches nothing on the rendered page. Remove it, or check whether the markup it was written for still exists.`,
+            element
           )
         )
       }

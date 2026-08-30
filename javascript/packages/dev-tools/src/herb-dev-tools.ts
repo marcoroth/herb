@@ -31,7 +31,7 @@ export class HerbDevTools {
   private static current: HerbDevTools | null = null
 
   static start(options: HerbDevToolsOptions = {}): HerbDevTools | null {
-    if (HerbDevTools.current) {
+    if (HerbDevTools.current || (typeof window !== 'undefined' && window.HerbDevTools)) {
       console.warn('[herb-dev-tools] already started, ignoring this start() call')
 
       return null
@@ -96,6 +96,10 @@ export class HerbDevTools {
 
   get runtimePanel(): RuntimePanel | null {
     return this.panel
+  }
+
+  get lintingEnabled(): boolean {
+    return this.overlay?.linterEnabled ?? true
   }
 
   report(input: RuntimeDiagnostic | RuntimeDiagnostic[]): RuntimeReportHandle {

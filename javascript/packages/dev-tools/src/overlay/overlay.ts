@@ -3,6 +3,8 @@ import overlayStyles from './overlay.css';
 import { injectStyle } from '../styles';
 import { SlotFlash } from '../slots/flash';
 
+export const HERB_LINTER_EVENT = 'herb:dev-tools:linter'
+
 export interface HerbOverlayOptions {
   projectPath?: string;
   autoInit?: boolean;
@@ -29,10 +31,11 @@ export class HerbOverlay {
   private currentlyHoveredERBElement: HTMLElement | null = null;
   private destroyed = false;
   private styleElement: HTMLStyleElement | null = null;
-
-  private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
   private slotFlash = new SlotFlash();
   private showingSlotUpdates = false;
+  private runningLinter = true;
+
+  private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
   private static readonly EDITOR_OPTIONS = [
     { value: 'auto', label: 'Auto (from server via RAILS_EDITOR or EDITOR)' },
     { value: 'atom', label: 'Atom' },
@@ -139,6 +142,7 @@ export class HerbOverlay {
         this.showingPartialOutlines = settings.showingPartialOutlines || false;
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
         this.showingSlotUpdates = settings.showingSlotUpdates || false;
+        this.runningLinter = settings.runningLinter !== undefined ? settings.runningLinter : true;
         this.menuOpen = settings.menuOpen || false;
         if (settings.preferredEditor) {
           this.preferredEditor = settings.preferredEditor;
@@ -159,6 +163,7 @@ export class HerbOverlay {
       showingPartialOutlines: this.showingPartialOutlines,
       showingComponentOutlines: this.showingComponentOutlines,
       showingSlotUpdates: this.showingSlotUpdates,
+      runningLinter: this.runningLinter,
       menuOpen: this.menuOpen,
       preferredEditor: this.preferredEditor
     };
@@ -301,6 +306,14 @@ export class HerbOverlay {
             </label>
           </div>
 
+          <div class="herb-toggle-item">
+            <label class="herb-toggle-label">
+              <input type="checkbox" id="herbToggleLinter" class="herb-toggle-input">
+              <span class="herb-toggle-switch"></span>
+              <span class="herb-toggle-text">Lint Rendered Page</span>
+            </label>
+          </div>
+
           ${this.runtimePanelToggleHTML()}
 
           <div class="herb-editor-section">
@@ -341,28 +354,38 @@ export class HerbOverlay {
     }
   }
 
+  private handleMenuTriggerClick = () => {
+    const menuTrigger = document.getElementById('herbMenuTrigger');
+    const menuPanel = document.getElementById('herbMenuPanel');
+
+    if (!menuTrigger || !menuPanel) {
+      return;
+    }
+
+    this.menuOpen = !this.menuOpen;
+
+    if (this.menuOpen) {
+      this.options.onMenuOpen?.();
+
+      this.syncRuntimePanelToggle();
+
+      menuTrigger.classList.add('active');
+      menuPanel.classList.add('open');
+    } else {
+      menuTrigger.classList.remove('active');
+      menuPanel.classList.remove('open');
+    }
+
+    this.saveSettings();
+  }
+
   private setupMenuToggle() {
     const menuTrigger = document.getElementById('herbMenuTrigger');
     const menuPanel = document.getElementById('herbMenuPanel');
 
     if (menuTrigger && menuPanel) {
-      menuTrigger.addEventListener('click', () => {
-        this.menuOpen = !this.menuOpen;
-
-        if (this.menuOpen) {
-          this.options.onMenuOpen?.();
-
-          this.syncRuntimePanelToggle();
-
-          menuTrigger.classList.add('active');
-          menuPanel.classList.add('open');
-        } else {
-          menuTrigger.classList.remove('active');
-          menuPanel.classList.remove('open');
-        }
-
-        this.saveSettings();
-      });
+      menuTrigger.removeEventListener('click', this.handleMenuTriggerClick);
+      menuTrigger.addEventListener('click', this.handleMenuTriggerClick);
     }
   }
 
@@ -449,6 +472,15 @@ export class HerbOverlay {
           this.toggleERBOutlines(false);
         }
         this.toggleERBTags(toggleERBSwitch.checked);
+      });
+    }
+
+    const toggleLinterSwitch = document.getElementById('herbToggleLinter') as HTMLInputElement;
+
+    if (toggleLinterSwitch) {
+      toggleLinterSwitch.checked = this.runningLinter;
+      toggleLinterSwitch.addEventListener('change', () => {
+        this.toggleLinter(toggleLinterSwitch.checked);
       });
     }
 
@@ -778,6 +810,18 @@ export class HerbOverlay {
     });
 
     this.saveSettings();
+  }
+
+  private toggleLinter(run?: boolean) {
+    this.runningLinter = run !== undefined ? run : !this.runningLinter;
+
+    this.saveSettings();
+
+    document.dispatchEvent(new CustomEvent(HERB_LINTER_EVENT, { detail: { enabled: this.runningLinter } }));
+  }
+
+  get linterEnabled(): boolean {
+    return this.runningLinter;
   }
 
   private toggleSlotUpdates(show?: boolean) {

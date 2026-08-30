@@ -141,6 +141,17 @@ describe("which rules run in the browser", () => {
     expect(namesFor(config)).not.toContain("html-no-duplicate-ids")
   })
 
+  test("gives a browser rule the severity it declares, and lets config change it", () => {
+    const tree = () => dom`<style scoped>.gone { color: red }</style>`
+    const severities = (config?: any) =>
+      createBrowserLinter({ config }).lintElement(tree()).offenses
+        .filter((offense) => offense.rule === "browser-scoped-style-no-unused-selector")
+        .map((offense) => offense.severity)
+
+    expect(severities()).toEqual(["info"])
+    expect(severities({ linter: { rules: { "browser-scoped-style-no-unused-selector": { severity: "warning" } } } })).toEqual(["warning"])
+  })
+
   test("takes a browser rule out when config narrows it to the command line", () => {
     const config = { linter: { rules: { "browser-scoped-style-no-unused-selector": { environments: ["cli"] } } } }
     const rule = new BrowserScopedStyleNoUnusedSelectorRule()

@@ -2,6 +2,8 @@ import { DEFAULT_RULE_CONFIG } from "../types.js"
 
 import { Location } from "@herb-tools/core"
 
+import { sourcePathForElement } from "./dom-to-ast.js"
+
 import type { DOMNodeLike } from "./dom-to-ast.js"
 import type { UnboundLintOffense, LintContext, LintSeverity, FullRuleConfig, RuleVersion } from "../types.js"
 
@@ -19,14 +21,18 @@ export abstract class BrowserRule {
     return { ...DEFAULT_RULE_CONFIG, environments: ["browser"] }
   }
 
-  protected createOffense(message: string, severity?: LintSeverity): UnboundLintOffense {
+  protected createOffense(message: string, element?: DOMNodeLike, severity?: LintSeverity): UnboundLintOffense {
+    const file = sourcePathForElement(element)
+
     return {
       rule: this.ruleName,
       code: this.ruleName,
-      source: "Herb Linter",
+      source: "Herb Linter (Browser)",
       message,
       location: Location.fromOptional(null),
       severity,
+      ...(element ? { element } : {}),
+      ...(file ? { file } : {}),
     }
   }
 

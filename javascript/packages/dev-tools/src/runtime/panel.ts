@@ -2390,11 +2390,32 @@ function hiddenBy(element: Element): { reason: string, culprit: Element | null }
   return null
 }
 
+const IDENTIFYING_ATTRIBUTES = ['src', 'href', 'alt', 'name', 'type', 'value', 'title', 'role', 'class']
+const GENERATED_ATTRIBUTES = ['data-herb-debug-', 'data-herb-source', 'data-herb-scope-', 'data-herb-style-scoped', 'data-herb-slot', 'data-herb-region', 'data-herb-manifests', 'data-herb-dependencies']
+
+function isGenerated(name: string): boolean {
+  return GENERATED_ATTRIBUTES.some(generated => name.startsWith(generated))
+}
+
+function identifyingAttribute(element: Element): Attr | null {
+  const attributes = [...element.attributes].filter(attribute =>
+    !isGenerated(attribute.name) && attribute.name !== 'style' && attribute.name !== 'id'
+  )
+
+  for (const name of IDENTIFYING_ATTRIBUTES) {
+    const found = attributes.find(attribute => attribute.name === name)
+
+    if (found) return found
+  }
+
+  return attributes[0] ?? null
+}
+
 function describeElement(element: Element): string {
   const tag = element.tagName.toLowerCase()
   const id = element.id ? `#${element.id}` : ''
-  const herb = [...element.attributes].find(attribute => attribute.name.startsWith('data-herb-'))
-  const detail = herb ? ` ${herb.name}="${herb.value.length > 40 ? `${herb.value.slice(0, 40)}…` : herb.value}"` : ''
+  const attribute = identifyingAttribute(element)
+  const detail = attribute ? ` ${attribute.name}="${attribute.value.length > 40 ? `${attribute.value.slice(0, 40)}…` : attribute.value}"` : ''
 
   return `<${tag}${id}${detail}>`
 }
