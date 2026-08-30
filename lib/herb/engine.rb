@@ -423,7 +423,7 @@ module Herb
 
     #: (Array[Herb::Diagnostic]) -> void
     def emit_compile_diagnostics(diagnostics)
-      entries = diagnostics.map(&:to_ruby).join(", ")
+      entries = diagnostics.map { |diagnostic| diagnostic.to_ruby(relative_file_path) }.join(", ")
 
       @src << " ::Herb::Engine::Runtime::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
     end

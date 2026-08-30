@@ -383,5 +383,15 @@ module Engine
       refute_nil diagnostic
       assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
     end
+    test "keeps that file when the diagnostic is carried into the compiled template and rendered" do
+      source = %(<h1>Page</h1><%= render "posts/dynamic" %>)
+      compiled, = compile(source, visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH)
+
+      session = Herb::Engine::Runtime::Session.capture { eval(compiled) }
+      diagnostic = session.report.diagnostics.find { |found| found.code == "scoped-style-built-with-erb" }
+
+      refute_nil diagnostic
+      assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
+    end
   end
 end

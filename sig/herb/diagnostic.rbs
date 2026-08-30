@@ -66,8 +66,8 @@ module Herb
 
     alias to_hash to_h
 
-    # : () -> String
-    def to_ruby: () -> String
+    # : (?String?) -> String
+    def to_ruby: (?String?) -> String
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String

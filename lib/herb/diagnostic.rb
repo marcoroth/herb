@@ -55,7 +55,7 @@ module Herb
       end
 
       new(
-        template: template,
+        template: entry[:template] || template,
         message: entry[:message],
         severity: entry[:severity],
         code: entry[:code],
@@ -119,8 +119,7 @@ module Herb
 
     alias to_hash to_h
 
-    #: () -> String
-    def to_ruby
+    def to_ruby(compiled = nil)
       parts = [
         "message: #{message.inspect}",
         "severity: #{severity.inspect}",
@@ -129,6 +128,7 @@ module Herb
       ]
 
       parts << "suggestion: #{suggestion.inspect}" if suggestion
+      parts << "template: #{template.inspect}" if template && template != compiled
 
       if location
         parts << "line: #{location.start.line}" << "column: #{location.start.column}"
