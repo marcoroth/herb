@@ -23,6 +23,7 @@ module Herb
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @tokens = [] #: Array[untyped]
+        @padding_before = Hash.new(0) #: Hash[Integer, Integer]
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
         @trim_next_whitespace = false
@@ -429,12 +430,16 @@ module Herb
         if !skip_comment_check && erb_comment?(opening)
           follows_newline = leading_space_follows_newline?
           remove_trailing_whitespace_from_last_token! if left_trim?(node)
+          swallows_newline = at_line_start?
 
-          if at_line_start?
+          if swallows_newline
             leading_space = extract_and_remove_leading_space!
             @trim_next_whitespace = true
             save_pending_leading_whitespace!(leading_space) if !leading_space.empty? && follows_newline
           end
+
+          keep_line_count(node, extra: swallows_newline ? 1 : 0)
+
           return
         end
         return if erb_graphql?(opening)
@@ -446,6 +451,14 @@ module Herb
         else
           apply_trim(node, code)
         end
+
+        keep_line_count(node)
+      end
+
+      def keep_line_count(node, extra: 0)
+        lines = node.content.value.count("\n") - node.content.value.strip.count("\n") + extra
+
+        @padding_before[@tokens.length] += lines if lines.positive?
       end
 
       def add_text(text)
@@ -489,32 +502,44 @@ module Herb
         current_text = nil #: String?
         current_context = nil
 
-        tokens.each do |token|
-          type = token[0]
+        pending_padding = 0
 
-          if type == :text
-            value = token[1]
+        flush = lambda do
+          if current_text
+            optimized << [:text, current_text, current_context]
 
-            if current_text
-              current_text << value
-              current_context ||= token[2]
-            else
-              current_text = value.dup
-              current_context = token[2]
-            end
-          else
-            if current_text
-              optimized << [:text, current_text, current_context]
+            current_text = nil
+            current_context = nil
+          end
 
-              current_text = nil
-              current_context = nil
-            end
-
-            optimized << [type, token[1], token[2], token[3]]
+          if pending_padding.positive?
+            optimized << [:code, "\n" * pending_padding, nil]
+            pending_padding = 0
           end
         end
 
-        optimized << [:text, current_text, current_context] if current_text
+        tokens.each_with_index do |token, index|
+          pending_padding += @padding_before[index]
+
+          unless token[0] == :text
+            flush.call
+            optimized << [token[0], token[1], token[2], token[3]]
+
+            next
+          end
+
+          if current_text
+            current_text << token[1]
+            current_context ||= token[2]
+          else
+            current_text = token[1].dup
+            current_context = token[2]
+          end
+        end
+
+        pending_padding += @padding_before[tokens.length]
+
+        flush.call
 
         optimized
       end

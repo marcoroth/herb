@@ -9,6 +9,8 @@ Multi-line comment
 spanning multiple lines
 =end 
 
+ 
+
  y = 2 
  _buf << '<div>'.freeze; _buf << (x + y).to_s; _buf << '</div>
 '.freeze;

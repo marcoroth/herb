@@ -6,10 +6,11 @@ _buf = ::String.new;
 =begin 
 
  _buf << '  This, while unusual, is a legal form of commenting.
-'.freeze;
+'.freeze; 
+
 =end 
 
  _buf << '
 <div>Content</div>
-'.freeze;
+'.freeze; 
 _buf.to_s

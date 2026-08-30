@@ -5,4 +5,6 @@ input: "{source: \"<%\\n  text = <<~TEXT\\n    Hello, world!\\n  TEXT\\n%>\\n\",
 _buf = ::String.new; text = <<~TEXT
     Hello, world!
   TEXT
+ 
+
 _buf.to_s
