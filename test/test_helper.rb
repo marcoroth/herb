@@ -28,6 +28,20 @@ require_relative "snapshot_utils"
 Minitest::Spec::DSL.send(:alias_method, :test, :it)
 Minitest::Spec::DSL.send(:alias_method, :xtest, :xit)
 
+Minitest.after_run do
+  stale = SnapshotUtils.stale_line_fidelity_allowlist_entries
+
+  if !stale.empty? && !ENV["UPDATE_LINE_FIDELITY_ALLOWLIST"]
+    abort(<<~MESSAGE)
+
+      Every ERB tag now compiles to the line it was written on for #{stale.size} allowlisted #{stale.size == 1 ? "test" : "tests"}.
+      Remove #{stale.size == 1 ? "this entry" : "these entries"} from test/line_fidelity_allowlist.txt:
+
+      #{stale.sort.map { |entry| "  #{entry}" }.join("\n")}
+    MESSAGE
+  end
+end
+
 def cyclic_string(length)
   sequence = ("a".."z").to_a + ("0".."9").to_a
   sequence.cycle.take(length).join

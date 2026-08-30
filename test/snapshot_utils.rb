@@ -61,6 +61,8 @@ module SnapshotUtils
     snapshot_key = { source: source, options: engine_options }.to_s
     assert_snapshot_matches(expected, snapshot_key)
 
+    assert_erb_tags_keep_their_line(source, engine.src)
+
     prism_result = Prism.parse(engine.src)
     syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
 
@@ -500,6 +502,77 @@ module SnapshotUtils
     metadata
   end
 
+  LINE_FIDELITY_ALLOWLIST_PATH = File.expand_path("line_fidelity_allowlist.txt", __dir__)
+
+  def line_fidelity_allowlist
+    SnapshotUtils.line_fidelity_allowlist
+  end
+
+  def self.line_fidelity_allowlist
+    @line_fidelity_allowlist ||=
+      if File.exist?(LINE_FIDELITY_ALLOWLIST_PATH)
+        File.readlines(LINE_FIDELITY_ALLOWLIST_PATH, chomp: true).reject(&:empty?).to_set
+      else
+        Set.new
+      end
+  end
+
+  def self.line_fidelity_allowlist_ran
+    @line_fidelity_allowlist_ran ||= Set.new
+  end
+
+  def self.line_fidelity_allowlist_needed
+    @line_fidelity_allowlist_needed ||= Set.new
+  end
+
+  def self.line_fidelity_run_failed?
+    @line_fidelity_run_failed || false
+  end
+
+  def self.line_fidelity_run_failed!
+    @line_fidelity_run_failed = true
+  end
+
+  def self.stale_line_fidelity_allowlist_entries
+    return Set.new if line_fidelity_run_failed?
+
+    line_fidelity_allowlist_ran - line_fidelity_allowlist_needed
+  end
+
+  def after_teardown
+    super
+
+    SnapshotUtils.line_fidelity_run_failed! if failures.any? { |failure| !failure.is_a?(Minitest::Skip) }
+  end
+
+  def assert_erb_tags_keep_their_line(source, compiled)
+    off = erb_tags_off_their_line(source, compiled)
+    identifier = "#{self.class}##{name}"
+
+    if ENV["UPDATE_LINE_FIDELITY_ALLOWLIST"]
+      File.open(LINE_FIDELITY_ALLOWLIST_PATH, "a") { |file| file.puts(identifier) } unless off.empty?
+
+      return
+    end
+
+    if line_fidelity_allowlist.include?(identifier)
+      SnapshotUtils.line_fidelity_allowlist_ran << identifier
+      SnapshotUtils.line_fidelity_allowlist_needed << identifier unless off.empty?
+
+      return
+    end
+
+    assert off.empty?, <<~MESSAGE
+      An ERB tag compiles to a line other than the one it was written on, so a
+      backtrace from this template would name the wrong line:
+
+      #{off.map { |line, code| "  source line #{line}: #{code[0, 60]}" }.join("\n")}
+
+      Compiled source:
+      #{compiled}
+    MESSAGE
+  end
+
   private
 
   def evaluate_actionview_source(source, locals)
@@ -564,5 +637,33 @@ module SnapshotUtils
           .tr("-", "_")
           .tr(" ", "_")
           .downcase
+  end
+
+  def erb_content_nodes(node, found = [])
+    found << node if node.class.name&.end_with?("ERBContentNode")
+    node.compact_child_nodes.each { |child| erb_content_nodes(child, found) } if node.respond_to?(:compact_child_nodes)
+    found
+  end
+
+  def erb_tags_off_their_line(source, compiled)
+    lines = compiled.lines
+
+    erb_content_nodes(Herb.parse(source).value).filter_map do |node|
+      opening = node.tag_opening&.value.to_s
+
+      next if opening.empty? || opening.start_with?("<%#")
+
+      code = Herb::Engine::Helpers.strip_trailing_comment(node.content&.value.to_s.strip)
+
+      next if code.empty?
+
+      line = node.tag_opening.location.start.line
+      first = code.lines.first.to_s.strip
+
+      next if lines[line - 1].to_s.include?(first)
+      next unless compiled.include?(first)
+
+      [line, first]
+    end
   end
 end
