@@ -6,5 +6,5 @@ _buf = ::String.new; _buf << '<div>'.freeze; text = <<~TEXT
     Hello, world!
   TEXT
  _buf << '</div>
-'.freeze;
+'.freeze; 
 _buf.to_s
