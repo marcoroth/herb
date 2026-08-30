@@ -23,6 +23,7 @@ module Herb
         super()
 
         @engine = engine
+        @source_lines = options[:source]&.lines
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @trim = options[:trim] != false
         @tokens = [] #: Array[untyped]
@@ -742,7 +743,13 @@ module Herb
         if at_line_start?
           leading_space = extract_and_remove_leading_space!
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
-          right_space = Herb::Engine::Helpers.heredoc?(code) ? "\n" : " \n"
+          right_space = if Herb::Engine::Helpers.heredoc?(code)
+                          "\n"
+                        elsif newline_follows?(node)
+                          " \n"
+                        else
+                          " "
+                        end
 
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
@@ -751,6 +758,25 @@ module Herb
         else
           @tokens << [:code, code, current_context]
         end
+      end
+
+      #: (untyped) -> bool
+      def newline_follows?(node)
+        return true unless @source_lines
+
+        position = node.tag_closing&.location&.end || node.location&.end
+
+        return true unless position
+
+        line = @source_lines[position.line - 1]
+
+        return false unless line
+
+        rest = line[position.column..]
+
+        return false unless rest
+
+        rest.match?(/\A[ \t]*\r?\n\z/)
       end
 
       def save_pending_leading_whitespace!(whitespace)

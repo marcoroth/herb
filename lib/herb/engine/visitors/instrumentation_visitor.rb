@@ -179,11 +179,26 @@ module Herb
       end
 
       def wrapped_output(node)
-        erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) {\n#{code(node)}\n}")
+        body = code(node)
+
+        return erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
+
+        erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) { #{body} }")
       end
 
       def wrapped_statement(node)
-        erb_node(node, "<%", "#{SESSION}.enter(#{position(node)}); begin\n#{code(node)}\nensure; #{SESSION}.leave; end")
+        body = code(node)
+
+        if spans_lines?(body)
+          return erb_node(node, "<%", "#{SESSION}.enter(#{position(node)}); begin\n#{body}\nensure; #{SESSION}.leave; end")
+        end
+
+        erb_node(node, "<%", "#{SESSION}.enter(#{position(node)}); begin; #{body}; ensure; #{SESSION}.leave; end")
+      end
+
+      #: (String) -> bool
+      def spans_lines?(code)
+        code.include?("\n") || Herb::Engine::Helpers.heredoc?(code) || Herb::Engine::Helpers.comment?(code)
       end
 
       def enter_node(node)

@@ -78,6 +78,9 @@ module Herb
 
       def wrapped_statement: (untyped node) -> untyped
 
+      # : (String) -> bool
+      def spans_lines?: (String) -> bool
+
       def enter_node: (untyped node) -> untyped
 
       def leave_node: (untyped node) -> untyped
