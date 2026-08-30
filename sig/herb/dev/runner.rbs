@@ -27,6 +27,10 @@ module Herb
 
       private
 
+      def interactive?: () -> untyped
+
+      def terminal: (untyped sequence) -> untyped
+
       def pluralize: (untyped count, untyped word) -> untyped
 
       def require_cruise: () -> untyped

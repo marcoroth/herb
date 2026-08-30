@@ -2,6 +2,8 @@
 
 require_relative "../test_helper"
 require_relative "../../lib/herb/dev/runner"
+require "fileutils"
+require "tmpdir"
 
 module Dev
   class RunnerTest < Minitest::Spec
@@ -144,6 +146,23 @@ module Dev
       diff_result = Herb.diff('<div class="old">Hello</div>', '<div class="new">Hello</div><span>New</span>')
 
       refute Herb::Dev::Runner.can_patch?(diff_result.operations)
+    end
+
+    test "indexing writes no cursor escapes when stdout is not a terminal" do
+      directory = Dir.mktmpdir("herb_dev_runner_test")
+
+      File.write(File.join(directory, "index.html.erb"), "<div>Hello</div>\n")
+
+      config = Herb::Configuration.load(directory)
+
+      output, = capture_io do
+        Herb::Dev::Runner.new(path: directory).send(:index_files, config, directory)
+      end
+
+      assert_equal "  Files:     1 templates indexed\n", output
+    ensure
+      FileUtils.rm_rf(directory)
+      Herb.reset_configuration!
     end
   end
 end

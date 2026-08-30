@@ -30,6 +30,8 @@ module Herb
       end
 
       def run
+        $stdout.sync = true
+
         require_cruise
         require_relative "server"
 
@@ -44,8 +46,8 @@ module Herb
         check_existing_server(expanded_path)
         port = find_port
 
-        print CLEAR_SCREEN
-        print HIDE_CURSOR
+        terminal(CLEAR_SCREEN)
+        terminal(HIDE_CURSOR)
         print_header(config, expanded_path)
 
         file_states = index_files(config, @path)
@@ -61,13 +63,13 @@ module Herb
         watch_files(config, expanded_path, websocket, file_states)
       rescue Interrupt
         websocket&.stop
-        print SHOW_CURSOR
+        terminal(SHOW_CURSOR)
         puts
         puts "Stopped."
         exit(0)
       ensure
         websocket&.stop
-        print SHOW_CURSOR
+        terminal(SHOW_CURSOR)
       end
 
       def stop
@@ -113,6 +115,14 @@ module Herb
       end
 
       private
+
+      def interactive?
+        $stdout.tty?
+      end
+
+      def terminal(sequence)
+        print sequence if interactive?
+      end
 
       def pluralize(count, word)
         "#{count} #{word}#{"s" unless count == 1}"
@@ -176,7 +186,7 @@ module Herb
       end
 
       def index_files(config, path)
-        puts "  #{fg("Indexing files...", 241)}"
+        puts "  #{fg("Indexing files...", 241)}" if interactive?
 
         file_states = {}
         initial_files = config.find_files(path)
@@ -187,7 +197,7 @@ module Herb
           # skip files that can't be read
         end
 
-        print "\e[1A\e[2K"
+        terminal("\e[1A\e[2K")
         puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{file_states.size} templates indexed", 250)}"
 
         file_states
@@ -214,7 +224,7 @@ module Herb
           next unless config.path_included?(relative_path, include_patterns)
 
           if first_change
-            print "\e[2A\e[J"
+            terminal("\e[2A\e[J")
             puts "  #{fg("Recent changes:", 245)}"
             puts
             first_change = false
