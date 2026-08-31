@@ -2,11 +2,6 @@ Engine::BlockCommentsTest#test_0001_ruby block comments with =begin and =end mul
 Engine::BlockCommentsTest#test_0002_ruby block comments inside erb tags
 Engine::BlockCommentsTest#test_0003_ruby block comments with code before and after
 Engine::BlockCommentsTest#test_0007_ruby block comments with =begin and =end mutliline and no space before ERB closing tag
-Engine::DebugModeTest#test_0065_block with debug disable comment content erb expressions do NOT get debug spans
-Engine::DebugModeTest#test_0066_block with debug disable comment suppresses debug spans for multiple expressions
-Engine::DebugModeTest#test_0067_block with debug disable comment suppresses debug spans in nested html
-Engine::DebugModeTest#test_0068_debug disable comment works on non-content_for blocks
-Engine::DebugModeTest#test_0069_debug disable comment with extra whitespace
 Engine::DebugModeTest::marking which render a tag came from#test_0001_says nothing about the render unless asked
 Engine::DebugModeTest::marking which render a tag came from#test_0002_compiles the marker as a tag the session fills in
 Engine::ERBCommentsTest#test_0003_inline ruby comment between code
