@@ -128,7 +128,7 @@ module Herb
 
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
-      def keep_line_count: (untyped node, ?extra: untyped) -> untyped
+      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
 

@@ -1,6 +1,4 @@
 Engine::BlockCommentsTest#test_0001_ruby block comments with =begin and =end multiline
-Engine::BlockCommentsTest#test_0002_ruby block comments inside erb tags
-Engine::BlockCommentsTest#test_0003_ruby block comments with code before and after
 Engine::BlockCommentsTest#test_0007_ruby block comments with =begin and =end mutliline and no space before ERB closing tag
 Engine::ERBCommentsTest#test_0003_inline ruby comment between code
 Engine::ERBCommentsTest#test_0004_inline ruby comment before and between code

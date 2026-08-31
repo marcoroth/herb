@@ -653,11 +653,12 @@ module SnapshotUtils
 
       next if opening.empty? || opening.start_with?("<%#")
 
-      code = Herb::Engine::Helpers.strip_trailing_comment(node.content&.value.to_s.strip)
+      raw = node.content&.value.to_s
+      code = Herb::Engine::Helpers.strip_trailing_comment(raw.strip)
 
       next if code.empty?
 
-      line = node.tag_opening.location.start.line
+      line = node.tag_opening.location.start.line + raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
       first = code.lines.first.to_s.strip
 
       next if lines[line - 1].to_s.include?(first)
