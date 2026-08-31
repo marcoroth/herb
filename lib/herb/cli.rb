@@ -339,7 +339,7 @@ class Herb::CLI
         self.no_trim = true
       end
 
-      parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
+      parser.on("--optimize", "Enable compile-time optimizations for helpers and static output (for compile/render commands) (default: false)") do
         self.optimize = true
       end
 
@@ -1139,6 +1139,12 @@ class Herb::CLI
     Herb::Engine::CSSInliner::Visitor.new(stylesheets: inline_css)
   end
 
+  def optimize_visitor
+    require_relative "engine/visitors/optimize_visitor"
+
+    Herb::Engine::OptimizeVisitor.new
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -1153,6 +1159,7 @@ class Herb::CLI
       visitors << slot_visitor if slot_visitor
       visitors << scoped_style_visitor if scoped_styles
       visitors << css_inliner_visitor if inline_css
+      visitors << optimize_visitor if optimize
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
@@ -1164,7 +1171,6 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
-      options[:optimize] = true if optimize
       options[:trim] = false if no_trim
       options[:validate_ruby] = true
       options[:visitors] = visitors unless visitors.empty?
@@ -1277,13 +1283,13 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
-      options[:optimize] = true if optimize
       options[:trim] = false if no_trim
 
       visitors = []
       visitors << slot_visitor if slot_visitor
       visitors << scoped_style_visitor if scoped_styles
       visitors << css_inliner_visitor if inline_css
+      visitors << optimize_visitor if optimize
       options[:visitors] = visitors unless visitors.empty?
 
       engine = Herb::Engine.new(source, options)

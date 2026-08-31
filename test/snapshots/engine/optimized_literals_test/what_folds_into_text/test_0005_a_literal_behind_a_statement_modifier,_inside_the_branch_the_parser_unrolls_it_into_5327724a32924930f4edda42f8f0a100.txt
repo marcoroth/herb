@@ -2,5 +2,4 @@
 source: "Engine::OptimizedLiteralsTest::what folds into text#test_0005_a literal behind a statement modifier, inside the branch the parser unrolls it into"
 input: "{source: \"<p><%= \\\"yes\\\" if flag %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<p>'.freeze; if flag; _buf << 'yes'.freeze; end; _buf << '</p>'.freeze;
-_buf.to_s
+if flag; "<p>yes</p>".freeze; else "<p></p>".freeze;end;

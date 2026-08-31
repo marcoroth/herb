@@ -22,6 +22,11 @@ module Herb
     # : (String) -> String
     def string_literal: (String) -> String
 
+    STRING_LITERAL_ESCAPES: Hash[String, String]
+
+    # : (String) -> String
+    def escaped_string_literal: (String) -> String
+
     ESCAPE_TABLE: untyped
 
     ATTRIBUTE_ESCAPE_TABLE: untyped

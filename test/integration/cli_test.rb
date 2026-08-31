@@ -115,6 +115,54 @@ module Engine
       end
     end
 
+    test "compile with --optimize resolves helpers into the markup they produce" do
+      template = "<%= tag.br %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--optimize"]).call
+        end
+
+        assert_equal "'<br>'.freeze\n", captured_output
+      end
+    end
+
+    test "compile with --optimize collapses a static conditional into branch literals" do
+      template = "<% if flag %>A<% else %>B<% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--optimize"]).call
+        end
+
+        assert_equal %(if flag ; "A".freeze;else; "B".freeze;end;\n), captured_output
+      end
+    end
+
+    test "compile without --optimize keeps the helper call" do
+      template = "<%= tag.br %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_equal "__herb = ::Herb::Engine; _buf = ::String.new; _buf << __herb.h((tag.br));\n_buf.to_s\n", captured_output
+      end
+    end
+
+    test "render with --optimize renders the folded output" do
+      template = %(<p><%= "hello" %></p>)
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--optimize"]).call
+        end
+
+        assert_equal "<p>hello</p>\n", captured_output
+      end
+    end
+
     test "compile with json output" do
       template = "<div>Hello World</div>"
 

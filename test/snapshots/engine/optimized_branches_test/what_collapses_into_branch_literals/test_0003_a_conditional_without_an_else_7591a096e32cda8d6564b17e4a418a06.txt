@@ -1,0 +1,8 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0003_a conditional without an else"
+input: "{source: \"<div>\\n  <% if flag %>\\n    shown\\n  <% end %>\\n</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+
+  if flag 
+ "<div>\n    shown\n</div>".freeze;
+ else "<div>\n</div>".freeze;  end 
