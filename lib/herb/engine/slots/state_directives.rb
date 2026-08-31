@@ -3,6 +3,7 @@
 
 require "prism"
 
+require_relative "state_anchor"
 require_relative "state_kinds"
 require_relative "state_operators"
 require_relative "state_predicates"
@@ -76,8 +77,8 @@ module Herb
         )
 
         module Silent
-          #: (String, Herb::Location?, Symbol) -> nil
-          def self.slot_error(_message, _location, _family)
+          #: (String, Herb::Location?, Symbol, **untyped) -> nil
+          def self.slot_error(_message, _location, _family, **_options)
             nil
           end
 
@@ -113,15 +114,16 @@ module Herb
             }
           end
 
-          #: (String, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
-          def condition_read(expression, states, visitor, location)
+          #: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+          def condition_read(expression, states, visitor, anchor)
+            anchor = StateAnchor.new(anchor) unless anchor.is_a?(StateAnchor)
             source = expression.strip
             parsed = expression_node(source)
 
             return mentions_any?(source, states) ? :computed : nil if parsed.nil?
 
             said = visitor.diagnostic_count
-            read = tree_read(parsed, states, visitor, location)
+            read = tree_read(parsed, states, visitor, anchor)
 
             return :reported if visitor.diagnostic_count > said
             return read if read
@@ -129,26 +131,27 @@ module Herb
             mentions_any?(source, states) ? :computed : nil
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
-          def tree_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+          def tree_read(node, states, visitor, anchor)
+            anchor = StateAnchor.new(anchor) unless anchor.is_a?(StateAnchor)
             node = unwrap_parentheses(node)
 
-            read = bare_read(node, states, visitor, location)
+            read = bare_read(node, states, visitor, anchor)
             return read if read
 
-            predicate = predicate_read(node, states, visitor, location)
+            predicate = predicate_read(node, states, visitor, anchor)
             return predicate if predicate
 
-            transform = transform_read(node, states, visitor, location)
+            transform = transform_read(node, states, visitor, anchor)
             return transform if transform
 
-            negated = negated_read(node, states, visitor, location)
+            negated = negated_read(node, states, visitor, anchor)
             return negated if negated
 
-            equality = equality_read(node, states, visitor, location)
+            equality = equality_read(node, states, visitor, anchor)
             return equality if equality
 
-            combo_read(node, states, visitor, location)
+            combo_read(node, states, visitor, anchor)
           end
 
           #: (untyped) -> untyped
@@ -162,20 +165,45 @@ module Herb
             unwrap_parentheses(body.body.first)
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Combo | Symbol)?
-          def combo_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Combo | Symbol)?
+          def combo_read(node, states, visitor, anchor)
             op = case node
                  when Prism::AndNode then "all"
                  when Prism::OrNode then "any"
                  else return nil
                  end
 
-            parts = flatten_combo(node, node.class).map { |part| tree_read(part, states, visitor, location) }
+            said = visitor.diagnostic_count
+            branches = flatten_combo(node, node.class)
+            parts = branches.map { |part| tree_read(part, states, visitor, anchor) }
 
             return nil if parts.none? { |part| part.is_a?(Read) || part.is_a?(Combo) }
-            return :computed if parts.any? { |part| part.nil? || part == :computed }
+            return :reported if visitor.diagnostic_count > said
+
+            server = branches.zip(parts).find { |_, part| part.nil? || part == :computed }&.first
+
+            return :computed if server && !anchor.condition?
+
+            if server
+              read = branches.zip(parts).find { |_, part| part.is_a?(Read) || part.is_a?(Combo) }&.last
+
+              return mixed_combo(node, server, read, visitor, anchor)
+            end
 
             Combo.new(op: op, parts: parts)
+          end
+
+          #: (untyped, untyped, untyped, untyped, StateAnchor) -> nil
+          def mixed_combo(node, server, read, visitor, anchor)
+            named = read && read_names(read).first
+            reads = named ? "the state `#{named}`" : "a state"
+
+            visitor.slot_error(
+              "`#{server.slice}` is server Ruby inside a condition that also reads #{reads}. The client resolves each side of `#{node.is_a?(Prism::AndNode) ? "&&" : "||"}` itself and has no value for this one.",
+              anchor.locate(server),
+              :read,
+              suggestion: "Move `#{server.slice}` into its own conditional around this one, or declare a state for it and set it from app code."
+            )
           end
 
           #: (untyped, untyped) -> Array[untyped]
@@ -413,7 +441,7 @@ module Herb
             location = default&.location || state.name&.location || parsing.location
 
             if state.kind == "missing" || default.nil?
-              return refused(name, "The state `#{name}` has no default. Give it one, since the server renders a value for every state, like `(#{name}: false)`.", visitor, state.name&.location || parsing.location)
+              return refused(name, "The state `#{name}` has no default. The server renders a value for every state, so there is nothing to render or to seed the client with.", visitor, state.name&.location || parsing.location, suggestion: "Give it a default, like `(#{name}: false)`.")
             end
 
             source = default.content.to_s
@@ -423,11 +451,11 @@ module Herb
 
             case state.kind
             when "float"
-              refused(name, "The state `#{name}` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead.", visitor, location, source)
+              refused(name, "The state `#{name}` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text.", visitor, location, default: source, suggestion: "Declare it as an Integer or a String instead.")
             when "array"
-              refused(name, "The state `#{name}` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead.", visitor, location, source)
+              refused(name, "The state `#{name}` has an Array default. A list on the page is a collection of items, not one state holding many values.", visitor, location, default: source, suggestion: "Declare an item-scoped state inside the loop instead.")
             when "hash"
-              refused(name, "The state `#{name}` has a Hash default. Declare each leaf as its own state, like `(#{name}_title: \"\")`.", visitor, location, source)
+              refused(name, "The state `#{name}` has a Hash default. A state holds one value the client can write and read back.", visitor, location, default: source, suggestion: "Declare each leaf as its own state, like `(#{name}_title: \"\")`.")
             when "bare"
               derived_default(name, source, location, parsing) || bare_default(name, source, location, parsing)
             else
@@ -436,9 +464,11 @@ module Herb
             end
           end
 
-          #: (String, String, untyped, Herb::Location?, ?String) -> Declaration
-          def refused(name, message, visitor, location, default = "nil")
-            visitor.slot_error(message, location, :declaration)
+          #: (String, String, untyped, Herb::Location?, **untyped) -> Declaration
+          def refused(name, message, visitor, location, **options)
+            default = options.fetch(:default, "nil") #: String
+
+            visitor.slot_error(message, location, :declaration, suggestion: options[:suggestion])
 
             Declaration.new(name: name, kind: :seeded, default: default, derived: nil, line: nil, column: nil)
           end
@@ -452,12 +482,12 @@ module Herb
             return nil if value.nil?
 
             said = visitor.diagnostic_count
-            read = tree_read(value, declared, visitor, location) #: untyped
+            read = tree_read(value, declared, visitor, StateAnchor.new(location, context: :default)) #: untyped
 
             return Declaration.new(name: name, kind: :seeded, default: source, derived: nil, line: nil, column: nil) if visitor.diagnostic_count > said
 
             if read == :computed
-              return refused(name, "The state `#{name}` defaults to `#{source}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, source)
+              return refused(name, "The state `#{name}` defaults to `#{source}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none.", visitor, location, default: source, suggestion: "Split the two apart, so `#{name}` derives from states only.")
             end
 
             if read.nil?
@@ -465,11 +495,11 @@ module Herb
               (parsing.names - declared.keys - [name]).each { |candidate| later[candidate] = true }
 
               if mentions_any?(source, later)
-                return refused(name, "The state `#{name}` reads a state declared after it. A derived state reads only states declared before it, so move `#{name}` after the states it reads.", visitor, location)
+                return refused(name, "The state `#{name}` reads a state declared after it. A derived state reads only states declared before it.", visitor, location, suggestion: "Move `#{name}` after the states it reads.")
               end
 
               if mentions_any?(source, declared)
-                return refused(name, "The state `#{name}` defaults to `#{source}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart.", visitor, location, source)
+                return refused(name, "The state `#{name}` defaults to `#{source}`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none.", visitor, location, default: source, suggestion: "Split the two apart, so `#{name}` derives from states only.")
               end
 
               return nil
@@ -494,13 +524,13 @@ module Herb
             end
 
             if parsing.enclosing.key?(identifier)
-              return refused(name, "The state `#{name}` reads `#{identifier}` from an enclosing scope. A derived state reads only states from its own signature, so declare `#{name}` beside the states it reads.", visitor, location)
+              return refused(name, "The state `#{name}` reads `#{identifier}` from an enclosing scope. A derived state reads only states from its own signature.", visitor, location, suggestion: "Declare `#{name}` beside the states it reads.")
             end
 
             kind = parsing.locals[identifier]
 
             unless kind
-              return refused(name, "The state `#{name}` defaults to `#{identifier}`, which is not a declared strict local. A name that was never passed raises at render, so add `#{identifier}` to the `locals:` signature.", visitor, location)
+              return refused(name, "The state `#{name}` defaults to `#{identifier}`, which is not a declared strict local. A name that was never passed raises at render.", visitor, location, suggestion: "Add `#{identifier}` to the `locals:` signature.")
             end
 
             Declaration.new(name: name, kind: kind, default: identifier, derived: nil, line: nil, column: nil)
@@ -517,8 +547,8 @@ module Herb
             body.one? ? body.first : nil
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-          def bare_read(node, states, _visitor, _location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+          def bare_read(node, states, _visitor, _anchor)
             if node.is_a?(Prism::LocalVariableReadNode)
               declaration = states[node.name.to_s]
 
@@ -539,13 +569,13 @@ module Herb
             Read.new(name: name, comparand: nil, kind: declaration.kind, operator: nil, against: nil, transform: nil, against_transform: nil)
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-          def operand_read(node, states, visitor, location)
-            bare_read(node, states, visitor, location) || transform_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+          def operand_read(node, states, visitor, anchor)
+            bare_read(node, states, visitor, anchor) || transform_read(node, states, visitor, anchor)
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-          def transform_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+          def transform_read(node, states, visitor, anchor)
             return nil unless node.is_a?(Prism::CallNode)
 
             transform = TRANSFORMS[node.name.to_s]
@@ -557,21 +587,21 @@ module Herb
 
             return nil unless receiver
 
-            read = bare_read(receiver, states, visitor, location)
+            read = bare_read(receiver, states, visitor, anchor)
 
             return nil unless read.is_a?(Read)
 
             kinds = transform.fetch(:kinds)
 
             if kinds && read.kind != :seeded && !kinds.include?(read.kind)
-              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{transform.fetch(:only)} can be read with `#{node.name}`, so compare `#{read.name}` itself instead.", location, :read)
+              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{transform.fetch(:only)} can be read with `#{node.name}`.", anchor.locate(node), :read, suggestion: "Compare `#{read.name}` itself instead, like `#{read.name} == #{states.fetch(read.name).default}`.")
             end
 
             Read.new(name: read.name, comparand: nil, kind: transform.fetch(:returns), operator: nil, against: nil, transform: transform.fetch(:operation), against_transform: nil)
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-          def predicate_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+          def predicate_read(node, states, visitor, anchor)
             return nil unless node.is_a?(Prism::CallNode)
 
             predicate = PREDICATES[node.name.to_s]
@@ -583,25 +613,25 @@ module Herb
 
             return nil unless receiver
 
-            read = bare_read(receiver, states, visitor, location)
+            read = bare_read(receiver, states, visitor, anchor)
 
             return nil unless read.is_a?(Read)
 
             kinds = predicate[:kinds]
 
             if kinds && read.kind != :seeded && !kinds.include?(read.kind)
-              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{predicate.fetch(:only)} can be read with `#{node.name}`, so compare `#{read.name}` to a literal instead.", location, :read)
+              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{predicate.fetch(:only)} can be read with `#{node.name}`.", anchor.locate(node), :read, suggestion: "Compare `#{read.name}` to a literal instead, or declare it as #{kind_article(predicate.fetch(:kinds)&.first)} state.")
             end
 
             Read.new(name: read.name, comparand: predicate[:comparand], kind: read.kind, operator: predicate[:operator], against: nil, transform: nil, against_transform: nil)
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
-          def negated_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
+          def negated_read(node, states, visitor, anchor)
             return nil unless node.is_a?(Prism::CallNode) && node.name == :!
             return nil unless node.receiver && node.arguments.nil? && node.block.nil?
 
-            inner = tree_read(unwrap_parentheses(node.receiver), states, visitor, location)
+            inner = tree_read(unwrap_parentheses(node.receiver), states, visitor, anchor)
 
             return nil unless inner.is_a?(Read) || inner.is_a?(Combo)
 
@@ -619,8 +649,8 @@ module Herb
             read.with(operator: NEGATED_OPERATORS.fetch(read.operator || "=="), kind: :boolean)
           end
 
-          #: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-          def equality_read(node, states, visitor, location)
+          #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+          def equality_read(node, states, visitor, anchor)
             return nil unless node.is_a?(Prism::CallNode)
             return nil unless node.name == :== || node.name == :!= || ORDERED_OPERATORS.include?(node.name)
 
@@ -629,21 +659,21 @@ module Herb
 
             return nil unless left && right && node.arguments&.arguments&.one?
 
-            left_read = operand_read(left, states, visitor, location)
-            right_read = operand_read(right, states, visitor, location)
+            left_read = operand_read(left, states, visitor, anchor)
+            right_read = operand_read(right, states, visitor, anchor)
             read = left_read || right_read
 
             return nil unless read
 
             if left_read && right_read
-              return state_pair_read(node, left_read, right_read, visitor, location)
+              return state_pair_read(node, left_read, right_read, visitor, anchor)
             end
 
             literal = left_read ? right : left
             kind = KINDS[literal.class.name]
 
             unless kind
-              return visitor.slot_error("`#{node.slice}` compares the state `#{read.name}` against something that is not a literal. The client resolves a comparison by lookup, so compare against a literal instead.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` compares the state `#{read.name}` against `#{literal.slice}`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side.", anchor.locate(literal), :compare, suggestion: "Compare `#{read.name}` to a literal, like `#{read.name} == #{states.fetch(read.name).default}`, or declare a state for `#{literal.slice}` and set it from app code.")
             end
 
             operator = node.name == :== ? nil : node.name.to_s
@@ -651,22 +681,24 @@ module Herb
             ordered = operator && operator != "!="
 
             if ordered && read.kind != :integer && read.kind != :seeded
-              return visitor.slot_error("`#{node.slice}` orders #{subject_phrase(read)}. Ordering compares numbers, so declare `#{read.name}` as an Integer or compare it with `==` instead.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` orders #{subject_phrase(read)}. Ordering compares numbers.", anchor.locate(node), :compare, suggestion: "Declare `#{read.name}` as an Integer, like `(#{read.name}: 0)`, or compare it with `==` instead.")
             end
 
             if ordered && kind != :integer
-              return visitor.slot_error("`#{node.slice}` orders the state `#{read.name}` against #{kind_article(kind)} literal. Ordering compares numbers, so compare it against an Integer literal instead.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` orders the state `#{read.name}` against #{kind_article(kind)} literal. Ordering compares numbers.", anchor.locate(literal), :compare, suggestion: "Compare `#{read.name}` against an Integer literal, like `#{read.name} > 0`.")
             end
 
             unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded
-              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, so it can never match. Compare it against #{kind_article(read.kind)} literal instead.", location, :compare)
+              consequence = operator == "!=" ? "so it always matches" : "so it can never match"
+
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, #{consequence}.", anchor.locate(literal), :compare, suggestion: "Compare it against #{kind_article(read.kind)} literal, like `#{read.name} == #{states.fetch(read.name).default}`.")
             end
 
             Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil, transform: read.transform, against_transform: nil)
           end
 
-          #: (untyped, Read, Read, untyped, Herb::Location?) -> Read?
-          def state_pair_read(node, left, right, visitor, location)
+          #: (untyped, Read, Read, untyped, StateAnchor) -> Read?
+          def state_pair_read(node, left, right, visitor, anchor)
             operator = node.name == :== ? nil : node.name.to_s
 
             if right.transform && !left.transform
@@ -677,11 +709,11 @@ module Herb
             ordered = operator && operator != "!="
 
             if ordered && (left.kind != :integer || right.kind != :integer) && left.kind != :seeded && right.kind != :seeded
-              return visitor.slot_error("`#{node.slice}` orders #{subject_phrase(left)} against #{subject_phrase(right)}. Ordering compares numbers, so both sides have to be Integers.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` orders #{subject_phrase(left)} against #{subject_phrase(right)}. Ordering compares numbers.", anchor.locate(node), :compare, suggestion: "Make both sides Integers, or compare them with `==` instead.")
             end
 
             if !ordered && left.kind != right.kind && left.kind != :seeded && right.kind != :seeded
-              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(left)} with #{subject_phrase(right)}, so it can never match. Compare values of the same kind.", location, :compare)
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(left)} with #{subject_phrase(right)}, so it can never match.", anchor.locate(node), :compare, suggestion: "Compare values of the same kind, or redeclare one of the two states.")
             end
 
             Read.new(name: left.name, comparand: nil, kind: left.kind, operator: operator, against: right.name, transform: left.transform, against_transform: right.transform)

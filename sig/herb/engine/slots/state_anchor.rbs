@@ -1,0 +1,35 @@
+# Generated from lib/herb/engine/slots/state_anchor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # Points a diagnostic at the part of an expression that is actually wrong.
+      #
+      # A condition reaches the state compiler as a string that was cut out of an ERB token, so a
+      # Prism node inside it knows only its own offset within that string. This carries the token
+      # the string came from and turns those offsets back into a location in the template. When it
+      # has nothing to work with it answers the whole node's location, which is what every
+      # diagnostic used before.
+      class StateAnchor
+        attr_reader location: Herb::Location?
+
+        # : (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol) -> void
+        def initialize: (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol) -> void
+
+        # : () -> bool
+        def condition?: () -> bool
+
+        # : (::Prism::Node) -> Herb::Location?
+        def locate: (::Prism::Node) -> Herb::Location?
+
+        private
+
+        # : (::Prism::Node) -> Integer?
+        def character_offset: (::Prism::Node) -> Integer?
+
+        # : (Integer) -> Herb::Position
+        def advance: (Integer) -> Herb::Position
+      end
+    end
+  end
+end

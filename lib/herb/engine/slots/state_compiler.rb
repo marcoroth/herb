@@ -237,17 +237,17 @@ module Herb
             spelled = declaration_location(declaration) || node.location
 
             if @strict_locals.key?(declaration.name)
-              next @visitor.slot_error("`#{declaration.name}` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two.", spelled, :declaration)
+              next @visitor.slot_error("`#{declaration.name}` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so the name has two owners.", spelled, :declaration, suggestion: "Rename one of the two.")
             end
 
             if bucket.key?(declaration.name)
-              next @visitor.slot_error("The state `#{declaration.name}` is declared twice in the same scope. Remove one of the two declarations.", spelled, :declaration)
+              next @visitor.slot_error("The state `#{declaration.name}` is declared twice in the same scope.", spelled, :declaration, suggestion: "Remove one of the two declarations.")
             end
 
             shadowed = scope ? @region_states.key?(declaration.name) : @item_states.values.any? { |declarations| declarations.key?(declaration.name) }
 
             if shadowed
-              next @visitor.slot_error("The state `#{declaration.name}` is declared in both an item and its region. A later read could mean either one, so give them different names.", spelled, :declaration)
+              next @visitor.slot_error("The state `#{declaration.name}` is declared in both an item and its region, so a later read could mean either one.", spelled, :declaration, suggestion: "Give them different names, like `item_#{declaration.name}` for the one inside the loop.")
             end
 
             bucket[declaration.name] = declaration.line ? declaration : declaration.with(line: start&.line, column: start&.column)
@@ -375,18 +375,18 @@ module Herb
 
           conditions.each_with_index do |arm, branch|
             expression = condition_expression(arm)
-            read = StateDirectives.condition_read(expression, states, @visitor, arm.location)
+            read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(arm, expression))
 
             return nil if read == :reported
 
             if read == :computed
-              return @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal.", arm.location, :read)
+              return @visitor.slot_error("`#{expression}` computes with the state `#{mentioned_state(expression, states)&.name}`. The client resolves each condition itself and cannot run Ruby to pick a branch.", condition_anchor(arm, expression).location, :read, suggestion: read_advice(mentioned_state(expression, states)))
             end
 
             unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
               return nil if arms.empty?
 
-              return @visitor.slot_error("`#{expression}` sits in a state-driven conditional but reads no state. The client resolves every arm, so read a state here or move this branch out of the conditional.", arm.location, :conditional)
+              return @visitor.slot_error("`#{expression}` sits in a state-driven conditional but reads no state. The client resolves every arm, so an arm it cannot answer would never be chosen.", condition_anchor(arm, expression).location, :conditional, suggestion: "Read a state in this arm, or move this branch into its own conditional.")
             end
 
             StateDirectives.read_names(read).each { |name| rewrite_predicate(arm, name) }
@@ -413,12 +413,12 @@ module Herb
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_unless_for(node, states)
           expression = condition_expression(node)
-          read = StateDirectives.condition_read(expression, states, @visitor, node.location)
+          read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression))
 
           return nil if read.nil? || read == :reported
 
           if read == :computed
-            return @visitor.slot_error("`unless #{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal.", node.location, :read)
+            return @visitor.slot_error("`unless #{expression}` computes with the state `#{mentioned_state(expression, states)&.name}`. The client resolves each condition itself and cannot run Ruby to pick a branch.", condition_anchor(node, expression).location, :read, suggestion: read_advice(mentioned_state(expression, states)))
           end
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
@@ -438,12 +438,12 @@ module Herb
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_case_for(node, states)
           subject_source = condition_expression(node)
-          read = StateDirectives.condition_read(subject_source, states, @visitor, node.location)
+          read = StateDirectives.condition_read(subject_source, states, @visitor, condition_anchor(node, subject_source))
 
           return nil if read.nil? || read == :reported
 
           unless read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.operator.nil? && read.transform.nil?
-            return @visitor.slot_error("`case #{subject_source}` switches on something other than a bare state read. The client resolves a `case` by looking the state up, so switch on the state itself.", node.location, :conditional)
+            return @visitor.slot_error("`case #{subject_source}` switches on something other than a bare state read. The client resolves a `case` by looking the state up.", condition_anchor(node, subject_source).location, :conditional, suggestion: "Switch on the state itself, like `case #{mentioned_state(subject_source, states)&.name}`.")
           end
 
           rewrite_predicate(node, read.name)
@@ -457,11 +457,11 @@ module Herb
             comparands = StateDirectives.when_comparands(list, declaration)
 
             if comparands == :computed
-              return @visitor.slot_error("`when #{list}` on the state `#{read.name}` has a comparand that is not a literal. The client resolves a `when` by lookup, so compare against literals only.", arm.location, :conditional)
+              return @visitor.slot_error("`when #{list}` on the state `#{read.name}` has a comparand that is not a literal. The client resolves a `when` by lookup.", condition_anchor(arm, list).location, :conditional, suggestion: "List literals instead, like `when #{declaration.default}`.")
             end
 
             if comparands == :mismatched
-              return @visitor.slot_error("`when #{list}` compares the #{declaration.kind.to_s.capitalize} state `#{read.name}` against a literal of another type, so it can never match. Compare it against #{StateDirectives.kind_article(declaration.kind)} literal instead.", arm.location, :compare)
+              return @visitor.slot_error("`when #{list}` compares the #{declaration.kind.to_s.capitalize} state `#{read.name}` against a literal of another type, so it can never match.", condition_anchor(arm, list).location, :compare, suggestion: "Use #{StateDirectives.kind_article(declaration.kind)} literal in every arm, like `when #{declaration.default}`.")
             end
 
             next unless comparands.is_a?(Array)
@@ -475,6 +475,31 @@ module Herb
           else_branch = node.else_clause ? node.conditions.size : nil
 
           { arms: arms, else: else_branch, signature: signature_of(sources, else_branch) }
+        end
+
+        #: (String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Declaration?
+        def mentioned_state(expression, states)
+          states.each_value.find { |declaration| StateDirectives.mentions_any?(expression, { declaration.name => declaration }) }
+        end
+
+        #: (StateDirectives::Declaration?) -> String
+        def read_advice(declaration)
+          return "Read the state bare, or compare it to a literal." unless declaration
+
+          name = declaration.name
+
+          return "Read `#{name}` bare, like `<% if #{name} %>`, or as `#{name}?`." if declaration.kind == :boolean
+
+          "Read `#{name}` bare, like `<% if #{name} %>`, or compare it to a literal, like `#{name} == #{declaration.default}`."
+        end
+
+        #: (untyped, String) -> StateAnchor
+        def condition_anchor(node, expression)
+          content = node.content if node.respond_to?(:content)
+
+          return StateAnchor.new(node.location) unless content.is_a?(Herb::Token)
+
+          StateAnchor.new(content.location, token: content, expression: expression)
         end
 
         #: (untyped) -> String
@@ -515,7 +540,7 @@ module Herb
 
           return nil unless increment && states.key?(increment.name)
 
-          read = StateDirectives.condition_read(condition_expression(node), states, @visitor, node.location)
+          read = StateDirectives.condition_read(condition_expression(node), states, @visitor, condition_anchor(node, condition_expression(node)))
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
@@ -553,7 +578,7 @@ module Herb
             end
           end
 
-          @visitor.slot_error("`#{content.strip}` assigns the state `#{assigned.first}`. The client never sees a server-side write, so seed the initial value in the declaration, derive it from other states, count items with `#{assigned.first} += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.", node.location, :assignment)
+          @visitor.slot_error("`#{content.strip}` assigns the state `#{assigned.first}`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered.", node.location, :assignment, suggestion: "Seed the initial value in the declaration, derive it from other states, count items with `#{assigned.first} += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
         end
 
         #: (StateDirectives::FoldIncrement, when_read: untyped, location: Herb::Location?) -> void
@@ -562,23 +587,23 @@ module Herb
           declaration = @region_states[name]
 
           unless declaration
-            return @visitor.slot_error("`#{name} += #{increment.by}` counts into `#{name}`, which is an item state. A count lives once per region, so declare `#{name}` at the top of the template instead.", location, :count)
+            return @visitor.slot_error("`#{name} += #{increment.by}` counts into `#{name}`, which is an item state. A count lives once per region, not once per item.", location, :count, suggestion: "Declare `#{name}` at the top of the template, outside the loop.")
           end
 
           if declaration.derived
-            return @visitor.slot_error("`#{name} += #{increment.by}` counts into `#{name}`, which is derived from `#{declaration.default}`. A state is either derived or counted, so drop the derivation or the count.", location, :count)
+            return @visitor.slot_error("`#{name} += #{increment.by}` counts into `#{name}`, which is derived from `#{declaration.default}`. A state is either derived or counted, never both.", location, :count, suggestion: "Drop the derivation from `#{name}`, or count into a second state.")
           end
 
           unless declaration.kind == :integer
-            return @visitor.slot_error("`#{name} += #{increment.by}` counts into the #{declaration.kind.to_s.capitalize} state `#{name}`. A count is a number, so declare it as an Integer, like `(#{name}: 0)`.", location, :count)
+            return @visitor.slot_error("`#{name} += #{increment.by}` counts into the #{declaration.kind.to_s.capitalize} state `#{name}`. A count is a number.", location, :count, suggestion: "Declare `#{name}` as an Integer, like `(#{name}: 0)`.")
           end
 
           if @state_counts.any? { |count| count[:name] == name }
-            return @visitor.slot_error("`#{name}` is counted twice. One state holds one count, so declare a second state for the second count.", location, :count)
+            return @visitor.slot_error("`#{name}` is counted twice. One state holds one count.", location, :count, suggestion: "Declare a second state for the second count.")
           end
 
           if @visitor.recorded_expressions.any? { |expression| StateDirectives.mentions_any?(expression, { name => declaration }) }
-            return @visitor.slot_error("`#{name}` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current, so move the read after the loop.", location, :count)
+            return @visitor.slot_error("`#{name}` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current.", location, :count, suggestion: "Move the read below the loop that counts `#{name}`.")
           end
 
           @state_counts << { name: name, by: increment.by, collection: @visitor.current_collection, when: when_read }
@@ -605,7 +630,7 @@ module Herb
 
               next unless StateDirectives.mentions_any?(expression, mentioned)
 
-              next @visitor.slot_error("`#{count[:name]}` is read inside the loop that counts it. The count is complete only after the loop, so move the read below it.", node.location, :count)
+              next @visitor.slot_error("`#{count[:name]}` is read inside the loop that counts it. The count is complete only after the loop.", node.location, :count, suggestion: "Move the read below the loop.")
             end
           end
         end
@@ -665,7 +690,7 @@ module Herb
 
           return unless read
 
-          @visitor.slot_error("`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values, so give the state its own attribute or its own output.", node.location, :read)
+          @visitor.slot_error("`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values.", node.location, :read, suggestion: "Give the state its own attribute, or its own output outside this one.")
         end
 
         #: () -> void
@@ -709,12 +734,12 @@ module Herb
 
         #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
         def register_state_value(node, index, slot, expression, states)
-          read = slot.valued? ? StateDirectives.condition_read(expression, states, @visitor, node.location) : nil
+          read = slot.valued? ? StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression)) : nil
 
           return if read == :reported
 
           unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
-            return @visitor.slot_error("`#{expression}` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal.", node.location, :read)
+            return @visitor.slot_error("`#{expression}` computes with the state `#{mentioned_state(expression, states)&.name}`. The client cannot run Ruby to keep the result current.", condition_anchor(node, expression).location, :read, suggestion: "Show the value with `<%= #{mentioned_state(expression, states)&.name} %>`, or declare a second state for the computed answer and set it from app code.")
           end
 
           StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
@@ -727,12 +752,12 @@ module Herb
           return nil unless slot.type == :attribute || (slot.type == :boolean_attribute && !@state_presence.key?(index))
           return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
 
-          read = StateDirectives.condition_read(expression, states, @visitor, node.location)
+          read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression))
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
           if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && read.operator.nil? && !StateKinds::FALSY.include?(read.kind)
-            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean.", node.location, :read)
+            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off.", condition_anchor(node, expression).location, :read, suggestion: "Compare `#{read.name}` to a literal, like `#{read.name} == #{states.fetch(read.name).default}`, or declare it as a boolean.")
           end
 
           open_tag = @visitor.open_tag_for(node)

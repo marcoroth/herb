@@ -151,6 +151,12 @@ module Engine
         assert_equal :seeded, visitor.state_declarations[:region].first[:kind]
       end
 
+      def diagnostic_for(template)
+        error = assert_raises(Herb::Engine::CompilationError) { compile(template) }
+
+        error.diagnostics.first #: as !nil
+      end
+
       def refuse(template, message)
         error = assert_raises(Herb::Engine::CompilationError) { compile(template) }
 
@@ -165,60 +171,60 @@ module Engine
 
         refuse(
           "<%# herb:state (rate: 1.0) %><p><%= rate %></p>",
-          "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead."
+          "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text."
         )
 
         refuse(
           "<%# herb:state (rate: 1e3) %><p><%= rate %></p>",
-          "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so declare it as an Integer or a String instead."
+          "The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text."
         )
 
         refuse(
           "<%# herb:state (selected: []) %><p><%= selected %></p>",
-          "The state `selected` has an Array default. A list on the page is a collection of items, so declare an item-scoped boolean inside the loop instead."
+          "The state `selected` has an Array default. A list on the page is a collection of items, not one state holding many values."
         )
 
         refuse(
           "<%# herb:state (draft: { title: \"\" }) %><p><%= draft %></p>",
-          "The state `draft` has a Hash default. Declare each leaf as its own state, like `(draft_title: \"\")`."
+          "The state `draft` has a Hash default. A state holds one value the client can write and read back."
         )
 
         refuse(
           "<%# herb:state (open: open_initially) %><p><%= open %></p>",
-          "The state `open` defaults to `open_initially`, which is not a declared strict local. A name that was never passed raises at render, so add `open_initially` to the `locals:` signature."
+          "The state `open` defaults to `open_initially`, which is not a declared strict local. A name that was never passed raises at render."
         )
 
         refuse(
           "<%# locals: (open: false) %>\n<%# herb:state (open: false) %><p><%= open %></p>",
-          "`open` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so rename one of the two."
+          "`open` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so the name has two owners."
         )
 
         refuse(
           "<ul><% @items.each do |item| %><%# herb:state (open: false) %><li id=\"<%= item %>\"><%= open %></li><% end %></ul>" \
           "<%# herb:state (open: false) %>",
-          "The state `open` is declared in both an item and its region. A later read could mean either one, so give them different names."
+          "The state `open` is declared in both an item and its region, so a later read could mean either one."
         )
 
         refuse(
           "<%# herb:state (attempts: 0) %><p><%= attempts + 1 %></p>",
-          "`attempts + 1` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."
+          "`attempts + 1` computes with the state `attempts`. The client cannot run Ruby to keep the result current."
         )
 
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% if sort == 3 %>a<% end %></div>",
-          "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match. Compare it against a String literal instead."
+          "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match."
         )
 
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% case sort %><% when SORTS %>a<% end %></div>",
-          "`when SORTS` on the state `sort` has a comparand that is not a literal. The client resolves a `when` by lookup, so compare against literals only."
+          "`when SORTS` on the state `sort` has a comparand that is not a literal. The client resolves a `when` by lookup."
         )
       end
 
       test "a `when` against a literal of another kind is refused" do
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% case sort %><% when 3 %>a<% end %></div>",
-          "`when 3` compares the String state `sort` against a literal of another type, so it can never match. Compare it against a String literal instead."
+          "`when 3` compares the String state `sort` against a literal of another type, so it can never match."
         )
       end
 
@@ -233,7 +239,7 @@ module Engine
       test "a mixed conditional refuses the arm that reads no state" do
         refuse(
           "<%# herb:state (pending: false) %><div><% if pending? %>a<% elsif @admin %>b<% else %>c<% end %></div>",
-          "`@admin` sits in a state-driven conditional but reads no state. The client resolves every arm, so read a state here or move this branch out of the conditional."
+          "`@admin` sits in a state-driven conditional but reads no state. The client resolves every arm, so an arm it cannot answer would never be chosen."
         )
       end
 
@@ -293,6 +299,42 @@ module Engine
         assert_includes rendered, "Present"
       end
 
+      test "a state mistake is coded under the directive it belongs to" do
+        diagnostic = diagnostic_for(%(<%# herb:state (count: 0) %><div><% if count.empty? %>x<% end %></div>))
+
+        assert_equal "herb-state-read", diagnostic.code
+        assert_equal "Herb Compiler", diagnostic.origin
+        assert_equal "Visitor", diagnostic.data[:validator]
+      end
+
+      test "a diagnostic carries a suggestion beside its message" do
+        diagnostic = diagnostic_for(%(<%# herb:state (sort: "name") %><div><% if sort == 3 %>a<% end %></div>))
+
+        assert_equal "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match.", diagnostic.message
+        assert_equal "Compare it against a String literal, like `sort == \"name\"`.", diagnostic.suggestion
+      end
+
+      test "a diagnostic points at the part of the expression that is wrong" do
+        diagnostic = diagnostic_for(<<~ERB)
+          <%# herb:state (draft: "") %>
+
+          <% if draft.length > 3 && Current.user.admin? %>
+            Long
+          <% end %>
+        ERB
+
+        assert_equal 3, diagnostic.location&.start&.line
+        assert_equal 26, diagnostic.location&.start&.column
+        assert_equal 45, diagnostic.location&.end&.column
+      end
+
+      test "a combination naming server Ruby says which side the client cannot answer" do
+        diagnostic = diagnostic_for(%(<%# herb:state (draft: "") %><div><% if draft.blank? || Current.user.admin? %>x<% end %></div>))
+
+        assert_equal "`Current.user.admin?` is server Ruby inside a condition that also reads the state `draft`. The client resolves each side of `||` itself and has no value for this one.", diagnostic.message
+        assert_equal "Move `Current.user.admin?` into its own conditional around this one, or declare a state for it and set it from app code.", diagnostic.suggestion
+      end
+
       test "a predicate compiles into the comparison it stands for" do
         {
           %(<%# herb:state (draft: "") %><div><% if draft.empty? %>x<% end %></div>) => ["draft", { "value" => "" }],
@@ -326,27 +368,27 @@ module Engine
       test "a predicate on a state of another kind is refused" do
         refuse(
           %(<%# herb:state (draft: "") %><div><% if draft.zero? %>x<% end %></div>),
-          "`draft.zero?` reads the String state `draft` with `zero?`. Only an Integer state can be read with `zero?`, so compare `draft` to a literal instead."
+          "`draft.zero?` reads the String state `draft` with `zero?`. Only an Integer state can be read with `zero?`."
         )
 
         refuse(
           %(<%# herb:state (count: 0) %><div><% if count.empty? %>x<% end %></div>),
-          "`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`, so compare `count` to a literal instead."
+          "`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`."
         )
 
         refuse(
           %(<%# herb:state (count: 0) %><div><% if count.blank? %>x<% end %></div>),
-          "`count.blank?` reads the Integer state `count` with `blank?`. Only a Boolean, a String or a Nil state can be read with `blank?`, so compare `count` to a literal instead."
+          "`count.blank?` reads the Integer state `count` with `blank?`. Only a Boolean, a String or a Nil state can be read with `blank?`."
         )
 
         refuse(
           %(<%# herb:state (draft: "") %><div><% if draft.positive? %>x<% end %></div>),
-          "`draft.positive?` reads the String state `draft` with `positive?`. Only an Integer state can be read with `positive?`, so compare `draft` to a literal instead."
+          "`draft.positive?` reads the String state `draft` with `positive?`. Only an Integer state can be read with `positive?`."
         )
 
         refuse(
           %(<%# herb:state (tab: :first) %><div><% if tab.present? %>x<% end %></div>),
-          "`tab.present?` reads the Symbol state `tab` with `present?`. Only a Boolean, a String or a Nil state can be read with `present?`, so compare `tab` to a literal instead."
+          "`tab.present?` reads the Symbol state `tab` with `present?`. Only a Boolean, a String or a Nil state can be read with `present?`."
         )
       end
 
@@ -427,12 +469,12 @@ module Engine
       test "length on a state of another kind is refused" do
         refuse(
           %(<%# herb:state (count: 0) %><div><% if count.length > 3 %>x<% end %></div>),
-          "`count.length` reads the Integer state `count` with `length`. Only a String or a Symbol state can be read with `length`, so compare `count` itself instead."
+          "`count.length` reads the Integer state `count` with `length`. Only a String or a Symbol state can be read with `length`."
         )
 
         refuse(
           %(<%# herb:state (count: 0) %><div><% if count.size > 3 %>x<% end %></div>),
-          "`count.size` reads the Integer state `count` with `size`. Only a String or a Symbol state can be read with `size`, so compare `count` itself instead."
+          "`count.size` reads the Integer state `count` with `size`. Only a String or a Symbol state can be read with `size`."
         )
       end
 
@@ -461,14 +503,14 @@ module Engine
       test "two transformed sides keep their kinds compatible" do
         refuse(
           %(<%# herb:state (draft: "", other: "") %><div><% if draft.length > other.to_s %>x<% end %></div>),
-          "`draft.length > other.to_s` orders the length of the state `draft` against the to_s of the state `other`. Ordering compares numbers, so both sides have to be Integers."
+          "`draft.length > other.to_s` orders the length of the state `draft` against the to_s of the state `other`. Ordering compares numbers."
         )
       end
 
       test "a transform compared against a state of another kind is refused" do
         refuse(
           %(<%# herb:state (draft: "", filter: "all") %><div><% if draft.length > filter %>x<% end %></div>),
-          "`draft.length > filter` orders the length of the state `draft` against the String state `filter`. Ordering compares numbers, so both sides have to be Integers."
+          "`draft.length > filter` orders the length of the state `draft` against the String state `filter`. Ordering compares numbers."
         )
       end
 
@@ -580,7 +622,7 @@ module Engine
         end
 
         assert_equal(
-          ["`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."],
+          ["`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current."],
           compiler_findings(error)
         )
       end
@@ -619,7 +661,7 @@ module Engine
         end
 
         assert_equal(
-          ["`status` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values, so give the state its own attribute or its own output."],
+          ["`status` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values."],
           compiler_findings(error)
         )
       end
@@ -654,7 +696,7 @@ module Engine
 
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% if sort != 3 %>x<% end %></div>",
-          "`sort != 3` compares the String state `sort` against an Integer literal, so it can never match. Compare it against a String literal instead."
+          "`sort != 3` compares the String state `sort` against an Integer literal, so it always matches."
         )
       end
 
@@ -672,12 +714,12 @@ module Engine
       test "a state pair keeps its kinds compatible" do
         refuse(
           "<%# herb:state (sort: \"name\", attempts: 0) %><div><% if sort == attempts %>x<% end %></div>",
-          "`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match. Compare values of the same kind."
+          "`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match."
         )
 
         refuse(
           "<%# herb:state (sort: \"name\", other: \"x\") %><div><% if sort > other %>x<% end %></div>",
-          "`sort > other` orders the String state `sort` against the String state `other`. Ordering compares numbers, so both sides have to be Integers."
+          "`sort > other` orders the String state `sort` against the String state `other`. Ordering compares numbers."
         )
       end
 
@@ -690,12 +732,12 @@ module Engine
       test "ordering refuses non-integer states and comparands" do
         refuse(
           "<%# herb:state (sort: \"name\") %><div><% if sort > \"a\" %>x<% end %></div>",
-          "`sort > \"a\"` orders the String state `sort`. Ordering compares numbers, so declare `sort` as an Integer or compare it with `==` instead."
+          "`sort > \"a\"` orders the String state `sort`. Ordering compares numbers."
         )
 
         refuse(
           "<%# herb:state (attempts: 0) %><div><% if attempts > \"a\" %>x<% end %></div>",
-          "`attempts > \"a\"` orders the state `attempts` against a String literal. Ordering compares numbers, so compare it against an Integer literal instead."
+          "`attempts > \"a\"` orders the state `attempts` against a String literal. Ordering compares numbers."
         )
       end
 
@@ -747,7 +789,7 @@ module Engine
       test "a combo mixing a state with server code raises" do
         refuse(
           "<%# herb:state (pending: false) %><div><% if pending? && current_user.admin? %>x<% else %>y<% end %></div>",
-          "`pending? && current_user.admin?` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."
+          "`current_user.admin?` is server Ruby inside a condition that also reads the state `pending`. The client resolves each side of `&&` itself and has no value for this one."
         )
       end
 
@@ -810,19 +852,19 @@ module Engine
       test "a derived default mixing states with other Ruby raises" do
         refuse(
           %(<%# herb:state (pending: false, busy: pending || current_user.admin?) %><p><%= pending %></p>),
-          "The state `busy` defaults to `pending || current_user.admin?`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart."
+          "The state `busy` defaults to `pending || current_user.admin?`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none."
         )
 
         refuse(
           %(<%# herb:state (attempts: 0, doubled: attempts + 1) %><p><%= attempts %></p>),
-          "The state `doubled` defaults to `attempts + 1`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none, so split the two apart."
+          "The state `doubled` defaults to `attempts + 1`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none."
         )
       end
 
       test "a derived state cannot read forward" do
         refuse(
           %(<%# herb:state (busy: pending || failed, pending: false, failed: false) %><p><%= pending %></p>),
-          "The state `busy` reads a state declared after it. A derived state reads only states declared before it, so move `busy` after the states it reads."
+          "The state `busy` reads a state declared after it. A derived state reads only states declared before it."
         )
       end
 
@@ -841,7 +883,7 @@ module Engine
 
         refuse(
           template,
-          "The state `mirror` reads `open` from an enclosing scope. A derived state reads only states from its own signature, so declare `mirror` beside the states it reads."
+          "The state `mirror` reads `open` from an enclosing scope. A derived state reads only states from its own signature."
         )
       end
 
@@ -900,7 +942,7 @@ module Engine
       test "assigning a state outside a fold raises" do
         refuse(
           %(<%# herb:state (pending: false) %><div><% pending = true %><% if pending? %>A<% end %></div>),
-          "`pending = true` assigns the state `pending`. The client never sees a server-side write, so seed the initial value in the declaration, derive it from other states, count items with `pending += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`."
+          "`pending = true` assigns the state `pending`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered."
         )
       end
 
@@ -923,7 +965,7 @@ module Engine
 
             <p><%= total %></p>
           ERB
-          "`total += 1` assigns the state `total`. The client never sees a server-side write, so seed the initial value in the declaration, derive it from other states, count items with `total += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`."
+          "`total += 1` assigns the state `total`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered."
         )
       end
 
@@ -934,7 +976,7 @@ module Engine
             <p><%= total %></p>
             <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
           ERB
-          "`total` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current, so move the read after the loop."
+          "`total` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current."
         )
 
         refuse(
@@ -942,7 +984,7 @@ module Engine
             <%# herb:state (total: 0) %>
             <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><li id="i<%= item %>"><%= total %></li><% end %></ul>
           ERB
-          "`total` is read inside the loop that counts it. The count is complete only after the loop, so move the read below it."
+          "`total` is read inside the loop that counts it. The count is complete only after the loop."
         )
       end
 
@@ -952,7 +994,7 @@ module Engine
             <%# herb:state (label: "x") %>
             <ul><% @items.each do |item| %><%# herb:key item %><% label += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
           ERB
-          "`label += 1` counts into the String state `label`. A count is a number, so declare it as an Integer, like `(label: 0)`."
+          "`label += 1` counts into the String state `label`. A count is a number."
         )
 
         refuse(
@@ -960,7 +1002,7 @@ module Engine
             <%# herb:slots client %>
             <ul><% @items.each do |item| %><%# herb:key item %><%# herb:state (mine: 0) %><% mine += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
           ERB
-          "`mine += 1` counts into `mine`, which is an item state. A count lives once per region, so declare `mine` at the top of the template instead."
+          "`mine += 1` counts into `mine`, which is an item state. A count lives once per region, not once per item."
         )
 
         refuse(
@@ -969,7 +1011,7 @@ module Engine
             <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><% total += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
             <p><%= total %></p>
           ERB
-          "`total` is counted twice. One state holds one count, so declare a second state for the second count."
+          "`total` is counted twice. One state holds one count."
         )
       end
 
@@ -979,7 +1021,7 @@ module Engine
             <%# herb:state (pending: false, busy: pending) %>
             <ul><% @items.each do |item| %><%# herb:key item %><% busy += 1 %><li id="i<%= item %>"><%= item %></li><% end %></ul>
           ERB
-          "`busy += 1` counts into `busy`, which is derived from `pending`. A state is either derived or counted, so drop the derivation or the count."
+          "`busy += 1` counts into `busy`, which is derived from `pending`. A state is either derived or counted, never both."
         )
       end
 
@@ -1029,7 +1071,7 @@ module Engine
       test "a computed tag helper attribute raises" do
         refuse(
           %(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft.upcase %>),
-          "`draft.upcase` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."
+          "`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current."
         )
       end
 
@@ -1136,7 +1178,7 @@ module Engine
         end
 
         assert_equal(
-          ["`unless attempts * 2 > 3` computes with a state. The client cannot evaluate Ruby, so read the state bare, read it with a predicate, or compare it to a literal."],
+          ["`unless attempts * 2 > 3` computes with the state `attempts`. The client resolves each condition itself and cannot run Ruby to pick a branch."],
           compiler_findings(error)
         )
       end
@@ -1207,7 +1249,7 @@ module Engine
         end
 
         assert_equal(
-          ["`muted=\"<%= status %>\"` reads the String state `status` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare the state to a literal, or declare it as a boolean."],
+          ["`muted=\"<%= status %>\"` reads the String state `status` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off."],
           compiler_findings(error)
         )
       end
@@ -1220,7 +1262,7 @@ module Engine
           ERB
         end
 
-        assert_includes error.message, "computes with a state"
+        assert_includes error.message, "computes with the state `draft`"
       end
 
       test "a mismatched comparand in a boolean attribute still raises" do

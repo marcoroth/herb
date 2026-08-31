@@ -36,6 +36,8 @@ module Herb
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       #
       class Visitor < Herb::Visitor
+        STATE_FAMILIES = [:read, :compare, :declaration, :conditional, :count, :assignment].freeze #: Array[Symbol]
+
         extend Herb::Visitor::Experimental
         include Herb::Visitor::ContextAware
         include Herb::Visitor::Diagnostics
@@ -183,13 +185,18 @@ module Herb
           @degraded
         end
 
-        #: (String, Herb::Location?, Symbol) -> nil
-        def slot_error(message, location, family)
-          error(message, location, code: "slots-#{family}")
+        #: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
+        def slot_error(message, location, family, suggestion: nil)
+          error(message, location, code: diagnostic_code_for(family), suggestion: suggestion)
 
           @degraded = true
 
           nil
+        end
+
+        #: (Symbol) -> String
+        def diagnostic_code_for(family)
+          STATE_FAMILIES.include?(family) ? "herb-state-#{family}" : "slots-#{family}"
         end
 
         #: () -> String
@@ -915,7 +922,7 @@ module Herb
           name = static_attribute_value(name_attribute)
 
           unless name && !name.empty?
-            return slot_error("`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` is computed or empty. A slot name is an address the browser looks up, so give it a static, non-empty value.", name_attribute.location, :name)
+            return slot_error("`#{NAME_ATTRIBUTE}` on `<#{node.tag_name&.value}>` is computed or empty. A slot name is an address the browser looks up, so it has to be known before the page renders.", name_attribute.location, :name, suggestion: "Give it a static, non-empty value.")
           end
 
           candidates = @annotations[base..].to_a.select { |annotation|
@@ -956,15 +963,15 @@ module Herb
           return unless annotation
 
           if scope_names.key?(name)
-            return slot_error("Two slots in the same scope are both named `#{name}`. A slot name is an address, so give one of them a different name.", name_location(named), :name)
+            return slot_error("Two slots in the same scope are both named `#{name}`. A slot name is an address, and two slots cannot share one.", name_location(named), :name, suggestion: "Give one of them a different name.")
           end
 
           if (existing = annotation.name)
-            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`. Both elements hold the same slot, so keep one name or wrap what each should address in its own element.", name_location(named), :name)
+            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` claims the slot already named `#{existing}`. Both elements hold the same slot.", name_location(named), :name, suggestion: "Keep one of the two names, or wrap what each should address in its own element.")
           end
 
           if attribute_conflict?(name, annotation, named[:scope])
-            return slot_error("The name `#{name}` collides with the `#{name}` attribute slot in the same scope. An attribute slot is already addressable by its attribute, so drop the name or rename it.", name_location(named), :name)
+            return slot_error("The name `#{name}` collides with the `#{name}` attribute slot in the same scope. An attribute slot is already addressable by its attribute.", name_location(named), :name, suggestion: "Drop the name, or rename it.")
           end
 
           scope_names[name] = annotation
@@ -979,11 +986,11 @@ module Herb
           candidates = named[:candidates].reject(&:dropped).map(&:survivor).uniq
 
           if candidates.empty?
-            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot, since the element holds nothing dynamic. Move the name onto an element that wraps an ERB output, or remove it.", name_location(named), :name)
+            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` names no slot, since the element holds nothing dynamic.", name_location(named), :name, suggestion: "Move the name onto an element that wraps an ERB output, or remove it.")
           end
 
           unless candidates.one?
-            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots. Wrap the one it should name in its own element.", name_location(named), :name)
+            return slot_error("`#{NAME_ATTRIBUTE}=\"#{name}\"` on `<#{tag}>` is ambiguous between #{candidates.size} slots.", name_location(named), :name, suggestion: "Wrap the one it should name in its own element.")
           end
 
           candidates.fetch(0)

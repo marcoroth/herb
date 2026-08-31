@@ -35,7 +35,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("still flags a state read beside an action attribute", () => {
-    expectError("`count + 1` computes with the state `count`, and the client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
+    expectError("`count + 1` computes with the state `count`. The client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (count: 0) %>
@@ -44,7 +44,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed value read", () => {
-    expectError("`attempts + 1` computes with the state `attempts`, and the client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
+    expectError("`attempts + 1` computes with the state `attempts`. The client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -60,7 +60,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a state mixed with other dynamics in an interpolated attribute", () => {
-    expectError("`status` reads a state inside an interpolated attribute that mixes other dynamic parts. Give the state its own attribute or its own output, since a state write cannot supply the other values.")
+    expectError("`status` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values. Give the state its own attribute, or its own output outside this one.")
 
     assertOffenses(dedent`
       <%# herb:state (status: "") %>
@@ -85,7 +85,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags comparing states of different kinds", () => {
-    expectError("`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match. Compare states of one kind, or redeclare one.")
+    expectError("`sort == attempts` compares the String state `sort` with the Integer state `attempts`, so it can never match. Compare values of the same kind, or redeclare one of the two states.")
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name", attempts: 0) %>
@@ -94,7 +94,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags ordering non-integer states against each other", () => {
-    expectError("`sort > other` orders the states `sort` and `other`. Ordering compares numbers, so both have to be Integer states.")
+    expectError("`sort > other` orders the String state `sort` against the String state `other`. Ordering compares numbers. Make both sides Integers, or compare them with `==` instead.")
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name", other: "x") %>
@@ -110,7 +110,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a negated equality against another kind", () => {
-    expectError('`sort != 3` compares the String state `sort` against an Integer literal, so it always matches. Compare against a String, or redeclare the state.')
+    expectError('`sort != 3` compares the String state `sort` against an Integer literal, so it always matches. Compare it against a String literal, like `sort == \"name\"`.')
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -119,7 +119,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags ordering a string state", () => {
-    expectError("`sort > \"a\"` orders the String state `sort`. Ordering compares numbers, so only an Integer state takes `>`.")
+    expectError("`sort > \"a\"` orders the String state `sort`. Ordering compares numbers. Declare `sort` as an Integer, like `(sort: 0)`, or compare it with `==` instead.")
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -128,7 +128,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags ordering against a non-integer literal", () => {
-    expectError("`attempts > \"a\"` orders the state `attempts` against a String literal. Ordering compares numbers, so the comparand has to be an Integer.")
+    expectError("`attempts > \"a\"` orders the state `attempts` against a String literal. Ordering compares numbers. Compare \`attempts\` against an Integer literal, like \`attempts > 0\`.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -137,7 +137,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed condition", () => {
-    expectError("`attempts * 2 > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
+    expectError("`attempts * 2 > 3` computes with the state `attempts`. The client resolves each condition itself and cannot run Ruby to pick a branch. Read `attempts` bare, like `<% if attempts %>`, or compare it to a literal, like `attempts == 0`.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -153,7 +153,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed unless condition", () => {
-    expectError("`attempts * 2 > 3` computes with the state `attempts`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if attempts %>`, or compare it to a literal, `attempts == 0`.")
+    expectError("`attempts * 2 > 3` computes with the state `attempts`. The client resolves each condition itself and cannot run Ruby to pick a branch. Read `attempts` bare, like `<% if attempts %>`, or compare it to a literal, like `attempts == 0`.")
 
     assertOffenses(dedent`
       <%# herb:state (attempts: 0) %>
@@ -172,7 +172,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a comparison against a non-literal", () => {
-    expectError('`sort == params[:sort]` compares the state `sort` against something that is not a literal or another declared state. Compare against a literal, like `sort == "name"`, since the client resolves a comparison by lookup.')
+    expectError('`sort == params[:sort]` compares the state `sort` against `params[:sort]`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side. Compare `sort` to a literal, like `sort == "name"`, or declare a state for `params[:sort]` and set it from app code.')
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -181,7 +181,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a comparison against a literal of another type", () => {
-    expectError("`sort == 3` compares the String state `sort` against an Integer literal, so it can never match. Compare against a String, or redeclare the state.")
+    expectError("`sort == 3` compares the String state `sort` against an Integer literal, so it can never match. Compare it against a String literal, like `sort == \"name\"`.")
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -197,7 +197,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a symbol state compared against a string", () => {
-    expectError("`tab == \"profile\"` compares the Symbol state `tab` against a String literal, so it can never match. Compare against a Symbol, or redeclare the state.")
+    expectError("`tab == \"profile\"` compares the Symbol state `tab` against a String literal, so it can never match. Compare it against a Symbol literal, like `tab == :profile`.")
 
     assertOffenses(dedent`
       <%# herb:state (tab: :profile) %>
@@ -206,7 +206,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a stateless arm inside a state-driven conditional", () => {
-    expectError("`current_user.admin?` sits in a state-driven conditional but reads no state. Move it into its own conditional, or read a state in this arm, since the client resolves every arm itself.")
+    expectError("`current_user.admin?` sits in a state-driven conditional but reads no state. The client resolves every arm, so an arm it cannot answer would never be chosen. Read a state in this arm, or move this branch into its own conditional.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false) %>
@@ -233,7 +233,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a combo mixing a state with server code", () => {
-    expectError("`pending? && current_user.admin?` combines a state with `current_user.admin?`, which the client cannot evaluate. Split the server condition into its own conditional, or compute it into a second state set from app code.")
+    expectError("`current_user.admin?` is server Ruby inside a condition that also reads the state `pending`. The client resolves each side of `&&` itself and has no value for this one. Move `current_user.admin?` into its own conditional around this one, or declare a state for it and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false) %>
@@ -242,7 +242,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags the invalid condition inside a combo once", () => {
-    expectError("`attempts.empty?` reads the Integer state `attempts` with `empty?`. Only a String or a Symbol state can be read with `empty?`, so compare `attempts` to a literal instead.")
+    expectError("`attempts.empty?` reads the Integer state `attempts` with `empty?`. Only a String or a Symbol state can be read with `empty?`. Compare `attempts` to a literal instead, or declare it as a String state.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, attempts: 0) %>
@@ -266,7 +266,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a comparison against a derived state's inferred kind", () => {
-    expectError("`busy == 3` compares the Boolean state `busy` against an Integer literal, so it can never match. Compare against a Boolean, or redeclare the state.")
+    expectError("`busy == 3` compares the Boolean state `busy` against an Integer literal, so it can never match. Compare it against a Boolean literal, like `busy == pending || failed`.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
@@ -285,7 +285,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a computed tag helper attribute", () => {
-    expectError("`draft.upcase` computes with the state `draft`, and the client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.")
+    expectError("`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -294,7 +294,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a case that does not switch on a bare state read", () => {
-    expectError("`case sort.downcase` does not switch on a bare state read. Write the state alone, or compute the value into its own state.")
+    expectError("`case sort.downcase` switches on something other than a bare state read. The client resolves a `case` by looking the state up. Switch on the state itself, like `case sort`.")
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -305,7 +305,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a when comparand that is not a literal", () => {
-    expectError('`when other_sort` on the state `sort` has a comparand that is not a literal. List literals, like `when "name", "date"`, since the client resolves a `when` by lookup.')
+    expectError('`when other_sort` on the state `sort` has a comparand that is not a literal. The client resolves a `when` by lookup. List literals instead, like `when "name"`.')
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -316,7 +316,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a when comparand of another type", () => {
-    expectError("`when 3` compares the String state `sort` against a literal of another type, so it can never match. Use String literals in every arm.")
+    expectError("`when 3` compares the String state `sort` against a literal of another type, so it can never match. Use a String literal in every arm, like `when \"name\"`.")
 
     assertOffenses(dedent`
       <%# herb:state (sort: "name") %>
@@ -344,7 +344,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a mismatched comparand in a boolean attribute", () => {
-    expectError("`draft == 3` compares the String state `draft` against an Integer literal, so it can never match. Compare against a String, or redeclare the state.")
+    expectError("`draft == 3` compares the String state `draft` against an Integer literal, so it can never match. Compare it against a String literal, like `draft == \"\"`.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -353,8 +353,28 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("flags a presence read of a state that is never falsy", () => {
+    expectError('`disabled="<%= draft %>"` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare `draft` to a literal, like `draft == ""`, or declare it as a boolean.')
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft %></p>
+      <button disabled="<%= draft %>">Send</button>
+    `)
+  })
+
+  test("flags the predicate spelling of a presence read the same way", () => {
+    expectError('`disabled="<%= draft? %>"` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare `draft` to a literal, like `draft == ""`, or declare it as a boolean.')
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <p><%= draft %></p>
+      <button disabled="<%= draft? %>">Send</button>
+    `)
+  })
+
   test("flags a computed read in a boolean attribute", () => {
-    expectError('`draft.upcase` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == ""`.')
+    expectError('`draft.upcase` computes with the state `draft`. The client resolves each condition itself and cannot run Ruby to pick a branch. Read `draft` bare, like `<% if draft %>`, or compare it to a literal, like `draft == ""`.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -463,7 +483,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags two transformed sides whose kinds disagree", () => {
-    expectError("`draft.length > other.to_s` orders the length of the state `draft` against the to_s of the state `other`. Ordering compares numbers, so both sides have to be Integers.")
+    expectError("`draft.length > other.to_s` orders the length of the state `draft` against the to_s of the state `other`. Ordering compares numbers. Make both sides Integers, or compare them with `==` instead.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "", other: "") %>
@@ -472,7 +492,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a transform compared against a state of another kind", () => {
-    expectError("`draft.length > filter` compares the length of the state `draft` with the String state `filter`, so it can never match. Compare values of the same kind.")
+    expectError("`draft.length > filter` compares the length of the state `draft` with the String state `filter`, so it can never match. Compare values of the same kind, or redeclare one of the two states.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "", filter: "all") %>
@@ -495,7 +515,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags length on a state that is not a String or a Symbol", () => {
-    expectError("`count.length` reads the Integer state `count` with `length`. Only a String or a Symbol state can be read with `length`, so compare `count` itself instead.")
+    expectError("`count.length` reads the Integer state `count` with `length`. Only a String or a Symbol state can be read with `length`. Compare `count` itself instead, like `count == 0`.")
 
     assertOffenses(dedent`
       <%# herb:state (count: 0) %>
@@ -527,7 +547,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags zero? on a state that is not an Integer", () => {
-    expectError("`draft.zero?` reads the String state `draft` with `zero?`. Only an Integer state can be read with `zero?`, so compare `draft` to a literal instead.")
+    expectError("`draft.zero?` reads the String state `draft` with `zero?`. Only an Integer state can be read with `zero?`. Compare `draft` to a literal instead, or declare it as an Integer state.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -536,7 +556,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags one? on a state that is not an Integer", () => {
-    expectError("`draft.one?` reads the String state `draft` with `one?`. Only an Integer state can be read with `one?`, so compare `draft` to a literal instead.")
+    expectError("`draft.one?` reads the String state `draft` with `one?`. Only an Integer state can be read with `one?`. Compare `draft` to a literal instead, or declare it as an Integer state.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -545,7 +565,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags empty? on a state that is not a String or a Symbol", () => {
-    expectError("`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`, so compare `count` to a literal instead.")
+    expectError("`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`. Compare `count` to a literal instead, or declare it as a String state.")
 
     assertOffenses(dedent`
       <%# herb:state (count: 0) %>
@@ -554,7 +574,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags blank? on a state that is never blank", () => {
-    expectError("`count.blank?` reads the Integer state `count` with `blank?`. Only a Boolean, a String or a Nil state can be read with `blank?`, so compare `count` to a literal instead.")
+    expectError("`count.blank?` reads the Integer state `count` with `blank?`. Only a Boolean, a String or a Nil state can be read with `blank?`. Compare `count` to a literal instead, or declare it as a Boolean state.")
 
     assertOffenses(dedent`
       <%# herb:state (count: 0) %>
@@ -563,7 +583,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags present? on a state that is always present", () => {
-    expectError("`tab.present?` reads the Symbol state `tab` with `present?`. Only a Boolean, a String or a Nil state can be read with `present?`, so compare `tab` to a literal instead.")
+    expectError("`tab.present?` reads the Symbol state `tab` with `present?`. Only a Boolean, a String or a Nil state can be read with `present?`. Compare `tab` to a literal instead, or declare it as a Boolean state.")
 
     assertOffenses(dedent`
       <%# herb:state (tab: :first) %>
@@ -572,7 +592,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a method that is not a supported predicate", () => {
-    expectError("`draft.upcase?` computes with the state `draft`, and the client cannot run Ruby to pick the branch. Read it bare, `<% if draft %>`, or compare it to a literal, `draft == \"\"`.")
+    expectError("`draft.upcase?` computes with the state `draft`. The client resolves each condition itself and cannot run Ruby to pick a branch. Read `draft` bare, like `<% if draft %>`, or compare it to a literal, like `draft == \"\"`.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>

@@ -96,6 +96,15 @@ module Herb
         # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_case_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
+        # : (String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Declaration?
+        def mentioned_state: (String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Declaration?
+
+        # : (StateDirectives::Declaration?) -> String
+        def read_advice: (StateDirectives::Declaration?) -> String
+
+        # : (untyped, String) -> StateAnchor
+        def condition_anchor: (untyped, String) -> StateAnchor
+
         # : (untyped) -> String
         def condition_expression: (untyped) -> String
 

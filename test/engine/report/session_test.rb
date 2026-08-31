@@ -91,7 +91,7 @@ module Engine
     end
 
     def compiled_entry
-      { message: "m", code: "slots-declaration", severity: :error, origin: "Herb Compiler", phase: :compile }
+      { message: "m", code: "herb-state-declaration", severity: :error, origin: "Herb Compiler", phase: :compile }
     end
 
     def in_project(contents = "<div>\n  <span>\n</div>\n")
@@ -142,7 +142,7 @@ module Engine
         Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/gone.html.erb", [compiled_entry])
       end
 
-      assert_equal ["slots-declaration"], session.report.diagnostics.map(&:code)
+      assert_equal ["herb-state-declaration"], session.report.diagnostics.map(&:code)
       assert_empty session.report.sources
     end
 

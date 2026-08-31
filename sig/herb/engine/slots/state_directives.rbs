@@ -122,8 +122,8 @@ module Herb
         end
 
         module Silent
-          # : (String, Herb::Location?, Symbol) -> nil
-          def self.slot_error: (String, Herb::Location?, Symbol) -> nil
+          # : (String, Herb::Location?, Symbol, **untyped) -> nil
+          def self.slot_error: (String, Herb::Location?, Symbol, **untyped) -> nil
 
           # : (?Symbol?) -> Integer
           def self.diagnostic_count: (?Symbol?) -> Integer
@@ -132,17 +132,20 @@ module Herb
         # : (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
         def self.parse: (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
 
-        # : (String, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
-        def self.condition_read: (String, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
+        # : (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+        def self.condition_read: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
-        def self.tree_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo | Symbol)?
+        # : (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+        def self.tree_read: (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
 
         # : (untyped) -> untyped
         def self.unwrap_parentheses: (untyped) -> untyped
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Combo | Symbol)?
-        def self.combo_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Combo | Symbol)?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Combo | Symbol)?
+        def self.combo_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Combo | Symbol)?
+
+        # : (untyped, untyped, untyped, untyped, StateAnchor) -> nil
+        def self.mixed_combo: (untyped, untyped, untyped, untyped, StateAnchor) -> nil
 
         # : (untyped, untyped) -> Array[untyped]
         def self.flatten_combo: (untyped, untyped) -> Array[untyped]
@@ -195,8 +198,8 @@ module Herb
         # : (untyped, Parsing) -> Declaration
         private def self.classify: (untyped, Parsing) -> Declaration
 
-        # : (String, String, untyped, Herb::Location?, ?String) -> Declaration
-        private def self.refused: (String, String, untyped, Herb::Location?, ?String) -> Declaration
+        # : (String, String, untyped, Herb::Location?, **untyped) -> Declaration
+        private def self.refused: (String, String, untyped, Herb::Location?, **untyped) -> Declaration
 
         # : (String, String, Herb::Location?, Parsing) -> Declaration?
         private def self.derived_default: (String, String, Herb::Location?, Parsing) -> Declaration?
@@ -210,29 +213,29 @@ module Herb
         # : (String) -> untyped
         private def self.expression_node: (String) -> untyped
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-        private def self.bare_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.bare_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-        private def self.operand_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.operand_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-        private def self.transform_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.transform_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-        private def self.predicate_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.predicate_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
-        private def self.negated_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> (Read | Combo)?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
+        private def self.negated_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
 
         # : (Read | Combo) -> (Read | Combo)
         private def self.negate: (Read | Combo) -> (Read | Combo)
 
-        # : (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
-        private def self.equality_read: (untyped, Hash[String, Declaration], untyped, Herb::Location?) -> Read?
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.equality_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
 
-        # : (untyped, Read, Read, untyped, Herb::Location?) -> Read?
-        private def self.state_pair_read: (untyped, Read, Read, untyped, Herb::Location?) -> Read?
+        # : (untyped, Read, Read, untyped, StateAnchor) -> Read?
+        private def self.state_pair_read: (untyped, Read, Read, untyped, StateAnchor) -> Read?
       end
     end
   end
