@@ -609,6 +609,61 @@ module Engine
         end
       end
 
+      test "a read is rewritten where it is code and left alone everywhere else" do
+        {
+          [" draft? ", "draft"] => " draft ",
+          [" !open? ", "open"] => " !open ",
+          [" count.one? ", "count"] => " (count == 1) ",
+          [' draft == "draft?" ', "draft"] => ' draft == "draft?" ',
+          [' draft == "count.one?" ', "count"] => ' draft == "count.one?" ',
+          [" \"\#{draft?} draft?\" ", "draft"] => " \"\#{draft} draft?\" ",
+          [" :draft? ", "draft"] => " :draft? ",
+          [" foo.draft? ", "draft"] => " foo.draft? ",
+          [" item.draft? && draft? ", "draft"] => " item.draft? && draft ",
+          [" foo.count.one? ", "count"] => " foo.count.one? ",
+        }.each do |(source, name), rewritten|
+          assert_equal rewritten, Herb::Engine::Slots::StateDirectives.rewrite_reads(source, name)
+        end
+      end
+
+      test "two predicates in one tag both rewrite, after the first shifts the source" do
+        template = %(<%# herb:state (pending: false, failed: false) %><div><% if pending? && failed? %>x<% end %></div>)
+        _, src = compile(template)
+
+        assert_equal "if pending && failed;", src[/if pending[^;]*;/]
+      end
+
+      test "a call on a receiver that spells a state name is not a read" do
+        template = <<~ERB
+          <%# herb:state (draft: "") %>
+          <ul><% @items.each do |item| %><%# herb:key item %><li id="i<%= item %>"><%= item.draft %></li><% end %></ul>
+        ERB
+
+        visitor, = compile(template)
+
+        assert_empty visitor.state_values
+        assert_empty visitor.state_presence
+      end
+
+      test "a string literal that spells a predicate keeps its `?` in the server's comparison" do
+        template = %(<%# herb:state (draft: "draft?") %><p><%= draft == "draft?" %></p>)
+        visitor, = compile(template)
+
+        assert_equal ["draft", { "value" => "draft?" }], encoded(visitor.state_values.fetch(0))
+
+        assert_equal(
+          %(<!--herb-region:app/views/test.html.erb:a560d282:0--><p data-herb-slot="0:child">true</p><!--/herb-region:app/views/test.html.erb-->),
+          render(template)
+        )
+      end
+
+      test "a negated predicate read evaluates on the server" do
+        assert_equal(
+          %(<!--herb-region:app/views/test.html.erb:50a4b7a7:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->x<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:50a4b7a7"><!--herb-branch:0:0-->x</template>),
+          render(%(<%# herb:state (open: false) %><div><% if !open? %>x<% end %></div>))
+        )
+      end
+
       test "a negated read renders for the server" do
         rendered = render(%(<%# herb:state (open: false) %><button disabled="<%= !open %>">Send</button>))
 
@@ -701,6 +756,22 @@ module Engine
           ["`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current."],
           compiler_findings(error)
         )
+      end
+
+      test "a string literal that spells a state name is not a read" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><p><%= "draft" %></p>))
+
+        assert_empty visitor.state_values
+        assert_empty visitor.state_presence
+      end
+
+      test "a string literal that spells a counted state is not a read inside its loop" do
+        visitor, = compile(<<~ERB)
+          <%# herb:state (total: 0) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><li id="i<%= item %>"><%= "total" %></li><% end %></ul>
+        ERB
+
+        assert_equal [{ name: "total", collection: 0, by: 1, when: nil }], visitor.state_count_entries
       end
 
       test "a second directive in the same scope is refused, since one declaration owns the scope" do

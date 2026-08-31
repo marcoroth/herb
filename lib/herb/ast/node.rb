@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "../locate"
+
 module Herb
   #: type serialized_node = {
   #|  type: String,

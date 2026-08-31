@@ -114,11 +114,13 @@ module Herb
             }
           end
 
-          #: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
-          def condition_read(expression, states, visitor, anchor)
+          #: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?, ?untyped) -> (Read | Combo | Symbol)?
+          def condition_read(expression, states, visitor, anchor, resolved = nil)
             anchor = StateAnchor.new(anchor) unless anchor.is_a?(StateAnchor)
             source = expression.strip
-            parsed = expression_node(source)
+            resolved_node = resolved_expression(resolved, source)
+            parsed = resolved_node || expression_node(source)
+            anchor = anchor.rebased(resolved_node.location.start_offset) if resolved_node
 
             return mentions_any?(source, states) ? :computed : nil if parsed.nil?
 
@@ -128,7 +130,7 @@ module Herb
             return :reported if visitor.diagnostic_count > said
             return read if read
 
-            mentions_any?(source, states) ? :computed : nil
+            mentions?(parsed, states) ? :computed : nil
           end
 
           #: (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
@@ -331,8 +333,6 @@ module Herb
 
           #: (String, Hash[String, Declaration]) -> Array[String]
           def assigned_state_names(source, states)
-            return [] unless mentions_any?(source, states)
-
             result = Prism.parse(source)
 
             return [] if result.failure?
@@ -440,27 +440,98 @@ module Herb
             spelled.start_with?("A", "E", "I", "O", "U") ? "an #{spelled}" : "a #{spelled}"
           end
 
-          #: (String, String) -> String
-          def rewrite_reads(source, name)
-            rewritten = source
+          #: (String, String, ?untyped) -> String
+          def rewrite_reads(source, name, resolved = nil)
+            splices = read_splices(source, name, resolved&.source == source ? resolved : nil)
 
-            PREDICATES.each do |spelled, predicate|
-              rewrite = predicate[:rewrite]
+            return source if splices.empty?
 
-              next unless rewrite
+            rewritten = source.dup
 
-              rewritten = rewritten.gsub(/(?<![\w?!])#{Regexp.escape(name)}\.#{Regexp.escape(spelled)}(?![\w?!])/) { "(#{name} #{rewrite})" }
-            end
+            splices.reverse_each { |start, finish, replacement| rewritten.bytesplice(start, finish - start, replacement) }
 
-            rewritten.gsub(/(?<![\w?!])#{Regexp.escape(name)}\?(?![\w?!])/) { name }
+            rewritten
           end
 
           #: (String, Hash[String, Declaration]) -> bool
           def mentions_any?(source, states)
-            states.each_key.any? { |name| /(?<![\w?])#{Regexp.escape(name)}\??(?![\w?!])/.match?(source) }
+            return false if states.empty?
+
+            reads_any?(expression_nodes(source), states)
+          end
+
+          #: (untyped, Hash[String, Declaration]) -> bool
+          def mentions?(node, states)
+            return false if states.empty? || node.nil?
+
+            reads_any?(descendants(node), states)
           end
 
           private
+
+          #: (untyped, String) -> untyped
+          def resolved_expression(resolved, source)
+            nodes = resolved&.nodes
+
+            return nil unless nodes&.one?
+
+            node = nodes.fetch(0)
+
+            node.slice == source ? node : nil
+          end
+
+          #: (Array[untyped], Hash[String, Declaration]) -> bool
+          def reads_any?(nodes, states)
+            nodes.any? { |node| states.key?(bare_name(node).to_s.delete_suffix("?")) }
+          end
+
+          #: (String, String, untyped) -> Array[[Integer, Integer, String]]
+          def read_splices(source, name, resolved = nil)
+            splices = [] #: Array[[Integer, Integer, String]]
+            nodes = resolved ? resolved.nodes.flat_map { |node| descendants(node) } : expression_nodes(source)
+            base = resolved ? resolved.offset : 0
+
+            nodes.each do |node|
+              next unless node.is_a?(Prism::CallNode) && node.arguments.nil? && node.block.nil?
+
+              rewrite = PREDICATES.dig(node.name.to_s, :rewrite)
+
+              if rewrite && bare_name(node.receiver) == name
+                splices << [node.location.start_offset - base, node.location.end_offset - base, "(#{name} #{rewrite})"]
+              elsif node.receiver.nil? && node.name.to_s == "#{name}?"
+                splices << [node.location.start_offset - base, node.location.end_offset - base, name]
+              end
+            end
+
+            splices.sort_by { |splice| splice[0] }
+          end
+
+          #: (String) -> Array[untyped]
+          def expression_nodes(source)
+            Prism.parse(source).value.statements.body.compact.flat_map { |node| descendants(node) }
+          end
+
+          #: (untyped) -> Array[untyped]
+          def descendants(node)
+            found = [] #: Array[untyped]
+            queue = [node] #: Array[untyped]
+
+            until queue.empty?
+              current = queue.shift
+              found << current
+              queue.concat(current.compact_child_nodes)
+            end
+
+            found
+          end
+
+          #: (untyped) -> String?
+          def bare_name(node)
+            return node.name.to_s if node.is_a?(Prism::LocalVariableReadNode)
+            return nil unless node.is_a?(Prism::CallNode) && node.receiver.nil? && node.arguments.nil? && node.block.nil?
+
+            node.name.to_s
+          end
 
           #: (untyped, Parsing) -> Declaration
           def declaration_for(state, parsing)

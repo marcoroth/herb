@@ -12,15 +12,24 @@ module Herb
       # has nothing to work with it answers the whole node's location, which is what every
       # diagnostic used before.
       #
+      # A node resolved out of the template's whole Prism program counts from the start of the
+      # template instead, so `rebased` takes the offset those nodes count from.
+      #
       class StateAnchor
         attr_reader :location #: Herb::Location?
 
-        #: (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol) -> void
-        def initialize(location, token: nil, expression: nil, context: :condition)
+        #: (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol, ?base: Integer) -> void
+        def initialize(location, token: nil, expression: nil, context: :condition, base: 0)
           @location = location #: Herb::Location?
           @token = token #: Herb::Token?
           @expression = expression #: String?
           @context = context #: Symbol
+          @base = base #: Integer
+        end
+
+        #: (Integer) -> StateAnchor
+        def rebased(base)
+          StateAnchor.new(@location, token: @token, expression: @expression, context: @context, base: base)
         end
 
         #: () -> bool
@@ -56,7 +65,10 @@ module Herb
 
           return nil unless within
 
-          bytes = node.location.start_offset
+          bytes = node.location.start_offset - @base
+
+          return nil if bytes.negative?
+
           prefix = expression.byteslice(0, bytes)
 
           return nil unless prefix

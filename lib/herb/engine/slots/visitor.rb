@@ -3,6 +3,7 @@
 
 require "digest"
 
+require_relative "../../ruby_program"
 require_relative "../../visitor"
 require_relative "../../visitor/context_aware"
 require_relative "../../visitor/diagnostics"
@@ -42,7 +43,7 @@ module Herb
         include Herb::Visitor::ContextAware
         include Herb::Visitor::Diagnostics
 
-        recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true
+        recommended_parser_option iteration_nodes: true, render_nodes: true, strict_locals: true, prism_program: true
         required_parser_option action_view_helpers: true, track_locations: true, herb_directives: true
         experimental "Slots are experimental. Their markers, payload and client API may change."
 
@@ -414,6 +415,18 @@ module Herb
         #: () -> String
         def occurrence_expression
           "((#{OCCURRENCES} ||= ::Hash.new(0))[#{identifier.inspect}] += 1) - 1"
+        end
+
+        #: (Herb::Location?) -> Herb::RubyProgram::Resolved?
+        def ruby_at(location)
+          return nil unless location
+
+          unless @ruby_program_built
+            @ruby_program_built = true
+            @ruby_program = @document ? Herb::RubyProgram.for(@document) : nil
+          end
+
+          @ruby_program&.resolve(location)
         end
 
         def visit_document_node(node)

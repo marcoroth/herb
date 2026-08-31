@@ -375,7 +375,7 @@ module Herb
 
           conditions.each_with_index do |arm, branch|
             expression = condition_expression(arm)
-            read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(arm, expression))
+            read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(arm, expression), resolved_ruby(arm))
 
             return nil if read == :reported
 
@@ -417,7 +417,7 @@ module Herb
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_unless_for(node, states)
           expression = condition_expression(node)
-          read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression))
+          read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression), resolved_ruby(node))
 
           return nil if read.nil? || read == :reported
 
@@ -458,7 +458,7 @@ module Herb
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_case_for(node, states)
           subject_source = condition_expression(node)
-          read = StateDirectives.condition_read(subject_source, states, @visitor, condition_anchor(node, subject_source))
+          read = StateDirectives.condition_read(subject_source, states, @visitor, condition_anchor(node, subject_source), resolved_ruby(node))
 
           return nil if read.nil? || read == :reported
 
@@ -531,6 +531,11 @@ module Herb
         end
 
         #: (untyped) -> untyped
+        def resolved_ruby(node)
+          @visitor.ruby_at(node.content&.location) if node.respond_to?(:content) && node.content.is_a?(Herb::Token)
+        end
+
+        #: (untyped) -> untyped
         def register_count_fold(node)
           return nil if @visitor.continuation?(node)
           return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
@@ -560,7 +565,7 @@ module Herb
 
           return nil unless increment && states.key?(increment.name)
 
-          read = StateDirectives.condition_read(condition_expression(node), states, @visitor, condition_anchor(node, condition_expression(node)))
+          read = StateDirectives.condition_read(condition_expression(node), states, @visitor, condition_anchor(node, condition_expression(node)), resolved_ruby(node))
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
@@ -663,7 +668,7 @@ module Herb
 
           return unless token
 
-          token.value.replace(StateDirectives.rewrite_reads(token.value, name))
+          token.value.replace(StateDirectives.rewrite_reads(token.value, name, @visitor.ruby_at(token.location)))
         rescue FrozenError
           nil
         end
@@ -681,7 +686,7 @@ module Herb
           return nil unless position
 
           literal = children.fetch(position) #: untyped
-          rewritten = StateDirectives.rewrite_reads(literal.content.to_s, name)
+          rewritten = StateDirectives.rewrite_reads(literal.content.to_s, name, @visitor.ruby_at(literal.location))
           replacement = Herb::AST::RubyLiteralNode.build(content: rewritten, location: literal.location)
 
           children[position] = replacement
@@ -754,7 +759,7 @@ module Herb
 
         #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
         def register_state_value(node, index, slot, expression, states)
-          read = slot.valued? ? StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression)) : nil
+          read = slot.valued? ? StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression), resolved_ruby(node)) : nil
 
           return if read == :reported
 
@@ -772,7 +777,7 @@ module Herb
           return nil unless slot.type == :attribute || (slot.type == :boolean_attribute && !@state_presence.key?(index))
           return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
 
-          read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression))
+          read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression), resolved_ruby(node))
 
           return :reported if read == :reported
 

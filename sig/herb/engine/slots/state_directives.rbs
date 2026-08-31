@@ -132,8 +132,8 @@ module Herb
         # : (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
         def self.parse: (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
 
-        # : (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
-        def self.condition_read: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+        # : (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?, ?untyped) -> (Read | Combo | Symbol)?
+        def self.condition_read: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?, ?untyped) -> (Read | Combo | Symbol)?
 
         # : (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
         def self.tree_read: (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
@@ -198,11 +198,32 @@ module Herb
         # : ((Symbol | String)?) -> String
         def self.kind_article: ((Symbol | String)?) -> String
 
-        # : (String, String) -> String
-        def self.rewrite_reads: (String, String) -> String
+        # : (String, String, ?untyped) -> String
+        def self.rewrite_reads: (String, String, ?untyped) -> String
 
         # : (String, Hash[String, Declaration]) -> bool
         def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
+
+        # : (untyped, Hash[String, Declaration]) -> bool
+        def self.mentions?: (untyped, Hash[String, Declaration]) -> bool
+
+        # : (untyped, String) -> untyped
+        private def self.resolved_expression: (untyped, String) -> untyped
+
+        # : (Array[untyped], Hash[String, Declaration]) -> bool
+        private def self.reads_any?: (Array[untyped], Hash[String, Declaration]) -> bool
+
+        # : (String, String, untyped) -> Array[[Integer, Integer, String]]
+        private def self.read_splices: (String, String, untyped) -> Array[[ Integer, Integer, String ]]
+
+        # : (String) -> Array[untyped]
+        private def self.expression_nodes: (String) -> Array[untyped]
+
+        # : (untyped) -> Array[untyped]
+        private def self.descendants: (untyped) -> Array[untyped]
+
+        # : (untyped) -> String?
+        private def self.bare_name: (untyped) -> String?
 
         # : (untyped, Parsing) -> Declaration
         private def self.declaration_for: (untyped, Parsing) -> Declaration

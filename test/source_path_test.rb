@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/herb/source_path"
 
 class SourcePathTest < Minitest::Spec
   PATH = "app/views/posts/_card.html.erb"

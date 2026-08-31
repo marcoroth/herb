@@ -112,6 +112,9 @@ module Herb
         def condition_expression: (untyped) -> String
 
         # : (untyped) -> untyped
+        def resolved_ruby: (untyped) -> untyped
+
+        # : (untyped) -> untyped
         def register_count_fold: (untyped) -> untyped
 
         # : (untyped) -> void
