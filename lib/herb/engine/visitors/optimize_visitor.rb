@@ -493,7 +493,7 @@ module Herb
       def within_duplication_limit?(paths, tokens)
         static_bytes = tokens.sum { |token| token[0] == :text ? token[1].bytesize : 0 }
 
-        paths.sum(&:bytesize) <= DUPLICATION_LIMIT * static_bytes
+        paths.sum(&:bytesize) <= DUPLICATION_LIMIT * static_bytes # steep:ignore
       end
 
       #: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
