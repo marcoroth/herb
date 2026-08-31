@@ -6,16 +6,9 @@ module Herb
   class Engine
     class Compiler < ::Herb::Visitor
       PADDING_NEWLINES = Array.new(17) { |count| ("\n" * count).freeze }.freeze #: Array[String]
-
-      EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze
-
-      TRAILING_WHITESPACE = /[ \t]+\z/
-      TRAILING_INDENTATION = /\n[ \t]+\z/
-      TRAILING_INDENTATION_CAPTURE = /\n([ \t]+)\z/
-      WHITESPACE_ONLY = /\A[ \t]+\z/
-      WHITESPACE_ONLY_CAPTURE = /\A([ \t]+)\z/
-
-      RAW_TEXT_ELEMENTS = ["script", "style"].freeze
+      EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze #: Array[Symbol]
+      HORIZONTAL_SPACE = [" ", "\t"].freeze #: Array[String]
+      RAW_TEXT_ELEMENTS = ["script", "style"].freeze #: Array[String]
 
       attr_reader :tokens
 
@@ -655,6 +648,36 @@ module Herb
         end
       end
 
+      #: (String) -> Integer
+      def trailing_space_length(text)
+        count = 0
+        count += 1 while count < text.length && HORIZONTAL_SPACE.include?(text[text.length - 1 - count])
+
+        count
+      end
+
+      #: (String) -> String
+      def trailing_spaces(text)
+        text[text.length - trailing_space_length(text), text.length].to_s
+      end
+
+      #: (String) -> void
+      def remove_trailing_spaces!(text)
+        text.replace(text[0, text.length - trailing_space_length(text)].to_s)
+      end
+
+      #: (String) -> bool
+      def whitespace_only?(text)
+        !text.empty? && trailing_space_length(text) == text.length
+      end
+
+      #: (String) -> bool
+      def trailing_indentation?(text)
+        spaces = trailing_space_length(text)
+
+        spaces.positive? && text[text.length - spaces - 1] == "\n"
+      end
+
       def at_line_start?
         return true if @tokens.empty?
 
@@ -662,7 +685,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value.match?(WHITESPACE_ONLY) && preceding_token_ends_with_newline?) || last_value.match?(TRAILING_INDENTATION)
+          last_value.empty? || last_value.end_with?("\n") || (whitespace_only?(last_value) && preceding_token_ends_with_newline?) || trailing_indentation?(last_value)
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
@@ -718,7 +741,7 @@ module Herb
 
         text = token[1]
 
-        return Regexp.last_match(1) if text =~ TRAILING_INDENTATION_CAPTURE || text =~ WHITESPACE_ONLY_CAPTURE
+        return trailing_spaces(text) if trailing_indentation?(text) || whitespace_only?(text)
 
         ""
       end
@@ -729,9 +752,9 @@ module Herb
 
         text = token[1]
 
-        return true if text.match?(TRAILING_INDENTATION)
+        return true if trailing_indentation?(text)
 
-        text.match?(WHITESPACE_ONLY) && (preceding_text_ends_with_newline? || @last_trim_consumed_newline)
+        whitespace_only?(text) && (preceding_text_ends_with_newline? || @last_trim_consumed_newline)
       end
 
       def preceding_text_ends_with_newline?
@@ -748,9 +771,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text.match?(TRAILING_INDENTATION)
-          text.sub!(TRAILING_WHITESPACE, "")
-        elsif text.match?(WHITESPACE_ONLY)
+        if trailing_indentation?(text)
+          remove_trailing_spaces!(text)
+        elsif whitespace_only?(text)
           text.replace("")
         end
 
@@ -822,12 +845,12 @@ module Herb
         return "" unless token
 
         text = token[1]
-        removed = text[TRAILING_WHITESPACE] || ""
+        removed = trailing_spaces(text)
 
-        if text.match?(TRAILING_INDENTATION)
-          text.sub!(TRAILING_WHITESPACE, "")
+        if trailing_indentation?(text)
+          remove_trailing_spaces!(text)
           token[1] = text
-        elsif text.match?(WHITESPACE_ONLY)
+        elsif whitespace_only?(text)
           text.replace("")
           token[1] = text
         end
