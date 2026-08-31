@@ -93,6 +93,9 @@ module Herb
         # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 
+        # : (String, StateDirectives::Read, Hash[String, StateDirectives::Declaration], StateAnchor, String) -> nil
+        def presence_error: (String, StateDirectives::Read, Hash[String, StateDirectives::Declaration], StateAnchor, String) -> nil
+
         # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
         def state_case_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
 

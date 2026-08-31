@@ -177,6 +177,18 @@ module Herb
         # : (String, Declaration) -> (Array[String] | Symbol)
         def self.when_comparands: (String, Declaration) -> (Array[String] | Symbol)
 
+        # : (Symbol?, String) -> String
+        def self.predicate_advice: (Symbol?, String) -> String
+
+        # : ((Read | Combo)) -> Read?
+        def self.never_falsy_read: (Read | Combo) -> Read?
+
+        # : (Declaration) -> bool
+        def self.literal_default?: (Declaration) -> bool
+
+        # : (Declaration, String) -> String
+        def self.default_example: (Declaration, String) -> String
+
         # : (Declaration) -> bool
         def self.seeded?: (Declaration) -> bool
 

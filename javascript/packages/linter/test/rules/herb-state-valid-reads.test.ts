@@ -161,13 +161,39 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("allows the `?` spelling on a state of any kind", () => {
+  test("allows the `?` spelling on a state that can be falsy", () => {
     expectNoOffenses(dedent`
-      <%# herb:state (attempts: 0, draft: "", tab: :first, shown: draft?) %>
-      <% if attempts? %>Tried<% end %>
-      <% if draft? %>Drafted<% end %>
-      <% if tab? %>Tabbed<% end %>
+      <%# herb:state (pending: false, missing: nil, draft: "", shown: draft?) %>
+      <% if pending? %>Sending<% end %>
+      <% if missing? %>Missing<% end %>
       <% if shown %>Shown<% end %>
+    `)
+  })
+
+  test("flags a bare condition on a state that can never be falsy", () => {
+    expectError('`draft` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always true. Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == ""`, or declare it as a boolean.')
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft %>Drafted<% else %>Empty<% end %>
+    `)
+  })
+
+  test("flags the `?` spelling of that condition the same way", () => {
+    expectError("`attempts?` reads the Integer state `attempts` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always true. Ask `attempts.zero?`, `.one?` or `.positive?`, compare it to a literal, like `attempts == 0`, or declare it as a boolean.")
+
+    assertOffenses(dedent`
+      <%# herb:state (attempts: 0) %>
+      <% if attempts? %>Tried<% end %>
+    `)
+  })
+
+  test("flags an `unless` on a state that can never be falsy", () => {
+    expectError("`unless tab` reads the Symbol state `tab` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always false. Ask `tab.empty?`, compare it to a literal, like `tab == :first`, or declare it as a boolean.")
+
+    assertOffenses(dedent`
+      <%# herb:state (tab: :first) %>
+      <% unless tab %>Tabbed<% end %>
     `)
   })
 
@@ -266,7 +292,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a comparison against a derived state's inferred kind", () => {
-    expectError("`busy == 3` compares the Boolean state `busy` against an Integer literal, so it can never match. Compare it against a Boolean literal, like `busy == pending || failed`.")
+    expectError("`busy == 3` compares the Boolean state `busy` against an Integer literal, so it can never match. Compare it against a Boolean literal.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, failed: false, busy: pending || failed) %>
@@ -354,7 +380,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags a presence read of a state that is never falsy", () => {
-    expectError('`disabled="<%= draft %>"` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare `draft` to a literal, like `draft == ""`, or declare it as a boolean.')
+    expectError('`disabled="<%= draft %>"` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == ""`, or declare it as a boolean.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -364,7 +390,7 @@ describe("HerbStateValidReadsRule", () => {
   })
 
   test("flags the predicate spelling of a presence read the same way", () => {
-    expectError('`disabled="<%= draft? %>"` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Compare `draft` to a literal, like `draft == ""`, or declare it as a boolean.')
+    expectError('`disabled="<%= draft? %>"` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off. Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == ""`, or declare it as a boolean.')
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
