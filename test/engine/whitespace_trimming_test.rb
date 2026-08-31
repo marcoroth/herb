@@ -472,5 +472,11 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "a block tag closed on its own line keeps the blank line after it" do
+      template = "<% a = 1 %>\n\n<% provide :t do %><%= x %><% end %>\n\n<% b = 2 %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
