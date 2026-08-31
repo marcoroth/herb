@@ -4,10 +4,6 @@ Engine::ERBCommentsTest#test_0003_inline ruby comment between code
 Engine::ERBCommentsTest#test_0004_inline ruby comment before and between code
 Engine::ERBCommentsTest#test_0006_inline ruby comment multiline
 Engine::ExamplesCompilationTest#test_0004_block comment compilation
-Engine::ExamplesCompilationTest#test_0017_graphql compilation
-Engine::GraphQLTest#test_0003_graphql tag with surrounding html
-Engine::GraphQLTest#test_0004_graphql tag with comment and html
-Engine::GraphQLTest#test_0005_graphql tag with query variables
 Engine::RenderNodeCompilationTest#test_0006_emits a render inside a loop
 Engine::WhitespaceTrimmingTest#test_0031_output tag with -%> followed by another expression tag
 Engine::WhitespaceTrimmingTest#test_0036_leading whitespace before statement tag with inline expression is preserved
