@@ -502,65 +502,8 @@ module SnapshotUtils
     metadata
   end
 
-  LINE_FIDELITY_ALLOWLIST_PATH = File.expand_path("line_fidelity_allowlist.txt", __dir__)
-
-  def line_fidelity_allowlist
-    SnapshotUtils.line_fidelity_allowlist
-  end
-
-  def self.line_fidelity_allowlist
-    @line_fidelity_allowlist ||=
-      if File.exist?(LINE_FIDELITY_ALLOWLIST_PATH)
-        File.readlines(LINE_FIDELITY_ALLOWLIST_PATH, chomp: true).reject(&:empty?).to_set
-      else
-        Set.new
-      end
-  end
-
-  def self.line_fidelity_allowlist_ran
-    @line_fidelity_allowlist_ran ||= Set.new
-  end
-
-  def self.line_fidelity_allowlist_needed
-    @line_fidelity_allowlist_needed ||= Set.new
-  end
-
-  def self.line_fidelity_run_failed?
-    @line_fidelity_run_failed || false
-  end
-
-  def self.line_fidelity_run_failed!
-    @line_fidelity_run_failed = true
-  end
-
-  def self.stale_line_fidelity_allowlist_entries
-    return Set.new if line_fidelity_run_failed?
-
-    line_fidelity_allowlist_ran - line_fidelity_allowlist_needed
-  end
-
-  def after_teardown
-    super
-
-    SnapshotUtils.line_fidelity_run_failed! if failures.any? { |failure| !failure.is_a?(Minitest::Skip) }
-  end
-
   def assert_erb_tags_keep_their_line(source, compiled)
     off = erb_tags_off_their_line(source, compiled)
-    identifier = "#{self.class}##{name}"
-
-    if ENV["UPDATE_LINE_FIDELITY_ALLOWLIST"]
-      File.open(LINE_FIDELITY_ALLOWLIST_PATH, "a") { |file| file.puts(identifier) } unless off.empty?
-
-      return
-    end
-
-    if line_fidelity_allowlist.include?(identifier)
-      SnapshotUtils.line_fidelity_allowlist_ran << identifier
-      SnapshotUtils.line_fidelity_allowlist_needed << identifier unless off.empty?
-
-      return
-    end
 
     assert off.empty?, <<~MESSAGE
       An ERB tag compiles to a line other than the one it was written on, so a
