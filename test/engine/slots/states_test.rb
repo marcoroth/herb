@@ -304,6 +304,34 @@ module Engine
         )
       end
 
+      test "a nil check on a state that can never be nil is refused, in either spelling" do
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft.nil? %>x<% end %></div>),
+          "`draft.nil?` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it can never match."
+        )
+
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft == nil %>x<% end %></div>),
+          "`draft == nil` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it can never match."
+        )
+
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft != nil %>x<% end %></div>),
+          "`draft != nil` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it always matches."
+        )
+      end
+
+      test "a nil check compiles for the kinds that really can be nil" do
+        {
+          %(<%# herb:state (missing: nil) %><div><% if missing.nil? %>x<% end %></div>) => ["missing", { "value" => nil }],
+          %(<%# herb:state (thing: @thing) %><div><% if thing.nil? %>x<% end %></div>) => ["thing", { "value" => nil }],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
       test "the way out names the predicates that can answer false for the state's kind" do
         assert_equal(
           "Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == \"\"`, or declare it as a boolean.",
@@ -373,7 +401,7 @@ module Engine
       test "a predicate compiles into the comparison it stands for" do
         {
           %(<%# herb:state (draft: "") %><div><% if draft.empty? %>x<% end %></div>) => ["draft", { "value" => "" }],
-          %(<%# herb:state (draft: "") %><div><% if draft.nil? %>x<% end %></div>) => ["draft", { "value" => nil }],
+          %(<%# herb:state (missing: nil) %><div><% if missing.nil? %>x<% end %></div>) => ["missing", { "value" => nil }],
           %(<%# herb:state (count: 0) %><div><% if count.zero? %>x<% end %></div>) => ["count", { "value" => 0 }],
           %(<%# herb:state (count: 0) %><div><% if count.one? %>x<% end %></div>) => ["count", { "value" => 1 }],
           %(<%# herb:state (count: 0) %><div><% if count.positive? %>x<% end %></div>) => ["count", { "value" => 0 }, ">"],

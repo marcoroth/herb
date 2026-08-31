@@ -660,7 +660,24 @@ module Herb
               return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{predicate.fetch(:only)} can be read with `#{node.name}`.", anchor.locate(node), :read, suggestion: "Compare `#{read.name}` to a literal instead, or declare it as #{kind_article(predicate.fetch(:kinds)&.first)} state.")
             end
 
+            if predicate[:comparand] == "nil" && !StateKinds::NILABLE.include?(read.kind)
+              return nil_check_error(node, read, visitor, anchor, consequence: "can never match", example: default_example(states.fetch(read.name), "#{read.name} == "))
+            end
+
             Read.new(name: read.name, comparand: predicate[:comparand], kind: read.kind, operator: predicate[:operator], against: nil, transform: nil, against_transform: nil)
+          end
+
+          #: (untyped, Read, untyped, StateAnchor, **untyped) -> nil
+          def nil_check_error(node, read, visitor, anchor, **options)
+            consequence = options.fetch(:consequence) #: String
+            example = options.fetch(:example) #: String
+
+            visitor.slot_error(
+              "`#{node.slice}` reads #{subject_phrase(read)} as a nil check. Only a Nil state can be nil, so it #{consequence}.",
+              anchor.locate(node),
+              :compare,
+              suggestion: "#{predicate_advice(read.kind, read.name)}compare it to a literal#{example}, or declare it with a `nil` default."
+            )
           end
 
           #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
@@ -723,6 +740,10 @@ module Herb
 
             if ordered && kind != :integer
               return visitor.slot_error("`#{node.slice}` orders the state `#{read.name}` against #{kind_article(kind)} literal. Ordering compares numbers.", anchor.locate(literal), :compare, suggestion: "Compare `#{read.name}` against an Integer literal, like `#{read.name} > 0`.")
+            end
+
+            if !ordered && kind == :nil && !StateKinds::NILABLE.include?(read.kind)
+              return nil_check_error(node, read, visitor, anchor, consequence: operator == "!=" ? "always matches" : "can never match", example: default_example(states.fetch(read.name), "#{read.name} == "))
             end
 
             unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded

@@ -15,6 +15,8 @@ module Herb
 
         FALSY: Array[Symbol]
 
+        NILABLE: Array[Symbol]
+
         ARTICLES: Hash[String, String]
       end
     end

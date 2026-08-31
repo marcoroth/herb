@@ -237,6 +237,9 @@ module Herb
         # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
         private def self.predicate_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
 
+        # : (untyped, Read, untyped, StateAnchor, **untyped) -> nil
+        private def self.nil_check_error: (untyped, Read, untyped, StateAnchor, **untyped) -> nil
+
         # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
         private def self.negated_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
 

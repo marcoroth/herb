@@ -35,6 +35,7 @@ kinds:
     literal: true
     value: true
     falsy: true
+    nilable: true
 
   - name: "array"
     article: "an Array"
@@ -54,6 +55,7 @@ kinds:
     value: true
     unknown: true
     falsy: true
+    nilable: true
 
   - name: "missing"
     article: "a value"

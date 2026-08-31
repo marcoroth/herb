@@ -170,6 +170,32 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("flags a nil check on a state that can never be nil", () => {
+    expectError('`draft.nil?` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it can never match. Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == ""`, or declare it with a `nil` default.')
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft.nil? %>x<% end %>
+    `)
+  })
+
+  test("flags the same nil check written as a comparison", () => {
+    expectError('`draft != nil` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it always matches. Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == ""`, or declare it with a `nil` default.')
+
+    assertOffenses(dedent`
+      <%# herb:state (draft: "") %>
+      <% if draft != nil %>x<% end %>
+    `)
+  })
+
+  test("allows a nil check on the kinds that really can be nil", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (missing: nil, thing: @thing) %>
+      <% if missing.nil? %>x<% end %>
+      <% if thing.nil? %>y<% end %>
+    `)
+  })
+
   test("flags a bare condition on a state that can never be falsy", () => {
     expectError('`draft` reads the String state `draft` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always true. Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == ""`, or declare it as a boolean.')
 
@@ -215,10 +241,10 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("allows a comparison against nil for any kind", () => {
+  test("allows a comparison against nil on a state that can hold one", () => {
     expectNoOffenses(dedent`
       <%# herb:state (error: nil, sort: "name") %>
-      <% if sort == nil %>Unset<% end %>
+      <% if error == nil %>Unset<% end %>
     `)
   })
 
@@ -567,7 +593,7 @@ describe("HerbStateValidReadsRule", () => {
       <% if draft.empty? %>Empty<% end %>
       <% if count.zero? %>None<% end %>
       <% if count.one? %>One<% end %>
-      <% if open.nil? %>Unset<% end %>
+      <% if note.nil? %>Unset<% end %>
       <% if note.blank? %>No note<% end %>
     `)
   })

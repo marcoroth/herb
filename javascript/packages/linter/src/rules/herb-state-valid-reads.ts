@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { StateScopeMap } from "../utils/state-directives-utils.js"
 
-import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
+import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
 
 import { declaredKind, defaultExample, kindWithArticle, predicateAdvice } from "../utils/state-directives-utils.js"
 import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
@@ -380,6 +380,12 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
         return "reported"
       }
 
+      if (STATE_PREDICATES[call.predicate].comparand === "nil" && !NILABLE_STATE_KINDS.has(kind)) {
+        this.nilCheckOffense(predicate, declaration, kind, "can never match")
+
+        return "reported"
+      }
+
       return "state"
     }
 
@@ -551,6 +557,12 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
           return "reported"
         }
 
+        if (!ordered && comparandKind === "nil" && !NILABLE_STATE_KINDS.has(kind)) {
+          this.nilCheckOffense(predicate, declaration, kind, operator === "!=" ? "always matches" : "can never match")
+
+          return "reported"
+        }
+
         if (!ordered && kind !== "seeded" && comparandKind !== "nil" && comparandKind !== kind) {
           const consequence = operator === "==" ? "so it can never match" : "so it always matches"
 
@@ -578,6 +590,13 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
 
     return "other"
+  }
+
+  private nilCheckOffense(predicate: PrismNode, declaration: StateDeclaration, kind: string, consequence: string): void {
+    this.addOffense(
+      `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${declaration.name}\` as a nil check. Only a Nil state can be nil, so it ${consequence}. ${predicateAdvice(kind, declaration.name)}compare it to a literal${defaultExample(declaration, `${declaration.name} == `)}, or declare it with a \`nil\` default.`,
+      this.locationOf(predicate),
+    )
   }
 
   private checkNeverFalsy(predicate: PrismNode, spelled: string, answer: string): boolean {

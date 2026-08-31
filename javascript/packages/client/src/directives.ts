@@ -12,10 +12,11 @@ export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./grammar/attribut
 export { STATE_PREDICATES, STATE_PREDICATE_NAMES } from "./state-predicates"
 export { STATE_TRANSFORMS, STATE_TRANSFORM_NAMES } from "./state-transforms"
 export { MIRRORED_COMPARISONS, NEGATED_COMPARISONS, ORDERED_COMPARISONS, COMPARISON_OPERATORS } from "./state-operators"
-export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, stateKindArticle } from "./state-kinds"
+export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LITERAL_KINDS } from "./state-kinds"
 
-export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
+export { stateKindArticle } from "./state-kinds"
 export { isMarker, parseMarker } from "./markup/markers"
+export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
 
 export type { Clause } from "./grammar/parsing"
 export type { StatePredicate } from "./state-predicates"
