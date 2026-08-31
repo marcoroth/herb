@@ -83,6 +83,34 @@ static VALUE buffer_cleanup(VALUE arg) {
   return Qnil;
 }
 
+#define HERB_MAX_ERB_OPENERS 64
+
+static size_t read_erb_openers(VALUE options, hb_string_T* buffer) {
+  VALUE erb_openers = rb_hash_lookup(options, rb_utf8_str_new_cstr("erb_openers"));
+  if (NIL_P(erb_openers)) { erb_openers = rb_hash_lookup(options, ID2SYM(rb_intern("erb_openers"))); }
+  if (NIL_P(erb_openers)) { return SIZE_MAX; }
+
+  Check_Type(erb_openers, T_ARRAY);
+
+  long length = RARRAY_LEN(erb_openers);
+
+  if (length > HERB_MAX_ERB_OPENERS) {
+    rb_raise(rb_eArgError, "erb_openers accepts at most %d entries", HERB_MAX_ERB_OPENERS);
+  }
+
+  for (long index = 0; index < length; index++) {
+    VALUE opener = rb_ary_entry(erb_openers, index);
+
+    Check_Type(opener, T_STRING);
+
+    if (RSTRING_LEN(opener) == 0) { rb_raise(rb_eArgError, "erb_openers entries must not be empty"); }
+
+    buffer[index] = hb_string_from_data(RSTRING_PTR(opener), (size_t) RSTRING_LEN(opener));
+  }
+
+  return (size_t) length;
+}
+
 static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
   VALUE source, options;
   rb_scan_args(argc, argv, "1:", &source, &options);
@@ -90,10 +118,20 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
   char* string = (char*) check_string(source);
   bool print_arena_stats = false;
 
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
+
   if (!NIL_P(options)) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+
+    size_t opener_count = read_erb_openers(options, opener_buffer);
+
+    if (opener_count != SIZE_MAX) {
+      parser_options.erb_openers = opener_buffer;
+      parser_options.erb_opener_count = opener_count;
+    }
   }
 
   lex_args_T args = { 0 };
@@ -101,7 +139,7 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
-  args.tokens = herb_lex(string, &args.allocator);
+  args.tokens = herb_lex_with_options(string, &parser_options, &args.allocator);
 
   if (print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args.allocator.context); }
 
@@ -116,8 +154,16 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   bool print_arena_stats = false;
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
 
   if (!NIL_P(options)) {
+    size_t opener_count = read_erb_openers(options, opener_buffer);
+
+    if (opener_count != SIZE_MAX) {
+      parser_options.erb_openers = opener_buffer;
+      parser_options.erb_opener_count = opener_count;
+    }
+
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
     if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
     if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
@@ -235,8 +281,20 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
   if (!hb_buffer_init(&output, strlen(string), &allocator)) { return Qnil; }
 
   herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
 
   if (!NIL_P(options)) {
+    size_t opener_count = read_erb_openers(options, opener_buffer);
+
+    if (opener_count != SIZE_MAX) {
+      extract_options.erb_openers = opener_buffer;
+      extract_options.erb_opener_count = opener_count;
+    }
+
+    VALUE custom_tags_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("custom_tags"));
+    if (NIL_P(custom_tags_value)) { custom_tags_value = rb_hash_lookup(options, ID2SYM(rb_intern("custom_tags"))); }
+    if (!NIL_P(custom_tags_value)) { extract_options.custom_tags = RTEST(custom_tags_value); }
+
     VALUE semicolons_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("semicolons"));
     if (NIL_P(semicolons_value)) { semicolons_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons"))); }
     if (!NIL_P(semicolons_value)) { extract_options.semicolons = RTEST(semicolons_value); }
@@ -409,6 +467,18 @@ static VALUE Herb_leak_check(VALUE self, VALUE source) {
   }
 
   return result;
+}
+
+static VALUE Herb_default_erb_openings(VALUE self) {
+  VALUE openings = rb_ary_new_capa((long) HERB_DEFAULT_ERB_OPENINGS_COUNT);
+
+  for (size_t index = 0; index < HERB_DEFAULT_ERB_OPENINGS_COUNT; index++) {
+    hb_string_T opening = HERB_DEFAULT_ERB_OPENINGS[index];
+
+    rb_ary_push(openings, rb_str_freeze(rb_utf8_str_new(opening.data, (long) opening.length)));
+  }
+
+  return openings;
 }
 
 static VALUE Herb_version(VALUE self) {
@@ -590,6 +660,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mBackend, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mBackend, "arena_stats", Herb_arena_stats, -1);
   rb_define_singleton_method(mBackend, "leak_check", Herb_leak_check, 1);
+  rb_define_singleton_method(mBackend, "default_erb_openings", Herb_default_erb_openings, 0);
   rb_define_singleton_method(mBackend, "version", Herb_version, 0);
   rb_define_singleton_method(mBackend, "diff", Herb_diff, -1);
 }

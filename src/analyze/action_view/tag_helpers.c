@@ -1754,8 +1754,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
       if (token_is_escaped_erb_tag_opening(block_node->tag_opening)) { continue; }
 
       if (block_node->tag_opening && !hb_string_is_empty(block_node->tag_opening->value)) {
-        const char* opening_string = block_node->tag_opening->value.data;
-        if (opening_string && strstr(opening_string, "=") == NULL) { continue; }
+        if (!hb_string_contains_character(block_node->tag_opening->value, '=')) { continue; }
       }
 
       token_T* block_content = block_node->content;
@@ -1785,10 +1784,8 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
       if (token_is_escaped_erb_tag_opening(tag_opening)) { continue; }
 
       if (tag_opening && !hb_string_is_empty(tag_opening->value)) {
-        const char* opening_string = tag_opening->value.data;
-
-        if (opening_string && strstr(opening_string, "#") != NULL) { continue; }
-        if (opening_string && strstr(opening_string, "=") == NULL) { continue; }
+        if (hb_string_contains_character(tag_opening->value, '#')) { continue; }
+        if (!hb_string_contains_character(tag_opening->value, '=')) { continue; }
       }
 
       token_T* erb_content = erb_node->content;

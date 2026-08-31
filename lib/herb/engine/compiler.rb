@@ -451,7 +451,8 @@ module Herb
 
           return
         end
-        return if erb_graphql?(opening)
+
+        return if erb_custom_opening?(opening)
 
         code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 

@@ -1,4 +1,8 @@
-export interface ParseOptions {
+export interface LexOptions {
+  erb_openers?: string[]
+}
+
+export interface ParseOptions extends LexOptions {
   track_whitespace?: boolean
   track_locations?: boolean
   analyze?: boolean
@@ -18,7 +22,15 @@ export interface ParseOptions {
   max_errors?: number | null
 }
 
-export type SerializedParserOptions = Required<ParseOptions>
+export type SerializedParserOptions = Required<Omit<ParseOptions, "erb_openers">> & { erb_openers: string[] }
+
+export function commentedERBTagPrefixes(defaultOpenings: string[], erbOpeners: string[]): string[] {
+  const defaultPrefixes = defaultOpenings
+    .map(opening => opening.slice("<%".length))
+    .filter(prefix => prefix !== "" && prefix !== "#")
+
+  return [...erbOpeners, ...defaultPrefixes].sort((a, b) => b.length - a.length)
+}
 
 export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   track_whitespace: false,
@@ -36,6 +48,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   prism_program: false,
   dot_notation_tags: false,
   html: true,
+  erb_openers: [],
   timeout: 1000,
   max_errors: 25,
 }
@@ -85,6 +98,9 @@ export class ParserOptions {
   /** Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text. */
   readonly html: boolean
 
+  /** ERB tag openers recognized in addition to the built-in ones, written without the leading `<%`. */
+  readonly erb_openers: string[]
+
   /** Parse timeout in milliseconds. 0 disables the timeout. */
   readonly timeout: number
 
@@ -111,6 +127,7 @@ export class ParserOptions {
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program
     this.dot_notation_tags = options.dot_notation_tags ?? DEFAULT_PARSER_OPTIONS.dot_notation_tags
     this.html = options.html ?? DEFAULT_PARSER_OPTIONS.html
+    this.erb_openers = options.erb_openers ?? DEFAULT_PARSER_OPTIONS.erb_openers
     this.timeout = options.timeout ?? DEFAULT_PARSER_OPTIONS.timeout
     this.max_errors = options.max_errors ?? DEFAULT_PARSER_OPTIONS.max_errors
   }

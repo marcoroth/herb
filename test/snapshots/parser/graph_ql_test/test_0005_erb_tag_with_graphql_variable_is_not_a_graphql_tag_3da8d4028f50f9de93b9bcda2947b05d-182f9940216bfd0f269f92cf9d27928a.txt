@@ -1,6 +1,7 @@
 ---
 source: "Parser::GraphQLTest#test_0005_erb tag with graphql variable is not a graphql tag"
 input: "<% graphql = \"query\" %>"
+options: {erb_openers: ["graphql"]}
 ---
 @ DocumentNode (location: (1:0)-(1:23))
 └── children: (1 item)

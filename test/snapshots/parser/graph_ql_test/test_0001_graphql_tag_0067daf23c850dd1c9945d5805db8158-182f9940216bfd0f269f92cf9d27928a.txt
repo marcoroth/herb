@@ -7,6 +7,7 @@ input: |2-
     homePlanet
   }
 %>
+options: {erb_openers: ["graphql"]}
 ---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)

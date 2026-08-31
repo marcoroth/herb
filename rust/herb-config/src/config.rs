@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigOptions, LinterConfig, RuleConfig};
+use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigOptions, LinterConfig, ParserConfig, RuleConfig};
 use crate::defaults::{config_template, default_config, default_config_value, DEFAULT_VERSION};
 use crate::glob::{glob, glob_absolute, is_path_matching};
 use crate::merge::deep_merge;
@@ -82,6 +82,7 @@ impl Config {
   pub fn options(&self) -> HerbConfigOptions {
     HerbConfigOptions {
       files: self.config.files.clone(),
+      parser: self.config.parser.clone(),
       engine: None,
       linter: self.config.linter.clone(),
       formatter: self.config.formatter.clone(),
@@ -94,6 +95,14 @@ impl Config {
 
   pub fn formatter(&self) -> Option<&FormatterConfig> {
     self.config.formatter.as_ref()
+  }
+
+  pub fn parser(&self) -> Option<&ParserConfig> {
+    self.config.parser.as_ref()
+  }
+
+  pub fn erb_openers(&self) -> Option<Vec<String>> {
+    self.config.parser.as_ref()?.erb_openers.clone()
   }
 
   pub fn to_json(&self) -> String {

@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+#include <vector>
+
 #include "extension_helpers.h"
 #include "nodes.h"
 
@@ -26,13 +29,56 @@ extern "C" {
 
 using namespace emscripten;
 
-val Herb_lex(const std::string& source) {
+static bool HasERBOpeners(val options) {
+  if (options.isUndefined() || options.isNull() || options.typeOf().as<std::string>() != "object") {
+    return false;
+  }
+
+  if (!options.hasOwnProperty("erb_openers")) {
+    return false;
+  }
+
+  val configured = options["erb_openers"];
+
+  return !configured.isUndefined() && !configured.isNull();
+}
+
+static std::vector<std::string> ReadERBOpeners(val options) {
+  if (!HasERBOpeners(options)) {
+    return std::vector<std::string>();
+  }
+
+  return vecFromJSArray<std::string>(options["erb_openers"]);
+}
+
+static void ApplyERBOpeners(parser_options_T& parser_options, const std::vector<std::string>& openers, std::vector<hb_string_T>& storage) {
+  storage.clear();
+  storage.reserve(openers.size());
+
+  for (const std::string& opener : openers) {
+    storage.push_back(hb_string_from_data(opener.c_str(), opener.length()));
+  }
+
+  parser_options.erb_openers = storage.data();
+  parser_options.erb_opener_count = storage.size();
+}
+
+val Herb_lex(const std::string& source, val options) {
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     return val::null();
   }
 
-  hb_array_T* tokens = herb_lex(source.c_str(), &allocator);
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  std::vector<hb_string_T> opener_storage;
+  std::vector<std::string> openers = ReadERBOpeners(options);
+
+  if (HasERBOpeners(options)) {
+    ApplyERBOpeners(parser_options, openers, opener_storage);
+  }
+
+  hb_array_T* tokens = herb_lex_with_options(source.c_str(), &parser_options, &allocator);
 
   val result = CreateLexResult(tokens, source);
 
@@ -45,7 +91,14 @@ val Herb_lex(const std::string& source) {
 val Herb_parse(const std::string& source, val options) {
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
+  std::vector<std::string> openers = ReadERBOpeners(options);
+  std::vector<hb_string_T> opener_storage;
+
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (HasERBOpeners(options)) {
+      ApplyERBOpeners(parser_options, openers, opener_storage);
+    }
+
     if (options.hasOwnProperty("track_whitespace")) {
       bool track_whitespace = options["track_whitespace"].as<bool>();
       if (track_whitespace) {
@@ -151,7 +204,25 @@ std::string Herb_extract_ruby(const std::string& source, val options) {
 
   herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
 
+  std::vector<std::string> openers = ReadERBOpeners(options);
+  std::vector<hb_string_T> opener_storage;
+
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (HasERBOpeners(options)) {
+      opener_storage.reserve(openers.size());
+
+      for (const std::string& opener : openers) {
+        opener_storage.push_back(hb_string_from_data(opener.c_str(), opener.length()));
+      }
+
+      extract_options.erb_openers = opener_storage.data();
+      extract_options.erb_opener_count = opener_storage.size();
+    }
+
+    if (options.hasOwnProperty("custom_tags")) {
+      extract_options.custom_tags = options["custom_tags"].as<bool>();
+    }
+
     if (options.hasOwnProperty("semicolons")) {
       extract_options.semicolons = options["semicolons"].as<bool>();
     }
@@ -304,6 +375,18 @@ val Herb_diff(const std::string& old_source, const std::string& new_source, val 
   return result;
 }
 
+val Herb_default_erb_openings() {
+  val openings = val::array();
+
+  for (size_t index = 0; index < HERB_DEFAULT_ERB_OPENINGS_COUNT; index++) {
+    hb_string_T opening = HERB_DEFAULT_ERB_OPENINGS[index];
+
+    openings.call<void>("push", std::string(opening.data, opening.length));
+  }
+
+  return openings;
+}
+
 std::string Herb_version() {
   const char* libherb_version = herb_version();
   const char* libprism_version = herb_prism_version();
@@ -317,6 +400,7 @@ EMSCRIPTEN_BINDINGS(herb_module) {
   function("parse", &Herb_parse);
   function("extractRuby", &Herb_extract_ruby);
   function("extractHTML", &Herb_extract_html);
+  function("defaultERBOpenings", &Herb_default_erb_openings);
   function("version", &Herb_version);
   function("parseRuby", &Herb_parse_ruby);
   function("diff", &Herb_diff);

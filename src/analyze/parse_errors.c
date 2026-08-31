@@ -83,7 +83,12 @@ void herb_analyze_parse_errors(
   const parser_options_T* parser_options,
   hb_allocator_T* allocator
 ) {
-  char* extracted_ruby = herb_extract_ruby_with_semicolons(source, allocator);
+  char* extracted_ruby = herb_extract_ruby_with_semicolons_and_openers(
+    source,
+    parser_options ? parser_options->erb_openers : NULL,
+    parser_options ? parser_options->erb_opener_count : 0,
+    allocator
+  );
 
   if (!extracted_ruby) { return; }
 

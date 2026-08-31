@@ -1,0 +1,9 @@
+---
+source: "Engine::ERBOpenersTest#test_0004_several configured openers are omitted from compilation"
+input: "{source: \"<%graphql query { id } %>\\n<%herb slot :header %>\\n<p><%= name %></p>\\n\", options: {parser_options: {erb_openers: [\"graphql\", \"herb\"]}}}"
+---
+_buf = ::String.new; _buf << '
+
+<p>'.freeze; _buf << (name).to_s; _buf << '</p>
+'.freeze;
+_buf.to_s

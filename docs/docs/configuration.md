@@ -334,6 +334,32 @@ linter:
         - 'app/views/admin/**/*'
 ```
 
+## Parser Configuration <Badge type="tip" text="^0.11.0" />
+
+Every Herb tool parses your templates, so anything that changes how a template is read belongs here:
+
+```yaml [.herb.yml]
+parser:
+  erb_openers:
+    - graphql
+```
+
+### `erb_openers`
+
+Extra ERB tag openers to recognize, written without the leading `<%`. A tag opened this way holds something other than Ruby, so its body is left out of the compiled template and is never reported as a Ruby error.
+
+The `graphql-client` gem is the common case. Without this setting a query written as `<%graphql … %>` is read as Ruby, and the linter, formatter, and Language Server all report it as broken. With it, the same file is clean:
+
+```yaml [.herb.yml]
+parser:
+  erb_openers:
+    - graphql
+```
+
+An opener ending in a letter, digit, or underscore matches only on a word boundary, so `graphql` picks up `<%graphql query %>` and leaves `<%graphql_helper %>` as ordinary Ruby. See [Parser Options](/parser-options#erb-openers) for the full behavior.
+
+Unlike the `engine` section below, `parser` is read by every tool, since all of them have to agree on how a template is read.
+
 ## Engine Configuration <Badge type="tip" text="v0.9.0+" />
 
 Configure the template engine behavior:

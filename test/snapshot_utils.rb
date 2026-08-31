@@ -12,11 +12,11 @@ end
 module SnapshotUtils
   include CompareHelpers
 
-  def assert_lexed_snapshot(source)
-    result = Herb.lex(source)
+  def assert_lexed_snapshot(source, **options)
+    result = Herb.lex(source, **options)
     expected = result.value.inspect
 
-    assert_snapshot_matches(expected, source, {})
+    assert_snapshot_matches(expected, source, options)
 
     assert_equal "TOKEN_EOF", result.value.last.type
     assert_equal source.to_s.bytesize, result.value.last.range.from
