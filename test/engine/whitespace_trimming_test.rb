@@ -466,5 +466,11 @@ module Engine
 
       assert_includes engine.src, "'\nafter\n'"
     end
+
+    test "a multi-line control tag keeps the line its code starts on" do
+      template = "<%\n  if true %>\n<%= \"text\" %>\n<% end %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
