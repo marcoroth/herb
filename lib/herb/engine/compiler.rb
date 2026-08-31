@@ -235,7 +235,10 @@ module Herb
 
       def visit_erb_control_node(node, &)
         if node.content
+          code_index = @tokens.length
+
           apply_trim(node, node.content.value.strip)
+          keep_line_count(node, at: code_index)
         end
 
         yield if block_given?
