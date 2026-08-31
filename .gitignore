@@ -74,6 +74,7 @@ dkms.conf
 
 # Temporary files
 tmp/*
+/bench/tmp/
 
 # Bundler Config
 !/.bundle/config

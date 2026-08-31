@@ -260,6 +260,75 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+  engine:
+    name: Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: Compile Ruby extension
+        run: bundle exec rake compile
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Run the engine benchmark
+        env:
+          HERB_CORPUS_PATH: ${{ github.workspace }}/corpus
+        run: bundle exec ruby bench/engine/run.rb | tee bench-engine.txt
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Engine benchmark"
+            echo
+            echo '```'
+            sed -n '/^Results$/,$p' bench-engine.txt 2>/dev/null || echo "the benchmark did not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: engine-benchmark
+          path: |
+            bench-engine.txt
+            bench/tmp/native-*.json
+            bench/tmp/engine-*.txt
+          if-no-files-found: ignore
+          retention-days: 30
+
   printer:
     name: Printer Roundtrip
     runs-on: ubuntu-latest
