@@ -21,6 +21,8 @@ module Herb
 
         NODE_KINDS = StateKinds::NODE #: Hash[String, Symbol]
 
+        IDENTIFIER_TOKENS = [:IDENTIFIER, :METHOD_NAME].freeze #: Array[Symbol]
+
         Declaration = Data.define(
           :name,    #: String
           :kind,    #: Symbol
@@ -392,10 +394,28 @@ module Herb
 
           #: (String, Hash[String, Declaration]) -> bool
           def mentions_any?(source, states)
-            states.each_key.any? { |name| /(?<![\w?])#{Regexp.escape(name)}\??(?![\w?!])/.match?(source) }
+            return false if states.empty?
+
+            identifiers(source).any? { |identifier| states.key?(identifier) }
           end
 
           private
+
+          #: (String) -> Array[String]
+          def identifiers(source)
+            names = [] #: Array[String]
+            previous = nil #: Symbol?
+
+            Prism.lex(source).value.map(&:first).each do |token|
+              type = token.type
+
+              names << token.value.delete_suffix("?") if IDENTIFIER_TOKENS.include?(type) && previous != :SYMBOL_BEGIN
+
+              previous = type
+            end
+
+            names
+          end
 
           #: (untyped, Parsing) -> Declaration
           def declaration_for(state, parsing)

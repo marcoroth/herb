@@ -585,6 +585,22 @@ module Engine
         )
       end
 
+      test "a string literal that spells a state name is not a read" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><p><%= "draft" %></p>))
+
+        assert_empty visitor.state_values
+        assert_empty visitor.state_presence
+      end
+
+      test "a string literal that spells a counted state is not a read inside its loop" do
+        visitor, = compile(<<~ERB)
+          <%# herb:state (total: 0) %>
+          <ul><% @items.each do |item| %><%# herb:key item %><% total += 1 %><li id="i<%= item %>"><%= "total" %></li><% end %></ul>
+        ERB
+
+        assert_equal [{ name: "total", collection: 0, by: 1, when: nil }], visitor.state_count_entries
+      end
+
       test "a second directive in the same scope is refused, since one declaration owns the scope" do
         error = assert_raises(Herb::Engine::ParseError) do
           compile("<%# herb:state (open: false) %><%# herb:state (other: true) %><p><%= open %></p>")

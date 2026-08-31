@@ -12,6 +12,8 @@ module Herb
 
         NODE_KINDS: Hash[String, Symbol]
 
+        IDENTIFIER_TOKENS: Array[Symbol]
+
         class Declaration < Data
           attr_reader name(): String
 
@@ -188,6 +190,9 @@ module Herb
 
         # : (String, Hash[String, Declaration]) -> bool
         def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
+
+        # : (String) -> Array[String]
+        private def self.identifiers: (String) -> Array[String]
 
         # : (untyped, Parsing) -> Declaration
         private def self.declaration_for: (untyped, Parsing) -> Declaration
