@@ -321,7 +321,7 @@ module Herb
 
     def trailing_newline(code)
       return "\n" if Helpers.comment?(code)
-      return "\n" if Helpers.heredoc?(code)
+      return "\n" if Helpers.ends_on_heredoc_terminator?(code)
 
       ""
     end

@@ -10,6 +10,9 @@ module Herb
       def self.without_trailing_spaces: (String) -> String
 
       # : (String) -> bool
+      def self.ends_on_heredoc_terminator?: (String) -> bool
+
+      # : (String) -> bool
       def self.heredoc?: (String) -> bool
 
       # : (String) -> String
