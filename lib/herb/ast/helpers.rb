@@ -48,8 +48,8 @@ module Herb
       end
 
       #: (String) -> bool
-      def erb_graphql?(opening)
-        opening.start_with?("<%graphql")
+      def erb_custom_opening?(opening)
+        opening.start_with?("<%") && !Herb.default_erb_openings.include?(opening)
       end
 
       #: (String) -> bool

@@ -1,20 +1,12 @@
-import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { ParserRule } from "../types.js"
+import { CommentedERBTagVisitor, commentedTagPrefixesFor, respacedCommentedTag } from "../utils/commented-erb-tag-utils.js"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
 import { Location } from "@herb-tools/core"
+import type { CommentedERBTagAutofixContext } from "../utils/commented-erb-tag-utils.js"
 import type { UnboundLintOffense, LintOffense, LintContext, LintSeverity, FullRuleConfig } from "../types.js"
 
-interface ERBNoExtraWhitespaceAutofixContext extends BaseAutofixContext {
-  node: Mutable<ERBNode>
-  openTag: Token
-  closeTag: Token
-  content: string
-  fixType: "after-open" | "before-close" | "after-comment-equals"
-}
-
-class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWhitespaceAutofixContext> {
-
+class ERBNoExtraWhitespaceInsideTagsVisitor extends CommentedERBTagVisitor {
   visitERBNode(node: ERBNode): void {
     const openTag = node.tag_opening
     const closeTag = node.tag_closing
@@ -43,17 +35,6 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
     if (this.hasExtraTrailingWhitespace(value)) {
       this.reportWhitespace(node, openTag, closeTag, value, "end", 0, `Remove extra whitespace before \`${closeTag.value}\`.`, "before-close")
     }
-  }
-
-  private getCommentedTagPrefix(content: string): string | null {
-    if (content.startsWith("graphql")) return "graphql"
-    if (content.startsWith("%=")) return "%="
-    if (content.startsWith("==")) return "=="
-    if (content.startsWith("%")) return "%"
-    if (content.startsWith("=")) return "="
-    if (content.startsWith("-")) return "-"
-
-    return null
   }
 
   private hasExtraLeadingWhitespace(content: string): boolean {
@@ -115,7 +96,7 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
   }
 }
 
-export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAutofixContext> {
+export class ERBNoExtraWhitespaceRule extends ParserRule<CommentedERBTagAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-no-extra-whitespace-inside-tags"
   static introducedIn = this.version("0.8.0")
@@ -127,15 +108,15 @@ export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAut
     }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBNoExtraWhitespaceAutofixContext>[] {
-    const visitor = new ERBNoExtraWhitespaceInsideTagsVisitor(this.ruleName, context)
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<CommentedERBTagAutofixContext>[] {
+    const visitor = new ERBNoExtraWhitespaceInsideTagsVisitor(this.ruleName, commentedTagPrefixesFor(result, context), context)
 
     visitor.visit(result.value)
 
     return visitor.offenses
   }
 
-  autofix(offense: LintOffense<ERBNoExtraWhitespaceAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+  autofix(offense: LintOffense<CommentedERBTagAutofixContext>, result: ParseResult, context?: Partial<LintContext>): ParseResult | null {
     if (!offense.autofixContext) return null
 
     const { node, fixType } = offense.autofixContext
@@ -153,11 +134,10 @@ export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAut
         break
 
       case "after-comment-equals": {
-        const prefix = content.startsWith("graphql") ? "graphql" : content.startsWith("%=") ? "%=" : content.startsWith("==") ? "==" : content.startsWith("%") ? "%" : content.startsWith("=") ? "=" : content.startsWith("-") ? "-" : null
+        const respaced = respacedCommentedTag(content, commentedTagPrefixesFor(result, context), rest => rest.replace(/^\s{2,}/, ""))
 
-        if (prefix) {
-          const afterPrefix = content.substring(prefix.length)
-          node.content.value = prefix + " " + afterPrefix.replace(/^\s{2,}/, "")
+        if (respaced) {
+          node.content.value = respaced
         }
 
         break

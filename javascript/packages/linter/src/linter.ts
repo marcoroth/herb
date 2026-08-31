@@ -123,7 +123,7 @@ export class Linter {
    */
   constructor(herb: HerbBackend, rules?: RuleClass[], config?: Config, allAvailableRules?: RuleClass[]) {
     this.herb = herb
-    this.parseCache = new ParseCache(herb)
+    this.parseCache = new ParseCache(herb, config?.parserOptions ?? {})
     this.config = config
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.allAvailableRules = allAvailableRules !== undefined ? allAvailableRules : this.rules
@@ -810,7 +810,8 @@ export class Linter {
       ...context,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
-      framework: context?.framework ?? this.config?.framework
+      framework: context?.framework ?? this.config?.framework,
+      herb: context?.herb ?? this.herb
     }
 
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)

@@ -35,6 +35,9 @@ module Herb
       # : (String) -> untyped
       def leak_check: (String) -> untyped
 
+      # : () -> Array[String]
+      def default_erb_openings: () -> Array[String]
+
       # : () -> String
       def version: () -> String
 

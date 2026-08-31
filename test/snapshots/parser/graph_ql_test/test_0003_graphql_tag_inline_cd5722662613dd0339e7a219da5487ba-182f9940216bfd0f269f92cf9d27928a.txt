@@ -1,6 +1,7 @@
 ---
 source: "Parser::GraphQLTest#test_0003_graphql tag inline"
 input: "<%graphql query { users { id } } %>"
+options: {erb_openers: ["graphql"]}
 ---
 @ DocumentNode (location: (1:0)-(1:35))
 └── children: (1 item)

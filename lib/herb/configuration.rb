@@ -89,6 +89,22 @@ module Herb
       files["exclude"] || DEFAULTS.dig("files", "exclude") || []
     end
 
+    def parser
+      @config["parser"] || {}
+    end
+
+    #: () -> Array[String]
+    def erb_openers
+      parser["erb_openers"] || []
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def parser_options
+      openers = erb_openers
+
+      openers.empty? ? {} : { erb_openers: openers }
+    end
+
     def linter
       @config["linter"] || {}
     end

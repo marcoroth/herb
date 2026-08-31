@@ -616,6 +616,18 @@
                     <span class="select-none">Dot-notation tags</span>
                   </label>
 
+                  <label class="flex items-center gap-2 text-gray-300 text-sm" title="Extra ERB tag openers to recognize, written without the leading &lt;% and separated by commas — their bodies are not parsed as Ruby">
+                    <span class="select-none">ERB openers:</span>
+                    <input
+                      type="text"
+                      placeholder="graphql"
+                      data-option="erb_openers"
+                      data-option-type="list"
+                      data-action="change->playground#onOptionChange"
+                      class="w-28 px-2 py-1 text-sm rounded border-gray-600 bg-gray-700 text-gray-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </label>
+
                   <span class="text-gray-600 mx-1">|</span>
 
                   <button

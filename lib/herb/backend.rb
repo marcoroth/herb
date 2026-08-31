@@ -50,6 +50,11 @@ module Herb
         unavailable(__method__)
       end
 
+      #: () -> Array[String]
+      def default_erb_openings
+        unavailable(__method__)
+      end
+
       #: () -> String
       def version
         unavailable(__method__)

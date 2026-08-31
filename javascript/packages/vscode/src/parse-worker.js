@@ -44,8 +44,18 @@ const { Config } = require('@herb-tools/config');
     console.log = originalConsoleLog;
     console.error = originalConsoleError;
 
+    let projectConfig;
+
+    try {
+      projectConfig = await Config.loadForEditor(workspaceRoot);
+    } catch (_configError) {
+      projectConfig = undefined;
+    }
+
+    const parserOptions = projectConfig?.parserOptions ?? {};
+
     const content = fs.readFileSync(file, 'utf8');
-    const parseResult = Herb.parse(content);
+    const parseResult = Herb.parse(content, parserOptions);
     const parseErrors = parseResult.recursiveErrors().length;
 
     let lintOffenses = [];
@@ -55,6 +65,7 @@ const { Config } = require('@herb-tools/config');
     if (parseErrors === 0 && linterEnabled) {
       try {
         const config = Config.fromObject({
+          parser: projectConfig?.parser,
           linter: {
             enabled: true,
             rules: linterRules
@@ -92,7 +103,7 @@ const { Config } = require('@herb-tools/config');
           indentWidth: formatterIndentWidth,
           indentStyle: formatterIndentStyle,
           maxLineLength: formatterMaxLineLength
-        });
+        }, parserOptions);
         const formattedContent = formatter.format(content);
 
         formatterIssues = formattedContent !== content;

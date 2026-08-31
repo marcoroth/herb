@@ -1,0 +1,6 @@
+---
+source: "Engine::GraphQLTest#test_0010_code starting with the letters graphql is compiled as Ruby"
+input: "{source: \"<%graphqlish %>\", options: {parser_options: {erb_openers: [\"graphql\"]}}}"
+---
+_buf = ::String.new; graphqlish 
+_buf.to_s

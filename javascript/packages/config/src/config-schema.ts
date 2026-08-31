@@ -71,6 +71,10 @@ export const EnvironmentSchema = z.enum(ENVIRONMENT_NAMES)
 export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()
   .describe("Template engine used for compilation (default: 'erubi')")
 
+export const ParserConfigSchema = z.object({
+  erb_openers: z.array(z.string().min(1)).optional().describe("ERB tag openers recognized in addition to the built-in ones, written without the leading `<%` (e.g., ['graphql'] makes `<%graphql ... %>` a tag whose body is not Ruby)"),
+}).strict().optional()
+
 export const EngineConfigSchema = z.record(z.string(), z.unknown()).nullish()
 
 export const HerbConfigSchema = z.object({
@@ -78,6 +82,7 @@ export const HerbConfigSchema = z.object({
   framework: FrameworkSchema,
   template_engine: TemplateEngineSchema,
   files: FilesConfigSchema.describe("Top-level file configuration"),
+  parser: ParserConfigSchema.describe("Parser configuration shared by every Herb tool"),
   engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,
   formatter: FormatterConfigSchema,
@@ -86,6 +91,7 @@ export const HerbConfigSchema = z.object({
 export type HerbConfigSchemaType = z.infer<typeof HerbConfigSchema>
 export type RuleConfigSchemaType = z.infer<typeof RuleConfigSchema>
 export type FilesConfigSchemaType = z.infer<typeof FilesConfigSchema>
+export type ParserConfigSchemaType = z.infer<typeof ParserConfigSchema>
 export type SeveritySchemaType = z.infer<typeof SeveritySchema>
 
 export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }

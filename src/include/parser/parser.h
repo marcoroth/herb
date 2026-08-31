@@ -41,6 +41,8 @@ typedef struct PARSER_OPTIONS_STRUCT {
   uint32_t max_errors;
   uint32_t* error_count;
   uint64_t deadline_ms;
+  const hb_string_T* erb_openers;
+  size_t erb_opener_count;
 } parser_options_T;
 
 typedef struct MATCH_TAGS_CONTEXT_STRUCT {
@@ -50,6 +52,12 @@ typedef struct MATCH_TAGS_CONTEXT_STRUCT {
 } match_tags_context_T;
 
 extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+
+static inline void lexer_apply_erb_openers(lexer_T* lexer, const parser_options_T* options) {
+  if (options == NULL || options->erb_openers == NULL) { return; }
+
+  lexer->erb_openers = (erb_openers_T) { .items = options->erb_openers, .count = options->erb_opener_count };
+}
 
 static inline bool parser_options_past_deadline(const parser_options_T* options) {
   if (options == NULL || options->timeout_ms == 0) { return false; }

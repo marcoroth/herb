@@ -10,6 +10,7 @@ input: |2-
 %>
 
 <p><%= human.name %> lives on <%= human.home_planet %>.</p>
+options: {erb_openers: ["graphql"]}
 ---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (6 items)

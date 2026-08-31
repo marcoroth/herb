@@ -28,7 +28,9 @@ typedef struct {
   erb_end_candidate_kind_T kind;
 } erb_end_candidate_T;
 
-static hb_string_T erb_open_patterns[] = HB_STRING_LIST("<%==", "<%%=", "<%graphql", "<%=", "<%#", "<%-", "<%%", "<%");
+const hb_string_T HERB_DEFAULT_ERB_OPENINGS[] = HB_STRING_LIST("<%", "<%=", "<%==", "<%#", "<%-", "<%%", "<%%=");
+
+const size_t HERB_DEFAULT_ERB_OPENINGS_COUNT = sizeof(HERB_DEFAULT_ERB_OPENINGS) / sizeof(HERB_DEFAULT_ERB_OPENINGS[0]);
 
 static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0' || lexer->stalled;
@@ -62,6 +64,7 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
 
   lexer->current_character = lexer->source.data[0];
   lexer->state = STATE_DATA;
+  lexer->erb_openers = (erb_openers_T) { .items = NULL, .count = 0 };
 
   lexer->current_line = 1;
   lexer->current_column = 0;
@@ -209,6 +212,21 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
 // ===== ERB Parsing
 
+static bool is_erb_opener_word_character(const char character) {
+  return isalnum(character) || character == '_';
+}
+
+static bool lexer_matches_erb_opener(const lexer_T* lexer, hb_string_T opener) {
+  if (hb_string_is_empty(opener)) { return false; }
+
+  hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position + 2);
+
+  if (!hb_string_starts_with(remaining_source, opener)) { return false; }
+  if (!is_erb_opener_word_character(opener.data[opener.length - 1])) { return true; }
+
+  return !is_erb_opener_word_character(lexer_peek(lexer, 2 + opener.length));
+}
+
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
   lexer->state = STATE_ERB_CONTENT;
 
@@ -216,10 +234,28 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
     return lexer_advance_with(lexer, hb_string("<%"), TOKEN_ERB_START);
   }
 
-  for (size_t i = 0; i < sizeof(erb_open_patterns) / sizeof(erb_open_patterns[0]); i++) {
-    token_T* match = lexer_match_and_advance(lexer, erb_open_patterns[i], TOKEN_ERB_START);
-    if (match) { return match; }
+  hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position);
+  hb_string_T longest_default = HB_STRING_NULL;
+  uint32_t custom_length = 0;
+
+  for (size_t i = 0; i < HERB_DEFAULT_ERB_OPENINGS_COUNT; i++) {
+    hb_string_T opening = HERB_DEFAULT_ERB_OPENINGS[i];
+
+    if (hb_string_starts_with(remaining_source, opening) && opening.length > longest_default.length) {
+      longest_default = opening;
+    }
   }
+
+  for (size_t i = 0; i < lexer->erb_openers.count; i++) {
+    hb_string_T opener = lexer->erb_openers.items[i];
+
+    if (lexer_matches_erb_opener(lexer, opener) && opener.length + 2 > custom_length) {
+      custom_length = opener.length + 2;
+    }
+  }
+
+  if (custom_length > longest_default.length) { return lexer_advance_with_next(lexer, custom_length, TOKEN_ERB_START); }
+  if (longest_default.length > 0) { return lexer_advance_with(lexer, longest_default, TOKEN_ERB_START); }
 
   return lexer_error(lexer, "Unexpected ERB start");
 }

@@ -6,6 +6,8 @@ import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
 import { stringify, parse, parseDocument, isMap, isScalar, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
+
+import type { ParseOptions } from "@herb-tools/core"
 import { promises as fs, accessSync, readFileSync, readdirSync, statSync } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
@@ -82,6 +84,10 @@ export type FilesConfig = {
   exclude?: string[]
 }
 
+export type ParserConfig = {
+  erb_openers?: string[]
+}
+
 import { resolveSeverity, ALL_RULES_KEY } from "./config-schema.js"
 
 import type { SeverityConfig, LinterMode } from "./config-schema.js"
@@ -129,6 +135,7 @@ export type HerbConfigOptions = {
   framework?: Framework
   template_engine?: TemplateEngine
   files?: FilesConfig
+  parser?: ParserConfig
   engine?: EngineConfig
   linter?: LinterConfig
   formatter?: FormatterConfig
@@ -223,6 +230,7 @@ export class Config {
   get options(): HerbConfigOptions {
     return {
       files: this.config.files,
+      parser: this.config.parser,
       linter: this.config.linter,
       formatter: this.config.formatter
     }
@@ -230,6 +238,16 @@ export class Config {
 
   get framework() {
     return this.config.framework
+  }
+
+  get parser() {
+    return this.config.parser
+  }
+
+  get parserOptions(): ParseOptions {
+    const erbOpeners = this.config.parser?.erb_openers
+
+    return erbOpeners ? { erb_openers: erbOpeners } : {}
   }
 
   get linter() {

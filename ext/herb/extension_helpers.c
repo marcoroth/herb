@@ -152,6 +152,16 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_
   rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes")), options->prism_nodes ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes_deep")), options->prism_nodes_deep ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_program")), options->prism_program ? Qtrue : Qfalse);
+
+  VALUE erb_openers = rb_ary_new_capa((long) options->erb_opener_count);
+
+  for (size_t index = 0; index < options->erb_opener_count; index++) {
+    hb_string_T opener = options->erb_openers[index];
+
+    rb_ary_push(erb_openers, rb_utf8_str_new(opener.data, (long) opener.length));
+  }
+
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("erb_openers")), erb_openers);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("timeout")), DBL2NUM((double) options->timeout_ms / 1000.0));
 
   rb_hash_aset(

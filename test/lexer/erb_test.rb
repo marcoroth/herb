@@ -130,5 +130,25 @@ module Lexer
     test "erb tag with no recoverable closing delimiter" do
       assert_lexed_snapshot(%(<%= items.select { |item| item.size > 3 ))
     end
+
+    test "erb tag with a configured opener" do
+      assert_lexed_snapshot(%(<%graphql query { users { id } } %>), erb_openers: ["graphql"])
+    end
+
+    test "erb tag with a configured opener that is not configured" do
+      assert_lexed_snapshot(%(<%graphql query { users { id } } %>))
+    end
+
+    test "erb tag sharing a prefix with a configured opener" do
+      assert_lexed_snapshot(%(<%graphql_helper %>), erb_openers: ["graphql"])
+    end
+
+    test "erb tag with a configured symbol opener" do
+      assert_lexed_snapshot(%(<%? maybe %>), erb_openers: ["?"])
+    end
+
+    test "erb <%== %>" do
+      assert_lexed_snapshot(%(<%== "hello world" %>))
+    end
   end
 end

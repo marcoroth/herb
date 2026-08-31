@@ -66,17 +66,17 @@ rescue LoadError => e
 end
 
 module Herb
-  #: (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?arena_stats: bool) -> ParseResult
+  #: (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?erb_openers: Array[String], ?arena_stats: bool) -> ParseResult
   def self.parse(...)
     Backend.parse(...)
   end
 
-  #: (String input, ?arena_stats: bool) -> LexResult
+  #: (String input, ?erb_openers: Array[String], ?arena_stats: bool) -> LexResult
   def self.lex(...)
     Backend.lex(...)
   end
 
-  #: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool) -> String
+  #: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool, ?custom_tags: bool, ?erb_openers: Array[String]) -> String
   def self.extract_ruby(...)
     Backend.extract_ruby(...)
   end
@@ -121,6 +121,11 @@ module Herb
     require "prism"
 
     Prism.parse(source)
+  end
+
+  #: () -> Array[String]
+  def self.default_erb_openings
+    @default_erb_openings ||= Backend.default_erb_openings.freeze
   end
 
   def self.configuration(project_path = nil)
