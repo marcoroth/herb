@@ -2,5 +2,5 @@
 source: "Engine::ERBOpenersTest#test_0003_graphql is compiled as Ruby when it is not configured"
 input: "{source: \"<%graphql_query %>\", options: {parser_options: {erb_openers: [\"herb\"]}}}"
 ---
-_buf = ::String.new; graphql_query 
+_buf = ::String.new; graphql_query ;
 _buf.to_s

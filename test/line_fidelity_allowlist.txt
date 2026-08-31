@@ -1,11 +1,4 @@
 Engine::BlockCommentsTest#test_0001_ruby block comments with =begin and =end multiline
 Engine::BlockCommentsTest#test_0007_ruby block comments with =begin and =end mutliline and no space before ERB closing tag
-Engine::ERBCommentsTest#test_0003_inline ruby comment between code
-Engine::ERBCommentsTest#test_0004_inline ruby comment before and between code
-Engine::ERBCommentsTest#test_0006_inline ruby comment multiline
 Engine::ExamplesCompilationTest#test_0004_block comment compilation
-Engine::RenderNodeCompilationTest#test_0006_emits a render inside a loop
 Engine::WhitespaceTrimmingTest#test_0031_output tag with -%> followed by another expression tag
-Engine::WhitespaceTrimmingTest#test_0036_leading whitespace before statement tag with inline expression is preserved
-Engine::WhitespaceTrimmingTest#test_0045_leading whitespace preserved when control tag with inline output follows a trimmed code-only line
-Engine::WhitespaceTrimmingTest#test_0046_leading whitespace preserved after multiple consecutive trimmed code-only lines

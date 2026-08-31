@@ -2,5 +2,5 @@
 source: "Engine::GraphQLTest#test_0006_graphql variable assignment is not omitted"
 input: "{source: \"<% graphql = \\\"query\\\" %>\", options: {parser_options: {erb_openers: [\"graphql\"]}}}"
 ---
-_buf = ::String.new; graphql = "query" 
+_buf = ::String.new; graphql = "query" ;
 _buf.to_s
