@@ -2,8 +2,6 @@ Engine::BlockCommentsTest#test_0001_ruby block comments with =begin and =end mul
 Engine::BlockCommentsTest#test_0002_ruby block comments inside erb tags
 Engine::BlockCommentsTest#test_0003_ruby block comments with code before and after
 Engine::BlockCommentsTest#test_0007_ruby block comments with =begin and =end mutliline and no space before ERB closing tag
-Engine::DebugModeTest::marking which render a tag came from#test_0001_says nothing about the render unless asked
-Engine::DebugModeTest::marking which render a tag came from#test_0002_compiles the marker as a tag the session fills in
 Engine::ERBCommentsTest#test_0003_inline ruby comment between code
 Engine::ERBCommentsTest#test_0004_inline ruby comment before and between code
 Engine::ERBCommentsTest#test_0006_inline ruby comment multiline
@@ -12,26 +10,7 @@ Engine::ExamplesCompilationTest#test_0017_graphql compilation
 Engine::GraphQLTest#test_0003_graphql tag with surrounding html
 Engine::GraphQLTest#test_0004_graphql tag with comment and html
 Engine::GraphQLTest#test_0005_graphql tag with query variables
-Engine::InlineRenderTest#test_0012_detects circular references and falls back
-Engine::InstrumentationTest::what it emits#test_0001_wraps an output tag
-Engine::InstrumentationTest::what it emits#test_0002_frames a block rather than wrapping it
-Engine::InstrumentationTest::what it emits#test_0003_frames an assignment rather than wrapping it
-Engine::InstrumentationTest::what it emits#test_0004_opens and closes around a statement
-Engine::InstrumentationTest::what it emits#test_0006_reaches into a conditional
-Engine::InstrumentationTest::what it says a render was reached by#test_0001_frames a partial
-Engine::InstrumentationTest::what it says a render was reached by#test_0002_frames a collection
-Engine::InstrumentationTest::what it says a render was reached by#test_0004_frames a template
-Engine::InstrumentationTest::what it says a render was reached by#test_0005_frames an object, which only Rails can classify
 Engine::RenderNodeCompilationTest#test_0006_emits a render inside a loop
-Engine::ScopedStyleVisitorTest#test_0023_carries the scope into the markup a client rebuilds a branch from
-Engine::Slots::ManifestChannelTest#test_0001_writes nothing at all unless a delivery asks for it
-Engine::Slots::ManifestChannelTest#test_0014_a template with nothing of its own to say records nothing
-Engine::Slots::ManifestChannelTest#test_0015_and inlines nothing either
-Engine::Slots::ManifestCollectorTest#test_0006_a project that extracts its manifests sends none with the page
-Engine::Slots::MarkersTest#test_0016_compiles slot markers into the generated source
-Engine::Slots::MarkersTest#test_0017_compiles a conditional into the generated source
-Engine::Slots::MarkersTest#test_0018_compiles a collection into the generated source
-Engine::Slots::MarkersTest#test_0019_compiles attribute slots into the generated source
 Engine::WhitespaceTrimmingTest#test_0031_output tag with -%> followed by another expression tag
 Engine::WhitespaceTrimmingTest#test_0036_leading whitespace before statement tag with inline expression is preserved
 Engine::WhitespaceTrimmingTest#test_0045_leading whitespace preserved when control tag with inline output follows a trimmed code-only line

@@ -178,6 +178,9 @@ module Herb
 
       def apply_trim: (untyped node, untyped code) -> untyped
 
+      # : (untyped) -> bool
+      def newline_follows?: (untyped) -> bool
+
       def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
 
       def restore_pending_leading_whitespace!: () -> untyped

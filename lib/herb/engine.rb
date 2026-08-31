@@ -108,7 +108,7 @@ module Herb
         wrapped = !wrapping.equal?(postamble)
         postamble = wrapping
 
-        compiler = compiler_class.new(self, properties)
+        compiler = compiler_class.new(self, properties.merge(source: input))
 
         parse_result.value.accept(compiler)
 

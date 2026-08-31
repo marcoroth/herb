@@ -9,6 +9,5 @@ _buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-294
 <article class="card" data-herb-scope-bf0ebc68>
   <h2 class="title" data-herb-scope-bf0ebc68>Card</h2>
 </article>
-'.freeze; }.call() 
- _buf << '</section>'.freeze;
+'.freeze; }.call() ; _buf << '</section>'.freeze;
 _buf.to_s
