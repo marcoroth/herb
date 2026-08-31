@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedLiteralsTest::what stays dynamic#test_0002_a string with interpolation"
+input: "{source: \"<p><%= \\\"a\\\#{b}\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << ("a#{b}").to_s; _buf << '</p>'.freeze;
+_buf.to_s

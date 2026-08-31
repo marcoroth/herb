@@ -250,7 +250,7 @@ Herb ships the following transform visitors:
 | `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
 | `InlineRender::Visitor`       | Replaces a `render` of a static partial with the partial (experimental)      |
 | `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental)      |
-| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)            |
+| `OptimizeVisitor`             | Compile-time optimizations for helpers and literal output (experimental)     |
 | `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
 | `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
 | `SourceAttributionVisitor`    | Stamps every element with the template and position it was written at        |
@@ -799,7 +799,9 @@ Herb::Engine.new(source, visitors: [Herb::Engine::OptimizeVisitor.new])
 
 `<%= tag.div do %>Content<% end %>` compiles to `<div>Content</div>` with no helper call left at all. Only the helpers the registry marks supported are resolved.
 
-Its presence also collapses a template that carries no Ruby into the single string literal it renders, with none of the buffer the compiler would otherwise build up. `<div>Static</div>` compiles to `'<div>Static</div>'`. A template written as HTML qualifies on its own, and one left fully static once its helpers resolved to markup qualifies too, so `<%= tag.br %>` compiles to `'<br>'`. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
+An output tag that carries only a string, integer, or float literal renders the same text every time, so the visitor folds it into the template text around it, with the escaping the renderer would have applied already applied. `<%= "hello" %>` compiles to the text `hello`, and with `escape: true`, `<%= "it's" %>` compiles to `it&#39;s`. The fold follows the tag's position, so a literal in an attribute value takes the attribute escape, and one inside `<script>` or `<style>` takes the JavaScript or CSS escape. A literal that spans lines, sits in a trimming tag, or renders nothing stays dynamic, and so does one whose escape function the caller swapped out through `escapefunc`, `attrfunc`, `jsfunc`, or `cssfunc`, unless the stock function leaves the value untouched.
+
+Its presence also collapses a template that carries no Ruby into the single string literal it renders, with none of the buffer the compiler would otherwise build up. `<div>Static</div>` compiles to `'<div>Static</div>'`. A template written as HTML qualifies on its own, and one left fully static once its helpers resolved to markup and its literals folded into text qualifies too, so `<%= tag.br %>` compiles to `'<br>'` and `<h1><%= "hello" %></h1>` to `'<h1>hello</h1>'`. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 
 Replacing a helper call with its markup is the same thing as calling it only while the helper is the one it was resolved against. An application that defines its own `content_tag` gets the stock markup everywhere instead of its own, with nothing at the call site to say so. `verify` compiles a check into the template that reports a helper that has since been overwritten:
 
