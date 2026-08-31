@@ -316,12 +316,15 @@ module Herb
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
           code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
+          code_index = @tokens.length
 
           @tokens << if should_escape
                        [:expr_block_escaped, code, current_context]
                      else
                        [:expr_block, code, current_context]
                      end
+
+          keep_line_count(node, at: code_index)
 
           @last_trim_consumed_newline = false
           @trim_next_whitespace = true if right_trim?(node)
