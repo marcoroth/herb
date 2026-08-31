@@ -343,5 +343,11 @@ module Engine
     test "compilation with parser_options strict false" do
       assert_compiled_snapshot("<div>Hello</div>", parser_options: { strict: false })
     end
+
+    test "heredoc closed before the end of an output tag keeps the following line" do
+      template = "<%= part(\n  y: [<<-D]\n    text\n  D\n) %>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

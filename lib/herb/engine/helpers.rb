@@ -25,6 +25,15 @@ module Herb
       end
 
       #: (String) -> bool
+      def self.ends_on_heredoc_terminator?(code)
+        return false unless heredoc?(code)
+
+        terminators = code.scan(/<<[~-]?\s*['"`]?(\w+)/).flatten
+
+        terminators.any? && terminators.include?(code.lines.last.to_s.strip)
+      end
+
+      #: (String) -> bool
       def self.heredoc?(code)
         code.match?(/<<[~-]?\s*['"`]?\w/)
       end
