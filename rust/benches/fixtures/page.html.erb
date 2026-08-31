@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= content_for(:title) || "Herb" %></title>
+
+    <% if Rails.env.production? %>
+      <meta name="robots" content="index, follow">
+    <% end %>
+  </head>
+
+  <body class="<%= body_classes %>" data-controller="layout">
+    <header class="header">
+      <nav aria-label="Main navigation">
+        <ul>
+          <% navigation_items.each do |item| %>
+            <li class="<%= "active" if current_page?(item.path) %>">
+              <a href="<%= item.path %>" title="<%= item.title %>"><%= item.label %></a>
+            </li>
+          <% end %>
+        </ul>
+      </nav>
+
+      <% if signed_in? %>
+        <div class="account">
+          <img src="<%= current_user.avatar_url %>" alt="<%= current_user.name %>" width="32" height="32">
+
+          <span><%= current_user.name %></span>
+
+          <form action="/session" method="post">
+            <input type="hidden" name="_method" value="delete">
+            <button type="submit">Sign out</button>
+          </form>
+        </div>
+      <% else %>
+        <a href="/session/new" class="button">Sign in</a>
+      <% end %>
+    </header>
+
+    <main id="main">
+      <% if flash.any? %>
+        <div class="flashes">
+          <% flash.each do |type, message| %>
+            <div class="flash flash--<%= type %>" role="alert"><%= message %></div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <section class="articles">
+        <h1><%= @collection.title %></h1>
+
+        <% if @articles.any? %>
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Author</th>
+                <th scope="col">Published</th>
+                <th scope="col">Tags</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% @articles.each_with_index do |article, index| %>
+                <tr class="row <%= index.even? ? "even" : "odd" %>" data-id="<%= article.id %>">
+                  <td>
+                    <a href="/articles/<%= article.to_param %>"><%= article.title %></a>
+
+                    <% if article.draft? %>
+                      <em>(draft)</em>
+                    <% end %>
+                  </td>
+
+                  <td><%= article.author.name %></td>
+                  <td><time datetime="<%= article.published_at.iso8601 %>"><%= article.published_at.strftime("%B %d, %Y") %></time></td>
+
+                  <td>
+                    <% article.tags.each do |tag| %>
+                      <span class="tag"><%= tag.name %></span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+
+          <% case @collection.pagination %>
+          <% when :cursor %>
+            <a href="<%= @collection.next_cursor_path %>" rel="next">Next</a>
+          <% when :pages %>
+            <ol class="pagination">
+              <% (1..@collection.total_pages).each do |page| %>
+                <li><a href="?page=<%= page %>"><%= page %></a></li>
+              <% end %>
+            </ol>
+          <% else %>
+            <p>All <%= @articles.size %> articles shown.</p>
+          <% end %>
+        <% else %>
+          <p class="empty">No articles yet.</p>
+        <% end %>
+      </section>
+
+      <aside class="sidebar">
+        <%# Comment: the sidebar is rendered for every request %>
+        <h2>Popular</h2>
+
+        <ul>
+          <% @popular.each do |article| %>
+            <li>
+              <a href="/articles/<%= article.to_param %>"><%= truncate(article.title, length: 40) %></a>
+              <small><%= pluralize(article.views_count, "view") %></small>
+            </li>
+          <% end %>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; <%= Time.current.year %> Herb</p>
+
+      <% begin %>
+        <p><%= render_status_widget %></p>
+      <% rescue StandardError => error %>
+        <p class="error"><%= error.message %></p>
+      <% end %>
+    </footer>
+  </body>
+</html>

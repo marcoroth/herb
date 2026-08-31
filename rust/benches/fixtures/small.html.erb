@@ -1,0 +1,9 @@
+<div class="card" id="user-<%= user.id %>">
+  <h2><%= user.name %></h2>
+
+  <% if user.admin? %>
+    <span class="badge">Admin</span>
+  <% else %>
+    <span class="badge"><%= user.role %></span>
+  <% end %>
+</div>

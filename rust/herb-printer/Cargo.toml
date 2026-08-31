@@ -24,3 +24,10 @@ herb = { path = "..", version = "0.10.3", default-features = false }
 colored = { version = "3", optional = true }
 herb-config = { path = "../herb-config", version = "0.10.3", optional = true }
 rayon = { version = "1.10", optional = true }
+
+[dev-dependencies]
+divan = { version = "5.0.1", package = "codspeed-divan-compat" }
+
+[[bench]]
+name = "printer"
+harness = false

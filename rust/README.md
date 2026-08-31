@@ -81,6 +81,30 @@ make test
 cargo test
 ```
 
+## Benchmarking
+
+The benchmarks are written with [divan](https://github.com/nvzqz/divan) through the [CodSpeed](https://codspeed.io) compatibility layer and are tracked on every push and pull request:
+
+| Benchmark suite                                          | Covers                                                        |
+|----------------------------------------------------------|---------------------------------------------------------------|
+| [`benches/parser.rs`](./benches/parser.rs)               | Lexing, parsing, Ruby/HTML extraction and diffing             |
+| [`herb-printer/benches/printer.rs`](./herb-printer/benches/printer.rs) | Identity, indent and ERB-to-Ruby-string printing    |
+
+Every benchmark runs against three input sizes: a small component (`small`), a realistic page layout (`page`), and that layout repeated 25 times (`large`).
+
+Run them locally with `divan` (walltime):
+
+```bash
+cargo bench -p herb -p herb-printer
+```
+
+Or run them the same way CI does, with CodSpeed's CPU simulation:
+
+```bash
+cargo codspeed build --measurement-mode simulation --package herb --package herb-printer
+codspeed run --mode simulation -- cargo codspeed run --package herb --package herb-printer
+```
+
 ## Publishing
 
 Before publishing to crates.io, vendor the C sources:

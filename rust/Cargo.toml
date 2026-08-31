@@ -50,8 +50,13 @@ colored = { version = "3", optional = true }
 colored = "3"
 insta = "1.40"
 cargo-insta = "1.43.2"
+divan = { version = "5.0.1", package = "codspeed-divan-compat" }
 
 [build-dependencies]
 cc = "1.0"
 glob = "0.3"
 bindgen = "0.72"
+
+[[bench]]
+name = "parser"
+harness = false
