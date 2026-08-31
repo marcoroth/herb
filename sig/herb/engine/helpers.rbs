@@ -6,6 +6,9 @@ module Herb
       # : (String) -> bool
       def self.comment?: (String) -> bool
 
+      # : (String) -> String
+      def self.without_trailing_spaces: (String) -> String
+
       # : (String) -> bool
       def self.heredoc?: (String) -> bool
 

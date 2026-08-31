@@ -16,6 +16,14 @@ module Herb
         true
       end
 
+      #: (String) -> String
+      def self.without_trailing_spaces(code)
+        cut = code.length
+        cut -= 1 while cut.positive? && [" ", "\t"].include?(code[cut - 1])
+
+        code[0, cut].to_s
+      end
+
       #: (String) -> bool
       def self.heredoc?(code)
         code.match?(/<<[~-]?\s*['"`]?\w/)
@@ -30,7 +38,7 @@ module Herb
 
         return code unless comment
 
-        code.byteslice(0, comment.location.start_offset).to_s.rstrip
+        without_trailing_spaces(code.byteslice(0, comment.location.start_offset).to_s)
       rescue StandardError
         code
       end

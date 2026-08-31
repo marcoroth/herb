@@ -133,5 +133,11 @@ module Engine
 
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "a tag whose content is only comments keeps every line" do
+      template = "<%\n  # a\n  # b\n%>\n<%= x %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
