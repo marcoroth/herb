@@ -1,0 +1,7 @@
+---
+source: "Engine::OptimizedLiteralsTest::what stays dynamic#test_0004_a literal in a tag that spans lines"
+input: "{source: \"<p><%=\\n\\\"hello\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; 
+ _buf << ("hello").to_s; _buf << '</p>'.freeze;
+_buf.to_s

@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::how it escapes#test_0004_honors the double equals indicator staying raw when the engine escapes"
+input: "{source: \"<p><%== \\\"<b>bold</b>\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], escape: true}}"
+---
+'<p><b>bold</b></p>'.freeze
