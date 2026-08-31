@@ -26,6 +26,7 @@ module Herb
         @trim_next_whitespace = false
         @last_trim_consumed_newline = false
         @pending_trim_newline_index = nil #: Integer?
+        @pending_trim_owns_next_whitespace = false
         @pending_leading_whitespace = nil
         @pending_leading_whitespace_insert_index = 0
         @current_element_source = nil
@@ -611,14 +612,14 @@ module Herb
       end
 
       def process_erb_output(node, opening, code)
-        settle_pending_trim_newline!(false)
-
         if @trim_next_whitespace && @pending_leading_whitespace
           restore_pending_leading_whitespace!
           @pending_leading_whitespace = nil
           @trim_next_whitespace = false
           @last_trim_consumed_newline = false
         end
+
+        settle_pending_trim_newline!(false)
 
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
@@ -802,8 +803,12 @@ module Herb
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
           @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
-          @pending_trim_newline_index = @tokens.length - 1 if right_space.end_with?(" \n")
           @trim_next_whitespace = true
+
+          if right_space.end_with?(" \n")
+            @pending_trim_newline_index = @tokens.length - 1
+            @pending_trim_owns_next_whitespace = true
+          end
         else
           @tokens << [:code, code, current_context]
         end
@@ -822,11 +827,15 @@ module Herb
 
         return unless index
 
+        owned = @pending_trim_owns_next_whitespace
+
         @pending_trim_newline_index = nil
+        @pending_trim_owns_next_whitespace = false
 
         return if keep
 
         @tokens[index][1] = @tokens[index][1].chomp
+        @trim_next_whitespace = false if owned
       end
 
       def save_pending_leading_whitespace!(whitespace)
@@ -838,6 +847,11 @@ module Herb
         return unless @pending_leading_whitespace
 
         @tokens.insert(@pending_leading_whitespace_insert_index, [:text, @pending_leading_whitespace, current_context])
+
+        return unless @pending_trim_newline_index
+        return if @pending_trim_newline_index < @pending_leading_whitespace_insert_index
+
+        @pending_trim_newline_index += 1
       end
 
       def remove_trailing_whitespace_from_last_token!
