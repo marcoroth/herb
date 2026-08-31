@@ -1,0 +1,7 @@
+---
+source: "Engine::OptimizedBranchesTest::what it renders#test_0001_renders the branch the condition picks"
+input: "{source: \"<p>\\n  <% if flag %>\\n    Hello World\\n  <% else %>\\n    Hello Tomorrow\\n  <% end %>\\n</p>\\n\", locals: {flag: true}, options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+<p>
+    Hello World
+</p>

@@ -39,6 +39,21 @@ module Herb
       "'#{text.gsub(/['\\]/, '\\\\\&')}#{@text_end}"
     end
 
+    STRING_LITERAL_ESCAPES = {
+      "\\" => "\\\\",
+      '"' => "\\\"",
+      "#" => "\\#",
+      "\n" => "\\n",
+      "\r" => "\\r",
+    }.freeze #: Hash[String, String]
+
+    #: (String) -> String
+    def escaped_string_literal(text)
+      escaped = text.gsub(/[\\"#\n\r]/, STRING_LITERAL_ESCAPES)
+
+      "\"#{escaped}\"#{".freeze" if @freeze_template_literals}"
+    end
+
     ESCAPE_TABLE = {
       "&" => "&amp;",
       "<" => "&lt;",

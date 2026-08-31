@@ -1,0 +1,10 @@
+---
+source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0002_a nested conditional"
+input: "{source: \"<% if flag %>\\n  <% if other %>\\n    x\\n  <% end %>\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; if flag 
+   if other 
+ _buf << '    x
+'.freeze;   end 
+ end ;
+_buf.to_s

@@ -801,7 +801,29 @@ Herb::Engine.new(source, visitors: [Herb::Engine::OptimizeVisitor.new])
 
 An output tag that carries only a string, integer, or float literal renders the same text every time, so the visitor folds it into the template text around it, with the escaping the renderer would have applied already applied. `<%= "hello" %>` compiles to the text `hello`, and with `escape: true`, `<%= "it's" %>` compiles to `it&#39;s`. The fold follows the tag's position, so a literal in an attribute value takes the attribute escape, and one inside `<script>` or `<style>` takes the JavaScript or CSS escape. A literal that spans lines, sits in a trimming tag, or renders nothing stays dynamic, and so does one whose escape function the caller swapped out through `escapefunc`, `attrfunc`, `jsfunc`, or `cssfunc`, unless the stock function leaves the value untouched.
 
-Its presence also collapses a template that carries no Ruby into the single string literal it renders, with none of the buffer the compiler would otherwise build up. `<div>Static</div>` compiles to `'<div>Static</div>'`. A template written as HTML qualifies on its own, and one left fully static once its helpers resolved to markup and its literals folded into text qualifies too, so `<%= tag.br %>` compiles to `'<br>'` and `<h1><%= "hello" %></h1>` to `'<h1>hello</h1>'`. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
+Its presence also collapses a template that carries no Ruby into the single string literal it renders, with none of the buffer the compiler would otherwise build up. `<div>Static</div>` compiles to `'<div>Static</div>'`. A template written as HTML qualifies on its own, and one left fully static once its helpers resolved to markup and its literals folded into text qualifies too, so `<%= tag.br %>` compiles to `'<br>'` and `<h1><%= "hello" %></h1>` to `'<h1>hello</h1>'`.
+
+A template whose only Ruby is a single `if`, `unless`, or `elsif` chain over otherwise static markup collapses the same way, into the chain itself picking between one frozen string literal per branch:
+
+```erb
+<p>
+  <% if signed_in? %>
+    Hello World
+  <% else %>
+    Hello Tomorrow
+  <% end %>
+</p>
+```
+
+```ruby
+if signed_in?
+ "<p>\n    Hello World\n</p>\n".freeze;
+else
+ "<p>\n    Hello Tomorrow\n</p>\n".freeze;
+end
+```
+
+Each literal holds everything its branch renders, the markup around the conditional included. The conditions compile onto the lines they were written on, so backtraces stay right, and a chain without an `else` gets one that returns the surrounding markup alone. A branch that carries an expression, a nested conditional, or a second chain keeps the buffer. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 
 Replacing a helper call with its markup is the same thing as calling it only while the helper is the one it was resolved against. An application that defines its own `content_tag` gets the stock markup everywhere instead of its own, with nothing at the call site to say so. `verify` compiles a check into the template that reports a helper that has since been overwritten:
 

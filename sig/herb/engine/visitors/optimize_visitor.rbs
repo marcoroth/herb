@@ -33,6 +33,13 @@ module Herb
     # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
     # to report.
     #
+    # A template whose only Ruby is a single `if`, `unless`, or `elsif` chain over otherwise
+    # static markup collapses the same way. Each branch becomes one frozen string literal holding
+    # everything that branch renders, the markup around the conditional included, and the compiled
+    # template is the chain itself picking between them. The conditions compile onto the lines
+    # they were written on, so backtraces stay right, and a chain without an `else` gets one that
+    # returns the surrounding markup alone.
+    #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
     # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
@@ -114,6 +121,27 @@ module Herb
 
       # : (String) -> bool
       def escape_output?: (String) -> bool
+
+      # : (Herb::Engine, Array[untyped]) -> String?
+      def compile_static_branches: (Herb::Engine, Array[untyped]) -> String?
+
+      # : (Array[untyped]) -> Hash[Symbol, untyped]?
+      def conditional_chain: (Array[untyped]) -> Hash[Symbol, untyped]?
+
+      # : (Array[untyped], Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def chain_step: (Array[untyped], Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+
+      # : (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def chain_transition: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+
+      # : (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def chain_branch_transition: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+
+      # : (String) -> Symbol?
+      def chain_keyword: (String) -> Symbol?
+
+      # : (Herb::Engine, Array[untyped], Hash[Symbol, untyped]) -> String
+      def render_static_branches: (Herb::Engine, Array[untyped], Hash[Symbol, untyped]) -> String
 
       # : (String?, Herb::Location?) -> void
       def collect: (String?, Herb::Location?) -> void

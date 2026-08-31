@@ -40,6 +40,13 @@ module Herb
     # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
     # to report.
     #
+    # A template whose only Ruby is a single `if`, `unless`, or `elsif` chain over otherwise
+    # static markup collapses the same way. Each branch becomes one frozen string literal holding
+    # everything that branch renders, the markup around the conditional included, and the compiled
+    # template is the chain itself picking between them. The conditions compile onto the lines
+    # they were written on, so backtraces stay right, and a chain without an `else` gets one that
+    # returns the surrounding markup alone.
+    #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
     # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
@@ -136,9 +143,9 @@ module Herb
       def compile_static_body(engine, compiler)
         text = compiler.static_template_text
 
-        return unless text
+        return engine.string_literal(text) if text
 
-        engine.string_literal(text)
+        compile_static_branches(engine, compiler.optimized_tokens)
       end
 
       #: () -> String
@@ -250,6 +257,139 @@ module Herb
         escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
 
         opening == "<%==" ? !escape : !!escape
+      end
+
+      #: (Herb::Engine, Array[untyped]) -> String?
+      def compile_static_branches(engine, tokens)
+        chain = conditional_chain(tokens)
+
+        return unless chain
+
+        render_static_branches(engine, tokens, chain)
+      end
+
+      #: (Array[untyped]) -> Hash[Symbol, untyped]?
+      def conditional_chain(tokens)
+        parts = {
+          prefix: +"",
+          suffix: +"",
+          branches: [],
+          state: :prefix,
+          else_seen: false,
+        } #: Hash[Symbol, untyped]
+
+        tokens.each do |token|
+          return nil unless chain_step(token, parts)
+        end
+
+        return nil unless parts[:state] == :suffix
+
+        {
+          values: parts[:branches].map { |branch| "#{parts[:prefix]}#{branch}#{parts[:suffix]}" },
+          implicit: "#{parts[:prefix]}#{parts[:suffix]}",
+          else_seen: parts[:else_seen],
+        }
+      end
+
+      #: (Array[untyped], Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def chain_step(token, parts)
+        type = token[0]
+        value = token[1]
+
+        if type == :text
+          case parts[:state]
+          when :prefix then parts[:prefix] << value
+          when :branch then parts[:branches].last << value
+          when :suffix then parts[:suffix] << value
+          end
+
+          return parts
+        end
+
+        return nil unless type == :code
+
+        code = value.strip
+
+        return parts if code.empty?
+
+        keyword = chain_keyword(code)
+
+        return nil unless keyword
+
+        chain_transition(keyword, parts)
+      end
+
+      #: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def chain_transition(keyword, parts)
+        case parts[:state]
+        when :prefix
+          return nil unless keyword == :opening
+
+          parts[:branches] << +""
+          parts[:state] = :branch
+
+          parts
+        when :branch
+          chain_branch_transition(keyword, parts)
+        end
+      end
+
+      #: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def chain_branch_transition(keyword, parts)
+        case keyword
+        when :elsif, :else
+          return nil if parts[:else_seen]
+
+          parts[:branches] << +""
+          parts[:else_seen] = true if keyword == :else
+
+          parts
+        when :end
+          parts[:state] = :suffix
+
+          parts
+        end
+      end
+
+      #: (String) -> Symbol?
+      def chain_keyword(code)
+        return :opening if code.match?(/\A(?:if|unless)\b/)
+        return :elsif if code.match?(/\Aelsif\b/)
+        return :else if code == "else"
+        return :end if code == "end"
+
+        nil
+      end
+
+      #: (Herb::Engine, Array[untyped], Hash[Symbol, untyped]) -> String
+      def render_static_branches(engine, tokens, chain)
+        literals = chain[:values].map { |value| engine.escaped_string_literal(value) }
+        src = +""
+        index = 0
+
+        tokens.each do |token|
+          value = token[1]
+          code = token[0] == :code ? value.strip.to_s : ""
+
+          if code.empty?
+            src << ("\n" * value.count("\n"))
+
+            next
+          end
+
+          keyword = chain_keyword(code)
+
+          src << " else #{engine.escaped_string_literal(chain[:implicit])};" if keyword == :end && !chain[:else_seen]
+          src << value
+          src << ";" unless value.end_with?("\n")
+
+          next if keyword == :end
+
+          src << " #{literals[index]};"
+          index += 1
+        end
+
+        src
       end
 
       #: (String?, Herb::Location?) -> void
