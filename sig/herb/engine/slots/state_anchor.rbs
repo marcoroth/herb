@@ -10,11 +10,17 @@ module Herb
       # the string came from and turns those offsets back into a location in the template. When it
       # has nothing to work with it answers the whole node's location, which is what every
       # diagnostic used before.
+      #
+      # A node resolved out of the template's whole Prism program counts from the start of the
+      # template instead, so `rebased` takes the offset those nodes count from.
       class StateAnchor
         attr_reader location: Herb::Location?
 
-        # : (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol) -> void
-        def initialize: (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol) -> void
+        # : (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol, ?base: Integer) -> void
+        def initialize: (Herb::Location?, ?token: Herb::Token?, ?expression: String?, ?context: Symbol, ?base: Integer) -> void
+
+        # : (Integer) -> StateAnchor
+        def rebased: (Integer) -> StateAnchor
 
         # : () -> bool
         def condition?: () -> bool

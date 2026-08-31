@@ -3,6 +3,8 @@
 
 require "json"
 
+require_relative "locate"
+
 module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode

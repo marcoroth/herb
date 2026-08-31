@@ -226,6 +226,9 @@ module Herb
         # : () -> String
         def occurrence_expression: () -> String
 
+        # : (Herb::Location?) -> Herb::RubyProgram::Resolved?
+        def ruby_at: (Herb::Location?) -> Herb::RubyProgram::Resolved?
+
         def visit_document_node: (untyped node) -> untyped
 
         # : (untyped) -> void
