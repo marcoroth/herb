@@ -161,6 +161,7 @@ Metrics/ParameterLists:
     - lib/herb.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/engine/visitors/optimize_visitor.rb
     - lib/herb/dev/runner.rb
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb

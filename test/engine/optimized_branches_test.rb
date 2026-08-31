@@ -22,6 +22,10 @@ module Engine
       { visitors: [Herb::Engine::OptimizeVisitor.new], **options }
     end
 
+    def subtree_options
+      { visitors: [Herb::Engine::OptimizeVisitor.new(subtrees: true)] }
+    end
+
     describe "what collapses into branch literals" do
       test "a conditional between static markup" do
         assert_compiled_snapshot(CONDITIONAL, optimize_options)
@@ -125,6 +129,38 @@ module Engine
         template = "#{"x" * 120}<% if flag %>1<% elsif other %>2<% elsif third %>3<% elsif fourth %>4<% elsif fifth %>5<% end %>"
 
         assert_compiled_snapshot(template, optimize_options)
+      end
+    end
+
+    describe "what collapses inside a kept buffer" do
+      test "a static chain and its surrounding text become one append" do
+        template = "<div>\n  <%= name %>\n  <% if flag %>Admin<% else %>Member<% end %>\n</div>"
+
+        assert_compiled_snapshot(template, subtree_options)
+      end
+
+      test "a conditional attribute beside a dynamic one" do
+        template = <<~ERB
+          <select>
+          <% if flag %>
+          <option <%= tag.attributes(class: kind, selected: option == current) %>>One</option>
+          <% else %>
+          <option>None</option>
+          <% end %>
+          </select>
+        ERB
+
+        assert_compiled_snapshot(template, subtree_options)
+      end
+
+      test "each chain collapses on its own when text sits between them" do
+        template = "a <% if flag %>x<% end %> b <% if other %>y<% end %> c <%= name %>"
+
+        assert_compiled_snapshot(template, subtree_options)
+      end
+
+      test "a chain the buffer already renders in one append stays as it was" do
+        assert_compiled_snapshot("<% if flag %>a<% end %><%= name %>", subtree_options)
       end
     end
 

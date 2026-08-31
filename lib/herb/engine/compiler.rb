@@ -61,6 +61,8 @@ module Herb
             @engine.send(:add_expression_block, indicator_for(type), value)
           when :expr_block_end
             @engine.send(:add_expression_block_end, value, escaped: escaped)
+          when :chain
+            @engine.send(:add_expression_result, value)
           end
         end
       end

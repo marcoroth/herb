@@ -845,9 +845,17 @@ end
 
 The conditions compile onto the lines they were written on, so backtraces stay right, and a chain without an `else` gets one that returns what the template renders without it. A pattern matching chain is the exception, since it keeps raising `NoMatchingPatternError` for a value no pattern accepts. The path literals repeat the markup the paths share, so the collapse steps back once they would hold more than four times the template's static bytes, and the buffer stays. A branch that carries an expression keeps the buffer, and so does a chain that sits beside another in the same scope.
 
+A template that keeps its buffer can still get its static subtrees, with `subtrees: true`. A chain whose branches are static collapses into a single append of the chain picking between path literals, with the static text around it merged in, so a conditional attribute next to a dynamic one renders in one append where it took three:
+
+```ruby
+_buf << '<option class="'.freeze; _buf << ::Herb::Engine.attr((kind)); _buf << (if (option == current); "\" selected>One</option>".freeze; else "\">One</option>".freeze;end;).to_s;
+```
+
+A chain the buffer already renders in one append is left as it was. The pass trades compiled template bytes for fewer appends at render time, which is why it is the one pass that is off by default.
+
 The `herb compile --optimize` and `herb render --optimize` commands wire the visitor up from the command line. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 
-Every pass is on by default, and each can be left off on its own. `helpers: false` stops asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs dynamic, and `collapse: false` keeps the buffer for a template either collapse would have compiled without one:
+Every pass except `subtrees` is on by default, and each can be toggled on its own. `helpers: false` stops asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs dynamic, and `collapse: false` keeps the buffer for a template either collapse would have compiled without one:
 
 ```ruby
 Herb::Engine::OptimizeVisitor.new(literals: false, collapse: false)

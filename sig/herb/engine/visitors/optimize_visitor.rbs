@@ -49,7 +49,16 @@ module Herb
     # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
     # stays. A chain that sits beside another in the same scope keeps the buffer too.
     #
-    # Every pass is on by default, and each can be left off on its own. `helpers: false` stops
+    # A template the collapse walks away from can still get its static subtrees. With
+    # `subtrees: true`, when the buffer stays, a chain whose branches are static collapses into a
+    # single append of the chain picking between path literals, the static text around it merged
+    # in, so a conditional attribute next to a dynamic one costs one append where it cost three.
+    # A chain the buffer already renders in one append is left as it was, and the duplication
+    # limit governs each subtree the way it governs the template. The pass trades compiled
+    # template bytes for fewer appends at render time, which is why it is the one pass that is
+    # off by default.
+    #
+    # Every other pass is on by default, and each can be left off on its own. `helpers: false` stops
     # asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the
     # postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs
     # dynamic, and `collapse: false` keeps the buffer for a template either collapse above would
@@ -98,8 +107,8 @@ module Herb
       # : () -> bool
       def self.rewrites_erb_source?: () -> bool
 
-      # : (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?verify: bool) -> void
-      def initialize: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?verify: bool) -> void
+      # : (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?subtrees: bool, ?verify: bool) -> void
+      def initialize: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?subtrees: bool, ?verify: bool) -> void
 
       # : () -> Hash[Symbol, untyped]
       def required_parser_options: () -> Hash[Symbol, untyped]
@@ -129,6 +138,12 @@ module Herb
 
       # : () -> Array[String]
       def non_default_toggles: () -> Array[String]
+
+      # : (Herb::Engine, untyped) -> String?
+      def static_body: (Herb::Engine, untyped) -> String?
+
+      # : (Herb::Engine, Array[untyped]) -> void
+      def collapse_subtrees: (Herb::Engine, Array[untyped]) -> void
 
       # : ((Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode)) -> Symbol?
       def element_output_context: (Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode) -> Symbol?
@@ -195,6 +210,15 @@ module Herb
 
       # : (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
       def collect_leaf_literals: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
+
+      # : (Herb::Engine, Array[untyped], Integer) -> [::Range[Integer], Array[untyped]]?
+      def chain_run_replacement: (Herb::Engine, Array[untyped], Integer) -> [ ::Range[Integer], Array[untyped] ]?
+
+      # : (Array[untyped], Integer) -> Integer?
+      def chain_end_index: (Array[untyped], Integer) -> Integer?
+
+      # : (Hash[Symbol, untyped]) -> bool
+      def nested_chain?: (Hash[Symbol, untyped]) -> bool
 
       # : (String) -> Symbol?
       def chain_keyword: (String) -> Symbol?
