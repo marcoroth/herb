@@ -823,7 +823,9 @@ else
 end
 ```
 
-Each literal holds everything its branch renders, the markup around the conditional included. The conditions compile onto the lines they were written on, so backtraces stay right, and a chain without an `else` gets one that returns the surrounding markup alone. A branch that carries an expression, a nested conditional, or a second chain keeps the buffer. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
+Each literal holds everything its branch renders, the markup around the conditional included. The conditions compile onto the lines they were written on, so backtraces stay right, and a chain without an `else` gets one that returns the surrounding markup alone. A branch that carries an expression, a nested conditional, or a second chain keeps the buffer.
+
+The `herb compile --optimize` and `herb render --optimize` commands wire the visitor up from the command line. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 
 Replacing a helper call with its markup is the same thing as calling it only while the helper is the one it was resolved against. An application that defines its own `content_tag` gets the stock markup everywhere instead of its own, with nothing at the call site to say so. `verify` compiles a check into the template that reports a helper that has since been overwritten:
 

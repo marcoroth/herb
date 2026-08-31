@@ -30,7 +30,9 @@ module Herb
     #
     # A literal that spans lines, sits in a trimming tag, or renders nothing at all stays dynamic,
     # so folding never moves another tag off the line it was written on and never changes how the
-    # whitespace around the tag is handled.
+    # whitespace around the tag is handled. Folding rewrites the ERB a template was written with,
+    # so a visitor that reads it, like `Slots::Visitor`, has to run earlier in the stack, and the
+    # stack raises when it does not.
     #
     # Its presence also lets the engine collapse a template that carries no Ruby into the single
     # string literal it renders, skipping the buffer the compiler would otherwise build up. A
@@ -76,6 +78,11 @@ module Herb
       #: () -> Array[String]
       def self.helper_sources
         @helper_sources ||= Herb::ActionView::HelperRegistry.supported.map(&:source).freeze
+      end
+
+      #: () -> bool
+      def self.rewrites_erb_source?
+        true
       end
 
       #: (?verify: bool) -> void
