@@ -93,6 +93,7 @@ module Herb
 
       OUTPUT_OPENINGS = ["<%=", "<%=="].freeze #: Array[String]
       CHILD_LISTS = [:children, :body, :statements].freeze #: Array[Symbol]
+      BRANCHLESS_KEYWORDS = [:end, :case_opening].freeze #: Array[Symbol]
       DUPLICATION_LIMIT = 4 #: Integer
 
       required_parser_option action_view_helpers: true, transform_conditionals: true
@@ -492,7 +493,7 @@ module Herb
       def within_duplication_limit?(paths, tokens)
         static_bytes = tokens.sum { |token| token[0] == :text ? token[1].bytesize : 0 }
 
-        paths.map(&:bytesize).sum <= DUPLICATION_LIMIT * static_bytes
+        paths.sum(&:bytesize) <= DUPLICATION_LIMIT * static_bytes
       end
 
       #: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
@@ -559,7 +560,7 @@ module Herb
           src << value
           src << ";" unless value.end_with?("\n")
 
-          next if [:end, :case_opening].include?(keyword)
+          next if BRANCHLESS_KEYWORDS.include?(keyword)
 
           literal = queues[:branches].shift
           src << " #{literal};" if literal

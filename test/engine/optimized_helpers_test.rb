@@ -132,7 +132,7 @@ module Engine
         compiled = compile
         context = overriding_context
 
-        counts = 3.times.map do
+        counts = Array.new(3) do
           Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }.diagnostics.length
         end
 

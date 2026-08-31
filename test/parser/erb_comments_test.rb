@@ -55,7 +55,7 @@ module Parser
     end
 
     test "handles long multiline ERB comments" do
-      lines = 100.times.map { |i| "Line #{i}: #{"x" * 50}" }
+      lines = Array.new(100) { |i| "Line #{i}: #{"x" * 50}" }
       content = "<%#\n#{lines.join("\n")}\n%>"
       assert_parsed_snapshot(content)
     end

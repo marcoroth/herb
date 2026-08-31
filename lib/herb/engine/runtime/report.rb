@@ -30,8 +30,8 @@ module Herb
         end
 
         #: (Symbol) { () -> untyped } -> untyped
-        def channel(name, &build)
-          @channels[name] ||= build.call
+        def channel(name)
+          @channels[name] ||= yield
         end
 
         #: () -> Array[untyped]

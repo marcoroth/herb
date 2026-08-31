@@ -90,6 +90,8 @@ module Herb
 
       CHILD_LISTS: Array[Symbol]
 
+      BRANCHLESS_KEYWORDS: Array[Symbol]
+
       DUPLICATION_LIMIT: Integer
 
       # : () -> Array[String]

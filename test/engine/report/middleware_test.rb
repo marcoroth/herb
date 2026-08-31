@@ -158,8 +158,8 @@ module Engine
     test "leaves a file-backed response alone rather than buffering it" do
       streamed = Object.new
 
-      def streamed.each(&block)
-        block.call("<html><body></body></html>")
+      def streamed.each
+        yield("<html><body></body></html>")
       end
 
       def streamed.to_path
