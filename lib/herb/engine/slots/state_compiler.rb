@@ -774,10 +774,14 @@ module Herb
 
           read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression))
 
+          return :reported if read == :reported
+
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
           if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && read.operator.nil? && !StateKinds::FALSY.include?(read.kind)
-            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off.", condition_anchor(node, expression).location, :read, suggestion: "#{StateDirectives.predicate_advice(read.kind, read.name)}compare it to a literal#{StateDirectives.default_example(states.fetch(read.name), "#{read.name} == ")}, or declare it as a boolean.")
+            @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off.", condition_anchor(node, expression).location, :read, suggestion: "#{StateDirectives.predicate_advice(read.kind, read.name)}compare it to a literal#{StateDirectives.default_example(states.fetch(read.name), "#{read.name} == ")}, or declare it as a boolean.")
+
+            return :reported
           end
 
           open_tag = @visitor.open_tag_for(node)

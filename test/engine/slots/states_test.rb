@@ -304,6 +304,19 @@ module Engine
         )
       end
 
+      test "a mistake inside a boolean attribute is reported once" do
+        [
+          %(<%# herb:state (draft: "") %><div><button disabled="<%= draft == 3 %>">x</button></div>),
+          %(<%# herb:state (draft: "") %><div><button disabled="<%= draft.nil? %>">x</button></div>),
+          %(<%# herb:state (draft: "") %><div><button disabled="<%= draft %>">x</button></div>),
+          %(<%# herb:state (count: 0) %><div><button disabled="<%= count.empty? %>">x</button></div>)
+        ].each do |template|
+          error = assert_raises(Herb::Engine::CompilationError) { compile(template) }
+
+          assert_equal 1, error.diagnostics.size
+        end
+      end
+
       test "a nil check on a state that can never be nil is refused, in either spelling" do
         refuse(
           %(<%# herb:state (draft: "") %><div><% if draft.nil? %>x<% end %></div>),
