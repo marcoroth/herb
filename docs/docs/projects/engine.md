@@ -847,6 +847,14 @@ The conditions compile onto the lines they were written on, so backtraces stay r
 
 The `herb compile --optimize` and `herb render --optimize` commands wire the visitor up from the command line. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 
+Every pass is on by default, and each can be left off on its own. `helpers: false` stops asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs dynamic, and `collapse: false` keeps the buffer for a template either collapse would have compiled without one:
+
+```ruby
+Herb::Engine::OptimizeVisitor.new(literals: false, collapse: false)
+```
+
+Turning a parser-side pass off only withdraws the visitor's request for the parser option behind it. A caller that asks for `action_view_helpers: true` through `parser_options` still gets the resolution the parser was asked for directly. Unrolling is also part of how the parser resolves helpers, since a helper behind a modifier has to come out of it first, so a modifier keeps its written shape only once `helpers` is off too.
+
 Replacing a helper call with its markup is the same thing as calling it only while the helper is the one it was resolved against. An application that defines its own `content_tag` gets the stock markup everywhere instead of its own, with nothing at the call site to say so. `verify` compiles a check into the template that reports a helper that has since been overwritten:
 
 ```ruby

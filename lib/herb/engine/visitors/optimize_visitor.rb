@@ -56,6 +56,21 @@ module Herb
     # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
     # stays. A chain that sits beside another in the same scope keeps the buffer too.
     #
+    # Every pass is on by default, and each can be left off on its own. `helpers: false` stops
+    # asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the
+    # postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs
+    # dynamic, and `collapse: false` keeps the buffer for a template either collapse above would
+    # have compiled without one:
+    #
+    #     Herb::Engine::OptimizeVisitor.new(literals: false, collapse: false)
+    #
+    # Turning a parser-side pass off only withdraws this visitor's request for the parser option
+    # behind it. A caller that asks for `action_view_helpers: true` through `parser_options` still
+    # gets the resolution the parser was asked for directly, and `verify` below still covers what
+    # it resolved. Unrolling is also part of how the parser resolves helpers, since a helper
+    # behind a modifier has to come out of it first, so a modifier keeps its written shape only
+    # once `helpers` is off too.
+    #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
     # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
@@ -93,10 +108,14 @@ module Herb
         true
       end
 
-      #: (?verify: bool) -> void
-      def initialize(verify: false)
+      #: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?verify: bool) -> void
+      def initialize(helpers: true, conditionals: true, literals: true, collapse: true, verify: false)
         super()
 
+        @helpers = helpers
+        @conditionals = conditionals
+        @literals = literals
+        @collapse = collapse
         @verify = verify
         @sources = {} #: Hash[String, Herb::Location?]
         @output_contexts = [] #: Array[Symbol]
@@ -104,9 +123,13 @@ module Herb
 
       #: () -> Hash[Symbol, untyped]
       def required_parser_options
-        return super unless @verify
+        options = super
 
-        super.merge(track_locations: true)
+        options.delete(:action_view_helpers) unless @helpers
+        options.delete(:transform_conditionals) unless @conditionals
+        options[:track_locations] = true if @verify
+
+        options
       end
 
       #: (Herb::AST::DocumentNode) -> void
@@ -124,6 +147,8 @@ module Herb
 
       #: (Herb::AST::Node) -> void
       def visit_node(node)
+        return unless @literals
+
         CHILD_LISTS.each do |name|
           next unless node.respond_to?(name)
 
@@ -156,6 +181,8 @@ module Herb
 
       #: (Herb::Engine, untyped) -> String?
       def compile_static_body(engine, compiler)
+        return unless @collapse
+
         text = compiler.static_template_text
 
         return engine.string_literal(text) if text
@@ -165,12 +192,27 @@ module Herb
 
       #: () -> String
       def inspect
-        return "#<#{self.class.name}>" unless @verify
+        toggles = non_default_toggles
 
-        "#<#{self.class.name} verify=true>"
+        return "#<#{self.class.name}>" if toggles.empty?
+
+        "#<#{self.class.name} #{toggles.join(" ")}>"
       end
 
       private
+
+      #: () -> Array[String]
+      def non_default_toggles
+        toggles = [] #: Array[String]
+
+        toggles << "helpers=false" unless @helpers
+        toggles << "conditionals=false" unless @conditionals
+        toggles << "literals=false" unless @literals
+        toggles << "collapse=false" unless @collapse
+        toggles << "verify=true" if @verify
+
+        toggles
+      end
 
       #: ((Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode)) -> Symbol?
       def element_output_context(node)

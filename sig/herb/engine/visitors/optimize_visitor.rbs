@@ -49,6 +49,21 @@ module Herb
     # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
     # stays. A chain that sits beside another in the same scope keeps the buffer too.
     #
+    # Every pass is on by default, and each can be left off on its own. `helpers: false` stops
+    # asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the
+    # postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs
+    # dynamic, and `collapse: false` keeps the buffer for a template either collapse above would
+    # have compiled without one:
+    #
+    #     Herb::Engine::OptimizeVisitor.new(literals: false, collapse: false)
+    #
+    # Turning a parser-side pass off only withdraws this visitor's request for the parser option
+    # behind it. A caller that asks for `action_view_helpers: true` through `parser_options` still
+    # gets the resolution the parser was asked for directly, and `verify` below still covers what
+    # it resolved. Unrolling is also part of how the parser resolves helpers, since a helper
+    # behind a modifier has to come out of it first, so a modifier keeps its written shape only
+    # once `helpers` is off too.
+    #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
     # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
@@ -83,8 +98,8 @@ module Herb
       # : () -> bool
       def self.rewrites_erb_source?: () -> bool
 
-      # : (?verify: bool) -> void
-      def initialize: (?verify: bool) -> void
+      # : (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?verify: bool) -> void
+      def initialize: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?verify: bool) -> void
 
       # : () -> Hash[Symbol, untyped]
       def required_parser_options: () -> Hash[Symbol, untyped]
@@ -111,6 +126,9 @@ module Herb
       def inspect: () -> String
 
       private
+
+      # : () -> Array[String]
+      def non_default_toggles: () -> Array[String]
 
       # : ((Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode)) -> Symbol?
       def element_output_context: (Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode) -> Symbol?
