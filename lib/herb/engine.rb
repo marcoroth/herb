@@ -198,7 +198,8 @@ module Herb
       terminate_expression
 
       if code.include?("=begin") || code.include?("=end")
-        @src << "\n" << code << "\n"
+        @src << "\n" << code
+        @src << "\n" unless code.end_with?("\n")
       else
         @src.chomp! if @src.end_with?("\n") && code.start_with?(" ") && !code.end_with?("\n")
 

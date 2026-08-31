@@ -482,13 +482,13 @@ module Herb
       def keep_line_count(node, extra: 0, at: nil)
         raw = node.content.value
 
-        return if raw.include?("=begin") || raw.include?("=end")
-
         leading = raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
         trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra
 
+        block_comment = raw.include?("=begin") || raw.include?("=end")
+
         @padding_before ||= Hash.new(0)
-        @padding_before[at] += leading if at && leading.positive?
+        @padding_before[at] += leading if at && leading.positive? && !block_comment
         @padding_before[@tokens.length] += trailing if trailing.positive?
       end
 
