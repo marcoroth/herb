@@ -24,6 +24,8 @@ module Herb
 
         FALSY = [<%= state_kinds.select(&:falsy?).map { |kind| ":#{kind.name}" }.join(", ") %>].freeze #: Array[Symbol]
 
+        NILABLE = [<%= state_kinds.select(&:nilable?).map { |kind| ":#{kind.name}" }.join(", ") %>].freeze #: Array[Symbol]
+
         ARTICLES = {
 <%- state_kinds.each do |kind| -%>
           <%= kind.name.inspect %> => <%= kind.article.inspect %>,

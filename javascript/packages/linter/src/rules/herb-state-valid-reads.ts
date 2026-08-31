@@ -2,9 +2,9 @@ import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { StateScopeMap } from "../utils/state-directives-utils.js"
 
-import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
+import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LITERAL_KINDS, STATE_PREDICATES, STATE_TRANSFORMS } from "@herb-tools/client/directives"
 
-import { declaredKind, kindWithArticle } from "../utils/state-directives-utils.js"
+import { declaredKind, defaultExample, kindWithArticle, predicateAdvice } from "../utils/state-directives-utils.js"
 import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
@@ -227,7 +227,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     if (prismType(prism) === "UnlessNode" && prism.predicate) {
       const names = this.states.namesIn(this.stack)
 
-      if (names.length > 0) {
+      if (names.length > 0 && !this.checkNeverFalsy(prism.predicate, `unless ${this.sliceOf(prism.predicate)}`, "false")) {
         this.classifyPredicate(prism.predicate, names)
       }
     }
@@ -265,6 +265,8 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     while (prismType(current) === "IfNode") {
       const predicate = current.predicate
       if (!predicate) return
+
+      if (this.checkNeverFalsy(predicate, this.sliceOf(predicate), "true")) return
 
       const read = this.classifyPredicate(predicate, names)
       if (read === "reported") return
@@ -351,7 +353,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (!transformApplies(transformCall.transform, kind)) {
         this.addOffense(
-          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${transformCall.name}\` with \`${transformCall.transform}\`. Only ${STATE_TRANSFORMS[transformCall.transform].only} can be read with \`${transformCall.transform}\`. Compare \`${transformCall.name}\` itself instead, like \`${transformCall.name} == ${declaration.defaultSource}\`.`,
+          `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${transformCall.name}\` with \`${transformCall.transform}\`. Only ${STATE_TRANSFORMS[transformCall.transform].only} can be read with \`${transformCall.transform}\`. Compare \`${transformCall.name}\` itself instead${defaultExample(declaration, `${transformCall.name} == `)}.`,
           this.locationOf(predicate),
         )
 
@@ -378,6 +380,12 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
         return "reported"
       }
 
+      if (STATE_PREDICATES[call.predicate].comparand === "nil" && !NILABLE_STATE_KINDS.has(kind)) {
+        this.nilCheckOffense(predicate, declaration, kind, "can never match")
+
+        return "reported"
+      }
+
       return "state"
     }
 
@@ -400,7 +408,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!transformApplies(call.transform, kind)) {
           this.addOffense(
-            `\`${this.sliceOf(side)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.transform}\`. Only ${STATE_TRANSFORMS[call.transform].only} can be read with \`${call.transform}\`. Compare \`${call.name}\` itself instead, like \`${call.name} == ${declaration.defaultSource}\`.`,
+            `\`${this.sliceOf(side)}\` reads the ${capitalize(kind)} state \`${call.name}\` with \`${call.transform}\`. Only ${STATE_TRANSFORMS[call.transform].only} can be read with \`${call.transform}\`. Compare \`${call.name}\` itself instead${defaultExample(declaration, `${call.name} == `)}.`,
             this.locationOf(side),
           )
 
@@ -519,7 +527,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
         const kind = declaredKind(declaration)
 
         if (!comparandKind) {
-          const example = kind === "seeded" ? "" : `, like \`${declaration.name} == ${declaration.defaultSource}\``
+          const example = defaultExample(declaration, `${declaration.name} == `)
 
           this.addOffense(
             `\`${this.sliceOf(predicate)}\` compares the state \`${declaration.name}\` against \`${this.sliceOf(comparand)}\`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side. Compare \`${declaration.name}\` to a literal${example}, or declare a state for \`${this.sliceOf(comparand)}\` and set it from app code.`,
@@ -549,11 +557,17 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
           return "reported"
         }
 
+        if (!ordered && comparandKind === "nil" && !NILABLE_STATE_KINDS.has(kind)) {
+          this.nilCheckOffense(predicate, declaration, kind, operator === "!=" ? "always matches" : "can never match")
+
+          return "reported"
+        }
+
         if (!ordered && kind !== "seeded" && comparandKind !== "nil" && comparandKind !== kind) {
           const consequence = operator === "==" ? "so it can never match" : "so it always matches"
 
           this.addOffense(
-            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal, ${consequence}. Compare it against ${kindWithArticle(kind)} literal, like \`${declaration.name} == ${declaration.defaultSource}\`.`,
+            `\`${this.sliceOf(predicate)}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against ${kindWithArticle(comparandKind)} literal, ${consequence}. Compare it against ${kindWithArticle(kind)} literal${defaultExample(declaration, `${declaration.name} == `)}.`,
             this.locationOf(predicate),
           )
 
@@ -578,6 +592,35 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     return "other"
   }
 
+  private nilCheckOffense(predicate: PrismNode, declaration: StateDeclaration, kind: string, consequence: string): void {
+    this.addOffense(
+      `\`${this.sliceOf(predicate)}\` reads the ${capitalize(kind)} state \`${declaration.name}\` as a nil check. Only a Nil state can be nil, so it ${consequence}. ${predicateAdvice(kind, declaration.name)}compare it to a literal${defaultExample(declaration, `${declaration.name} == `)}, or declare it with a \`nil\` default.`,
+      this.locationOf(predicate),
+    )
+  }
+
+  private checkNeverFalsy(predicate: PrismNode, spelled: string, answer: string): boolean {
+    const bare = prismBareRead(predicate)
+    const declaration = bare ? this.resolve(bare.name) : null
+
+    if (!declaration) {
+      return false
+    }
+
+    const kind = declaredKind(declaration)
+
+    if (FALSY_STATE_KINDS.has(kind)) {
+      return false
+    }
+
+    this.addOffense(
+      `\`${spelled}\` reads the ${capitalize(kind)} state \`${bare!.name}\` as a presence. Only \`nil\` and \`false\` are falsy in Ruby, so the condition is always ${answer}. ${predicateAdvice(kind, bare!.name)}compare it to a literal${defaultExample(declaration, `${bare!.name} == `)}, or declare it as a boolean.`,
+      this.locationOf(predicate),
+    )
+
+    return true
+  }
+
   private checkPresenceRead(expression: string, node: ERBContentNode): boolean {
     const bare = bareReadName(expression)
     const declaration = bare ? this.resolve(bare) : null
@@ -589,7 +632,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     if (FALSY_STATE_KINDS.has(kind)) return false
 
     this.addOffense(
-      `\`${this.attributeName}="<%= ${expression} %>"\` reads the ${capitalize(kind)} state \`${bare}\` as a presence. Only \`nil\` and \`false\` are falsy in Ruby, so the attribute could never turn off. Compare \`${bare}\` to a literal, like \`${bare} == ${declaration.defaultSource}\`, or declare it as a boolean.`,
+      `\`${this.attributeName}="<%= ${expression} %>"\` reads the ${capitalize(kind)} state \`${bare}\` as a presence. Only \`nil\` and \`false\` are falsy in Ruby, so the attribute could never turn off. ${predicateAdvice(kind, bare!)}compare it to a literal${defaultExample(declaration, `${bare} == `)}, or declare it as a boolean.`,
       node.location,
     )
 
@@ -638,7 +681,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (!comparandKind) {
           this.addOffense(
-            `\`when ${list}\` on the state \`${declaration.name}\` has a comparand that is not a literal. The client resolves a \`when\` by lookup. List literals instead, like \`when ${declaration.defaultSource}\`.`,
+            `\`when ${list}\` on the state \`${declaration.name}\` has a comparand that is not a literal. The client resolves a \`when\` by lookup. List literals instead${defaultExample(declaration, "when ")}.`,
             this.locationOf(condition),
           )
 
@@ -647,7 +690,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
         if (kind !== "seeded" && comparandKind !== "nil" && comparandKind !== kind) {
           this.addOffense(
-            `\`when ${list}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against a literal of another type, so it can never match. Use ${kindWithArticle(kind)} literal in every arm, like \`when ${declaration.defaultSource}\`.`,
+            `\`when ${list}\` compares the ${capitalize(kind)} state \`${declaration.name}\` against a literal of another type, so it can never match. Use ${kindWithArticle(kind)} literal in every arm${defaultExample(declaration, "when ")}.`,
             this.locationOf(condition),
           )
 
@@ -667,7 +710,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       return `Read \`${name}\` bare, like \`<% if ${name} %>\`, or as \`${name}?\`.`
     }
 
-    return `Read \`${name}\` bare, like \`<% if ${name} %>\`, or compare it to a literal, like \`${name} == ${declaration.defaultSource}\`.`
+    return `Read \`${name}\` bare, like \`<% if ${name} %>\`, or compare it to a literal${defaultExample(declaration, `${name} == `)}.`
   }
 
   private resolve(name: string): StateDeclaration | undefined {

@@ -16,6 +16,8 @@ export const UNKNOWN_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds
 
 export const FALSY_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds.select(&:falsy?).map { |kind| kind.name.inspect }.join(", ") %>])
 
+export const NILABLE_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds.select(&:nilable?).map { |kind| kind.name.inspect }.join(", ") %>])
+
 export const PRISM_LITERAL_KINDS: Record<string, StateDefaultKind> = {
 <%- state_kinds.select(&:literal?).each do |kind| -%>
 <%- kind.prism_nodes.each do |node| -%>

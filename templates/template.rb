@@ -692,6 +692,7 @@ module Herb
         @value = config.fetch("value", false)
         @unknown = config.fetch("unknown", false)
         @falsy = config.fetch("falsy", false)
+        @nilable = config.fetch("nilable", false)
       end
 
       def literal?
@@ -708,6 +709,10 @@ module Herb
 
       def falsy?
         @falsy
+      end
+
+      def nilable?
+        @nilable
       end
 
       def prism_constants

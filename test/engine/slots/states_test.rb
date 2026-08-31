@@ -281,11 +281,10 @@ module Engine
         assert_includes rendered, "false</textarea>"
       end
 
-      test "the `?` spelling reads any state for its truth, the way the bare name does" do
+      test "the `?` spelling reads a state for its truth, the way the bare name does" do
         {
-          %(<%# herb:state (message: "hi") %><div><% if message? %>x<% end %></div>) => ["message", nil],
-          %(<%# herb:state (attempts: 0) %><div><% if attempts? %>x<% end %></div>) => ["attempts", nil],
-          %(<%# herb:state (tab: :first) %><div><% if tab? %>x<% end %></div>) => ["tab", nil],
+          %(<%# herb:state (pending: false) %><div><% if pending? %>x<% end %></div>) => ["pending", nil],
+          %(<%# herb:state (missing: nil) %><div><% if missing? %>x<% end %></div>) => ["missing", nil],
         }.each do |template, condition|
           visitor, = compile(template)
 
@@ -293,8 +292,85 @@ module Engine
         end
       end
 
+      test "a state that can never be falsy is refused as a condition, in either spelling" do
+        refuse(
+          %(<%# herb:state (message: "hi") %><div><% if message %>x<% end %></div>),
+          "`message` reads the String state `message` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always true."
+        )
+
+        refuse(
+          %(<%# herb:state (attempts: 0) %><div><% if attempts? %>x<% end %></div>),
+          "`attempts?` reads the Integer state `attempts` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always true."
+        )
+      end
+
+      test "a mistake inside a boolean attribute is reported once" do
+        [
+          %(<%# herb:state (draft: "") %><div><button disabled="<%= draft == 3 %>">x</button></div>),
+          %(<%# herb:state (draft: "") %><div><button disabled="<%= draft.nil? %>">x</button></div>),
+          %(<%# herb:state (draft: "") %><div><button disabled="<%= draft %>">x</button></div>),
+          %(<%# herb:state (count: 0) %><div><button disabled="<%= count.empty? %>">x</button></div>)
+        ].each do |template|
+          error = assert_raises(Herb::Engine::CompilationError) { compile(template) }
+
+          assert_equal 1, error.diagnostics.size
+        end
+      end
+
+      test "a nil check on a state that can never be nil is refused, in either spelling" do
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft.nil? %>x<% end %></div>),
+          "`draft.nil?` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it can never match."
+        )
+
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft == nil %>x<% end %></div>),
+          "`draft == nil` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it can never match."
+        )
+
+        refuse(
+          %(<%# herb:state (draft: "") %><div><% if draft != nil %>x<% end %></div>),
+          "`draft != nil` reads the String state `draft` as a nil check. Only a Nil state can be nil, so it always matches."
+        )
+      end
+
+      test "a nil check compiles for the kinds that really can be nil" do
+        {
+          %(<%# herb:state (missing: nil) %><div><% if missing.nil? %>x<% end %></div>) => ["missing", { "value" => nil }],
+          %(<%# herb:state (thing: @thing) %><div><% if thing.nil? %>x<% end %></div>) => ["thing", { "value" => nil }],
+        }.each do |template, condition|
+          visitor, = compile(template)
+
+          assert_equal({ arms: [arm(0, condition)], else: nil }, visitor.state_conditional_entries.fetch(0))
+        end
+      end
+
+      test "the way out names the predicates that can answer false for the state's kind" do
+        assert_equal(
+          "Ask `draft.empty?`, `.blank?` or `.present?`, compare it to a literal, like `draft == \"\"`, or declare it as a boolean.",
+          diagnostic_for(%(<%# herb:state (draft: "") %><div><% if draft %>x<% end %></div>)).suggestion
+        )
+
+        assert_equal(
+          "Ask `attempts.zero?`, `.one?` or `.positive?`, compare it to a literal, like `attempts == 0`, or declare it as a boolean.",
+          diagnostic_for(%(<%# herb:state (attempts: 0) %><div><% if attempts %>x<% end %></div>)).suggestion
+        )
+
+        assert_equal(
+          "Ask `tab.empty?`, compare it to a literal, like `tab == :first`, or declare it as a boolean.",
+          diagnostic_for(%(<%# herb:state (tab: :first) %><div><% if tab %>x<% end %></div>)).suggestion
+        )
+      end
+
+      test "an `unless` on a state that can never be falsy is refused the other way around" do
+        refuse(
+          %(<%# herb:state (tab: :first) %><div><% unless tab %>x<% end %></div>),
+          "`unless tab` reads the Symbol state `tab` as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always false."
+        )
+      end
+
       test "the `?` spelling drops off the source the server runs" do
-        rendered = render(%(<%# herb:state (message: "hi") %><div><% if message? %>Present<% else %>None<% end %></div>))
+        rendered = render(%(<%# herb:state (pending: true) %><div><% if pending? %>Present<% else %>None<% end %></div>))
 
         assert_includes rendered, "Present"
       end
@@ -338,7 +414,7 @@ module Engine
       test "a predicate compiles into the comparison it stands for" do
         {
           %(<%# herb:state (draft: "") %><div><% if draft.empty? %>x<% end %></div>) => ["draft", { "value" => "" }],
-          %(<%# herb:state (draft: "") %><div><% if draft.nil? %>x<% end %></div>) => ["draft", { "value" => nil }],
+          %(<%# herb:state (missing: nil) %><div><% if missing.nil? %>x<% end %></div>) => ["missing", { "value" => nil }],
           %(<%# herb:state (count: 0) %><div><% if count.zero? %>x<% end %></div>) => ["count", { "value" => 0 }],
           %(<%# herb:state (count: 0) %><div><% if count.one? %>x<% end %></div>) => ["count", { "value" => 1 }],
           %(<%# herb:state (count: 0) %><div><% if count.positive? %>x<% end %></div>) => ["count", { "value" => 0 }, ">"],

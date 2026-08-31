@@ -374,6 +374,43 @@ module Herb
             }
           end
 
+          #: (Symbol?, String) -> String
+          def predicate_advice(kind, name)
+            spellings = PREDICATES.filter_map { |predicate, entry| predicate if entry[:kinds]&.include?(kind) }
+
+            return "" if spellings.empty?
+
+            listed = spellings.each_with_index.map { |predicate, index| index.zero? ? "`#{name}.#{predicate}`" : "`.#{predicate}`" }
+            leading = listed[0..-2] #: Array[String]
+
+            "Ask #{listed.one? ? listed.last : "#{leading.join(", ")} or #{listed.last}"}, "
+          end
+
+          #: ((Read | Combo)) -> Read?
+          def never_falsy_read(read)
+            return nil unless read.is_a?(Read)
+            return nil unless read.operator.nil? && read.comparand.nil? && read.against.nil? && read.transform.nil?
+            return nil if StateKinds::FALSY.include?(read.kind)
+
+            read
+          end
+
+          #: (Declaration) -> bool
+          def literal_default?(declaration)
+            return false if declaration.derived
+
+            node = expression_node(declaration.default)
+
+            !node.nil? && KINDS.key?(node.class.name)
+          end
+
+          #: (Declaration, String) -> String
+          def default_example(declaration, spelling)
+            return "" unless literal_default?(declaration)
+
+            ", like `#{spelling}#{declaration.default}`"
+          end
+
           #: (Declaration) -> bool
           def seeded?(declaration)
             return false if declaration.derived
@@ -594,7 +631,7 @@ module Herb
             kinds = transform.fetch(:kinds)
 
             if kinds && read.kind != :seeded && !kinds.include?(read.kind)
-              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{transform.fetch(:only)} can be read with `#{node.name}`.", anchor.locate(node), :read, suggestion: "Compare `#{read.name}` itself instead, like `#{read.name} == #{states.fetch(read.name).default}`.")
+              return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{transform.fetch(:only)} can be read with `#{node.name}`.", anchor.locate(node), :read, suggestion: "Compare `#{read.name}` itself instead#{default_example(states.fetch(read.name), "#{read.name} == ")}.")
             end
 
             Read.new(name: read.name, comparand: nil, kind: transform.fetch(:returns), operator: nil, against: nil, transform: transform.fetch(:operation), against_transform: nil)
@@ -623,7 +660,24 @@ module Herb
               return visitor.slot_error("`#{node.slice}` reads the #{read.kind.to_s.capitalize} state `#{read.name}` with `#{node.name}`. Only #{predicate.fetch(:only)} can be read with `#{node.name}`.", anchor.locate(node), :read, suggestion: "Compare `#{read.name}` to a literal instead, or declare it as #{kind_article(predicate.fetch(:kinds)&.first)} state.")
             end
 
+            if predicate[:comparand] == "nil" && !StateKinds::NILABLE.include?(read.kind)
+              return nil_check_error(node, read, visitor, anchor, consequence: "can never match", example: default_example(states.fetch(read.name), "#{read.name} == "))
+            end
+
             Read.new(name: read.name, comparand: predicate[:comparand], kind: read.kind, operator: predicate[:operator], against: nil, transform: nil, against_transform: nil)
+          end
+
+          #: (untyped, Read, untyped, StateAnchor, **untyped) -> nil
+          def nil_check_error(node, read, visitor, anchor, **options)
+            consequence = options.fetch(:consequence) #: String
+            example = options.fetch(:example) #: String
+
+            visitor.slot_error(
+              "`#{node.slice}` reads #{subject_phrase(read)} as a nil check. Only a Nil state can be nil, so it #{consequence}.",
+              anchor.locate(node),
+              :compare,
+              suggestion: "#{predicate_advice(read.kind, read.name)}compare it to a literal#{example}, or declare it with a `nil` default."
+            )
           end
 
           #: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
@@ -673,7 +727,7 @@ module Herb
             kind = KINDS[literal.class.name]
 
             unless kind
-              return visitor.slot_error("`#{node.slice}` compares the state `#{read.name}` against `#{literal.slice}`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side.", anchor.locate(literal), :compare, suggestion: "Compare `#{read.name}` to a literal, like `#{read.name} == #{states.fetch(read.name).default}`, or declare a state for `#{literal.slice}` and set it from app code.")
+              return visitor.slot_error("`#{node.slice}` compares the state `#{read.name}` against `#{literal.slice}`, which is not a literal. The client resolves a comparison by looking the state up, so it has no value for the other side.", anchor.locate(literal), :compare, suggestion: "Compare `#{read.name}` to a literal#{default_example(states.fetch(read.name), "#{read.name} == ")}, or declare a state for `#{literal.slice}` and set it from app code.")
             end
 
             operator = node.name == :== ? nil : node.name.to_s
@@ -688,10 +742,14 @@ module Herb
               return visitor.slot_error("`#{node.slice}` orders the state `#{read.name}` against #{kind_article(kind)} literal. Ordering compares numbers.", anchor.locate(literal), :compare, suggestion: "Compare `#{read.name}` against an Integer literal, like `#{read.name} > 0`.")
             end
 
+            if !ordered && kind == :nil && !StateKinds::NILABLE.include?(read.kind)
+              return nil_check_error(node, read, visitor, anchor, consequence: operator == "!=" ? "always matches" : "can never match", example: default_example(states.fetch(read.name), "#{read.name} == "))
+            end
+
             unless ordered || kind == read.kind || kind == :nil || read.kind == :seeded
               consequence = operator == "!=" ? "so it always matches" : "so it can never match"
 
-              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, #{consequence}.", anchor.locate(literal), :compare, suggestion: "Compare it against #{kind_article(read.kind)} literal, like `#{read.name} == #{states.fetch(read.name).default}`.")
+              return visitor.slot_error("`#{node.slice}` compares #{subject_phrase(read)} against #{kind_article(kind)} literal, #{consequence}.", anchor.locate(literal), :compare, suggestion: "Compare it against #{kind_article(read.kind)} literal#{default_example(states.fetch(read.name), "#{read.name} == ")}.")
             end
 
             Read.new(name: read.name, comparand: literal.slice, kind: read.kind, operator: operator, against: nil, transform: read.transform, against_transform: nil)

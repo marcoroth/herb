@@ -389,6 +389,10 @@ module Herb
               return @visitor.slot_error("`#{expression}` sits in a state-driven conditional but reads no state. The client resolves every arm, so an arm it cannot answer would never be chosen.", condition_anchor(arm, expression).location, :conditional, suggestion: "Read a state in this arm, or move this branch into its own conditional.")
             end
 
+            dead = StateDirectives.never_falsy_read(read)
+
+            return presence_error(expression, dead, states, condition_anchor(arm, expression), "true") if dead
+
             StateDirectives.read_names(read).each { |name| rewrite_predicate(arm, name) }
 
             arms << arm_entry(read, branch)
@@ -423,6 +427,10 @@ module Herb
 
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
+          dead = StateDirectives.never_falsy_read(read)
+
+          return presence_error("unless #{expression}", dead, states, condition_anchor(node, expression), "false") if dead
+
           chain = @visitor.conditional_chain(node)
           else_position = chain.index { |arm| arm.is_a?(Herb::AST::ERBElseNode) }
 
@@ -433,6 +441,18 @@ module Herb
             else: 0,
             signature: signature_of(["!#{StateDirectives.condition_source(read)}@#{else_position}"], 0),
           }
+        end
+
+        #: (String, StateDirectives::Read, Hash[String, StateDirectives::Declaration], StateAnchor, String) -> nil
+        def presence_error(spelled, read, states, anchor, answer)
+          declaration = states.fetch(read.name)
+
+          @visitor.slot_error(
+            "`#{spelled}` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the condition is always #{answer}.",
+            anchor.location,
+            :read,
+            suggestion: "#{StateDirectives.predicate_advice(read.kind, read.name)}compare it to a literal#{StateDirectives.default_example(declaration, "#{read.name} == ")}, or declare it as a boolean."
+          )
         end
 
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
@@ -457,11 +477,11 @@ module Herb
             comparands = StateDirectives.when_comparands(list, declaration)
 
             if comparands == :computed
-              return @visitor.slot_error("`when #{list}` on the state `#{read.name}` has a comparand that is not a literal. The client resolves a `when` by lookup.", condition_anchor(arm, list).location, :conditional, suggestion: "List literals instead, like `when #{declaration.default}`.")
+              return @visitor.slot_error("`when #{list}` on the state `#{read.name}` has a comparand that is not a literal. The client resolves a `when` by lookup.", condition_anchor(arm, list).location, :conditional, suggestion: "List literals instead#{StateDirectives.default_example(declaration, "when ")}.")
             end
 
             if comparands == :mismatched
-              return @visitor.slot_error("`when #{list}` compares the #{declaration.kind.to_s.capitalize} state `#{read.name}` against a literal of another type, so it can never match.", condition_anchor(arm, list).location, :compare, suggestion: "Use #{StateDirectives.kind_article(declaration.kind)} literal in every arm, like `when #{declaration.default}`.")
+              return @visitor.slot_error("`when #{list}` compares the #{declaration.kind.to_s.capitalize} state `#{read.name}` against a literal of another type, so it can never match.", condition_anchor(arm, list).location, :compare, suggestion: "Use #{StateDirectives.kind_article(declaration.kind)} literal in every arm#{StateDirectives.default_example(declaration, "when ")}.")
             end
 
             next unless comparands.is_a?(Array)
@@ -490,7 +510,7 @@ module Herb
 
           return "Read `#{name}` bare, like `<% if #{name} %>`, or as `#{name}?`." if declaration.kind == :boolean
 
-          "Read `#{name}` bare, like `<% if #{name} %>`, or compare it to a literal, like `#{name} == #{declaration.default}`."
+          "Read `#{name}` bare, like `<% if #{name} %>`, or compare it to a literal#{StateDirectives.default_example(declaration, "#{name} == ")}."
         end
 
         #: (untyped, String) -> StateAnchor
@@ -754,10 +774,14 @@ module Herb
 
           read = StateDirectives.condition_read(expression, states, @visitor, condition_anchor(node, expression))
 
+          return :reported if read == :reported
+
           return nil unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
 
           if read.is_a?(StateDirectives::Read) && read.comparand.nil? && read.against.nil? && read.operator.nil? && !StateKinds::FALSY.include?(read.kind)
-            return @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off.", condition_anchor(node, expression).location, :read, suggestion: "Compare `#{read.name}` to a literal, like `#{read.name} == #{states.fetch(read.name).default}`, or declare it as a boolean.")
+            @visitor.slot_error("`#{slot.attribute}=\"<%= #{expression} %>\"` reads #{StateDirectives.subject_phrase(read)} as a presence. Only `nil` and `false` are falsy in Ruby, so the attribute could never turn off.", condition_anchor(node, expression).location, :read, suggestion: "#{StateDirectives.predicate_advice(read.kind, read.name)}compare it to a literal#{StateDirectives.default_example(states.fetch(read.name), "#{read.name} == ")}, or declare it as a boolean.")
+
+            return :reported
           end
 
           open_tag = @visitor.open_tag_for(node)
