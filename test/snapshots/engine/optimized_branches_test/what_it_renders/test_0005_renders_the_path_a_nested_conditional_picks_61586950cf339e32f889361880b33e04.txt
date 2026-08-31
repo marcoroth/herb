@@ -1,5 +1,5 @@
 ---
-source: "Engine::OptimizedBranchesTest::what it renders#test_0004_renders the path a nested conditional picks"
+source: "Engine::OptimizedBranchesTest::what it renders#test_0005_renders the path a nested conditional picks"
 input: "{source: \"<select>\\n<% if flag %>\\n<option <% if other %>selected<% end %>>One</option>\\n<% else %>\\n<option>None</option>\\n<% end %>\\n</select>\", locals: {flag: true, other: false}, options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
 <select>

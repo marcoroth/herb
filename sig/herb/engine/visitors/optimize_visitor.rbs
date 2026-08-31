@@ -35,12 +35,15 @@ module Herb
     # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
     # to report.
     #
-    # A template whose only Ruby is `if`, `unless`, and `elsif` chains over otherwise static
-    # markup collapses the same way, nesting included. Each render path becomes one frozen string
-    # literal holding everything that path renders, the markup around and between the conditionals
-    # included, and the compiled template is the chains themselves picking between them. The
-    # conditions compile onto the lines they were written on, so backtraces stay right, and a
-    # chain without an `else` gets one that returns what the template renders without it.
+    # A template whose only Ruby is conditional chains over otherwise static markup collapses the
+    # same way, nesting included. `if`, `unless`, and `elsif` qualify, and so do `case` with its
+    # `when` branches and `case` matching with `in` patterns. Each render path becomes one frozen
+    # string literal holding everything that path renders, the markup around and between the
+    # conditionals included, and the compiled template is the chains themselves picking between
+    # them. The conditions compile onto the lines they were written on, so backtraces stay right.
+    # A chain without an `else` gets one that returns what the template renders without it, except
+    # a pattern matching chain, which keeps raising `NoMatchingPatternError` for a value no
+    # pattern accepts, the way it rendered before the collapse.
     #
     # The path literals repeat the markup the paths share, so the collapse steps back when they
     # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
@@ -142,11 +145,17 @@ module Herb
       # : (Array[untyped], Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
       def tree_step: (Array[untyped], Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
 
-      # : (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
-      def tree_transition: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      # : (Symbol, String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_transition: (Symbol, String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
 
       # : (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
       def open_chain: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+
+      # : (String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_case_chain: (String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+
+      # : (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_case_branch: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
 
       # : (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
       def open_branch: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped

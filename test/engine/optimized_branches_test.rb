@@ -81,6 +81,28 @@ module Engine
 
         assert_compiled_snapshot(template, optimize_options)
       end
+
+      test "a case chain, into one literal per when" do
+        template = "<div>\n<% case status %>\n<% when :active %>\n  On\n<% when :idle %>\n  Off\n<% else %>\n  Unknown\n<% end %>\n</div>"
+
+        assert_compiled_snapshot(template, optimize_options)
+      end
+
+      test "a case chain without an else, rendering nothing when no value matches" do
+        assert_compiled_snapshot("<% case status %>\n<% when :active %>\nOn\n<% end %>", optimize_options)
+      end
+
+      test "a pattern matching chain, still raising when no pattern matches" do
+        template = "<% case value %>\n<% in [Integer] %>\nints\n<% in [String] %>\nstrings\n<% end %>"
+
+        assert_compiled_snapshot(template, optimize_options)
+      end
+
+      test "a case chain nested inside a branch" do
+        template = "<% if flag %>\n<% case status %>\n<% when :active %>\nA\n<% end %>\n<% else %>\nB\n<% end %>"
+
+        assert_compiled_snapshot(template, optimize_options)
+      end
     end
 
     describe "what keeps the buffer" do
@@ -119,6 +141,14 @@ module Engine
         assert_evaluated_snapshot(
           "<div>\n  <% if flag %>\n    shown\n  <% end %>\n</div>",
           { flag: false },
+          optimize_options
+        )
+      end
+
+      test "renders the when branch the value picks" do
+        assert_evaluated_snapshot(
+          "<div>\n<% case status %>\n<% when :active %>\n  On\n<% else %>\n  Off\n<% end %>\n</div>",
+          { status: :active },
           optimize_options
         )
       end

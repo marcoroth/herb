@@ -42,12 +42,15 @@ module Herb
     # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
     # to report.
     #
-    # A template whose only Ruby is `if`, `unless`, and `elsif` chains over otherwise static
-    # markup collapses the same way, nesting included. Each render path becomes one frozen string
-    # literal holding everything that path renders, the markup around and between the conditionals
-    # included, and the compiled template is the chains themselves picking between them. The
-    # conditions compile onto the lines they were written on, so backtraces stay right, and a
-    # chain without an `else` gets one that returns what the template renders without it.
+    # A template whose only Ruby is conditional chains over otherwise static markup collapses the
+    # same way, nesting included. `if`, `unless`, and `elsif` qualify, and so do `case` with its
+    # `when` branches and `case` matching with `in` patterns. Each render path becomes one frozen
+    # string literal holding everything that path renders, the markup around and between the
+    # conditionals included, and the compiled template is the chains themselves picking between
+    # them. The conditions compile onto the lines they were written on, so backtraces stay right.
+    # A chain without an `else` gets one that returns what the template renders without it, except
+    # a pattern matching chain, which keeps raising `NoMatchingPatternError` for a value no
+    # pattern accepts, the way it rendered before the collapse.
     #
     # The path literals repeat the markup the paths share, so the collapse steps back when they
     # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
@@ -303,6 +306,8 @@ module Herb
         value = token[1]
 
         if type == :text
+          return nil if chains.last && chains.last[:kind] == :case
+
           containers.last[:pieces] << value
 
           return containers
@@ -318,14 +323,16 @@ module Herb
 
         return nil unless keyword
 
-        tree_transition(keyword, containers, chains)
+        tree_transition(keyword, code, containers, chains)
       end
 
-      #: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
-      def tree_transition(keyword, containers, chains)
+      #: (Symbol, String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_transition(keyword, code, containers, chains)
         case keyword
         when :opening then open_chain(containers, chains)
+        when :case_opening then open_case_chain(code, containers, chains)
         when :elsif, :else then open_branch(keyword, containers, chains)
+        when :when, :in then open_case_branch(keyword, containers, chains)
         when :end then close_chain(containers, chains)
         end
       end
@@ -334,11 +341,48 @@ module Herb
       def open_chain(containers, chains)
         return nil if container_chain(containers.last)
 
-        chain = { branches: [], else_seen: false } #: Hash[Symbol, untyped]
+        chain = { kind: :if, branches: [], else_seen: false } #: Hash[Symbol, untyped]
         branch = { pieces: [] } #: Hash[Symbol, untyped]
 
         containers.last[:pieces] << chain
         chains << chain
+        chain[:branches] << branch
+        containers << branch
+
+        containers
+      end
+
+      #: (String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_case_chain(code, containers, chains)
+        return nil if code.include?("\n")
+        return nil if container_chain(containers.last)
+
+        chain = { kind: :case, branches: [], else_seen: false } #: Hash[Symbol, untyped]
+
+        containers.last[:pieces] << chain
+        chains << chain
+
+        containers
+      end
+
+      #: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_case_branch(keyword, containers, chains)
+        chain = chains.last
+
+        return nil unless chain
+        return nil if chain[:else_seen]
+
+        case chain[:kind]
+        when :case
+          chain[:kind] = keyword
+        when keyword
+          containers.pop
+        else
+          return nil
+        end
+
+        branch = { pieces: [] } #: Hash[Symbol, untyped]
+
         chain[:branches] << branch
         containers << branch
 
@@ -351,6 +395,8 @@ module Herb
 
         return nil unless chain
         return nil if chain[:else_seen]
+        return nil if keyword == :elsif && chain[:kind] != :if
+        return nil if chain[:kind] == :case
 
         branch = { pieces: [] } #: Hash[Symbol, untyped]
 
@@ -364,7 +410,10 @@ module Herb
 
       #: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
       def close_chain(containers, chains)
-        return nil unless chains.pop
+        chain = chains.pop
+
+        return nil unless chain
+        return nil if chain[:kind] == :case
 
         containers.pop
 
@@ -392,7 +441,7 @@ module Herb
 
         before, after = chain_surroundings(container)
         paths = chain[:branches].flat_map { |branch| container_paths(branch) }
-        paths << "" unless chain[:else_seen]
+        paths << "" unless chain[:else_seen] || chain[:kind] == :in
 
         paths.map { |path| "#{before}#{path}#{after}" }
       end
@@ -423,13 +472,18 @@ module Herb
           end
         end
 
-        queues[:ends] << (chain[:else_seen] ? nil : engine.escaped_string_literal("#{full_prefix}#{full_suffix}"))
+        implicit = !chain[:else_seen] && chain[:kind] != :in
+
+        queues[:ends] << (implicit ? engine.escaped_string_literal("#{full_prefix}#{full_suffix}") : nil)
       end
 
       #: (String) -> Symbol?
       def chain_keyword(code)
         return :opening if code.match?(/\A(?:if|unless)\b/)
+        return :case_opening if code.match?(/\Acase\b/)
         return :elsif if code.match?(/\Aelsif\b/)
+        return :when if code.match?(/\Awhen\b/)
+        return :in if code.match?(/\Ain\b/)
         return :else if code == "else"
         return :end if code == "end"
 
@@ -463,7 +517,7 @@ module Herb
           src << value
           src << ";" unless value.end_with?("\n")
 
-          next if keyword == :end
+          next if [:end, :case_opening].include?(keyword)
 
           literal = queues[:branches].shift
           src << " #{literal};" if literal
