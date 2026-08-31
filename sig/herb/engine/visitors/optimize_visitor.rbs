@@ -35,12 +35,16 @@ module Herb
     # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
     # to report.
     #
-    # A template whose only Ruby is a single `if`, `unless`, or `elsif` chain over otherwise
-    # static markup collapses the same way. Each branch becomes one frozen string literal holding
-    # everything that branch renders, the markup around the conditional included, and the compiled
-    # template is the chain itself picking between them. The conditions compile onto the lines
-    # they were written on, so backtraces stay right, and a chain without an `else` gets one that
-    # returns the surrounding markup alone.
+    # A template whose only Ruby is `if`, `unless`, and `elsif` chains over otherwise static
+    # markup collapses the same way, nesting included. Each render path becomes one frozen string
+    # literal holding everything that path renders, the markup around and between the conditionals
+    # included, and the compiled template is the chains themselves picking between them. The
+    # conditions compile onto the lines they were written on, so backtraces stay right, and a
+    # chain without an `else` gets one that returns what the template renders without it.
+    #
+    # The path literals repeat the markup the paths share, so the collapse steps back when they
+    # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
+    # stays. A chain that sits beside another in the same scope keeps the buffer too.
     #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
@@ -67,6 +71,8 @@ module Herb
       OUTPUT_OPENINGS: Array[String]
 
       CHILD_LISTS: Array[Symbol]
+
+      DUPLICATION_LIMIT: Integer
 
       # : () -> Array[String]
       def self.helper_sources: () -> Array[String]
@@ -131,16 +137,37 @@ module Herb
       def compile_static_branches: (Herb::Engine, Array[untyped]) -> String?
 
       # : (Array[untyped]) -> Hash[Symbol, untyped]?
-      def conditional_chain: (Array[untyped]) -> Hash[Symbol, untyped]?
+      def branch_tree: (Array[untyped]) -> Hash[Symbol, untyped]?
 
-      # : (Array[untyped], Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
-      def chain_step: (Array[untyped], Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      # : (Array[untyped], Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_step: (Array[untyped], Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
 
-      # : (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
-      def chain_transition: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      # : (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_transition: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
 
-      # : (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
-      def chain_branch_transition: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      # : (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_chain: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+
+      # : (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_branch: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+
+      # : (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def close_chain: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+
+      # : (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def container_chain: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+
+      # : (Hash[Symbol, untyped]) -> [String, String]
+      def chain_surroundings: (Hash[Symbol, untyped]) -> [ String, String ]
+
+      # : (Hash[Symbol, untyped]) -> Array[String]
+      def container_paths: (Hash[Symbol, untyped]) -> Array[String]
+
+      # : (Array[String], Array[untyped]) -> bool
+      def within_duplication_limit?: (Array[String], Array[untyped]) -> bool
+
+      # : (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
+      def collect_leaf_literals: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
 
       # : (String) -> Symbol?
       def chain_keyword: (String) -> Symbol?

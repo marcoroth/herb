@@ -42,12 +42,16 @@ module Herb
     # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
     # to report.
     #
-    # A template whose only Ruby is a single `if`, `unless`, or `elsif` chain over otherwise
-    # static markup collapses the same way. Each branch becomes one frozen string literal holding
-    # everything that branch renders, the markup around the conditional included, and the compiled
-    # template is the chain itself picking between them. The conditions compile onto the lines
-    # they were written on, so backtraces stay right, and a chain without an `else` gets one that
-    # returns the surrounding markup alone.
+    # A template whose only Ruby is `if`, `unless`, and `elsif` chains over otherwise static
+    # markup collapses the same way, nesting included. Each render path becomes one frozen string
+    # literal holding everything that path renders, the markup around and between the conditionals
+    # included, and the compiled template is the chains themselves picking between them. The
+    # conditions compile onto the lines they were written on, so backtraces stay right, and a
+    # chain without an `else` gets one that returns what the template renders without it.
+    #
+    # The path literals repeat the markup the paths share, so the collapse steps back when they
+    # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
+    # stays. A chain that sits beside another in the same scope keeps the buffer too.
     #
     # Replacing a helper call with its markup is only the same thing as calling it while the helper
     # is the one it was resolved against. An application that defines its own `content_tag` gets the
@@ -71,6 +75,7 @@ module Herb
 
       OUTPUT_OPENINGS = ["<%=", "<%=="].freeze #: Array[String]
       CHILD_LISTS = [:children, :body, :statements].freeze #: Array[Symbol]
+      DUPLICATION_LIMIT = 4 #: Integer
 
       required_parser_option action_view_helpers: true, transform_conditionals: true
       experimental "Compile-time optimizations are experimental. Output may differ from standard Action View rendering."
@@ -268,94 +273,157 @@ module Herb
 
       #: (Herb::Engine, Array[untyped]) -> String?
       def compile_static_branches(engine, tokens)
-        chain = conditional_chain(tokens)
+        root = branch_tree(tokens)
 
-        return unless chain
+        return unless root
+        return unless within_duplication_limit?(container_paths(root), tokens)
 
-        render_static_branches(engine, tokens, chain)
+        render_static_branches(engine, tokens, root)
       end
 
       #: (Array[untyped]) -> Hash[Symbol, untyped]?
-      def conditional_chain(tokens)
-        parts = {
-          prefix: +"",
-          suffix: +"",
-          branches: [],
-          state: :prefix,
-          else_seen: false,
-        } #: Hash[Symbol, untyped]
+      def branch_tree(tokens)
+        root = { pieces: [] } #: Hash[Symbol, untyped]
+        containers = [root] #: Array[Hash[Symbol, untyped]]
+        chains = [] #: Array[Hash[Symbol, untyped]]
 
         tokens.each do |token|
-          return nil unless chain_step(token, parts)
+          return nil unless tree_step(token, containers, chains)
         end
 
-        return nil unless parts[:state] == :suffix
+        return nil unless chains.empty?
+        return nil unless container_chain(root)
 
-        {
-          values: parts[:branches].map { |branch| "#{parts[:prefix]}#{branch}#{parts[:suffix]}" },
-          implicit: "#{parts[:prefix]}#{parts[:suffix]}",
-          else_seen: parts[:else_seen],
-        }
+        root
       end
 
-      #: (Array[untyped], Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
-      def chain_step(token, parts)
+      #: (Array[untyped], Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_step(token, containers, chains)
         type = token[0]
         value = token[1]
 
         if type == :text
-          case parts[:state]
-          when :prefix then parts[:prefix] << value
-          when :branch then parts[:branches].last << value
-          when :suffix then parts[:suffix] << value
-          end
+          containers.last[:pieces] << value
 
-          return parts
+          return containers
         end
 
         return nil unless type == :code
 
         code = value.strip
 
-        return parts if code.empty?
+        return containers if code.empty?
 
         keyword = chain_keyword(code)
 
         return nil unless keyword
 
-        chain_transition(keyword, parts)
+        tree_transition(keyword, containers, chains)
       end
 
-      #: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
-      def chain_transition(keyword, parts)
-        case parts[:state]
-        when :prefix
-          return nil unless keyword == :opening
-
-          parts[:branches] << +""
-          parts[:state] = :branch
-
-          parts
-        when :branch
-          chain_branch_transition(keyword, parts)
-        end
-      end
-
-      #: (Symbol, Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
-      def chain_branch_transition(keyword, parts)
+      #: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_transition(keyword, containers, chains)
         case keyword
-        when :elsif, :else
-          return nil if parts[:else_seen]
-
-          parts[:branches] << +""
-          parts[:else_seen] = true if keyword == :else
-
-          parts
-        when :end
-          parts[:state] = :suffix
-
-          parts
+        when :opening then open_chain(containers, chains)
+        when :elsif, :else then open_branch(keyword, containers, chains)
+        when :end then close_chain(containers, chains)
         end
+      end
+
+      #: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_chain(containers, chains)
+        return nil if container_chain(containers.last)
+
+        chain = { branches: [], else_seen: false } #: Hash[Symbol, untyped]
+        branch = { pieces: [] } #: Hash[Symbol, untyped]
+
+        containers.last[:pieces] << chain
+        chains << chain
+        chain[:branches] << branch
+        containers << branch
+
+        containers
+      end
+
+      #: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_branch(keyword, containers, chains)
+        chain = chains.last
+
+        return nil unless chain
+        return nil if chain[:else_seen]
+
+        branch = { pieces: [] } #: Hash[Symbol, untyped]
+
+        containers.pop
+        chain[:branches] << branch
+        containers << branch
+        chain[:else_seen] = true if keyword == :else
+
+        containers
+      end
+
+      #: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def close_chain(containers, chains)
+        return nil unless chains.pop
+
+        containers.pop
+
+        containers
+      end
+
+      #: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def container_chain(container)
+        container[:pieces].find { |piece| piece.is_a?(Hash) }
+      end
+
+      #: (Hash[Symbol, untyped]) -> [String, String]
+      def chain_surroundings(container)
+        pieces = container[:pieces]
+        index = pieces.index { |piece| piece.is_a?(Hash) }
+
+        [pieces.take(index).join, pieces.drop(index + 1).join]
+      end
+
+      #: (Hash[Symbol, untyped]) -> Array[String]
+      def container_paths(container)
+        chain = container_chain(container)
+
+        return [container[:pieces].join] unless chain
+
+        before, after = chain_surroundings(container)
+        paths = chain[:branches].flat_map { |branch| container_paths(branch) }
+        paths << "" unless chain[:else_seen]
+
+        paths.map { |path| "#{before}#{path}#{after}" }
+      end
+
+      #: (Array[String], Array[untyped]) -> bool
+      def within_duplication_limit?(paths, tokens)
+        static_bytes = tokens.sum { |token| token[0] == :text ? token[1].bytesize : 0 }
+
+        paths.map(&:bytesize).sum <= DUPLICATION_LIMIT * static_bytes
+      end
+
+      #: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
+      def collect_leaf_literals(engine, container, prefix, suffix, queues)
+        chain = container_chain(container)
+
+        return unless chain
+
+        before, after = chain_surroundings(container)
+        full_prefix = "#{prefix}#{before}"
+        full_suffix = "#{after}#{suffix}"
+
+        chain[:branches].each do |branch|
+          if container_chain(branch)
+            queues[:branches] << nil
+            collect_leaf_literals(engine, branch, full_prefix, full_suffix, queues)
+          else
+            queues[:branches] << engine.escaped_string_literal("#{full_prefix}#{branch[:pieces].join}#{full_suffix}")
+          end
+        end
+
+        queues[:ends] << (chain[:else_seen] ? nil : engine.escaped_string_literal("#{full_prefix}#{full_suffix}"))
       end
 
       #: (String) -> Symbol?
@@ -369,10 +437,11 @@ module Herb
       end
 
       #: (Herb::Engine, Array[untyped], Hash[Symbol, untyped]) -> String
-      def render_static_branches(engine, tokens, chain)
-        literals = chain[:values].map { |value| engine.escaped_string_literal(value) }
+      def render_static_branches(engine, tokens, root)
+        queues = { branches: [], ends: [] } #: Hash[Symbol, Array[String?]]
+        collect_leaf_literals(engine, root, "", "", queues)
+
         src = +""
-        index = 0
 
         tokens.each do |token|
           value = token[1]
@@ -386,14 +455,18 @@ module Herb
 
           keyword = chain_keyword(code)
 
-          src << " else #{engine.escaped_string_literal(chain[:implicit])};" if keyword == :end && !chain[:else_seen]
+          if keyword == :end
+            implicit = queues[:ends].shift
+            src << " else #{implicit};" if implicit
+          end
+
           src << value
           src << ";" unless value.end_with?("\n")
 
           next if keyword == :end
 
-          src << " #{literals[index]};"
-          index += 1
+          literal = queues[:branches].shift
+          src << " #{literal};" if literal
         end
 
         src

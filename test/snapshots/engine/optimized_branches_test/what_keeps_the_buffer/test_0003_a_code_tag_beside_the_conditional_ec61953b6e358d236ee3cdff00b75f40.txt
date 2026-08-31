@@ -1,5 +1,5 @@
 ---
-source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0004_a code tag beside the conditional"
+source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0003_a code tag beside the conditional"
 input: "{source: \"<% count = 1 %>\\n<% if flag %>a<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
 _buf = ::String.new; count = 1 

@@ -803,7 +803,7 @@ An output tag that carries only a string, integer, or float literal renders the 
 
 Its presence also collapses a template that carries no Ruby into the single string literal it renders, with none of the buffer the compiler would otherwise build up. `<div>Static</div>` compiles to `'<div>Static</div>'`. A template written as HTML qualifies on its own, and one left fully static once its helpers resolved to markup and its literals folded into text qualifies too, so `<%= tag.br %>` compiles to `'<br>'` and `<h1><%= "hello" %></h1>` to `'<h1>hello</h1>'`.
 
-A template whose only Ruby is a single `if`, `unless`, or `elsif` chain over otherwise static markup collapses the same way, into the chain itself picking between one frozen string literal per branch:
+A template whose only Ruby is `if`, `unless`, and `elsif` chains over otherwise static markup collapses the same way, nesting included, into the chains themselves picking between one frozen string literal per render path:
 
 ```erb
 <p>
@@ -823,7 +823,27 @@ else
 end
 ```
 
-Each literal holds everything its branch renders, the markup around the conditional included. The conditions compile onto the lines they were written on, so backtraces stay right, and a chain without an `else` gets one that returns the surrounding markup alone. A branch that carries an expression, a nested conditional, or a second chain keeps the buffer.
+Each literal holds everything its path renders, the markup around and between the conditionals included, so a conditional attribute inside a conditional element still collapses:
+
+```erb
+<select>
+<% if signed_in? %>
+<option <%= tag.attributes(selected: option == current) %>>One</option>
+<% else %>
+<option>None</option>
+<% end %>
+</select>
+```
+
+```ruby
+if signed_in? 
+if (option == current); "<select>\n<option selected>One</option>\n</select>\n".freeze; else "<select>\n<option >One</option>\n</select>\n".freeze;end;
+else 
+ "<select>\n<option>None</option>\n</select>\n".freeze;
+end 
+```
+
+The conditions compile onto the lines they were written on, so backtraces stay right, and a chain without an `else` gets one that returns what the template renders without it. The path literals repeat the markup the paths share, so the collapse steps back once they would hold more than four times the template's static bytes, and the buffer stays. A branch that carries an expression keeps the buffer, and so does a chain that sits beside another in the same scope.
 
 The `herb compile --optimize` and `herb render --optimize` commands wire the visitor up from the command line. The engine keeps the buffer when the caller drives it through `preamble`, `postamble`, `bufval`, or `ensure`, and when a visitor recorded a diagnostic the compiled template still has to report.
 

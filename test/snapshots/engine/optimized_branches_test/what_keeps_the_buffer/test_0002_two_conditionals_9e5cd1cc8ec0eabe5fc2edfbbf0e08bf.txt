@@ -1,5 +1,5 @@
 ---
-source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0003_two conditionals"
+source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0002_two conditionals"
 input: "{source: \"<% if flag %>a<% end %>\\n<% if other %>b<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
 _buf = ::String.new; if flag ; _buf << 'a'.freeze; end; _buf << '

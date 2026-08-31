@@ -57,15 +57,35 @@ module Engine
       test "a comment inside a branch" do
         assert_compiled_snapshot("<% if flag %>\n  <%# a\n  multiline comment %>\n  body\n<% end %>", optimize_options)
       end
+
+      test "a nested conditional, into one literal per render path" do
+        assert_compiled_snapshot("<% if flag %>\n  <% if other %>\n    x\n  <% end %>\n<% end %>", optimize_options)
+      end
+
+      test "a conditional attribute inside a conditional element" do
+        template = <<~ERB
+          <select>
+          <% if flag %>
+          <option <%= tag.attributes(selected: option == current) %>>One</option>
+          <% else %>
+          <option>None</option>
+          <% end %>
+          </select>
+        ERB
+
+        assert_compiled_snapshot(template, optimize_options)
+      end
+
+      test "an elsif chain nested inside a branch" do
+        template = "<div>\n<% if flag %>\n  <% if other %>\n    deep\n  <% elsif third %>\n    mid\n  <% end %>\n<% else %>\n  flat\n<% end %>\n</div>"
+
+        assert_compiled_snapshot(template, optimize_options)
+      end
     end
 
     describe "what keeps the buffer" do
       test "an expression inside a branch" do
         assert_compiled_snapshot("<% if flag %>\n  <%= greeting %>\n<% end %>", optimize_options)
-      end
-
-      test "a nested conditional" do
-        assert_compiled_snapshot("<% if flag %>\n  <% if other %>\n    x\n  <% end %>\n<% end %>", optimize_options)
       end
 
       test "two conditionals" do
@@ -77,6 +97,12 @@ module Engine
 
       test "a code tag beside the conditional" do
         assert_compiled_snapshot("<% count = 1 %>\n<% if flag %>a<% end %>", optimize_options)
+      end
+
+      test "paths that would repeat too much of the template" do
+        template = "#{"x" * 120}<% if flag %>1<% elsif other %>2<% elsif third %>3<% elsif fourth %>4<% elsif fifth %>5<% end %>"
+
+        assert_compiled_snapshot(template, optimize_options)
       end
     end
 
@@ -93,6 +119,14 @@ module Engine
         assert_evaluated_snapshot(
           "<div>\n  <% if flag %>\n    shown\n  <% end %>\n</div>",
           { flag: false },
+          optimize_options
+        )
+      end
+
+      test "renders the path a nested conditional picks" do
+        assert_evaluated_snapshot(
+          "<select>\n<% if flag %>\n<option <% if other %>selected<% end %>>One</option>\n<% else %>\n<option>None</option>\n<% end %>\n</select>",
+          { flag: true, other: false },
           optimize_options
         )
       end
