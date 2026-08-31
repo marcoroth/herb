@@ -27,6 +27,7 @@ gem "rbs-inline", "~> 0.14"
 gem "reactionview", "~> 0.4.0"
 gem "reline", "~> 0.7"
 gem "rubocop", "~> 1.71"
+gem "rubocop-performance", "~> 1.26.0"
 gem "sorbet"
 gem "turbo-rails", "~> 2.0", require: false
 gem "webrick", "~> 1.9", require: false
