@@ -1,3 +1,5 @@
+import type { SlotsRequestFailure } from "@herb-tools/client"
+
 import type { ErrorMessage } from "./types"
 import type { RuntimeDiagnostic } from "../runtime/report"
 
@@ -16,4 +18,17 @@ export function diagnosticsFromError(message: ErrorMessage): RuntimeDiagnostic[]
     ...(error.suggestion ? { suggestion: error.suggestion } : {}),
     ...(message.source === undefined ? {} : { source: message.source }),
   }))
+}
+
+export function diagnosticFromRefreshFailure(file: string, status: number, failure: SlotsRequestFailure | null): RuntimeDiagnostic {
+  return {
+    template: failure?.template ?? file,
+    message: failure?.message ?? `The application answered ${status} while re-rendering. Check the server log.`,
+    code: failure?.class ?? "RuntimeError",
+    severity: "error" as const,
+    origin: "Web Application",
+    phase: "runtime" as const,
+    overlay: "dismissible" as const,
+    ...(failure?.line ? { location: { start: { line: failure.line, column: 1 } } } : {}),
+  }
 }

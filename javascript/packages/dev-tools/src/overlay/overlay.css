@@ -461,6 +461,11 @@
   border-bottom: 1px solid var(--herb-line);
 }
 
+.herb-toggle-item-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .herb-toggle-item:last-child {
   border-bottom: none;
 }
