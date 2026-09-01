@@ -73,7 +73,7 @@ module Herb
 
           return write_placeholder(standing) if standing
 
-          return if SKIPPED_PREFIXES.any? { |prefix| node.type.to_s.start_with?(prefix) }
+          return if !node.is_a?(Herb::AST::ERBOpenTagNode) && SKIPPED_PREFIXES.any? { |prefix| node.type.to_s.start_with?(prefix) }
 
           case node
           when Herb::AST::HTMLTextNode, Herb::AST::LiteralNode
@@ -84,6 +84,16 @@ module Herb
             write(node.open_tag)
             write_all(node.body)
             write(node.close_tag) if node.close_tag
+          when Herb::AST::ERBOpenTagNode
+            raise Unprintable unless node.tag_name
+
+            emit("<")
+            emit(node.tag_name.value)
+
+            @anchored[node]&.each { |annotation| write_placeholder(annotation) }
+
+            write_all(node.children)
+            emit(">")
           when Herb::AST::HTMLOpenTagNode
             emit(node.tag_opening&.value || "<")
             emit(node.tag_name&.value)
