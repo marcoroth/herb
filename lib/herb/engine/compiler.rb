@@ -468,7 +468,9 @@ module Herb
           apply_trim(node, code)
         end
 
-        keep_line_count(node, at: code_index)
+        absorbed = erb_output?(opening) && ::Herb::Engine::Helpers.ends_on_heredoc_terminator?(code) ? 1 : 0
+
+        keep_line_count(node, at: code_index, absorbed: absorbed)
       end
 
       #: (untyped, ?extra: Integer) -> void
@@ -481,11 +483,11 @@ module Herb
         @padding_before[@tokens.length] += lines
       end
 
-      def keep_line_count(node, extra: 0, at: nil)
+      def keep_line_count(node, extra: 0, at: nil, absorbed: 0)
         raw = node.content.value
 
         leading = raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
-        trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra
+        trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra - absorbed
 
         block_comment = raw.include?("=begin") || raw.include?("=end")
 

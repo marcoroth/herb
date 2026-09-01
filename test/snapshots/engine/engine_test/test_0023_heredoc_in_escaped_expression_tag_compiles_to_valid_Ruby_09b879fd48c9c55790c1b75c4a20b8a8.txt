@@ -8,5 +8,5 @@ _buf = ::String.new; _buf << ::Herb::Engine.h((method_call <<~GRAPHQL, variables
   }
 GRAPHQL
 )); _buf << '
-'.freeze; 
+'.freeze;
 _buf.to_s
