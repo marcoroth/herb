@@ -10,7 +10,7 @@ export interface SchemaEnvelope {
   mode: string | null
   version: string
   manifest: Record<string, unknown> | null
-  skeleton: string | null
+  static_markup: string | null
   statics: Record<string, string> | null
 }
 

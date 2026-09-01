@@ -223,7 +223,7 @@ module Herb
       rescue IOError, Errno::ECONNRESET, Errno::EPIPE
         # client disconnected
       rescue StandardError => e
-        warn "[herb-dev-server] connection error: #{e.class}: #{e.message}"
+        warn "[Herb Dev Server] connection error: #{e.class}: #{e.message}"
       ensure
         @mutex.synchronize { @clients.delete_if { |client| client.socket == socket } }
 

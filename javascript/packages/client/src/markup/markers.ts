@@ -151,6 +151,14 @@ export function numericBranch(branch: string): number | null {
   return Number(branch)
 }
 
+export function regionOpenMarker(file: string, version: string, occurrence: number): string {
+  return `herb-region:${file}:${version}:${occurrence}`
+}
+
+export function regionCloseMarker(file: string): string {
+  return `/herb-region:${file}`
+}
+
 export function itemMarker(index: number, key: string): string {
   return `herb-item:${index}:${key}`
 }

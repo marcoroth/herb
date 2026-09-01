@@ -1,22 +1,12 @@
-import { Connection } from "./connection"
 import { Toast } from "./toast"
+import { Connection } from "./connection"
 import { ConnectionDot } from "./connection-dot"
 import { MismatchAlert } from "./mismatch-alert"
 
-import { applyPatch } from "./patch"
 import { diagnosticsFromError } from "./diagnostics"
-import { DEV_SERVER_FIXED_EVENT } from "./types"
+import { heldRuntime } from "./runtime-handle"
 
-import type {
-  DiagnosticSink,
-  HerbClientOptions,
-  HerbMessage,
-  WelcomeMessage,
-  PatchMessage,
-  ReloadMessage,
-  ErrorMessage,
-  FixedMessage,
-} from "./types"
+import type { DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
 
 const DEFAULT_PORT = 8592
 
@@ -88,7 +78,21 @@ export class HerbClient {
 
     this.hasConnectedBefore = true
     this.updateState("connected")
+    this.sendHello()
     this.options.onConnect?.()
+  }
+
+  private sendHello(): void {
+    const runtime = heldRuntime()
+
+    this.connection.send({
+      type: "hello",
+      role: "browser",
+      capabilities: {
+        runtime: Boolean(runtime),
+        regions: runtime?.slots.regions().length ?? 0,
+      },
+    })
   }
 
   private onDisconnect(): void {
@@ -101,7 +105,7 @@ export class HerbClient {
   }
 
   private onReconnecting(attempt: number, maxAttempts: number, delay: number): void {
-    console.debug(`[herb-client] reconnecting (attempt ${attempt}/${maxAttempts}, next try in ${(delay / 1000).toFixed(1)}s)...`)
+    console.debug(`[Herb Dev Client] reconnecting (attempt ${attempt}/${maxAttempts}, next try in ${(delay / 1000).toFixed(1)}s)...`)
     this.connectionDot.updateReconnectCountdown(attempt, maxAttempts, delay)
   }
 
@@ -117,17 +121,14 @@ export class HerbClient {
       case "welcome":
         this.handleWelcome(message)
         break
-      case "patch":
-        this.handlePatch(message)
+      case "schema":
+        this.handleSchema(message)
         break
-      case "reload":
-        this.handleReload(message)
+      case "invalidate":
+        this.handleInvalidate(message)
         break
       case "error":
         this.handleError(message)
-        break
-      case "fixed":
-        this.handleFixed(message)
         break
     }
   }
@@ -137,7 +138,7 @@ export class HerbClient {
 
     if (clientProject && message.project && clientProject !== message.project) {
       this.projectMatch = false
-      console.warn(`[herb-client] project mismatch — server: ${message.project}, client: ${clientProject}. Ignoring messages.`)
+      console.warn(`[Herb Dev Client] project mismatch — server: ${message.project}, client: ${clientProject}. Ignoring messages.`)
       this.updateState("disconnected")
 
       MismatchAlert.show(message.project, clientProject)
@@ -146,36 +147,25 @@ export class HerbClient {
     }
   }
 
-  private handlePatch(message: PatchMessage): void {
-    this.options.onPatch?.(message)
+  private handleSchema(message: SchemaMessage): void {
+    this.options.onSchema?.(message)
 
-    const applied = applyPatch(message)
+    this.getDiagnostics()?.report(message.file, message.diagnostics ?? [])
 
-    if (!applied) {
-      window.location.reload()
-    }
+    this.options.hotReload?.onSchema(message)
   }
 
-  private handleReload(message: ReloadMessage): void {
-    this.options.onReload?.(message)
-    window.location.reload()
+  private handleInvalidate(message: InvalidateMessage): void {
+    this.options.onInvalidate?.(message)
+    this.options.hotReload?.onInvalidate(message)
   }
 
   private handleError(message: ErrorMessage): void {
     this.options.onError?.(message)
 
-    const sink = this.getDiagnostics()
-    if (!sink) return
+    this.getDiagnostics()?.report(message.file, diagnosticsFromError(message))
 
-    sink.clear()
-    sink.report(diagnosticsFromError(message))
-  }
-
-  private handleFixed(message: FixedMessage): void {
-    this.options.onFixed?.(message)
-    this.getDiagnostics()?.clear()
-
-    document.dispatchEvent(new CustomEvent(DEV_SERVER_FIXED_EVENT, { detail: message }))
+    this.options.hotReload?.onError(message)
   }
 
   private updateState(state: ClientState): void {

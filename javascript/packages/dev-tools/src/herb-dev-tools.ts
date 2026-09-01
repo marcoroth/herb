@@ -3,6 +3,7 @@ import baseStyles from './base.css'
 import { injectStyle } from './styles.js'
 
 import { HerbClient } from './dev-server/client.js'
+import { HotReload } from './dev-server/hot-reload.js'
 import { HerbOverlay } from './overlay/overlay.js'
 import { RuntimePanel } from './runtime/panel.js'
 
@@ -11,6 +12,7 @@ import type { RuntimeReportHandle } from './runtime/panel.js'
 import type { RuntimeDiagnostic } from './runtime/report.js'
 
 const NOOP_HANDLE: RuntimeReportHandle = { dismiss() {} }
+const LIVE_DIAGNOSTIC_ORIGINS = ['Herb Linter (Rendered Page)']
 
 export const DEV_TOOLS_START_EVENT = 'herb:dev-tools-start'
 
@@ -32,7 +34,7 @@ export class HerbDevTools {
 
   static start(options: HerbDevToolsOptions = {}): HerbDevTools | null {
     if (HerbDevTools.current || (typeof window !== 'undefined' && window.HerbDevTools)) {
-      console.warn('[herb-dev-tools] already started, ignoring this start() call')
+      console.warn('[Herb Dev Tools] already started, ignoring this start() call')
 
       return null
     }
@@ -56,7 +58,7 @@ export class HerbDevTools {
   }
 
   private devServerClient: HerbClient | null = null
-  private devServerReport: RuntimeReportHandle | null = null
+  private devServerReports = new Map<string, RuntimeReportHandle>()
   private devToolsOverlay: HerbOverlay | null = null
   private panel: RuntimePanel | null = null
   private styleElement: HTMLStyleElement | null = null
@@ -70,7 +72,7 @@ export class HerbDevTools {
 
     this.devServerClient?.disconnect()
     this.devServerClient = null
-    this.devServerReport = null
+    this.devServerReports.clear()
 
     this.devToolsOverlay?.destroy()
     this.devToolsOverlay = null
@@ -136,7 +138,9 @@ export class HerbDevTools {
     if (this.options.devServer !== false) {
       const clientOptions = typeof this.options.devServer === 'object' ? this.options.devServer : {}
 
-      this.devServerClient = new HerbClient({ ...clientOptions, diagnostics: () => this.diagnosticSink() })
+      const hotReload = new HotReload({ sink: () => this.diagnosticSink() })
+
+      this.devServerClient = new HerbClient({ hotReload, ...clientOptions, diagnostics: () => this.diagnosticSink() })
       this.devServerClient.connect()
     }
 
@@ -171,12 +175,28 @@ export class HerbDevTools {
     }
 
     return {
-      report: diagnostics => {
-        this.devServerReport = panel.report(diagnostics)
+      report: (file, diagnostics) => {
+        this.devServerReports.get(file)?.dismiss()
+        this.devServerReports.delete(file)
+
+        panel.clearTemplate(file, { except: LIVE_DIAGNOSTIC_ORIGINS })
+
+        if (diagnostics.length === 0) {
+          return
+        }
+
+        this.devServerReports.set(file, panel.report(diagnostics))
       },
-      clear: () => {
-        this.devServerReport?.dismiss()
-        this.devServerReport = null
+      clear: file => {
+        this.devServerReports.get(file)?.dismiss()
+        this.devServerReports.delete(file)
+      },
+      clearAll: () => {
+        for (const handle of this.devServerReports.values()) {
+          handle.dismiss()
+        }
+
+        this.devServerReports.clear()
       },
     }
   }
