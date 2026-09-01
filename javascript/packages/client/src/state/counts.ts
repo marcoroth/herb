@@ -26,6 +26,19 @@ export class Counts {
     this.slots = slots
   }
 
+  migrateRegion(from: Region, to: Region): void {
+    const bucket = this.last.get(from)
+
+    if (bucket) {
+      this.last.delete(from)
+      this.last.set(to, bucket)
+    }
+
+    if (this.queued.delete(from)) {
+      this.queued.add(to)
+    }
+  }
+
   declarationsIn(manifest: StateManifest): DeclaredState[] {
     return manifest.declarations.filter((declaration) => declaration.count)
   }

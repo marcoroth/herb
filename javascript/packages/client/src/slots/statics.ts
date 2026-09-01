@@ -10,7 +10,7 @@
 import { HERB_ATTRIBUTES } from "../grammar/attributes"
 
 import { blankSlots, fillSlots, parkedBranches } from "../markup/fragments"
-import { numericBranch } from "../markup/markers"
+import { parseStaticsKey } from "../markup/markers"
 import { staticsElements } from "../markup/anchors"
 import { parseStaticsIdentity } from "../markup/markers"
 
@@ -45,6 +45,20 @@ export class Statics {
     return true
   }
 
+  push(identity: StaticsIdentity, key: string, fragment: DocumentFragment): void {
+    const { file, version } = identity
+    const held = this.held.get(file)
+
+    let parked: Parked = { version, fragments: new Map() }
+
+    if (held && held.version === version) {
+      parked = held
+    }
+
+    this.held.set(file, parked)
+    parked.fragments.set(key, fragment)
+  }
+
   adopt(root: Node): void {
     for (const element of staticsElements(root)) {
       const identity = parseStaticsIdentity(element.getAttribute(HERB_ATTRIBUTES.region) ?? "")
@@ -70,12 +84,10 @@ export class Statics {
   }
 
   branches(file: string, slot: number): number[] {
-    const prefix = `${slot}:`
-
     return this.keys(file)
-      .filter((key) => key.startsWith(prefix))
-      .map((key) => numericBranch(key.slice(prefix.length)))
-      .filter((branch): branch is number => branch !== null)
+      .map((key) => parseStaticsKey(key))
+      .filter((parsed): parsed is { kind: "branch"; index: number; branch: number } => parsed?.kind === "branch" && parsed.index === slot)
+      .map((parsed) => parsed.branch)
       .sort((left, right) => left - right)
   }
 
