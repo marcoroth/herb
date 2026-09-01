@@ -5,37 +5,36 @@ require_relative "../colors"
 require_relative "../configuration"
 require_relative "../diagnostic"
 require_relative "../diagnostic/formatter"
+require_relative "classifier"
 
 module Herb
   module Dev
     class Runner
       include Herb::Colors
 
-      PATCHABLE_TYPES = ["text_changed", "attribute_value_changed", "attribute_added", "attribute_removed"].freeze #: Array[String]
+      PATCHABLE_TYPES = Herb::Dev::Classifier::PATCHABLE_TYPES #: Array[String]
 
+      #: (Array[Herb::Diff::Operation]) -> bool
       def self.can_patch?(operations)
-        operations.all? { |operation|
-          next false unless PATCHABLE_TYPES.include?(operation.type.to_s)
-          next false if operation.new_node&.type&.to_s&.include?("ERB")
-          next false if operation.old_node&.type&.to_s&.include?("ERB")
-
-          true
-        }
+        Herb::Dev::Classifier.can_patch?(operations)
       end
 
-      CLEAR_SCREEN = "\e[2J\e[H"
-      HIDE_CURSOR = "\e[?25l"
-      SHOW_CURSOR = "\e[?25h"
+      CLEAR_SCREEN = "\e[2J\e[H" #: String
+      HIDE_CURSOR = "\e[?25l" #: String
+      SHOW_CURSOR = "\e[?25h" #: String
 
+      #: (?path: String) -> void
       def initialize(path: ".")
         @path = path
       end
 
+      #: () -> void
       def run
         $stdout.sync = true
 
         require_cruise
         require_relative "server"
+        require_relative "../dev"
 
         unless File.directory?(@path)
           puts "Not a directory: '#{@path}'."
@@ -52,9 +51,25 @@ module Herb
         terminal(HIDE_CURSOR)
         print_header(config, expanded_path)
 
-        file_states = index_files(config, @path)
-
         websocket = Herb::Dev::Server.new(port: port, project_path: expanded_path)
+        pipeline = Herb::Dev::Pipeline.new(server: websocket, configuration: config)
+        pipeline.on_classified { |event, classification| paint(event, classification) }
+
+        @first_change = true
+        @errored_files = Set.new
+
+        websocket.on_client do |event, count|
+          announce_first_change
+          paint_client(event, count)
+        end
+
+        watcher = Herb::Dev::Watcher.new(config: config, root: expanded_path) do |event|
+          announce_first_change
+          pipeline.handle_event(event)
+        end
+
+        index_files(watcher)
+
         websocket.start
 
         puts "  #{fg("WebSocket:".ljust(11), 245)}#{fg("ws://localhost:#{websocket.port}", 250)}"
@@ -62,7 +77,8 @@ module Herb
         puts "  #{fg("Ready!", 42)} #{fg("Watching for changes...", 241)}"
         puts
 
-        watch_files(config, expanded_path, websocket, file_states)
+        watch_stdin
+        watcher.run
       rescue Interrupt
         websocket&.stop
         terminal(SHOW_CURSOR)
@@ -74,6 +90,7 @@ module Herb
         terminal(SHOW_CURSOR)
       end
 
+      #: () -> void
       def stop
         require_relative "server"
 
@@ -86,12 +103,18 @@ module Herb
 
         entries.each do |entry|
           entry.stop!
-          puts "Stopped herb dev server for #{entry.project_name} (PID: #{entry.pid}, port: #{entry.port})"
+
+          if entry.embedded?
+            puts "Stopped the server for #{entry.project_name} (PID: #{entry.pid}, port: #{entry.port}). The Herb dev server was embedded in it, so the whole server shut down."
+          else
+            puts "Stopped herb dev server for #{entry.project_name} (PID: #{entry.pid}, port: #{entry.port})"
+          end
         end
 
         exit(0)
       end
 
+      #: () -> void
       def restart
         require_relative "server"
 
@@ -100,6 +123,7 @@ module Herb
         run
       end
 
+      #: () -> void
       def status
         require_relative "server"
 
@@ -109,7 +133,7 @@ module Herb
           puts "No herb dev servers running."
         else
           entries.each do |entry|
-            puts "#{entry.project_name} — PID: #{entry.pid}, port: #{entry.port}, started: #{entry.started_at}"
+            puts "#{entry.project_name} — PID: #{entry.pid}, port: #{entry.port}, #{entry.kind}, started: #{entry.started_at}"
           end
         end
 
@@ -118,14 +142,17 @@ module Herb
 
       private
 
+      #: () -> bool
       def interactive?
         $stdout.tty?
       end
 
+      #: (String) -> void
       def terminal(sequence)
         print sequence if interactive?
       end
 
+      #: (String, Array[Herb::Diagnostic], String) -> void
       def print_diagnostics(source, diagnostics, filename)
         return if diagnostics.empty?
 
@@ -138,10 +165,12 @@ module Herb
         end
       end
 
+      #: (Integer, String) -> String
       def pluralize(count, word)
         "#{count} #{word}#{"s" unless count == 1}"
       end
 
+      #: () -> void
       def require_cruise
         Herb.ensure_installed("cruise")
       rescue StandardError
@@ -156,18 +185,27 @@ module Herb
         MESSAGE
       end
 
+      #: (String) -> void
       def check_existing_server(expanded_path)
         existing = Herb::Dev::ServerEntry.find_by_project(expanded_path)
 
         return unless existing
 
-        puts "Herb dev server is already running for this project (PID: #{existing.pid}, port: #{existing.port})."
-        puts
-        puts "  herb dev stop       Stop the running server"
-        puts "  herb dev restart    Restart the server"
+        if existing.embedded?
+          puts "Herb dev server is already running for this project, embedded in another server for this app (PID: #{existing.pid}, port: #{existing.port})."
+          puts
+          puts "  herb dev stop       Stop it. The dev server lives inside that server, so this stops the whole server."
+        else
+          puts "Herb dev server is already running for this project (PID: #{existing.pid}, port: #{existing.port})."
+          puts
+          puts "  herb dev stop       Stop the running server"
+          puts "  herb dev restart    Restart the server"
+        end
+
         exit(1)
       end
 
+      #: () -> Integer
       def find_port
         port = Herb::Dev::Server::DEFAULT_PORT
         port_owner = Herb::Dev::ServerEntry.find_by_port(port)
@@ -180,6 +218,7 @@ module Herb
         port
       end
 
+      #: (Herb::Configuration, String) -> void
       def print_header(config, expanded_path)
         puts
         puts fg_bg(" \u{1F33F} Herb Dev Server ", 255, 28)
@@ -199,196 +238,107 @@ module Herb
         end
       end
 
-      def index_files(config, path)
+      #: (Watcher) -> void
+      def index_files(watcher)
         puts "  #{fg("Indexing files...", 241)}" if interactive?
 
-        file_states = {}
-        initial_files = config.find_files(path)
-
-        initial_files.each do |file_path|
-          file_states[file_path] = File.read(file_path)
-        rescue StandardError
-          # skip files that can't be read
-        end
+        count = watcher.index(@path)
 
         terminal("\e[1A\e[2K")
-        puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{file_states.size} templates indexed", 250)}"
-
-        file_states
+        puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{count} templates indexed", 250)}"
       end
 
-      def watch_files(config, expanded_path, websocket, file_states)
-        include_patterns = config.file_include_patterns
-        exclude_patterns = config.file_exclude_patterns
-        first_change = true
-        errored_files = Set.new
-
+      #: () -> Thread
+      def watch_stdin
         Thread.new do
           $stdin.gets(nil)
           Thread.main.raise(Interrupt)
         rescue IOError, Errno::EBADF
           Thread.main.raise(Interrupt)
         end
+      end
 
-        Cruise.watch(expanded_path, only: ["created", "modified", "removed"]) do |event|
-          file_path = event.path
-          relative_path = file_path.delete_prefix("#{expanded_path}/")
+      #: () -> void
+      def announce_first_change
+        return unless @first_change
 
-          next if config.path_excluded?(relative_path, exclude_patterns)
-          next unless config.path_included?(relative_path, include_patterns)
+        terminal("\e[2A\e[J")
+        puts "  #{fg("Recent changes:", 245)}"
+        puts
+        @first_change = false
+      end
 
-          if first_change
-            terminal("\e[2A\e[J")
-            puts "  #{fg("Recent changes:", 245)}"
-            puts
-            first_change = false
-          end
+      #: (Symbol, Integer) -> void
+      def paint_client(event, count)
+        timestamp = fg(Time.now.strftime("%H:%M:%S.%L"), 241)
+        badge = event == :connected ? bold(fg("+ client ", 75)) : bold(fg("- client ", 241))
 
-          timestamp = fg(Time.now.strftime("%H:%M:%S.%L"), 241)
-          display_path = fg(relative_path, 250)
+        puts "    #{timestamp} #{badge} #{fg(event.to_s, 250)} #{fg("(#{count} open)", 241)}"
+      end
 
-          case event.kind
-          when "created", "modified"
-            handle_file_change(file_path, relative_path, file_states, errored_files, websocket, timestamp, display_path)
-          when "removed"
-            file_states.delete(file_path)
-            badge = bold(fg("- removed", 196))
-            puts "    #{timestamp} #{badge} #{display_path}"
-          end
+      #: (Watcher::Event, Classifier::Classification?) -> void
+      def paint(event, classification)
+        timestamp = fg(Time.now.strftime("%H:%M:%S.%L"), 241)
+        display_path = fg(event.relative_path, 250)
+
+        case event.kind
+        when :removed
+          @errored_files.delete(event.path)
+          puts "    #{timestamp} #{bold(fg("- removed", 196))} #{display_path}"
+        when :added
+          puts "    #{timestamp} #{bold(fg("+ added  ", 42))} #{display_path}"
+        when :changed
+          paint_change(event, classification, timestamp, display_path)
         end
       end
 
-      def handle_file_change(file_path, relative_path, file_states, errored_files, websocket, timestamp, display_path)
-        return unless File.exist?(file_path)
+      #: (Watcher::Event, Classifier::Classification, String, String) -> void
+      def paint_change(event, classification, timestamp, display_path)
+        case classification&.kind
+        when :parse_error
+          @errored_files.add(event.path)
 
-        current_content = File.read(file_path)
-        previous_content = file_states[file_path]
-
-        if previous_content.nil?
-          file_states[file_path] = current_content
-          badge = bold(fg("+ added  ", 42))
-          puts "    #{timestamp} #{badge} #{display_path}"
-          return
+          print "    #{timestamp} #{bold(fg("\u{2717} error", 196))}"
+          print_diagnostics(event.current.to_s, Herb::Diagnostic.from_errors(new_errors(event, classification), template: event.relative_path), event.relative_path)
+          puts
+        when :none, :whitespace, nil
+          paint_cleared(event, timestamp, display_path)
+        else
+          paint_cleared(event, timestamp, display_path)
+          print_diff_summary(classification, timestamp, display_path)
         end
-
-        return if previous_content == current_content
-
-        current_parse = Herb.parse(current_content, strict: true, analyze: true)
-
-        if current_parse.errors.any?
-          broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, file_states, errored_files, websocket, timestamp)
-          return
-        end
-
-        if errored_files.delete?(file_path)
-          broadcast_fixed(file_path, relative_path, current_content, file_states, websocket, timestamp, display_path)
-          return
-        end
-
-        handle_diff(file_path, relative_path, current_content, previous_content, file_states, websocket, timestamp, display_path)
       end
 
-      def broadcast_errors(file_path, relative_path, current_parse, current_content, previous_content, file_states, errored_files, websocket, timestamp)
-        current_errors = current_parse.errors
+      #: (Watcher::Event, Classifier::Classification) -> Array[Herb::Errors::Error]
+      def new_errors(event, classification)
+        previous_errors = Herb.parse(event.previous.to_s, strict: true, analyze: true).errors
 
-        previous_parse = Herb.parse(previous_content, strict: true, analyze: true)
-        previous_errors = previous_parse.errors
-
-        new_errors = current_errors.select { |error|
+        classification.errors.select { |error|
           previous_errors.none? { |previous_error|
             previous_error.error_name == error.error_name && previous_error.location.start.line == error.location.start.line
           }
         }
+      end
 
-        badge = bold(fg("\u{2717} error", 196))
-        print "    #{timestamp} #{badge}"
+      #: (Watcher::Event, String, String) -> void
+      def paint_cleared(event, timestamp, display_path)
+        return unless @errored_files.delete?(event.path)
 
-        print_diagnostics(current_content, Herb::Diagnostic.from_errors(new_errors, template: relative_path), relative_path)
-
-        file_states[file_path] = current_content
-        errored_files.add(file_path)
-
-        if websocket.client_count.positive?
-          websocket.broadcast({
-            type: "error",
-            file: relative_path,
-            source: current_content,
-            errors: current_errors.map { |error|
-              diagnostic = error.to_diagnostic(template: relative_path)
-
-              {
-                name: error.error_name,
-                code: diagnostic.code,
-                origin: diagnostic.origin,
-                message: diagnostic.message,
-                suggestion: diagnostic.suggestion,
-                line: error.location.start.line,
-                column: error.location.start.column,
-              }
-            },
-          })
-        end
-
+        puts "    #{timestamp} #{bold(fg("\u{2713} clear  ", 42))} #{display_path}"
         puts
       end
 
-      def broadcast_fixed(file_path, relative_path, current_content, file_states, websocket, timestamp, display_path)
-        file_states[file_path] = current_content
-        badge = bold(fg("\u{2713} fixed  ", 42))
-        puts "    #{timestamp} #{badge} #{display_path}"
+      #: (Classifier::Classification, String, String) -> void
+      def print_diff_summary(classification, timestamp, display_path)
+        operations = classification.operations
 
-        if websocket.client_count.positive?
-          websocket.broadcast({ type: "fixed", file: relative_path })
-        end
-
-        puts
-      end
-
-      def handle_diff(file_path, relative_path, current_content, previous_content, file_states, websocket, timestamp, display_path)
-        diff_result = Herb.diff(previous_content, current_content)
-        file_states[file_path] = current_content
-
-        return if diff_result.identical?
-
-        operations = diff_result.operations
-        can_patch = self.class.can_patch?(operations)
-
-        if can_patch && websocket.client_count.positive?
-          patch_operations = operations.map do |operation|
-            {
-              type: operation.type.to_s,
-              path: operation.path,
-              old_value: extract_node_value(operation.old_node),
-              new_value: extract_node_value(operation.new_node),
-              old_node_type: operation.old_node&.type,
-              new_node_type: operation.new_node&.type,
-            }
-          end
-
-          websocket.broadcast({
-            type: "patch",
-            file: relative_path,
-            operations: patch_operations,
-          })
-        elsif !can_patch && websocket.client_count.positive?
-          websocket.broadcast({
-            type: "reload",
-            file: relative_path,
-          })
-        end
-
-        print_diff_summary(operations, can_patch, websocket, timestamp, display_path)
-      end
-
-      def print_diff_summary(operations, can_patch, websocket, timestamp, display_path)
-        badge = if can_patch
-                  bold(fg("\u{2713} patch ", 42))
+        badge = if classification.kind == :static
+                  bold(fg("\u{2713} static ", 42))
                 else
-                  bold(fg("\u{21BB} reload ", 214))
+                  bold(fg("\u{21BB} fetch  ", 214))
                 end
 
-        clients_label = websocket.client_count.positive? ? " #{fg("[#{pluralize(websocket.client_count, "client")}]", 241)}" : ""
-        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{pluralize(operations.size, "operation")})", 241)}#{clients_label}"
+        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{pluralize(operations.size, "operation")})", 241)}"
 
         operations.each_with_index do |operation, index|
           type = operation.type.to_s
@@ -418,6 +368,7 @@ module Herb
         puts
       end
 
+      #: (String, String, Integer, Herb::AST::Node, String) -> void
       def print_diff_node(indent, sign, color, node, _type)
         value = extract_node_value(node)
 
@@ -432,6 +383,7 @@ module Herb
         end
       end
 
+      #: (Herb::AST::Node?) -> String?
       def extract_node_value(node)
         return nil unless node
 

@@ -7,59 +7,88 @@ module Herb
 
       PATCHABLE_TYPES: Array[String]
 
-      def self.can_patch?: (untyped operations) -> untyped
+      # : (Array[Herb::Diff::Operation]) -> bool
+      def self.can_patch?: (Array[Herb::Diff::Operation]) -> bool
 
-      CLEAR_SCREEN: ::String
+      CLEAR_SCREEN: String
 
-      HIDE_CURSOR: ::String
+      HIDE_CURSOR: String
 
-      SHOW_CURSOR: ::String
+      SHOW_CURSOR: String
 
-      def initialize: (?path: untyped) -> untyped
+      # : (?path: String) -> void
+      def initialize: (?path: String) -> void
 
-      def run: () -> untyped
+      # : () -> void
+      def run: () -> void
 
-      def stop: () -> untyped
+      # : () -> void
+      def stop: () -> void
 
-      def restart: () -> untyped
+      # : () -> void
+      def restart: () -> void
 
-      def status: () -> untyped
+      # : () -> void
+      def status: () -> void
 
       private
 
-      def interactive?: () -> untyped
+      # : () -> bool
+      def interactive?: () -> bool
 
-      def terminal: (untyped sequence) -> untyped
+      # : (String) -> void
+      def terminal: (String) -> void
 
-      def print_diagnostics: (untyped source, untyped diagnostics, untyped filename) -> untyped
+      # : (String, Array[Herb::Diagnostic], String) -> void
+      def print_diagnostics: (String, Array[Herb::Diagnostic], String) -> void
 
-      def pluralize: (untyped count, untyped word) -> untyped
+      # : (Integer, String) -> String
+      def pluralize: (Integer, String) -> String
 
-      def require_cruise: () -> untyped
+      # : () -> void
+      def require_cruise: () -> void
 
-      def check_existing_server: (untyped expanded_path) -> untyped
+      # : (String) -> void
+      def check_existing_server: (String) -> void
 
-      def find_port: () -> untyped
+      # : () -> Integer
+      def find_port: () -> Integer
 
-      def print_header: (untyped config, untyped expanded_path) -> untyped
+      # : (Herb::Configuration, String) -> void
+      def print_header: (Herb::Configuration, String) -> void
 
-      def index_files: (untyped config, untyped path) -> untyped
+      # : (Watcher) -> void
+      def index_files: (Watcher) -> void
 
-      def watch_files: (untyped config, untyped expanded_path, untyped websocket, untyped file_states) -> untyped
+      # : () -> Thread
+      def watch_stdin: () -> Thread
 
-      def handle_file_change: (untyped file_path, untyped relative_path, untyped file_states, untyped errored_files, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+      # : () -> void
+      def announce_first_change: () -> void
 
-      def broadcast_errors: (untyped file_path, untyped relative_path, untyped current_parse, untyped current_content, untyped previous_content, untyped file_states, untyped errored_files, untyped websocket, untyped timestamp) -> untyped
+      # : (Symbol, Integer) -> void
+      def paint_client: (Symbol, Integer) -> void
 
-      def broadcast_fixed: (untyped file_path, untyped relative_path, untyped current_content, untyped file_states, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+      # : (Watcher::Event, Classifier::Classification?) -> void
+      def paint: (Watcher::Event, Classifier::Classification?) -> void
 
-      def handle_diff: (untyped file_path, untyped relative_path, untyped current_content, untyped previous_content, untyped file_states, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+      # : (Watcher::Event, Classifier::Classification, String, String) -> void
+      def paint_change: (Watcher::Event, Classifier::Classification, String, String) -> void
 
-      def print_diff_summary: (untyped operations, untyped can_patch, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+      # : (Watcher::Event, Classifier::Classification) -> Array[Herb::Errors::Error]
+      def new_errors: (Watcher::Event, Classifier::Classification) -> Array[Herb::Errors::Error]
 
-      def print_diff_node: (untyped indent, untyped sign, untyped color, untyped node, untyped _type) -> untyped
+      # : (Watcher::Event, String, String) -> void
+      def paint_cleared: (Watcher::Event, String, String) -> void
 
-      def extract_node_value: (untyped node) -> untyped
+      # : (Classifier::Classification, String, String) -> void
+      def print_diff_summary: (Classifier::Classification, String, String) -> void
+
+      # : (String, String, Integer, Herb::AST::Node, String) -> void
+      def print_diff_node: (String, String, Integer, Herb::AST::Node, String) -> void
+
+      # : (Herb::AST::Node?) -> String?
+      def extract_node_value: (Herb::AST::Node?) -> String?
     end
   end
 end

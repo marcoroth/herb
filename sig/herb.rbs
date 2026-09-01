@@ -42,7 +42,4 @@ module Herb
   def self.configure: (?untyped project_path) -> untyped
 
   def self.reset_configuration!: () -> untyped
-
-  # : (*String gems) -> void
-  def self.ensure_installed: (*String gems) -> void
 end

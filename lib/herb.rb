@@ -27,6 +27,7 @@ require_relative "herb/warnings"
 require_relative "herb/diagnostic"
 
 require_relative "herb/version"
+require_relative "herb/ensure_installed"
 require_relative "herb/visitor"
 
 begin
@@ -140,31 +141,5 @@ module Herb
 
   def self.reset_configuration!
     @configuration = nil
-  end
-
-  #: (*String gems) -> void
-  def self.ensure_installed(*gems)
-    missing = gems.reject do |name|
-      require name
-      true
-    rescue LoadError
-      false
-    end
-
-    return if missing.empty?
-
-    require "bundler/inline"
-
-    verbose = $VERBOSE
-    $VERBOSE = nil
-
-    begin
-      gemfile(true, quiet: true) do # steep:ignore
-        source "https://rubygems.org" # steep:ignore
-        missing.each { |name| gem name }
-      end
-    ensure
-      $VERBOSE = verbose
-    end
   end
 end
