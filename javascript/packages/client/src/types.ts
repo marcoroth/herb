@@ -20,7 +20,7 @@ export type SlotOperation =
   | "item-updated"
   | "built"
 
-export type BuildCause = "apply" | "client"
+export type BuildCause = "apply" | "client" | "rebuild"
 export type RenderMode = "server" | "client"
 export type ApplyMode = "replace" | "merge"
 

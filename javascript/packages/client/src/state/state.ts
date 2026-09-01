@@ -86,6 +86,52 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     return this.server.slotsFor(key)
   }
 
+  migrateRegion(from: Region, to: Region, options: { except?: string[] } = {}): void {
+    const values = this.scoped.get(from)
+
+    if (values) {
+      this.scoped.delete(from)
+      this.scoped.set(to, values)
+    }
+
+    this.seeds.migrateRegion(from, to)
+    this.counts.migrateRegion(from, to)
+
+    for (const name of options.except ?? []) {
+      if (values) {
+        for (const bucket of values.values()) {
+          bucket.delete(name)
+        }
+      }
+
+      this.seeds.forget(to, name)
+    }
+  }
+
+  resettle(region: Region): void {
+    const manifest = this.manifestFor(region)
+
+    if (manifest) {
+      for (const indices of Object.values(manifest.reads)) {
+        for (const index of indices) {
+          const slot = region.slots.get(index)
+
+          if (slot) {
+            this.slots.claim(slot)
+          }
+        }
+      }
+    }
+
+    for (const slot of region.slots.values()) {
+      this.settleBranch(slot)
+
+      for (const item of slot.items.values()) {
+        this.settleItem(slot, item)
+      }
+    }
+  }
+
   settle(built: Built): void {
     for (const slot of built.branches) {
       this.settleBranch(slot)
@@ -756,6 +802,8 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       for (const placed of this.placedSlots(scope, Number(indexKey))) {
         const slot = placed.slot
         const target = this.targetBranch(conditional, placed.scope)
+
+        this.slots.claim(slot)
 
         if (!this.slots.switchBranch(slot, target) && slot.branch !== target) {
           report({

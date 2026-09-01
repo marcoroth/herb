@@ -60,6 +60,11 @@ export interface StateCount {
   by?: number
 }
 
+export interface ServerRead {
+  index: number
+  node_path: number[]
+}
+
 export interface StateManifest {
   version: string
   declarations: DeclaredState[]
@@ -68,6 +73,7 @@ export interface StateManifest {
   conditionals: ConditionalMap
   presence?: PresenceMap
   computed?: ComputedMap
+  server?: Record<string, ServerRead[]>
 }
 
 export interface StateScope {

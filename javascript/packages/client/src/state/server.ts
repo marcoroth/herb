@@ -1,4 +1,5 @@
 import { elementOf } from "../markup/anchors"
+import { slotsRequest } from "../shared/slots-request"
 
 import type { Slots } from "../slots/slots"
 import type { ApplyReport, Payload, Slot } from "../types"
@@ -228,15 +229,7 @@ export class ServerState {
       url.searchParams.set(name, value)
     }
 
-    url.searchParams.set("format", this.options.format)
-
-    const response = await fetch(url.toString(), { signal, headers: { Accept: "application/json" } })
-
-    if (!response.ok) {
-      throw new Error(`Herb state request failed with ${response.status}`)
-    }
-
-    return (await response.json()) as Payload
+    return await slotsRequest(url, { format: this.options.format, signal })
   }
 
   stateName(name: string): string {

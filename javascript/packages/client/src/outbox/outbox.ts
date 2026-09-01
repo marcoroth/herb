@@ -2,6 +2,7 @@ import { HERB_ATTRIBUTES } from "../grammar/attributes"
 
 import { report } from "../shared/report"
 import { scopeOf } from "../state/scopes"
+import { slotsRequest } from "../shared/slots-request"
 
 import type { Slots } from "../slots/slots"
 import type { State } from "../state/state"
@@ -378,10 +379,6 @@ export class Outbox {
 
 function defaultTransport(format: string): MutationTransport {
   return async (request, signal) => {
-    const url = new URL(request.url, window.location.href)
-
-    url.searchParams.set("format", format)
-
     let body: FormData | URLSearchParams | undefined
 
     if (request.body instanceof FormData) {
@@ -390,18 +387,13 @@ function defaultTransport(format: string): MutationTransport {
       body = new URLSearchParams(request.body)
     }
 
-    const response = await fetch(url.toString(), {
+    return await slotsRequest(request.url, {
       method: request.method,
       body,
       headers: request.headers,
+      format,
       signal,
     })
-
-    if (!response.ok) {
-      throw new Error(`Herb mutation failed with ${response.status}`)
-    }
-
-    return (await response.json()) as Payload
   }
 }
 

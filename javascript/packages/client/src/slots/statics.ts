@@ -45,6 +45,20 @@ export class Statics {
     return true
   }
 
+  push(identity: StaticsIdentity, key: string, fragment: DocumentFragment): void {
+    const { file, version } = identity
+    const held = this.held.get(file)
+
+    let parked: Parked = { version, fragments: new Map() }
+
+    if (held && held.version === version) {
+      parked = held
+    }
+
+    this.held.set(file, parked)
+    parked.fragments.set(key, fragment)
+  }
+
   adopt(root: Node): void {
     for (const element of staticsElements(root)) {
       const identity = parseStaticsIdentity(element.getAttribute(HERB_ATTRIBUTES.region) ?? "")

@@ -38,6 +38,54 @@ function payload(template: string, slots: Payload["slots"], version = "aaaaaaaa"
   return { template, version, occurrence, slots }
 }
 
+describe("a claimed conditional", () => {
+  test("still hands nested values to the branch the state chose", () => {
+    const slots = mounted(
+      `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><p><!--herb-slot:1-->old<!--/herb-slot:1--></p><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+    )
+    const slot = slots.slot(FILE, 0)!
+
+    slots.claim(slot)
+
+    const report = slots.apply(payload(FILE, { 0: { branch: 0, slots: { 1: "fresh" } } }))
+
+    expect(report.applied).toBe(1)
+    expect(document.body.textContent).toContain("fresh")
+  })
+
+  test("remembers a disagreeing payload's values for the branch a later switch shows", () => {
+    const slots = mounted(
+      `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><p><!--herb-slot:1-->sending<!--/herb-slot:1--></p><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->` +
+      `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:0:1--><i><!--herb-slot:2--><!--/herb-slot:2--></i></template>`
+    )
+    const slot = slots.slot(FILE, 0)!
+
+    slots.claim(slot)
+    slots.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "Today at 4:24 PM" } } }))
+
+    expect(document.body.textContent).toContain("sending")
+
+    expect(slots.switchBranch(slot, 1)).toBe(true)
+    expect(document.body.textContent).toContain("Today at 4:24 PM")
+  })
+
+  test("keeps the state's branch when the payload disagrees, and applies nothing inside", () => {
+    const slots = mounted(
+      `<!--herb-region:${FILE}:aaaaaaaa:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><p><!--herb-slot:1-->mine<!--/herb-slot:1--></p><!--/herb-slot:0--></div><!--/herb-region:${FILE}-->`
+    )
+    const slot = slots.slot(FILE, 0)!
+
+    slots.claim(slot)
+
+    const report = slots.apply(payload(FILE, { 0: { branch: 1, slots: { 2: "theirs" } } }))
+
+    expect(report.applied).toBe(0)
+    expect(slot.branch).toBe(0)
+    expect(document.body.textContent).toContain("mine")
+    expect(document.body.textContent).not.toContain("theirs")
+  })
+})
+
 describe("applying values to a conditional", () => {
   beforeEach(() => {
     document.body.innerHTML = ""

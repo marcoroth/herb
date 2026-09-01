@@ -63,6 +63,12 @@ export class Manifests {
     return taken
   }
 
+  push(identity: string, manifest: TemplateManifest): void {
+    this.held.set(identity, manifest)
+    this.byFile.set(manifest.file, manifest)
+    this.byFile.set(manifest.identifier, manifest)
+  }
+
   hold(manifests: Record<string, TemplateManifest>): number {
     let taken = 0
 
@@ -93,6 +99,32 @@ export class Manifests {
 
   statesOf(file: string, version: string): StateManifest | null {
     return this.get(file, version)?.states ?? null
+  }
+
+  evict(file: string, keepVersion: string): number {
+    let dropped = 0
+
+    for (const [identity, manifest] of this.held) {
+      if (manifest.file !== file || manifest.version === keepVersion) {
+        continue
+      }
+
+      this.held.delete(identity)
+      dropped += 1
+    }
+
+    const current = this.byFile.get(file)
+
+    if (current && current.version !== keepVersion) {
+      const kept = [...this.held.values()].find((manifest) => manifest.file === file && manifest.version === keepVersion)
+
+      if (kept) {
+        this.byFile.set(file, kept)
+        this.byFile.set(kept.identifier, kept)
+      }
+    }
+
+    return dropped
   }
 
   clear(): void {
