@@ -39,6 +39,8 @@ export interface ContentUnitWithNode {
  */
 export const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
+export const NON_SQUIGGLY_HEREDOC = /<<(?!~)-?['"`]?[A-Za-z_]/
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
@@ -268,7 +270,11 @@ export const ERB_BLOCK_COMMENT_DELIMITER = /\n=(begin|end)\b/
  * the delimiter, changes the delimiter's column and breaks the Ruby semantics.
  */
 export function isERBBlockCommentDelimiter(node: Node): boolean {
-  return isNode(node, ERBContentNode) && ERB_BLOCK_COMMENT_DELIMITER.test(node.content?.value ?? "")
+  if (!isNode(node, ERBContentNode)) return false
+
+  const content = node.content?.value ?? ""
+
+  return !NON_SQUIGGLY_HEREDOC.test(content) && ERB_BLOCK_COMMENT_DELIMITER.test(content)
 }
 
 /**

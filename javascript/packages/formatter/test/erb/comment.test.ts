@@ -633,6 +633,24 @@ describe("@herb-tools/formatter", () => {
       expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
     })
 
+    test("does not treat heredoc body text as a block-comment delimiter", () => {
+      const source = dedent`
+        <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <%= <<HEREDOC
+        =begin literal
+        HEREDOC %>
+      `)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+    })
+
     test("an already-expanded block comment is a fixed point", () => {
       expectFormattedToMatch(dedent`
         <%

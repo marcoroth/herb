@@ -48,6 +48,7 @@ import {
   isInlineElement,
   isMultilineERBComment,
   isERBBlockCommentDelimiter,
+  NON_SQUIGGLY_HEREDOC,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -1109,7 +1110,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (!/^[ \t]*\r?\n/.test(content)) return false
     if (!content.trim().includes("\n")) return false
 
-    return !/<<(?!~)-?['"`]?[A-Za-z_]/.test(content)
+    return !NON_SQUIGGLY_HEREDOC.test(content)
   }
 
   /**
