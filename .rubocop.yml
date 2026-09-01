@@ -44,6 +44,7 @@ Style/BlockDelimiters:
 Style/SafeNavigationChainLength:
   Exclude:
     - lib/herb/ast/erb_render_node.rb
+    - lib/herb/dev/classifier.rb
     - lib/herb/dev/runner.rb
 
 Style/GlobalVars:
@@ -68,6 +69,7 @@ Metrics/CyclomaticComplexity:
     - bench/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
@@ -83,6 +85,7 @@ Metrics/MethodLength:
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/diagnostic.rb
@@ -104,6 +107,9 @@ Metrics/AbcSize:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev.rb
+    - lib/herb/dev/classifier.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/diagnostic.rb
@@ -127,7 +133,9 @@ Metrics/ClassLength:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/configuration.rb
+    - lib/herb/dev/pipeline.rb
     - lib/herb/dev/runner.rb
+    - lib/herb/dev/server_entry.rb
     - lib/herb/dev/server.rb
     - lib/herb/diagnostic.rb
     - lib/herb/engine.rb
@@ -144,6 +152,7 @@ Metrics/ModuleLength:
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
     - bench/**/*
+    - lib/herb/dev/protocol.rb
 
 Metrics/BlockLength:
   Max: 30
@@ -161,6 +170,7 @@ Metrics/ParameterLists:
     - lib/herb.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb
@@ -180,6 +190,9 @@ Metrics/PerceivedComplexity:
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev.rb
+    - lib/herb/dev/classifier.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/engine.rb
