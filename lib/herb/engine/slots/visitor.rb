@@ -50,6 +50,8 @@ module Herb
         attr_reader :states #: StateCompiler
         attr_reader :document #: untyped
         attr_reader :warnings #: Array[Herb::Warnings::Warning]
+        attr_reader :static_markup #: String?
+        attr_reader :slot_nodes #: Array[untyped]
 
         SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\b(?<mode>[^%]*?)-?%>/ #: Regexp
         MODE_OPTION = /\b(server|client)\b/ #: Regexp
@@ -123,8 +125,8 @@ module Herb
           true
         end
 
-        #: (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
-        def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist, fatal: true)
+        #: (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool, ?static_markup: bool) -> void
+        def initialize(markers: Markers.new, mode: :server, identifier: :path, mark: true, deliver: :hoist, fatal: true, static_markup: false)
           super(fatal: fatal)
 
           raise ArgumentError, "`mode: #{mode.inspect}` is not a slot mode. Pass one of #{MODES.map(&:inspect).join(", ")}." unless MODES.include?(mode)
@@ -134,6 +136,8 @@ module Herb
           @mark = mark
           @degraded = false
           @deliver = deliver
+          @capture_static_markup = static_markup
+          @static_markup = nil #: String?
           @bufvar = "_buf"
           @mode = mode
           @statics = mode == :client ? {} : nil #: Hash[String, String]?
@@ -261,9 +265,6 @@ module Herb
         def open_tag_for(node)
           @attribute_open_tags[node]
         end
-
-        #: () -> Array[untyped]
-        attr_reader :slot_nodes
 
         #: (untyped) -> untyped
         def scope_of(node)
@@ -421,6 +422,11 @@ module Herb
           @states.apply_states
         end
 
+        #: () -> Hash[String, String]?
+        def statics
+          @statics&.dup
+        end
+
         #: (untyped) -> void
         def finish(node)
           return unless @mark
@@ -429,6 +435,9 @@ module Herb
 
           insert_markers(node)
           wrap_displaced
+
+          @static_markup = Statics.new(@standing, @element_anchored).markup(node.children) if @capture_static_markup
+
           wrap_region(node)
           append_statics(node)
           deliver_manifest(node)

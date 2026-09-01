@@ -37,6 +37,10 @@ module Herb
 
         attr_reader warnings: Array[Herb::Warnings::Warning]
 
+        attr_reader static_markup: String?
+
+        attr_reader slot_nodes: Array[untyped]
+
         SLOTS_DIRECTIVE: Regexp
 
         MODE_OPTION: Regexp
@@ -122,8 +126,8 @@ module Herb
         # : () -> bool
         def self.reads_erb_source?: () -> bool
 
-        # : (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
-        def initialize: (?markers: Markers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool, ?deliver: Symbol, ?fatal: bool) -> void
+        # : (?markers: Markers, ?mode: Symbol, ?identifier: (Symbol | ^(String) -> String), ?mark: bool, ?deliver: Symbol, ?fatal: bool, ?static_markup: bool) -> void
+        def initialize: (?markers: Markers, ?mode: Symbol, ?identifier: Symbol | ^(String) -> String, ?mark: bool, ?deliver: Symbol, ?fatal: bool, ?static_markup: bool) -> void
 
         # : () -> bool
         def degraded?: () -> bool
@@ -173,9 +177,6 @@ module Herb
         # : (untyped) -> untyped
         def open_tag_for: (untyped) -> untyped
 
-        # : () -> Array[untyped]
-        attr_reader slot_nodes: untyped
-
         # : (untyped) -> untyped
         def scope_of: (untyped) -> untyped
 
@@ -222,6 +223,9 @@ module Herb
         def occurrence_expression: () -> String
 
         def visit_document_node: (untyped node) -> untyped
+
+        # : () -> Hash[String, String]?
+        def statics: () -> Hash[String, String]?
 
         # : (untyped) -> void
         def finish: (untyped) -> void

@@ -111,6 +111,7 @@ module Herb
             "conditionals" => conditionals,
             "presence" => presence,
             "computed" => computed,
+            "server" => {},
           }
         end
 
