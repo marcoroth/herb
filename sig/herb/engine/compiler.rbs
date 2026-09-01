@@ -123,7 +123,7 @@ module Herb
       # : (untyped, ?extra: Integer) -> void
       def keep_span_line_count: (untyped, ?extra: Integer) -> void
 
-      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped) -> untyped
+      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped, ?absorbed: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
 

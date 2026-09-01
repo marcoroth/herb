@@ -349,5 +349,11 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "heredoc ending an output tag keeps the following line" do
+      template = "<p><%= <<~TEXT\n  hello\nTEXT\n%></p>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
