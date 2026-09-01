@@ -27,6 +27,7 @@ module Herb
         @last_trim_consumed_newline = false
         @pending_trim_newline_index = nil #: Integer?
         @pending_trim_owns_next_whitespace = false
+        @pending_span_extra_index = nil #: Integer?
         @pending_leading_whitespace = nil
         @pending_leading_whitespace_insert_index = 0
         @current_element_source = nil
@@ -452,6 +453,7 @@ module Herb
           end
 
           keep_span_line_count(node, extra: swallows_newline ? 1 : 0)
+          @pending_span_extra_index = @tokens.length if swallows_newline
 
           return
         end
@@ -501,11 +503,13 @@ module Herb
           @trim_next_whitespace = false
 
           settle_pending_trim_newline!(@last_trim_consumed_newline)
+          settle_pending_span_extra!(@last_trim_consumed_newline)
           restore_pending_leading_whitespace! unless @last_trim_consumed_newline
         else
           @last_trim_consumed_newline = false
 
           settle_pending_trim_newline!(false)
+          settle_pending_span_extra!(false)
         end
 
         @pending_leading_whitespace = nil
@@ -822,6 +826,19 @@ module Herb
         position = node.tag_closing&.location&.end || node.location&.end
 
         !position.nil? && !position.line.positive?
+      end
+
+      #: (bool) -> void
+      def settle_pending_span_extra!(keep)
+        index = @pending_span_extra_index
+
+        return unless index
+
+        @pending_span_extra_index = nil
+
+        return if keep
+
+        @padding_before[index] -= 1 if @padding_before&.key?(index)
       end
 
       #: (bool) -> void

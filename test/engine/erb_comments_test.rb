@@ -139,5 +139,11 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "a multi-line comment closed with content after it keeps the following line" do
+      template = "<%#-- a\nb\nc\n--#%><div>hi</div>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
