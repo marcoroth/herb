@@ -192,6 +192,9 @@ module Herb
       def without_source?: (untyped) -> bool
 
       # : (bool) -> void
+      def settle_pending_span_extra!: (bool) -> void
+
+      # : (bool) -> void
       def settle_pending_trim_newline!: (bool) -> void
 
       def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
