@@ -56,7 +56,16 @@ module Herb
     # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
     # stays. A chain that sits beside another in the same scope keeps the buffer too.
     #
-    # Every pass is on by default, and each can be left off on its own. `helpers: false` stops
+    # A template the collapse walks away from can still get its static subtrees. With
+    # `subtrees: true`, when the buffer stays, a chain whose branches are static collapses into a
+    # single append of the chain picking between path literals, the static text around it merged
+    # in, so a conditional attribute next to a dynamic one costs one append where it cost three.
+    # A chain the buffer already renders in one append is left as it was, and the duplication
+    # limit governs each subtree the way it governs the template. The pass trades compiled
+    # template bytes for fewer appends at render time, which is why it is the one pass that is
+    # off by default.
+    #
+    # Every other pass is on by default, and each can be left off on its own. `helpers: false` stops
     # asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the
     # postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs
     # dynamic, and `collapse: false` keeps the buffer for a template either collapse above would
@@ -108,14 +117,15 @@ module Herb
         true
       end
 
-      #: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?verify: bool) -> void
-      def initialize(helpers: true, conditionals: true, literals: true, collapse: true, verify: false)
+      #: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?subtrees: bool, ?verify: bool) -> void
+      def initialize(helpers: true, conditionals: true, literals: true, collapse: true, subtrees: false, verify: false)
         super()
 
         @helpers = helpers
         @conditionals = conditionals
         @literals = literals
         @collapse = collapse
+        @subtrees = subtrees
         @verify = verify
         @sources = {} #: Hash[String, Herb::Location?]
         @output_contexts = [] #: Array[Symbol]
@@ -181,13 +191,13 @@ module Herb
 
       #: (Herb::Engine, untyped) -> String?
       def compile_static_body(engine, compiler)
-        return unless @collapse
+        body = static_body(engine, compiler)
 
-        text = compiler.static_template_text
+        return body if body
 
-        return engine.string_literal(text) if text
+        collapse_subtrees(engine, compiler.optimized_tokens) if @subtrees
 
-        compile_static_branches(engine, compiler.optimized_tokens)
+        nil
       end
 
       #: () -> String
@@ -209,9 +219,40 @@ module Herb
         toggles << "conditionals=false" unless @conditionals
         toggles << "literals=false" unless @literals
         toggles << "collapse=false" unless @collapse
+        toggles << "subtrees=true" if @subtrees
         toggles << "verify=true" if @verify
 
         toggles
+      end
+
+      #: (Herb::Engine, untyped) -> String?
+      def static_body(engine, compiler)
+        return unless @collapse
+
+        text = compiler.static_template_text
+
+        return engine.string_literal(text) if text
+
+        compile_static_branches(engine, compiler.optimized_tokens)
+      end
+
+      #: (Herb::Engine, Array[untyped]) -> void
+      def collapse_subtrees(engine, tokens)
+        cursor = { index: 0 } #: Hash[Symbol, Integer]
+
+        while cursor[:index] < tokens.length
+          replacement = chain_run_replacement(engine, tokens, cursor[:index])
+
+          if replacement
+            range, token = replacement
+            tokens[range] = [token]
+            cursor[:index] = range.begin + 1
+          else
+            cursor[:index] += 1
+          end
+        end
+
+        nil
       end
 
       #: ((Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode)) -> Symbol?
@@ -517,6 +558,66 @@ module Herb
         implicit = !chain[:else_seen] && chain[:kind] != :in
 
         queues[:ends] << (implicit ? engine.escaped_string_literal("#{full_prefix}#{full_suffix}") : nil)
+      end
+
+      #: (Herb::Engine, Array[untyped], Integer) -> [::Range[Integer], Array[untyped]]?
+      def chain_run_replacement(engine, tokens, index)
+        opening = tokens[index]
+
+        return unless opening[0] == :code
+        return unless [:opening, :case_opening].include?(chain_keyword(opening[1].strip.to_s))
+
+        closing = chain_end_index(tokens, index)
+
+        return unless closing
+
+        start = index
+        start -= 1 while start.positive? && tokens[start - 1][0] == :text
+
+        stop = closing
+        stop += 1 while stop + 1 < tokens.length && tokens[stop + 1][0] == :text
+
+        slice = tokens[start..stop] #: Array[untyped]
+        root = branch_tree(slice)
+
+        return unless root
+        return unless start < index || stop > closing || nested_chain?(root)
+        return unless within_duplication_limit?(container_paths(root), slice)
+
+        source = render_static_branches(engine, slice, root)
+
+        return if Helpers.comment?(source) || Helpers.heredoc?(source)
+
+        [(start..stop), [:chain, source, nil]]
+      end
+
+      #: (Array[untyped], Integer) -> Integer?
+      def chain_end_index(tokens, index)
+        depth = 0
+
+        (index...tokens.length).each do |position|
+          token = tokens[position]
+
+          next unless token[0] == :code
+
+          keyword = chain_keyword(token[1].strip.to_s)
+
+          depth += 1 if [:opening, :case_opening].include?(keyword)
+          depth -= 1 if keyword == :end
+
+          return position if depth.zero? && keyword == :end
+        end
+
+        nil
+      end
+
+      #: (Hash[Symbol, untyped]) -> bool
+      def nested_chain?(container)
+        chain = container_chain(container)
+
+        return false unless chain
+
+        chain[:branches].any? { |branch| container_chain(branch) }
       end
 
       #: (String) -> Symbol?

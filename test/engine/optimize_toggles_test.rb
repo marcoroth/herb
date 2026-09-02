@@ -70,6 +70,22 @@ module Engine
       end
     end
 
+    describe "the subtrees pass" do
+      test "off by default, a static chain inside a kept buffer stays buffered" do
+        assert_compiled_snapshot(
+          "<div>\n  <%= name %>\n  <% if flag %>Admin<% else %>Member<% end %>\n</div>",
+          optimize_options
+        )
+      end
+
+      test "turned on, the chain and the text around it become one append" do
+        assert_compiled_snapshot(
+          "<div>\n  <%= name %>\n  <% if flag %>Admin<% else %>Member<% end %>\n</div>",
+          optimize_options({ subtrees: true })
+        )
+      end
+    end
+
     describe "what inspect names" do
       test "default construction names no toggles" do
         assert_equal "#<Herb::Engine::OptimizeVisitor>", Herb::Engine::OptimizeVisitor.new.inspect
@@ -84,9 +100,9 @@ module Engine
       end
 
       test "every non-default toggle is named" do
-        visitor = Herb::Engine::OptimizeVisitor.new(helpers: false, conditionals: false, literals: false, collapse: false, verify: true)
+        visitor = Herb::Engine::OptimizeVisitor.new(helpers: false, conditionals: false, literals: false, collapse: false, subtrees: true, verify: true)
 
-        assert_equal "#<Herb::Engine::OptimizeVisitor helpers=false conditionals=false literals=false collapse=false verify=true>", visitor.inspect
+        assert_equal "#<Herb::Engine::OptimizeVisitor helpers=false conditionals=false literals=false collapse=false subtrees=true verify=true>", visitor.inspect
       end
     end
 
