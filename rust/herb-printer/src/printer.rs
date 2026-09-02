@@ -555,11 +555,20 @@ pub trait Printer: Visitor + Default {
     self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
   }
 
+  fn emit_herb_directive(&mut self, node: &HerbDirectiveNode) {
+    self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
+  }
+
+  fn emit_herb_state_directive(&mut self, node: &HerbStateDirectiveNode) {
+    self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
+  }
+
   fn emit_html_omitted_close_tag(&mut self, _node: &HTMLOmittedCloseTagNode) {}
   fn emit_html_virtual_close_tag(&mut self, _node: &HTMLVirtualCloseTagNode) {}
   fn emit_ruby_render_local(&mut self, _node: &RubyRenderLocalNode) {}
   fn emit_ruby_render_keywords(&mut self, _node: &RubyRenderKeywordsNode) {}
   fn emit_ruby_parameter(&mut self, _node: &RubyParameterNode) {}
+  fn emit_herb_state_declaration(&mut self, _node: &HerbStateDeclarationNode) {}
 }
 
 fn ensure_printable(has_errors: bool, node_type: &str) -> Result<(), PrintError> {

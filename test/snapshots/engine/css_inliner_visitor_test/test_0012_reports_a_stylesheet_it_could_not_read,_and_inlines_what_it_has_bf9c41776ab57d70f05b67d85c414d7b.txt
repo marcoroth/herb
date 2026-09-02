@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0012_reports a stylesheet it could not read, and inlines what it has"
+input: "{source: \"<style>.a { color: #ff0000 }</style><p class=\\\"a\\\">Hi</p>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor stylesheets=nope.css>]}}"
+---
+<p class="a" style="color: #ff0000;">Hi</p>

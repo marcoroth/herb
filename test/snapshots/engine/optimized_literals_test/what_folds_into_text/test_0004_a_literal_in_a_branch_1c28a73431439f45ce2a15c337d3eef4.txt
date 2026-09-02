@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::what folds into text#test_0004_a literal in a branch"
+input: "{source: \"<% if flag %><%= \\\"yes\\\" %><% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag ; "yes".freeze; else "".freeze;end;

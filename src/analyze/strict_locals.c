@@ -27,8 +27,7 @@ static bool is_strict_locals_node(const AST_ERB_CONTENT_NODE_T* node) {
   if (!node->tag_opening || !node->content) { return false; }
   if (hb_string_is_empty(node->tag_opening->value)) { return false; }
 
-  const char* opening = node->tag_opening->value.data;
-  if (!opening || !strstr(opening, "#")) { return false; }
+  if (!hb_string_contains_character(node->tag_opening->value, '#')) { return false; }
 
   const char* content = node->content->value.data;
   if (!content) { return false; }

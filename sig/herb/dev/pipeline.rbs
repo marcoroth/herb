@@ -1,0 +1,100 @@
+# Generated from lib/herb/dev/pipeline.rb with RBS::Inline
+
+module Herb
+  module Dev
+    # Turns one watcher event into the messages the browsers need.
+    #
+    # The pipeline holds what it learned about every file so far. The version a file last
+    # compiled to says whether an edit changed the template's shape, the slot entries feed
+    # the remap, and the error state decides when a clean compile has to say so out loud.
+    # Parse errors and compile diagnostics live in the same state machine, so a template
+    # that stops compiling behaves exactly like one that stops parsing.
+    #
+    # The compiler is looked up per event. A host that registers one after the pipeline
+    # started is picked up on the next change.
+    class Pipeline
+      STATES: Array[Symbol]
+
+      class Failure < Struct[untyped]
+        attr_accessor mode(): untyped
+
+        attr_accessor manifest(): untyped
+
+        attr_accessor version(): untyped
+
+        attr_accessor slot_entries(): untyped
+
+        attr_accessor statics(): untyped
+
+        attr_accessor static_markup(): untyped
+
+        attr_accessor diagnostics(): untyped
+
+        def self.new: (?untyped mode, ?untyped manifest, ?untyped version, ?untyped slot_entries, ?untyped statics, ?untyped static_markup, ?untyped diagnostics) -> instance
+                    | (?mode: untyped, ?manifest: untyped, ?version: untyped, ?slot_entries: untyped, ?statics: untyped, ?static_markup: untyped, ?diagnostics: untyped) -> instance
+      end
+
+      # : (server: untyped, ?configuration: Herb::Configuration?, ?compiler: ^() -> Herb::Dev::_Compiler?) -> void
+      def initialize: (server: untyped, ?configuration: Herb::Configuration?, ?compiler: ^() -> Herb::Dev::_Compiler?) -> void
+
+      # : () { (untyped, Classifier::Classification?) -> void } -> void
+      def on_classified: () { (untyped, Classifier::Classification?) -> void } -> void
+
+      # : () -> bool
+      def compiles?: () -> bool
+
+      # : (Watcher::Event) -> void
+      def handle_event: (Watcher::Event) -> void
+
+      private
+
+      # : (Watcher::Event) -> void
+      def handle_removed: (Watcher::Event) -> void
+
+      # : (Watcher::Event) -> void
+      def handle_added: (Watcher::Event) -> void
+
+      # : (Watcher::Event) -> void
+      def handle_changed: (Watcher::Event) -> void
+
+      # : (Watcher::Event, Classifier::Classification) -> void
+      def handle_content_change: (Watcher::Event, Classifier::Classification) -> void
+
+      # : (Herb::Dev::_Compiler, Watcher::Event) -> untyped
+      def compile: (Herb::Dev::_Compiler, Watcher::Event) -> untyped
+
+      # : (StandardError) -> untyped
+      def failure: (StandardError) -> untyped
+
+      # : (String, Watcher::Event, untyped, Classifier::Classification) -> Hash[Symbol, untyped]
+      def schema_for: (String, Watcher::Event, untyped, Classifier::Classification) -> Hash[Symbol, untyped]
+
+      # : (String, Classifier::Classification, untyped) -> Hash[Symbol, untyped]
+      def invalidate_for: (String, Classifier::Classification, untyped) -> Hash[Symbol, untyped]
+
+      # : (String, Classifier::Classification, untyped) -> Symbol
+      def scope_for: (String, Classifier::Classification, untyped) -> Symbol
+
+      # : (untyped) -> untyped
+      def states_of: (untyped) -> untyped
+
+      # : (String, untyped, Classifier::Classification) -> Hash[String, untyped]?
+      def remap_for: (String, untyped, Classifier::Classification) -> Hash[String, untyped]?
+
+      # : (String, untyped) -> Array[String]?
+      def changed_statics_for: (String, untyped) -> Array[String]?
+
+      # : (String, untyped) -> void
+      def remember: (String, untyped) -> void
+
+      # : (Watcher::Event, Classifier::Classification) -> void
+      def handle_without_compiler: (Watcher::Event, Classifier::Classification) -> void
+
+      # : (Hash[Symbol, untyped]) -> void
+      def broadcast: (Hash[Symbol, untyped]) -> void
+
+      # : (Watcher::Event, Classifier::Classification?) -> void
+      def notify: (Watcher::Event, Classifier::Classification?) -> void
+    end
+  end
+end

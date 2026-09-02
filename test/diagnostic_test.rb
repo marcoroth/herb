@@ -64,28 +64,12 @@ class DiagnosticTest < Minitest::Spec
     assert_equal "3 SQL queries", metric.to_h[:value]
   end
 
-  describe ".code_for" do
-    test "hyphenates and drops the trailing Error" do
-      assert_equal "missing-closing-tag", Herb::Diagnostic.code_for("MissingClosingTagError")
-      assert_equal "render-layout-without-block", Herb::Diagnostic.code_for("RenderLayoutWithoutBlockError")
-    end
-
-    test "keeps a name that does not end in Error" do
-      assert_equal "security-violation", Herb::Diagnostic.code_for("SecurityViolation")
-    end
-
-    test "splits an acronym on the last capital" do
-      assert_equal "html-parse", Herb::Diagnostic.code_for("HTMLParseError")
-      assert_equal "malformed-erb-closing-tag", Herb::Diagnostic.code_for("MalformedERBClosingTagError")
-    end
-  end
-
   describe "built from a parser error" do
     test "keeps the position it was found at, without shifting the column" do
       error = Herb.parse("<div><p></div>").errors.first
       diagnostic = error.to_diagnostic(template: "a.html.erb")
 
-      assert_equal "missing-closing-tag", diagnostic.code
+      assert_equal "MissingClosingTagError", diagnostic.code
       assert_equal "Herb Parser", diagnostic.origin
       assert_equal error.location.start.column, diagnostic.location.start.column
       assert_equal error.location.start.column + 1, diagnostic.to_h[:location][:start][:column]

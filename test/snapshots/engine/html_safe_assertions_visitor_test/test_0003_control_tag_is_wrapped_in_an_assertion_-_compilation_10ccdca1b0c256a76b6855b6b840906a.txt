@@ -1,7 +1,0 @@
----
-source: "Engine::HTMLSafeAssertionsVisitorTest#test_0003_control tag is wrapped in an assertion - compilation"
-input: "{source: \"<% content = message.html_safe %><div><%= content %></div>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
----
-_buf = ::String.new; content = ::Herb::Engine::HTMLSafeAssertions.check(message, file: "app/views/test.html.erb".freeze, line: 1, column: 1, source: "<% content = message.html_safe %>".freeze, mode: :raise).html_safe 
- _buf << '<div>'.freeze; _buf << (content).to_s; _buf << '</div>'.freeze;
-_buf.to_s

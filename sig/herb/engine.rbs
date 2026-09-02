@@ -22,15 +22,19 @@ module Herb
     # : (String) -> String
     def string_literal: (String) -> String
 
+    STRING_LITERAL_ESCAPES: Hash[String, String]
+
+    # : (String) -> String
+    def escaped_string_literal: (String) -> String
+
     ESCAPE_TABLE: untyped
+
+    ATTRIBUTE_ESCAPE_TABLE: untyped
 
     def initialize: (untyped input, ?untyped properties) -> untyped
 
     def self.h: (untyped value) -> untyped
 
-    # Appending to a plain String buffer never escapes, but `ActionView::OutputBuffer#<<` does
-    # unless the value is already marked safe. A marker the engine generated is markup, so it has
-    # to survive both buffers unchanged.
     # : (untyped) -> String
     def self.raw: (untyped) -> String
 
@@ -41,10 +45,6 @@ module Herb
     def self.css: (untyped value) -> untyped
 
     def self.nested_attribute_value: (untyped value) -> untyped
-
-    def self.comment?: (untyped code) -> untyped
-
-    def self.heredoc?: (untyped code) -> untyped
 
     # : () -> untyped
     def compiler_class: () -> untyped
@@ -85,6 +85,9 @@ module Herb
 
     # : (Hash[Symbol, untyped]) -> bool
     def buffer_required?: (Hash[Symbol, untyped]) -> bool
+
+    # : (String) -> String
+    def wrap_postamble: (String) -> String
 
     # : (untyped) -> String?
     def compile_static_body: (untyped) -> String?

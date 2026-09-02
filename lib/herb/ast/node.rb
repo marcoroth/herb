@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "../locate"
+
 module Herb
   #: type serialized_node = {
   #|  type: String,
@@ -113,6 +115,16 @@ module Herb
       #: () -> Array[Herb::AST::Node]
       def compact_child_nodes
         child_nodes.compact
+      end
+
+      #: (Herb::Position) -> Herb::Locate::Result?
+      def locate(position)
+        Herb::Locate.call(self, position)
+      end
+
+      #: (Herb::Position) -> bool
+      def locatable?(position)
+        Herb::Locate.locatable?(self, position)
       end
 
       #: () -> Array[Herb::Errors::Error]

@@ -3,7 +3,7 @@ import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
-import { isAssignmentNode, isDebugOutputCall, isSleepCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "../utils/prism-rule-utils.js"
+import { isAssignmentNode, isAttributeWriteCall, isDebugOutputCall, isSleepCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "../utils/prism-rule-utils.js"
 import { StateScopeMap } from "../utils/state-directives-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -47,6 +47,7 @@ class UnusedExpressionCollector extends PrismVisitor {
     }
 
     if (isAssignmentNode(node)) return
+    if (isAttributeWriteCall(node)) return
 
     if (this.isUnusedExpression(node)) {
       this.expressions.push(node)

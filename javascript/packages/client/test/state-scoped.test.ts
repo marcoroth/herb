@@ -1,8 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState, STATE_EVENT } from "../src/state"
-import { resetReport } from "../src/report"
-import type { RuntimeDiagnostic } from "../src/report"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+import { STATE_EVENT } from "../src/shared/events"
+import { resetReport } from "../src/shared/report"
+import type { RuntimeDiagnostic } from "../src/shared/types"
 
 const FILE = "app/views/page/chat.html.erb"
 
@@ -32,30 +33,34 @@ function regionMarkup(occurrence: number): string {
   )
 }
 
+function arm(branch: number | null, condition: unknown): unknown {
+  return { branch, condition }
+}
+
 const MANIFEST = {
   state: {},
   states: {
     [FILE]: {
       version: "aaaaaaaa",
       declarations: [
-        { name: "pending", kind: "boolean", default: "false", scope: "region" },
-        { name: "failed", kind: "boolean", default: "false", scope: "region" },
-        { name: "attempts", kind: "integer", default: "0", scope: "region" },
-        { name: "starred", kind: "boolean", default: "false", scope: 2 },
-        { name: "sort", kind: "string", default: '"name"', scope: "region" },
-        { name: "counter1", kind: "integer", default: "0", scope: "region" },
-        { name: "counter2", kind: "integer", default: "5", scope: "region" },
+        { name: "pending", kind: "boolean", default: "false", value: false, scope: "region" },
+        { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
+        { name: "attempts", kind: "integer", default: "0", value: 0, scope: "region" },
+        { name: "starred", kind: "boolean", default: "false", value: false, scope: 2 },
+        { name: "sort", kind: "string", default: '"name"', value: "name", scope: "region" },
+        { name: "counter1", kind: "integer", default: "0", value: 0, scope: "region" },
+        { name: "counter2", kind: "integer", default: "5", value: 5, scope: "region" },
       ],
       reads: { attempts: [1] },
       conditionals: {
-        0: { arms: [["pending", null, 0], ["failed", null, 1]], else: 2 },
-        4: { arms: [["starred", null, 0]], else: 1 },
-        7: { arms: [["pending", null, 1]], else: 0 },
-        8: { arms: [["attempts", "3", 0, ">"]], else: 1 },
-        10: { arms: [["sort", '"date"', 0, "!="]], else: 1 },
-        11: { arms: [["counter1", { state: "counter2" }, 0, ">"]], else: 1 },
+        0: { arms: [arm(0, ["pending", null]), arm(1, ["failed", null])], else: 2 },
+        4: { arms: [arm(0, ["starred", null])], else: 1 },
+        7: { arms: [arm(1, ["pending", null])], else: 0 },
+        8: { arms: [arm(0, ["attempts", { value: 3 }, ">"])], else: 1 },
+        10: { arms: [arm(0, ["sort", { value: "date" }, "!="])], else: 1 },
+        11: { arms: [arm(0, ["counter1", { state: "counter2" }, ">"])], else: 1 },
       },
-      presence: { 9: ["attempts", "2", ">="] },
+      presence: { 9: ["attempts", { value: 2 }, ">="] },
     },
   },
 }
@@ -64,17 +69,16 @@ function dependencies(): string {
   return `<template data-herb-dependencies>${JSON.stringify(MANIFEST)}</template>`
 }
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 function boot(markup: string): void {
   document.body.innerHTML = markup + dependencies()
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, {
-    persist: "none",
+  state = new State(slots, {
     transport: () => {
       throw new Error("a declared state must never reach the transport")
     },
@@ -90,10 +94,10 @@ describe("a state read in an interpolated attribute", () => {
   const ROW_PAGE =
     `<!--herb-region:${ROW_FILE}:dddddddd:0-->` +
     `<div class="row-" data-herb-slot="0:attribute_interpolation:class">x</div>` +
-    `<template data-herb-region="${ROW_FILE}:dddddddd">` +
-    `<!--herb-branch:0:parts-->row-<!--herb-part-->` +
-    `</template>` +
-    `<!--/herb-region:${ROW_FILE}-->`
+    `<!--/herb-region:${ROW_FILE}-->` +
+    `<template data-herb-manifests>${JSON.stringify({
+      [`${ROW_FILE}:dddddddd`]: { file: ROW_FILE, identifier: ROW_FILE, version: "dddddddd", names: {}, parts: { 0: ["row-", ""] }, states: null },
+    })}</template>`
 
   const ROW_MANIFEST = {
     state: {},
@@ -110,12 +114,11 @@ describe("a state read in an interpolated attribute", () => {
   test("a state write rebuilds the whole attribute from its parts", () => {
     document.body.innerHTML = ROW_PAGE + `<template data-herb-dependencies>${JSON.stringify(ROW_MANIFEST)}</template>`
 
-    const rowSlots = new SlotIndex()
+    const rowSlots = new Slots()
 
     rowSlots.scan(document.body)
 
-    const rowState = new SlotState(rowSlots, {
-      persist: "none",
+    const rowState = new State(rowSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -154,8 +157,8 @@ describe("sibling collections sharing a state name", () => {
       [TWIN_FILE]: {
         version: "cccccccc",
         declarations: [
-          { name: "starred", kind: "boolean", default: "false", scope: 0 },
-          { name: "starred", kind: "boolean", default: "false", scope: 5 },
+          { name: "starred", kind: "boolean", default: "false", value: false, scope: 0 },
+          { name: "starred", kind: "boolean", default: "false", value: false, scope: 5 },
         ],
         reads: {},
         conditionals: {
@@ -169,12 +172,11 @@ describe("sibling collections sharing a state name", () => {
   test("a write in one collection leaves the other alone", () => {
     document.body.innerHTML = TWIN_PAGE + `<template data-herb-dependencies>${JSON.stringify(TWIN_MANIFEST)}</template>`
 
-    const twinSlots = new SlotIndex()
+    const twinSlots = new Slots()
 
     twinSlots.scan(document.body)
 
-    const twinState = new SlotState(twinSlots, {
-      persist: "none",
+    const twinState = new State(twinSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -193,11 +195,11 @@ describe("sibling collections sharing a state name", () => {
 
 describe("declared state", () => {
   test("a burst of state writes does not evict held revert tokens", () => {
-    const report = slots.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 1: "9" } })
+    const { token } = slots.transaction(() => slots.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 1: "9" } }))
 
     for (let step = 0; step < 60; step += 1) state.setState({ attempts: step })
 
-    expect(slots.revert(report.token!)).toBe(true)
+    expect(slots.revert(token!)).toBe(true)
   })
 
   test("a state compares against another state, from either side", () => {
@@ -291,9 +293,9 @@ describe("declared state", () => {
 
     manifest.states[FILE].conditionals[0] = { arms: [["attempts", null, 0]], else: 2 }
     document.body.innerHTML = regionMarkup(0) + `<template data-herb-dependencies>${JSON.stringify(manifest)}</template>`
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     state.setState({ attempts: 0 })
@@ -346,9 +348,9 @@ describe("declared state", () => {
 
   test("two renders of a template hold independent values", () => {
     document.body.innerHTML = regionMarkup(0) + regionMarkup(1) + dependencies()
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     const regions = slots.regionsFor(FILE)
@@ -382,9 +384,9 @@ describe("declared state", () => {
   test("a version mismatch declines rather than resolving stale arms", () => {
     document.body.innerHTML =
       regionMarkup(0).split("aaaaaaaa").join("bbbbbbbb") + dependencies()
-    slots = new SlotIndex()
+    slots = new Slots()
     slots.scan(document.body)
-    state = new SlotState(slots, { persist: "none" })
+    state = new State(slots, {})
     state.adopt()
 
     expect(state.setState({ pending: true })).toBe(false)
@@ -393,7 +395,7 @@ describe("declared state", () => {
   test("the transport is never called", () => {
     const transport = vi.fn()
 
-    state = new SlotState(slots, { persist: "none", transport })
+    state = new State(slots, { transport })
     state.adopt()
     state.setState({ pending: true })
 
@@ -436,11 +438,11 @@ describe("combo conditions", () => {
       [COMBO_FILE]: {
         version: "eeeeeeee",
         declarations: [
-          { name: "counter1", kind: "integer", default: "0", scope: "region" },
-          { name: "counter2", kind: "integer", default: "5", scope: "region" },
-          { name: "pending", kind: "boolean", default: "false", scope: "region" },
-          { name: "failed", kind: "boolean", default: "false", scope: "region" },
-          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+          { name: "counter1", kind: "integer", default: "0", value: 0, scope: "region" },
+          { name: "counter2", kind: "integer", default: "5", value: 5, scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", value: 0, scope: "region" },
         ],
         reads: {},
         conditionals: {
@@ -453,17 +455,16 @@ describe("combo conditions", () => {
     },
   }
 
-  let comboState: SlotState
+  let comboState: State
 
   beforeEach(() => {
     document.body.innerHTML = COMBO_PAGE + `<template data-herb-dependencies>${JSON.stringify(COMBO_MANIFEST)}</template>`
 
-    const comboSlots = new SlotIndex()
+    const comboSlots = new Slots()
 
     comboSlots.scan(document.body)
 
-    comboState = new SlotState(comboSlots, {
-      persist: "none",
+    comboState = new State(comboSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -542,9 +543,9 @@ describe("derived states", () => {
       [DERIVED_FILE]: {
         version: "ffffffff",
         declarations: [
-          { name: "pending", kind: "boolean", default: "false", scope: "region" },
-          { name: "failed", kind: "boolean", default: "false", scope: "region" },
-          { name: "attempts", kind: "integer", default: "0", scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
+          { name: "attempts", kind: "integer", default: "0", value: 0, scope: "region" },
           { name: "busy", kind: "boolean", default: "pending || failed", derived: { any: [["pending", null], ["failed", null]] }, scope: "region" },
           { name: "total", kind: "integer", default: "attempts", derived: ["attempts", null], scope: "region" },
           { name: "deep", kind: "boolean", default: "busy && attempts > 2", derived: { all: [["busy", null], ["attempts", "2", ">"]] }, scope: "region" },
@@ -559,17 +560,16 @@ describe("derived states", () => {
     },
   }
 
-  let derivedState: SlotState
+  let derivedState: State
 
   beforeEach(() => {
     document.body.innerHTML = DERIVED_PAGE + `<template data-herb-dependencies>${JSON.stringify(DERIVED_MANIFEST)}</template>`
 
-    const derivedSlots = new SlotIndex()
+    const derivedSlots = new Slots()
 
     derivedSlots.scan(document.body)
 
-    derivedState = new SlotState(derivedSlots, {
-      persist: "none",
+    derivedState = new State(derivedSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -663,8 +663,8 @@ describe("counted states", () => {
       [COUNT_FILE]: {
         version: "cafe1234",
         declarations: [
-          { name: "pending", kind: "boolean", default: "false", scope: 0 },
-          { name: "pending_count", kind: "integer", default: "0", count: { collection: 0, when: ["pending", null], by: 1 }, scope: "region" },
+          { name: "pending", kind: "boolean", default: "false", value: false, scope: 0 },
+          { name: "pending_count", kind: "integer", default: "0", value: 0, count: { collection: 0, when: ["pending", null], by: 1 }, scope: "region" },
           { name: "loud", kind: "boolean", default: "pending_count > 0", derived: ["pending_count", "0", ">"], scope: "region" },
         ],
         reads: { pending_count: [2] },
@@ -676,17 +676,16 @@ describe("counted states", () => {
     },
   }
 
-  let countSlots: SlotIndex
-  let countState: SlotState
+  let countSlots: Slots
+  let countState: State
 
   beforeEach(() => {
     document.body.innerHTML = COUNT_PAGE + `<template data-herb-dependencies>${JSON.stringify(COUNT_MANIFEST)}</template>`
 
-    countSlots = new SlotIndex()
+    countSlots = new Slots()
     countSlots.scan(document.body)
 
-    countState = new SlotState(countSlots, {
-      persist: "none",
+    countState = new State(countSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -695,7 +694,7 @@ describe("counted states", () => {
     countState.adopt()
   })
 
-  function scopeOf(selector: string): NonNullable<ReturnType<SlotState["scopeFor"]>> {
+  function scopeOf(selector: string): NonNullable<ReturnType<State["scopeFor"]>> {
     return countState.scopeFor(document.querySelector(selector)!, "pending")!
   }
 
@@ -781,7 +780,7 @@ describe("shipped seeds", () => {
         declarations: [
           { name: "open", kind: "boolean", default: "open_initially", scope: "region" },
           { name: "label", kind: "seeded", default: "@label", scope: "region" },
-          { name: "failed", kind: "boolean", default: "false", scope: "region" },
+          { name: "failed", kind: "boolean", default: "false", value: false, scope: "region" },
           { name: "pending", kind: "boolean", default: "message.odd?", scope: 1 },
         ],
         reads: {},
@@ -793,17 +792,16 @@ describe("shipped seeds", () => {
     },
   }
 
-  let seedSlots: SlotIndex
-  let seedState: SlotState
+  let seedSlots: Slots
+  let seedState: State
 
   beforeEach(() => {
     document.body.innerHTML = SEED_PAGE + `<template data-herb-dependencies>${JSON.stringify(SEED_MANIFEST)}</template>`
 
-    seedSlots = new SlotIndex()
+    seedSlots = new Slots()
     seedSlots.scan(document.body)
 
-    seedState = new SlotState(seedSlots, {
-      persist: "none",
+    seedState = new State(seedSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -860,7 +858,7 @@ describe("shipped seeds that disagree with the declaration", () => {
 
   let devTools: FakeDevTools
 
-  function boot(seeds: string, declarations: Record<string, unknown>[]): SlotState {
+  function boot(seeds: string, declarations: Record<string, unknown>[]): State {
     document.body.innerHTML =
       `<!--herb-region:${ODD_FILE}:0ddc0ffe:0-->` +
       `<!--herb-seeds:${seeds}-->` +
@@ -871,10 +869,10 @@ describe("shipped seeds that disagree with the declaration", () => {
         states: { [ODD_FILE]: { version: "0ddc0ffe", declarations, reads: {}, conditionals: {} } },
       })}</template>`
 
-    const oddSlots = new SlotIndex()
+    const oddSlots = new Slots()
     oddSlots.scan(document.body)
 
-    const oddState = new SlotState(oddSlots, { persist: "none" })
+    const oddState = new State(oddSlots, {})
     oddState.adopt()
 
     return oddState
@@ -945,7 +943,7 @@ describe("shipped seeds that disagree with the declaration", () => {
     const oddState = boot('{"name":"x"}', [
       { name: "name", kind: "string", default: "@name", scope: "region", line: 2, column: 0 },
       { name: "shape", kind: "seeded", default: "@shape", scope: "region", line: 2, column: 0 },
-      { name: "count", kind: "integer", default: "0", scope: "region", line: 2, column: 0 },
+      { name: "count", kind: "integer", default: "0", value: 0, scope: "region", line: 2, column: 0 },
     ])
 
     expect(oddState.getState("shape")).toBeNull()
@@ -971,7 +969,7 @@ const MIXED_PAGE =
         version: "eeeeeeee",
         declarations: [
           { name: "filter", kind: "string", default: '"all"', scope: "region" },
-          { name: "starred", kind: "boolean", default: "false", scope: 0 },
+          { name: "starred", kind: "boolean", default: "false", value: false, scope: 0 },
         ],
         reads: {},
         conditionals: {},
@@ -984,12 +982,11 @@ describe("a condition reading both a region state and an item state", () => {
   test("resolves each name in its own scope, once per row", () => {
     document.body.innerHTML = MIXED_PAGE
 
-    const mixedSlots = new SlotIndex()
+    const mixedSlots = new Slots()
 
     mixedSlots.scan(document.body)
 
-    const mixedState = new SlotState(mixedSlots, {
-      persist: "none",
+    const mixedState = new State(mixedSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -1021,12 +1018,11 @@ describe("a condition reading both a region state and an item state", () => {
         `</template>`,
     )
 
-    const addedSlots = new SlotIndex()
+    const addedSlots = new Slots()
 
     addedSlots.scan(document.body)
 
-    const addedState = new SlotState(addedSlots, {
-      persist: "none",
+    const addedState = new State(addedSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -1038,14 +1034,11 @@ describe("a condition reading both a region state and an item state", () => {
     const collection = region.slots.get(0)!
 
     addedState.setState({ filter: "starred" }, { scope: { region, item: null } })
-
     addedSlots.addItem(collection, "c")
 
     expect(collection.items.get("c")!.slots.get(1)!.anchor.kind).toBe("element")
     expect([...document.querySelectorAll("li")].map((li) => li.hasAttribute("hidden"))).toEqual([true, true, true])
 
-    // The server renders every state as its default, so its answer for a state-driven boolean
-    // attribute is always stale. It must not win over what the client already decided.
     addedSlots.apply({
       template: MIXED_FILE,
       version: "eeeeeeee",
@@ -1054,5 +1047,69 @@ describe("a condition reading both a region state and an item state", () => {
     })
 
     expect([...document.querySelectorAll("li")].map((li) => li.hasAttribute("hidden"))).toEqual([true, true, true])
+  })
+})
+
+describe("a collection nested inside another collection", () => {
+  const NESTED_FILE = "app/views/page/nested.html.erb"
+
+  const NESTED_PAGE =
+    `<!--herb-region:${NESTED_FILE}:ffffffff:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:g--><li><span data-herb-slot="1:child">group</span><ul><!--herb-slot:2:collection-->` +
+    `<!--herb-item:2:r--><li data-herb-slot="3:child">row</li><!--/herb-item:2-->` +
+    `<!--/herb-slot:2--></ul></li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul><!--/herb-region:${NESTED_FILE}-->`
+
+  const NESTED_MANIFEST = {
+    state: {},
+    states: {
+      [NESTED_FILE]: {
+        version: "ffffffff",
+        declarations: [
+          { name: "open", kind: "boolean", default: "false", value: false, scope: 0 },
+          { name: "picked", kind: "boolean", default: "false", value: false, scope: 2 },
+        ],
+        reads: {},
+        conditionals: {},
+      },
+    },
+  }
+
+  let nestedSlots: Slots
+  let nestedState: State
+
+  beforeEach(() => {
+    document.body.innerHTML = NESTED_PAGE + `<template data-herb-dependencies>${JSON.stringify(NESTED_MANIFEST)}</template>`
+
+    nestedSlots = new Slots()
+    nestedSlots.scan(document.body)
+
+    nestedState = new State(nestedSlots, { transport: () => { throw new Error("no transport") } })
+    nestedState.adopt()
+  })
+
+  test("indexes the inner collection's items under the outer item that holds them", () => {
+    const outer = nestedSlots.slot(NESTED_FILE, 0)!
+    const inner = outer.items.get("g")!.slots.get(2)!
+
+    expect(inner.type).toBe("collection")
+    expect([...inner.items.keys()]).toEqual(["r"])
+  })
+
+  test("resolves a state declared on the outer collection from inside the inner one", () => {
+    const row = document.querySelector("[data-herb-slot='3:child']")!
+
+    expect(nestedState.scopeFor(row, "picked")?.item?.key).toBe("r")
+    expect(nestedState.scopeFor(row, "open")?.item?.key).toBe("g")
+  })
+
+  test("writes each state in the scope that declares it", () => {
+    const row = document.querySelector("[data-herb-slot='3:child']")!
+
+    nestedState.setState({ open: true }, { scope: nestedState.scopeFor(row, "open")! })
+    nestedState.setState({ picked: true }, { scope: nestedState.scopeFor(row, "picked")! })
+
+    expect(nestedState.getState("open", { scope: nestedState.scopeFor(row, "open")! })).toBe(true)
+    expect(nestedState.getState("picked", { scope: nestedState.scopeFor(row, "picked")! })).toBe(true)
   })
 })

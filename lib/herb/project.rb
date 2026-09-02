@@ -8,6 +8,9 @@ require "pathname"
 require "English"
 require "stringio"
 
+require_relative "colors"
+require_relative "configuration"
+
 module Herb
   class Project
     include Colors
@@ -477,6 +480,7 @@ module Herb
     end
 
     def compile_file(file_path, file_content)
+      require_relative "engine"
       require_relative "engine/validators"
 
       Herb::Engine.new(

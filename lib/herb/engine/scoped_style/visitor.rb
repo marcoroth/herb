@@ -4,10 +4,11 @@
 require "digest"
 
 require_relative "../../visitor"
-require_relative "../context_aware"
-require_relative "../diagnostics"
+require_relative "../../visitor/experimental"
+require_relative "../../visitor/context_aware"
+require_relative "../../visitor/diagnostics"
 require_relative "channel"
-require_relative "../visitor_context"
+require_relative "../../visitor/context"
 
 module Herb
   class Engine
@@ -24,19 +25,17 @@ module Herb
       # rewritten to require it. There is no single root element to write, because a file is scoped
       # as a whole. A file with five sibling roots and a file with none behave the same way.
       #
-      # Where the attribute goes depends on what the file can be sure of. A file that renders nothing
-      # owns everything under its roots, so the attribute goes on the roots alone and the selectors
-      # match within them. A file that renders something does not, so every element it wrote carries
-      # the attribute and the selectors match only those.
+      # Every element the file wrote carries the attribute, and every rule is narrowed by it. Markup the
+      # file rendered carries a scope of its own or none, so a block reaches what the file wrote and
+      # nothing else, whatever is nested inside it.
       #
-      # The second form is not a fallback that could be avoided with a better selector. Narrowing by
-      # ancestor cannot stop at a nested scope, because an element inside one is still a descendant
-      # of the one outside it, and CSS has no way to say otherwise. Only an attribute on the element
-      # itself distinguishes them.
+      # Narrowing by ancestor would cost fewer attributes, and cannot be had. An element inside a nested
+      # scope is still a descendant of the one outside it, and CSS has no way to say otherwise, so only
+      # an attribute on the element itself tells them apart.
       #
       # A file is scoped as a whole, so markup an inlined partial brought with it belongs to the
-      # partial and not to the template it landed in. `Herb::Engine::Origin` is what says so, which
-      # is why this has to run after `InlineRenderVisitor` and before `SlotVisitor`, whose parked
+      # partial and not to the template it landed in. `Herb::Visitor::Context::Origin` is what says so, which
+      # is why this has to run after `InlineRenderVisitor` and before `Slots::Visitor`, whose parked
       # markup a client rebuilds from and which therefore has to already carry the attribute.
       #
       # Rewriting the selectors is somebody else's job. `transform` is anything answering `call` with
@@ -53,12 +52,11 @@ module Herb
       #     Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new(minify: true))
       #
       # `scope` is the selector each rule has to be narrowed by, appended to what the rule already
-      # matches. A file that renders nothing is given the ancestor form instead, which is the same
-      # operation on the transform's side:
+      # matches.
       #
-      #     scope: ":where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)"
-      #
-      # Without one, a block is left exactly as it was written and reported. Scoping the markup while
+      # Lightning CSS is what narrows a block unless something else is given, so `transform` is for
+      # narrowing it some other way. Without one at all, which is a machine with no `lightningcss` on
+      # it, a block is left exactly as it was written and reported. Scoping the markup while
       # leaving the CSS alone would turn a scoped block into a global one. A `transform` that raises
       # is treated the same way, so CSS nobody can read costs the block it was written in and not the
       # whole template.
@@ -67,59 +65,49 @@ module Herb
       # which needs nothing else installed and writes the block again on every render of the file it
       # was written in. `:hoist` takes the block out and registers the CSS with the session the page
       # is collecting into, which writes it once however many times the file renders, and needs
-      # `Herb::Engine::Report::Middleware` to put it on the page.
+      # `Herb::Engine::Runtime::Middleware` to put it on the page.
       #
       class Visitor < Herb::Visitor
-        include ContextAware
-        include Diagnostics
+        extend Herb::Visitor::Experimental
+        include Herb::Visitor::ContextAware
+        include Herb::Visitor::Diagnostics
 
         ARRAY_PROPERTIES = [:children, :body, :statements].freeze #: Array[Symbol]
         NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
         ATTRIBUTE_PREFIX = "data-herb-scope-" #: String
         SCOPED_ATTRIBUTE = "scoped" #: String
+        ANCHOR_ATTRIBUTE = "data-herb-style-scoped" #: String
         UNSCOPABLE_ELEMENTS = ["style", "script"].freeze #: Array[String]
         OPEN_TAGS = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[untyped]
+        DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
+
         DIGEST_LENGTH = 8 #: Integer
 
         required_parser_option track_locations: true
         required_parser_option render_nodes: true
-
-        # @rbs!
-        #   def self.experimental_warning_issued: () -> bool
-        #   def self.experimental_warning_issued=: (bool) -> bool
-
-        class << self
-          attr_accessor :experimental_warning_issued #: bool
-        end
-
-        self.experimental_warning_issued = false
-
-        DELIVERIES = [:inline, :hoist, :none].freeze #: Array[Symbol]
+        experimental "Scoped styles are experimental. Their output and API may change."
 
         Pending = Data.define(:node, :open_tag, :attribute, :css, :file, :container)
+
+        #: () -> bool
+        def self.rewrites_style_blocks?
+          true
+        end
 
         #: (?transform: untyped, ?deliver: Symbol) -> void
         def initialize(transform: nil, deliver: :inline)
           super()
 
-          raise ArgumentError, "deliver has to be one of #{DELIVERIES.join(", ")}, got #{deliver.inspect}" unless DELIVERIES.include?(deliver)
+          raise ArgumentError, "`deliver: #{deliver.inspect}` is not a delivery. Pass one of #{DELIVERIES.map(&:inspect).join(", ")}." unless DELIVERIES.include?(deliver)
 
           @deliver = deliver
-          @transform = transform
+          @transform = transform || default_transform
           @scopes = {} #: Hash[String, String]
           @styles = {} #: Hash[String, String]
           @elements = {} #: Hash[String, Integer]
-          @openings = {} #: Hash[String, Integer]
-          @depth = {} #: Hash[String, Integer]
           @pending = [] #: Array[Array[untyped]]
           @stack = [] #: Array[String]
-
-          return if self.class.experimental_warning_issued
-
-          self.class.experimental_warning_issued = true
-
-          warn "[Herb] Scoped styles are experimental. Their output and API may change."
         end
 
         #: () -> Hash[String, String]
@@ -133,8 +121,6 @@ module Herb
           @scopes = {} #: Hash[String, String]
           @styles = {} #: Hash[String, String]
           @elements = Hash.new(0) #: Hash[String, Integer]
-          @openings = Hash.new(0) #: Hash[String, Integer]
-          @depth = Hash.new(0) #: Hash[String, Integer]
           @pending = [] #: Array[Array[untyped]]
 
           collect(node)
@@ -165,14 +151,10 @@ module Herb
           if attributes && scope
             @elements[file] += 1
 
-            attributes << attribute_node(scope) if @depth[file].zero? || @openings[file].positive?
+            attributes << attribute_node(scope)
           end
 
-          @depth[file] += 1
-
           super
-        ensure
-          @depth[file] -= 1
         end
 
         #: () -> String
@@ -193,7 +175,7 @@ module Herb
           @stack.last #: as String
         end
 
-        #: (Herb::AST::Node) -> Herb::Engine::Origin::Entry?
+        #: (Herb::AST::Node) -> Herb::Visitor::Context::Origin::Entry?
         def enter(node)
           entry = origin.of(node)
 
@@ -211,11 +193,7 @@ module Herb
 
         #: (Herb::AST::Node, ?Array[untyped]?) -> void
         def collect(node, container = nil)
-          @openings[current_file] += 1 if origin.of(node)
-
           entered = enter(node)
-
-          @openings[current_file] += 1 if opens_the_file?(node)
 
           scope_style(node, container) if node.is_a?(Herb::AST::HTMLElementNode)
 
@@ -236,11 +214,6 @@ module Herb
           leave if entered
 
           nil
-        end
-
-        #: (Herb::AST::Node) -> bool
-        def opens_the_file?(node)
-          node.is_a?(Herb::AST::ERBRenderNode) || node.is_a?(Herb::AST::ERBYieldNode)
         end
 
         #: (Herb::AST::Node, Symbol) -> untyped
@@ -300,13 +273,13 @@ module Herb
 
         #: (Pending, String) -> String?
         def narrowed_css(pending, scope)
-          result = @transform.call(pending.css, scope: scope_selector(pending.file, scope))
+          result = @transform.call(pending.css, scope: scope_selector(scope))
 
-          warned_style(pending.node, result)
+          warned_style(pending.node, result, pending.file)
 
           result.to_s
         rescue StandardError => e
-          untransformable_style(pending.node, e)
+          untransformable_style(pending.node, e, pending.file)
         end
 
         #: (Pending, String, String) -> void
@@ -315,7 +288,7 @@ module Herb
 
           if index.nil?
             pending.node.body.replace([literal_node(narrowed)])
-            remove_attribute(pending.open_tag, pending.attribute)
+            replace_attribute(pending.open_tag, pending.attribute, anchor_node(scope))
           elsif @deliver == :hoist
             pending.container[index] = register_node(scope, narrowed)
           else
@@ -345,6 +318,36 @@ module Herb
             tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
             valid: true
           )
+        end
+
+        #: (String) -> Herb::AST::HTMLAttributeNode
+        def anchor_node(scope)
+          name_node = Herb::AST::HTMLAttributeNameNode.build(children: [literal_node(ANCHOR_ATTRIBUTE)])
+
+          value_node = Herb::AST::HTMLAttributeValueNode.build(
+            open_quote: Herb::Token.from("TOKEN_QUOTE", '"'),
+            children: [literal_node(scope)],
+            close_quote: Herb::Token.from("TOKEN_QUOTE", '"'),
+            quoted: true
+          )
+
+          Herb::AST::HTMLAttributeNode.build(
+            name: name_node,
+            equals: Herb::Token.from("TOKEN_EQUALS", "="),
+            value: value_node
+          )
+        end
+
+        #: (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode, Herb::AST::HTMLAttributeNode) -> void
+        def replace_attribute(open_tag, attribute, replacement)
+          children = open_tag.children
+          index = children.index(attribute)
+
+          return unless index
+
+          children[index] = replacement
+
+          nil
         end
 
         #: (Herb::AST::HTMLOpenTagNode, Herb::AST::HTMLAttributeNode) -> void
@@ -396,12 +399,13 @@ module Herb
 
         #: (Herb::AST::HTMLElementNode) -> bool
         def scopable_file?(node)
-          return true unless current_file == VisitorContext::UNKNOWN_FILE_PATH
+          return true unless current_file == Herb::Visitor::Context::UNKNOWN_FILE_PATH
 
           warning(
             "A `<style scoped>` block needs the path of the file it was written in, and this template was compiled without one. Compile it with `filename:` to scope it.",
             node.location,
-            code: "scoped-style-without-a-file"
+            code: "scoped-style-without-a-file",
+            template: current_file
           )
 
           false
@@ -412,7 +416,8 @@ module Herb
           warning(
             "A `<style scoped>` block built with ERB has no CSS to read at compile time, so it was left as it was written and still applies to the whole page.",
             node.location,
-            code: "scoped-style-built-with-erb"
+            code: "scoped-style-built-with-erb",
+            template: current_file
           )
 
           nil
@@ -420,46 +425,60 @@ module Herb
 
         #: (Herb::AST::HTMLElementNode) -> void
         def untransformed_style(node)
+          reason = @unavailable ? " Loading `lightningcss` failed with `#{@unavailable}`." : ""
+
           warning(
-            "A `<style scoped>` block was found, and #{self.class.name} was given no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page.",
+            "A `<style scoped>` block was found, and there is no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page.#{reason} Install `lightningcss`, or give #{self.class.name} a `transform` of its own.",
             node.location,
-            code: "scoped-style-without-a-transform"
+            code: "scoped-style-without-a-transform",
+            template: current_file
           )
 
           nil
         end
 
-        #: (Herb::AST::HTMLElementNode, StandardError) -> nil
-        def untransformable_style(node, error)
+        #: () -> untyped
+        def default_transform
+          require "lightningcss"
+
+          ::LightningCSS::Transformer.new
+        rescue LoadError => e
+          @unavailable = e.message
+
+          nil
+        end
+
+        #: (Herb::AST::HTMLElementNode, StandardError, String) -> nil
+        def untransformable_style(node, error, file)
           warning(
             "A `<style scoped>` block could not be narrowed by the `transform` #{self.class.name} was given, so it was left as it was written and still applies to the whole page. It failed with `#{error.message}`.",
             node.location,
-            code: "scoped-style-that-could-not-be-narrowed"
+            code: "scoped-style-that-could-not-be-narrowed",
+            template: file
           )
 
           nil
         end
 
-        #: (Herb::AST::HTMLElementNode, untyped) -> void
-        def warned_style(node, result)
+        #: (Herb::AST::HTMLElementNode, untyped, String) -> void
+        def warned_style(node, result, file)
           return unless result.respond_to?(:warnings)
 
           result.warnings.each do |message|
             warning(
               "The `transform` could not act on something in this `<style scoped>` block, so that part of the CSS was kept as it was written and does nothing. It reported `#{message}`.",
               node.location,
-              code: "scoped-style-with-a-warning"
+              code: "scoped-style-with-a-warning",
+              template: file
             )
           end
 
           nil
         end
 
-        #: (String, String) -> String
-        def scope_selector(file, scope)
-          return "[#{scope}]" if @openings[file].positive?
-
-          ":where([#{scope}], [#{scope}] *)"
+        #: (String) -> String
+        def scope_selector(scope)
+          "[#{scope}]"
         end
 
         #: (String) -> String
@@ -501,7 +520,8 @@ module Herb
             warning(
               "The `<style scoped>` block in #{file} has no markup to apply to, because nothing in the file it was written in is an element.",
               nil,
-              code: "scoped-style-without-markup"
+              code: "scoped-style-without-markup",
+              template: file
             )
           end
 

@@ -6,13 +6,14 @@ module Herb
     module Helpers
       #: (Herb::AST::Node?) -> bool
       def erb_node?(node)
-        node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBRenderNode)
+        !erb_opening(node).empty?
       end
 
       #: (Herb::AST::Node?) -> String
       def erb_opening(node)
         token = case node
-                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode then node.tag_opening
+                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
+                  node.tag_opening
                 end
 
         token&.value.to_s
@@ -39,9 +40,21 @@ module Herb
         opening.start_with?("<%#")
       end
 
+      #: (Herb::AST::Node?) -> bool
+      def erb_comment_node?(node)
+        return false unless node.is_a?(Herb::AST::ERBContentNode)
+
+        erb_comment?(erb_opening(node)) || inline_ruby_comment?(node)
+      end
+
       #: (String) -> bool
-      def erb_graphql?(opening)
-        opening.start_with?("<%graphql")
+      def erb_custom_opening?(opening)
+        opening.start_with?("<%") && !Herb.default_erb_openings.include?(opening)
+      end
+
+      #: (String) -> bool
+      def erb_omitted?(opening)
+        erb_comment?(opening) || erb_custom_opening?(opening)
       end
 
       #: (String) -> bool
@@ -55,7 +68,9 @@ module Herb
 
         close_tag = node.close_tag
 
-        close_tag if close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+        return unless close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+
+        close_tag
       end
 
       #: (Herb::AST::Node?) -> bool

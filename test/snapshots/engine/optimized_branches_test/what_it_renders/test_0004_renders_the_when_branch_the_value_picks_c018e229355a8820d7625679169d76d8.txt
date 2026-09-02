@@ -1,0 +1,7 @@
+---
+source: "Engine::OptimizedBranchesTest::what it renders#test_0004_renders the when branch the value picks"
+input: "{source: \"<div>\\n<% case status %>\\n<% when :active %>\\n  On\\n<% else %>\\n  Off\\n<% end %>\\n</div>\", locals: {status: :active}, options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+<div>
+  On
+</div>

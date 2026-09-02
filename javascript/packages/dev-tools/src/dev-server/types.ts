@@ -1,36 +1,40 @@
-export type DiffOperationType =
-  | "text_changed"
-  | "whitespace_changed"
-  | "attribute_value_changed"
-  | "attribute_added"
-  | "attribute_removed"
-  | "node_inserted"
-  | "node_removed"
-  | "node_replaced"
-  | "node_moved"
-  | "node_wrapped"
-  | "node_unwrapped"
-  | "erb_content_changed"
-  | "tag_name_changed"
+import type { RuntimeDiagnostic } from "../runtime/report"
+import type { TemplateManifest } from "@herb-tools/client"
 
-export interface DiffOperation {
-  type: DiffOperationType
-  path: number[]
-  old_value: string | null
-  new_value: string | null
-  old_node_type: string | null
-  new_node_type: string | null
+export interface HelloMessage {
+  type: "hello"
+  role: "browser"
+  capabilities?: {
+    runtime: boolean
+    regions: number
+  }
 }
 
-export interface PatchMessage {
-  type: "patch"
-  file: string
-  operations: DiffOperation[]
+export interface SchemaVersion {
+  from: string | null
+  to: string | null
 }
 
-export interface ReloadMessage {
-  type: "reload"
+export interface SchemaMessage {
+  type: "schema"
   file: string
+  mode: "client" | "server" | null
+  version: SchemaVersion
+  manifest: TemplateManifest | null
+  static_markup: string | null
+  changed_statics?: string[] | null
+  statics: Record<string, string> | null
+  remap: { slots: Record<string, number | null> } | null
+  diagnostics: RuntimeDiagnostic[]
+  source: string | null
+}
+
+export interface InvalidateMessage {
+  type: "invalidate"
+  file: string
+  version: string | null
+  node_path: number[]
+  scope: "state" | "static" | "fetch"
 }
 
 export interface ParseError {
@@ -38,28 +42,28 @@ export interface ParseError {
   message: string
   line: number
   column: number
+  code?: string
+  origin?: string
+  suggestion?: string | null
 }
 
 export interface ErrorMessage {
   type: "error"
   file: string
   errors: ParseError[]
-}
-
-export interface FixedMessage {
-  type: "fixed"
-  file: string
+  source?: string
 }
 
 export interface WelcomeMessage {
   type: "welcome"
   project: string
+  compiler?: boolean
 }
 
-export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | ErrorMessage | FixedMessage
+export const DEV_SERVER_COMMAND = "bundle exec herb dev"
 
+export type HerbMessage = WelcomeMessage | SchemaMessage | InvalidateMessage | ErrorMessage
 export type ConnectionState = "connected" | "disconnected" | "given-up"
-
 export type MessageHandler = (message: HerbMessage) => void
 
 export interface ConnectionOptions {
@@ -73,19 +77,26 @@ export interface ConnectionOptions {
   onReconnecting?: (attempt: number, maxAttempts: number, delay: number) => void
 }
 
-export interface ErrorOverlayHandle {
-  showErrors(errors: unknown[], filename: string): void
-  clearErrors(): void
+export interface DiagnosticSink {
+  report(file: string, diagnostics: RuntimeDiagnostic[]): void
+  clear(file: string): void
+  clearAll(): void
+}
+
+export interface HotReloadHandler {
+  onSchema(message: SchemaMessage): void
+  onInvalidate(message: InvalidateMessage): void
+  onError(message: ErrorMessage): void
 }
 
 export interface HerbClientOptions {
   port?: number
   host?: string
-  errorOverlay?: () => ErrorOverlayHandle | null
-  onPatch?: (message: PatchMessage) => void
-  onReload?: (message: ReloadMessage) => void
+  diagnostics?: () => DiagnosticSink | null
+  hotReload?: HotReloadHandler
+  onSchema?: (message: SchemaMessage) => void
+  onInvalidate?: (message: InvalidateMessage) => void
   onError?: (message: ErrorMessage) => void
-  onFixed?: (message: FixedMessage) => void
   onConnect?: () => void
   onDisconnect?: () => void
 }

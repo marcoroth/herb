@@ -1,0 +1,13 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0012_a case chain, into one literal per when"
+input: "{source: \"<div>\\n<% case status %>\\n<% when :active %>\\n  On\\n<% when :idle %>\\n  Off\\n<% else %>\\n  Unknown\\n<% end %>\\n</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+
+case status 
+when :active 
+ "<div>\n  On\n</div>".freeze;
+when :idle 
+ "<div>\n  Off\n</div>".freeze;
+else 
+ "<div>\n  Unknown\n</div>".freeze;
+end 

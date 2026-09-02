@@ -1,0 +1,7 @@
+---
+source: "Engine::RemoveCommentsTest#test_0006_multi-line html comment - render"
+input: "{source: \"<div>\\n  <!--\\n    a note\\n    over two lines\\n  -->\\n</div>\\n\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<div>
+  
+</div>

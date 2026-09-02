@@ -3,6 +3,7 @@
 
 #include "../lib/hb_allocator.h"
 #include "../lib/hb_string.h"
+#include "erb_openers.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -28,6 +29,7 @@ typedef struct LEXER_STRUCT {
 
   char current_character;
   lexer_state_T state;
+  erb_openers_T erb_openers;
   uint8_t malformed_erb_close_length;
   uint32_t stall_counter;
   uint32_t last_position;

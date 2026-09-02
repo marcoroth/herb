@@ -2,6 +2,5 @@
 source: "Engine::ValidationDeduplicationTest#test_0001_validation errors in ERB loops generate single template per location"
 input: "{source: \"<% 10.times do |i| %><div <%= i %>></div><% end %>\", options: {visitors: [#<Herb::Engine::Validators::SecurityValidator fatal=false>, #<Herb::Engine::Validators::NestingValidator fatal=false>, #<Herb::Engine::Validators::AccessibilityValidator fatal=false>], filename: \"loop_test.html.erb\"}}"
 ---
-_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("loop_test.html.erb", [{ message: "ERB output tags (<%= %>) are not allowed in attribute position.", severity: :error, code: "security-violation", origin: "Herb Compiler", suggestion: "Use control flow (<% %>) with static attributes instead.", line: 1, column: 26, end_line: 1, end_column: 34 }].freeze); 10.times do |i| 
- _buf << '<div '.freeze; _buf << (i).to_s; _buf << '></div>'.freeze; end;
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("loop_test.html.erb", [{ message: "ERB output tags (<%= %>) are not allowed in attribute position.", severity: :error, code: "SecurityViolation", origin: "Herb Compiler", suggestion: "Use control flow (<% %>) with static attributes instead.", line: 1, column: 26, end_line: 1, end_column: 34 }].freeze); 10.times do |i| ; _buf << '<div '.freeze; _buf << (i).to_s; _buf << '></div>'.freeze; end;
 _buf.to_s

@@ -81,6 +81,10 @@ gems:
     revision: 82762423fc5694b82888ea89a972847cf19838c2
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: cruise
+  version: 0.2.1
+  source:
+    type: rubygems
 - name: date
   version: '0'
   source:

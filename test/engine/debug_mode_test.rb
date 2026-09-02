@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
-require_relative "../../lib/herb/engine/instrumentation_visitor"
+require_relative "../../lib/herb/engine/visitors/instrumentation_visitor"
 
 module Engine
   class DebugModeTest < Minitest::Spec
@@ -675,7 +675,7 @@ module Engine
 
         html = [] #: Array[String]
 
-        Herb::Engine::Report::Session.capture do
+        Herb::Engine::Runtime::Session.capture do
           renders.times { html << object.instance_eval(source) }
         end
 

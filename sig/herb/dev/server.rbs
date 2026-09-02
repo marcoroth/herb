@@ -3,48 +3,69 @@
 module Herb
   module Dev
     class Server
-      DEFAULT_PORT: ::Integer
+      DEFAULT_PORT: Integer
 
-      HANDSHAKE_TIMEOUT: ::Integer
+      HANDSHAKE_TIMEOUT: Integer
 
-      attr_reader port: untyped
+      ROLES: Array[Symbol]
 
-      attr_reader project_path: untyped
+      class Client < Struct[untyped]
+        attr_accessor socket(): untyped
 
-      class Client < Data
-        attr_reader socket(): untyped
+        attr_accessor version(): untyped
 
-        attr_reader version(): untyped
+        attr_accessor mutex(): untyped
 
-        attr_reader mutex(): untyped
+        attr_accessor role(): untyped
 
-        def self.new: (untyped socket, untyped version, untyped mutex) -> instance
-                    | (socket: untyped, version: untyped, mutex: untyped) -> instance
-
-        def self.members: () -> [ :socket, :version, :mutex ]
-
-        def members: () -> [ :socket, :version, :mutex ]
+        def self.new: (?socket: untyped, ?version: untyped, ?mutex: untyped, ?role: untyped) -> instance
+                    | ({ ?socket: untyped, ?version: untyped, ?mutex: untyped, ?role: untyped }) -> instance
       end
 
-      def initialize: (?port: untyped, ?project_path: untyped) -> untyped
+      attr_reader port: Integer
 
-      def start: () -> untyped
+      attr_reader project_path: String?
 
-      def stop: () -> untyped
+      # : (?port: Integer, ?project_path: String?, ?kind: String) -> void
+      def initialize: (?port: Integer, ?project_path: String?, ?kind: String) -> void
 
-      def broadcast: (untyped message) -> untyped
+      # : () -> void
+      def start: () -> void
 
-      def client_count: () -> untyped
+      # : () -> void
+      def stop: () -> void
 
-      def self.port_available?: (untyped port) -> untyped
+      # : (Hash[Symbol, untyped] | String, ?to: Symbol) -> void
+      def broadcast: (Hash[Symbol, untyped] | String, ?to: Symbol) -> void
 
-      def self.find_available_port: (?untyped starting_port) -> untyped
+      # : () { (Symbol, Integer) -> void } -> void
+      def on_client: () { (Symbol, Integer) -> void } -> void
+
+      # : (Client) -> void
+      def register: (Client) -> void
+
+      # : (untyped) -> void
+      def unregister: (untyped) -> void
+
+      # : () -> Integer
+      def client_count: () -> Integer
+
+      # : (Integer) -> bool
+      def self.port_available?: (Integer) -> bool
+
+      # : (?Integer) -> Integer?
+      def self.find_available_port: (?Integer) -> Integer?
+
+      # : (Client, String) -> void
+      def handle_text_frame: (Client, String) -> void
 
       private
 
-      def safely_close: (untyped resource) -> untyped
+      # : (untyped) -> void
+      def safely_close: (untyped) -> void
 
-      def handle_connection: (untyped socket) -> untyped
+      # : (untyped) -> void
+      def handle_connection: (untyped) -> void
     end
   end
 end

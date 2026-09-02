@@ -458,7 +458,7 @@ module Engine
       klass = Data.define(:title, :description, :price)
       product = klass.new(title: "title", description: "Description", price: 42.00)
 
-      assert_evaluated_snapshot(template, { product: product }, { escape: false })
+      assert_evaluated_snapshot(template, { product: product }, { escape: false, parser_options: { erb_openers: ["graphql"] } })
     end
 
     test "conditional html element with condition true" do

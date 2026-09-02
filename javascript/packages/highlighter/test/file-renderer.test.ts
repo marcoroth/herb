@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest"
 import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
-import { stripAnsiColors } from "./util.js"
+import { stripAnsiColors } from "../src/ansi.js"
 
 import { FileRenderer } from "../src/file-renderer.js"
 import { Herb } from "@herb-tools/node-wasm"

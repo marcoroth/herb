@@ -102,6 +102,67 @@ module Engine
       end
     end
 
+    test "compile with --no-trim" do
+      template = "<% a = 1 %>\ntext\n"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--no-trim"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "a = 1; _buf << '\ntext\n'"
+      end
+    end
+
+    test "compile with --optimize resolves helpers into the markup they produce" do
+      template = "<%= tag.br %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--optimize"]).call
+        end
+
+        assert_equal "'<br>'.freeze\n", captured_output
+      end
+    end
+
+    test "compile with --optimize collapses a static conditional into branch literals" do
+      template = "<% if flag %>A<% else %>B<% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--optimize"]).call
+        end
+
+        assert_equal %(if flag ; "A".freeze;else; "B".freeze;end;\n), captured_output
+      end
+    end
+
+    test "compile without --optimize keeps the helper call" do
+      template = "<%= tag.br %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_equal "__herb = ::Herb::Engine; _buf = ::String.new; _buf << __herb.h((tag.br));\n_buf.to_s\n", captured_output
+      end
+    end
+
+    test "render with --optimize renders the folded output" do
+      template = %(<p><%= "hello" %></p>)
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--optimize"]).call
+        end
+
+        assert_equal "<p>hello</p>\n", captured_output
+      end
+    end
+
     test "compile with json output" do
       template = "<div>Hello World</div>"
 
@@ -291,8 +352,12 @@ module Engine
         json_data = JSON.parse(output)
 
         assert_equal false, json_data["success"]
-        assert_includes json_data["error"], "HTML+ERB Compilation Errors"
         assert_equal File.basename(file_path), File.basename(json_data["filename"])
+
+        assert_equal(
+          "TEMPLATE:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 1 more error)",
+          json_data["error"].gsub(file_path, "TEMPLATE")
+        )
       end
     end
 
@@ -309,9 +374,16 @@ module Engine
         end
 
         output = captured_output
-        assert_includes output, "HTML+ERB Compilation Errors"
-        assert_includes output, "Total errors:"
-        assert output.match?(/\d+:\d+/)
+
+        assert_equal(<<~REPORT, output.gsub(file_path, "TEMPLATE"))
+          \u2718 [MissingClosingTagError] Opening tag `<span>` at (2:3) doesn't have a matching closing tag `</span>` in the same scope.
+
+              TEMPLATE:2:3:
+                2 \u2502   <span>Unclosed span
+                  \u2575   ~~~~~~
+
+            Add the closing tag, or make it self-closing.
+        REPORT
       end
     end
 
