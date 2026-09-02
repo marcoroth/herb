@@ -2,5 +2,5 @@
 source: "Engine::ValidationDeduplicationTest#test_0003_validation overlay includes deduplication metadata"
 input: "{source: \"<div <%= @test %>></div>\", options: {visitors: [#<Herb::Engine::Validators::SecurityValidator fatal=false>, #<Herb::Engine::Validators::NestingValidator fatal=false>, #<Herb::Engine::Validators::AccessibilityValidator fatal=false>], filename: \"meta_test.html.erb\"}}"
 ---
-_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("meta_test.html.erb", [{ message: "ERB output tags (<%= %>) are not allowed in attribute position.", severity: :error, code: "security-violation", origin: "Herb Compiler", suggestion: "Use control flow (<% %>) with static attributes instead.", line: 1, column: 5, end_line: 1, end_column: 17 }].freeze); _buf << '<div '.freeze; _buf << (@test).to_s; _buf << '></div>'.freeze;
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("meta_test.html.erb", [{ message: "ERB output tags (<%= %>) are not allowed in attribute position.", severity: :error, code: "SecurityViolation", origin: "Herb Compiler", suggestion: "Use control flow (<% %>) with static attributes instead.", line: 1, column: 5, end_line: 1, end_column: 17 }].freeze); _buf << '<div '.freeze; _buf << (@test).to_s; _buf << '></div>'.freeze;
 _buf.to_s

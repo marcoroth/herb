@@ -1,23 +1,33 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 
 const FILE = "app/views/posts/index.html.erb"
 
+const MANIFEST = {
+  file: FILE,
+  identifier: FILE,
+  version: "aaaaaaaa",
+  names: { messages: 0, body: 2, summary: 3 },
+  parts: {},
+  states: null,
+}
+
 const PAGE =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
-  `<ul data-herb-name="0:messages"><!--herb-slot:0:collection-->` +
-  `<!--herb-item:0:a--><li id="a" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child">first</span></li><!--/herb-item:0-->` +
-  `<!--herb-item:0:b--><li id="b" data-herb-slot="1:attribute:id"><span data-herb-name="2:body" data-herb-slot="2:child">second</span></li><!--/herb-item:0-->` +
+  `<ul data-herb-name="messages"><!--herb-slot:0:collection-->` +
+  `<!--herb-item:0:a--><li id="a" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child">first</span></li><!--/herb-item:0-->` +
+  `<!--herb-item:0:b--><li id="b" data-herb-slot="1:attribute:id"><span data-herb-name="body" data-herb-slot="2:child">second</span></li><!--/herb-item:0-->` +
   `<!--/herb-slot:0--></ul>` +
-  `<p data-herb-name="3:summary"><!--herb-slot:3-->two messages<!--/herb-slot:3--></p>` +
-  `<!--/herb-region:${FILE}-->`
+  `<p data-herb-name="summary"><!--herb-slot:3-->two messages<!--/herb-slot:3--></p>` +
+  `<!--/herb-region:${FILE}-->` +
+  `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:aaaaaaaa`]: MANIFEST })}</template>`
 
-let index: SlotIndex
+let index: Slots
 
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 

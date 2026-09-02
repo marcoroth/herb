@@ -133,5 +133,30 @@ module Engine
 
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "a tag whose content is only comments keeps every line" do
+      template = "<%\n  # a\n  # b\n%>\n<%= x %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a multi-line comment closed with content after it keeps the following line" do
+      template = "<%#-- a\nb\nc\n--#%><div>hi</div>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a comment followed by text keeps the line the text was written on" do
+      template = "<%# comment %>\nhi\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "erb comment lines preserve line count parity with erubi" do
+      template = "<%# comment 1 %>\n<%# comment 2 %>\n<% code = 1 %>\n<%= code %>"
+
+      assert_compiled_snapshot(template)
+      assert_erubi_line_parity(template)
+    end
   end
 end

@@ -1,6 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 
-import { RuntimePanel, escapeHTML, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
+import { stripAnsiColors } from "@herb-tools/highlighter"
+
+import { RuntimePanel, inlineCodeHTML, safeUrl } from "../src/runtime/panel"
 import { dropLeadingBlocks, resetRuntimeHighlighting } from "../src/runtime/highlighting"
 import { MAX_RUNTIME_DIAGNOSTICS, resetRuntimeReportWarnings } from "../src/runtime/report"
 
@@ -89,10 +91,8 @@ function waitForFix() {
   return waitFor(() => document.querySelector(".herb-dev-tools-fix") as HTMLDetailsElement | null, "the fix diff to hydrate")
 }
 
-const ANSI_ESCAPES = /\u001b\[[0-9;]*m/g
-
 function plain(element: HTMLElement) {
-  return (element.textContent ?? "").replace(ANSI_ESCAPES, "")
+  return stripAnsiColors(element.textContent ?? "")
 }
 
 function waitForExcerpt() {
@@ -181,15 +181,49 @@ describe("clear control", () => {
     return document.querySelector(`.herb-dev-tools-filter[data-herb-dev-tools-origin="${origin}"]`) as HTMLElement
   }
 
-  test("sits with the hide button and not in the window controls", () => {
+  test("ends the origin row, beside the filters it clears", () => {
     embed(PAYLOAD)
     createPanel().open()
 
     const header = document.querySelector(".herb-dev-tools-header")!
+    const origins = document.querySelector(".herb-dev-tools-filters") as HTMLElement
+    const actions = origins.querySelector(".herb-dev-tools-filters-actions") as HTMLElement
 
-    expect(clearButton()!.parentElement).toBe(header)
-    expect(clearButton()!.nextElementSibling!.className).toBe("herb-dev-tools-hide")
-    expect(header.querySelector(".herb-dev-tools-window-controls")!.contains(clearButton())).toBe(false)
+    expect(clearButton()!.parentElement).toBe(actions)
+    expect(clearButton()).toBe(actions.lastElementChild)
+    expect(actions).toBe(origins.lastElementChild)
+    expect(header.contains(clearButton())).toBe(false)
+
+    const row = origins.getBoundingClientRect()
+
+    expect(clearButton()!.getBoundingClientRect().right)
+      .toBeCloseTo(row.right - parseFloat(getComputedStyle(origins).paddingRight), 0)
+  })
+
+  test("shares the row with a control that collapses every file at once", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const toggle = () => document.querySelector('[data-herb-dev-tools-action="collapse-all"]') as HTMLButtonElement
+    const collapsed = () => document.querySelectorAll(".herb-dev-tools-group-collapsed").length
+    const groups = () => document.querySelectorAll(".herb-dev-tools-group").length
+
+    expect(groups()).toBeGreaterThan(1)
+    expect(toggle().textContent).toBe("Collapse all")
+    expect(collapsed()).toBe(0)
+
+    toggle().click()
+
+    expect(collapsed()).toBe(groups())
+    expect(toggle().textContent).toBe("Expand all")
+
+    toggle().click()
+
+    expect(collapsed()).toBe(0)
+    expect(toggle().textContent).toBe("Collapse all")
   })
 
   test("empties everything while the All filter is active", () => {
@@ -200,7 +234,7 @@ describe("clear control", () => {
     panel.open()
 
     expect(cards()).toHaveLength(3)
-    expect(clearButton()!.textContent).toBe("Clear all")
+    expect(clearButton()!.textContent).toBe("Clear")
 
     clearButton()!.click()
 
@@ -208,7 +242,7 @@ describe("clear control", () => {
     expect(panel.count).toBe(0)
   })
 
-  test("clears only the filtered origin and leaves the rest", () => {
+  test("empties everything even while an origin filter is active", () => {
     embed(PAYLOAD)
 
     const panel = createPanel()
@@ -216,14 +250,12 @@ describe("clear control", () => {
     panel.open()
     chip("Herb Linter").click()
 
-    expect(clearButton()!.textContent).toBe("Clear Herb Linter")
+    expect(clearButton()!.textContent).toBe("Clear")
 
     clearButton()!.click()
 
-    const origins = cards().map(card => card.getAttribute("data-herb-dev-tools-origin"))
-
-    expect(origins).toEqual(["Acme Scanner", "Herb Engine Runtime"])
-    expect(panel.count).toBe(2)
+    expect(cards()).toHaveLength(0)
+    expect(panel.count).toBe(0)
   })
 
   test("names its scope for assistive technology", () => {
@@ -237,7 +269,7 @@ describe("clear control", () => {
 
     chip("Herb Linter").click()
 
-    expect(clearButton()!.getAttribute("aria-label")).toBe("Clear the 1 entry from Herb Linter")
+    expect(clearButton()!.getAttribute("aria-label")).toBe("Clear all 3 entries and empty the panel")
   })
 
   test("leaves the dismissed state alone", () => {
@@ -268,7 +300,7 @@ describe("clear control", () => {
     expect(panel.dismissed).toBe(false)
   })
 
-  test("stays open when the control only clears one origin", () => {
+  test("closes even when an origin filter was narrowing the view", () => {
     embed(PAYLOAD)
 
     const panel = createPanel()
@@ -277,8 +309,8 @@ describe("clear control", () => {
     ;(document.querySelector('[data-herb-dev-tools-origin="Herb Linter"]') as HTMLButtonElement).click()
     clearButton()!.click()
 
-    expect(root()).not.toBeNull()
-    expect(panel.count).toBe(2)
+    expect(root()).toBeNull()
+    expect(panel.count).toBe(0)
   })
 
   test("still explains itself when the API empties it", () => {
@@ -486,20 +518,21 @@ describe("cards", () => {
     expect(cards()).toHaveLength(3)
   })
 
-  test("renders a severity dot, the rule code, and the suggestion", () => {
+  test("renders the rule code as a severity pill, and the suggestion", () => {
     embed(PAYLOAD)
     createPanel()
 
     const card = cards()[0]
 
-    expect(card.querySelector(".herb-dev-tools-dot-error")).not.toBeNull()
+    expect(card.querySelector(".herb-dev-tools-dot")).toBeNull()
+    expect(card.querySelector(".herb-dev-tools-code-error")).not.toBeNull()
     expect(card.querySelector(".herb-dev-tools-code")!.textContent).toBe("html-no-nested-forms")
     expect(card.querySelector(".herb-dev-tools-code")!.getAttribute("href")).toBeNull()
     expect(card.querySelector(".herb-dev-tools-docs")!.getAttribute("href")).toBe("https://herb-tools.dev/linter/rules/html-no-nested-forms")
     expect(card.querySelector(".herb-dev-tools-suggestion")!.textContent).toBe("Remove the inner form.")
   })
 
-  test("never renders a severity dot for a metric", () => {
+  test("never renders a severity pill for a metric", () => {
     embed(PAYLOAD)
     createPanel()
 
@@ -508,14 +541,14 @@ describe("cards", () => {
     expect(metric).not.toBeNull()
     expect(metric.querySelector(".herb-dev-tools-dot")).toBeNull()
     expect(metric.querySelector(".herb-dev-tools-metric")!.textContent).toBe("3 SQL queries")
-    expect(document.querySelectorAll(".herb-dev-tools-dot-error, .herb-dev-tools-dot-warning")).toHaveLength(2)
+    expect(document.querySelectorAll(".herb-dev-tools-code-error, .herb-dev-tools-code-warning")).toHaveLength(2)
   })
 
-  test("keeps a metric free of a severity dot even when the payload sends one", () => {
+  test("keeps a metric free of a severity pill even when the payload sends one", () => {
     embed({ version: 1, diagnostics: [{ template: "a.html.erb", message: "m", kind: "metric", severity: "error" }] })
     createPanel()
 
-    expect(document.querySelector(".herb-dev-tools-dot")).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-code-error")).toBeNull()
     expect(document.querySelector(".herb-dev-tools-metric")!.textContent).toBe("metric")
   })
 
@@ -635,10 +668,6 @@ describe("inline code", () => {
 
   test("leaves an unpaired backtick alone", () => {
     expect(inlineCodeHTML("a ` b")).toBe("a ` b")
-  })
-
-  test("escapes every HTML significant character", () => {
-    expect(escapeHTML(`<&>"'`)).toBe("&lt;&amp;&gt;&quot;&#39;")
   })
 })
 
@@ -849,9 +878,12 @@ describe("fix diffs", () => {
     expect(details.tagName).toBe("DETAILS")
     expect(details.open).toBe(false)
     expect(details.getAttribute("data-herb-dev-tools-fix")).toBe("safe")
-    expect(summary.textContent).toContain("Not applied")
-    expect(summary.querySelector(".herb-dev-tools-fix-command")!.textContent).toBe("herb lint --fix")
-    expect(summary.textContent).not.toContain("unsafe")
+    expect(summary.textContent).toBe("Preview the change")
+    expect(document.querySelector(".herb-dev-tools-fix-command")!.textContent).toBe("npx @herb-tools/linter app/views/posts/_actions.html.erb --fix --only html-no-nested-forms")
+
+    const note = document.querySelector(".herb-dev-tools-autofix-note")!
+
+    expect(note.textContent).toBe("not applied, safe")
 
     const rendered = details.querySelector(".herb-dev-tools-fix-diff herb-ansi") as HTMLElement
 
@@ -872,9 +904,8 @@ describe("fix diffs", () => {
     const summary = details.querySelector(".herb-dev-tools-fix-summary")!
 
     expect(details.getAttribute("data-herb-dev-tools-fix")).toBe("unsafe")
-    expect(summary.textContent).toContain("Not applied")
-    expect(summary.textContent).toContain("unsafe")
-    expect(summary.querySelector(".herb-dev-tools-fix-command")!.textContent).toBe("herb lint --fix-unsafely")
+    expect(document.querySelector(".herb-dev-tools-autofix-note")!.textContent).toBe("not applied, unsafe")
+    expect(document.querySelector(".herb-dev-tools-fix-command")!.textContent).toBe("npx @herb-tools/linter app/views/posts/_actions.html.erb --fix-unsafely --only html-no-nested-forms")
   })
 
   test("falls back to a safe label for an unrecognized kind", async () => {
@@ -887,7 +918,7 @@ describe("fix diffs", () => {
     const details = await waitForFix()
 
     expect(details.getAttribute("data-herb-dev-tools-fix")).toBe("safe")
-    expect(details.querySelector(".herb-dev-tools-fix-command")!.textContent).toBe("herb lint --fix")
+    expect(document.querySelector(".herb-dev-tools-fix-command")!.textContent).toBe("npx @herb-tools/linter app/views/posts/_actions.html.erb --fix --only html-no-nested-forms")
   })
 
   test("gives the diff a foreground that differs from its background", async () => {
@@ -970,10 +1001,6 @@ describe("fix diffs", () => {
 })
 
 describe("expanded presentation", () => {
-  function expandButton() {
-    return document.querySelector('[data-herb-dev-tools-action="expand"]') as HTMLButtonElement
-  }
-
   function panel() {
     return document.querySelector(".herb-dev-tools-panel") as HTMLElement
   }
@@ -993,9 +1020,9 @@ describe("expanded presentation", () => {
       title: getComputedStyle(title).color,
     }
 
-    expect(neutral.band).toBe("rgb(249, 250, 251)")
-    expect(neutral.border).toBe("rgb(229, 231, 235)")
-    expect(neutral.title).toBe("rgb(17, 24, 39)")
+    expect(neutral.band).toBe("rgb(255, 255, 255)")
+    expect(neutral.border).toBe("rgb(212, 212, 216)")
+    expect(neutral.title).toBe("rgb(9, 9, 11)")
 
     instance.clear()
     instance.report(diagnostic({ kind: "metric", value: "3 SQL queries", code: "two" }))
@@ -1018,25 +1045,30 @@ describe("expanded presentation", () => {
 
     expect(cluster).toBe(header.lastElementChild)
     expect(Array.from(cluster.children).map(node => node.getAttribute("data-herb-dev-tools-action")))
-      .toEqual(["expand", "close"])
+      .toEqual(["copy-markdown", "expand", "close"])
 
     expect(header.querySelector(".herb-dev-tools-hide")!.parentElement).toBe(header)
   })
 
-  test("matches the close button's hit target and optical weight", () => {
+  test("offers the expand control only while docked, since closing is what collapses", () => {
     embed(PAYLOAD)
 
     const instance = createPanel()
 
     instance.open()
 
-    const expand = expandButton().getBoundingClientRect()
+    const expand = document.querySelector('[data-herb-dev-tools-action="expand"]') as HTMLElement
+
+    expect(expand).not.toBeNull()
+    expect(expand.getAttribute("aria-expanded")).toBe("false")
+
     const close = (document.querySelector(".herb-dev-tools-close") as HTMLElement).getBoundingClientRect()
 
-    expect(expand.width).toBe(close.width)
-    expect(expand.height).toBe(close.height)
-    expect(expand.width).toBeGreaterThanOrEqual(24)
-    expect(parseFloat(getComputedStyle(expandButton()).fontSize)).toBeGreaterThan(15)
+    expect(expand.getBoundingClientRect().width).toBe(close.width)
+
+    instance.expand()
+
+    expect(document.querySelector('[data-herb-dev-tools-action="expand"]')).toBeNull()
   })
 
   test("keeps every control reachable in the anchored header", () => {
@@ -1140,48 +1172,54 @@ describe("expanded presentation", () => {
     expect(panel().classList.contains("herb-dev-tools-expanded")).toBe(false)
     expect(document.querySelector(".herb-dev-tools-backdrop")).toBeNull()
 
-    expandButton().click()
+    instance.toggleExpanded()
 
     expect(instance.expanded).toBe(true)
     expect(panel().classList.contains("herb-dev-tools-expanded")).toBe(true)
     expect(document.querySelector(".herb-dev-tools-backdrop")).not.toBeNull()
 
-    expandButton().click()
+    instance.toggleExpanded()
 
     expect(instance.expanded).toBe(false)
     expect(panel().classList.contains("herb-dev-tools-expanded")).toBe(false)
     expect(document.querySelector(".herb-dev-tools-backdrop")).toBeNull()
   })
 
-  test("names the control after what the click will do", () => {
+  test("closing an expanded panel collapses it, so it reopens docked", () => {
     embed(PAYLOAD)
 
     const instance = createPanel()
 
     instance.open()
+    ;(document.querySelector('[data-herb-dev-tools-action="expand"]') as HTMLButtonElement).click()
 
-    expect(expandButton().getAttribute("aria-label")).toBe("Expand panel to fill the window")
-    expect(expandButton().getAttribute("aria-expanded")).toBe("false")
+    expect(instance.expanded).toBe(true)
+    ;(document.querySelector(".herb-dev-tools-close") as HTMLButtonElement).click()
 
-    instance.expand()
+    expect(instance.expanded).toBe(false)
 
-    expect(expandButton().getAttribute("aria-label")).toBe("Collapse panel back to the corner")
-    expect(expandButton().getAttribute("aria-expanded")).toBe("true")
+    instance.open()
+
+    expect(instance.expanded).toBe(false)
+    expect(panel().classList.contains("herb-dev-tools-expanded")).toBe(false)
   })
 
-  test("survives a reload through sessionStorage", () => {
+  test("does not carry an expanded panel across a reload", () => {
     embed(PAYLOAD)
 
     const instance = createPanel()
 
     instance.open()
     instance.expand()
+    instance.close()
     instance.destroy()
 
     const reloaded = createPanel()
 
-    expect(reloaded.expanded).toBe(true)
-    expect(panel().classList.contains("herb-dev-tools-expanded")).toBe(true)
+    reloaded.open()
+
+    expect(reloaded.expanded).toBe(false)
+    expect(panel().classList.contains("herb-dev-tools-expanded")).toBe(false)
   })
 
   test("fills the window minus the inset when expanded", () => {
@@ -1198,6 +1236,20 @@ describe("expanded presentation", () => {
     expect(rect.top).toBeCloseTo(24, 0)
     expect(rect.width).toBeCloseTo(window.innerWidth - 48, 0)
     expect(rect.height).toBeCloseTo(window.innerHeight - 48, 0)
+  })
+
+  test("stops widening once it has the room it needs", () => {
+    embed(PAYLOAD)
+
+    const instance = createPanel()
+
+    instance.open()
+    instance.expand()
+
+    const styles = getComputedStyle(panel())
+
+    expect(styles.maxWidth).toBe("1280px")
+    expect(styles.marginLeft).toBe(styles.marginRight)
   })
 
   test("collapses back to the exact anchored position with the panel still open", () => {
@@ -1451,7 +1503,7 @@ describe("report", () => {
     panel.report(diagnostic({ origin: "Acme Scanner", severity: "warning" }))
 
     expect(cards()).toHaveLength(1)
-    expect(document.querySelector(".herb-dev-tools-dot-warning")).not.toBeNull()
+    expect(document.querySelector(".herb-dev-tools-code-warning")).not.toBeNull()
   })
 
   test("accepts a batch", () => {
@@ -2029,7 +2081,6 @@ describe("overlay", () => {
     expect(badge()).toBeNull()
     expect(document.querySelector(".herb-dev-tools-close")).toBeNull()
     expect(document.querySelector(".herb-dev-tools-hide")).toBeNull()
-    expect(document.querySelector(".herb-dev-tools-expand")).toBeNull()
     expect(document.querySelector(".herb-dev-tools-clear")).toBeNull()
 
     escape()
@@ -2508,7 +2559,7 @@ describe("overlay", () => {
       diagnostic({ code: "two", origin: "Herb Validator", overlay: "blocking" }),
     ])
 
-    expect(document.querySelector(".herb-dev-tools-title")!.textContent).toBe("Herb Runtime Diagnostics")
+    expect(document.querySelector(".herb-dev-tools-title")!.textContent).toBe("Herb Diagnostics")
     expect(document.querySelector(".herb-dev-tools-summary")!.textContent).toBe("2 errors")
   })
 
@@ -2873,7 +2924,7 @@ describe("overlay heading bar", () => {
 
     const scope = () => document.querySelector('[data-herb-dev-tools-action="overlay-scope"]') as HTMLButtonElement
 
-    expect(scope().title).toBe("Show the other 2 diagnostics this page reported")
+    expect(scope().getAttribute("data-herb-dev-tools-tip")).toBe("Show the other 2 diagnostics this page reported")
 
     instance.clear("unknown")
     instance.report([
@@ -2881,7 +2932,7 @@ describe("overlay heading bar", () => {
       diagnostic({ code: "broke", overlay: "blocking" }),
     ])
 
-    expect(scope().title).toBe("Show the one other diagnostic this page reported")
+    expect(scope().getAttribute("data-herb-dev-tools-tip")).toBe("Show the one other diagnostic this page reported")
   })
 
   test("keeps one bar layout across the focused and widened views", () => {
@@ -2916,7 +2967,7 @@ describe("overlay heading bar", () => {
 
     expect(controls()).toBe(header().lastElementChild)
     expect(Array.from(controls().children).map(node => node.getAttribute("data-herb-dev-tools-action")))
-      .toEqual(["overlay-scope", "dismiss-overlay"])
+      .toEqual(["copy-markdown", "dismiss-overlay"])
 
     instance.toggleOverlayScope()
 
@@ -2957,7 +3008,7 @@ describe("overlay severity accent", () => {
 
     expect(styles.backgroundColor).not.toBe("rgb(220, 38, 38)")
     expect(styles.color).not.toBe("rgb(255, 255, 255)")
-    expect(styles.backgroundColor).not.toBe("rgb(249, 250, 251)")
+    expect(styles.backgroundColor).not.toBe("rgb(255, 255, 255)")
     expect(styles.borderBottomColor).not.toBe("rgb(229, 231, 235)")
     expect(styles.boxShadow).toBe("none")
   })
@@ -3037,7 +3088,7 @@ describe("heading bar across the overlay toggle", () => {
 
     expect(widened.padding).toBe(featured.padding)
     expect(widened.background).not.toBe(featured.background)
-    expect(widened.background).toBe("rgb(249, 250, 251)")
+    expect(widened.background).toBe("rgb(255, 255, 255)")
     expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
   })
 
@@ -3054,7 +3105,7 @@ describe("heading bar across the overlay toggle", () => {
     instance.toggleOverlayScope()
 
     expect(chrome().padding).toBe(featured.padding)
-    expect(chrome().background).toBe("rgb(249, 250, 251)")
+    expect(chrome().background).toBe("rgb(255, 255, 255)")
   })
 
   test("leaves the docked panel header untinted", () => {
@@ -3065,7 +3116,7 @@ describe("heading bar across the overlay toggle", () => {
 
     const docked = chrome()
 
-    expect(docked.background).toBe("rgb(249, 250, 251)")
+    expect(docked.background).toBe("rgb(255, 255, 255)")
     expect(docked.shadow).toBe("none")
     expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
   })
@@ -3123,7 +3174,7 @@ describe("expanding the docked panel", () => {
     instance.report(diagnostic({ code: "errored", severity: "error" }))
 
     expect(chrome().background).toBe(warning)
-    expect(chrome().background).toBe("rgb(249, 250, 251)")
+    expect(chrome().background).toBe("rgb(255, 255, 255)")
     expect(header().querySelector(".herb-dev-tools-dot")).toBeNull()
   })
 
@@ -3433,7 +3484,6 @@ describe("header control alignment", () => {
       gap,
       padding,
       title: element.querySelector(".herb-dev-tools-title")!.getBoundingClientRect(),
-      clear: element.querySelector(".herb-dev-tools-clear")!.getBoundingClientRect(),
       hide: element.querySelector(".herb-dev-tools-hide")!.getBoundingClientRect(),
       controls: element.querySelector(".herb-dev-tools-window-controls")!.getBoundingClientRect(),
     }
@@ -3445,13 +3495,12 @@ describe("header control alignment", () => {
     createPanel().open()
     ;(document.querySelector(".herb-dev-tools-panel") as HTMLElement).style.width = "640px"
 
-    const { box, gap, padding, title, clear, hide, controls } = measure()
+    const { box, gap, padding, title, hide, controls } = measure()
 
     expect(title.left).toBeCloseTo(box.left + padding, 0)
-    expect(clear.left).toBeGreaterThan(box.left + box.width / 2)
+    expect(hide.left).toBeGreaterThan(box.left + box.width / 2)
     expect(title.right).toBeGreaterThan(box.left + box.width / 2)
 
-    expect(hide.left - clear.right).toBeCloseTo(gap, 0)
     expect(controls.left - hide.right).toBeCloseTo(gap, 0)
     expect(controls.right).toBeCloseTo(box.right - padding, 0)
   })
@@ -3465,11 +3514,10 @@ describe("header control alignment", () => {
     instance.expand()
     ;(document.querySelector(".herb-dev-tools-panel") as HTMLElement).style.width = "640px"
 
-    const { element, box, gap, padding, title, clear, hide, controls } = measure()
+    const { element, box, gap, padding, title, hide, controls } = measure()
 
-    expect(clear.left).toBeGreaterThan(box.left + box.width / 2)
+    expect(hide.left).toBeGreaterThan(box.left + box.width / 2)
     expect(title.right).toBeGreaterThan(box.left + box.width / 2)
-    expect(hide.left - clear.right).toBeCloseTo(gap, 0)
     expect(controls.left - hide.right).toBeCloseTo(gap, 0)
     expect(controls.right).toBeCloseTo(box.right - padding, 0)
     expect(element.scrollWidth).toBeLessThanOrEqual(element.clientWidth)
@@ -3889,143 +3937,5 @@ describe("what a blocking screen calls itself", () => {
     ])
 
     expect(title()).toBe("Herb Parser")
-  })
-})
-
-describe("one block per file", () => {
-  const SOURCE = `<div class="actions">\n  <form action="/posts">\n    <button>Delete</button>\n  </form>\n</div>\n`
-
-  function payload() {
-    return {
-      version: 1,
-      sources: { "app/views/posts/_actions.html.erb": SOURCE },
-      diagnostics: [
-        {
-          template: "app/views/posts/_actions.html.erb",
-          message: "Nested `<form>` elements are not allowed.",
-          code: "html-no-nested-forms",
-          severity: "error",
-          origin: "Herb Linter",
-          location: { start: { line: 2, column: 3 }, end: { line: 2, column: 24 } },
-        },
-        {
-          template: "app/views/posts/_actions.html.erb",
-          message: "Button has no accessible name.",
-          code: "html-button-name",
-          severity: "warning",
-          origin: "Herb Linter",
-          location: { start: { line: 3, column: 5 }, end: { line: 3, column: 26 } },
-        },
-      ],
-    }
-  }
-
-  function viewButton() {
-    return document.querySelector('[data-herb-dev-tools-action="view"]') as HTMLButtonElement | null
-  }
-
-  function combined() {
-    return document.querySelector(".herb-dev-tools-combined")
-  }
-
-  test("offers the toggle once the panel fills the window", async () => {
-    embed(payload())
-
-    const instance = createPanel()
-
-    instance.open()
-
-    expect(viewButton()).toBeNull()
-
-    instance.expand()
-
-    await waitForExcerpt()
-
-    expect(viewButton()!.textContent).toBe("One block per file")
-    expect(viewButton()!.getAttribute("aria-pressed")).toBe("false")
-  })
-
-  test("replaces the cards with a single block", async () => {
-    embed(payload())
-
-    const instance = createPanel()
-
-    instance.open()
-    instance.expand()
-
-    await waitForExcerpt()
-
-    expect(cards()).toHaveLength(2)
-    expect(combined()).toBeNull()
-
-    instance.toggleView()
-
-    await waitFor(() => combined(), "the combined block")
-
-    expect(cards()).toHaveLength(0)
-    expect(document.querySelectorAll(".herb-dev-tools-combined")).toHaveLength(1)
-    expect(viewButton()!.textContent).toBe("One card per offense")
-  })
-
-  test("marks every offence in the one block", async () => {
-    embed(payload())
-
-    const instance = createPanel()
-
-    instance.open()
-    instance.expand()
-    instance.toggleView()
-
-    const element = await waitFor(
-      () => document.querySelector(".herb-dev-tools-combined herb-ansi") as HTMLElement | null,
-      "the combined block",
-    )
-
-    const plain = element.textContent!.split("").filter(character => character.charCodeAt(0) !== 27).join("")
-      .replace(/\[[0-9;]*m/g, "")
-
-    expect(plain).toContain("Nested `<form>` elements are not allowed.")
-    expect(plain).toContain("Button has no accessible name.")
-
-    const lines = plain.split("\n")
-
-    expect(lines.some(line => line.includes("1 \u2502 <div class=\"actions\">"))).toBe(true)
-    expect(lines.some(line => line.includes("5 \u2502 </div>"))).toBe(true)
-    expect(lines.filter(line => line.includes("~")).length).toBe(2)
-  })
-
-  test("keeps the cards for a file it has no source for", async () => {
-    embed({ version: 1, diagnostics: payload().diagnostics })
-
-    const instance = createPanel()
-
-    instance.open()
-    instance.expand()
-    instance.toggleView()
-
-    expect(instance.view).toBe("combined")
-    expect(combined()).toBeNull()
-    expect(cards()).toHaveLength(2)
-    expect(viewButton()).toBeNull()
-  })
-
-  test("remembers the choice for the session", async () => {
-    embed(payload())
-
-    const first = createPanel()
-
-    first.open()
-    first.expand()
-    first.toggleView()
-
-    expect(first.view).toBe("combined")
-
-    first.destroy()
-    document.body.innerHTML = ""
-    embed(payload())
-
-    const second = createPanel()
-
-    expect(second.view).toBe("combined")
   })
 })

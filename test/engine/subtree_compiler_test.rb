@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
-require_relative "../../lib/herb/engine/subtree_compiler"
+require_relative "../../lib/herb/engine/slots/subtree_compiler"
 
 module Engine
   class SubtreeCompilerTest < Minitest::Spec
@@ -28,7 +28,7 @@ module Engine
     ERB
 
     def compile(source, path)
-      Herb::Engine::SubtreeCompiler.new(source, node_path: path, filename: "app/views/test.html.erb").src
+      Herb::Engine::Slots::SubtreeCompiler.new(source, node_path: path, filename: "app/views/test.html.erb").src
     end
 
     def render(source, path, **assigns)
@@ -120,7 +120,7 @@ module Engine
 
     describe "a path that leads nowhere" do
       test "says so rather than compiling a template that renders nothing" do
-        error = assert_raises(Herb::Engine::SubtreeCompiler::TargetNotFound) do
+        error = assert_raises(Herb::Engine::Slots::SubtreeCompiler::TargetNotFound) do
           compile("<div><p>a</p></div>", [9])
         end
 
@@ -128,7 +128,7 @@ module Engine
       end
 
       test "does not treat an open tag as a position" do
-        assert_raises(Herb::Engine::SubtreeCompiler::TargetNotFound) do
+        assert_raises(Herb::Engine::Slots::SubtreeCompiler::TargetNotFound) do
           compile(%(<div class="a" id="b">x</div>), [0, 1])
         end
       end

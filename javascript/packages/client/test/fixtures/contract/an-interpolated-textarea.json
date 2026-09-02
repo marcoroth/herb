@@ -1,0 +1,48 @@
+{
+  "file": "app/views/contract/an-interpolated-textarea.html.erb",
+  "template": "<textarea><%= @d %>11</textarea>",
+  "rendered": "<!--herb-region:app/views/contract/an-interpolated-textarea.html.erb:c380979f:0--><textarea data-herb-slot=\"0:raw_text_interpolation\">draft11</textarea><!--/herb-region:app/views/contract/an-interpolated-textarea.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/an-interpolated-textarea.html.erb:c380979f:0--><textarea data-herb-slot=\"0:raw_text_interpolation\">draft11</textarea><!--/herb-region:app/views/contract/an-interpolated-textarea.html.erb-->",
+  "values": {
+    "template": "app/views/contract/an-interpolated-textarea.html.erb",
+    "version": "c380979f",
+    "occurrence": 0,
+    "slots": {
+      "0": [
+        "typed"
+      ]
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/an-interpolated-textarea.html.erb:c380979f:0--><textarea data-herb-slot=\"0:raw_text_interpolation\">typed11</textarea><!--/herb-region:app/views/contract/an-interpolated-textarea.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/an-interpolated-textarea.html.erb",
+    "identifier": "app/views/contract/an-interpolated-textarea.html.erb",
+    "version": "c380979f",
+    "slots": [
+      {
+        "index": 0,
+        "type": "raw_text_interpolation",
+        "node_path": [
+          0
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/an-interpolated-textarea.html.erb",
+    "identifier": "app/views/contract/an-interpolated-textarea.html.erb",
+    "version": "c380979f",
+    "names": {},
+    "parts": {
+      "0": [
+        "",
+        "11"
+      ]
+    },
+    "states": null
+  },
+  "dependencies": {
+    "state": {},
+    "params": {}
+  }
+}

@@ -12,11 +12,11 @@ end
 module SnapshotUtils
   include CompareHelpers
 
-  def assert_lexed_snapshot(source)
-    result = Herb.lex(source)
+  def assert_lexed_snapshot(source, **options)
+    result = Herb.lex(source, **options)
     expected = result.value.inspect
 
-    assert_snapshot_matches(expected, source, {})
+    assert_snapshot_matches(expected, source, options)
 
     assert_equal "TOKEN_EOF", result.value.last.type
     assert_equal source.to_s.bytesize, result.value.last.range.from
@@ -34,6 +34,20 @@ module SnapshotUtils
     result
   end
 
+  def assert_error_snapshot(source, validators: true, **engine_options)
+    require_relative "../lib/herb/engine"
+
+    options = validators ? engine_options.merge(visitors: Herb::Engine::Validators.all) : engine_options
+
+    error = assert_raises(Herb::Engine::CompilationError) do
+      Herb::Engine.new(source, options)
+    end
+
+    assert_snapshot_matches(error.detailed_message, source, engine_options.merge(validators: validators))
+
+    error
+  end
+
   def assert_compiled_snapshot(source, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
     require "prism"
@@ -46,6 +60,8 @@ module SnapshotUtils
 
     snapshot_key = { source: source, options: engine_options }.to_s
     assert_snapshot_matches(expected, snapshot_key)
+
+    assert_erb_tags_keep_their_line(source, engine.src)
 
     prism_result = Prism.parse(engine.src)
     syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
@@ -274,14 +290,31 @@ module SnapshotUtils
     expected_snapshot_path
   end
 
+  def assert_erubi_line_parity(source, options = {})
+    require_erubi_silently
+
+    herb = Herb::Engine.new(source, options).src
+    erubi = Erubi::Engine.new(source, options).src
+
+    assert_equal erubi.lines.count, herb.lines.count, <<~MESSAGE
+      Herb and Erubi compile #{source.inspect} to a different number of lines, so a
+      backtrace through Template#render would name a different line in each.
+
+      Erubi (#{erubi.lines.count} lines):
+      #{erubi}
+      Herb (#{herb.lines.count} lines):
+      #{herb}
+    MESSAGE
+  end
+
   def should_compare_with_erubi?
-    return false if class_name.include?("DebugMode")
+    return false if class_name.include?("DebugMode") || class_name.include?("SourceAttribution")
 
     !ENV["COMPARE_WITH_ERUBI"].nil?
   end
 
   def should_compare_with_actionview_erubi?
-    return false if class_name.include?("DebugMode")
+    return false if class_name.include?("DebugMode") || class_name.include?("SourceAttribution")
 
     !ENV["COMPARE_WITH_ACTIONVIEW_ERUBI"].nil?
   end
@@ -353,12 +386,12 @@ module SnapshotUtils
     end
   end
 
-  def compare_with_actionview_erubi_evaluated(source, herb_result, locals, _options, enforce_equality: false)
+  def compare_with_actionview_erubi_evaluated(source, herb_result, locals, options, enforce_equality: false)
     require "action_view"
     require_erubi_silently
 
     begin
-      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer")
+      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer", **options.slice(:trim))
 
       view = ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil)
       view.instance_variable_set(:@output_buffer, ActionView::OutputBuffer.new)
@@ -486,6 +519,20 @@ module SnapshotUtils
     metadata
   end
 
+  def assert_erb_tags_keep_their_line(source, compiled)
+    off = erb_tags_off_their_line(source, compiled)
+
+    assert off.empty?, <<~MESSAGE
+      An ERB tag compiles to a line other than the one it was written on, so a
+      backtrace from this template would name the wrong line:
+
+      #{off.map { |line, code| "  source line #{line}: #{code[0, 60]}" }.join("\n")}
+
+      Compiled source:
+      #{compiled}
+    MESSAGE
+  end
+
   private
 
   def evaluate_actionview_source(source, locals)
@@ -550,5 +597,36 @@ module SnapshotUtils
           .tr("-", "_")
           .tr(" ", "_")
           .downcase
+  end
+
+  def erb_content_nodes(node, found = [])
+    found << node if node.class.name&.end_with?("ERBContentNode")
+    node.compact_child_nodes.each { |child| erb_content_nodes(child, found) } if node.respond_to?(:compact_child_nodes)
+    found
+  end
+
+  def erb_tags_off_their_line(source, compiled)
+    lines = compiled.lines
+    source_lines = source.lines
+
+    erb_content_nodes(Herb.parse(source).value).filter_map do |node|
+      opening = node.tag_opening&.value.to_s
+
+      next if opening.empty? || opening.start_with?("<%#")
+
+      raw = node.content&.value.to_s
+      code = Herb::Engine::Helpers.strip_trailing_comment(raw.strip)
+
+      next if code.empty?
+
+      line = node.tag_opening.location.start.line + raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
+      first = code.lines.first.to_s.strip
+
+      next if lines[line - 1].to_s.include?(first)
+      next if source_lines[line - 2].to_s.match?(/-%>[ \t]*\r?\n?\z/)
+      next unless compiled.include?(first)
+
+      [line, first]
+    end
   end
 end

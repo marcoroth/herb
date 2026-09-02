@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -43,7 +43,7 @@ module Engine
       }.freeze
 
       def compile(source)
-        Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb")
+        Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb")
       end
 
       def evaluate(compiler, assigns)
@@ -139,7 +139,7 @@ module Engine
       end
 
       test "an iteration is a collection whether or not its value is output" do
-        items = { items: { "1" => { 1 => "1" }, "2" => { 1 => "2" } } }
+        items = { items: {}, order: [] }
 
         %(<% @items.each do |r| %><%= r %><% end %>).then do |source|
           assert_equal({ 0 => items }, evaluate(compile(source), items: [1, 2]))

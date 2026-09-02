@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::a tag helper the parser resolved#test_0001_is stamped at the position of the tag that asked for it"
+input: "{source: \"<%= link_to \\\"Home\\\", \\\"/\\\" %>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<a href="/" data-herb-source="app/views/posts/_card.html.erb:1:1">Home</a>

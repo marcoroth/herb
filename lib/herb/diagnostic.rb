@@ -43,6 +43,11 @@ module Herb
       @error_class = error_class
     end
 
+    #: (Array[Herb::Errors::Error], template: String, ?origin: String) -> Array[Diagnostic]
+    def self.from_errors(errors, template:, origin: "Herb Parser")
+      errors.map { |error| error.to_diagnostic(template: template, origin: origin) }
+    end
+
     #: (String, Hash[Symbol, untyped]) -> Diagnostic
     def self.from_compiled(template, entry)
       if entry[:line]
@@ -50,7 +55,7 @@ module Herb
       end
 
       new(
-        template: template,
+        template: entry[:template] || template,
         message: entry[:message],
         severity: entry[:severity],
         code: entry[:code],
@@ -59,16 +64,6 @@ module Herb
         location: location,
         phase: :compile
       )
-    end
-
-    #: (String) -> String
-    def self.code_for(type)
-      type
-        .gsub(/([A-Z])([A-Z][a-z])/, '\1_\2')
-        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-        .downcase
-        .sub(/_?error\z/, "")
-        .tr("_", "-")
     end
 
     #: () -> bool
@@ -124,8 +119,8 @@ module Herb
 
     alias to_hash to_h
 
-    #: () -> String
-    def to_ruby
+    #: (?String?) -> String
+    def to_ruby(compiled = nil)
       parts = [
         "message: #{message.inspect}",
         "severity: #{severity.inspect}",
@@ -134,6 +129,7 @@ module Herb
       ]
 
       parts << "suggestion: #{suggestion.inspect}" if suggestion
+      parts << "template: #{template.inspect}" if template && template != compiled
 
       if location
         parts << "line: #{location.start.line}" << "column: #{location.start.column}"

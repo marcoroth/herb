@@ -13,10 +13,9 @@ require_relative "herb/result"
 require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
-require_relative "herb/diff_operation"
-require_relative "herb/diff_result"
+require_relative "herb/diff"
+require_relative "herb/backend"
 
-require_relative "herb/ast"
 require_relative "herb/ast/node"
 require_relative "herb/ast/nodes"
 require_relative "herb/ast/erb_content_node"
@@ -27,25 +26,20 @@ require_relative "herb/errors"
 require_relative "herb/warnings"
 require_relative "herb/diagnostic"
 
-require_relative "herb/project"
-require_relative "herb/configuration"
-
 require_relative "herb/version"
-
-require_relative "herb/html/util"
+require_relative "herb/ensure_installed"
 require_relative "herb/visitor"
-require_relative "herb/engine"
 
 begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
 
   if RUBY_PATCHLEVEL == -1
-    require "herb/herb"
+    require_relative "herb/herb"
   else
     begin
-      require "herb/#{major}.#{minor}/herb"
+      require_relative "herb/#{major}.#{minor}/herb"
     rescue LoadError
-      require "herb/herb"
+      require_relative "herb/herb"
     end
   end
 rescue LoadError => e
@@ -71,70 +65,81 @@ rescue LoadError => e
 end
 
 module Herb
-  class << self
-    #: (String path, ?arena_stats: bool) -> LexResult
-    def lex_file(path, **)
-      lex(File.read(path), **)
-    end
+  #: (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?erb_openers: Array[String], ?arena_stats: bool) -> ParseResult
+  def self.parse(...)
+    Backend.parse(...)
+  end
 
-    #: (String path, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
-    def parse_file(path, **)
-      parse(File.read(path), **)
-    end
+  #: (String input, ?erb_openers: Array[String], ?arena_stats: bool) -> LexResult
+  def self.lex(...)
+    Backend.lex(...)
+  end
 
-    #: (String source) -> Prism::ParseResult
-    def parse_ruby(source)
-      require "prism"
+  #: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool, ?custom_tags: bool, ?erb_openers: Array[String]) -> String
+  def self.extract_ruby(...)
+    Backend.extract_ruby(...)
+  end
 
-      Prism.parse(source)
-    end
+  #: (String source) -> String
+  def self.extract_html(...)
+    Backend.extract_html(...)
+  end
 
-    def configuration(project_path = nil)
-      @configuration ||= Configuration.load(project_path)
-    end
+  #: (String old_source, String new_source, ?track_whitespace_changes: bool) -> Herb::Diff::Result
+  def self.diff(...)
+    Backend.diff(...)
+  end
 
-    def configure(project_path = nil)
-      @configuration = Configuration.load(project_path)
-    end
+  #: (?arena_stats: bool) -> untyped
+  def self.arena_stats(...)
+    Backend.arena_stats(...)
+  end
 
-    def reset_configuration!
-      @configuration = nil
-    end
+  #: (String source) -> untyped
+  def self.leak_check(...)
+    Backend.leak_check(...)
+  end
 
-    def dev_server_port(project_path = nil)
-      require_relative "herb/dev/server_entry"
+  #: () -> String
+  def self.version
+    Backend.version
+  end
 
-      project_path ||= Dir.pwd
-      entry = Dev::ServerEntry.find_by_project(project_path)
-      entry&.port
-    rescue StandardError
-      nil
-    end
+  #: (String path, ?arena_stats: bool) -> LexResult
+  def self.lex_file(path, arena_stats: ParserOptions::DEFAULT_CAPTURE_ARENA_STATS)
+    lex(File.read(path), arena_stats: arena_stats)
+  end
 
-    #: (*String gems) -> void
-    def ensure_installed(*gems)
-      missing = gems.reject do |name|
-        require name
-        true
-      rescue LoadError
-        false
-      end
+  #: (String path, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?herb_directives: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
+  def self.parse_file(path, track_locations: ParserOptions::DEFAULT_TRACK_LOCATIONS, track_whitespace: ParserOptions::DEFAULT_TRACK_WHITESPACE, analyze: ParserOptions::DEFAULT_ANALYZE, strict: ParserOptions::DEFAULT_STRICT, action_view_helpers: ParserOptions::DEFAULT_ACTION_VIEW_HELPERS, transform_conditionals: ParserOptions::DEFAULT_TRANSFORM_CONDITIONALS, strict_locals: ParserOptions::DEFAULT_STRICT_LOCALS, herb_directives: ParserOptions::DEFAULT_HERB_DIRECTIVES, prism_nodes: ParserOptions::DEFAULT_PRISM_NODES, prism_nodes_deep: ParserOptions::DEFAULT_PRISM_NODES_DEEP, prism_program: ParserOptions::DEFAULT_PRISM_PROGRAM, arena_stats: ParserOptions::DEFAULT_CAPTURE_ARENA_STATS)
+    parse(File.read(path), track_locations: track_locations, track_whitespace: track_whitespace, analyze: analyze, strict: strict, action_view_helpers: action_view_helpers, transform_conditionals: transform_conditionals, strict_locals: strict_locals, herb_directives: herb_directives, prism_nodes: prism_nodes, prism_nodes_deep: prism_nodes_deep, prism_program: prism_program, arena_stats: arena_stats)
+  end
 
-      return if missing.empty?
+  #: (String source) -> Prism::ParseResult
+  def self.parse_ruby(source)
+    require "prism"
 
-      require "bundler/inline"
+    Prism.parse(source)
+  end
 
-      verbose = $VERBOSE
-      $VERBOSE = nil
+  #: () -> Array[String]
+  def self.default_erb_openings
+    @default_erb_openings ||= Backend.default_erb_openings.freeze
+  end
 
-      begin
-        gemfile(true, quiet: true) do # steep:ignore
-          source "https://rubygems.org" # steep:ignore
-          missing.each { |name| gem name }
-        end
-      ensure
-        $VERBOSE = verbose
-      end
-    end
+  def self.configuration(project_path = nil)
+    require_relative "herb/configuration"
+
+    @configuration ||= Configuration.load(project_path)
+  end
+
+  def self.configure(project_path = nil)
+    require_relative "herb/configuration"
+
+    @configuration = Configuration.load(project_path)
+  end
+
+  def self.reset_configuration!
+    @configuration = nil
   end
 end

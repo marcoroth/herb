@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0016_parks no item template for an unkeyed collection, which has no addressable items"
+input: "{source: \"<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>\", locals: {\"@items\" => [\"a\", \"b\"]}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:efe7da5f:0--><ul><!--herb-slot:0:collection--><li data-herb-slot="1:child">a</li><li data-herb-slot="1:child">b</li><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->

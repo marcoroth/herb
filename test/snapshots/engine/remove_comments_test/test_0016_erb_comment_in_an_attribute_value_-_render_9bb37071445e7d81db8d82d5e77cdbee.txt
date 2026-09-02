@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsTest#test_0016_erb comment in an attribute value - render"
+input: "{source: \"<div class=\\\"<%# a comment %>\\\">Content</div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<div class="">Content</div>

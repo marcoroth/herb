@@ -54,6 +54,14 @@ module Herb
 
     def user_tool_include_patterns: (untyped tool) -> untyped
 
+    def parser: () -> untyped
+
+    # : () -> Array[String]
+    def erb_openers: () -> Array[String]
+
+    # : () -> Hash[Symbol, untyped]
+    def parser_options: () -> Hash[Symbol, untyped]
+
     def linter: () -> untyped
 
     def engine: () -> untyped

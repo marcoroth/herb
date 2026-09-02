@@ -1,0 +1,12 @@
+---
+source: "Engine::EngineBlockTest#test_0018_a multi-line block opening keeps the line its body starts on"
+input: "{source: \"<%=\\n  render(\\n    x\\n  ) do |c|\\n%>\\n  <%= c %>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << (render(
+    x
+  ) do |c|;
+ _buf << '
+  '.freeze; _buf << (c).to_s; _buf << '
+'.freeze; end )
+_buf.to_s

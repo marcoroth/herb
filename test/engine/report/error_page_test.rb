@@ -14,7 +14,7 @@ module Engine
       Herb::Diagnostic.new(
         template: "app/views/posts/_post.html.erb",
         message: "Opening tag `<form>` does not have a matching closing tag.",
-        code: "missing-closing-tag",
+        code: "MissingClosingTagError",
         origin: "Herb Parser",
         location: Herb::Location.from(2, 2, 2, 8),
         suggestion: "Close the `<form>` before the `</div>` on line 4."
@@ -28,6 +28,24 @@ module Engine
         source: SOURCE,
         filename: "app/views/posts/_post.html.erb"
       )
+    end
+
+    def second_diagnostic
+      Herb::Diagnostic.new(
+        template: "app/views/posts/_post.html.erb",
+        message: "The state `rate` has a Float default.",
+        code: "herb-state-declaration",
+        origin: "Herb Compiler",
+        location: Herb::Location.from(3, 4, 3, 9),
+        suggestion: "Declare it as an Integer or a String instead."
+      )
+    end
+
+    def compile_error(filename: "app/views/posts/_post.html.erb")
+      errors = [diagnostic, second_diagnostic]
+      formatter = Herb::Diagnostic::Formatter.new(SOURCE, errors, filename: filename)
+
+      Herb::Engine::CompilationError.new(formatter.summary, details: formatter, diagnostics: errors)
     end
 
     def ok_app
@@ -47,7 +65,7 @@ module Engine
     end
 
     def middleware(app, **)
-      Herb::Engine::Report::ErrorPage.new(app, **)
+      Herb::Engine::Runtime::ErrorPage.new(app, **)
     end
 
     def payload(body)
@@ -108,11 +126,50 @@ module Engine
 
         assert_equal 1, entries.size
         assert_equal "blocking", entries.first["overlay"]
-        assert_equal "missing-closing-tag", entries.first["code"]
+        assert_equal "MissingClosingTagError", entries.first["code"]
       end
 
       test "carries the template source so the panel can show an excerpt" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        assert_equal(
+          { "app/views/posts/_post.html.erb" => SOURCE },
+          payload(body.first)["sources"]
+        )
+      end
+
+      test "carries every diagnostic a compile error collected, not just its summary" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        entries = payload(body.first)["diagnostics"]
+
+        assert_equal(["MissingClosingTagError", "herb-state-declaration"], entries.map { |entry| entry["code"] })
+        assert_equal(["blocking", "blocking"], entries.map { |entry| entry["overlay"] })
+      end
+
+      test "keeps the template and location a compile error's diagnostics carry" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        entry = payload(body.first)["diagnostics"].last
+
+        assert_equal "app/views/posts/_post.html.erb", entry["template"]
+        assert_equal 3, entry["location"]["start"]["line"]
+        assert_equal "Declare it as an Integer or a String instead.", entry["suggestion"]
+      end
+
+      test "carries the source of a compile error that is not a parse error" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        assert_equal(
+          { "app/views/posts/_post.html.erb" => SOURCE },
+          payload(body.first)["sources"]
+        )
+      end
+
+      test "keys that source by the template its diagnostics name, not the path it compiled" do
+        error = compile_error(filename: "/Users/me/app/app/views/posts/_post.html.erb")
+
+        _status, _headers, body = middleware(raising_app(error)).call(HTML_ENV)
 
         assert_equal(
           { "app/views/posts/_post.html.erb" => SOURCE },
@@ -142,11 +199,29 @@ module Engine
         assert_includes body.first, "Close the `&lt;form&gt;` before"
       end
 
+      test "prints one row per source line, with no blank line between them" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        pre = body.first[%r{<pre>(.+?)</pre>}m, 1]
+
+        assert_equal 4, pre.scan("<span").size
+        assert_equal 0, pre.scan("\n").size
+      end
+
       test "escapes the source it prints" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
         assert_includes body.first, "&lt;form&gt;"
         refute_includes body.first[%r{<pre>.+?</pre>}m], "<form>"
+      end
+
+      test "keeps the provenance footer inside the container its rules are scoped to" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        main = body.first[%r{<main class="herb-error">.+?</main>}m]
+
+        assert_includes main, %(<footer class="herb-error-provenance">)
+        assert_equal 1, body.first.scan("herb-error-provenance\"").size
       end
 
       test "scopes every style rule to itself" do
@@ -184,6 +259,14 @@ module Engine
         assert_includes body.first, "without a matching opening tag"
       end
 
+      test "shows a section with an excerpt for every diagnostic a compile error collected" do
+        _status, _headers, body = middleware(raising_app(compile_error)).call(HTML_ENV)
+
+        assert_equal 2, body.first.scan("<section>").size
+        assert_equal 2, body.first.scan("<pre>").size
+        assert_includes body.first, "app/views/posts/_post.html.erb:3:5"
+      end
+
       test "starts the dev tools when it is told where they are" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
 
@@ -196,6 +279,51 @@ module Engine
 
         assert_includes body.first, "onFixed: () => window.location.reload()"
         refute_includes body.first, "devServer: false"
+      end
+
+      test "hears that even when something else started the dev tools first" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
+
+        assert_includes body.first, %(document.addEventListener("herb:dev-server-fixed", () => window.location.reload()))
+      end
+
+      test "names the dev server port, so the tools reach a project that moved it" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: 9999).call(HTML_ENV)
+
+        assert_includes body.first, %(<meta name="herb-dev-server-port" content="9999">)
+      end
+
+      test "asks for that port at the time it serves too" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: -> { 4321 }).call(HTML_ENV)
+
+        assert_includes body.first, %(<meta name="herb-dev-server-port" content="4321">)
+      end
+
+      test "leaves the port out when nobody named one, so the default still applies" do
+        _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
+
+        refute_includes body.first, "herb-dev-server-port"
+      end
+
+      test "asks for the path at the time it serves, for a pipeline that boots later" do
+        resolved = -> { "/assets/herb-abc123.js" }
+
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: resolved).call(HTML_ENV)
+
+        assert_includes body.first, %(import { HerbDevTools } from "/assets/herb-abc123.js")
+      end
+
+      test "costs the overlay and not the page when it cannot answer" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> { raise "no pipeline" }).call(HTML_ENV)
+
+        refute_includes body.first, "HerbDevTools"
+        assert_includes body.first, "This template could not be compiled"
+      end
+
+      test "leaves the script out when it names nothing yet" do
+        _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> {}).call(HTML_ENV)
+
+        refute_includes body.first, "HerbDevTools"
       end
 
       test "leaves the script out when it is not" do

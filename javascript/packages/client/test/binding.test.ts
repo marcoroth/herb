@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
 
 const FILE = "app/views/page/form.html.erb"
 
@@ -28,16 +28,16 @@ const PAGE =
     },
   })}</template>`
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
   state.observe()
 })
@@ -118,16 +118,16 @@ describe("property sync after user interaction", () => {
       },
     })}</template>`
 
-  let syncSlots: SlotIndex
-  let syncState: SlotState
+  let syncSlots: Slots
+  let syncState: State
 
   beforeEach(() => {
     document.body.innerHTML = SYNC_PAGE
 
-    syncSlots = new SlotIndex()
+    syncSlots = new Slots()
     syncSlots.scan(document.body)
 
-    syncState = new SlotState(syncSlots, { persist: "none" })
+    syncState = new State(syncSlots, {})
     syncState.adopt()
     syncState.observe()
   })
@@ -210,16 +210,68 @@ const AREA_PAGE =
     },
   })}</template>`
 
+describe("a boolean attribute that computes", () => {
+  const COMPUTED_FILE = "app/views/page/computed.html.erb"
+
+  const COMPUTED_PAGE =
+    `<!--herb-region:${COMPUTED_FILE}:beefcafe:0-->` +
+    `<input id="plain" type="checkbox" data-herb-slot="0:boolean_attribute:checked">` +
+    `<input id="derived" type="checkbox" checked data-herb-slot="1:boolean_attribute:checked">` +
+    `<!--/herb-region:${COMPUTED_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      states: {
+        [COMPUTED_FILE]: {
+          version: "beefcafe",
+          declarations: [
+            { name: "agreed", kind: "boolean", default: "false", scope: "region" },
+            { name: "unread", kind: "number", default: "5", scope: "region" },
+          ],
+          reads: { agreed: [0], unread: [1] },
+          conditionals: {},
+          presence: { 0: ["agreed", null], 1: ["unread", { value: 3 }, ">"] },
+        },
+      },
+    })}</template>`
+
+  let computedSlots: Slots
+  let computedState: State
+
+  beforeEach(() => {
+    document.body.innerHTML = COMPUTED_PAGE
+
+    computedSlots = new Slots()
+    computedSlots.scan(document.body)
+
+    computedState = new State(computedSlots, {})
+    computedState.adopt()
+    computedState.observe()
+  })
+
+  afterEach(() => computedState.disconnect())
+
+  test("a bare presence read still binds the click", () => {
+    document.querySelector<HTMLInputElement>("#plain")!.click()
+
+    expect(computedState.getState("agreed")).toBe(true)
+  })
+
+  test("a computed presence read never writes its operand back", () => {
+    document.querySelector<HTMLInputElement>("#derived")!.click()
+
+    expect(computedState.getState("unread")).toBe(5)
+  })
+})
+
 describe("a state rendered as a textarea's content", () => {
   test("a write reaches the textarea", () => {
     document.body.innerHTML = AREA_PAGE
 
-    const areaSlots = new SlotIndex()
+    const areaSlots = new Slots()
 
     areaSlots.scan(document.body)
 
-    const areaState = new SlotState(areaSlots, {
-      persist: "none",
+    const areaState = new State(areaSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },

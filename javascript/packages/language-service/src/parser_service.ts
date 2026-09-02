@@ -1,10 +1,12 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Visitor } from "@herb-tools/core"
+import { Visitor, commentedERBTagPrefixes } from "@herb-tools/core"
 
 import type { HerbBackend, Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/core"
 
 import { lspRangeFromLocation } from "./range_utils"
+
+import type { ProjectConfig } from "./types.js"
 
 class ErrorVisitor extends Visitor {
   private readonly source = "Herb Parser "
@@ -40,14 +42,23 @@ export interface ParseServiceResult {
 
 export class ParserService {
   private readonly backend: HerbBackend
+  private config?: ProjectConfig
 
   constructor(backend: HerbBackend) {
     this.backend = backend
   }
 
+  setConfig(config?: ProjectConfig) {
+    this.config = config
+  }
+
+  private get parserOptions(): ParseOptions {
+    return this.config?.parserOptions ?? {}
+  }
+
   parseDocument(textDocument: TextDocument): ParseServiceResult {
     const content = textDocument.getText()
-    const result = this.backend.parse(content)
+    const result = this.backend.parse(content, this.parserOptions)
 
     const errorVisitor = new ErrorVisitor()
     result.visit(errorVisitor)
@@ -59,6 +70,10 @@ export class ParserService {
   }
 
   parseContent(content: string, options?: ParseOptions): ParseResult {
-    return this.backend.parse(content, options)
+    return this.backend.parse(content, { ...this.parserOptions, ...options })
+  }
+
+  commentedERBTagPrefixes(erbOpeners?: string[]): string[] {
+    return commentedERBTagPrefixes(this.backend.defaultERBOpenings(), erbOpeners ?? this.parserOptions.erb_openers ?? [])
   }
 }

@@ -1,0 +1,69 @@
+{
+  "file": "app/views/contract/an-attribute-and-a-child.html.erb",
+  "template": "<li class=\"<%= @c %>\"><%= @n %></li>",
+  "rendered": "<!--herb-region:app/views/contract/an-attribute-and-a-child.html.erb:dfb12a52:0--><li class=\"item\" data-herb-slot=\"0:attribute:class 1:child\">Marco</li><!--/herb-region:app/views/contract/an-attribute-and-a-child.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/an-attribute-and-a-child.html.erb:dfb12a52:0--><li class=\"item\" data-herb-slot=\"0:attribute:class 1:child\">Marco</li><!--/herb-region:app/views/contract/an-attribute-and-a-child.html.erb-->",
+  "values": {
+    "template": "app/views/contract/an-attribute-and-a-child.html.erb",
+    "version": "dfb12a52",
+    "occurrence": 0,
+    "slots": {
+      "0": "row",
+      "1": "Joe"
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/an-attribute-and-a-child.html.erb:dfb12a52:0--><li class=\"row\" data-herb-slot=\"0:attribute:class 1:child\">Joe</li><!--/herb-region:app/views/contract/an-attribute-and-a-child.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/an-attribute-and-a-child.html.erb",
+    "identifier": "app/views/contract/an-attribute-and-a-child.html.erb",
+    "version": "dfb12a52",
+    "slots": [
+      {
+        "index": 0,
+        "type": "attribute",
+        "node_path": [
+          0
+        ],
+        "attribute": "class"
+      },
+      {
+        "index": 1,
+        "type": "child",
+        "node_path": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/an-attribute-and-a-child.html.erb",
+    "identifier": "app/views/contract/an-attribute-and-a-child.html.erb",
+    "version": "dfb12a52",
+    "names": {},
+    "parts": {},
+    "states": null
+  },
+  "dependencies": {
+    "state": {
+      "@c": [
+        {
+          "file": "app/views/contract/an-attribute-and-a-child.html.erb",
+          "version": "dfb12a52",
+          "index": 0
+        }
+      ],
+      "@n": [
+        {
+          "file": "app/views/contract/an-attribute-and-a-child.html.erb",
+          "version": "dfb12a52",
+          "index": 1
+        }
+      ]
+    },
+    "params": {
+      "c": "@c",
+      "n": "@n"
+    }
+  }
+}

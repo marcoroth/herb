@@ -1,0 +1,11 @@
+---
+source: "Engine::SourceAttributionTest::a helper the parser cannot resolve to a tag#test_0001_is left alone, and the markup around it keeps its stamp"
+input: "{source: \"<div>\\n  <%= form_with url: \\\"/\\\" do |form| %>\\n    inner\\n  <% end %>\\n</div>\\n\", options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-source="app/views/posts/_card.html.erb:1:1">
+  '.freeze; _buf << (form_with url: "/" do |form|; _buf << '
+    inner
+'.freeze;   end )
+ _buf << '</div>
+'.freeze;
+_buf.to_s

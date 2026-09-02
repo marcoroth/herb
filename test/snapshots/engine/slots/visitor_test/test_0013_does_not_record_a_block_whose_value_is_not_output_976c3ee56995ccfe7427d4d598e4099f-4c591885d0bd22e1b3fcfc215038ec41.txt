@@ -1,0 +1,9 @@
+---
+source: "Engine::Slots::VisitorTest#test_0013_does not record a block whose value is not output"
+input: "<div><% @user.tap do |u| %><b>x</b><% end %></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: e3b0c442
+
+slots: (none)

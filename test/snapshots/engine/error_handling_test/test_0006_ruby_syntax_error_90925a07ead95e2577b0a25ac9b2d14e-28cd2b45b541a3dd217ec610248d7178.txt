@@ -1,0 +1,25 @@
+---
+source: "Engine::ErrorHandlingTest#test_0006_ruby syntax error"
+input: |2-
+<div>
+  <%= user.name.upcase( %>
+</div>
+options: {validators: true}
+---
+[source]:2:3: argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments (and 1 more error) (Herb::Engine::ParseError)
+
+✘ [RubyParseError] argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments
+
+    [source]:2:3:
+      2 │   <%= user.name.upcase( %>
+        ╵   ~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Check the Ruby syntax inside the ERB tag.
+
+✘ [RubyParseError] argument_term_paren: unexpected end-of-input; expected a `)` to close the arguments
+
+    [source]:2:3:
+      2 │   <%= user.name.upcase( %>
+        ╵   ~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Check the Ruby syntax inside the ERB tag.

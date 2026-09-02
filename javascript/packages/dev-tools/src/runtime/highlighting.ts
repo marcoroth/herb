@@ -21,8 +21,8 @@ export interface ExcerptOptions {
 
 export interface RuntimeHighlighting {
   excerpt(source: string, diagnostic: NormalizedDiagnostic, options?: ExcerptOptions): string | null
-  combined(path: string, source: string, diagnostics: NormalizedDiagnostic[]): string | null
   diff(path: string, source: string, fix: NormalizedFix): string | null
+  file(source: string): string | null
 }
 
 let setup: Promise<RuntimeHighlighting | null> | null = null
@@ -92,25 +92,9 @@ async function build(): Promise<RuntimeHighlighting> {
       }
     },
 
-    combined(path, source, diagnostics) {
-      const markable = diagnostics.filter(diagnostic => diagnostic.location !== null && diagnostic.severity !== null)
-
-      if (markable.length === 0) {
-        return null
-      }
-
+    file(source) {
       try {
-        const rendered = inlineRenderer.render(
-          path,
-          source,
-          markable.map(diagnostic => toDiagnostic(diagnostic, source)),
-          true,
-          false,
-          MAX_WIDTH,
-          false,
-        )
-
-        return dropLeadingBlocks(rendered, 1)
+        return syntaxRenderer.highlight(source)
       } catch (_error) {
         return null
       }

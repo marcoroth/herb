@@ -1,0 +1,39 @@
+---
+predicates:
+  - name: "nil?"
+    comparand: "nil"
+    only: "every state"
+
+  - name: "zero?"
+    comparand: "0"
+    kinds: ["integer"]
+    only: "an Integer state"
+
+  - name: "one?"
+    comparand: "1"
+    kinds: ["integer"]
+    only: "an Integer state"
+    rewrite: "== 1"
+
+  - name: "positive?"
+    comparand: "0"
+    operator: ">"
+    kinds: ["integer"]
+    only: "an Integer state"
+
+  - name: "empty?"
+    comparand: '""'
+    kinds: ["string", "symbol"]
+    only: "a String or a Symbol state"
+
+  - name: "blank?"
+    operator: "blank"
+    negated: "present"
+    kinds: ["boolean", "string", "nil"]
+    only: "a Boolean, a String or a Nil state"
+
+  - name: "present?"
+    operator: "present"
+    negated: "blank"
+    kinds: ["boolean", "string", "nil"]
+    only: "a Boolean, a String or a Nil state"

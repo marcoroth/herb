@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it leaves alone#test_0002_an element whose tag name is built at runtime"
+input: "{source: \"<<%= tag_name %>>x</<%= tag_name %>>\", locals: {tag_name: \"div\"}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div>x</div>

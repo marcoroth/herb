@@ -59,6 +59,12 @@ static inline bool hb_string_equals_case_insensitive(hb_string_T a, hb_string_T 
   return strncasecmp(a.data, b.data, a.length) == 0;
 }
 
+static inline bool hb_string_contains_character(hb_string_T string, char character) {
+  if (hb_string_is_empty(string)) { return false; }
+
+  return memchr(string.data, character, string.length) != NULL;
+}
+
 static inline bool hb_string_starts_with(hb_string_T string, hb_string_T expected_prefix) {
   if (hb_string_is_empty(string) || hb_string_is_empty(expected_prefix)) { return false; }
   if (string.length < expected_prefix.length) { return false; }

@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::MarkersTest#test_0049_delimits items of a body with several roots via the herb:key directive"
-input: "{source: \"<% @users.each do |user| %><%# herb:key user[:id] %><dt><%= user[:name] %></dt><dd><%= user[:email] %></dd><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\", email: \"marco@example.com\"}]}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:13c4d05e:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><dt data-herb-slot="1:child">Marco</dt><dd data-herb-slot="2:child">marco@example.com</dd><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

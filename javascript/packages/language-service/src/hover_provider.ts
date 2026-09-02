@@ -9,6 +9,7 @@ import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation, nodeToRange } from "./range_utils"
 import { RubyLocalsIndex } from "./ruby_locals_index"
 import { collectStateDirectives } from "./herb_attribute_links"
+import { LITERAL_STATE_KINDS } from "@herb-tools/client/directives"
 
 import type { DocumentNode } from "@herb-tools/core"
 
@@ -136,7 +137,7 @@ function blockParameter(scope: Node): string | null {
 }
 
 function declaredStateKind(kind: string): string {
-  return ["boolean", "integer", "string", "symbol", "nil"].includes(kind) ? kind : "seeded"
+  return LITERAL_STATE_KINDS.has(kind) ? kind : "seeded"
 }
 
 function stateUsageLines(name: string, kind: string, defaultSource: string, derived = false): string[] {
@@ -204,7 +205,7 @@ const SCOPED_STYLE_DOC = dedent(`
 
   \`\`\`html
   <style>
-    .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+    .title[data-herb-scope-1a2b3c4d] {
       color: red;
     }
   </style>

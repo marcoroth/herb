@@ -1,0 +1,66 @@
+# Generated from lib/herb/dev/protocol.rb with RBS::Inline
+
+module Herb
+  module Dev
+    # Builds the messages the dev server broadcasts, and nothing else.
+    #
+    # Everything here is a pure function from what the pipeline knows to a Hash the socket
+    # writes out, so the whole protocol is testable without a connection.
+    #
+    # A `schema` message always carries `diagnostics`, and an empty array means the file is
+    # clean now. That is the whole error lifecycle. There is no separate message for a file
+    # being fixed.
+    module Protocol
+      MAX_REMAP_OPERATIONS: Integer
+
+      NULLING_TYPES: Array[Symbol]
+
+      REPLAYED_TYPES: Array[Symbol]
+
+      # : (file: String, mode: Symbol?, from: String?, to: String?, ?manifest: Hash[String, untyped]?, ?static_markup: String?, ?statics: Hash[String, String]?, ?changed_statics: Array[String]?, ?remap: Hash[String, untyped]?, ?diagnostics: Array[Hash[Symbol, untyped]], ?source: String?) -> Hash[Symbol, untyped]
+      def self.schema: (file: String, mode: Symbol?, from: String?, to: String?, ?manifest: Hash[String, untyped]?, ?static_markup: String?, ?statics: Hash[String, String]?, ?changed_statics: Array[String]?, ?remap: Hash[String, untyped]?, ?diagnostics: Array[Hash[Symbol, untyped]], ?source: String?) -> Hash[Symbol, untyped]
+
+      # : (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
+      def self.invalidate: (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
+
+      # : (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
+      def self.error: (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
+
+      # : (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]], Array[Herb::Diff::Operation]) -> Hash[String, untyped]?
+      def self.remap: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]], Array[Herb::Diff::Operation]) -> Hash[String, untyped]?
+
+      # : (Hash[Symbol, untyped], Array[Hash[Symbol, untyped]], Hash[String, Hash[Symbol, untyped]], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation]) -> Integer?
+      def self.target_for: (Hash[Symbol, untyped], Array[Hash[Symbol, untyped]], Hash[String, Hash[Symbol, untyped]], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation]) -> Integer?
+
+      # : (Array[Integer], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation]) -> Array[Integer]?
+      def self.replay: (Array[Integer], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation], Array[Herb::Diff::Operation]) -> Array[Integer]?
+
+      # : (Array[Herb::Diff::Operation]) -> bool
+      def self.replayable?: (Array[Herb::Diff::Operation]) -> bool
+
+      # : (Hash[Symbol, untyped], Hash[Symbol, untyped], Array[Integer]) -> bool
+      def self.counterpart?: (Hash[Symbol, untyped], Hash[Symbol, untyped], Array[Integer]) -> bool
+
+      # : (Array[Herb::Diff::Operation], Array[Integer]) -> bool
+      def self.nulled?: (Array[Herb::Diff::Operation], Array[Integer]) -> bool
+
+      # : (Array[Integer], Array[Integer]) -> bool
+      def self.prefix?: (Array[Integer], Array[Integer]) -> bool
+
+      # : (Array[Integer], Array[Integer]) -> bool
+      def self.sibling_before?: (Array[Integer], Array[Integer]) -> bool
+
+      # : (Array[Integer], Array[Integer]) -> bool
+      def self.sibling_at_or_before?: (Array[Integer], Array[Integer]) -> bool
+
+      # : (Array[Integer], Array[Integer]) -> bool
+      def self.same_parent?: (Array[Integer], Array[Integer]) -> bool
+
+      # : (Array[Integer], Array[Integer]) -> Integer
+      def self.sibling_index: (Array[Integer], Array[Integer]) -> Integer
+
+      # : (Array[Integer]) -> Integer
+      def self.operation_index: (Array[Integer]) -> Integer
+    end
+  end
+end

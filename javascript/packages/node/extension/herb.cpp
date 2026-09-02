@@ -20,9 +20,75 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+#include <vector>
+
+#define HERB_MAX_ERB_OPENERS 64
+
+struct ERBOpeners {
+  std::vector<std::string> values;
+  std::vector<hb_string_T> items;
+  bool configured = false;
+};
+
+static bool ReadERBOpeners(napi_env env, napi_value options, ERBOpeners& openers) {
+  bool has_property = false;
+  napi_has_named_property(env, options, "erb_openers", &has_property);
+
+  if (!has_property) { return true; }
+
+  napi_value value;
+  napi_get_named_property(env, options, "erb_openers", &value);
+
+  bool is_array = false;
+  napi_is_array(env, value, &is_array);
+
+  if (!is_array) { return true; }
+
+  uint32_t length = 0;
+  napi_get_array_length(env, value, &length);
+
+  if (length > HERB_MAX_ERB_OPENERS) {
+    napi_throw_error(env, nullptr, "erb_openers accepts at most 64 entries");
+    return false;
+  }
+
+  openers.configured = true;
+  openers.values.reserve(length);
+
+  for (uint32_t index = 0; index < length; index++) {
+    napi_value entry;
+    napi_get_element(env, value, index, &entry);
+
+    size_t entry_length = 0;
+    napi_get_value_string_utf8(env, entry, nullptr, 0, &entry_length);
+
+    std::string opener(entry_length, '\0');
+    napi_get_value_string_utf8(env, entry, &opener[0], entry_length + 1, &entry_length);
+    opener.resize(entry_length);
+
+    openers.values.push_back(opener);
+  }
+
+  openers.items.reserve(openers.values.size());
+
+  for (const std::string& opener : openers.values) {
+    openers.items.push_back(hb_string_from_data(opener.c_str(), opener.length()));
+  }
+
+  return true;
+}
+
+static void ApplyERBOpeners(parser_options_T& parser_options, const ERBOpeners& openers) {
+  if (!openers.configured) { return; }
+
+  parser_options.erb_openers = openers.items.data();
+  parser_options.erb_opener_count = openers.items.size();
+}
+
 napi_value Herb_lex(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
+  size_t argc = 2;
+  napi_value args[2];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 1) {
@@ -33,6 +99,23 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  ERBOpeners openers;
+
+  if (argc >= 2) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[1], &valuetype);
+
+    if (valuetype == napi_object) {
+      if (!ReadERBOpeners(env, args[1], openers)) {
+        free(string);
+        return nullptr;
+      }
+
+      ApplyERBOpeners(parser_options, openers);
+    }
+  }
+
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(string);
@@ -40,7 +123,7 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  hb_array_T* tokens = herb_lex(string, &allocator);
+  hb_array_T* tokens = herb_lex_with_options(string, &parser_options, &allocator);
   napi_value result = CreateLexResult(env, tokens, args[0]);
 
   herb_free_tokens(&tokens, &allocator);
@@ -64,6 +147,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   if (!string) { return nullptr; }
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  ERBOpeners openers;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -183,6 +267,24 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         parser_options.strict_locals = strict_locals_value;
       }
 
+      if (!ReadERBOpeners(env, args[1], openers)) {
+        free(string);
+        return nullptr;
+      }
+
+      ApplyERBOpeners(parser_options, openers);
+
+      napi_value herb_directives_prop;
+      bool has_herb_directives_prop;
+      napi_has_named_property(env, args[1], "herb_directives", &has_herb_directives_prop);
+
+      if (has_herb_directives_prop) {
+        napi_get_named_property(env, args[1], "herb_directives", &herb_directives_prop);
+        bool herb_directives_value;
+        napi_get_value_bool(env, herb_directives_prop, &herb_directives_value);
+        parser_options.herb_directives = herb_directives_value;
+      }
+
       napi_value prism_nodes_prop;
       bool has_prism_nodes_prop;
       napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);
@@ -267,6 +369,7 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   }
 
   herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  ERBOpeners openers;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -275,6 +378,26 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
     if (valuetype == napi_object) {
       napi_value prop;
       bool has_prop;
+
+      if (!ReadERBOpeners(env, args[1], openers)) {
+        hb_buffer_free(&output);
+        hb_allocator_destroy(&allocator);
+        free(string);
+        return nullptr;
+      }
+
+      if (openers.configured) {
+        extract_options.erb_openers = openers.items.data();
+        extract_options.erb_opener_count = openers.items.size();
+      }
+
+      napi_has_named_property(env, args[1], "custom_tags", &has_prop);
+      if (has_prop) {
+        napi_get_named_property(env, args[1], "custom_tags", &prop);
+        bool value;
+        napi_get_value_bool(env, prop, &value);
+        extract_options.custom_tags = value;
+      }
 
       napi_has_named_property(env, args[1], "semicolons", &has_prop);
       if (has_prop) {
@@ -387,6 +510,21 @@ napi_value Herb_parse_ruby(napi_env env, napi_callback_info info) {
   free(string);
 
   return result;
+}
+
+napi_value Herb_default_erb_openings(napi_env env, napi_callback_info info) {
+  napi_value openings;
+  napi_create_array_with_length(env, HERB_DEFAULT_ERB_OPENINGS_COUNT, &openings);
+
+  for (size_t index = 0; index < HERB_DEFAULT_ERB_OPENINGS_COUNT; index++) {
+    hb_string_T opening = HERB_DEFAULT_ERB_OPENINGS[index];
+
+    napi_value entry;
+    napi_create_string_utf8(env, opening.data, opening.length, &entry);
+    napi_set_element(env, openings, index, entry);
+  }
+
+  return openings;
 }
 
 napi_value Herb_version(napi_env env, napi_callback_info info) {
@@ -550,6 +688,7 @@ napi_value Init(napi_env env, napi_value exports) {
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "diff", nullptr, Herb_diff, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "defaultERBOpenings", nullptr, Herb_default_erb_openings, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "parseRuby", nullptr, Herb_parse_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
   };

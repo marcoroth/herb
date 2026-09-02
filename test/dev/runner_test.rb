@@ -1,10 +1,96 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+require "fileutils"
+
 require_relative "../test_helper"
 require_relative "../../lib/herb/dev/runner"
+require_relative "../../lib/herb/dev"
 
 module Dev
   class RunnerTest < Minitest::Spec
+    class FakeWebSocket
+      attr_reader :messages #: Array[Hash[Symbol, untyped]]
+
+      def initialize
+        @messages = []
+      end
+
+      def client_count
+        1
+      end
+
+      def broadcast(message, **)
+        @messages << message
+      end
+    end
+
+    BROKEN = "<div>\n  <form>\n</div>\n" #: String
+
+    def broadcast_for(current_content, previous_content)
+      websocket = FakeWebSocket.new
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
+
+      event = Herb::Dev::Watcher::Event.new(
+        kind: :changed,
+        path: "/app/views/posts/index.html.erb",
+        relative_path: "app/views/posts/index.html.erb",
+        previous: previous_content,
+        current: current_content
+      )
+
+      capture_io { pipeline.handle_event(event) }
+
+      websocket.messages.first
+    end
+
+    test "names the parser as what found the error, not itself as what delivered it" do
+      error = broadcast_for(BROKEN, "")[:errors].first
+      parsed = Herb.parse(BROKEN, strict: true, analyze: true).errors.first.to_diagnostic(template: "app/views/posts/index.html.erb")
+
+      assert_equal "Herb Parser", error[:origin]
+      assert_equal parsed.origin, error[:origin]
+    end
+
+    test "sends the code and suggestion the same error would carry off the page" do
+      error = broadcast_for(BROKEN, "")[:errors].first
+      parsed = Herb.parse(BROKEN, strict: true, analyze: true).errors.first.to_diagnostic(template: "app/views/posts/index.html.erb")
+
+      assert_equal parsed.code, error[:code]
+      assert_equal parsed.suggestion, error[:suggestion]
+      assert_equal parsed.message, error[:message]
+    end
+
+    test "sends the whole file with the errors, so the panel can highlight it" do
+      assert_equal BROKEN, broadcast_for(BROKEN, "")[:source]
+    end
+
+    test "sends the content it just read, not the content it replaced" do
+      assert_equal BROKEN, broadcast_for(BROKEN, "<div>\n</div>\n")[:source]
+    end
+
+    test "a fixed file broadcasts a clearing schema and never a fixed message" do
+      websocket = FakeWebSocket.new
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
+
+      broken = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/a", relative_path: "a.html.erb", previous: "<div></div>", current: BROKEN)
+      fixed = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/a", relative_path: "a.html.erb", previous: BROKEN, current: "<div>\n  <form></form>\n</div>\n")
+
+      capture_io do
+        pipeline.handle_event(broken)
+        pipeline.handle_event(fixed)
+      end
+
+      types = websocket.messages.map { |message| message[:type] }
+
+      refute_includes types, "fixed"
+      assert_includes types, "schema"
+
+      schema = websocket.messages.find { |message| message[:type] == "schema" }
+
+      assert_equal [], schema[:diagnostics]
+    end
+
     test "text_changed is patchable" do
       diff_result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
@@ -79,6 +165,108 @@ module Dev
       diff_result = Herb.diff('<div class="old">Hello</div>', '<div class="new">Hello</div><span>New</span>')
 
       refute Herb::Dev::Runner.can_patch?(diff_result.operations)
+    end
+
+    test "indexing writes no cursor escapes when stdout is not a terminal" do
+      directory = Dir.mktmpdir("herb_dev_runner_test")
+
+      File.write(File.join(directory, "index.html.erb"), "<div>Hello</div>\n")
+
+      config = Herb::Configuration.load(directory)
+
+      watcher = Herb::Dev::Watcher.new(config: config, root: directory) { |event| event }
+
+      output, = capture_io do
+        Herb::Dev::Runner.new(path: directory).send(:index_files, watcher)
+      end
+
+      assert_equal "  Files:     1 templates indexed\n", output
+    ensure
+      FileUtils.rm_rf(directory)
+      Herb.reset_configuration!
+    end
+
+    def paint_error(previous, current)
+      runner = Herb::Dev::Runner.new
+      runner.instance_variable_set(:@errored_files, Set.new)
+
+      classification = Herb::Dev::Classifier.new.call(previous, current)
+
+      event = Herb::Dev::Watcher::Event.new(
+        kind: :changed,
+        path: "/app/views/posts/index.html.erb",
+        relative_path: "app/views/posts/index.html.erb",
+        previous: previous,
+        current: current
+      )
+
+      output, = capture_io do
+        runner.send(:paint_change, event, classification, "12:00:00", "index.html.erb")
+      end
+
+      output
+    end
+
+    test "prints the diagnostic with its source context and suggestion" do
+      output = paint_error("", BROKEN)
+
+      expected = [
+        "    12:00:00 \u2717 error  \u2718 [MissingClosingTagError] Opening tag `<form>` at (2:3) doesn't have a matching closing tag `</form>` in the same scope.",
+        "",
+        "      app/views/posts/index.html.erb:2:3:",
+        "        2 \u2502   <form>",
+        "          \u2575   ~~~~~~",
+        "",
+        "    Add the closing tag, or make it self-closing.",
+        "",
+        ""
+      ].join("\n")
+
+      assert_equal expected, output
+    end
+
+    test "a repeated event for unchanged content emits nothing from the watcher" do
+      directory = Dir.mktmpdir("herb_dev_runner_test")
+      path = File.join(directory, "index.html.erb")
+
+      File.write(path, BROKEN)
+
+      config = Herb::Configuration.load(directory)
+      events = []
+      watcher = Herb::Dev::Watcher.new(config: config, root: directory) { |event| events << event }
+
+      watcher.index
+
+      raw = Struct.new(:kind, :path).new("modified", path)
+
+      watcher.send(:handle, raw)
+      watcher.send(:handle, raw)
+
+      assert_empty events
+    ensure
+      FileUtils.rm_rf(directory)
+      Herb.reset_configuration!
+    end
+
+    test "an error already reported is not repeated when a new one joins it" do
+      broken_once = "<div>\n  <form>\n</div>\n"
+      broken_twice = "<div>\n  <form>\n  <span>\n</div>\n"
+
+      output = paint_error(broken_once, broken_twice)
+
+      expected = [
+        "    12:00:00 \u2717 error  \u2718 [MissingClosingTagError] Opening tag `<span>` at (3:3) doesn't have a matching closing tag `</span>` in the same scope.",
+        "",
+        "      app/views/posts/index.html.erb:3:3:",
+        "        3 \u2502   <span>",
+        "          \u2575   ~~~~~~",
+        "",
+        "    Add the closing tag, or make it self-closing.",
+        "",
+        ""
+      ].join("\n")
+
+      assert_equal expected, output
     end
   end
 end

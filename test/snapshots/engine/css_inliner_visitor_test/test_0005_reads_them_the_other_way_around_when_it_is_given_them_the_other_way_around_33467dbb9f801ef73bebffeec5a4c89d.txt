@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0005_reads them the other way around when it is given them the other way around"
+input: "{source: \"<div class=\\\"card\\\">Hi</div>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor stylesheets=theme.css, email.css>]}}"
+---
+<div class="card" style="color: #ff0000;padding: 4px;">Hi</div>

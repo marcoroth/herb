@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::how it escapes#test_0007_applies the CSS escape inside a style element"
+input: "{source: \"<style>.a { color: <%= \\\"red\\\" %>; }</style>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<style>.a { color: red; }</style>'.freeze

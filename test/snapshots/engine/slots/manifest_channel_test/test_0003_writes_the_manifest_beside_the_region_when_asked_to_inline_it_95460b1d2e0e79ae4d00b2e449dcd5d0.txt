@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::ManifestChannelTest#test_0003_writes the manifest beside the region when asked to inline it"
+input: "{source: \"<li data-herb-name=\\\"row\\\" id=\\\"row-<%= @n %>-x\\\"><%= @n %></li>\", locals: {\"@n\" => 1}, options: {visitors: [#<Herb::Engine::Slots::Visitor client deliver=inline>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<!--herb-region:app/views/posts/_card.html.erb:db7ab613:0--><li data-herb-name="row" id="row-1-x" data-herb-slot="0:attribute_interpolation:id 1:child">1</li><!--/herb-region:app/views/posts/_card.html.erb--><template data-herb-manifests>{"app/views/posts/_card.html.erb:db7ab613":{"file":"app\/views\/posts\/_card.html.erb","identifier":"app\/views\/posts\/_card.html.erb","version":"db7ab613","names":{"row":1},"parts":{"0":["row-","-x"]},"states":null}}</template>

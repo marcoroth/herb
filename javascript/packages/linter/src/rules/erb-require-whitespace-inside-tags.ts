@@ -1,20 +1,12 @@
-import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor } from "../utils/rule-utils.js"
+import { ParserRule } from "../types.js"
+import { CommentedERBTagVisitor, commentedTagPrefixesFor, respacedCommentedTag } from "../utils/commented-erb-tag-utils.js"
 import { isERBEscapedNode } from "@herb-tools/core"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
+import type { CommentedERBTagAutofixContext } from "../utils/commented-erb-tag-utils.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
-interface ERBRequireWhitespaceAutofixContext extends BaseAutofixContext {
-  node: Mutable<ERBNode>
-  openTag: Token
-  closeTag: Token
-  content: string
-  fixType: "after-open" | "before-close" | "after-comment-equals"
-}
-
-class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAutofixContext> {
-
+class RequireWhitespaceInsideTags extends CommentedERBTagVisitor {
   visitERBNode(node: ERBNode): void {
     const openTag = node.tag_opening
     const closeTag = node.tag_closing
@@ -105,17 +97,6 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
     )
   }
 
-  private getCommentedTagPrefix(content: string): string | null {
-    if (content.startsWith("graphql")) return "graphql"
-    if (content.startsWith("%=")) return "%="
-    if (content.startsWith("==")) return "=="
-    if (content.startsWith("%")) return "%"
-    if (content.startsWith("=")) return "="
-    if (content.startsWith("-")) return "-"
-
-    return null
-  }
-
   private checkCloseTagWhitespace(node: ERBNode, openTag: Token, closeTag: Token, content: string):void {
     if (content.endsWith(" ") || content.endsWith("\n")) {
       return
@@ -135,7 +116,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
   }
 }
 
-export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAutofixContext> {
+export class ERBRequireWhitespaceRule extends ParserRule<CommentedERBTagAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-require-whitespace-inside-tags"
   static introducedIn = this.version("0.4.0")
@@ -147,15 +128,15 @@ export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAut
     }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBRequireWhitespaceAutofixContext>[] {
-    const visitor = new RequireWhitespaceInsideTags(this.ruleName, context)
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<CommentedERBTagAutofixContext>[] {
+    const visitor = new RequireWhitespaceInsideTags(this.ruleName, commentedTagPrefixesFor(result, context), context)
 
     visitor.visit(result.value)
 
     return visitor.offenses
   }
 
-  autofix(offense: LintOffense<ERBRequireWhitespaceAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+  autofix(offense: LintOffense<CommentedERBTagAutofixContext>, result: ParseResult, context?: Partial<LintContext>): ParseResult | null {
     if (!offense.autofixContext) return null
 
     const { node, fixType } = offense.autofixContext
@@ -177,10 +158,10 @@ export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAut
     }
 
     if (fixType === "after-comment-equals") {
-      const prefix = content.startsWith("graphql") ? "graphql" : content.startsWith("%=") ? "%=" : content.startsWith("==") ? "==" : content.startsWith("%") ? "%" : content.startsWith("=") ? "=" : content.startsWith("-") ? "-" : null
+      const respaced = respacedCommentedTag(content, commentedTagPrefixesFor(result, context))
 
-      if (prefix) {
-        node.content.value = prefix + " " + content.substring(prefix.length)
+      if (respaced) {
+        node.content.value = respaced
 
         return result
       }

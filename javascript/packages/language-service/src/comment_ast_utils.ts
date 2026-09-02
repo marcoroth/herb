@@ -38,20 +38,17 @@ export function commentERBNode(node: ERBContentNode): void {
   }
 }
 
-export function uncommentERBNode(node: ERBContentNode): void {
+export function carriesCommentedTagPrefix(contentValue: string, prefixes: string[]): boolean {
+  return prefixes.some(prefix => contentValue.startsWith(` ${prefix} `))
+}
+
+export function uncommentERBNode(node: ERBContentNode, prefixes: string[]): void {
   const mutable = asMutable(node)
 
   if (mutable.tag_opening && mutable.tag_opening.value === "<%#") {
     const contentValue = mutable.content?.value || ""
 
-    if (
-      contentValue.startsWith(" graphql ") ||
-      contentValue.startsWith(" %= ") ||
-      contentValue.startsWith(" == ") ||
-      contentValue.startsWith(" % ") ||
-      contentValue.startsWith(" = ") ||
-      contentValue.startsWith(" - ")
-    ) {
+    if (carriesCommentedTagPrefix(contentValue, prefixes)) {
       mutable.tag_opening = Token.from(mutable.tag_opening.type, "<%")
       mutable.content = Token.from(mutable.content!.type, contentValue.substring(1))
     } else {
@@ -204,6 +201,7 @@ function commentPerSegment(content: string, erbNodes: ERBContentNode[]): string 
 
 export function uncommentLineContent(content: string, parserService: ParserService): string {
   const parseResult = parserService.parseContent(content, { track_whitespace: true })
+  const prefixes = parserService.commentedERBTagPrefixes(parseResult.options.erb_openers)
   const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
 
@@ -214,7 +212,7 @@ export function uncommentLineContent(content: string, parserService: ParserServi
 
   for (const node of lineERBNodes) {
     if (isERBCommentNode(node)) {
-      uncommentERBNode(node)
+      uncommentERBNode(node, prefixes)
     }
   }
 
@@ -266,7 +264,7 @@ export function uncommentLineContent(content: string, parserService: ParserServi
 
       for (const erbNode of innerERBNodes) {
         if (isERBCommentNode(erbNode)) {
-          uncommentERBNode(erbNode)
+          uncommentERBNode(erbNode, prefixes)
         }
       }
 

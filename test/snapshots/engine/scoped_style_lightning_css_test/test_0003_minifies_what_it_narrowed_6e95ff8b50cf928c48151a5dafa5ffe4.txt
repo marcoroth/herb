@@ -2,5 +2,5 @@
 source: "Engine::ScopedStyleLightningCSSTest#test_0003_minifies what it narrowed"
 input: "{source: \"<style scoped>.a { color: #ff0000; font-weight: bold }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
 ---
-_buf = ::String.new; _buf << '<style>.a:where([data-herb-scope-2940ba8a],[data-herb-scope-2940ba8a] *){color:red;font-weight:700}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.a[data-herb-scope-2940ba8a]{color:red;font-weight:700}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
 _buf.to_s

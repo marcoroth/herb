@@ -1,0 +1,9 @@
+---
+source: "Engine::OptimizeTogglesTest::the subtrees pass#test_0001_off by default, a static chain inside a kept buffer stays buffered"
+input: "{source: \"<div>\\n  <%= name %>\\n  <% if flag %>Admin<% else %>Member<% end %>\\n</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<div>
+  '.freeze; _buf << (name).to_s; _buf << '
+  '.freeze;   if flag ; _buf << 'Admin'.freeze; else; _buf << 'Member'.freeze; end; _buf << '
+</div>'.freeze;
+_buf.to_s

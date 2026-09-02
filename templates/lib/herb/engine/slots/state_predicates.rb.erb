@@ -1,0 +1,39 @@
+module Herb
+  class Engine
+    module Slots
+      # The Ruby predicates a `herb:state` read may use, and the condition each one resolves into.
+      #
+      module StatePredicates
+        TABLE = {
+<%- state_predicates.each do |predicate| -%>
+          <%= predicate.name.inspect %> => {
+<%- if predicate.comparand -%>
+            comparand: <%= predicate.comparand.inspect %>,
+<%- end -%>
+<%- if predicate.operator -%>
+            operator: <%= predicate.operator.inspect %>,
+<%- end -%>
+            kinds: <%= predicate.ruby_kinds %>,
+            only: <%= predicate.only.inspect %>,
+<%- if predicate.rewrite -%>
+            rewrite: <%= predicate.rewrite.inspect %>,
+<%- end -%>
+          },
+<%- end -%>
+        }.freeze #: Hash[String, Hash[Symbol, untyped]]
+
+        NEGATED = {
+<%- state_predicates.select { |predicate| predicate.unary? && predicate.negated }.each do |predicate| -%>
+          <%= predicate.operator.inspect %> => <%= predicate.negated.inspect %>,
+<%- end -%>
+        }.freeze #: Hash[String, String]
+
+        UNARY = {
+<%- state_predicates.select(&:unary?).each do |predicate| -%>
+          <%= predicate.operator.inspect %> => <%= predicate.name.inspect %>,
+<%- end -%>
+        }.freeze #: Hash[String, String]
+      end
+    end
+  end
+end

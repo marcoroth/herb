@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/inline_render_visitor"
+require_relative "../../../lib/herb/engine/inline_render/visitor"
 require_relative "../../../lib/herb/engine/scoped_style/visitor"
 
 require "lightningcss"
@@ -16,7 +16,7 @@ module Engine
     TEMPLATE = "app/views/posts/index.html.erb"
 
     def options(inline: false, **overrides)
-      visitors = inline ? [Herb::Engine::InlineRenderVisitor.new] : []
+      visitors = inline ? [Herb::Engine::InlineRender::Visitor.new] : []
 
       visitors << Herb::Engine::ScopedStyle::Visitor.new(
         transform: LightningCSS::Transformer.new(minify: true),
@@ -26,11 +26,11 @@ module Engine
       { filename: TEMPLATE, project_path: PROJECT_PATH, escape: false, visitors: visitors }
     end
 
-    test "narrows by ancestor when the file renders nothing" do
+    test "narrows by the attribute when the file renders nothing" do
       assert_compiled_snapshot(%(<style scoped>.title { color: #ff0000 }</style><h1 class="title">Hi</h1>), options)
     end
 
-    test "narrows by the element itself when the file renders something" do
+    test "narrows by the attribute when the file renders something" do
       source = %(<style scoped>.title { color: #ff0000 }</style><h1 class="title">Hi</h1><%= render "posts/plain" %>)
 
       assert_compiled_snapshot(source, options)

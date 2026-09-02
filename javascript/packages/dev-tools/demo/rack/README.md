@@ -11,8 +11,8 @@ The app serves the dev tools bundle from `dist/` itself, so there is one server 
 
 | Route | What it shows |
 | --- | --- |
-| `/valid` | A template that compiles. `Report::Middleware` injects what the page reported and the panel docks a badge in the corner. |
-| `/broken` | A template that does not. The engine raises, nothing renders, and `Report::ErrorPage` answers with a page carrying the diagnostics as a blocking overlay. |
+| `/valid` | A template that compiles. `Runtime::Middleware` injects what the page reported and the panel docks a badge in the corner. |
+| `/broken` | A template that does not. The engine raises, nothing renders, and `Runtime::ErrorPage` answers with a page carrying the diagnostics as a blocking overlay. |
 | `/broken.json` | The same failure asked for as JSON. The middleware raises on, so an XHR still fails the way it would have. |
 | `/boom` | An error that is not Herb's, raised on untouched. |
 

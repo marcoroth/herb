@@ -1,112 +1,119 @@
-import { clearOnNavigation } from "./report"
-import { SlotActions } from "./actions"
-import { SlotIndex } from "./slot-index"
-import { SlotMutations } from "./mutations"
-import { SlotState } from "./state"
+import { clearOnNavigation } from "./shared/report"
+import { watchCoverage } from "./shared/coverage"
 
-import type { MutationsOptions } from "./mutations"
-import type { ScopedSetOptions, StateOptions, StateScope, StateValue } from "./state"
+import { ACTION_ATTRIBUTES } from "./grammar/attributes"
 
-const CONSTRUCT = Symbol("HerbRuntime.start")
+import { Slots } from "./slots/slots"
+import { State } from "./state/state"
+import { Outbox } from "./outbox/outbox"
+import { Actions } from "./actions/actions"
+import { ElementObserver } from "./shared/element-observer"
 
-let instance: HerbRuntime | null = null
+import type { StateOptions } from "./state/types"
+import type { OutboxOptions } from "./outbox/types"
+import type { TemplateManifest } from "./slots/manifests"
+
+const CONSTRUCT = Symbol("Runtime.start")
+
+let instance: Runtime | null = null
+
+declare global {
+  interface Window {
+    HerbRuntime?: Runtime
+  }
+}
 
 export interface RuntimeOptions {
   state?: StateOptions
-  mutations?: MutationsOptions
+  outbox?: OutboxOptions
+  manifests?: Record<string, TemplateManifest>
 }
 
-export class HerbRuntime {
-  public readonly slots: SlotIndex
-  public readonly state: SlotState
-  public readonly mutations: SlotMutations
-  public readonly actions: SlotActions
+export class Runtime {
+  public readonly slots: Slots
+  public readonly state: State
+  public readonly outbox: Outbox
+  public readonly actions: Actions
 
+  private elements: ElementObserver | null = null
   private stopClearing: (() => void) | null = null
+  private stopWatchingCoverage: (() => void) | null = null
 
   private constructor(token?: symbol, options: RuntimeOptions = {}) {
     if (token !== CONSTRUCT) {
-      throw new TypeError("HerbRuntime is created by HerbRuntime.start()")
+      throw new TypeError("Runtime is created by Runtime.start()")
     }
 
-    this.slots = new SlotIndex()
-    this.state = new SlotState(this.slots, options.state)
-    this.mutations = new SlotMutations(this.slots, this.state, options.mutations)
-    this.actions = new SlotActions(this.state)
+    this.slots = new Slots()
+    this.state = new State(this.slots, options.state)
+    this.outbox = new Outbox(this.slots, this.state, options.outbox)
+    this.actions = new Actions(this.state)
   }
 
-  static start(options: RuntimeOptions = {}): HerbRuntime {
-    const existing = HerbRuntime.get()
-    if (existing) return existing
+  static start(options: RuntimeOptions = {}): Runtime {
+    const existing = Runtime.get()
 
-    const runtime = new HerbRuntime(CONSTRUCT, options)
+    if (existing) {
+      return existing
+    }
 
-    runtime.slots.observe()
+    const runtime = new Runtime(CONSTRUCT, options)
+
+    if (options.manifests) {
+      runtime.slots.adoptManifests(options.manifests)
+    }
+
+    const elements = new ElementObserver(ACTION_ATTRIBUTES)
+    const root = document.documentElement
+
+    runtime.elements = elements
+
+    runtime.slots.observe(root, elements)
     runtime.state.adopt()
-    runtime.state.observe()
-    runtime.actions.start()
-    runtime.mutations.observe()
+    runtime.state.observe(root, elements)
+    runtime.actions.start(document, elements)
+    runtime.outbox.observe()
     runtime.stopClearing = clearOnNavigation()
+    runtime.stopWatchingCoverage = watchCoverage(runtime.slots)
 
     instance = runtime
+
+    try {
+      window.HerbRuntime = runtime
+    } catch {
+      /* no window, no global */
+    }
 
     return runtime
   }
 
-  static get(): HerbRuntime | null {
+  static get(): Runtime | null {
     return instance
   }
 
   stop(): void {
     this.slots.disconnect()
     this.state.disconnect()
-    this.mutations.unobserve()
-    this.mutations.abort()
+    this.outbox.unobserve()
+    this.outbox.abort()
     this.actions.stop()
+    this.elements?.disconnect()
+    this.elements = null
     this.stopClearing?.()
     this.stopClearing = null
+    this.stopWatchingCoverage?.()
+    this.stopWatchingCoverage = null
 
     if (instance === this) {
       instance = null
+
+      try {
+        if (window.HerbRuntime === this) {
+          delete window.HerbRuntime
+        }
+      } catch {
+        /* no window, no global */
+      }
     }
-  }
-}
-
-
-export interface ScopedState {
-  scope: StateScope | null
-  get(name: string): StateValue
-  set(values: Record<string, StateValue>): boolean
-  toggle(name: string): boolean
-  increment(name: string, by?: number): boolean
-  decrement(name: string, by?: number): boolean
-  reset(name: string): boolean
-  on(name: string, listener: (value: StateValue, previous: StateValue) => void): () => void
-}
-
-export function stateFor(element: Element): ScopedState {
-  const runtime = HerbRuntime.get()
-
-  const resolve = (name: string): ScopedSetOptions => {
-    const scope = runtime?.state.scopeFor(element, name)
-
-    return scope ? { scope } : {}
-  }
-
-  return {
-    get scope() {
-      return runtime?.state.scopeFor(element) ?? null
-    },
-    get: (name) => runtime?.state.getState(name, resolve(name)) ?? null,
-    set: (values) => {
-      const first = Object.keys(values)[0]
-
-      return first ? (runtime?.state.setState(values, resolve(first)) ?? false) : false
-    },
-    toggle: (name) => runtime?.state.toggle(name, resolve(name)) ?? false,
-    increment: (name, by) => runtime?.state.increment(name, { ...resolve(name), by }) ?? false,
-    decrement: (name, by) => runtime?.state.decrement(name, { ...resolve(name), by }) ?? false,
-    reset: (name) => runtime?.state.reset(name, resolve(name)) ?? false,
-    on: (name, listener) => runtime?.state.on(name, listener, resolve(name)) ?? (() => {}),
   }
 }
