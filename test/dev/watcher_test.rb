@@ -110,5 +110,88 @@ module Dev
         assert_empty events
       end
     end
+
+    def watcher_for(root, watch_paths)
+      Herb::Dev::Watcher.new(config: Herb::Configuration.load(root), root: root, watch_paths: watch_paths) { |event| event }
+    end
+
+    test "watches the project root when no watch paths are given" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+
+        assert_equal [root], watcher_for(root, nil).watch_paths
+      end
+    end
+
+    test "watches only the directories it is given" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+        views = File.join(root, "app/views")
+        components = File.join(root, "app/components")
+
+        FileUtils.mkdir_p(views)
+        FileUtils.mkdir_p(components)
+
+        assert_equal [components, views], watcher_for(root, [views, components]).watch_paths
+      end
+    end
+
+    test "ignores directories outside the project root" do
+      Dir.mktmpdir do |root|
+        Dir.mktmpdir do |outside|
+          root = File.realpath(root)
+          views = File.join(root, "app/views")
+
+          FileUtils.mkdir_p(views)
+
+          assert_equal [views], watcher_for(root, [views, File.realpath(outside)]).watch_paths
+        end
+      end
+    end
+
+    test "ignores paths that are not existing directories" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+        views = File.join(root, "app/views")
+
+        FileUtils.mkdir_p(views)
+        write(root, "app/views/index.html.erb", "<p>Hi</p>")
+
+        watch_paths = watcher_for(root, [views, File.join(root, "nope"), File.join(root, "app/views/index.html.erb")]).watch_paths
+
+        assert_equal [views], watch_paths
+      end
+    end
+
+    test "collapses a nested directory into the one that already covers it" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+        views = File.join(root, "app/views")
+        admin = File.join(views, "admin")
+
+        FileUtils.mkdir_p(admin)
+
+        assert_equal [views], watcher_for(root, [views, admin]).watch_paths
+      end
+    end
+
+    test "falls back to the project root when nothing usable is left" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+
+        assert_equal [root], watcher_for(root, [File.join(root, "nope")]).watch_paths
+      end
+    end
+
+    test "collapses to the project root when the root itself is included" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+        views = File.join(root, "app/views")
+
+        FileUtils.mkdir_p(views)
+
+        assert_equal [root], watcher_for(root, [root, views]).watch_paths
+      end
+    end
   end
 end

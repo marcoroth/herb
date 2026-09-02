@@ -105,6 +105,7 @@ Metrics/AbcSize:
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/diagnostic/formatter.rb
     - lib/herb/ast/node.rb
+    - lib/herb/dev/watcher.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/dev.rb
@@ -191,6 +192,7 @@ Metrics/PerceivedComplexity:
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/watcher.rb
     - lib/herb/dev.rb
     - lib/herb/dev/classifier.rb
     - lib/herb/dev/protocol.rb

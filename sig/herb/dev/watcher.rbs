@@ -40,8 +40,10 @@ module Herb
 
       attr_reader file_states: Hash[String, String]
 
-      # : (config: Herb::Configuration, root: String) { (Event) -> void } -> void
-      def initialize: (config: Herb::Configuration, root: String) { (Event) -> void } -> void
+      attr_reader watch_paths: Array[String]
+
+      # : (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
+      def initialize: (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
 
       # : (?String) -> Integer
       def index: (?String) -> Integer
@@ -56,6 +58,9 @@ module Herb
       def stop: () -> void
 
       private
+
+      # : (Array[String]?) -> Array[String]
+      def resolve_watch_paths: (Array[String]?) -> Array[String]
 
       # : (Cruise::Event) -> void
       def handle: (Cruise::Event) -> void

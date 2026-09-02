@@ -32,12 +32,14 @@ module Herb
       )
 
       attr_reader :file_states #: Hash[String, String]
+      attr_reader :watch_paths #: Array[String]
 
-      #: (config: Herb::Configuration, root: String) { (Event) -> void } -> void
-      def initialize(config:, root:, &on_event)
+      #: (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
+      def initialize(config:, root:, watch_paths: nil, &on_event)
         @config = config
         @root = root
         @on_event = on_event
+        @watch_paths = resolve_watch_paths(watch_paths) #: Array[String]
         @file_states = {} #: Hash[String, String]
         @include_patterns = config.file_include_patterns
         @exclude_patterns = config.file_exclude_patterns
@@ -60,7 +62,7 @@ module Herb
       def run
         Herb.ensure_installed("cruise")
 
-        Cruise.watch(@root, only: KINDS) do |raw|
+        Cruise.watch(*@watch_paths, only: KINDS) do |raw|
           break if @stopped
 
           handle(raw)
@@ -83,6 +85,27 @@ module Herb
       end
 
       private
+
+      #: (Array[String]?) -> Array[String]
+      def resolve_watch_paths(paths)
+        return [@root] if paths.nil?
+
+        candidates = Array(paths).filter_map do |path|
+          expanded = File.expand_path(path.to_s, @root)
+
+          next unless File.directory?(expanded)
+          next unless expanded == @root || expanded.start_with?("#{@root}/")
+
+          expanded
+        end.uniq.sort
+
+        return [@root] if candidates.empty?
+        return [@root] if candidates.include?(@root)
+
+        candidates.reject do |path|
+          candidates.any? { |other| other != path && path.start_with?("#{other}/") }
+        end
+      end
 
       #: (Cruise::Event) -> void
       def handle(raw)
