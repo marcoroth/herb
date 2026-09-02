@@ -39,6 +39,8 @@ export interface ContentUnitWithNode {
  */
 export const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
+export const NON_SQUIGGLY_HEREDOC = /<<(?!~)-?['"`]?[A-Za-z_]/
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
@@ -254,6 +256,28 @@ export function isMultilineERBComment(node: Node): boolean {
 }
 
 /**
+ * Matches a Ruby block-comment delimiter (`=begin` / `=end`) that sits at the
+ * very start of a line inside an ERB tag's content. Ruby only recognizes these
+ * delimiters when they are in column 0, so the formatter must keep them on their
+ * own line and never indent or inline them.
+ */
+export const ERB_BLOCK_COMMENT_DELIMITER = /\n=(begin|end)\b/
+
+/**
+ * Check if an ERB content node contains a Ruby block-comment delimiter
+ * (`=begin` / `=end`) anchored to the start of a line. Such tags are
+ * whitespace-significant: collapsing them onto a preceding line, or indenting
+ * the delimiter, changes the delimiter's column and breaks the Ruby semantics.
+ */
+export function isERBBlockCommentDelimiter(node: Node): boolean {
+  if (!isNode(node, ERBContentNode)) return false
+
+  const content = node.content?.value ?? ""
+
+  return !NON_SQUIGGLY_HEREDOC.test(content) && ERB_BLOCK_COMMENT_DELIMITER.test(content)
+}
+
+/**
  * Check if a node should be appended to the last line (for adjacent inline elements and punctuation)
  */
 export function shouldAppendToLastLine(child: Node, siblings: Node[], index: number): boolean {
@@ -270,7 +294,7 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
   }
 
   if (isNode(child, ERBContentNode)) {
-    if (isMultilineERBComment(child)) return false
+    if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) return false
 
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]

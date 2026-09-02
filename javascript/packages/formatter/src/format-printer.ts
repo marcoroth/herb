@@ -47,6 +47,8 @@ import {
   isFrontmatter,
   isInlineElement,
   isMultilineERBComment,
+  isERBBlockCommentDelimiter,
+  NON_SQUIGGLY_HEREDOC,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -1078,6 +1080,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBContentNode(node: ERBContentNode) {
     if (isERBCommentNode(node)) {
       this.visitERBCommentNode(node)
+    } else if (isERBBlockCommentDelimiter(node)) {
+      // Ruby block-comment delimiters (`=begin` / `=end`) are only recognized in
+      // column 0, so they must always stay expanded on their own line and never
+      // be collapsed inline, regardless of the surrounding flow context.
+      this.printExpandedERBNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)
     } else {
@@ -1103,7 +1110,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (!/^[ \t]*\r?\n/.test(content)) return false
     if (!content.trim().includes("\n")) return false
 
-    return !/<<(?!~)-?['"`]?[A-Za-z_]/.test(content)
+    return !NON_SQUIGGLY_HEREDOC.test(content)
   }
 
   /**
@@ -1136,7 +1143,15 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     this.withIndent(() => {
       dedentedLines.forEach(line => {
-        this.push(line === "" ? "" : this.indent + line)
+        if (line === "") {
+          this.push("")
+        } else if (/^=(begin|end)\b/.test(line)) {
+          // Ruby only treats `=begin` / `=end` as block-comment delimiters when
+          // they start at column 0, so they must never be indented.
+          this.push(line)
+        } else {
+          this.push(this.indent + line)
+        }
       })
     })
 
@@ -1861,7 +1876,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
-      if (isMultilineERBComment(child)) {
+      if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) {
         return null
       }
 
@@ -1938,7 +1953,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
       } else if (isNode(child, ERBContentNode)) {
-        if (isMultilineERBComment(child)) {
+        if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) {
           return null
         }
       } else {

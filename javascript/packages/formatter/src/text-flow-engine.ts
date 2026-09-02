@@ -11,6 +11,7 @@ import {
   isInlineElement,
   isLineBreakingElement,
   isMultilineERBComment,
+  isERBBlockCommentDelimiter,
   needsSpaceBetween,
 } from "./format-helpers.js"
 
@@ -103,7 +104,7 @@ export class TextFlowEngine {
           this.delegate.pushWithIndent(inlineContent)
           inlineContent = ""
         }
-      } else if (isNode(child, ERBContentNode) && !isMultilineERBComment(child)) {
+      } else if (isNode(child, ERBContentNode) && !isMultilineERBComment(child) && !isERBBlockCommentDelimiter(child)) {
         inlineContent += this.delegate.renderERBAsString(child)
         processedCount++
         lastProcessedIndex = index
@@ -123,7 +124,7 @@ export class TextFlowEngine {
           break
         }
 
-        if (isNode(child, ERBContentNode) && !isMultilineERBComment(child)) {
+        if (isNode(child, ERBContentNode) && !isMultilineERBComment(child) && !isERBBlockCommentDelimiter(child)) {
           inlineContent += this.delegate.renderERBAsString(child)
           processedIndices.add(index)
           lastProcessedIndex = index
