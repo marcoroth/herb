@@ -164,6 +164,42 @@ export function branchKey(index: number, branch: number | string): string {
   return `${index}:${branch}`
 }
 
+export type StaticsKey =
+  | { kind: "item"; index: number }
+  | { kind: "parts"; index: number }
+  | { kind: "branch"; index: number; branch: number }
+
+export function parseStaticsKey(key: string): StaticsKey | null {
+  const separator = key.indexOf(":")
+
+  if (separator === -1) {
+    return null
+  }
+
+  const head = key.slice(0, separator)
+  const tail = key.slice(separator + 1)
+
+  if (!NUMERIC.test(head)) {
+    return null
+  }
+
+  const index = Number(head)
+
+  if (tail === ITEM_STATICS) {
+    return { kind: "item", index }
+  }
+
+  if (tail === PARTS_STATICS) {
+    return { kind: "parts", index }
+  }
+
+  if (NUMERIC.test(tail)) {
+    return { kind: "branch", index, branch: Number(tail) }
+  }
+
+  return null
+}
+
 export function itemStaticsKey(index: number): string {
   return branchKey(index, ITEM_STATICS)
 }

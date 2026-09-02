@@ -73,6 +73,25 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
       }
 
       if (slot.claimed) {
+        if (
+          slot.type === "conditional" &&
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value) &&
+          "branch" in value &&
+          !("items" in value) &&
+          value.slots
+        ) {
+          if (value.branch === slot.branch) {
+            applySlots(slots, payload, owner(slot), value.slots, report, mode)
+          } else if (value.branch !== null) {
+            const shown = slot.shown ?? new Map<number, SlotValues>()
+
+            shown.set(value.branch, { ...(shown.get(value.branch) ?? {}), ...leaves(value.slots) })
+            slot.shown = shown
+          }
+        }
+
         continue
       }
 

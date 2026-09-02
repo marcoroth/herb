@@ -33,6 +33,34 @@ export class Seeds {
     return this.store.get(scope.region)?.get(scope.item?.key ?? "")?.get(name)
   }
 
+  migrateRegion(from: Region, to: Region): void {
+    const buckets = this.store.get(from)
+
+    if (buckets) {
+      this.store.delete(from)
+      this.store.set(to, buckets)
+    }
+
+    const reported = this.reported.get(from)
+
+    if (reported) {
+      this.reported.delete(from)
+      this.reported.set(to, reported)
+    }
+  }
+
+  forget(region: Region, name: string): void {
+    const buckets = this.store.get(region)
+
+    if (!buckets) {
+      return
+    }
+
+    for (const bucket of buckets.values()) {
+      bucket.delete(name)
+    }
+  }
+
   migrate(region: Region, from: string, to: string): void {
     const buckets = this.store.get(region)
     const bucket = buckets?.get(from)
@@ -166,6 +194,10 @@ export class Seeds {
 
     for (const index of manifest.reads[name] ?? []) {
       for (const slot of this.delegate.scopedSlots(scope, index)) {
+        if (slot.claimed) {
+          continue
+        }
+
         if (INTERPOLATED_SLOT_TYPES.includes(slot.type)) {
           continue
         }

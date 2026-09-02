@@ -41,7 +41,7 @@ import type { CollectionsDelegate } from "./collections"
 import type { RegionIndexDelegate } from "./region-index"
 import type { JournalDelegate } from "./journal"
 
-import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotsDelegate, ApplyOptions, ApplyReport, Item, ItemMap, ItemPlan, ItemStep, Payload, Placement, Region, ScanContext, RenderMode, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotOperation, SlotValue, SlotValues, TransactionResult } from "../types"
+import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotsDelegate, ApplyOptions, ApplyReport, Item, ItemMap, ItemPlan, ItemStep, Payload, Placement, Region, ScanContext, RenderMode, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotOperation, SlotValue, SlotValues, StaticsIdentity, TransactionResult } from "../types"
 
 export class Slots implements ElementObserverDelegate, JournalDelegate, CollectionsDelegate, RegionIndexDelegate {
   private journal = new Journal(this)
@@ -84,12 +84,42 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     this.elements = null
   }
 
-  adoptManifests(manifests: Record<string, TemplateManifest>): number {
-    return this.manifests.hold(manifests)
+  adoptManifests(manifests: Record<string, TemplateManifest>, options: { replace?: boolean } = {}): number {
+    if (!options.replace) {
+      return this.manifests.hold(manifests)
+    }
+
+    let held = 0
+
+    for (const [identity, manifest] of Object.entries(manifests)) {
+      this.manifests.push(identity, manifest)
+      held += 1
+    }
+
+    return held
   }
 
   statesFor(file: string, version: string): StateManifest | null {
     return this.manifests.statesOf(file, version)
+  }
+
+  holdStatics(identity: StaticsIdentity, statics: Record<string, string>): number {
+    let parked = 0
+
+    for (const [key, markup] of Object.entries(statics)) {
+      const template = document.createElement("template")
+
+      template.innerHTML = markup
+
+      this.statics.push(identity, key, template.content)
+      parked += 1
+    }
+
+    return parked
+  }
+
+  evictManifests(file: string, keepVersion: string): number {
+    return this.manifests.evict(file, keepVersion)
   }
 
   rangeOf(target: Slot | Item): Range {
@@ -488,6 +518,10 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
     if (!item) {
       return null
+    }
+
+    if (htmlOf(this.rangeOf(item)) === html) {
+      return { regions: [], slots: [] }
     }
 
     this.journal.record(slot, () => {

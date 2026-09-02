@@ -17,6 +17,12 @@ const CONSTRUCT = Symbol("Runtime.start")
 
 let instance: Runtime | null = null
 
+declare global {
+  interface Window {
+    HerbRuntime?: Runtime
+  }
+}
+
 export interface RuntimeOptions {
   state?: StateOptions
   outbox?: OutboxOptions
@@ -72,6 +78,12 @@ export class Runtime {
 
     instance = runtime
 
+    try {
+      window.HerbRuntime = runtime
+    } catch {
+      /* no window, no global */
+    }
+
     return runtime
   }
 
@@ -94,6 +106,14 @@ export class Runtime {
 
     if (instance === this) {
       instance = null
+
+      try {
+        if (window.HerbRuntime === this) {
+          delete window.HerbRuntime
+        }
+      } catch {
+        /* no window, no global */
+      }
     }
   }
 }
