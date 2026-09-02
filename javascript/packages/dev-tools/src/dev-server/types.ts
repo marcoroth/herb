@@ -63,6 +63,7 @@ export interface WelcomeMessage {
 }
 
 export const DEV_SERVER_FIXED_EVENT = "herb:dev-server-fixed"
+export const DEV_SERVER_COMMAND = "bundle exec herb dev"
 
 export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | ErrorMessage | FixedMessage
 export type ConnectionState = "connected" | "disconnected" | "given-up"

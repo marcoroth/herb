@@ -2,6 +2,7 @@ import { Connection } from "./connection"
 import { Toast } from "./toast"
 import { ConnectionDot } from "./connection-dot"
 import { MismatchAlert } from "./mismatch-alert"
+import { UnavailableAlert } from "./unavailable-alert"
 
 import { applyPatch } from "./patch"
 import { diagnosticsFromError } from "./diagnostics"
@@ -19,6 +20,7 @@ import type {
 } from "./types"
 
 const DEFAULT_PORT = 8592
+const UNAVAILABLE_HINT_AFTER_ATTEMPTS = 3
 
 type ClientState = "connected" | "disconnected" | "given-up"
 
@@ -55,10 +57,14 @@ export class HerbClient {
   }
 
   disconnect(): void {
+    UnavailableAlert.hide()
+
     this.connection.disconnect()
   }
 
   retry(): void {
+    UnavailableAlert.hide()
+
     this.updateState("disconnected")
     this.connection.retry()
   }
@@ -86,6 +92,8 @@ export class HerbClient {
       Toast.show("Herb Dev Server reconnected", "connected")
     }
 
+    UnavailableAlert.reset()
+
     this.hasConnectedBefore = true
     this.updateState("connected")
     this.options.onConnect?.()
@@ -103,11 +111,19 @@ export class HerbClient {
   private onReconnecting(attempt: number, maxAttempts: number, delay: number): void {
     console.debug(`[herb-client] reconnecting (attempt ${attempt}/${maxAttempts}, next try in ${(delay / 1000).toFixed(1)}s)...`)
     this.connectionDot.updateReconnectCountdown(attempt, maxAttempts, delay)
+
+    if (!this.hasConnectedBefore && attempt >= UNAVAILABLE_HINT_AFTER_ATTEMPTS) {
+      this.showUnavailableAlert()
+    }
   }
 
   private onGivenUp(): void {
     this.updateState("given-up")
-    Toast.show("Herb Dev Server not available — click the dot to retry", "warning")
+    this.showUnavailableAlert()
+  }
+
+  private showUnavailableAlert(): void {
+    UnavailableAlert.show({ port: this.port, onRetry: () => this.retry() })
   }
 
   private handleMessage(message: HerbMessage): void {
