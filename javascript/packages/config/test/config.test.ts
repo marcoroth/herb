@@ -1051,7 +1051,6 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
         "public/**/*",
         "legacy/**/*"
       ])
@@ -1081,7 +1080,7 @@ describe("@herb-tools/config", () => {
 
       expect(config.isEnabledForPath("app/views/home/index.html.erb", "linter")).toBe(true)
       expect(config.isEnabledForPath("node_modules/pkg/file.html.erb", "linter")).toBe(false)
-      expect(config.isEnabledForPath("vendor/bundle/file.html.erb", "linter")).toBe(false)
+      expect(config.isEnabledForPath("vendor/bundle/file.html.erb", "linter")).toBe(true)
       expect(config.isEnabledForPath("public/assets/file.html.erb", "linter")).toBe(false)
     })
 
@@ -1142,7 +1141,6 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
         "legacy/**/*"
       ])
     })
@@ -1175,7 +1173,6 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
         "public/**/*"
       ])
     })
@@ -1183,7 +1180,7 @@ describe("@herb-tools/config", () => {
     test("exclude patterns that duplicate defaults result in duplicates", () => {
       const configOptions: HerbConfigOptions = {
         files: {
-          exclude: ["vendor/**/*"]
+          exclude: ["node_modules/**/*"]
         }
       }
 
@@ -1196,8 +1193,7 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
-        "vendor/**/*"
+        "node_modules/**/*"
       ])
     })
 
@@ -1234,7 +1230,6 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
         "public/**/*",
         "test/**/*"
       ])
@@ -1267,7 +1262,6 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
         "legacy/**/*"
       ])
     })
@@ -1334,7 +1328,6 @@ describe("@herb-tools/config", () => {
         "node_modules/**/*",
         "storage/**/*",
         "tmp/**/*",
-        "vendor/**/*",
         "custom-exclude/**/*"
       ])
     })
