@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/thread.h>
 
 #include "../../src/include/lib/hb_allocator.h"
 #include "../../src/include/lib/hb_arena_debug.h"
@@ -20,8 +21,10 @@ VALUE cParserOptions;
 
 typedef struct {
   AST_DOCUMENT_NODE_T* root;
+  const char* input;
   VALUE source;
   const parser_options_T* parser_options;
+  bool print_arena_stats;
   hb_allocator_T allocator;
 } parse_args_T;
 
@@ -36,8 +39,35 @@ typedef struct {
   hb_allocator_T allocator;
 } buffer_args_T;
 
-static VALUE parse_convert_body(VALUE arg) {
+static void* parse_without_gvl(void* arg) {
   parse_args_T* args = (parse_args_T*) arg;
+
+  args->root = herb_parse(args->input, args->parser_options, &args->allocator);
+
+  return NULL;
+}
+
+static VALUE parse_without_gvl_body(VALUE arg) {
+  rb_thread_call_without_gvl(parse_without_gvl, (void*) arg, RUBY_UBF_IO, NULL);
+
+  return Qnil;
+}
+
+static VALUE parse_unlock_source(VALUE source) {
+  return rb_str_unlocktmp(source);
+}
+
+static VALUE parse_body(VALUE arg) {
+  parse_args_T* args = (parse_args_T*) arg;
+
+  if (NIL_P(args->source) || RB_OBJ_FROZEN(args->source)) {
+    parse_without_gvl_body(arg);
+  } else {
+    rb_str_locktmp(args->source);
+    rb_ensure(parse_without_gvl_body, arg, parse_unlock_source, args->source);
+  }
+
+  if (args->print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args->allocator.context); }
 
   return create_parse_result(args->root, args->source, args->parser_options);
 }
@@ -256,16 +286,14 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   parser_options.error_count = &error_count;
 
   parse_args_T args = { 0 };
+  args.input = string;
   args.source = source;
   args.parser_options = &parser_options;
+  args.print_arena_stats = print_arena_stats;
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
-  args.root = herb_parse(string, &parser_options, &args.allocator);
-
-  if (print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args.allocator.context); }
-
-  return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
+  return rb_ensure(parse_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {

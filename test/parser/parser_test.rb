@@ -14,6 +14,23 @@ module Parser
       assert_parsed_snapshot("")
     end
 
+    test "parse releases the GVL and unlocks its input" do
+      source = "<div><%= value %></div>\n" * 10_000
+      parser = Thread.new { Herb.parse(source, track_locations: false) }
+      observed_without_gvl = false
+
+      while parser.alive?
+        observed_without_gvl ||= parser.status == "sleep"
+        Thread.pass
+      end
+
+      parser.value
+      assert observed_without_gvl
+
+      source << "<p>still mutable</p>"
+      assert_predicate source, :valid_encoding?
+    end
+
     test "parse_file" do
       file = Tempfile.new
       file.write(%(<h1><%= RUBY_VERSION %></h1>))
