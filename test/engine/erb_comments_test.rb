@@ -151,5 +151,12 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "erb comment lines preserve line count parity with erubi" do
+      template = "<%# comment 1 %>\n<%# comment 2 %>\n<% code = 1 %>\n<%= code %>"
+
+      assert_compiled_snapshot(template)
+      assert_erubi_line_parity(template)
+    end
   end
 end
