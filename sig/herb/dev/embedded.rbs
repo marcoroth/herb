@@ -1,0 +1,21 @@
+# Generated from lib/herb/dev/embedded.rb with RBS::Inline
+
+module Herb
+  module Dev
+    class Embedded
+      # : (Server, Watcher, Pipeline, Integer) -> void
+      def initialize: (Server, Watcher, Pipeline, Integer) -> void
+
+      attr_reader server: Server
+
+      attr_reader watcher: Watcher
+
+      attr_reader pipeline: Pipeline
+
+      attr_reader pid: Integer
+
+      # : () -> void
+      def stop: () -> void
+    end
+  end
+end

@@ -30,6 +30,7 @@ gem "rubocop", "~> 1.71"
 gem "sorbet"
 gem "turbo-rails", "~> 2.0", require: false
 gem "webrick", "~> 1.9", require: false
+gem "websocket", "~> 1.2"
 gem "yerba", "~> 0.9"
 
 # TODO: remove once https://github.com/soutaro/steep/pull/2255 ships

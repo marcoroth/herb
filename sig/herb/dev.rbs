@@ -1,0 +1,58 @@
+# Generated from lib/herb/dev.rb with RBS::Inline
+
+module Herb
+  # The development server: a file watcher, a websocket, and the pipeline between them.
+  #
+  # The dev server never compiles a template itself, because slot identity depends on the
+  # visitor stack the application compiles with, and only the application knows that stack.
+  # A host that does know it registers a compiler here:
+  #
+  #     Herb::Dev.compiler = ->(source, relative_path) { ... }
+  #
+  # The compiler returns nil for a file it cannot compile at all, and otherwise an object
+  # answering `mode`, `manifest`, `version`, `slot_entries`, `statics`, `static_markup` and
+  # `diagnostics`. Without one, the pipeline still classifies changes and tells browsers to
+  # fetch, so everything degrades instead of breaking.
+  module Dev
+    interface _Compiler
+      def call: (String source, String relative_path) -> _CompiledSchema?
+    end
+
+    interface _CompiledSchema
+      def mode: () -> Symbol?
+
+      def manifest: () -> Hash[String, untyped]?
+
+      def version: () -> String?
+
+      def slot_entries: () -> Array[Hash[Symbol, untyped]]?
+
+      def statics: () -> Hash[String, String]?
+
+      def static_markup: () -> String?
+
+      def diagnostics: () -> Array[untyped]?
+    end
+
+    attr_accessor self.compiler: _Compiler?
+
+    # Starts the watcher and the websocket server inside the current process, for a host
+    # that already runs the application, like a Rails server in development. Everything a
+    # start would collide with makes it a no-op instead of an error, so a host can call it
+    # unconditionally:
+    #
+    #     Rails.application.server { Herb::Dev.boot(Rails.root.to_s) }
+    #
+    # : (String, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
+    def self.boot: (String, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
+
+    # : (Watcher::Event, Classifier::Classification?) -> String?
+    def self.activity_line: (Watcher::Event, Classifier::Classification?) -> String?
+
+    # : () -> Embedded?
+    def self.booted: () -> Embedded?
+
+    # : () -> void
+    def self.shutdown: () -> void
+  end
+end
