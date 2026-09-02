@@ -30,5 +30,6 @@ export function diagnosticFromRefreshFailure(file: string, status: number, failu
     phase: "runtime" as const,
     overlay: "dismissible" as const,
     ...(failure?.line ? { location: { start: { line: failure.line, column: 1 } } } : {}),
+    ...(failure?.backtrace?.length ? { backtrace: failure.backtrace } : {}),
   }
 }

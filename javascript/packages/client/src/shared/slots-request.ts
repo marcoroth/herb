@@ -11,6 +11,7 @@ export interface SlotsRequestFailure {
   message?: string
   template?: string | null
   line?: number | null
+  backtrace?: string[] | null
 }
 
 export class SlotsRequestError extends Error {

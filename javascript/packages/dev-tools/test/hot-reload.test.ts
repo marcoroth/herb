@@ -131,7 +131,7 @@ describe("a raising re-render", () => {
     const sink = { report, clear: vi.fn(), clearAll: vi.fn() }
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
-      error: { class: "NoMethodError", message: "undefined method 'oops'", template: FILE },
+      error: { class: "NoMethodError", message: "undefined method 'oops'", template: FILE, backtrace: ["app/models/message.rb:12:in 'oops'", "app/views/chat/show.html.erb:5"] },
     }), { status: 500 })))
 
     try {
@@ -148,10 +148,11 @@ describe("a raising re-render", () => {
 
       expect(reload).not.toHaveBeenCalled()
 
-      const diagnostics = report.mock.calls[0][1] as Array<{ code?: string, message?: string }>
+      const diagnostics = report.mock.calls[0][1] as Array<{ code?: string, message?: string, backtrace?: string[] }>
 
       expect(diagnostics[diagnostics.length - 1]?.code).toBe("NoMethodError")
       expect(diagnostics[diagnostics.length - 1]?.message).toBe("undefined method 'oops'")
+      expect(diagnostics[diagnostics.length - 1]?.backtrace).toEqual(["app/models/message.rb:12:in 'oops'", "app/views/chat/show.html.erb:5"])
     } finally {
       vi.unstubAllGlobals()
       runtime.stop()

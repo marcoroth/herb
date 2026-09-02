@@ -11,6 +11,7 @@ export const OVERLAY_MODES = ['blocking', 'dismissible'] as const;
 export const PHASES = ['compile', 'runtime'] as const;
 export const FIX_KINDS = ['safe', 'unsafe'] as const;
 export const DEFAULT_FIX_KIND: FixKind = 'safe';
+export const MAX_BACKTRACE_FRAMES = 5;
 
 export type RenderVia = typeof RENDER_VIA_VALUES[number];
 export type RuntimeSeverity = typeof RUNTIME_SEVERITIES[number];
@@ -73,6 +74,7 @@ export interface RuntimeDiagnostic {
   overlay?: OverlayMode | false;
   phase?: Phase;
   source?: string;
+  backtrace?: string[];
   element?: Element | null;
 }
 
@@ -106,6 +108,7 @@ export interface NormalizedDiagnostic {
   fix: NormalizedFix | null;
   overlay: OverlayMode | null;
   phase: Phase | null;
+  backtrace: string[];
   element: Element | null;
 }
 
@@ -291,8 +294,19 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     fix: normalizeFix(value.fix, template, sources),
     overlay: normalizeOverlay(value.overlay),
     phase: normalizePhase(value.phase),
+    backtrace: normalizeBacktrace(value.backtrace),
     element: asElement(value.element),
   };
+}
+
+function normalizeBacktrace(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((frame): frame is string => typeof frame === 'string' && frame.length > 0)
+    .slice(0, MAX_BACKTRACE_FRAMES);
 }
 
 function asElement(value: unknown): Element | null {

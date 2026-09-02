@@ -1695,6 +1695,7 @@ export class RuntimePanel {
     })
 
     const stack = frames.length === 0 ? [] : ['', '### Render stack', '', ...frames]
+    const backtrace = diagnostic.backtrace.length === 0 ? [] : ['', '### Backtrace', '', ...diagnostic.backtrace.map((frame) => `- \`${frame}\``)]
 
     return [
       `## ${diagnostic.code ?? diagnostic.origin}`,
@@ -1707,6 +1708,7 @@ export class RuntimePanel {
       ...facts,
       ...this.markdownExcerpt(diagnostic),
       ...stack,
+      ...backtrace,
       ...this.markdownFix(diagnostic),
     ]
   }
@@ -1990,6 +1992,7 @@ export class RuntimePanel {
       suggestion,
       this.excerptHTML(diagnostic),
       this.stackHTML(diagnostic),
+      this.backtraceHTML(diagnostic),
       this.fixHTML(diagnostic),
       `</article>`,
     ].join('')
@@ -2168,6 +2171,29 @@ export class RuntimePanel {
     return [
       `<div class="herb-dev-tools-stack">`,
       `<p class="herb-dev-tools-stack-title">Render stack<span class="herb-dev-tools-stack-order">innermost first</span></p>`,
+      `<ol class="herb-dev-tools-frames">${items.join('')}</ol>`,
+      `</div>`,
+    ].join('')
+  }
+
+  private backtraceHTML(diagnostic: NormalizedDiagnostic): string {
+    if (diagnostic.backtrace.length === 0) {
+      return ''
+    }
+
+    const items = diagnostic.backtrace.map((frame) => {
+      const parsed = /^(.+?):(\d+)(?::in .*)?$/.exec(frame)
+
+      if (!parsed) {
+        return `<li class="herb-dev-tools-frame">${escapeHTML(frame)}</li>`
+      }
+
+      return `<li class="herb-dev-tools-frame">${this.pathHTML(frame, parsed[1], Number(parsed[2]), 1, 'herb-dev-tools-frame-target')}</li>`
+    })
+
+    return [
+      `<div class="herb-dev-tools-stack">`,
+      `<p class="herb-dev-tools-stack-title">Backtrace<span class="herb-dev-tools-stack-order">innermost first</span></p>`,
       `<ol class="herb-dev-tools-frames">${items.join('')}</ol>`,
       `</div>`,
     ].join('')
