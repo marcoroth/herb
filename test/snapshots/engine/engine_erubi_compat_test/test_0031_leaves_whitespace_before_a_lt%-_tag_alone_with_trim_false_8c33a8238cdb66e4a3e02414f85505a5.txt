@@ -1,7 +1,0 @@
----
-source: "Engine::EngineErubiCompatTest#test_0031_leaves whitespace before a <%- tag alone with trim: false"
-input: "{source: \"before\\n  <%- a = 1 %>\\nafter\\n\", locals: {}, options: {trim: false}}"
----
-before
-  
-after

@@ -218,7 +218,8 @@ module Herb
       else
         @src.chomp! if @src.end_with?("\n") && code.start_with?(" ") && !code.end_with?("\n")
 
-        @src << " " << code
+        @src << " " unless code.match?(/\A\n+\z/)
+        @src << code
 
         if Helpers.comment?(code) || Helpers.heredoc?(code)
           @src << "\n" unless code[-1] == "\n"

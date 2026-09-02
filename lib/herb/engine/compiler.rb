@@ -589,6 +589,17 @@ module Herb
           pending_padding += @padding_before[index]
 
           if token[0] == :text
+            if pending_padding.positive?
+              if current_text
+                optimized << [:text, current_text, current_context]
+                current_text = nil
+                current_context = nil
+              end
+
+              optimized << [:code, padding_newlines(pending_padding), nil]
+              pending_padding = 0
+            end
+
             if current_text
               current_text << token[1]
               current_context ||= token[2]
