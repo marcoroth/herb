@@ -1,7 +1,7 @@
 import overlayStyles from './overlay.css';
 
 import { injectStyle } from '../styles';
-import { SlotFlash } from '../slots/flash';
+import { HotReloadFlash, SlotFlash } from '../slots/flash';
 
 export const HERB_LINTER_EVENT = 'herb:dev-tools:linter'
 
@@ -13,6 +13,7 @@ export interface HerbOverlayOptions {
   onReinitialize?: () => void;
   isRuntimePanelVisible?: () => boolean;
   onRuntimePanelToggle?: (visible: boolean) => void;
+  onHotReloadingToggle?: (enabled: boolean) => void;
   reportedFor?: (template: string) => { count: number, tone: string } | null;
 }
 
@@ -32,8 +33,11 @@ export class HerbOverlay {
   private destroyed = false;
   private styleElement: HTMLStyleElement | null = null;
   private slotFlash = new SlotFlash();
+  private hotReloadFlash = new HotReloadFlash();
+  private flashingHotReload = true;
   private showingSlotUpdates = false;
   private runningLinter = true;
+  private hotReloading = true;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
   private static readonly EDITOR_OPTIONS = [
@@ -95,6 +99,7 @@ export class HerbOverlay {
     document.removeEventListener('turbo:visit', this.handleTurboNavigation);
 
     this.slotFlash.stop();
+    this.hotReloadFlash.stop();
 
 
     document.querySelector('.herb-floating-menu')?.remove();
@@ -143,6 +148,8 @@ export class HerbOverlay {
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
         this.showingSlotUpdates = settings.showingSlotUpdates || false;
         this.runningLinter = settings.runningLinter !== undefined ? settings.runningLinter : true;
+        this.hotReloading = settings.hotReloading !== undefined ? settings.hotReloading : true;
+        this.flashingHotReload = settings.flashingHotReload !== undefined ? settings.flashingHotReload : true;
         this.menuOpen = settings.menuOpen || false;
         if (settings.preferredEditor) {
           this.preferredEditor = settings.preferredEditor;
@@ -164,12 +171,29 @@ export class HerbOverlay {
       showingComponentOutlines: this.showingComponentOutlines,
       showingSlotUpdates: this.showingSlotUpdates,
       runningLinter: this.runningLinter,
+      hotReloading: this.hotReloading,
+      flashingHotReload: this.flashingHotReload,
       menuOpen: this.menuOpen,
       preferredEditor: this.preferredEditor
     };
 
     localStorage.setItem(HerbOverlay.SETTINGS_KEY, JSON.stringify(settings));
     this.updateMenuButtonState();
+  }
+
+  private toggleHotReloading(enabled: boolean) {
+    this.hotReloading = enabled;
+    this.saveSettings();
+    this.options.onHotReloadingToggle?.(enabled);
+  }
+
+  private toggleHotReloadFlashes(show?: boolean) {
+    this.flashingHotReload = show !== undefined ? show : !this.flashingHotReload;
+
+    if (this.flashingHotReload) this.hotReloadFlash.start();
+    else this.hotReloadFlash.stop();
+
+    this.saveSettings();
   }
 
   private updateMenuButtonState() {
@@ -306,6 +330,22 @@ export class HerbOverlay {
             </label>
           </div>
 
+          ${devServer ? `<div class="herb-toggle-item" id="herbHotReloadingItem">
+            <label class="herb-toggle-label">
+              <input type="checkbox" id="herbToggleHotReloading" class="herb-toggle-input">
+              <span class="herb-toggle-switch"></span>
+              <span class="herb-toggle-text">Hot Reloading</span>
+            </label>
+          </div>
+
+          <div class="herb-toggle-item" id="herbHotReloadFlashesItem">
+            <label class="herb-toggle-label">
+              <input type="checkbox" id="herbToggleHotReloadFlashes" class="herb-toggle-input">
+              <span class="herb-toggle-switch"></span>
+              <span class="herb-toggle-text">Flash Hot Reload Updates</span>
+            </label>
+          </div>` : ``}
+
           <div class="herb-toggle-item">
             <label class="herb-toggle-label">
               <input type="checkbox" id="herbToggleLinter" class="herb-toggle-input">
@@ -338,12 +378,14 @@ export class HerbOverlay {
   }
 
   private applySettings() {
+    this.options.onHotReloadingToggle?.(this.hotReloading);
     this.toggleViewOutlines(this.showingViewOutlines);
     this.togglePartialOutlines(this.showingPartialOutlines);
     this.toggleComponentOutlines(this.showingComponentOutlines);
     this.toggleERBTags(this.showingERB);
     this.toggleERBOutlines(this.showingERBOutlines);
     this.toggleSlotUpdates(this.showingSlotUpdates);
+    this.toggleHotReloadFlashes(this.flashingHotReload);
 
     const menuTrigger = document.getElementById('herbMenuTrigger');
     const menuPanel = document.getElementById('herbMenuPanel');
@@ -434,6 +476,24 @@ export class HerbOverlay {
   }
 
   private setupToggleSwitches() {
+    const toggleHotReloadingSwitch = document.getElementById('herbToggleHotReloading') as HTMLInputElement | null;
+
+    if (toggleHotReloadingSwitch) {
+      toggleHotReloadingSwitch.checked = this.hotReloading;
+      toggleHotReloadingSwitch.addEventListener('change', () => {
+        this.toggleHotReloading(toggleHotReloadingSwitch.checked);
+      });
+    }
+
+    const toggleHotReloadFlashesSwitch = document.getElementById('herbToggleHotReloadFlashes') as HTMLInputElement | null;
+
+    if (toggleHotReloadFlashesSwitch) {
+      toggleHotReloadFlashesSwitch.checked = this.flashingHotReload;
+      toggleHotReloadFlashesSwitch.addEventListener('change', () => {
+        this.toggleHotReloadFlashes(toggleHotReloadFlashesSwitch.checked);
+      });
+    }
+
     const toggleViewOutlinesSwitch = document.getElementById('herbToggleViewOutlines') as HTMLInputElement;
 
     if (toggleViewOutlinesSwitch) {

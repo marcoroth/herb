@@ -426,6 +426,16 @@ export class RuntimePanel {
     }
   }
 
+  public clearTemplate(template: string, options: { except?: string[] } = {}) {
+    const spared = options.except ?? []
+
+    this.entries = this.entries.filter(entry => entry.diagnostic.template !== template || spared.includes(entry.diagnostic.origin))
+
+    this.cleared = this.entries.length === 0
+
+    this.render()
+  }
+
   public clear(origin?: string) {
     if (origin === undefined) {
       this.entries = []

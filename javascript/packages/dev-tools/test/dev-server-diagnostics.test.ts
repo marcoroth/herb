@@ -223,17 +223,32 @@ describe("a dev server error in the panel", () => {
     expect(document.querySelectorAll(".herb-dev-tools-connection-dot")).toHaveLength(1)
   })
 
-  test("announces a fix on the document, for a page that did not start the dev tools", async () => {
-    const client = new HerbClient({})
-    const heard: string[] = []
+  test("a schema with no diagnostics clears exactly the file it names", () => {
+    const files: Array<[string, number]> = []
+    const sink = {
+      report: (file: string, diagnostics: unknown[]) => {
+        files.push([file, diagnostics.length])
+      },
+      clear: () => {},
+      clearAll: () => {},
+    }
 
-    document.addEventListener("herb:dev-server-fixed", (event) => {
-      heard.push((event as CustomEvent).detail.file)
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleSchema"]({
+      type: "schema",
+      file: "app/views/posts/index.html.erb",
+      mode: "client",
+      version: { from: "a", to: "b" },
+      manifest: null,
+      static_markup: null,
+      statics: null,
+      remap: null,
+      diagnostics: [],
+      source: null,
     })
 
-    client["handleFixed"]({ type: "fixed", file: "app/views/posts/index.html.erb" })
-
-    expect(heard).toEqual(["app/views/posts/index.html.erb"])
+    expect(files).toEqual([["app/views/posts/index.html.erb", 0]])
   })
 
   test("renders no excerpt when the server sent no source", () => {

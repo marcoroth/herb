@@ -55,6 +55,8 @@ export class ConnectionDot {
 
     const state = this.client.getState()
 
+    this.applyHotReloadingAvailability(state === "connected")
+
     switch (state) {
       case "connected": {
         this.applyBadge(dot, colors.green, "Connected to herb dev server", true, true, "default", null)
@@ -186,6 +188,24 @@ export class ConnectionDot {
     dot.style.cursor = cursor
     dot.title = title
     dot.onclick = handler
+  }
+
+  private applyHotReloadingAvailability(connected: boolean): void {
+    const toggle = document.getElementById("herbToggleHotReloading") as HTMLInputElement | null
+
+    if (!toggle) {
+      return
+    }
+
+    toggle.disabled = !connected
+    document.getElementById("herbHotReloadingItem")?.classList.toggle("herb-toggle-item-disabled", !connected)
+
+    const flashes = document.getElementById("herbToggleHotReloadFlashes") as HTMLInputElement | null
+
+    if (flashes) {
+      flashes.disabled = !connected
+      document.getElementById("herbHotReloadFlashesItem")?.classList.toggle("herb-toggle-item-disabled", !connected)
+    }
   }
 
   private updatePanel(panelDot: HTMLElement[], panelStatus: HTMLElement[], panelRetry: HTMLButtonElement[], options: UpdatePanelOptions): void {
