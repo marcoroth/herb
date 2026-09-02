@@ -19,16 +19,25 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
   }
 
   protected checkParsedHerbDisable(node: ERBContentNode, _content: string, herbDisable: HerbDisableComment): void {
-    herbDisable.ruleNameDetails.forEach(ruleDetail => {
-      if (this.validRuleNames.has(ruleDetail.name)) return
+    const check = (name: string, offset: number, length: number) => {
+      if (this.validRuleNames.has(name)) return
 
-      const suggestion = didyoumean(ruleDetail.name, this.validRuleNamesList)
+      const suggestion = didyoumean(name, this.validRuleNamesList)
       const message = suggestion
-        ? `Unknown rule \`${ruleDetail.name}\`. Did you mean \`${suggestion}\`?`
-        : `Unknown rule \`${ruleDetail.name}\`.`
+        ? `Unknown rule \`${name}\`. Did you mean \`${suggestion}\`?`
+        : `Unknown rule \`${name}\`.`
 
-      const location = this.createRuleNameLocation(node, ruleDetail)
+      const location = this.createRuleNameLocation(node, { name, offset, length })
       this.addOffenseWithFallback(message, location, node)
+    }
+
+    herbDisable.ruleNameDetails.forEach(ruleDetail => {
+      check(ruleDetail.name, ruleDetail.offset, ruleDetail.length)
+    })
+
+    herbDisable.fileScopedEntries.forEach(entry => {
+      // `all` is not a valid rule name in the file-scoped form.
+      check(entry.name, entry.nameOffset, entry.nameLength)
     })
   }
 }

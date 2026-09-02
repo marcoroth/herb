@@ -7,21 +7,25 @@ import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentNoDuplicateRulesVisitor extends HerbDisableCommentParsedVisitor {
   protected checkParsedHerbDisable(node: ERBContentNode, _content: string, herbDisable: HerbDisableComment): void {
-    const seenRules = new Map<string, number>()
+    const seenRules = new Set<string>()
 
-    herbDisable.ruleNameDetails.forEach((ruleDetail, index) => {
-      const firstIndex = seenRules.get(ruleDetail.name)
-
-      if (firstIndex !== undefined) {
-        const location = this.createRuleNameLocation(node, ruleDetail)
-        const message = `Duplicate rule \`${ruleDetail.name}\` in \`herb:disable\` comment. Remove the duplicate.`
-
+    const check = (name: string, offset: number, length: number) => {
+      if (seenRules.has(name)) {
+        const location = this.createRuleNameLocation(node, { name, offset, length })
+        const message = `Duplicate rule \`${name}\` in \`herb:disable\` comment. Remove the duplicate.`
         this.addOffenseWithFallback(message, location, node)
-
         return
       }
 
-      seenRules.set(ruleDetail.name, index)
+      seenRules.add(name)
+    }
+
+    herbDisable.ruleNameDetails.forEach(ruleDetail => {
+      check(ruleDetail.name, ruleDetail.offset, ruleDetail.length)
+    })
+
+    herbDisable.fileScopedEntries.forEach(entry => {
+      check(entry.name, entry.nameOffset, entry.nameLength)
     })
   }
 }

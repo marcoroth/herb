@@ -78,6 +78,12 @@ export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAut
   hints: number
   ignored: number
   wouldBeIgnored?: number
+  /**
+   * Number of offenses suppressed by a matching file-scoped
+   * `<%# herb:disable RULE N %>` (or `all`) entry. Kept separate from
+   * `ignored` (which counts line-scoped `herb:disable` suppressions).
+   */
+  counterSuppressed?: number
 }
 
 /**
@@ -265,6 +271,43 @@ export interface LexerRuleConstructor {
 }
 
 /**
+ * A single file-scoped `<%# herb:disable rule N|all %>` entry observed in the
+ * source, indexed by rule name and reported to the meta-rules via LintContext.
+ */
+export interface HerbCounterCacheEntry {
+  ruleName: string
+  /** Suppression count. `"all"` means suppress every offense of this rule. */
+  count: number | "all"
+  line: number
+  column: number
+  raw: string
+}
+
+/**
+ * Per-rule reconciliation between a file-scoped `<%# herb:disable rule N %>`
+ * entry (E) and the actual offense count for the file (N), placed on
+ * LintContext so the out-of-date meta-rule can read it after the main rule
+ * loop has run.
+ *
+ * `"all"` entries never trigger drift and are omitted from this map.
+ */
+export interface HerbCounterDrift {
+  ruleName: string
+  /** Declared expected count (E). Always a number; `"all"` entries are not tracked here. */
+  expected: number
+  /** Actual offense count (N) after herb:disable line-scope filtering */
+  actual: number
+  /** Location metadata of the enclosing herb:disable comment */
+  line: number
+  column: number
+  raw: string
+  /** Zero-based offset of the count token within `raw`, for autofix. */
+  countOffset: number
+  /** Length of the count token as it appears in `raw`. */
+  countLength: number
+}
+
+/**
  * Complete lint context with all properties defined.
  * Use Partial<LintContext> when passing context to rules.
  */
@@ -273,6 +316,13 @@ export interface LintContext {
   validRuleNames: string[] | undefined
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
+  /**
+   * Per-rule drift map built during the main rule loop and consumed by the
+   * `herb-disable-comment-out-of-date` meta-rule.
+   */
+  counterDriftByRule: Map<string, HerbCounterDrift> | undefined
+  /** Report offenses even when counter-suppressed (mirrors ignoreDisableComments). */
+  ignoreCounterComments: boolean | undefined
   indentWidth: number | undefined
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
@@ -291,6 +341,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
+  counterDriftByRule: undefined,
+  ignoreCounterComments: undefined,
   indentWidth: undefined,
   indentStyle: undefined,
   framework: undefined,

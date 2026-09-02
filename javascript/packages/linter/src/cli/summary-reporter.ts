@@ -23,6 +23,7 @@ export interface SummaryData {
   totalHints?: number
   totalIgnored: number
   totalWouldBeIgnored?: number
+  totalCounterSuppressed?: number
   filesWithOffenses: number
   filesFailing?: number
   filesNotFailing?: number
@@ -161,6 +162,13 @@ export class SummaryReporter {
       const message = `${totalIgnored} ${this.pluralize(totalIgnored, "offense")} suppressed with herb:disable`
 
       console.log(`  ${colorize(pad("Ignored"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
+    }
+
+    const totalCounterSuppressed = data.totalCounterSuppressed ?? 0
+    if (totalCounterSuppressed > 0) {
+      const message = `${totalCounterSuppressed} ${this.pluralize(totalCounterSuppressed, "offense")} suppressed by file-scoped herb:disable count`
+
+      console.log(`  ${colorize(pad("Counter"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
     }
 
     if (notReportedCount > 0) {

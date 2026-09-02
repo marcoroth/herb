@@ -9,6 +9,7 @@ import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 
 import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
+import { loadCustomRules as loadCustomRulesFromDisk } from "./loader.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
@@ -18,6 +19,7 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
 import type { RuleFilterFlag } from "./cli/summary-reporter.js"
+import type { RuleClass } from "./types.js"
 
 export * from "./cli/index.js"
 
@@ -159,6 +161,32 @@ export class CLI {
     return supported
   }
 
+  /**
+   * Resolve the effective file set for a command. When `patterns` is empty,
+   * use every file the linter is configured to look at; otherwise scope to
+   * the explicit paths/patterns, mirroring the main lint pipeline.
+   */
+  protected async resolveFiles(patterns: string[], config: Config, force: boolean, formatOption: FormatOption): Promise<string[]> {
+    if (patterns.length === 0) {
+      return await config.findFilesForTool('linter', this.projectPath)
+    }
+
+    const allFiles: string[] = []
+
+    for (const pattern of patterns) {
+      const { files: patternFiles } = await this.resolvePatternToFiles(pattern, config, force)
+
+      if (patternFiles.length === 0) {
+        console.error(`✗ No files found matching pattern: ${pattern}`)
+        process.exit(1)
+      }
+
+      allFiles.push(...patternFiles)
+    }
+
+    return this.rejectUnsupportedFiles([...new Set(allFiles)], config, force, formatOption)
+  }
+
   protected async beforeProcess(): Promise<void> {
     // Hook for subclasses to add custom output before processing
   }
@@ -196,7 +224,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -346,7 +374,7 @@ export class CLI {
 
       await Herb.load()
 
-      const files = await config.findFilesForTool('linter', this.projectPath)
+      const files = await this.resolveFiles(patterns, config, force, formatOption)
 
       const disableFailingContext: ProcessingContext = {
         projectPath: this.projectPath,
@@ -390,6 +418,71 @@ export class CLI {
       }
 
       console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.\n`)
+      process.exit(0)
+    }
+
+    if (updateCounters) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const loadedConfig = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+
+      console.log(`\n${colorize("↻", "cyan")} Reconciling file-scoped <%# herb:disable rule N %> counts...`)
+
+      await Herb.load()
+
+      const files = await this.resolveFiles(patterns, loadedConfig, force, formatOption)
+
+      let customRules: RuleClass[] | undefined = undefined
+      if (loadCustomRules) {
+        try {
+          const result = await loadCustomRulesFromDisk({ baseDir: this.projectPath, silent: true })
+          customRules = result.rules
+        } catch {
+          // Ignore custom rule loading failures — updateCounters skips unknown rules.
+        }
+      }
+
+      const linter = Linter.from(Herb, loadedConfig, customRules, { all: false })
+
+      const { readFileSync, writeFileSync } = await import("node:fs")
+      const { resolve } = await import("node:path")
+
+      let filesTouched = 0
+      let totalRewritten = 0
+      let totalDeleted = 0
+
+      for (const filename of files) {
+        const filePath = resolve(this.projectPath, filename)
+        const content = readFileSync(filePath, "utf-8")
+
+        const { source: updated, rewritten, deleted } = linter.updateCounters(content, {
+          fileName: filename,
+          projectPath: this.projectPath,
+        })
+
+        if (updated !== content) {
+          writeFileSync(filePath, updated, "utf-8")
+          filesTouched++
+          totalRewritten += rewritten
+          totalDeleted += deleted
+        }
+      }
+
+      const parts: string[] = []
+      if (totalRewritten > 0) parts.push(`${totalRewritten} updated`)
+      if (totalDeleted > 0) parts.push(`${totalDeleted} removed`)
+
+      if (parts.length === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} All file-scoped <%# herb:disable %> counts already match. Nothing to update.\n`)
+      } else {
+        console.log(`\n${colorize("✓", "brightGreen")} Reconciled ${parts.join(", ")} across ${filesTouched} ${filesTouched === 1 ? "file" : "files"}.\n`)
+      }
+
       process.exit(0)
     }
 
