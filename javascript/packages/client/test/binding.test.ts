@@ -210,6 +210,59 @@ const AREA_PAGE =
     },
   })}</template>`
 
+describe("a boolean attribute that computes", () => {
+  const COMPUTED_FILE = "app/views/page/computed.html.erb"
+
+  const COMPUTED_PAGE =
+    `<!--herb-region:${COMPUTED_FILE}:beefcafe:0-->` +
+    `<input id="plain" type="checkbox" data-herb-slot="0:boolean_attribute:checked">` +
+    `<input id="derived" type="checkbox" checked data-herb-slot="1:boolean_attribute:checked">` +
+    `<!--/herb-region:${COMPUTED_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      states: {
+        [COMPUTED_FILE]: {
+          version: "beefcafe",
+          declarations: [
+            { name: "agreed", kind: "boolean", default: "false", scope: "region" },
+            { name: "unread", kind: "number", default: "5", scope: "region" },
+          ],
+          reads: { agreed: [0], unread: [1] },
+          conditionals: {},
+          presence: { 0: ["agreed", null], 1: ["unread", { value: 3 }, ">"] },
+        },
+      },
+    })}</template>`
+
+  let computedSlots: Slots
+  let computedState: State
+
+  beforeEach(() => {
+    document.body.innerHTML = COMPUTED_PAGE
+
+    computedSlots = new Slots()
+    computedSlots.scan(document.body)
+
+    computedState = new State(computedSlots, {})
+    computedState.adopt()
+    computedState.observe()
+  })
+
+  afterEach(() => computedState.disconnect())
+
+  test("a bare presence read still binds the click", () => {
+    document.querySelector<HTMLInputElement>("#plain")!.click()
+
+    expect(computedState.getState("agreed")).toBe(true)
+  })
+
+  test("a computed presence read never writes its operand back", () => {
+    document.querySelector<HTMLInputElement>("#derived")!.click()
+
+    expect(computedState.getState("unread")).toBe(5)
+  })
+})
+
 describe("a state rendered as a textarea's content", () => {
   test("a write reaches the textarea", () => {
     document.body.innerHTML = AREA_PAGE

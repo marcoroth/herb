@@ -289,12 +289,28 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     return this.attributeValue(slot) ?? currentText(slot.anchor)
   }
 
-  setText(slot: Slot, text: string): boolean {
+  setText(slot: Slot, text: SlotValue): boolean {
     if (slot.anchor.kind === "element") {
       return false
     }
 
-    if (this.currentText(slot) === text) {
+    let written = text
+
+    if (slot.type === "raw_text_interpolation") {
+      const whole = this.interpolate(slot, text)
+
+      if (whole === null) {
+        return false
+      }
+
+      written = whole
+    }
+
+    if (Array.isArray(written)) {
+      return false
+    }
+
+    if (this.currentText(slot) === written) {
       return false
     }
 
@@ -309,11 +325,11 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     this.index.forgetChildren(slot)
 
     if (slot.anchor.kind === "content") {
-      slot.anchor.element.textContent = text
+      slot.anchor.element.textContent = written
     } else {
       const fragment = document.createDocumentFragment()
 
-      fragment.append(document.createTextNode(text))
+      fragment.append(document.createTextNode(written))
 
       this.rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: slot.item })
     }
@@ -354,6 +370,16 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       }
 
       return this.attributeValue(slot) === whole
+    }
+
+    if (slot.type === "raw_text_interpolation") {
+      const whole = this.interpolate(slot, value)
+
+      if (whole === null) {
+        return false
+      }
+
+      return this.currentText(slot) === whole
     }
 
     if (Array.isArray(value)) {

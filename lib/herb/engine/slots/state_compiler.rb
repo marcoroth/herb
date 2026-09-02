@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "did_you_mean"
+
 require_relative "state_directives"
 
 module Herb
@@ -14,19 +16,26 @@ module Herb
       #
       class StateCompiler
         STATE_KEYWORDS = {
-          "if" => :if, "elsif" => :elsif, "unless" => :unless, "case" => :case, "when" => :when,
+          "if" => :if,
+          "elsif" => :elsif,
+          "unless" => :unless,
+          "case" => :case,
+          "when" => :when,
         }.freeze #: Hash[String, Symbol]
 
         SEEDS_LOCAL = "_herb_seeds" #: String
+        BARE_IDENTIFIER = /\A[a-z_][a-zA-Z0-9_]*\z/ #: Regexp
+        BINDABLE_ATTRIBUTES = ["value", "checked", "selected"].freeze #: Array[String]
+        BINDABLE_ELEMENTS = ["input", "textarea", "select", "option"].freeze #: Array[String]
 
         attr_reader :state_presence #: Hash[Integer, untyped]
-
         attr_reader :state_values #: Hash[Integer, untyped]
 
         #: (untyped) -> void
         def initialize(visitor)
           @visitor = visitor
           @strict_locals = {} #: Hash[String, Symbol]
+          @near_missed = Set.new #: Set[Integer]
           @region_states = {} #: Hash[String, StateDirectives::Declaration]
           item_states = {} #: Hash[untyped, Hash[String, StateDirectives::Declaration]]
           @item_states = item_states.compare_by_identity
@@ -71,9 +80,15 @@ module Herb
 
             name = slot.expression.to_s.strip.delete_suffix("?")
 
-            next unless names.include?(name)
+            unless names.include?(name)
+              warn_near_miss(slot, name, names)
+
+              next
+            end
 
             (reads[name] ||= []) << slot.index
+
+            warn_unbindable(slot, name) if slot.interpolated?
           end
 
           presence = {} #: Hash[String, untyped]
@@ -81,6 +96,8 @@ module Herb
           state_presence.each do |index, read|
             presence[index.to_s] = StateDirectives.condition_entry(read)
             StateDirectives.read_names(read).each { |name| (reads[name] ||= []) << index }
+
+            warn_computed_presence(index, read)
           end
 
           computed = {} #: Hash[String, untyped]
@@ -104,6 +121,8 @@ module Herb
             declaration["count"] = { "collection" => count[:collection], "when" => count[:when], "by" => count[:by] }
           end
 
+          warn_branch_orphans(reads, computed, presence)
+
           {
             "version" => @visitor.version,
             "declarations" => declarations,
@@ -112,6 +131,99 @@ module Herb
             "presence" => presence,
             "computed" => computed,
           }
+        end
+
+        #: (untyped, String) -> void
+        def warn_unbindable(slot, name)
+          return unless bindable_shape?(slot)
+          return if @visitor.listener_writes?(slot.index, [name])
+
+          place = slot.attribute ? "`#{slot.attribute}`" : "content"
+
+          @visitor.slot_warning(
+            "`#{name}` shares this `<#{slot.tag}>`'s #{place} with other text, so typing here will not write the state back. State writes still update the whole #{place}.",
+            @visitor.slot_nodes[slot.index]&.location,
+            :binding,
+            suggestion: "Make `#{name}` the only #{slot.attribute ? "value of `#{slot.attribute}`" : "content of the `<#{slot.tag}>`"} to bind it, or write the state from your own listener."
+          )
+        end
+
+        #: (untyped) -> bool
+        def bindable_shape?(slot)
+          if slot.attribute
+            BINDABLE_ATTRIBUTES.include?(slot.attribute) && BINDABLE_ELEMENTS.include?(slot.tag.to_s)
+          else
+            slot.tag == "textarea"
+          end
+        end
+
+        #: (Integer, untyped) -> void
+        def warn_computed_presence(index, read)
+          slot = @visitor.slots[index]
+
+          return unless slot && bindable_shape?(slot)
+          return if bare_presence?(read)
+          return if @visitor.listener_writes?(index, StateDirectives.read_names(read))
+
+          @visitor.slot_warning(
+            "`#{slot.attribute}` on this `<#{slot.tag}>` follows `#{StateDirectives.condition_source(read)}`, so using the control cannot write a state back. The attribute still updates when the states change.",
+            @visitor.slot_nodes[index]&.location,
+            :binding,
+            suggestion: "Drive `#{slot.attribute}` with a single state to bind it, or write the states from your own listener."
+          )
+        end
+
+        #: (untyped) -> bool
+        def bare_presence?(read)
+          read.is_a?(StateDirectives::Read) && read.operator.nil? && read.transform.nil? && read.comparand.nil? && read.against.nil?
+        end
+
+        #: (untyped, String, Array[String]) -> void
+        def warn_near_miss(slot, name, names)
+          return unless BARE_IDENTIFIER.match?(name)
+          return if @strict_locals.key?(name)
+
+          suggestions = DidYouMean::SpellChecker.new(dictionary: names).correct(name)
+
+          return if suggestions.empty?
+
+          @near_missed << slot.index
+
+          @visitor.slot_warning(
+            "`#{name}` reads like the state `#{suggestions.first}` but is not declared, so the server owns it and the client can never fill it.",
+            @visitor.slot_nodes[slot.index]&.location,
+            :unknown,
+            suggestion: "Spell the state's name, or declare `#{name}` in `herb:state`."
+          )
+        end
+
+        #: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
+        def warn_branch_orphans(reads, computed, presence)
+          return unless @visitor.client?
+
+          covered = (reads.values.flatten + computed.keys.map(&:to_i) + presence.keys.map(&:to_i)).to_set
+          warned = Set.new #: Set[Integer]
+
+          state_conditional_entries.each_key do |index|
+            @visitor.slots_inside(index).each do |inside|
+              next unless warned.add?(inside)
+
+              slot = @visitor.slots[inside]
+
+              next unless slot&.valued?
+              next if covered.include?(inside)
+              next if @near_missed.include?(inside)
+
+              expression = slot.expression.to_s.strip
+
+              @visitor.slot_warning(
+                "`<%= #{expression} %>` sits inside a branch the client can show on its own, but its value comes from the server. The server only computes values for the branch it renders, so showing this branch ahead of the server leaves the value empty.",
+                @visitor.slot_nodes[inside]&.location,
+                :branch,
+                suggestion: "Declare a state holding the value, or move `<%= #{expression} %>` out of the conditional."
+              )
+            end
+          end
         end
 
         #: (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
@@ -708,14 +820,24 @@ module Herb
 
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> void
         def check_interpolated_state_read(node, states)
-          return unless node.respond_to?(:value)
+          children = if node.is_a?(Herb::AST::HTMLElementNode)
+                       Array(node.body)
+                     elsif node.respond_to?(:value)
+                       node.value&.children || []
+                     else
+                       [] #: Array[untyped]
+                     end
 
-          outputs = (node.value&.children || []).grep(Herb::AST::ERBContentNode)
+          outputs = children.grep(Herb::AST::ERBContentNode)
           read = outputs.map { |output| output.content&.value.to_s.strip }.find { |expression| StateDirectives.mentions_any?(expression, states) }
 
           return unless read
 
-          @visitor.slot_error("`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values.", node.location, :read, suggestion: "Give the state its own attribute, or its own output outside this one.")
+          if node.is_a?(Herb::AST::HTMLElementNode)
+            @visitor.slot_error("`#{read}` reads a state inside a `<#{node.tag_name&.value}>` that mixes other dynamic parts. A state write cannot supply the other values.", node.location, :read, suggestion: "Give the state its own element, or its own output outside this one.")
+          else
+            @visitor.slot_error("`#{read}` reads a state inside an interpolated attribute that mixes other dynamic parts. A state write cannot supply the other values.", node.location, :read, suggestion: "Give the state its own attribute, or its own output outside this one.")
+          end
         end
 
         #: () -> void
@@ -734,7 +856,7 @@ module Herb
 
             next if states.empty?
 
-            if slot.type == :attribute_interpolation && slot.expression.to_s.strip.empty?
+            if slot.interpolated? && slot.expression.to_s.strip.empty?
               check_interpolated_state_read(node, states)
               next
             end
@@ -745,6 +867,7 @@ module Herb
             next if expression.empty?
             next unless StateDirectives.mentions_any?(expression, states)
 
+            next if refuse_mixed_boolean(node, slot, expression)
             next if convert_boolean_attribute(node, index, slot, expression, states)
 
             if states.key?(expression) || states.key?(expression.delete_suffix("?"))
@@ -770,6 +893,21 @@ module Herb
           StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
 
           @state_values[index] = read
+        end
+
+        #: (untyped, untyped, String) -> Symbol?
+        def refuse_mixed_boolean(node, slot, expression)
+          return nil unless slot.type == :attribute_interpolation
+          return nil unless slot.attribute && Herb::HTML::Util.boolean_attribute?(slot.attribute)
+
+          @visitor.slot_error(
+            "`#{slot.attribute}` on this `<#{slot.tag}>` mixes `#{expression}` with other text. A boolean attribute follows presence and any value keeps it present, so it could never turn off.",
+            node.location,
+            :read,
+            suggestion: "Make `<%= #{expression} %>` the whole value of `#{slot.attribute}`."
+          )
+
+          :reported
         end
 
         #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped

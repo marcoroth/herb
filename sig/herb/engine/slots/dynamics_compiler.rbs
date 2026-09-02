@@ -127,6 +127,9 @@ module Herb
           def visit_html_attribute_node: (untyped) -> void
 
           # : (untyped) -> void
+          def visit_html_element_node: (untyped) -> void
+
+          # : (untyped) -> void
           def visit_erb_content_node: (untyped) -> void
 
           # : (untyped) -> void

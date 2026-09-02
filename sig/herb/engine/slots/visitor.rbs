@@ -57,6 +57,8 @@ module Herb
 
         CAPTURING: Regexp
 
+        LISTENER_ATTRIBUTES: Array[String]
+
         OPEN_TAG_TYPES: Array[Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode]
 
         BRANCH_BODY_PROPERTIES: Array[Symbol]
@@ -130,8 +132,20 @@ module Herb
         # : () -> bool
         def degraded?: () -> bool
 
+        # : () -> bool
+        def client?: () -> bool
+
+        # : (Integer, Array[String]) -> bool
+        def listener_writes?: (Integer, Array[String]) -> bool
+
+        # : (Integer) -> Array[Integer]
+        def slots_inside: (Integer) -> Array[Integer]
+
         # : (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
         def slot_error: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
+
+        # : (String, untyped, Symbol, ?suggestion: String?) -> void
+        def slot_warning: (String, untyped, Symbol, ?suggestion: String?) -> void
 
         # : (Symbol) -> String
         def diagnostic_code_for: (Symbol) -> String
@@ -312,6 +326,9 @@ module Herb
         # : () -> void
         def collapse_invariant_conditionals: () -> void
 
+        # : (untyped) -> Array[Integer]
+        def slot_indices_within: (untyped) -> Array[Integer]
+
         # : (String) -> bool
         def branching_shape?: (String) -> bool
 
@@ -323,6 +340,21 @@ module Herb
 
         # : (Symbol) -> Symbol?
         def anchored_type_for: (Symbol) -> Symbol?
+
+        # : (Array[untyped]) -> Array[String]?
+        def rcdata_segments: (Array[untyped]) -> Array[String]?
+
+        # : (untyped) -> Array[String]
+        def listener_names_for: (untyped) -> Array[String]
+
+        # : (untyped) -> String?
+        def rcdata_expression_for: (untyped) -> String?
+
+        # : (Array[untyped]) -> bool
+        def mixed_rcdata_body?: (Array[untyped]) -> bool
+
+        # : (untyped) -> nil
+        def refuse_mixed_rcdata: (untyped) -> nil
 
         # : (untyped) -> Symbol
         def attribute_type_for: (untyped) -> Symbol

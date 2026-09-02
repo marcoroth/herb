@@ -85,6 +85,11 @@ module Engine
           { c: "c", i: "i" },
           { c: "d", i: "j" }
         ],
+        "an interpolated textarea" => [
+          %(<textarea><%= @d %>11</textarea>),
+          { d: "draft" },
+          { d: "typed" }
+        ],
         "a block and what follows it" => [
           %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>),
           { after: "A" },

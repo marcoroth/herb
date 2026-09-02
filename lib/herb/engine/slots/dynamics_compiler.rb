@@ -133,6 +133,7 @@ module Herb
             @slot_visitor = engine.slot_visitor
             @current_node = nil
             @current_attribute = nil
+            @current_rcdata = nil
             @rendering = false
             @block_depth = 0
 
@@ -151,6 +152,18 @@ module Herb
             super
           ensure
             @current_attribute = previous
+          end
+
+          #: (untyped) -> void
+          def visit_html_element_node(node)
+            index = @slot_visitor.index_for(node)
+            previous = @current_rcdata
+
+            @current_rcdata = node if index && @slot_visitor.slots[index]&.type == :raw_text_interpolation
+
+            super
+          ensure
+            @current_rcdata = previous
           end
 
           #: (untyped) -> void
@@ -310,7 +323,7 @@ module Herb
 
           #: (untyped) -> Integer?
           def claim(node)
-            @slot_visitor.index_for(@current_attribute || node)
+            @slot_visitor.index_for(@current_attribute || @current_rcdata || node)
           end
 
           #: (String) -> void
@@ -643,7 +656,7 @@ module Herb
 
         #: (Integer) -> bool
         def interpolated?(index)
-          @slot_visitor.slots[index]&.type == :attribute_interpolation
+          @slot_visitor.slots[index]&.interpolated? || false
         end
 
         #: (String) -> void

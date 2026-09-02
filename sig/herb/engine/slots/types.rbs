@@ -18,6 +18,8 @@ module Herb
 
         VALUED: Array[Symbol]
 
+        INTERPOLATED: Array[Symbol]
+
         # : (Symbol) -> bool
         def self.structural?: (Symbol) -> bool
 
@@ -35,6 +37,9 @@ module Herb
 
         # : (Symbol) -> bool
         def self.valued?: (Symbol) -> bool
+
+        # : (Symbol) -> bool
+        def self.interpolated?: (Symbol) -> bool
       end
     end
   end

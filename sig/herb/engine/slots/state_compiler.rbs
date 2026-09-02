@@ -14,6 +14,12 @@ module Herb
 
         SEEDS_LOCAL: String
 
+        BARE_IDENTIFIER: Regexp
+
+        BINDABLE_ATTRIBUTES: Array[String]
+
+        BINDABLE_ELEMENTS: Array[String]
+
         attr_reader state_presence: Hash[Integer, untyped]
 
         attr_reader state_values: Hash[Integer, untyped]
@@ -29,6 +35,24 @@ module Herb
 
         # : () -> Hash[String, untyped]?
         def manifest: () -> Hash[String, untyped]?
+
+        # : (untyped, String) -> void
+        def warn_unbindable: (untyped, String) -> void
+
+        # : (untyped) -> bool
+        def bindable_shape?: (untyped) -> bool
+
+        # : (Integer, untyped) -> void
+        def warn_computed_presence: (Integer, untyped) -> void
+
+        # : (untyped) -> bool
+        def bare_presence?: (untyped) -> bool
+
+        # : (untyped, String, Array[String]) -> void
+        def warn_near_miss: (untyped, String, Array[String]) -> void
+
+        # : (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
+        def warn_branch_orphans: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
 
         # : (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
         def declared_entry: (Hash[Symbol, untyped], String | Integer) -> Hash[String, untyped]
@@ -143,6 +167,9 @@ module Herb
 
         # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
         def register_state_value: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+
+        # : (untyped, untyped, String) -> Symbol?
+        def refuse_mixed_boolean: (untyped, untyped, String) -> Symbol?
 
         # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
         def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped

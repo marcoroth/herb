@@ -73,6 +73,16 @@ export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text
       continue
     }
 
+    if (entry.type === "raw_text_interpolation") {
+      const whole = interpolateParts(parts?.(entry.index) ?? null, value)
+
+      if (whole !== null) {
+        element.textContent = whole
+      }
+
+      continue
+    }
+
     if (entry.type === DEFAULT_SLOT_TYPE && !Array.isArray(value)) {
       element.innerHTML = markup(value, text)
     }
