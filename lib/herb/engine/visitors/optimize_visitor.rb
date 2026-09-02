@@ -1,0 +1,726 @@
+# frozen_string_literal: true
+# typed: true
+
+require_relative "../../visitor"
+require_relative "../../visitor/experimental"
+require_relative "../../visitor/context_aware"
+require_relative "../helpers"
+require_relative "../../action_view/helper_registry"
+
+module Herb
+  class Engine
+    # Asks the parser to resolve Action View helpers into the markup they produce, so the compiler
+    # emits that markup directly instead of a call the renderer has to make. Passing it is the
+    # whole opt-in:
+    #
+    #     Herb::Engine.new(source, visitors: [Herb::Engine::OptimizeVisitor.new])
+    #
+    # There is no check first for whether a template looks like it contains helpers, because a
+    # caller that added this has already answered that question.
+    #
+    # An output tag whose Ruby is a single string, integer, or float literal renders the same text
+    # every time, so the visitor folds it into the template text around it. `<%= "hello" %>`
+    # compiles to the text `hello`, with nothing left to evaluate when the template renders. The
+    # escaping the compiler would have arranged at render time is applied once here instead, by the
+    # same functions it would have called, so the fold produces byte for byte what the expression
+    # would have, in an attribute value and inside `<script>` or `<style>` just as in plain
+    # content. A caller that swapped one of those functions out through `escapefunc`, `attrfunc`,
+    # `jsfunc`, or `cssfunc` gets the fold only when the stock function leaves the value untouched,
+    # on the grounds that an escape function has nothing to do there either.
+    #
+    # A literal that spans lines, sits in a trimming tag, or renders nothing at all stays dynamic,
+    # so folding never moves another tag off the line it was written on and never changes how the
+    # whitespace around the tag is handled. Folding rewrites the ERB a template was written with,
+    # so a visitor that reads it, like `Slots::Visitor`, has to run earlier in the stack, and the
+    # stack raises when it does not.
+    #
+    # Its presence also lets the engine collapse a template that carries no Ruby into the single
+    # string literal it renders, skipping the buffer the compiler would otherwise build up. A
+    # template that was HTML to begin with qualifies, and so does one left fully static once the
+    # helpers above resolved to markup and the literal outputs folded into text. The collapse is
+    # held back when the caller drives the buffer itself through `preamble`, `postamble`, `bufval`,
+    # or `ensure`, and when a visitor recorded a diagnostic that the compiled template still needs
+    # to report.
+    #
+    # A template whose only Ruby is conditional chains over otherwise static markup collapses the
+    # same way, nesting included. `if`, `unless`, and `elsif` qualify, and so do `case` with its
+    # `when` branches and `case` matching with `in` patterns. Each render path becomes one frozen
+    # string literal holding everything that path renders, the markup around and between the
+    # conditionals included, and the compiled template is the chains themselves picking between
+    # them. The conditions compile onto the lines they were written on, so backtraces stay right.
+    # A chain without an `else` gets one that returns what the template renders without it, except
+    # a pattern matching chain, which keeps raising `NoMatchingPatternError` for a value no
+    # pattern accepts, the way it rendered before the collapse.
+    #
+    # The path literals repeat the markup the paths share, so the collapse steps back when they
+    # would hold more than `DUPLICATION_LIMIT` times the template's static bytes, and the buffer
+    # stays. A chain that sits beside another in the same scope keeps the buffer too.
+    #
+    # A template the collapse walks away from can still get its static subtrees. With
+    # `subtrees: true`, when the buffer stays, a chain whose branches are static collapses into a
+    # single append of the chain picking between path literals, the static text around it merged
+    # in, so a conditional attribute next to a dynamic one costs one append where it cost three.
+    # A chain the buffer already renders in one append is left as it was, and the duplication
+    # limit governs each subtree the way it governs the template. The pass trades compiled
+    # template bytes for fewer appends at render time, which is why it is the one pass that is
+    # off by default.
+    #
+    # Every other pass is on by default, and each can be left off on its own. `helpers: false` stops
+    # asking the parser to resolve helpers, `conditionals: false` stops asking it to unroll the
+    # postfix conditionals and ternaries it would have, `literals: false` keeps literal outputs
+    # dynamic, and `collapse: false` keeps the buffer for a template either collapse above would
+    # have compiled without one:
+    #
+    #     Herb::Engine::OptimizeVisitor.new(literals: false, collapse: false)
+    #
+    # Turning a parser-side pass off only withdraws this visitor's request for the parser option
+    # behind it. A caller that asks for `action_view_helpers: true` through `parser_options` still
+    # gets the resolution the parser was asked for directly, and `verify` below still covers what
+    # it resolved. Unrolling is also part of how the parser resolves helpers, since a helper
+    # behind a modifier has to come out of it first, so a modifier keeps its written shape only
+    # once `helpers` is off too.
+    #
+    # Replacing a helper call with its markup is only the same thing as calling it while the helper
+    # is the one it was resolved against. An application that defines its own `content_tag` gets the
+    # stock markup instead, everywhere, with nothing at the call site to say so. `verify` compiles a
+    # check into the template that runs when it renders and reports a helper that has since been
+    # overwritten:
+    #
+    #     Herb::Engine::OptimizeVisitor.new(verify: true)
+    #
+    # It costs a call per render and reports rather than corrects, so it earns its place in
+    # development and not in production. Compiling it in is the caller's decision for the same reason
+    # the optimization itself is.
+    #
+    class OptimizeVisitor < Herb::Visitor
+      extend Herb::Visitor::Experimental
+      include Herb::Visitor::ContextAware
+
+      SESSION = "::Herb::Engine::Runtime::Session" #: String
+      CODE = "overwritten-helper" #: String
+      ORIGIN = "Herb Engine" #: String
+
+      OUTPUT_OPENINGS = ["<%=", "<%=="].freeze #: Array[String]
+      CHILD_LISTS = [:children, :body, :statements].freeze #: Array[Symbol]
+      DUPLICATION_LIMIT = 4 #: Integer
+
+      required_parser_option action_view_helpers: true, transform_conditionals: true
+      experimental "Compile-time optimizations are experimental. Output may differ from standard Action View rendering."
+
+      #: () -> Array[String]
+      def self.helper_sources
+        @helper_sources ||= Herb::ActionView::HelperRegistry.supported.map(&:source).freeze
+      end
+
+      #: () -> bool
+      def self.rewrites_erb_source?
+        true
+      end
+
+      #: (?helpers: bool, ?conditionals: bool, ?literals: bool, ?collapse: bool, ?subtrees: bool, ?verify: bool) -> void
+      def initialize(helpers: true, conditionals: true, literals: true, collapse: true, subtrees: false, verify: false)
+        super()
+
+        @helpers = helpers
+        @conditionals = conditionals
+        @literals = literals
+        @collapse = collapse
+        @subtrees = subtrees
+        @verify = verify
+        @sources = {} #: Hash[String, Herb::Location?]
+        @output_contexts = [] #: Array[Symbol]
+      end
+
+      #: () -> Hash[Symbol, untyped]
+      def required_parser_options
+        options = super
+
+        options.delete(:action_view_helpers) unless @helpers
+        options.delete(:transform_conditionals) unless @conditionals
+        options[:track_locations] = true if @verify
+
+        options
+      end
+
+      #: (Herb::AST::DocumentNode) -> void
+      def visit_document_node(node)
+        @sources = {} #: Hash[String, Herb::Location?]
+        @output_contexts = [] #: Array[Symbol]
+
+        super
+
+        return unless @verify
+        return if @sources.empty?
+
+        node.children << check_node(node)
+      end
+
+      #: (Herb::AST::Node) -> void
+      def visit_node(node)
+        return unless @literals
+
+        CHILD_LISTS.each do |name|
+          next unless node.respond_to?(name)
+
+          children = node.public_send(name)
+
+          next unless children.is_a?(Array)
+
+          children.map! { |child| folded_literal(child) || child }
+        end
+      end
+
+      #: (Herb::AST::HTMLElementNode) -> void
+      def visit_html_element_node(node)
+        collect(node.element_source, node.location)
+
+        with_output_context(element_output_context(node)) { super }
+      end
+
+      #: (Herb::AST::HTMLConditionalElementNode) -> void
+      def visit_html_conditional_element_node(node)
+        collect(node.element_source, node.location)
+
+        with_output_context(element_output_context(node)) { super }
+      end
+
+      #: (Herb::AST::HTMLAttributeValueNode) -> void
+      def visit_html_attribute_value_node(node)
+        with_output_context(:attribute_value) { super }
+      end
+
+      #: (Herb::Engine, untyped) -> String?
+      def compile_static_body(engine, compiler)
+        body = static_body(engine, compiler)
+
+        return body if body
+
+        collapse_subtrees(engine, compiler.optimized_tokens) if @subtrees
+
+        nil
+      end
+
+      #: () -> String
+      def inspect
+        toggles = non_default_toggles
+
+        return "#<#{self.class.name}>" if toggles.empty?
+
+        "#<#{self.class.name} #{toggles.join(" ")}>"
+      end
+
+      private
+
+      #: () -> Array[String]
+      def non_default_toggles
+        toggles = [] #: Array[String]
+
+        toggles << "helpers=false" unless @helpers
+        toggles << "conditionals=false" unless @conditionals
+        toggles << "literals=false" unless @literals
+        toggles << "collapse=false" unless @collapse
+        toggles << "subtrees=true" if @subtrees
+        toggles << "verify=true" if @verify
+
+        toggles
+      end
+
+      #: (Herb::Engine, untyped) -> String?
+      def static_body(engine, compiler)
+        return unless @collapse
+
+        text = compiler.static_template_text
+
+        return engine.string_literal(text) if text
+
+        compile_static_branches(engine, compiler.optimized_tokens)
+      end
+
+      #: (Herb::Engine, Array[untyped]) -> void
+      def collapse_subtrees(engine, tokens)
+        cursor = { index: 0 } #: Hash[Symbol, Integer]
+
+        while cursor[:index] < tokens.length
+          replacement = chain_run_replacement(engine, tokens, cursor[:index])
+
+          if replacement
+            range, token = replacement
+            tokens[range] = [token]
+            cursor[:index] = range.begin + 1
+          else
+            cursor[:index] += 1
+          end
+        end
+
+        nil
+      end
+
+      #: ((Herb::AST::HTMLElementNode | Herb::AST::HTMLConditionalElementNode)) -> Symbol?
+      def element_output_context(node)
+        case node.tag_name&.value&.downcase
+        when "script" then :script_content
+        when "style" then :style_content
+        end
+      end
+
+      #: (Symbol?) { () -> void } -> void
+      def with_output_context(output_context)
+        return yield unless output_context
+
+        @output_contexts.push(output_context)
+
+        begin
+          yield
+        ensure
+          @output_contexts.pop
+        end
+      end
+
+      #: () -> Symbol
+      def current_output_context
+        @output_contexts.last || :html_content
+      end
+
+      #: (Herb::AST::Node?) -> Herb::AST::LiteralNode?
+      def folded_literal(node)
+        return unless node.is_a?(Herb::AST::ERBContentNode)
+
+        opening = node.tag_opening&.value
+
+        return unless opening
+        return unless OUTPUT_OPENINGS.include?(opening)
+        return unless node.tag_closing&.value == "%>"
+
+        code = node.content&.value
+
+        return unless code
+        return if code.include?("\n")
+
+        value = literal_value(code)
+
+        return unless value
+
+        text = output_text(value, opening)
+
+        return unless text
+        return if text.empty? || text.include?("\n")
+
+        Herb::AST::LiteralNode.build(content: +text, location: node.location)
+      end
+
+      #: (String) -> String?
+      def literal_value(code)
+        return unless Helpers.prism_available?
+
+        result = Prism.parse(code)
+
+        return unless result.success?
+
+        statements = result.value.statements.body
+
+        return unless statements.length == 1
+
+        case (statement = statements.first)
+        when Prism::StringNode then statement.unescaped
+        when Prism::IntegerNode, Prism::FloatNode then statement.value.to_s
+        end
+      end
+
+      #: (String, String) -> String?
+      def output_text(value, opening)
+        case current_output_context
+        when :attribute_value then escaped_output(value, :attrfunc) { Engine.attr(value) }
+        when :script_content then escaped_output(value, :jsfunc) { Engine.js(value) }
+        when :style_content then escaped_output(value, :cssfunc) { Engine.css(value) }
+        else
+          return value unless escape_output?(opening)
+
+          escaped_output(value, :escapefunc) { Engine.h(value) }
+        end
+      end
+
+      #: (String, Symbol) { () -> String } -> String?
+      def escaped_output(value, option)
+        escaped = yield
+
+        return escaped unless context.options.key?(option)
+        return value if escaped == value
+
+        nil
+      end
+
+      #: (String) -> bool
+      def escape_output?(opening)
+        options = context.options
+        escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
+
+        opening == "<%==" ? !escape : !!escape
+      end
+
+      #: (Herb::Engine, Array[untyped]) -> String?
+      def compile_static_branches(engine, tokens)
+        root = branch_tree(tokens)
+
+        return unless root
+        return unless within_duplication_limit?(container_paths(root), tokens)
+
+        render_static_branches(engine, tokens, root)
+      end
+
+      #: (Array[untyped]) -> Hash[Symbol, untyped]?
+      def branch_tree(tokens)
+        root = { pieces: [] } #: Hash[Symbol, untyped]
+        containers = [root] #: Array[Hash[Symbol, untyped]]
+        chains = [] #: Array[Hash[Symbol, untyped]]
+
+        tokens.each do |token|
+          return nil unless tree_step(token, containers, chains)
+        end
+
+        return nil unless chains.empty?
+        return nil unless container_chain(root)
+
+        root
+      end
+
+      #: (Array[untyped], Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_step(token, containers, chains)
+        type = token[0]
+        value = token[1]
+
+        if type == :text
+          return nil if chains.last && chains.last[:kind] == :case
+
+          containers.last[:pieces] << value
+
+          return containers
+        end
+
+        return nil unless type == :code
+
+        code = value.strip
+
+        return containers if code.empty?
+
+        keyword = chain_keyword(code)
+
+        return nil unless keyword
+
+        tree_transition(keyword, code, containers, chains)
+      end
+
+      #: (Symbol, String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def tree_transition(keyword, code, containers, chains)
+        case keyword
+        when :opening then open_chain(containers, chains)
+        when :case_opening then open_case_chain(code, containers, chains)
+        when :elsif, :else then open_branch(keyword, containers, chains)
+        when :when, :in then open_case_branch(keyword, containers, chains)
+        when :end then close_chain(containers, chains)
+        end
+      end
+
+      #: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_chain(containers, chains)
+        return nil if container_chain(containers.last)
+
+        chain = { kind: :if, branches: [], else_seen: false } #: Hash[Symbol, untyped]
+        branch = { pieces: [] } #: Hash[Symbol, untyped]
+
+        containers.last[:pieces] << chain
+        chains << chain
+        chain[:branches] << branch
+        containers << branch
+
+        containers
+      end
+
+      #: (String, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_case_chain(code, containers, chains)
+        return nil if code.include?("\n")
+        return nil if container_chain(containers.last)
+
+        chain = { kind: :case, branches: [], else_seen: false } #: Hash[Symbol, untyped]
+
+        containers.last[:pieces] << chain
+        chains << chain
+
+        containers
+      end
+
+      #: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_case_branch(keyword, containers, chains)
+        chain = chains.last
+
+        return nil unless chain
+        return nil if chain[:else_seen]
+
+        case chain[:kind]
+        when :case
+          chain[:kind] = keyword
+        when keyword
+          containers.pop
+        else
+          return nil
+        end
+
+        branch = { pieces: [] } #: Hash[Symbol, untyped]
+
+        chain[:branches] << branch
+        containers << branch
+
+        containers
+      end
+
+      #: (Symbol, Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def open_branch(keyword, containers, chains)
+        chain = chains.last
+
+        return nil unless chain
+        return nil if chain[:else_seen]
+        return nil if keyword == :elsif && chain[:kind] != :if
+        return nil if chain[:kind] == :case
+
+        branch = { pieces: [] } #: Hash[Symbol, untyped]
+
+        containers.pop
+        chain[:branches] << branch
+        containers << branch
+        chain[:else_seen] = true if keyword == :else
+
+        containers
+      end
+
+      #: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]]) -> untyped
+      def close_chain(containers, chains)
+        chain = chains.pop
+
+        return nil unless chain
+        return nil if chain[:kind] == :case
+
+        containers.pop
+
+        containers
+      end
+
+      #: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]?
+      def container_chain(container)
+        container[:pieces].find { |piece| piece.is_a?(Hash) }
+      end
+
+      #: (Hash[Symbol, untyped]) -> [String, String]
+      def chain_surroundings(container)
+        pieces = container[:pieces]
+        index = pieces.index { |piece| piece.is_a?(Hash) }
+
+        [pieces.take(index).join, pieces.drop(index + 1).join]
+      end
+
+      #: (Hash[Symbol, untyped]) -> Array[String]
+      def container_paths(container)
+        chain = container_chain(container)
+
+        return [container[:pieces].join] unless chain
+
+        before, after = chain_surroundings(container)
+        paths = chain[:branches].flat_map { |branch| container_paths(branch) }
+        paths << "" unless chain[:else_seen] || chain[:kind] == :in
+
+        paths.map { |path| "#{before}#{path}#{after}" }
+      end
+
+      #: (Array[String], Array[untyped]) -> bool
+      def within_duplication_limit?(paths, tokens)
+        static_bytes = tokens.sum { |token| token[0] == :text ? token[1].bytesize : 0 }
+
+        paths.map(&:bytesize).sum <= DUPLICATION_LIMIT * static_bytes
+      end
+
+      #: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
+      def collect_leaf_literals(engine, container, prefix, suffix, queues)
+        chain = container_chain(container)
+
+        return unless chain
+
+        before, after = chain_surroundings(container)
+        full_prefix = "#{prefix}#{before}"
+        full_suffix = "#{after}#{suffix}"
+
+        chain[:branches].each do |branch|
+          if container_chain(branch)
+            queues[:branches] << nil
+            collect_leaf_literals(engine, branch, full_prefix, full_suffix, queues)
+          else
+            queues[:branches] << engine.escaped_string_literal("#{full_prefix}#{branch[:pieces].join}#{full_suffix}")
+          end
+        end
+
+        implicit = !chain[:else_seen] && chain[:kind] != :in
+
+        queues[:ends] << (implicit ? engine.escaped_string_literal("#{full_prefix}#{full_suffix}") : nil)
+      end
+
+      #: (Herb::Engine, Array[untyped], Integer) -> [::Range[Integer], Array[untyped]]?
+      def chain_run_replacement(engine, tokens, index)
+        opening = tokens[index]
+
+        return unless opening[0] == :code
+        return unless [:opening, :case_opening].include?(chain_keyword(opening[1].strip.to_s))
+
+        closing = chain_end_index(tokens, index)
+
+        return unless closing
+
+        start = index
+        start -= 1 while start.positive? && tokens[start - 1][0] == :text
+
+        stop = closing
+        stop += 1 while stop + 1 < tokens.length && tokens[stop + 1][0] == :text
+
+        slice = tokens[start..stop] #: Array[untyped]
+        root = branch_tree(slice)
+
+        return unless root
+        return unless start < index || stop > closing || nested_chain?(root)
+        return unless within_duplication_limit?(container_paths(root), slice)
+
+        source = render_static_branches(engine, slice, root)
+
+        return if Helpers.comment?(source) || Helpers.heredoc?(source)
+
+        [(start..stop), [:chain, source, nil]]
+      end
+
+      #: (Array[untyped], Integer) -> Integer?
+      def chain_end_index(tokens, index)
+        depth = 0
+
+        (index...tokens.length).each do |position|
+          token = tokens[position]
+
+          next unless token[0] == :code
+
+          keyword = chain_keyword(token[1].strip.to_s)
+
+          depth += 1 if [:opening, :case_opening].include?(keyword)
+          depth -= 1 if keyword == :end
+
+          return position if depth.zero? && keyword == :end
+        end
+
+        nil
+      end
+
+      #: (Hash[Symbol, untyped]) -> bool
+      def nested_chain?(container)
+        chain = container_chain(container)
+
+        return false unless chain
+
+        chain[:branches].any? { |branch| container_chain(branch) }
+      end
+
+      #: (String) -> Symbol?
+      def chain_keyword(code)
+        return :opening if code.match?(/\A(?:if|unless)\b/)
+        return :case_opening if code.match?(/\Acase\b/)
+        return :elsif if code.match?(/\Aelsif\b/)
+        return :when if code.match?(/\Awhen\b/)
+        return :in if code.match?(/\Ain\b/)
+        return :else if code == "else"
+        return :end if code == "end"
+
+        nil
+      end
+
+      #: (Herb::Engine, Array[untyped], Hash[Symbol, untyped]) -> String
+      def render_static_branches(engine, tokens, root)
+        queues = { branches: [], ends: [] } #: Hash[Symbol, Array[String?]]
+        collect_leaf_literals(engine, root, "", "", queues)
+
+        src = +""
+
+        tokens.each do |token|
+          value = token[1]
+          code = token[0] == :code ? value.strip.to_s : ""
+
+          if code.empty?
+            src << ("\n" * value.count("\n"))
+
+            next
+          end
+
+          keyword = chain_keyword(code)
+
+          if keyword == :end
+            implicit = queues[:ends].shift
+            src << " else #{implicit};" if implicit
+          end
+
+          src << value
+          src << ";" unless value.end_with?("\n")
+
+          next if [:end, :case_opening].include?(keyword)
+
+          literal = queues[:branches].shift
+          src << " #{literal};" if literal
+        end
+
+        src
+      end
+
+      #: (String?, Herb::Location?) -> void
+      def collect(source, location)
+        return unless source
+        return unless self.class.helper_sources.include?(source)
+        return if @sources.key?(source)
+
+        @sources[source] = location
+
+        nil
+      end
+
+      #: (Herb::AST::DocumentNode) -> Herb::AST::ERBContentNode
+      def check_node(node)
+        checks = @sources.map { |source, location| check_for(source, location) }.join("; ")
+
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{checks} "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true,
+          location: node.location
+        )
+      end
+
+      #: (String, Herb::Location?) -> String
+      def check_for(source, location)
+        expected, _, name = source.rpartition("#")
+
+        "#{SESSION}.record_compile_diagnostics(#{context.relative_file_path.dump}, " \
+          "[#{entry_for(name, expected, location)}].freeze) " \
+          "if respond_to?(#{name.to_sym.inspect}, true) && method(#{name.to_sym.inspect}).owner.to_s != #{expected.dump}"
+      end
+
+      #: (String, String, Herb::Location?) -> String
+      def entry_for(name, expected, location)
+        message = "`#{name}` was compiled away as #{expected}, but here it is defined by "
+
+        parts = [
+          "message: #{message.dump} + method(#{name.to_sym.inspect}).owner.to_s",
+          "severity: :warning",
+          "code: #{CODE.dump}",
+          "origin: #{ORIGIN.dump}",
+          "suggestion: #{"Remove the override, or compile this template without `OptimizeVisitor`.".dump}"
+        ]
+
+        if location
+          parts << "line: #{location.start.line}" << "column: #{location.start.column}"
+          parts << "end_line: #{location.end.line}" << "end_column: #{location.end.column}"
+        end
+
+        "{ #{parts.join(", ")} }"
+      end
+    end
+  end
+end

@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0002_writes a block the template wrote into the style attribute of the markup it applies to"
+input: "{source: \"<style>.title { color: #ff0000 }</style><h1 class=\\\"title\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<h1 class="title" style="color: #ff0000;">Hi</h1>

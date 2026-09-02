@@ -2,5 +2,5 @@
 source: "Engine::ScopedStyleVisitorTest#test_0006_counts a yield as something the file did not write"
 input: "{source: \"<style scoped>.a { color: red; }</style><div><span><%= yield %></span></div>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>]}}"
 ---
-_buf = ::String.new; _buf << '<style>.a { color: red; }/* narrowed */</style><div data-herb-scope-2940ba8a><span data-herb-scope-2940ba8a>'.freeze; _buf << (yield).to_s; _buf << '</span></div>'.freeze;
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.a { color: red; }/* narrowed */</style><div data-herb-scope-2940ba8a><span data-herb-scope-2940ba8a>'.freeze; _buf << (yield).to_s; _buf << '</span></div>'.freeze;
 _buf.to_s

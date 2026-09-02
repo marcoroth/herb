@@ -1,0 +1,25 @@
+# Generated from lib/herb/engine/helpers.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Helpers
+      # : (String) -> bool
+      def self.comment?: (String) -> bool
+
+      # : (String) -> String
+      def self.without_trailing_spaces: (String) -> String
+
+      # : (String) -> bool
+      def self.ends_on_heredoc_terminator?: (String) -> bool
+
+      # : (String) -> bool
+      def self.heredoc?: (String) -> bool
+
+      # : (String) -> String
+      def self.strip_trailing_comment: (String) -> String
+
+      # : () -> bool
+      def self.prism_available?: () -> bool
+    end
+  end
+end

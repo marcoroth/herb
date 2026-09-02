@@ -555,6 +555,16 @@
                     <span class="select-none">Strict locals</span>
                   </label>
 
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Parse Herb comment directives (<%# herb:state (...) %>, <%# herb:disable ... %>, <%# herb:slots ... %>, …) and transform them into HerbDirectiveNode, or HerbStateDirectiveNode with structured state declarations">
+                    <input
+                      type="checkbox"
+                      data-option="herb_directives"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Herb directives</span>
+                  </label>
+
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">
                     <input
                       type="checkbox"
@@ -604,6 +614,18 @@
                       class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
                     />
                     <span class="select-none">Dot-notation tags</span>
+                  </label>
+
+                  <label class="flex items-center gap-2 text-gray-300 text-sm" title="Extra ERB tag openers to recognize, written without the leading &lt;% and separated by commas — their bodies are not parsed as Ruby">
+                    <span class="select-none">ERB openers:</span>
+                    <input
+                      type="text"
+                      placeholder="graphql"
+                      data-option="erb_openers"
+                      data-option-type="list"
+                      data-action="change->playground#onOptionChange"
+                      class="w-28 px-2 py-1 text-sm rounded border-gray-600 bg-gray-700 text-gray-200 focus:ring-green-500 focus:border-green-500"
+                    />
                   </label>
 
                   <span class="text-gray-600 mx-1">|</span>

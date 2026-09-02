@@ -373,5 +373,17 @@ module Analyze
         <%# locals: (title:, &callback) %>
       HTML
     end
+
+    test "local with multi-byte characters in its name" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (ünïcode:, after:) %>
+      HTML
+    end
+
+    test "local with a multi-byte character in its default" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (greeting: "grüß", after: 1) %>
+      HTML
+    end
   end
 end

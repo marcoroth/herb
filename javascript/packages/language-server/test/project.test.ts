@@ -65,6 +65,54 @@ describe("Project", () => {
     return new Project(connection, root, shared)
   }
 
+  describe("parser options", () => {
+    const GRAPHQL_TEMPLATE = `<%graphql query Products($first: Int!) { products(first: $first) { id } } %>`
+
+    function projectWithParserService(): { project: Project, parserService: ParserService } {
+      const parserService = new ParserService(Herb)
+      const capabilities = new Capabilities(params)
+
+      const shared: SharedServices = {
+        documents: { documents: {}, get: () => undefined } as unknown as Documents,
+        parserService,
+        definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
+        userSettings: new UserSettings(connection, capabilities),
+        capabilities,
+        readFile,
+      }
+
+      return { project: new Project(connection, root, shared), parserService }
+    }
+
+    test("gives the parser service the openers a checked-in config names", async () => {
+      writeFileSync(join(root, ".herb.yml"), "parser:\n  erb_openers:\n    - graphql\n")
+
+      const { project, parserService } = projectWithParserService()
+      await project.loadConfig()
+
+      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors()).toEqual([])
+    })
+
+    test("leaves the parser service on the default openers without a config", async () => {
+      const { project, parserService } = projectWithParserService()
+      await project.loadConfig()
+
+      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors().length).toBeGreaterThan(0)
+    })
+
+    test("picks up openers that are added to the config while the server runs", async () => {
+      const { project, parserService } = projectWithParserService()
+      await project.loadConfig()
+
+      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors().length).toBeGreaterThan(0)
+
+      writeFileSync(join(root, ".herb.yml"), "parser:\n  erb_openers:\n    - graphql\n")
+      await project.refreshConfig()
+
+      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors()).toEqual([])
+    })
+  })
+
   describe("framework", () => {
     test("exposes the framework a checked-in config sets", async () => {
       writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")

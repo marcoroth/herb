@@ -39,6 +39,24 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for attribute writers", () => {
+      expectNoOffenses(dedent`
+        <% row_data.index = 1 %>
+        <% row_data[:index] = 2 %>
+        <% row_data = 3 %>
+        <% self.title = "Hello" %>
+        <% form.object.name = @user.name %>
+      `)
+    })
+
+    test("passes for attribute operator assignments", () => {
+      expectNoOffenses(dedent`
+        <% row_data.index += 1 %>
+        <% row_data.index ||= 0 %>
+        <% row_data[:index] &&= 1 %>
+      `)
+    })
+
     test("passes for control flow", () => {
       expectNoOffenses(dedent`
         <% if logged_in? %>
@@ -308,6 +326,18 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
       assertOffenses(dedent`
         <% @user.name %>
+      `)
+    })
+
+    test("fails for comparison operators that end in an equals sign", () => {
+      expectError("Avoid unused expressions in silent ERB tags. `<% @user.role == \"admin\" %>` is evaluated but its return value is discarded. Use `<%= @user.role == \"admin\" %>` to output the value or remove the expression.")
+      expectError("Avoid unused expressions in silent ERB tags. `<% @count <= 10 %>` is evaluated but its return value is discarded. Use `<%= @count <= 10 %>` to output the value or remove the expression.")
+      expectError("Avoid unused expressions in silent ERB tags. `<% @name =~ /admin/ %>` is evaluated but its return value is discarded. Use `<%= @name =~ /admin/ %>` to output the value or remove the expression.")
+
+      assertOffenses(dedent`
+        <% @user.role == "admin" %>
+        <% @count <= 10 %>
+        <% @name =~ /admin/ %>
       `)
     })
 

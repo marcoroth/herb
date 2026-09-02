@@ -3,7 +3,7 @@
 require "json"
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -32,13 +32,13 @@ module Engine
       end
 
       def render(assigns)
-        source = Herb::Engine.new(TEMPLATE, visitors: [Herb::Engine::SlotVisitor.new], filename: FILE).src
+        source = Herb::Engine.new(TEMPLATE, visitors: [Herb::Engine::Slots::Visitor.new], filename: FILE).src
 
         View.new(**assigns).instance_eval(source)
       end
 
       def values(assigns)
-        source = Herb::Engine::DynamicsCompiler.new(TEMPLATE, filename: FILE).src
+        source = Herb::Engine::Slots::DynamicsCompiler.new(TEMPLATE, filename: FILE).src
 
         View.new(**assigns).instance_eval(source)
       end

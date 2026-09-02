@@ -108,12 +108,23 @@ class RubyLocalsIndexTest < Minitest::Spec
     assert_includes index.names, "post"
   end
 
-  test "counts columns in bytes so multibyte content does not shift a location" do
+  test "multibyte content on an earlier line does not shift a location" do
     source = "<%# locals: (title:) %>\n<p>über</p>\n<p><%= title %></p>\n"
     local = index_for(source).find("title")
 
     assert_equal 3, local.usages.first.start.line
     assert_equal "title", text_at(source, local.declaration)
+    assert_equal "title", text_at(source, local.usages.first)
+  end
+
+  test "counts columns in characters, so multibyte content on the same line does not shift a location" do
+    source = "<%# locals: (title:) %>\n<p>üü <%= title %></p>\n"
+    local = index_for(source).find("title")
+    usage = local.usages.first
+
+    assert_equal 2, usage.start.line
+    assert_equal 10, usage.start.column
+    assert_equal "title", text_at(source, usage)
   end
   test "declares herb:state names, so a state read is not an unknown name" do
     source = "<%# herb:state (pending: false, attempts: 0) %>\n<p><%= attempts %></p>\n<% if pending? %><b>x</b><% end %>\n"

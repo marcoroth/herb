@@ -1,0 +1,13 @@
+---
+source: "Parser::ERBOpenersTest#test_0003_a configured word opener requires a word boundary"
+input: "<%herbal_tea %>"
+options: {erb_openers: ["herb"]}
+---
+@ DocumentNode (location: (1:0)-(1:15))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:15))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: "herbal_tea " (location: (1:2)-(1:13))
+        ├── tag_closing: "%>" (location: (1:13)-(1:15))
+        ├── parsed: true
+        └── valid: true

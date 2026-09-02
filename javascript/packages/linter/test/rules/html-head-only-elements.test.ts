@@ -181,6 +181,23 @@ describe("html-head-only-elements", () => {
     `)
   })
 
+  test("passes when a scoped style block was already narrowed, so `scoped` is gone", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <style data-herb-style-scoped="data-herb-scope-2940ba8a">
+            .card[data-herb-scope-2940ba8a] { color: red; }
+          </style>
+
+          <div class="card" data-herb-scope-2940ba8a>Hi</div>
+        </body>
+      </html>
+    `)
+  })
+
   test("fails when a style block in the body was not written as scoped", () => {
     expectError("Element `<style>` must be placed inside the `<head>` tag.")
 

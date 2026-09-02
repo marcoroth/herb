@@ -2,5 +2,5 @@
 source: "Engine::ScopedStyleLightningCSSTest#test_0006_leaves the inside of a functional pseudo class alone"
 input: "{source: \"<style scoped>.x:not(.y) { color: red }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/scoped_styles\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>]}}"
 ---
-_buf = ::String.new; _buf << '<style>.x:not(.y):where([data-herb-scope-2940ba8a],[data-herb-scope-2940ba8a] *){color:red}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.x:not(.y)[data-herb-scope-2940ba8a]{color:red}</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
 _buf.to_s

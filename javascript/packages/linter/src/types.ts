@@ -1,10 +1,11 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
-import type { DiagnosticTag, HerbError } from "@herb-tools/core"
+import type { DiagnosticTag, HerbError, SourcePath } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
 import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
-import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
+import type { DOMNodeLike } from "./browser/dom-to-ast.js"
+import type { Framework, Environment, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
 
@@ -55,6 +56,10 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   severity?: LintSeverity
   /** The call chain that justified the offense */
   renderedFrom?: AncestorChain
+  /** The template the offense was written in */
+  file?: SourcePath
+  /** The element the offense is about, when what was linted is a live DOM */
+  element?: DOMNodeLike
 }
 
 /**
@@ -96,6 +101,15 @@ export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
   severity: "error",
   exclude: []
 }
+
+/**
+ * Where a rule runs when neither the rule nor config says.
+ *
+ * The linter decides this, because it is the thing that runs rules. The config package only
+ * records what a user asked for.
+ * Config only has to know which names are valid.
+ */
+export const DEFAULT_ENVIRONMENT: Environment = "cli"
 
 /**
  * Base class for parser rules.
@@ -262,6 +276,7 @@ export interface LintContext {
   indentWidth: number | undefined
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
+  environment: Environment | undefined
   partials: PartialIndex | undefined
   partialCallers: RenderGraph | undefined
   projectPath: string | undefined
@@ -279,6 +294,7 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   indentWidth: undefined,
   indentStyle: undefined,
   framework: undefined,
+  environment: undefined,
   partials: undefined,
   partialCallers: undefined,
   projectPath: undefined,

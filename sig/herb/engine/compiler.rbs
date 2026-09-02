@@ -3,19 +3,13 @@
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
-      EXPRESSION_TOKEN_TYPES: untyped
+      PADDING_NEWLINES: Array[String]
 
-      TRAILING_WHITESPACE: ::Regexp
+      EXPRESSION_TOKEN_TYPES: Array[Symbol]
 
-      TRAILING_INDENTATION: ::Regexp
+      HORIZONTAL_SPACE: Array[String]
 
-      TRAILING_INDENTATION_CAPTURE: ::Regexp
-
-      WHITESPACE_ONLY: ::Regexp
-
-      WHITESPACE_ONLY_CAPTURE: ::Regexp
-
-      RAW_TEXT_ELEMENTS: untyped
+      RAW_TEXT_ELEMENTS: Array[String]
 
       attr_reader tokens: untyped
 
@@ -126,6 +120,11 @@ module Herb
 
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
+      # : (untyped, ?extra: Integer) -> void
+      def keep_span_line_count: (untyped, ?extra: Integer) -> void
+
+      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped, ?absorbed: untyped) -> untyped
+
       def add_text: (untyped text) -> untyped
 
       def add_code: (untyped code) -> untyped
@@ -136,6 +135,10 @@ module Herb
 
       def optimize_tokens: (untyped tokens) -> untyped
 
+      def padding_newlines: (untyped count) -> untyped
+
+      def optimize_tokens_with_padding: (untyped tokens) -> untyped
+
       def process_erb_output: (untyped node, untyped opening, untyped code) -> untyped
 
       def indicator_for: (untyped type) -> untyped
@@ -145,6 +148,21 @@ module Herb
       def should_escape_output?: (untyped opening) -> untyped
 
       def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
+
+      # : (String) -> Integer
+      def trailing_space_length: (String) -> Integer
+
+      # : (String) -> String
+      def trailing_spaces: (String) -> String
+
+      # : (String) -> void
+      def remove_trailing_spaces!: (String) -> void
+
+      # : (String) -> bool
+      def whitespace_only?: (String) -> bool
+
+      # : (String) -> bool
+      def trailing_indentation?: (String) -> bool
 
       def at_line_start?: () -> untyped
 
@@ -169,6 +187,15 @@ module Herb
       def extract_and_remove_leading_space!: () -> untyped
 
       def apply_trim: (untyped node, untyped code) -> untyped
+
+      # : (untyped) -> bool
+      def without_source?: (untyped) -> bool
+
+      # : (bool) -> void
+      def settle_pending_span_extra!: (bool) -> void
+
+      # : (bool) -> void
+      def settle_pending_trim_newline!: (bool) -> void
 
       def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
 

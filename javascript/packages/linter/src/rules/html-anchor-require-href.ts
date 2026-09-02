@@ -89,7 +89,8 @@ export class HTMLAnchorRequireHrefRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

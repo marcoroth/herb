@@ -1,0 +1,25 @@
+#ifndef HERB_DIRECTIVE_KINDS_H
+#define HERB_DIRECTIVE_KINDS_H
+
+#include <prism.h>
+
+/**
+ * The kind a `herb:state` default gets from the Prism node it parsed into.
+ *
+ * Returns NULL for a node type that has no plain mapping. The caller decides what those become,
+ * since a call node is a bare read or a seed depending on its shape.
+ */
+static inline const char* herb_directive_kind_for_prism_type(pm_node_type_t type) {
+  switch (type) {
+<%- state_kinds.reject { |kind| kind.prism_nodes.empty? }.each do |kind| -%>
+<%- kind.prism_constants[0..-2].each do |constant| -%>
+    case <%= constant %>:
+<%- end -%>
+    case <%= kind.prism_constants.last %>: return "<%= kind.name %>";
+
+<%- end -%>
+    default: return NULL;
+  }
+}
+
+#endif

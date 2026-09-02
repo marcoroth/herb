@@ -1,32 +1,41 @@
-import { HerbRuntime, stateFor } from "./runtime"
+import { Runtime } from "./runtime"
 
-import type { ScopedState } from "./runtime"
-import type { StateScope } from "./state"
-import type { SlotMutations } from "./mutations"
-import type { SlotIndex } from "./slot-index"
+import { stateFor } from "./state/for-element"
+
+import type { Slots } from "./slots/slots"
+import type { Outbox } from "./outbox/outbox"
+import type { StateScope } from "./state/types"
+import type { ScopedState } from "./state/for-element"
 
 export interface StateHost {
   element: Element
   state?: ScopedState
-  mutations?: SlotMutations
-  slots?: SlotIndex
+  outbox?: Outbox
+  slots?: Slots
   disconnect?(): void
 }
 
 export function useState(host: StateHost): ScopedState {
   const state = stateFor(host.element)
+  const scope = state.scope
   const unsubscribes: (() => void)[] = []
 
   host.state = state
-  host.mutations = HerbRuntime.get()?.mutations
-  host.slots = HerbRuntime.get()?.slots
+  host.outbox = Runtime.get()?.outbox
+  host.slots = Runtime.get()?.slots
 
-  const scope = state.scope
+  let names: string[] = []
 
-  for (const name of scope ? namesFor(scope) : []) {
+  if (scope) {
+    names = namesFor(scope)
+  }
+
+  for (const name of names) {
     const method = (host as unknown as Record<string, unknown>)[`${name}Changed`]
 
-    if (typeof method !== "function") continue
+    if (typeof method !== "function") {
+      continue
+    }
 
     unsubscribes.push(
       state.on(name, (value, previous) => (method as (value: unknown, previous: unknown) => void).call(host, value, previous)),
@@ -36,7 +45,9 @@ export function useState(host: StateHost): ScopedState {
   const teardown = host.disconnect?.bind(host)
 
   host.disconnect = () => {
-    for (const unsubscribe of unsubscribes) unsubscribe()
+    for (const unsubscribe of unsubscribes) {
+      unsubscribe()
+    }
 
     teardown?.()
   }
@@ -45,9 +56,11 @@ export function useState(host: StateHost): ScopedState {
 }
 
 function namesFor(scope: StateScope): string[] {
-  const runtime = HerbRuntime.get()
+  const runtime = Runtime.get()
 
-  if (!runtime) return []
+  if (!runtime) {
+    return []
+  }
 
   return runtime.state.declaredStates(scope).map((declaration) => declaration.name)
 }

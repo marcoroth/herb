@@ -1,0 +1,15 @@
+# Generated from lib/herb/engine/slots/state_transforms.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The Ruby methods a `herb:state` read may call to transform a state's value before comparing
+      # it, and the operation each one becomes on the wire.
+      module StateTransforms
+        TABLE: Hash[String, Hash[Symbol, untyped]]
+
+        SPELLINGS: Hash[String, String]
+      end
+    end
+  end
+end

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0020_parks nothing at all in server mode, and counts nothing either"
+input: "rendered in server mode"
+---
+<!--herb-region:app/views/test.html.erb:5c690a9b:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->y<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

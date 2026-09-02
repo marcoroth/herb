@@ -1,5 +1,7 @@
 import { AnsiUp } from "ansi_up"
 
+import { escapeHTML } from "@herb-tools/core"
+
 import { ANSI_ESCAPE } from "./ansi.js"
 import { ANSI_PALETTE as ONEDARK_ANSI_PALETTE } from "../themes/onedark.json" with { type: "json" }
 
@@ -49,7 +51,7 @@ export class ANSIConverter {
       const target = url !== null && this.links ? this.resolveUrl(url) : null
 
       if (target !== null) {
-        output += `<a href="${this.escapeHTML(target)}" rel="noopener noreferrer">${merged}</a>`
+        output += `<a href="${escapeHTML(target)}" rel="noopener noreferrer">${merged}</a>`
       } else {
         output += merged
       }
@@ -105,15 +107,6 @@ export class ANSIConverter {
 
   private toRGB(hex: string): [number, number, number] {
     return [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16)) as [number, number, number]
-  }
-
-  private escapeHTML(text: string): string {
-    return text
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#x27;")
   }
 
   private resolveUrl(url: string): string | null {

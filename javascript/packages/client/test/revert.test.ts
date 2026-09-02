@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import type { Payload } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
+import type { Payload } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
 
@@ -14,11 +14,11 @@ const PAGE =
   `<div><!--herb-slot:4:conditional--><!--herb-branch:4:1--><i>shown</i><!--/herb-slot:4--></div>` +
   `<section data-herb-slot="5:element">original</section>` +
   `<div id="cond"><!--herb-slot:6:conditional--><!--herb-branch:6:1--><p data-herb-slot="7:child">typed</p><!--/herb-slot:6--></div>` +
-  `<template data-herb-statics="6:0"><!--herb-branch:6:0--><em>off</em></template>` +
-  `<template data-herb-statics="4:0"><!--herb-branch:4:0--><em>hidden</em></template>` +
+  `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:6:0--><em>off</em></template>` +
+  `<template data-herb-region="${FILE}:aaaaaaaa"><!--herb-branch:4:0--><em>hidden</em></template>` +
   `<!--/herb-region:${FILE}-->`
 
-let index: SlotIndex
+let index: Slots
 
 function ids(): string[] {
   return [...document.querySelectorAll("li")].map((li) => li.id)
@@ -27,17 +27,17 @@ function ids(): string[] {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 
 describe("transaction and revert", () => {
   test("reverts an applied branch switch to the previous markup", () => {
-    const report = index.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 4: { branch: 0 } } })
+    const { token } = index.transaction(() => index.apply({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 4: { branch: 0 } } }))
 
     expect(document.querySelector("div em")?.textContent).toBe("hidden")
 
-    index.revert(report.token!)
+    index.revert(token!)
 
     expect(document.querySelector("div i")?.textContent).toBe("shown")
     expect(index.slot(FILE, 4)!.branch).toBe(1)
@@ -99,6 +99,30 @@ describe("transaction and revert", () => {
     index.revert(token!)
     expect(ids()).toEqual(["a", "b"])
     expect(index.currentText(index.slotInItem(FILE, 0, "a", 2)!)).toBe("first")
+  })
+
+  test("reverts a write to a slot inside a collection nested in another collection", () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0--><ul><!--herb-slot:8:collection-->` +
+      `<!--herb-item:8:g--><li><ul><!--herb-slot:9:collection-->` +
+      `<!--herb-item:9:r--><li data-herb-slot="10:child">inner</li><!--/herb-item:9-->` +
+      `<!--/herb-slot:9--></ul></li><!--/herb-item:8-->` +
+      `<!--/herb-slot:8--></ul><!--/herb-region:${FILE}-->`
+
+    const nested = new Slots()
+    nested.scan(document.body)
+
+    const outer = nested.slot(FILE, 8)!
+    const inner = outer.items.get("g")!.slots.get(9)!
+    const slot = inner.items.get("r")!.slots.get(10)!
+
+    const { token } = nested.transaction(() => nested.update(slot, "changed"))
+
+    expect(document.querySelector("[data-herb-slot]")?.textContent).toBe("changed")
+
+    nested.revert(token!)
+
+    expect(document.querySelector("[data-herb-slot]")?.textContent).toBe("inner")
   })
 
   test("reverts a rekey back to the old key on the same node", () => {
@@ -171,7 +195,7 @@ describe("transaction and revert", () => {
     expect(document.querySelector("p b")?.textContent).toBe("bold")
   })
 
-  test("apply carries a token that reverts the whole payload", () => {
+  test("an apply inside a transaction reverts as a whole, and one outside records nothing", () => {
     const payload: Payload = {
       template: FILE,
       version: "aaaaaaaa",
@@ -179,12 +203,19 @@ describe("transaction and revert", () => {
       slots: { 3: "replaced", 0: { items: { a: { 2: "rewritten" } } } },
     }
 
-    const report = index.apply(payload, { items: "merge" })
+    const { token } = index.transaction(() => index.apply(payload, { items: "merge" }))
 
-    expect(report.token).toBeDefined()
-    expect(index.revert(report.token!)).toBe(true)
+    expect(token).not.toBeNull()
+    expect(index.revert(token!)).toBe(true)
     expect(document.querySelector("p b")?.textContent).toBe("bold")
     expect(index.currentText(index.slotInItem(FILE, 0, "a", 2)!)).toBe("first")
+
+    index.apply(payload, { items: "merge" })
+
+    const { token: none } = index.transaction(() => index.setText(index.slot(FILE, 3)!, "replaced"))
+
+    expect(none).toBeNull()
+    expect(document.querySelector("p")?.textContent).toBe("replaced")
   })
 
   test("an unchanged transaction yields no token, and a token reverts once", () => {

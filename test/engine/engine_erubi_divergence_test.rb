@@ -30,8 +30,20 @@ module Engine
         .gsub("::Erubi.h", "::Herb::Engine.h")
     end
 
-    def without_erb_comment_line(source)
-      source.gsub("\n\n _buf", "\n _buf")
+    def reported_line(engine, template)
+      engine.new(template, filename: "template.erb").src.then do |source|
+        eval(source, TOPLEVEL_BINDING.dup, "template.erb")
+        nil
+      end
+    rescue RuntimeError => e
+      e.backtrace.find { |line| line.include?("template.erb") }[/:(\d+)/, 1].to_i
+    end
+
+    def assert_reports_the_same_line_as_erubi(template)
+      expected = template.lines.index { |line| line.include?("<% raise %>") } + 1
+
+      assert_equal expected, reported_line(Herb::Engine, template)
+      assert_equal expected, reported_line(Erubi::Engine, template)
     end
 
     def assert_renders_the_same_as_erubi(template, options = {}, **locals)
@@ -137,15 +149,6 @@ module Engine
       assert_includes evaluate(herb, data: injection), "var data = \\x3c/script\\x3e;"
     end
 
-    test "does not leave a blank line where an ERB comment was" do
-      herb, erubi = assert_diverges_from_erubi("<%# a comment %>\n<div>Content</div>\n")
-
-      assert_equal "_buf = ::String.new; _buf << '<div>Content</div>\n'.freeze;\n_buf.to_s\n", herb
-      assert_equal "_buf = ::String.new;\n _buf << '<div>Content</div>\n'.freeze;\n_buf.to_s\n", erubi
-
-      assert_renders_the_same_as_erubi("<%# a comment %>\n<div>Content</div>\n")
-    end
-
     test "differs only by padding and the escape module across a whole template" do
       template = <<~ERB
         <table>
@@ -167,7 +170,7 @@ module Engine
       assert_equal herb, with_herb_escape_module(without_expression_padding(erubi))
     end
 
-    test "differs only by padding and the comment line across a whole template" do
+    test "puts the line a comment took somewhere else than erubi does" do
       template = <<~ERB
         <!DOCTYPE html>
         <html>
@@ -183,9 +186,9 @@ module Engine
         </html>
       ERB
 
-      herb, erubi = assert_diverges_from_erubi(template)
+      assert_diverges_from_erubi(template)
 
-      assert_equal herb, without_erb_comment_line(without_expression_padding(erubi))
+      assert_renders_the_same_as_erubi(template)
     end
 
     test "separates a preamble that Erubi runs into the first append" do
@@ -200,14 +203,13 @@ module Engine
       assert_raises(SyntaxError) { RubyVM::InstructionSequence.compile(erubi) }
     end
 
-    test "ignores trim: false and keeps trimming" do
-      template = "<% a = 1 %>\ntext\n"
+    test "compiles a case split across tags with trim: false where Erubi produces invalid Ruby" do
+      template = "<% case a %>\n<% when 1 %>\nA\n<% end %>\n"
       herb, erubi = assert_diverges_from_erubi(template, { trim: false })
 
-      assert_equal Herb::Engine.new(template).src, herb
-      assert_includes erubi, "_buf << '\n'.freeze;"
+      assert_equal "\nA\n\n", evaluate(herb, { a: 1 })
 
-      refute_equal evaluate(erubi, {}), evaluate(herb, {})
+      assert_raises(SyntaxError) { RubyVM::InstructionSequence.compile(erubi) }
     end
 
     test "refuses an escaped ERB tag that Erubi passes through" do

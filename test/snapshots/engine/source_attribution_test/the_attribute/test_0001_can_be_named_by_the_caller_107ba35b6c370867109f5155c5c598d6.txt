@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::the attribute#test_0001_can be named by the caller"
+input: "{source: \"<div>x</div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor attribute=\"data-origin\">], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div data-origin="app/views/posts/_card.html.erb:1:1">x</div>

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::ManifestChannelTest#test_0007_a hoisted page carries no manifest markup of its own"
+input: "{source: \"<li data-herb-name=\\\"row\\\" id=\\\"row-<%= @n %>-x\\\"><%= @n %></li>\", locals: {\"@n\" => 1}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<!--herb-region:app/views/posts/_card.html.erb:db7ab613:0--><li data-herb-name="row" id="row-1-x" data-herb-slot="0:attribute_interpolation:id 1:child">1</li><!--/herb-region:app/views/posts/_card.html.erb-->

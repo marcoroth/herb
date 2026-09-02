@@ -1,0 +1,67 @@
+# Generated from lib/herb/dev/watcher.rb with RBS::Inline
+
+module Herb
+  module Dev
+    # Watches a project's templates and says which one changed.
+    #
+    # Cruise reports raw filesystem events, and most of them are noise. This keeps the last
+    # content it saw for every template, filters events through the project's include and
+    # exclude patterns, and emits one normalized event per change that actually changed
+    # something, carrying both the previous and the current source so nothing downstream has
+    # to read the file again.
+    #
+    #     watcher = Herb::Dev::Watcher.new(config: config, root: root) do |event|
+    #       pipeline.handle_event(event)
+    #     end
+    #
+    #     watcher.run    # blocks, for the CLI
+    #     watcher.spawn  # returns a Thread, for an embedded host
+    class Watcher
+      KINDS: Array[String]
+
+      class Event < Data
+        attr_reader kind(): Symbol
+
+        attr_reader path(): String
+
+        attr_reader relative_path(): String
+
+        attr_reader previous(): String?
+
+        attr_reader current(): String?
+
+        def self.new: (Symbol kind, String path, String relative_path, String? previous, String? current) -> instance
+                    | (kind: Symbol, path: String, relative_path: String, previous: String?, current: String?) -> instance
+
+        def self.members: () -> [ :kind, :path, :relative_path, :previous, :current ]
+
+        def members: () -> [ :kind, :path, :relative_path, :previous, :current ]
+      end
+
+      attr_reader file_states: Hash[String, String]
+
+      # : (config: Herb::Configuration, root: String) { (Event) -> void } -> void
+      def initialize: (config: Herb::Configuration, root: String) { (Event) -> void } -> void
+
+      # : (?String) -> Integer
+      def index: (?String) -> Integer
+
+      # : () -> void
+      def run: () -> void
+
+      # : () -> Thread
+      def spawn: () -> Thread
+
+      # : () -> void
+      def stop: () -> void
+
+      private
+
+      # : (Cruise::Event) -> void
+      def handle: (Cruise::Event) -> void
+
+      # : (String, String, String) -> Event?
+      def normalize: (String, String, String) -> Event?
+    end
+  end
+end

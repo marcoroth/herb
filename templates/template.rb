@@ -403,12 +403,14 @@ module Herb
     class ErrorType
       include ConfigType
 
-      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments
+      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments, :suggestion_template, :suggestion_arguments
 
       def initialize(config)
         @name = config.fetch("name")
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
+        @suggestion_template = config.dig("suggestion", "template")
+        @suggestion_arguments = config.dig("suggestion", "arguments") || []
 
         camelized = Template.underscore(@name)
         @type = camelized.upcase
@@ -423,6 +425,14 @@ module Herb
 
           type.new(name: field_name, kind: kind)
         end
+      end
+
+      def ruby_suggestion_arguments
+        suggestion_arguments.map { |argument| argument.gsub("->", ".") }
+      end
+
+      def ruby_suggestion_guards
+        suggestion_arguments.map { |argument| argument.split("->").first }.uniq
       end
 
       def c_type
@@ -668,6 +678,110 @@ module Herb
 
       def receiver_call_detect?
         @detect_style == "receiver_call"
+      end
+    end
+
+    class StateKind
+      attr_reader :name, :article, :prism_nodes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @article = config.fetch("article")
+        @prism_nodes = config.fetch("prism_nodes", [])
+        @literal = config.fetch("literal", false)
+        @value = config.fetch("value", false)
+        @unknown = config.fetch("unknown", false)
+        @falsy = config.fetch("falsy", false)
+        @nilable = config.fetch("nilable", false)
+      end
+
+      def literal?
+        @literal
+      end
+
+      def value?
+        @value
+      end
+
+      def unknown?
+        @unknown
+      end
+
+      def falsy?
+        @falsy
+      end
+
+      def nilable?
+        @nilable
+      end
+
+      def prism_constants
+        prism_nodes.map { |node| "PM_#{Template.underscore(node).upcase}" }
+      end
+    end
+
+    class StateOperator
+      attr_reader :operator, :mirrored, :negated
+
+      def initialize(config)
+        @operator = config.fetch("operator")
+        @mirrored = config.fetch("mirrored", nil)
+        @negated = config.fetch("negated")
+        @ordered = config.fetch("ordered", false)
+      end
+
+      def ordered?
+        @ordered
+      end
+    end
+
+    class StateTransform
+      attr_reader :name, :operation, :kinds, :returns, :only
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @operation = config.fetch("operation")
+        @kinds = config.fetch("kinds", nil)
+        @returns = config.fetch("returns")
+        @only = config.fetch("only")
+      end
+
+      def ruby_kinds
+        kinds ? "[#{kinds.map { |kind| ":#{kind}" }.join(", ")}]" : "nil"
+      end
+
+      def typescript_kinds
+        kinds ? "[#{kinds.map(&:inspect).join(", ")}]" : "null"
+      end
+    end
+
+    class StatePredicate
+      attr_reader :name, :comparand, :operator, :kinds, :only, :rewrite, :negated
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @comparand = config.fetch("comparand", nil)
+        @operator = config.fetch("operator", nil)
+        @kinds = config.fetch("kinds", nil)
+        @only = config.fetch("only")
+        @rewrite = config.fetch("rewrite", nil)
+        @negated = config.fetch("negated", nil)
+      end
+
+      def unary?
+        !operator.nil? && comparand.nil?
+      end
+
+      def ruby_kinds
+        kinds ? "[#{kinds.map { |kind| ":#{kind}" }.join(", ")}]" : "nil"
+      end
+
+      def typescript_kinds
+        kinds ? "[#{kinds.map(&:inspect).join(", ")}]" : "null"
+      end
+
+      def literal(value)
+        value.inspect
       end
     end
 
@@ -941,7 +1055,7 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators }
       )
       content = heading_for(name, template_file) + rendered_template
 
@@ -1009,6 +1123,30 @@ module Herb
       Dir.glob("config/action_view_helpers/**/*.yml").map do |file|
         HelperType.new(YAML.load_file(file))
       end
+    end
+
+    def self.state_predicates
+      config = YAML.load_file("config/state/predicates.yml")
+
+      (config["predicates"] || []).map { |predicate| StatePredicate.new(predicate) }
+    end
+
+    def self.state_kinds
+      config = YAML.load_file("config/state/kind.yml")
+
+      (config["kinds"] || []).map { |kind| StateKind.new(kind) }
+    end
+
+    def self.state_transforms
+      config = YAML.load_file("config/state/transforms.yml")
+
+      (config["transforms"] || []).map { |transform| StateTransform.new(transform) }
+    end
+
+    def self.state_operators
+      config = YAML.load_file("config/state/operators.yml")
+
+      (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
     end
 
     def self.config

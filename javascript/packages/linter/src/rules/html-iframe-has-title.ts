@@ -51,7 +51,8 @@ export class HTMLIframeHasTitleRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

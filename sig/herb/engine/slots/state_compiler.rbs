@@ -1,0 +1,179 @@
+# Generated from lib/herb/engine/slots/state_compiler.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # Compiles the `herb:state` directives a template declares.
+      #
+      # A directive names states with their defaults. This turns them into assignments the template
+      # runs, classifies the conditionals and boolean attributes that read them, folds the counts
+      # that count over a collection, and builds the tables a page needs to resolve any of it for
+      # itself. It knows nothing about markers; it asks the visitor which slot a node is.
+      class StateCompiler
+        STATE_KEYWORDS: Hash[String, Symbol]
+
+        SEEDS_LOCAL: String
+
+        BARE_IDENTIFIER: Regexp
+
+        BINDABLE_ATTRIBUTES: Array[String]
+
+        BINDABLE_ELEMENTS: Array[String]
+
+        attr_reader state_presence: Hash[Integer, untyped]
+
+        attr_reader state_values: Hash[Integer, untyped]
+
+        # : (untyped) -> void
+        def initialize: (untyped) -> void
+
+        # : () -> bool
+        def any?: () -> bool
+
+        # : () -> Array[String]
+        def count_signatures: () -> Array[String]
+
+        # : () -> Hash[String, untyped]?
+        def manifest: () -> Hash[String, untyped]?
+
+        # : (untyped, String) -> void
+        def warn_unbindable: (untyped, String) -> void
+
+        # : (untyped) -> bool
+        def bindable_shape?: (untyped) -> bool
+
+        # : (Integer, untyped) -> void
+        def warn_computed_presence: (Integer, untyped) -> void
+
+        # : (untyped) -> bool
+        def bare_presence?: (untyped) -> bool
+
+        # : (untyped, String, Array[String]) -> void
+        def warn_near_miss: (untyped, String, Array[String]) -> void
+
+        # : (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
+        def warn_branch_orphans: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
+
+        # : (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
+        def declared_entry: (Hash[Symbol, untyped], String | Integer) -> Hash[String, untyped]
+
+        # : (String, String?) -> void
+        def declare_local: (String, String?) -> void
+
+        # : () -> Array[Hash[Symbol, untyped]]
+        def state_count_entries: () -> Array[Hash[Symbol, untyped]]
+
+        # : () -> Hash[Symbol, untyped]
+        def state_declarations: () -> Hash[Symbol, untyped]
+
+        # : () -> Array[String]
+        def seeded_region_states: () -> Array[String]
+
+        # : () -> Hash[Integer, Array[String]]
+        def seeded_item_states: () -> Hash[Integer, Array[String]]
+
+        # : () -> Array[Hash[Symbol, untyped]]
+        def state_entries: () -> Array[Hash[Symbol, untyped]]
+
+        # : () -> Hash[Integer, String]
+        def state_conditional_signatures: () -> Hash[Integer, String]
+
+        # : () -> Hash[Integer, Hash[Symbol, untyped]]
+        def state_conditional_entries: () -> Hash[Integer, Hash[Symbol, untyped]]
+
+        # : (untyped, Array[untyped]) -> void
+        def register_state_directive: (untyped, Array[untyped]) -> void
+
+        # : (StateDirectives::Declaration) -> Herb::Location?
+        def declaration_location: (StateDirectives::Declaration) -> Herb::Location?
+
+        # : (String?) -> Symbol
+        def local_kind: (String?) -> Symbol
+
+        # : (untyped) -> Hash[String, StateDirectives::Declaration]
+        def states_for: (untyped) -> Hash[String, StateDirectives::Declaration]
+
+        # : () -> void
+        def apply_states: () -> void
+
+        # : (Array[StateDirectives::Declaration]) -> String?
+        def seeds_marker: (Array[StateDirectives::Declaration]) -> String?
+
+        # : (StateDirectives::Declaration) -> String
+        def state_assignment: (StateDirectives::Declaration) -> String
+
+        # : () -> void
+        def classify_state_conditionals: () -> void
+
+        # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+        def state_conditional_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+        # : (Array[String], Integer?) -> String
+        def signature_of: (Array[String], Integer?) -> String
+
+        # : (untyped, Integer?) -> Hash[String, untyped]
+        def arm_entry: (untyped, Integer?) -> Hash[String, untyped]
+
+        # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+        def state_unless_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+        # : (String, StateDirectives::Read, Hash[String, StateDirectives::Declaration], StateAnchor, String) -> nil
+        def presence_error: (String, StateDirectives::Read, Hash[String, StateDirectives::Declaration], StateAnchor, String) -> nil
+
+        # : (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+        def state_case_for: (untyped, Hash[String, StateDirectives::Declaration]) -> Hash[Symbol, untyped]?
+
+        # : (String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Declaration?
+        def mentioned_state: (String, Hash[String, StateDirectives::Declaration]) -> StateDirectives::Declaration?
+
+        # : (StateDirectives::Declaration?) -> String
+        def read_advice: (StateDirectives::Declaration?) -> String
+
+        # : (untyped, String) -> StateAnchor
+        def condition_anchor: (untyped, String) -> StateAnchor
+
+        # : (untyped) -> String
+        def condition_expression: (untyped) -> String
+
+        # : (untyped) -> untyped
+        def resolved_ruby: (untyped) -> untyped
+
+        # : (untyped) -> untyped
+        def register_count_fold: (untyped) -> untyped
+
+        # : (untyped) -> void
+        def check_state_assignment: (untyped) -> void
+
+        # : (StateDirectives::FoldIncrement, when_read: untyped, location: Herb::Location?) -> void
+        def register_count: (StateDirectives::FoldIncrement, when_read: untyped, location: Herb::Location?) -> void
+
+        # : () -> void
+        def check_state_count_reads: () -> void
+
+        # : (untyped, String) -> void
+        def rewrite_predicate: (untyped, String) -> void
+
+        # : (untyped, String) -> untyped
+        def rewrite_literal_predicate: (untyped, String) -> untyped
+
+        # : (untyped) -> untyped
+        def predicate_token_for: (untyped) -> untyped
+
+        # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
+        def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
+
+        # : () -> void
+        def check_state_value_reads: () -> void
+
+        # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+        def register_state_value: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+
+        # : (untyped, untyped, String) -> Symbol?
+        def refuse_mixed_boolean: (untyped, untyped, String) -> Symbol?
+
+        # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
+        def convert_boolean_attribute: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> untyped
+      end
+    end
+  end
+end

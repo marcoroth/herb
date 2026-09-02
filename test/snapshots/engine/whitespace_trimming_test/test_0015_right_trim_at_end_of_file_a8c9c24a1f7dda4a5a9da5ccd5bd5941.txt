@@ -4,5 +4,5 @@ input: "{source: \"<% if true -%>\\nContent\\n<% end -%>\", options: {}}"
 ---
 _buf = ::String.new; if true 
  _buf << 'Content
-'.freeze; end 
+'.freeze; end ;
 _buf.to_s
