@@ -30,10 +30,6 @@ module Engine
         .gsub("::Erubi.h", "::Herb::Engine.h")
     end
 
-    def without_trailing_space(source)
-      source.gsub(/ +$/, "")
-    end
-
     def reported_line(engine, template)
       engine.new(template, filename: "template.erb").src.then do |source|
         eval(source, TOPLEVEL_BINDING.dup, "template.erb")
@@ -151,16 +147,6 @@ module Engine
       assert_includes evaluate(erubi, data: injection), "var data = </script>;"
       refute_includes evaluate(herb, data: injection), "var data = </script>;"
       assert_includes evaluate(herb, data: injection), "var data = \\x3c/script\\x3e;"
-    end
-
-    test "keeps the line an ERB comment was written on" do
-      herb, erubi = assert_diverges_from_erubi("<%# a comment %>\n<div>Content</div>\n")
-
-      assert_equal "_buf = ::String.new; _buf << '<div>Content</div>\n'.freeze; \n_buf.to_s\n", herb
-      assert_equal "_buf = ::String.new;\n _buf << '<div>Content</div>\n'.freeze;\n_buf.to_s\n", erubi
-
-      assert_renders_the_same_as_erubi("<%# a comment %>\n<div>Content</div>\n")
-      assert_reports_the_same_line_as_erubi("<div>a</div>\n<%# a comment %>\n<% raise %>\n")
     end
 
     test "differs only by padding and the escape module across a whole template" do

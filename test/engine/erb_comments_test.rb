@@ -145,5 +145,11 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "a comment followed by text keeps the line the text was written on" do
+      template = "<%# comment %>\nhi\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
