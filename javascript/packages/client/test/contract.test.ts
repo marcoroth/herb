@@ -20,6 +20,7 @@ import aValueCarryingMarkupAndQuotes from "./fixtures/contract/a-value-carrying-
 import anAttributeAndAChild from "./fixtures/contract/an-attribute-and-a-child.json"
 import anEmptyCollection from "./fixtures/contract/an-empty-collection.json"
 import anInterpolatedAttributeInsideABlock from "./fixtures/contract/an-interpolated-attribute-inside-a-block.json"
+import anInterpolatedTextarea from "./fixtures/contract/an-interpolated-textarea.json"
 import expressionsInOrder from "./fixtures/contract/expressions-in-order.json"
 import nothingDynamicAtAll from "./fixtures/contract/nothing-dynamic-at-all.json"
 import twoAttributesOnOneElement from "./fixtures/contract/two-attributes-on-one-element.json"
@@ -59,6 +60,7 @@ const FIXTURES: Record<string, Fixture> = {
   "an attribute and a child": anAttributeAndAChild as Fixture,
   "an empty collection": anEmptyCollection as Fixture,
   "an interpolated attribute inside a block": anInterpolatedAttributeInsideABlock as Fixture,
+  "an interpolated textarea": anInterpolatedTextarea as Fixture,
   "expressions in order": expressionsInOrder as Fixture,
   "nothing dynamic at all": nothingDynamicAtAll as Fixture,
   "a value carrying markup and quotes": aValueCarryingMarkupAndQuotes as Fixture,

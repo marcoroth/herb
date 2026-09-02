@@ -37,7 +37,7 @@ module Herb
       #     visitors = mode ? [Herb::Engine::Slots::Visitor.new(mode: mode)] : []
       #
       class Visitor < Herb::Visitor
-        STATE_FAMILIES = [:read, :compare, :declaration, :conditional, :count, :assignment].freeze #: Array[Symbol]
+        STATE_FAMILIES = [:read, :compare, :declaration, :conditional, :count, :assignment, :unknown, :binding].freeze #: Array[Symbol]
 
         extend Herb::Visitor::Experimental
         include Herb::Visitor::ContextAware
@@ -64,6 +64,7 @@ module Herb
         NAME_ATTRIBUTE = "data-herb-name" #: String
 
         CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
+        LISTENER_ATTRIBUTES = ["data-herb-set", "data-herb-toggle", "data-herb-increment", "data-herb-decrement", "data-herb-reset"].freeze #: Array[String]
         OPEN_TAG_TYPES = [Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode].freeze #: Array[Herb::AST::HTMLOpenTagNode|Herb::AST::ERBOpenTagNode]
         BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
         BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
@@ -101,7 +102,7 @@ module Herb
           def presence? = type == :boolean_attribute
 
           #: () -> bool
-          def interpolated? = type == :attribute_interpolation
+          def interpolated? = Types.interpolated?(type)
         end
 
         #: (String) -> bool
@@ -178,12 +179,39 @@ module Herb
           @in_html_doctype = false
           @raw_text_depth = 0
           @rcdata_depth = 0
+          @rcdata_mixed_depth = 0
+          @rcdata_interpolated_depth = 0
+          @interpolated_rcdata = [] #: Array[untyped]
+          @listener_stack = [] #: Array[Array[String]]
+          listener_written = {} #: Hash[untyped, Array[String]]
+          @listener_written = listener_written.compare_by_identity
           @current_open_tag = nil
         end
 
         #: () -> bool
         def degraded?
           @degraded
+        end
+
+        #: () -> bool
+        def client?
+          @mode == :client
+        end
+
+        #: (Integer, Array[String]) -> bool
+        def listener_writes?(index, names)
+          written = @listener_written[@slot_nodes[index]]
+
+          !written.nil? && written.intersect?(names)
+        end
+
+        #: (Integer) -> Array[Integer]
+        def slots_inside(index)
+          node = @slot_nodes[index]
+
+          return [] unless node
+
+          branch_bodies(node).flat_map { |body| slot_indices_within(body) }.uniq
         end
 
         #: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
@@ -195,9 +223,14 @@ module Herb
           nil
         end
 
+        #: (String, untyped, Symbol, ?suggestion: String?) -> void
+        def slot_warning(message, location, family, suggestion: nil)
+          warning(message, location, code: diagnostic_code_for(family), suggestion: suggestion)
+        end
+
         #: (Symbol) -> String
         def diagnostic_code_for(family)
-          STATE_FAMILIES.include?(family) ? "herb-state-#{family}" : "slots-#{family}"
+          STATE_FAMILIES.include?(family) ? "herb-state-#{family}" : "herb-slots-#{family}"
         end
 
         #: () -> String
@@ -377,6 +410,18 @@ module Herb
             parts[index.to_s] = segments
           end
 
+          @interpolated_rcdata.each do |node|
+            index = @indices[node]
+
+            next unless index
+
+            segments = rcdata_segments(node.body)
+
+            next unless segments
+
+            parts[index.to_s] = segments
+          end
+
           parts
         end
 
@@ -489,13 +534,23 @@ module Herb
           tag_name = node.tag_name&.value&.downcase.to_s
           raw_text = Herb::HTML::Util.raw_text_element?(tag_name)
           rcdata = Herb::HTML::Util.rcdata_element?(tag_name)
+          segments = rcdata && mixed_rcdata_body?(node.body) ? rcdata_segments(node.body) : nil
+          mixed = rcdata && segments.nil? && mixed_rcdata_body?(node.body)
 
           @raw_text_depth += 1 if raw_text
           @rcdata_depth += 1 if rcdata
+          @rcdata_mixed_depth += 1 if mixed
+          @rcdata_interpolated_depth += 1 if segments
 
           previous_open_tag = @current_open_tag
           @current_open_tag = node.open_tag
           @tag_stack.push(tag_name)
+          @listener_stack.push(listener_names_for(node))
+
+          if segments
+            record_slot(node, :raw_text_interpolation)
+            @interpolated_rcdata << node
+          end
 
           name_attribute = attributes_for(node).find { |attribute| attribute_name_for(attribute)&.downcase == NAME_ATTRIBUTE }
           base = @annotations.size
@@ -508,9 +563,12 @@ module Herb
 
           record_named_element(node, name_attribute, base, base_scope, base_depth) if name_attribute
 
+          @listener_stack.pop
           @tag_stack.pop
           @current_open_tag = previous_open_tag
 
+          @rcdata_interpolated_depth -= 1 if segments
+          @rcdata_mixed_depth -= 1 if mixed
           @rcdata_depth -= 1 if rcdata
           @raw_text_depth -= 1 if raw_text
         end
@@ -803,6 +861,20 @@ module Herb
           @standing.delete_if { |_node, annotation| annotation.dropped }
         end
 
+        #: (untyped) -> Array[Integer]
+        def slot_indices_within(nodes)
+          children = Array(nodes) #: Array[untyped]
+
+          children.compact.flat_map { |child|
+            next [] unless child.is_a?(Herb::AST::Node)
+
+            inside = slot_indices_within(child.compact_child_nodes)
+            index = @indices[child]
+
+            index ? [index, *inside] : inside
+          }
+        end
+
         #: (String) -> bool
         def branching_shape?(shape)
           Types::STRUCTURAL.any? { |type| shape.include?("\u0000#{type}\u0000") }
@@ -832,6 +904,8 @@ module Herb
 
           return unless type
           return if @in_html_comment || @in_html_doctype
+          return if type == :raw_text && @rcdata_interpolated_depth.positive?
+          return refuse_mixed_rcdata(node) if type == :raw_text && @rcdata_mixed_depth.positive?
 
           key_source, key_expression = type == :collection ? key_for(node) : [nil, nil]
 
@@ -850,6 +924,9 @@ module Herb
 
           @annotations << annotation
           @annotation_of[node] = annotation
+
+          written = @listener_stack.flatten
+          @listener_written[node] = written unless written.empty?
 
           if type == :collection && key_source == :index
             @warnings << Herb::Warnings::UnkeyedCollectionWarning.new(
@@ -871,6 +948,7 @@ module Herb
 
         #: (Symbol) -> Symbol?
         def anchored_type_for(type)
+          return type if type == :raw_text_interpolation
           return type if Types.attribute_value?(type)
 
           return nil if @in_attribute
@@ -879,6 +957,88 @@ module Herb
           return :raw_text if @rcdata_depth.positive?
 
           type
+        end
+
+        #: (Array[untyped]) -> Array[String]?
+        def rcdata_segments(children)
+          segments = [+""]
+
+          Array(children).each do |child|
+            case child
+            when Herb::AST::HTMLTextNode, Herb::AST::LiteralNode
+              segments.last << child.content.to_s
+            when Herb::AST::WhitespaceNode
+              segments.last << child.value&.value.to_s
+            when Herb::AST::ERBContentNode
+              return nil unless erb_outputs?(child)
+
+              segments << +""
+            else
+              return nil
+            end
+          end
+
+          segments.size > 1 ? segments : nil
+        end
+
+        #: (untyped) -> Array[String]
+        def listener_names_for(node)
+          attributes_for(node).flat_map { |attribute|
+            name = attribute_name_for(attribute)&.downcase
+
+            next [] unless name && LISTENER_ATTRIBUTES.include?(name)
+
+            value = static_attribute_value(attribute)
+
+            next [] unless value
+
+            value.split.flat_map { |clause|
+              rest = clause.split("->", 2).last.to_s
+
+              rest.split(",").filter_map { |piece|
+                target = name == "data-herb-set" ? piece.split("=", 2).first : piece
+                cleaned = target.to_s.strip
+
+                cleaned unless cleaned.empty?
+              }
+            }
+          }
+        end
+
+        #: (untyped) -> String?
+        def rcdata_expression_for(node)
+          outputs = Array(node.body).grep(Herb::AST::ERBContentNode) #: Array[untyped]
+
+          return nil unless outputs.one?
+
+          outputs.fetch(0).content&.value&.strip
+        end
+
+        #: (Array[untyped]) -> bool
+        def mixed_rcdata_body?(children)
+          outputs = children.count { |child| child.is_a?(Herb::AST::ERBContentNode) && erb_outputs?(child) }
+
+          return false if outputs.zero?
+          return true if outputs > 1
+
+          children.any? { |child|
+            (child.is_a?(Herb::AST::HTMLTextNode) || child.is_a?(Herb::AST::LiteralNode)) && !child.content.to_s.strip.empty?
+          }
+        end
+
+        #: (untyped) -> nil
+        def refuse_mixed_rcdata(node)
+          expression = expression_for(node)
+          tag = @tag_stack.last
+
+          slot_warning(
+            "`<%= #{expression} %>` shares the `<#{tag}>` content with other text. The client writes this content as one piece and would discard the rest, so the expression stays server-rendered and never updates.",
+            node.location,
+            :content,
+            suggestion: "Make `<%= #{expression} %>` the only content of the `<#{tag}>`, or move the other text outside it."
+          )
+
+          nil
         end
 
         #: (untyped) -> Symbol
@@ -1150,6 +1310,7 @@ module Herb
 
         def expression_for(node)
           return attribute_expression_for(node) if node.is_a?(Herb::AST::HTMLAttributeNode)
+          return rcdata_expression_for(node) if node.is_a?(Herb::AST::HTMLElementNode)
           return nil unless node.respond_to?(:content)
 
           content = node.content

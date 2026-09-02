@@ -1,3 +1,5 @@
+import { INTERPOLATED_SLOT_TYPES } from "../markup/markers"
+
 import { armOf } from "./conditions"
 import { report } from "../shared/report"
 import { scoped } from "./scopes"
@@ -164,6 +166,10 @@ export class Seeds {
 
     for (const index of manifest.reads[name] ?? []) {
       for (const slot of this.delegate.scopedSlots(scope, index)) {
+        if (INTERPOLATED_SLOT_TYPES.includes(slot.type)) {
+          continue
+        }
+
         const element = elementOf(slot.anchor)
 
         if (slot.type === "boolean_attribute") {

@@ -135,6 +135,12 @@ function applyLeaf(slots: Slots, payload: Payload, slot: Slot, index: number, va
 
         return
       }
+    } else if (slot.type === "raw_text_interpolation") {
+      if (!slots.setText(slot, written)) {
+        defer(report, payload, index, "partial-content")
+
+        return
+      }
     } else {
       if (Array.isArray(written)) {
         defer(report, payload, index, "partial-attribute")

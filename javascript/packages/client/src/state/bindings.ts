@@ -8,7 +8,7 @@ const BINDABLE_ELEMENTS = ["input", "textarea", "select", "option"]
 const BINDABLE_ATTRIBUTES = ["value", "checked", "selected"]
 
 export function bindable(slot: Slot): boolean {
-  if (slot.type === "attribute_interpolation") {
+  if (slot.type === "attribute_interpolation" || slot.type === "raw_text_interpolation") {
     return false
   }
 

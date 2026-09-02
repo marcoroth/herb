@@ -1,6 +1,7 @@
 import { VALUE_ELEMENTS } from "./bindings"
 
 import { bindable } from "./bindings"
+import { bareRead } from "./conditions"
 import { elementOf } from "../markup/anchors"
 import { boundValue } from "./values"
 
@@ -107,6 +108,10 @@ export class BoundInputs {
           }
 
           if (!shipped && !bindable(slot)) {
+            continue
+          }
+
+          if (!shipped && slot.type === "boolean_attribute" && bareRead(manifest.presence?.[String(index)]) !== name) {
             continue
           }
 

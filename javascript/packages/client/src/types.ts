@@ -9,6 +9,7 @@ export type SlotType =
   | "boolean_attribute"
   | "element"
   | "raw_text"
+  | "raw_text_interpolation"
 
 export type SlotOperation =
   | "value"
@@ -46,7 +47,7 @@ export type PayloadItems = Record<string, PayloadSlots>
 export type SeededSlots = PayloadSlots & { seeds?: Seeds }
 export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected
 export type AppliedValue = Exclude<PayloadValue, Payload>
-export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "block" | "items" | "partial-attribute"
+export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "block" | "items" | "partial-attribute" | "partial-content"
 
 export type SlotAnchor = RangeAnchor | ElementAnchor | ContentAnchor
 

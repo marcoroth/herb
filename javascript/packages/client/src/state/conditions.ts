@@ -1,5 +1,19 @@
 import type { Arm, ComboCondition, ConditionValue, ConditionalArm, StateComparand, StateCondition, ValueOf } from "./types"
 
+export function bareRead(condition: StateCondition | null | undefined): string | null {
+  if (!condition || !Array.isArray(condition)) {
+    return null
+  }
+
+  const [name, comparand, operator, transform] = condition
+
+  if (comparand !== null || operator || transform) {
+    return null
+  }
+
+  return typeof name === "string" ? name : null
+}
+
 export function armOf(arm: ConditionalArm): Arm {
   if (Array.isArray(arm)) {
     const [name, comparand, branch, operator] = arm

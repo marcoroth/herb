@@ -16,7 +16,8 @@ export const ITEM_STATICS = "item"
 export const PARTS_STATICS = "parts"
 export const PART_MARKER = "herb-part"
 export const DEFAULT_SLOT_TYPE: SlotType = "child"
-export const CONTENT_SLOT_TYPES: SlotType[] = ["child", "raw_text"]
+export const CONTENT_SLOT_TYPES: SlotType[] = ["child", "raw_text", "raw_text_interpolation"]
+export const INTERPOLATED_SLOT_TYPES: SlotType[] = ["attribute_interpolation", "raw_text_interpolation"]
 
 export interface RegionOpenMarker {
   kind: "region-open"

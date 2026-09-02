@@ -93,7 +93,7 @@ module Engine
       test "one template reports problems from unrelated parts of itself" do
         diagnostics, = report(THREE_FAMILIES)
 
-        assert_equal ["herb-state-declaration", "slots-name", "herb-state-compare"], diagnostics.map(&:code)
+        assert_equal ["herb-state-declaration", "herb-slots-name", "herb-state-compare"], diagnostics.map(&:code)
 
         assert_equal(
           [
@@ -149,7 +149,7 @@ module Engine
       test "findings from different families both reach the page" do
         _, src = report(THREE_FAMILIES)
 
-        assert_equal ["herb-state-declaration", "slots-name", "herb-state-compare"], recorded(src).map(&:code)
+        assert_equal ["herb-state-declaration", "herb-slots-name", "herb-state-compare"], recorded(src).map(&:code)
       end
 
       test "findings of one family on one line reach the page as one" do
@@ -215,6 +215,229 @@ module Engine
 
         assert_equal([[2, 35]], diagnostics.map { |diagnostic| at(diagnostic) })
         assert_equal(["1.0"], diagnostics.map { |diagnostic| spelled(SECOND_LINE_DIRECTIVE, diagnostic) })
+      end
+
+      NEAR_MISS = <<~ERB
+        <%# herb:state (editing: false, body_draft: "") %>
+        <div>
+          <% if editing %>
+            <textarea rows="2"><%= body_draft11 %></textarea>
+          <% else %>
+            <p>view</p>
+          <% end %>
+        </div>
+      ERB
+
+      test "a bare identifier one typo away from a state warns without degrading" do
+        diagnostics, = report(NEAR_MISS)
+
+        assert_equal 1, diagnostics.length
+
+        warning = diagnostics.first
+
+        assert_equal :warning, warning.severity
+        assert_equal "herb-state-unknown", warning.code
+        assert_equal "`body_draft11` reads like the state `body_draft` but is not declared, so the server owns it and the client can never fill it.", warning.message
+        assert_equal 4, warning.location.start.line
+      end
+
+      test "helper calls, chains and unrelated identifiers stay silent" do
+        ["body_draft", "sanitize(body)", "current_user_name", "message.body_draft1"].each do |expression|
+          diagnostics, = report(<<~ERB)
+            <%# herb:state (editing: false, body_draft: "") %>
+            <div><span><%= #{expression} %></span></div>
+          ERB
+
+          assert_empty diagnostics
+        end
+      end
+
+      MIXED_TEXTAREA = <<~ERB
+        <%# herb:state (editing: false, body_draft: "") %>
+        <div>
+          <textarea data-chat-target="editor" rows="2"><%= body_draft %>11</textarea>
+        </div>
+      ERB
+
+      test "an expression sharing a textarea with other text compiles to an interpolation" do
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+
+        Herb::Engine.new(MIXED_TEXTAREA, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_equal ["herb-state-binding"], visitor.diagnostics.map(&:code)
+        assert_equal [:raw_text_interpolation], visitor.slots.map(&:type)
+        assert_equal({ "0" => ["", "11"] }, visitor.manifest["parts"])
+        assert_equal({ "body_draft" => [0] }, visitor.manifest["states"]["reads"])
+      end
+
+      test "a state mixed into a form control's value warns that it cannot bind" do
+        diagnostics, = report(<<~ERB)
+          <%# herb:state (body_draft: "") %>
+          <input value="<%= body_draft %>blahblah">
+        ERB
+
+        assert_equal 1, diagnostics.length
+        assert_equal :warning, diagnostics.first.severity
+        assert_equal "herb-state-binding", diagnostics.first.code
+        assert_equal "`body_draft` shares this `<input>`'s `value` with other text, so typing here will not write the state back. State writes still update the whole `value`.", diagnostics.first.message
+      end
+
+      test "mixes that never bound stay silent" do
+        [
+          %(<input value="<%= body_draft %>">),
+          %(<div class="<%= body_draft %>x"></div>),
+          %(<input value="<%= message.author %>x">)
+        ].each do |element|
+          diagnostics, = report(<<~ERB)
+            <%# herb:state (body_draft: "") %>
+            #{element}
+          ERB
+
+          assert_empty diagnostics
+        end
+      end
+
+      test "a lone or whitespace-framed textarea expression stays a plain content slot" do
+        [
+          "<textarea><%= body_draft %></textarea>",
+          "<textarea>\n    <%= body_draft %>\n  </textarea>"
+        ].each do |element|
+          visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+
+          Herb::Engine.new(MIXED_TEXTAREA.sub(%(<textarea data-chat-target="editor" rows="2"><%= body_draft %>11</textarea>), element), visitors: [visitor], filename: "app/views/test.html.erb")
+
+          assert_empty visitor.diagnostics
+          assert_equal [:raw_text], visitor.slots.map(&:type)
+        end
+      end
+
+      test "two state reads in one textarea cannot share the content" do
+        diagnostics, = report(MIXED_TEXTAREA.sub("<%= body_draft %>11", "<%= body_draft %><%= editing %>"))
+
+        assert_equal 1, diagnostics.length
+        assert_equal :error, diagnostics.first.severity
+        assert_equal "herb-state-read", diagnostics.first.code
+        assert_equal "`body_draft` reads a state inside a `<textarea>` that mixes other dynamic parts. A state write cannot supply the other values.", diagnostics.first.message
+      end
+
+      test "content that parts cannot express warns and keeps the slot off" do
+        diagnostics, = report(MIXED_TEXTAREA.sub("<%= body_draft %>11", "<%= body_draft %><% x = 1 %>11"))
+
+        assert_equal 1, diagnostics.length
+        assert_equal :warning, diagnostics.first.severity
+        assert_equal "herb-slots-content", diagnostics.first.code
+        assert_equal "`<%= body_draft %>` shares the `<textarea>` content with other text. The client writes this content as one piece and would discard the rest, so the expression stays server-rendered and never updates.", diagnostics.first.message
+      end
+
+      CLIENT_BRANCH = <<~ERB
+        <%# herb:state (editing: false, body_draft: "") %>
+        <div>
+          <% if editing %>
+            <span><%= message.sent_label %></span>
+            <p><%= body_draft %></p>
+          <% end %>
+          <em><%= message.author %></em>
+        </div>
+      ERB
+
+      test "a server value inside a client branch warns while state reads and top-level values stay silent" do
+        diagnostics, = report(CLIENT_BRANCH)
+
+        assert_equal 1, diagnostics.length
+
+        warning = diagnostics.first
+
+        assert_equal :warning, warning.severity
+        assert_equal "herb-slots-branch", warning.code
+        assert_equal "`<%= message.sent_label %>` sits inside a branch the client can show on its own, but its value comes from the server. The server only computes values for the branch it renders, so showing this branch ahead of the server leaves the value empty.", warning.message
+        assert_equal 4, warning.location.start.line
+      end
+
+      test "a server-driven conditional keeps its branches silent" do
+        diagnostics, = report(CLIENT_BRANCH.sub("<% if editing %>", "<% if message.editable? %>"))
+
+        assert_empty diagnostics
+      end
+
+      test "a computed boolean attribute on a form control warns that it cannot bind" do
+        diagnostics, = report(<<~ERB)
+          <%# herb:state (agreed: true, unread: 0) %>
+          <%= tag.input type: "checkbox", checked: unread > 3 %>
+        ERB
+
+        assert_equal 1, diagnostics.length
+        assert_equal :warning, diagnostics.first.severity
+        assert_equal "herb-state-binding", diagnostics.first.code
+        assert_equal "`checked` on this `<input>` follows `unread > 3`, so using the control cannot write a state back. The attribute still updates when the states change.", diagnostics.first.message
+      end
+
+      test "bare and off-control boolean attributes stay silent" do
+        [
+          %(<%= tag.input type: "checkbox", checked: agreed %>),
+          %(<%= tag.input type: "checkbox", checked: agreed? %>),
+          %(<%= tag.button "Send", disabled: unread > 3 %>)
+        ].each do |element|
+          diagnostics, = report(<<~ERB)
+            <%# herb:state (agreed: true, unread: 0) %>
+            #{element}
+          ERB
+
+          assert_empty diagnostics
+        end
+      end
+
+      test "a control whose listener already writes the state stays silent" do
+        [
+          <<~HTML,
+            <select data-herb-set="change->filter=$value">
+              <option value="all" selected="<%= filter == "all" %>">All</option>
+            </select>
+          HTML
+          %(<input type="checkbox" data-herb-set="unread=0" checked="<%= unread > 3 %>">),
+          %(<textarea data-herb-set="input->body_draft=$value"><%= body_draft %>11</textarea>)
+        ].each do |element|
+          diagnostics, = report(<<~ERB)
+            <%# herb:state (filter: "all", unread: 0, body_draft: "") %>
+            #{element}
+          ERB
+
+          assert_empty diagnostics
+        end
+      end
+
+      test "a listener writing a different state does not excuse the control" do
+        diagnostics, = report(<<~ERB)
+          <%# herb:state (filter: "all", unread: 0) %>
+          <input type="checkbox" data-herb-set="filter=all" checked="<%= unread > 3 %>">
+        ERB
+
+        assert_equal ["herb-state-binding"], diagnostics.map(&:code)
+      end
+
+      test "a state condition mixed into a boolean attribute is refused" do
+        diagnostics, = report(<<~ERB)
+          <%# herb:state (draft: "") %>
+          <button data-herb-reset="draft" hidden="<%= draft == "" %>111">x</button>
+        ERB
+
+        assert_equal 1, diagnostics.length
+        assert_equal :error, diagnostics.first.severity
+        assert_equal "herb-state-read", diagnostics.first.code
+        assert_equal "`hidden` on this `<button>` mixes `draft == \"\"` with other text. A boolean attribute follows presence and any value keeps it present, so it could never turn off.", diagnostics.first.message
+      end
+
+      test "whole-value and non-state boolean attributes stay silent" do
+        [
+          %(<button hidden="<%= draft == "" %>">x</button>),
+          %(<button hidden="<%= @x %>111">x</button>)
+        ].each do |element|
+          diagnostics, = report(<<~ERB)
+            <%# herb:state (draft: "") %>
+            #{element}
+          ERB
+
+          assert_empty diagnostics
+        end
       end
     end
   end
