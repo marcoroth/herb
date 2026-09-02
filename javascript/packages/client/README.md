@@ -19,15 +19,15 @@ This package is the browser half. The index at its core stays passive. It answer
 Nothing starts on its own. A page that has not asked for the runtime does not get an observer:
 
 ```typescript
-import { HerbRuntime } from "@herb-tools/client"
+import { Runtime } from "@herb-tools/client"
 
-const { slots, state, mutations, actions } = HerbRuntime.start()
+const { slots, state, outbox, actions } = Runtime.start()
 ```
 
 `start` is idempotent and returns the same runtime every time, so anything that needs the runtime can ask for it and get the one already running:
 
 ```typescript
-const runtime = HerbRuntime.get()
+const runtime = Runtime.get()
 ```
 
 Constructing it directly throws. A second runtime would be a second index over the same document, and neither would see the other's updates. To stop watching:
@@ -90,11 +90,11 @@ slots.setAttribute(slot, "active")
 
 Markup is parsed against the range it is going into, so a replacement `<tr>` lands correctly inside a table.
 
-`rangeFor` gives the live range a slot covers, when you would rather write the update yourself:
+`rangeOf` gives the live range a slot or an item covers, when you would rather write the update yourself:
 
 ```typescript
-slots.rangeFor(slot)
-slots.rangeForItem(item)
+slots.rangeOf(slot)
+slots.rangeOf(item)
 ```
 
 ## Applying a whole payload
@@ -108,6 +108,8 @@ const report = slots.apply(payload)
 
 `applied` counts what was written, not what arrived. A value equal to the one already there is not written, since writing it would cost a re-parse, destroy whatever the slot contained, and announce a change that did not happen, so a payload matching the page reports `{ applied: 0, deferred: [] }` and touches nothing.
 
+A value arrives as the server would have written it into the page. A slot that stands in the markup takes those bytes as they are. An attribute is set through the DOM, which holds what the browser parsed out of the markup, so an attribute's value is read back from `&amp;` and `&lt;` to the characters they stand for before it is written.
+
 A payload names the template, the version and which rendering it is, so nothing has to be said about where it goes. A partial's values arrive nested inside the slot that rendered it and are handed to that partial's own region, so one call covers a page however many templates it was built from.
 
 Values alone cannot do everything, and the report is the difference. `applied` counts what was written and `deferred` says what was not, with enough to act on:
@@ -118,6 +120,7 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 - `stale-version` and `no-region` mean nothing was applied at all. A version that does not match says the payload's indices were compiled against a different template, so the values would land in the wrong places, and there is no partial credit to take.
 - `branch` means the conditional took a branch whose markup the page never had and nothing was parked for it. Ask the server for that subtree.
+- `block` means a helper built the markup around the slot and its own output no longer matches what the page has. The interior of a block is written from the slots inside it, so a helper whose wrapper depends on state, as in `form_with(model: @record)`, has a value nothing on the page can write. Ask the server for that subtree.
 - `items` means the collection had no item to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and an item the page has never had is built from one it has, because every item of a collection is the same shape by construction. A collection that rendered nothing has no item to copy, which is why a template in client mode parks one for exactly that case. Emptying a collection on the page reaches the same state, so the last item out leaves its shape behind, and this is only reached when neither exists.
 - `partial-attribute` means the slot is a word interpolated into an attribute, as in `class="card <%= state %>"`. A marker says which attribute a slot is and not which stretch of it, so writing the value would drop what the template wrote around it, and refusing is the only honest answer.
 - `no-slot` means the payload named an index the page has no marker for, which is usually a region that was only partly scanned.
@@ -129,22 +132,14 @@ A branch the server parked is built for you, so a template in client mode toggle
 `apply` answers what to do with values once you have them. `state` is how a page asks for them.
 
 ```typescript
-const { state } = HerbRuntime.start()
+const { state } = Runtime.start()
 
 await state.set({ query: "ruby", page: 1 })
 state.set("query", "")
 state.get("query")
 ```
 
-By default the query string is where the state lives, so the address bar keeps matching the page and back, forward and bookmarking all keep working without the server holding a session. `set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
-
-That default fits a view's inputs, which is what a search box, a filter and a page number are. It does not fit everything. A form about to save a row is a mutation and not a view, a long value runs into what a URL can hold, and anything private has no business in a server log or a `Referer` header. Those pages keep their state in memory:
-
-```typescript
-HerbRuntime.start({ state: { persist: "none" } })
-```
-
-A page that keeps state in memory never reads the query string and never writes to it, and everything else is unchanged. It still sends the whole state, and it still writes the slots it can.
+`set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
 
 A page that has told the client which slots read which state can write some of them itself. The compiler marks each slot with where its next value comes from:
 
@@ -164,21 +159,22 @@ const report = await state.set("query", "ruby")
 The map is delivered the way parked statics are, and is taken out of the document once read:
 
 ```html
-<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0,"mode":"identity"}]},"params":{"query":"@query"}}</template>
+<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0}]},"params":{"query":"@query"}}</template>
 ```
 
 A partial knows the state under whatever name its caller passed it, so the map names every slot under the name the page uses. `Herb::Engine::SlotDependencies` builds it.
+
+The slots it lists for a state are the ones a page may write itself, which is why a state that only decides what renders is named with none. Those are written when `set` is called and put back if the request fails. Everything else is what the reply is for.
 
 A template reads `@query` and a request carries `query`, and what joins them is a line in a controller that no template sees. So the map says which request name feeds which state, and `set` takes the request name. A name the map says nothing about is tried as the state's own name, so `state.set("@query", …)` reaches it too.
 
 Nothing about the transport is assumed. The default asks the same URL for the `slots` format, which is what `ReActionView` serves, and any other protocol is a function:
 
 ```typescript
-HerbRuntime.start({
+Runtime.start({
   state: {
     transport: async (request, signal) => fetch(build(request), { signal }).then((response) => response.json()),
     debounce: 150,
-    persist: "none",
   },
 })
 ```
@@ -228,7 +224,7 @@ export default class extends Controller {
 }
 ```
 
-`useState` assigns `this.state`, `this.mutations` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
+`useState` assigns `this.state`, `this.outbox` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
 
 ## Actions in markup
 
@@ -252,10 +248,10 @@ A button that only writes a state does not need a controller. Four attributes co
 
 ## Sending
 
-A mutation is a send that must not lose what the user did. `mutations` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
+A mutation is a send that must not lose what the user did. `outbox` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
 
 ```typescript
-mutations.submit({
+outbox.submit({
   url: form.action,
   body: new FormData(form),
   into: { file: "app/views/chat/show.html.erb", name: "messages" },
@@ -305,7 +301,14 @@ slots.reconcile(collection, ["3", "1", "2"])
 // { added: [], removed: [], moved: ["3", "1"], kept: [...], unchanged: false }
 ```
 
-One limit worth knowing: JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. Ascending is what an append wants and what most collections already are, so it rarely shows, but a collection whose order the server decides has to be keyed by something that is not a number.
+`reconcileItems` carries that plan out: it builds, drops and reorders a collection's rows so its items are exactly the keys given, and returns the keys it could not build because the collection had no row to copy. `apply` uses it; a page doing its own optimistic collection edits can call it directly.
+
+```typescript
+slots.reconcileItems(collection, ["3", "1", "2"])
+// [] — or ["4"] if key 4 had no row to build from
+```
+
+JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. The payload carries an explicit `order` alongside `items`, so a collection is put in the order the server rendered whatever its keys are.
 
 ## Branches that never rendered
 
@@ -319,12 +322,6 @@ A conditional that was false rendered nothing, so its markup was never on the pa
 ```
 
 Naming its own region frees it from where it sits, so it can be parked once for the page, not once per rendering, and the parser moving it is of no consequence. Which branch is which comes out of the payload, because `herb-branch` is the same marker the rendered output carries. A branch runs to the next branch marker among the payload's own children, so a conditional nested inside a branch stays with the branch containing it.
-
-A `<template>` that says nothing about its region belongs to the region it was delivered in, and names one branch by attribute:
-
-```html
-<template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template>
-```
 
 The runtime takes each one out of the document once it has read it, the way a `<turbo-stream>` element removes itself after acting. A `<template>` keeps its content when it leaves the document, so nothing is lost. What is left is the rendered output and its markers, with no trace of the parked copy. This matters for one delivered inside its region, which until it is removed sits inside the range of that region and of any slot spanning it, where an update would copy it into the page or destroy it.
 

@@ -1,0 +1,7 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0005_an unless"
+input: "{source: \"<% unless flag %>\\n  <span>Guest</span>\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+unless flag 
+ "  <span>Guest</span>\n".freeze;
+ else "".freeze;end ;

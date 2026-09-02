@@ -1,3 +1,5 @@
+import type { RuntimeDiagnostic } from "../runtime/report"
+
 export type DiffOperationType =
   | "text_changed"
   | "whitespace_changed"
@@ -38,12 +40,16 @@ export interface ParseError {
   message: string
   line: number
   column: number
+  code?: string
+  origin?: string
+  suggestion?: string | null
 }
 
 export interface ErrorMessage {
   type: "error"
   file: string
   errors: ParseError[]
+  source?: string
 }
 
 export interface FixedMessage {
@@ -56,10 +62,10 @@ export interface WelcomeMessage {
   project: string
 }
 
+export const DEV_SERVER_FIXED_EVENT = "herb:dev-server-fixed"
+
 export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | ErrorMessage | FixedMessage
-
 export type ConnectionState = "connected" | "disconnected" | "given-up"
-
 export type MessageHandler = (message: HerbMessage) => void
 
 export interface ConnectionOptions {
@@ -73,15 +79,15 @@ export interface ConnectionOptions {
   onReconnecting?: (attempt: number, maxAttempts: number, delay: number) => void
 }
 
-export interface ErrorOverlayHandle {
-  showErrors(errors: unknown[], filename: string): void
-  clearErrors(): void
+export interface DiagnosticSink {
+  report(diagnostics: RuntimeDiagnostic[]): void
+  clear(): void
 }
 
 export interface HerbClientOptions {
   port?: number
   host?: string
-  errorOverlay?: () => ErrorOverlayHandle | null
+  diagnostics?: () => DiagnosticSink | null
   onPatch?: (message: PatchMessage) => void
   onReload?: (message: ReloadMessage) => void
   onError?: (message: ErrorMessage) => void

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
-require_relative "visitor_stack"
+require_relative "../visitor/stack"
+require_relative "validators/base"
 require_relative "validators/security_validator"
 require_relative "validators/nesting_validator"
 require_relative "validators/accessibility_validator"
@@ -18,6 +19,7 @@ module Herb
     #
     # Reading which ones are switched on lives here rather than in the engine, so that a caller
     # that already knows what it wants never has to consult configuration at all.
+    #
     module Validators
       ALL = {
         security: SecurityValidator,
@@ -26,11 +28,11 @@ module Herb
         render: RenderValidator,
       }.freeze #: Hash[Symbol, untyped]
 
-      #: (?fatal: bool, **untyped) -> Herb::Engine::VisitorStack
+      #: (?fatal: bool, **untyped) -> Herb::Visitor::Stack
       def self.all(fatal: true, **overrides)
         enabled = Herb.configuration.enabled_validators(overrides)
 
-        ALL.each_with_object(VisitorStack.new) do |(name, validator), stack|
+        ALL.each_with_object(Visitor::Stack.new) do |(name, validator), stack|
           stack.use(validator.new(fatal: fatal)) if enabled[name]
         end
       end

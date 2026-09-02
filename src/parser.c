@@ -41,6 +41,7 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .transform_conditionals = false,
                                                        .render_nodes = false,
                                                        .strict_locals = false,
+                                                       .herb_directives = false,
                                                        .iteration_nodes = false,
                                                        .prism_nodes_deep = false,
                                                        .prism_nodes = false,
@@ -53,7 +54,9 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .timeout_ms = 1000,
                                                        .max_errors = 25,
                                                        .error_count = NULL,
-                                                       .deadline_ms = 0 };
+                                                       .deadline_ms = 0,
+                                                       .erb_openers = NULL,
+                                                       .erb_opener_count = 0 };
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);

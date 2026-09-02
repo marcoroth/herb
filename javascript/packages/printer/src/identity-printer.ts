@@ -474,6 +474,18 @@ export class IdentityPrinter extends Printer {
     this.printERBNode(node)
   }
 
+  visitHerbDirectiveNode(node: Nodes.HerbDirectiveNode): void {
+    this.printERBNode(node)
+  }
+
+  visitHerbStateDirectiveNode(node: Nodes.HerbStateDirectiveNode): void {
+    this.printERBNode(node)
+  }
+
+  visitHerbStateDeclarationNode(_node: Nodes.HerbStateDeclarationNode): void {
+    // extracted metadata, nothing to print
+  }
+
   visitRubyParameterNode(_node: Nodes.RubyParameterNode): void {
     // extracted metadata, nothing to print
   }
@@ -513,7 +525,7 @@ export class IdentityPrinter extends Printer {
   /**
    * Print ERB node tags and content
    */
-  protected printERBNode(node: Nodes.ERBNode): void {
+  protected printERBNode(node: Nodes.ERBNode | Nodes.HerbDirectiveNode | Nodes.HerbStateDirectiveNode): void {
     if (node.tag_opening) {
       this.write(node.tag_opening.value)
     }

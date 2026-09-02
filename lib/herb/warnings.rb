@@ -48,7 +48,6 @@ module Herb
     # TODO: move to `config.yml` so they are in line with the way errors are defined and generated.
     class UnkeyedCollectionWarning < Warning
       attr_reader :expression #: String?
-
       attr_reader :tag_name #: String?
 
       #: (Location, ?String?, ?tag_name: String?) -> void

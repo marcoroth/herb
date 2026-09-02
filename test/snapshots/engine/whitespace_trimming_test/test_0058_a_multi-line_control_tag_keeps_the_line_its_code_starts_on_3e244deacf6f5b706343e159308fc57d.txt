@@ -1,0 +1,9 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0058_a multi-line control tag keeps the line its code starts on"
+input: "{source: \"<%\\n  if true %>\\n<%= \\\"text\\\" %>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; 
+ if true 
+ _buf << ("text").to_s; _buf << '
+'.freeze; end 
+_buf.to_s

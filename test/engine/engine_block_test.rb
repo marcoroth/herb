@@ -155,5 +155,11 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "a multi-line block opening keeps the line its body starts on" do
+      template = "<%=\n  render(\n    x\n  ) do |c|\n%>\n  <%= c %>\n<% end %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

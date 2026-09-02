@@ -1,0 +1,84 @@
+{
+  "file": "app/views/contract/expressions-in-order.html.erb",
+  "template": "<%= @a %><p><%= @b %></p><%= @c %>",
+  "rendered": "<!--herb-region:app/views/contract/expressions-in-order.html.erb:fcd78050:0--><!--herb-slot:0-->a<!--/herb-slot:0--><p data-herb-slot=\"1:child\">b</p><!--herb-slot:2-->c<!--/herb-slot:2--><!--/herb-region:app/views/contract/expressions-in-order.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/expressions-in-order.html.erb:fcd78050:0--><!--herb-slot:0-->a<!--/herb-slot:0--><p data-herb-slot=\"1:child\">b</p><!--herb-slot:2-->c<!--/herb-slot:2--><!--/herb-region:app/views/contract/expressions-in-order.html.erb-->",
+  "values": {
+    "template": "app/views/contract/expressions-in-order.html.erb",
+    "version": "fcd78050",
+    "occurrence": 0,
+    "slots": {
+      "0": "A",
+      "1": "B",
+      "2": "C"
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/expressions-in-order.html.erb:fcd78050:0--><!--herb-slot:0-->A<!--/herb-slot:0--><p data-herb-slot=\"1:child\">B</p><!--herb-slot:2-->C<!--/herb-slot:2--><!--/herb-region:app/views/contract/expressions-in-order.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/expressions-in-order.html.erb",
+    "identifier": "app/views/contract/expressions-in-order.html.erb",
+    "version": "fcd78050",
+    "slots": [
+      {
+        "index": 0,
+        "type": "child",
+        "node_path": [
+          0
+        ]
+      },
+      {
+        "index": 1,
+        "type": "child",
+        "node_path": [
+          1,
+          0
+        ]
+      },
+      {
+        "index": 2,
+        "type": "child",
+        "node_path": [
+          2
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/expressions-in-order.html.erb",
+    "identifier": "app/views/contract/expressions-in-order.html.erb",
+    "version": "fcd78050",
+    "names": {},
+    "parts": {},
+    "states": null
+  },
+  "dependencies": {
+    "state": {
+      "@a": [
+        {
+          "file": "app/views/contract/expressions-in-order.html.erb",
+          "version": "fcd78050",
+          "index": 0
+        }
+      ],
+      "@b": [
+        {
+          "file": "app/views/contract/expressions-in-order.html.erb",
+          "version": "fcd78050",
+          "index": 1
+        }
+      ],
+      "@c": [
+        {
+          "file": "app/views/contract/expressions-in-order.html.erb",
+          "version": "fcd78050",
+          "index": 2
+        }
+      ]
+    },
+    "params": {
+      "a": "@a",
+      "b": "@b",
+      "c": "@c"
+    }
+  }
+}

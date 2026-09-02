@@ -69,11 +69,78 @@ on("report-spaced", () => {
   })
 })
 
+on("report-blocking", () => {
+  lastHandle = devTools.report({
+    template: "app/views/posts/_post.html.erb",
+    message: "Unclosed `<form>` element. The template could not be compiled.",
+    code: "html-missing-closing-tag",
+    severity: "error",
+    origin: "Herb Parser",
+    location: { start: { line: 2, column: 3 }, end: { line: 2, column: 47 } },
+    suggestion: "Close the `<form>` before the `</article>` on line 11.",
+    overlay: "blocking",
+  })
+})
+
+on("report-dismissible", () => {
+  lastHandle = devTools.report({
+    template: "app/components/post_actions_component.html.erb",
+    message: "This slot could not be hydrated. The page is showing server-rendered markup.",
+    code: "slot-hydration-failed",
+    severity: "error",
+    origin: "Herb Client Runtime",
+    location: { start: { line: 2, column: 3 } },
+    suggestion: "Check that the slot markers survived the server response.",
+    overlay: "dismissible",
+  })
+})
+
+on("report-located", () => {
+  const posts = document.querySelectorAll<HTMLElement>("article.post")
+
+  lastHandle = devTools.report([
+    {
+      template: "app/views/posts/_post.html.erb",
+      node: "3",
+      message: "Cover image has no intrinsic size, so the page reflows once it loads.",
+      code: "html-img-require-dimensions",
+      severity: "warning",
+      origin: "Acme Scanner",
+      location: { start: { line: 1, column: 1 } },
+      suggestion: "Give the cover an explicit `width` and `height`.",
+      element: document.getElementById("cover-three"),
+    },
+    {
+      template: "app/views/posts/_post.html.erb",
+      node: "3",
+      message: "This partial rendered without a byline.",
+      code: "demo-missing-byline",
+      severity: "info",
+      origin: "Acme Scanner",
+      location: { start: { line: 1, column: 1 } },
+      element: posts[1] ?? null,
+    },
+    {
+      template: "app/views/posts/_draft.html.erb",
+      node: "6",
+      message: "Draft cover has no alt text.",
+      code: "html-img-require-alt",
+      severity: "warning",
+      origin: "Acme Scanner",
+      location: { start: { line: 1, column: 1 } },
+      element: document.getElementById("cover-four"),
+    },
+  ])
+})
+
 on("dismiss-last", () => {
   lastHandle?.dismiss()
   lastHandle = null
 })
 
+on("open-panel", () => devTools.open())
+on("open-expanded", () => devTools.open({ expanded: true }))
+on("close-panel", () => devTools.close())
 on("clear-origin", () => devTools.clear("Acme Scanner"))
 on("clear-all", () => devTools.clear())
 on("unhide", () => devTools.show({ open: true }))

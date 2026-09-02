@@ -10,6 +10,7 @@ gem "actionview", "~> 8.1", require: "action_view"
 gem "benchmark"
 gem "charm"
 gem "cruise"
+gem "css_inline", "~> 0.21"
 gem "digest", "~> 3.2"
 gem "erubi"
 gem "irb", "~> 1.18"
@@ -28,6 +29,7 @@ gem "reline", "~> 0.7"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
 gem "turbo-rails", "~> 2.0", require: false
+gem "webrick", "~> 1.9", require: false
 gem "yerba", "~> 0.9"
 
 # TODO: remove once https://github.com/soutaro/steep/pull/2255 ships

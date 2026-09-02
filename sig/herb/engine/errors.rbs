@@ -3,6 +3,19 @@
 module Herb
   class Engine
     class CompilationError < StandardError
+      attr_reader details: untyped
+
+      attr_reader diagnostics: untyped
+
+      attr_reader visitors: untyped
+
+      attr_reader parser_options: untyped
+
+      def initialize: (untyped message, ?details: untyped, ?diagnostics: untyped, ?visitors: untyped, ?parser_options: untyped) -> untyped
+
+      def detailed_message: (?highlight: untyped, **untyped) -> untyped
+
+      def formatted_errors: (?highlight: untyped) -> untyped
     end
 
     class GeneratorTemplateError < CompilationError
@@ -28,6 +41,23 @@ module Herb
       private
 
       def build_error_message: (untyped message) -> untyped
+    end
+
+    class ParseError < CompilationError
+      CONTEXT_LINES: Integer
+
+      attr_reader source: String
+
+      attr_reader filename: String?
+
+      # : (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped], ?details: untyped) -> void
+      def initialize: (String, diagnostics: Array[Herb::Diagnostic], source: String, ?filename: String?, ?visitors: Array[String], ?parser_options: Hash[Symbol, untyped], ?details: untyped) -> void
+
+      # : () -> Integer?
+      def line_number: () -> Integer?
+
+      # : () -> Array[String]
+      def annotated_source_code: () -> Array[String]
     end
   end
 end

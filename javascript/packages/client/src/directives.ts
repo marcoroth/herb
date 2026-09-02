@@ -5,34 +5,39 @@
  * This entry exists for tooling, the linter and the language service consume it, and it never
  * loads in an application: nothing in the runtime imports this module, so the production
  * entries are unaffected. The clause grammar re-exported here is the exact code
- * `SlotActions` runs, which is what keeps the linter and the runtime from drifting.
+ * `Actions` runs, which is what keeps the linter and the runtime from drifting.
  */
 
-export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./parsing"
-export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./attributes"
+export { ACTION_SCHEMA, ACTION_NAMES, HERB_ATTRIBUTES } from "./grammar/attributes"
+export { STATE_PREDICATES, STATE_PREDICATE_NAMES } from "./state-predicates"
+export { STATE_TRANSFORMS, STATE_TRANSFORM_NAMES } from "./state-transforms"
+export { MIRRORED_COMPARISONS, NEGATED_COMPARISONS, ORDERED_COMPARISONS, COMPARISON_OPERATORS } from "./state-operators"
+export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LITERAL_KINDS } from "./state-kinds"
 
-export type { Clause } from "./parsing"
-export type { ActionName, ActionSchema, HerbAttribute } from "./attributes"
+export { stateKindArticle } from "./state-kinds"
+export { isMarker, parseMarker } from "./markup/markers"
+export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
 
+export type { Clause } from "./grammar/parsing"
+export type { StatePredicate } from "./state-predicates"
+export type { StateTransform } from "./state-transforms"
+export type { StateDefaultKind, StateValueKind } from "./state-kinds"
+export type { ActionName, ActionSchema, HerbAttribute } from "./grammar/attributes"
+export type { MarkerData, RegionOpenMarker, RegionCloseMarker } from "./markup/markers"
+
+import { STATE_PREDICATES } from "./state-predicates"
+import { STATE_TRANSFORMS } from "./state-transforms"
+import { MIRRORED_COMPARISONS, NEGATED_COMPARISONS } from "./state-operators"
+import { LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS } from "./state-kinds"
+
+import type { StateDefaultKind } from "./state-kinds"
+
+const SLOTS_MODE = /\b(server|client)\b/
+const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s
 const STATE_DIRECTIVE_PRESENCE = /^\s*herb:state\b/
 const STATE_DIRECTIVE_PATTERN = /^\s*herb:state\s*(\(.*\))\s*$/s
-const SLOTS_DIRECTIVE = /^\s*herb:slots\b(.*)$/s
-const SLOTS_MODE = /\b(server|client)\b/
-const KEYWORD_SEGMENT = /^(\s*)([a-z_][a-zA-Z0-9_]*):(.*)$/s
 const BARE_IDENTIFIER = /^[a-z_][a-zA-Z0-9_]*$/
-
-export type StateDefaultKind =
-  | "boolean"
-  | "integer"
-  | "string"
-  | "symbol"
-  | "nil"
-  | "float"
-  | "array"
-  | "hash"
-  | "bare"
-  | "seeded"
-  | "missing"
+const KEYWORD_SEGMENT = /^(\s*)([a-z_][a-zA-Z0-9_]*):(.*)$/s
 
 export interface StateDeclaration {
   name: string
@@ -56,7 +61,10 @@ export function isStateDirectiveContent(content: string): boolean {
 
 export function slotsDirectiveModeOf(content: string): "server" | "client" | null {
   const match = SLOTS_DIRECTIVE.exec(content)
-  if (!match) return null
+
+  if (!match) {
+    return null
+  }
 
   const mode = SLOTS_MODE.exec(match[1])?.[1]
 
@@ -66,7 +74,9 @@ export function slotsDirectiveModeOf(content: string): "server" | "client" | nul
 export function parseStateDirective(content: string): StateSignature | null {
   const match = STATE_DIRECTIVE_PATTERN.exec(content)
 
-  if (!match) return null
+  if (!match) {
+    return null
+  }
 
   const signature = match[1]
   const signatureOffset = content.indexOf(signature)
@@ -132,29 +142,63 @@ function parseStateSignature(signature: string, signatureOffset: number): StateS
 }
 
 export function classifyDefault(source: string): StateDefaultKind {
-  if (source === "") return "missing"
-  if (source === "true" || source === "false") return "boolean"
-  if (source === "nil") return "nil"
+  if (source === "") {
+    return "missing"
+  }
 
-  if (/^-?\d[\d_]*\.\d/.test(source)) return "float"
-  if (/^-?\d[\d_]*$/.test(source)) return "integer"
-  if (/^"(?:[^"\\#]|\\.|#(?!\{))*"$/s.test(source)) return "string"
-  if (/^'(?:[^'\\]|\\.)*'$/s.test(source)) return "string"
-  if (/^:(?:[a-zA-Z_]\w*[?!=]?|"[^"]*"|'[^']*')$/.test(source)) return "symbol"
+  if (source === "true" || source === "false") {
+    return "boolean"
+  }
 
-  if (source.startsWith("[")) return "array"
-  if (source.startsWith("{")) return "hash"
+  if (source === "nil") {
+    return "nil"
+  }
 
-  if (BARE_IDENTIFIER.test(source)) return "bare"
+  if (/^-?\d[\d_]*(?:\.\d[\d_]*(?:[eE][-+]?\d[\d_]*)?|[eE][-+]?\d[\d_]*)$/.test(source)) {
+    return "float"
+  }
+
+  if (/^-?(?:\d[\d_]*|0[xX][\da-fA-F][\da-fA-F_]*|0[oO][0-7][0-7_]*|0[bB][01][01_]*|0[dD]\d[\d_]*)$/.test(source)) {
+    return "integer"
+  }
+
+  if (/^"(?:[^"\\#]|\\.|#(?!\{))*"$/s.test(source)) {
+    return "string"
+  }
+
+  if (/^'(?:[^'\\]|\\.)*'$/s.test(source)) {
+    return "string"
+  }
+
+  if (/^\?(?:\\[a-zA-Z0-9\\]|[^\s\\])$/.test(source)) {
+    return "string"
+  }
+
+  if (/^:(?:[a-zA-Z_]\w*[?!=]?|"[^"]*"|'[^']*')$/.test(source)) {
+    return "symbol"
+  }
+
+  if (source.startsWith("[")) {
+    return "array"
+  }
+
+  if (source.startsWith("{")) {
+    return "hash"
+  }
+
+  if (BARE_IDENTIFIER.test(source)) {
+    return "bare"
+  }
 
   return "seeded"
 }
 
-export type DerivedComparand = string | null | { state: string }
+export type DerivedComparand = string | null | { state: string, transform?: string }
 
 export type DerivedCondition =
   | [string, DerivedComparand]
   | [string, DerivedComparand, string]
+  | [string, DerivedComparand, string | null, string]
   | { all?: DerivedCondition[]; any?: DerivedCondition[] }
 
 export interface DerivedDefault {
@@ -163,13 +207,76 @@ export interface DerivedDefault {
   sources: string[]
 }
 
-const MIRRORED_COMPARISONS: Record<string, string> = { ">": "<", ">=": "<=", "<": ">", "<=": ">=" }
-const LITERAL_DEFAULT_KINDS = new Set(["boolean", "integer", "string", "symbol", "nil"])
+
+export interface PredicateRead {
+  name: string
+  predicate: string
+}
+
+const PREDICATE_READ = /^([a-z_][a-zA-Z0-9_]*)\.([a-z_]+\?)$/
+const TRANSFORM_READ = /^([a-z_][a-zA-Z0-9_]*)\.([a-z_]+)$/
+
+export interface TransformRead {
+  name: string
+  transform: string
+}
+
+export function transformReadName(expression: string): TransformRead | null {
+  const match = TRANSFORM_READ.exec(expression.trim())
+
+  if (!match || !(match[2] in STATE_TRANSFORMS)) {
+    return null
+  }
+
+  return { name: match[1], transform: match[2] }
+}
+
+export function transformApplies(transform: string, kind: string): boolean {
+  const spec = STATE_TRANSFORMS[transform]
+
+  if (!spec || spec.kinds === null || UNKNOWN_STATE_KINDS.has(kind)) {
+    return true
+  }
+
+  return spec.kinds.includes(kind)
+}
+
+export function predicateReadName(expression: string): PredicateRead | null {
+  const match = PREDICATE_READ.exec(expression.trim())
+
+  if (!match || !(match[2] in STATE_PREDICATES)) {
+    return null
+  }
+
+  return { name: match[1], predicate: match[2] }
+}
+
+export function predicateAnswers(predicate: string, kind: string): boolean {
+  const spec = STATE_PREDICATES[predicate]
+
+  if (!spec || spec.kinds === null || UNKNOWN_STATE_KINDS.has(kind)) {
+    return true
+  }
+
+  return spec.kinds.includes(kind)
+}
+
+export function predicateCondition(read: PredicateRead): DerivedCondition {
+  const spec = STATE_PREDICATES[read.predicate]
+
+  if (spec.comparand === undefined) {
+    return [read.name, null, spec.operator as string]
+  }
+
+  return spec.operator ? [read.name, spec.comparand, spec.operator] : [read.name, spec.comparand]
+}
 
 export function classifyDerivedDefault(source: string, declared: ReadonlyMap<string, string>): DerivedDefault | "mixed" | null {
   const parsed = parseDerivedCondition(source.trim(), declared)
 
-  if (parsed === null && mentionsAnyState(source, [...declared.keys()])) return "mixed"
+  if (parsed === null && mentionsAnyState(source, [...declared.keys()])) {
+    return "mixed"
+  }
 
   return parsed
 }
@@ -187,7 +294,9 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
       for (const part of parts) {
         const parsed = parseDerivedCondition(part, declared)
 
-        if (parsed === null || parsed === "mixed") return parsed === "mixed" ? "mixed" : null
+        if (parsed === null || parsed === "mixed") {
+          return parsed === "mixed" ? "mixed" : null
+        }
 
         conditions.push(parsed.condition)
         sources.push(...parsed.sources)
@@ -195,6 +304,18 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
 
       return { kind: "boolean", condition: { [key]: conditions }, sources: [...new Set(sources)] }
     }
+  }
+
+  if (trimmed.startsWith("!")) {
+    const inner = parseDerivedCondition(unwrapParentheses(trimmed.slice(1).trim()), declared)
+
+    if (inner === null || inner === "mixed") {
+      return inner
+    }
+
+    const negated = negateCondition(inner.condition)
+
+    return negated === null ? "mixed" : { kind: "boolean", condition: negated, sources: inner.sources }
   }
 
   const comparison = splitTopLevelComparison(trimmed)
@@ -205,54 +326,174 @@ function parseDerivedCondition(source: string, declared: ReadonlyMap<string, str
     const rightState = derivedStateSide(right, declared)
 
     if (leftState && rightState) {
-      const spelled = operator === "==" ? undefined : operator
-      const condition: DerivedCondition = spelled ? [leftState, { state: rightState }, spelled] : [leftState, { state: rightState }]
+      let left = leftState
+      let right = rightState
+      let mirrored = operator === "==" ? undefined : operator
 
-      return { kind: "boolean", condition, sources: [...new Set([leftState, rightState])] }
+      if (right.transform && !left.transform) {
+        [left, right] = [right, left]
+
+        if (mirrored && mirrored !== "!=") {
+          mirrored = MIRRORED_COMPARISONS[mirrored]
+        }
+      }
+
+      const comparand: DerivedComparand = right.transform ? { state: right.state, transform: right.transform } : { state: right.state }
+      const sources = [...new Set([left.state, right.state])]
+
+      if (left.transform) {
+        return { kind: "boolean", condition: [left.state, comparand, mirrored ?? "==", left.transform], sources }
+      }
+
+      return { kind: "boolean", condition: mirrored ? [left.state, comparand, mirrored] : [left.state, comparand], sources }
     }
 
-    const state = leftState ?? rightState
+    const side = leftState ?? rightState
 
-    if (!state) return null
+    if (!side) {
+      return null
+    }
 
     const literal = (leftState ? right : left).trim()
 
-    if (!LITERAL_DEFAULT_KINDS.has(classifyDefault(literal))) return null
+    if (!LITERAL_STATE_KINDS.has(classifyDefault(literal))) {
+      return null
+    }
 
     let spelled = operator === "==" ? undefined : operator
 
-    if (spelled && rightState && spelled !== "!=") spelled = MIRRORED_COMPARISONS[spelled]
+    if (spelled && rightState && spelled !== "!=") {
+      spelled = MIRRORED_COMPARISONS[spelled]
+    }
 
-    const condition: DerivedCondition = spelled ? [state, literal, spelled] : [state, literal]
+    if (side.transform) {
+      return { kind: "boolean", condition: [side.state, literal, spelled ?? "==", side.transform], sources: [side.state] }
+    }
 
-    return { kind: "boolean", condition, sources: [state] }
+    const condition: DerivedCondition = spelled ? [side.state, literal, spelled] : [side.state, literal]
+
+    return { kind: "boolean", condition, sources: [side.state] }
+  }
+
+  const transform = transformReadName(trimmed)
+
+  if (transform) {
+    const kind = declared.get(transform.name)
+
+    if (kind === undefined) {
+      return null
+    }
+
+    if (!transformApplies(transform.transform, kind)) {
+      return "mixed"
+    }
+
+    const spec = STATE_TRANSFORMS[transform.transform]
+
+    return { kind: spec.returns as DerivedDefault["kind"], condition: [transform.name, null, null, spec.operation], sources: [transform.name] }
+  }
+
+  const predicate = predicateReadName(trimmed)
+
+  if (predicate) {
+    const kind = declared.get(predicate.name)
+
+    if (kind === undefined) {
+      return null
+    }
+
+    return predicateAnswers(predicate.predicate, kind)
+      ? { kind: "boolean", condition: predicateCondition(predicate), sources: [predicate.name] }
+      : "mixed"
   }
 
   const bare = bareReadName(trimmed)
 
-  if (bare === null) return null
+  if (bare === null) {
+    return null
+  }
 
   const kind = declared.get(bare)
 
-  if (kind === undefined) return null
-
-  if (trimmed.endsWith("?")) {
-    return kind === "boolean" || kind === "seeded" || kind === "bare"
-      ? { kind: "boolean", condition: [bare, null], sources: [bare] }
-      : "mixed"
+  if (kind === undefined) {
+    return null
   }
 
-  const resolved = LITERAL_DEFAULT_KINDS.has(kind) ? kind as DerivedDefault["kind"] : "seeded"
+  if (trimmed.endsWith("?")) {
+    return { kind: "boolean", condition: [bare, null], sources: [bare] }
+  }
+
+  const resolved = LITERAL_STATE_KINDS.has(kind) ? kind as DerivedDefault["kind"] : "seeded"
 
   return { kind: resolved, condition: [bare, null], sources: [bare] }
 }
 
-function derivedStateSide(side: string, declared: ReadonlyMap<string, string>): string | null {
-  const bare = bareReadName(side.trim())
+interface DerivedSide {
+  state: string
+  transform: string | null
+}
 
-  if (bare === null || !declared.has(bare)) return null
+const NEGATED_UNARY: Record<string, string> = { blank: "present", present: "blank" }
 
-  return bare
+function negateCondition(condition: DerivedCondition): DerivedCondition | null {
+  if (!Array.isArray(condition)) {
+    const parts = condition.all ?? condition.any
+
+    if (!parts) {
+      return null
+    }
+
+    const negated = parts.map((part) => negateCondition(part))
+
+    if (negated.some((part) => part === null)) {
+      return null
+    }
+
+    return condition.all ? { any: negated as DerivedCondition[] } : { all: negated as DerivedCondition[] }
+  }
+
+  const [name, comparand, operator, transform] = condition
+  const spelled = typeof operator === "string" ? operator : null
+
+  const flipped =
+    spelled === null
+      ? (comparand === null ? "falsy" : "!=")
+      : spelled === "falsy"
+        ? null
+        : (NEGATED_UNARY[spelled] ?? NEGATED_COMPARISONS[spelled] ?? null)
+
+  if (spelled !== null && spelled !== "falsy" && flipped === null) {
+    return null
+  }
+
+  if (typeof transform === "string") {
+    return [name, comparand, flipped, transform]
+  }
+
+  return flipped === null ? [name, comparand] : [name, comparand, flipped]
+}
+
+function derivedStateSide(side: string, declared: ReadonlyMap<string, string>): DerivedSide | null {
+  const source = side.trim()
+  const bare = bareReadName(source)
+
+  if (bare !== null && declared.has(bare)) {
+    return { state: bare, transform: null }
+  }
+
+  const transform = transformReadName(source)
+
+  if (transform === null) {
+    return null
+  }
+
+  const kind = declared.get(transform.name)
+
+  if (kind === undefined || !transformApplies(transform.transform, kind)) {
+    return null
+  }
+
+  return { state: transform.name, transform: STATE_TRANSFORMS[transform.transform].operation }
 }
 
 function unwrapParentheses(source: string): string {
@@ -279,9 +520,11 @@ function splitTopLevelOperator(source: string, operator: "||" | "&&"): string[] 
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
-    else if (character === ")" || character === "]" || character === "}") depth -= 1
-    else if (depth === 0 && character === operator[0] && source[index + 1] === operator[1]) {
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    } else if (character === ")" || character === "]" || character === "}") {
+      depth -= 1
+    } else if (depth === 0 && character === operator[0] && source[index + 1] === operator[1]) {
       parts.push(source.slice(start, index).trim())
       index += 1
       start = index + 1
@@ -305,13 +548,23 @@ function splitTopLevelComparison(source: string): [string, string, string] | nul
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
-    else if (character === ")" || character === "]" || character === "}") depth -= 1
-    else if (depth === 0) {
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    } else if (character === ")" || character === "]" || character === "}") {
+      depth -= 1
+    } else if (depth === 0) {
       for (const operator of ["==", "!=", ">=", "<=", ">", "<"]) {
-        if (!source.startsWith(operator, index)) continue
-        if (operator === "<" && source[index + 1] === "<") break
-        if (operator === ">" && source[index + 1] === ">") break
+        if (!source.startsWith(operator, index)) {
+          continue
+        }
+
+        if (operator === "<" && source[index + 1] === "<") {
+          break
+        }
+
+        if (operator === ">" && source[index + 1] === ">") {
+          break
+        }
 
         return [source.slice(0, index), operator, source.slice(index + operator.length)]
       }
@@ -328,7 +581,9 @@ export function mentionsAnyState(source: string, stateNames: readonly string[]):
 export function bareReadName(expression: string): string | null {
   const source = expression.trim()
 
-  if (!/^[a-z_][a-zA-Z0-9_]*\??$/.test(source)) return null
+  if (!/^[a-z_][a-zA-Z0-9_]*\??$/.test(source)) {
+    return null
+  }
 
   return source.endsWith("?") ? source.slice(0, -1) : source
 }
@@ -353,8 +608,13 @@ function topLevelSegments(inner: string): Segment[] {
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
-    if (character === ")" || character === "]" || character === "}") depth -= 1
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    }
+
+    if (character === ")" || character === "]" || character === "}") {
+      depth -= 1
+    }
 
     if (character === "," && depth === 0) {
       segments.push({ text: inner.slice(start, index), start })
@@ -380,7 +640,9 @@ function skipString(content: string, index: number): number {
       continue
     }
 
-    if (content[cursor] === quote) return cursor + 1
+    if (content[cursor] === quote) {
+      return cursor + 1
+    }
 
     cursor += 1
   }
@@ -401,12 +663,16 @@ function balanced(inner: string): boolean {
       continue
     }
 
-    if (character === "(" || character === "[" || character === "{") depth += 1
+    if (character === "(" || character === "[" || character === "{") {
+      depth += 1
+    }
 
     if (character === ")" || character === "]" || character === "}") {
       depth -= 1
 
-      if (depth < 0) return false
+      if (depth < 0) {
+        return false
+      }
     }
 
     index += 1

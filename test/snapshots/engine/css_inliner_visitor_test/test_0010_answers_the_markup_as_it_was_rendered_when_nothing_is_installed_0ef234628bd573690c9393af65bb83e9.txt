@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0010_answers the markup as it was rendered when nothing is installed"
+input: "{source: \"<style>.uninstalled { color: #ff0000 }</style><h1 class=\\\"uninstalled\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<h1 class="uninstalled" style="color: #ff0000;">Hi</h1>

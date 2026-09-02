@@ -1,6 +1,9 @@
-import { Visitor } from "@herb-tools/core"
-import { isStateDirectiveContent, mentionsAnyState, parseStateDirective, slotsDirectiveModeOf } from "@herb-tools/client/directives"
+import { LITERAL_STATE_KINDS, STATE_PREDICATES } from "@herb-tools/client/directives"
 import { ACTION_NAMES, ACTION_SCHEMA, HERB_ATTRIBUTES } from "@herb-tools/client/directives"
+
+import { Visitor } from "@herb-tools/core"
+
+import { isStateDirectiveContent, mentionsAnyState, parseStateDirective, slotsDirectiveModeOf } from "@herb-tools/client/directives"
 
 import type { ERBBlockNode, ERBContentNode, ERBIfNode, Node } from "@herb-tools/core"
 import type { ActionName, ActionSchema, Clause, StateDeclaration, StateSignature } from "@herb-tools/client/directives"
@@ -65,11 +68,30 @@ export function declaredKind(declaration: StateDeclaration): "boolean" | "intege
   }
 }
 
-export function kindWithArticle(kind: string): string {
-  const capitalized = kind.charAt(0).toUpperCase() + kind.slice(1)
+export function predicateAdvice(kind: string, name: string): string {
+  const spellings = Object.entries(STATE_PREDICATES).filter(([, entry]) => entry.kinds?.includes(kind)).map(([predicate]) => predicate)
 
-  return kind === "integer" ? `an ${capitalized}` : `a ${capitalized}`
+  if (spellings.length === 0) return ""
+
+  const listed = spellings.map((predicate, index) => index === 0 ? `\`${name}.${predicate}\`` : `\`.${predicate}\``)
+  const last = listed[listed.length - 1]
+
+  return `Ask ${listed.length === 1 ? last : `${listed.slice(0, -1).join(", ")} or ${last}`}, `
 }
+
+export function literalDefault(declaration: StateDeclaration): boolean {
+  if (declaration.derived !== undefined && declaration.derived !== null) return false
+
+  return LITERAL_STATE_KINDS.has(declaration.kind)
+}
+
+export function defaultExample(declaration: StateDeclaration, spelling: string): string {
+  if (!literalDefault(declaration)) return ""
+
+  return `, like \`${spelling}${declaration.defaultSource}\``
+}
+
+export { stateKindArticle as kindWithArticle } from "@herb-tools/client/directives"
 
 export class StateScopeMap {
   #scopes = new Map<unknown, Map<string, StateDeclaration>>()

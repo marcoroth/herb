@@ -7,8 +7,8 @@ module Engine
     include SnapshotUtils
 
     class RewritingReporter < Herb::Visitor
-      include Herb::Engine::ContextAware
-      include Herb::Engine::Diagnostics
+      include Herb::Visitor::ContextAware
+      include Herb::Visitor::Diagnostics
 
       def inspect
         "#<#{self.class.name}>"
@@ -43,7 +43,7 @@ module Engine
     end
 
     def render_into_session(engine)
-      Herb::Engine::Report::Session.capture { eval(engine.src) }
+      Herb::Engine::Runtime::Session.capture { eval(engine.src) }
     end
 
     test "a visitor that rewrites the tree can also report" do
@@ -55,7 +55,7 @@ module Engine
 
       diagnostic = visitor.diagnostics.first
 
-      assert_equal "obsolete-element", diagnostic.code
+      assert_equal "ObsoleteElement", diagnostic.code
       assert_equal :warning, diagnostic.severity
       assert_equal FILENAME, diagnostic.template
       assert_equal "Use CSS animations instead.", diagnostic.suggestion
@@ -72,7 +72,7 @@ module Engine
 
       diagnostic = render_into_session(engine).diagnostics.first
 
-      assert_equal "obsolete-element", diagnostic.code
+      assert_equal "ObsoleteElement", diagnostic.code
       assert_equal :warning, diagnostic.severity
       assert_equal FILENAME, diagnostic.template
       assert_equal "Use CSS animations instead.", diagnostic.suggestion
@@ -93,8 +93,8 @@ module Engine
 
       codes = render_into_session(engine).diagnostics.map(&:code)
 
-      assert_includes codes, "invalid-nesting"
-      assert_includes codes, "obsolete-element"
+      assert_includes codes, "InvalidNestingError"
+      assert_includes codes, "ObsoleteElement"
     end
 
     test "carries a message intact whatever it contains" do
@@ -164,7 +164,7 @@ module Engine
         reporter = RewritingReporter.new
         reporter.warning("w", nil)
 
-        assert_equal Herb::Engine::VisitorContext::UNKNOWN_FILE_PATH, reporter.diagnostics.first.template
+        assert_equal Herb::Visitor::Context::UNKNOWN_FILE_PATH, reporter.diagnostics.first.template
       end
 
       test "marks what it finds as found at compile time" do

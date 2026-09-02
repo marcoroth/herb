@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0025_parks nothing at all unless the mode asks for it"
+input: "rendered with no delivery asked for"
+---
+<!--herb-region:app/views/test.html.erb:5c690a9b:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

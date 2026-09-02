@@ -18,12 +18,12 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rolldown -c",
-    "watch": "tsc -b -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n\u2717 Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
-    "typecheck": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.test.json && tsc -p tsconfig.browser-test.json",
     "prepublishOnly": "yarn check:rule-versions && yarn clean && yarn build && yarn test"
   },
   "exports": {
@@ -37,8 +37,13 @@
     "./cli": {
       "types": "./dist/types/cli.d.ts",
       "import": "./dist/cli.js",
-      "require": "./dist/cli.js",
+      "require": "./dist/cli.cjs",
       "default": "./dist/cli.js"
+    },
+    "./browser": {
+      "types": "./dist/types/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "default": "./dist/browser/index.js"
     },
     "./loader": {
       "types": "./dist/types/loader.d.ts",
@@ -57,9 +62,9 @@
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "@ruby/prism": "^1.9.0",
-    "picomatch": "^4.0.5",
+    "picomatch": "^4.0.7",
     "postcss": "^8.5.26",
-    "postcss-selector-parser": "^6.1.2",
+    "postcss-selector-parser": "^7.1.5",
     "tinyglobby": "^0.2.15"
   },
   "files": [

@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0004_paths that would repeat too much of the template"
+input: "{source: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<% if flag %>1<% elsif other %>2<% elsif third %>3<% elsif fourth %>4<% elsif fifth %>5<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.freeze; if flag; _buf << '1'.freeze; elsif other; _buf << '2'.freeze; elsif third; _buf << '3'.freeze; elsif fourth; _buf << '4'.freeze; elsif fifth; _buf << '5'.freeze; end;
+_buf.to_s

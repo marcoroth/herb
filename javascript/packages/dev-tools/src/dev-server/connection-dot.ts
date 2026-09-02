@@ -1,9 +1,23 @@
-import type { HerbClient } from "./client"
 import { colors } from "./colors"
+
+import type { HerbClient } from "./client"
+
+const CONNECTING_HOLD = 1000
+
+type UpdatePanelOptions = {
+  dotColor: string
+  statusText: string
+  statusColor: string
+  retryVisible: boolean
+  retryHandler?: (e: MouseEvent) => void
+  keepStatusWhileRetrying?: boolean
+}
 
 export class ConnectionDot {
   private client: HerbClient
   private reconnectCountdown: ReturnType<typeof setInterval> | null = null
+  private countdownHold: ReturnType<typeof setTimeout> | null = null
+  private connectingSince: number | null = null
 
   constructor(client: HerbClient) {
     this.client = client
@@ -12,25 +26,36 @@ export class ConnectionDot {
   apply(): void {
     if (this.reconnectCountdown) {
       clearInterval(this.reconnectCountdown)
+
       this.reconnectCountdown = null
     }
 
-    const dot = document.getElementById("herbConnectionDot")
-    if (!dot) return
+    if (this.countdownHold) {
+      clearTimeout(this.countdownHold)
 
-    const panelDot = document.getElementById("herbDevServerDot")
-    const panelStatus = document.getElementById("herbDevServerStatus")
-    const panelRetry = document.getElementById("herbDevServerRetry") as HTMLButtonElement | null
-    const retryHandler = (e: MouseEvent) => { e.stopPropagation(); this.client.retry() }
+      this.countdownHold = null
+    }
+
+    const dot = document.getElementById("herbConnectionDot")
+    const panelDot = this.all("[data-herb-dev-server-dot]")
+    const panelStatus = this.all("[data-herb-dev-server-status]")
+    const panelRetry = this.all<HTMLButtonElement>("[data-herb-dev-server-retry]")
+
+    if (!dot && panelDot.length === 0 && panelStatus.length === 0) {
+      return
+    }
+
+    const retryHandler = (event: MouseEvent) => {
+      event.stopPropagation()
+
+      this.client.retry()
+    }
 
     const state = this.client.getState()
 
     switch (state) {
-      case "connected":
-        this.setDotStyle(dot, colors.green, true, true)
-        dot.style.cursor = "default"
-        dot.title = "Connected to herb dev server"
-        dot.onclick = null
+      case "connected": {
+        this.applyBadge(dot, colors.green, "Connected to herb dev server", true, true, "default", null)
 
         this.updatePanel(panelDot, panelStatus, panelRetry, {
           dotColor: colors.green,
@@ -40,12 +65,10 @@ export class ConnectionDot {
         })
 
         break
+      }
 
-      case "disconnected":
-        this.setDotStyle(dot, colors.red, false, false)
-        dot.style.cursor = "default"
-        dot.title = "Disconnected from herb dev server"
-        dot.onclick = null
+      case "disconnected": {
+        this.applyBadge(dot, colors.red, "Disconnected from herb dev server", false, false, "default", null)
 
         this.updatePanel(panelDot, panelStatus, panelRetry, {
           dotColor: colors.red,
@@ -53,15 +76,14 @@ export class ConnectionDot {
           statusColor: colors.gray,
           retryVisible: true,
           retryHandler,
+          keepStatusWhileRetrying: true,
         })
 
         break
+      }
 
-      case "given-up":
-        this.setDotStyle(dot, colors.amber, false, false)
-        dot.style.cursor = "pointer"
-        dot.title = "Connection to herb dev server failed — click to retry"
-        dot.onclick = retryHandler
+      case "given-up": {
+        this.applyBadge(dot, colors.amber, "Connection to herb dev server failed — click to retry", false, false, "pointer", retryHandler)
 
         this.updatePanel(panelDot, panelStatus, panelRetry, {
           dotColor: colors.amber,
@@ -72,64 +94,114 @@ export class ConnectionDot {
         })
 
         break
+      }
     }
   }
 
   updateReconnectCountdown(attempt: number, maxAttempts: number, delay: number): void {
-    const panelStatus = document.getElementById("herbDevServerStatus")
-    if (!panelStatus) return
+    const panelStatus = this.all("[data-herb-dev-server-status]")
+
+    if (panelStatus.length === 0) {
+      return
+    }
 
     if (this.reconnectCountdown) {
       clearInterval(this.reconnectCountdown)
+
       this.reconnectCountdown = null
     }
 
-    let remaining = Math.ceil(delay / 1000)
-    panelStatus.textContent = `Retry ${attempt}/${maxAttempts} in ${remaining}s`
-    panelStatus.style.color = colors.gray
+    if (this.countdownHold) {
+      clearTimeout(this.countdownHold)
 
-    this.reconnectCountdown = setInterval(() => {
-      remaining--
+      this.countdownHold = null
+    }
 
-      if (remaining <= 0) {
+    const deadline = Date.now() + delay
+    let announced = false
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+
+      if (remaining === 0) {
         if (this.reconnectCountdown) {
           clearInterval(this.reconnectCountdown)
           this.reconnectCountdown = null
         }
 
-        panelStatus.textContent = `Retry ${attempt}/${maxAttempts} connecting...`
+        if (!announced) {
+          announced = true
+          this.connectingSince = Date.now()
+        }
+
+        this.write(panelStatus, `Retrying... (${attempt}/${maxAttempts})`, colors.gray)
 
         return
       }
 
-      panelStatus.textContent = `Retry ${attempt}/${maxAttempts} in ${remaining}s`
-    }, 1000)
+      this.write(panelStatus, `Retrying in ${remaining}s (${attempt}/${maxAttempts})`, colors.gray)
+    }
+
+    const begin = () => {
+      this.countdownHold = null
+
+      tick()
+
+      this.reconnectCountdown = setInterval(tick, 200)
+    }
+
+    const held = (this.connectingSince === null) ? 0 : Math.max(0, CONNECTING_HOLD - (Date.now() - this.connectingSince))
+
+    if (held === 0) {
+      begin()
+    } else {
+      this.countdownHold = setTimeout(begin, held)
+    }
   }
 
-  private updatePanel(
-    panelDot: HTMLElement | null,
-    panelStatus: HTMLElement | null,
-    panelRetry: HTMLButtonElement | null,
-    options: {
-      dotColor: string
-      statusText: string
-      statusColor: string
-      retryVisible: boolean
-      retryHandler?: (e: MouseEvent) => void
-    }
-  ): void {
-    if (panelDot) this.setDotStyle(panelDot, options.dotColor, false, false)
+  private all<T extends Element = HTMLElement>(selector: string): T[] {
+    return Array.from(document.querySelectorAll<T>(selector))
+  }
 
-    if (panelStatus) {
-      panelStatus.textContent = options.statusText
-      panelStatus.style.color = options.statusColor
+  private get holdingConnecting(): boolean {
+    return this.connectingSince !== null && Date.now() - this.connectingSince < CONNECTING_HOLD
+  }
+
+  private write(elements: HTMLElement[], text: string, color: string): void {
+    for (const element of elements) {
+      element.textContent = text
+      element.style.color = color
+    }
+  }
+
+  private applyBadge(dot: HTMLElement | null, color: string, title: string, glow: boolean, pulse: boolean, cursor: string, handler: ((e: MouseEvent) => void) | null): void {
+    if (!dot) return
+
+    this.setDotStyle(dot, color, glow, pulse)
+
+    dot.style.cursor = cursor
+    dot.title = title
+    dot.onclick = handler
+  }
+
+  private updatePanel(panelDot: HTMLElement[], panelStatus: HTMLElement[], panelRetry: HTMLButtonElement[], options: UpdatePanelOptions): void {
+    for (const element of panelDot) {
+      this.setDotStyle(element, options.dotColor, false, false)
     }
 
-    if (panelRetry) {
-      panelRetry.style.display = options.retryVisible ? "block" : "none"
+    if (!(options.keepStatusWhileRetrying && this.holdingConnecting)) {
+      this.write(panelStatus, options.statusText, options.statusColor)
+    }
+
+    for (const element of panelStatus) {
+      element.parentElement?.setAttribute("data-herb-dev-tools-tip", options.statusText)
+    }
+
+    for (const element of panelRetry) {
+      element.style.display = options.retryVisible ? "block" : "none"
 
       if (options.retryHandler) {
-        panelRetry.onclick = options.retryHandler
+        element.onclick = options.retryHandler
       }
     }
   }

@@ -1,3 +1,8 @@
+import { createRequire } from "module"
+
+const { dependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = Object.keys(dependencies ?? {})
+
 export default {
   input: "src/index.ts",
   output: [
@@ -12,6 +17,6 @@ export default {
       sourcemap: true,
     }
   ],
-  external: [/@ruby\/prism/],
+  external: (id) => runtimeDependencies.some((pkg) => id === pkg || id.startsWith(pkg + "/")),
   platform: "node",
 }

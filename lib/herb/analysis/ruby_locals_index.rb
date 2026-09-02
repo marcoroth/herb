@@ -18,7 +18,7 @@ module Herb
 
       #: (String) -> RubyLocalsIndex
       def self.from_source(source)
-        document = ::Herb.parse(source, prism_program: true, strict_locals: true).value
+        document = ::Herb.parse(source, prism_program: true, strict_locals: true, herb_directives: true).value
 
         from_document(document, source)
       end

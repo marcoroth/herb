@@ -47,6 +47,7 @@ export class Project {
 
   private readonly connection: Connection
   private readonly userSettings: UserSettings
+  private readonly parserService: ParserService
 
   constructor(connection: Connection, root: string, shared: SharedServices) {
     const { userSettings, capabilities } = shared
@@ -55,6 +56,7 @@ export class Project {
     this.userSettings = userSettings
     this.root = root
     this.herbBackend = Herb
+    this.parserService = shared.parserService
 
     this.configService = new ConfigService(root)
     this.index = new ProjectIndex({ root, backend: this.herbBackend, logger: connection.console })
@@ -101,6 +103,7 @@ export class Project {
     this.linterService.setConfig(this.config)
     this.completionProvider.setConfig(this.config)
     this.referencesProvider.setConfig(this.config)
+    this.parserService.setConfig(this.config)
 
     this.linterService.rebuildLinter()
   }

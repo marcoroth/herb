@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
-require_relative "../../lib/herb/engine/dynamics_compiler"
+require_relative "../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   class DynamicsCompilerTest < Minitest::Spec
@@ -13,7 +13,7 @@ module Engine
       def form_with(**) = "<form>#{yield(Field.new)}</form>"
 
       def render(*)
-        source = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
+        source = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
 
         View.new(inner: "inner").instance_eval(source)
       end
@@ -30,10 +30,10 @@ module Engine
     end
 
     CONDITIONAL = "<% if @admin %><b><%= @secret %></b><% else %><%= @public %><% end %>"
-    PARTIAL_VERSION = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
+    PARTIAL_VERSION = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
 
     def payload(source, **assigns)
-      compiled = Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
 
       View.new(**assigns).instance_eval(compiled)
     end
@@ -164,49 +164,49 @@ module Engine
     describe "collections" do
       test "groups by item rather than by slot" do
         users = [View::User.new("Marco", "Roth"), View::User.new("Joe", "Doe")]
-        source = "<% @users.each do |u| %><li><%= u.firstname %> <%= u.lastname %></li><% end %>"
+        source = %(<% @users.each do |u| %><li id="<%= u.firstname %>"><%= u.lastname %></li><% end %>)
 
-        assert_equal({ 0 => { items: { "1" => { 1 => "Marco", 2 => "Roth" }, "2" => { 1 => "Joe", 2 => "Doe" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "Marco" => { 1 => "Marco", 2 => "Roth" }, "Joe" => { 1 => "Joe", 2 => "Doe" } }, order: ["Marco", "Joe"] } }, dynamics(source, users: users))
       end
 
       test "reports a collection that rendered no items" do
-        assert_equal({ 0 => { items: {} } }, dynamics("<% @users.each do |u| %><%= u %><% end %>", users: []))
+        assert_equal({ 0 => { items: {}, order: [] } }, dynamics(%(<% @users.each do |u| %><li id="<%= u %>"><%= u %></li><% end %>), users: []))
       end
 
       test "keeps the items of a nested collection inside the item that produced them" do
-        source = "<% @items.each do |r| %><% r.each do |c| %><%= c %><% end %><% end %>"
+        source = %(<% @items.each do |r| %><ul id="<%= r.first %>"><% r.each do |c| %><li id="<%= c %>"><%= c %></li><% end %></ul><% end %>)
 
-        assert_equal({ 0 => { items: { "1" => { 1 => { items: { "1" => { 2 => "1" }, "2" => { 2 => "2" } } } }, "2" => { 1 => { items: { "1" => { 2 => "3" } } } } } } }, dynamics(source, items: [[1, 2], [3]]))
+        assert_equal({ 0 => { items: { "1" => { 1 => "1", 2 => { items: { "1" => { 3 => "1", 4 => "1" }, "2" => { 3 => "2", 4 => "2" } }, order: ["1", "2"] } }, "3" => { 1 => "3", 2 => { items: { "3" => { 3 => "3", 4 => "3" } }, order: ["3"] } } }, order: ["1", "3"] } }, dynamics(source, items: [[1, 2], [3]]))
       end
 
       test "nests a conditional inside the item it ran in" do
-        source = "<% @xs.each do |x| %><% if x %><%= x %><% end %><% end %>"
+        source = %(<% @xs.each_with_index do |x, i| %><li id="<%= i %>"><% if x %><%= x %><% end %></li><% end %>)
 
-        assert_equal({ 0 => { items: { "1" => { 1 => { branch: 0, slots: { 2 => "a" } } }, "2" => { 1 => { branch: nil } } } } }, dynamics(source, xs: ["a", nil]))
+        assert_equal({ 0 => { items: { "0" => { 1 => "0", 2 => { branch: 0, slots: { 3 => "a" } } }, "1" => { 1 => "1", 2 => { branch: nil } } }, order: ["0", "1"] } }, dynamics(source, xs: ["a", nil]))
       end
 
       test "nests a collection inside the branch it ran in" do
-        source = "<% if @on %><% @xs.each do |x| %><%= x %><% end %><% end %>"
+        source = %(<% if @on %><% @xs.each do |x| %><li id="<%= x %>"><%= x %></li><% end %><% end %>)
 
-        assert_equal({ 0 => { branch: 0, slots: { 1 => { items: { "1" => { 2 => "a" }, "2" => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
+        assert_equal({ 0 => { branch: 0, slots: { 1 => { items: { "a" => { 2 => "a", 3 => "a" }, "b" => { 2 => "b", 3 => "b" } }, order: ["a", "b"] } } } }, dynamics(source, on: true, xs: ["a", "b"]))
       end
 
       test "keys items by the key the template declared" do
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
         source = %(<% @users.each do |u| %><li id="<%= u.firstname %>"><%= u.lastname %></li><% end %>)
 
-        assert_equal({ 0 => { items: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } }, order: ["Ada", "Grace"] } }, dynamics(source, users: users))
       end
 
-      test "keys items by position when the template declares no key" do
+      test "reports an unkeyed collection as holding nothing addressable" do
         source = %(<% @users.each do |u| %><%= u.firstname %><% end %>)
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
 
-        assert_equal({ 0 => { items: { "1" => { 1 => "Ada" }, "2" => { 1 => "Grace" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: {}, order: [] } }, dynamics(source, users: users))
       end
 
       test "treats a for loop as a collection" do
-        assert_equal({ 0 => { items: { "1" => { 1 => "a" }, "2" => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
+        assert_equal({ 0 => { items: {}, order: [] } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
       end
     end
 
@@ -280,19 +280,19 @@ module Engine
 
     describe "what it compiles to" do
       test "collects into a Hash rather than a String" do
-        assert_includes Herb::Engine::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
+        assert_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
       end
 
       test "names its buffers so a template's own locals cannot collide" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %>)
-        compiled = Herb::Engine::DynamicsCompiler.new(source).src
+        compiled = Herb::Engine::Slots::DynamicsCompiler.new(source).src
 
         assert_includes compiled, "__herb_block1"
         refute_includes compiled, "_buf"
       end
 
       test "leaves the static markup out" do
-        refute_includes Herb::Engine::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+        refute_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "hello"
       end
     end
   end

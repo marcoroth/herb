@@ -155,7 +155,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
     const content = (node.content?.value ?? "").trim()
 
     this.addOffense(
-      `\`${tag} ${content} %>\` assigns the state \`${assigned[0]}\`, and the client never sees a server-side write. Seed the initial value in the declaration, derive it from other states, count items with \`${assigned[0]} += 1\` behind a state condition in a keyed loop, or write it at runtime with \`data-herb-set\` or \`state.set\`.`,
+      `\`${tag} ${content} %>\` assigns the state \`${assigned[0]}\`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered. Seed the initial value in the declaration, derive it from other states, count items with \`${assigned[0]} += 1\` behind a state condition in a keyed loop, or write it at runtime with \`data-herb-set\` or \`state.set\`.`,
       node.location,
     )
   }
@@ -169,7 +169,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 
         if (read.order < foldOrder) {
           this.addOffense(
-            `\`${fold.name}\` is read before its count is complete. The server renders this read mid-count and the client cannot keep it current here, so move it after the loop.`,
+            `\`${fold.name}\` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current. Move the read below the loop that counts \`${fold.name}\`.`,
             read.location,
           )
 
@@ -178,7 +178,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 
         if (read.blocks.includes(fold.block)) {
           this.addOffense(
-            `\`${fold.name}\` is read inside the loop that counts it. The count is complete only after the loop, so move this read below it.`,
+            `\`${fold.name}\` is read inside the loop that counts it. The count is complete only after the loop. Move the read below the loop.`,
             read.location,
           )
         }
@@ -196,7 +196,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 
     if (!region) {
       this.addOffense(
-        `\`${spelled}\` counts into \`${fold.name}\`, which is an item state. A count lives once per region, so declare \`${fold.name}\` at the top of the template.`,
+        `\`${spelled}\` counts into \`${fold.name}\`, which is an item state. A count lives once per region, not once per item. Declare \`${fold.name}\` at the top of the template, outside the loop.`,
         fold.assignment.location,
       )
 
@@ -205,7 +205,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 
     if (isDerived(region)) {
       this.addOffense(
-        `\`${spelled}\` counts into \`${fold.name}\`, which is derived from \`${region.defaultSource}\`. A state is either derived or counted, so drop one of the two.`,
+        `\`${spelled}\` counts into \`${fold.name}\`, which is derived from \`${region.defaultSource}\`. A state is either derived or counted, never both. Drop the derivation from \`${fold.name}\`, or count into a second state.`,
         fold.assignment.location,
       )
 
@@ -216,7 +216,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 
     if (kind !== "integer") {
       this.addOffense(
-        `\`${spelled}\` counts into the ${kind.charAt(0).toUpperCase() + kind.slice(1)} state \`${fold.name}\`. A count is a number, so declare it as an Integer, like \`(${fold.name}: 0)\`.`,
+        `\`${spelled}\` counts into the ${kind.charAt(0).toUpperCase() + kind.slice(1)} state \`${fold.name}\`. A count is a number. Declare \`${fold.name}\` as an Integer, like \`(${fold.name}: 0)\`.`,
         fold.assignment.location,
       )
 
@@ -225,7 +225,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 
     if (this.folds.some((other) => other !== fold && other.name === fold.name && (this.foldOrders.get(other) ?? Infinity) < (this.foldOrders.get(fold) ?? 0))) {
       this.addOffense(
-        `\`${fold.name}\` is counted twice. One state holds one count, so declare a second state for the second count.`,
+        `\`${fold.name}\` is counted twice. One state holds one count. Declare a second state for the second count.`,
         fold.assignment.location,
       )
     }

@@ -3,10 +3,10 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/inline_render_visitor"
+require_relative "../../../lib/herb/engine/inline_render/visitor"
 require_relative "../../../lib/herb/engine/scoped_style/visitor"
-require_relative "../../../lib/herb/engine/slot_visitor"
-require_relative "../../../lib/herb/engine/report/middleware"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/runtime/middleware"
 
 module Engine
   class ScopedStyleVisitorTest < Minitest::Spec
@@ -15,7 +15,7 @@ module Engine
     PROJECT_PATH = "test/fixtures/scoped_styles"
     TEMPLATE = "app/views/posts/index.html.erb"
     CARD = "app/views/posts/_card.html.erb"
-    SESSION = Herb::Engine::Report::Session
+    SESSION = Herb::Engine::Runtime::Session
 
     class Transform
       attr_reader :calls #: Array[Array[untyped]]
@@ -51,6 +51,35 @@ module Engine
       end
     end
 
+    class Narrowing
+      def call(css, scope:)
+        css.gsub(/([^{}]+)\{([^{}]*)\}/) { "#{Regexp.last_match(1).strip}#{scope}{#{Regexp.last_match(2).strip}}" }
+      end
+    end
+
+    class Recording
+      attr_reader :calls #: Array[Array[untyped]]
+
+      def initialize(answer: "inlined")
+        @answer = answer
+        @calls = []
+      end
+
+      def call(html, keep: false)
+        @calls << [html, keep]
+
+        @answer
+      end
+    end
+
+    class Untransformable < Herb::Engine::ScopedStyle::Visitor
+      private
+
+      def require(*)
+        raise LoadError, "cannot load such file -- lightningcss"
+      end
+    end
+
     def options(transform: Transform.new, filename: TEMPLATE, visitors: [], deliver: :inline, **overrides)
       visitor = Herb::Engine::ScopedStyle::Visitor.new(transform: transform, deliver: deliver)
 
@@ -77,20 +106,20 @@ module Engine
 
       scope = visitor.styles.keys.first
 
-      assert_equal [[".title { color: red; }", ":where([#{scope}], [#{scope}] *)"]], transform.calls
+      assert_equal [[".title { color: red; }", "[#{scope}]"]], transform.calls
     end
 
-    test "takes the scoped attribute back out with the space that separated it" do
+    test "swaps the scoped attribute for the anchor that says what it narrowed to" do
       assert_compiled_snapshot(%(<style scoped>.a { color: red; }</style><h1>Hi</h1>), options)
     end
 
-    test "puts the attribute on the roots alone when a file renders nothing" do
+    test "puts the attribute on every element the file wrote" do
       source = %(<style scoped>.a { color: red; }</style>\n<div class="card"><h1 class="title">Hi</h1></div>)
 
       assert_compiled_snapshot(source, options)
     end
 
-    test "puts the attribute on every element when a file renders something" do
+    test "puts it on every element it wrote and none it rendered" do
       source = %(<style scoped>.a { color: red; }</style>\n<div class="card"><h1 class="title">Hi</h1><%= render "posts/plain" %></div>)
 
       assert_compiled_snapshot(source, options(project_path: PROJECT_PATH))
@@ -139,11 +168,12 @@ module Engine
       assert_empty visitor.styles
     end
 
-    test "leaves a block alone when it was given no transform to narrow it with" do
-      _, visitor = compile(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), transform: nil)
+    test "narrows with Lightning CSS when it was given no transform of its own" do
+      _, visitor = compile(%(<style scoped>.title { color: red; }</style><h1 class="title">Hi</h1>), transform: nil)
 
-      assert_equal ["scoped-style-without-a-transform"], visitor.diagnostics.map(&:code)
-      assert_empty visitor.styles
+      assert_empty visitor.diagnostics
+      assert_equal 1, visitor.styles.length
+      assert_includes visitor.styles.values.first, "[data-herb-scope-"
     end
 
     test "refuses a template compiled without a path, because a scope would not be stable" do
@@ -170,13 +200,13 @@ module Engine
     test "gives markup an inlined partial brought with it the partial's own scope" do
       source = %(<style scoped>.page { padding: 1rem; }</style><section class="page"><%= render "posts/card" %></section>)
 
-      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRenderVisitor.new], project_path: PROJECT_PATH))
+      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH))
     end
 
     test "leaves a partial that has no scoped block of its own unattributed" do
       source = %(<style scoped>.page { padding: 1rem; }</style><section class="page"><%= render "posts/plain" %></section>)
 
-      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRenderVisitor.new], project_path: PROJECT_PATH))
+      assert_compiled_snapshot(source, options(visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH))
     end
 
     test "attributes an element a helper produced, when the parser was told about helpers" do
@@ -211,7 +241,7 @@ module Engine
 
       assert_compiled_snapshot(
         source,
-        options(visitors: [Herb::Engine::SlotVisitor.new(mode: :client)], project_path: PROJECT_PATH)
+        options(visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], project_path: PROJECT_PATH)
       )
     end
 
@@ -262,7 +292,7 @@ module Engine
           [200, { "content-type" => "text/html" }, [body]]
         }
 
-        _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
+        _, _, response = Herb::Engine::Runtime::Middleware.new(app).call({})
 
         assert_equal 1, response.first.scan("<style").length
         assert_equal 5, response.first.scan("<h1").length
@@ -271,7 +301,7 @@ module Engine
       test "puts nothing on a page that registered nothing" do
         app = ->(_env) { [200, { "content-type" => "text/html" }, ["<html><head></head><body></body></html>"]] }
 
-        _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
+        _, _, response = Herb::Engine::Runtime::Middleware.new(app).call({})
 
         assert_equal "<html><head></head><body></body></html>", response.first
       end
@@ -283,7 +313,7 @@ module Engine
           [200, { "content-type" => "text/html" }, ["<div>#{eval(compiled)}</div>"]]
         }
 
-        _, _, response = Herb::Engine::Report::Middleware.new(app).call({})
+        _, _, response = Herb::Engine::Runtime::Middleware.new(app).call({})
 
         assert_equal 0, response.first.scan("<style").length
       end
@@ -328,6 +358,40 @@ module Engine
       output = `#{Gem.ruby} #{load_path} -e 'require "herb"; print defined?(Herb::Engine::ScopedStyle::Visitor).inspect' 2>&1`
 
       assert_equal "nil", output
+    end
+    test "leaves a block alone when there is no transform to narrow it with" do
+      visitor = Untransformable.new
+      Herb::Engine.new(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), filename: TEMPLATE, escape: false, visitors: [visitor])
+
+      assert_equal ["scoped-style-without-a-transform"], visitor.diagnostics.map(&:code)
+      assert_empty visitor.styles
+    end
+
+    test "says why there is no transform, so that a broken install is not read as a missing one" do
+      visitor = Untransformable.new
+      Herb::Engine.new(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), filename: TEMPLATE, escape: false, visitors: [visitor])
+
+      assert_includes visitor.diagnostics.first.message, "cannot load such file -- lightningcss"
+    end
+
+    test "files what it found in an inlined partial under the partial, not the file it landed in" do
+      source = %(<h1>Page</h1><%= render "posts/dynamic" %>)
+      _, visitor = compile(source, visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH)
+
+      diagnostic = visitor.diagnostics.find { |found| found.code == "scoped-style-built-with-erb" }
+
+      refute_nil diagnostic
+      assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
+    end
+    test "keeps that file when the diagnostic is carried into the compiled template and rendered" do
+      source = %(<h1>Page</h1><%= render "posts/dynamic" %>)
+      compiled, = compile(source, visitors: [Herb::Engine::InlineRender::Visitor.new], project_path: PROJECT_PATH)
+
+      session = Herb::Engine::Runtime::Session.capture { eval(compiled) }
+      diagnostic = session.report.diagnostics.find { |found| found.code == "scoped-style-built-with-erb" }
+
+      refute_nil diagnostic
+      assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
     end
   end
 end

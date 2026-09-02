@@ -161,7 +161,7 @@ class EngineVisitorsTest < Minitest::Spec
   end
 
   class ContextCapturingVisitor < Herb::Visitor
-    include Herb::Engine::ContextAware
+    include Herb::Visitor::ContextAware
 
     attr_reader :seen
 
@@ -207,7 +207,7 @@ class EngineVisitorsTest < Minitest::Spec
 
   test "an explicitly set context is not overwritten by the engine" do
     visitor = ContextCapturingVisitor.new
-    visitor.context = Herb::Engine::VisitorContext.new(file_path: "explicit.html.erb")
+    visitor.context = Herb::Visitor::Context.new(file_path: "explicit.html.erb")
 
     Herb::Engine.new("<div>Hi</div>", filename: "engine.html.erb", visitors: [visitor])
 

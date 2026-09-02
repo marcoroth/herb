@@ -133,5 +133,17 @@ module Engine
 
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "a tag whose content is only comments keeps every line" do
+      template = "<%\n  # a\n  # b\n%>\n<%= x %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a multi-line comment closed with content after it keeps the following line" do
+      template = "<%#-- a\nb\nc\n--#%><div>hi</div>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

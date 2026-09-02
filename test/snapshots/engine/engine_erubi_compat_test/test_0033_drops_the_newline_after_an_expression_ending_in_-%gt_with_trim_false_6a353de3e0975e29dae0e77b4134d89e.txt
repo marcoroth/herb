@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0033_drops the newline after an expression ending in -%> with trim: false"
+input: "{source: \"<%= a -%>\\ntext\\n\", options: {trim: false}}"
+---
+_buf = ::String.new; _buf << (a).to_s; _buf << 'text
+'.freeze;
+_buf.to_s

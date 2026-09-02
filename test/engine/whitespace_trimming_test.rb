@@ -442,5 +442,41 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "trim: false keeps the whitespace around <%- and -%> code tags" do
+      template = <<~ERB
+        <%- if true -%>
+          <h1>Content</h1>
+        <%- end -%>
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "trim: false keeps the newline after the end of a block expression" do
+      template = <<~ERB
+        <%= wrapper do %>
+          <p>hi</p>
+        <% end %>
+        after
+      ERB
+
+      engine = assert_compiled_snapshot(template, trim: false)
+
+      assert_includes engine.src, "'\nafter\n'"
+    end
+
+    test "a multi-line control tag keeps the line its code starts on" do
+      template = "<%\n  if true %>\n<%= \"text\" %>\n<% end %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a block tag closed on its own line keeps the blank line after it" do
+      template = "<% a = 1 %>\n\n<% provide :t do %><%= x %><% end %>\n\n<% b = 2 %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

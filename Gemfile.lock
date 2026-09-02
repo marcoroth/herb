@@ -109,6 +109,12 @@ GEM
     cruise (0.2.0-x86_64-darwin)
     cruise (0.2.0-x86_64-linux-gnu)
     cruise (0.2.0-x86_64-linux-musl)
+    css_inline (0.21.3-aarch64-linux)
+    css_inline (0.21.3-aarch64-linux-musl)
+    css_inline (0.21.3-arm64-darwin)
+    css_inline (0.21.3-x86_64-darwin)
+    css_inline (0.21.3-x86_64-linux)
+    css_inline (0.21.3-x86_64-linux-musl)
     csv (3.3.5)
     date (3.5.1)
     difftastic (0.8.0-aarch64-linux)
@@ -277,11 +283,11 @@ GEM
       prism (~> 1.7)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sorbet (0.6.13428)
-      sorbet-static (= 0.6.13428)
-    sorbet-static (0.6.13428-aarch64-linux)
-    sorbet-static (0.6.13428-universal-darwin)
-    sorbet-static (0.6.13428-x86_64-linux)
+    sorbet (0.6.13444)
+      sorbet-static (= 0.6.13444)
+    sorbet-static (0.6.13444-aarch64-linux)
+    sorbet-static (0.6.13444-universal-darwin)
+    sorbet-static (0.6.13444-x86_64-linux)
     stringio (3.2.0)
     strscan (3.1.7)
     terminal-table (4.0.0)
@@ -298,6 +304,7 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
+    webrick (1.9.2)
     yerba (0.9.0-aarch64-linux-gnu)
     yerba (0.9.0-aarch64-linux-musl)
     yerba (0.9.0-arm64-darwin)
@@ -322,6 +329,7 @@ DEPENDENCIES
   benchmark
   charm
   cruise
+  css_inline (~> 0.21)
   digest (~> 3.2)
   erubi
   herb!
@@ -343,6 +351,7 @@ DEPENDENCIES
   sorbet
   steep!
   turbo-rails (~> 2.0)
+  webrick (~> 1.9)
   yerba (~> 0.9)
 
 BUNDLED WITH

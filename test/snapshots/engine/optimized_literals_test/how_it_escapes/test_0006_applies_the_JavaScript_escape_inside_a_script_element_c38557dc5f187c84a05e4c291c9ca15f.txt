@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::how it escapes#test_0006_applies the JavaScript escape inside a script element"
+input: "{source: \"<script>let text = \\\"<%= \\\"line\\\\nbreak\\\" %>\\\";</script>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<script>let text = "line\\nbreak";</script>'.freeze

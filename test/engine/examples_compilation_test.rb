@@ -7,6 +7,10 @@ module Engine
   class ExamplesCompilationTest < Minitest::Spec
     include SnapshotUtils
 
+    EXAMPLE_PARSER_OPTIONS = {
+      "graphql" => { erb_openers: ["graphql"] },
+    }.freeze
+
     examples_dir = File.expand_path("../../examples", __dir__)
     example_files = Dir.glob(File.join(examples_dir, "*.html.erb"))
 
@@ -18,7 +22,11 @@ module Engine
 
       test test_name do
         template = File.read(file_path)
-        assert_compiled_snapshot(template, escape: false)
+        options = { escape: false }
+        parser_options = EXAMPLE_PARSER_OPTIONS[basename]
+        options[:parser_options] = parser_options if parser_options
+
+        assert_compiled_snapshot(template, options)
       end
     end
   end

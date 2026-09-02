@@ -32,7 +32,7 @@ export class Formatter {
    * Creates a Formatter instance from a Config object (recommended).
    *
    * @param herb - The Herb backend instance for parsing
-   * @param config - Optional Config instance for formatter options
+   * @param config - Optional Config instance for formatter and parser options
    * @param options - Additional options to override config
    * @returns A configured Formatter instance
    */
@@ -51,7 +51,7 @@ export class Formatter {
       postRewriters: options.postRewriters,
     }
 
-    return new Formatter(herb, mergedOptions)
+    return new Formatter(herb, mergedOptions, config?.parserOptions ?? {})
   }
 
   /**

@@ -257,7 +257,13 @@ module Engine
         engine.send(:ensure_valid_ruby!, "def foo(")
       end
 
-      assert_match(/Compiled template produced invalid Ruby/, error.message)
+      assert_equal <<~MESSAGE.chomp, error.message
+        Compiled template produced invalid Ruby:
+          - unexpected end-of-input; expected a `)` to close the parameters (line 1)
+          - unexpected end-of-input, assuming it is closing the parent top level context (line 1)
+          - expected an `end` to close the `def` statement (line 1)
+      MESSAGE
+
       assert error.compiled_source
     end
 
@@ -336,6 +342,18 @@ module Engine
 
     test "compilation with parser_options strict false" do
       assert_compiled_snapshot("<div>Hello</div>", parser_options: { strict: false })
+    end
+
+    test "heredoc closed before the end of an output tag keeps the following line" do
+      template = "<%= part(\n  y: [<<-D]\n    text\n  D\n) %>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "heredoc ending an output tag keeps the following line" do
+      template = "<p><%= <<~TEXT\n  hello\nTEXT\n%></p>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
     end
   end
 end

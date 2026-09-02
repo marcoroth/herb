@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0003_a void element"
+input: "{source: \"<img src=\\\"a.png\\\">\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<img src="a.png" data-herb-source="app/views/posts/_card.html.erb:1:1">

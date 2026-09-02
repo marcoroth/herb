@@ -525,6 +525,70 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn default_rule_severity_returns_none_when_all_is_not_configured() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    html-tag-name-lowercase:\n      severity: warning\n").default_rule_severity(),
+      None
+    );
+  }
+
+  #[test]
+  fn default_rule_severity_returns_the_all_pseudo_rule_setting() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    all:\n      severity: warning\n").default_rule_severity(),
+      Some(Severity::Warning.into())
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_falls_back_to_the_all_pseudo_rule() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      severity: warning\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Error.into(), LinterMode::Cli),
+      Severity::Warning
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_prefers_the_rule_severity_over_the_all_pseudo_rule() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      severity: warning\n    rule-a:\n      severity: info\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Error.into(), LinterMode::Cli),
+      Severity::Info
+    );
+    assert_eq!(
+      config.get_configured_severity("rule-b", Severity::Error.into(), LinterMode::Cli),
+      Severity::Warning
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_resolves_the_all_pseudo_rule_with_mode() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      severity:\n        editor: hint\n        cli: error\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Warning.into(), LinterMode::Editor),
+      Severity::Hint
+    );
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Warning.into(), LinterMode::Cli),
+      Severity::Error
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_keeps_the_default_when_all_sets_only_enabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Warning.into(), LinterMode::Cli),
+      Severity::Warning
+    );
+  }
+
+  #[test]
   fn is_rule_disabled_returns_true_for_unconfigured_rules_when_all_is_disabled() {
     assert!(config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n").is_rule_disabled("html-img-require-alt"));
   }

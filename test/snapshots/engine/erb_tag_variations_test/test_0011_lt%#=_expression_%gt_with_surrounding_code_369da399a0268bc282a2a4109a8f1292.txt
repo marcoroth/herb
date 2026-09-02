@@ -5,5 +5,5 @@ input: "{source: \"<div>\\n  <%#= render \\\"partial\\\" %>\\n  <p>Visible conte
 _buf = ::String.new; _buf << '<div>
   <p>Visible content</p>
 </div>
-'.freeze;
+'.freeze; 
 _buf.to_s
