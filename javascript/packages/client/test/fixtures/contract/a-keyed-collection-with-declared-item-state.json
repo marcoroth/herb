@@ -132,7 +132,8 @@
           ]
         }
       },
-      "computed": {}
+      "computed": {},
+      "server": {}
     }
   },
   "dependencies": {

@@ -68,7 +68,8 @@
           null
         ]
       },
-      "computed": {}
+      "computed": {},
+      "server": {}
     }
   },
   "dependencies": {
