@@ -1,4 +1,5 @@
 import { attributeValue } from "../markup/fragments"
+import { report as reportDiagnostic } from "../shared/report"
 
 import type { Slots } from "./slots"
 import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, Payload, PayloadSlots, PayloadValue, SeededSlots, Slot, SlotMap, SlotValue, SlotValues } from "../types"
@@ -82,6 +83,8 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
           !("items" in value) &&
           value.slots
         ) {
+          const parked = parkBranchStatics(slots, payload, slot, value as Branched)
+
           if (value.branch === slot.branch) {
             applySlots(slots, payload, owner(slot), value.slots, report, mode)
           } else if (value.branch !== null) {
@@ -89,6 +92,10 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
 
             shown.set(value.branch, { ...(shown.get(value.branch) ?? {}), ...leaves(value.slots) })
             slot.shown = shown
+          }
+
+          if (parked) {
+            slots.announceBranchMaterial(slot)
           }
         }
 
@@ -173,9 +180,31 @@ function applyLeaf(slots: Slots, payload: Payload, slot: Slot, index: number, va
     report.applied += 1
   }
 
+function parkBranchStatics(slots: Slots, payload: Payload, slot: Slot, value: Branched): boolean {
+    if (value.branch === null || !value.statics) {
+      return false
+    }
+
+    slots.holdStatics(
+      { file: payload.template, version: payload.version },
+      { [`${slot.index}:${value.branch}`]: value.statics },
+    )
+
+    return true
+  }
+
 function applyBranch(slots: Slots, payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: ApplyMode): void {
+    parkBranchStatics(slots, payload, slot, value)
+
     if (value.branch !== slot.branch) {
       if (!slots.switchBranch(slot, value.branch, leaves(value.slots))) {
+        reportDiagnostic({
+          template: payload.template,
+          message: `The payload picked branch ${value.branch} of a conditional this page has no material for, so the branch cannot be shown.`,
+          code: "herb-slots-materialize",
+          severity: "warning",
+          suggestion: "Render the page with `herb:slots client` to park every branch, or serve the values from a build that sends the branch statics along.",
+        })
         defer(report, payload, slot.index, "branch")
 
         return
