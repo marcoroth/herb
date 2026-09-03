@@ -7,6 +7,7 @@ import type { RuntimeDiagnostic } from "./types"
 export const SLOTS_MIME_TYPE = "application/vnd.herb.slots+json"
 export const SCHEMA_HEADER = "Herb-Schema"
 export const NODE_PATH_HEADER = "Herb-Node-Path"
+export const BLOCK_HEADER = "Herb-Block"
 export const STATE_HEADER = "Herb-State"
 
 export type SlotsResponse = Payload & { schema?: SchemaEnvelope }
@@ -46,6 +47,7 @@ export interface SlotsRequestOptions {
   format?: string
   schema?: boolean
   nodePath?: number[]
+  block?: number
   state?: Record<string, Record<string, unknown>>
   signal?: AbortSignal
   report?: boolean
@@ -61,6 +63,10 @@ export function slotsHeaders(options: SlotsRequestOptions = {}): Record<string, 
 
   if (options.nodePath) {
     headers[NODE_PATH_HEADER] = options.nodePath.join(",")
+  }
+
+  if (options.block !== undefined) {
+    headers[BLOCK_HEADER] = String(options.block)
   }
 
   if (options.state && Object.keys(options.state).length > 0) {

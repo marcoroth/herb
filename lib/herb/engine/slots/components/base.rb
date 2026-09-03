@@ -50,7 +50,7 @@ module Herb
             end
           end
 
-          TIMING_ATTRIBUTES = ["delay", "hold"].freeze #: Array[String]
+          TIMING_ATTRIBUTES = ["delay", "hold", "poll"].freeze #: Array[String]
 
           private
 

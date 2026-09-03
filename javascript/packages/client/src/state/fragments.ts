@@ -1,5 +1,5 @@
 import { scopeOf } from "./scopes"
-import { hostOf } from "../markup/anchors"
+import { connected, hostOf } from "../markup/anchors"
 
 import type { Slots } from "../slots/slots"
 import type { RefreshReport } from "./refresh"
@@ -22,7 +22,7 @@ export interface FragmentsDelegate {
   manifestFor(region: Region): StateManifest | null
   placedSlots(scope: StateScope, index: number): PlacedSlot[]
   writeInternal(name: string, scope: StateScope): void
-  requestRefetch(): void
+  requestBlock(region: Region, index: number): Promise<RefreshReport>
   resettle(slot: Slot): void
 }
 
@@ -32,6 +32,7 @@ export class Fragments {
   private readonly showing = new Map<Slot, FragmentPresentation>()
   private readonly armed = new Set<Slot>()
   private readonly observers = new Map<Slot, IntersectionObserver>()
+  private readonly polls = new Map<Slot, ReturnType<typeof setTimeout>>()
 
   constructor(slots: Slots, delegate: FragmentsDelegate) {
     this.slots = slots
@@ -120,6 +121,8 @@ export class Fragments {
   }
 
   hydrated(): void {
+    this.sweep()
+
     for (const region of this.slots.regions()) {
       const fragments = this.delegate.manifestFor(region)?.fragments
 
@@ -135,7 +138,7 @@ export class Fragments {
         }
 
         for (const placed of this.delegate.placedSlots(scope, Number(key))) {
-          this.arm(placed.slot, entry, placed.scope)
+          this.arm(placed.slot, Number(key), entry, placed.scope)
         }
       }
     }
@@ -160,6 +163,34 @@ export class Fragments {
 
     this.observers.clear()
     this.armed.clear()
+
+    for (const timer of this.polls.values()) {
+      clearTimeout(timer)
+    }
+
+    this.polls.clear()
+  }
+
+  private sweep(): void {
+    for (const [slot, timer] of this.polls) {
+      if (!connected(slot.anchor)) {
+        clearTimeout(timer)
+        this.polls.delete(slot)
+      }
+    }
+
+    for (const [slot, observer] of this.observers) {
+      if (!connected(slot.anchor)) {
+        observer.disconnect()
+        this.observers.delete(slot)
+      }
+    }
+
+    for (const slot of this.armed) {
+      if (!connected(slot.anchor)) {
+        this.armed.delete(slot)
+      }
+    }
   }
 
   private present(slot: Slot, fragment: FragmentEntry): void {
@@ -188,7 +219,7 @@ export class Fragments {
 
     const delay = fragment.delay ?? FRAGMENT_DELAY
 
-    if (delay <= 0) {
+    if (delay <= 0 || slot.branch === presentation.fallback) {
       this.swapToFallback(slot, presentation)
 
       return
@@ -204,12 +235,16 @@ export class Fragments {
   private swapToFallback(slot: Slot, presentation: FragmentPresentation): void {
     presentation.shownAt = Date.now()
 
+    if (presentation.deferred) {
+      this.slots.claim(slot)
+    }
+
     if (slot.branch !== presentation.fallback) {
       this.slots.switchBranch(slot, presentation.fallback)
     }
   }
 
-  private arm(slot: Slot, entry: FragmentEntry, scope: StateScope): void {
+  private arm(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
     if (this.armed.has(slot)) {
       return
     }
@@ -217,15 +252,13 @@ export class Fragments {
     this.armed.add(slot)
 
     if (slot.branch !== entry.fallback) {
+      this.armPoll(slot, index, entry, scope)
+
       return
     }
 
-    const state = entry.state as string
-
     if (entry.mode === "async" || typeof IntersectionObserver === "undefined") {
-      this.present(slot, entry)
-      this.delegate.writeInternal(state, scope)
-      this.delegate.requestRefetch()
+      this.trigger(slot, index, entry, scope)
 
       return
     }
@@ -233,7 +266,7 @@ export class Fragments {
     const sentinel = this.sentinelFor(slot)
 
     if (!sentinel) {
-      this.delegate.writeInternal(state, scope)
+      this.trigger(slot, index, entry, scope)
 
       return
     }
@@ -245,13 +278,56 @@ export class Fragments {
 
       observer.disconnect()
       this.observers.delete(slot)
-      this.present(slot, entry)
-      this.delegate.writeInternal(state, scope)
-      this.delegate.requestRefetch()
+      this.trigger(slot, index, entry, scope)
     })
 
     observer.observe(sentinel)
     this.observers.set(slot, observer)
+  }
+
+  private trigger(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
+    this.present(slot, entry)
+    this.delegate.writeInternal(entry.state as string, scope)
+
+    void this.delegate.requestBlock(scope.region, index).then((outcome) => {
+      this.settle(outcome)
+      this.armPoll(slot, index, entry, scope)
+    })
+  }
+
+  private armPoll(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
+    const every = entry.poll ?? 0
+
+    if (every <= 0 || this.polls.has(slot)) {
+      return
+    }
+
+    const tick = (): void => {
+      this.polls.set(slot, setTimeout(() => {
+        if (!connected(slot.anchor)) {
+          this.polls.delete(slot)
+          this.armed.delete(slot)
+
+          return
+        }
+
+        if (document.hidden) {
+          tick()
+
+          return
+        }
+
+        void this.delegate.requestBlock(scope.region, index).then((outcome) => {
+          this.settle(outcome)
+
+          if (this.polls.has(slot)) {
+            tick()
+          }
+        })
+      }, every))
+    }
+
+    tick()
   }
 
   private sentinelFor(slot: Slot): Element | null {
