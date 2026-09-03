@@ -42,6 +42,8 @@ module Herb
 
       attr_reader watch_paths: Array[String]
 
+      attr_reader broken_files: Set[String]
+
       # : (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
       def initialize: (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
 
@@ -64,6 +66,9 @@ module Herb
 
       # : (Array[String]) -> Array[String]
       def asset_watch_paths: (Array[String]) -> Array[String]
+
+      # : (String) -> String
+      def relative_for: (String) -> String
 
       # : (Cruise::Event) -> void
       def handle: (Cruise::Event) -> void

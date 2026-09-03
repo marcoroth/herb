@@ -2,12 +2,12 @@ import { DEV_SERVER_ORIGIN } from "../src/dev-server/diagnostics"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { stripAnsiColors } from "@herb-tools/highlighter"
-import { diagnosticsFromError } from "../src/dev-server/diagnostics"
+import { diagnosticsFromError, diagnosticFromBrokenTemplate } from "../src/dev-server/diagnostics"
 
 import { HerbClient } from "../src/dev-server/client"
 import { RuntimePanel } from "../src/runtime/panel"
 
-import type { ErrorMessage } from "../src/dev-server/types"
+import type { ErrorMessage, WelcomeMessage } from "../src/dev-server/types"
 
 let panels: RuntimePanel[] = []
 
@@ -141,6 +141,74 @@ describe("diagnostics from a dev server error", () => {
     message.errors.push({ name: "second", message: "another", line: 9, column: 4 })
 
     expect(diagnosticsFromError(message)).toHaveLength(2)
+  })
+})
+
+describe("templates the server says were already broken", () => {
+  function collectingSink() {
+    const reported: Array<[string, number]> = []
+
+    return {
+      reported,
+      sink: {
+        report: (file: string, diagnostics: unknown[]) => {
+          reported.push([file, diagnostics.length])
+        },
+        clear: () => {},
+        clearAll: () => {},
+      },
+    }
+  }
+
+  function welcome(broken?: string[]): WelcomeMessage {
+    return { type: "welcome", project: "/app", ...(broken === undefined ? {} : { broken_files: broken }) } as WelcomeMessage
+  }
+
+  test("reports one diagnostic for every template the welcome names", () => {
+    const { reported, sink } = collectingSink()
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleWelcome"](welcome(["a.html.erb", "b.html.erb"]))
+
+    expect(reported).toEqual([["a.html.erb", 1], ["b.html.erb", 1]])
+  })
+
+  test("reports nothing when the project has nothing broken", () => {
+    const { reported, sink } = collectingSink()
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleWelcome"](welcome([]))
+
+    expect(reported).toEqual([])
+  })
+
+  test("reports nothing when the server is old enough not to say", () => {
+    const { reported, sink } = collectingSink()
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleWelcome"](welcome())
+
+    expect(reported).toEqual([])
+  })
+
+  test("names the dev server as the origin, so a clearing schema takes it away", () => {
+    const diagnostic = diagnosticFromBrokenTemplate("a.html.erb")
+
+    expect(diagnostic.origin).toBe(DEV_SERVER_ORIGIN)
+    expect(diagnostic.overlay).toBe("dismissible")
+    expect(diagnostic.template).toBe("a.html.erb")
+  })
+
+  test("opens a card naming the template that did not parse", () => {
+    const panel = createPanel()
+
+    panel.report([diagnosticFromBrokenTemplate("app/views/posts/index.html.erb")])
+
+    expect(document.querySelector(".herb-dev-tools-card")?.textContent).toContain("app/views/posts/index.html.erb")
+
+    panel.clear(DEV_SERVER_ORIGIN)
+
+    expect(document.querySelector(".herb-dev-tools-card")).toBeNull()
   })
 })
 

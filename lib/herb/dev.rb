@@ -95,6 +95,8 @@ module Herb
       server = Server.new(port: port, project_path: expanded, kind: "embedded")
       pipeline = Pipeline.new(server: server, configuration: configuration)
 
+      server.on_welcome { pipeline.broken_files }
+
       server.on_client do |event, count|
         logger.call("Herb dev server client #{event} (#{count} #{count == 1 ? "connection" : "connections"} open)")
       end
@@ -110,6 +112,7 @@ module Herb
       end
 
       watcher.index
+      pipeline.remember_broken(watcher.broken_files)
       server.start
       watcher.spawn
 

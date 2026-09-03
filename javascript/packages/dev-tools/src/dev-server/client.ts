@@ -4,7 +4,7 @@ import { ConnectionDot } from "./connection-dot"
 import { MismatchAlert } from "./mismatch-alert"
 import { UnavailableAlert } from "./unavailable-alert"
 
-import { diagnosticsFromError } from "./diagnostics"
+import { diagnosticsFromError, diagnosticFromBrokenTemplate } from "./diagnostics"
 import { heldRuntime } from "./runtime-handle"
 
 import type { AssetMessage, DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
@@ -163,6 +163,18 @@ export class HerbClient {
       MismatchAlert.show(message.project, clientProject)
     } else {
       this.projectMatch = true
+
+      this.reportBroken(message.broken_files ?? [])
+    }
+  }
+
+  private reportBroken(files: string[]): void {
+    const diagnostics = this.getDiagnostics()
+
+    if (!diagnostics) return
+
+    for (const file of files) {
+      diagnostics.report(file, [diagnosticFromBrokenTemplate(file)])
     }
   }
 

@@ -8,6 +8,7 @@ require_relative "../../herb"
 
 Herb.ensure_installed("websocket")
 
+require_relative "protocol"
 require_relative "server_entry"
 
 module Herb
@@ -33,6 +34,7 @@ module Herb
         @accept_thread = nil
         @entry = nil
         @on_client = nil #: (^(Symbol, Integer) -> void)?
+        @on_welcome = nil #: (^() -> Array[String])?
       end
 
       #: () -> void
@@ -91,6 +93,11 @@ module Herb
       #: () { (Symbol, Integer) -> void } -> void
       def on_client(&block)
         @on_client = block
+      end
+
+      #: () { () -> Array[String] } -> void
+      def on_welcome(&block)
+        @on_welcome = block
       end
 
       #: (Client) -> void
@@ -166,6 +173,13 @@ module Herb
 
       private
 
+      #: () -> Array[String]
+      def broken_files
+        @on_welcome&.call || []
+      rescue StandardError
+        []
+      end
+
       #: (untyped) -> void
       def safely_close(resource)
         resource&.close
@@ -203,7 +217,7 @@ module Herb
 
         welcome = WebSocket::Frame::Outgoing::Server.new(
           version: handshake.version,
-          data: JSON.generate({ type: "welcome", project: @project_path }),
+          data: JSON.generate(Protocol.welcome(project: @project_path, broken_files: broken_files)),
           type: :text
         )
 

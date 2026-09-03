@@ -20,6 +20,9 @@ module Herb
       # : (file: String, mode: Symbol?, from: String?, to: String?, ?manifest: Hash[String, untyped]?, ?static_markup: String?, ?statics: Hash[String, String]?, ?changed_statics: Array[String]?, ?remap: Hash[String, untyped]?, ?diagnostics: Array[Hash[Symbol, untyped]], ?source: String?) -> Hash[Symbol, untyped]
       def self.schema: (file: String, mode: Symbol?, from: String?, to: String?, ?manifest: Hash[String, untyped]?, ?static_markup: String?, ?statics: Hash[String, String]?, ?changed_statics: Array[String]?, ?remap: Hash[String, untyped]?, ?diagnostics: Array[Hash[Symbol, untyped]], ?source: String?) -> Hash[Symbol, untyped]
 
+      # : (project: String?, ?broken_files: Array[String]) -> Hash[Symbol, untyped]
+      def self.welcome: (project: String?, ?broken_files: Array[String]) -> Hash[Symbol, untyped]
+
       # : (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
       def self.invalidate: (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
 

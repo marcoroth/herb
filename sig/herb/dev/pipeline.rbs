@@ -40,6 +40,12 @@ module Herb
       # : () { (untyped, Classifier::Classification?) -> void } -> void
       def on_classified: () { (untyped, Classifier::Classification?) -> void } -> void
 
+      # : (Enumerable[String]) -> void
+      def remember_broken: (Enumerable[String]) -> void
+
+      # : () -> Array[String]
+      def broken_files: () -> Array[String]
+
       # : () -> bool
       def compiles?: () -> bool
 
