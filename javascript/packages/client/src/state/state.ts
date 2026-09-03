@@ -4,6 +4,7 @@ import { DEPENDENCIES_SELECTOR } from "../grammar/attributes"
 import { Seeds } from "./seeds"
 import { Counts } from "./counts"
 import { Refresh } from "./refresh"
+import { armMutationRefresh } from "../shared/mutation-refresh"
 import { ServerState } from "./server"
 import { BoundInputs } from "./bound-inputs"
 import { ElementObserver } from "../shared/element-observer"
@@ -42,6 +43,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   private elements: ElementObserver | null = null
   private unobserveElements: (() => void) | null = null
   private unsubscribe: (() => void) | null = null
+  private disarmMutationRefresh: (() => void) | null = null
 
   constructor(slots: Slots, options: StateOptions = {}) {
     this.options = {
@@ -61,11 +63,32 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       manifestFor: (region) => this.manifestFor(region),
       steeringValue: (region, name) => this.valueAt(name, scopeOf(region)),
     }, { transport: this.options.refetchTransport, format: this.options.format })
+    this.disarmMutationRefresh = armMutationRefresh(() => this.refreshAfterMutation())
     this.unsubscribe = slots.subscribe(this)
   }
 
   refresh(): Promise<RefreshReport> {
     return this.refetch.flush()
+  }
+
+  refreshAfterMutation(): void {
+    if (this.options.refetch === "off") {
+      return
+    }
+
+    for (const region of this.slots.regions()) {
+      const server = this.manifestFor(region)?.server
+
+      if (!server) {
+        continue
+      }
+
+      if (Object.keys(server.reads ?? {}).length > 0 || Object.keys(server.branches ?? {}).length > 0) {
+        void this.refetch.request(0)
+
+        return
+      }
+    }
   }
 
   set(key: string | SerializedState, value?: string): Promise<StateReport> {
@@ -205,6 +228,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
     this.unsubscribe?.()
     this.unsubscribe = null
+
+    this.disarmMutationRefresh?.()
+    this.disarmMutationRefresh = null
+    this.refetch.stop()
 
     if (typeof document === "undefined") {
       return
