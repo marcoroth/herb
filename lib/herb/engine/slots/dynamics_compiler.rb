@@ -136,6 +136,7 @@ module Herb
             @current_attribute = nil
             @current_rcdata = nil
             @rendering = false
+            @capturing_part = false
             @block_depth = 0
 
             branch_counts = {} #: Hash[Integer, Integer]
@@ -324,6 +325,8 @@ module Herb
 
           #: (untyped) -> Integer?
           def claim(node)
+            return nil if @capturing_part
+
             @slot_visitor.index_for(@current_attribute || @current_rcdata || node)
           end
 
@@ -357,9 +360,31 @@ module Herb
             count
           end
 
+          # A conditional inside an attribute or an interpolated text run is not
+          # structural. The slot is the attribute, so the taken branch's output,
+          # text and expressions alike, buffers into one part appended under the
+          # slot's index, the same shape the page renders.
           #: (untyped) { () -> void } -> void
           def conditional(node)
             return yield if branch?(node)
+
+            if @current_attribute || @current_rcdata
+              return yield if @capturing_part
+
+              index = claim(node)
+
+              return yield unless index
+
+              @capturing_part = true
+              @tokens << [:scope, "", nil, [:part_open]]
+
+              yield
+
+              @tokens << [:scope, "", nil, [:part_close, index]]
+              @capturing_part = false
+
+              return
+            end
 
             index = claim(node)
 
@@ -692,6 +717,20 @@ module Herb
         #: (String) -> void
         def add_block_dynamic(value)
           @src << "; " << @bufvar << " << (" << value << ");"
+        end
+
+        #: () -> void
+        def scope_part_open
+          open_block
+        end
+
+        #: (Integer) -> void
+        def scope_part_close(index)
+          buffer = @bufvar
+
+          close_block
+
+          @src << "; " << assignment(index, buffer) << ";"
         end
 
         #: () -> void

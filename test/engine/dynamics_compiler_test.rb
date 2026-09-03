@@ -374,5 +374,27 @@ module Engine
         refute entry.key?(:statics)
       end
     end
+
+    KNOB = %(<%# herb:slots client %>\n<span class="knob <%= @dark ? "far" : "" %>" id="k"></span>) #: String
+
+    describe "a conditional inside an attribute" do
+      test "the payload carries the taken branch's text as the attribute's part" do
+        assert_equal ["far"], dynamics(KNOB, dark: true).fetch(0)
+        assert_equal [""], dynamics(KNOB, dark: false).fetch(0)
+      end
+
+      test "the slot the payload fills is the attribute the visitor modeled" do
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(KNOB, filename: "app/views/test.html.erb")
+
+        assert_equal :attribute_interpolation, compiler.slot_visitor.slots.fetch(0).type
+      end
+
+      test "a whole-value attribute conditional assigns the scalar the visitor expects" do
+        source = %(<%# herb:slots client %>\n<span class="<%= @on ? "is-\#{@tone}" : "off" %>"></span>)
+
+        assert_equal "is-calm", dynamics(source, on: true, tone: "calm").fetch(0)
+        assert_equal "off", dynamics(source, on: false).fetch(0)
+      end
+    end
   end
 end
