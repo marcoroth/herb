@@ -1,4 +1,4 @@
-import { DIRECT_EVENTS } from "./events"
+import { DIRECT_EVENTS, eventMatches, parseEventSpec } from "./events"
 import { ACTION_ATTRIBUTES, ACTION_SCHEMA, ACTION_SELECTOR, HERB_ATTRIBUTES } from "../grammar/attributes"
 
 import { Instructions } from "./instructions"
@@ -16,16 +16,24 @@ import type { ElementObserverDelegate } from "../shared/element-observer"
 import type { ActionName, ActionSchema } from "../grammar/attributes"
 import type { Instruction, ResolvedDeclaration, StateGroups } from "./types"
 
+interface Timing {
+  timer?: ReturnType<typeof setTimeout>
+  last?: number
+}
+
 export class Actions implements ElementObserverDelegate, InstructionsDelegate {
   private readonly state: State
   private readonly instructions = new Instructions(this)
 
   private events = new Set<string>()
+  private globalEvents = new Set<string>()
   private direct = new Map<Element, () => void>()
   private elements: ElementObserver | null = null
   private unobserve: (() => void) | null = null
   private pinned: Map<string, StateScope> | null = null
   private listeners: [string, (event: Event) => void][] = []
+  private globalListeners: [string, (event: Event) => void][] = []
+  private timings = new WeakMap<Element, Map<string, Timing>>()
 
   constructor(state: State) {
     this.state = state
@@ -71,12 +79,18 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
       document.removeEventListener(event, listener, true)
     }
 
+    for (const [event, listener] of this.globalListeners) {
+      window.removeEventListener(event, listener, true)
+    }
+
     for (const detach of this.direct.values()) {
       detach()
     }
 
     this.listeners = []
+    this.globalListeners = []
     this.events = new Set()
+    this.globalEvents = new Set()
     this.direct = new Map()
   }
 
@@ -91,10 +105,14 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
 
     for (const element of elements) {
       for (const instruction of this.instructions.of(element)) {
-        if (DIRECT_EVENTS.includes(instruction.event)) {
-          this.attach(element, instruction.event)
+        const spec = parseEventSpec(instruction.event)
+
+        if (DIRECT_EVENTS.includes(spec.type)) {
+          this.attach(element, spec.type)
+        } else if (spec.global) {
+          this.delegateGlobal(spec.type)
         } else {
-          this.delegate(instruction.event)
+          this.delegate(spec.type)
         }
       }
 
@@ -117,6 +135,25 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
 
     document.addEventListener(event, listener, true)
     this.listeners.push([event, listener])
+  }
+
+  private delegateGlobal(event: string): void {
+    if (this.globalEvents.has(event)) {
+      return
+    }
+
+    this.globalEvents.add(event)
+
+    const listener = (fired: Event): void => this.dispatchGlobal(fired)
+
+    window.addEventListener(event, listener, true)
+    this.globalListeners.push([event, listener])
+  }
+
+  private dispatchGlobal(event: Event): void {
+    for (const element of document.querySelectorAll(ACTION_SELECTOR)) {
+      this.run(element, event, true)
+    }
   }
 
   private attach(element: Element, _event: string): void {
@@ -157,9 +194,29 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
     }
   }
 
-  private run(element: Element, event: Event): boolean {
-    const pending = this.instructions.of(element).filter((instruction) => instruction.event === event.type)
+  private run(element: Element, event: Event, global = false): boolean {
+    let shortcut = false
+
+    const pending = this.instructions.of(element).filter((instruction) => {
+      const spec = parseEventSpec(instruction.event)
+
+      if (spec.global !== global || !eventMatches(spec, event)) {
+        return false
+      }
+
+      if (spec.outside && event.target instanceof Node && element.contains(event.target)) {
+        return false
+      }
+
+      shortcut ||= spec.modifiers.length > 0
+
+      return true
+    })
     const handled = pending.length > 0
+
+    if (shortcut && event.cancelable) {
+      event.preventDefault()
+    }
 
     this.pinned = null
 
@@ -169,13 +226,75 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
 
     try {
       for (const entry of pending) {
-        this.execute(element, entry.action, entry.rest, event)
+        this.schedule(element, entry, event)
       }
     } finally {
       this.pinned = null
     }
 
     return handled
+  }
+
+  private schedule(element: Element, entry: Instruction, event: Event): void {
+    const key = `${entry.action}:${entry.event}:${entry.rest}`
+    const timing = this.timings.get(element) ?? new Map<string, Timing>()
+    const held = timing.get(key) ?? {}
+
+    this.timings.set(element, timing)
+    timing.set(key, held)
+
+    const throttle = this.timingOf(element, HERB_ATTRIBUTES.throttle)
+
+    if (throttle !== null) {
+      const now = Date.now()
+
+      if (held.last !== undefined && now - held.last < throttle) {
+        return
+      }
+
+      held.last = now
+      this.execute(element, entry.action, entry.rest, event)
+
+      return
+    }
+
+    const debounce = this.timingOf(element, HERB_ATTRIBUTES.debounce)
+
+    if (debounce !== null) {
+      if (held.timer !== undefined) {
+        clearTimeout(held.timer)
+      }
+
+      held.timer = setTimeout(() => {
+        held.timer = undefined
+
+        const pinned = this.pinScopes(element, [entry])
+
+        this.pinned = pinned
+
+        try {
+          this.execute(element, entry.action, entry.rest, event)
+        } finally {
+          this.pinned = null
+        }
+      }, debounce)
+
+      return
+    }
+
+    this.execute(element, entry.action, entry.rest, event)
+  }
+
+  private timingOf(element: Element, attribute: string): number | null {
+    const raw = element.getAttribute(attribute)
+
+    if (raw === null) {
+      return null
+    }
+
+    const parsed = Number(raw)
+
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
   }
 
   private execute(element: Element, action: ActionName, rest: string, event: Event): void {

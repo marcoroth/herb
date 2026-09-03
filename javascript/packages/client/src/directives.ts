@@ -17,6 +17,7 @@ export { STATE_DEFAULT_KINDS, LITERAL_STATE_KINDS, UNKNOWN_STATE_KINDS, FALSY_ST
 export { stateKindArticle } from "./state-kinds"
 export { isMarker, parseMarker } from "./markup/markers"
 export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
+export { eventSpecProblem } from "./actions/events"
 
 export type { Clause } from "./grammar/parsing"
 export type { StatePredicate } from "./state-predicates"
