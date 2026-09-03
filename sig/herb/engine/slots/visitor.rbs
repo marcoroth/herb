@@ -139,11 +139,20 @@ module Herb
         # : () -> bool
         def client?: () -> bool
 
+        # : () -> void
+        def state_overrides!: () -> void
+
+        # : () -> bool
+        def state_overrides?: () -> bool
+
         # : (Integer, Array[String]) -> bool
         def listener_writes?: (Integer, Array[String]) -> bool
 
         # : (Integer) -> Array[Integer]
         def slots_inside: (Integer) -> Array[Integer]
+
+        # : (Integer) -> Array[Array[Integer]]
+        def slots_by_branch: (Integer) -> Array[Array[Integer]]
 
         # : (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
         def slot_error: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil

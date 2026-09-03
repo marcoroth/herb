@@ -202,6 +202,16 @@ module Herb
           @mode == :client
         end
 
+        #: () -> void
+        def state_overrides!
+          @state_overrides = true
+        end
+
+        #: () -> bool
+        def state_overrides?
+          !!@state_overrides
+        end
+
         #: (Integer, Array[String]) -> bool
         def listener_writes?(index, names)
           written = @listener_written[@slot_nodes[index]]
@@ -216,6 +226,15 @@ module Herb
           return [] unless node
 
           branch_bodies(node).flat_map { |body| slot_indices_within(body) }.uniq
+        end
+
+        #: (Integer) -> Array[Array[Integer]]
+        def slots_by_branch(index)
+          node = @slot_nodes[index]
+
+          return [] unless node
+
+          branch_bodies(node).map { |body| slot_indices_within(body) }
         end
 
         #: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil

@@ -14,6 +14,8 @@ module Herb
 
         SEEDS_LOCAL: String
 
+        OVERRIDES_LOCAL: String
+
         BARE_IDENTIFIER: Regexp
 
         BINDABLE_ATTRIBUTES: Array[String]
@@ -51,8 +53,41 @@ module Herb
         # : (untyped, String, Array[String]) -> void
         def warn_near_miss: (untyped, String, Array[String]) -> void
 
-        # : (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
-        def warn_branch_orphans: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
+        # : () -> void
+        def check_collection_reads: () -> void
+
+        # : (Array[Hash[String, untyped]]) -> Set[String]
+        def steerable_names: (Array[Hash[String, untyped]]) -> Set[String]
+
+        # : (untyped) -> Array[String]
+        def condition_names: (untyped) -> Array[String]
+
+        # : (Hash[Symbol, untyped], Set[String]) -> bool
+        def steered_conditional?: (Hash[Symbol, untyped], Set[String]) -> bool
+
+        # : (Integer, Hash[Symbol, untyped]) -> Set[Integer]
+        def default_branch_slots: (Integer, Hash[Symbol, untyped]) -> Set[Integer]
+
+        # : (Integer, Integer) -> Set[Integer]
+        def branch_slot_set: (Integer, Integer) -> Set[Integer]
+
+        # : (untyped, Hash[String, StateDirectives::Declaration]) -> bool?
+        def static_condition: (untyped, Hash[String, StateDirectives::Declaration]) -> bool?
+
+        # : (Hash[String, untyped], Hash[String, StateDirectives::Declaration]) -> untyped
+        def static_comparand: (Hash[String, untyped], Hash[String, StateDirectives::Declaration]) -> untyped
+
+        # : (Hash[String, untyped], Hash[String, StateDirectives::Declaration]) -> bool?
+        def static_combo: (Hash[String, untyped], Hash[String, StateDirectives::Declaration]) -> bool?
+
+        # : (String, Hash[String, StateDirectives::Declaration]) -> untyped
+        def static_default: (String, Hash[String, StateDirectives::Declaration]) -> untyped
+
+        # : (untyped, untyped, String) -> bool?
+        def compare_statics: (untyped, untyped, String) -> bool?
+
+        # : (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped], Set[String]) -> void
+        def branch_orphans: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped], Set[String]) -> void
 
         # : (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
         def declared_entry: (Hash[Symbol, untyped], String | Integer) -> Hash[String, untyped]
@@ -101,6 +136,14 @@ module Herb
 
         # : (StateDirectives::Declaration) -> String
         def state_assignment: (StateDirectives::Declaration) -> String
+
+        # A derived state re-derives from its overridden bases, and a count has
+        # to accumulate from its seed, so neither takes an override itself.
+        # : (StateDirectives::Declaration) -> bool
+        def overridable?: (StateDirectives::Declaration) -> bool
+
+        # : () -> String
+        def overrides_prelude: () -> String
 
         # : () -> void
         def classify_state_conditionals: () -> void
@@ -167,6 +210,13 @@ module Herb
 
         # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
         def register_state_value: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+
+        # The client cannot run Ruby, but it can ask the server to run it again,
+        # so an expression computing with region states becomes a server read the
+        # client refetches whenever one of them changes. An item state cannot be
+        # steered yet, so a read depending on one keeps refusing.
+        # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> nil
+        def register_server_read: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> nil
 
         # : (untyped, untyped, String) -> Symbol?
         def refuse_mixed_boolean: (untyped, untyped, String) -> Symbol?

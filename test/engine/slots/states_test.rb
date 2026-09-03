@@ -206,11 +206,6 @@ module Engine
         )
 
         refuse(
-          "<%# herb:state (attempts: 0) %><p><%= attempts + 1 %></p>",
-          "`attempts + 1` computes with the state `attempts`. The client cannot run Ruby to keep the result current."
-        )
-
-        refuse(
           "<%# herb:state (sort: \"name\") %><div><% if sort == 3 %>a<% end %></div>",
           "`sort == 3` compares the String state `sort` against an Integer literal, so it can never match."
         )
@@ -747,15 +742,10 @@ module Engine
         assert_includes rendered, ">true<"
       end
 
-      test "a computed read in a textarea still raises" do
-        error = assert_raises(Herb::Engine::CompilationError) do
-          compile(%(<%# herb:state (draft: "") %><textarea><%= draft.upcase %></textarea>))
-        end
+      test "a computed read in a textarea becomes a server read" do
+        visitor, = compile(%(<%# herb:state (draft: "") %><textarea><%= draft.upcase %></textarea>))
 
-        assert_equal(
-          ["`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current."],
-          compiler_findings(error)
-        )
+        assert_equal({ "draft" => [{ "index" => 0, "node_path" => [1, 0] }] }, visitor.manifest["states"]["server"]["reads"])
       end
 
       test "a string literal that spells a state name is not a read" do
@@ -1215,11 +1205,10 @@ module Engine
         assert_includes render(template, { "done" => false }), %(<input data-herb-slot="0:boolean_attribute:disabled">)
       end
 
-      test "a computed tag helper attribute raises" do
-        refuse(
-          %(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft.upcase %>),
-          "`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current."
-        )
+      test "a computed tag helper attribute becomes a server read" do
+        visitor, = compile(%(<%# herb:slots client %><%# herb:state (draft: "") %><%= tag.input value: draft.upcase %>))
+
+        assert_equal ["draft"], visitor.manifest["states"]["server"]["reads"].keys
       end
 
       SEEDED = <<~ERB
@@ -1401,15 +1390,65 @@ module Engine
         )
       end
 
-      test "a computed read in a boolean attribute still raises" do
+      test "a computed read in a boolean attribute becomes a server read" do
+        visitor, = compile(<<~ERB)
+          <%# herb:state (draft: "") %>
+          <button disabled="<%= draft.upcase %>">Send</button>
+        ERB
+
+        assert_equal ["draft"], visitor.manifest["states"]["server"]["reads"].keys
+      end
+
+      test "a value computing with a region state becomes a server read" do
+        visitor, = compile(%(<%# herb:state (q: "") %><p><%= User.search(q).count %></p>))
+
+        assert_equal({ "q" => [{ "index" => 0, "node_path" => [1, 0] }] }, visitor.manifest["states"]["server"]["reads"])
+        assert_empty visitor.diagnostics
+      end
+
+      test "a keyed collection computing with a region state becomes a server read" do
+        visitor, = compile(<<~ERB)
+          <%# herb:state (q: "") %>
+          <ul>
+          <% @messages.search(q).each do |message| %>
+            <%# herb:key message.id %>
+            <li id="<%= message.id %>"><%= message.body %></li>
+          <% end %>
+          </ul>
+        ERB
+
+        reads = visitor.manifest["states"]["server"]["reads"]
+
+        assert_equal ["q"], reads.keys
+        assert_equal 1, reads["q"].length
+        assert_empty visitor.diagnostics
+      end
+
+      test "a collection reading no region state registers nothing" do
+        visitor, = compile(<<~ERB)
+          <%# herb:state (q: "") %>
+          <ul>
+          <% @messages.each do |message| %>
+            <%# herb:key message.id %>
+            <li id="<%= message.id %>"><%= message.body %></li>
+          <% end %>
+          </ul>
+        ERB
+
+        assert_empty visitor.manifest["states"]["server"]["reads"]
+      end
+
+      test "a value computing with an item state still raises" do
         error = assert_raises(Herb::Engine::CompilationError) do
           compile(<<~ERB)
-            <%# herb:state (draft: "") %>
-            <button disabled="<%= draft.upcase %>">Send</button>
+            <% @posts.each do |post| %>
+              <%# herb:state (likes: 0) %>
+              <li id="<%= post.id %>"><%= likes * 2 %></li>
+            <% end %>
           ERB
         end
 
-        assert_includes error.message, "computes with the state `draft`"
+        assert_includes error.message, "which lives on an item"
       end
 
       test "a mismatched comparand in a boolean attribute still raises" do
