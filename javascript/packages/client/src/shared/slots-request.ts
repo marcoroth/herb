@@ -3,6 +3,7 @@ import type { Payload } from "../types"
 export const SLOTS_MIME_TYPE = "application/vnd.herb.slots+json"
 export const SCHEMA_HEADER = "Herb-Schema"
 export const NODE_PATH_HEADER = "Herb-Node-Path"
+export const STATE_HEADER = "Herb-State"
 
 export type SlotsResponse = Payload & { schema?: SchemaEnvelope }
 
@@ -41,6 +42,7 @@ export interface SlotsRequestOptions {
   format?: string
   schema?: boolean
   nodePath?: number[]
+  state?: Record<string, Record<string, unknown>>
   signal?: AbortSignal
 }
 
@@ -55,7 +57,15 @@ export function slotsHeaders(options: SlotsRequestOptions = {}): Record<string, 
     headers[NODE_PATH_HEADER] = options.nodePath.join(",")
   }
 
+  if (options.state && Object.keys(options.state).length > 0) {
+    headers[STATE_HEADER] = asciiJSON(options.state)
+  }
+
   return headers
+}
+
+function asciiJSON(value: unknown): string {
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`)
 }
 
 // TODO: should this use @rails/request.js?
