@@ -3,6 +3,7 @@ import { DEPENDENCIES_SELECTOR } from "../grammar/attributes"
 
 import { Seeds } from "./seeds"
 import { Counts } from "./counts"
+import { Refresh } from "./refresh"
 import { ServerState } from "./server"
 import { BoundInputs } from "./bound-inputs"
 import { ElementObserver } from "../shared/element-observer"
@@ -16,6 +17,7 @@ import { declarationSpot, declared, declaredValue } from "./declarations"
 
 import type { Slots } from "../slots/slots"
 import type { Conditional } from "./types"
+import type { RefreshReport } from "./refresh"
 import type { StateKind, StateValue } from "./values"
 import type { Built, Item, Region, Slot } from "../types"
 import type { CountOptions, DeclaredState, DependencyMap, PlacedSlot, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
@@ -29,6 +31,7 @@ import type { ElementObserverDelegate } from "../shared/element-observer"
 export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDelegate, BoundInputsDelegate, CountsDelegate {
   private readonly slots: Slots
   private readonly server: ServerState
+  private readonly refetch: Refresh
   private readonly declared = new Map<string, StateManifest>()
   private readonly scoped: ScopeStore = new Map()
   private readonly seeds: Seeds
@@ -45,13 +48,24 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       transport: options.transport ?? ((request, signal) => this.server.fetch(request, signal)),
       debounce: options.debounce ?? 0,
       format: options.format ?? "slots",
+      refetch: options.refetch ?? "auto",
+      refetchDebounce: options.refetchDebounce ?? 150,
+      refetchTransport: options.refetchTransport,
     }
 
     this.slots = slots
     this.seeds = new Seeds(this, slots)
     this.counts = new Counts(this, slots)
     this.server = new ServerState(slots, this.options)
+    this.refetch = new Refresh(slots, {
+      manifestFor: (region) => this.manifestFor(region),
+      steeringValue: (region, name) => this.valueAt(name, scopeOf(region)),
+    }, { transport: this.options.refetchTransport, format: this.options.format })
     this.unsubscribe = slots.subscribe(this)
+  }
+
+  refresh(): Promise<RefreshReport> {
+    return this.refetch.flush()
   }
 
   set(key: string | SerializedState, value?: string): Promise<StateReport> {
@@ -483,7 +497,21 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
     }
 
+    this.requestReadRefetch(manifest, names)
+
     return true
+  }
+
+  private requestReadRefetch(manifest: StateManifest, names: string[]): void {
+    if (this.options.refetch !== "auto") {
+      return
+    }
+
+    const reads = manifest.server?.reads ?? {}
+
+    if (names.some((name) => (reads[name] ?? []).length > 0)) {
+      void this.refetch.request(this.options.refetchDebounce)
+    }
   }
 
   toggle(name: string, options: ScopedSetOptions = {}): boolean {
@@ -970,6 +998,37 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     this.writePresence(manifest, at, declared)
     this.writeComputed(manifest, at, declared)
     this.writeConditionals(manifest, at, declared)
+
+    this.requestBranchRefetch(manifest, slot)
+  }
+
+  private requestBranchRefetch(manifest: StateManifest, slot: Slot): void {
+    if (this.options.refetch !== "auto" || slot.branch === null) {
+      return
+    }
+
+    const reads = manifest.server?.branches?.[String(slot.index)] ?? []
+
+    if (reads.length === 0) {
+      return
+    }
+
+    const stash = slot.shown?.get(slot.branch) ?? {}
+    const descendants = this.slots.descendantsOf(slot)
+
+    const missing = reads.some((read) => {
+      if (read.index in stash) {
+        return false
+      }
+
+      const live = descendants.find((child) => child.index === read.index)
+
+      return live !== undefined && !live.claimed && this.slots.currentText(live) === ""
+    })
+
+    if (missing) {
+      void this.refetch.request(0)
+    }
   }
 
   private settleItem(collection: Slot, item: Item): void {

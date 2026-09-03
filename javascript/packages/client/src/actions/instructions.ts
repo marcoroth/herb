@@ -108,6 +108,10 @@ export class Instructions {
       return
     }
 
+    if (schema.operation === "action") {
+      return
+    }
+
     if (schema.operation === "set") {
       for (const assignment of splitOutsideQuotes(clause.rest, ",")) {
         this.validateAssignment(element, assignment)
