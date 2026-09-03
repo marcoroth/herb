@@ -23,6 +23,9 @@ module Herb
       # : (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
       def self.invalidate: (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
 
+      # : (kind: Symbol, file: String) -> Hash[Symbol, untyped]
+      def self.asset: (kind: Symbol, file: String) -> Hash[Symbol, untyped]
+
       # : (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
       def self.error: (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
 

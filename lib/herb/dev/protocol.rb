@@ -50,6 +50,15 @@ module Herb
         }
       end
 
+      #: (kind: Symbol, file: String) -> Hash[Symbol, untyped]
+      def self.asset(kind:, file:)
+        {
+          type: "asset",
+          kind: kind.to_s,
+          file: file,
+        }
+      end
+
       #: (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
       def self.error(file:, source:, errors:)
         entries = errors.map { |parse_error|

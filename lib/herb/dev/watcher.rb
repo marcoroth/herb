@@ -2,6 +2,7 @@
 # typed: true
 
 require_relative "../configuration"
+require_relative "assets"
 
 module Herb
   module Dev
@@ -41,6 +42,7 @@ module Herb
         @on_event = on_event
         @watch_paths = resolve_watch_paths(watch_paths) #: Array[String]
         @file_states = {} #: Hash[String, String]
+        @assets = Assets.new
         @include_patterns = config.file_include_patterns
         @exclude_patterns = config.file_exclude_patterns
         @thread = nil #: Thread?
@@ -54,6 +56,8 @@ module Herb
         rescue StandardError
           nil
         end
+
+        @assets.index(path)
 
         @file_states.size
       end
@@ -102,9 +106,21 @@ module Herb
         return [@root] if candidates.empty?
         return [@root] if candidates.include?(@root)
 
-        candidates.reject do |path|
+        narrowed = candidates.reject do |path|
           candidates.any? { |other| other != path && path.start_with?("#{other}/") }
         end
+
+        (narrowed + asset_watch_paths(narrowed)).sort
+      end
+
+      #: (Array[String]) -> Array[String]
+      def asset_watch_paths(narrowed)
+        builds = File.join(@root, Assets::ROOT)
+
+        return [] unless File.directory?(builds)
+        return [] if narrowed.any? { |path| builds == path || builds.start_with?("#{path}/") }
+
+        [builds]
       end
 
       #: (Cruise::Event) -> void
@@ -112,12 +128,20 @@ module Herb
         path = raw.path
         relative_path = path.delete_prefix("#{@root}/")
 
+        return handle_asset(path, relative_path) if @config.path_included?(relative_path, Assets::PATTERNS)
         return if @config.path_excluded?(relative_path, @exclude_patterns)
         return unless @config.path_included?(relative_path, @include_patterns)
 
         event = normalize(raw.kind, path, relative_path)
 
         @on_event.call(event) if event
+      end
+
+      #: (String, String) -> void
+      def handle_asset(path, relative_path)
+        return unless @assets.changed?(path)
+
+        @on_event.call(Event.new(kind: Assets.kind_for(path), path: path, relative_path: relative_path, previous: nil, current: nil))
       end
 
       #: (String, String, String) -> Event?

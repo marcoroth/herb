@@ -347,3 +347,24 @@ describe("the per-file diagnostics sink", () => {
     }
   })
 })
+
+describe("a rebuilt asset", () => {
+  test("a script build output reloads the page", () => {
+    const reload = vi.fn()
+    const hotReload = new HotReload({ runtime: () => null, reload })
+
+    hotReload.onAsset({ type: "asset", kind: "script", file: "app/assets/builds/application.js" })
+
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  test("hot reloading off leaves the page alone", () => {
+    const reload = vi.fn()
+    const hotReload = new HotReload({ runtime: () => null, reload })
+
+    hotReload.setEnabled(false)
+    hotReload.onAsset({ type: "asset", kind: "script", file: "app/assets/builds/application.js" })
+
+    expect(reload).not.toHaveBeenCalled()
+  })
+})
