@@ -1,0 +1,10 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0001_handles literal erb escape with double percent"
+input: "{source: \"<table>\\n<%% for item in @items %>\\n  <tr>\\n    <td><%# i+1 %></td>\\n    <td><%# item %></td>\\n  </tr>\\n  <%% end %>\\n</table>\", locals: {\"@items\": [2], i: 0}, options: {}}"
+---
+<table>
+  <tr>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
