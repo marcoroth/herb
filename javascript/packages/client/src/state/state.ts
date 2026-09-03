@@ -16,6 +16,7 @@ import { armMutationRefresh } from "../shared/mutation-refresh"
 import { armOf, evaluate, matches, mentions } from "./conditions"
 import { steeringNames } from "./refresh"
 import { slotsRequest } from "../shared/slots-request"
+import { TRANSITION_SELECTOR, transitionMutation } from "../shared/transitions"
 import { collectionIn, scopeOf, scoped } from "./scopes"
 import { declarationSpot, declared, declaredValue } from "./declarations"
 
@@ -578,7 +579,14 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return { applied: 0, deferred: 0, stale: false, failed: true }
     }
 
-    const report = this.slots.apply(payload)
+    let report!: ReturnType<Slots["apply"]>
+
+    const slot = region.slots.get(index)
+    const root = (slot && hostOf(slot.anchor)) || document
+
+    await transitionMutation(() => {
+      report = this.slots.apply(payload)
+    }, root)
 
     return { applied: report.applied, deferred: report.deferred.length, stale: false, failed: false }
   }
@@ -610,6 +618,26 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
     const reads = manifest.server?.reads ?? {}
     const stale = new Set(names.flatMap((name) => (reads[name] ?? []).map((read) => read.index)))
+
+    const branches = manifest.server?.branches ?? {}
+
+    for (const [conditionalKey, entries] of Object.entries(branches)) {
+      const conditional = manifest.conditionals[conditionalKey]
+
+      if (!conditional) {
+        continue
+      }
+
+      const placements = this.placedSlots(scope, Number(conditionalKey))
+
+      if (placements.length === 0 || placements.some((placed) => this.targetBranch(conditional, placed.scope) === 0)) {
+        continue
+      }
+
+      for (const entry of entries) {
+        stale.delete(entry.index)
+      }
+    }
 
     if (stale.size === 0) {
       return
@@ -879,6 +907,26 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     scoped(this.scoped, scope).set(name, value)
   }
 
+  private departing(placed: PlacedSlot, manifest: StateManifest): boolean {
+    for (let ancestor = placed.slot.parent; ancestor; ancestor = ancestor.parent) {
+      const conditional = manifest.conditionals[String(ancestor.index)]
+
+      if (!conditional || ancestor.branch === null) {
+        continue
+      }
+
+      if (this.targetBranch(conditional, placed.scope) !== ancestor.branch) {
+        if (this.fragments.holding(ancestor)) {
+          continue
+        }
+
+        return true
+      }
+    }
+
+    return false
+  }
+
   private writeValueSlots(manifest: StateManifest, scope: StateScope, name: string, value: StateValue): void {
     const computed = manifest.computed ?? {}
 
@@ -889,6 +937,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
       for (const placed of this.placedSlots(scope, index)) {
         if (placed.slot.type === "boolean_attribute") {
+          continue
+        }
+
+        if (this.departing(placed, manifest)) {
           continue
         }
 
@@ -907,6 +959,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
 
       for (const placed of this.placedSlots(scope, Number(indexKey))) {
+        if (this.departing(placed, manifest)) {
+          continue
+        }
+
         const present = matches(entry, (name) => this.valueAt(name, placed.scope))
 
         this.slots.setBooleanAttribute(placed.slot, present)
@@ -922,6 +978,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
 
       for (const placed of this.placedSlots(scope, Number(indexKey))) {
+        if (this.departing(placed, manifest)) {
+          continue
+        }
+
         this.write(placed.slot, printValue(evaluate(entry, (name) => this.valueAt(name, placed.scope))))
         this.slots.claim(placed.slot)
       }
@@ -944,6 +1004,19 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
         const target = this.targetBranch(conditional, placed.scope)
 
         this.slots.claim(slot)
+
+        const host = hostOf(slot.anchor)
+        const leaving = slot.branch !== target && Boolean(host?.querySelector(TRANSITION_SELECTOR))
+
+        if (leaving) {
+          void transitionMutation(() => {
+            if (!this.slots.switchBranch(slot, target) && slot.branch !== target && this.options.refetch !== "off") {
+              void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+            }
+          }, host ?? document)
+
+          continue
+        }
 
         if (!this.slots.switchBranch(slot, target) && slot.branch !== target) {
           if (this.options.refetch !== "off") {

@@ -1462,6 +1462,30 @@ module Engine
         assert_includes error.message, "Integer literal"
       end
 
+      test "a collection reading a state joins its branch's members" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (album: "") %>
+          <input value="<%= album %>">
+          <% if album.present? %>
+            <ul>
+              <% Catalog.tracks(album).each do |entry| %>
+                <%# herb:key entry %>
+                <li><%= entry %></li>
+              <% end %>
+            </ul>
+          <% end %>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        branches = visitor.manifest["states"]["server"]["branches"]
+        refetchable = visitor.manifest["states"]["server"]["reads"]["album"].map { |read| read["index"] }
+
+        assert_equal [], refetchable - branches.values.flatten.map { |entry| entry["index"] }
+      end
+
       test "a block argument shadows a state inside its body" do
         source = <<~ERB
           <%# herb:slots client %>
