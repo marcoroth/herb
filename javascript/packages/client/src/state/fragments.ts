@@ -1,5 +1,6 @@
 import { scopeOf } from "./scopes"
 import { connected, hostOf } from "../markup/anchors"
+import { transitionMutation } from "../shared/transitions"
 
 import type { Slots } from "../slots/slots"
 import type { RefreshReport } from "./refresh"
@@ -90,7 +91,8 @@ export class Fragments {
 
         presentation.restoreTimer = setTimeout(() => {
           this.showing.delete(slot)
-          this.delegate.resettle(slot)
+
+          void transitionMutation(() => this.delegate.resettle(slot), hostOf(slot.anchor) ?? document)
         }, Math.max(remaining, 0))
 
         continue
@@ -108,7 +110,7 @@ export class Fragments {
         this.showing.delete(slot)
 
         if (slot.branch === presentation.fallback) {
-          this.slots.switchBranch(slot, restored)
+          void transitionMutation(() => void this.slots.switchBranch(slot, restored), hostOf(slot.anchor) ?? document)
         }
       }, remaining)
 

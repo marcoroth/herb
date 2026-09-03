@@ -506,3 +506,53 @@ describe("a template that declares no mutation states", () => {
     delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
   })
 })
+
+  test("an optimistic insert into a marked collection runs a view transition", async () => {
+    document.body.innerHTML = PAGE.replaceAll("<li ", "<li data-herb-transition ")
+
+    slots = new Slots()
+    slots.scan(document.body)
+    state = new State(slots)
+    state.adopt()
+
+    const doc = document as Document & { startViewTransition?: (update: () => void) => unknown }
+    const native = doc.startViewTransition
+    let started = 0
+
+    doc.startViewTransition = (update: () => void) => {
+      started += 1
+      update()
+
+      return { ready: Promise.resolve(), finished: Promise.resolve(), updateCallbackDone: Promise.resolve(), skipTransition: () => {} }
+    }
+
+    try {
+      let release!: (payload: Payload) => void
+      const outbox = build(() => new Promise((resolve) => (release = resolve)))
+
+      const result = outbox.submit({
+        url: "/messages",
+        body: { body: "typed" },
+        into: { file: FILE, name: "messages" },
+        values: { body: "typed" },
+      })
+
+      for (let i = 0; i < 50 && document.querySelectorAll("li").length < 2; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+      }
+
+      expect(document.querySelectorAll("li").length).toBe(2)
+
+      expect(started).toBeGreaterThanOrEqual(1)
+
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      release(confirmPayload("message_42", "stored"))
+
+      const outcome = await result
+
+      expect(outcome.status).toBe("confirmed")
+    } finally {
+      doc.startViewTransition = native
+    }
+  })

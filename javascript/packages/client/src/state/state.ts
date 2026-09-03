@@ -16,6 +16,7 @@ import { elementOf, hostOf } from "../markup/anchors"
 import { armOf, evaluate, matches, mentions } from "./conditions"
 import { steeringNames } from "./refresh"
 import { slotsRequest } from "../shared/slots-request"
+import { TRANSITION_SELECTOR, transitionMutation } from "../shared/transitions"
 import { collectionIn, scopeOf, scoped } from "./scopes"
 import { declarationSpot, declared, declaredValue } from "./declarations"
 
@@ -578,7 +579,14 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return { applied: 0, deferred: 0, stale: false, failed: true }
     }
 
-    const report = this.slots.apply(payload)
+    let report!: ReturnType<Slots["apply"]>
+
+    const slot = region.slots.get(index)
+    const root = (slot && hostOf(slot.anchor)) || document
+
+    await transitionMutation(() => {
+      report = this.slots.apply(payload)
+    }, root)
 
     return { applied: report.applied, deferred: report.deferred.length, stale: false, failed: false }
   }
@@ -944,6 +952,18 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
         const target = this.targetBranch(conditional, placed.scope)
 
         this.slots.claim(slot)
+
+        const incoming = target !== null && slot.branch !== target && Boolean(this.slots.parked(placed.scope.region.file, `${slot.index}:${target}`)?.querySelector(TRANSITION_SELECTOR))
+
+        if (incoming) {
+          void transitionMutation(() => {
+            if (!this.slots.switchBranch(slot, target) && slot.branch !== target && this.options.refetch !== "off") {
+              void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+            }
+          }, hostOf(slot.anchor) ?? document, true)
+
+          continue
+        }
 
         if (!this.slots.switchBranch(slot, target) && slot.branch !== target) {
           if (this.options.refetch !== "off") {

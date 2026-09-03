@@ -1,0 +1,256 @@
+import { describe, test, expect, afterEach, vi } from "vitest"
+
+import { Runtime } from "../src/runtime"
+import { transitionMutation } from "../src/shared/transitions"
+
+type StartViewTransition = ((update: () => void) => unknown) | undefined
+
+const documentWithVT = document as Document & { startViewTransition?: StartViewTransition }
+const native = documentWithVT.startViewTransition
+
+interface FakeTransition {
+  ready: Promise<void>
+  finished: Promise<void>
+  updateCallbackDone: Promise<void>
+  skipTransition(): void
+}
+
+function stub(): { calls: number; names: string[][] } {
+  const seen = { calls: 0, names: [] as string[][] }
+
+  documentWithVT.startViewTransition = (update: () => void): FakeTransition => {
+    seen.calls += 1
+    update()
+    seen.names.push([...document.querySelectorAll<HTMLElement>("[data-herb-transition]")].map((el) => el.style.viewTransitionName))
+
+    return {
+      ready: Promise.resolve(),
+      finished: Promise.resolve(),
+      updateCallbackDone: Promise.resolve(),
+      skipTransition: () => {},
+    }
+  }
+
+  return seen
+}
+
+afterEach(() => {
+  documentWithVT.startViewTransition = native
+  document.body.innerHTML = ""
+})
+
+describe("transitionMutation", () => {
+  test("a marked element runs the mutation inside a view transition and names itself", async () => {
+    document.body.innerHTML = `<div data-herb-transition><p id="content">before</p></div>`
+
+    const seen = stub()
+    const mutate = vi.fn(() => {
+      document.getElementById("content")!.textContent = "after"
+    })
+
+    await transitionMutation(mutate)
+
+    expect(seen.calls).toBe(1)
+    expect(mutate).toHaveBeenCalledTimes(1)
+    expect(document.body.innerHTML).toContain("after")
+    expect(seen.names[0]).toEqual(["match-element"])
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(document.querySelector<HTMLElement>("[data-herb-transition]")!.style.viewTransitionName).toBe("")
+  })
+
+  test("a valued attribute names the transition for user CSS", async () => {
+    document.body.innerHTML = `<div data-herb-transition="side panel"></div>`
+
+    const seen = stub()
+
+    await transitionMutation(() => {})
+
+    expect(seen.names[0]).toEqual(["side-panel"])
+  })
+
+  test("a page without marked elements mutates without a transition", async () => {
+    document.body.innerHTML = `<div><p id="content">before</p></div>`
+
+    const seen = stub()
+
+    await transitionMutation(() => {
+      document.getElementById("content")!.textContent = "after"
+    })
+
+    expect(seen.calls).toBe(0)
+    expect(document.body.innerHTML).toContain("after")
+  })
+
+  test("an open modal dialog skips the transition and keeps the mutation", async () => {
+    document.body.innerHTML = `<div data-herb-transition></div><dialog id="modal"><p>open</p></dialog>`
+    document.querySelector<HTMLDialogElement>("#modal")!.showModal()
+
+    const seen = stub()
+    const mutate = vi.fn()
+
+    await transitionMutation(mutate)
+
+    document.querySelector<HTMLDialogElement>("#modal")!.close()
+
+    expect(seen.calls).toBe(0)
+    expect(mutate).toHaveBeenCalledTimes(1)
+  })
+
+  test("a browser without the API mutates without a transition", async () => {
+    document.body.innerHTML = `<div data-herb-transition><p id="content">before</p></div>`
+
+    documentWithVT.startViewTransition = undefined
+
+    await transitionMutation(() => {
+      document.getElementById("content")!.textContent = "after"
+    })
+
+    expect(document.body.innerHTML).toContain("after")
+  })
+
+  test("concurrent mutations batch into one following transition", async () => {
+    document.body.innerHTML = `<div data-herb-transition></div>`
+
+    const seen = stub()
+    const order: number[] = []
+
+    await Promise.all([
+      transitionMutation(() => order.push(1)),
+      transitionMutation(() => order.push(2)),
+      transitionMutation(() => order.push(3)),
+    ])
+
+    expect(order).toEqual([1, 2, 3])
+    expect(seen.calls).toBeLessThanOrEqual(2)
+  })
+
+  test("naming stays scoped to the mutation's own subtree", async () => {
+    document.body.innerHTML = `<div id="mine" data-herb-transition="mine"></div><div data-herb-transition="other"></div>`
+
+    const seen = stub()
+
+    await transitionMutation(() => {}, document.getElementById("mine")!)
+
+    expect(seen.names[0]).toEqual(["mine", ""])
+  })
+
+  test("elements added by the mutation get named before the new capture", async () => {
+    document.body.innerHTML = `<div id="host" data-herb-transition></div>`
+
+    const seen = stub()
+
+    await transitionMutation(() => {
+      document.getElementById("host")!.insertAdjacentHTML("afterend", `<div data-herb-transition="fresh"></div>`)
+    })
+
+    expect(seen.names[0]).toEqual(["match-element", "fresh"])
+  })
+})
+
+const FILE = "app/views/chat/panel.html.erb"
+
+function panelPage(marked: boolean): string {
+  return (
+    `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+    `<!--herb-slot:0:conditional--><!--herb-branch:0:1--><!--/herb-slot:0-->` +
+    `<template data-herb-region="${FILE}:aaaaaaaa">` +
+    `<!--herb-branch:0:0--><div id="panel"${marked ? ' data-herb-transition="panel"' : ""}>opened</div>` +
+    `<!--herb-branch:0:1-->` +
+    `</template>` +
+    `<!--/herb-region:${FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      states: {
+        [FILE]: {
+          version: "aaaaaaaa",
+          declarations: [{ name: "open", kind: "boolean", default: "false", value: false, scope: "region" }],
+          reads: {},
+          conditionals: { 0: { arms: [{ branch: 0, condition: ["open", null] }], else: 1 } },
+          presence: {},
+          computed: {},
+          server: { branches: {}, reads: {} },
+        },
+      },
+    })}</template>`
+  )
+}
+
+describe("marked branch flips", () => {
+  let runtime: Runtime | null = null
+
+  afterEach(() => {
+    runtime?.stop()
+    runtime = null
+    document.body.innerHTML = ""
+  })
+
+  test("mounting a branch whose parked material is marked runs a view transition", async () => {
+    document.body.innerHTML = panelPage(true)
+
+    const seen = stub()
+
+    runtime = Runtime.start({ state: { refetch: "off" } })
+    runtime.state.setState({ open: true })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("opened")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(seen.calls).toBe(1)
+  })
+
+  test("an unmarked branch flips synchronously", () => {
+    document.body.innerHTML = panelPage(false)
+
+    const seen = stub()
+
+    runtime = Runtime.start({ state: { refetch: "off" } })
+    runtime.state.setState({ open: true })
+
+    expect(document.body.innerHTML).toContain("opened")
+    expect(seen.calls).toBe(0)
+  })
+})
+
+describe("collection appends", () => {
+  let runtime: Runtime | null = null
+
+  afterEach(() => {
+    runtime?.stop()
+    runtime = null
+    document.body.innerHTML = ""
+  })
+
+  test("an appended item lands inside a view transition when rows are marked", async () => {
+    const LIST = "app/views/chat/list.html.erb"
+
+    document.body.innerHTML =
+      `<!--herb-region:${LIST}:bbbbbbbb:0--><ul>` +
+      `<!--herb-slot:0:collection-->` +
+      `<!--herb-item:0:1--><li data-herb-transition data-herb-slot="1:child">one</li><!--/herb-item:0-->` +
+      `<!--/herb-slot:0--></ul>` +
+      `<template data-herb-region="${LIST}:bbbbbbbb"><!--herb-branch:0:item-->` +
+      `<!--herb-item:0:--><li data-herb-transition data-herb-slot="1:child"></li><!--/herb-item:0--></template>` +
+      `<!--/herb-region:${LIST}-->`
+
+    const seen = stub()
+    const transport = vi.fn(async () => ({
+      template: LIST,
+      version: "bbbbbbbb",
+      occurrence: 0,
+      slots: { 0: { items: { 1: { 1: "one" }, 2: { 1: "two" } }, order: ["1", "2"] } },
+    }))
+
+    runtime = Runtime.start({ state: { refetchTransport: transport } })
+
+    await runtime.refresh()
+
+    expect(document.body.innerHTML).toContain("two")
+    expect(seen.calls).toBe(1)
+    expect(document.querySelectorAll("li").length).toBe(2)
+  })
+})
