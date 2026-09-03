@@ -193,6 +193,10 @@ export class Seeds {
     const declaration = this.delegate.declarationFor(manifest, scope, name)
 
     for (const index of manifest.reads[name] ?? []) {
+      if (manifest.computed?.[String(index)]) {
+        continue
+      }
+
       for (const slot of this.delegate.scopedSlots(scope, index)) {
         if (slot.claimed) {
           continue
@@ -211,7 +215,26 @@ export class Seeds {
             continue
           }
 
-          return element.hasAttribute(slot.attribute)
+          const operator = entry[2]
+          const present = element.hasAttribute(slot.attribute)
+
+          if (operator === undefined || operator === null) {
+            return present
+          }
+
+          if (declaration?.kind !== "boolean") {
+            continue
+          }
+
+          if (operator === "falsy" || operator === "blank") {
+            return !present
+          }
+
+          if (operator === "truthy" || operator === "present") {
+            return present
+          }
+
+          continue
         }
 
         return coerceState(this.slots.currentText(slot), declaration?.kind ?? "string")
