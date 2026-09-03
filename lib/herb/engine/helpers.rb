@@ -26,16 +26,33 @@ module Herb
 
       #: (String) -> bool
       def self.ends_on_heredoc_terminator?(code)
-        return false unless heredoc?(code)
+        return false unless code.include?("<<")
 
-        terminators = code.scan(/<<[~-]?\s*['"`]?(\w+)/).flatten
+        tokens = heredoc_tokens(code)
 
-        terminators.any? && terminators.include?(code.lines.last.to_s.strip)
+        return true unless tokens
+
+        tokens.any? { |token| token.type == :HEREDOC_END && token.location.start_line == code.lines.size }
       end
 
       #: (String) -> bool
       def self.heredoc?(code)
-        code.match?(/<<[~-]?\s*['"`]?\w/)
+        return false unless code.include?("<<")
+
+        tokens = heredoc_tokens(code)
+
+        return true unless tokens
+
+        tokens.any? { |token| token.type == :HEREDOC_START }
+      end
+
+      #: (String) -> Array[untyped]?
+      def self.heredoc_tokens(code)
+        return nil unless prism_available?
+
+        Prism.lex(code).value.map(&:first)
+      rescue StandardError
+        nil
       end
 
       #: (String) -> String
