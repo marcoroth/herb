@@ -355,5 +355,17 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "a shovel operator spanning two lines in an output tag keeps the following line" do
+      template = "<p><%= a <<\nb %></p>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a shovel operator in a control tag keeps the line the next tag is on" do
+      template = "<% list << item %><%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
