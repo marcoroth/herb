@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { ACTION_ATTRIBUTE_SCHEMA, BY_ATTRIBUTE, StateScopeMap, collectCountedFolds, declaredKind, isActionAttribute, isDerived, kindWithArticle } from "../utils/state-directives-utils.js"
-import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "@herb-tools/client/directives"
+import { balancedQuotes, clauses, eventSpecProblem, names, splitOutsideQuotes, unquote } from "@herb-tools/client/directives"
 
 import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes } from "@herb-tools/core"
 
@@ -81,6 +81,17 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
         clause.event === ""
           ? `\`${name}\` has a clause with no event before the arrow. Name one, like \`click->\`, or drop the arrow to use the element's default event.`
           : `\`${name}\` has a clause with nothing after the event. Name the state to write, like \`${clause.event}->open\`.`,
+        attribute.location,
+      )
+
+      return
+    }
+
+    const problem = clause.event === null ? null : eventSpecProblem(clause.event)
+
+    if (problem !== null) {
+      this.addOffense(
+        `\`${clause.event}\` in \`${name}\` ${problem}`,
         attribute.location,
       )
 
