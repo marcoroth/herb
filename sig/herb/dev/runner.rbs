@@ -60,6 +60,9 @@ module Herb
       # : (Watcher) -> void
       def index_files: (Watcher) -> void
 
+      # : (Integer) -> String
+      def broken_summary: (Integer) -> String
+
       # : () -> Thread
       def watch_stdin: () -> Thread
 

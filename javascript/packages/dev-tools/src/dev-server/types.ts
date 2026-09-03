@@ -58,6 +58,7 @@ export interface WelcomeMessage {
   type: "welcome"
   project: string
   compiler?: boolean
+  broken_files?: string[]
 }
 
 export const DEV_SERVER_COMMAND = "bundle exec herb dev"

@@ -31,6 +31,18 @@ module Dev
       Herb::Engine::Slots::SchemaCompiler.call(source, filename: "a.html.erb", mode: :client).slot_entries
     end
 
+    test "the welcome message carries the templates that don't parse" do
+      message = Herb::Dev::Protocol.welcome(project: "/app", broken_files: ["a.html.erb", "b.html.erb"])
+
+      assert_equal({ type: "welcome", project: "/app", broken_files: ["a.html.erb", "b.html.erb"] }, message)
+    end
+
+    test "a project with nothing broken welcomes with an empty list" do
+      message = Herb::Dev::Protocol.welcome(project: "/app")
+
+      assert_equal({ type: "welcome", project: "/app", broken_files: [] }, message)
+    end
+
     test "removing one span inside an item nulls only that span's slot" do
       before_source = ITEM_TEMPLATE
       after_source = ITEM_TEMPLATE.sub("<span><%= item.author %></span>", "")

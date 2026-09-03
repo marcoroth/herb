@@ -39,6 +39,15 @@ module Herb
         }
       end
 
+      #: (project: String?, ?broken_files: Array[String]) -> Hash[Symbol, untyped]
+      def self.welcome(project:, broken_files: [])
+        {
+          type: "welcome",
+          project: project,
+          broken_files: broken_files,
+        }
+      end
+
       #: (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
       def self.invalidate(file:, version:, node_path:, scope:)
         {

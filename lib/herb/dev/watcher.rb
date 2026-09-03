@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "../../herb"
 require_relative "../configuration"
 require_relative "assets"
 
@@ -34,6 +35,7 @@ module Herb
 
       attr_reader :file_states #: Hash[String, String]
       attr_reader :watch_paths #: Array[String]
+      attr_reader :broken_files #: Set[String]
 
       #: (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
       def initialize(config:, root:, watch_paths: nil, &on_event)
@@ -43,6 +45,7 @@ module Herb
         @watch_paths = resolve_watch_paths(watch_paths) #: Array[String]
         @file_states = {} #: Hash[String, String]
         @assets = Assets.new
+        @broken_files = Set.new #: Set[String]
         @include_patterns = config.file_include_patterns
         @exclude_patterns = config.file_exclude_patterns
         @thread = nil #: Thread?
@@ -52,7 +55,9 @@ module Herb
       #: (?String) -> Integer
       def index(path = @root)
         @config.find_files(path).each do |file_path|
-          @file_states[file_path] = File.read(file_path)
+          content = File.read(file_path)
+          @file_states[file_path] = content
+          @broken_files.add(relative_for(file_path)) if Herb.parse(content, strict: true, analyze: true).errors.any?
         rescue StandardError
           nil
         end
@@ -123,10 +128,15 @@ module Herb
         [builds]
       end
 
+      #: (String) -> String
+      def relative_for(path)
+        path.delete_prefix("#{@root}/")
+      end
+
       #: (Cruise::Event) -> void
       def handle(raw)
         path = raw.path
-        relative_path = path.delete_prefix("#{@root}/")
+        relative_path = relative_for(path)
 
         return handle_asset(path, relative_path) if @config.path_included?(relative_path, Assets::PATTERNS)
         return if @config.path_excluded?(relative_path, @exclude_patterns)

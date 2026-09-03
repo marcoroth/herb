@@ -40,6 +40,16 @@ module Herb
         @on_classified = block
       end
 
+      #: (Enumerable[String]) -> void
+      def remember_broken(files)
+        files.each { |file| @file_state[file] = :parse_error }
+      end
+
+      #: () -> Array[String]
+      def broken_files
+        @file_state.select { |_, state| state == :parse_error }.keys
+      end
+
       #: () -> bool
       def compiles?
         !@compiler.call.nil?
@@ -64,7 +74,7 @@ module Herb
       #: (Watcher::Event) -> void
       def handle_removed(event)
         file = event.relative_path
-        was_errored = @file_state[file] && @file_state[file] != :ok
+        was_broken = @file_state[file] && @file_state[file] != :ok
         from = @versions[file]
 
         @versions.delete(file)
@@ -73,7 +83,7 @@ module Herb
         @statics.delete(file)
         @file_state.delete(file)
 
-        broadcast(Protocol.schema(file: file, mode: nil, from: from, to: nil)) if was_errored
+        broadcast(Protocol.schema(file: file, mode: nil, from: from, to: nil)) if was_broken
 
         notify(event, nil)
       end

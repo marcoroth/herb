@@ -138,6 +138,7 @@ Metrics/ClassLength:
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server_entry.rb
     - lib/herb/dev/server.rb
+    - lib/herb/dev/watcher.rb
     - lib/herb/diagnostic.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb

@@ -56,7 +56,9 @@ module Herb
         pipeline.on_classified { |event, classification| paint(event, classification) }
 
         @first_change = true
-        @errored_files = Set.new
+        @broken_files = Set.new
+
+        websocket.on_welcome { pipeline.broken_files }
 
         websocket.on_client do |event, count|
           announce_first_change
@@ -69,6 +71,9 @@ module Herb
         end
 
         index_files(watcher)
+
+        @broken_files = watcher.broken_files.dup
+        pipeline.remember_broken(watcher.broken_files)
 
         websocket.start
 
@@ -243,9 +248,17 @@ module Herb
         puts "  #{fg("Indexing files...", 241)}" if interactive?
 
         count = watcher.index(@path)
+        broken = watcher.broken_files.size
 
         terminal("\e[1A\e[2K")
-        puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{count} templates indexed", 250)}"
+        puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{pluralize(count, "template")} indexed", 250)}#{broken_summary(broken)}"
+      end
+
+      #: (Integer) -> String
+      def broken_summary(broken)
+        return "" unless broken.positive?
+
+        fg(", #{broken} #{broken == 1 ? "doesn't" : "don't"} parse", 214)
       end
 
       #: () -> Thread
@@ -283,7 +296,7 @@ module Herb
 
         case event.kind
         when :removed
-          @errored_files.delete(event.path)
+          @broken_files.delete(event.relative_path)
           puts "    #{timestamp} #{bold(fg("- removed", 196))} #{display_path}"
         when :added
           puts "    #{timestamp} #{bold(fg("+ added  ", 42))} #{display_path}"
@@ -296,16 +309,23 @@ module Herb
       def paint_change(event, classification, timestamp, display_path)
         case classification&.kind
         when :parse_error
-          @errored_files.add(event.path)
+          @broken_files.add(event.relative_path)
 
-          print "    #{timestamp} #{bold(fg("\u{2717} error", 196))}"
-          print_diagnostics(event.current.to_s, Herb::Diagnostic.from_errors(new_errors(event, classification), template: event.relative_path), event.relative_path)
-          puts
+          errors = new_errors(event, classification)
+
+          unless errors.empty?
+            print "    #{timestamp} #{bold(fg("\u{2717} error", 196))}"
+            print_diagnostics(event.current.to_s, Herb::Diagnostic.from_errors(errors, template: event.relative_path), event.relative_path)
+            puts
+          end
         when :none, :whitespace, nil
           paint_cleared(event, timestamp, display_path)
         else
-          paint_cleared(event, timestamp, display_path)
-          print_diff_summary(classification, timestamp, display_path)
+          if @broken_files.include?(event.relative_path)
+            paint_cleared(event, timestamp, display_path)
+          else
+            print_diff_summary(classification, timestamp, display_path)
+          end
         end
       end
 
@@ -322,7 +342,7 @@ module Herb
 
       #: (Watcher::Event, String, String) -> void
       def paint_cleared(event, timestamp, display_path)
-        return unless @errored_files.delete?(event.path)
+        return unless @broken_files.delete?(event.relative_path)
 
         puts "    #{timestamp} #{bold(fg("\u{2713} clear  ", 42))} #{display_path}"
         puts
