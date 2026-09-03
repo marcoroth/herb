@@ -250,10 +250,6 @@ function sentenceCase(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function fixKey(diagnostic: NormalizedDiagnostic): string {
-  return diagnosticKey(diagnostic).replace(/\u0000/g, '|')
-}
-
 function tip(text: string, label: string = text): string {
   return ` aria-label="${escapeHTML(label)}" data-herb-dev-tools-tip="${escapeHTML(text)}"`
 }
@@ -672,7 +668,7 @@ export class RuntimePanel {
       return
     }
 
-    const entry = this.entries.find(candidate => fixKey(candidate.diagnostic) === key)
+    const entry = this.entries.find(candidate => diagnosticKey(candidate.diagnostic) === key)
     const source = entry?.diagnostic.fix?.source
 
     if (source === undefined) {
@@ -2088,7 +2084,7 @@ export class RuntimePanel {
       return `<div class="herb-dev-tools-fix-pending" data-herb-dev-tools-fix-pending hidden></div>`
     }
 
-    const key = fixKey(diagnostic)
+    const key = diagnosticKey(diagnostic)
     const view = this.fixViews.get(key) ?? 'diff'
     const open = this.openFixes.has(key)
 

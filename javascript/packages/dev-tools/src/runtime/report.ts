@@ -500,8 +500,9 @@ export function buildRenderStack(tree: RenderTreeNode[], diagnostic: NormalizedD
 }
 
 export function diagnosticKey(diagnostic: NormalizedDiagnostic): string {
-  const line = diagnostic.location?.start.line ?? '';
-  const discriminator = diagnostic.code ?? diagnostic.message;
-
-  return [diagnostic.template, line, diagnostic.code ?? '', discriminator].join(' ');
+  return JSON.stringify([
+    diagnostic.template,
+    diagnostic.location?.start.line ?? null,
+    diagnostic.code ?? diagnostic.message
+  ]);
 }
