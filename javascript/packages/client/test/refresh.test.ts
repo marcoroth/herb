@@ -213,6 +213,99 @@ describe("refetching server-derived slots", () => {
     expect(document.body.innerHTML).toContain("fresh")
   })
 
+  test("a payload carrying statics materializes a branch the page never parked", () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><p>off</p><!--/herb-slot:0--></div>` +
+      `<!--/herb-region:${FILE}-->`
+
+    const live = start()
+    const report = live.slots.apply(payloadFor({
+      0: { branch: 0, statics: "<!--herb-branch:0:0--><em><!--herb-slot:1--><!--/herb-slot:1--></em>", slots: { 1: "unrolled" } },
+    }))
+
+    expect(report.deferred).toEqual([])
+    expect(document.body.innerHTML).toContain("<em>")
+    expect(document.body.innerHTML).toContain("unrolled")
+  })
+
+  test("a payload's statics let a stuck state branch finally flip", async () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><p>off</p><!--/herb-slot:0--></div>` +
+      `<b><!--herb-slot:3--><!--/herb-slot:3--></b>` +
+      `<!--/herb-region:${FILE}-->` +
+      dependencies(STATES)
+
+    const live = start({ state: { refetchTransport: async () => payloadFor({}), refetchDebounce: 0 } })
+
+    live.state.setState({ editing: true })
+
+    expect(document.body.innerHTML).toContain("off")
+
+    live.slots.apply(payloadFor({
+      0: { branch: 0, statics: "<!--herb-branch:0:0--><em><!--herb-slot:2--><!--/herb-slot:2--></em>", slots: { 2: "arrived" } },
+    }))
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("arrived")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(document.body.innerHTML).not.toContain("<p>off</p>")
+  })
+
+  test("a state flip with no material refetches and unrolls the branch", async () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><p>off</p><!--/herb-slot:0--></div>` +
+      `<b><!--herb-slot:3--><!--/herb-slot:3--></b>` +
+      `<!--/herb-region:${FILE}-->` +
+      dependencies(STATES)
+
+    const transport = vi.fn(async () => payloadFor({
+      0: { branch: 0, statics: "<!--herb-branch:0:0--><em><!--herb-slot:2--><!--/herb-slot:2--></em>", slots: { 2: "fetched" } },
+    }))
+
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ editing: true })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fetched")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(transport).toHaveBeenCalled()
+    expect(document.body.innerHTML).not.toContain("<p>off</p>")
+  })
+
+  test("a branch flip with no material defers and says so", () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><p>off</p><!--/herb-slot:0--></div>` +
+      `<!--/herb-region:${FILE}-->`
+
+    const reportSink = vi.fn()
+
+    vi.stubGlobal("HerbDevTools", { report: reportSink })
+
+    try {
+      const live = start()
+      const report = live.slots.apply(payloadFor({ 0: { branch: 0, slots: {} } }))
+
+      expect(report.deferred).toHaveLength(1)
+
+      const reported = reportSink.mock.calls.flat(2) as Array<{ code?: string }>
+
+      expect(reported.some((diagnostic) => diagnostic.code === "herb-slots-materialize")).toBe(true)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   test("data-herb-action fires $refresh and reports unknown actions", async () => {
     document.body.innerHTML =
       PAGE +
@@ -247,6 +340,7 @@ describe("refetching server-derived slots", () => {
       const entry = reported.find((diagnostic) => diagnostic.code === "herb-invalid-action")
 
       expect(entry?.message).toContain("somethingCustom")
+      expect(reported.every((diagnostic) => diagnostic.code !== "herb-unknown-state")).toBe(true)
     } finally {
       vi.unstubAllGlobals()
     }

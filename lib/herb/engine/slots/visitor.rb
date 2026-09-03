@@ -144,7 +144,7 @@ module Herb
           @static_markup = nil #: String?
           @bufvar = "_buf"
           @mode = mode
-          @statics = mode == :client ? {} : nil #: Hash[String, String]?
+          @statics = {} #: Hash[String, String]?
           @identify = identifier
 
           @slots = [] #: Array[Slot]
@@ -1444,6 +1444,8 @@ module Herb
 
         #: (Herb::AST::DocumentNode) -> void
         def append_statics(document_node)
+          return unless client?
+
           statics = @statics
           return if statics.nil? || statics.empty?
 
@@ -1515,7 +1517,7 @@ module Herb
               text_node(@markers.item_open_suffix)
             )
 
-            body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked
+            body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked && client?
 
             body.push(text_node(@markers.item_close(slot_index)))
           end

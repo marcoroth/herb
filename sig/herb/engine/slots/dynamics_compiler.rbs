@@ -259,6 +259,12 @@ module Herb
         # : (Integer, Integer) -> void
         def scope_branch: (Integer, Integer) -> void
 
+        # : (Integer, Integer) -> String?
+        def payload_statics: (Integer, Integer) -> String?
+
+        # : () -> Hash[String, String]
+        def branch_statics: () -> Hash[String, String]
+
         # : (Integer) -> void
         def scope_close_conditional: (Integer) -> void
 

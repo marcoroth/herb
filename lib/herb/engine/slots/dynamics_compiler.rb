@@ -441,6 +441,8 @@ module Herb
         def initialize(input, properties = {})
           @block_depth = 0
           @scopes = [] #: Array[Integer]
+          @input = input
+          @filename = properties[:filename]
           @slot_visitor = properties[:slot_visitor] || Visitor.new(mode: :server, mark: false)
           @slot_visitor.state_overrides!
           visitors = [*properties[:visitors], @slot_visitor]
@@ -576,9 +578,35 @@ module Herb
         def scope_branch(index, branch)
           leave_scope(index)
 
-          @src << "; #{SLOT_BUFFER}#{index} = { branch: #{branch}, slots: (#{SCOPE_BUFFER}#{index} = ::Hash.new) };"
+          statics = payload_statics(index, branch)
+          parked = statics ? " statics: #{statics.inspect}," : ""
+
+          @src << "; #{SLOT_BUFFER}#{index} = { branch: #{branch},#{parked} slots: (#{SCOPE_BUFFER}#{index} = ::Hash.new) };"
 
           @scopes.push(index)
+        end
+
+        # A client-mode page carries every branch's statics itself. A server-mode
+        # page carries none, so the payload brings the taken branch's markup along
+        # and the client parks it on arrival, the way LiveView unrolls a new branch.
+        # The values visitor never marks the tree, so the markup comes from one
+        # extra marking pass, run lazily and only for templates with conditionals.
+        #: (Integer, Integer) -> String?
+        def payload_statics(index, branch)
+          return nil unless @input.is_a?(String) && Visitor.directive_mode(@input) == :server
+
+          branch_statics["#{index}:#{branch}"]
+        end
+
+        #: () -> Hash[String, String]
+        def branch_statics
+          @branch_statics ||= begin
+            visitor = Visitor.new(fatal: false)
+
+            Herb::Engine.new(@input, visitors: [visitor], filename: @filename)
+
+            visitor.statics || {}
+          end
         end
 
         #: (Integer) -> void
