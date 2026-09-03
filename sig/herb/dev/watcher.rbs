@@ -62,8 +62,14 @@ module Herb
       # : (Array[String]?) -> Array[String]
       def resolve_watch_paths: (Array[String]?) -> Array[String]
 
+      # : (Array[String]) -> Array[String]
+      def asset_watch_paths: (Array[String]) -> Array[String]
+
       # : (Cruise::Event) -> void
       def handle: (Cruise::Event) -> void
+
+      # : (String, String) -> void
+      def handle_asset: (String, String) -> void
 
       # : (String, String, String) -> Event?
       def normalize: (String, String, String) -> Event?

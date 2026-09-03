@@ -7,7 +7,7 @@ import { UnavailableAlert } from "./unavailable-alert"
 import { diagnosticsFromError } from "./diagnostics"
 import { heldRuntime } from "./runtime-handle"
 
-import type { DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
+import type { AssetMessage, DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
 
 const DEFAULT_PORT = 8592
 const UNAVAILABLE_HINT_AFTER_ATTEMPTS = 3
@@ -146,6 +146,9 @@ export class HerbClient {
       case "error":
         this.handleError(message)
         break
+      case "asset":
+        this.handleAsset(message)
+        break
     }
   }
 
@@ -174,6 +177,12 @@ export class HerbClient {
   private handleInvalidate(message: InvalidateMessage): void {
     this.options.onInvalidate?.(message)
     this.options.hotReload?.onInvalidate(message)
+  }
+
+  private handleAsset(message: AssetMessage): void {
+    this.options.onAsset?.(message)
+
+    this.options.hotReload?.onAsset(message)
   }
 
   private handleError(message: ErrorMessage): void {

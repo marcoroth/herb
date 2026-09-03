@@ -54,6 +54,8 @@ module Herb
           handle_added(event)
         when :changed
           handle_changed(event)
+        when :stylesheet, :script
+          broadcast(Protocol.asset(kind: event.kind, file: event.relative_path))
         end
       end
 

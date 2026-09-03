@@ -193,5 +193,78 @@ module Dev
         assert_equal [root], watcher_for(root, [root, views]).watch_paths
       end
     end
+
+    test "a rebuilt stylesheet is one :stylesheet event per changed digest" do
+      with_watcher do |root, watcher, events|
+        path = write(root, "app/assets/builds/tailwind.css", ".a{}")
+
+        watcher.send(:handle, RawEvent.new("created", path))
+        watcher.send(:handle, RawEvent.new("modified", path))
+
+        write(root, "app/assets/builds/tailwind.css", ".a{} .b{}")
+        watcher.send(:handle, RawEvent.new("modified", path))
+
+        assert_equal [:stylesheet, :stylesheet], events.map(&:kind)
+        assert_equal "app/assets/builds/tailwind.css", events.first.relative_path
+        assert_nil events.first.current
+      end
+    end
+
+    test "an indexed stylesheet stays quiet until its content moves" do
+      with_watcher do |root, watcher, events|
+        path = write(root, "app/assets/builds/tailwind.css", ".a{}")
+
+        watcher.index
+
+        watcher.send(:handle, RawEvent.new("modified", path))
+
+        assert_empty events
+
+        write(root, "app/assets/builds/tailwind.css", ".b{}")
+        watcher.send(:handle, RawEvent.new("modified", path))
+
+        assert_equal [:stylesheet], events.map(&:kind)
+      end
+    end
+
+    test "a narrowed watcher keeps the CSS build outputs in its watch paths" do
+      Dir.mktmpdir do |root|
+        root = File.realpath(root)
+        views = File.join(root, "app/views")
+        builds = File.join(root, "app/assets/builds")
+
+        FileUtils.mkdir_p(views)
+        FileUtils.mkdir_p(builds)
+
+        assert_equal [builds, views], watcher_for(root, [views]).watch_paths
+      end
+    end
+
+    test "a rebuilt script is a :script event" do
+      with_watcher do |root, watcher, events|
+        path = write(root, "app/assets/builds/application.js", "console.log(1)")
+
+        watcher.send(:handle, RawEvent.new("modified", path))
+
+        assert_equal [:script], events.map(&:kind)
+      end
+    end
+
+    test "a removed asset stays silent, and an identical rebuild after it stays quiet" do
+      with_watcher do |root, watcher, events|
+        path = write(root, "app/assets/builds/tailwind.css", ".a{}")
+
+        watcher.send(:handle, RawEvent.new("modified", path))
+        events.clear
+
+        File.delete(path)
+        watcher.send(:handle, RawEvent.new("removed", path))
+
+        write(root, "app/assets/builds/tailwind.css", ".a{}")
+        watcher.send(:handle, RawEvent.new("created", path))
+
+        assert_empty events
+      end
+    end
   end
 end
