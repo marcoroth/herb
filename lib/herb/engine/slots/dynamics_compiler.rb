@@ -460,6 +460,70 @@ module Herb
             end
           end
         end
+
+        # Cuts the parsed template down to one deferred block for a scoped values
+        # compile. It runs after the slots visitor, so numbering stays global, and
+        # keeps the ancestor chain of the addressed node plus every state
+        # assignment, so the block's locals still resolve. Everything else, and
+        # every side effect it would have run, drops out of the program.
+        class Prune < Herb::Visitor
+          #: (Visitor, Integer) -> void
+          def initialize(slot_visitor, index)
+            super()
+
+            @slot_visitor = slot_visitor
+            @index = index
+          end
+
+          #: (untyped) -> void
+          def visit_document_node(node)
+            target = @slot_visitor.slot_nodes[@index]
+
+            return unless target
+
+            keep(node, target)
+          end
+
+          private
+
+          #: (untyped, untyped) -> void
+          def keep(node, target)
+            Visitor::BRANCH_BODY_PROPERTIES.each do |property|
+              next unless node.respond_to?(property)
+
+              value = node.send(property)
+
+              case value
+              when Array
+                if property == :conditions
+                  value.each { |arm| keep(arm, target) if contains?(arm, target) }
+                else
+                  value.replace(value.select { |child| child.equal?(target) || contains?(child, target) || @slot_visitor.assignment_node?(child) })
+                  value.each { |child| keep(child, target) if !child.equal?(target) && contains?(child, target) }
+                end
+              when Herb::AST::Node
+                keep(value, target) if contains?(value, target)
+              end
+            end
+
+            Visitor::BRANCH_CONTINUATION_PROPERTIES.each do |property|
+              next unless node.respond_to?(property)
+
+              continuation = node.send(property)
+
+              keep(continuation, target) if continuation && contains?(continuation, target)
+            end
+          end
+
+          #: (untyped, untyped) -> bool
+          def contains?(node, target)
+            return true if node.equal?(target)
+            return false unless node.is_a?(Herb::AST::Node)
+
+            node.compact_child_nodes.any? { |child| contains?(child, target) }
+          end
+        end
+
         attr_reader :slot_visitor #: Visitor
 
         #: (String, ?Hash[Symbol, untyped]) -> void
@@ -471,6 +535,7 @@ module Herb
           @slot_visitor = properties[:slot_visitor] || Visitor.new(mode: :server, mark: false)
           @slot_visitor.state_overrides!
           visitors = [*properties[:visitors], @slot_visitor]
+          visitors << Prune.new(@slot_visitor, properties[:block]) if properties[:block]
 
           super(
             input,

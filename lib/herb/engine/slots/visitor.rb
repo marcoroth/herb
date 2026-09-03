@@ -195,10 +195,12 @@ module Herb
           fragment_nodes = {} #: Hash[untyped, Hash[String, untyped]]
           fragment_fallbacks = {} #: Hash[untyped, Array[untyped]]
           deferred_nodes = {} #: Hash[untyped, Hash[Symbol, untyped]]
+          assignment_nodes = {} #: Hash[untyped, bool]
 
           @fragment_nodes = fragment_nodes.compare_by_identity
           @fragment_fallbacks = fragment_fallbacks.compare_by_identity
           @deferred_nodes = deferred_nodes.compare_by_identity
+          @assignment_nodes = assignment_nodes.compare_by_identity
         end
 
         #: () -> bool
@@ -270,6 +272,18 @@ module Herb
         #: (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
         def record_deferred(node, mode:, state:, timing:)
           @deferred_nodes[node] = { mode: mode, state: state, timing: timing }
+        end
+
+        #: (untyped) -> untyped
+        def record_assignment(node)
+          @assignment_nodes[node] = true
+
+          node
+        end
+
+        #: (untyped) -> bool
+        def assignment_node?(node)
+          @assignment_nodes.key?(node)
         end
 
         #: () -> Hash[Integer, Hash[Symbol, untyped]]

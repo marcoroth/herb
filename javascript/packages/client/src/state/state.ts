@@ -14,6 +14,8 @@ import { report } from "../shared/report"
 import { printValue } from "./values"
 import { elementOf, hostOf } from "../markup/anchors"
 import { armOf, evaluate, matches, mentions } from "./conditions"
+import { steeringNames } from "./refresh"
+import { slotsRequest } from "../shared/slots-request"
 import { collectionIn, scopeOf, scoped } from "./scopes"
 import { declarationSpot, declared, declaredValue } from "./declarations"
 
@@ -21,7 +23,7 @@ import type { Slots } from "../slots/slots"
 import type { Conditional } from "./types"
 import type { RefreshReport } from "./refresh"
 import type { StateKind, StateValue } from "./values"
-import type { Built, Item, Region, Slot } from "../types"
+import type { Built, Item, Payload, Region, Slot } from "../types"
 import type { CountOptions, DeclaredState, DependencyMap, PlacedSlot, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
 
 import type { SlotsDelegate } from "../types"
@@ -69,7 +71,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       manifestFor: (region) => this.manifestFor(region),
       placedSlots: (scope, index) => this.placedSlots(scope, index),
       writeInternal: (name, scope) => void this.setState({ [name]: true }, { scope }),
-      requestRefetch: () => void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome)),
+      requestBlock: (region, index) => this.fetchBlock(region, index),
       resettle: (slot) => this.settleBranch(slot),
     })
     this.disarmMutationRefresh = armMutationRefresh(() => this.refreshAfterMutation())
@@ -554,6 +556,51 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
 
     return true
+  }
+
+  private async fetchBlock(region: Region, index: number): Promise<RefreshReport> {
+    const steering = this.blockSteering(region)
+    const address = { template: region.file, index }
+
+    let payload: Payload | null
+
+    try {
+      if (this.options.refetchTransport) {
+        payload = await this.options.refetchTransport(steering, new AbortController().signal, address)
+      } else {
+        payload = await slotsRequest(window.location.href, { format: this.options.format, state: steering, block: index })
+      }
+    } catch {
+      return { applied: 0, deferred: 0, stale: false, failed: true }
+    }
+
+    if (!payload) {
+      return { applied: 0, deferred: 0, stale: false, failed: true }
+    }
+
+    const report = this.slots.apply(payload)
+
+    return { applied: report.applied, deferred: report.deferred.length, stale: false, failed: false }
+  }
+
+  private blockSteering(region: Region): Record<string, Record<string, unknown>> {
+    const manifest = this.manifestFor(region)
+
+    if (!manifest) {
+      return {}
+    }
+
+    const values: Record<string, unknown> = {}
+
+    for (const name of steeringNames(manifest)) {
+      const value = this.valueAt(name, scopeOf(region))
+
+      if (value !== undefined) {
+        values[name] = value
+      }
+    }
+
+    return Object.keys(values).length > 0 ? { [region.file]: values } : {}
   }
 
   private requestReadRefetch(manifest: StateManifest, scope: StateScope, names: string[]): void {

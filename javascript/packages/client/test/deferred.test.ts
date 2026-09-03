@@ -76,7 +76,99 @@ describe("deferred blocks", () => {
 
     expect(transport).toHaveBeenCalledTimes(1)
     expect(calls[0][FILE]._herb_block_0).toBe(true)
+    expect(transport.mock.calls[0][2]).toEqual({ template: FILE, index: 0 })
     expect(document.body.innerHTML).not.toContain("loading stats")
+  })
+
+  test("two async blocks fan out in parallel over the scoped lane", async () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><p class="pulse">one loading</p><!--/herb-slot:0--></div>` +
+      `<div><!--herb-slot:2:conditional--><!--herb-branch:2:1--><p class="pulse">two loading</p><!--/herb-slot:2--></div>` +
+      `<!--/herb-region:${FILE}-->` +
+      `<template data-herb-dependencies>${JSON.stringify({
+        state: {},
+        states: {
+          [FILE]: {
+            version: "aaaaaaaa",
+            declarations: [
+              { name: "_herb_block_0", kind: "boolean", default: "false", value: false, scope: "region", internal: true },
+              { name: "_herb_block_1", kind: "boolean", default: "false", value: false, scope: "region", internal: true },
+            ],
+            reads: {},
+            conditionals: {
+              0: { arms: [{ branch: 0, condition: ["_herb_block_0", null] }], else: 1 },
+              2: { arms: [{ branch: 0, condition: ["_herb_block_1", null] }], else: 1 },
+            },
+            presence: {},
+            computed: {},
+            server: { branches: {}, reads: {} },
+            fragments: {
+              0: { mode: "async", state: "_herb_block_0", fallback: 1 },
+              2: { mode: "async", state: "_herb_block_1", fallback: 1 },
+            },
+          },
+        },
+      })}</template>`
+
+    const resolvers: Array<(payload: Payload) => void> = []
+    const transport = vi.fn((_state: Record<string, Record<string, unknown>>, _signal: AbortSignal, block?: { index: number }) =>
+      new Promise<Payload>((resolve) => {
+        resolvers.push((payload) => resolve(payload))
+
+        void block
+      }))
+
+    start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    await vi.waitFor(() => {
+      if (transport.mock.calls.length < 2) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(resolvers.length).toBe(2)
+
+    resolvers[1]({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 2: { branch: 0, statics: `<!--herb-branch:2:0--><p>two ready</p>`, slots: {} } } })
+    resolvers[0]({ template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 0: { branch: 0, statics: `<!--herb-branch:0:0--><p>one ready</p>`, slots: {} } } })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("one ready") || !document.body.innerHTML.includes("two ready")) {
+        throw new Error("still waiting")
+      }
+    })
+  })
+
+  test("a polled block refetches itself on its interval", async () => {
+    document.body.innerHTML = deferredPage("async").replace(
+      '"fragments":{"0":{"mode":"async","state":"_herb_block_0","fallback":1}}',
+      '"fragments":{"0":{"mode":"async","state":"_herb_block_0","fallback":1,"poll":40}}',
+    )
+
+    expect(document.body.innerHTML).toContain('"poll":40')
+
+    const transport = vi.fn(async () => PRIMARY)
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("42 things")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    await vi.waitFor(() => {
+      if (transport.mock.calls.length < 3) {
+        throw new Error("still waiting")
+      }
+    })
+
+    live.stop()
+
+    const settled = transport.mock.calls.length
+
+    await new Promise((resolve) => setTimeout(resolve, 120))
+
+    expect(transport.mock.calls.length).toBe(settled)
   })
 
   test("a deferred block re-requests when its page comes back", async () => {

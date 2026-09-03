@@ -103,6 +103,26 @@ module Herb
       # values its interior took. `each` and the other iterations are compiled as collections for that
       # reason, and a helper that yields repeatedly reports the last value its interior took.
       class DynamicsCompiler < Herb::Engine
+        class Prune < Herb::Visitor
+          @slot_visitor: untyped
+
+          @index: Integer
+
+          # : (untyped, Integer) -> void
+          def initialize: (untyped, Integer) -> void
+
+          # : (untyped) -> void
+          def visit_document_node: (untyped) -> void
+
+          private
+
+          # : (untyped, untyped) -> void
+          def keep: (untyped, untyped) -> void
+
+          # : (untyped, untyped) -> bool
+          def contains?: (untyped, untyped) -> bool
+        end
+
         BUFFER: String
 
         BLOCK_BUFFER: String

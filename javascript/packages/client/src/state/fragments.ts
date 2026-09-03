@@ -22,7 +22,7 @@ export interface FragmentsDelegate {
   manifestFor(region: Region): StateManifest | null
   placedSlots(scope: StateScope, index: number): PlacedSlot[]
   writeInternal(name: string, scope: StateScope): void
-  requestRefetch(): void
+  requestBlock(region: Region, index: number): Promise<RefreshReport>
   resettle(slot: Slot): void
 }
 
@@ -32,6 +32,7 @@ export class Fragments {
   private readonly showing = new Map<Slot, FragmentPresentation>()
   private readonly armed = new Set<Slot>()
   private readonly observers = new Map<Slot, IntersectionObserver>()
+  private readonly polls = new Map<Slot, ReturnType<typeof setTimeout>>()
 
   constructor(slots: Slots, delegate: FragmentsDelegate) {
     this.slots = slots
@@ -137,7 +138,7 @@ export class Fragments {
         }
 
         for (const placed of this.delegate.placedSlots(scope, Number(key))) {
-          this.arm(placed.slot, entry, placed.scope)
+          this.arm(placed.slot, Number(key), entry, placed.scope)
         }
       }
     }
@@ -162,6 +163,12 @@ export class Fragments {
 
     this.observers.clear()
     this.armed.clear()
+
+    for (const timer of this.polls.values()) {
+      clearTimeout(timer)
+    }
+
+    this.polls.clear()
   }
 
   private present(slot: Slot, fragment: FragmentEntry): void {
@@ -190,7 +197,7 @@ export class Fragments {
 
     const delay = fragment.delay ?? FRAGMENT_DELAY
 
-    if (delay <= 0) {
+    if (delay <= 0 || slot.branch === presentation.fallback) {
       this.swapToFallback(slot, presentation)
 
       return
@@ -203,15 +210,22 @@ export class Fragments {
     }, delay)
   }
 
+  // Masking a deferred block claims its slot, so a payload landing during
+  // the mask parks its material without flipping the branch, and the flip
+  // waits for the mask to lift.
   private swapToFallback(slot: Slot, presentation: FragmentPresentation): void {
     presentation.shownAt = Date.now()
+
+    if (presentation.deferred) {
+      this.slots.claim(slot)
+    }
 
     if (slot.branch !== presentation.fallback) {
       this.slots.switchBranch(slot, presentation.fallback)
     }
   }
 
-  private arm(slot: Slot, entry: FragmentEntry, scope: StateScope): void {
+  private arm(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
     if (this.armed.has(slot)) {
       return
     }
@@ -219,15 +233,13 @@ export class Fragments {
     this.armed.add(slot)
 
     if (slot.branch !== entry.fallback) {
+      this.armPoll(slot, index, entry, scope)
+
       return
     }
 
-    const state = entry.state as string
-
     if (entry.mode === "async" || typeof IntersectionObserver === "undefined") {
-      this.present(slot, entry)
-      this.delegate.writeInternal(state, scope)
-      this.delegate.requestRefetch()
+      this.trigger(slot, index, entry, scope)
 
       return
     }
@@ -235,7 +247,7 @@ export class Fragments {
     const sentinel = this.sentinelFor(slot)
 
     if (!sentinel) {
-      this.delegate.writeInternal(state, scope)
+      this.trigger(slot, index, entry, scope)
 
       return
     }
@@ -247,13 +259,52 @@ export class Fragments {
 
       observer.disconnect()
       this.observers.delete(slot)
-      this.present(slot, entry)
-      this.delegate.writeInternal(state, scope)
-      this.delegate.requestRefetch()
+      this.trigger(slot, index, entry, scope)
     })
 
     observer.observe(sentinel)
     this.observers.set(slot, observer)
+  }
+
+  private trigger(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
+    this.present(slot, entry)
+    this.delegate.writeInternal(entry.state as string, scope)
+
+    void this.delegate.requestBlock(scope.region, index).then((outcome) => {
+      this.settle(outcome)
+      this.armPoll(slot, index, entry, scope)
+    })
+  }
+
+  // A polled block refreshes itself over the scoped lane, so an interval
+  // never pays for the rest of the template. A hidden document skips the
+  // tick and checks again one interval later.
+  private armPoll(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
+    const every = entry.poll ?? 0
+
+    if (every <= 0 || this.polls.has(slot)) {
+      return
+    }
+
+    const tick = (): void => {
+      this.polls.set(slot, setTimeout(() => {
+        if (document.hidden) {
+          tick()
+
+          return
+        }
+
+        void this.delegate.requestBlock(scope.region, index).then((outcome) => {
+          this.settle(outcome)
+
+          if (this.polls.has(slot)) {
+            tick()
+          }
+        })
+      }, every))
+    }
+
+    tick()
   }
 
   // The first element the fallback renders anchors the observer. An empty

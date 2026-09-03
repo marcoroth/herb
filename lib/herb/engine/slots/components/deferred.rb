@@ -14,7 +14,7 @@ module Herb
         # block nears the viewport.
         #
         class Deferred < Base
-          ATTRIBUTES = Fragment::ATTRIBUTES #: Array[String]
+          ATTRIBUTES = (Fragment::ATTRIBUTES + ["poll"]).freeze #: Array[String]
 
           #: () -> Array[String]
           def allowed_attributes
@@ -42,7 +42,7 @@ module Herb
 
             @visitor.record_deferred(if_node, mode: mode, state: state, timing: timing)
 
-            [@visitor.erb_code_node(@visitor.states.internal_assignment(state)), if_node]
+            [@visitor.record_assignment(@visitor.erb_code_node(@visitor.states.internal_assignment(state))), if_node]
           end
 
           private

@@ -627,7 +627,7 @@ module Herb
             assignments = "#{overrides_prelude}; #{assignments}" if @visitor.state_overrides?
             seeds = directive[:inline] || @visitor.degraded? ? nil : seeds_marker(bucket.values)
 
-            parent[position] = @visitor.erb_code_node(seeds ? "; #{assignments}; #{seeds}" : "; #{assignments}")
+            parent[position] = @visitor.record_assignment(@visitor.erb_code_node(seeds ? "; #{assignments}; #{seeds}" : "; #{assignments}"))
           end
 
           if @region_states.empty? && @item_states.empty? && @internal_states.empty?
