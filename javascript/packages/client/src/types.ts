@@ -96,6 +96,7 @@ export interface Slot {
   item: Item | null
   claimed: boolean
   shown: Map<number, SlotValues> | null
+  captured: Map<number, DocumentFragment> | null
 }
 
 export interface Item extends Bounds {

@@ -114,6 +114,34 @@ describe("refetching server-derived slots", () => {
     expect(transport).not.toHaveBeenCalled()
   })
 
+  test("a fragment scoped with `on` only masks for its named states", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 0, hold: 0, on: ["editing"] } })
+
+    let resolveTransport: (payload: Payload) => void = () => {}
+    const transport = vi.fn(() => new Promise<Payload>((resolve) => { resolveTransport = resolve }))
+
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "basel" })
+
+    expect(document.body.innerHTML).toContain("old answer")
+    expect(document.body.innerHTML).not.toContain("looking it up")
+
+    await vi.waitFor(() => {
+      expect(transport).toHaveBeenCalled()
+    })
+
+    expect(document.body.innerHTML).not.toContain("looking it up")
+
+    resolveTransport(payloadFor({ 4: { branch: 0, slots: { 3: "fresh answer" } } }))
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fresh answer")) {
+        throw new Error("still waiting")
+      }
+    })
+  })
+
   test("writing a state a server read depends on refetches debounced, once", async () => {
     document.body.innerHTML = PAGE
 
@@ -211,6 +239,150 @@ describe("refetching server-derived slots", () => {
     expect(report.applied).toBe(1)
     expect(calls[0]).toEqual({})
     expect(document.body.innerHTML).toContain("fresh")
+  })
+
+  function fragmentPage(fragments: Record<string, unknown>): string {
+    return (
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:4:conditional--><!--herb-branch:4:0--><p><!--herb-slot:3-->old answer<!--/herb-slot:3--></p><!--/herb-slot:4--></div>` +
+      `<template data-herb-region="${FILE}:aaaaaaaa">` +
+      `<!--herb-branch:4:0--><p><!--herb-slot:3--><!--/herb-slot:3--></p>` +
+      `<!--herb-branch:4:1--><p class="pulse">looking it up</p>` +
+      `</template>` +
+      `<!--/herb-region:${FILE}-->` +
+      `<template data-herb-dependencies>${JSON.stringify({
+        state: {},
+        states: {
+          [FILE]: {
+            ...STATES,
+            server: { branches: {}, reads: { q: [{ index: 3, node_path: [1, 0] }] } },
+            fragments,
+          },
+        },
+      })}</template>`
+    )
+  }
+
+  test("a stale server read swaps its fragment to the fallback until the refetch lands", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 0, hold: 0 } })
+
+    let resolveTransport: (payload: Payload) => void = () => {}
+    const transport = vi.fn(() => new Promise<Payload>((resolve) => { resolveTransport = resolve }))
+
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "basel" })
+
+    expect(document.body.innerHTML).toContain("looking it up")
+    expect(document.body.innerHTML).not.toContain("old answer")
+
+    await vi.waitFor(() => {
+      if (transport.mock.calls.length === 0) {
+        throw new Error("still waiting")
+      }
+    })
+
+    resolveTransport(payloadFor({ 4: { branch: 0, slots: { 3: "fresh answer" } } }))
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fresh answer")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(document.body.innerHTML).not.toContain("looking it up")
+  })
+
+  test("refetch off never swaps a fragment", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 0, hold: 0 } })
+
+    const transport = vi.fn(async () => payloadFor({}))
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0, refetch: "off" } })
+
+    live.state.setState({ q: "basel" })
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(document.body.innerHTML).toContain("old answer")
+    expect(transport).not.toHaveBeenCalled()
+  })
+
+  test("the fallback waits out `delay` before it appears", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 40, hold: 0 } })
+
+    let resolveTransport: (payload: Payload) => void = () => {}
+    const transport = vi.fn(() => new Promise<Payload>((resolve) => { resolveTransport = resolve }))
+
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "basel" })
+
+    expect(document.body.innerHTML).toContain("old answer")
+    expect(document.body.innerHTML).not.toContain("looking it up")
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("looking it up")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    resolveTransport(payloadFor({ 4: { branch: 0, slots: { 3: "fresh answer" } } }))
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fresh answer")) {
+        throw new Error("still waiting")
+      }
+    })
+  })
+
+  test("a refetch that lands inside `delay` never shows the fallback", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 60, hold: 0 } })
+
+    const transport = vi.fn(async () => payloadFor({ 4: { branch: 0, slots: { 3: "fresh answer" } } }))
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "basel" })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fresh answer")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect(document.body.innerHTML).toContain("fresh answer")
+    expect(document.body.innerHTML).not.toContain("looking it up")
+  })
+
+  test("`hold` keeps the fallback up after a fast payload", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 0, hold: 100 } })
+
+    const transport = vi.fn(async () => payloadFor({ 4: { branch: 0, slots: { 3: "fresh answer" } } }))
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "basel" })
+
+    expect(document.body.innerHTML).toContain("looking it up")
+
+    await vi.waitFor(() => {
+      if (transport.mock.calls.length === 0) {
+        throw new Error("still waiting")
+      }
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 30))
+
+    expect(document.body.innerHTML).toContain("looking it up")
+    expect(document.body.innerHTML).not.toContain("fresh answer")
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fresh answer")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(document.body.innerHTML).not.toContain("looking it up")
   })
 
   test("a payload carrying statics materializes a branch the page never parked", () => {

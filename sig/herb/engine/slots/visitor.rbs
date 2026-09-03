@@ -151,6 +151,21 @@ module Herb
         # : (Integer) -> Array[Integer]
         def slots_inside: (Integer) -> Array[Integer]
 
+        # : (untyped) -> bool
+        def fragment?: (untyped) -> bool
+
+        # : () -> Array[Integer]
+        def fragment_indexes: () -> Array[Integer]
+
+        # : (Integer) -> Hash[String, untyped]
+        def fragment_timing_for: (Integer) -> Hash[String, untyped]
+
+        # : (Array[untyped]) -> Array[untyped]
+        def transform_component_children: (Array[untyped]) -> Array[untyped]
+
+        # : (untyped, Array[untyped], Hash[String, untyped]) -> void
+        def record_fragment: (untyped, Array[untyped], Hash[String, untyped]) -> void
+
         # : (Integer) -> Array[Array[Integer]]
         def slots_by_branch: (Integer) -> Array[Array[Integer]]
 
@@ -342,6 +357,15 @@ module Herb
 
         def visit_branching_node: (untyped node) -> untyped
 
+        # : (untyped) -> bool
+        def declares_slots?: (untyped) -> bool
+
+        # : (untyped) -> void
+        def transform_components: (untyped) -> void
+
+        # : (untyped) -> Array[untyped]
+        def transformed: (untyped) -> Array[untyped]
+
         # : () -> void
         def collapse_invariant_conditionals: () -> void
 
@@ -450,6 +474,9 @@ module Herb
 
         # : (Herb::AST::DocumentNode) -> void
         def append_statics: (Herb::AST::DocumentNode) -> void
+
+        # : () -> Array[[String, Array[untyped]]]
+        def fallback_statics_entries: () -> Array[[ String, Array[untyped] ]]
 
         # : (String) -> String
         def covered_key: (String) -> String

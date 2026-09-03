@@ -1,0 +1,44 @@
+# Generated from lib/herb/engine/slots/components/fragment.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Components
+        # Suspense-like fallbacks for server-derived content.
+        #
+        # A fragment compiles its primary children into a synthesized single-arm
+        # conditional the page renders on first load, and parks its `<Fallback>`
+        # for the client to show the instant a state write invalidates a server
+        # read inside it. `delay` and `hold` tune when the fallback appears and
+        # how long it stays.
+        class Fragment < Base
+          NAME: String
+
+          ATTRIBUTES: Array[String]
+
+          TIMING_ATTRIBUTES: Array[String]
+
+          # : () -> Array[String]
+          def allowed_attributes: () -> Array[String]
+
+          # : () -> Array[untyped]
+          def transform: () -> Array[untyped]
+
+          private
+
+          # : () -> Hash[String, untyped]
+          def masking: () -> Hash[String, untyped]
+
+          # : () -> Hash[String, Integer]
+          def timing: () -> Hash[String, Integer]
+
+          # : (untyped) -> void
+          def refuse_nested_fragment: (untyped) -> void
+
+          # : (Array[untyped]) -> untyped
+          def synthesized_conditional: (Array[untyped]) -> untyped
+        end
+      end
+    end
+  end
+end

@@ -1,5 +1,5 @@
 import { asList } from "../shared/arrays"
-import { branchKey, branchOf, parseMarker, slotOpenIndex } from "./markers"
+import { branchKey, branchOf, isItemClose, isItemOpen, parseMarker, slotOpenIndex } from "./markers"
 import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
 
 import { DEFAULT_SLOT_TYPE, PART_MARKER } from "./markers"
@@ -89,13 +89,60 @@ export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text
   }
 }
 
+function insideItem(node: Node, fragment: DocumentFragment): boolean {
+  let depth = 0
+  const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_COMMENT)
+
+  while (walker.nextNode()) {
+    const comment = walker.currentNode as Comment
+
+    if (comment === node) {
+      return depth > 0
+    }
+
+    const data = comment.data.trim()
+
+    if (isItemOpen(data)) {
+      depth += 1
+    } else if (isItemClose(data)) {
+      depth -= 1
+    }
+  }
+
+  if (node instanceof Element) {
+    let parent: Node | null = node
+
+    while (parent && parent !== fragment) {
+      let sibling: Node | null = parent
+
+      while ((sibling = sibling.previousSibling)) {
+        if (sibling.nodeType === Node.COMMENT_NODE) {
+          const data = (sibling as Comment).data.trim()
+
+          if (isItemOpen(data)) {
+            return true
+          }
+
+          if (isItemClose(data)) {
+            break
+          }
+        }
+      }
+
+      parent = parent.parentNode
+    }
+  }
+
+  return false
+}
+
 export function valuesIn(fragment: DocumentFragment): SlotValues {
   const found: SlotValues = {}
 
   for (const open of slotOpeners(fragment)) {
     const index = slotOpenIndex(open.data.trim())
 
-    if (index === null) {
+    if (index === null || insideItem(open, fragment)) {
       continue
     }
 
@@ -115,6 +162,10 @@ export function valuesIn(fragment: DocumentFragment): SlotValues {
 
   for (const [element, entry] of anchoredSlots(fragment)) {
     if (entry.attribute !== null || entry.type !== DEFAULT_SLOT_TYPE) {
+      continue
+    }
+
+    if (insideItem(element, fragment)) {
       continue
     }
 

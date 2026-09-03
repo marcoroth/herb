@@ -31,6 +31,11 @@ describe("html-tag-name-lowercase", () => {
     assertOffenses('<Div class="container"><Span>Hello</Span></Div>')
   })
 
+  test("passes for component tags, which are not HTML elements", () => {
+    expectNoOffenses("<Fragment><span>content</span><Fallback><div>skeleton</div></Fallback></Fragment>")
+    expectNoOffenses("<MyWidget></MyWidget>")
+  })
+
   test("handles self-closing tags", () => {
     expectError('Opening tag name `<IMG>` should be lowercase. Use `<img>` instead.')
 
