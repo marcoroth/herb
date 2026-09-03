@@ -16,8 +16,6 @@ module Herb
 
           ATTRIBUTES: Array[String]
 
-          TIMING_ATTRIBUTES: Array[String]
-
           # : () -> Array[String]
           def allowed_attributes: () -> Array[String]
 
@@ -31,9 +29,6 @@ module Herb
           # the named states does.
           # : () -> Hash[String, untyped]
           def masking: () -> Hash[String, untyped]
-
-          # : () -> Hash[String, Integer]
-          def timing: () -> Hash[String, Integer]
 
           # : (untyped) -> void
           def refuse_nested_fragment: (untyped) -> void

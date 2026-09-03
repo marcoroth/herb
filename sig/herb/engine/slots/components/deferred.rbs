@@ -1,0 +1,34 @@
+# Generated from lib/herb/engine/slots/components/deferred.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Components
+        # A block whose primary content stays out of the initial response.
+        #
+        # The transform conditions the primary on an internal boolean state the
+        # client steers, so the first render shows only the `<Fallback>` and the
+        # block request is an ordinary steered refetch answering the primary
+        # branch with its statics. `Async` requests on mount and `Lazy` when the
+        # block nears the viewport.
+        class Deferred < Base
+          ATTRIBUTES: Array[String]
+
+          # : () -> Array[String]
+          def allowed_attributes: () -> Array[String]
+
+          # : () -> Array[untyped]
+          def transform: () -> Array[untyped]
+
+          private
+
+          # : () -> String
+          def mode: () -> String
+
+          # : (String, Array[untyped], untyped) -> untyped
+          def deferred_conditional: (String, Array[untyped], untyped) -> untyped
+        end
+      end
+    end
+  end
+end

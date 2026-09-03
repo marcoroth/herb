@@ -32,6 +32,15 @@ module Herb
         # : () -> bool
         def any?: () -> bool
 
+        # A deferred block's condition. It is declared by the compiler, steered by
+        # the client, and never spelled in a directive, so it joins the manifest
+        # flagged internal and stays out of every user-facing surface.
+        # : () -> String
+        def declare_internal_block: () -> String
+
+        # : (String) -> String
+        def internal_assignment: (String) -> String
+
         # : () -> Array[String]
         def count_signatures: () -> Array[String]
 
@@ -137,6 +146,13 @@ module Herb
 
         # : () -> void
         def apply_states: () -> void
+
+        # A deferred block steers one region-scoped state, so inside a collection
+        # every copy would materialize together, and the client cannot arm a block
+        # it can only reach through an item. Per-item deferral needs item-state
+        # steering, which does not exist yet.
+        # : () -> void
+        def check_deferred_placement: () -> void
 
         # : () -> void
         def check_fragments: () -> void

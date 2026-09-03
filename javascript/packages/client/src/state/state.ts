@@ -4,6 +4,7 @@ import { DEPENDENCIES_SELECTOR } from "../grammar/attributes"
 import { Seeds } from "./seeds"
 import { Counts } from "./counts"
 import { Refresh } from "./refresh"
+import { Fragments } from "./fragments"
 import { armMutationRefresh } from "../shared/mutation-refresh"
 import { ServerState } from "./server"
 import { BoundInputs } from "./bound-inputs"
@@ -21,24 +22,13 @@ import type { Conditional } from "./types"
 import type { RefreshReport } from "./refresh"
 import type { StateKind, StateValue } from "./values"
 import type { Built, Item, Region, Slot } from "../types"
-import type { CountOptions, DeclaredState, DependencyMap, FragmentEntry, PlacedSlot, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
+import type { CountOptions, DeclaredState, DependencyMap, PlacedSlot, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
 
 import type { SlotsDelegate } from "../types"
 import type { SeedsDelegate } from "./seeds"
 import type { CountsDelegate } from "./counts"
 import type { BoundInputsDelegate } from "./bound-inputs"
 import type { ElementObserverDelegate } from "../shared/element-observer"
-
-const FRAGMENT_DELAY = 150
-const FRAGMENT_HOLD = 300
-
-interface FragmentPresentation {
-  fallback: number
-  hold: number
-  shownAt: number
-  showTimer: ReturnType<typeof setTimeout> | null
-  restoreTimer: ReturnType<typeof setTimeout> | null
-}
 
 export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDelegate, BoundInputsDelegate, CountsDelegate {
   private readonly slots: Slots
@@ -50,7 +40,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   private readonly counts: Counts
   private readonly bound = new BoundInputs(this)
   private readonly options: ResolvedStateOptions
-  private readonly fallbacksShowing = new Map<Slot, FragmentPresentation>()
+  private readonly fragments: Fragments
 
   private elements: ElementObserver | null = null
   private unobserveElements: (() => void) | null = null
@@ -75,6 +65,13 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       manifestFor: (region) => this.manifestFor(region),
       steeringValue: (region, name) => this.valueAt(name, scopeOf(region)),
     }, { transport: this.options.refetchTransport, format: this.options.format })
+    this.fragments = new Fragments(slots, {
+      manifestFor: (region) => this.manifestFor(region),
+      placedSlots: (scope, index) => this.placedSlots(scope, index),
+      writeInternal: (name, scope) => void this.setState({ [name]: true }, { scope }),
+      requestRefetch: () => void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome)),
+      resettle: (slot) => this.settleBranch(slot),
+    })
     this.disarmMutationRefresh = armMutationRefresh(() => this.refreshAfterMutation())
     this.unsubscribe = slots.subscribe(this)
   }
@@ -109,6 +106,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
   built(built: Built): void {
     this.settle(built)
+    this.fragments.hydrated()
   }
 
   branchMaterial(slot: Slot): void {
@@ -203,6 +201,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       template.remove()
     }
 
+    if (templates.length > 0) {
+      this.fragments.hydrated()
+    }
+
     return templates.length
   }
 
@@ -248,18 +250,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     this.disarmMutationRefresh?.()
     this.disarmMutationRefresh = null
     this.refetch.stop()
-
-    for (const presentation of this.fallbacksShowing.values()) {
-      if (presentation.showTimer !== null) {
-        clearTimeout(presentation.showTimer)
-      }
-
-      if (presentation.restoreTimer !== null) {
-        clearTimeout(presentation.restoreTimer)
-      }
-    }
-
-    this.fallbacksShowing.clear()
+    this.fragments.disconnect()
 
     if (typeof document === "undefined") {
       return
@@ -577,117 +568,9 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return
     }
 
-    this.showFallbacks(manifest, scope, stale, names)
+    this.fragments.showFallbacks(manifest, scope, stale, names)
 
-    void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.settleFallbacks(outcome))
-  }
-
-  private showFallbacks(manifest: StateManifest, scope: StateScope, stale: Set<number>, names: string[]): void {
-    const entries = Object.entries(manifest.fragments ?? {}).sort(([left], [right]) => Number(left) - Number(right))
-
-    for (const [key, fragment] of entries) {
-      if (!fragment.reads.some((index) => stale.has(index))) {
-        continue
-      }
-
-      if (fragment.on && !fragment.on.some((name) => names.includes(name))) {
-        continue
-      }
-
-      for (const placed of this.placedSlots(scope, Number(key))) {
-        this.presentFallback(placed.slot, fragment)
-      }
-    }
-  }
-
-  private presentFallback(slot: Slot, fragment: FragmentEntry): void {
-    const existing = this.fallbacksShowing.get(slot)
-
-    if (existing) {
-      if (existing.restoreTimer !== null) {
-        clearTimeout(existing.restoreTimer)
-
-        existing.restoreTimer = null
-      }
-
-      return
-    }
-
-    const presentation: FragmentPresentation = {
-      fallback: fragment.fallback,
-      hold: fragment.hold ?? FRAGMENT_HOLD,
-      shownAt: 0,
-      showTimer: null,
-      restoreTimer: null,
-    }
-
-    this.fallbacksShowing.set(slot, presentation)
-
-    const delay = fragment.delay ?? FRAGMENT_DELAY
-
-    if (delay <= 0) {
-      this.swapToFallback(slot, presentation)
-
-      return
-    }
-
-    presentation.showTimer = setTimeout(() => {
-      presentation.showTimer = null
-
-      this.swapToFallback(slot, presentation)
-    }, delay)
-  }
-
-  private swapToFallback(slot: Slot, presentation: FragmentPresentation): void {
-    if (slot.branch !== presentation.fallback) {
-      this.slots.switchBranch(slot, presentation.fallback)
-    }
-
-    presentation.shownAt = Date.now()
-  }
-
-  private settleFallbacks(outcome: RefreshReport): void {
-    if (outcome.stale) {
-      return
-    }
-
-    for (const [slot, presentation] of [...this.fallbacksShowing]) {
-      if (presentation.restoreTimer !== null) {
-        continue
-      }
-
-      if (presentation.showTimer !== null) {
-        clearTimeout(presentation.showTimer)
-
-        presentation.showTimer = null
-      }
-
-      if (presentation.shownAt === 0 || outcome.failed || slot.branch === presentation.fallback) {
-        this.fallbacksShowing.delete(slot)
-
-        continue
-      }
-
-      const remaining = presentation.shownAt + presentation.hold - Date.now()
-
-      if (remaining <= 0) {
-        this.fallbacksShowing.delete(slot)
-
-        continue
-      }
-
-      const restored = slot.branch
-
-      this.slots.switchBranch(slot, presentation.fallback)
-
-      presentation.restoreTimer = setTimeout(() => {
-        this.fallbacksShowing.delete(slot)
-
-        if (slot.branch === presentation.fallback) {
-          this.slots.switchBranch(slot, restored)
-        }
-      }, remaining)
-    }
+    void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
   }
 
   toggle(name: string, options: ScopedSetOptions = {}): boolean {
@@ -1006,13 +889,18 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
       for (const placed of this.placedSlots(scope, Number(indexKey))) {
         const slot = placed.slot
+
+        if (this.fragments.holding(slot)) {
+          continue
+        }
+
         const target = this.targetBranch(conditional, placed.scope)
 
         this.slots.claim(slot)
 
         if (!this.slots.switchBranch(slot, target) && slot.branch !== target) {
           if (this.options.refetch !== "off") {
-            void this.refetch.request(this.options.refetchDebounce)
+            void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
 
             continue
           }

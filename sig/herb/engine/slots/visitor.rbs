@@ -166,6 +166,12 @@ module Herb
         # : (untyped, Array[untyped], Hash[String, untyped]) -> void
         def record_fragment: (untyped, Array[untyped], Hash[String, untyped]) -> void
 
+        # : (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
+        def record_deferred: (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
+
+        # : () -> Hash[Integer, Hash[Symbol, untyped]]
+        def deferred_entries: () -> Hash[Integer, Hash[Symbol, untyped]]
+
         # : (Integer) -> Array[Array[Integer]]
         def slots_by_branch: (Integer) -> Array[Array[Integer]]
 

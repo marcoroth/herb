@@ -50,11 +50,32 @@ module Herb
           @state_presence = {} #: Hash[Integer, untyped]
           @state_values = {} #: Hash[Integer, untyped]
           @server_reads = {} #: Hash[String, Array[Hash[String, untyped]]]
+          @internal_states = {} #: Hash[String, StateDirectives::Declaration]
         end
 
         #: () -> bool
         def any?
-          !(@region_states.empty? && @item_states.empty?)
+          !(@region_states.empty? && @item_states.empty? && @internal_states.empty?)
+        end
+
+        # A deferred block's condition. It is declared by the compiler, steered by
+        # the client, and never spelled in a directive, so it joins the manifest
+        # flagged internal and stays out of every user-facing surface.
+        #: () -> String
+        def declare_internal_block
+          name = "_herb_block_#{@internal_states.size}"
+
+          @internal_states[name] = StateDirectives::Declaration.new(name: name, kind: :boolean, default: "false", derived: nil, line: nil, column: nil)
+
+          name
+        end
+
+        #: (String) -> String
+        def internal_assignment(name)
+          declaration = @internal_states.fetch(name)
+          assignment = state_assignment(declaration)
+
+          @visitor.state_overrides? ? "#{overrides_prelude}; #{assignment}" : assignment
         end
 
         #: () -> Array[String]
@@ -71,12 +92,14 @@ module Herb
         #: () -> Hash[String, untyped]?
         def manifest
           declared = state_declarations
-          names = declared[:region].map { |declaration| declaration[:name] } + declared[:items].values.flatten.map { |declaration| declaration[:name] }
+          names = declared[:region].map { |declaration| declaration[:name] } + declared[:items].values.flatten.map { |declaration| declaration[:name] } + @internal_states.keys
 
           return nil if names.empty?
 
           reads = {} #: Hash[String, Array[Integer]]
           declarations = declared[:region].map { |declaration| declared_entry(declaration, "region") } + declared[:items].flat_map { |index, list| list.map { |declaration| declared_entry(declaration, index) } }
+
+          declarations += @internal_states.values.map { |declaration| declared_entry(declaration.to_h, "region").merge("internal" => true) }
 
           @visitor.slots.each do |slot|
             next unless slot.valued?
@@ -213,6 +236,12 @@ module Herb
             inside = (@visitor.slots_by_branch(index)[0] || []).select { |slot_index| refetchable.include?(slot_index) }
 
             entries[index.to_s] = { "fallback" => 1, "reads" => inside }.merge(@visitor.fragment_timing_for(index)) unless inside.empty?
+          end
+
+          @visitor.deferred_entries.each do |index, info|
+            inside = (@visitor.slots_by_branch(index)[0] || []).select { |slot_index| refetchable.include?(slot_index) }
+
+            entries[index.to_s] = { "mode" => info[:mode], "state" => info[:state], "fallback" => 1, "reads" => inside }.merge(info[:timing])
           end
 
           entries
@@ -576,7 +605,8 @@ module Herb
 
         #: (untyped) -> Hash[String, StateDirectives::Declaration]
         def states_for(scope)
-          states = scope ? @region_states.merge(@item_states[scope] || {}) : @region_states.dup
+          region = @region_states.merge(@internal_states)
+          states = scope ? region.merge(@item_states[scope] || {}) : region
           none = [] #: Array[String]
           shadowed = scope ? @visitor.block_locals(scope) : none
 
@@ -600,7 +630,7 @@ module Herb
             parent[position] = @visitor.erb_code_node(seeds ? "; #{assignments}; #{seeds}" : "; #{assignments}")
           end
 
-          if @region_states.empty? && @item_states.empty?
+          if @region_states.empty? && @item_states.empty? && @internal_states.empty?
             check_fragments
 
             return
@@ -611,6 +641,30 @@ module Herb
           check_collection_reads
           check_state_count_reads
           check_fragments
+          check_deferred_placement
+        end
+
+        # A deferred block steers one region-scoped state, so inside a collection
+        # every copy would materialize together, and the client cannot arm a block
+        # it can only reach through an item. Per-item deferral needs item-state
+        # steering, which does not exist yet.
+        #: () -> void
+        def check_deferred_placement
+          collections = @visitor.slots.select { |slot| slot.type == :collection }
+
+          @visitor.deferred_entries.each do |index, info|
+            slot = @visitor.slots[index]
+
+            next unless slot
+            next if collections.none? { |collection| slot.node_path.first(collection.node_path.length) == collection.node_path }
+
+            @visitor.slot_error(
+              "A `<#{info[:mode].capitalize}>` sits inside a collection, and a deferred block cannot stand per item yet.",
+              @visitor.slot_nodes[index]&.location,
+              :component,
+              suggestion: "Move the block outside the loop, or defer around the whole collection."
+            )
+          end
         end
 
         #: () -> void
@@ -927,7 +981,7 @@ module Herb
           return if states.empty?
 
           content = node.content&.value.to_s
-          assigned = StateDirectives.assigned_state_names(content, states)
+          assigned = StateDirectives.assigned_state_names(content, states) - @internal_states.keys
 
           return if assigned.empty?
 
