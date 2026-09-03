@@ -53,6 +53,9 @@ module Herb
         # : (untyped, String, Array[String]) -> void
         def warn_near_miss: (untyped, String, Array[String]) -> void
 
+        # : () -> Hash[String, untyped]
+        def fragment_entries: () -> Hash[String, untyped]
+
         # : (Array[Hash[String, untyped]]) -> Set[String]
         def steerable_names: (Array[Hash[String, untyped]]) -> Set[String]
 
@@ -134,6 +137,9 @@ module Herb
 
         # : () -> void
         def apply_states: () -> void
+
+        # : () -> void
+        def check_fragments: () -> void
 
         # : (Array[StateDirectives::Declaration]) -> String?
         def seeds_marker: (Array[StateDirectives::Declaration]) -> String?

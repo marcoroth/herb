@@ -1,0 +1,21 @@
+# Generated from lib/herb/engine/slots/components/fallback.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Components
+        # The markup a `<Fragment>` shows while its content is stale.
+        #
+        # A fallback only means something inside a `<Fragment>`, which consumes
+        # it during its own transform, so a fallback reaching its own transform
+        # stands outside one and errors.
+        class Fallback < Base
+          NAME: String
+
+          # : () -> Array[untyped]
+          def transform: () -> Array[untyped]
+        end
+      end
+    end
+  end
+end

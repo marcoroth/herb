@@ -389,6 +389,39 @@ module Engine
         assert_equal :attribute_interpolation, compiler.slot_visitor.slots.fetch(0).type
       end
 
+      test "a fragment's values always take the primary branch and skip the fallback" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <Fragment>
+            <p><%= helper_with_argument(1) %></p>
+            <Fallback><p>waiting for <%= @never %></p></Fallback>
+          </Fragment>
+        ERB
+
+        values = dynamics(source)
+
+        assert_equal({ 0 => { branch: 0, slots: { 1 => "helper(1)" } } }, values)
+      end
+
+      test "a fragment numbers identically in the values and page compiles" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <span><%= @before %></span>
+          <Fragment>
+            <p><%= @inside %></p>
+            <Fallback><p>waiting</p></Fallback>
+          </Fragment>
+          <em><%= @after %></em>
+        ERB
+
+        values_visitor = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").slot_visitor
+
+        page_visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [page_visitor], filename: "app/views/test.html.erb")
+
+        assert_equal(page_visitor.slots.map { |slot| [slot.index, slot.type] }, values_visitor.slots.map { |slot| [slot.index, slot.type] })
+      end
+
       test "a whole-value attribute conditional assigns the scalar the visitor expects" do
         source = %(<%# herb:slots client %>\n<span class="<%= @on ? "is-\#{@tone}" : "off" %>"></span>)
 

@@ -79,6 +79,14 @@ export interface StateManifest {
   presence?: PresenceMap
   computed?: ComputedMap
   server?: ServerMap
+  fragments?: Record<string, FragmentEntry>
+}
+
+export interface FragmentEntry {
+  fallback: number
+  reads: number[]
+  delay?: number
+  hold?: number
 }
 
 export interface StateScope {

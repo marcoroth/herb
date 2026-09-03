@@ -1,0 +1,58 @@
+# Generated from lib/herb/engine/slots/components/base.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Components
+        # What every built-in component shares.
+        #
+        # A component receives the element it stands on and the slots visitor
+        # transforming the template. It validates its attributes against its
+        # `allowed_attributes` and answers the nodes that replace it.
+        class Base
+          @element: untyped
+
+          @visitor: untyped
+
+          # : (untyped, untyped) -> Array[untyped]
+          def self.transform: (untyped, untyped) -> Array[untyped]
+
+          # : (untyped, untyped) -> void
+          def initialize: (untyped, untyped) -> void
+
+          # : () -> Array[untyped]
+          def transform: () -> Array[untyped]
+
+          # : () -> Array[String]
+          def allowed_attributes: () -> Array[String]
+
+          # : () -> void
+          def refuse_unknown_attributes: () -> void
+
+          private
+
+          # : () -> String
+          def tag_name: () -> String
+
+          # : () -> Array[untyped]
+          def children: () -> Array[untyped]
+
+          # : () -> Array[untyped]
+          def attributes: () -> Array[untyped]
+
+          # : (untyped) -> String?
+          def attribute_name: (untyped) -> String?
+
+          # : (untyped) -> String?
+          def static_value: (untyped) -> String?
+
+          # : (String, untyped, ?suggestion: String?) -> nil
+          def error: (String, untyped, ?suggestion: String?) -> nil
+
+          # : (String, untyped, ?suggestion: String?) -> void
+          def warning: (String, untyped, ?suggestion: String?) -> void
+        end
+      end
+    end
+  end
+end
