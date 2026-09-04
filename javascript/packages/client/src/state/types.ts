@@ -84,9 +84,11 @@ export interface StateManifest {
 
 export interface FragmentEntry {
   fallback: number
-  reads: number[]
+  reads?: number[]
   delay?: number
   hold?: number
+  mode?: "lazy" | "async"
+  state?: string
   on?: string[]
 }
 
