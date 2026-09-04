@@ -232,6 +232,78 @@ describe("marked branch flips", () => {
   })
 })
 
+const READ_FILE = "app/views/chat/detail.html.erb"
+
+function detailPage(): string {
+  return (
+    `<!--herb-region:${READ_FILE}:aaaaaaaa:0-->` +
+    `<!--herb-slot:0:conditional--><!--herb-branch:0:1--><!--/herb-slot:0-->` +
+    `<template data-herb-region="${READ_FILE}:aaaaaaaa">` +
+    `<!--herb-branch:0:0--><div data-herb-transition="detail"><span id="value"><!--herb-slot:1--><!--/herb-slot:1--></span></div>` +
+    `<!--herb-branch:0:1-->` +
+    `</template>` +
+    `<!--/herb-region:${READ_FILE}-->` +
+    `<template data-herb-dependencies>${JSON.stringify({
+      state: {},
+      states: {
+        [READ_FILE]: {
+          version: "aaaaaaaa",
+          declarations: [{ name: "album", kind: "string", default: '""', value: "", scope: "region" }],
+          reads: { album: [1] },
+          conditionals: { 0: { arms: [{ branch: 0, condition: ["album", null, "present"] }], else: 1 } },
+          presence: {},
+          computed: {},
+          server: { branches: {}, reads: {} },
+        },
+      },
+    })}</template>`
+  )
+}
+
+describe("reads in a leaving branch", () => {
+  let runtime: Runtime | null = null
+
+  afterEach(() => {
+    runtime?.stop()
+    runtime = null
+    document.body.innerHTML = ""
+  })
+
+  test("a read inside a leaving branch keeps what it showed", async () => {
+    document.body.innerHTML = detailPage()
+
+    let shownAtCapture: string | null = null
+
+    documentWithVT.startViewTransition = (update: () => void): FakeTransition => {
+      shownAtCapture = document.getElementById("value")?.textContent ?? null
+
+      update()
+
+      return {
+        ready: Promise.resolve(),
+        finished: Promise.resolve(),
+        updateCallbackDone: Promise.resolve(),
+        skipTransition: () => {},
+      }
+    }
+
+    runtime = Runtime.start({ state: { refetch: "off" } })
+    runtime.state.setState({ album: "basel" })
+
+    expect(document.getElementById("value")?.textContent).toBe("basel")
+
+    runtime.state.setState({ album: "" })
+
+    await vi.waitFor(() => {
+      if (document.getElementById("value")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(shownAtCapture).toBe("basel")
+  })
+})
+
 describe("collection appends", () => {
   let runtime: Runtime | null = null
 

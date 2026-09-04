@@ -887,6 +887,26 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     scoped(this.scoped, scope).set(name, value)
   }
 
+  // A write that switches a conditional away also reaches the reads inside
+  // the branch it is leaving, repainting departing content with next-state
+  // values, a closed panel's empty URL for one. Content on its way out
+  // keeps what it showed instead.
+  private departing(placed: PlacedSlot, manifest: StateManifest): boolean {
+    for (let ancestor = placed.slot.parent; ancestor; ancestor = ancestor.parent) {
+      const conditional = manifest.conditionals[String(ancestor.index)]
+
+      if (!conditional || ancestor.branch === null) {
+        continue
+      }
+
+      if (this.targetBranch(conditional, placed.scope) !== ancestor.branch) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   private writeValueSlots(manifest: StateManifest, scope: StateScope, name: string, value: StateValue): void {
     const computed = manifest.computed ?? {}
 
@@ -897,6 +917,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
       for (const placed of this.placedSlots(scope, index)) {
         if (placed.slot.type === "boolean_attribute") {
+          continue
+        }
+
+        if (this.departing(placed, manifest)) {
           continue
         }
 
@@ -915,6 +939,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
 
       for (const placed of this.placedSlots(scope, Number(indexKey))) {
+        if (this.departing(placed, manifest)) {
+          continue
+        }
+
         const present = matches(entry, (name) => this.valueAt(name, placed.scope))
 
         this.slots.setBooleanAttribute(placed.slot, present)
@@ -930,6 +958,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
 
       for (const placed of this.placedSlots(scope, Number(indexKey))) {
+        if (this.departing(placed, manifest)) {
+          continue
+        }
+
         this.write(placed.slot, printValue(evaluate(entry, (name) => this.valueAt(name, placed.scope))))
         this.slots.claim(placed.slot)
       }
