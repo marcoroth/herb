@@ -89,6 +89,10 @@ module Herb
               next
             end
 
+            scope_and_depth = @visitor.scope_of(@visitor.slot_nodes[slot.index])
+
+            next if scope_and_depth && @visitor.block_locals(scope_and_depth[0]).include?(name)
+
             (reads[name] ||= []) << slot.index
 
             warn_unbindable(slot, name) if slot.interpolated?
@@ -557,7 +561,11 @@ module Herb
 
         #: (untyped) -> Hash[String, StateDirectives::Declaration]
         def states_for(scope)
-          scope ? @region_states.merge(@item_states[scope] || {}) : @region_states.dup
+          states = scope ? @region_states.merge(@item_states[scope] || {}) : @region_states.dup
+          none = [] #: Array[String]
+          shadowed = scope ? @visitor.block_locals(scope) : none
+
+          shadowed.empty? ? states : states.except(*shadowed)
         end
 
         #: () -> void

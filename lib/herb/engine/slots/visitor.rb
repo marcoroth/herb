@@ -311,6 +311,23 @@ module Herb
           @collection_nodes.last
         end
 
+        # A block parameter shadows a state of the same name inside its body,
+        # the way Ruby resolves it, so classification asks which names a scope
+        # binds before treating a read as a state.
+        #: (untyped) -> Array[String]
+        def block_locals(scope)
+          nodes = @collection_nodes.include?(scope) ? @collection_nodes.take(@collection_nodes.index(scope) + 1) : [scope]
+
+          nodes.compact.flat_map { |node| parameter_names(node) }
+        end
+
+        #: (untyped) -> Array[String]
+        def parameter_names(node)
+          return [] unless node.respond_to?(:block_arguments)
+
+          (node.block_arguments || []).filter_map { |parameter| parameter.name&.value&.to_s if parameter.respond_to?(:name) }
+        end
+
         #: () -> bool
         def in_item_body?
           @container_depth == @collection_body_depths.last

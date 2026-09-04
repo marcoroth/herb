@@ -1461,6 +1461,29 @@ module Engine
 
         assert_includes error.message, "Integer literal"
       end
+
+      test "a block argument shadows a state inside its body" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (track: "", album: "a") %>
+          <input value="<%= track %>">
+          <ul>
+            <% Catalog.tracks(album).each do |track| %>
+              <%# herb:key track[:number] %>
+              <li>
+                <button data-herb-set="track='<%= track[:album] %>'"><%= track[:title] %></button>
+              </li>
+            <% end %>
+          </ul>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_empty visitor.diagnostics
+        assert_equal ["track"], visitor.manifest["states"]["reads"].keys
+        assert_equal 1, visitor.manifest["states"]["reads"]["track"].length
+      end
     end
   end
 end
