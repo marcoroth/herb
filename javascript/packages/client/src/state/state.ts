@@ -953,14 +953,15 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
         this.slots.claim(slot)
 
-        const incoming = target !== null && slot.branch !== target && Boolean(this.slots.parked(placed.scope.region.file, `${slot.index}:${target}`)?.querySelector(TRANSITION_SELECTOR))
+        const host = hostOf(slot.anchor)
+        const leaving = slot.branch !== target && Boolean(host?.querySelector(TRANSITION_SELECTOR))
 
-        if (incoming) {
+        if (leaving) {
           void transitionMutation(() => {
             if (!this.slots.switchBranch(slot, target) && slot.branch !== target && this.options.refetch !== "off") {
               void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
             }
-          }, hostOf(slot.anchor) ?? document, true)
+          }, host ?? document)
 
           continue
         }

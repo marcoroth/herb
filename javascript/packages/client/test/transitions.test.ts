@@ -186,7 +186,7 @@ describe("marked branch flips", () => {
     document.body.innerHTML = ""
   })
 
-  test("mounting a branch whose parked material is marked runs a view transition", async () => {
+  test("mounting into unmarked surroundings stays synchronous", () => {
     document.body.innerHTML = panelPage(true)
 
     const seen = stub()
@@ -194,8 +194,24 @@ describe("marked branch flips", () => {
     runtime = Runtime.start({ state: { refetch: "off" } })
     runtime.state.setState({ open: true })
 
+    expect(document.body.innerHTML).toContain("opened")
+    expect(seen.calls).toBe(0)
+  })
+
+  test("flipping away from visible marked content runs a view transition", async () => {
+    document.body.innerHTML = panelPage(true)
+
+    const seen = stub()
+
+    runtime = Runtime.start({ state: { refetch: "off" } })
+    runtime.state.setState({ open: true })
+
+    expect(document.body.innerHTML).toContain("opened")
+
+    runtime.state.setState({ open: false })
+
     await vi.waitFor(() => {
-      if (!document.body.innerHTML.includes("opened")) {
+      if (document.body.innerHTML.includes("opened")) {
         throw new Error("still waiting")
       }
     })

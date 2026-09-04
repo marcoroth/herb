@@ -99,6 +99,14 @@ function flush(): void {
   const style = document.createElement("style")
 
   style.textContent = `
+    @layer herb-transitions {
+      ::view-transition-group(*),
+      ::view-transition-old(*),
+      ::view-transition-new(*) {
+        animation-duration: 150ms;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
         animation: none !important;
