@@ -162,6 +162,33 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     return this.index.files()
   }
 
+  // Everything the page holds ready without rendering it, the parked branch
+  // statics plus the material captured off switched branches, so a caller
+  // like the rendered-page linter can ask what could still appear.
+  parkedRoots(): DocumentFragment[] {
+    const roots = this.statics.all()
+
+    for (const region of this.regions()) {
+      for (const slot of region.slots.values()) {
+        this.capturedIn(slot, roots)
+      }
+    }
+
+    return roots
+  }
+
+  private capturedIn(slot: Slot, roots: DocumentFragment[]): void {
+    for (const fragment of slot.captured?.values() ?? []) {
+      roots.push(fragment)
+    }
+
+    for (const item of slot.items.values()) {
+      for (const inner of item.slots.values()) {
+        this.capturedIn(inner, roots)
+      }
+    }
+  }
+
   slotsFor(file: string, index: number): Slot[] {
     return this.index.slotsFor(file, index)
   }

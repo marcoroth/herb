@@ -117,6 +117,238 @@ function isScoped(element: DOMElementLike): element is ScopedStyleElement {
   return isStyleElement(element) && hasAttribute(element, "scoped") || attributeValue(element, HERB_ATTRIBUTES.styleScoped) !== null
 }
 
+function splitOutsideBrackets(selector: string, separators: string): string[] {
+  const parts: string[] = []
+
+  let depth = 0
+  let quote: string | null = null
+  let current = ""
+
+  for (const character of selector) {
+    if (quote) {
+      if (character === quote) {
+        quote = null
+      }
+
+      current += character
+
+      continue
+    }
+
+    if (character === '"' || character === "'") {
+      quote = character
+      current += character
+
+      continue
+    }
+
+    if (character === "(" || character === "[") {
+      depth += 1
+    } else if (character === ")" || character === "]") {
+      depth -= 1
+    }
+
+    if (depth === 0 && separators.includes(character)) {
+      parts.push(current)
+      current = ""
+
+      continue
+    }
+
+    current += character
+  }
+
+  parts.push(current)
+
+  return parts
+}
+
+function lastCompound(selector: string): string | null {
+  const groups = splitOutsideBrackets(selector, ",")
+    .map((group) => {
+      const compounds = splitOutsideBrackets(group.trim(), " >+~")
+        .map((compound) => compound.trim())
+        .filter((compound) => compound.length > 0)
+
+      return compounds[compounds.length - 1] ?? ""
+    })
+    .filter((group) => group.length > 0)
+
+  if (groups.length === 0) {
+    return null
+  }
+
+  return groups.join(", ")
+}
+
+interface CompoundParts {
+  core: string
+  classes: string[]
+  valued: Array<{ name: string, test: string }>
+}
+
+interface DynamicElementLike {
+  getAttribute?(name: string): string | null
+  matches?(selectors: string): boolean
+}
+
+function simpleSelectors(compound: string): string[] {
+  const parts: string[] = []
+
+  let depth = 0
+  let quote: string | null = null
+  let current = ""
+
+  for (const character of compound) {
+    if (quote) {
+      if (character === quote) {
+        quote = null
+      }
+
+      current += character
+
+      continue
+    }
+
+    if (character === '"' || character === "'") {
+      quote = character
+      current += character
+
+      continue
+    }
+
+    if (character === "(" || character === "[") {
+      depth += 1
+    } else if (character === ")" || character === "]") {
+      depth -= 1
+    }
+
+    const opensBracket = character === "[" && depth === 1
+    const startsSimple = (character === "." || character === "#" || character === ":") && depth === 0 && !current.endsWith(":")
+
+    if ((opensBracket || startsSimple) && current.length > 0) {
+      parts.push(current)
+      current = ""
+    }
+
+    current += character
+  }
+
+  if (current.length > 0) {
+    parts.push(current)
+  }
+
+  return parts
+}
+
+const VALUED_ATTRIBUTE = /^\[([^\]~^$*|=]+)[~^$*|]?=/
+
+function compoundParts(compound: string): CompoundParts {
+  const kept: string[] = []
+  const classes: string[] = []
+  const valued: Array<{ name: string, test: string }> = []
+
+  for (const part of simpleSelectors(compound)) {
+    if (part.startsWith(".")) {
+      classes.push(part)
+
+      continue
+    }
+
+    const attribute = part.match(VALUED_ATTRIBUTE)
+
+    if (attribute) {
+      valued.push({ name: attribute[1].trim(), test: part })
+
+      continue
+    }
+
+    kept.push(part)
+  }
+
+  return { core: kept.join("") || "*", classes, valued }
+}
+
+function dynamicAttributeNames(element: DynamicElementLike): Set<string> {
+  const raw = element.getAttribute?.(HERB_ATTRIBUTES.slot) ?? ""
+  const names = new Set<string>()
+
+  for (const entry of raw.split(/\s+/).filter(Boolean)) {
+    const [, , ...name] = entry.split(":")
+
+    if (name.length > 0) {
+      names.add(name.join(":"))
+    }
+  }
+
+  return names
+}
+
+// A parked element whose attribute is a blanked slot, like the class part a
+// state writes at runtime, can satisfy the requirements on that attribute
+// even though the parked markup does not show them.
+function satisfiedWithDynamics(root: QueryableLike, compound: string): boolean {
+  const { core, classes, valued } = compoundParts(compound)
+
+  if (classes.length === 0 && valued.length === 0) {
+    return false
+  }
+
+  let candidates: ArrayLike<unknown>
+
+  try {
+    candidates = root.querySelectorAll(core)
+  } catch {
+    return true
+  }
+
+  return Array.from(candidates).some((candidate) => {
+    const element = candidate as DynamicElementLike
+
+    if (typeof element.matches !== "function") {
+      return false
+    }
+
+    const dynamic = dynamicAttributeNames(element)
+
+    for (const test of classes) {
+      if (!element.matches(test) && !dynamic.has("class")) {
+        return false
+      }
+    }
+
+    for (const { name, test } of valued) {
+      if (!element.matches(test) && !dynamic.has(name)) {
+        return false
+      }
+    }
+
+    return true
+  })
+}
+
+// Parked markup holds no ancestors outside its own fragment, and its blanked
+// slots drop value-dependent attributes and classes, so a selector that fails
+// as a whole still counts when its innermost compound finds the markup it was
+// written for.
+function matchesParked(root: QueryableLike, selector: string): boolean {
+  if (matches(root, selector)) {
+    return true
+  }
+
+  const compound = lastCompound(selector)
+
+  if (compound === null) {
+    return false
+  }
+
+  if (compound !== selector && matches(root, compound)) {
+    return true
+  }
+
+  return satisfiedWithDynamics(root, compound.replace(TRANSIENT_PSEUDO, ""))
+}
+
 export class BrowserScopedStyleNoUnusedSelectorRule extends BrowserRule {
   static ruleName = "browser-scoped-style-no-unused-selector"
 
@@ -127,12 +359,16 @@ export class BrowserScopedStyleNoUnusedSelectorRule extends BrowserRule {
     }
   }
 
-  check(root: DOMNodeLike, _context?: Partial<LintContext>): UnboundLintOffense[] {
+  check(root: DOMNodeLike, context?: Partial<LintContext>): UnboundLintOffense[] {
     const scope = root as QueryableLike
 
     if (typeof scope.querySelectorAll !== "function") {
       return []
     }
+
+    const parked = Array.from(context?.parkedRoots?.() ?? []).filter(
+      (candidate): candidate is QueryableLike => typeof (candidate as QueryableLike).querySelectorAll === "function"
+    )
 
     const offenses: UnboundLintOffense[] = []
 
@@ -142,6 +378,10 @@ export class BrowserScopedStyleNoUnusedSelectorRule extends BrowserRule {
 
       for (const selector of selectors(element.sheet.cssRules)) {
         if (matches(scope, selector)) {
+          continue
+        }
+
+        if (parked.some((candidate) => matchesParked(candidate, selector))) {
           continue
         }
 

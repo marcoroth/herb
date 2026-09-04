@@ -122,6 +122,76 @@ describe("browser-scoped-style-no-unused-selector", () => {
   })
 })
 
+describe("matching against parked markup", () => {
+  const check = (markup: string, parked: string[]) => {
+    const roots = parked.map((fragment) => {
+      const template = document.createElement("template")
+
+      template.innerHTML = fragment
+
+      return template.content
+    })
+
+    return new BrowserScopedStyleNoUnusedSelectorRule().check(dom(markup) as any, { parkedRoots: () => roots })
+  }
+
+  test("says nothing about a selector whose markup is parked for later", () => {
+    const offenses = check(
+      `<style scoped>.detail .cover { width: 4rem }</style>`,
+      [`<section class="detail"><img class="cover"></section>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("accepts a parked match through the selector's innermost compound alone", () => {
+    const offenses = check(
+      `<style scoped>.player .tracks li:hover .play { display: inline }</style>`,
+      [`<span class="play"></span>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("honors a parked element whose class is a blanked slot", () => {
+    const offenses = check(
+      `<style scoped>.wave.is-on { display: flex }</style>`,
+      [`<span class="wave " data-herb-slot="16:attribute_interpolation:class"></span>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("honors a parked element whose tested attribute is a slot", () => {
+    const offenses = check(
+      `<style scoped>.playhead[data-playing="false"] { animation-play-state: paused }</style>`,
+      [`<div class="playhead" data-playing="" data-herb-slot="9:attribute:data-playing"></div>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("still reports a class no parked element could ever carry", () => {
+    const offenses = check(
+      `<style scoped>.wave.is-on { display: flex }</style>`,
+      [`<span class="wave"></span>`]
+    )
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toBe(unused(".wave.is-on"))
+  })
+
+  test("still reports a selector no parked markup answers for", () => {
+    const offenses = check(
+      `<style scoped>.vanished { color: red }</style>`,
+      [`<section class="detail"><img class="cover"></section>`]
+    )
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toBe(unused(".vanished"))
+  })
+})
+
 describe("where a browser rule's finding came from", () => {
   const check = (markup: string) => new BrowserScopedStyleNoUnusedSelectorRule().check(dom(markup) as any)
 
