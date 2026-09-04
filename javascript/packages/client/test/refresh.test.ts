@@ -101,6 +101,46 @@ describe("refetching server-derived slots", () => {
     expect(transport).not.toHaveBeenCalled()
   })
 
+  test("closing a branch over its own reads refetches nothing", async () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><!--/herb-slot:0--></div>` +
+      `<template data-herb-region="${FILE}:aaaaaaaa">` +
+      `<!--herb-branch:0:0--><p><!--herb-slot:2--><!--/herb-slot:2--></p>` +
+      `<!--herb-branch:0:1-->` +
+      `</template>` +
+      `<!--/herb-region:${FILE}-->` +
+      dependencies({
+        version: "aaaaaaaa",
+        declarations: [{ name: "album", kind: "string", default: '""', value: "", scope: "region" }],
+        reads: {},
+        conditionals: { 0: { arms: [{ branch: 0, condition: ["album", null, "present"] }], else: 1 } },
+        presence: {},
+        computed: {},
+        server: { reads: { album: [{ index: 2, node_path: [1, 0] }] }, branches: { 0: [{ index: 2, node_path: [1, 0] }] } },
+      })
+
+    const transport = vi.fn(async () => payloadFor({ 0: { branch: 0, slots: { 2: "opened" } } }))
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ album: "acid-archive" })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("opened")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    const settled = transport.mock.calls.length
+
+    live.state.setState({ album: "" })
+
+    await new Promise((resolve) => setTimeout(resolve, 40))
+
+    expect(document.body.innerHTML).not.toContain("opened")
+    expect(transport.mock.calls.length).toBe(settled)
+  })
+
   test("writing a state its current value refetches nothing", async () => {
     document.body.innerHTML = PAGE
 

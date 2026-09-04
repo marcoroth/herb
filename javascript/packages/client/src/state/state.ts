@@ -619,6 +619,30 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     const reads = manifest.server?.reads ?? {}
     const stale = new Set(names.flatMap((name) => (reads[name] ?? []).map((read) => read.index)))
 
+    // A read inside a branch the page is not showing needs no fresh value.
+    // The write that closes a panel would otherwise mask and refetch for
+    // the very content it just removed, and a write feeding a branch that
+    // never materialized fetches when the branch does.
+    const branches = manifest.server?.branches ?? {}
+
+    for (const [conditionalKey, entries] of Object.entries(branches)) {
+      const conditional = manifest.conditionals[conditionalKey]
+
+      if (!conditional) {
+        continue
+      }
+
+      const placements = this.placedSlots(scope, Number(conditionalKey))
+
+      if (placements.length === 0 || placements.some((placed) => this.targetBranch(conditional, placed.scope) === 0)) {
+        continue
+      }
+
+      for (const entry of entries) {
+        stale.delete(entry.index)
+      }
+    }
+
     if (stale.size === 0) {
       return
     }
