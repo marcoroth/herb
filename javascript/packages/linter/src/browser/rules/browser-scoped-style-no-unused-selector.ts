@@ -90,13 +90,24 @@ function selectors(rules: ArrayLike<CSSRuleLike>): string[] {
   })
 }
 
+// A selector gated on interaction state, like `.card:hover img`, matches
+// nothing while nobody interacts, so the transient pseudo-classes drop out
+// and the check asks whether the markup they were written for exists.
+const TRANSIENT_PSEUDO = /:(?:hover|focus-within|focus-visible|focus|active|visited|target)\b/g
+
 function matches(scope: QueryableLike, selector: string): boolean {
+  const resting = selector.replace(TRANSIENT_PSEUDO, "")
+
+  if (resting.trim().length === 0) {
+    return true
+  }
+
   try {
-    if (scope.matches?.(selector)) {
+    if (scope.matches?.(resting)) {
       return true
     }
 
-    return scope.querySelectorAll(selector).length > 0
+    return scope.querySelectorAll(resting).length > 0
   } catch {
     return true
   }

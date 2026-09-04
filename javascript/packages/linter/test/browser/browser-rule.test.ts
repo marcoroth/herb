@@ -51,6 +51,28 @@ describe("browser-scoped-style-no-unused-selector", () => {
     `)
   })
 
+  test("says nothing about a selector gated on interaction state", () => {
+    expectNoOffenses(`
+      <style scoped>
+        .card:hover img { opacity: 0.8 }
+        .row:focus-within .play { display: inline }
+        .link:active { color: red }
+      </style>
+      <div class="card"><img src="x.png"></div>
+      <div class="row"><span class="play"></span></div>
+      <a class="link">go</a>
+    `)
+  })
+
+  test("still reports a hover selector whose markup is gone", () => {
+    expectInfo(unused(".vanished:hover img"))
+
+    assertOffenses(`
+      <style scoped>.vanished:hover img { opacity: 0.8 }</style>
+      <div class="card">used</div>
+    `)
+  })
+
   test("says nothing about a selector that matches the element it is scoped to", () => {
     expectNoOffenses(`
       <div class="card">
