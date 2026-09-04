@@ -145,6 +145,28 @@
           "default": true,
           "description": "Suggest adding a file's project folder to the workspace when an HTML+ERB file outside the current workspace folders is opened. Herb only analyzes files inside workspace folders.",
           "markdownDescription": "Suggest adding a file's project folder to the workspace when an HTML+ERB file outside the current workspace folders is opened. Herb only analyzes files inside workspace folders."
+        },
+        "languageServerHerb.runtimeReports.inlayHints": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Annotate ERB tags with what the application recorded against them while it rendered, like how many queries a render call ran. Nothing appears until the application writes a journal, and a tag stops being annotated once you edit the template.",
+          "markdownDescription": "Annotate ERB tags with what the application recorded against them while it rendered, like `(2 SQL queries)` beside a `render` call. Nothing appears until the application writes a journal, and a tag stops being annotated once you edit the template, since what was recorded no longer describes what is written there."
+        },
+        "languageServerHerb.runtimeOverlays.display": {
+          "type": "string",
+          "enum": [
+            "replace",
+            "report",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Show what the tag rendered in place of the tag. The tag is revealed on whichever line the cursor is on, so it stays editable.",
+            "Leave the tag as written and underline it, with what it rendered in the hover.",
+            "Show nothing."
+          ],
+          "default": "replace",
+          "description": "How to show what an ERB tag rendered, for tags the application asked Herb to capture."
         }
       }
     },
@@ -229,6 +251,11 @@
         "command": "herb.setMaxLineLength",
         "title": "Herb: Set Max Line Length",
         "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "herb.changeRuntimeOverlayDisplay",
+        "title": "Change Runtime Value Display",
+        "category": "Herb"
       }
     ],
     "keybindings": [
