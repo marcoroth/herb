@@ -207,6 +207,18 @@ module Herb
         def predicate_token_for: (untyped) -> untyped
 
         # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
+        # : (untyped) -> Array[untyped]
+        def interpolation_children: (untyped) -> Array[untyped]
+
+        # A conditional standing as one segment of an interpolation is evaluated
+        # on the server, so the states its condition reads become server reads.
+        # Registering them is what makes a write to one refetch the attribute.
+        # : (untyped, Integer, untyped) -> void
+        def register_segment_reads: (untyped, Integer, untyped) -> void
+
+        # : (untyped) -> String
+        def segment_code: (untyped) -> String
+
         def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
 
         # : () -> void

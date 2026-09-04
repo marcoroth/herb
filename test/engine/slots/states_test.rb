@@ -1502,6 +1502,24 @@ module Engine
         assert_empty visitor.diagnostics
         assert_equal ["row ", ""], visitor.manifest["parts"]["2"]
       end
+
+      test "an attribute conditional registers its states as server reads" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (view: "list") %>
+          <button data-herb-set="view=grid" aria-pressed="<%= view == "grid" %>">Grid</button>
+          <ul class="entries <%= "is-grid" if view == "grid" %>"></ul>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        server_reads = visitor.manifest["states"]["server"]["reads"]["view"].map { |read| read["index"] }
+        parts_key = visitor.manifest["parts"].keys.last
+
+        assert_empty visitor.diagnostics
+        assert_includes server_reads, parts_key.to_i
+      end
     end
   end
 end

@@ -1006,15 +1006,62 @@ module Herb
           outputs.one? ? outputs.fetch(0).content : nil
         end
 
+        #: (untyped) -> Array[untyped]
+        def interpolation_children(node)
+          if node.is_a?(Herb::AST::HTMLElementNode)
+            Array(node.body)
+          elsif node.respond_to?(:value)
+            node.value&.children || []
+          else
+            [] #: Array[untyped]
+          end
+        end
+
+        # A conditional standing as one segment of an interpolation is evaluated
+        # on the server, so the states its condition reads become server reads.
+        # Registering them is what makes a write to one refetch the attribute.
+        #: (untyped, Integer, untyped) -> void
+        def register_segment_reads(node, index, slot)
+          segments = interpolation_children(node).select { |child| child.is_a?(Herb::AST::ERBIfNode) || child.is_a?(Herb::AST::ERBUnlessNode) || child.is_a?(Herb::AST::ERBCaseNode) }
+
+          return if segments.empty?
+
+          code = segments.map { |segment| segment_code(segment) }.join(" ")
+          mentioned = @region_states.each_value.select { |declaration| mentioned_state(code, { declaration.name => declaration }) } # steep:ignore UnannotatedEmptyCollection
+
+          return if mentioned.empty?
+
+          entry = { "index" => index, "node_path" => slot.node_path }
+
+          mentioned.each do |declaration|
+            @server_reads[declaration.name] ||= [] # steep:ignore UnannotatedEmptyCollection
+            @server_reads.fetch(declaration.name) << entry
+          end
+        end
+
+        #: (untyped) -> String
+        def segment_code(node)
+          collected = [] #: Array[String]
+
+          gather = lambda do |current|
+            content = current.respond_to?(:content) ? current.content : nil #: untyped
+
+            collected << content.value.to_s if content.respond_to?(:value)
+
+            none = [] #: Array[untyped]
+            children = current.respond_to?(:child_nodes) ? current.child_nodes : none
+
+            children.compact.each { |child| gather.call(child) }
+          end
+
+          gather.call(node)
+
+          collected.join(" ")
+        end
+
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> void
         def check_interpolated_state_read(node, states)
-          children = if node.is_a?(Herb::AST::HTMLElementNode)
-                       Array(node.body)
-                     elsif node.respond_to?(:value)
-                       node.value&.children || []
-                     else
-                       [] #: Array[untyped]
-                     end
+          children = interpolation_children(node)
 
           outputs = children.grep(Herb::AST::ERBContentNode)
           read = outputs.map { |output| output.content&.value.to_s.strip }.find { |expression| StateDirectives.mentions_any?(expression, states) }
@@ -1046,6 +1093,7 @@ module Herb
 
             if slot.interpolated? && slot.expression.to_s.strip.empty?
               check_interpolated_state_read(node, states)
+              register_segment_reads(node, index, slot)
               next
             end
 
