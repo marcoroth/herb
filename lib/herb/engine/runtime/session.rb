@@ -124,6 +124,17 @@ module Herb
           current.enter(template, line, column, via, end_line: end_line, end_column: end_column)
         end
 
+        #: [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
+        def self.output(template, line, column, via = nil, end_line: nil, end_column: nil)
+          at(template, line, column, via, end_line: end_line, end_column: end_column) do
+            value = yield
+
+            observe(:output, value)
+
+            value
+          end
+        end
+
         #: () -> void
         def self.leave
           current.leave

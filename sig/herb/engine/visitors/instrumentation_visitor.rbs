@@ -48,6 +48,9 @@ module Herb
       # : () -> bool
       def self.rewrites_erb_source?: () -> bool
 
+      # : (?capture_output: (bool | ^(String) -> boolish | Regexp | Array[untyped])?) -> void
+      def initialize: (?capture_output: (bool | ^(String) -> boolish | Regexp | Array[untyped])?) -> void
+
       def visit_document_node: (untyped node) -> untyped
 
       def inspect: () -> untyped
@@ -75,6 +78,8 @@ module Herb
       def via: (untyped node) -> untyped
 
       def wrapped_output: (untyped node) -> untyped
+
+      def captured?: (untyped node) -> untyped
 
       def wrapped_statement: (untyped node) -> untyped
 
