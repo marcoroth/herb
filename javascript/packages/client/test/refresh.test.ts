@@ -101,6 +101,16 @@ describe("refetching server-derived slots", () => {
     expect(transport).not.toHaveBeenCalled()
   })
 
+  test("parked branches and captured material list as parked roots", async () => {
+    document.body.innerHTML = PAGE
+
+    const live = start({ state: { refetch: "off" } })
+    const roots = live.slots.parkedRoots()
+
+    expect(roots.length).toBeGreaterThan(0)
+    expect(roots.some((root) => root.querySelector("em") !== null)).toBe(true)
+  })
+
   test("writing a state its current value refetches nothing", async () => {
     document.body.innerHTML = PAGE
 

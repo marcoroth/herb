@@ -51,6 +51,50 @@ describe("browser-scoped-style-no-unused-selector", () => {
     `)
   })
 
+  test("says nothing about a selector gated on interaction state", () => {
+    expectNoOffenses(`
+      <style scoped>
+        .card:hover img { opacity: 0.8 }
+        .row:focus-within .play { display: inline }
+        .link:active { color: red }
+      </style>
+      <div class="card"><img src="x.png"></div>
+      <div class="row"><span class="play"></span></div>
+      <a class="link">go</a>
+    `)
+  })
+
+  test("still reports a hover selector whose markup is gone", () => {
+    expectInfo(unused(".vanished:hover img"))
+
+    assertOffenses(`
+      <style scoped>.vanished:hover img { opacity: 0.8 }</style>
+      <div class="card">used</div>
+    `)
+  })
+
+  test("checks a pseudo-element selector on its originating element", () => {
+    expectNoOffenses(`
+      <style scoped>
+        .sheet::before { content: "" }
+        .field::placeholder { color: gray }
+        .row:after { clear: both }
+      </style>
+      <div class="sheet"></div>
+      <input class="field">
+      <div class="row"></div>
+    `)
+  })
+
+  test("still reports a pseudo-element whose originating element is gone", () => {
+    expectInfo(unused(".vanished::before"))
+
+    assertOffenses(`
+      <style scoped>.vanished::before { content: "" }</style>
+      <div class="sheet"></div>
+    `)
+  })
+
   test("says nothing about a selector that matches the element it is scoped to", () => {
     expectNoOffenses(`
       <div class="card">
@@ -97,6 +141,76 @@ describe("browser-scoped-style-no-unused-selector", () => {
       <style scoped>DIV.Card { color: red }</style>
       <div class="Card"></div>
     `)
+  })
+})
+
+describe("matching against parked markup", () => {
+  const check = (markup: string, parked: string[]) => {
+    const roots = parked.map((fragment) => {
+      const template = document.createElement("template")
+
+      template.innerHTML = fragment
+
+      return template.content
+    })
+
+    return new BrowserScopedStyleNoUnusedSelectorRule().check(dom(markup) as any, { parkedRoots: () => roots })
+  }
+
+  test("says nothing about a selector whose markup is parked for later", () => {
+    const offenses = check(
+      `<style scoped>.detail .cover { width: 4rem }</style>`,
+      [`<section class="detail"><img class="cover"></section>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("accepts a parked match through the selector's innermost compound alone", () => {
+    const offenses = check(
+      `<style scoped>.player .tracks li:hover .play { display: inline }</style>`,
+      [`<span class="play"></span>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("honors a parked element whose class is a blanked slot", () => {
+    const offenses = check(
+      `<style scoped>.wave.is-on { display: flex }</style>`,
+      [`<span class="wave " data-herb-slot="16:attribute_interpolation:class"></span>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("honors a parked element whose tested attribute is a slot", () => {
+    const offenses = check(
+      `<style scoped>.playhead[data-playing="false"] { animation-play-state: paused }</style>`,
+      [`<div class="playhead" data-playing="" data-herb-slot="9:attribute:data-playing"></div>`]
+    )
+
+    expect(offenses).toHaveLength(0)
+  })
+
+  test("still reports a class no parked element could ever carry", () => {
+    const offenses = check(
+      `<style scoped>.wave.is-on { display: flex }</style>`,
+      [`<span class="wave"></span>`]
+    )
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toBe(unused(".wave.is-on"))
+  })
+
+  test("still reports a selector no parked markup answers for", () => {
+    const offenses = check(
+      `<style scoped>.vanished { color: red }</style>`,
+      [`<section class="detail"><img class="cover"></section>`]
+    )
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toBe(unused(".vanished"))
   })
 })
 
