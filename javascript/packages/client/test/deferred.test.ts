@@ -203,6 +203,33 @@ describe("deferred blocks", () => {
     expect(transport).toHaveBeenCalledTimes(2)
   })
 
+  test("a poll ends when its block leaves the page", async () => {
+    document.body.innerHTML = deferredPage("async").replace(
+      '"fragments":{"0":{"mode":"async","state":"_herb_block_0","fallback":1}}',
+      '"fragments":{"0":{"mode":"async","state":"_herb_block_0","fallback":1,"poll":40}}',
+    )
+
+    const transport = vi.fn(async () => PRIMARY)
+
+    start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    await vi.waitFor(() => {
+      if (transport.mock.calls.length < 2) {
+        throw new Error("still waiting")
+      }
+    })
+
+    document.body.innerHTML = "<p>next page</p>"
+
+    await new Promise((resolve) => setTimeout(resolve, 60))
+
+    const settled = transport.mock.calls.length
+
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    expect(transport.mock.calls.length).toBe(settled)
+  })
+
   test("a lazy block waits for the viewport and then materializes", async () => {
     document.body.innerHTML = deferredPage("lazy", `<div id="spacer" style="height:3000px"></div>`)
 

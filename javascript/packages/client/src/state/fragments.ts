@@ -1,5 +1,5 @@
 import { scopeOf } from "./scopes"
-import { hostOf } from "../markup/anchors"
+import { connected, hostOf } from "../markup/anchors"
 
 import type { Slots } from "../slots/slots"
 import type { RefreshReport } from "./refresh"
@@ -123,6 +123,8 @@ export class Fragments {
   }
 
   hydrated(): void {
+    this.sweep()
+
     for (const region of this.slots.regions()) {
       const fragments = this.delegate.manifestFor(region)?.fragments
 
@@ -169,6 +171,31 @@ export class Fragments {
     }
 
     this.polls.clear()
+  }
+
+  // Slots swept off the page keep no watchers behind. A poll also ends
+  // itself on its next tick, but a long interval would hold its detached
+  // markup until then, so a rescan clears it here right away.
+  private sweep(): void {
+    for (const [slot, timer] of this.polls) {
+      if (!connected(slot.anchor)) {
+        clearTimeout(timer)
+        this.polls.delete(slot)
+      }
+    }
+
+    for (const [slot, observer] of this.observers) {
+      if (!connected(slot.anchor)) {
+        observer.disconnect()
+        this.observers.delete(slot)
+      }
+    }
+
+    for (const slot of this.armed) {
+      if (!connected(slot.anchor)) {
+        this.armed.delete(slot)
+      }
+    }
   }
 
   private present(slot: Slot, fragment: FragmentEntry): void {
@@ -278,7 +305,9 @@ export class Fragments {
 
   // A polled block refreshes itself over the scoped lane, so an interval
   // never pays for the rest of the template. A hidden document skips the
-  // tick and checks again one interval later.
+  // tick and checks again one interval later. A slot swept off the page,
+  // the way a Turbo visit swaps the body, ends its poll on the next tick,
+  // since nothing else tears a pruned slot's timers down.
   private armPoll(slot: Slot, index: number, entry: FragmentEntry, scope: StateScope): void {
     const every = entry.poll ?? 0
 
@@ -288,6 +317,13 @@ export class Fragments {
 
     const tick = (): void => {
       this.polls.set(slot, setTimeout(() => {
+        if (!connected(slot.anchor)) {
+          this.polls.delete(slot)
+          this.armed.delete(slot)
+
+          return
+        }
+
         if (document.hidden) {
           tick()
 
