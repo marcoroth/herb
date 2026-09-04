@@ -87,6 +87,7 @@ export interface FragmentEntry {
   reads: number[]
   delay?: number
   hold?: number
+  on?: string[]
 }
 
 export interface StateScope {

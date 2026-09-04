@@ -114,6 +114,34 @@ describe("refetching server-derived slots", () => {
     expect(transport).not.toHaveBeenCalled()
   })
 
+  test("a fragment scoped with `on` only masks for its named states", async () => {
+    document.body.innerHTML = fragmentPage({ 4: { fallback: 1, reads: [3], delay: 0, hold: 0, on: ["editing"] } })
+
+    let resolveTransport: (payload: Payload) => void = () => {}
+    const transport = vi.fn(() => new Promise<Payload>((resolve) => { resolveTransport = resolve }))
+
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "basel" })
+
+    expect(document.body.innerHTML).toContain("old answer")
+    expect(document.body.innerHTML).not.toContain("looking it up")
+
+    await vi.waitFor(() => {
+      expect(transport).toHaveBeenCalled()
+    })
+
+    expect(document.body.innerHTML).not.toContain("looking it up")
+
+    resolveTransport(payloadFor({ 4: { branch: 0, slots: { 3: "fresh answer" } } }))
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("fresh answer")) {
+        throw new Error("still waiting")
+      }
+    })
+  })
+
   test("writing a state a server read depends on refetches debounced, once", async () => {
     document.body.innerHTML = PAGE
 

@@ -577,16 +577,20 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return
     }
 
-    this.showFallbacks(manifest, scope, stale)
+    this.showFallbacks(manifest, scope, stale, names)
 
     void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.settleFallbacks(outcome))
   }
 
-  private showFallbacks(manifest: StateManifest, scope: StateScope, stale: Set<number>): void {
+  private showFallbacks(manifest: StateManifest, scope: StateScope, stale: Set<number>, names: string[]): void {
     const entries = Object.entries(manifest.fragments ?? {}).sort(([left], [right]) => Number(left) - Number(right))
 
     for (const [key, fragment] of entries) {
       if (!fragment.reads.some((index) => stale.has(index))) {
+        continue
+      }
+
+      if (fragment.on && !fragment.on.some((name) => names.includes(name))) {
         continue
       }
 

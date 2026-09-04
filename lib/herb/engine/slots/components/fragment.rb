@@ -15,7 +15,8 @@ module Herb
         #
         class Fragment < Base
           NAME = "Fragment" #: String
-          ATTRIBUTES = ["delay", "hold"].freeze #: Array[String]
+          ATTRIBUTES = ["delay", "hold", "on"].freeze #: Array[String]
+          TIMING_ATTRIBUTES = ["delay", "hold"].freeze #: Array[String]
 
           #: () -> Array[String]
           def allowed_attributes
@@ -48,12 +49,32 @@ module Herb
 
             if_node = synthesized_conditional(primary)
 
-            @visitor.record_fragment(if_node, fallback.body || [], timing)
+            @visitor.record_fragment(if_node, fallback.body || [], timing.merge(masking))
 
             [if_node]
           end
 
           private
+
+          # `on` narrows when the fallback shows. Without it any covered read
+          # going stale masks the fragment, and with it only a write to one of
+          # the named states does.
+          #: () -> Hash[String, untyped]
+          def masking
+            named = attributes.find { |attribute| attribute_name(attribute) == "on" }
+
+            return {} unless named
+
+            states = static_value(named).to_s.split(/[,\s]+/).reject(&:empty?)
+
+            if states.empty?
+              error("`on` names the states that mask this `<Fragment>`, and it names none.", named.location, suggestion: %(Name at least one state, like `on="album"`.))
+
+              return {}
+            end
+
+            { "on" => states }
+          end
 
           #: () -> Hash[String, Integer]
           def timing
@@ -62,7 +83,7 @@ module Herb
             attributes.each do |attribute|
               name = attribute_name(attribute).to_s
 
-              next unless ATTRIBUTES.include?(name)
+              next unless TIMING_ATTRIBUTES.include?(name)
 
               value = static_value(attribute)
 

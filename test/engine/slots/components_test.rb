@@ -181,6 +181,23 @@ module Engine
         assert_equal({ "1" => { "fallback" => 1, "reads" => [2], "delay" => 0, "hold" => 600 } }, visitor.manifest["states"]["fragments"])
       end
 
+      test "the `on` attribute names the masking states" do
+        source = FRAGMENT.sub("<Fragment>", %(<Fragment on="peek">))
+
+        visitor, = compile(source)
+
+        assert_empty visitor.diagnostics
+        assert_equal ["peek"], visitor.manifest["states"]["fragments"]["1"]["on"]
+      end
+
+      test "an empty `on` errors" do
+        source = FRAGMENT.sub("<Fragment>", %(<Fragment on="">))
+
+        visitor, = compile(source)
+
+        assert_includes visitor.diagnostics.map(&:message).join, "names none"
+      end
+
       test "a timing attribute that is not a whole number errors" do
         source = FRAGMENT.sub("<Fragment>", %(<Fragment delay="fast">))
 

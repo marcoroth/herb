@@ -192,7 +192,7 @@ module Herb
           @listener_written = listener_written.compare_by_identity
           @current_open_tag = nil
 
-          fragment_nodes = {} #: Hash[untyped, Hash[String, Integer]]
+          fragment_nodes = {} #: Hash[untyped, Hash[String, untyped]]
           fragment_fallbacks = {} #: Hash[untyped, Array[untyped]]
 
           @fragment_nodes = fragment_nodes.compare_by_identity
@@ -245,7 +245,7 @@ module Herb
           @fragment_nodes.keys.filter_map { |node| @indices[node] }
         end
 
-        #: (Integer) -> Hash[String, Integer]
+        #: (Integer) -> Hash[String, untyped]
         def fragment_timing_for(index)
           node = @slot_nodes[index]
 
@@ -259,7 +259,7 @@ module Herb
           children.flat_map { |child| transformed(child) }
         end
 
-        #: (untyped, Array[untyped], Hash[String, Integer]) -> void
+        #: (untyped, Array[untyped], Hash[String, untyped]) -> void
         def record_fragment(node, fallback_children, timing)
           @fragment_nodes[node] = timing
           @fragment_fallbacks[node] = fallback_children

@@ -24,6 +24,14 @@ module Herb
 
           private
 
+          TIMING_ATTRIBUTES: Array[String]
+
+          # `on` narrows when the fallback shows. Without it any covered read
+          # going stale masks the fragment, and with it only a write to one of
+          # the named states does.
+          # : () -> Hash[String, untyped]
+          def masking: () -> Hash[String, untyped]
+
           # : () -> Hash[String, Integer]
           def timing: () -> Hash[String, Integer]
 
