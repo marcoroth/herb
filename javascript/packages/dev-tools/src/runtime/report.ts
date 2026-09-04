@@ -523,6 +523,7 @@ export function diagnosticKey(diagnostic: NormalizedDiagnostic): string {
   return JSON.stringify([
     diagnostic.template,
     diagnostic.location?.start.line ?? null,
-    diagnostic.code ?? diagnostic.message
+    diagnostic.code ?? null,
+    diagnostic.location && diagnostic.code ? null : diagnostic.message
   ]);
 }
