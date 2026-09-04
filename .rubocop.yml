@@ -177,6 +177,7 @@ Metrics/ParameterLists:
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb
     - lib/herb/engine/errors.rb
+    - lib/herb/engine/runtime/journal/summary.rb
     - lib/herb/engine/runtime/session.rb
     - lib/herb/engine/slots/schema_compiler.rb
     - lib/herb/engine/slots/visitor.rb
@@ -186,6 +187,7 @@ Metrics/ParameterLists:
     - lib/herb/prism_inspect.rb
     - lib/herb/visitor/diagnostics.rb
     - lib/herb/engine/visitors/optimize_visitor.rb
+    - test/engine/runtime/journal_test.rb
 
 Metrics/PerceivedComplexity:
   Exclude:
