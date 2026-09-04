@@ -95,8 +95,12 @@ function selectors(rules: ArrayLike<CSSRuleLike>): string[] {
 // and the check asks whether the markup they were written for exists.
 const TRANSIENT_PSEUDO = /:(?:hover|focus-within|focus-visible|focus|active|visited|target)\b/g
 
+// A pseudo-element never matches in the query APIs, so `.card::before` is
+// checked on its originating element instead.
+const PSEUDO_ELEMENT = /::[a-z-]+(?:\([^)]*\))?|:(?:before|after|first-line|first-letter)\b/g
+
 function matches(scope: QueryableLike, selector: string): boolean {
-  const resting = selector.replace(TRANSIENT_PSEUDO, "")
+  const resting = selector.replace(TRANSIENT_PSEUDO, "").replace(PSEUDO_ELEMENT, "")
 
   if (resting.trim().length === 0) {
     return true
