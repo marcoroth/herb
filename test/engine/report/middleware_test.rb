@@ -2,6 +2,11 @@
 
 require_relative "../../test_helper"
 
+require "tmpdir"
+require "json"
+
+require "herb/engine/runtime/journal"
+
 module Engine
   class ReportMiddlewareTest < Minitest::Spec
     PAGE = "<html><body><h1>Hello</h1></body></html>"
@@ -265,6 +270,130 @@ module Engine
 
       test "returns the response untouched when nothing collected" do
         assert_equal DOCUMENT, respond_with
+      end
+    end
+
+    describe "handing the session to a journal" do
+      after do
+        Herb::Engine::Runtime::Middleware.journal = nil
+        Herb::Engine::Runtime::Session.clear_measurements
+      end
+
+      def rendered(journal, env: { "REQUEST_METHOD" => "GET", "PATH_INFO" => "/posts" })
+        Herb::Engine::Runtime::Middleware.new(
+          app {
+            Herb::Engine::Runtime::Session.current.enter_render("app/views/a.html.erb", "a" * 64)
+            Herb::Engine::Runtime::Session.record(diagnostic)
+          },
+          journal: journal
+        ).call(env)
+      end
+
+      def written(dir)
+        Dir.glob(File.join(dir, "journal", "**", "*.jsonl"))
+      end
+
+      test "writes nothing when it was not given one" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(nil)
+
+          assert_empty written(dir)
+        end
+      end
+
+      test "writes the session it opened, keyed by the text that was rendered" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(Herb::Engine::Runtime::Journal.new(root: dir))
+
+          assert_path_exists File.join(dir, "journal", "app/views/a.html.erb.#{"a" * 8}.jsonl")
+        end
+      end
+
+      test "takes a path and builds the journal itself" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(dir)
+
+          refute_empty written(dir)
+        end
+      end
+
+      test "falls back to the journal set on the class, since the host often mounts this" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          Herb::Engine::Runtime::Middleware.journal = dir
+
+          rendered(nil)
+
+          refute_empty written(dir)
+        end
+      end
+
+      test "prefers the journal it was given over the one on the class" do
+        Dir.mktmpdir("herb-class") do |ignored|
+          Dir.mktmpdir("herb-given") do |dir|
+            Herb::Engine::Runtime::Middleware.journal = ignored
+
+            rendered(dir)
+
+            refute_empty written(dir)
+            assert_empty written(ignored)
+          end
+        end
+      end
+
+      test "says what request a record came from" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(dir)
+
+          record = JSON.parse(File.readlines(written(dir).first).last)
+
+          assert_equal "/posts", record["request_path"]
+        end
+      end
+
+      test "applies what producers registered, so observations reach the journal" do
+        Herb::Engine::Runtime::Session.measurement(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+          "#{queries.size} SQL queries"
+        end
+
+        Dir.mktmpdir("herb-middleware") do |dir|
+          Herb::Engine::Runtime::Middleware.new(
+            app {
+              Herb::Engine::Runtime::Session.current.enter_render("app/views/a.html.erb", "a" * 64)
+              Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 1, 0) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+              end
+            },
+            journal: dir
+          ).call({})
+
+          codes = File.readlines(written(dir).first).map { |line| JSON.parse(line)["code"] }
+
+          assert_includes codes, "sql-queries"
+        end
+      end
+
+      test "leaves a borrowed session to whoever opened it" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          Herb::Engine::Runtime::Session.capture { rendered(dir) }
+
+          assert_empty written(dir)
+        end
+      end
+
+      test "returns the page even when a measurement raises" do
+        Herb::Engine::Runtime::Session.measurement(:queries, origin: "Herb Engine") { |_| raise "boom" }
+
+        response = rendered(nil)
+
+        assert_equal 200, response[0]
+        assert_includes body_of(response), "Hello"
+      end
+
+      test "returns the page even when the journal cannot write" do
+        response = rendered("/does/not/exist/and/cannot/be/made")
+
+        assert_equal 200, response[0]
+        assert_includes body_of(response), "Hello"
       end
     end
   end
