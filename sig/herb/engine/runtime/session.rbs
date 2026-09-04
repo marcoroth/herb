@@ -15,6 +15,31 @@ module Herb
       # Outside of one, recording still works and collects into a session nobody reads, so a producer
       # never has to guard its own calls.
       class Session
+        class Measurement < Data
+          attr_reader key(): untyped
+
+          attr_reader origin(): untyped
+
+          attr_reader code(): untyped
+
+          attr_reader message(): untyped
+
+          attr_reader description(): untyped
+
+          attr_reader kind(): untyped
+
+          attr_reader per(): untyped
+
+          attr_reader block(): untyped
+
+          def self.new: (untyped key, untyped origin, untyped code, untyped message, untyped description, untyped kind, untyped per, untyped block) -> instance
+                      | (key: untyped, origin: untyped, code: untyped, message: untyped, description: untyped, kind: untyped, per: untyped, block: untyped) -> instance
+
+          def self.members: () -> [ :key, :origin, :code, :message, :description, :kind, :per, :block ]
+
+          def members: () -> [ :key, :origin, :code, :message, :description, :kind, :per, :block ]
+        end
+
         STATE_KEY: Symbol
 
         RACTOR_KEY: Symbol
@@ -51,11 +76,11 @@ module Herb
         # : (String) -> void
         def self.read_source: (String) -> void
 
-        # : [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
-        def self.at: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
+        # : [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
+        def self.at: [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
 
-        # : (String?, Integer, Integer, ?Symbol?) -> void
-        def self.enter: (String?, Integer, Integer, ?Symbol?) -> void
+        # : (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
+        def self.enter: (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
 
         # : () -> void
         def self.leave: () -> void
@@ -87,6 +112,15 @@ module Herb
         # : () -> bool
         def self.scoped?: () -> bool
 
+        # : (Symbol, origin: String, ?code: String?, ?message: String?, ?description: (^(Array[untyped]) -> String)?, ?kind: Symbol, ?per: Symbol) { (Array[untyped]) -> String } -> void
+        def self.measurement: (Symbol, origin: String, ?code: String?, ?message: String?, ?description: (^(Array[untyped]) -> String)?, ?kind: Symbol, ?per: Symbol) { (Array[untyped]) -> String } -> void
+
+        # : () -> Array[Herb::Engine::Runtime::Session::Measurement]
+        def self.measurements: () -> Array[Herb::Engine::Runtime::Session::Measurement]
+
+        # : () -> void
+        def self.clear_measurements: () -> void
+
         # : () -> void
         def self.reset!: () -> void
 
@@ -111,8 +145,8 @@ module Herb
         # : () -> bool
         def empty?: () -> bool
 
-        # : (String?, Integer, Integer, ?Symbol?) -> void
-        def enter: (String?, Integer, Integer, ?Symbol?) -> void
+        # : (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
+        def enter: (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
 
         # : () -> void
         def leave: () -> void
@@ -164,6 +198,9 @@ module Herb
         # : () -> Array[Herb::Engine::Runtime::Entry]
         def entries: () -> Array[Herb::Engine::Runtime::Entry]
 
+        # : () -> Array[Herb::Diagnostic]
+        def apply_measurements: () -> Array[Herb::Diagnostic]
+
         # Turns what was observed under one key into one diagnostic per tag that saw any.
         #
         #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
@@ -179,8 +216,14 @@ module Herb
         # only sometimes, and which of those it is depends on what the tag is for. Reporting it as a
         # warning would make that call on the reader's behalf and get it wrong often enough to train
         # them to ignore it.
-        # : (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
-        def measure: (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+        #
+        # : (Symbol, origin: String, ?code: String?, ?message: String?, ?description: (^(Array[untyped]) -> String)?, ?kind: Symbol, ?per: Symbol) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+        def measure: (Symbol, origin: String, ?code: String?, ?message: String?, ?description: (^(Array[untyped]) -> String)?, ?kind: Symbol, ?per: Symbol) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+
+        private
+
+        # : (Symbol, Symbol) -> Array[[Herb::Engine::Runtime::Entry, Array[untyped]]]
+        def measurable: (Symbol, Symbol) -> Array[[ Herb::Engine::Runtime::Entry, Array[untyped] ]]
       end
     end
   end

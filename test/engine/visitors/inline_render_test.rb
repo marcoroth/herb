@@ -303,8 +303,8 @@ module Engine
       test "instruments nothing it wrote itself" do
         source = compiled(inline: true)
 
-        assert_equal ['("app/views/posts/index.html.erb", 1, 0, :partial)'], source.scan(/Session\.enter(\([^)]*\))/).flatten
-        assert_equal ["(\"#{CARD}\", 1, 5)"], source.scan(/Session\.at(\([^)]*\))/).flatten
+        assert_equal ['("app/views/posts/index.html.erb", 1, 0, :partial, end_line: 1, end_column: 26)'], source.scan(/Session\.enter(\([^)]*\))/).flatten
+        assert_equal ["(\"#{CARD}\", 1, 5, nil, end_line: 1, end_column: 17)"], source.scan(/Session\.at(\([^)]*\))/).flatten
       end
 
       test "reports one render per item of a collection rather than one for the lot" do

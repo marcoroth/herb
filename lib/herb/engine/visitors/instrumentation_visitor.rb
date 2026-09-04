@@ -219,10 +219,10 @@ module Herb
 
       def position(node)
         location = node.location
-        parts = [@file.dump, location.start.line, location.start.column]
-        kind = via(node)
+        parts = [@file.dump, location.start.line, location.start.column, via(node).inspect]
 
-        parts << kind.inspect if kind
+        parts << "end_line: #{location.end.line}"
+        parts << "end_column: #{location.end.column}"
 
         parts.join(", ")
       end
