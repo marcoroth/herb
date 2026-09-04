@@ -443,6 +443,7 @@ export class RegionIndex {
       item,
       claimed: false,
       shown: null,
+      captured: null,
     }
 
     state.openSlots.push({ index: slot.index, slot })
@@ -580,6 +581,7 @@ export class RegionIndex {
         item,
         claimed: false,
         shown: null,
+        captured: null,
       }
 
       this.attach(region, slot, result, enclosing, item)

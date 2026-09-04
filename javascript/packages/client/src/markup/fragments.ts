@@ -89,13 +89,65 @@ export function fillSlots(fragment: DocumentFragment, dynamics: SlotValues, text
   }
 }
 
+// A flat map cannot say which item a value belongs to, so anything inside
+// an item range stays out and travels with the captured markup instead.
+const ITEM_OPEN = /^herb-item:\d+:/
+const ITEM_CLOSE = /^\/herb-item:\d+$/
+
+function insideItem(node: Node, fragment: DocumentFragment): boolean {
+  let depth = 0
+  const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_COMMENT)
+
+  while (walker.nextNode()) {
+    const comment = walker.currentNode as Comment
+
+    if (comment === node) {
+      return depth > 0
+    }
+
+    const data = comment.data.trim()
+
+    if (ITEM_OPEN.test(data)) {
+      depth += 1
+    } else if (ITEM_CLOSE.test(data)) {
+      depth -= 1
+    }
+  }
+
+  if (node instanceof Element) {
+    let parent: Node | null = node
+
+    while (parent && parent !== fragment) {
+      let sibling: Node | null = parent
+
+      while ((sibling = sibling.previousSibling)) {
+        if (sibling.nodeType === Node.COMMENT_NODE) {
+          const data = (sibling as Comment).data.trim()
+
+          if (ITEM_OPEN.test(data)) {
+            return true
+          }
+
+          if (ITEM_CLOSE.test(data)) {
+            break
+          }
+        }
+      }
+
+      parent = parent.parentNode
+    }
+  }
+
+  return false
+}
+
 export function valuesIn(fragment: DocumentFragment): SlotValues {
   const found: SlotValues = {}
 
   for (const open of slotOpeners(fragment)) {
     const index = slotOpenIndex(open.data.trim())
 
-    if (index === null) {
+    if (index === null || insideItem(open, fragment)) {
       continue
     }
 
@@ -115,6 +167,10 @@ export function valuesIn(fragment: DocumentFragment): SlotValues {
 
   for (const [element, entry] of anchoredSlots(fragment)) {
     if (entry.attribute !== null || entry.type !== DEFAULT_SLOT_TYPE) {
+      continue
+    }
+
+    if (insideItem(element, fragment)) {
       continue
     }
 
