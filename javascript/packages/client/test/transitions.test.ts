@@ -70,6 +70,30 @@ describe("transitionMutation", () => {
     expect(seen.names[0]).toEqual(["side-panel"])
   })
 
+  test("CSS turning every marked element off skips the transition", async () => {
+    document.body.innerHTML = `<style>#off { view-transition-name: none !important }</style><div id="off" data-herb-transition><p id="content">before</p></div>`
+
+    const seen = stub()
+
+    await transitionMutation(() => {
+      document.getElementById("content")!.textContent = "after"
+    })
+
+    expect(document.getElementById("content")!.textContent).toBe("after")
+    expect(seen.calls).toBe(0)
+    expect(document.getElementById("off")!.style.viewTransitionName).toBe("")
+  })
+
+  test("one live marked element keeps the transition despite a vetoed sibling", async () => {
+    document.body.innerHTML = `<style>#off { view-transition-name: none !important }</style><div id="off" data-herb-transition></div><div data-herb-transition></div>`
+
+    const seen = stub()
+
+    await transitionMutation(() => {})
+
+    expect(seen.calls).toBe(1)
+  })
+
   test("a page without marked elements mutates without a transition", async () => {
     document.body.innerHTML = `<div><p id="content">before</p></div>`
 

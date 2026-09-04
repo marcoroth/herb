@@ -96,6 +96,24 @@ function flush(): void {
 
   setNames(roots)
 
+  // CSS gets the last word on participation. A marked element whose computed
+  // view-transition-name stays `none`, through a media query saying
+  // `view-transition-name: none !important`, is turned off for that layout,
+  // and a batch whose marked elements are all turned off mutates without a
+  // transition, so no capture ever freezes the page for it.
+  if (!anyEffectiveName(roots)) {
+    clearNames()
+
+    for (const job of batch) {
+      job.callback()
+      job.done()
+    }
+
+    flush()
+
+    return
+  }
+
   const style = document.createElement("style")
 
   style.textContent = `
@@ -154,6 +172,24 @@ interface ViewTransitionLike {
   finished: Promise<void>
   updateCallbackDone: Promise<void>
   skipTransition(): void
+}
+
+function markedIn(roots: ParentNode[]): HTMLElement[] {
+  const found: HTMLElement[] = []
+
+  for (const root of roots) {
+    if (root instanceof HTMLElement && root.matches(TRANSITION_SELECTOR)) {
+      found.push(root)
+    }
+
+    found.push(...root.querySelectorAll<HTMLElement>(TRANSITION_SELECTOR))
+  }
+
+  return found
+}
+
+function anyEffectiveName(roots: ParentNode[]): boolean {
+  return markedIn(roots).some((element) => getComputedStyle(element).viewTransitionName !== "none")
 }
 
 function setNames(roots: ParentNode[]): void {
