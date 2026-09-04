@@ -497,7 +497,15 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
     }
 
-    this.requestReadRefetch(manifest, names)
+    const changed = names.filter((name) => {
+      const value = this.valueAt(name, scopes.get(name) ?? resolved)
+
+      return value !== (previous.get(name) ?? null)
+    })
+
+    if (changed.length > 0) {
+      this.requestReadRefetch(manifest, changed)
+    }
 
     return true
   }
