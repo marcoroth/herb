@@ -100,6 +100,19 @@ describe("refetching server-derived slots", () => {
     expect(transport).not.toHaveBeenCalled()
   })
 
+  test("writing a state its current value refetches nothing", async () => {
+    document.body.innerHTML = PAGE
+
+    const transport = vi.fn(async () => payloadFor({}))
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    live.state.setState({ q: "" })
+
+    await new Promise((resolve) => setTimeout(resolve, 30))
+
+    expect(transport).not.toHaveBeenCalled()
+  })
+
   test("writing a state a server read depends on refetches debounced, once", async () => {
     document.body.innerHTML = PAGE
 
