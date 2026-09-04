@@ -385,15 +385,23 @@ export class RegionIndex {
     }
   }
 
+  // A held region only continues into new markup while it still stands in
+  // the page. A body swap, the way a Turbo visit replaces a page, delivers
+  // the fresh markup before the removal, so matching an already detached
+  // region here would alias the new page onto the old visit's slots.
   private openRegion(marker: RegionOpenMarker, comment: Comment, result: ScanResult, state: ParseState): void {
     const range: RegionRange = { start: comment, end: null }
     const existing = this.held.find((candidate) => candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version)
 
-    if (existing) {
+    if (existing && existing.ranges.some((candidate) => candidate.start.isConnected)) {
       existing.ranges.push(range)
       state.openRegions.push({ region: existing, range })
 
       return
+    }
+
+    if (existing) {
+      this.held = this.held.filter((candidate) => candidate !== existing)
     }
 
     const region: Region = {

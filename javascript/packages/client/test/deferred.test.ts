@@ -79,6 +79,38 @@ describe("deferred blocks", () => {
     expect(document.body.innerHTML).not.toContain("loading stats")
   })
 
+  test("a deferred block re-requests when its page comes back", async () => {
+    const page = deferredPage("async")
+
+    document.body.innerHTML = page
+
+    const transport = vi.fn(async () => PRIMARY)
+
+    start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("42 things")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    document.body.innerHTML = "<p>another page</p>"
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    document.body.innerHTML = page
+
+    expect(document.body.innerHTML).toContain("loading stats")
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("42 things")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(transport).toHaveBeenCalledTimes(2)
+  })
+
   test("a lazy block waits for the viewport and then materializes", async () => {
     document.body.innerHTML = deferredPage("lazy", `<div id="spacer" style="height:3000px"></div>`)
 
