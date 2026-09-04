@@ -218,6 +218,8 @@ module Engine
       assert_includes Erubi::Engine.new(template).src, "'<% literal %>"
 
       assert_raises(Herb::Engine::GeneratorTemplateError) { Herb::Engine.new(template) }
+
+      assert_equal Erubi::Engine.new(template).src, Herb::Engine.new(template, parser_options: { html: false }).src
     end
 
     test "refuses a case with its first condition in the same tag that Erubi compiles" do

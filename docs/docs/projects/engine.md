@@ -75,7 +75,7 @@ Two things that `Erubi::Engine` accepts are handled differently by `Herb::Engine
 
 A `case` with its first `when`/`in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). The AST that pattern produces cannot be formatted or compiled reliably. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the same thing.
 
-Escaped tags such as `<%% %>` and `<%%= %>` raise `Herb::Engine::GeneratorTemplateError`. A template that emits literal ERB is a generator template, not a template to render.
+Escaped tags such as `<%% %>` and `<%%= %>` raise `Herb::Engine::GeneratorTemplateError`. A template that emits literal ERB is a generator template, not a template to render. With the `html: false` parser option they emit the literal tag the way Erubi does, see [Templates that are not HTML](#templates-that-are-not-html).
 
 One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
 
@@ -109,6 +109,16 @@ Herb::Engine.new(source, parser_options: { strict: false })
 Since Herb trims, the conventional form with `case` and `when` in separate tags already works, and it is the form the formatter and the linter are built around.
 
 The linter is configured separately from the engine. Set [`framework`](/configuration#framework-configuration) in `.herb.yml` so rules that assume Action View stay quiet in a project that is not running it.
+
+### Templates that are not HTML
+
+The parser's [`html`](/parser-options) option turns HTML parsing off, so `<` followed by a letter is plain text and only the ERB tags are structured. That is the mode for mail text, YAML, JavaScript, shell scripts, and anything else that is not markup, where the HTML parser would reject `a <b` or `<<EOF`:
+
+```ruby
+Herb::Engine.new(source, parser_options: { html: false })
+```
+
+The ERB structure is still parsed, so control flow, blocks, and trimming behave the same as in an HTML template. Context-aware escaping falls back to `escapefunc` for every `<%= %>`, since there is no attribute, script, or style context to tell apart. Escaped tags are the one place the mode changes what compiles. `<%% %>` and `<%%= %>` emit the literal `<% %>` and `<%= %>` the way Erubi does, in place of raising `GeneratorTemplateError`, since a generator template that writes ERB into a Ruby or YAML file is a normal input here.
 
 ### Blocks
 

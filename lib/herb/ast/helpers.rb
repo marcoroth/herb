@@ -58,6 +58,11 @@ module Herb
       end
 
       #: (String) -> bool
+      def erb_escaped?(opening)
+        opening.start_with?("<%%")
+      end
+
+      #: (String) -> bool
       def erb_output?(opening)
         opening.include?("=") && !erb_comment?(opening)
       end
