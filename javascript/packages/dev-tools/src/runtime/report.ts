@@ -519,10 +519,15 @@ export function buildRenderStack(tree: RenderTreeNode[], diagnostic: NormalizedD
   return frames;
 }
 
+// A line number separates a rule's findings; without one only the message
+// can, so a locationless diagnostic keeps its message in the key. Otherwise
+// distinct findings of one rule on one template would collapse into a
+// single entry showing the first message alone.
 export function diagnosticKey(diagnostic: NormalizedDiagnostic): string {
   return JSON.stringify([
     diagnostic.template,
     diagnostic.location?.start.line ?? null,
-    diagnostic.code ?? diagnostic.message
+    diagnostic.code ?? null,
+    diagnostic.location && diagnostic.code ? null : diagnostic.message
   ]);
 }
