@@ -14,6 +14,8 @@ module Herb
 
         attr_reader sources: Hash[String, String]
 
+        attr_reader digests: Hash[String, String]
+
         attr_reader nodes: Hash[String, Hash[String, Hash[Symbol, untyped]]]
 
         attr_reader render_tree: Array[Hash[Symbol, untyped]]
@@ -39,8 +41,11 @@ module Herb
         # : (String, String?) -> void
         def source: (String, String?) -> void
 
-        # : (String, String?, String?, ?called_from: Array[untyped]?) -> void
-        def render: (String, String?, String?, ?called_from: Array[untyped]?) -> void
+        # : (String?) -> String?
+        def digest_for: (String?) -> String?
+
+        # : (String, String?, String?, ?called_from: Array[untyped]?, ?digest: String?) -> void
+        def render: (String, String?, String?, ?called_from: Array[untyped]?, ?digest: String?) -> void
 
         # : (String, Symbol, untyped, origin: String) -> void
         def annotate: (String, Symbol, untyped, origin: String) -> void

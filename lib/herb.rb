@@ -2,6 +2,7 @@
 # typed: false
 
 require_relative "herb/colors"
+require_relative "herb/fingerprint"
 require_relative "herb/range"
 require_relative "herb/position"
 require_relative "herb/location"

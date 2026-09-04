@@ -87,6 +87,10 @@ module Herb
 
       def enter_render_node: (untyped node, untyped file) -> untyped
 
+      def render_arguments: (untyped file) -> untyped
+
+      def digest_for: (untyped file) -> untyped
+
       def leave_render_node: (untyped node) -> untyped
 
       def position: (untyped node) -> untyped

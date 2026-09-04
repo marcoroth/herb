@@ -81,7 +81,7 @@ module Herb
       private
 
       def frame_render(node)
-        template = context.relative_file_path.dump
+        template = render_arguments(context.relative_file_path)
 
         node.children.unshift(erb_node(node, "<%", "#{SESSION}.enter_render(#{template}); begin"))
         node.children.push(erb_node(node, "<%", "ensure; #{SESSION}.leave_render; end"))
@@ -210,7 +210,19 @@ module Herb
       end
 
       def enter_render_node(node, file)
-        erb_node(node, "<%", "#{SESSION}.enter_render(#{file.dump}); begin")
+        erb_node(node, "<%", "#{SESSION}.enter_render(#{render_arguments(file)}); begin")
+      end
+
+      def render_arguments(file)
+        digest = digest_for(file)
+
+        digest ? "#{file.dump}, #{digest.dump}" : file.dump
+      end
+
+      def digest_for(file)
+        Herb::Fingerprint.template_file(context.project_path + file)
+      rescue StandardError
+        nil
       end
 
       def leave_render_node(node)
