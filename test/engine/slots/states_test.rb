@@ -1484,6 +1484,24 @@ module Engine
         assert_equal ["track"], visitor.manifest["states"]["reads"].keys
         assert_equal 1, visitor.manifest["states"]["reads"]["track"].length
       end
+
+      test "an attribute conditional joins the manifest parts" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (track: "") %>
+          <input value="<%= track %>">
+          <% Catalog.tracks.each do |entry| %>
+            <%# herb:key entry %>
+            <li class="row <%= "is-on" if track == entry %>"><%= entry %></li>
+          <% end %>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_empty visitor.diagnostics
+        assert_equal ["row ", ""], visitor.manifest["parts"]["2"]
+      end
     end
   end
 end
