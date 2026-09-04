@@ -65,6 +65,10 @@ function eligible(root: ParentNode, force: boolean): boolean {
     return false
   }
 
+  if (document.visibilityState === "hidden") {
+    return false
+  }
+
   if (document.querySelector("dialog:modal")) {
     return false
   }
@@ -157,6 +161,7 @@ function flush(): void {
 
   transition.ready?.catch(() => {})
   skipUnderTopLayer(transition)
+  skipWhenHidden(transition)
 
   transition.finished.finally(() => {
     style.remove()
@@ -220,6 +225,23 @@ function clearNames(): void {
 
 function identifier(name: string): string {
   return name.replace(/[^a-zA-Z0-9_-]/g, "-")
+}
+
+// A hidden document runs no animations, so a transition started just before
+// the page hid would never finish and the queue behind it would jam. Hiding
+// skips the animation and lets the mutations land.
+function skipWhenHidden(transition: ViewTransitionLike): void {
+  const onHidden = () => {
+    if (document.visibilityState === "hidden") {
+      transition.skipTransition()
+    }
+  }
+
+  document.addEventListener("visibilitychange", onHidden)
+
+  transition.finished.finally(() => {
+    document.removeEventListener("visibilitychange", onHidden)
+  }).catch(() => {})
 }
 
 function skipUnderTopLayer(transition: ViewTransitionLike): void {

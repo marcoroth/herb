@@ -94,6 +94,25 @@ describe("transitionMutation", () => {
     expect(seen.calls).toBe(1)
   })
 
+  test("a hidden document mutates without a transition", async () => {
+    document.body.innerHTML = `<div data-herb-transition><p id="content">before</p></div>`
+
+    const seen = stub()
+
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true })
+
+    try {
+      await transitionMutation(() => {
+        document.getElementById("content")!.textContent = "after"
+      })
+    } finally {
+      Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true })
+    }
+
+    expect(document.getElementById("content")!.textContent).toBe("after")
+    expect(seen.calls).toBe(0)
+  })
+
   test("a page without marked elements mutates without a transition", async () => {
     document.body.innerHTML = `<div><p id="content">before</p></div>`
 
