@@ -22,17 +22,14 @@ gem "nokogiri", "~> 1.19"
 gem "rake", "~> 13.4"
 gem "rake-compiler", "~> 1.3"
 gem "rake-compiler-dock", "~> 1.12"
-gem "rbs", "~> 4.1"
+gem "rbs", "~> 4.2"
 gem "rbs-inline", "~> 0.14"
 gem "reactionview", "~> 0.4.0"
 gem "reline", "~> 0.7"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
+gem "steep", "~> 2.1"
 gem "turbo-rails", "~> 2.0", require: false
 gem "webrick", "~> 1.9", require: false
 gem "websocket", "~> 1.2"
 gem "yerba", "~> 0.9"
-
-# TODO: remove once https://github.com/soutaro/steep/pull/2255 ships
-# gem "steep", "~> 2.0"
-gem "steep", github: "marcoroth/steep", branch: "enum-self-type"
