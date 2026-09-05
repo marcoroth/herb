@@ -15,6 +15,7 @@ export type SlotOperation =
   | "value"
   | "attribute"
   | "branch"
+  | "branch-material"
   | "item-added"
   | "item-rekeyed"
   | "item-removed"
@@ -55,6 +56,7 @@ export interface SlotsDelegate {
   valueWritten?(slot: Slot): void
   attributeWritten?(slot: Slot): void
   branchSwitched?(slot: Slot): void
+  branchMaterial?(slot: Slot): void
   itemAdded?(slot: Slot, key: string, item: Item | null): void
   itemRemoved?(slot: Slot, key: string, item: Item | null): void
   itemUpdated?(slot: Slot, key: string, item: Item | null): void
@@ -214,6 +216,7 @@ export interface PayloadSlots {
 
 export interface Branched {
   branch: number | null
+  statics?: string
   slots?: PayloadSlots
 }
 

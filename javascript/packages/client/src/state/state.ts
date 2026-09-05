@@ -99,6 +99,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     this.settle(built)
   }
 
+  branchMaterial(slot: Slot): void {
+    this.settleBranch(slot)
+  }
+
   itemAdded(slot: Slot): void {
     this.counts.itemsChanged(slot)
   }
@@ -870,13 +874,19 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
         this.slots.claim(slot)
 
         if (!this.slots.switchBranch(slot, target) && slot.branch !== target) {
+          if (this.options.refetch !== "off") {
+            void this.refetch.request(this.options.refetchDebounce)
+
+            continue
+          }
+
           report({
             template: scope.region.file,
             element: hostOf(slot.anchor),
             message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
             code: "herb-no-parked-branch",
             severity: "warning",
-            suggestion: "the template renders in server mode; compile it with `herb:slots client`",
+            suggestion: "the template renders in server mode; compile it with `herb:slots client`, or leave `refetch` on to pull the branch from the server",
           })
         }
       }

@@ -343,5 +343,36 @@ module Engine
         assert_equal 0, values[:slots][0][:branch]
       end
     end
+
+    describe "branch statics in the payload" do
+      def parity(mode)
+        <<~ERB
+          <%# herb:slots #{mode} %>
+          <% if @on %>
+            <b>lit <%= @watts %></b>
+          <% else %>
+            <i>dark</i>
+          <% end %>
+        ERB
+      end
+
+      test "a server-mode payload brings the taken branch's markup along" do
+        entry = dynamics(parity("server"), on: false).fetch(0)
+
+        assert_equal 1, entry.fetch(:branch)
+        assert_includes entry.fetch(:statics), "<i>dark</i>"
+
+        lit = dynamics(parity("server"), on: true, watts: 60).fetch(0)
+
+        assert_equal 0, lit.fetch(:branch)
+        assert_includes lit.fetch(:statics), "<b>"
+      end
+
+      test "a client-mode payload sends no statics, since the page parks them" do
+        entry = dynamics(parity("client"), on: false).fetch(0)
+
+        refute entry.key?(:statics)
+      end
+    end
   end
 end

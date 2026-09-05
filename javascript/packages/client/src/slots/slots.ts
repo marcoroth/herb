@@ -689,6 +689,10 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     this.built?.items.push({ slot, item })
   }
 
+  announceBranchMaterial(slot: Slot): void {
+    this.announce(slot, "branch-material", (delegate) => delegate.branchMaterial?.(slot), {})
+  }
+
   announceItemAdded(slot: Slot, key: string, item: Item | null): void {
     this.announce(slot, "item-added", (delegate) => delegate.itemAdded?.(slot, key, item), { key, item })
   }
