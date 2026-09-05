@@ -276,30 +276,30 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
   }
 
   private set(element: Element, rest: string, event: Event): void {
-    const groups: StateGroups = new Map()
-
-    for (const assignment of splitOutsideQuotes(rest, ",")) {
-      const pair = this.pairOf(element, assignment)
-
-      if (!pair) {
-        return
-      }
-
-      const resolved = this.declaration(element, pair.name)
-
-      if (!resolved) {
-        return
-      }
-
-      const assigned = this.assignedValue(element, pair.name, resolved, pair.raw, event)
-
-      if (!assigned) {
-        return
-      }
-
-      this.group(groups, resolved.scope, pair.name, assigned.value)
+    if (splitOutsideQuotes(rest, ",").length > 1) {
+      return
     }
 
+    const groups: StateGroups = new Map()
+    const pair = this.pairOf(element, rest)
+
+    if (!pair) {
+      return
+    }
+
+    const resolved = this.declaration(element, pair.name)
+
+    if (!resolved) {
+      return
+    }
+
+    const assigned = this.assignedValue(element, pair.name, resolved, pair.raw, event)
+
+    if (!assigned) {
+      return
+    }
+
+    this.group(groups, resolved.scope, pair.name, assigned.value)
     this.apply(groups)
   }
 

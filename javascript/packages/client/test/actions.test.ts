@@ -11,7 +11,8 @@ const PAGE =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
   `<section>` +
   `<button id="toggle" data-herb-toggle="open">Details</button>` +
-  `<button id="both" data-herb-set="pending=false,failed=true">Fail</button>` +
+  `<button id="both" data-herb-set="pending=false failed=true">Fail</button>` +
+  `<button id="blank" data-herb-set="sort=''">Clear</button>` +
   `<button id="bump" data-herb-increment="attempts" data-herb-by="2">More</button>` +
   `<button id="combo" data-herb-increment="attempts" data-herb-set="open=true">Both</button>` +
   `<button id="same" data-herb-increment="attempts" data-herb-set="attempts=10">Same</button>` +
@@ -97,7 +98,7 @@ describe("declarative actions", () => {
     expect(state.getState("open")).toBe(false)
   })
 
-  test("a comma pair lands as one transition", () => {
+  test("two clauses on one attribute both write", () => {
     const order: string[] = []
     const handler = (event: Event): void => {
       order.push((event as CustomEvent<{ name: string }>).detail.name)
@@ -110,6 +111,42 @@ describe("declarative actions", () => {
     expect(state.getState("pending")).toBe(false)
     expect(state.getState("failed")).toBe(true)
     expect(order).toEqual(["pending", "failed"])
+  })
+
+  test("a comma list is no longer a clause, and writes nothing", () => {
+    const entries: { code?: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(...[input].flat() as { code?: string }[]),
+    }
+
+    const legacy = document.createElement("button")
+
+    legacy.id = "legacy"
+    legacy.setAttribute("data-herb-set", "pending=true,failed=true")
+    document.querySelector("section")!.append(legacy)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    click("#legacy")
+
+    expect(state.getState("pending")).not.toBe(true)
+    expect(state.getState("failed")).not.toBe(true)
+    expect(entries.some((entry) => entry.code === "herb-invalid-action")).toBe(true)
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("an empty quoted value sets the state to the empty string", () => {
+    click("#tab-a")
+
+    expect(state.getState("sort")).toBe("name")
+
+    click("#blank")
+
+    expect(state.getState("sort")).toBe("")
   })
 
   test("a set writes through to the bound input", () => {
@@ -345,7 +382,7 @@ describe("declarative actions", () => {
 
     const rogue = document.createElement("button")
 
-    rogue.setAttribute("data-herb-toggle", "sort,open")
+    rogue.setAttribute("data-herb-toggle", "sort")
     document.querySelector("section")!.append(rogue)
     rogue.dispatchEvent(new MouseEvent("click", { bubbles: true }))
 
