@@ -53,18 +53,22 @@ module Herb
         # : (untyped, String, Array[String]) -> void
         def warn_near_miss: (untyped, String, Array[String]) -> void
 
-        # : () -> void
-        def check_collection_reads: () -> void
-
         # : (Array[Hash[String, untyped]]) -> Set[String]
         def steerable_names: (Array[Hash[String, untyped]]) -> Set[String]
 
+        # The names a serialized arm condition resolves with, comparand states included.
+        # Mirrors the client's steering collection, which decides what rides `Herb-State`.
+        #
         # : (untyped) -> Array[String]
         def condition_names: (untyped) -> Array[String]
 
         # : (Hash[Symbol, untyped], Set[String]) -> bool
         def steered_conditional?: (Hash[Symbol, untyped], Set[String]) -> bool
 
+        # The server evaluates the branch the declared defaults pick, so a value
+        # in that branch fills on any refetch, steered or not. When every arm
+        # condition decides statically against literal defaults, the slots in
+        # the winning branch need no warning.
         # : (Integer, Hash[Symbol, untyped]) -> Set[Integer]
         def default_branch_slots: (Integer, Hash[Symbol, untyped]) -> Set[Integer]
 
@@ -210,6 +214,13 @@ module Herb
 
         # : (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
         def register_state_value: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> void
+
+        # A keyed loop whose collection computes with region states is a server
+        # read too. The values program re-runs the loop with the steered states,
+        # so the collection narrows and widens with them, and registering the
+        # dependency is what makes a state write refetch it.
+        # : () -> void
+        def check_collection_reads: () -> void
 
         # The client cannot run Ruby, but it can ask the server to run it again,
         # so an expression computing with region states becomes a server read the

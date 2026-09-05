@@ -196,6 +196,15 @@ module Herb
         # : () -> untyped
         def current_collection: () -> untyped
 
+        # A block parameter shadows a state of the same name inside its body,
+        # the way Ruby resolves it, so classification asks which names a scope
+        # binds before treating a read as a state.
+        # : (untyped) -> Array[String]
+        def block_locals: (untyped) -> Array[String]
+
+        # : (untyped) -> Array[String]
+        def parameter_names: (untyped) -> Array[String]
+
         # : () -> bool
         def in_item_body?: () -> bool
 
@@ -207,15 +216,6 @@ module Herb
 
         # : (untyped) -> untyped
         def scope_of: (untyped) -> untyped
-
-        # A block parameter shadows a state of the same name inside its body,
-        # the way Ruby resolves it, so classification asks which names a scope
-        # binds before treating a read as a state.
-        # : (untyped) -> Array[String]
-        def block_locals: (untyped) -> Array[String]
-
-        # : (untyped) -> Array[String]
-        def parameter_names: (untyped) -> Array[String]
 
         # : (Integer, Slot) -> void
         def replace_slot: (Integer, Slot) -> void
