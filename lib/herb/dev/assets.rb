@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # typed: true
 
-require "digest"
+require_relative "../fingerprint"
 
 module Herb
   module Dev
@@ -28,7 +28,9 @@ module Herb
       def index(root)
         PATTERNS.each do |pattern|
           Dir.glob(File.join(root, pattern)).each do |asset|
-            @digests[asset] = Digest::SHA256.file(asset).hexdigest
+            digest = Herb::Fingerprint.file(asset)
+
+            @digests[asset] = digest if digest
           rescue StandardError
             nil
           end
@@ -39,8 +41,9 @@ module Herb
       def changed?(path)
         return false unless File.exist?(path)
 
-        digest = Digest::SHA256.file(path).hexdigest
+        digest = Herb::Fingerprint.file(path)
 
+        return false unless digest
         return false if @digests[path] == digest
 
         @digests[path] = digest

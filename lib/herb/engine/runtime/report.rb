@@ -15,6 +15,7 @@ module Herb
 
         attr_reader :meta #: Hash[Symbol, untyped]
         attr_reader :sources #: Hash[String, String]
+        attr_reader :digests #: Hash[String, String]
         attr_reader :nodes #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
         attr_reader :render_tree #: Array[Hash[Symbol, untyped]]
 
@@ -24,6 +25,7 @@ module Herb
           @diagnostics = {} #: Hash[Array[untyped], Herb::Diagnostic]
           @meta = {} #: Hash[Symbol, untyped]
           @sources = {} #: Hash[String, String]
+          @digests = {} #: Hash[String, String]
           @nodes = {} #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
           @render_tree = [] #: Array[Hash[Symbol, untyped]]
           @channels = {} #: Hash[Symbol, untyped]
@@ -67,8 +69,15 @@ module Herb
           @sources[template] = source if source
         end
 
-        #: (String, String?, String?, ?called_from: Array[untyped]?) -> void
-        def render(id, template, parent, called_from: nil)
+        #: (String?) -> String?
+        def digest_for(template)
+          @digests[template]
+        end
+
+        #: (String, String?, String?, ?called_from: Array[untyped]?, ?digest: String?) -> void
+        def render(id, template, parent, called_from: nil, digest: nil)
+          @digests[template] ||= digest if template && digest
+
           node = { id: id, template: template, parent: parent } #: Hash[Symbol, untyped]
 
           if called_from

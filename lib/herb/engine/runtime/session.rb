@@ -129,18 +129,18 @@ module Herb
           current.leave
         end
 
-        #: [T] (String?) { () -> T } -> T
-        def self.render(template)
-          enter_render(template)
+        #: [T] (String?, ?String?) { () -> T } -> T
+        def self.render(template, digest = nil)
+          enter_render(template, digest)
 
           yield
         ensure
           leave_render
         end
 
-        #: (String?) -> String
-        def self.enter_render(template)
-          current.enter_render(template)
+        #: (String?, ?String?) -> String
+        def self.enter_render(template, digest = nil)
+          current.enter_render(template, digest)
         end
 
         #: () -> void
@@ -303,11 +303,11 @@ module Herb
         # The tag that is open when a render starts is the tag that started it, so the call site
         # comes for free. Without it the tree would say a partial rendered twice under one parent but
         # not from where, which `stack` can say and a payload built from the tree alone could not.
-        #: (String?) -> String
-        def enter_render(template)
+        #: (String?, ?String?) -> String
+        def enter_render(template, digest = nil)
           id = (@minted += 1).to_s
 
-          report.render(id, template, @renders.last, called_from: @frames.last)
+          report.render(id, template, @renders.last, called_from: @frames.last, digest: digest)
           @renders.push(id)
 
           id
