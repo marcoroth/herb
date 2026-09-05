@@ -1,6 +1,7 @@
 import { describe, test, expect, afterEach, vi } from "vitest"
 
 import { Runtime } from "../src/runtime"
+import { mutationSettled } from "../src/shared/mutation-refresh"
 
 import type { Payload } from "../src/types"
 
@@ -137,6 +138,44 @@ describe("refetching server-derived slots", () => {
 
     expect(transport).toHaveBeenCalledTimes(1)
     expect(calls[0][FILE].q).toBe("abc")
+  })
+
+  test("a settled mutation refetches the server reads, steered", async () => {
+    document.body.innerHTML = PAGE
+
+    const calls: Array<Record<string, Record<string, unknown>>> = []
+    const transport = vi.fn(async (state: Record<string, Record<string, unknown>>) => {
+      calls.push(state)
+
+      return payloadFor({ 3: "2 results" })
+    })
+
+    start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    mutationSettled()
+
+    await vi.waitFor(() => {
+      if (!document.body.innerHTML.includes("2 results")) {
+        throw new Error("still waiting")
+      }
+    })
+
+    expect(transport).toHaveBeenCalledTimes(1)
+    expect(calls[0][FILE]).toBeDefined()
+  })
+
+  test("a settled mutation stays quiet with refetch off", async () => {
+    document.body.innerHTML = PAGE
+
+    const transport = vi.fn(async () => payloadFor({}))
+
+    start({ state: { refetchTransport: transport, refetchDebounce: 0, refetch: "off" } })
+
+    mutationSettled()
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(transport).not.toHaveBeenCalled()
   })
 
   test("refetch off leaves the network alone", async () => {
