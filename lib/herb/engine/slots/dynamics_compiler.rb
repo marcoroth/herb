@@ -586,11 +586,6 @@ module Herb
           @scopes.push(index)
         end
 
-        # A client-mode page carries every branch's statics itself. A server-mode
-        # page carries none, so the payload brings the taken branch's markup along
-        # and the client parks it on arrival, the way LiveView unrolls a new branch.
-        # The values visitor never marks the tree, so the markup comes from one
-        # extra marking pass, run lazily and only for templates with conditionals.
         #: (Integer, Integer) -> String?
         def payload_statics(index, branch)
           return nil unless @input.is_a?(String) && Visitor.directive_mode(@input) == :server
