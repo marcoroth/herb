@@ -191,6 +191,10 @@ module Herb
           # : (Integer) -> Integer
           def next_branch: (Integer) -> Integer
 
+          # A conditional inside an attribute or an interpolated text run is not
+          # structural. The slot is the attribute, so the taken branch's output,
+          # text and expressions alike, buffers into one part appended under the
+          # slot's index, the same shape the page renders.
           # : (untyped) { () -> void } -> void
           def conditional: (untyped) { () -> void } -> void
 

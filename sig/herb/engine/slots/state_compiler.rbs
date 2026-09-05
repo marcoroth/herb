@@ -206,7 +206,6 @@ module Herb
         # : (untyped) -> untyped
         def predicate_token_for: (untyped) -> untyped
 
-        # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
         # : (untyped) -> Array[untyped]
         def interpolation_children: (untyped) -> Array[untyped]
 
@@ -219,6 +218,7 @@ module Herb
         # : (untyped) -> String
         def segment_code: (untyped) -> String
 
+        # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
         def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
 
         # : () -> void
