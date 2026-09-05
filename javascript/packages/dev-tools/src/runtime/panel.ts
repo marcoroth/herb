@@ -15,11 +15,13 @@ export type BadgeTone = RuntimeSeverity | 'metric'
 
 const ALL_ORIGINS = '*'
 const ALL_SEVERITIES = '*'
+const ALL_METRICS = '*'
 const MIN_PANEL_WIDTH = 440
 const MIN_PANEL_HEIGHT = 180
 const VIEWPORT_MARGIN = 24
 const RESIZE_EDGES = ['left', 'bottom', 'corner'] as const
 const STATE_KEY = 'herb-dev-tools-runtime-panel'
+const MUTED_KEY = 'herb-dev-tools-muted-metrics'
 const ROOT_CLASS = 'herb-dev-tools-runtime-root'
 const LINKABLE_SCHEMES = ['http:', 'https:', 'file:']
 const MARKDOWN_CONTEXT_LINES = 3
@@ -70,6 +72,7 @@ interface PanelState {
   expanded: boolean
   origin: string
   severity: string
+  choosing: boolean
   width: number | null
   height: number | null
 }
@@ -78,6 +81,14 @@ type ResizeEdge = typeof RESIZE_EDGES[number]
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), Math.max(low, high))
+}
+
+function metricKey(diagnostic: NormalizedDiagnostic): string | null {
+  return diagnostic.kind === 'metric' ? diagnostic.code : null
+}
+
+function asMuted(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
 }
 
 function asSize(value: unknown): number | null {
@@ -124,6 +135,37 @@ const COPY_ICON = [
   ` fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`,
   `<rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/>`,
   `<path d="M10.5 5.5v-2a1.5 1.5 0 0 0-1.5-1.5H4a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 4 12h1.5"/>`,
+  `</svg>`,
+].join('')
+
+const SLIDERS_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`,
+  `<path d="M2.5 5h11"/><path d="M2.5 11h11"/>`,
+  `<circle cx="6" cy="5" r="1.8" fill="currentColor" stroke="none"/>`,
+  `<circle cx="10.5" cy="11" r="1.8" fill="currentColor" stroke="none"/>`,
+  `</svg>`,
+].join('')
+
+const TRASH_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`,
+  `<path d="M2.8 4.3h10.4"/><path d="M6.2 4.3V2.9h3.6v1.4"/>`,
+  `<path d="M4.4 4.3 5 13.1h6l.6-8.8"/>`,
+  `</svg>`,
+].join('')
+
+const FOLD_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">`,
+  `<path d="M4 2 8 5.2 12 2"/><path d="M2.5 8h11"/><path d="M4 14 8 10.8 12 14"/>`,
+  `</svg>`,
+].join('')
+
+const UNFOLD_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">`,
+  `<path d="M4 5.2 8 2 12 5.2"/><path d="M2.5 8h11"/><path d="M4 10.8 8 14 12 10.8"/>`,
   `</svg>`,
 ].join('')
 
@@ -341,7 +383,8 @@ export class RuntimePanel {
   private onOpenFile: ((file: string, line: number, column: number) => void) | null = null
   private onRender: (() => void) | null = null
   private onOpen: (() => void) | null = null
-  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
+  private mutes: string[] = []
+  private state: PanelState = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, choosing: false, width: null, height: null }
   private root: HTMLElement | null = null
   private highlighting: RuntimeHighlighting | null = null
   private hydrating = false
@@ -452,15 +495,37 @@ export class RuntimePanel {
   }
 
   public get diagnosticCount(): number {
-    return this.entries
+    return this.shown
       .filter(entry => entry.diagnostic.kind === 'diagnostic')
       .reduce((total, entry) => total + entry.count, 0)
   }
 
   public get metricCount(): number {
-    return this.entries
+    return this.shown
       .filter(entry => entry.diagnostic.kind === 'metric')
       .reduce((total, entry) => total + entry.count, 0)
+  }
+
+  private get shown(): PanelEntry[] {
+    if (this.mutes.length === 0) {
+      return this.entries
+    }
+
+    return this.entries.filter(entry => !this.muted(entry.diagnostic))
+  }
+
+  private muted(diagnostic: NormalizedDiagnostic): boolean {
+    if (diagnostic.kind !== 'metric') {
+      return false
+    }
+
+    if (this.mutes.includes(ALL_METRICS)) {
+      return true
+    }
+
+    const key = metricKey(diagnostic)
+
+    return key !== null && this.mutes.includes(key)
   }
 
   public get badgeCount(): number {
@@ -468,11 +533,11 @@ export class RuntimePanel {
   }
 
   public get badgeSeverity(): RuntimeSeverity | null {
-    return severityOf(this.entries)
+    return severityOf(this.shown)
   }
 
   private get headerTone(): BadgeTone {
-    const scope = this.overlayFocused ? this.visibleEntries() : this.entries
+    const scope = this.overlayFocused ? this.visibleEntries() : this.shown
 
     return severityOf(scope) ?? 'metric'
   }
@@ -727,8 +792,8 @@ export class RuntimePanel {
     const description = collapsed ? 'Show the diagnostics for every file' : 'Hide the diagnostics for every file'
 
     return [
-      `<button type="button" class="herb-dev-tools-collapse-all" data-herb-dev-tools-action="collapse-all"`,
-      `${tip(description, label)}>${label}</button>`,
+      `<button type="button" class="herb-dev-tools-collapse-all herb-dev-tools-action-icon" data-herb-dev-tools-action="collapse-all"`,
+      `${tip(description, label)}>${collapsed ? UNFOLD_ICON : FOLD_ICON}</button>`,
     ].join('')
   }
 
@@ -780,6 +845,7 @@ export class RuntimePanel {
 
   private init() {
     this.loadState()
+    this.loadMutes()
     this.loadPayload()
 
     this.render()
@@ -861,17 +927,34 @@ export class RuntimePanel {
         expanded: parsed?.expanded === true,
         origin: typeof parsed?.origin === 'string' ? parsed.origin : ALL_ORIGINS,
         severity: typeof parsed?.severity === 'string' ? parsed.severity : ALL_SEVERITIES,
+        choosing: parsed?.choosing === true,
         width: asSize(parsed?.width),
         height: asSize(parsed?.height),
       }
     } catch (_error) {
-      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, width: null, height: null }
+      this.state = { dismissed: false, open: false, expanded: false, origin: ALL_ORIGINS, severity: ALL_SEVERITIES, choosing: false, width: null, height: null }
     }
   }
 
   private saveState() {
     try {
       sessionStorage.setItem(STATE_KEY, JSON.stringify(this.state))
+    } catch (_error) {
+      return
+    }
+  }
+
+  private loadMutes() {
+    try {
+      this.mutes = asMuted(JSON.parse(localStorage.getItem(MUTED_KEY) ?? '[]'))
+    } catch (_error) {
+      this.mutes = []
+    }
+  }
+
+  private saveMutes() {
+    try {
+      localStorage.setItem(MUTED_KEY, JSON.stringify(this.mutes))
     } catch (_error) {
       return
     }
@@ -976,7 +1059,7 @@ export class RuntimePanel {
   }
 
   private matching(origin: string, severity: string): PanelEntry[] {
-    return this.entries.filter(entry => {
+    return this.shown.filter(entry => {
       const sameOrigin = origin === ALL_ORIGINS || entry.diagnostic.origin === origin
 
       return sameOrigin && matchesSeverity(entry.diagnostic, severity)
@@ -1509,9 +1592,9 @@ export class RuntimePanel {
     const description = `Clear all ${entries} and empty the panel`
 
     return [
-      `<button type="button" class="herb-dev-tools-clear" data-herb-dev-tools-action="clear"`,
+      `<button type="button" class="herb-dev-tools-clear herb-dev-tools-action-icon" data-herb-dev-tools-action="clear"`,
       tip(`${description}. Reload the page to read its report again`, description),
-      `>Clear</button>`,
+      `>${TRASH_ICON}</button>`,
     ].join('')
   }
 
@@ -1524,7 +1607,7 @@ export class RuntimePanel {
       return ''
     }
 
-    return `${this.originFiltersHTML()}${this.severityFiltersHTML()}`
+    return `${this.originFiltersHTML()}${this.severityFiltersHTML()}${this.metricMutesHTML()}`
   }
 
   private countOf(entries: PanelEntry[]): number {
@@ -1562,7 +1645,7 @@ export class RuntimePanel {
       buttons.push(this.filterButtonHTML('origin', origin, origin, count, this.state.origin === origin))
     }
 
-    const actions = `${this.collapseAllButtonHTML()}${this.clearButtonHTML()}`
+    const actions = `${this.metricsToggleHTML()}${this.collapseAllButtonHTML()}${this.clearButtonHTML()}`
     const trailing = actions === '' ? '' : `<div class="herb-dev-tools-filters-actions">${actions}</div>`
 
     return `<div class="herb-dev-tools-filters">${buttons.join('')}${trailing}</div>`
@@ -1590,6 +1673,103 @@ export class RuntimePanel {
     }
 
     return `<div class="herb-dev-tools-filters herb-dev-tools-filters-severity">${buttons.join('')}</div>`
+  }
+
+  private metricMutesHTML(): string {
+    const reported = this.entries.filter(entry => entry.diagnostic.kind === 'metric')
+
+    if (reported.length === 0 || !this.state.choosing) {
+      return ''
+    }
+
+    const metrics = new Map<string, number>()
+
+    for (const entry of reported) {
+      const key = metricKey(entry.diagnostic)
+
+      if (key === null) {
+        continue
+      }
+
+      metrics.set(key, (metrics.get(key) ?? 0) + entry.count)
+    }
+
+    const off = this.mutes.includes(ALL_METRICS)
+    const total = this.countOf(reported)
+    const buttons = [this.muteButtonHTML(ALL_METRICS, 'All metrics', total, off)]
+
+    if (!off) {
+      for (const [key, count] of metrics) {
+        buttons.push(this.muteButtonHTML(key, key, count, this.mutes.includes(key)))
+      }
+    }
+
+    return `<div class="herb-dev-tools-filters herb-dev-tools-mutes">${buttons.join('')}</div>`
+  }
+
+  private metricsToggleHTML(): string {
+    if (!this.entries.some(entry => entry.diagnostic.kind === 'metric')) {
+      return ''
+    }
+
+    const off = this.mutedCount
+    const label = off === 0 ? 'Choose which metrics are shown' : `Choose which metrics are shown, ${off} off`
+    const description = this.state.choosing ? 'Stop choosing which metrics are shown' : label
+    const counted = off === 0 ? '' : `<span class="herb-dev-tools-muted-count">${off}</span>`
+
+    return [
+      `<button type="button" class="herb-dev-tools-collapse-all herb-dev-tools-action-icon herb-dev-tools-metrics-toggle${this.state.choosing ? ' herb-dev-tools-metrics-toggle-open' : ''}"`,
+      ` data-herb-dev-tools-action="choose-metrics"`,
+      `${tip(description, label)} aria-expanded="${this.state.choosing}">${SLIDERS_ICON}${counted}</button>`,
+    ].join('')
+  }
+
+  private get mutedCount(): number {
+    if (this.mutes.includes(ALL_METRICS)) {
+      const keys = new Set<string>()
+
+      for (const entry of this.entries) {
+        const key = metricKey(entry.diagnostic)
+
+        if (key !== null) {
+          keys.add(key)
+        }
+      }
+
+      return Math.max(keys.size, 1)
+    }
+
+    return this.mutes.length
+  }
+
+  private toggleChoosing() {
+    this.state.choosing = !this.state.choosing
+
+    this.saveState()
+    this.render()
+  }
+
+  private muteButtonHTML(key: string, label: string, count: number, muted: boolean): string {
+    const description = muted ? `Show ${label.toLowerCase()} again` : `Stop showing ${label.toLowerCase()} here`
+
+    return [
+      `<button type="button" class="herb-dev-tools-mute${muted ? ' herb-dev-tools-mute-off' : ''}"`,
+      ` data-herb-dev-tools-action="mute" data-herb-dev-tools-metric="${escapeHTML(key)}"`,
+      `${tip(description)} aria-pressed="${!muted}">${escapeHTML(label)} (${count})</button>`,
+    ].join('')
+  }
+
+  private toggleMute(key: string | null) {
+    if (key === null) {
+      return
+    }
+
+    this.mutes = this.mutes.includes(key)
+      ? this.mutes.filter(muted => muted !== key)
+      : [...this.mutes, key]
+
+    this.saveMutes()
+    this.render()
   }
 
   private get heroEntry(): PanelEntry | null {
@@ -2282,6 +2462,10 @@ export class RuntimePanel {
 
           this.saveState()
           this.render()
+        } else if (action === 'choose-metrics') {
+          this.toggleChoosing()
+        } else if (action === 'mute') {
+          this.toggleMute(element.getAttribute('data-herb-dev-tools-metric'))
         } else if (action === 'open') {
           this.openFrom(element)
         } else if (action === 'locate') {

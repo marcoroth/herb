@@ -69,6 +69,32 @@ on("report-spaced", () => {
   })
 })
 
+on("report-metrics", () => {
+  const templates = ["app/views/posts/index.html.erb", "app/views/posts/_post.html.erb", "app/components/post_actions_component.html.erb"]
+
+  const renders = templates.flatMap((template, index) => [3, 7, 11, 18].map((line, position) => ({
+    template,
+    message: `This tag rendered once, taking ${(0.4 + index + position).toFixed(1)} ms and allocating ${(1200 * (position + 1)).toLocaleString("en-US")} objects.`,
+    code: "render-time",
+    kind: "metric" as const,
+    origin: "Herb Engine",
+    value: `${(0.4 + index + position).toFixed(1)} ms`,
+    location: { start: { line, column: 3 } },
+  })))
+
+  const queries = [4, 9].map(line => ({
+    template: "app/views/posts/index.html.erb",
+    message: "This ERB tag ran 5 SQL queries while the page rendered.",
+    code: "sql-queries",
+    kind: "metric" as const,
+    origin: "Herb Engine",
+    value: "5 SQL queries",
+    location: { start: { line, column: 5 } },
+  }))
+
+  lastHandle = devTools.report([...renders, ...queries])
+})
+
 on("report-blocking", () => {
   lastHandle = devTools.report({
     template: "app/views/posts/_post.html.erb",

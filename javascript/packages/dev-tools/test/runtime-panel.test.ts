@@ -158,6 +158,7 @@ function diagnostic(overrides: Partial<RuntimeDiagnostic> = {}): RuntimeDiagnost
 beforeEach(() => {
   resetRuntimeReportWarnings()
   sessionStorage.clear()
+  localStorage.clear()
 
   document.body.innerHTML = ""
   panels = []
@@ -170,6 +171,7 @@ afterEach(() => {
 
   document.body.innerHTML = ""
   sessionStorage.clear()
+  localStorage.clear()
 })
 
 describe("clear control", () => {
@@ -212,18 +214,28 @@ describe("clear control", () => {
     const groups = () => document.querySelectorAll(".herb-dev-tools-group").length
 
     expect(groups()).toBeGreaterThan(1)
-    expect(toggle().textContent).toBe("Collapse all")
+    expect(toggle().getAttribute("aria-label")).toBe("Collapse all")
     expect(collapsed()).toBe(0)
 
     toggle().click()
 
     expect(collapsed()).toBe(groups())
-    expect(toggle().textContent).toBe("Expand all")
+    expect(toggle().getAttribute("aria-label")).toBe("Expand all")
 
     toggle().click()
 
     expect(collapsed()).toBe(0)
-    expect(toggle().textContent).toBe("Collapse all")
+    expect(toggle().getAttribute("aria-label")).toBe("Collapse all")
+  })
+
+  test("can show the tooltip that says what it does", () => {
+    embed(PAYLOAD)
+    createPanel().open()
+
+    const button = clearButton()!
+
+    expect(button.getAttribute("data-herb-dev-tools-tip")).toContain("Clear all")
+    expect(getComputedStyle(button).overflow).not.toBe("hidden")
   })
 
   test("empties everything while the All filter is active", () => {
@@ -234,7 +246,7 @@ describe("clear control", () => {
     panel.open()
 
     expect(cards()).toHaveLength(3)
-    expect(clearButton()!.textContent).toBe("Clear")
+    expect(clearButton()!.getAttribute("aria-label")).toBe("Clear all 3 entries and empty the panel")
 
     clearButton()!.click()
 
@@ -250,7 +262,7 @@ describe("clear control", () => {
     panel.open()
     chip("Herb Linter").click()
 
-    expect(clearButton()!.textContent).toBe("Clear")
+    expect(clearButton()!.getAttribute("aria-label")).toBe("Clear all 3 entries and empty the panel")
 
     clearButton()!.click()
 
@@ -3937,5 +3949,255 @@ describe("what a blocking screen calls itself", () => {
     ])
 
     expect(title()).toBe("Herb Parser")
+  })
+})
+
+describe("muting metrics", () => {
+  const METRICS = {
+    version: 1,
+    diagnostics: [
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "This tag rendered once, taking 1.4 ms.",
+        code: "render-time",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "1.4 ms",
+        location: { start: { line: 2, column: 1 } },
+      },
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "This ERB tag ran 3 SQL queries while the page rendered.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 5, column: 1 } },
+      },
+      {
+        template: "app/views/posts/_actions.html.erb",
+        message: "Image is missing an alt attribute.",
+        code: "html-img-require-alt",
+        severity: "warning",
+        origin: "Herb Linter",
+        location: { start: { line: 3, column: 3 } },
+      },
+    ],
+  }
+
+  function mute(key: string) {
+    return document.querySelector(`.herb-dev-tools-mute[data-herb-dev-tools-metric="${key}"]`) as HTMLButtonElement | null
+  }
+
+  function chooser() {
+    return document.querySelector(".herb-dev-tools-metrics-toggle") as HTMLButtonElement | null
+  }
+
+  function choosing() {
+    chooser()!.click()
+  }
+
+  function messages() {
+    return cards().map(card => card.textContent ?? "")
+  }
+
+  test("keeps the chips out of the way until they are asked for", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+    expect(chooser()!.textContent).toBe("")
+    expect(chooser()!.getAttribute("aria-expanded")).toBe("false")
+
+    choosing()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).not.toBeNull()
+    expect(chooser()!.getAttribute("aria-expanded")).toBe("true")
+
+    choosing()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+  })
+
+  test("says how many are off once the chips are closed again", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+    choosing()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+    expect(chooser()!.textContent).toBe("1")
+  })
+
+  test("counts every metric as off while the switch for all of them is on", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("*")!.click()
+
+    expect(chooser()!.textContent).toBe("2")
+  })
+
+  test("names every metric it was told about, and the switch for all of them", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+
+    const chips = Array.from(document.querySelectorAll(".herb-dev-tools-mutes .herb-dev-tools-mute"))
+
+    expect(chips.map(chip => chip.textContent)).toEqual(["All metrics (2)", "render-time (1)", "sql-queries (1)"])
+  })
+
+  test("takes a muted metric out of the panel and leaves the rest", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    expect(messages().some(message => message.includes("1.4 ms"))).toBe(false)
+    expect(messages().some(message => message.includes("3 SQL queries"))).toBe(true)
+    expect(messages().some(message => message.includes("alt attribute"))).toBe(true)
+  })
+
+  test("stops counting what it stopped showing", () => {
+    embed(METRICS)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.metricCount).toBe(2)
+
+    choosing()
+    mute("sql-queries")!.click()
+
+    expect(panel.metricCount).toBe(1)
+    expect(panel.diagnosticCount).toBe(1)
+  })
+
+  test("brings a metric back when its chip is pressed again", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    expect(mute("render-time")!.getAttribute("aria-pressed")).toBe("false")
+
+    mute("render-time")!.click()
+
+    expect(mute("render-time")!.getAttribute("aria-pressed")).toBe("true")
+    expect(messages().some(message => message.includes("1.4 ms"))).toBe(true)
+  })
+
+  test("leaves only the way back once every metric is off", () => {
+    embed(METRICS)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    choosing()
+    mute("*")!.click()
+
+    expect(panel.metricCount).toBe(0)
+    expect(messages().some(message => message.includes("alt attribute"))).toBe(true)
+    expect(document.querySelectorAll(".herb-dev-tools-mutes .herb-dev-tools-mute")).toHaveLength(1)
+
+    mute("*")!.click()
+
+    expect(panel.metricCount).toBe(2)
+  })
+
+  test("keeps what was muted somewhere the session does not reach", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    expect(JSON.parse(localStorage.getItem("herb-dev-tools-muted-metrics")!)).toEqual(["render-time"])
+    expect(JSON.parse(sessionStorage.getItem("herb-dev-tools-runtime-panel")!).muted).toBeUndefined()
+  })
+
+  test("is still muted for a panel that never saw the click", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    panels.forEach(panel => panel.destroy())
+    document.body.innerHTML = ""
+    sessionStorage.clear()
+
+    embed(METRICS)
+
+    const reopened = createPanel()
+
+    reopened.open()
+
+    expect(reopened.metricCount).toBe(1)
+    expect(chooser()!.textContent).toBe("1")
+  })
+
+  test("says nothing is muted when the browser refuses to remember", () => {
+    const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("denied")
+    })
+
+    embed(METRICS)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.metricCount).toBe(2)
+
+    getItem.mockRestore()
+  })
+
+  test("counts a metric its producer left uncoded without offering a chip for it", () => {
+    embed({
+      version: 1,
+      diagnostics: [
+        ...METRICS.diagnostics,
+        {
+          template: "app/views/posts/index.html.erb",
+          message: "This component rendered twice on this page.",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "2 renders",
+          location: { start: { line: 9, column: 1 } },
+        },
+      ],
+    })
+
+    const panel = createPanel()
+
+    panel.open()
+
+    choosing()
+
+    const chips = Array.from(document.querySelectorAll(".herb-dev-tools-mutes .herb-dev-tools-mute"))
+
+    expect(chips.map(chip => chip.textContent)).toEqual(["All metrics (3)", "render-time (1)", "sql-queries (1)"])
+
+    mute("*")!.click()
+
+    expect(panel.metricCount).toBe(0)
+  })
+
+  test("says nothing about muting when nothing reported a metric", () => {
+    embed(fixPayload(null, null))
+    createPanel().open()
+
+    expect(chooser()).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
   })
 })
