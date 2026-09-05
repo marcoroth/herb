@@ -20,6 +20,7 @@ const MIN_PANEL_WIDTH = 440
 const MIN_PANEL_HEIGHT = 180
 const VIEWPORT_MARGIN = 24
 const RESIZE_EDGES = ['left', 'bottom', 'corner'] as const
+const SOURCE_ATTRIBUTE = 'data-herb-source'
 const STATE_KEY = 'herb-dev-tools-runtime-panel'
 const MUTED_KEY = 'herb-dev-tools-muted-metrics'
 const ROOT_CLASS = 'herb-dev-tools-runtime-root'
@@ -135,6 +136,13 @@ const COPY_ICON = [
   ` fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`,
   `<rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/>`,
   `<path d="M10.5 5.5v-2a1.5 1.5 0 0 0-1.5-1.5H4a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 4 12h1.5"/>`,
+  `</svg>`,
+].join('')
+
+const TARGET_ICON = [
+  `<svg class="herb-dev-tools-icon" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"`,
+  ` fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`,
+  `<circle cx="8" cy="8" r="4.2"/><path d="M8 1.2v2"/><path d="M8 12.8v2"/><path d="M1.2 8h2"/><path d="M12.8 8h2"/>`,
   `</svg>`,
 ].join('')
 
@@ -1174,16 +1182,17 @@ export class RuntimePanel {
     return 1
   }
 
-  private pathHTML(label: string, file: string, line: number, column: number, className: string): string {
+  private pathHTML(label: string, file: string, line: number, column: number, className: string, source: string | null = null): string {
     const text = escapeHTML(label)
+    const stamped = source === null ? '' : ` data-herb-dev-tools-source="${escapeHTML(source)}"`
 
     if (this.onOpenFile === null) {
-      return `<span class="${className}">${text}</span>`
+      return `<span class="${className}"${stamped}>${text}</span>`
     }
 
     return [
       `<button type="button" class="${className} herb-dev-tools-path" data-herb-dev-tools-action="open"`,
-      ` data-herb-dev-tools-file="${escapeHTML(file)}" data-herb-dev-tools-line="${line}" data-herb-dev-tools-column="${column}"`,
+      ` data-herb-dev-tools-file="${escapeHTML(file)}" data-herb-dev-tools-line="${line}" data-herb-dev-tools-column="${column}"${stamped}`,
       ` title="Open ${text} in editor">${text}</button>`,
     ].join('')
   }
@@ -2332,7 +2341,7 @@ export class RuntimePanel {
       return ''
     }
 
-    const items = frames.map((frame) => {
+    const items = frames.map((frame, index) => {
       const via = frame.via === null
         ? ''
         : [
@@ -2341,7 +2350,10 @@ export class RuntimePanel {
           `</span>`,
         ].join('')
 
-      return `<li class="herb-dev-tools-frame">${via}${this.pathHTML(frameLabel(frame), frame.template, frame.line ?? 1, frame.column ?? 1, 'herb-dev-tools-frame-target')}</li>`
+      const path = this.pathHTML(frameLabel(frame), frame.template, frame.line ?? 1, frame.column ?? 1, 'herb-dev-tools-frame-target', frame.template)
+      const highlight = index === 0 ? this.highlightButtonHTML(frame.template, frame.line) : ''
+
+      return `<li class="herb-dev-tools-frame">${via}${path}${highlight}</li>`
     })
 
     return [
@@ -2350,6 +2362,48 @@ export class RuntimePanel {
       `<ol class="herb-dev-tools-frames">${items.join('')}</ol>`,
       `</div>`,
     ].join('')
+  }
+
+  private highlightButtonHTML(template: string, line: number | null): string {
+    const found = nearestStamped(template, line).length
+
+    if (found === 0) {
+      return ''
+    }
+
+    const description = found === 1
+      ? 'Show what this rendered on the page'
+      : `Show all ${found} of these on the page`
+
+    return [
+      `<button type="button" class="herb-dev-tools-highlight" data-herb-dev-tools-action="highlight"`,
+      ` data-herb-dev-tools-source="${escapeHTML(template)}" data-herb-dev-tools-at="${line ?? ''}"`,
+      `${tip(description)}>${TARGET_ICON}`,
+      found === 1 ? '' : `<span class="herb-dev-tools-highlight-count">${found}</span>`,
+      `</button>`,
+    ].join('')
+  }
+
+  private highlightFrom(trigger: HTMLElement) {
+    const targets = this.targetsOf(trigger)
+
+    if (targets.length === 0) return
+
+    this.stepOutOfTheWay()
+
+    targets[0].scrollIntoView({ block: 'center', behavior: 'smooth' })
+    targets.forEach(target => flashElement(target))
+  }
+
+  private targetsOf(trigger: HTMLElement): Element[] {
+    const template = trigger.getAttribute('data-herb-dev-tools-source')
+
+    if (template === null) return []
+
+    const line = Number(trigger.getAttribute('data-herb-dev-tools-at'))
+
+    return nearestStamped(template, Number.isFinite(line) && line > 0 ? line : null)
+      .filter(node => node.isConnected && hiddenBy(node) === null)
   }
 
   private backtraceHTML(diagnostic: NormalizedDiagnostic): string {
@@ -2406,7 +2460,7 @@ export class RuntimePanel {
       return
     }
 
-    root.querySelectorAll<HTMLElement>('[data-herb-dev-tools-action]').forEach((element) => {
+    root.querySelectorAll<HTMLElement>('[data-herb-dev-tools-action], [data-herb-dev-tools-source]').forEach((element) => {
       element.addEventListener('click', (event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -2468,12 +2522,16 @@ export class RuntimePanel {
           this.toggleMute(element.getAttribute('data-herb-dev-tools-metric'))
         } else if (action === 'open') {
           this.openFrom(element)
+        } else if (action === 'highlight') {
+          this.highlightFrom(element)
         } else if (action === 'locate') {
           this.locateFrom(element)
         }
       })
 
-      if (element.getAttribute('data-herb-dev-tools-action') === 'locate') {
+      const action = element.getAttribute('data-herb-dev-tools-action')
+
+      if (action === 'locate' || element.hasAttribute('data-herb-dev-tools-source')) {
         element.addEventListener('mouseenter', () => this.outlineFrom(element, true))
         element.addEventListener('mouseleave', () => this.outlineFrom(element, false))
       }
@@ -2522,18 +2580,25 @@ export class RuntimePanel {
     }
   }
 
-  private outline: HTMLElement | null = null
+  private outlines: HTMLElement[] = []
 
   private outlineFrom(trigger: HTMLElement, on: boolean) {
-    this.outline?.remove()
-    this.outline = null
+    this.outlines.forEach(box => box.remove())
+    this.outlines = []
 
     if (!on) return
 
-    const target = this.entryFor(trigger)?.diagnostic.element
+    const element = this.entryFor(trigger)?.diagnostic.element
+    const targets = trigger.getAttribute('data-herb-dev-tools-source') === null
+      ? (element ? [element] : [])
+      : this.targetsOf(trigger)
 
-    if (!target || !target.isConnected || hiddenBy(target) !== null) return
+    targets
+      .filter(target => target.isConnected && hiddenBy(target) === null)
+      .forEach(target => this.outlines.push(this.outlineOver(target)))
+  }
 
+  private outlineOver(target: Element): HTMLElement {
     const rect = target.getBoundingClientRect()
     const box = document.createElement('div')
 
@@ -2541,7 +2606,8 @@ export class RuntimePanel {
     box.style.cssText = `position:absolute;z-index:2147483000;pointer-events:none;top:${rect.top + window.scrollY}px;left:${rect.left + window.scrollX}px;width:${rect.width}px;height:${rect.height}px;outline:2px solid #f59e0b;outline-offset:2px;background:rgba(245,158,11,0.12)`
 
     document.body.appendChild(box)
-    this.outline = box
+
+    return box
   }
 
   private openFrom(element: HTMLElement) {
@@ -2570,6 +2636,41 @@ function severityOf(entries: PanelEntry[]): RuntimeSeverity | null {
   }
 
   return null
+}
+
+function stampedNodes(template: string): Element[] {
+  const stamped = Array.from(document.querySelectorAll(`[${SOURCE_ATTRIBUTE}]`))
+
+  return stamped.filter(node => node.getAttribute(SOURCE_ATTRIBUTE)?.startsWith(`${template}:`) === true)
+}
+
+function stampedAt(node: Element, template: string): [number, number] | null {
+  const value = node.getAttribute(SOURCE_ATTRIBUTE)
+
+  if (value === null || !value.startsWith(`${template}:`)) return null
+
+  const [line, column] = value.slice(template.length + 1).split(':').map(Number)
+
+  return Number.isFinite(line) && Number.isFinite(column) ? [line, column] : null
+}
+
+function nearestStamped(template: string, line: number | null): Element[] {
+  const nodes = stampedNodes(template)
+
+  if (line === null || nodes.length === 0) return nodes
+
+  const positions = nodes.map(node => stampedAt(node, template)).filter((at): at is [number, number] => at !== null)
+  const above = positions.filter(([stampLine]) => stampLine <= line)
+
+  if (above.length === 0) return nodes
+
+  const best = above.reduce((carried, at) => (at[0] > carried[0] || (at[0] === carried[0] && at[1] > carried[1])) ? at : carried)
+
+  return nodes.filter(node => {
+    const at = stampedAt(node, template)
+
+    return at !== null && at[0] === best[0] && at[1] === best[1]
+  })
 }
 
 function hiddenBy(element: Element): { reason: string, culprit: Element | null } | null {

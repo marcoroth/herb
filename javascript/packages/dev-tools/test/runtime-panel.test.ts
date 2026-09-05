@@ -4201,3 +4201,266 @@ describe("muting metrics", () => {
     expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
   })
 })
+
+describe("pointing a frame at what it rendered", () => {
+  const STACKED = {
+    version: 1,
+    renderTree: [
+      { id: "0", template: "app/views/layouts/application.html.erb", parent: null, via: "layout" },
+      { id: "1", template: "app/views/posts/index.html.erb", parent: "0", via: "template", location: { line: 7, column: 10 } },
+      { id: "2", template: "app/views/posts/_post.html.erb", parent: "1", via: "partial", location: { line: 12, column: 4 } },
+    ],
+    diagnostics: [
+      {
+        template: "app/views/posts/_post.html.erb",
+        node: "2",
+        message: "This partial issued 3 SQL queries while rendering.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 2, column: 1 } },
+      },
+    ],
+  }
+
+  function stamp(template: string, line: number, text: string, column = 1) {
+    const element = document.createElement("article")
+
+    element.setAttribute("data-herb-source", `${template}:${line}:${column}`)
+    element.textContent = text
+    element.getBoundingClientRect = () => ({ top: 0, left: 0, width: 100, height: 40, right: 100, bottom: 40, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+
+    document.body.appendChild(element)
+
+    return element
+  }
+
+  function highlight() {
+    return document.querySelector(".herb-dev-tools-highlight") as HTMLButtonElement | null
+  }
+
+  test("offers nothing when the page carries no stamps", () => {
+    embed(STACKED)
+    createPanel().open()
+
+    expect(document.querySelector(".herb-dev-tools-frame")).not.toBeNull()
+    expect(highlight()).toBeNull()
+  })
+
+  test("offers the innermost frame alone, and says how many it found", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "first post")
+    stamp("app/views/posts/_post.html.erb", 1, "second post")
+    stamp("app/views/posts/index.html.erb", 3, "the page")
+
+    embed(STACKED)
+    createPanel().open()
+
+    const buttons = Array.from(document.querySelectorAll(".herb-dev-tools-highlight"))
+
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0].closest(".herb-dev-tools-frame")!.textContent).toContain("_post.html.erb")
+    expect(buttons[0].getAttribute("data-herb-dev-tools-source")).toBe("app/views/posts/_post.html.erb")
+    expect(buttons[0].textContent).toBe("2")
+    expect(buttons[0].getAttribute("aria-label")).toBe("Show all 2 of these on the page")
+  })
+
+  test("says it plainly when the frame rendered once", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "only post")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()!.textContent).toBe("")
+    expect(highlight()!.getAttribute("aria-label")).toBe("Show what this rendered on the page")
+  })
+
+  test("outlines every node the frame rendered while the control is under the pointer", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "first post")
+    stamp("app/views/posts/_post.html.erb", 1, "second post")
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(document.querySelectorAll(".herb-element-outline")).toHaveLength(2)
+
+    highlight()!.dispatchEvent(new MouseEvent("mouseleave"))
+
+    expect(document.querySelectorAll(".herb-element-outline")).toHaveLength(0)
+  })
+
+  test("flashes them all when the control is pressed", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "first post")
+    stamp("app/views/posts/_post.html.erb", 1, "second post")
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.click()
+
+    expect(document.querySelectorAll(".herb-element-flash")).toHaveLength(2)
+  })
+
+  test("answers with what was opened above the finding, not with the whole template", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "the article")
+    stamp("app/views/posts/_post.html.erb", 2, "the heading beside it")
+    stamp("app/views/posts/_post.html.erb", 9, "something written below")
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.dispatchEvent(new MouseEvent("mouseenter"))
+
+    const outlined = Array.from(document.querySelectorAll(".herb-element-outline"))
+
+    expect(outlined).toHaveLength(1)
+    expect(highlight()!.getAttribute("aria-label")).toBe("Show what this rendered on the page")
+  })
+
+  test("answers with every copy when the same element was rendered again", () => {
+    stamp("app/views/posts/_post.html.erb", 2, "first copy")
+    stamp("app/views/posts/_post.html.erb", 2, "second copy")
+    stamp("app/views/posts/_post.html.erb", 2, "third copy")
+    stamp("app/views/posts/_post.html.erb", 9, "written below all of them")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()!.textContent).toBe("3")
+
+    highlight()!.click()
+
+    expect(document.querySelectorAll(".herb-element-flash")).toHaveLength(3)
+  })
+
+  test("takes the innermost tag opened above, when two were opened on the way", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "the outer one", 1)
+    stamp("app/views/posts/_post.html.erb", 1, "the inner one", 5)
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.click()
+
+    const flashed = document.querySelectorAll(".herb-element-flash")
+
+    expect(flashed).toHaveLength(1)
+  })
+
+  test("falls back to everything the template rendered when nothing was opened above", () => {
+    stamp("app/views/posts/_post.html.erb", 40, "written well below the finding")
+    stamp("app/views/posts/_post.html.erb", 41, "and another")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()!.textContent).toBe("2")
+  })
+
+  test("does not answer for a template whose name it only starts with", () => {
+    stamp("app/views/posts/_post_actions.html.erb", 1, "a different partial")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()).toBeNull()
+  })
+})
+
+describe("hovering a frame in the render stack", () => {
+  const STACKED = {
+    version: 1,
+    renderTree: [
+      { id: "0", template: "app/views/layouts/application.html.erb", parent: null, via: "layout" },
+      { id: "1", template: "app/views/posts/index.html.erb", parent: "0", via: "template", location: { line: 7, column: 10 } },
+      { id: "2", template: "app/views/posts/_post.html.erb", parent: "1", via: "partial", location: { line: 12, column: 4 } },
+    ],
+    diagnostics: [
+      {
+        template: "app/views/posts/_post.html.erb",
+        node: "2",
+        message: "This partial issued 3 SQL queries while rendering.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 6, column: 1 } },
+      },
+    ],
+  }
+
+  function stamp(template: string, line: number, column = 1) {
+    const element = document.createElement("article")
+
+    element.setAttribute("data-herb-source", `${template}:${line}:${column}`)
+    element.getBoundingClientRect = () => ({ top: 0, left: 0, width: 80, height: 20, right: 80, bottom: 20, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+
+    document.body.appendChild(element)
+  }
+
+  function frames() {
+    return Array.from(document.querySelectorAll(".herb-dev-tools-frame .herb-dev-tools-frame-target")) as HTMLElement[]
+  }
+
+  function outlines() {
+    return document.querySelectorAll(".herb-element-outline").length
+  }
+
+  test("outlines everything that file put on the page, for any frame", () => {
+    stamp("app/views/posts/_post.html.erb", 2)
+    stamp("app/views/posts/_post.html.erb", 9)
+    stamp("app/views/posts/index.html.erb", 3)
+    stamp("app/views/posts/index.html.erb", 4)
+    stamp("app/views/posts/index.html.erb", 5)
+
+    embed(STACKED)
+    createPanel().open()
+
+    const [innermost, middle] = frames()
+
+    middle.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(outlines()).toBe(3)
+
+    middle.dispatchEvent(new MouseEvent("mouseleave"))
+
+    expect(outlines()).toBe(0)
+
+    innermost.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(outlines()).toBe(2)
+  })
+
+  test("shows the whole file, where the control beside it shows one element", () => {
+    stamp("app/views/posts/_post.html.erb", 2)
+    stamp("app/views/posts/_post.html.erb", 9)
+
+    embed(STACKED)
+    createPanel().open()
+
+    const path = frames()[0]
+    const control = document.querySelector(".herb-dev-tools-highlight") as HTMLElement
+
+    path.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(outlines()).toBe(2)
+
+    path.dispatchEvent(new MouseEvent("mouseleave"))
+    control.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(outlines()).toBe(1)
+  })
+
+  test("outlines nothing for a frame whose file left no mark", () => {
+    stamp("app/views/posts/_post.html.erb", 2)
+
+    embed(STACKED)
+    createPanel().open()
+
+    frames()[2].dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(outlines()).toBe(0)
+  })
+})
