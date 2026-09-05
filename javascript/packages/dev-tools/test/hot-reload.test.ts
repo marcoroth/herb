@@ -306,7 +306,13 @@ describe("diffStateManifests", () => {
   })
 
   test("a server read is never derivable", () => {
-    const delta = diffStateManifests(manifest(), manifest({ server: { count: [{ index: 1, node_path: [0] }] } }))
+    const delta = diffStateManifests(manifest(), manifest({ server: { reads: { count: [{ index: 1, node_path: [0] }] } } }))
+
+    expect(delta.stateDerivable).toBe(false)
+  })
+
+  test("a server branch read is never derivable", () => {
+    const delta = diffStateManifests(manifest(), manifest({ server: { branches: { view: [{ index: 2, node_path: [0] }] } } }))
 
     expect(delta.stateDerivable).toBe(false)
   })
