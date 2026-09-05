@@ -1,0 +1,142 @@
+# Generated from lib/herb/engine/runtime/journal.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Runtime
+      # What a template did, kept after the request that did it is gone.
+      #
+      #     journal = Herb::Engine::Runtime::Journal.new(root: "tmp/herb")
+      #     journal.write(session.report, request: { method: "GET", path: "/posts" })
+      #     journal.summary("app/views/posts/_card.html.erb", digest)
+      #
+      # A report describes one request and dies with it, which is enough for the browser and no use
+      # to an editor. An editor has a file open and wants to know what happened in it, without
+      # knowing which request that was or whether the request has been made yet. So this is keyed by
+      # what the editor already has, a path and the text at that path:
+      #
+      #     tmp/herb/journal/app/views/posts/_card.html.erb.9f2a1c4e.jsonl
+      #
+      # The digest in the name is the whole staleness mechanism. An editor hashes its buffer, builds
+      # that path and opens it. A file edited since produces a different name, which does not exist,
+      # so a position recorded against text that no longer exists is never shown and nothing has to
+      # work out how far an edit moved things.
+      #
+      # Written the way `Dev::ServerEntry` writes its own registry: a known directory, one file per
+      # key, and pruning done by whoever happens to pass by rather than a separate sweep.
+      #
+      # What accumulates is the point. One request says a partial ran three queries. A journal says
+      # it ran between three and forty seven across two hundred renders, which is the shape of an
+      # N+1 and is not visible from any one request.
+      class Journal
+        RECORD_VERSION: Integer
+
+        DEFAULT_ROOT: String
+
+        DIRECTORY: String
+
+        EXTENSION: String
+
+        MAX_RECORDS: Integer
+
+        MAX_RECORD_BYTES: Integer
+
+        MIN_RECORD_BYTES: Integer
+
+        MAX_SAMPLED_OBSERVATIONS: Integer
+
+        MAX_OBSERVATION_LENGTH: Integer
+
+        KEPT_DIGESTS: Integer
+
+        attr_reader root: Pathname
+
+        attr_reader max_records: Integer
+
+        attr_reader kept_digests: Integer
+
+        # : (?root: (String | Pathname), ?max_records: Integer, ?kept_digests: Integer) -> void
+        def initialize: (?root: String | Pathname, ?max_records: Integer, ?kept_digests: Integer) -> void
+
+        # : () -> Pathname
+        def directory: () -> Pathname
+
+        # : (String, String) -> Pathname?
+        def path_for: (String, String) -> Pathname?
+
+        # : (Herb::Engine::Runtime::Report, ?request: Hash[Symbol, untyped]?) -> String?
+        def write: (Herb::Engine::Runtime::Report, ?request: Hash[Symbol, untyped]?) -> String?
+
+        # : (String, String?) -> Herb::Engine::Runtime::Journal::Summary?
+        def summary: (String, String?) -> Herb::Engine::Runtime::Journal::Summary?
+
+        # : (String) -> Array[String]
+        def digests: (String) -> Array[String]
+
+        private
+
+        # : (Herb::Engine::Runtime::Report, Hash[Array[untyped], Array[String]], String, String, String?) -> void
+        def collect_findings: (Herb::Engine::Runtime::Report, Hash[Array[untyped], Array[String]], String, String, String?) -> void
+
+        # : (Herb::Engine::Runtime::Report, Hash[Array[untyped], Array[String]], String, String, String?) -> void
+        def collect_calls: (Herb::Engine::Runtime::Report, Hash[Array[untyped], Array[String]], String, String, String?) -> void
+
+        # : (Hash[String, Hash[Symbol, untyped]], Hash[Symbol, untyped]) -> Array[untyped]?
+        def call_site: (Hash[String, Hash[Symbol, untyped]], Hash[Symbol, untyped]) -> Array[untyped]?
+
+        # : (Herb::Diagnostic, String, String, String?) -> String?
+        def finding_line: (Herb::Diagnostic, String, String, String?) -> String?
+
+        # : (untyped) -> untyped
+        def jsonable: (untyped) -> untyped
+
+        # : (Hash[untyped, untyped]) -> Hash[String, untyped]
+        def jsonable_hash: (Hash[untyped, untyped]) -> Hash[String, untyped]
+
+        # : (Hash[Symbol, untyped]?) -> Hash[Symbol, untyped]
+        def trim: (Hash[Symbol, untyped]?) -> Hash[Symbol, untyped]
+
+        # : (untyped) -> untyped
+        def truncate: (untyped) -> untyped
+
+        # : (String, String, String) -> String
+        def header_for: (String, String, String) -> String
+
+        # : (Hash[Symbol, untyped]) -> String
+        def encode: (Hash[Symbol, untyped]) -> String
+
+        # : (Pathname) -> Array[Hash[String, untyped]]
+        def records_in: (Pathname) -> Array[Hash[String, untyped]]
+
+        # : (Pathname, header: String?, lines: Array[String]) -> void
+        def append: (Pathname, header: String?, lines: Array[String]) -> void
+
+        # : (File) -> bool
+        def over_cap?: (File) -> bool
+
+        # : (File, String?) -> void
+        def compact: (File, String?) -> void
+
+        # : (String) -> bool
+        def truncated?: (String) -> bool
+
+        # : (String) -> Integer
+        def truncated_count: (String) -> Integer
+
+        # : (Pathname) -> void
+        def collect_siblings: (Pathname) -> void
+
+        # : (Pathname) -> String
+        def base_of: (Pathname) -> String
+
+        # : (String?) -> String?
+        def safe_relative_path: (String?) -> String?
+
+        # : () -> String
+        def mint_run_id: () -> String
+
+        # : () -> String
+        def timestamp: () -> String
+      end
+    end
+  end
+end
