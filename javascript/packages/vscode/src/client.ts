@@ -5,6 +5,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, Wo
 import { Config, defaultPersonalSettings } from "@herb-tools/config"
 
 const inlayHintDefaults = defaultPersonalSettings.inlayHints!
+const runtimeReportDefaults = defaultPersonalSettings.runtimeReports!
 
 export class Client {
   private client!: LanguageClient
@@ -67,6 +68,10 @@ export class Client {
     return await this.client.sendNotification(method, params)
   }
 
+  onNotification(method: string, handler: (params: any) => void) {
+    return this.client.onNotification(method, handler)
+  }
+
   async sendRequest<T>(method: string, params: any): Promise<T> {
     return await this.client.sendRequest(method, params)
   }
@@ -103,6 +108,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          runtimeReports: {
+            inlayHints: vscodeConfig.get('runtimeReports.inlayHints', runtimeReportDefaults.inlayHints),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
@@ -125,6 +133,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          runtimeReports: {
+            inlayHints: vscodeConfig.get('runtimeReports.inlayHints', runtimeReportDefaults.inlayHints),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
@@ -135,6 +146,7 @@ export class Client {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         inlayHints: { ...inlayHintDefaults },
+        runtimeReports: { ...runtimeReportDefaults },
         trace: { server: 'verbose' },
       }
     }
@@ -190,6 +202,7 @@ export class Client {
   private get experimentalCapabilities() {
     return {
       extractToPartialCommand: true,
+      runtimeOverlays: true,
     }
   }
 
@@ -218,6 +231,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          runtimeReports: {
+            inlayHints: vscodeConfig.get('runtimeReports.inlayHints', runtimeReportDefaults.inlayHints),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
@@ -241,6 +257,9 @@ export class Client {
             minimumLines: vscodeConfig.get('inlayHints.minimumLines', inlayHintDefaults.minimumLines),
             maximumClasses: vscodeConfig.get('inlayHints.maximumClasses', inlayHintDefaults.maximumClasses),
           },
+          runtimeReports: {
+            inlayHints: vscodeConfig.get('runtimeReports.inlayHints', runtimeReportDefaults.inlayHints),
+          },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
@@ -252,6 +271,7 @@ export class Client {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         inlayHints: { ...inlayHintDefaults },
+        runtimeReports: { ...runtimeReportDefaults },
         trace: { server: 'verbose' },
         experimental: this.experimentalCapabilities,
       }
