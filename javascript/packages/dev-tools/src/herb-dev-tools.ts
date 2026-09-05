@@ -155,6 +155,7 @@ export class HerbDevTools {
         isRuntimePanelVisible: runtimePanelEnabled ? () => this.panel === null || !this.panel.dismissed : undefined,
         onRuntimePanelToggle: runtimePanelEnabled ? visible => (visible ? this.panel?.show() : this.panel?.dismiss()) : undefined,
         reportedFor: runtimePanelEnabled ? template => this.panel?.reportedFor(template) ?? null : undefined,
+        measuredFor: runtimePanelEnabled ? template => this.panel?.measuredFor(template) ?? null : undefined,
       })
     }
 
