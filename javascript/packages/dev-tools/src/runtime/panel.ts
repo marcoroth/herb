@@ -13,6 +13,7 @@ import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, Runtim
 
 export type BadgeTone = RuntimeSeverity | 'metric'
 
+const WRAPPING_OBSERVATION = 80
 const ALL_ORIGINS = '*'
 const ALL_SEVERITIES = '*'
 const ALL_METRICS = '*'
@@ -82,6 +83,22 @@ type ResizeEdge = typeof RESIZE_EDGES[number]
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), Math.max(low, high))
+}
+
+function readingLabel(diagnostic: NormalizedDiagnostic): string {
+  if (diagnostic.kind === 'value' && diagnostic.tag !== null) {
+    return diagnostic.tag
+  }
+
+  return diagnostic.value ?? diagnostic.kind
+}
+
+function spaced(entries: string[]): string[] {
+  if (!entries.some(entry => entry.length > WRAPPING_OBSERVATION)) {
+    return entries
+  }
+
+  return entries.flatMap((entry, index) => index === 0 ? [entry] : ['', entry])
 }
 
 function isReading(diagnostic: NormalizedDiagnostic): boolean {
@@ -1814,7 +1831,7 @@ export class RuntimePanel {
       : `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-soft">${escapeHTML(sentenceCase(diagnostic.overlay))}</span>`
 
     const marker = isReading(diagnostic)
-      ? `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(diagnostic.value ?? diagnostic.kind)}</span>`
+      ? `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(readingLabel(diagnostic))}</span>`
       : `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(sentenceCase(diagnostic.severity ?? 'error'))}</span>`
 
     const chips = `${marker}${mode}${group}`
@@ -2148,7 +2165,7 @@ export class RuntimePanel {
       : `<span class="herb-dev-tools-code herb-dev-tools-code-${escapeHTML(codeTone)}">${escapeHTML(codeLabel)}</span>`
 
     const marker = isMetric
-      ? `<span class="herb-dev-tools-metric">${escapeHTML(diagnostic.value ?? 'metric')}</span>`
+      ? `<span class="herb-dev-tools-metric"${diagnostic.value === null ? '' : ` title="${escapeHTML(diagnostic.value)}"`}>${escapeHTML(readingLabel(diagnostic))}</span>`
       : ''
 
     const docs = url === null
@@ -2180,6 +2197,7 @@ export class RuntimePanel {
       element,
       suggestion,
       this.excerptHTML(diagnostic),
+      this.observationsHTML(diagnostic),
       this.stackHTML(diagnostic),
       this.backtraceHTML(diagnostic),
       this.fixHTML(diagnostic),
@@ -2336,6 +2354,43 @@ export class RuntimePanel {
       `</div>`,
       `</div>`,
     ].join('')
+  }
+
+  private observationsHTML(diagnostic: NormalizedDiagnostic): string {
+    const keys = Object.keys(diagnostic.observations)
+
+    if (keys.length === 0) {
+      return ''
+    }
+
+    const sections = keys.map((key) => {
+      const observed = diagnostic.observations[key]
+      const lines = spaced(observed.map(entry => this.observation(entry))).map(escapeHTML).join('\n')
+      const counted = observed.length === 1 ? key : `${key} (${observed.length})`
+
+      return [
+        `<p class="herb-dev-tools-observed-key">${escapeHTML(counted)}</p>`,
+        `<pre class="herb-dev-tools-observed-list"><code>${lines}</code></pre>`,
+      ].join('')
+    })
+
+    const total = keys.reduce((count, key) => count + diagnostic.observations[key].length, 0)
+    const summary = total === 1 ? 'What was observed' : `What was observed (${total})`
+
+    return [
+      `<details class="herb-dev-tools-observed">`,
+      `<summary>${escapeHTML(summary)}</summary>`,
+      sections.join(''),
+      `</details>`,
+    ].join('')
+  }
+
+  private observation(entry: unknown): string {
+    if (entry === null || typeof entry !== 'object') {
+      return String(entry)
+    }
+
+    return Object.entries(entry as Record<string, unknown>).map(([key, value]) => `${key}: ${value}`).join('  ')
   }
 
   private stackHTML(diagnostic: NormalizedDiagnostic): string {
@@ -2597,13 +2652,20 @@ export class RuntimePanel {
       ? (element ? [element] : [])
       : this.targetsOf(trigger)
 
-    targets
-      .filter(target => target.isConnected && hiddenBy(target) === null)
-      .forEach(target => this.outlines.push(this.outlineOver(target)))
+    const showing = targets.filter(target => target.isConnected && hiddenBy(target) === null)
+
+    if (showing.length === 0) return
+
+    if (trigger.hasAttribute('data-herb-dev-tools-at')) {
+      showing.forEach(target => this.outlines.push(this.outlineOver(target.getBoundingClientRect())))
+
+      return
+    }
+
+    this.outlines.push(this.outlineOver(spanning(showing)))
   }
 
-  private outlineOver(target: Element): HTMLElement {
-    const rect = target.getBoundingClientRect()
+  private outlineOver(rect: Bounds): HTMLElement {
     const box = document.createElement('div')
 
     box.className = 'herb-slot-flash herb-element-outline'
@@ -2640,6 +2702,26 @@ function severityOf(entries: PanelEntry[]): RuntimeSeverity | null {
   }
 
   return null
+}
+
+interface Bounds {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
+function spanning(elements: Element[]): Bounds {
+  const rects = elements.map(element => element.getBoundingClientRect())
+  const top = Math.min(...rects.map(rect => rect.top))
+  const left = Math.min(...rects.map(rect => rect.left))
+
+  return {
+    top,
+    left,
+    width: Math.max(...rects.map(rect => rect.right)) - left,
+    height: Math.max(...rects.map(rect => rect.bottom)) - top,
+  }
 }
 
 function stampedNodes(template: string): Element[] {
