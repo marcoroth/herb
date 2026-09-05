@@ -9,6 +9,7 @@ require "pathname"
 
 require_relative "../../fingerprint"
 require_relative "../../visitor/context"
+require_relative "observations"
 require_relative "journal/summary"
 
 module Herb
@@ -47,8 +48,6 @@ module Herb
         MAX_RECORDS = 2_000 #: Integer
         MAX_RECORD_BYTES = 4_096 #: Integer
         MIN_RECORD_BYTES = 64 #: Integer
-        MAX_SAMPLED_OBSERVATIONS = 12 #: Integer
-        MAX_OBSERVATION_LENGTH = 240 #: Integer
         KEPT_DIGESTS = 5 #: Integer
 
         attr_reader :root #: Pathname
@@ -220,62 +219,20 @@ module Herb
             message: diagnostic.message,
             description: diagnostic.description,
             value: diagnostic.value,
-            data: jsonable(diagnostic.data),
+            data: Observations.jsonable(diagnostic.data),
           }.compact
 
           line = encode(record)
 
           return line if line.bytesize <= MAX_RECORD_BYTES
 
-          trimmed = encode(record.merge(data: trim(record[:data]), data_trimmed: true))
+          trimmed = encode(record.merge(data: Observations.trim(record[:data]), data_trimmed: true))
 
           return trimmed if trimmed.bytesize <= MAX_RECORD_BYTES
 
           encode(record.except(:data))
         rescue StandardError
           nil
-        end
-
-        #: (untyped) -> untyped
-        def jsonable(value)
-          case value
-          when nil, true, false, String, Integer then value
-          when Float then value.finite? ? value : value.to_s
-          when Symbol then value.to_s
-          when Array then value.map { |entry| jsonable(entry) }
-          when Hash then jsonable_hash(value)
-          else "#<#{value.class.name || "Object"}>"
-          end
-        rescue StandardError
-          nil
-        end
-
-        #: (Hash[untyped, untyped]) -> Hash[String, untyped]
-        def jsonable_hash(value)
-          sanitized = {} #: Hash[String, untyped]
-
-          value.each { |key, entry| sanitized[key.to_s] = jsonable(entry) }
-
-          sanitized
-        end
-
-        #: (Hash[Symbol, untyped]?) -> Hash[Symbol, untyped]
-        def trim(data)
-          return {} unless data.is_a?(Hash)
-
-          data.transform_values do |value|
-            next truncate(value) unless value.is_a?(Array)
-
-            value.first(MAX_SAMPLED_OBSERVATIONS).map { |observed| truncate(observed) }
-          end
-        end
-
-        #: (untyped) -> untyped
-        def truncate(observed)
-          return observed unless observed.is_a?(String)
-          return observed if observed.length <= MAX_OBSERVATION_LENGTH
-
-          "#{observed[0, MAX_OBSERVATION_LENGTH]}…"
         end
 
         #: (String, String, String) -> String

@@ -4391,11 +4391,18 @@ describe("hovering a frame in the render stack", () => {
     ],
   }
 
-  function stamp(template: string, line: number, column = 1) {
+  function stamp(template: string, line: number, column = 1, box = { top: 0, left: 0, width: 80, height: 20 }) {
     const element = document.createElement("article")
 
     element.setAttribute("data-herb-source", `${template}:${line}:${column}`)
-    element.getBoundingClientRect = () => ({ top: 0, left: 0, width: 80, height: 20, right: 80, bottom: 20, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+    element.getBoundingClientRect = () => ({
+      ...box,
+      right: box.left + box.width,
+      bottom: box.top + box.height,
+      x: box.left,
+      y: box.top,
+      toJSON: () => ({}),
+    }) as DOMRect
 
     document.body.appendChild(element)
   }
@@ -4408,12 +4415,11 @@ describe("hovering a frame in the render stack", () => {
     return document.querySelectorAll(".herb-element-outline").length
   }
 
-  test("outlines everything that file put on the page, for any frame", () => {
-    stamp("app/views/posts/_post.html.erb", 2)
-    stamp("app/views/posts/_post.html.erb", 9)
-    stamp("app/views/posts/index.html.erb", 3)
-    stamp("app/views/posts/index.html.erb", 4)
-    stamp("app/views/posts/index.html.erb", 5)
+  test("outlines the region a file covers, for any frame", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 60, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/index.html.erb", 3, 1, { top: 200, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/index.html.erb", 5, 1, { top: 300, left: 0, width: 100, height: 40 })
 
     embed(STACKED)
     createPanel().open()
@@ -4422,7 +4428,10 @@ describe("hovering a frame in the render stack", () => {
 
     middle.dispatchEvent(new MouseEvent("mouseenter"))
 
-    expect(outlines()).toBe(3)
+    const covering = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect(outlines()).toBe(1)
+    expect([covering.style.top, covering.style.height]).toEqual(["200px", "140px"])
 
     middle.dispatchEvent(new MouseEvent("mouseleave"))
 
@@ -4430,12 +4439,14 @@ describe("hovering a frame in the render stack", () => {
 
     innermost.dispatchEvent(new MouseEvent("mouseenter"))
 
-    expect(outlines()).toBe(2)
+    const inner = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect([inner.style.top, inner.style.height]).toEqual(["0px", "100px"])
   })
 
   test("shows the whole file, where the control beside it shows one element", () => {
-    stamp("app/views/posts/_post.html.erb", 2)
-    stamp("app/views/posts/_post.html.erb", 9)
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 300, left: 0, width: 100, height: 40 })
 
     embed(STACKED)
     createPanel().open()
@@ -4445,12 +4456,65 @@ describe("hovering a frame in the render stack", () => {
 
     path.dispatchEvent(new MouseEvent("mouseenter"))
 
-    expect(outlines()).toBe(2)
+    const region = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect([region.style.top, region.style.height]).toEqual(["0px", "340px"])
 
     path.dispatchEvent(new MouseEvent("mouseleave"))
     control.dispatchEvent(new MouseEvent("mouseenter"))
 
+    const narrowed = document.querySelector(".herb-element-outline") as HTMLElement
+
     expect(outlines()).toBe(1)
+    expect([narrowed.style.top, narrowed.style.height]).toEqual(["0px", "40px"])
+  })
+
+  test("draws one region around everything the file covers", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 100, left: 20, width: 200, height: 50 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 400, left: 60, width: 300, height: 80 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    frames()[0].dispatchEvent(new MouseEvent("mouseenter"))
+
+    const boxes = Array.from(document.querySelectorAll(".herb-element-outline")) as HTMLElement[]
+
+    expect(boxes).toHaveLength(1)
+    expect(boxes[0].style.top).toBe("100px")
+    expect(boxes[0].style.left).toBe("20px")
+    expect(boxes[0].style.width).toBe("340px")
+    expect(boxes[0].style.height).toBe("380px")
+  })
+
+  test("covers a sibling in between that the template never stamped", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/index.html.erb", 3, 1, { top: 50, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 100, left: 0, width: 100, height: 40 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    frames()[0].dispatchEvent(new MouseEvent("mouseenter"))
+
+    const box = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect(box.style.top).toBe("0px")
+    expect(box.style.height).toBe("140px")
+  })
+
+  test("keeps a box per copy for the control that narrows to one element", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 200, left: 0, width: 100, height: 40 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    const control = document.querySelector(".herb-dev-tools-highlight") as HTMLElement
+
+    control.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(document.querySelectorAll(".herb-element-outline")).toHaveLength(2)
   })
 
   test("outlines nothing for a frame whose file left no mark", () => {
@@ -4564,5 +4628,169 @@ describe("what a tag rendered", () => {
     expect(panel.metricCount).toBe(0)
     expect(cards().some(card => (card.textContent ?? "").includes("Latest posts"))).toBe(false)
     expect(cards().some(card => (card.textContent ?? "").includes("alt attribute"))).toBe(true)
+  })
+})
+
+describe("what was observed behind a count", () => {
+  const OBSERVED = {
+    version: 1,
+    diagnostics: [
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "This ERB tag ran 3 SQL queries while the page rendered.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 4, column: 5 } },
+        data: {
+          queries: ["SELECT 1 FROM posts", "SELECT 2 FROM posts", "SELECT 3 FROM posts"],
+          render: [{ duration: 1.6, allocations: 3373 }],
+        },
+      },
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "Image is missing an alt attribute.",
+        code: "html-img-require-alt",
+        severity: "warning",
+        origin: "Herb Linter",
+        location: { start: { line: 9, column: 3 } },
+      },
+    ],
+  }
+
+  function observed() {
+    return document.querySelector(".herb-dev-tools-observed") as HTMLDetailsElement | null
+  }
+
+  test("shows the statements a count was counting", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    const text = observed()!.textContent ?? ""
+
+    expect(text).toContain("SELECT 1 FROM posts")
+    expect(text).toContain("SELECT 3 FROM posts")
+  })
+
+  test("puts a blank line between statements long enough to wrap into each other", () => {
+    const first = `SELECT "events".* FROM "events" WHERE "events"."id" IN (20, 320, 137, 556, 85) ORDER BY "events"."id"`
+    const second = `SELECT "talks".* FROM "talks" WHERE "talks"."event_id" IN (20, 320, 137, 556, 85) ORDER BY "talks"."id"`
+
+    embed({
+      version: 1,
+      diagnostics: [
+        {
+          template: "app/views/posts/index.html.erb",
+          message: "This ERB tag ran 2 SQL queries while the page rendered.",
+          code: "sql-queries",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "2 SQL queries",
+          location: { start: { line: 4, column: 5 } },
+          data: { queries: [first, second] },
+        },
+      ],
+    })
+
+    createPanel().open()
+
+    expect(observed()!.querySelector("code")!.textContent).toBe(`${first}\n\n${second}`)
+  })
+
+  test("leaves observations that fit on a line packed together", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    const text = observed()!.querySelector("code")!.textContent ?? ""
+
+    expect(text).not.toContain("\n\n")
+  })
+
+  test("spells out an observation recorded as an object", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    expect(observed()!.textContent).toContain("duration: 1.6  allocations: 3373")
+    expect(observed()!.textContent).not.toContain("[object Object]")
+  })
+
+  test("counts what it holds, and stays folded until asked", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    expect(observed()!.open).toBe(false)
+    expect(observed()!.querySelector("summary")!.textContent).toBe("What was observed (4)")
+    expect(observed()!.querySelectorAll(".herb-dev-tools-observed-key")).toHaveLength(2)
+  })
+
+  test("says nothing for a finding that observed nothing", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    const linter = cards().find(card => (card.textContent ?? "").includes("alt attribute"))!
+
+    expect(linter.querySelector(".herb-dev-tools-observed")).toBeNull()
+  })
+})
+
+describe("naming the tag a rendered value came from", () => {
+  function payload(overrides: Record<string, unknown> = {}) {
+    return {
+      version: 1,
+      diagnostics: [
+        {
+          template: "app/views/page/home.html.erb",
+          message: "Hello World from en.yml",
+          code: "rendered-output",
+          kind: "value",
+          origin: "Herb Engine",
+          value: "Hello World from en.yml",
+          location: { start: { line: 5, column: 6 }, end: { line: 5, column: 29 } },
+          ...overrides,
+        },
+      ],
+    }
+  }
+
+  function chip() {
+    return document.querySelector(".herb-dev-tools-metric") as HTMLElement
+  }
+
+  test("wears the tag, and keeps what it rendered on the hover", () => {
+    embed(payload({ tag: '<%= t("hello_world") %>' }))
+    createPanel().open()
+
+    expect(chip().textContent).toBe('<%= t("hello_world") %>')
+    expect(chip().getAttribute("title")).toBe("Hello World from en.yml")
+  })
+
+  test("falls back to what it rendered when the report carried no tag", () => {
+    embed(payload())
+    createPanel().open()
+
+    expect(chip().textContent).toBe("Hello World from en.yml")
+  })
+
+  test("leaves a metric wearing its number", () => {
+    embed({
+      version: 1,
+      diagnostics: [
+        {
+          template: "app/views/page/home.html.erb",
+          message: "This ERB tag ran 3 SQL queries while the page rendered.",
+          code: "sql-queries",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "3 SQL queries",
+          tag: "<%= render @posts %>",
+          location: { start: { line: 5, column: 6 }, end: { line: 5, column: 29 } },
+        },
+      ],
+    })
+
+    createPanel().open()
+
+    expect(chip().textContent).toBe("3 SQL queries")
   })
 })

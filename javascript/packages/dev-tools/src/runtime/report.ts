@@ -110,6 +110,8 @@ export interface NormalizedDiagnostic {
   phase: Phase | null;
   backtrace: string[];
   element: Element | null;
+  observations: Record<string, unknown[]>;
+  tag: string | null;
 }
 
 export interface NormalizedRuntimeReport {
@@ -296,6 +298,8 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     phase: normalizePhase(value.phase),
     backtrace: normalizeBacktrace(value.backtrace),
     element: asElement(value.element),
+    observations: normalizeObservations(value.data),
+    tag: asString(value.tag),
   };
 }
 
@@ -307,6 +311,22 @@ function normalizeBacktrace(value: unknown): string[] {
   return value
     .filter((frame): frame is string => typeof frame === 'string' && frame.length > 0)
     .slice(0, MAX_BACKTRACE_FRAMES);
+}
+
+function normalizeObservations(value: unknown): Record<string, unknown[]> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const observations: Record<string, unknown[]> = {};
+
+  for (const [key, observed] of Object.entries(value)) {
+    if (Array.isArray(observed) && observed.length > 0) {
+      observations[key] = observed;
+    }
+  }
+
+  return observations;
 }
 
 function asElement(value: unknown): Element | null {

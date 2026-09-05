@@ -42,10 +42,6 @@ module Herb
 
         MIN_RECORD_BYTES: Integer
 
-        MAX_SAMPLED_OBSERVATIONS: Integer
-
-        MAX_OBSERVATION_LENGTH: Integer
-
         KEPT_DIGESTS: Integer
 
         attr_reader root: Pathname
@@ -85,18 +81,6 @@ module Herb
 
         # : (Herb::Diagnostic, String, String, String?) -> String?
         def finding_line: (Herb::Diagnostic, String, String, String?) -> String?
-
-        # : (untyped) -> untyped
-        def jsonable: (untyped) -> untyped
-
-        # : (Hash[untyped, untyped]) -> Hash[String, untyped]
-        def jsonable_hash: (Hash[untyped, untyped]) -> Hash[String, untyped]
-
-        # : (Hash[Symbol, untyped]?) -> Hash[Symbol, untyped]
-        def trim: (Hash[Symbol, untyped]?) -> Hash[Symbol, untyped]
-
-        # : (untyped) -> untyped
-        def truncate: (untyped) -> untyped
 
         # : (String, String, String) -> String
         def header_for: (String, String, String) -> String

@@ -4,12 +4,14 @@
 require "json"
 
 require_relative "../../diagnostic"
+require_relative "observations"
 
 module Herb
   class Engine
     module Runtime
       class Report
         VERSION = 1 #: Integer
+        MAX_TAG_LENGTH = 120 #: Integer
         MAX_DIAGNOSTICS = 200 #: Integer
         ATTRIBUTE = "data-herb-diagnostics" #: String
 
@@ -126,7 +128,7 @@ module Herb
         def to_h
           {
             version: VERSION,
-            diagnostics: diagnostics.map(&:to_h),
+            diagnostics: diagnostics.map { |diagnostic| serialized(diagnostic) },
             renderTree: @render_tree,
             nodes: @nodes,
             sources: sources,
@@ -146,6 +148,51 @@ module Herb
         end
 
         private
+
+        #: (Herb::Diagnostic) -> Hash[Symbol, untyped]
+        def serialized(diagnostic)
+          observed = Observations.trim(Observations.jsonable(diagnostic.data))
+          tag = tag_source(diagnostic)
+
+          diagnostic.to_h.merge(observed.empty? ? {} : { data: observed }).merge(tag ? { tag: tag } : {})
+        end
+
+        #: (Herb::Diagnostic) -> String?
+        def tag_source(diagnostic)
+          location = diagnostic.location
+          finish = location&.end
+
+          return nil unless location && finish
+          return nil unless location.start.line == finish.line
+
+          line = template_line(diagnostic.template, location.start.line)
+
+          return nil unless line
+
+          text = line[(location.start.column)...(finish.column)].to_s.strip
+
+          text.empty? ? nil : Observations.truncate(text, MAX_TAG_LENGTH)
+        end
+
+        #: (String, Integer) -> String?
+        def template_line(template, line)
+          source = @sources[template] || read_template(template)
+
+          return nil unless source
+
+          source.lines[line - 1]&.chomp
+        end
+
+        #: (String) -> String?
+        def read_template(template)
+          @read ||= {} #: Hash[String, String?]
+
+          @read.fetch(template) do
+            @read[template] = File.exist?(template) ? File.read(template) : nil
+          end
+        rescue SystemCallError, IOError
+          nil
+        end
 
         #: () -> String
         def escaped_json

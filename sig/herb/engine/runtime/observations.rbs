@@ -1,0 +1,38 @@
+# Generated from lib/herb/engine/runtime/observations.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Runtime
+      # What a producer observed, made fit to be written down.
+      #
+      # An observation is any object its producer chose to record, while both places it ends up are
+      # JSON: the journal on disk and the report a page carries. Anything that is not already a
+      # primitive has to become one, and there is a size past which an observation stops being worth
+      # keeping whole.
+      #
+      #     Observations.jsonable({ queries: [statement, connection] })
+      #     #=> { "queries" => ["SELECT 1", "#<ActiveRecord::ConnectionAdapters::SQLite3Adapter>"] }
+      #
+      # The default `to_s` of an object carries its memory address, which means nothing once the
+      # process is gone and differs on every run, so what is kept is the class name alone. It says
+      # an object was there without pretending to be it.
+      module Observations
+        MAX_SAMPLED: Integer
+
+        MAX_LENGTH: Integer
+
+        # : (untyped) -> untyped
+        def self.jsonable: (untyped) -> untyped
+
+        # : (untyped, ?sampled: Integer, ?length: Integer) -> Hash[untyped, untyped]
+        def self.trim: (untyped, ?sampled: Integer, ?length: Integer) -> Hash[untyped, untyped]
+
+        # : (untyped, ?Integer) -> untyped
+        def self.truncate: (untyped, ?Integer) -> untyped
+
+        # : (Hash[untyped, untyped]) -> Hash[String, untyped]
+        private def self.jsonable_hash: (Hash[untyped, untyped]) -> Hash[String, untyped]
+      end
+    end
+  end
+end
