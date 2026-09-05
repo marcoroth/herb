@@ -6,7 +6,7 @@ export const UNKNOWN_TEMPLATE = '(unknown template)';
 export const DEFAULT_SEVERITY: RuntimeSeverity = 'error';
 export const RENDER_VIA_VALUES = ['layout', 'template', 'partial', 'component'] as const;
 export const RUNTIME_SEVERITIES = ['error', 'warning', 'info', 'hint'] as const;
-export const RUNTIME_KINDS = ['diagnostic', 'metric'] as const;
+export const RUNTIME_KINDS = ['diagnostic', 'metric', 'value'] as const;
 export const OVERLAY_MODES = ['blocking', 'dismissible'] as const;
 export const PHASES = ['compile', 'runtime'] as const;
 export const FIX_KINDS = ['safe', 'unsafe'] as const;
@@ -284,7 +284,7 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     message,
     node: asString(value.node),
     code: asString(value.code),
-    severity: kind === 'metric' ? null : severity ?? DEFAULT_SEVERITY,
+    severity: kind === 'diagnostic' ? severity ?? DEFAULT_SEVERITY : null,
     kind,
     origin: trimOrigin(value.origin),
     location: normalizeRange(value.location),

@@ -92,7 +92,17 @@ on("report-metrics", () => {
     location: { start: { line, column: 5 } },
   }))
 
-  lastHandle = devTools.report([...renders, ...queries])
+  const rendered = ["Latest posts", "Neueste Beiträge"].map((value, index) => ({
+    template: "app/views/posts/index.html.erb",
+    message: value,
+    code: "rendered-output",
+    kind: "value" as const,
+    origin: "Herb Engine",
+    value,
+    location: { start: { line: 2 + index, column: 5 } },
+  }))
+
+  lastHandle = devTools.report([...renders, ...queries, ...rendered])
 })
 
 on("report-blocking", () => {

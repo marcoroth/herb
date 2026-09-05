@@ -4464,3 +4464,105 @@ describe("hovering a frame in the render stack", () => {
     expect(outlines()).toBe(0)
   })
 })
+
+describe("what a tag rendered", () => {
+  const RENDERED = {
+    version: 1,
+    diagnostics: [
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "Latest posts",
+        code: "rendered-output",
+        kind: "value",
+        origin: "Herb Engine",
+        value: "Latest posts",
+        location: { start: { line: 4, column: 5 } },
+      },
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "Image is missing an alt attribute.",
+        code: "html-img-require-alt",
+        severity: "warning",
+        origin: "Herb Linter",
+        location: { start: { line: 9, column: 3 } },
+      },
+    ],
+  }
+
+  test("is not an error just because nobody gave it a severity", () => {
+    embed(RENDERED)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.badgeSeverity).toBe("warning")
+    expect(document.querySelectorAll(".herb-dev-tools-badge-error")).toHaveLength(0)
+    expect(cards().some(card => (card.textContent ?? "").includes("Latest posts"))).toBe(true)
+  })
+
+  test("is counted beside the metrics instead of against the page", () => {
+    embed(RENDERED)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.metricCount).toBe(1)
+    expect(panel.diagnosticCount).toBe(1)
+  })
+
+  test("wears a chip the same height as the ones beside it", () => {
+    embed({
+      version: 1,
+      renderTree: [
+        { id: "0", template: "app/views/posts/index.html.erb", parent: null, via: "template" },
+      ],
+      diagnostics: [
+        {
+          template: "app/views/posts/index.html.erb",
+          node: "0",
+          message: "This ERB tag ran 3 SQL queries while the page rendered.",
+          code: "sql-queries",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "3 SQL queries",
+          location: { start: { line: 4, column: 5 } },
+        },
+      ],
+    })
+
+    createPanel().open()
+
+    const height = (selector: string) => {
+      const element = document.querySelector(selector) as HTMLElement
+
+      return Math.round(element.getBoundingClientRect().height)
+    }
+
+    expect(height(".herb-dev-tools-metric")).toBe(height(".herb-dev-tools-code"))
+    expect(height(".herb-dev-tools-metric")).toBe(height(".herb-dev-tools-frame-via"))
+  })
+
+  test("can be put away like a metric", () => {
+    embed(RENDERED)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const chooser = document.querySelector(".herb-dev-tools-metrics-toggle") as HTMLButtonElement
+
+    chooser.click()
+
+    const chip = document.querySelector('.herb-dev-tools-mute[data-herb-dev-tools-metric="rendered-output"]') as HTMLButtonElement
+
+    expect(chip).not.toBeNull()
+
+    chip.click()
+
+    expect(panel.metricCount).toBe(0)
+    expect(cards().some(card => (card.textContent ?? "").includes("Latest posts"))).toBe(false)
+    expect(cards().some(card => (card.textContent ?? "").includes("alt attribute"))).toBe(true)
+  })
+})
