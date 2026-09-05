@@ -308,6 +308,30 @@
   color: var(--herb-dev-tools-ink);
 }
 
+.herb-dev-tools-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid var(--herb-dev-tools-border);
+  border-radius: 999px;
+  background: var(--herb-dev-tools-surface);
+  color: var(--herb-dev-tools-ink-faint);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.herb-dev-tools-highlight:hover {
+  border-color: var(--herb-dev-tools-ink-faint);
+  color: var(--herb-dev-tools-ink);
+}
+
+.herb-dev-tools-highlight-count {
+  font-variant-numeric: tabular-nums;
+}
+
 .herb-dev-tools-action-icon {
   gap: 4px;
   padding: 0 7px;
