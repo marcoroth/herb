@@ -133,7 +133,10 @@
         }
       },
       "computed": {},
-      "server": {}
+      "server": {
+        "branches": {},
+        "reads": {}
+      }
     }
   },
   "dependencies": {
