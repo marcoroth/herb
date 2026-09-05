@@ -40,7 +40,7 @@ const SEVERITY_FILTERS: Array<{ value: string, label: string, matches: (diagnost
   { value: 'error', label: 'Errors', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'error' },
   { value: 'warning', label: 'Warnings', matches: diagnostic => diagnostic.kind === 'diagnostic' && diagnostic.severity === 'warning' },
   { value: 'notice', label: 'Notices', matches: diagnostic => diagnostic.kind === 'diagnostic' && (diagnostic.severity === 'info' || diagnostic.severity === 'hint') },
-  { value: 'metric', label: 'Metrics', matches: diagnostic => diagnostic.kind === 'metric' },
+  { value: 'metric', label: 'Metrics', matches: diagnostic => isReading(diagnostic) },
 ]
 
 export interface RuntimeReportHandle {
@@ -84,8 +84,12 @@ function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), Math.max(low, high))
 }
 
+function isReading(diagnostic: NormalizedDiagnostic): boolean {
+  return diagnostic.kind !== 'diagnostic'
+}
+
 function metricKey(diagnostic: NormalizedDiagnostic): string | null {
-  return diagnostic.kind === 'metric' ? diagnostic.code : null
+  return isReading(diagnostic) ? diagnostic.code : null
 }
 
 function asMuted(value: unknown): string[] {
@@ -510,7 +514,7 @@ export class RuntimePanel {
 
   public get metricCount(): number {
     return this.shown
-      .filter(entry => entry.diagnostic.kind === 'metric')
+      .filter(entry => isReading(entry.diagnostic))
       .reduce((total, entry) => total + entry.count, 0)
   }
 
@@ -523,7 +527,7 @@ export class RuntimePanel {
   }
 
   private muted(diagnostic: NormalizedDiagnostic): boolean {
-    if (diagnostic.kind !== 'metric') {
+    if (!isReading(diagnostic)) {
       return false
     }
 
@@ -1378,7 +1382,7 @@ export class RuntimePanel {
     const errors = this.countBy(scope, entry => entry.diagnostic.severity === 'error')
     const warnings = this.countBy(scope, entry => entry.diagnostic.severity === 'warning')
     const notices = this.countBy(scope, entry => entry.diagnostic.severity === 'info' || entry.diagnostic.severity === 'hint')
-    const metrics = this.countBy(scope, entry => entry.diagnostic.kind === 'metric')
+    const metrics = this.countBy(scope, entry => isReading(entry.diagnostic))
     const parts: string[] = []
 
     if (errors > 0) parts.push(`${errors} error${errors === 1 ? '' : 's'}`)
@@ -1685,7 +1689,7 @@ export class RuntimePanel {
   }
 
   private metricMutesHTML(): string {
-    const reported = this.entries.filter(entry => entry.diagnostic.kind === 'metric')
+    const reported = this.entries.filter(entry => isReading(entry.diagnostic))
 
     if (reported.length === 0 || !this.state.choosing) {
       return ''
@@ -1717,7 +1721,7 @@ export class RuntimePanel {
   }
 
   private metricsToggleHTML(): string {
-    if (!this.entries.some(entry => entry.diagnostic.kind === 'metric')) {
+    if (!this.entries.some(entry => isReading(entry.diagnostic))) {
       return ''
     }
 
@@ -1809,8 +1813,8 @@ export class RuntimePanel {
       ? ''
       : `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-soft">${escapeHTML(sentenceCase(diagnostic.overlay))}</span>`
 
-    const marker = diagnostic.kind === 'metric'
-      ? `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(diagnostic.value ?? 'metric')}</span>`
+    const marker = isReading(diagnostic)
+      ? `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(diagnostic.value ?? diagnostic.kind)}</span>`
       : `<span class="herb-dev-tools-hero-chip herb-dev-tools-hero-chip-solid">${escapeHTML(sentenceCase(diagnostic.severity ?? 'error'))}</span>`
 
     const chips = `${marker}${mode}${group}`
@@ -2135,7 +2139,7 @@ export class RuntimePanel {
 
   private cardHTML(entry: PanelEntry): string {
     const diagnostic = entry.diagnostic
-    const isMetric = diagnostic.kind === 'metric'
+    const isMetric = isReading(diagnostic)
     const url = safeUrl(diagnostic.docsUrl)
     const codeTone = isMetric ? 'metric' : (diagnostic.severity ?? 'error')
     const codeLabel = diagnostic.code ?? (isMetric ? null : sentenceCase(diagnostic.severity ?? 'error'))
