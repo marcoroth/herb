@@ -82,6 +82,9 @@ module Herb
         # : (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
         def self.enter: (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
 
+        # : [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
+        def self.output: [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
+
         # : () -> void
         def self.leave: () -> void
 

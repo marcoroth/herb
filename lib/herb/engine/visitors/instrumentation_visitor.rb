@@ -64,6 +64,14 @@ module Herb
         true
       end
 
+      #: (?capture_output: (bool | ^(String) -> boolish | Regexp | Array[untyped])?) -> void
+      def initialize(capture_output: nil)
+        super()
+
+        @capture_everything = capture_output == true
+        @capture_output = (capture_output == true ? [] : Array(capture_output)) #: Array[untyped]
+      end
+
       def visit_document_node(node)
         @file = context.relative_file_path
 
@@ -180,10 +188,26 @@ module Herb
 
       def wrapped_output(node)
         body = code(node)
+        call = captured?(node) ? "output" : "at"
 
-        return erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
+        return erb_node(node, "<%=", "#{SESSION}.#{call}(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
 
-        erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) { #{body} }")
+        erb_node(node, "<%=", "#{SESSION}.#{call}(#{position(node)}) { #{body} }")
+      end
+
+      def captured?(node)
+        return false if !@capture_everything && @capture_output.empty?
+
+        source = code(node)
+
+        return false if source.empty?
+        return true if @capture_everything
+
+        @capture_output.any? do |matcher|
+          matcher.is_a?(Regexp) ? matcher.match?(source) : matcher.call(source)
+        end
+      rescue StandardError
+        false
       end
 
       def wrapped_statement(node)

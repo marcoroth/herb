@@ -204,5 +204,68 @@ module Engine
         assert_includes compile(%(<%= render layout: "box" do %>inner<% end %>)), "inner"
       end
     end
+
+    describe "capturing what a tag rendered" do
+      def captured(source, capture_output:)
+        Herb::Engine.new(
+          source,
+          filename: FILENAME,
+          visitors: [Herb::Engine::InstrumentationVisitor.new(capture_output: capture_output)]
+        ).src
+      end
+
+      def calls(compiled)
+        compiled.scan(/Session\.(output|at)\(/).flatten.tally
+      end
+
+      test "captures nothing unless it was asked to" do
+        refute_includes compile(%(<div><%= t(".title") %></div>)), "Session.output("
+      end
+
+      test "captures only the tags that match" do
+        compiled = captured(%(<div><%= t(".title") %><%= post.body %></div>), capture_output: /\A\s*t[\s(]/)
+
+        assert_equal({ "output" => 1, "at" => 1 }, calls(compiled))
+      end
+
+      test "captures every output tag when told to capture everything" do
+        compiled = captured(%(<div><%= t(".title") %><%= post.body %></div>), capture_output: true)
+
+        assert_equal({ "output" => 2 }, calls(compiled))
+      end
+
+      test "takes anything that answers to call" do
+        assert_includes captured(%(<%= post.body %>), capture_output: ->(source) { source.include?("body") }), "Session.output("
+      end
+
+      test "leaves a tag it cannot make sense of alone" do
+        refute_includes captured(%(<%= post.body %>), capture_output: ->(_source) { raise "boom" }), "Session.output("
+      end
+
+      test "records the value the tag rendered, filed against the tag" do
+        compiled = captured(%(<div><%= title %></div>), capture_output: true)
+        context = Class.new { def title = "Upcoming events" }.new
+
+        session = Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }
+
+        assert_equal([["Upcoming events"]], session.entries.map { |entry| entry[:output] })
+      end
+
+      test "records one value per render of a tag inside a collection" do
+        compiled = captured(%(<% items.each do |item| %><%= item %><% end %>), capture_output: true)
+        context = Struct.new(:items).new(["alpha", "beta", "gamma"])
+
+        session = Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }
+
+        assert_equal([["alpha", "beta", "gamma"]], session.entries.map { |entry| entry[:output] })
+      end
+
+      test "still renders what it would have rendered" do
+        source = %(<div><%= title %></div>)
+        context = Class.new { def title = "Upcoming events" }.new
+
+        assert_equal "<div>Upcoming events</div>", context.instance_eval(captured(source, capture_output: true))
+      end
+    end
   end
 end
