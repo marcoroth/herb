@@ -292,8 +292,29 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     slot.branch = branch
 
     this.built?.branches.push(slot)
+    this.focusAutofocus(slot)
 
     return true
+  }
+
+  private focusAutofocus(slot: Slot): void {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    if (slot.anchor.kind !== "range" || !slot.anchor.start.isConnected) {
+      return
+    }
+
+    const range = this.rangeOf(slot)
+    const holder = range.commonAncestorContainer
+    const root = holder instanceof Element ? holder : holder.parentElement
+
+    const target = root?.querySelector<HTMLElement>("[autofocus]")
+
+    if (target && range.intersectsNode(target) && document.activeElement !== target) {
+      target.focus()
+    }
   }
 
   private partsFor(region: Region, index: number): AttributeParts | null {

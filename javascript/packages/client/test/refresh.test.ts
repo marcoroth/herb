@@ -282,6 +282,21 @@ describe("refetching server-derived slots", () => {
     expect(document.body.innerHTML).not.toContain("<p>off</p>")
   })
 
+  test("a materialized branch focuses its autofocus element", () => {
+    document.body.innerHTML =
+      `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
+      `<div><!--herb-slot:0:conditional--><p>off</p><!--/herb-slot:0--></div>` +
+      `<!--/herb-region:${FILE}-->`
+
+    const live = start()
+
+    live.slots.apply(payloadFor({
+      0: { branch: 0, statics: "<!--herb-branch:0:0--><input autofocus placeholder=\"draft\">", slots: {} },
+    }))
+
+    expect((document.activeElement as HTMLInputElement)?.placeholder).toBe("draft")
+  })
+
   test("a branch flip with no material defers and says so", () => {
     document.body.innerHTML =
       `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
