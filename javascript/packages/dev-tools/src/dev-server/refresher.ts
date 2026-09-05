@@ -75,6 +75,7 @@ export async function refresh(runtime: Runtime, file: string, options: RefreshOp
     schema: options.needSchema,
     nodePath: options.nodePath,
     signal: options.signal,
+    report: false,
   })
 
   if (response.schema && typeof runtime.slots.holdStatics === "function") {
