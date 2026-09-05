@@ -14,4 +14,8 @@ gems:
   - name: steep
     ignore: true
 
+  - name: actionpack
+
+  - name: optparse
+
   - name: strscan
