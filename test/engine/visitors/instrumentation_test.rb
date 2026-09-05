@@ -25,6 +25,8 @@ module Engine
       "a conditional" => "<% if true %>yes<% else %>no<% end %>",
       "a comment" => "<%# ignored %>ok",
       "markup around a tag" => "<p>before</p><%= 1 %><p>after</p>",
+      "a conditional spanning lines" => "<% shown = true %>\n<% if shown %>\n  <%= 2 %>\n<% end %>\n",
+      "a block inside a conditional branch" => "<% shown = false %>\n<% if shown %>\n  <p>no</p>\n<% else %>\n  <% [2].each do |number| %>\n    <%= number %>\n  <% end %>\n<% end %>\n",
     }.freeze
 
     def instrumented(source)

@@ -20,6 +20,8 @@ module Herb
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @trim = options[:trim] != false
         @tokens = [] #: Array[untyped]
+        synthesized = {} #: Hash[untyped, bool]
+        @synthesized_tokens = synthesized.compare_by_identity
         @padding_before = nil #: Hash[Integer, Integer]?
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
@@ -702,10 +704,13 @@ module Herb
       end
 
       def at_line_start?
-        return true if @tokens.empty?
+        index = @tokens.length - 1
+        index -= 1 while index >= 0 && @synthesized_tokens[@tokens[index]]
 
-        last_type = @tokens.last[0]
-        last_value = @tokens.last[1]
+        return true if index.negative?
+
+        last_type = @tokens[index][0]
+        last_value = @tokens[index][1]
 
         if last_type == :text
           last_value.empty? || last_value.end_with?("\n") || (whitespace_only?(last_value) && preceding_token_ends_with_newline?) || trailing_indentation?(last_value)
@@ -824,7 +829,9 @@ module Herb
 
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
-          @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
+
+          add_code_token("#{effective_leading_space}#{code}#{right_space}", node)
+
           @trim_next_whitespace = true
 
           if right_space.end_with?(" \n")
@@ -832,8 +839,17 @@ module Herb
             @pending_trim_owns_next_whitespace = true
           end
         else
-          @tokens << [:code, code, current_context]
+          add_code_token(code, node)
         end
+      end
+
+      def add_code_token(value, node)
+        token = [:code, value, current_context]
+
+        @tokens << token
+        @synthesized_tokens[token] = true if without_source?(node)
+
+        token
       end
 
       #: (untyped) -> bool

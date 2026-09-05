@@ -188,6 +188,13 @@ module Herb
 
       def apply_trim: (untyped node, untyped code) -> untyped
 
+      # Code that came from a node with no source of its own, such as one a visitor wrote.
+      #
+      # It stands where a template said nothing, so it has no newline of its own to account for and
+      # the tags around it have to read as though it were not there. Remembering which tokens those
+      # are is what lets `at_line_start?` look past them.
+      def add_code_token: (untyped value, untyped node) -> untyped
+
       # : (untyped) -> bool
       def without_source?: (untyped) -> bool
 
