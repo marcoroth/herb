@@ -1,3 +1,6 @@
+plugins:
+  - rubocop-performance
+
 AllCops:
   NewCops: enable
   SuggestExtensions: false
@@ -259,3 +262,7 @@ Style/IfUnlessModifier:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: false
+
+Performance/MapCompact:
+  Enabled: false
+

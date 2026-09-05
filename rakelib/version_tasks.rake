@@ -49,7 +49,7 @@ namespace :version do
     version_file_path = File.join(__dir__, "../lib/herb/version.rb")
     version_file_contents = File.read(version_file_path)
 
-    new_version = args[:version].gsub("-", ".")
+    new_version = args[:version].tr("-", ".")
     unless version_file_contents.gsub!(version_constant_re, "  VERSION = \"#{new_version}\"")
       raise("Could not update the VERSION constant in lib/herb/version.rb")
     end

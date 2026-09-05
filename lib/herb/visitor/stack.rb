@@ -119,7 +119,7 @@ module Herb
 
       #: (Module) -> bool
       def include_visitor?(anchor)
-        any? { |visitor| visitor.is_a?(anchor) }
+        any?(anchor)
       end
 
       private
