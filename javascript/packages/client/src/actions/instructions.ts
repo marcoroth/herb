@@ -1,7 +1,7 @@
 import { ACTION_NAMES, ACTION_SCHEMA, HERB_ATTRIBUTES } from "../grammar/attributes"
 
 import { report } from "../shared/report"
-import { defaultEventFor } from "./events"
+import { defaultEventFor, eventSpecProblem } from "./events"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "../grammar/parsing"
 
 import type { Clause } from "../grammar/parsing"
@@ -101,6 +101,20 @@ export class Instructions {
         template: this.delegate.templateOf(element),
         element,
         message: `\`${attribute}\` has a clause with ${problem}`,
+        code: "herb-invalid-action",
+        severity: "error",
+      })
+
+      return
+    }
+
+    const problem = clause.event === null ? null : eventSpecProblem(clause.event)
+
+    if (problem !== null) {
+      report({
+        template: this.delegate.templateOf(element),
+        element,
+        message: `\`${clause.event}\` in \`${attribute}\` ${problem}`,
         code: "herb-invalid-action",
         severity: "error",
       })

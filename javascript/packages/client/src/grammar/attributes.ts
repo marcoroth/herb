@@ -23,6 +23,8 @@ export const HERB_ATTRIBUTES = {
   decrement: "data-herb-decrement",
   reset: "data-herb-reset",
   by: "data-herb-by",
+  debounce: "data-herb-debounce",
+  throttle: "data-herb-throttle",
 } as const
 
 export const ACTION_SCHEMA = {
