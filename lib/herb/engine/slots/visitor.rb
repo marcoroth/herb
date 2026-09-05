@@ -202,6 +202,16 @@ module Herb
           @mode == :client
         end
 
+        #: () -> void
+        def state_overrides!
+          @state_overrides = true
+        end
+
+        #: () -> bool
+        def state_overrides?
+          !!@state_overrides
+        end
+
         #: (Integer, Array[String]) -> bool
         def listener_writes?(index, names)
           written = @listener_written[@slot_nodes[index]]
@@ -216,6 +226,15 @@ module Herb
           return [] unless node
 
           branch_bodies(node).flat_map { |body| slot_indices_within(body) }.uniq
+        end
+
+        #: (Integer) -> Array[Array[Integer]]
+        def slots_by_branch(index)
+          node = @slot_nodes[index]
+
+          return [] unless node
+
+          branch_bodies(node).map { |body| slot_indices_within(body) }
         end
 
         #: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
@@ -290,6 +309,20 @@ module Herb
         #: () -> untyped
         def current_collection
           @collection_nodes.last
+        end
+
+        #: (untyped) -> Array[String]
+        def block_locals(scope)
+          nodes = @collection_nodes.include?(scope) ? @collection_nodes.take(@collection_nodes.index(scope) + 1) : [scope]
+
+          nodes.compact.flat_map { |node| parameter_names(node) }
+        end
+
+        #: (untyped) -> Array[String]
+        def parameter_names(node)
+          return [] unless node.respond_to?(:block_arguments)
+
+          (node.block_arguments || []).filter_map { |parameter| parameter.name&.value&.to_s if parameter.respond_to?(:name) }
         end
 
         #: () -> bool

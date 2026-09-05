@@ -38,6 +38,18 @@ module Engine
       View.new(**assigns).instance_eval(compiled)
     end
 
+    class SteeredView < View
+      attr_accessor :__herb_state_overrides
+    end
+
+    def steered(source, overrides, **assigns)
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+      view = SteeredView.new(**assigns)
+      view.__herb_state_overrides = overrides
+
+      view.instance_eval(compiled)
+    end
+
     def dynamics(source, **assigns)
       payload(source, **assigns)[:slots]
     end
@@ -293,6 +305,42 @@ module Engine
 
       test "leaves the static markup out" do
         refute_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+      end
+    end
+
+    STEERABLE = %(<%# herb:state (editing: false, q: "") %><% if editing %><b>on</b><% else %><i>off</i><% end %><span><%= q.length + 1 %></span>)
+
+    describe "state overrides" do
+      test "the values program initializes states through the override channel" do
+        source = Herb::Engine::Slots::DynamicsCompiler.new(STEERABLE, filename: "app/views/test.html.erb").src
+
+        assert_includes source, "StateOverrides.resolve"
+        assert_includes source, %(StateOverrides.fetch(_herb_state_overrides, "editing", :boolean))
+      end
+
+      test "an override steers the branch and the dependent reads" do
+        values = steered(STEERABLE, { "app/views/test.html.erb" => { "editing" => true, "q" => "abc" } })
+
+        assert_equal 0, values[:slots][0][:branch]
+        assert_equal "4", values[:slots][1]
+      end
+
+      test "no hook and no overrides both fall back to the defaults" do
+        assert_equal 1, payload(STEERABLE)[:slots][0][:branch]
+        assert_equal 1, steered(STEERABLE, nil)[:slots][0][:branch]
+      end
+
+      test "a wrongly typed override falls back to the default" do
+        values = steered(STEERABLE, { "app/views/test.html.erb" => { "editing" => "sideways" } })
+
+        assert_equal 1, values[:slots][0][:branch]
+      end
+
+      test "a derived state re-derives from its overridden base" do
+        template = %(<%# herb:state (count: 0, loud: count > 2) %><% if loud %>a<% else %>b<% end %>)
+        values = steered(template, { "app/views/test.html.erb" => { "count" => 5 } })
+
+        assert_equal 0, values[:slots][0][:branch]
       end
     end
   end
