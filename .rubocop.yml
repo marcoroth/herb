@@ -177,6 +177,7 @@ Metrics/ParameterLists:
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb
     - lib/herb/engine/errors.rb
+    - lib/herb/engine/runtime/session.rb
     - lib/herb/engine/slots/schema_compiler.rb
     - lib/herb/engine/slots/visitor.rb
     - lib/herb/errors.rb
