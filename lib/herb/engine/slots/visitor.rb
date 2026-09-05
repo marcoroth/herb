@@ -1034,15 +1034,12 @@ module Herb
 
             next [] unless value
 
-            value.split.flat_map { |clause|
+            value.split.filter_map { |clause|
               rest = clause.split("->", 2).last.to_s
+              target = name == "data-herb-set" ? rest.split("=", 2).first : rest
+              cleaned = target.to_s.strip
 
-              rest.split(",").filter_map { |piece|
-                target = name == "data-herb-set" ? piece.split("=", 2).first : piece
-                cleaned = target.to_s.strip
-
-                cleaned unless cleaned.empty?
-              }
+              cleaned unless cleaned.empty?
             }
           }
         end
