@@ -14,6 +14,7 @@ import type { NormalizedDiagnostic, NormalizedRuntimeReport, OverlayMode, Runtim
 export type BadgeTone = RuntimeSeverity | 'metric'
 
 const WRAPPING_OBSERVATION = 80
+const MAX_LABEL_READINGS = 3
 const ALL_ORIGINS = '*'
 const ALL_SEVERITIES = '*'
 const ALL_METRICS = '*'
@@ -850,6 +851,28 @@ export class RuntimePanel {
     const count = matching.reduce((total, entry) => total + entry.count, 0)
 
     return { count, tone: severityOf(matching) ?? 'metric' }
+  }
+
+  public measuredFor(template: string): string | null {
+    const readings = this.shown.filter(entry => isReading(entry.diagnostic) && entry.diagnostic.template === template)
+
+    if (readings.length === 0) {
+      return null
+    }
+
+    const counted = new Map<string, number>()
+
+    for (const entry of readings) {
+      const value = entry.diagnostic.value
+
+      if (value === null) continue
+
+      counted.set(value, (counted.get(value) ?? 0) + entry.count)
+    }
+
+    const parts = Array.from(counted).slice(0, MAX_LABEL_READINGS).map(([value, count]) => count === 1 ? value : `${value} ×${count}`)
+
+    return parts.length === 0 ? null : parts.join(' · ')
   }
 
   public refresh() {

@@ -15,6 +15,7 @@ export interface HerbOverlayOptions {
   onRuntimePanelToggle?: (visible: boolean) => void;
   onHotReloadingToggle?: (enabled: boolean) => void;
   reportedFor?: (template: string) => { count: number, tone: string } | null;
+  measuredFor?: (template: string) => string | null;
 }
 
 export class HerbOverlay {
@@ -25,6 +26,7 @@ export class HerbOverlay {
   private showingViewOutlines = false;
   private showingPartialOutlines = false;
   private showingComponentOutlines = false;
+  private showingOutlineMetrics = false;
   private menuOpen = false;
   private projectPath = '';
   private preferredEditor = 'auto';
@@ -147,6 +149,7 @@ export class HerbOverlay {
         this.showingViewOutlines = settings.showingViewOutlines || false;
         this.showingPartialOutlines = settings.showingPartialOutlines || false;
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
+        this.showingOutlineMetrics = settings.showingOutlineMetrics || false;
         this.showingSlotUpdates = settings.showingSlotUpdates || false;
         this.runningLinter = settings.runningLinter !== undefined ? settings.runningLinter : true;
         this.hotReloading = settings.hotReloading !== undefined ? settings.hotReloading : true;
@@ -177,6 +180,7 @@ export class HerbOverlay {
       showingViewOutlines: this.showingViewOutlines,
       showingPartialOutlines: this.showingPartialOutlines,
       showingComponentOutlines: this.showingComponentOutlines,
+      showingOutlineMetrics: this.showingOutlineMetrics,
       showingSlotUpdates: this.showingSlotUpdates,
       runningLinter: this.runningLinter,
       hotReloading: this.hotReloading,
@@ -373,6 +377,14 @@ export class HerbOverlay {
             </label>
           </div>
 
+          <div class="herb-toggle-item">
+            <label class="herb-toggle-label">
+              <input type="checkbox" id="herbToggleOutlineMetrics" class="herb-toggle-input">
+              <span class="herb-toggle-switch"></span>
+              <span class="herb-toggle-text">Measurements on Outlines</span>
+            </label>
+          </div>
+
           ${devServer ? `<div class="herb-toggle-item" id="herbHotReloadingItem">
             <label class="herb-toggle-label">
               <input type="checkbox" id="herbToggleHotReloading" class="herb-toggle-input">
@@ -561,6 +573,15 @@ export class HerbOverlay {
       toggleHotReloadFlashesSwitch.addEventListener('change', () => {
         this.toggleHotReloadFlashes(toggleHotReloadFlashesSwitch.checked);
         this.syncFlashUpdatesToggle();
+      });
+    }
+
+    const toggleOutlineMetricsSwitch = document.getElementById('herbToggleOutlineMetrics') as HTMLInputElement;
+
+    if (toggleOutlineMetricsSwitch) {
+      toggleOutlineMetricsSwitch.checked = this.showingOutlineMetrics;
+      toggleOutlineMetricsSwitch.addEventListener('change', () => {
+        this.toggleOutlineMetrics(toggleOutlineMetricsSwitch.checked);
       });
     }
 
@@ -778,6 +799,43 @@ export class HerbOverlay {
     this.saveSettings();
   }
 
+  private appendMeasurements(label: HTMLElement, relativePath: string) {
+    label.querySelector('.herb-overlay-label-measured')?.remove();
+
+    if (!this.showingOutlineMetrics) {
+      return;
+    }
+
+    const measured = this.options.measuredFor?.(relativePath) ?? null;
+
+    if (measured === null) {
+      return;
+    }
+
+    const chip = document.createElement('span');
+
+    chip.className = 'herb-overlay-label-measured';
+    chip.textContent = measured;
+    chip.title = `Measured for ${relativePath}`;
+
+    label.appendChild(chip);
+  }
+
+  private toggleOutlineMetrics(show?: boolean) {
+    this.showingOutlineMetrics = show !== undefined ? show : !this.showingOutlineMetrics;
+
+    document.querySelectorAll('.herb-overlay-label').forEach((label) => {
+      const element = label.parentElement;
+      const relativePath = element?.getAttribute('data-herb-debug-file-relative-path')
+        || element?.getAttribute('data-herb-debug-file-name')
+        || '';
+
+      this.appendMeasurements(label as HTMLElement, relativePath);
+    });
+
+    this.saveSettings();
+  }
+
   private createOverlayLabel(element: HTMLElement, type: 'view' | 'partial' | 'component') {
     if (element.querySelector('.herb-overlay-label')) {
       return;
@@ -809,6 +867,8 @@ export class HerbOverlay {
 
       label.appendChild(badge);
     }
+
+    this.appendMeasurements(label, relativePath);
 
     label.addEventListener('mouseenter', () => {
       name.textContent = relativePath;
