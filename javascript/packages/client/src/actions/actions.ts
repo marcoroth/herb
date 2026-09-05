@@ -188,6 +188,8 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
         this.toggle(element, rest)
       } else if (schema.operation === "reset") {
         this.reset(element, rest)
+      } else if (schema.operation === "action") {
+        this.invoke(element, rest)
       } else {
         this.count(element, rest, schema.step ?? 1)
       }
@@ -397,6 +399,24 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
       }
 
       this.state.increment(name, { scope: resolved.scope, by: step })
+    }
+  }
+
+  private invoke(element: Element, rest: string): void {
+    for (const name of names(rest)) {
+      if (name === "$refresh") {
+        void this.state.refresh()
+
+        continue
+      }
+
+      report({
+        template: this.templateOf(element),
+        element,
+        message: name.startsWith("$") ? `\`${name}\` is not a built-in action` : `\`${name}\` names a user-defined action, and those are not available yet`,
+        code: "herb-invalid-action",
+        severity: "error",
+      })
     }
   }
 

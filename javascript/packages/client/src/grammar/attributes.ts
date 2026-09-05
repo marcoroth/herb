@@ -2,7 +2,7 @@ export type ActionName = keyof typeof ACTION_SCHEMA
 export type HerbAttribute = keyof typeof HERB_ATTRIBUTES
 
 export interface ActionSchema {
-  operation: "set" | "toggle" | "count" | "reset"
+  operation: "set" | "toggle" | "count" | "reset" | "action"
   needs?: "boolean" | "integer"
   step?: number
   bare?: boolean
@@ -16,6 +16,7 @@ export const HERB_ATTRIBUTES = {
   dependencies: "data-herb-dependencies",
   manifests: "data-herb-manifests",
   into: "data-herb-into",
+  action: "data-herb-action",
   set: "data-herb-set",
   toggle: "data-herb-toggle",
   increment: "data-herb-increment",
@@ -25,6 +26,7 @@ export const HERB_ATTRIBUTES = {
 } as const
 
 export const ACTION_SCHEMA = {
+  action: { operation: "action" },
   set: { operation: "set" },
   toggle: { operation: "toggle", needs: "boolean" },
   increment: { operation: "count", needs: "integer", step: 1 },
