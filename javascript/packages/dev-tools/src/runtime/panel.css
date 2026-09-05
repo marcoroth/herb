@@ -308,6 +308,30 @@
   color: var(--herb-dev-tools-ink);
 }
 
+.herb-dev-tools-action-icon {
+  gap: 4px;
+  padding: 0 7px;
+  color: var(--herb-dev-tools-ink-faint);
+  flex: none;
+  overflow: visible;
+}
+
+.herb-dev-tools-action-icon:hover {
+  color: var(--herb-dev-tools-ink);
+}
+
+.herb-dev-tools-muted-count {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.herb-dev-tools-metrics-toggle.herb-dev-tools-metrics-toggle-open {
+  border-color: var(--herb-dev-tools-ink-faint);
+  background: #f4f4f5;
+  color: var(--herb-dev-tools-ink);
+}
+
 .herb-dev-tools-window-controls {
   display: flex;
   align-items: center;
@@ -389,6 +413,38 @@
 .herb-dev-tools-filters-severity {
   border-top: 1px solid var(--herb-dev-tools-line);
   border-bottom: 1px solid var(--herb-dev-tools-line);
+}
+
+.herb-dev-tools-mutes {
+  border-bottom: 1px solid var(--herb-dev-tools-line);
+}
+
+.herb-dev-tools-mute {
+  border: 1px solid var(--herb-dev-tools-ink);
+  border-radius: 999px;
+  background: var(--herb-dev-tools-ink);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.herb-dev-tools-mute:hover {
+  opacity: 0.85;
+}
+
+.herb-dev-tools-mute.herb-dev-tools-mute-off {
+  border-color: var(--herb-dev-tools-border);
+  background: var(--herb-dev-tools-surface);
+  color: var(--herb-dev-tools-ink-faint);
+  text-decoration: line-through;
+}
+
+.herb-dev-tools-mute.herb-dev-tools-mute-off:hover {
+  border-color: var(--herb-dev-tools-ink-faint);
+  color: var(--herb-dev-tools-ink-soft);
+  opacity: 1;
 }
 
 .herb-dev-tools-filter {
