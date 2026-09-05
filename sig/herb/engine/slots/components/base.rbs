@@ -10,10 +10,6 @@ module Herb
         # transforming the template. It validates its attributes against its
         # `allowed_attributes` and answers the nodes that replace it.
         class Base
-          @element: untyped
-
-          @visitor: untyped
-
           # : (untyped, untyped) -> Array[untyped]
           def self.transform: (untyped, untyped) -> Array[untyped]
 

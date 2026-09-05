@@ -16,6 +16,8 @@ module Herb
 
           ATTRIBUTES: Array[String]
 
+          TIMING_ATTRIBUTES: Array[String]
+
           # : () -> Array[String]
           def allowed_attributes: () -> Array[String]
 
@@ -23,8 +25,6 @@ module Herb
           def transform: () -> Array[untyped]
 
           private
-
-          TIMING_ATTRIBUTES: Array[String]
 
           # `on` narrows when the fallback shows. Without it any covered read
           # going stale masks the fragment, and with it only a write to one of
