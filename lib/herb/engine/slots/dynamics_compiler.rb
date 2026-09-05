@@ -4,6 +4,7 @@
 require_relative "../../../herb"
 require_relative "../../engine"
 require_relative "visitor"
+require_relative "state_overrides"
 
 module Herb
   class Engine
@@ -441,6 +442,7 @@ module Herb
           @block_depth = 0
           @scopes = [] #: Array[Integer]
           @slot_visitor = properties[:slot_visitor] || Visitor.new(mode: :server, mark: false)
+          @slot_visitor.state_overrides!
           visitors = [*properties[:visitors], @slot_visitor]
 
           super(
