@@ -103,6 +103,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-component-requires-slots`](./herb-component-requires-slots.md) - Require a `herb:slots` directive on templates using component tags.
 - [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
 - [`herb-scoped-style-no-unused-selector`](./herb-scoped-style-no-unused-selector.md) - No unused selector in a `<style scoped>` block.
 - [`herb-scoped-style-require-top-level`](./herb-scoped-style-require-top-level.md) - Require a `<style scoped>` block to be a top-level element.
