@@ -162,7 +162,7 @@ export class Refresh {
   }
 }
 
-function steeringNames(manifest: StateManifest): Set<string> {
+export function steeringNames(manifest: StateManifest): Set<string> {
   const names = new Set<string>()
 
   for (const conditional of Object.values(manifest.conditionals ?? {})) {

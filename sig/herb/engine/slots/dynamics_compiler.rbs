@@ -210,6 +210,22 @@ module Herb
           def iteration: (untyped, Symbol) -> void
         end
 
+        class Prune < Herb::Visitor
+          # : (Visitor, Integer) -> void
+          def initialize: (Visitor, Integer) -> void
+
+          # : (untyped) -> void
+          def visit_document_node: (untyped) -> void
+
+          private
+
+          # : (untyped, untyped) -> void
+          def keep: (untyped, untyped) -> void
+
+          # : (untyped, untyped) -> bool
+          def contains?: (untyped, untyped) -> bool
+        end
+
         attr_reader slot_visitor: Visitor
 
         # : (String, ?Hash[Symbol, untyped]) -> void

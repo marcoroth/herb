@@ -87,6 +87,7 @@ export interface FragmentEntry {
   reads?: number[]
   delay?: number
   hold?: number
+  poll?: number
   mode?: "lazy" | "async"
   state?: string
   on?: string[]
@@ -160,7 +161,12 @@ export interface StateOptions {
   refetchTransport?: RefreshTransport
 }
 
-export type RefreshTransport = (state: Record<string, Record<string, unknown>>, signal: AbortSignal) => Promise<Payload>
+export type RefreshTransport = (state: Record<string, Record<string, unknown>>, signal: AbortSignal, block?: BlockAddress) => Promise<Payload>
+
+export interface BlockAddress {
+  template: string
+  index: number
+}
 
 export interface StateReport extends ApplyReport {
   written: number

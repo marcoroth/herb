@@ -145,7 +145,7 @@ module Engine
       test "an unknown attribute on a deferred block errors" do
         visitor, = compile(%(<%# herb:slots client %>\n<Async id="x"><p><%= @a %></p></Async>))
 
-        assert_equal ["`<Async>` only takes `delay` and `hold` and `on`."], visitor.diagnostics.map(&:message)
+        assert_equal ["`<Async>` only takes `delay` and `hold` and `on` and `poll`."], visitor.diagnostics.map(&:message)
       end
 
       test "timing attributes and state reads flow into a deferred entry" do
@@ -205,6 +205,92 @@ module Engine
         visitor, = compile(source)
 
         assert_empty visitor.diagnostics
+      end
+
+      test "a scoped compile runs only the addressed block" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (label: "tiles") %>
+          <% Thread.current[:deferred_effects] << :top %>
+          <h1><%= label %></h1>
+          <Async>
+            <% Thread.current[:deferred_effects] << :first %>
+            <p><%= "first \#{label}" %></p>
+            <Fallback><p>one loading</p></Fallback>
+          </Async>
+          <Async>
+            <% Thread.current[:deferred_effects] << :second %>
+            <p><%= "second \#{label}" %></p>
+            <Fallback><p>two loading</p></Fallback>
+          </Async>
+        ERB
+
+        probe = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [probe], filename: "app/views/test.html.erb")
+
+        second = probe.deferred_entries.keys.fetch(1)
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb", block: second)
+
+        Thread.current[:deferred_effects] = []
+        view = OverridableView.new({ "app/views/test.html.erb" => { "_herb_block_1" => true, "label" => "steered" } })
+        values = JSON.parse(JSON.generate(view.instance_eval(compiler.src)))
+
+        assert_equal [:second], Thread.current[:deferred_effects]
+        assert_equal [second.to_s], values["slots"].keys
+        assert_equal({ (second + 1).to_s => "second steered" }, values["slots"][second.to_s]["slots"])
+        assert_includes values["slots"][second.to_s]["statics"], "herb-branch:#{second}:0"
+      end
+
+      test "a scoped compile keeps the ancestors of a nested block" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (peek: "") %>
+          <input value="<%= peek %>">
+          <% if peek.present? %>
+            <Lazy>
+              <p><%= "located \#{peek}" %></p>
+              <Fallback><p>looking</p></Fallback>
+            </Lazy>
+          <% end %>
+        ERB
+
+        probe = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [probe], filename: "app/views/test.html.erb")
+
+        block = probe.deferred_entries.keys.fetch(0)
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb", block: block)
+
+        view = OverridableView.new({ "app/views/test.html.erb" => { "peek" => "basel", "_herb_block_0" => true } })
+        values = JSON.parse(JSON.generate(view.instance_eval(compiler.src)))
+        outer = values["slots"].values.fetch(0)
+
+        assert_equal 0, outer["branch"]
+        assert_equal "located basel", outer["slots"][block.to_s]["slots"].values.fetch(0)
+      end
+
+      test "poll flows into a deferred entry" do
+        source = ASYNC.sub("<Async>", %(<Async poll="5000">))
+
+        visitor, = compile(source)
+
+        assert_equal 5000, visitor.manifest["states"]["fragments"]["0"]["poll"]
+        assert_empty visitor.diagnostics
+      end
+
+      test "poll on a fragment errors" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (peek: "") %>
+          <input value="<%= peek %>">
+          <Fragment poll="5000">
+            <p><%= Geo.locate(peek) %></p>
+            <Fallback><p>looking</p></Fallback>
+          </Fragment>
+        ERB
+
+        visitor, = compile(source)
+
+        assert_includes visitor.diagnostics.map(&:message).join, "only takes `delay` and `hold`"
       end
 
       test "the page and values compiles agree on indexes and state names" do
