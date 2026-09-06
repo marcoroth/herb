@@ -197,6 +197,15 @@ module Herb
         # : (untyped) -> untyped
         def predicate_token_for: (untyped) -> untyped
 
+        # : (untyped) -> Array[untyped]
+        def interpolation_children: (untyped) -> Array[untyped]
+
+        # : (untyped, Integer, untyped) -> void
+        def register_segment_reads: (untyped, Integer, untyped) -> void
+
+        # : (untyped) -> String
+        def segment_code: (untyped) -> String
+
         # : (untyped, Hash[String, StateDirectives::Declaration]) -> void
         def check_interpolated_state_read: (untyped, Hash[String, StateDirectives::Declaration]) -> void
 

@@ -1484,6 +1484,42 @@ module Engine
         assert_equal ["track"], visitor.manifest["states"]["reads"].keys
         assert_equal 1, visitor.manifest["states"]["reads"]["track"].length
       end
+
+      test "an attribute conditional joins the manifest parts" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (track: "") %>
+          <input value="<%= track %>">
+          <% Catalog.tracks.each do |entry| %>
+            <%# herb:key entry %>
+            <li class="row <%= "is-on" if track == entry %>"><%= entry %></li>
+          <% end %>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        assert_empty visitor.diagnostics
+        assert_equal ["row ", ""], visitor.manifest["parts"]["2"]
+      end
+
+      test "an attribute conditional registers its states as server reads" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (view: "list") %>
+          <button data-herb-set="view=grid" aria-pressed="<%= view == "grid" %>">Grid</button>
+          <ul class="entries <%= "is-grid" if view == "grid" %>"></ul>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        server_reads = visitor.manifest["states"]["server"]["reads"]["view"].map { |read| read["index"] }
+        parts_key = visitor.manifest["parts"].keys.last
+
+        assert_empty visitor.diagnostics
+        assert_includes server_reads, parts_key.to_i
+      end
     end
   end
 end

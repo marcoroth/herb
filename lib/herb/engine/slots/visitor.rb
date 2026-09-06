@@ -1532,6 +1532,8 @@ module Herb
               return nil unless erb_outputs?(child)
 
               segments << +""
+            when Herb::AST::ERBIfNode, Herb::AST::ERBUnlessNode, Herb::AST::ERBCaseNode
+              segments << +""
             else
               return nil
             end
