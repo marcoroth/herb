@@ -30,8 +30,8 @@ import { ElementObserver } from "../shared/element-observer"
 import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
-import { branchKey } from "../markup/markers"
-import { interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
+import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker } from "../markup/markers"
+import { blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
 import { currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
@@ -746,6 +746,91 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     }
 
     return this.building("client", () => this.swapBranch(slot, branch, dynamics))
+  }
+
+  rebuildKeyed(slot: Slot, key: string, dynamics: SlotValues = {}): boolean {
+    if (slot.type !== "keyed" || slot.anchor.kind !== "range" || key === slot.key) {
+      return false
+    }
+
+    return this.building("client", () => this.swapKeyed(slot, key, dynamics))
+  }
+
+  private swapKeyed(slot: Slot, key: string, dynamics: SlotValues): boolean {
+    if (slot.anchor.kind !== "range") {
+      return false
+    }
+
+    const fragment = this.keyedMarkup(slot, dynamics)
+
+    if (!fragment) {
+      return false
+    }
+
+    this.journal.record(slot, () => {
+      const before = this.current(slot)
+      const previous = slot.key
+
+      return (live) => {
+        if (live.anchor.kind === "range") {
+          live.items.clear()
+          live.items.set(previous ?? "", { key: previous ?? "", start: live.anchor.start, end: live.anchor.end, slots: new Map(), collection: live })
+          live.anchor.start.data = keyedSlotMarker(live.index, previous ?? "")
+        }
+
+        live.key = previous
+
+        this.update(live, before)
+      }
+    })
+
+    const previous = slot.key
+    const held: Item = { key, start: slot.anchor.start, end: slot.anchor.end, slots: new Map(), collection: slot }
+
+    this.index.forgetChildren(slot)
+
+    slot.items.clear()
+    slot.items.set(key, held)
+
+    this.rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: held })
+
+    slot.anchor.start.data = keyedSlotMarker(slot.index, key)
+    slot.key = key
+
+    this.focusAutofocus(slot)
+    this.announce(slot, "keyed", (delegate) => delegate.keyedRebuilt?.(slot, key, previous), { key, previousKey: previous })
+
+    return true
+  }
+
+  private keyedMarkup(slot: Slot, dynamics: SlotValues): DocumentFragment | null {
+    const parked = this.materialize(slot.region.file, itemStaticsKey(slot.index), dynamics)
+
+    if (parked) {
+      for (const node of [...parked.childNodes]) {
+        if (node.nodeType !== Node.COMMENT_NODE) {
+          continue
+        }
+
+        const marker = branchOf((node as Comment).data.trim())
+
+        if (marker && marker.branch === ITEM_STATICS) {
+          node.remove()
+        }
+      }
+
+      return parked
+    }
+
+    const fragment = document.createRange().createContextualFragment("")
+
+    fragment.append(this.rangeOf(slot).cloneContents())
+
+    blankSlots(fragment)
+    blankSeeds(fragment)
+    fillSlots(fragment, dynamics, false, (index) => this.manifests.partsForFile(slot.region.file, index))
+
+    return fragment
   }
 
   recordBuilt(slot: Slot, item: Item): void {

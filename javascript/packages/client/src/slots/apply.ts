@@ -2,7 +2,7 @@ import { attributeValue } from "../markup/fragments"
 import { report as reportDiagnostic } from "../shared/report"
 
 import type { Slots } from "./slots"
-import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, Payload, PayloadSlots, PayloadValue, SeededSlots, Slot, SlotMap, SlotValue, SlotValues } from "../types"
+import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, KeyedValue, Payload, PayloadSlots, PayloadValue, SeededSlots, Slot, SlotMap, SlotValue, SlotValues } from "../types"
 
 export function isPayload(value: PayloadValue | unknown): value is Payload {
   return typeof value === "object" && value !== null && "template" in value
@@ -135,9 +135,25 @@ function applyValue(slots: Slots, payload: Payload, slot: Slot, index: number, v
 
     if ("items" in value) {
       applyItems(slots, payload, slot, value, report, mode)
+    } else if ("key" in value) {
+      applyKeyed(slots, payload, slot, value, report, mode)
     } else {
       applyBranch(slots, payload, slot, value, report, mode)
     }
+  }
+
+function applyKeyed(slots: Slots, payload: Payload, slot: Slot, value: KeyedValue, report: ApplyReport, mode: ApplyMode): void {
+    if (value.key !== slot.key) {
+      if (!slots.rebuildKeyed(slot, value.key, leaves(value.slots))) {
+        defer(report, payload, slot.index, "keyed")
+
+        return
+      }
+    }
+
+    const held = slot.items.get(value.key)
+
+    applySlots(slots, payload, held?.slots ?? owner(slot), value.slots ?? {}, report, mode)
   }
 
 function applyLeaf(slots: Slots, payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {

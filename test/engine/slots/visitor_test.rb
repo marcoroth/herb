@@ -495,11 +495,11 @@ module Engine
         assert_slots_snapshot("<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>")
       end
 
-      test "wraps a standalone element carrying a dynamic herb-key in a one-item collection" do
+      test "compiles a standalone element carrying a dynamic herb-key to a keyed slot" do
         assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="<%= @track %>">x</div>))
       end
 
-      test "builds an interpolated key for a standalone herb-key holding several expressions" do
+      test "builds an interpolated key for a keyed slot holding several expressions" do
         assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="<%= @track %>:<%= @number %>">x</div>))
       end
 

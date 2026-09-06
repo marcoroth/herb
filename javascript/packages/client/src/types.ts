@@ -2,6 +2,7 @@ export type SlotType =
   | "child"
   | "conditional"
   | "collection"
+  | "keyed"
   | "block"
   | "comment"
   | "attribute"
@@ -16,6 +17,7 @@ export type SlotOperation =
   | "attribute"
   | "branch"
   | "branch-material"
+  | "keyed"
   | "item-added"
   | "item-rekeyed"
   | "item-removed"
@@ -46,9 +48,9 @@ export type Restore = (live: Slot) => void
 
 export type PayloadItems = Record<string, PayloadSlots>
 export type SeededSlots = PayloadSlots & { seeds?: Seeds }
-export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected
+export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected | KeyedValue
 export type AppliedValue = Exclude<PayloadValue, Payload>
-export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "block" | "items" | "partial-attribute" | "partial-content"
+export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "keyed" | "block" | "items" | "partial-attribute" | "partial-content"
 
 export type SlotAnchor = RangeAnchor | ElementAnchor | ContentAnchor
 
@@ -61,6 +63,7 @@ export interface SlotsDelegate {
   itemRemoved?(slot: Slot, key: string, item: Item | null): void
   itemUpdated?(slot: Slot, key: string, item: Item | null): void
   itemRekeyed?(slot: Slot, key: string, previousKey: string, item: Item | null): void
+  keyedRebuilt?(slot: Slot, key: string, previousKey: string | null): void
   built?(built: Built): void
 }
 
@@ -89,6 +92,7 @@ export interface Slot {
   attribute: string | null
   anchor: SlotAnchor
   items: ItemMap
+  key: string | null
   branch: number | null
   parent: Slot | null
   children: Slot[]
@@ -224,6 +228,11 @@ export interface Branched {
 export interface Collected {
   items: PayloadItems
   order?: string[]
+}
+
+export interface KeyedValue {
+  key: string
+  slots?: PayloadSlots
 }
 
 export interface Deferred {
