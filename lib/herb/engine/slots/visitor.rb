@@ -269,6 +269,34 @@ module Herb
           @fragment_fallbacks[node] = fallback_children
         end
 
+        #: (Array[untyped]) -> void
+        def register_fallback_reads(children)
+          children.each do |child|
+            if child.is_a?(Herb::AST::ERBContentNode) && erb_outputs?(child) && fallback_state_read?(child)
+              record_slot(child, :child)
+
+              next
+            end
+
+            BRANCH_BODY_PROPERTIES.each do |property|
+              next unless child.respond_to?(property)
+
+              array = child.send(property)
+
+              register_fallback_reads(array) if array.is_a?(Array)
+            end
+          end
+        end
+
+        #: (untyped) -> bool
+        def fallback_state_read?(node)
+          name = expression_for(node).to_s.strip
+
+          return false unless name.match?(/\A[a-z_][a-zA-Z0-9_]*\z/)
+
+          state_declarations[:region].any? { |entry| entry[:name] == name && !entry[:derived] }
+        end
+
         #: (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
         def record_deferred(node, mode:, state:, timing:)
           @deferred_nodes[node] = { mode: mode, state: state, timing: timing }
@@ -585,6 +613,8 @@ module Herb
           transform_components(node) if declares_slots?(node)
 
           visit_children_with_paths(node.children)
+
+          @fragment_fallbacks.each_value { |body| register_fallback_reads(body) }
 
           collapse_invariant_conditionals
           apply_names
@@ -1625,8 +1655,25 @@ module Herb
 
             next unless index
 
-            [@markers.statics_key(index, 1), [text_node(@markers.branch(index, 1)), *body]]
+            [@markers.statics_key(index, 1), [text_node(@markers.branch(index, 1)), *marked_fallback(body)]]
           }
+        end
+
+        #: (Array[untyped]) -> Array[untyped]
+        def marked_fallback(children)
+          children.flat_map do |child|
+            insert_markers(child)
+
+            slot_index = @standing[child]&.survivor&.index
+
+            next [child] unless slot_index
+
+            [
+              comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)),
+              child,
+              comment_node(@markers.slot_close(slot_index))
+            ]
+          end
         end
 
         #: (String) -> String
