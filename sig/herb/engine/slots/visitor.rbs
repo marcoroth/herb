@@ -166,6 +166,12 @@ module Herb
         # : (untyped, Array[untyped], Hash[String, untyped]) -> void
         def record_fragment: (untyped, Array[untyped], Hash[String, untyped]) -> void
 
+        # : (Array[untyped]) -> void
+        def register_fallback_reads: (Array[untyped]) -> void
+
+        # : (untyped) -> bool
+        def fallback_state_read?: (untyped) -> bool
+
         # : (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
         def record_deferred: (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
 
@@ -489,6 +495,9 @@ module Herb
 
         # : () -> Array[[String, Array[untyped]]]
         def fallback_statics_entries: () -> Array[[ String, Array[untyped] ]]
+
+        # : (Array[untyped]) -> Array[untyped]
+        def marked_fallback: (Array[untyped]) -> Array[untyped]
 
         # : (String) -> String
         def covered_key: (String) -> String

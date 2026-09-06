@@ -70,6 +70,45 @@ module Engine
         assert_equal plain.slots.map(&:type), seeded.slots.map(&:type)
       end
 
+      test "a state read in a fallback stays a live slot" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (album: "a", artist: "") %>
+          <input value="<%= album %>">
+          <Fragment on="album">
+            <p><%= Geo.locate(album) %></p>
+            <Fallback><p>by <%= artist %></p></Fallback>
+          </Fragment>
+        ERB
+
+        visitor, engine = compile(source)
+
+        assert_empty visitor.diagnostics
+        assert_equal [3], visitor.manifest["states"]["reads"]["artist"]
+        assert_equal [:attribute, :conditional, :child, :child], visitor.slots.map(&:type)
+
+        page = Object.new.instance_eval(engine.src.gsub("Geo.locate(album)", "'located'"))
+
+        assert_snapshot_matches(page, source, { probe: "fallback state read" })
+      end
+
+      test "a derived state read in a fallback renders once and holds no slot" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (album: "a", artist: "", credit: artist) %>
+          <input value="<%= album %>">
+          <Fragment on="album">
+            <p><%= Geo.locate(album) %></p>
+            <Fallback><p>by <%= credit %></p></Fallback>
+          </Fragment>
+        ERB
+
+        visitor, = compile(source)
+
+        assert_nil visitor.manifest["states"]["reads"]["credit"]
+        assert_equal [:attribute, :conditional, :child], visitor.slots.map(&:type)
+      end
+
       test "the manifest maps the fragment to the reads inside it" do
         visitor, = compile(FRAGMENT)
 
