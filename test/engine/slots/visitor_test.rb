@@ -494,6 +494,22 @@ module Engine
       test "records what a block whose value is not output contains" do
         assert_slots_snapshot("<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>")
       end
+
+      test "wraps a standalone element carrying a dynamic herb-key in a one-item collection" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="<%= @track %>">x</div>))
+      end
+
+      test "builds an interpolated key for a standalone herb-key holding several expressions" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="<%= @track %>:<%= @number %>">x</div>))
+      end
+
+      test "leaves a static herb-key alone" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="fixed">x</div>))
+      end
+
+      test "leaves a herb-key inside a collection body to the collection" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>))
+      end
     end
   end
 end

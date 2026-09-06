@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::MarkersTest#test_0068_delimits a standalone keyed element as a one-item collection"
+input: "{source: \"<%# herb:slots %>\\n<div herb-key=\\\"<%= @id %>\\\"><%= @name %></div>\", locals: {\"@id\" => 7, \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:cf790895:0-->
+<!--herb-slot:0:collection--><!--herb-item:0:7--><div data-herb-slot="1:child">Marco</div><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->
