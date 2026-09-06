@@ -3,6 +3,8 @@ import { HERB_ATTRIBUTES } from "../grammar/attributes"
 import { report } from "../shared/report"
 import { scopeOf } from "../state/scopes"
 import { slotsRequest } from "../shared/slots-request"
+import { transitionMutation } from "../shared/transitions"
+import { hostOf } from "../markup/anchors"
 
 import type { Slots } from "../slots/slots"
 import type { State } from "../state/state"
@@ -30,21 +32,29 @@ export class Outbox {
   submit(options: SubmitOptions): Promise<MutationResult> {
     const key = options.key ?? `herb-pending-${(this.minted += 1)}`
     const slot = this.collection(options.into)
-
-    let item: Item | null = null
-
-    if (slot) {
-      item = this.slots.addItem(slot, key, { values: options.values, text: true })
-    }
-
     const record: Sending = { options, key, slot: null }
 
-    if (slot && item) {
-      this.setStates(slot, item, { pending: true, failed: false })
+    let inserted = false
 
-      record.slot = slot
+    const insert = () => {
+      inserted = true
+
+      if (!slot) {
+        return
+      }
+
+      const item = this.slots.addItem(slot, key, { values: options.values, text: true })
+
+      if (item) {
+        this.setStates(slot, item, { pending: true, failed: false })
+
+        record.slot = slot
+      }
     }
 
+    const pending = transitionMutation(insert, (slot && hostOf(slot.anchor)) || document)
+
+    record.inserted = inserted ? undefined : pending
     this.records.set(key, record)
 
     return this.enqueue(record)
@@ -210,6 +220,10 @@ export class Outbox {
   }
 
   private async send(record: Sending): Promise<MutationResult> {
+    if (record.inserted) {
+      await record.inserted
+    }
+
     const { options, key } = record
     let payload: Payload | null = null
 
@@ -221,10 +235,10 @@ export class Outbox {
       return { status: statusOf(record.slot, "failed"), key, error: error as Error }
     }
 
-    return this.confirm(record, payload)
+    return await this.confirm(record, payload)
   }
 
-  private confirm(record: Sending, payload: Payload | null): MutationResult {
+  private async confirm(record: Sending, payload: Payload | null): Promise<MutationResult> {
     const { options, key } = record
     const slot = record.slot
 
@@ -254,7 +268,11 @@ export class Outbox {
       narrowed = this.narrow(payload, slot)
     }
 
-    const report = this.slots.apply(narrowed, { items: "merge" })
+    let report!: ReturnType<Slots["apply"]>
+
+    await transitionMutation(() => {
+      report = this.slots.apply(narrowed, { items: "merge" })
+    }, (record.slot && hostOf(record.slot.anchor)) || document)
 
     if (report.applied === 0 && report.deferred.some((deferred) => deferred.reason === "stale-version")) {
       this.settle(record, confirmed)

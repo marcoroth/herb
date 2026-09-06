@@ -1,5 +1,6 @@
 import { armOf } from "./conditions"
 import { slotsRequest } from "../shared/slots-request"
+import { transitionMutation } from "../shared/transitions"
 
 import type { Slots } from "../slots/slots"
 import type { Payload, Region } from "../types"
@@ -101,7 +102,11 @@ export class Refresh {
       return
     }
 
-    const report = this.slots.apply(payload)
+    let report!: ReturnType<Slots["apply"]>
+
+    await transitionMutation(() => {
+      report = this.slots.apply(payload)
+    })
 
     this.settle({ applied: report.applied, deferred: report.deferred.length, stale: false, failed: false })
   }

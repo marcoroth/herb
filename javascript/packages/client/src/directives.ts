@@ -18,6 +18,7 @@ export { stateKindArticle } from "./state-kinds"
 export { isMarker, parseMarker } from "./markup/markers"
 export { clauses, names, balancedQuotes, splitOutsideQuotes, unquote } from "./grammar/parsing"
 export { eventSpecProblem } from "./actions/events"
+export { transitionIdentifier, TRANSITION_ATTRIBUTE } from "./shared/transitions"
 
 export type { Clause } from "./grammar/parsing"
 export type { StatePredicate } from "./state-predicates"

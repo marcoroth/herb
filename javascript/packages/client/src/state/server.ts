@@ -1,5 +1,6 @@
 import { elementOf } from "../markup/anchors"
 import { slotsRequest } from "../shared/slots-request"
+import { transitionMutation } from "../shared/transitions"
 
 import type { Slots } from "../slots/slots"
 import type { ApplyReport, Payload, Slot } from "../types"
@@ -150,7 +151,11 @@ export class ServerState {
     let report: ApplyReport = { applied: 0, deferred: [] }
 
     if (payload) {
-      report = this.slots.apply(payload)
+      const applied = payload
+
+      await transitionMutation(() => {
+        report = this.slots.apply(applied)
+      })
     }
 
     return this.settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false })

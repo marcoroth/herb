@@ -401,7 +401,8 @@ module Herb
 
               slot = @visitor.slots[inside]
 
-              next unless slot&.valued?
+              next unless slot
+              next unless slot.valued? || refetchable.include?(inside)
               next if covered.include?(inside)
               next if @near_missed.include?(inside)
 
