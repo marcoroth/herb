@@ -31,7 +31,7 @@ import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
 import { branchKey } from "../markup/markers"
-import { interpolateParts, valuesIn, withoutMarkers } from "../markup/fragments"
+import { interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
 import { currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
@@ -281,7 +281,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       return true
     }
 
-    const markup = this.materialize(slot.region.file, branchKey(slot.index, branch), { ...(slot.shown?.get(branch) ?? {}), ...dynamics })
+    const markup = this.branchMarkup(slot, branch, dynamics)
 
     if (!markup) {
       return false
@@ -295,6 +295,20 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     this.focusAutofocus(slot)
 
     return true
+  }
+
+  private branchMarkup(slot: Slot, branch: number, dynamics: SlotValues): DocumentFragment | null {
+    const captured = slot.captured?.get(branch)
+
+    if (captured) {
+      const copy = captured.cloneNode(true) as DocumentFragment
+
+      fillSlots(copy, { ...(slot.shown?.get(branch) ?? {}), ...dynamics }, false, (index) => this.manifests.partsForFile(slot.region.file, index))
+
+      return copy
+    }
+
+    return this.materialize(slot.region.file, branchKey(slot.index, branch), { ...(slot.shown?.get(branch) ?? {}), ...dynamics })
   }
 
   private focusAutofocus(slot: Slot): void {
@@ -664,6 +678,10 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     }
 
     const contents = this.rangeOf(slot).cloneContents()
+    const captured = slot.captured ?? new Map<number, DocumentFragment>()
+
+    captured.set(slot.branch, contents.cloneNode(true) as DocumentFragment)
+    slot.captured = captured
 
     this.remember(slot, slot.branch, valuesIn(contents))
 

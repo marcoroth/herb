@@ -11,6 +11,7 @@ require_relative "../../visitor/experimental"
 require_relative "annotation"
 require_relative "identifier"
 require_relative "manifest/channel"
+require_relative "components"
 require_relative "types"
 require_relative "state_compiler"
 require_relative "markers"
@@ -190,6 +191,12 @@ module Herb
           listener_written = {} #: Hash[untyped, Array[String]]
           @listener_written = listener_written.compare_by_identity
           @current_open_tag = nil
+
+          fragment_nodes = {} #: Hash[untyped, Hash[String, untyped]]
+          fragment_fallbacks = {} #: Hash[untyped, Array[untyped]]
+
+          @fragment_nodes = fragment_nodes.compare_by_identity
+          @fragment_fallbacks = fragment_fallbacks.compare_by_identity
         end
 
         #: () -> bool
@@ -226,6 +233,36 @@ module Herb
           return [] unless node
 
           branch_bodies(node).flat_map { |body| slot_indices_within(body) }.uniq
+        end
+
+        #: (untyped) -> bool
+        def fragment?(node)
+          @fragment_nodes.key?(node)
+        end
+
+        #: () -> Array[Integer]
+        def fragment_indexes
+          @fragment_nodes.keys.filter_map { |node| @indices[node] }
+        end
+
+        #: (Integer) -> Hash[String, untyped]
+        def fragment_timing_for(index)
+          node = @slot_nodes[index]
+
+          return {} unless node
+
+          @fragment_nodes[node] || {}
+        end
+
+        #: (Array[untyped]) -> Array[untyped]
+        def transform_component_children(children)
+          children.flat_map { |child| transformed(child) }
+        end
+
+        #: (untyped, Array[untyped], Hash[String, untyped]) -> void
+        def record_fragment(node, fallback_children, timing)
+          @fragment_nodes[node] = timing
+          @fragment_fallbacks[node] = fallback_children
         end
 
         #: (Integer) -> Array[Array[Integer]]
@@ -511,6 +548,8 @@ module Herb
         def visit_document_node(node)
           @document = node
 
+          transform_components(node) if declares_slots?(node)
+
           visit_children_with_paths(node.children)
 
           collapse_invariant_conditionals
@@ -683,8 +722,10 @@ module Herb
         end
 
         def visit_erb_if_node(node)
-          return if @states.register_count_fold(node)
-          return if convert_helper_boolean_attribute(node)
+          unless fragment?(node)
+            return if @states.register_count_fold(node)
+            return if convert_helper_boolean_attribute(node)
+          end
 
           record_slot(node, :conditional) unless continuation?(node)
 
@@ -867,10 +908,73 @@ module Herb
           @container_depth -= 1
         end
 
+        #: (untyped) -> bool
+        def declares_slots?(node)
+          node.children.any? { |child|
+            case child
+            when Herb::AST::HerbDirectiveNode
+              child.key&.value.to_s == "slots"
+            when Herb::AST::ERBContentNode
+              child.tag_opening&.value.to_s.include?("#") && child.content&.value.to_s.match?(/\bherb:slots\b/)
+            else
+              false
+            end
+          }
+        end
+
+        #: (untyped) -> void
+        def transform_components(node)
+          return unless node.is_a?(Herb::AST::Node)
+
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            value = node.send(property)
+
+            case value
+            when Array
+              if property == :conditions
+                value.each { |arm| transform_components(arm) }
+              else
+                value.replace(value.flat_map { |child| transformed(child) })
+              end
+            when Herb::AST::Node
+              transform_components(value)
+            end
+          end
+
+          BRANCH_CONTINUATION_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            continuation = node.send(property)
+
+            transform_components(continuation) if continuation
+          end
+        end
+
+        #: (untyped) -> Array[untyped]
+        def transformed(child)
+          unless Components.element?(child)
+            transform_components(child)
+
+            return [child]
+          end
+
+          name = child.tag_name&.value.to_s
+          component = Components.for(name)
+
+          return component.transform(child, self) if component
+
+          slot_error("`<#{name}>` is not a component Herb knows.", child.location, :component, suggestion: "The built-in components are #{Components::BUILT_IN.map { |built_in| "`<#{built_in}>`" }.join(" and ")}.")
+
+          [child]
+        end
+
         #: () -> void
         def collapse_invariant_conditionals
           @standing.each_value do |annotation|
             next unless annotation.type == :conditional
+            next if fragment?(annotation.node)
             next unless exhaustive?(annotation.node)
 
             bodies = branch_bodies(annotation.node)
@@ -1444,26 +1548,48 @@ module Herb
           return unless client?
 
           statics = @statics
-          return if statics.nil? || statics.empty?
+          entries = (statics || {}).sort_by { |key, _| key.split(":").map(&:to_i) } #: Array[[String, (String | Array[untyped])]]
 
-          branches = statics.sort_by { |key, _| key.split(":").map(&:to_i) }
-          seen = branches.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }.join(" && ")
+          entries.concat(fallback_statics_entries)
+
+          return if entries.empty?
+
+          seen = entries.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }.join(" && ")
 
           nodes = [
             erb_code_node("unless #{seen}"),
             text_node(@markers.statics_open(identifier, version))
           ] #: Array[Herb::AST::Node]
 
-          branches.each do |key, markup|
+          entries.each do |key, parked|
             reference = "#{COVERED}[#{covered_key(key).inspect}]"
 
-            nodes.push(erb_code_node("unless #{reference}"), text_node(markup), erb_code_node("#{reference} = true"), erb_code_node("end"))
+            nodes.push(erb_code_node("unless #{reference}"))
+
+            if parked.is_a?(String)
+              nodes.push(text_node(parked))
+            else
+              nodes.concat(parked)
+            end
+
+            nodes.push(erb_code_node("#{reference} = true"), erb_code_node("end"))
           end
 
           nodes.push(text_node(@markers.statics_close), erb_code_node("end"))
 
           document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
           document_node.children.concat(nodes)
+        end
+
+        #: () -> Array[[String, Array[untyped]]]
+        def fallback_statics_entries
+          @fragment_fallbacks.filter_map { |node, body|
+            index = @indices[node]
+
+            next unless index
+
+            [@markers.statics_key(index, 1), [text_node(@markers.branch(index, 1)), *body]]
+          }
         end
 
         #: (String) -> String

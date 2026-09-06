@@ -136,6 +136,7 @@ module Herb
             "presence" => presence,
             "computed" => computed,
             "server" => { "branches" => branch_orphans(reads, computed, presence, steerable_names(declarations)), "reads" => @server_reads },
+            "fragments" => fragment_entries,
           }
         end
 
@@ -201,6 +202,20 @@ module Herb
             :unknown,
             suggestion: "Spell the state's name, or declare `#{name}` in `herb:state`."
           )
+        end
+
+        #: () -> Hash[String, untyped]
+        def fragment_entries
+          refetchable = @server_reads.values.flatten.to_set { |entry| entry["index"] }
+          entries = {} #: Hash[String, untyped]
+
+          @visitor.fragment_indexes.each do |index|
+            inside = (@visitor.slots_by_branch(index)[0] || []).select { |slot_index| refetchable.include?(slot_index) }
+
+            entries[index.to_s] = { "fallback" => 1, "reads" => inside }.merge(@visitor.fragment_timing_for(index)) unless inside.empty?
+          end
+
+          entries
         end
 
         #: (Array[Hash[String, untyped]]) -> Set[String]
@@ -578,12 +593,35 @@ module Herb
             parent[position] = @visitor.erb_code_node(seeds ? "; #{assignments}; #{seeds}" : "; #{assignments}")
           end
 
-          return if @region_states.empty? && @item_states.empty?
+          if @region_states.empty? && @item_states.empty?
+            check_fragments
+
+            return
+          end
 
           classify_state_conditionals
           check_state_value_reads
           check_collection_reads
           check_state_count_reads
+          check_fragments
+        end
+
+        #: () -> void
+        def check_fragments
+          refetchable = @server_reads.values.flatten.to_set { |entry| entry["index"] }
+
+          @visitor.fragment_indexes.each do |index|
+            inside = @visitor.slots_by_branch(index)[0] || []
+
+            next if inside.any? { |slot_index| refetchable.include?(slot_index) }
+
+            @visitor.slot_warning(
+              "Nothing inside this `<Fragment>` is derived on the server, so its `<Fallback>` can never appear.",
+              @visitor.slot_nodes[index]&.location,
+              :component,
+              suggestion: "Compute something with a declared state inside the fragment, or unwrap it."
+            )
+          end
         end
 
         #: (Array[StateDirectives::Declaration]) -> String?

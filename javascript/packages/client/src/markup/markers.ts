@@ -124,6 +124,14 @@ export function parseMarker(data: string): MarkerData | null {
   return branchOf(data)
 }
 
+export function isItemOpen(data: string): boolean {
+  return ITEM_OPEN.test(data)
+}
+
+export function isItemClose(data: string): boolean {
+  return ITEM_CLOSE.test(data)
+}
+
 export function branchOf(data: string): BranchMarker | null {
   const branch = BRANCH.exec(data)
 

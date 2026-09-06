@@ -72,7 +72,8 @@
       "server": {
         "branches": {},
         "reads": {}
-      }
+      },
+      "fragments": {}
     }
   },
   "dependencies": {
