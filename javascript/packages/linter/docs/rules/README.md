@@ -108,6 +108,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-scoped-style-no-unused-selector`](./herb-scoped-style-no-unused-selector.md) - No unused selector in a `<style scoped>` block.
 - [`herb-scoped-style-require-top-level`](./herb-scoped-style-require-top-level.md) - Require a `<style scoped>` block to be a top-level element.
 - [`herb-scoped-style-single-declaration`](./herb-scoped-style-single-declaration.md) - One `<style scoped>` block per file.
+- [`herb-slots-single-directive`](./herb-slots-single-directive.md) - Allow one `herb:slots` directive per template.
 - [`herb-slots-valid-components`](./herb-slots-valid-components.md) - Validate component structure and attributes in slots templates.
 - [`herb-slots-valid-mode`](./herb-slots-valid-mode.md) - Validate the `herb:slots` mode.
 - [`herb-state-no-silent-reads`](./herb-state-no-silent-reads.md) - Disallow bare state reads in silent tags.
