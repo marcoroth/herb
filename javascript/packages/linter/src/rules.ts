@@ -91,6 +91,7 @@ import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comme
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbSlotsSingleDirectiveRule } from "./rules/herb-slots-single-directive.js"
 import { HerbSlotsValidComponentsRule } from "./rules/herb-slots-valid-components.js"
 import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
 import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
@@ -263,6 +264,7 @@ export const rules: RuleClass[] = [
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
   HerbIntoRequiresCollectionRule,
+  HerbSlotsSingleDirectiveRule,
   HerbSlotsValidComponentsRule,
   HerbSlotsValidModeRule,
   HerbStateNoSilentReadsRule,
