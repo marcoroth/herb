@@ -50,7 +50,30 @@ module Herb
             end
           end
 
+          TIMING_ATTRIBUTES = ["delay", "hold"].freeze #: Array[String]
+
           private
+
+          #: () -> Hash[String, Integer]
+          def timing
+            timed = {} #: Hash[String, Integer]
+
+            attributes.each do |attribute|
+              name = attribute_name(attribute).to_s
+
+              next unless TIMING_ATTRIBUTES.include?(name) && allowed_attributes.include?(name)
+
+              value = static_value(attribute)
+
+              if value&.match?(/\A\d+\z/)
+                timed[name] = Integer(value, 10)
+              else
+                error("`#{name}` on a `<#{tag_name}>` takes a whole number of milliseconds.", attribute.location, suggestion: %(Write it like `#{name}="150"`.))
+              end
+            end
+
+            timed
+          end
 
           #: () -> String
           def tag_name

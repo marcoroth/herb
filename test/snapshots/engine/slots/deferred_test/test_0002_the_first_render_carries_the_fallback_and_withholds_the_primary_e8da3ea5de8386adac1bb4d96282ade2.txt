@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::DeferredTest#test_0002_the first render carries the fallback and withholds the primary"
+input: "{source: \"<%# herb:slots client %>\\n<Async>\\n  <p id=\\\"stats\\\"><%= @stats %></p>\\n  <Fallback><p class=\\\"pulse\\\">crunching <%= @hint %></p></Fallback>\\n</Async>\\n\", locals: {\"__herb_state_overrides\" => nil, \"@stats\" => \"42 things\", \"@hint\" => \"soon\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client fatal=false>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:c5bdc02c:0-->
+<!--herb-slot:0:conditional--><!--herb-branch:0:1--><p class="pulse">crunching <!--herb-slot:2-->soon<!--/herb-slot:2--></p><!--/herb-slot:0-->
+<!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:c5bdc02c"><!--herb-branch:0:1--><p class="pulse">crunching <!--herb-slot:2--><!--/herb-slot:2--></p></template>

@@ -16,7 +16,6 @@ module Herb
         class Fragment < Base
           NAME = "Fragment" #: String
           ATTRIBUTES = ["delay", "hold", "on"].freeze #: Array[String]
-          TIMING_ATTRIBUTES = ["delay", "hold"].freeze #: Array[String]
 
           #: () -> Array[String]
           def allowed_attributes
@@ -71,27 +70,6 @@ module Herb
             end
 
             { "on" => states }
-          end
-
-          #: () -> Hash[String, Integer]
-          def timing
-            timed = {} #: Hash[String, Integer]
-
-            attributes.each do |attribute|
-              name = attribute_name(attribute).to_s
-
-              next unless TIMING_ATTRIBUTES.include?(name)
-
-              value = static_value(attribute)
-
-              if value&.match?(/\A\d+\z/)
-                timed[name] = Integer(value, 10)
-              else
-                error("`#{name}` on a `<Fragment>` takes a whole number of milliseconds.", attribute.location, suggestion: %(Write it like `#{name}="150"`.))
-              end
-            end
-
-            timed
           end
 
           #: (untyped) -> void

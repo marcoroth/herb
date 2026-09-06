@@ -1,0 +1,24 @@
+---
+source: "Engine::Slots::DeferredTest#test_0008_steering the internal state answers the primary with its statics"
+input: |2-
+<%# herb:slots client %>
+<Async>
+  <p id="stats"><%= @stats %></p>
+  <Fallback><p class="pulse">crunching <%= @hint %></p></Fallback>
+</Async>
+options: {probe: "steered values"}
+---
+{
+  "template": "app/views/test.html.erb",
+  "version": "c5bdc02c",
+  "occurrence": 0,
+  "slots": {
+    "0": {
+      "branch": 0,
+      "statics": "<!--herb-branch:0:0-->\n  <p id=\"stats\" data-herb-slot=\"1:child\"></p>\n  \n",
+      "slots": {
+        "1": "42 things"
+      }
+    }
+  }
+}

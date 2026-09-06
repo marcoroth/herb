@@ -4,6 +4,9 @@
 require_relative "components/base"
 require_relative "components/fragment"
 require_relative "components/fallback"
+require_relative "components/deferred"
+require_relative "components/async"
+require_relative "components/lazy"
 
 module Herb
   class Engine
@@ -17,7 +20,7 @@ module Herb
       #
       module Components
         NAME = /\A[A-Z][A-Za-z0-9]*\z/ #: Regexp
-        REGISTRY = { Fragment::NAME => Fragment, Fallback::NAME => Fallback }.freeze #: Hash[String, singleton(Base)]
+        REGISTRY = { Fragment::NAME => Fragment, Fallback::NAME => Fallback, Async::NAME => Async, Lazy::NAME => Lazy }.freeze #: Hash[String, singleton(Base)]
         BUILT_IN = REGISTRY.keys.freeze #: Array[String]
 
         #: (String?) -> bool

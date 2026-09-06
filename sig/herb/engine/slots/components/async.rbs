@@ -1,0 +1,20 @@
+# Generated from lib/herb/engine/slots/components/async.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Components
+        # A deferred block the client requests immediately on mount, so expensive
+        # content loads in parallel with the page instead of blocking it.
+        class Async < Deferred
+          NAME: String
+
+          private
+
+          # : () -> String
+          def mode: () -> String
+        end
+      end
+    end
+  end
+end

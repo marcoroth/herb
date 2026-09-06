@@ -163,7 +163,7 @@ module Engine
 
         assert_equal "herb-slots-component", diagnostic.code
         assert_equal "`<Skeleton>` is not a component Herb knows.", diagnostic.message
-        assert_equal "The built-in components are `<Fragment>` and `<Fallback>`.", diagnostic.suggestion
+        assert_equal "The built-in components are `<Fragment>` and `<Fallback>` and `<Async>` and `<Lazy>`.", diagnostic.suggestion
       end
 
       test "an unknown attribute on a fragment errors" do

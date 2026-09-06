@@ -32,6 +32,12 @@ module Herb
         # : () -> bool
         def any?: () -> bool
 
+        # : () -> String
+        def declare_internal_block: () -> String
+
+        # : (String) -> String
+        def internal_assignment: (String) -> String
+
         # : () -> Array[String]
         def count_signatures: () -> Array[String]
 
@@ -130,6 +136,9 @@ module Herb
 
         # : () -> void
         def apply_states: () -> void
+
+        # : () -> void
+        def check_deferred_placement: () -> void
 
         # : () -> void
         def check_fragments: () -> void

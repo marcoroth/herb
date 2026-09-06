@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::DeferredTest#test_0009_a deferred block without a fallback renders nothing initially"
+input: "{source: \"<%# herb:slots client %>\\n<Async>\\n  <p id=\\\"stats\\\"><%= @stats %></p>\\n</Async>\\n\", locals: {\"__herb_state_overrides\" => nil, \"@stats\" => \"42 things\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client fatal=false>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:a42ab833:0-->
+<!--herb-slot:0:conditional--><!--/herb-slot:0-->
+<!--/herb-region:app/views/test.html.erb-->

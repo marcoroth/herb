@@ -389,11 +389,15 @@ export class RegionIndex {
     const range: RegionRange = { start: comment, end: null }
     const existing = this.held.find((candidate) => candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version)
 
-    if (existing) {
+    if (existing && existing.ranges.some((candidate) => candidate.start.isConnected)) {
       existing.ranges.push(range)
       state.openRegions.push({ region: existing, range })
 
       return
+    }
+
+    if (existing) {
+      this.held = this.held.filter((candidate) => candidate !== existing)
     }
 
     const region: Region = {

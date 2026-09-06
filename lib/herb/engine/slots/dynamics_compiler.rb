@@ -609,7 +609,10 @@ module Herb
 
         #: (Integer, Integer) -> String?
         def payload_statics(index, branch)
-          return nil unless @input.is_a?(String) && Visitor.directive_mode(@input) == :server
+          server = @input.is_a?(String) && Visitor.directive_mode(@input) == :server
+          withheld = branch.zero? && @slot_visitor.deferred_entries.key?(index)
+
+          return nil unless server || withheld
 
           branch_statics["#{index}:#{branch}"]
         end
