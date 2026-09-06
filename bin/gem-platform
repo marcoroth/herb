@@ -17,7 +17,7 @@ arch_map = {
 
 arch = arch_map[host_cpu] || host_cpu
 
-if host_os =~ /darwin/
+if host_os.include?("darwin")
   os = "darwin"
   platform = "#{arch}-#{os}"
 else
