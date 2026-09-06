@@ -1486,6 +1486,26 @@ module Engine
         assert_equal [], refetchable - branches.values.flatten.map { |entry| entry["index"] }
       end
 
+      test "a standalone keyed element reading a state registers a refetch read" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <%# herb:state (track: "", number: 0) %>
+          <input value="<%= track %>">
+          <div herb-key="<%= track %>:<%= number %>" class="playhead">x</div>
+        ERB
+
+        visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
+
+        collection = visitor.slots.find { |slot| slot.type == :collection }
+        reads = visitor.manifest["states"]["server"]["reads"]
+
+        refute_nil collection
+        assert_equal :directive, collection.key_source
+        assert_equal([collection.index], reads.fetch("track").map { |read| read["index"] })
+        assert_equal([collection.index], reads.fetch("number").map { |read| read["index"] })
+      end
+
       test "a block argument shadows a state inside its body" do
         source = <<~ERB
           <%# herb:slots client %>

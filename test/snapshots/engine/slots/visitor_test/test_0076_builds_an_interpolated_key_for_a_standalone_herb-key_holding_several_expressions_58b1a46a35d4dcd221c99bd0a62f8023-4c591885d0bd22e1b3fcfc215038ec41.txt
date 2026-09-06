@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0076_builds an interpolated key for a standalone herb-key holding several expressions"
+input: |2-
+<%# herb:slots %>
+<div herb-key="<%= @track %>:<%= @number %>">x</div>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 4d6d3b5f
+
+slots:
+  index=0  type=collection  node_path=[2]  expression="[\"\#{@track}:\#{@number}\"].each do"  key_source=directive  key_expression="\"\#{@track}:\#{@number}\""

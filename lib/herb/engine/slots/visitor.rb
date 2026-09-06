@@ -65,6 +65,7 @@ module Herb
         OCCURRENCES = "@_herb_region_occurrences" #: String
         OCCURRENCE = "_herb_occurrence" #: String
         NAME_ATTRIBUTE = "data-herb-name" #: String
+        KEY_ATTRIBUTE = "herb-key" #: String
 
         CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
         LISTENER_ATTRIBUTES = ["data-herb-set", "data-herb-toggle", "data-herb-increment", "data-herb-decrement", "data-herb-reset"].freeze #: Array[String]
@@ -610,7 +611,10 @@ module Herb
         def visit_document_node(node)
           @document = node
 
-          transform_components(node) if declares_slots?(node)
+          if declares_slots?(node)
+            transform_components(node)
+            wrap_keyed_elements(node)
+          end
 
           visit_children_with_paths(node.children)
 
@@ -1388,6 +1392,61 @@ module Herb
           }
         end
 
+        #: (untyped) -> void
+        def wrap_keyed_elements(node)
+          iteration = node.is_a?(Herb::AST::ERBIterationBlockNode) || node.is_a?(Herb::AST::ERBForNode) || node.is_a?(Herb::AST::ERBWhileNode) || node.is_a?(Herb::AST::ERBUntilNode)
+
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            array = node.send(property)
+
+            next unless array.is_a?(Array)
+
+            sole_element = iteration && array.grep(Herb::AST::HTMLElementNode).one?
+
+            array.each_with_index do |child, at|
+              wrap_keyed_elements(child)
+
+              next unless child.is_a?(Herb::AST::HTMLElementNode)
+              next if sole_element
+
+              expression = keyed_element_expression(child)
+
+              array[at] = synthesized_collection(child, expression) if expression
+            end
+          end
+        end
+
+        #: (untyped) -> String?
+        def keyed_element_expression(element)
+          attribute = attributes_for(element).find { |candidate| attribute_name_for(candidate)&.downcase == KEY_ATTRIBUTE }
+
+          return nil unless attribute
+
+          key_expression_for(attribute)
+        end
+
+        #: (untyped, String) -> untyped
+        def synthesized_collection(element, expression)
+          remove_herb_key_attribute(element)
+
+          parsed = Herb.parse("<% [#{expression}].each do %><%# herb:key #{expression} %><% end %>", iteration_nodes: true, herb_directives: true, track_locations: false).value.children.first #: untyped
+
+          parsed.body << element
+
+          parsed
+        end
+
+        #: (untyped) -> void
+        def remove_herb_key_attribute(element)
+          open_tag = element.open_tag
+
+          return unless OPEN_TAG_TYPES.any? { |type| open_tag.is_a?(type) }
+
+          open_tag.children.reject! { |child| attribute_name_for(child)&.downcase == KEY_ATTRIBUTE }
+        end
+
         #: (untyped) -> [Symbol, String?]
         def key_for(node)
           body = collection_body(node)
@@ -1400,14 +1459,14 @@ module Herb
 
           attributes = attributes_for(elements.first)
 
-          ["herb-key", "id"].each do |name|
+          [KEY_ATTRIBUTE, "id"].each do |name|
             attribute = attributes.find { |candidate| attribute_name_for(candidate)&.downcase == name }
             next unless attribute
 
             expression = key_expression_for(attribute)
             next unless expression
 
-            return [name == "herb-key" ? :herb_key : :id, expression]
+            return [name == KEY_ATTRIBUTE ? :herb_key : :id, expression]
           end
 
           [:index, nil]

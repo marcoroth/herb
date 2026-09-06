@@ -59,6 +59,8 @@ module Herb
 
         NAME_ATTRIBUTE: String
 
+        KEY_ATTRIBUTE: String
+
         CAPTURING: Regexp
 
         LISTENER_ATTRIBUTES: Array[String]
@@ -443,6 +445,18 @@ module Herb
 
         # : (String, Annotation, untyped) -> bool
         def attribute_conflict?: (String, Annotation, untyped) -> bool
+
+        # : (untyped) -> void
+        def wrap_keyed_elements: (untyped) -> void
+
+        # : (untyped) -> String?
+        def keyed_element_expression: (untyped) -> String?
+
+        # : (untyped, String) -> untyped
+        def synthesized_collection: (untyped, String) -> untyped
+
+        # : (untyped) -> void
+        def remove_herb_key_attribute: (untyped) -> void
 
         # : (untyped) -> [Symbol, String?]
         def key_for: (untyped) -> [ Symbol, String? ]
