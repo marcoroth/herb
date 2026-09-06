@@ -5,32 +5,32 @@ import { isStateDirective, slotsDirectiveMode } from "../utils/state-directives-
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
-class StateRequiresClientModeVisitor extends BaseRuleVisitor {
+class StateRequiresSlotsVisitor extends BaseRuleVisitor {
   public firstDirective: ERBContentNode | null = null
-  public clientMode = false
+  public declaresSlots = false
 
   visitERBContentNode(node: ERBContentNode): void {
     if (isStateDirective(node) && !this.firstDirective) {
       this.firstDirective = node
     }
 
-    if (slotsDirectiveMode(node) === "client") {
-      this.clientMode = true
+    if (slotsDirectiveMode(node) !== null) {
+      this.declaresSlots = true
     }
   }
 
-  reportServerMode(): void {
-    if (!this.firstDirective || this.clientMode) return
+  reportMissingSlots(): void {
+    if (!this.firstDirective || this.declaresSlots) return
 
     this.addOffense(
-      "`herb:state` declares client-owned state, but this template renders its slots in server mode, so no state can ever change anything. Add `<%# herb:slots client %>` so the branches a state drives are parked for the client.",
+      "`herb:state` declares client-owned state, but this template never opts into slots, so the states compile to nothing. Add `<%# herb:slots client %>` to park branch markup up front, or `<%# herb:slots server %>` to fetch it on demand.",
       this.firstDirective.location,
     )
   }
 }
 
-export class HerbStateRequiresClientModeRule extends ParserRule {
-  static ruleName = "herb-state-requires-client-mode"
+export class HerbStateRequiresSlotsRule extends ParserRule {
+  static ruleName = "herb-state-requires-slots"
   static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
@@ -41,10 +41,10 @@ export class HerbStateRequiresClientModeRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new StateRequiresClientModeVisitor(this.ruleName, context)
+    const visitor = new StateRequiresSlotsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
-    visitor.reportServerMode()
+    visitor.reportMissingSlots()
 
     return visitor.offenses
   }

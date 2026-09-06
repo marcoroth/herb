@@ -40,4 +40,4 @@ The rule flags any tag written in component case, an uppercase start on a name t
 
 ## References
 
-- [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md)
+- [`herb-state-requires-slots`](./herb-state-requires-slots.md)

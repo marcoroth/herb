@@ -114,7 +114,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-state-no-server-writes`](./herb-state-no-server-writes.md) - Disallow server-side writes to declared states.
 - [`herb-state-no-shadowed-states`](./herb-state-no-shadowed-states.md) - Disallow block arguments that shadow a declared `herb:state` name.
 - [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
-- [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md) - Require client mode for `herb:state`.
+- [`herb-state-requires-slots`](./herb-state-requires-slots.md) - Require a `herb:slots` directive for `herb:state`.
 - [`herb-state-directive-syntax`](./herb-state-directive-syntax.md) - Spell the `herb:state` directive in its canonical form.
 - [`herb-state-single-declaration`](./herb-state-single-declaration.md) - One `herb:state` declaration per scope.
 - [`herb-state-valid-actions`](./herb-state-valid-actions.md) - Validate `data-herb-*` action attributes.
