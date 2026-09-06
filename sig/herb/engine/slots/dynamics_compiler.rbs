@@ -302,6 +302,12 @@ module Herb
         def add_block_dynamic: (String) -> void
 
         # : () -> void
+        def scope_part_open: () -> void
+
+        # : (Integer) -> void
+        def scope_part_close: (Integer) -> void
+
+        # : () -> void
         def open_block: () -> void
 
         # : () -> void
