@@ -97,7 +97,7 @@ import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.j
 import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
 import { HerbStateNoShadowedStatesRule } from "./rules/herb-state-no-shadowed-states.js"
 import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
-import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
+import { HerbStateRequiresSlotsRule } from "./rules/herb-state-requires-slots.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
 import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
 import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
@@ -269,7 +269,7 @@ export const rules: RuleClass[] = [
   HerbStateNoServerWritesRule,
   HerbStateNoShadowedStatesRule,
   HerbStateNoUnusedStatesRule,
-  HerbStateRequiresClientModeRule,
+  HerbStateRequiresSlotsRule,
   HerbStateValidActionsRule,
   HerbStateValidBindingsRule,
   HerbScopedStyleNoUnusedSelectorRule,
