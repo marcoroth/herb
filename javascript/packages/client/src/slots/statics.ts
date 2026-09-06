@@ -79,6 +79,10 @@ export class Statics {
     return this.held.get(file)?.fragments.get(key) ?? null
   }
 
+  all(): DocumentFragment[] {
+    return [...this.held.values()].flatMap((parked) => [...parked.fragments.values()])
+  }
+
   keys(file: string): string[] {
     return [...(this.held.get(file)?.fragments.keys() ?? [])]
   }

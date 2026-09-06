@@ -281,6 +281,11 @@ export interface LintContext {
   partialCallers: RenderGraph | undefined
   projectPath: string | undefined
   herb: HerbBackend | undefined
+  parkedRoots: (() => ArrayLike<ParkedRoot>) | undefined
+}
+
+export interface ParkedRoot {
+  querySelectorAll(selectors: string): ArrayLike<unknown>
 }
 
 /**
@@ -298,7 +303,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   partials: undefined,
   partialCallers: undefined,
   projectPath: undefined,
-  herb: undefined
+  herb: undefined,
+  parkedRoots: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
