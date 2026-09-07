@@ -62,25 +62,17 @@ test_flags = $(debug_flags) $(prism_flags) -std=gnu99
 # Shared library build (if needed)
 shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
 
+cc ?= clang
+clang_format ?= clang-format
+clang_tidy ?= clang-tidy
+
+check_prefix ?= $(or $(CHECK_PREFIX),$(shell mise where conda:check 2>/dev/null))
+
+test_cflags = $(test_flags) -I$(check_prefix)/include
+test_ldflags = $(check_prefix)/lib/libcheck.a -lm $(prism_ldflags)
+
 ifeq ($(os),Linux)
-  test_cflags = $(test_flags) -I/usr/include/check
-  test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(prism_ldflags)
-  cc = clang-21
-  clang_format = clang-format-21
-  clang_tidy = clang-tidy-21
-endif
-
-ifeq ($(os),Darwin)
-  llvm_version := 21
-  llvm_prefix ?= $(shell brew --prefix llvm@$(llvm_version))
-  check_prefix ?= $(shell brew --prefix check)
-
-  cc ?= $(llvm_prefix)/bin/clang
-  clang_format ?= $(llvm_prefix)/bin/clang-format
-  clang_tidy ?= $(llvm_prefix)/bin/clang-tidy
-
-  test_cflags = $(test_flags) -I$(check_prefix)/include
-  test_ldflags = -L$(check_prefix)/lib -lcheck -lm $(prism_ldflags)
+  test_ldflags += -lpthread -lrt
 endif
 
 .PHONY: all
@@ -150,7 +142,7 @@ lint:
 
 .PHONY: tidy
 tidy:
-	$(clang_tidy) $(project_files) -- $(flags)
+	$(clang_tidy) $(project_files) -- $(flags) -resource-dir=$(shell $(cc) -print-resource-dir)
 
 .PHONY: clangd_config
 clangd_config:

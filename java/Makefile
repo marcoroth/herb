@@ -2,6 +2,7 @@
 
 JAVA_HOME ?= $(shell /usr/libexec/java_home 2>/dev/null || dirname $$(dirname $$(which java)))
 JNI_INCLUDES = -I$(JAVA_HOME)/include
+CC = clang
 
 os := $(shell uname -s)
 
@@ -9,18 +10,14 @@ ifeq ($(os),Darwin)
   JNI_INCLUDES += -I$(JAVA_HOME)/include/darwin
   JNI_LIB_EXT = dylib
   JNI_LIB_PREFIX = lib
-  LLVM_PATH = $(shell brew --prefix llvm@21)
-  CC = $(LLVM_PATH)/bin/clang
 else ifeq ($(os),Linux)
   JNI_INCLUDES += -I$(JAVA_HOME)/include/linux
   JNI_LIB_EXT = so
   JNI_LIB_PREFIX = lib
-  CC = clang
   LD_UNDEFINED_FLAGS = -Wl,--no-undefined
 else
   JNI_LIB_EXT = dll
   JNI_LIB_PREFIX =
-  CC = clang
 endif
 
 BUILD_DIR = ../build

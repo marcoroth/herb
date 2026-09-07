@@ -2,6 +2,7 @@
 
 set -e  # Exit on error
 
+mise install
 direnv allow
 bundle install
 bundle exec rake templates

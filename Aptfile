@@ -1,7 +1,0 @@
-check
-clang-21
-clang-format-21
-clang-tidy-21
-emscripten
-doxygen
-xvfb

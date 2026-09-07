@@ -8,6 +8,7 @@ If you encounter any issues when following along with this file please don't hes
 
 ### Requirements
 
+- [**mise**](https://mise.jdx.dev): Installs every tool below from `mise.toml`.
 - [**Check**](https://libcheck.github.io/check/): For unit testing.
 - [**Clang 21**](https://clang.llvm.org): The compiler used to build this project.
 - [**Clang Format 21**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
@@ -19,37 +20,15 @@ If you encounter any issues when following along with this file please don't hes
 - [**Doxygen**](https://www.doxygen.nl): For building the C-Reference documentation pages.
 
 
-##### For Linux
+##### Installing the dependencies
 
-Before installing the dependencies, you need to add the LLVM repository and GPG key to get Clang 21:
-
-```bash
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
-sudo apt update
-```
-
-Then install the required packages:
+Every tool above is declared in [`mise.toml`](mise.toml) and installed with [mise](https://mise.jdx.dev):
 
 ```bash
-xargs sudo apt-get install < Aptfile
-```
-or:
-
-```bash
-sudo apt-get install check clang-21 clang-tidy-21 clang-format-21 emscripten doxygen
+mise install
 ```
 
-##### For macOS (using Homebrew)
-
-```bash
-brew bundle
-```
-or:
-
-```bash
-brew install check llvm@21 emscripten doxygen
-```
+Activate mise in your shell (see the [mise docs](https://mise.jdx.dev/getting-started.html)) or prefix commands with `mise exec --` so the tools end up on your `PATH`.
 
 ### Building
 

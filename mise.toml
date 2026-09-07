@@ -1,0 +1,20 @@
+[tools]
+ruby = "4.0.2"
+node = "24.16.0"
+python = "3.14"
+java = "temurin-17"
+rust = "stable"
+emsdk = "5.0.2"
+"conda:clang" = "21.1.8"
+"conda:clangxx" = "21.1.8"
+"conda:clang-tools" = "21.1.8"
+"conda:check" = "0.15.2"
+"conda:doxygen" = "1.18.0"
+"conda:valgrind" = { version = "3.27.1", os = ["linux"] }
+
+[settings]
+experimental = true
+
+[env]
+_.path = { path = ["{{ tools['conda:clang'].path }}/bin", "{{ tools['conda:clangxx'].path }}/bin"], tools = true }
+CHECK_PREFIX = { value = "{{ tools['conda:check'].path }}", tools = true }
