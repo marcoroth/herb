@@ -63,8 +63,8 @@ module Herb
       # : (Integer) -> String
       def broken_summary: (Integer) -> String
 
-      # : () -> Thread
-      def watch_stdin: () -> Thread
+      # : () -> Thread?
+      def watch_stdin: () -> Thread?
 
       # : () -> void
       def announce_first_change: () -> void

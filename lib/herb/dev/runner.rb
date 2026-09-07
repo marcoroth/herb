@@ -261,8 +261,10 @@ module Herb
         fg(", #{broken} #{broken == 1 ? "doesn't" : "don't"} parse", 214)
       end
 
-      #: () -> Thread
+      #: () -> Thread?
       def watch_stdin
+        return nil unless $stdin.tty?
+
         Thread.new do
           $stdin.gets(nil)
           Thread.main.raise(Interrupt)
