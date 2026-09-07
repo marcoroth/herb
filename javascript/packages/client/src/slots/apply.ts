@@ -1,4 +1,5 @@
 import { attributeValue } from "../markup/fragments"
+import { itemStaticsKey } from "../markup/markers"
 import { report as reportDiagnostic } from "../shared/report"
 
 import type { Slots } from "./slots"
@@ -85,6 +86,10 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
         ) {
           const parked = parkBranchStatics(slots, payload, slot, value as Branched)
 
+          if (parked) {
+            slots.announceBranchMaterial(slot)
+          }
+
           if (value.branch === slot.branch) {
             applySlots(slots, payload, owner(slot), value.slots, report, mode)
           } else if (value.branch !== null) {
@@ -92,10 +97,6 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
 
             shown.set(value.branch, { ...(shown.get(value.branch) ?? {}), ...leaves(value.slots) })
             slot.shown = shown
-          }
-
-          if (parked) {
-            slots.announceBranchMaterial(slot)
           }
         }
 
@@ -234,7 +235,20 @@ function applyBranch(slots: Slots, payload: Payload, slot: Slot, value: Branched
     }
   }
 
+function parkItemStatics(slots: Slots, payload: Payload, slot: Slot, value: Collected): void {
+    if (!value.statics) {
+      return
+    }
+
+    slots.holdStatics(
+      { file: payload.template, version: payload.version },
+      { [itemStaticsKey(slot.index)]: value.statics },
+    )
+  }
+
 function applyItems(slots: Slots, payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
+    parkItemStatics(slots, payload, slot, value)
+
     const wanted = value.order ?? Object.keys(value.items)
     const unbuilt = slots.reconcileItems(slot, wanted, mode)
 

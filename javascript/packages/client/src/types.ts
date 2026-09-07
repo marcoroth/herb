@@ -228,6 +228,7 @@ export interface Branched {
 export interface Collected {
   items: PayloadItems
   order?: string[]
+  statics?: string
 }
 
 export interface KeyedValue {

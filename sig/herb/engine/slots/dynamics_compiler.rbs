@@ -278,6 +278,15 @@ module Herb
         # : (Integer, Integer) -> String?
         def payload_statics: (Integer, Integer) -> String?
 
+        # : () -> bool
+        def server_mode?: () -> bool
+
+        # : (Integer, Integer) -> bool
+        def withheld?: (Integer, Integer) -> bool
+
+        # : (Integer) -> String?
+        def item_statics: (Integer) -> String?
+
         # : () -> Hash[String, String]
         def branch_statics: () -> Hash[String, String]
 

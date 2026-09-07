@@ -299,6 +299,38 @@ module Engine
 
         assert_equal page_visitor.deferred_entries, compiler.slot_visitor.deferred_entries
       end
+
+      ASYNC_COLLECTION = <<~ERB
+        <%# herb:slots client %>
+        <Async>
+          <ul>
+            <% @rows.each do |row| %>
+              <li herb-key="<%= row %>"><%= row %></li>
+            <% end %>
+          </ul>
+          <Fallback><p class="pulse">rows loading</p></Fallback>
+        </Async>
+      ERB
+
+      test "steering a deferred block ships a collection's item statics along" do
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(ASYNC_COLLECTION, filename: "app/views/test.html.erb")
+
+        view = OverridableView.new({ "app/views/test.html.erb" => { "_herb_block_0" => true } })
+        view.instance_variable_set(:@rows, ["Europe", "Asia"])
+        values = JSON.parse(JSON.generate(view.instance_eval(compiler.src)))
+
+        assert_snapshot_matches(JSON.pretty_generate(values), ASYNC_COLLECTION, { probe: "steered collection values" })
+      end
+
+      test "an unsteered deferred block ships no item statics" do
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(ASYNC_COLLECTION, filename: "app/views/test.html.erb")
+
+        view = OverridableView.new(nil)
+        view.instance_variable_set(:@rows, ["Europe", "Asia"])
+        values = JSON.parse(JSON.generate(view.instance_eval(compiler.src)))
+
+        refute values["slots"]["0"].key?("statics")
+      end
     end
   end
 end
