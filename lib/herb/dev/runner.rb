@@ -58,7 +58,7 @@ module Herb
         @first_change = true
         @broken_files = Set.new
 
-        websocket.on_welcome { pipeline.broken_files }
+        websocket.on_welcome { pipeline.broken_entries }
 
         websocket.on_client do |event, count|
           announce_first_change
@@ -70,10 +70,7 @@ module Herb
           pipeline.handle_event(event)
         end
 
-        index_files(watcher)
-
-        @broken_files = watcher.broken_files.dup
-        pipeline.remember_broken(watcher.broken_files)
+        @broken_files = Set.new(index_files(watcher, pipeline))
 
         websocket.start
 
@@ -243,15 +240,17 @@ module Herb
         end
       end
 
-      #: (Watcher) -> void
-      def index_files(watcher)
+      #: (Watcher, Pipeline) -> Array[String]
+      def index_files(watcher, pipeline)
         puts "  #{fg("Indexing files...", 241)}" if interactive?
 
         count = watcher.index(@path)
-        broken = watcher.broken_files.size
+        broken = pipeline.remember_broken(watcher.sources)
 
         terminal("\e[1A\e[2K")
-        puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{pluralize(count, "template")} indexed", 250)}#{broken_summary(broken)}"
+        puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{pluralize(count, "template")} indexed", 250)}#{broken_summary(broken.size)}"
+
+        broken
       end
 
       #: (Integer) -> String

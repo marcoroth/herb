@@ -34,7 +34,7 @@ module Herb
         @accept_thread = nil
         @entry = nil
         @on_client = nil #: (^(Symbol, Integer) -> void)?
-        @on_welcome = nil #: (^() -> Array[String])?
+        @on_welcome = nil #: (^() -> Array[Hash[Symbol, untyped]])?
       end
 
       #: () -> void
@@ -95,7 +95,7 @@ module Herb
         @on_client = block
       end
 
-      #: () { () -> Array[String] } -> void
+      #: () { () -> Array[Hash[Symbol, untyped]] } -> void
       def on_welcome(&block)
         @on_welcome = block
       end
@@ -173,8 +173,8 @@ module Herb
 
       private
 
-      #: () -> Array[String]
-      def broken_files
+      #: () -> Array[Hash[Symbol, untyped]]
+      def broken_entries
         @on_welcome&.call || []
       rescue StandardError
         []
@@ -217,7 +217,7 @@ module Herb
 
         welcome = WebSocket::Frame::Outgoing::Server.new(
           version: handshake.version,
-          data: JSON.generate(Protocol.welcome(project: @project_path, broken_files: broken_files)),
+          data: JSON.generate(Protocol.welcome(project: @project_path, broken_files: broken_entries)),
           type: :text
         )
 

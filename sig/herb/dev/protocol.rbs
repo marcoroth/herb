@@ -32,6 +32,12 @@ module Herb
       # : (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
       def self.error: (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
 
+      # : (String, Array[untyped]) -> Array[Hash[Symbol, untyped]]
+      def self.error_entries: (String, Array[untyped]) -> Array[Hash[Symbol, untyped]]
+
+      # : (file: String, ?source: String?, ?errors: Array[untyped]?, ?diagnostics: Array[untyped]?) -> Hash[Symbol, untyped]
+      def self.broken: (file: String, ?source: String?, ?errors: Array[untyped]?, ?diagnostics: Array[untyped]?) -> Hash[Symbol, untyped]
+
       # : (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]], Array[Herb::Diff::Operation]) -> Hash[String, untyped]?
       def self.remap: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]], Array[Herb::Diff::Operation]) -> Hash[String, untyped]?
 

@@ -32,6 +32,7 @@ module Herb
         @state_manifests = {} #: Hash[String, untyped]
         @statics = {} #: Hash[String, Hash[String, String]?]
         @file_state = {} #: Hash[String, Symbol]
+        @broken = {} #: Hash[String, Hash[Symbol, untyped]]
         @on_classified = nil #: untyped
       end
 
@@ -40,14 +41,28 @@ module Herb
         @on_classified = block
       end
 
-      #: (Enumerable[String]) -> void
-      def remember_broken(files)
-        files.each { |file| @file_state[file] = :parse_error }
+      #: (Hash[String, String]) -> Array[String]
+      def remember_broken(sources)
+        sources.each do |file, source|
+          errors = Herb.parse(source, strict: true, analyze: true).errors
+
+          next if errors.empty?
+
+          @file_state[file] = :parse_error
+          @broken[file] = Protocol.broken(file: file, source: source, errors: errors)
+        end
+
+        broken_files
       end
 
       #: () -> Array[String]
       def broken_files
-        @file_state.select { |_, state| state == :parse_error }.keys
+        @broken.keys
+      end
+
+      #: () -> Array[Hash[Symbol, untyped]]
+      def broken_entries
+        @broken.values
       end
 
       #: () -> bool
@@ -82,6 +97,7 @@ module Herb
         @state_manifests.delete(file)
         @statics.delete(file)
         @file_state.delete(file)
+        @broken.delete(file)
 
         broadcast(Protocol.schema(file: file, mode: nil, from: from, to: nil)) if was_broken
 
@@ -95,14 +111,12 @@ module Herb
 
       #: (Watcher::Event) -> void
       def handle_changed(event)
-        file = event.relative_path
+        event.relative_path
         classification = @classifier.call(event.previous.to_s, event.current.to_s)
 
         case classification.kind
         when :parse_error
-          @file_state[file] = :parse_error
-
-          broadcast(Protocol.error(file: file, source: event.current.to_s, errors: classification.errors))
+          handle_parse_error(event, classification)
         when :none, :whitespace
           nil
         else
@@ -110,6 +124,17 @@ module Herb
         end
 
         notify(event, classification)
+      end
+
+      #: (Watcher::Event, Classifier::Classification) -> void
+      def handle_parse_error(event, classification)
+        file = event.relative_path
+        source = event.current.to_s
+
+        @file_state[file] = :parse_error
+        @broken[file] = Protocol.broken(file: file, source: source, errors: classification.errors)
+
+        broadcast(Protocol.error(file: file, source: source, errors: classification.errors))
       end
 
       #: (Watcher::Event, Classifier::Classification) -> void
@@ -151,9 +176,7 @@ module Herb
 
       #: (String, Watcher::Event, untyped, Classifier::Classification) -> Hash[Symbol, untyped]
       def schema_for(file, event, compiled, classification)
-        diagnostics = (compiled.diagnostics || []).map { |diagnostic|
-          diagnostic.respond_to?(:to_h) ? diagnostic.to_h : diagnostic
-        }
+        diagnostics = diagnostics_of(compiled)
 
         Protocol.schema(
           file: file,
@@ -225,7 +248,26 @@ module Herb
         @slot_entries[file] = compiled.slot_entries
         @state_manifests[file] = states_of(compiled)
         @statics[file] = compiled.statics
-        @file_state[file] = (compiled.diagnostics || []).empty? ? :ok : :diagnostics
+
+        record_diagnostics(file, diagnostics_of(compiled))
+      end
+
+      #: (String, Array[Hash[Symbol, untyped]]) -> void
+      def record_diagnostics(file, diagnostics)
+        if diagnostics.empty?
+          @file_state[file] = :ok
+          @broken.delete(file)
+        else
+          @file_state[file] = :diagnostics
+          @broken[file] = Protocol.broken(file: file, diagnostics: diagnostics)
+        end
+      end
+
+      #: (untyped) -> Array[Hash[Symbol, untyped]]
+      def diagnostics_of(compiled)
+        (compiled.diagnostics || []).map { |diagnostic|
+          diagnostic.respond_to?(:to_h) ? diagnostic.to_h : diagnostic
+        }
       end
 
       #: (Watcher::Event, Classifier::Classification) -> void
@@ -237,6 +279,7 @@ module Herb
         end
 
         @file_state[file] = :ok
+        @broken.delete(file)
 
         message = Protocol.invalidate(
           file: file,

@@ -41,8 +41,8 @@ module Herb
       # : () { (Symbol, Integer) -> void } -> void
       def on_client: () { (Symbol, Integer) -> void } -> void
 
-      # : () { () -> Array[String] } -> void
-      def on_welcome: () { () -> Array[String] } -> void
+      # : () { () -> Array[Hash[Symbol, untyped]] } -> void
+      def on_welcome: () { () -> Array[Hash[Symbol, untyped]] } -> void
 
       # : (Client) -> void
       def register: (Client) -> void
@@ -64,8 +64,8 @@ module Herb
 
       private
 
-      # : () -> Array[String]
-      def broken_files: () -> Array[String]
+      # : () -> Array[Hash[Symbol, untyped]]
+      def broken_entries: () -> Array[Hash[Symbol, untyped]]
 
       # : (untyped) -> void
       def safely_close: (untyped) -> void

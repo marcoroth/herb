@@ -4,10 +4,10 @@ import { ConnectionDot } from "./connection-dot"
 import { MismatchAlert } from "./mismatch-alert"
 import { UnavailableAlert } from "./unavailable-alert"
 
-import { diagnosticsFromError, diagnosticFromBrokenTemplate } from "./diagnostics"
+import { diagnosticsFromError, diagnosticsFromBrokenFile } from "./diagnostics"
 import { heldRuntime } from "./runtime-handle"
 
-import type { AssetMessage, DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
+import type { AssetMessage, BrokenFile, DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
 
 const DEFAULT_PORT = 8592
 const UNAVAILABLE_HINT_AFTER_ATTEMPTS = 3
@@ -168,13 +168,13 @@ export class HerbClient {
     }
   }
 
-  private reportBroken(files: string[]): void {
-    const diagnostics = this.getDiagnostics()
+  private reportBroken(files: BrokenFile[]): void {
+    const sink = this.getDiagnostics()
 
-    if (!diagnostics) return
+    if (!sink) return
 
-    for (const file of files) {
-      diagnostics.report(file, [diagnosticFromBrokenTemplate(file)])
+    for (const broken of files) {
+      sink.report(broken.file, diagnosticsFromBrokenFile(broken))
     }
   }
 

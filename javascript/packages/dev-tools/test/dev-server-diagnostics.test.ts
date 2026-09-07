@@ -2,12 +2,12 @@ import { DEV_SERVER_ORIGIN } from "../src/dev-server/diagnostics"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { stripAnsiColors } from "@herb-tools/highlighter"
-import { diagnosticsFromError, diagnosticFromBrokenTemplate } from "../src/dev-server/diagnostics"
+import { diagnosticsFromError, diagnosticsFromBrokenFile } from "../src/dev-server/diagnostics"
 
 import { HerbClient } from "../src/dev-server/client"
 import { RuntimePanel } from "../src/runtime/panel"
 
-import type { ErrorMessage, WelcomeMessage } from "../src/dev-server/types"
+import type { BrokenFile, ErrorMessage, WelcomeMessage } from "../src/dev-server/types"
 
 let panels: RuntimePanel[] = []
 
@@ -160,7 +160,7 @@ describe("templates the server says were already broken", () => {
     }
   }
 
-  function welcome(broken?: string[]): WelcomeMessage {
+  function welcome(broken?: BrokenFile[]): WelcomeMessage {
     return { type: "welcome", project: "/app", ...(broken === undefined ? {} : { broken_files: broken }) } as WelcomeMessage
   }
 
@@ -168,7 +168,9 @@ describe("templates the server says were already broken", () => {
     const { reported, sink } = collectingSink()
     const client = new HerbClient({ diagnostics: () => sink })
 
-    client["handleWelcome"](welcome(["a.html.erb", "b.html.erb"]))
+    const errors = errorMessage().errors
+
+    client["handleWelcome"](welcome([{ file: "a.html.erb", errors }, { file: "b.html.erb", errors }]))
 
     expect(reported).toEqual([["a.html.erb", 1], ["b.html.erb", 1]])
   })
@@ -191,20 +193,33 @@ describe("templates the server says were already broken", () => {
     expect(reported).toEqual([])
   })
 
-  test("names the dev server as the origin, so a clearing schema takes it away", () => {
-    const diagnostic = diagnosticFromBrokenTemplate("a.html.erb")
+  test("turns a parse failure into the same diagnostics a live error would", () => {
+    const message = errorMessage()
+    const broken = { file: message.file, source: "<div>\n  <form>\n</div>\n", errors: message.errors }
 
-    expect(diagnostic.origin).toBe(DEV_SERVER_ORIGIN)
-    expect(diagnostic.overlay).toBe("dismissible")
-    expect(diagnostic.template).toBe("a.html.erb")
+    expect(diagnosticsFromBrokenFile(broken)).toEqual(diagnosticsFromError({ ...message, source: broken.source }))
   })
 
-  test("opens a card naming the template that did not parse", () => {
+  test("passes a compiled template's diagnostics through untouched", () => {
+    const diagnostics = [{ template: "b.html.erb", message: "slot outside a region", severity: "error" as const }]
+
+    expect(diagnosticsFromBrokenFile({ file: "b.html.erb", diagnostics })).toEqual(diagnostics)
+  })
+
+  test("reports nothing for an entry carrying neither errors nor diagnostics", () => {
+    expect(diagnosticsFromBrokenFile({ file: "a.html.erb" })).toEqual([])
+  })
+
+  test("opens a card with the real error, not a placeholder", () => {
     const panel = createPanel()
+    const message = errorMessage()
 
-    panel.report([diagnosticFromBrokenTemplate("app/views/posts/index.html.erb")])
+    panel.report(diagnosticsFromBrokenFile({ file: message.file, source: "<div>\n  <form>\n</div>\n", errors: message.errors }))
 
-    expect(document.querySelector(".herb-dev-tools-card")?.textContent).toContain("app/views/posts/index.html.erb")
+    const card = document.querySelector(".herb-dev-tools-card")?.textContent
+
+    expect(card).toContain("missing-closing-tag")
+    expect(card).toContain("has no matching closing tag")
 
     panel.clear(DEV_SERVER_ORIGIN)
 

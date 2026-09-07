@@ -42,13 +42,14 @@ module Herb
 
       attr_reader watch_paths: Array[String]
 
-      attr_reader broken_files: Set[String]
-
       # : (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
       def initialize: (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
 
       # : (?String) -> Integer
       def index: (?String) -> Integer
+
+      # : () -> Hash[String, String]
+      def sources: () -> Hash[String, String]
 
       # : () -> void
       def run: () -> void

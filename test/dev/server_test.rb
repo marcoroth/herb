@@ -38,20 +38,20 @@ module Dev
 
     test "the welcome payload reports what the server was told is broken" do
       server = build_server
-      server.on_welcome { ["a.html.erb"] }
+      server.on_welcome { [{ file: "a.html.erb" }] }
 
-      assert_equal ["a.html.erb"], server.send(:broken_files)
+      assert_equal [{ file: "a.html.erb" }], server.send(:broken_entries)
     end
 
     test "a server nobody told about broken templates welcomes with an empty list" do
-      assert_equal [], build_server.send(:broken_files)
+      assert_equal [], build_server.send(:broken_entries)
     end
 
     test "a welcome hook that raises still lets the client connect" do
       server = build_server
       server.on_welcome { raise "boom" }
 
-      assert_equal [], server.send(:broken_files)
+      assert_equal [], server.send(:broken_entries)
     end
 
     test "a hello frame sets the client's role" do
