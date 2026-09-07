@@ -302,6 +302,9 @@ module Herb
         # : (untyped) -> void
         def finish: (untyped) -> void
 
+        # : () -> void
+        def follow_replacements: () -> void
+
         # : (untyped) -> void
         def deliver_manifest: (untyped) -> void
 

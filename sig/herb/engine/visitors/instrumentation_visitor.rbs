@@ -69,6 +69,9 @@ module Herb
       # : (Herb::AST::Node) -> Array[Herb::AST::Node]
       def rewrite_node: (Herb::AST::Node) -> Array[Herb::AST::Node]
 
+      # : (Herb::AST::Node, Herb::AST::Node) -> Herb::AST::Node
+      def replacing: (Herb::AST::Node, Herb::AST::Node) -> Herb::AST::Node
+
       def framed?: (untyped node) -> untyped
 
       def assignment?: (untyped node) -> untyped

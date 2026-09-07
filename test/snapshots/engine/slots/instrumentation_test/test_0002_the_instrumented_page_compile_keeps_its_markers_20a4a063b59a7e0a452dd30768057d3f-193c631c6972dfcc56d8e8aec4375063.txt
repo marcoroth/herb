@@ -1,0 +1,25 @@
+---
+source: "Engine::Slots::InstrumentationTest#test_0002_the instrumented page compile keeps its markers"
+input: |2-
+<%# herb:slots client %>
+<h2><%= @title %></h2>
+<p class="<%= @tone %>">
+  <%= @summary %>
+</p>
+<% if @open %>
+  <span><%= @detail %></span>
+<% end %>
+options: {visitors: "slots, instrumentation"}
+---
+_buf = ::String.new; @_herb_covered ||= {} ; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1; _buf << '<!--herb-region:app/views/test.html.erb:1e89ea84:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '-->'.freeze; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin; _buf << '
+<h2 data-herb-slot="0:child">'.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 2, 4, nil, end_line: 2, end_column: 17) { @title }).to_s; _buf << '</h2>
+<p class="'.freeze; _buf << ::Herb::Engine.attr((@tone)); _buf << '" data-herb-slot="1:attribute:class">
+  <!--herb-slot:2-->'.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 4, 2, nil, end_line: 4, end_column: 17) { @summary }).to_s; _buf << '<!--/herb-slot:2-->
+</p>
+'.freeze; ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 6, 0, nil, end_line: 8, end_column: 9) ; _buf << '<!--herb-slot:3:conditional-->'.freeze; if @open; _buf << '<!--herb-branch:3:0-->
+  <span data-herb-slot="4:child">'.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 7, 8, nil, end_line: 7, end_column: 22) { @detail }).to_s; _buf << '</span>
+'.freeze; end ; _buf << '<!--/herb-slot:3-->'.freeze; ::Herb::Engine::Runtime::Session.leave; _buf << '
+'.freeze; ensure; ::Herb::Engine::Runtime::Session.leave_render; end ; _buf << '<!--/herb-region:app/views/test.html.erb-->'.freeze; unless @_herb_covered["app/views/test.html.erb:3:0"]; _buf << '<template data-herb-region="app/views/test.html.erb:1e89ea84">'.freeze; unless @_herb_covered["app/views/test.html.erb:3:0"]; _buf << '<!--herb-branch:3:0-->
+  <span data-herb-slot="4:child"></span>
+'.freeze; @_herb_covered["app/views/test.html.erb:3:0"] = true ; end; _buf << '</template>'.freeze; end;
+_buf.to_s

@@ -640,6 +640,7 @@ module Herb
 
           return wrap_region(node) if @degraded
 
+          follow_replacements
           insert_markers(node)
           wrap_displaced
 
@@ -648,6 +649,21 @@ module Herb
           wrap_region(node)
           append_statics(node)
           deliver_manifest(node)
+        end
+
+        #: () -> void
+        def follow_replacements
+          replacements = context.replacements
+
+          return unless replacements.any?
+
+          replacements.each do |replacement, original|
+            annotations = @standing[original]
+            @standing[replacement] = annotations if annotations
+
+            index = @indices[original]
+            @indices[replacement] = index if index
+          end
         end
 
         #: (untyped) -> void
