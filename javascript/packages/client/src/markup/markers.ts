@@ -2,7 +2,7 @@ import type { Seeds, SlotType, StaticsIdentity } from "../types"
 
 const REGION_OPEN = /^herb-region:(.*):([0-9a-f]+):(\d+)$/
 const REGION_CLOSE = /^\/herb-region:(.*)$/
-const SLOT_OPEN = /^herb-slot:(\d+)(?::([a-z_]+))?$/
+const SLOT_OPEN = /^herb-slot:(\d+)(?::([a-z_]+)(?::([\s\S]*))?)?$/
 const SLOT_CLOSE = /^\/herb-slot:(\d+)$/
 const ITEM_OPEN = /^herb-item:(\d+):([\s\S]*)$/
 const ITEM_CLOSE = /^\/herb-item:(\d+)$/
@@ -35,6 +35,7 @@ export interface SlotOpenMarker {
   kind: "slot-open"
   index: number
   type: SlotType
+  key?: string
 }
 
 export interface SlotCloseMarker {
@@ -94,7 +95,13 @@ export function parseMarker(data: string): MarkerData | null {
   const slotOpen = SLOT_OPEN.exec(data)
 
   if (slotOpen) {
-    return { kind: "slot-open", index: Number(slotOpen[1]), type: (slotOpen[2] as SlotType) ?? DEFAULT_SLOT_TYPE }
+    const marker: SlotOpenMarker = { kind: "slot-open", index: Number(slotOpen[1]), type: (slotOpen[2] as SlotType) ?? DEFAULT_SLOT_TYPE }
+
+    if (slotOpen[3] !== undefined) {
+      marker.key = slotOpen[3]
+    }
+
+    return marker
   }
 
   const slotClose = SLOT_CLOSE.exec(data)
@@ -170,6 +177,10 @@ export function regionCloseMarker(file: string): string {
 
 export function itemMarker(index: number, key: string): string {
   return `herb-item:${index}:${key}`
+}
+
+export function keyedSlotMarker(index: number, key: string): string {
+  return `herb-slot:${index}:keyed:${key}`
 }
 
 export function slotCloseMarker(index: number): string {

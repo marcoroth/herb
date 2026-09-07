@@ -176,6 +176,8 @@ module Herb
           @states = StateCompiler.new(self)
           @collection_nodes = [] #: Array[untyped]
           @collection_body_depths = [] #: Array[Integer]
+          keyed_elements = {} #: Hash[untyped, String]
+          @keyed_elements = keyed_elements.compare_by_identity
           @container_depth = 0
 
           @in_attribute = false
@@ -613,7 +615,7 @@ module Herb
 
           if declares_slots?(node)
             transform_components(node)
-            wrap_keyed_elements(node)
+            detect_keyed_elements(node)
           end
 
           visit_children_with_paths(node.children)
@@ -680,6 +682,8 @@ module Herb
         end
 
         def visit_html_element_node(node)
+          record_slot(node, :keyed) if @keyed_elements.key?(node)
+
           tag_name = node.tag_name&.value&.downcase.to_s
           raw_text = Herb::HTML::Util.raw_text_element?(tag_name)
           rcdata = Herb::HTML::Util.rcdata_element?(tag_name)
@@ -1121,7 +1125,7 @@ module Herb
           return if type == :raw_text && @rcdata_interpolated_depth.positive?
           return refuse_mixed_rcdata(node) if type == :raw_text && @rcdata_mixed_depth.positive?
 
-          key_source, key_expression = type == :collection ? key_for(node) : [nil, nil]
+          key_source, key_expression = keys_for(node, type)
 
           annotation = Annotation.new(
             node: node,
@@ -1393,7 +1397,7 @@ module Herb
         end
 
         #: (untyped) -> void
-        def wrap_keyed_elements(node)
+        def detect_keyed_elements(node)
           iteration = node.is_a?(Herb::AST::ERBIterationBlockNode) || node.is_a?(Herb::AST::ERBForNode) || node.is_a?(Herb::AST::ERBWhileNode) || node.is_a?(Herb::AST::ERBUntilNode)
 
           BRANCH_BODY_PROPERTIES.each do |property|
@@ -1405,15 +1409,19 @@ module Herb
 
             sole_element = iteration && array.grep(Herb::AST::HTMLElementNode).one?
 
-            array.each_with_index do |child, at|
-              wrap_keyed_elements(child)
+            array.each do |child|
+              detect_keyed_elements(child)
 
               next unless child.is_a?(Herb::AST::HTMLElementNode)
               next if sole_element
 
               expression = keyed_element_expression(child)
 
-              array[at] = synthesized_collection(child, expression) if expression
+              next unless expression
+
+              remove_herb_key_attribute(child)
+
+              @keyed_elements[child] = expression
             end
           end
         end
@@ -1427,24 +1435,27 @@ module Herb
           key_expression_for(attribute)
         end
 
-        #: (untyped, String) -> untyped
-        def synthesized_collection(element, expression)
-          remove_herb_key_attribute(element)
-
-          parsed = Herb.parse("<% [#{expression}].each do %><%# herb:key #{expression} %><% end %>", iteration_nodes: true, herb_directives: true, track_locations: false).value.children.first #: untyped
-
-          parsed.body << element
-
-          parsed
-        end
-
         #: (untyped) -> void
         def remove_herb_key_attribute(element)
           open_tag = element.open_tag
 
           return unless OPEN_TAG_TYPES.any? { |type| open_tag.is_a?(type) }
 
-          open_tag.children.reject! { |child| attribute_name_for(child)&.downcase == KEY_ATTRIBUTE }
+          children = open_tag.children
+          at = children.index { |child| attribute_name_for(child)&.downcase == KEY_ATTRIBUTE }
+
+          return unless at
+
+          children.delete_at(at)
+          children.delete_at(at - 1) if at.positive? && children[at - 1].is_a?(Herb::AST::WhitespaceNode)
+        end
+
+        #: (untyped, Symbol) -> [Symbol?, String?]
+        def keys_for(node, type)
+          return key_for(node) if type == :collection
+          return [:herb_key, @keyed_elements.fetch(node)] if type == :keyed
+
+          [nil, nil]
         end
 
         #: (untyped) -> [Symbol, String?]
@@ -1616,10 +1627,24 @@ module Herb
               mark_branches(child, slot_index)
 
               if slot_index && slot_index != anchored
-                array.insert(index, comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)))
-                array.insert(index + 2, comment_node(@markers.slot_close(slot_index)))
+                if @slots[slot_index].type == :keyed
+                  park_keyed(slot_index, child)
 
-                index += 3
+                  array.insert(
+                    index,
+                    text_node(@markers.keyed_open_prefix(slot_index)),
+                    erb_code_node("#{@bufvar} << ::Herb::Engine.raw((#{@slots[slot_index].key_expression}).to_s)"),
+                    text_node(@markers.keyed_open_suffix)
+                  )
+                  array.insert(index + 4, comment_node(@markers.slot_close(slot_index)))
+
+                  index += 5
+                else
+                  array.insert(index, comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)))
+                  array.insert(index + 2, comment_node(@markers.slot_close(slot_index)))
+
+                  index += 3
+                end
               else
                 index += 1
               end
@@ -1809,6 +1834,17 @@ module Herb
           end
 
           segments.size > 1 ? segments : nil
+        end
+
+        #: (Integer, untyped) -> void
+        def park_keyed(slot_index, element)
+          statics = @statics
+          return unless statics
+
+          markup = Statics.new(@standing).markup([element.open_tag, *element.body, element.close_tag].compact)
+          return unless markup
+
+          statics[@markers.item_statics_key(slot_index)] = "#{@markers.branch(slot_index, Markers::ITEM_STATICS)}#{markup}"
         end
 
         #: (untyped, untyped) -> Array[untyped]?

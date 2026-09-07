@@ -5,6 +5,7 @@ const COLORS: Partial<Record<SlotOperation, string>> = {
   value: '#3b82f6',
   attribute: '#a855f7',
   branch: '#f59e0b',
+  keyed: '#ec4899',
   'item-added': '#10b981',
   'item-removed': '#ef4444',
   'item-updated': '#0ea5e9',

@@ -160,10 +160,21 @@ module Herb
           def visit_html_element_node(node)
             index = @slot_visitor.index_for(node)
             previous = @current_rcdata
+            slot = index ? @slot_visitor.slots[index] : nil #: untyped
 
-            @current_rcdata = node if index && @slot_visitor.slots[index]&.type == :raw_text_interpolation
+            @current_rcdata = node if slot&.type == :raw_text_interpolation
 
-            super
+            if slot&.type == :keyed
+              @tokens << [:scope, "", nil, [:open_keyed, index, slot.key_expression]]
+
+              begin
+                super
+              ensure
+                @tokens << [:scope, "", nil, [:close_keyed, index]]
+              end
+            else
+              super
+            end
           ensure
             @current_rcdata = previous
           end
@@ -737,6 +748,21 @@ module Herb
         #: (Integer) -> void
         def scope_close_collection(index)
           @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index}, order: #{ITEMS_BUFFER}#{index}.keys };"
+        end
+
+        #: (Integer, String) -> void
+        def scope_open_keyed(index, key)
+          @src << "; #{KEY_BUFFER}#{index} = (#{key}).to_s"
+          @src << "; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+
+          @scopes.push(index)
+        end
+
+        #: (Integer) -> void
+        def scope_close_keyed(index)
+          leave_scope(index)
+
+          @src << "; #{current_scope}[#{index}] = { key: #{KEY_BUFFER}#{index}, slots: #{SCOPE_BUFFER}#{index} };"
         end
 
         #: (Integer) -> void

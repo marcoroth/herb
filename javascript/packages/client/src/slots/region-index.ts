@@ -347,13 +347,25 @@ export class RegionIndex {
 
         if (slot && slot.anchor.kind === "range" && slot.anchor.start === comment) {
           state.openSlots.push({ index: slot.index, slot })
+
+          if (slot.type === "keyed") {
+            const held = slot.items.values().next().value as Item | undefined
+
+            if (held) {
+              state.openItems.push({ slot: slot.index, item: held })
+            }
+          }
         }
 
         break
       }
 
       case "slot-close": {
-        popMatching(state.openSlots, (candidate) => candidate.index === marker.index)
+        const open = popMatching(state.openSlots, (candidate) => candidate.index === marker.index)
+
+        if (open?.slot.type === "keyed") {
+          popMatching(state.openItems, (candidate) => candidate.slot === marker.index)
+        }
 
         break
       }
@@ -440,6 +452,7 @@ export class RegionIndex {
       attribute: null,
       anchor: { kind: "range", start: comment, end: comment },
       items: new Map(),
+      key: marker.key ?? null,
       branch: null,
       parent: null,
       children: [],
@@ -453,6 +466,14 @@ export class RegionIndex {
     state.openSlots.push({ index: slot.index, slot })
 
     this.attach(region, slot, result, enclosing, item)
+
+    if (slot.type === "keyed") {
+      const held: Item = { key: slot.key ?? "", start: comment, end: comment, slots: new Map(), collection: slot }
+
+      slot.items.set(held.key, held)
+
+      state.openItems.push({ slot: slot.index, item: held })
+    }
   }
 
   private closeSlot(marker: SlotCloseMarker, comment: Comment, state: ParseState): void {
@@ -460,6 +481,14 @@ export class RegionIndex {
 
     if (open?.slot.anchor.kind === "range") {
       open.slot.anchor.end = comment
+    }
+
+    if (open?.slot.type === "keyed") {
+      const held = popMatching(state.openItems, (candidate) => candidate.slot === marker.index)
+
+      if (held) {
+        held.item.end = comment
+      }
     }
   }
 
@@ -576,6 +605,7 @@ export class RegionIndex {
         index: entry.index,
         type: entry.type,
         attribute: entry.attribute,
+        key: null,
         anchor: { kind: anchorKind(entry.type), element },
         items: new Map(),
         branch: null,

@@ -302,6 +302,12 @@ module Herb
         # : (Integer) -> void
         def scope_close_collection: (Integer) -> void
 
+        # : (Integer, String) -> void
+        def scope_open_keyed: (Integer, String) -> void
+
+        # : (Integer) -> void
+        def scope_close_keyed: (Integer) -> void
+
         # : (Integer) -> void
         def leave_scope: (Integer) -> void
 

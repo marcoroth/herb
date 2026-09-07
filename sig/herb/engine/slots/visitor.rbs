@@ -447,16 +447,16 @@ module Herb
         def attribute_conflict?: (String, Annotation, untyped) -> bool
 
         # : (untyped) -> void
-        def wrap_keyed_elements: (untyped) -> void
+        def detect_keyed_elements: (untyped) -> void
 
         # : (untyped) -> String?
         def keyed_element_expression: (untyped) -> String?
 
-        # : (untyped, String) -> untyped
-        def synthesized_collection: (untyped, String) -> untyped
-
         # : (untyped) -> void
         def remove_herb_key_attribute: (untyped) -> void
+
+        # : (untyped, Symbol) -> [Symbol?, String?]
+        def keys_for: (untyped, Symbol) -> [ Symbol?, String? ]
 
         # : (untyped) -> [Symbol, String?]
         def key_for: (untyped) -> [ Symbol, String? ]
@@ -524,6 +524,9 @@ module Herb
 
         # : (untyped) -> Array[String]?
         def attribute_segments: (untyped) -> Array[String]?
+
+        # : (Integer, untyped) -> void
+        def park_keyed: (Integer, untyped) -> void
 
         # : (untyped, untyped) -> Array[untyped]?
         def park_item: (untyped, untyped) -> Array[untyped]?

@@ -428,6 +428,15 @@ module Engine
         assert_equal "is-calm", dynamics(source, on: true, tone: "calm").fetch(0)
         assert_equal "off", dynamics(source, on: false).fetch(0)
       end
+
+      test "a keyed element groups its key with the slots inside it" do
+        source = %(<%# herb:slots client %>\n<div herb-key="<%= @track %>:<%= @number %>" data-playing="<%= @playing %>">beat <%= @number %></div>)
+
+        assert_equal(
+          { key: "warehouse:3", slots: { 1 => "true", 2 => "3" } },
+          dynamics(source, track: "warehouse", number: 3, playing: true).fetch(0)
+        )
+      end
     end
   end
 end
