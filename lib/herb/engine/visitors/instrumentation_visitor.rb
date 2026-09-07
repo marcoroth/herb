@@ -143,12 +143,19 @@ module Herb
         if framed?(node)
           [enter_node(node), node, leave_node(node)]
         elsif erb_outputs?(node)
-          [wrapped_output(node)]
+          [replacing(node, wrapped_output(node))]
         elsif erb_statement?(node)
-          [wrapped_statement(node)]
+          [replacing(node, wrapped_statement(node))]
         else
           [node]
         end
+      end
+
+      #: (Herb::AST::Node, Herb::AST::Node) -> Herb::AST::Node
+      def replacing(node, replacement)
+        context.replacements.record(node, replacement)
+
+        replacement
       end
 
       def framed?(node)
