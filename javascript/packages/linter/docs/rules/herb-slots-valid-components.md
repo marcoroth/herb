@@ -10,7 +10,7 @@ Validates the built-in component tags in a template that declares `herb:slots`. 
 
 The engine's slots visitor reports these same problems as compile diagnostics, so they surface in the dev tools once the page runs. This rule reports them in the editor, using the same messages, before the page runs at all, the same arrangement `herb-state-valid-actions` has with the runtime.
 
-The checks mirror the engine. `<Fragment>` takes `delay`, `hold` and `on`, the deferred blocks `<Async>` and `<Lazy>` also take `poll`, and `<Fallback>` takes no attributes yet. A `<Fallback>` counts only as a direct child of its component, a `<Fragment>` cannot sit directly inside a `<Fallback>`, and an unknown capitalized name is reported the way the engine reports it. One engine warning stays engine-only, the one saying a fallback can never appear, since deciding it needs the server-read analysis only the compiler has.
+The checks mirror the engine. `<Fragment>` takes `delay`, `hold` and `on`, the deferred blocks `<Async>` and `<Lazy>` take `delay`, `hold` and `poll`, and `<Fallback>` takes no attributes yet. A `<Fallback>` counts only as a direct child of its component, a `<Fragment>` cannot sit directly inside a `<Fallback>`, and an unknown capitalized name is reported the way the engine reports it. One engine warning stays engine-only, the one saying a fallback can never appear, since deciding it needs the server-read analysis only the compiler has.
 
 Templates without a `herb:slots` directive are left to `herb-component-requires-slots`.
 

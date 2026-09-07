@@ -25,9 +25,10 @@ module Herb
           # : () -> void
           def refuse_unknown_attributes: () -> void
 
-          TIMING_ATTRIBUTES: Array[String]
-
           private
+
+          # : () -> Hash[String, Hash[Symbol, String]]
+          def attribute_definitions: () -> Hash[String, Hash[Symbol, String]]
 
           # : () -> Hash[String, Integer]
           def timing: () -> Hash[String, Integer]

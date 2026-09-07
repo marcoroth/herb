@@ -1,32 +1,20 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { slotsDirectiveMode } from "../utils/state-directives-utils.js"
-import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, getTagName, hasDynamicOutput, getAttributeValueNodes, isHTMLElementNode } from "@herb-tools/core"
+import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, getTagName, hasDynamicOutput, getAttributeValueNodes, isHTMLElementNode, isBuiltInComponent, isComponentTagName, componentAttribute, COMPONENT_DEFINITIONS, DEFERRED_COMPONENTS } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBContentNode, HTMLElementNode, HTMLAttributeNode, Node } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBContentNode, HTMLElementNode, HTMLAttributeNode, Node, BuiltInComponent } from "@herb-tools/core"
 import type * as Nodes from "@herb-tools/core"
 
-const COMPONENT_NAME = /^[A-Z][A-Za-z0-9]*$/
 const WHOLE_NUMBER = /^\d+$/
-
-const BUILT_IN = ["Fragment", "Fallback", "Async", "Lazy"]
-const DEFERRED = ["Async", "Lazy"]
-const TIMING_ATTRIBUTES = ["delay", "hold", "poll"]
-
-const ALLOWED_ATTRIBUTES: Record<string, string[]> = {
-  Fragment: ["delay", "hold", "on"],
-  Async: ["delay", "hold", "on", "poll"],
-  Lazy: ["delay", "hold", "on", "poll"],
-  Fallback: [],
-}
 
 function componentName(node: Node): string | null {
   if (!isHTMLElementNode(node)) return null
 
   const name = getTagName(node)
 
-  if (!name || !COMPONENT_NAME.test(name) || !/[a-z]/.test(name)) return null
+  if (!isComponentTagName(name)) return null
 
   return name
 }
@@ -74,7 +62,7 @@ class SlotsValidComponentsVisitor extends BaseRuleVisitor {
   }
 
   private checkComponent(node: HTMLElementNode, name: string): void {
-    if (!BUILT_IN.includes(name)) {
+    if (!isBuiltInComponent(name)) {
       this.addOffense(
         `\`<${name}>\` is not a component Herb knows.`,
         node.location,
@@ -99,7 +87,7 @@ class SlotsValidComponentsVisitor extends BaseRuleVisitor {
       )
     }
 
-    if (DEFERRED.includes(name) && this.iterationDepth > 0) {
+    if (DEFERRED_COMPONENTS.has(name) && this.iterationDepth > 0) {
       this.addOffense(
         `A \`<${name}>\` sits inside a collection, and a deferred block cannot stand per item yet.`,
         node.location,
@@ -125,8 +113,8 @@ class SlotsValidComponentsVisitor extends BaseRuleVisitor {
     }
   }
 
-  private checkAttributes(node: HTMLElementNode, name: string): void {
-    const allowed = ALLOWED_ATTRIBUTES[name]
+  private checkAttributes(node: HTMLElementNode, name: BuiltInComponent): void {
+    const allowed = COMPONENT_DEFINITIONS[name].attributes.map((attribute) => attribute.name)
     const attributes = this.attributesOf(node)
 
     if (attributes.some((attribute) => !allowed.includes(getAttributeName(attribute) ?? ""))) {
@@ -144,7 +132,7 @@ class SlotsValidComponentsVisitor extends BaseRuleVisitor {
 
       const value = getStaticAttributeValueContent(attribute) ?? ""
 
-      if (TIMING_ATTRIBUTES.includes(attributeName) && !WHOLE_NUMBER.test(value.trim())) {
+      if (componentAttribute(name, attributeName)?.type === "milliseconds" && !WHOLE_NUMBER.test(value.trim())) {
         this.addOffense(
           `\`${attributeName}\` on a \`<${name}>\` takes a whole number of milliseconds.`,
           attribute.location,

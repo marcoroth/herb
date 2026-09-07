@@ -14,13 +14,6 @@ module Herb
         # block nears the viewport.
         #
         class Deferred < Base
-          ATTRIBUTES = (Fragment::ATTRIBUTES + ["poll"]).freeze #: Array[String]
-
-          #: () -> Array[String]
-          def allowed_attributes
-            ATTRIBUTES
-          end
-
           #: () -> Array[untyped]
           def transform
             refuse_unknown_attributes

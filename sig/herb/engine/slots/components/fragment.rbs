@@ -14,11 +14,6 @@ module Herb
         class Fragment < Base
           NAME: String
 
-          ATTRIBUTES: Array[String]
-
-          # : () -> Array[String]
-          def allowed_attributes: () -> Array[String]
-
           # : () -> Array[untyped]
           def transform: () -> Array[untyped]
 
