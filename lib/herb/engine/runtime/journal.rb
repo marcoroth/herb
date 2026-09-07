@@ -125,7 +125,7 @@ module Herb
 
           base = base_of(file)
 
-          Dir.glob("#{base}.*#{EXTENSION}").sort_by { |found| -File.mtime(found).to_f }.filter_map { |found| found[/\.([0-9a-f]+)#{Regexp.escape(EXTENSION)}\z/, 1] }
+          Dir.glob("#{base}.*#{EXTENSION}").sort_by { |found| -File.mtime(found).to_f }.filter_map { |found| found[/\.([0-9a-f]+)#{Regexp.escape(EXTENSION)}\z/o, 1] }
         rescue SystemCallError
           []
         end
@@ -348,7 +348,7 @@ module Herb
 
         #: (Pathname) -> String
         def base_of(path)
-          path.to_s.sub(/\.[0-9a-f]+#{Regexp.escape(EXTENSION)}\z/, "")
+          path.to_s.sub(/\.[0-9a-f]+#{Regexp.escape(EXTENSION)}\z/o, "")
         end
 
         #: (String?) -> String?

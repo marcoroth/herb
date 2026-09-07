@@ -29,6 +29,7 @@ module Herb
         BARE_IDENTIFIER = /\A[a-z_][a-zA-Z0-9_]*\z/ #: Regexp
         BINDABLE_ATTRIBUTES = ["value", "checked", "selected"].freeze #: Array[String]
         BINDABLE_ELEMENTS = ["input", "textarea", "select", "option"].freeze #: Array[String]
+        COLLECTION_SLOT_TYPES = [:collection, :keyed].freeze #: Array[Symbol]
 
         attr_reader :state_presence #: Hash[Integer, untyped]
         attr_reader :state_values #: Hash[Integer, untyped]
@@ -349,11 +350,11 @@ module Herb
           parts = (condition["all"] || condition["any"]).to_a.map { |part| static_condition(part, states) }
 
           if condition.key?("all")
-            return false if parts.any? { |part| part == false }
-            return true if parts.all? { |part| part == true }
+            return false if parts.any?(false)
+            return true if parts.all?(true)
           else
-            return true if parts.any? { |part| part == true }
-            return false if parts.all? { |part| part == false }
+            return true if parts.any?(true)
+            return false if parts.all?(false)
           end
 
           nil
@@ -1215,7 +1216,7 @@ module Herb
 
             slot = @visitor.slots[index]
 
-            next unless [:collection, :keyed].include?(slot.type)
+            next unless COLLECTION_SLOT_TYPES.include?(slot.type)
 
             expression = (slot.type == :keyed ? slot.key_expression : slot.expression).to_s.strip
 

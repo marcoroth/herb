@@ -15,6 +15,10 @@ class VisitorTest < Minitest::Spec
       @visited_nodes << node
       super
     end
+
+    def visited_node_names
+      @visited_nodes.map { |node| node.class.to_s }
+    end
   end
 
   test "visitor" do
@@ -38,7 +42,7 @@ class VisitorTest < Minitest::Spec
     ]
 
     assert result.success?
-    assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
+    assert_equal expected_nodes, visitor.visited_node_names
   end
 
   test "document with nil in child_nodes" do
@@ -54,7 +58,7 @@ class VisitorTest < Minitest::Spec
     ]
 
     assert result.failed?
-    assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
+    assert_equal expected_nodes, visitor.visited_node_names
   end
 
   test "visitor requires and recommends no parser options by default" do

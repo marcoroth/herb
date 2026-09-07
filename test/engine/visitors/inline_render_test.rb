@@ -85,11 +85,11 @@ module Engine
     end
 
     describe "a project that does not keep templates in app/views" do
-      def in_project(&block)
+      def in_project
         root = Dir.mktmpdir("herb_inliner_layout")
 
         begin
-          block.call(root)
+          yield(root)
         ensure
           FileUtils.rm_rf(root)
         end
