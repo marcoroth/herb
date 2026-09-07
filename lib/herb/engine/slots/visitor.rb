@@ -636,11 +636,12 @@ module Herb
 
         #: (untyped) -> void
         def finish(node)
+          follow_replacements
+
           return unless @mark
 
           return wrap_region(node) if @degraded
 
-          follow_replacements
           insert_markers(node)
           wrap_displaced
 
