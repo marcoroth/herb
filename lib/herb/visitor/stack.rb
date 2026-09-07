@@ -26,6 +26,28 @@ module Herb
         stack
       end
 
+      #: (untyped) -> Stack
+      def self.arrange(visitors)
+        build(visitors).arrange
+      end
+
+      #: () -> Stack
+      def arrange
+        remaining = to_a
+        ordered = [] #: Array[untyped]
+
+        until remaining.empty?
+          ready = remaining.find { |visitor| remaining.none? { |other| !other.equal?(visitor) && precedes?(other, visitor) } }
+
+          raise OrderError, unsatisfiable_message(remaining) unless ready
+
+          ordered << ready
+          remaining.delete_if { |visitor| visitor.equal?(ready) }
+        end
+
+        self.class.build(ordered)
+      end
+
       #: () -> Array[String]
       def descriptions
         map { |visitor|
@@ -85,6 +107,32 @@ module Herb
         klass = visitor.class
 
         klass.respond_to?(question) && klass.public_send(question)
+      end
+
+      #: (untyped, untyped) -> bool
+      def precedes?(earlier, later)
+        return true if answers?(earlier, :inlines_renders?)
+        return true if answers?(earlier, :reads_erb_source?) && answers?(later, :rewrites_erb_source?)
+
+        answers?(earlier, :rewrites_style_blocks?) && answers?(later, :reads_style_blocks?)
+      end
+
+      #: (Array[untyped]) -> String
+      def unsatisfiable_message(remaining)
+        knotted = remaining.select { |visitor| blocked?(visitor, remaining) && blocking?(visitor, remaining) }
+        names = (knotted.empty? ? remaining : knotted).map { |visitor| visitor.class.name }.uniq.join(" and ")
+
+        "#{names} each have to run before the other, so no order of the stack satisfies what they declare. Drop one of them, or change what it declares."
+      end
+
+      #: (untyped, Array[untyped]) -> bool
+      def blocked?(visitor, remaining)
+        remaining.any? { |other| !other.equal?(visitor) && precedes?(other, visitor) }
+      end
+
+      #: (untyped, Array[untyped]) -> bool
+      def blocking?(visitor, remaining)
+        remaining.any? { |other| !other.equal?(visitor) && precedes?(visitor, other) }
       end
 
       public
