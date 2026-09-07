@@ -346,7 +346,7 @@ DEPENDENCIES
   rbs-inline (~> 0.14)
   reactionview (~> 0.4.0)
   reline (~> 0.7)
-  rubocop (~> 1.71)
+  rubocop (~> 1.72)
   rubocop-performance (~> 1.26.0)
   sorbet
   steep (~> 2.1)

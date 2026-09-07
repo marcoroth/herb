@@ -265,4 +265,3 @@ Style/DocumentDynamicEvalDefinition:
 
 Performance/MapCompact:
   Enabled: false
-
