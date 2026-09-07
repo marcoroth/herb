@@ -145,7 +145,7 @@ module Engine
       test "an unknown attribute on a deferred block errors" do
         visitor, = compile(%(<%# herb:slots client %>\n<Async id="x"><p><%= @a %></p></Async>))
 
-        assert_equal ["`<Async>` only takes `delay` and `hold` and `on` and `poll`."], visitor.diagnostics.map(&:message)
+        assert_equal ["`<Async>` only takes `delay` and `hold` and `poll`."], visitor.diagnostics.map(&:message)
       end
 
       test "timing attributes and state reads flow into a deferred entry" do

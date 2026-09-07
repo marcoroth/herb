@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "component_definitions"
 require_relative "components/base"
 require_relative "components/fragment"
 require_relative "components/fallback"

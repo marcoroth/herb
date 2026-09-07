@@ -15,12 +15,6 @@ module Herb
         #
         class Fragment < Base
           NAME = "Fragment" #: String
-          ATTRIBUTES = ["delay", "hold", "on"].freeze #: Array[String]
-
-          #: () -> Array[String]
-          def allowed_attributes
-            ATTRIBUTES
-          end
 
           #: () -> Array[untyped]
           def transform

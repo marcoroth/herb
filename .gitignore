@@ -112,6 +112,7 @@ javascript/packages/client/src/state-operators.ts
 javascript/packages/client/src/state-predicates.ts
 javascript/packages/client/src/state-transforms.ts
 javascript/packages/core/src/action-view-helpers.ts
+javascript/packages/core/src/built-in-components.ts
 javascript/packages/core/src/config.ts
 javascript/packages/core/src/errors.ts
 javascript/packages/core/src/html-entities.json
@@ -123,6 +124,7 @@ javascript/packages/node/extension/error_helpers.h
 javascript/packages/node/extension/nodes.cpp
 javascript/packages/node/extension/nodes.h
 lib/herb/action_view/helper_registry.rb
+lib/herb/engine/slots/component_definitions.rb
 lib/herb/engine/slots/state_kinds.rb
 lib/herb/engine/slots/state_operators.rb
 lib/herb/engine/slots/state_predicates.rb

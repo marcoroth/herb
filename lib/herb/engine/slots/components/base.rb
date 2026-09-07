@@ -30,7 +30,7 @@ module Herb
 
           #: () -> Array[String]
           def allowed_attributes
-            []
+            attribute_definitions.keys
           end
 
           #: () -> void
@@ -50,9 +50,12 @@ module Herb
             end
           end
 
-          TIMING_ATTRIBUTES = ["delay", "hold", "poll"].freeze #: Array[String]
-
           private
+
+          #: () -> Hash[String, Hash[Symbol, String]]
+          def attribute_definitions
+            ComponentDefinitions.attributes_for(tag_name)
+          end
 
           #: () -> Hash[String, Integer]
           def timing
@@ -61,7 +64,7 @@ module Herb
             attributes.each do |attribute|
               name = attribute_name(attribute).to_s
 
-              next unless TIMING_ATTRIBUTES.include?(name) && allowed_attributes.include?(name)
+              next unless attribute_definitions.dig(name, :type) == "milliseconds"
 
               value = static_value(attribute)
 

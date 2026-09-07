@@ -12,11 +12,6 @@ module Herb
         # branch with its statics. `Async` requests on mount and `Lazy` when the
         # block nears the viewport.
         class Deferred < Base
-          ATTRIBUTES: Array[String]
-
-          # : () -> Array[String]
-          def allowed_attributes: () -> Array[String]
-
           # : () -> Array[untyped]
           def transform: () -> Array[untyped]
 

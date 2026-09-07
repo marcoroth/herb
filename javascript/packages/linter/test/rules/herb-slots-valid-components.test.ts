@@ -75,7 +75,7 @@ describe("herb-slots-valid-components", () => {
 
   test("flags an unknown attribute, listing what the component takes", () => {
     expectError("`<Fragment>` only takes `delay` and `hold` and `on`.")
-    expectError("`<Async>` only takes `delay` and `hold` and `on` and `poll`.")
+    expectError("`<Async>` only takes `delay` and `hold` and `poll`.")
 
     assertOffenses(dedent`
       <%# herb:slots client %>

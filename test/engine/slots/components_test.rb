@@ -254,6 +254,16 @@ module Engine
 
         assert_equal ["`on` names the states that mask this `<Fragment>`, and it names none."], visitor.diagnostics.map(&:message)
       end
+
+      test "every component the config defines is registered" do
+        assert_equal Herb::Engine::Slots::ComponentDefinitions::BUILT_IN, Herb::Engine::Slots::Components::BUILT_IN
+      end
+
+      test "every deferred component the config defines subclasses Deferred" do
+        deferred = Herb::Engine::Slots::Components::REGISTRY.select { |_, component| component < Herb::Engine::Slots::Components::Deferred }
+
+        assert_equal Herb::Engine::Slots::ComponentDefinitions::DEFERRED, deferred.keys
+      end
     end
   end
 end

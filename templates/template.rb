@@ -720,6 +720,37 @@ module Herb
       end
     end
 
+    class SlotsComponentAttribute
+      attr_reader :name, :type, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = config.fetch("type")
+        @description = config.fetch("description")
+      end
+    end
+
+    class SlotsComponent
+      attr_reader :name, :parents, :description, :attributes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @parents = config.fetch("parents", nil)
+        @description = config.fetch("description")
+        @attributes = config.fetch("attributes", []).map { |attribute| SlotsComponentAttribute.new(attribute) }
+        @deferred = config.fetch("deferred", false)
+        @void = config.fetch("void", false)
+      end
+
+      def deferred?
+        @deferred
+      end
+
+      def void?
+        @void
+      end
+    end
+
     class StateOperator
       attr_reader :operator, :mirrored, :negated
 
@@ -1055,7 +1086,7 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components }
       )
       content = heading_for(name, template_file) + rendered_template
 
@@ -1147,6 +1178,12 @@ module Herb
       config = YAML.load_file("config/state/operators.yml")
 
       (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
+    end
+
+    def self.slots_components
+      config = YAML.load_file("config/slots/components.yml", aliases: true)
+
+      (config["components"] || []).map { |component| SlotsComponent.new(component) }
     end
 
     def self.config

@@ -36,6 +36,11 @@ describe("html-tag-name-lowercase", () => {
     expectNoOffenses("<MyWidget></MyWidget>")
   })
 
+  test("passes for the built-in components the engine compiles away", () => {
+    expectNoOffenses("<Async><p>content</p><Fallback><p>skeleton</p></Fallback></Async>")
+    expectNoOffenses("<Lazy><p>content</p><Fallback><p>skeleton</p></Fallback></Lazy>")
+  })
+
   test("handles self-closing tags", () => {
     expectError('Opening tag name `<IMG>` should be lowercase. Use `<img>` instead.')
 
