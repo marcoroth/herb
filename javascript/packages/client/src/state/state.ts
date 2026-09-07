@@ -120,6 +120,14 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     this.counts.itemsChanged(slot)
   }
 
+  keyedRebuilt(slot: Slot, key: string): void {
+    const held = slot.items.get(key)
+
+    if (held) {
+      this.settleItem(slot, held)
+    }
+  }
+
   itemRemoved(slot: Slot): void {
     this.counts.itemsChanged(slot)
   }

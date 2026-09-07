@@ -64,6 +64,16 @@ module Herb
         end
 
         #: (Integer) -> String
+        def keyed_open_prefix(slot_index)
+          "<!--#{PREFIX}slot:#{slot_index}:keyed:"
+        end
+
+        #: () -> String
+        def keyed_open_suffix
+          "-->"
+        end
+
+        #: (Integer) -> String
         def item_open_prefix(slot_index)
           "<!--#{PREFIX}item:#{slot_index}:"
         end

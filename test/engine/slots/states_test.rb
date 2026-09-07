@@ -1497,13 +1497,13 @@ module Engine
         visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
         Herb::Engine.new(source, visitors: [visitor], filename: "app/views/test.html.erb")
 
-        collection = visitor.slots.find { |slot| slot.type == :collection }
+        keyed = visitor.slots.find { |slot| slot.type == :keyed }
         reads = visitor.manifest["states"]["server"]["reads"]
 
-        refute_nil collection
-        assert_equal :directive, collection.key_source
-        assert_equal([collection.index], reads.fetch("track").map { |read| read["index"] })
-        assert_equal([collection.index], reads.fetch("number").map { |read| read["index"] })
+        refute_nil keyed
+        assert_equal :herb_key, keyed.key_source
+        assert_equal([keyed.index], reads.fetch("track").map { |read| read["index"] })
+        assert_equal([keyed.index], reads.fetch("number").map { |read| read["index"] })
       end
 
       test "a block argument shadows a state inside its body" do

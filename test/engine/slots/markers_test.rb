@@ -541,7 +541,7 @@ module Engine
         assert_equal [], recognized
       end
 
-      test "delimits a standalone keyed element as a one-item collection" do
+      test "delimits a standalone keyed element with its key in the slot marker" do
         assert_evaluated_snapshot(
           %(<%# herb:slots %>\n<div herb-key="<%= @id %>"><%= @name %></div>),
           { "@id" => 7, "@name" => "Marco" },

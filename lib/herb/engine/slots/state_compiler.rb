@@ -1215,9 +1215,9 @@ module Herb
 
             slot = @visitor.slots[index]
 
-            next unless slot.type == :collection
+            next unless [:collection, :keyed].include?(slot.type)
 
-            expression = slot.expression.to_s.strip
+            expression = (slot.type == :keyed ? slot.key_expression : slot.expression).to_s.strip
 
             next if expression.empty?
 
