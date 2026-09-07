@@ -18,10 +18,7 @@ module Herb
 
       #: (String) -> String
       def self.without_trailing_spaces(code)
-        cut = code.length
-        cut -= 1 while cut.positive? && [" ", "\t"].include?(code[cut - 1])
-
-        code[0, cut].to_s
+        code.sub(/[ \t]+\z/, "")
       end
 
       #: (String) -> bool

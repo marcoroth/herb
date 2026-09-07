@@ -221,7 +221,7 @@ module Herb
             branched = lambda do
               @tokens << [:scope, "", nil, [:branch, index, next_branch(index)]]
 
-              block.call
+              yield
             end
 
             super(node, &branched)

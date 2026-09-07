@@ -27,7 +27,7 @@ module Engine
       engine_options = @compiler_options.merge(options)
       engine = Herb::Engine.new(template, engine_options)
 
-      _buf = String.new
+      _buf = +""
       context.each { |key, value| instance_variable_set("@#{key}", value) }
 
       eval(engine.src)

@@ -22,6 +22,8 @@ module Herb
 
         BINDABLE_ELEMENTS: Array[String]
 
+        COLLECTION_SLOT_TYPES: Array[Symbol]
+
         attr_reader state_presence: Hash[Integer, untyped]
 
         attr_reader state_values: Hash[Integer, untyped]
