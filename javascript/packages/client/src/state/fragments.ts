@@ -223,7 +223,7 @@ export class Fragments {
 
     const delay = fragment.delay ?? FRAGMENT_DELAY
 
-    if (delay <= 0 || slot.branch === presentation.fallback) {
+    if (delay <= 0 || slot.branch === null || slot.branch === presentation.fallback || this.blank(slot, fragment)) {
       this.swapToFallback(slot, presentation)
 
       return
@@ -234,6 +234,22 @@ export class Fragments {
 
       this.swapToFallback(slot, presentation)
     }, delay)
+  }
+
+  private blank(slot: Slot, fragment: FragmentEntry): boolean {
+    const reads = fragment.reads ?? []
+
+    if (reads.length === 0) {
+      return false
+    }
+
+    const descendants = this.slots.descendantsOf(slot)
+
+    return !reads.some((index) => {
+      const read = descendants.find((child) => child.index === index)
+
+      return read ? this.slots.currentText(read).trim() !== "" : false
+    })
   }
 
   private swapToFallback(slot: Slot, presentation: FragmentPresentation): void {
