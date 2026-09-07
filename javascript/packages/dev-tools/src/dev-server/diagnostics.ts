@@ -1,6 +1,6 @@
 import type { SlotsRequestFailure } from "@herb-tools/client"
 
-import type { ErrorMessage } from "./types"
+import type { BrokenFile, ErrorMessage } from "./types"
 import type { RuntimeDiagnostic } from "../runtime/report"
 
 export const DEV_SERVER_ORIGIN = "Herb Dev Server"
@@ -20,15 +20,12 @@ export function diagnosticsFromError(message: ErrorMessage): RuntimeDiagnostic[]
   }))
 }
 
-export function diagnosticFromBrokenTemplate(file: string): RuntimeDiagnostic {
-  return {
-    template: file,
-    message: "This template did not parse when the dev server started. Edit it to see the errors.",
-    severity: "error" as const,
-    origin: DEV_SERVER_ORIGIN,
-    phase: "compile" as const,
-    overlay: "dismissible" as const,
+export function diagnosticsFromBrokenFile(broken: BrokenFile): RuntimeDiagnostic[] {
+  if (broken.errors) {
+    return diagnosticsFromError({ type: "error", file: broken.file, errors: broken.errors, source: broken.source })
   }
+
+  return broken.diagnostics ?? []
 }
 
 export function diagnosticFromRefreshFailure(file: string, status: number, failure: SlotsRequestFailure | null): RuntimeDiagnostic {

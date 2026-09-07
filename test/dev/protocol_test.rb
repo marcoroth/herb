@@ -32,9 +32,27 @@ module Dev
     end
 
     test "the welcome message carries the templates that don't parse" do
-      message = Herb::Dev::Protocol.welcome(project: "/app", broken_files: ["a.html.erb", "b.html.erb"])
+      entries = [{ file: "a.html.erb" }, { file: "b.html.erb" }]
+      message = Herb::Dev::Protocol.welcome(project: "/app", broken_files: entries)
 
-      assert_equal({ type: "welcome", project: "/app", broken_files: ["a.html.erb", "b.html.erb"] }, message)
+      assert_equal({ type: "welcome", project: "/app", broken_files: entries }, message)
+    end
+
+    test "a broken entry carries the source and the errors the overlay needs" do
+      source = "<div>\n  <form>\n</div>\n"
+      errors = Herb.parse(source, strict: true, analyze: true).errors
+      entry = Herb::Dev::Protocol.broken(file: "a.html.erb", source: source, errors: errors)
+
+      assert_equal ["a.html.erb", source], [entry[:file], entry[:source]]
+      assert_equal Herb::Dev::Protocol.error(file: "a.html.erb", source: source, errors: errors)[:errors], entry[:errors]
+      assert_nil entry[:diagnostics]
+    end
+
+    test "a broken entry for a compiled template carries its diagnostics instead" do
+      diagnostics = [{ message: "slot outside a region", severity: :error }]
+      entry = Herb::Dev::Protocol.broken(file: "b.html.erb", diagnostics: diagnostics)
+
+      assert_equal({ file: "b.html.erb", diagnostics: diagnostics }, entry)
     end
 
     test "a project with nothing broken welcomes with an empty list" do

@@ -54,11 +54,18 @@ export interface ErrorMessage {
   source?: string
 }
 
+export interface BrokenFile {
+  file: string
+  source?: string
+  errors?: ParseError[]
+  diagnostics?: RuntimeDiagnostic[]
+}
+
 export interface WelcomeMessage {
   type: "welcome"
   project: string
   compiler?: boolean
-  broken_files?: string[]
+  broken_files?: BrokenFile[]
 }
 
 export const DEV_SERVER_COMMAND = "bundle exec herb dev"
