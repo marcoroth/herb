@@ -532,6 +532,7 @@ module Herb
         def initialize(input, properties = {})
           @block_depth = 0
           @scopes = [] #: Array[Integer]
+          @withheld = {} #: Hash[Integer, bool]
           @input = input
           @filename = properties[:filename]
           @slot_visitor = properties[:slot_visitor] || Visitor.new(mode: :server, mark: false)
@@ -670,6 +671,8 @@ module Herb
         def scope_branch(index, branch)
           leave_scope(index)
 
+          @withheld[index] = withheld?(index, branch)
+
           statics = payload_statics(index, branch)
           parked = statics ? " statics: #{statics.inspect}," : ""
 
@@ -680,12 +683,26 @@ module Herb
 
         #: (Integer, Integer) -> String?
         def payload_statics(index, branch)
-          server = @input.is_a?(String) && Visitor.directive_mode(@input) == :server
-          withheld = branch.zero? && @slot_visitor.deferred_entries.key?(index)
-
-          return nil unless server || withheld
+          return nil unless server_mode? || withheld?(index, branch)
 
           branch_statics["#{index}:#{branch}"]
+        end
+
+        #: () -> bool
+        def server_mode?
+          @input.is_a?(String) && Visitor.directive_mode(@input) == :server
+        end
+
+        #: (Integer, Integer) -> bool
+        def withheld?(index, branch)
+          branch.zero? && @slot_visitor.deferred_entries.key?(index)
+        end
+
+        #: (Integer) -> String?
+        def item_statics(index)
+          return nil unless server_mode? || @scopes.any? { |scope| @withheld[scope] }
+
+          branch_statics["#{index}:#{Markers::ITEM_STATICS}"]
         end
 
         #: () -> Hash[String, String]
@@ -702,6 +719,8 @@ module Herb
         #: (Integer) -> void
         def scope_close_conditional(index)
           leave_scope(index)
+
+          @withheld.delete(index)
 
           @src << "; #{current_scope}[#{index}] = (#{SLOT_BUFFER}#{index} || { branch: nil });"
         end
@@ -747,7 +766,10 @@ module Herb
 
         #: (Integer) -> void
         def scope_close_collection(index)
-          @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index}, order: #{ITEMS_BUFFER}#{index}.keys };"
+          statics = item_statics(index)
+          parked = statics ? ", statics: #{statics.inspect}" : ""
+
+          @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index}, order: #{ITEMS_BUFFER}#{index}.keys#{parked} };"
         end
 
         #: (Integer, String) -> void

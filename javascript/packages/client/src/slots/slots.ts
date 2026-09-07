@@ -30,9 +30,9 @@ import { ElementObserver } from "../shared/element-observer"
 import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
-import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker } from "../markup/markers"
+import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker, slotOpenIndex } from "../markup/markers"
 import { blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
-import { currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor } from "../markup/anchors"
+import { anchoredSlots, currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor, slotOpeners } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
 import type { TemplateManifest } from "./manifests"
@@ -41,7 +41,7 @@ import type { CollectionsDelegate } from "./collections"
 import type { RegionIndexDelegate } from "./region-index"
 import type { JournalDelegate } from "./journal"
 
-import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotsDelegate, ApplyOptions, ApplyReport, Item, ItemMap, ItemPlan, ItemStep, Payload, Placement, Region, ScanContext, RenderMode, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotOperation, SlotValue, SlotValues, StaticsIdentity, TransactionResult } from "../types"
+import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotsDelegate, ApplyOptions, ApplyReport, Item, ItemMap, ItemPlan, ItemStep, Payload, Placement, Region, ScanContext, RenderMode, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, StaticsIdentity, TransactionResult } from "../types"
 
 export class Slots implements ElementObserverDelegate, JournalDelegate, CollectionsDelegate, RegionIndexDelegate {
   private journal = new Journal(this)
@@ -831,6 +831,68 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     fillSlots(fragment, dynamics, false, (index) => this.manifests.partsForFile(slot.region.file, index))
 
     return fragment
+  }
+
+  invalidateStale(region: Region, stale: Set<number>): void {
+    const walk = (slots: SlotMap): void => {
+      for (const slot of slots.values()) {
+        if (slot.shown) {
+          for (const values of slot.shown.values()) {
+            for (const index of Object.keys(values)) {
+              if (stale.has(Number(index)) || this.embedsStale(values[Number(index)], stale)) {
+                delete values[Number(index)]
+              }
+            }
+          }
+        }
+
+        if (slot.captured) {
+          for (const [branch, fragment] of [...slot.captured]) {
+            if (this.holdsAny(fragment, stale)) {
+              slot.captured.delete(branch)
+            }
+          }
+        }
+
+        for (const item of slot.items.values()) {
+          walk(item.slots)
+        }
+      }
+    }
+
+    walk(region.slots)
+  }
+
+  private embedsStale(value: SlotValue, stale: Set<number>): boolean {
+    if (typeof value !== "string") {
+      return false
+    }
+
+    for (const match of value.matchAll(/<!--\s*herb-slot:(\d+)/g)) {
+      if (stale.has(Number(match[1]))) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private holdsAny(fragment: DocumentFragment, stale: Set<number>): boolean {
+    for (const open of slotOpeners(fragment)) {
+      const index = slotOpenIndex(open.data.trim())
+
+      if (index !== null && stale.has(index)) {
+        return true
+      }
+    }
+
+    for (const [, entry] of anchoredSlots(fragment)) {
+      if (stale.has(entry.index)) {
+        return true
+      }
+    }
+
+    return false
   }
 
   recordBuilt(slot: Slot, item: Item): void {

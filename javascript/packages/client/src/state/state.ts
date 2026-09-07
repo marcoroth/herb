@@ -508,6 +508,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
       const changed = [...grouped, ...recomputed]
 
+      this.invalidateStaleReads(manifest, scope, changed)
       this.writeConditionals(manifest, scope, changed)
       this.writePresence(manifest, scope, changed)
       this.writeComputed(manifest, scope, changed)
@@ -527,6 +528,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
 
     if (recounted.length > 0) {
+      this.invalidateStaleReads(manifest, regionScope, recounted)
       this.writeConditionals(manifest, regionScope, recounted)
       this.writePresence(manifest, regionScope, recounted)
       this.writeComputed(manifest, regionScope, recounted)
@@ -617,6 +619,15 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
 
     return Object.keys(values).length > 0 ? { [region.file]: values } : {}
+  }
+
+  private invalidateStaleReads(manifest: StateManifest, scope: StateScope, names: string[]): void {
+    const reads = manifest.server?.reads ?? {}
+    const stale = new Set(names.flatMap((name) => (reads[name] ?? []).map((read) => read.index)))
+
+    if (stale.size > 0) {
+      this.slots.invalidateStale(scope.region, stale)
+    }
   }
 
   private requestReadRefetch(manifest: StateManifest, scope: StateScope, names: string[]): void {
