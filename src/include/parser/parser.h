@@ -13,6 +13,7 @@ typedef enum {
   FOREIGN_CONTENT_UNKNOWN = 0,
   FOREIGN_CONTENT_SCRIPT,
   FOREIGN_CONTENT_STYLE,
+  FOREIGN_CONTENT_TEXTAREA,
   // FOREIGN_CONTENT_RUBY,
   // FOREIGN_CONTENT_TEMPLATE
 } foreign_content_type_T;
@@ -89,6 +90,7 @@ typedef struct PARSER_STRUCT {
   hb_array_T* open_tags_stack;
   parser_state_T state;
   foreign_content_type_T foreign_content_type;
+  size_t svg_depth;
   parser_options_T options;
   size_t consecutive_error_count;
   bool in_recovery_mode;

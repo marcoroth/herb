@@ -69,6 +69,7 @@ void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options
   parser->open_tags_stack = hb_array_init(16, parser->allocator);
   parser->state = PARSER_STATE_DATA;
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
+  parser->svg_depth = 0;
   parser->options = options;
   parser->consecutive_error_count = 0;
   parser->in_recovery_mode = false;
@@ -1308,6 +1309,10 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
   parser_consume_dot_notation_segments(parser, tag_name, &errors);
 
+  if (parser->svg_depth > 0 && hb_string_equals_case_insensitive(tag_name->value, hb_string("svg"))) {
+    parser->svg_depth--;
+  }
+
   parser_consume_whitespace(parser, children);
 
   token_T* tag_closing = parser_consume_if_present(parser, TOKEN_HTML_TAG_END);
@@ -1470,6 +1475,8 @@ static AST_NODE_T* parser_parse_html_element(parser_T* parser) {
 
   // <tag />
   if (open_tag->is_void) { return (AST_NODE_T*) parser_parse_html_self_closing_element(parser, open_tag); }
+
+  if (hb_string_equals_case_insensitive(open_tag->tag_name->value, hb_string("svg"))) { parser->svg_depth++; }
 
   // <tag>, in void element list, and not in inside an <svg> element
   if (!open_tag->is_void && is_void_element(open_tag->tag_name->value) && !parser_in_svg_context(parser)) {

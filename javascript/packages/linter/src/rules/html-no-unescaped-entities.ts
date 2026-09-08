@@ -3,10 +3,10 @@ import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.
 import { getTagLocalName, isValidCharacterReference } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, HTMLTextNode, HTMLElementNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLTextNode, HTMLElementNode, LiteralNode } from "@herb-tools/core"
 
 interface UnescapedEntitiesAutofixContext extends BaseAutofixContext {
-  node: Mutable<HTMLTextNode>
+  node: Mutable<HTMLTextNode> | Mutable<LiteralNode>
   character: string
   entity: string
 }
@@ -72,6 +72,7 @@ function findUnescapedOccurrences(value: string): UnescapedOccurrence[] {
 }
 
 const RAW_TEXT_ELEMENTS = new Set(["script", "style"])
+const ESCAPABLE_RAW_TEXT_ELEMENTS = new Set(["textarea"])
 
 // Per the HTML5 spec (§13.2.5.36, §13.2.5.37), no characters are parse errors
 // in quoted attribute values. Entity checks only apply to text content.
@@ -96,12 +97,29 @@ class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAu
     return this.elementStack.some((tagName) => RAW_TEXT_ELEMENTS.has(tagName))
   }
 
-  visitHTMLTextNode(node: HTMLTextNode): void {
-    if (this.insideRawTextElement) {
-      super.visitHTMLTextNode(node)
-      return
+  private get insideEscapableRawTextElement(): boolean {
+    const innermost = this.elementStack[this.elementStack.length - 1]
+
+    return innermost !== undefined && ESCAPABLE_RAW_TEXT_ELEMENTS.has(innermost)
+  }
+
+  visitLiteralNode(node: LiteralNode): void {
+    if (this.insideEscapableRawTextElement) {
+      this.checkTextContent(node)
     }
 
+    super.visitLiteralNode(node)
+  }
+
+  visitHTMLTextNode(node: HTMLTextNode): void {
+    if (!this.insideRawTextElement) {
+      this.checkTextContent(node)
+    }
+
+    super.visitHTMLTextNode(node)
+  }
+
+  private checkTextContent(node: HTMLTextNode | LiteralNode): void {
     const content = node.content
     if (!content) return
 
@@ -118,8 +136,6 @@ class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAu
         { node, character, entity, unsafe: true },
       )
     }
-
-    super.visitHTMLTextNode(node)
   }
 }
 

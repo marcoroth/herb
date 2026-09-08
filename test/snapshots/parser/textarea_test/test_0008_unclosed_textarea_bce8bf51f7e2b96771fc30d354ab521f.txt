@@ -1,0 +1,28 @@
+---
+source: "Parser::TextareaTest#test_0008_unclosed textarea"
+input: "<textarea>never closed<div>"
+---
+@ DocumentNode (location: (1:0)-(1:27))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:10))
+        ├── errors: (1 error)
+        │   └── @ MissingClosingTagError (location: (1:1)-(1:9))
+        │       ├── message: "Opening tag `<textarea>` at (1:1) doesn't have a matching closing tag `</textarea>` in the same scope."
+        │       └── opening_tag: "textarea" (location: (1:1)-(1:9))
+        │
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:10))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "textarea" (location: (1:1)-(1:9))
+        │       ├── tag_closing: ">" (location: (1:9)-(1:10))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "textarea" (location: (1:1)-(1:9))
+        ├── body: (1 item)
+        │   └── @ LiteralNode (location: (1:10)-(1:27))
+        │       └── content: "never closed<div>"
+        │
+        ├── close_tag: ∅
+        ├── is_void: false
+        └── element_source: "HTML"
