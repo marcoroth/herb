@@ -1,0 +1,76 @@
+# Generated from lib/herb/analysis/partial_resolver.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    # Finds the file a render call names, and what the compile of that file calls itself.
+    #
+    # The engine resolves partials at compile time in more than one place, the render
+    # validator and the inliner among them, and each used to walk the filesystem on its own
+    # from the project's view root. This is the one object they ask instead, and the one an
+    # application can replace through `Herb::Engine.new(source, resolver: ...)` with a lookup
+    # that knows its real view paths, an engine's or a gem's, and how it names its templates.
+    #
+    # The default answers from the filesystem the way the engine always has. A name with a
+    # directory is looked up under the view root, a bare name next to the calling template
+    # and then under the view root, and the identifier is the path relative to the project,
+    # which is what the compile of that template reports as its own relative file path.
+    class PartialResolver
+      class Resolved < Data
+        attr_reader path(): Pathname
+
+        attr_reader identifier(): String
+
+        def self.new: (Pathname path, String identifier) -> instance
+                    | (path: Pathname, identifier: String) -> instance
+
+        def self.members: () -> [ :path, :identifier ]
+
+        def members: () -> [ :path, :identifier ]
+      end
+
+      TEMPLATE_HINT: String
+
+      attr_reader project_path: Pathname
+
+      attr_reader view_root: Pathname?
+
+      # : (?(String | Pathname)?, ?view_root: (String | Pathname | false)?) -> void
+      def initialize: (?(String | Pathname)?, ?view_root: (String | Pathname | false)?) -> void
+
+      # : (String, ?from: (String | Pathname)?, ?format: String?) -> Resolved?
+      def resolve: (String, ?from: (String | Pathname)?, ?format: String?) -> Resolved?
+
+      # : (String, ?from: (String | Pathname)?) -> Array[Pathname]
+      def candidates: (String, ?from: (String | Pathname)?) -> Array[Pathname]
+
+      # : (String, ?from: (String | Pathname)?, ?limit: Integer) -> Array[String]
+      def similar: (String, ?from: (String | Pathname)?, ?limit: Integer) -> Array[String]
+
+      # : (Pathname) -> String
+      def identifier_for: (Pathname) -> String
+
+      # : (String, Pathname?) -> Array[Pathname]
+      def candidate_paths: (String, Pathname?) -> Array[Pathname]
+
+      # : (String, Pathname?, ?limit: Integer) -> Array[String]
+      def similar_partials: (String, Pathname?, ?limit: Integer) -> Array[String]
+
+      # : (String, Pathname?) -> Array[String]
+      def non_partial_matches: (String, Pathname?) -> Array[String]
+
+      private
+
+      # : (String, Pathname?) -> Array[Pathname]
+      def lookup_directories: (String, Pathname?) -> Array[Pathname]
+
+      # : (Pathname?) -> Array[String]
+      def partial_names: (Pathname?) -> Array[String]
+
+      # : ((String | Pathname)?) -> Pathname?
+      def source_directory: ((String | Pathname)?) -> Pathname?
+
+      # : (Array[Pathname], String) -> Array[Pathname]
+      def prefer_format: (Array[Pathname], String) -> Array[Pathname]
+    end
+  end
+end

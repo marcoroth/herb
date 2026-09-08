@@ -152,6 +152,25 @@ module Engine
           assert_match(/_buf << \(render/, compile_in(root, "posts/index.html.erb", inline: true))
         end
       end
+
+      test "inlines a partial the context's resolver finds outside the view root" do
+        in_project do |root|
+          write_partial(root, "engine/views/posts/_card.html.erb")
+
+          resolver = Herb::Analysis::PartialResolver.new(root, view_root: File.join(root, "engine", "views"))
+          source = Herb::Engine.new(
+            %(<div><%= render "posts/card" %></div>),
+            filename: "app/views/posts/index.html.erb",
+            project_path: Pathname.new(root),
+            escape: false,
+            resolver: resolver,
+            visitors: [Herb::Engine::InlineRender::Visitor.new]
+          ).src
+
+          refute_match(/_buf << \(render/, source)
+          assert_equal "<div><p>the card</p></div>", render_with(source)
+        end
+      end
     end
 
     # A partial means what it means because of where it is, not only because of what it says. Every

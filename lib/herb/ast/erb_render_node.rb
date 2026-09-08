@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require "did_you_mean"
 require "pathname"
 
-require_relative "../analysis/partial_resolution"
+require_relative "../analysis/partial_resolver"
 
 module Herb
   module AST
@@ -37,10 +36,7 @@ module Herb
 
         return nil unless name
 
-        view_root = Pathname.new(view_root) unless view_root.nil? || view_root.is_a?(Pathname)
-
-        candidates = candidate_paths(name, view_root, source_directory)
-        candidates.find(&:exist?)
+        resolver_for(view_root).candidate_paths(name, coerce_directory(source_directory)).find(&:exist?)
       end
 
       def candidate_paths(name = nil, view_root = nil, source_directory = nil)
@@ -48,24 +44,7 @@ module Herb
 
         return [] unless name
 
-        view_root = Pathname.new(view_root) unless view_root.nil? || view_root.is_a?(Pathname)
-
-        directory = File.dirname(name) if name.include?("/")
-        base = name.include?("/") ? File.basename(name) : name
-        source_directory = Pathname.new(source_directory) if source_directory && !source_directory.is_a?(Pathname)
-
-        Analysis::PartialResolution::EXTENSIONS.flat_map do |extension|
-          paths = [] #: Array[Pathname]
-
-          if directory
-            paths << view_root.join(directory, "_#{base}#{extension}") if view_root
-          else
-            paths << source_directory.join("_#{base}#{extension}") if source_directory
-            paths << view_root.join("_#{base}#{extension}") if view_root
-          end
-
-          paths
-        end
+        resolver_for(view_root).candidate_paths(name, coerce_directory(source_directory))
       end
 
       def similar_partials(view_root: nil, source_directory: nil, limit: 3)
@@ -73,39 +52,7 @@ module Herb
 
         return [] unless name
 
-        suggestions = [] #: Array[String]
-
-        if view_root
-          view_root = Pathname.new(view_root) unless view_root.is_a?(Pathname)
-
-          if view_root.directory?
-            all_partials = Dir[File.join(view_root, "**", Analysis::PartialResolution::PARTIAL_GLOB_PATTERN)].filter_map do |file|
-              Analysis::PartialResolution.partial_name_for(file, view_root)
-            end
-
-            spell_checker = DidYouMean::SpellChecker.new(dictionary: all_partials)
-            suggestions = spell_checker.correct(name).first(limit)
-          end
-        elsif source_directory
-          source_directory = Pathname.new(source_directory) unless source_directory.is_a?(Pathname)
-
-          if source_directory.directory?
-            local_partials = Dir[File.join(source_directory, Analysis::PartialResolution::PARTIAL_GLOB_PATTERN)].filter_map do |file|
-              Analysis::PartialResolution.partial_name_for(file, source_directory)
-            end
-
-            unless local_partials.empty?
-              spell_checker = DidYouMean::SpellChecker.new(dictionary: local_partials)
-              suggestions = spell_checker.correct(name).first(limit)
-            end
-          end
-        end
-
-        if suggestions.empty?
-          suggestions.concat(find_non_partial_matches(name, view_root, source_directory))
-        end
-
-        suggestions
+        resolver_for(view_root).similar_partials(name, coerce_directory(source_directory), limit: limit)
       end
 
       def find_non_partial_matches(name = nil, view_root = nil, source_directory = nil)
@@ -113,42 +60,19 @@ module Herb
 
         return [] unless name
 
-        matches = [] #: Array[String]
+        resolver_for(view_root).non_partial_matches(name, coerce_directory(source_directory))
+      end
 
-        Analysis::PartialResolution::EXTENSIONS.each do |extension|
-          if name.include?("/")
-            next unless view_root
+      private
 
-            view_root = Pathname.new(view_root) unless view_root.is_a?(Pathname)
-            directory = File.dirname(name)
-            base = File.basename(name)
-            non_partial_path = view_root.join(directory, "#{base}#{extension}")
+      def resolver_for(view_root)
+        Analysis::PartialResolver.new(view_root: view_root || false)
+      end
 
-            if non_partial_path.exist?
-              matches << "#{name}#{extension} exists as a template, not a partial. Rename to _#{base}#{extension} to use it with render"
-            end
-          else
-            if source_directory
-              source_directory = Pathname.new(source_directory) unless source_directory.is_a?(Pathname)
-              non_partial_path = source_directory.join("#{name}#{extension}")
+      def coerce_directory(directory)
+        return nil unless directory
 
-              if non_partial_path.exist?
-                matches << "#{name}#{extension} exists as a template, not a partial. Rename to _#{name}#{extension} to use it with render"
-              end
-            end
-
-            if view_root
-              view_root = Pathname.new(view_root) unless view_root.is_a?(Pathname)
-              non_partial_path = view_root.join("#{name}#{extension}")
-
-              if non_partial_path.exist?
-                matches << "#{name}#{extension} exists as a template, not a partial. Rename to _#{name}#{extension} to use it with render"
-              end
-            end
-          end
-        end
-
-        matches.uniq
+        directory.is_a?(Pathname) ? directory : Pathname.new(directory)
       end
     end
   end

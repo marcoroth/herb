@@ -153,7 +153,33 @@ module Engine
     end
 
     test "to_hash exposes every part" do
-      assert_equal [:file_path, :project_path, :relative_file_path, :options, :data], context.to_hash.keys
+      assert_equal [:file_path, :project_path, :relative_file_path, :options, :resolver, :data], context.to_hash.keys
+    end
+
+    test "the resolver defaults to the filesystem lookup rooted at the project" do
+      subject = context(project_path: "/proj")
+
+      assert_instance_of Herb::Analysis::PartialResolver, subject.resolver
+      assert_equal Pathname.new("/proj"), subject.resolver.project_path
+      assert_same subject.resolver, subject[:resolver]
+      assert subject.key?(:resolver)
+    end
+
+    test "a given resolver is kept and survives a merge" do
+      resolver = Object.new
+      subject = context(project_path: "/proj", resolver: resolver)
+
+      assert_same resolver, subject.resolver
+      assert_same resolver, subject.merge(file_path: "b.erb").resolver
+      assert_same resolver, subject.to_hash[:resolver]
+    end
+
+    test "the engine hands its resolver to the context and keeps it out of the options" do
+      resolver = Object.new
+      engine = Herb::Engine.new("<p>hi</p>", filename: "a.erb", project_path: "/proj", resolver: resolver)
+
+      assert_same resolver, engine.context.resolver
+      refute engine.context.options.key?(:resolver)
     end
   end
 end

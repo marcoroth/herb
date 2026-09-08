@@ -33,10 +33,6 @@ module Herb
         def safe_to_inline?: (untyped file_path, ?item: untyped, ?shadowed: untyped) -> untyped
 
         def find_format: () -> untyped
-
-        def find_view_root: () -> untyped
-
-        def find_source_directory: () -> untyped
       end
     end
   end

@@ -255,7 +255,7 @@ module Herb
           @inliner ||= begin
             require_relative "inliner"
 
-            Inliner.new(project_path: context.project_path, filename: context.relative_file_path)
+            Inliner.new(project_path: context.project_path, filename: context.relative_file_path, resolver: context.resolver)
           end
         end
       end
