@@ -856,7 +856,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return this.valueAt(entry[0], scope)
     }
 
-    return matches(entry, (name) => this.valueAt(name, scope))
+    return evaluate(entry, (name) => this.valueAt(name, scope))
   }
 
   derivedDependents(manifest: StateManifest, scope: StateScope, written: string[]): string[] {
