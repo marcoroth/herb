@@ -1410,8 +1410,10 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   parser_push_open_tag(parser, open_tag->tag_name);
 
   if (parser_element_has_foreign_content(parser, open_tag->tag_name->value)) {
-    foreign_content_kind_T kind = parser_get_foreign_content_kind(open_tag->tag_name->value);
-    parser_enter_foreign_content(parser, kind, open_tag->tag_name->value);
+    hb_string_T tag_name = open_tag->tag_name->value;
+    hb_string_T end_tag_name = parser_foreign_content_has_end_tag(tag_name) ? tag_name : HB_STRING_NULL;
+
+    parser_enter_foreign_content(parser, parser_get_foreign_content_kind(tag_name), end_tag_name);
     parser_parse_foreign_content(parser, body, &errors);
   } else {
     parser_parse_in_data_state(parser, body, &errors);
@@ -1565,14 +1567,11 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   );
 }
 
-// <title> is raw text in HTML, an ordinary element inside <svg> and in XML documents
+// <title> and <plaintext> are ordinary elements in XML documents, <title> also inside <svg>
 static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name) {
-  if (hb_string_is_empty(tag_name)) { return false; }
-
   if (parser_get_foreign_content_kind(tag_name) == FOREIGN_CONTENT_NONE) { return false; }
-
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("title"))
-      && (parser_in_svg_context(parser) || parser->xml_document)) {
+  if (parser_foreign_content_is_html_only(tag_name) && parser->xml_document) { return false; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("title")) && parser_in_svg_context(parser)) {
     return false;
   }
 

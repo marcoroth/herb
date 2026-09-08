@@ -8,7 +8,7 @@ import type { ParseResult, HTMLTextNode, HTMLElementNode, HTMLAttributeValueNode
 const NON_BREAKING_SPACE = "\u00A0"
 const ENTITY = "&nbsp;"
 
-const RAW_TEXT_ELEMENTS = new Set(["script", "style"])
+const RAW_TEXT_ELEMENTS = new Set(["script", "style", "iframe", "xmp", "noembed", "noframes", "plaintext"])
 
 const MESSAGE = `Use \`${ENTITY}\` instead of a literal non-breaking space (U+00A0). The literal character is invisible in an editor, so it reads as a regular space and is easily lost when the file is edited.`
 

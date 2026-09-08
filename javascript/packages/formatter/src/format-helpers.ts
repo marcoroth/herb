@@ -53,7 +53,7 @@ export const INLINE_ELEMENTS = new Set([
 ])
 
 export const CONTENT_PRESERVING_ELEMENTS = new Set([
-  'script', 'style', 'pre', 'textarea'
+  'script', 'style', 'iframe', 'xmp', 'noembed', 'noframes', 'plaintext', 'pre', 'textarea'
 ])
 
 // https://tailwindcss.com/docs/white-space

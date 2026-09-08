@@ -59,25 +59,46 @@ bool parser_in_svg_context(const parser_T* parser) {
 typedef struct {
   const char* name;
   foreign_content_kind_T kind;
+  bool has_end_tag;
+  bool html_only;
 } foreign_content_element_T;
 
 static const foreign_content_element_T FOREIGN_CONTENT_ELEMENTS[] = {
-  { "script", FOREIGN_CONTENT_RAW_TEXT },
-  { "style", FOREIGN_CONTENT_RAW_TEXT },
-  { "textarea", FOREIGN_CONTENT_RCDATA },
-  { "title", FOREIGN_CONTENT_RCDATA },
+  { "script", FOREIGN_CONTENT_RAW_TEXT, true, false },    { "style", FOREIGN_CONTENT_RAW_TEXT, true, false },
+  { "iframe", FOREIGN_CONTENT_RAW_TEXT, true, false },    { "xmp", FOREIGN_CONTENT_RAW_TEXT, true, false },
+  { "noembed", FOREIGN_CONTENT_RAW_TEXT, true, false },   { "noframes", FOREIGN_CONTENT_RAW_TEXT, true, false },
+  { "plaintext", FOREIGN_CONTENT_RAW_TEXT, false, true }, { "textarea", FOREIGN_CONTENT_RCDATA, true, false },
+  { "title", FOREIGN_CONTENT_RCDATA, true, true },
 };
 
-foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
-  if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_NONE; }
+static const foreign_content_element_T* parser_find_foreign_content_element(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return NULL; }
 
   for (size_t i = 0; i < sizeof(FOREIGN_CONTENT_ELEMENTS) / sizeof(FOREIGN_CONTENT_ELEMENTS[0]); i++) {
     if (hb_string_equals_case_insensitive(tag_name, hb_string(FOREIGN_CONTENT_ELEMENTS[i].name))) {
-      return FOREIGN_CONTENT_ELEMENTS[i].kind;
+      return &FOREIGN_CONTENT_ELEMENTS[i];
     }
   }
 
-  return FOREIGN_CONTENT_NONE;
+  return NULL;
+}
+
+foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->kind : FOREIGN_CONTENT_NONE;
+}
+
+bool parser_foreign_content_has_end_tag(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->has_end_tag : false;
+}
+
+bool parser_foreign_content_is_html_only(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->html_only : false;
 }
 
 bool parser_is_foreign_content_tag(hb_string_T tag_name) {
