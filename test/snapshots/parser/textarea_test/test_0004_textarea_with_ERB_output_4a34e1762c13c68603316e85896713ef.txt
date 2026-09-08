@@ -1,0 +1,53 @@
+---
+source: "Parser::TextareaTest#test_0004_textarea with ERB output"
+input: "<textarea name=\"body\"><%= @post.body %></textarea>"
+---
+@ DocumentNode (location: (1:0)-(1:50))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:50))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:22))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "textarea" (location: (1:1)-(1:9))
+        │       ├── tag_closing: ">" (location: (1:21)-(1:22))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:10)-(1:21))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:10)-(1:14))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:10)-(1:14))
+        │       │       │               └── content: "name"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:14)-(1:15))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:21))
+        │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:16)-(1:20))
+        │       │               │       └── content: "body"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:20)-(1:21))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "textarea" (location: (1:1)-(1:9))
+        ├── body: (1 item)
+        │   └── @ ERBContentNode (location: (1:22)-(1:39))
+        │       ├── tag_opening: "<%=" (location: (1:22)-(1:25))
+        │       ├── content: " @post.body " (location: (1:25)-(1:37))
+        │       ├── tag_closing: "%>" (location: (1:37)-(1:39))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:39)-(1:50))
+        │       ├── tag_opening: "</" (location: (1:39)-(1:41))
+        │       ├── tag_name: "textarea" (location: (1:41)-(1:49))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:49)-(1:50))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

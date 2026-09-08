@@ -1,0 +1,158 @@
+---
+source: "Parser::TextareaTest#test_0009_textarea inside a form with sibling elements"
+input: |2-
+<form>
+  <label for="body">Body</label>
+  <textarea id="body"><p>not an element</p></textarea>
+  <button>Save</button>
+</form>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "form" (location: (1:1)-(1:5))
+    │   │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "form" (location: (1:1)-(1:5))
+    │   ├── body: (7 items)
+    │   │   ├── @ HTMLTextNode (location: (1:6)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:32))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:20))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "label" (location: (2:3)-(2:8))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:19)-(2:20))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:9)-(2:19))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:9)-(2:12))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:9)-(2:12))
+    │   │   │   │       │       │               └── content: "for"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:19))
+    │   │   │   │       │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │       │               │       └── content: "body"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (2:18)-(2:19))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "label" (location: (2:3)-(2:8))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:20)-(2:24))
+    │   │   │   │       └── content: "Body"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:24)-(2:32))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:24)-(2:26))
+    │   │   │   │       ├── tag_name: "label" (location: (2:26)-(2:31))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:31)-(2:32))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:32)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:54))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:22))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "textarea" (location: (3:3)-(3:11))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:21)-(3:22))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (3:12)-(3:21))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (3:12)-(3:14))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (3:12)-(3:14))
+    │   │   │   │       │       │               └── content: "id"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (3:14)-(3:15))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (3:15)-(3:21))
+    │   │   │   │       │               ├── open_quote: """ (location: (3:15)-(3:16))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (3:16)-(3:20))
+    │   │   │   │       │               │       └── content: "body"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (3:20)-(3:21))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "textarea" (location: (3:3)-(3:11))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ LiteralNode (location: (3:22)-(3:43))
+    │   │   │   │       └── content: "<p>not an element</p>"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:43)-(3:54))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:43)-(3:45))
+    │   │   │   │       ├── tag_name: "textarea" (location: (3:45)-(3:53))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:53)-(3:54))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:54)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:2)-(4:23))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:10))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │   │   │       ├── tag_name: "button" (location: (4:3)-(4:9))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:9)-(4:10))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "button" (location: (4:3)-(4:9))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (4:10)-(4:14))
+    │   │   │   │       └── content: "Save"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:14)-(4:23))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:14)-(4:16))
+    │   │   │   │       ├── tag_name: "button" (location: (4:16)-(4:22))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:22)-(4:23))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:23)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:7))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "form" (location: (5:2)-(5:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:6)-(5:7))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (5:7)-(6:0))
+        └── content: "\n"

@@ -39,6 +39,7 @@ token_T* parser_pop_open_tag(const parser_T* parser) {
  */
 bool parser_in_svg_context(const parser_T* parser) {
   if (!parser || !parser->open_tags_stack) { return false; }
+  if (parser->svg_depth > 0) { return true; }
 
   size_t stack_size = hb_array_size(parser->open_tags_stack);
 
@@ -60,6 +61,7 @@ foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
 
   if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
   if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("textarea"))) { return FOREIGN_CONTENT_TEXTAREA; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
@@ -72,6 +74,7 @@ hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type) 
   switch (type) {
     case FOREIGN_CONTENT_SCRIPT: return hb_string("script");
     case FOREIGN_CONTENT_STYLE: return hb_string("style");
+    case FOREIGN_CONTENT_TEXTAREA: return hb_string("textarea");
     default: return HB_STRING_EMPTY;
   }
 }
