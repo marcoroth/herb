@@ -281,4 +281,16 @@ describe("manifests a project extracted ahead of rendering", () => {
 
     expect(index.slot(FILE, "rows")?.index).toBe(2)
   })
+
+  test("answer the bindings a slot carries, and nothing for the rest", () => {
+    const bound = { ...MANIFEST, bindings: { 1: { identifier: "app/views/shared/_card.html.erb", partial: "shared/card", states: { open: "modal_open" } } } }
+
+    mount(PAGE + `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:${VERSION}`]: bound })}</template>`)
+
+    const region = index.region(FILE)!
+
+    expect(index.bindingsFor({ ...region, parent: region, slot: { index: 1, type: "child" } as never })).toEqual(bound.bindings[1])
+    expect(index.bindingsFor({ ...region, parent: region, slot: { index: 2, type: "child" } as never })).toBeNull()
+    expect(index.bindingsFor(region)).toBeNull()
+  })
 })

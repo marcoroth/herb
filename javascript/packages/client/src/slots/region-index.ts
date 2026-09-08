@@ -401,9 +401,18 @@ export class RegionIndex {
     const range: RegionRange = { start: comment, end: null }
     const existing = this.held.find((candidate) => candidate.file === marker.file && candidate.occurrence === marker.occurrence && candidate.version === marker.version)
 
+    const parent = last(state.openRegions)?.region ?? null
+    const enclosing = parent ? this.slotOpenIn(state, parent) : null
+
     if (existing && existing.ranges.some((candidate) => candidate.start.isConnected)) {
       existing.ranges.push(range)
       state.openRegions.push({ region: existing, range })
+
+      if (existing.parent === null && parent) {
+        existing.parent = parent
+        existing.slot = enclosing?.type === "child" ? enclosing : null
+        existing.item = this.itemAt(state, parent)
+      }
 
       return
     }
@@ -418,6 +427,9 @@ export class RegionIndex {
       occurrence: marker.occurrence,
       ranges: [range],
       slots: new Map(),
+      parent,
+      slot: enclosing?.type === "child" ? enclosing : null,
+      item: parent ? this.itemAt(state, parent) : null,
     }
 
     state.openRegions.push({ region, range })

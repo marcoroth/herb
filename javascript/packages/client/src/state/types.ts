@@ -98,6 +98,11 @@ export interface StateScope {
   item: Item | null
 }
 
+export interface ResolvedState {
+  scope: StateScope
+  name: string
+}
+
 export interface StateChangeDetail {
   name: string
   value: StateValue
