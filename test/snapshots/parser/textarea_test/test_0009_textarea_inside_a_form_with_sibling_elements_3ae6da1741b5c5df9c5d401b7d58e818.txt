@@ -101,7 +101,7 @@ input: |2-
     │   │   │   │
     │   │   │   ├── tag_name: "textarea" (location: (3:3)-(3:11))
     │   │   │   ├── body: (1 item)
-    │   │   │   │   └── @ LiteralNode (location: (3:22)-(3:43))
+    │   │   │   │   └── @ HTMLTextNode (location: (3:22)-(3:43))
     │   │   │   │       └── content: "<p>not an element</p>"
     │   │   │   │
     │   │   │   ├── close_tag:

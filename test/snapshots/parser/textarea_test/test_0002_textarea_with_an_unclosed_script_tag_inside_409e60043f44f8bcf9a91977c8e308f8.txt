@@ -69,7 +69,7 @@ input: |2-
     │   │
     │   ├── tag_name: "textarea" (location: (1:1)-(1:9))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:67)-(3:0))
+    │   │   └── @ HTMLTextNode (location: (1:67)-(3:0))
     │   │       └── content: "\n  <script src='....' type='module' ...>\n"
     │   │
     │   ├── close_tag:

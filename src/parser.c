@@ -25,6 +25,7 @@
 #define MAX_CONSECUTIVE_ERRORS 10
 static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, hb_array_T** errors);
 static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children, hb_array_T** errors);
+static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name);
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, hb_array_T* children);
 static void parser_consume_whitespace(parser_T* parser, hb_array_T* children);
@@ -70,6 +71,7 @@ void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options
   parser->state = PARSER_STATE_DATA;
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
   parser->svg_depth = 0;
+  parser->xml_document = false;
   parser->options = options;
   parser->consecutive_error_count = 0;
   parser->in_recovery_mode = false;
@@ -299,6 +301,8 @@ static AST_XML_DECLARATION_NODE_T* parser_parse_xml_declaration(parser_T* parser
   hb_buffer_init(&content, 64, parser->allocator);
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_XML_DECLARATION, &errors);
+
+  parser->xml_document = true;
 
   position_T start = parser->current_token->location.start;
 
@@ -1404,7 +1408,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
 
   parser_push_open_tag(parser, open_tag->tag_name);
 
-  if (!hb_string_is_empty(open_tag->tag_name->value) && parser_is_foreign_content_tag(open_tag->tag_name->value)) {
+  if (parser_element_has_foreign_content(parser, open_tag->tag_name->value)) {
     foreign_content_type_T content_type = parser_get_foreign_content_type(open_tag->tag_name->value);
     parser_enter_foreign_content(parser, content_type);
     parser_parse_foreign_content(parser, body, &errors);
@@ -1483,7 +1487,7 @@ static AST_NODE_T* parser_parse_html_element(parser_T* parser) {
     return (AST_NODE_T*) parser_parse_html_self_closing_element(parser, open_tag);
   }
 
-  if (!hb_string_is_empty(open_tag->tag_name->value) && parser_is_foreign_content_tag(open_tag->tag_name->value)) {
+  if (parser_element_has_foreign_content(parser, open_tag->tag_name->value)) {
     AST_HTML_ELEMENT_NODE_T* regular_element = parser_parse_html_regular_element(parser, open_tag);
 
     if (regular_element != NULL) { return (AST_NODE_T*) regular_element; }
@@ -1560,6 +1564,46 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   );
 }
 
+// <title> is raw text in HTML, an ordinary element inside <svg> and in XML documents
+static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return false; }
+
+  foreign_content_type_T content_type = parser_get_foreign_content_type(tag_name);
+
+  if (content_type == FOREIGN_CONTENT_UNKNOWN) { return false; }
+  if (content_type == FOREIGN_CONTENT_TITLE && (parser_in_svg_context(parser) || parser->xml_document)) {
+    return false;
+  }
+
+  return true;
+}
+
+// <textarea> and <title> hold text, <script> and <style> hold raw source
+static void parser_append_foreign_content_from_buffer(
+  const parser_T* parser,
+  hb_buffer_T* buffer,
+  hb_array_T* children,
+  position_T start
+) {
+  bool is_text =
+    parser->foreign_content_type == FOREIGN_CONTENT_TEXTAREA || parser->foreign_content_type == FOREIGN_CONTENT_TITLE;
+
+  if (!is_text || buffer->length == 0) {
+    parser_append_literal_node_from_buffer(parser, buffer, children, start);
+    return;
+  }
+
+  hb_string_T content = { .data = buffer->value, .length = (uint32_t) buffer->length };
+
+  hb_array_append(
+    children,
+    ast_html_text_node_init(content, start, parser->current_token->location.start, NULL, parser->allocator)
+  );
+
+  hb_buffer_free(buffer);
+  hb_buffer_init(buffer, 128, parser->allocator);
+}
+
 static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children, hb_array_T** errors) {
   hb_buffer_T content;
   hb_buffer_init(&content, 1024, parser->allocator);
@@ -1569,7 +1613,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
 
   while (!token_is(parser, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
-      parser_append_literal_node_from_buffer(parser, &content, children, start);
+      parser_append_foreign_content_from_buffer(parser, &content, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
@@ -1594,7 +1638,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
       if (next_token) { token_free(next_token, parser->allocator); }
 
       if (is_potential_match) {
-        parser_append_literal_node_from_buffer(parser, &content, children, start);
+        parser_append_foreign_content_from_buffer(parser, &content, children, start);
         parser_exit_foreign_content(parser);
 
         hb_buffer_free(&content);
@@ -1608,7 +1652,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
     token_free(token, parser->allocator);
   }
 
-  parser_append_literal_node_from_buffer(parser, &content, children, start);
+  parser_append_foreign_content_from_buffer(parser, &content, children, start);
   parser_exit_foreign_content(parser);
   hb_buffer_free(&content);
 }

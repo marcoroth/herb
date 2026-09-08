@@ -22,7 +22,7 @@ input: |2-
     │   │       ├── tag_closing: "%>" (location: (1:23)-(1:25))
     │   │       ├── then_keyword: ∅
     │   │       ├── statements: (1 item)
-    │   │       │   └── @ LiteralNode (location: (1:25)-(1:30))
+    │   │       │   └── @ HTMLTextNode (location: (1:25)-(1:30))
     │   │       │       └── content: "Draft"
     │   │       │
     │   │       ├── subsequent:
@@ -31,7 +31,7 @@ input: |2-
     │   │       │       ├── content: " else " (location: (1:32)-(1:38))
     │   │       │       ├── tag_closing: "%>" (location: (1:38)-(1:40))
     │   │       │       └── statements: (1 item)
-    │   │       │           └── @ LiteralNode (location: (1:40)-(1:45))
+    │   │       │           └── @ HTMLTextNode (location: (1:40)-(1:45))
     │   │       │               └── content: "Final"
     │   │       │
     │   │       │
