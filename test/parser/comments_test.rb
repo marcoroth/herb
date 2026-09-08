@@ -54,5 +54,13 @@ module Parser
     test "unclosed HTML comment with ERB inside" do
       assert_parsed_snapshot(%(<!-- <% presenter = featured.presenter %>\n<div data-id="<%= presenter.id %>"></div>))
     end
+
+    test "nested HTML comment opener" do
+      assert_parsed_snapshot(%(<!-- a <!-- b --> c -->))
+    end
+
+    test "nested HTML comment opener in an unclosed comment" do
+      assert_parsed_snapshot(%(<!-- outer <!-- inner))
+    end
   end
 end

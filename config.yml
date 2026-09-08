@@ -240,6 +240,23 @@ errors:
         - name: "comment_start"
           type: "token"
 
+    - name: "NestedCommentError"
+      message:
+        template: "Comment opened at (%u:%u) contains another `<!--` at (%u:%u)."
+        arguments:
+          - "comment_start->location.start.line"
+          - "comment_start->location.start.column"
+          - "nested_start->location.start.line"
+          - "nested_start->location.start.column"
+      suggestion:
+        template: "Comments cannot nest. The outer comment ends at the first `-->`, so remove the inner `<!--` or close the outer comment before it."
+      fields:
+        - name: "comment_start"
+          type: "token"
+
+        - name: "nested_start"
+          type: "token"
+
     - name: "InvalidCommentClosingTagError"
       message:
         template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."

@@ -344,6 +344,29 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class NestedCommentError < Error
+      include Colors
+
+      attr_reader comment_start: Herb::Token?
+
+      attr_reader nested_start: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_nested_comment_error
+      def to_hash: () -> serialized_nested_comment_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class InvalidCommentClosingTagError < Error
       include Colors
 

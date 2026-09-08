@@ -49,7 +49,8 @@ module Herb
       "UnexpectedEqualsSignBeforeAttributeNameError",
       "UnexpectedSolidusInTagError",
       "EndTagWithTrailingSolidusError",
-      "UnclosedCommentError"
+      "UnclosedCommentError",
+      "NestedCommentError"
     ].freeze
 
     ISSUE_TYPES = [

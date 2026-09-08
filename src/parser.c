@@ -136,6 +136,19 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
       continue;
     }
 
+    // <!-- outer <!-- inner -->
+    if (token_is(parser, TOKEN_HTML_COMMENT_START)) {
+      append_nested_comment_error(
+        comment_start,
+        parser->current_token,
+        parser->current_token->location.start,
+        parser->current_token->location.end,
+        parser->allocator,
+        &errors,
+        &parser->options
+      );
+    }
+
     token_T* token = parser_advance(parser);
     hb_buffer_append_string(&comment, token->value);
     token_free(token, parser->allocator);
