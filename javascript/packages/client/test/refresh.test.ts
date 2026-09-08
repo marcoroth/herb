@@ -218,6 +218,39 @@ describe("refetching server-derived slots", () => {
     expect(calls[0][FILE].q).toBe("abc")
   })
 
+  test("a refresh requested during another answers with its own outcome", async () => {
+    document.body.innerHTML = PAGE
+
+    let calls = 0
+    const transport = vi.fn((_state: Record<string, Record<string, unknown>>, signal: AbortSignal) => {
+      calls += 1
+
+      if (calls === 1) {
+        return new Promise<Payload>((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))
+        })
+      }
+
+      return Promise.resolve(payloadFor({ 3: "second answer" }))
+    })
+
+    const live = start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    const first = live.refresh()
+
+    await vi.waitFor(() => {
+      if (calls === 0) {
+        throw new Error("still waiting")
+      }
+    })
+
+    const second = live.refresh()
+
+    expect(await second).toEqual({ applied: 1, deferred: 0, stale: false, failed: false })
+    expect((await first).stale).toBe(true)
+    expect(document.body.innerHTML).toContain("second answer")
+  })
+
   test("a settled mutation refetches the server reads, steered", async () => {
     document.body.innerHTML = PAGE
 

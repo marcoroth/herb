@@ -72,7 +72,7 @@ export class Refresh {
 
     this.due = Infinity
     this.controller?.abort()
-    this.settle({ applied: 0, deferred: 0, stale: true, failed: false })
+    this.settle({ applied: 0, deferred: 0, stale: true, failed: false }, this.waiting.splice(0))
   }
 
   private async run(): Promise<void> {
@@ -83,6 +83,7 @@ export class Refresh {
 
     const controller = new AbortController()
     const epoch = (this.epoch += 1)
+    const waiting = this.waiting.splice(0)
 
     this.controller = controller
 
@@ -91,13 +92,15 @@ export class Refresh {
     try {
       payload = await this.transport()(this.steering(), controller.signal)
     } catch {
-      this.settle({ applied: 0, deferred: 0, stale: epoch !== this.epoch, failed: epoch === this.epoch })
+      const stale = epoch !== this.epoch || controller.signal.aborted
+
+      this.settle({ applied: 0, deferred: 0, stale, failed: !stale }, waiting)
 
       return
     }
 
     if (epoch !== this.epoch) {
-      this.settle({ applied: 0, deferred: 0, stale: true, failed: false })
+      this.settle({ applied: 0, deferred: 0, stale: true, failed: false }, waiting)
 
       return
     }
@@ -108,12 +111,10 @@ export class Refresh {
       report = this.slots.apply(payload)
     })
 
-    this.settle({ applied: report.applied, deferred: report.deferred.length, stale: false, failed: false })
+    this.settle({ applied: report.applied, deferred: report.deferred.length, stale: false, failed: false }, waiting)
   }
 
-  private settle(report: RefreshReport): void {
-    const waiting = this.waiting.splice(0)
-
+  private settle(report: RefreshReport, waiting: RefreshWaiter[]): void {
     for (const waiter of waiting) {
       waiter(report)
     }

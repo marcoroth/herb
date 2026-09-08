@@ -106,13 +106,15 @@ export class ServerState {
     const changes = this.pending
     const restores = this.restores
     const previous = this.previous
+    const waiting = this.waiting
 
     this.pending = new Map()
     this.restores = []
     this.previous = new Map()
+    this.waiting = []
 
     if (changes.size === 0) {
-      return this.settle(IDLE)
+      return this.settle(IDLE, waiting)
     }
 
     const changed = [...changes.keys()]
@@ -128,7 +130,7 @@ export class ServerState {
       payload = await this.options.transport({ state: this.all(), changed }, controller.signal)
     } catch (error) {
       if (controller.signal.aborted || this.superseded(taken)) {
-        return this.settle({ ...IDLE, written: restores.length, stale: true })
+        return this.settle({ ...IDLE, written: restores.length, stale: true }, waiting)
       }
 
       this.restore(restores)
@@ -141,11 +143,11 @@ export class ServerState {
         }
       }
 
-      return this.settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true })
+      return this.settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true }, waiting)
     }
 
     if (this.superseded(taken)) {
-      return this.settle({ ...IDLE, written: restores.length, stale: true })
+      return this.settle({ ...IDLE, written: restores.length, stale: true }, waiting)
     }
 
     let report: ApplyReport = { applied: 0, deferred: [] }
@@ -158,14 +160,10 @@ export class ServerState {
       })
     }
 
-    return this.settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false })
+    return this.settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false }, waiting)
   }
 
-  private settle(report: StateReport): StateReport {
-    const waiting = this.waiting
-
-    this.waiting = []
-
+  private settle(report: StateReport, waiting: StateWaiter[]): StateReport {
     for (const resolve of waiting) {
       resolve(report)
     }
