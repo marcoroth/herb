@@ -62,5 +62,13 @@ module Parser
     test "nested HTML comment opener in an unclosed comment" do
       assert_parsed_snapshot(%(<!-- outer <!-- inner))
     end
+
+    test "conditional comment closed by an abrupt opener" do
+      assert_parsed_snapshot(%(<!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->))
+    end
+
+    test "nested HTML comment opener at end of file" do
+      assert_parsed_snapshot(%(<!-- a <!--))
+    end
   end
 end

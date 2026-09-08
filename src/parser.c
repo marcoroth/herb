@@ -115,6 +115,39 @@ static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
   return cdata;
 }
 
+// <!-- a <!-->
+static token_T* parser_parse_html_comment_abrupt_end(
+  parser_T* parser,
+  hb_buffer_T* comment,
+  hb_array_T* children,
+  position_T start
+) {
+  token_T* nested_start = parser_advance(parser);
+  token_T* tag_end = parser_advance(parser);
+
+  position_T dashes_start = nested_start->location.start;
+  dashes_start.column += 2;
+
+  hb_buffer_append_string(comment, hb_string("<!"));
+
+  hb_string_T content = { .data = comment->value, .length = (uint32_t) comment->length };
+  hb_array_append(children, ast_literal_node_init(content, start, dashes_start, NULL, parser->allocator));
+  hb_buffer_clear(comment);
+
+  token_T* comment_end = hb_allocator_alloc(parser->allocator, sizeof(token_T));
+
+  comment_end->type = TOKEN_HTML_COMMENT_END;
+  comment_end->value = hb_string_from_data(hb_allocator_strndup(parser->allocator, "-->", 3), 3);
+  comment_end->owns_value = true;
+  comment_end->location = (location_T) { .start = dashes_start, .end = tag_end->location.end };
+  comment_end->range = (range_T) { .from = nested_start->range.from + 2, .to = tag_end->range.to };
+
+  token_free(nested_start, parser->allocator);
+  token_free(tag_end, parser->allocator);
+
+  return comment_end;
+}
+
 static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   hb_array_T* errors = NULL;
   hb_array_T* children = hb_array_init(8, parser->allocator);
@@ -123,6 +156,8 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 
   hb_buffer_T comment;
   hb_buffer_init(&comment, 512, parser->allocator);
+
+  token_T* comment_end = NULL;
 
   while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_HTML_COMMENT_INVALID_END, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
@@ -136,17 +171,31 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
       continue;
     }
 
-    // <!-- outer <!-- inner -->
     if (token_is(parser, TOKEN_HTML_COMMENT_START)) {
-      append_nested_comment_error(
-        comment_start,
-        parser->current_token,
-        parser->current_token->location.start,
-        parser->current_token->location.end,
-        parser->allocator,
-        &errors,
-        &parser->options
-      );
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* next_token = lexer_next_token(&lexer_copy);
+      token_type_T next_type = next_token ? next_token->type : TOKEN_EOF;
+
+      if (next_token) { token_free(next_token, parser->allocator); }
+
+      // <!--[if !mso]><!--><meta><!--<![endif]-->
+      if (next_type == TOKEN_HTML_TAG_END) {
+        comment_end = parser_parse_html_comment_abrupt_end(parser, &comment, children, start);
+        break;
+      }
+
+      // <!-- outer <!-- inner -->
+      if (next_type != TOKEN_EOF) {
+        append_nested_comment_error(
+          comment_start,
+          parser->current_token,
+          parser->current_token->location.start,
+          parser->current_token->location.end,
+          parser->allocator,
+          &errors,
+          &parser->options
+        );
+      }
     }
 
     token_T* token = parser_advance(parser);
@@ -156,9 +205,9 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 
   parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
-  token_T* comment_end = NULL;
-
-  if (token_is(parser, TOKEN_HTML_COMMENT_INVALID_END)) {
+  if (comment_end != NULL) {
+    // closed by <!-->
+  } else if (token_is(parser, TOKEN_HTML_COMMENT_INVALID_END)) {
     comment_end = parser_advance(parser);
     append_invalid_comment_closing_tag_error(
       comment_end,
