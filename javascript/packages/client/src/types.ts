@@ -121,6 +121,9 @@ export interface Region {
   occurrence: number
   ranges: RegionRange[]
   slots: SlotMap
+  parent: Region | null
+  slot: Slot | null
+  item: Item | null
   seeds?: Seeds
 }
 

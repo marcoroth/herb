@@ -35,7 +35,7 @@ import { blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fil
 import { anchoredSlots, currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor, slotOpeners } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
-import type { TemplateManifest } from "./manifests"
+import type { BindingEntry, TemplateManifest } from "./manifests"
 import type { ElementObserverDelegate } from "../shared/element-observer"
 import type { CollectionsDelegate } from "./collections"
 import type { RegionIndexDelegate } from "./region-index"
@@ -101,6 +101,14 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
   statesFor(file: string, version: string): StateManifest | null {
     return this.manifests.statesOf(file, version)
+  }
+
+  bindingsFor(region: Region): BindingEntry | null {
+    if (!region.parent || !region.slot) {
+      return null
+    }
+
+    return this.manifests.bindingsOf(region.parent.file, region.parent.version, region.slot.index)
   }
 
   holdStatics(identity: StaticsIdentity, statics: Record<string, string>): number {

@@ -25,13 +25,16 @@ import type { Conditional } from "./types"
 import type { RefreshReport } from "./refresh"
 import type { StateKind, StateValue } from "./values"
 import type { Built, Item, Payload, Region, Slot } from "../types"
-import type { CountOptions, DeclaredState, DependencyMap, PlacedSlot, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
+import type { CountOptions, DeclaredState, DependencyMap, PlacedSlot, ResolvedState, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
+import type { BindingEntry } from "../slots/manifests"
 
 import type { SlotsDelegate } from "../types"
 import type { SeedsDelegate } from "./seeds"
 import type { CountsDelegate } from "./counts"
 import type { BoundInputsDelegate } from "./bound-inputs"
 import type { ElementObserverDelegate } from "../shared/element-observer"
+
+const ALIAS_DEPTH = 8
 
 export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDelegate, BoundInputsDelegate, CountsDelegate {
   private readonly slots: Slots
@@ -350,8 +353,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
 
     const placed = new Map(this.slots.placements(target).map((placement) => [placement.region, placement]))
+    const enclosing = this.slots.regions().filter((region) => placed.has(region))
+    const ordered = enclosing.some((region) => this.slots.bindingsFor(region) !== null) ? [...enclosing].reverse() : enclosing
 
-    for (const region of this.slots.regions()) {
+    for (const region of ordered) {
       const placement = placed.get(region)
 
       if (!placement) {
@@ -432,11 +437,41 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return false
     }
 
+    const forwarded = new Map<StateScope, StateValues>()
+    const writes: StateValues = {}
+
+    for (const name of names) {
+      const alias = this.resolveState(this.scopeFor(resolved, name) ?? resolved, name)
+
+      if (alias.scope.region === resolved.region) {
+        writes[name] = values[name]
+
+        continue
+      }
+
+      const bucket = forwarded.get(alias.scope) ?? {}
+
+      bucket[alias.name] = values[name]
+      forwarded.set(alias.scope, bucket)
+    }
+
+    let outcome = true
+
+    for (const [scope, bucket] of forwarded) {
+      outcome = this.setState(bucket, { scope }) && outcome
+    }
+
+    const own = Object.keys(writes)
+
+    if (own.length === 0) {
+      return outcome
+    }
+
     const previous = new Map<string, StateValue>()
     const scopes = new Map<string, StateScope>()
     const groups = new Map<StateScope, string[]>()
 
-    for (const name of names) {
+    for (const name of own) {
       const target = this.scopeFor(resolved, name) ?? resolved
       const declaration = this.declaration(manifest, target, name)
 
@@ -485,15 +520,21 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     const counted = this.counts.declarationsIn(manifest).map((declaration) => ({ name: declaration.name, previous: this.valueAt(declaration.name, regionScope) }))
     const countDependents = this.derivedDependents(manifest, regionScope, counted.map((entry) => entry.name)).map((name) => ({ name, previous: this.valueAt(name, regionScope) }))
 
-    for (const [name, value] of Object.entries(values)) {
+    const snapshots = this.snapshotBound([...groups.keys(), regionScope])
+
+    for (const [name, value] of Object.entries(writes)) {
       const target = scopes.get(name) ?? resolved
 
       this.store(target, name, value)
       this.writeValueSlots(manifest, target, name, value)
     }
 
+    const recomputedBy = new Map<StateScope, string[]>()
+
     for (const [scope, grouped] of groups) {
       const recomputed: string[] = []
+
+      recomputedBy.set(scope, recomputed)
 
       for (const dependent of dependents.get(scope) ?? []) {
         const value = this.valueAt(dependent.name, scope)
@@ -534,7 +575,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       this.writeComputed(manifest, regionScope, recounted)
     }
 
-    for (const [name, value] of Object.entries(values)) {
+    for (const [name, value] of Object.entries(writes)) {
       this.announceState(scopes.get(name) ?? resolved, name, value, previous.get(name) ?? null)
     }
 
@@ -556,17 +597,159 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       }
     }
 
-    const changed = names.filter((name) => {
+    const changed = own.filter((name) => {
       const value = this.valueAt(name, scopes.get(name) ?? resolved)
 
       return value !== (previous.get(name) ?? null)
     })
 
+    for (const [scope, grouped] of groups) {
+      this.propagateToBound(scope, [...grouped, ...(recomputedBy.get(scope) ?? [])], snapshots)
+    }
+
+    if (recounted.length > 0) {
+      this.propagateToBound(regionScope, recounted, snapshots)
+    }
+
     if (changed.length > 0) {
       this.requestReadRefetch(manifest, regionScope, changed)
     }
 
-    return true
+    return outcome
+  }
+
+  resolveState(at: StateScope, name: string): ResolvedState {
+    let scope = this.scopeFor(at, name) ?? at
+    let key = name
+
+    for (let depth = 0; depth < ALIAS_DEPTH; depth += 1) {
+      if (scope.item !== null) {
+        break
+      }
+
+      const region = scope.region
+      const parent = region.parent
+      const target = this.slots.bindingsFor(region)?.states[key]
+
+      if (!parent || !target || !this.manifestFor(parent)) {
+        break
+      }
+
+      const above = scopeOf(parent, region.item)
+
+      scope = this.scopeFor(above, target) ?? above
+      key = target
+    }
+
+    return { scope, name: key }
+  }
+
+  private boundChildren(scope: StateScope): Array<{ region: Region; binding: BindingEntry }> {
+    const found: Array<{ region: Region; binding: BindingEntry }> = []
+
+    for (const region of this.slots.regions()) {
+      if (region.parent !== scope.region) {
+        continue
+      }
+
+      if (scope.item !== null && region.item !== scope.item) {
+        continue
+      }
+
+      const binding = this.slots.bindingsFor(region)
+
+      if (binding) {
+        found.push({ region, binding })
+      }
+    }
+
+    return found
+  }
+
+  private snapshotBound(scopes: Iterable<StateScope>): Map<Region, Map<string, StateValue>> {
+    const snapshots = new Map<Region, Map<string, StateValue>>()
+
+    const visit = (scope: StateScope): void => {
+      for (const { region, binding } of this.boundChildren(scope)) {
+        if (snapshots.has(region)) {
+          continue
+        }
+
+        const manifest = this.manifestFor(region)
+
+        if (!manifest) {
+          continue
+        }
+
+        const childScope = scopeOf(region)
+        const names = Object.keys(binding.states)
+        const held = new Map<string, StateValue>()
+
+        for (const name of [...names, ...this.derivedDependents(manifest, childScope, names)]) {
+          held.set(name, this.valueAt(name, childScope))
+        }
+
+        snapshots.set(region, held)
+        visit(childScope)
+      }
+    }
+
+    for (const scope of scopes) {
+      visit(scope)
+    }
+
+    return snapshots
+  }
+
+  private propagateToBound(scope: StateScope, changed: string[], snapshots: Map<Region, Map<string, StateValue>>): void {
+    for (const { region, binding } of this.boundChildren(scope)) {
+      const names = Object.entries(binding.states)
+        .filter(([, parent]) => changed.includes(parent))
+        .map(([child]) => child)
+
+      if (names.length === 0) {
+        continue
+      }
+
+      const manifest = this.manifestFor(region)
+
+      if (!manifest) {
+        continue
+      }
+
+      const childScope = scopeOf(region)
+      const before = snapshots.get(region) ?? new Map<string, StateValue>()
+      const recomputed: string[] = []
+
+      for (const name of names) {
+        this.writeValueSlots(manifest, childScope, name, this.valueAt(name, childScope))
+      }
+
+      for (const dependent of this.derivedDependents(manifest, childScope, names)) {
+        const value = this.valueAt(dependent, childScope)
+
+        if (value === before.get(dependent)) {
+          continue
+        }
+
+        recomputed.push(dependent)
+        this.writeValueSlots(manifest, childScope, dependent, value)
+      }
+
+      const all = [...names, ...recomputed]
+
+      this.invalidateStaleReads(manifest, childScope, all)
+      this.writeConditionals(manifest, childScope, all)
+      this.writePresence(manifest, childScope, all)
+      this.writeComputed(manifest, childScope, all)
+
+      for (const name of all) {
+        this.announceState(childScope, name, this.valueAt(name, childScope), before.get(name) ?? null)
+      }
+
+      this.propagateToBound(childScope, all, snapshots)
+      this.requestReadRefetch(manifest, childScope, all)
+    }
   }
 
   private async fetchBlock(region: Region, index: number): Promise<RefreshReport> {
@@ -819,8 +1002,8 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   }
 
   valueAt(name: string, at: StateScope): StateValue {
-    const scope = this.scopeFor(at, name) ?? at
-    const declaration = this.declarationIn(scope, name)
+    const { scope, name: key } = this.resolveState(at, name)
+    const declaration = this.declarationIn(scope, key)
 
     if (declaration?.count) {
       return this.counts.countFor(declaration, scope)
@@ -830,19 +1013,19 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
       return this.deriveValue(declaration, scope)
     }
 
-    const stored = this.scoped.get(scope.region)?.get(scope.item?.key ?? "")?.get(name)
+    const stored = this.scoped.get(scope.region)?.get(scope.item?.key ?? "")?.get(key)
 
     if (stored !== undefined) {
       return stored
     }
 
-    const seeded = this.seeds.valueFor(name, scope)
+    const seeded = this.seeds.valueFor(key, scope)
 
     if (seeded !== undefined) {
       return seeded
     }
 
-    return this.defaultOf(name, scope)
+    return this.defaultOf(key, scope)
   }
 
   private deriveValue(declaration: DeclaredState, scope: StateScope): StateValue {
@@ -907,7 +1090,9 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   }
 
   declares(scope: StateScope, name: string): boolean {
-    return this.declarationIn(this.scopeFor(scope, name) ?? scope, name) !== null
+    const resolved = this.resolveState(scope, name)
+
+    return this.declarationIn(resolved.scope, resolved.name) !== null
   }
 
   private declarationIn(scope: StateScope, name: string): DeclaredState | null {
