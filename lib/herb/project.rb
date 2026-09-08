@@ -42,7 +42,12 @@ module Herb
       "UnclosedERBTagError",
       "MalformedERBClosingTagError",
       "StrayERBClosingTagError",
-      "NestedERBTagError"
+      "NestedERBTagError",
+      "MissingWhitespaceBetweenAttributesError",
+      "UnexpectedCharacterInAttributeNameError",
+      "UnexpectedCharacterInUnquotedAttributeValueError",
+      "UnexpectedEqualsSignBeforeAttributeNameError",
+      "UnexpectedSolidusInTagError"
     ].freeze
 
     ISSUE_TYPES = [

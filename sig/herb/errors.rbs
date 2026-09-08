@@ -436,6 +436,111 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class MissingWhitespaceBetweenAttributesError < Error
+      include Colors
+
+      attr_reader found: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_missing_whitespace_between_attributes_error
+      def to_hash: () -> serialized_missing_whitespace_between_attributes_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnexpectedCharacterInAttributeNameError < Error
+      include Colors
+
+      attr_reader character: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unexpected_character_in_attribute_name_error
+      def to_hash: () -> serialized_unexpected_character_in_attribute_name_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnexpectedCharacterInUnquotedAttributeValueError < Error
+      include Colors
+
+      attr_reader character: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unexpected_character_in_unquoted_attribute_value_error
+      def to_hash: () -> serialized_unexpected_character_in_unquoted_attribute_value_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnexpectedEqualsSignBeforeAttributeNameError < Error
+      include Colors
+
+      attr_reader equals: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unexpected_equals_sign_before_attribute_name_error
+      def to_hash: () -> serialized_unexpected_equals_sign_before_attribute_name_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnexpectedSolidusInTagError < Error
+      include Colors
+
+      attr_reader solidus: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unexpected_solidus_in_tag_error
+      def to_hash: () -> serialized_unexpected_solidus_in_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class UnclosedERBTagError < Error
       include Colors
 

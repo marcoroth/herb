@@ -938,13 +938,13 @@ test/fixtures/tag-attributes.html.erb:5:0
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
 
-[error] Unexpected Token. Expected: an identifier, \`@\`, \`<%\`, whitespace, or a newline, found: a character. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
+[error] Missing whitespace between attributes at (2:22). \`alt\` is parsed as the start of a new attribute. (\`MISSING_WHITESPACE_BETWEEN_ATTRIBUTES_ERROR\`) (parser-no-errors)
 
-test/fixtures/parser-errors.html.erb:2:16
+test/fixtures/parser-errors.html.erb:2:22
 
       1 │ <div id=test class=foo>
-  →   2 │   <img src=image.jpg>
-        │                 ~
+  →   2 │   <img src="image.jpg"alt="Image">
+        │                       ~~~
       3 │ </div>
       4 │
 
