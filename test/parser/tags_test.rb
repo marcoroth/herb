@@ -354,5 +354,13 @@ module Parser
     test "dot-notation component tag with three segments and lowercase middle" do
       assert_parsed_snapshot("<Namespace.dialog.Button></Namespace.dialog.Button>", dot_notation_tags: true)
     end
+
+    test "closing tag with trailing solidus" do
+      assert_parsed_snapshot("<div></div/>")
+    end
+
+    test "void element closing tag with trailing solidus" do
+      assert_parsed_snapshot("<p><br/></br/></p>")
+    end
   end
 end

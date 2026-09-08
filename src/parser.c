@@ -1239,6 +1239,20 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
   token_T* tag_closing = parser_consume_if_present(parser, TOKEN_HTML_TAG_END);
 
+  // </div/>
+  if (tag_closing == NULL && token_is(parser, TOKEN_HTML_TAG_SELF_CLOSE) && tag_name != NULL) {
+    tag_closing = parser_advance(parser);
+
+    append_end_tag_with_trailing_solidus_error(
+      tag_name,
+      tag_closing->location.start,
+      tag_closing->location.end,
+      parser->allocator,
+      &errors,
+      &parser->options
+    );
+  }
+
   if (tag_closing == NULL) {
     append_unclosed_close_tag_error(
       tag_name,

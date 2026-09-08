@@ -397,6 +397,27 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class EndTagWithTrailingSolidusError < Error
+      include Colors
+
+      attr_reader tag_name: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_end_tag_with_trailing_solidus_error
+      def to_hash: () -> serialized_end_tag_with_trailing_solidus_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class UnclosedQuoteError < Error
       include Colors
 
