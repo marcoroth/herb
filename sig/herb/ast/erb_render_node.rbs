@@ -15,6 +15,10 @@ module Herb
 
       def local_names: () -> untyped
 
+      def state_names: () -> untyped
+
+      def bound_state?: () -> untyped
+
       def resolve: (?view_root: untyped, ?source_directory: untyped) -> untyped
 
       def candidate_paths: (?untyped name, ?untyped view_root, ?untyped source_directory) -> untyped

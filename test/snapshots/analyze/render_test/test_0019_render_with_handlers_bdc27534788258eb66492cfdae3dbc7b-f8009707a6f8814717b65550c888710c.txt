@@ -29,7 +29,9 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: "[:builder]" (location: (1:48)-(1:58))
     │   │       ├── content_type: ∅
-    │   │       └── locals: []
+    │   │       ├── locals: []
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

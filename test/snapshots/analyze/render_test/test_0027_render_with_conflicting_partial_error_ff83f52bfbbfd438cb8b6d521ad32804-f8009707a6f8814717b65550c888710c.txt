@@ -35,14 +35,16 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       └── locals: (1 item)
-    │   │           └── @ RubyRenderLocalNode (location: (1:19)-(1:35))
-    │   │               ├── name: "partial" (location: (1:19)-(1:27))
-    │   │               └── value:
-    │   │                   └── @ RubyLiteralNode (location: (1:28)-(1:35))
-    │   │                       └── content: "\"other\""
-    │   │
-    │   │
+    │   │       ├── locals: (1 item)
+    │   │       │   └── @ RubyRenderLocalNode (location: (1:19)-(1:35))
+    │   │       │       ├── name: "partial" (location: (1:19)-(1:27))
+    │   │       │       └── value:
+    │   │       │           └── @ RubyLiteralNode (location: (1:28)-(1:35))
+    │   │       │               └── content: "\"other\""
+    │   │       │
+    │   │       │
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

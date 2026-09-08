@@ -34,14 +34,16 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       └── locals: (1 item)
-    │   │           └── @ RubyRenderLocalNode (location: (1:29)-(1:42))
-    │   │               ├── name: "title" (location: (1:29)-(1:35))
-    │   │               └── value:
-    │   │                   └── @ RubyLiteralNode (location: (1:36)-(1:42))
-    │   │                       └── content: "@title"
-    │   │
-    │   │
+    │   │       ├── locals: (1 item)
+    │   │       │   └── @ RubyRenderLocalNode (location: (1:29)-(1:42))
+    │   │       │       ├── name: "title" (location: (1:29)-(1:35))
+    │   │       │       └── value:
+    │   │       │           └── @ RubyLiteralNode (location: (1:36)-(1:42))
+    │   │       │               └── content: "@title"
+    │   │       │
+    │   │       │
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

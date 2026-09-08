@@ -3,6 +3,7 @@
 #include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/helpers.h"
+#include "../include/analyze/herb_directives.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/lexer/token.h"
@@ -217,6 +218,102 @@ static pm_hash_node_t* find_locals_hash(pm_keyword_hash_node_t* keyword_hash, hb
   return NULL;
 }
 
+static bool extract_assoc_parts(
+  pm_assoc_node_t* assoc,
+  const char* source,
+  size_t erb_content_offset,
+  const uint8_t* erb_content_source,
+  hb_allocator_T* allocator,
+  token_T** name_token,
+  AST_RUBY_LITERAL_NODE_T** value_node
+) {
+  char* name = extract_string_value(assoc->key, allocator);
+  if (!name) { name = extract_source_expression(assoc->key, allocator); }
+  if (!name) { return false; }
+
+  bool shorthand = assoc->value && assoc->value->type == PM_IMPLICIT_NODE;
+  char* value = shorthand ? hb_allocator_strdup(allocator, name) : extract_source_expression(assoc->value, allocator);
+
+  if (!value) {
+    hb_allocator_dealloc(allocator, name);
+    return false;
+  }
+
+  *name_token = create_token_from_prism_node(
+    assoc->key,
+    name,
+    TOKEN_IDENTIFIER,
+    source,
+    erb_content_offset,
+    erb_content_source,
+    allocator
+  );
+
+  position_T value_start = { .line = 1, .column = 1 };
+  position_T value_end = value_start;
+  pm_node_t* spanned = shorthand ? assoc->key : assoc->value;
+
+  if (spanned && source && erb_content_source) {
+    size_t start_offset = (size_t) (spanned->location.start - erb_content_source);
+    size_t end_offset = (size_t) (spanned->location.end - erb_content_source);
+
+    if (shorthand && end_offset > start_offset && erb_content_source[end_offset - 1] == ':') { end_offset--; }
+
+    value_start = byte_offset_to_position(source, erb_content_offset + start_offset);
+    value_end = byte_offset_to_position(source, erb_content_offset + end_offset);
+  }
+
+  *value_node = ast_ruby_literal_node_init(
+    hb_string_from_c_string(value),
+    value_start,
+    value_end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  hb_allocator_dealloc(allocator, name);
+  hb_allocator_dealloc(allocator, value);
+
+  return true;
+}
+
+static void append_local_from_assoc(
+  hb_array_T* locals,
+  pm_assoc_node_t* assoc,
+  const char* source,
+  size_t erb_content_offset,
+  const uint8_t* erb_content_source,
+  hb_allocator_T* allocator
+) {
+  token_T* name_token = NULL;
+  AST_RUBY_LITERAL_NODE_T* value_node = NULL;
+
+  if (!extract_assoc_parts(
+        assoc,
+        source,
+        erb_content_offset,
+        erb_content_source,
+        allocator,
+        &name_token,
+        &value_node
+      )) {
+    return;
+  }
+
+  position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
+
+  AST_RUBY_RENDER_LOCAL_NODE_T* local_node = ast_ruby_render_local_node_init(
+    name_token,
+    value_node,
+    start,
+    value_node->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
+  );
+
+  hb_array_append(locals, local_node);
+}
+
 static hb_array_T* extract_locals_from_hash(
   pm_hash_node_t* hash,
   const char* source,
@@ -230,56 +327,14 @@ static hb_array_T* extract_locals_from_hash(
     pm_node_t* element = hash->elements.nodes[index];
     if (element->type != PM_ASSOC_NODE) { continue; }
 
-    pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
-    char* name = extract_string_value(assoc->key, allocator);
-    if (!name) { name = extract_source_expression(assoc->key, allocator); }
-    if (!name) { continue; }
-
-    char* value = extract_source_expression(assoc->value, allocator);
-
-    if (!value) {
-      hb_allocator_dealloc(allocator, name);
-      continue;
-    }
-
-    token_T* name_token = create_token_from_prism_node(
-      assoc->key,
-      name,
-      TOKEN_IDENTIFIER,
+    append_local_from_assoc(
+      locals,
+      (pm_assoc_node_t*) element,
       source,
       erb_content_offset,
       erb_content_source,
       allocator
     );
-
-    position_T value_start = { .line = 1, .column = 1 };
-    position_T value_end = value_start;
-
-    if (assoc->value && source && erb_content_source) {
-      size_t start_offset = (size_t) (assoc->value->location.start - erb_content_source);
-      size_t end_offset = (size_t) (assoc->value->location.end - erb_content_source);
-      value_start = byte_offset_to_position(source, erb_content_offset + start_offset);
-      value_end = byte_offset_to_position(source, erb_content_offset + end_offset);
-    }
-
-    AST_RUBY_LITERAL_NODE_T* value_node = ast_ruby_literal_node_init(
-      hb_string_from_c_string(value),
-      value_start,
-      value_end,
-      hb_array_init(0, allocator),
-      allocator
-    );
-
-    position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-    position_T end = value_end;
-
-    AST_RUBY_RENDER_LOCAL_NODE_T* local_node =
-      ast_ruby_render_local_node_init(name_token, value_node, start, end, hb_array_init(0, allocator), allocator);
-
-    hb_array_append(locals, local_node);
-
-    hb_allocator_dealloc(allocator, name);
-    hb_allocator_dealloc(allocator, value);
   }
 
   return locals;
@@ -308,6 +363,116 @@ static token_T* extract_keyword_token(
 
   hb_allocator_dealloc(allocator, keyword.value);
   return token;
+}
+
+static bool is_state_binding_assoc(pm_assoc_node_t* assoc, hb_allocator_T* allocator, const parser_options_T* options) {
+  if (!options || !options->herb_directives) { return false; }
+  if (!assoc->value || assoc->value->type != PM_HASH_NODE) { return false; }
+
+  char* key = extract_string_value(assoc->key, allocator);
+  if (!key) { return false; }
+
+  bool matches = string_equals(key, "state");
+  hb_allocator_dealloc(allocator, key);
+
+  if (!matches) { return false; }
+
+  pm_hash_node_t* hash = (pm_hash_node_t*) assoc->value;
+
+  for (size_t index = 0; index < hash->elements.size; index++) {
+    pm_node_t* element = hash->elements.nodes[index];
+    if (element->type != PM_ASSOC_NODE) { return false; }
+    if (((pm_assoc_node_t*) element)->key->type != PM_SYMBOL_NODE) { return false; }
+  }
+
+  return true;
+}
+
+static pm_assoc_node_t* find_state_assoc(
+  pm_keyword_hash_node_t* keyword_hash,
+  hb_allocator_T* allocator,
+  const parser_options_T* options
+) {
+  if (!keyword_hash) { return NULL; }
+
+  for (size_t index = 0; index < keyword_hash->elements.size; index++) {
+    pm_node_t* element = keyword_hash->elements.nodes[index];
+    if (element->type != PM_ASSOC_NODE) { continue; }
+
+    pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
+    if (is_state_binding_assoc(assoc, allocator, options)) { return assoc; }
+  }
+
+  return NULL;
+}
+
+static hb_array_T* extract_state_entries(
+  pm_assoc_node_t* state_assoc,
+  const char* source,
+  size_t erb_content_offset,
+  const uint8_t* erb_content_source,
+  hb_allocator_T* allocator
+) {
+  if (!state_assoc) { return hb_array_init(0, allocator); }
+
+  pm_hash_node_t* hash = (pm_hash_node_t*) state_assoc->value;
+  hb_array_T* entries = hb_array_init(hash->elements.size, allocator);
+
+  for (size_t index = 0; index < hash->elements.size; index++) {
+    pm_assoc_node_t* assoc = (pm_assoc_node_t*) hash->elements.nodes[index];
+    token_T* name_token = NULL;
+    AST_RUBY_LITERAL_NODE_T* value_node = NULL;
+
+    if (!extract_assoc_parts(
+          assoc,
+          source,
+          erb_content_offset,
+          erb_content_source,
+          allocator,
+          &name_token,
+          &value_node
+        )) {
+      continue;
+    }
+
+    position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
+    pm_node_t* value = assoc->value;
+
+    if (value->type == PM_IMPLICIT_NODE) { value = ((pm_implicit_node_t*) value)->value; }
+
+    AST_HERB_STATE_DECLARATION_NODE_T* entry = ast_herb_state_declaration_node_init(
+      name_token,
+      value_node,
+      herb_directive_kind_for_prism_node(value),
+      start,
+      value_node->base.location.end,
+      hb_array_init(0, allocator),
+      allocator
+    );
+
+    hb_array_append(entries, entry);
+  }
+
+  return entries;
+}
+
+static location_T* prism_node_location(
+  pm_node_t* node,
+  const char* source,
+  size_t erb_content_offset,
+  const uint8_t* erb_content_source,
+  hb_allocator_T* allocator
+) {
+  if (!node || !source || !erb_content_source) { return NULL; }
+
+  size_t start_offset = (size_t) (node->location.start - erb_content_source);
+  size_t end_offset = (size_t) (node->location.end - erb_content_source);
+
+  return location_create(
+    byte_offset_to_position(source, erb_content_offset + start_offset),
+    byte_offset_to_position(source, erb_content_offset + end_offset),
+    allocator
+  );
 }
 
 typedef struct {
@@ -351,6 +516,11 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   token_T* variants = NULL;
   token_T* handlers = NULL;
   token_T* content_type = NULL;
+
+  pm_assoc_node_t* state_assoc = find_state_assoc(keyword_hash, allocator, options);
+  hb_array_T* state = extract_state_entries(state_assoc, source, erb_content_offset, erb_content_source, allocator);
+  location_T* state_location =
+    prism_node_location((pm_node_t*) state_assoc, source, erb_content_offset, erb_content_source, allocator);
 
   hb_array_T* locals = NULL;
   bool has_keyword_partial = false;
@@ -410,61 +580,16 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         for (size_t index = 0; index < keyword_hash->elements.size; index++) {
           pm_node_t* element = keyword_hash->elements.nodes[index];
           if (element->type != PM_ASSOC_NODE) { continue; }
+          if (element == (pm_node_t*) state_assoc) { continue; }
 
-          pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
-          char* name = extract_string_value(assoc->key, allocator);
-          if (!name) { name = extract_source_expression(assoc->key, allocator); }
-          if (!name) { continue; }
-
-          char* value = extract_source_expression(assoc->value, allocator);
-
-          if (!value) {
-            hb_allocator_dealloc(allocator, name);
-            continue;
-          }
-
-          token_T* name_token = create_token_from_prism_node(
-            assoc->key,
-            name,
-            TOKEN_IDENTIFIER,
+          append_local_from_assoc(
+            locals,
+            (pm_assoc_node_t*) element,
             source,
             erb_content_offset,
             erb_content_source,
             allocator
           );
-
-          position_T value_start = { .line = 1, .column = 1 };
-          position_T value_end = value_start;
-
-          if (assoc->value && source && erb_content_source) {
-            size_t start_offset = (size_t) (assoc->value->location.start - erb_content_source);
-            size_t end_offset = (size_t) (assoc->value->location.end - erb_content_source);
-            value_start = byte_offset_to_position(source, erb_content_offset + start_offset);
-            value_end = byte_offset_to_position(source, erb_content_offset + end_offset);
-          }
-
-          AST_RUBY_LITERAL_NODE_T* value_node = ast_ruby_literal_node_init(
-            hb_string_from_c_string(value),
-            value_start,
-            value_end,
-            hb_array_init(0, allocator),
-            allocator
-          );
-
-          position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-
-          AST_RUBY_RENDER_LOCAL_NODE_T* local_node = ast_ruby_render_local_node_init(
-            name_token,
-            value_node,
-            start,
-            value_end,
-            hb_array_init(0, allocator),
-            allocator
-          );
-
-          hb_array_append(locals, local_node);
-          hb_allocator_dealloc(allocator, name);
-          hb_allocator_dealloc(allocator, value);
         }
       }
     } else {
@@ -557,6 +682,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
           break;
         }
       }
+
+      if (!is_known && assoc == state_assoc) { is_known = true; }
 
       if (!is_known) {
         has_non_render_kwargs = true;
@@ -770,6 +897,8 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     handlers,
     content_type,
     locals,
+    state,
+    state_location,
     erb_node->base.location.start,
     erb_node->base.location.end,
     hb_array_init(0, allocator),

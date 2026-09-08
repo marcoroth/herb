@@ -1507,6 +1507,14 @@ nodes:
           kind:
             - "RubyRenderLocalNode"
 
+        - name: "state"
+          type: "array"
+          kind:
+            - "HerbStateDeclarationNode"
+
+        - name: "state_location"
+          type: "location"
+
     - name: "ERBRenderNode"
       fields:
         - name: "tag_opening"

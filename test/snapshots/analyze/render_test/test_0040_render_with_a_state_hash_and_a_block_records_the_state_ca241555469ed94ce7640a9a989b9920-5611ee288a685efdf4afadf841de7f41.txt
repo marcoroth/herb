@@ -1,20 +1,20 @@
 ---
-source: "Analyze::RenderBlockTest#test_0016_render with keyword rest block argument"
+source: "Analyze::RenderTest#test_0040_render with a state hash and a block records the state"
 input: |2-
-<%= render ConfigComponent.new do |**options| %>
-  <p>content</p>
+<%= render "shared/panel", state: { open: panel_open } do %>
+  <p>inside</p>
 <% end %>
-options: {render_nodes: true}
+options: {render_nodes: true, herb_directives: true}
 ---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBRenderNode (location: (1:0)-(3:9))
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   ├── content: " render ConfigComponent.new do |**options| " (location: (1:3)-(1:46))
-    │   ├── tag_closing: "%>" (location: (1:46)-(1:48))
+    │   ├── content: " render "shared/panel", state: { open: panel_open } do " (location: (1:3)-(1:58))
+    │   ├── tag_closing: "%>" (location: (1:58)-(1:60))
     │   ├── keywords:
     │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(3:9))
-    │   │       ├── partial: ∅
+    │   │       ├── partial: "shared/panel" (location: (1:11)-(1:25))
     │   │       ├── template_path: ∅
     │   │       ├── layout: ∅
     │   │       ├── file: ∅
@@ -24,7 +24,7 @@ options: {render_nodes: true}
     │   │       ├── html: ∅
     │   │       ├── renderable: ∅
     │   │       ├── collection: ∅
-    │   │       ├── object: "ConfigComponent.new" (location: (1:11)-(1:30))
+    │   │       ├── object: ∅
     │   │       ├── as_name: ∅
     │   │       ├── spacer_template: ∅
     │   │       ├── formats: ∅
@@ -32,14 +32,22 @@ options: {render_nodes: true}
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
     │   │       ├── locals: []
-    │   │       ├── state: []
-    │   │       └── state_location: ∅
+    │   │       ├── state: (1 item)
+    │   │       │   └── @ HerbStateDeclarationNode (location: (1:36)-(1:52))
+    │   │       │       ├── name: "open" (location: (1:36)-(1:41))
+    │   │       │       ├── default_value:
+    │   │       │       │   └── @ RubyLiteralNode (location: (1:42)-(1:52))
+    │   │       │       │       └── content: "panel_open"
+    │   │       │       │
+    │   │       │       └── kind: "bare"
+    │   │       │
+    │   │       └── state_location: (location: (1:27)-(1:54))
     │   │
     │   ├── body: (3 items)
-    │   │   ├── @ HTMLTextNode (location: (1:48)-(2:2))
+    │   │   ├── @ HTMLTextNode (location: (1:60)-(2:2))
     │   │   │   └── content: "\n  "
     │   │   │
-    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:16))
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:15))
     │   │   │   ├── open_tag:
     │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
     │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
@@ -50,29 +58,23 @@ options: {render_nodes: true}
     │   │   │   │
     │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
     │   │   │   ├── body: (1 item)
-    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(2:12))
-    │   │   │   │       └── content: "content"
+    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(2:11))
+    │   │   │   │       └── content: "inside"
     │   │   │   │
     │   │   │   ├── close_tag:
-    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:12)-(2:16))
-    │   │   │   │       ├── tag_opening: "</" (location: (2:12)-(2:14))
-    │   │   │   │       ├── tag_name: "p" (location: (2:14)-(2:15))
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:11)-(2:15))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:11)-(2:13))
+    │   │   │   │       ├── tag_name: "p" (location: (2:13)-(2:14))
     │   │   │   │       ├── children: []
-    │   │   │   │       └── tag_closing: ">" (location: (2:15)-(2:16))
+    │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
     │   │   │   │
     │   │   │   ├── is_void: false
     │   │   │   └── element_source: "HTML"
     │   │   │
-    │   │   └── @ HTMLTextNode (location: (2:16)-(3:0))
+    │   │   └── @ HTMLTextNode (location: (2:15)-(3:0))
     │   │       └── content: "\n"
     │   │
-    │   ├── block_arguments: (1 item)
-    │   │   └── @ RubyParameterNode (location: (1:35)-(1:44))
-    │   │       ├── name: "options" (location: (1:37)-(1:44))
-    │   │       ├── default_value: ∅
-    │   │       ├── kind: "keyword_rest"
-    │   │       └── required: false
-    │   │
+    │   ├── block_arguments: []
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

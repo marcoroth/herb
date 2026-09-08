@@ -82,14 +82,16 @@ options: {render_nodes: true, prism_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       └── locals: (1 item)
-    │   │           └── @ RubyRenderLocalNode (location: (1:38)-(1:51))
-    │   │               ├── name: "title" (location: (1:38)-(1:44))
-    │   │               └── value:
-    │   │                   └── @ RubyLiteralNode (location: (1:45)-(1:51))
-    │   │                       └── content: "@title"
-    │   │
-    │   │
+    │   │       ├── locals: (1 item)
+    │   │       │   └── @ RubyRenderLocalNode (location: (1:38)-(1:51))
+    │   │       │       ├── name: "title" (location: (1:38)-(1:44))
+    │   │       │       └── value:
+    │   │       │           └── @ RubyLiteralNode (location: (1:45)-(1:51))
+    │   │       │               └── content: "@title"
+    │   │       │
+    │   │       │
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

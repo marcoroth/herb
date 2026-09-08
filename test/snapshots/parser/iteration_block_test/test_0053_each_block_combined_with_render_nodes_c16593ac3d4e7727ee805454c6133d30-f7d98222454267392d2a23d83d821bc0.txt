@@ -44,14 +44,16 @@ options: {iteration_nodes: true, render_nodes: true}
     │   │   │   │       ├── variants: ∅
     │   │   │   │       ├── handlers: ∅
     │   │   │   │       ├── content_type: ∅
-    │   │   │   │       └── locals: (1 item)
-    │   │   │   │           └── @ RubyRenderLocalNode (location: (2:21)-(2:31))
-    │   │   │   │               ├── name: "user" (location: (2:21)-(2:26))
-    │   │   │   │               └── value:
-    │   │   │   │                   └── @ RubyLiteralNode (location: (2:27)-(2:31))
-    │   │   │   │                       └── content: "user"
-    │   │   │   │
-    │   │   │   │
+    │   │   │   │       ├── locals: (1 item)
+    │   │   │   │       │   └── @ RubyRenderLocalNode (location: (2:21)-(2:31))
+    │   │   │   │       │       ├── name: "user" (location: (2:21)-(2:26))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ RubyLiteralNode (location: (2:27)-(2:31))
+    │   │   │   │       │               └── content: "user"
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       ├── state: []
+    │   │   │   │       └── state_location: ∅
     │   │   │   │
     │   │   │   ├── body: []
     │   │   │   ├── block_arguments: []

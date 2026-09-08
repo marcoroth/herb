@@ -221,5 +221,73 @@ module Analyze
         <%= render partial: "product", collection: @products, cached: true %>
       HTML
     end
+
+    test "render with a state hash keeps it out of the locals" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/album_card", album: a, state: { open: modal_open } %>
+      HTML
+    end
+
+    test "render partial with a state hash raises no missing locals error" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render partial: "shared/album_card", state: { open: modal_open } %>
+      HTML
+    end
+
+    test "render with a state value that is not a hash stays a local" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "address", state: @address.state %>
+      HTML
+    end
+
+    test "render with a state hash and a block records the state" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/panel", state: { open: panel_open } do %>
+          <p>inside</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with a state hash stays a local without herb directives" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render "shared/album_card", album: a, state: { open: modal_open } %>
+      HTML
+    end
+
+    test "render partial with a state hash still errors without herb directives" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render partial: "shared/album_card", state: { open: modal_open } %>
+      HTML
+    end
+
+    test "render with a state hash holding a splat stays a local" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/album_card", state: { open: modal_open, **extra } %>
+      HTML
+    end
+
+    test "render with a state hash holding a string key stays a local" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/album_card", state: { "open" => modal_open } %>
+      HTML
+    end
+
+    test "render with a state hash classifies each value" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/album_card", state: { open: modal_open, count: 3, label: "hi", featured: album.featured? } %>
+      HTML
+    end
+
+    test "render with the hash shorthand in locals and state" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/album_card", album:, state: { page: } %>
+      HTML
+    end
+
+    test "render with a state hash of literals classifies each kind" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true, herb_directives: true)
+        <%= render "shared/album_card", state: { on: true, off: false, count: 42, offset: -1, label: "hi", tone: :warm, note: nil, ratio: 1.5, tags: [1, 2], meta: { x: 1 }, greeting: "hi \#{name}" } %>
+      HTML
+    end
   end
 end
