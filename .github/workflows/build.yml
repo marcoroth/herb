@@ -45,7 +45,7 @@ jobs:
         run: bundle exec yerba check
 
       - name: clang-format version
-        run: clang-format --version
+        run: clang-format --version | grep "version 21"
 
       - name: Lint
         run: bin/lint
@@ -65,7 +65,7 @@ jobs:
         run: bundle exec rake rbs_inline
 
       - name: clang-tidy version
-        run: clang-tidy --version
+        run: clang-tidy --version | grep "version 21"
 
       - name: Tidy
         run: bin/tidy

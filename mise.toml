@@ -16,5 +16,5 @@ emsdk = "5.0.2"
 experimental = true
 
 [env]
-_.path = { path = ["{{ tools['conda:clang'].path }}/bin", "{{ tools['conda:clangxx'].path }}/bin"], tools = true }
+_.path = { path = ["{{ tools['conda:clang'].path }}/bin", "{{ tools['conda:clangxx'].path }}/bin", "{{ tools['conda:clang-tools'].path }}/bin"], tools = true }
 CHECK_PREFIX = { value = "{{ tools['conda:check'].path }}", tools = true }
