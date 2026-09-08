@@ -1,0 +1,67 @@
+# Generated from lib/herb/engine/slots/render_bindings.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # Reads the `state:` entries off a render call and answers the call without them.
+      #
+      # The parser already took the hash apart into one declaration node per entry, with the
+      # kind it would give a `herb:state` default, so a value the parser calls bare is a
+      # candidate for a binding to one of the caller's states and anything else is a seed.
+      # The splice works on the argument's location, turned into an index into the tag's
+      # content, so the stripped call is the original source minus exactly the `state:`
+      # argument and the comma that carried it.
+      module RenderBindings
+        BARE_IDENTIFIER: Regexp
+
+        REFUSED: Hash[Symbol, String]
+
+        class Entry < Data
+          attr_reader name(): String
+
+          attr_reader source(): String
+
+          attr_reader candidate(): String?
+
+          attr_reader kind(): Symbol
+
+          attr_reader location(): Herb::Location?
+
+          def self.new: (String name, String source, String? candidate, Symbol kind, Herb::Location? location) -> instance
+                      | (name: String, source: String, candidate: String?, kind: Symbol, location: Herb::Location?) -> instance
+
+          def self.members: () -> [ :name, :source, :candidate, :kind, :location ]
+
+          def members: () -> [ :name, :source, :candidate, :kind, :location ]
+        end
+
+        class Analysis < Data
+          attr_reader entries(): Array[Entry]
+
+          attr_reader stripped(): String
+
+          attr_reader problems(): Array[[ String, String, Herb::Location? ]]
+
+          def self.new: (Array[Entry] entries, String stripped, Array[[ String, String, Herb::Location? ]] problems) -> instance
+                      | (entries: Array[Entry], stripped: String, problems: Array[[ String, String, Herb::Location? ]]) -> instance
+
+          def self.members: () -> [ :entries, :stripped, :problems ]
+
+          def members: () -> [ :entries, :stripped, :problems ]
+        end
+
+        # : (untyped) -> Analysis?
+        def self.analyze: (untyped) -> Analysis?
+
+        # : (untyped, Array[Entry], Array[[String, String, Herb::Location?]]) -> void
+        def self.collect: (untyped, Array[Entry], Array[[ String, String, Herb::Location? ]]) -> void
+
+        # : (untyped, Herb::Location) -> String?
+        def self.strip: (untyped, Herb::Location) -> String?
+
+        # : (untyped, Herb::Position) -> Integer?
+        def self.index_in: (untyped, Herb::Position) -> Integer?
+      end
+    end
+  end
+end

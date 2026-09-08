@@ -40,7 +40,7 @@ module Herb
             compile(file, source, Visitor.new(**{ mode: :client, mark: false, identifier: @identifier }.compact)) { |visitor|
               manifest = visitor.manifest
 
-              next nil if manifest["names"].empty? && manifest["parts"].empty? && manifest["states"].nil?
+              next nil if manifest["names"].empty? && manifest["parts"].empty? && manifest["states"].nil? && manifest["bindings"].empty?
 
               key = "#{visitor.identifier}:#{visitor.version}"
               @manifests[key] ||= manifest

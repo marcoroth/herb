@@ -17,6 +17,8 @@ require_relative "state_compiler"
 require_relative "markers"
 require_relative "statics"
 require_relative "state_directives"
+require_relative "render_bindings"
+require_relative "callee"
 
 module Herb
   class Engine
@@ -172,6 +174,8 @@ module Herb
           @named_elements = [] #: Array[Hash[Symbol, untyped]]
           attribute_open_tags = {} #: Hash[untyped, untyped]
           @attribute_open_tags = attribute_open_tags.compare_by_identity
+          render_bindings = {} #: Hash[untyped, Hash[Symbol, untyped]]
+          @render_bindings = render_bindings.compare_by_identity
           @interpolated_attributes = [] #: Array[untyped]
           @states = StateCompiler.new(self)
           @collection_nodes = [] #: Array[untyped]
@@ -486,7 +490,9 @@ module Herb
 
           counts = @states.count_signatures
 
-          slots + declarations + counts
+          bindings = manifest_bindings.map { |index, entry| [index, entry["identifier"], entry["states"]].inspect }
+
+          slots + declarations + counts + bindings
         end
 
         #: () -> String
@@ -513,8 +519,34 @@ module Herb
             "version" => version,
             "names" => manifest_names,
             "parts" => manifest_parts,
+            "bindings" => manifest_bindings,
             "states" => @states.manifest,
           }
+        end
+
+        #: () -> Hash[String, Hash[String, untyped]]
+        def manifest_bindings
+          bindings = {} #: Hash[String, Hash[String, untyped]]
+
+          @render_bindings.each do |node, binding|
+            index = @indices[node]
+
+            next unless index
+            next if binding.fetch(:bound).empty?
+
+            bindings[index.to_s] = {
+              "identifier" => binding.fetch(:identifier),
+              "partial" => binding.fetch(:partial),
+              "states" => binding.fetch(:bound),
+            }
+          end
+
+          bindings
+        end
+
+        #: (String) -> bool
+        def counted_state?(name)
+          @states.counted_state?(name)
         end
 
         #: () -> Hash[String, Integer]
@@ -627,6 +659,8 @@ module Herb
           number_slots
 
           @states.apply_states
+
+          wrap_bound_renders
         end
 
         #: () -> Hash[String, String]?
@@ -673,7 +707,7 @@ module Herb
 
           built = manifest
 
-          return if built["names"].empty? && built["parts"].empty? && built["states"].nil?
+          return if built["names"].empty? && built["parts"].empty? && built["states"].nil? && built["bindings"].empty?
 
           json = JSON.generate(built, script_safe: true)
           key = "#{identifier}:#{version}"
@@ -799,9 +833,214 @@ module Herb
         end
 
         def visit_erb_render_node(node)
+          bind_render_states(node) if node.bound_state?
+
           record_slot(node, erb_outputs?(node) ? :child : nil)
 
           super
+        end
+
+        #: (untyped) -> void
+        def bind_render_states(node)
+          location = node.location
+
+          unless node.static_partial?
+            slot_error("`state:` needs a partial the compiler can see, and this render picks its template at runtime.", location, :binding, suggestion: "Render the partial by its literal name, like `render \"shared/card\", state: { ... }`.")
+
+            return
+          end
+
+          if node.end_node
+            slot_error("`state:` cannot bind a partial rendered with a block, since the binding wraps the whole call.", location, :binding, suggestion: "Render the partial without a block, or move the block's content into the partial.")
+
+            return
+          end
+
+          if inline? || @in_html_comment || !erb_outputs?(node)
+            slot_error("`state:` binds a partial rendered as page content, not one inside an attribute, a comment or a silent tag.", location, :binding, suggestion: "Render the partial with `<%= render ... %>` in the page body.")
+
+            return
+          end
+
+          token = node.content
+          analysis = RenderBindings.analyze(node)
+
+          unless token && analysis
+            slot_error("`state:` on this render could not be read.", location, :binding, suggestion: "Write it as `state: { name: value }` after the partial's locals.")
+
+            return
+          end
+
+          analysis.problems.each { |message, suggestion, where| slot_error(message, where || location, :binding, suggestion: suggestion) }
+
+          return unless analysis.problems.empty?
+
+          partial = node.partial_path.to_s
+          twice = node.local_names & analysis.entries.map(&:name)
+
+          analysis.entries.each do |entry|
+            next unless twice.include?(entry.name)
+
+            slot_error("`#{entry.name}` goes to `#{partial}` both as a local and as a state, and the state assignment would overwrite the local.", entry.location || location, :binding, suggestion: "Pass `#{entry.name}` one way. A local is a snapshot the partial reads, a state is a value the client can write.")
+          end
+
+          return unless twice.empty?
+
+          unless partial.include?("/")
+            slot_error("`state:` needs the partial's directory in its name, since `#{partial}` resolves through the controller's view paths at render and the compiler cannot follow that.", location, :binding, suggestion: "Name it from the view root, like `render \"#{File.basename(File.dirname(context.relative_file_path))}/#{partial}\", state: { ... }`.")
+
+            return
+          end
+
+          relative, absolute = child_template_for(node)
+
+          unless relative && absolute
+            similar = similar_partials_for(node).map { |name| "`#{name}`" }
+            advice = similar.empty? ? "Check the partial's path." : "Did you mean #{similar.join(", ")}?"
+
+            slot_error("`#{partial}` could not be found from `#{context.relative_file_path}`, and `state:` needs a partial the compiler can open.", location, :binding, suggestion: advice)
+
+            return
+          end
+
+          callee = Callee.for(absolute)
+
+          slot_warning("`#{partial}` could not be compiled from `#{context.relative_file_path}`, so its states go unchecked.", location, :binding, suggestion: "A partial that renders its own caller is checked from the other side only.") unless callee
+
+          failed = callee&.errors&.first
+
+          if failed
+            slot_error("`#{partial}` did not compile, so `state:` cannot check its states. Its compile said #{failed.message}", location, :binding, suggestion: "Fix the partial first.")
+
+            return
+          end
+
+          bound = {} #: Hash[String, String]
+          seeded = {} #: Hash[String, String]
+
+          analysis.entries.each { |entry| classify_binding(entry, partial, callee, bound, seeded, entry.location || location) }
+
+          return if @degraded
+
+          token.value.replace(analysis.stripped)
+
+          @render_bindings[node] = { identifier: Identifier.new(@identify).call(relative), partial: partial, bound: bound, seeded: seeded }
+        rescue FrozenError
+          slot_error("`state:` on this render could not be rewritten, since the template's source was frozen before the compile could edit it.", node.location, :binding, suggestion: "Report this with the template that raised it.")
+        end
+
+        #: (RenderBindings::Entry, String, Callee?, Hash[String, String], Hash[String, String], Herb::Location?) -> void
+        def classify_binding(entry, partial, callee, bound, seeded, location)
+          child = callee&.declaration(entry.name)
+
+          if callee && child.nil?
+            known = callee.names.map { |name| "`#{name}`" }.join(", ")
+            advice = known.empty? ? "Declare `#{entry.name}` in the partial with `<%# herb:state (#{entry.name}: ...) %>`." : "The partial declares #{known}."
+
+            slot_error("`#{partial}` declares no state `#{entry.name}`, so `state:` has nothing to bind it to.", location, :binding, suggestion: advice)
+
+            return
+          end
+
+          if child && (child.derived || child.counted)
+            slot_error("`#{entry.name}` is a #{child.derived ? "derived" : "counted"} state of `#{partial}`, and the partial computes it itself.", location, :binding, suggestion: "Bind or seed the states it computes from instead.")
+
+            return
+          end
+
+          candidate = entry.candidate
+          declaration = candidate ? @states.region_declaration(candidate) : nil
+
+          if declaration && candidate
+            if declaration.derived || @states.counted_state?(candidate)
+              slot_error("`#{candidate}` is a #{declaration.derived ? "derived" : "counted"} state, and a binding needs a state the partial can write back to.", location, :binding, suggestion: "Bind a plain state, or bind the states `#{candidate}` computes from.")
+
+              return
+            end
+
+            if child && !compatible_kinds?(child.kind, declaration.kind)
+              slot_error("`#{entry.name}` on `#{partial}` is #{with_article(child.kind)} state and `#{candidate}` is #{with_article(declaration.kind)} one.", location, :binding, suggestion: "Bind a state of the same kind, or change the partial's default.")
+
+              return
+            end
+
+            bound[entry.name] = candidate
+
+            return
+          end
+
+          warn_binding_near_miss(candidate, location) if candidate
+
+          reason = RenderBindings::REFUSED[entry.kind]
+
+          if reason
+            slot_error("`#{entry.source}` seeds `#{entry.name}` on `#{partial}` with #{StateKinds::ARTICLES.fetch(entry.kind.to_s)}. #{reason}", location, :binding, suggestion: "Pass it as a local instead.")
+
+            return
+          end
+
+          if child && !compatible_kinds?(child.kind, entry.kind)
+            slot_error("`#{entry.name}` on `#{partial}` is #{with_article(child.kind)} state, and `#{entry.source}` seeds it with #{with_article(entry.kind)} value.", location, :binding, suggestion: "Seed it with #{with_article(child.kind)} value.")
+
+            return
+          end
+
+          seeded[entry.name] = entry.source
+        end
+
+        #: (Symbol, Symbol) -> bool
+        def compatible_kinds?(declared, given)
+          return true if declared == given
+          return true if declared == :seeded || given == :seeded
+
+          declared == :nil || given == :nil
+        end
+
+        #: (Symbol) -> String
+        def with_article(kind)
+          spelled = kind.to_s
+
+          spelled.start_with?("a", "e", "i", "o", "u") ? "an #{spelled}" : "a #{spelled}"
+        end
+
+        #: (String, Herb::Location?) -> void
+        def warn_binding_near_miss(candidate, location)
+          suggestions = DidYouMean::SpellChecker.new(dictionary: @states.region_state_names).correct(candidate)
+
+          return if suggestions.empty?
+
+          slot_warning("`#{candidate}` is not a state of this template, so it seeds the partial once and never follows a change. Did you mean `#{suggestions.first}`?", location, :binding, suggestion: "Bind `#{suggestions.first}` to keep the two in step.")
+        end
+
+        #: (untyped) -> [String?, Pathname?]
+        def child_template_for(node)
+          resolved = context.resolver.resolve(node.partial_path.to_s, from: context.file_path)
+
+          resolved ? [resolved.identifier, resolved.path] : [nil, nil]
+        end
+
+        #: (untyped) -> Array[String]
+        def similar_partials_for(node)
+          context.resolver.similar(node.partial_path.to_s, from: context.file_path)
+        end
+
+        #: () -> void
+        def wrap_bound_renders
+          return if @degraded
+
+          @render_bindings.each do |node, binding|
+            token = node.content
+
+            next unless token
+
+            bound = binding.fetch(:bound).map { |child, parent| "#{child.inspect} => #{parent}" }.join(", ")
+            seeded = binding.fetch(:seeded).map { |child, expression| "#{child.inspect} => (#{expression})" }.join(", ")
+            call = token.value.strip
+
+            token.value.replace(" ::Herb::Engine::Slots::Bindings.with(#{binding.fetch(:identifier).inspect}, bound: { #{bound} }, seeded: { #{seeded} }) { #{call} } ")
+          rescue FrozenError
+            next
+          end
         end
 
         def visit_erb_yield_node(node)
@@ -1681,6 +1920,7 @@ module Herb
           annotation = @standing[body[0]]&.survivor
           return nil unless annotation
           return nil unless annotation.type == :child
+          return nil if @render_bindings.key?(body[0])
 
           annotation.index
         end

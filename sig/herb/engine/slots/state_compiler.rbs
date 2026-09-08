@@ -154,6 +154,15 @@ module Herb
         # : (StateDirectives::Declaration) -> bool
         def overridable?: (StateDirectives::Declaration) -> bool
 
+        # : (String) -> StateDirectives::Declaration?
+        def region_declaration: (String) -> StateDirectives::Declaration?
+
+        # : () -> Array[String]
+        def region_state_names: () -> Array[String]
+
+        # : (String) -> bool
+        def counted_state?: (String) -> bool
+
         # : () -> String
         def overrides_prelude: () -> String
 

@@ -270,6 +270,12 @@ module Herb
         # : () -> Hash[String, untyped]
         def manifest: () -> Hash[String, untyped]
 
+        # : () -> Hash[String, Hash[String, untyped]]
+        def manifest_bindings: () -> Hash[String, Hash[String, untyped]]
+
+        # : (String) -> bool
+        def counted_state?: (String) -> bool
+
         # : () -> Hash[String, Integer]
         def manifest_names: () -> Hash[String, Integer]
 
@@ -325,6 +331,30 @@ module Herb
         def visit_erb_content_node: (untyped node) -> untyped
 
         def visit_erb_render_node: (untyped node) -> untyped
+
+        # : (untyped) -> void
+        def bind_render_states: (untyped) -> void
+
+        # : (RenderBindings::Entry, String, Callee?, Hash[String, String], Hash[String, String], Herb::Location?) -> void
+        def classify_binding: (RenderBindings::Entry, String, Callee?, Hash[String, String], Hash[String, String], Herb::Location?) -> void
+
+        # : (Symbol, Symbol) -> bool
+        def compatible_kinds?: (Symbol, Symbol) -> bool
+
+        # : (Symbol) -> String
+        def with_article: (Symbol) -> String
+
+        # : (String, Herb::Location?) -> void
+        def warn_binding_near_miss: (String, Herb::Location?) -> void
+
+        # : (untyped) -> [String?, Pathname?]
+        def child_template_for: (untyped) -> [ String?, Pathname? ]
+
+        # : (untyped) -> Array[String]
+        def similar_partials_for: (untyped) -> Array[String]
+
+        # : () -> void
+        def wrap_bound_renders: () -> void
 
         def visit_erb_yield_node: (untyped node) -> untyped
 

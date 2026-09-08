@@ -1,0 +1,62 @@
+# Generated from lib/herb/engine/slots/callee.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The state interface of a partial, read at a caller's compile.
+      #
+      # A render that binds states names the partial by its literal path, so the caller can
+      # open that file, compile it with a throwaway visitor and learn which region states it
+      # declares and of what kind. That is what lets a binding to a state the partial never
+      # declared, or of the wrong kind, fail the caller's compile instead of a render.
+      #
+      # Lookups are memoized by path and modification time. A partial that renders a caller
+      # that renders it again would compile forever, so a path already being read answers nil
+      # and the caller skips the interface check for that one render.
+      class Callee
+        class Declared < Data
+          attr_reader name(): String
+
+          attr_reader kind(): Symbol
+
+          attr_reader derived(): bool
+
+          attr_reader counted(): bool
+
+          def self.new: (String name, Symbol kind, bool derived, bool counted) -> instance
+                      | (name: String, kind: Symbol, derived: bool, counted: bool) -> instance
+
+          def self.members: () -> [ :name, :kind, :derived, :counted ]
+
+          def members: () -> [ :name, :kind, :derived, :counted ]
+        end
+
+        COMPILING: Symbol
+
+        CACHE_LIMIT: Integer
+
+        # : (Pathname | String) -> Callee?
+        def self.for: (Pathname | String) -> Callee?
+
+        # : () -> void
+        def self.reset!: () -> void
+
+        attr_reader path: Pathname
+
+        attr_reader diagnostics: Array[Herb::Diagnostic]
+
+        # : (Pathname) -> void
+        def initialize: (Pathname) -> void
+
+        # : (String) -> Declared?
+        def declaration: (String) -> Declared?
+
+        # : () -> Array[String]
+        def names: () -> Array[String]
+
+        # : () -> Array[Herb::Diagnostic]
+        def errors: () -> Array[Herb::Diagnostic]
+      end
+    end
+  end
+end
