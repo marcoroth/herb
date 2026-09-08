@@ -62,6 +62,7 @@ foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
   if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
   if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
   if (hb_string_equals_case_insensitive(tag_name, hb_string("textarea"))) { return FOREIGN_CONTENT_TEXTAREA; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("title"))) { return FOREIGN_CONTENT_TITLE; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
@@ -75,6 +76,7 @@ hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type) 
     case FOREIGN_CONTENT_SCRIPT: return hb_string("script");
     case FOREIGN_CONTENT_STYLE: return hb_string("style");
     case FOREIGN_CONTENT_TEXTAREA: return hb_string("textarea");
+    case FOREIGN_CONTENT_TITLE: return hb_string("title");
     default: return HB_STRING_EMPTY;
   }
 }
