@@ -385,5 +385,11 @@ module Analyze
         <%# locals: (greeting: "grüß", after: 1) %>
       HTML
     end
+
+    test "missing parentheses with nothing after the prefix and whitespace trimming" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: -%>
+      HTML
+    end
   end
 end

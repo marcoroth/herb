@@ -25,25 +25,7 @@ input: |2-
         │   │   └── content: "\n  if (n"
         │   │
         │   └── @ HTMLOpenTagNode (location: (2:7)-(8:0))
-        │       ├── errors: (4 errors)
-        │       │   ├── @ UnexpectedError (location: (2:9)-(2:10))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
-        │       │   ├── @ UnexpectedError (location: (2:18)-(2:19))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
-        │       │   ├── @ UnexpectedError (location: (6:2)-(6:3))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
+        │       ├── errors: (1 error)
         │       │   └── @ UnclosedOpenTagError (location: (2:8)-(8:0))
         │       │       ├── message: "Opening tag `<o>` at (2:8) is missing closing `>`."
         │       │       └── tag_name: "o" (location: (2:8)-(2:9))
@@ -51,13 +33,24 @@ input: |2-
         │       ├── tag_opening: "<" (location: (2:7)-(2:8))
         │       ├── tag_name: "o" (location: (2:8)-(2:9))
         │       ├── tag_closing: ∅
-        │       ├── children: (3 items)
-        │       │   ├── @ HTMLAttributeNode (location: (2:10)-(2:17))
+        │       ├── children: (5 items)
+        │       │   ├── @ HTMLAttributeNode (location: (2:9)-(2:17))
         │       │   │   ├── name:
-        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:10)-(2:17))
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:9)-(2:17))
         │       │   │   │       └── children: (1 item)
-        │       │   │   │           └── @ LiteralNode (location: (2:10)-(2:17))
-        │       │   │   │               └── content: "length)"
+        │       │   │   │           └── @ LiteralNode (location: (2:9)-(2:17))
+        │       │   │   │               └── content: ".length)"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (2:18)-(2:19))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:18)-(2:19))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (2:18)-(2:19))
+        │       │   │   │               └── content: "{"
         │       │   │   │
         │       │   │   │
         │       │   │   ├── equals: ∅
@@ -87,6 +80,17 @@ input: |2-
         │       │   │           ├── content: " end " (location: (5:6)-(5:11))
         │       │   │           └── tag_closing: "%>" (location: (5:11)-(5:13))
         │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (6:2)-(6:3))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (6:2)-(6:3))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (6:2)-(6:3))
+        │       │   │   │               └── content: "}"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
         │       │   │
         │       │   └── @ ERBContentNode (location: (7:0)-(7:9))
         │       │       ├── errors: (1 error)

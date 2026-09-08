@@ -144,7 +144,7 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- when Herb::Template::PositionField -%>
   // position_T is part of struct
   <%- when Herb::Template::StringField -%>
-  if (<%= error.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= error.human %>-><%= field.name %>.data); }
+  if (!hb_string_is_empty(<%= error.human %>-><%= field.name %>)) { hb_allocator_dealloc(allocator, <%= error.human %>-><%= field.name %>.data); }
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
