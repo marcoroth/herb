@@ -6,6 +6,7 @@
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
+#include "../include/parser/foreign_content_elements.h"
 #include "../include/parser/parser.h"
 
 #include <stdarg.h>
@@ -56,25 +57,10 @@ bool parser_in_svg_context(const parser_T* parser) {
 
 // ===== Foreign Content Handling =====
 
-typedef struct {
-  const char* name;
-  foreign_content_kind_T kind;
-  bool has_end_tag;
-  bool html_only;
-} foreign_content_element_T;
-
-static const foreign_content_element_T FOREIGN_CONTENT_ELEMENTS[] = {
-  { "script", FOREIGN_CONTENT_RAW_TEXT, true, false },    { "style", FOREIGN_CONTENT_RAW_TEXT, true, false },
-  { "iframe", FOREIGN_CONTENT_RAW_TEXT, true, false },    { "xmp", FOREIGN_CONTENT_RAW_TEXT, true, false },
-  { "noembed", FOREIGN_CONTENT_RAW_TEXT, true, false },   { "noframes", FOREIGN_CONTENT_RAW_TEXT, true, false },
-  { "plaintext", FOREIGN_CONTENT_RAW_TEXT, false, true }, { "textarea", FOREIGN_CONTENT_RCDATA, true, false },
-  { "title", FOREIGN_CONTENT_RCDATA, true, true },
-};
-
 static const foreign_content_element_T* parser_find_foreign_content_element(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return NULL; }
 
-  for (size_t i = 0; i < sizeof(FOREIGN_CONTENT_ELEMENTS) / sizeof(FOREIGN_CONTENT_ELEMENTS[0]); i++) {
+  for (size_t i = 0; i < FOREIGN_CONTENT_ELEMENTS_COUNT; i++) {
     if (hb_string_equals_case_insensitive(tag_name, hb_string(FOREIGN_CONTENT_ELEMENTS[i].name))) {
       return &FOREIGN_CONTENT_ELEMENTS[i];
     }

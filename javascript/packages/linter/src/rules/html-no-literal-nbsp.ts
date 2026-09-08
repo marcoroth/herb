@@ -1,14 +1,12 @@
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
 import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.js"
-import { getTagLocalName, isNode, LiteralNode } from "@herb-tools/core"
+import { getTagLocalName, isNode, LiteralNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLTextNode, HTMLElementNode, HTMLAttributeValueNode } from "@herb-tools/core"
 
 const NON_BREAKING_SPACE = "\u00A0"
 const ENTITY = "&nbsp;"
-
-const RAW_TEXT_ELEMENTS = new Set(["script", "style", "iframe", "xmp", "noembed", "noframes", "plaintext"])
 
 const MESSAGE = `Use \`${ENTITY}\` instead of a literal non-breaking space (U+00A0). The literal character is invisible in an editor, so it reads as a regular space and is easily lost when the file is edited.`
 

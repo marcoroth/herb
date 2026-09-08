@@ -720,6 +720,24 @@ module Herb
       end
     end
 
+    class ForeignContentElement
+      attr_reader :name, :kind
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @kind = config.fetch("kind")
+        @end_tag = config.fetch("end_tag", true)
+        @html_only = config.fetch("html_only", false)
+
+        raise "Unknown foreign content kind #{@kind.inspect} for #{@name}" unless %w[raw_text rcdata].include?(@kind)
+      end
+
+      def raw_text? = @kind == "raw_text"
+      def rcdata? = @kind == "rcdata"
+      def end_tag? = @end_tag
+      def html_only? = @html_only
+    end
+
     class SlotsComponentAttribute
       attr_reader :name, :type, :description
 
@@ -1086,9 +1104,9 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements }
       )
-      content = heading_for(name, template_file) + rendered_template
+      content = heading_for(name, template_file_display) + rendered_template
 
       check_gitignore(name)
 
@@ -1178,6 +1196,12 @@ module Herb
       config = YAML.load_file("config/state/operators.yml")
 
       (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
+    end
+
+    def self.foreign_content_elements
+      config = YAML.load_file("config/html_elements.yml")
+
+      (config["foreign_content_elements"] || []).map { |element| ForeignContentElement.new(element) }
     end
 
     def self.slots_components

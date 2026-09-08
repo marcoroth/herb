@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
+require_relative "foreign_content_elements"
+
 module Herb
   module HTML
     module Util
       # TODO: extract to shared utility for all languages in .yml
       VOID_ELEMENTS = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].freeze #: Array[String]
-      RCDATA_ELEMENTS = ["textarea", "title"].freeze #: Array[String]
-      RAW_TEXT_ELEMENTS = ["script", "style", "xmp", "iframe", "noembed", "noframes", "plaintext"].freeze #: Array[String]
+      RCDATA_ELEMENTS = ForeignContentElements::RCDATA_ELEMENTS #: Array[String]
+      RAW_TEXT_ELEMENTS = ForeignContentElements::RAW_TEXT_ELEMENTS #: Array[String]
 
       # https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
       BOOLEAN_ATTRIBUTES = [
