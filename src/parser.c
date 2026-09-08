@@ -155,6 +155,17 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
       &errors,
       &parser->options
     );
+  } else if (token_is(parser, TOKEN_EOF)) {
+    append_unclosed_comment_error(
+      comment_start,
+      comment_start->location.start,
+      parser->current_token->location.start,
+      parser->allocator,
+      &errors,
+      &parser->options
+    );
+
+    comment_end = parser_advance(parser);
   } else {
     comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, &errors);
   }

@@ -228,6 +228,18 @@ errors:
         - name: "close_column"
           type: "size_t"
 
+    - name: "UnclosedCommentError"
+      message:
+        template: "Comment opened at (%u:%u) is missing its closing `-->`."
+        arguments:
+          - "comment_start->location.start.line"
+          - "comment_start->location.start.column"
+      suggestion:
+        template: "Add `-->` where the comment should end."
+      fields:
+        - name: "comment_start"
+          type: "token"
+
     - name: "InvalidCommentClosingTagError"
       message:
         template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."

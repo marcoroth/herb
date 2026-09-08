@@ -46,5 +46,13 @@ module Parser
     test "HTML comment with invalid closing tag --!> followed by html tag" do
       assert_parsed_snapshot(%(<!--Hello World--!><h1>Hello</h1>))
     end
+
+    test "unclosed HTML comment" do
+      assert_parsed_snapshot(%(<!-- never closed\n<div></div>))
+    end
+
+    test "unclosed HTML comment with ERB inside" do
+      assert_parsed_snapshot(%(<!-- <% presenter = featured.presenter %>\n<div data-id="<%= presenter.id %>"></div>))
+    end
   end
 end

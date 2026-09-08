@@ -323,6 +323,27 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class UnclosedCommentError < Error
+      include Colors
+
+      attr_reader comment_start: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String?
+      def suggestion: () -> String?
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_comment_error
+      def to_hash: () -> serialized_unclosed_comment_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class InvalidCommentClosingTagError < Error
       include Colors
 
