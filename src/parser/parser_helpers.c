@@ -56,43 +56,48 @@ bool parser_in_svg_context(const parser_T* parser) {
 
 // ===== Foreign Content Handling =====
 
-foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
-  if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
+typedef struct {
+  const char* name;
+  foreign_content_kind_T kind;
+} foreign_content_element_T;
 
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("textarea"))) { return FOREIGN_CONTENT_TEXTAREA; }
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("title"))) { return FOREIGN_CONTENT_TITLE; }
+static const foreign_content_element_T FOREIGN_CONTENT_ELEMENTS[] = {
+  { "script", FOREIGN_CONTENT_RAW_TEXT },
+  { "style", FOREIGN_CONTENT_RAW_TEXT },
+  { "textarea", FOREIGN_CONTENT_RCDATA },
+  { "title", FOREIGN_CONTENT_RCDATA },
+};
 
-  return FOREIGN_CONTENT_UNKNOWN;
+foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_NONE; }
+
+  for (size_t i = 0; i < sizeof(FOREIGN_CONTENT_ELEMENTS) / sizeof(FOREIGN_CONTENT_ELEMENTS[0]); i++) {
+    if (hb_string_equals_case_insensitive(tag_name, hb_string(FOREIGN_CONTENT_ELEMENTS[i].name))) {
+      return FOREIGN_CONTENT_ELEMENTS[i].kind;
+    }
+  }
+
+  return FOREIGN_CONTENT_NONE;
 }
 
 bool parser_is_foreign_content_tag(hb_string_T tag_name) {
-  return parser_get_foreign_content_type(tag_name) != FOREIGN_CONTENT_UNKNOWN;
+  return parser_get_foreign_content_kind(tag_name) != FOREIGN_CONTENT_NONE;
 }
 
-hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type) {
-  switch (type) {
-    case FOREIGN_CONTENT_SCRIPT: return hb_string("script");
-    case FOREIGN_CONTENT_STYLE: return hb_string("style");
-    case FOREIGN_CONTENT_TEXTAREA: return hb_string("textarea");
-    case FOREIGN_CONTENT_TITLE: return hb_string("title");
-    default: return HB_STRING_EMPTY;
-  }
-}
-
-void parser_enter_foreign_content(parser_T* parser, foreign_content_type_T type) {
+void parser_enter_foreign_content(parser_T* parser, foreign_content_kind_T kind, hb_string_T tag_name) {
   if (parser == NULL) { return; }
 
   parser->state = PARSER_STATE_FOREIGN_CONTENT;
-  parser->foreign_content_type = type;
+  parser->foreign_content_kind = kind;
+  parser->foreign_content_tag_name = tag_name;
 }
 
 void parser_exit_foreign_content(parser_T* parser) {
   if (parser == NULL) { return; }
 
   parser->state = PARSER_STATE_DATA;
-  parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
+  parser->foreign_content_kind = FOREIGN_CONTENT_NONE;
+  parser->foreign_content_tag_name = HB_STRING_NULL;
 }
 
 void parser_append_unexpected_error_impl(
@@ -267,12 +272,10 @@ void parser_handle_mismatched_tags(
   }
 }
 
-bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_type_T expected_type) {
-  hb_string_T expected_tag_name = parser_get_foreign_content_closing_tag(expected_type);
+bool parser_is_foreign_content_closing_tag_name(const parser_T* parser, hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name) || hb_string_is_empty(parser->foreign_content_tag_name)) { return false; }
 
-  if (hb_string_is_empty(tag_name) || hb_string_is_empty(expected_tag_name)) { return false; }
-
-  return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
+  return hb_string_equals_case_insensitive(parser->foreign_content_tag_name, tag_name);
 }
 
 void parser_synchronize(parser_T* parser, hb_array_T** errors) {

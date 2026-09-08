@@ -69,7 +69,8 @@ void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = hb_array_init(16, parser->allocator);
   parser->state = PARSER_STATE_DATA;
-  parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
+  parser->foreign_content_kind = FOREIGN_CONTENT_NONE;
+  parser->foreign_content_tag_name = HB_STRING_NULL;
   parser->svg_depth = 0;
   parser->xml_document = false;
   parser->options = options;
@@ -1409,8 +1410,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   parser_push_open_tag(parser, open_tag->tag_name);
 
   if (parser_element_has_foreign_content(parser, open_tag->tag_name->value)) {
-    foreign_content_type_T content_type = parser_get_foreign_content_type(open_tag->tag_name->value);
-    parser_enter_foreign_content(parser, content_type);
+    foreign_content_kind_T kind = parser_get_foreign_content_kind(open_tag->tag_name->value);
+    parser_enter_foreign_content(parser, kind, open_tag->tag_name->value);
     parser_parse_foreign_content(parser, body, &errors);
   } else {
     parser_parse_in_data_state(parser, body, &errors);
@@ -1568,10 +1569,10 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
 static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
-  foreign_content_type_T content_type = parser_get_foreign_content_type(tag_name);
+  if (parser_get_foreign_content_kind(tag_name) == FOREIGN_CONTENT_NONE) { return false; }
 
-  if (content_type == FOREIGN_CONTENT_UNKNOWN) { return false; }
-  if (content_type == FOREIGN_CONTENT_TITLE && (parser_in_svg_context(parser) || parser->xml_document)) {
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("title"))
+      && (parser_in_svg_context(parser) || parser->xml_document)) {
     return false;
   }
 
@@ -1585,8 +1586,7 @@ static void parser_append_foreign_content_from_buffer(
   hb_array_T* children,
   position_T start
 ) {
-  bool is_text =
-    parser->foreign_content_type == FOREIGN_CONTENT_TEXTAREA || parser->foreign_content_type == FOREIGN_CONTENT_TITLE;
+  bool is_text = parser->foreign_content_kind == FOREIGN_CONTENT_RCDATA;
 
   if (!is_text || buffer->length == 0) {
     parser_append_literal_node_from_buffer(parser, buffer, children, start);
@@ -1608,8 +1608,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
   hb_buffer_T content;
   hb_buffer_init(&content, 1024, parser->allocator);
   position_T start = parser->current_token->location.start;
-  hb_string_T expected_closing_tag = parser_get_foreign_content_closing_tag(parser->foreign_content_type);
-  bool has_closing_tag = !hb_string_is_empty(expected_closing_tag);
+  bool has_closing_tag = !hb_string_is_empty(parser->foreign_content_tag_name);
 
   while (!token_is(parser, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
@@ -1630,7 +1629,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
       bool is_potential_match = false;
 
       if (next_token && next_token->type == TOKEN_IDENTIFIER && !hb_string_is_empty(next_token->value)) {
-        is_potential_match = parser_is_expected_closing_tag_name(next_token->value, parser->foreign_content_type);
+        is_potential_match = parser_is_foreign_content_closing_tag_name(parser, next_token->value);
       }
 
       lexer_restore_state(parser->lexer, saved_state);
