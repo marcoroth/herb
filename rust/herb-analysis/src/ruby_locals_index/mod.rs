@@ -217,7 +217,7 @@ fn state_locals(document: &herb::nodes::DocumentNode, references: &ReferenceColl
 }
 
 fn collect_state_locals(node: &AnyNode, references: &ReferenceCollector, offsets: &OffsetTable, found: &mut Vec<Local>) {
-  if let AnyNode::ERBContentNode(inner) = node {
+  if let AnyNode::ERBCommentNode(inner) = node {
     if let Some(signature) = state_signature(inner) {
       for name in signature_names(&signature) {
         let predicate = format!("{name}?");
@@ -238,11 +238,7 @@ fn collect_state_locals(node: &AnyNode, references: &ReferenceCollector, offsets
   }
 }
 
-fn state_signature(node: &herb::nodes::ERBContentNode) -> Option<String> {
-  if node.tag_opening.as_ref()?.value != "<%#" {
-    return None;
-  }
-
+fn state_signature(node: &herb::nodes::ERBCommentNode) -> Option<String> {
   let content = node.content.as_ref()?.value.trim();
   let content = content.strip_prefix('-').map_or(content, str::trim);
   let content = content.strip_suffix('-').map_or(content, str::trim);
