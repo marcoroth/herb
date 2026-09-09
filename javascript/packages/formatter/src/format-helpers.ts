@@ -1,4 +1,4 @@
-import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
+import { isNode, isERBNode, isAnyERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -248,7 +248,7 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
  * Check if a node is an ERB comment that renders as a block.
  */
 export function isMultilineERBComment(node: Node): boolean {
-  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+  return isNode(node, ERBContentNode) && isAnyERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
 }
 
 /**

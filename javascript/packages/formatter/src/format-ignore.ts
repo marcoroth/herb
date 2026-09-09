@@ -1,4 +1,4 @@
-import { isERBCommentNode } from "@herb-tools/core"
+import { isAnyERBCommentNode, isERBNode } from "@herb-tools/core"
 import { Visitor } from "@herb-tools/core"
 
 import type { Node, ERBContentNode } from "@herb-tools/core"
@@ -10,9 +10,10 @@ const HERB_FORMATTER_IGNORE_PREFIX = `${HERB_FORMATTER_PREFIX} ignore`
  * Check if an ERB content node is a herb:formatter ignore comment
  */
 export function isHerbFormatterIgnoreComment(node: Node): boolean {
-  if (!isERBCommentNode(node)) return false
+  if (!isERBNode(node)) return false
+  if (!isAnyERBCommentNode(node)) return false
 
-  const content = node?.content?.value || ""
+  const content = node.content?.value || ""
 
   return content.trim() === HERB_FORMATTER_IGNORE_PREFIX
 }

@@ -1,4 +1,4 @@
-import { isNode, getTagName, isERBCommentNode, isPureWhitespaceNode } from "@herb-tools/core"
+import { isNode, getTagName, isAnyERBCommentNode, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
@@ -292,7 +292,7 @@ export class TextFlowAnalyzer {
       node: child
     })
 
-    if (isERBCommentNode(child)) {
+    if (isAnyERBCommentNode(child)) {
       for (let j = index + 1; j < children.length; j++) {
         const nextChild = children[j]
         if (isNode(nextChild, WhitespaceNode)) continue

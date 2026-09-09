@@ -1,7 +1,7 @@
 import { Visitor, HTMLCommentNode, } from "@herb-tools/core"
 
 import { lspLine } from "./range_utils"
-import { isERBCommentNode } from "@herb-tools/core"
+import { isAnyERBCommentNode } from "@herb-tools/core"
 
 import type { Node, ERBNode, ERBContentNode, HTMLTextNode, HTMLElementNode } from "@herb-tools/core"
 
@@ -28,7 +28,7 @@ export class LineContextCollector extends Visitor {
     nodes.push(node as ERBContentNode)
     this.erbNodesPerLine.set(startLine, nodes)
 
-    this.setLine(startLine, isERBCommentNode(node) ? "erb-comment" : "erb-tag", node)
+    this.setLine(startLine, isAnyERBCommentNode(node) ? "erb-comment" : "erb-tag", node)
 
     const interiorContext = node.tag_opening.value === "<%#" ? "erb-comment" : "ruby"
 

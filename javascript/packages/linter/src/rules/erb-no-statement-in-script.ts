@@ -6,7 +6,7 @@ import {
   getStaticAttributeValue,
   isERBNode,
   isERBOutputNode,
-  isERBCommentNode,
+  isAnyERBCommentNode,
   isHTMLOpenTagNode,
 } from "@herb-tools/core"
 
@@ -50,7 +50,7 @@ class ERBNoStatementInScriptVisitor extends BaseRuleVisitor {
     for (const child of nodes) {
       if (!isERBNode(child)) continue
       if (isERBOutputNode(child)) continue
-      if (isERBCommentNode(child)) continue
+      if (isAnyERBCommentNode(child)) continue
 
       const content = child.content?.value || ""
 

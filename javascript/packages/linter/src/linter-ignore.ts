@@ -1,4 +1,4 @@
-import { isERBCommentNode } from "@herb-tools/core"
+import { isAnyERBCommentNode, isERBNode } from "@herb-tools/core"
 import { Visitor, ERBContentNode } from "@herb-tools/core"
 
 import type { Node, ParseResult } from "@herb-tools/core"
@@ -13,9 +13,10 @@ const HERB_LINTER_IGNORE_PREFIX = `${HERB_LINTER_PREFIX} ignore`
  * @returns true if this is a linter ignore directive
  */
 export function isHerbLinterIgnoreComment(node: Node): boolean {
-  if (!isERBCommentNode(node)) return false
+  if (!isERBNode(node)) return false
+  if (!isAnyERBCommentNode(node)) return false
 
-  const content = node?.content?.value || ""
+  const content = node.content?.value || ""
 
   return content.trim() === HERB_LINTER_IGNORE_PREFIX
 }

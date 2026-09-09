@@ -1,5 +1,5 @@
 import { Node, HTMLTextNode, HTMLElementNode, HTMLDoctypeNode, ERBContentNode, WhitespaceNode, XMLDeclarationNode } from "@herb-tools/core"
-import { isNode, getTagName, isERBNode, isERBOutputNode, isERBCommentNode, isCommentNode, isERBControlFlowNode } from "@herb-tools/core"
+import { isNode, getTagName, isERBNode, isERBOutputNode, isAnyERBCommentNode, isCommentNode, isERBControlFlowNode } from "@herb-tools/core"
 import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode, countBlankLines } from "./format-helpers.js"
 
 import { INLINE_ELEMENTS, SPACEABLE_CONTAINERS } from "./format-helpers.js"
@@ -199,7 +199,7 @@ export class SpacingAnalyzer {
     }
 
     if (isERBOutputNode(node)) return "erb-output"
-    if (isERBCommentNode(node)) return "erb-comment"
+    if (isAnyERBCommentNode(node)) return "erb-comment"
     if (isERBNode(node)) return "erb-code"
 
     return null

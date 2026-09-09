@@ -29,7 +29,7 @@ import {
   isNoneOf,
   isERBNode,
   isERBControlFlowNode,
-  isERBCommentNode,
+  isAnyERBCommentNode,
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
@@ -78,6 +78,7 @@ import {
   HTMLCommentNode,
   HTMLDoctypeNode,
   WhitespaceNode,
+  ERBCommentNode,
   ERBContentNode,
   ERBBlockNode,
   ERBIterationBlockNode,
@@ -1030,7 +1031,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.pushWithIndent(open + inner + close)
   }
 
-  visitERBCommentNode(node: ERBContentNode) {
+  visitERBCommentNode(node: ERBCommentNode | ERBContentNode) {
     const result = formatERBCommentLines(
       node.tag_opening?.value || "<%#",
       node?.content?.value || "",
@@ -1076,7 +1077,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    if (isERBCommentNode(node)) {
+    if (isAnyERBCommentNode(node)) {
       this.visitERBCommentNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)

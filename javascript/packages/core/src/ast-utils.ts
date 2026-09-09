@@ -61,12 +61,6 @@ export type ERBOutputNode = ERBNode & {
   }
 }
 
-export type ERBCommentNode = ERBNode & {
-  tag_opening: {
-    value: "<%#"
-  }
-}
-
 export type ERBEscapedNode = ERBNode & {
   tag_opening: {
     value: "<%%" | "<%%="
@@ -94,13 +88,18 @@ export function isERBEscapedNode(node: Node): node is ERBEscapedNode {
 }
 
 /**
- * Checks if a node is a ERB comment node (control flow: <%# %>)
+ * Checks if a node is an ERB comment in the broadest sense: either an
+ * `ERBCommentNode` (`<%# %>`), or an ERB tag whose Ruby is a comment
+ * (`<% # %>`), which the parser keeps as an `ERBContentNode`.
+ *
+ * Use `isERBCommentNode` from the generated type guards when you specifically
+ * mean a `<%#` comment node.
  */
-export function isERBCommentNode(node: Node): node is ERBCommentNode {
+export function isAnyERBCommentNode(node: Node): boolean {
   if (!isERBNode(node)) return false
   if (!node.tag_opening?.value) return false
 
-  return node.tag_opening?.value === "<%#" || (node.tag_opening?.value !== "<%#" && (node.content?.value || "").trimStart().startsWith("#"))
+  return node.tag_opening.value === "<%#" || (node.content?.value || "").trimStart().startsWith("#")
 }
 
 
@@ -304,8 +303,8 @@ export function getTagLocalName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCl
 /**
  * Check if a node is a comment (HTML comment or ERB comment)
  */
-export function isCommentNode(node: Node): node is HTMLCommentNode | ERBCommentNode {
-  return isHTMLCommentNode(node) || isERBCommentNode(node)
+export function isCommentNode(node: Node): boolean {
+  return isHTMLCommentNode(node) || isAnyERBCommentNode(node)
 }
 
 /**

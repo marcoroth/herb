@@ -4,7 +4,7 @@ import { LineContextCollector } from "./line_context_collector"
 import { HTMLCommentNode, Token } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
+import { isAnyERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
 import { asMutable, cloneNode } from "@herb-tools/rewriter"
 
 import type { Node, ERBContentNode } from "@herb-tools/core"
@@ -211,7 +211,7 @@ export function uncommentLineContent(content: string, parserService: ParserServi
   const children = asMutable(document).children
 
   for (const node of lineERBNodes) {
-    if (isERBCommentNode(node)) {
+    if (isAnyERBCommentNode(node)) {
       uncommentERBNode(node, prefixes)
     }
   }
@@ -263,7 +263,7 @@ export function uncommentLineContent(content: string, parserService: ParserServi
       innerERBNodes.push(...(innerCollector.erbNodesPerLine.get(0) || []))
 
       for (const erbNode of innerERBNodes) {
-        if (isERBCommentNode(erbNode)) {
+        if (isAnyERBCommentNode(erbNode)) {
           uncommentERBNode(erbNode, prefixes)
         }
       }
