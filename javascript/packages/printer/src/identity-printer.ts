@@ -529,7 +529,7 @@ export class IdentityPrinter extends Printer {
   /**
    * Print ERB node tags and content
    */
-  protected printERBNode(node: Nodes.ERBNode | Nodes.HerbDirectiveNode | Nodes.HerbStateDirectiveNode): void {
+  protected printERBNode(node: Nodes.ERBNode): void {
     if (node.tag_opening) {
       this.write(node.tag_opening.value)
     }
