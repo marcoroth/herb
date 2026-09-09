@@ -3,13 +3,13 @@ import { ParserRule } from "../types.js"
 import { isStateDirective, slotsDirectiveMode } from "../utils/state-directives-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 
 class StateRequiresSlotsVisitor extends BaseRuleVisitor {
-  public firstDirective: ERBContentNode | null = null
+  public firstDirective: ERBCommentNode | null = null
   public declaresSlots = false
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (isStateDirective(node) && !this.firstDirective) {
       this.firstDirective = node
     }

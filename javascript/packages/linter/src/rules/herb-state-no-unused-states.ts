@@ -6,11 +6,11 @@ import { mentionsAnyState } from "@herb-tools/client/directives"
 import { Location, forEachAttribute, getAttributeName, getStaticAttributeValueContent } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBBlockNode, ERBCaseNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBWhenNode, HTMLOpenTagNode, Node } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBBlockNode, ERBCaseNode, ERBCommentNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBWhenNode, HTMLOpenTagNode, Node } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 interface TrackedDeclaration {
-  node: ERBContentNode
+  node: ERBCommentNode
   declaration: StateDeclaration
   scope: ERBBlockNode | null
   used: boolean
@@ -60,7 +60,7 @@ class UnusedStatesVisitor extends BaseRuleVisitor {
     super.visitERBWhenNode(node)
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (isStateDirective(node)) {
       const parsed = stateSignatureOf(node)
 
@@ -78,7 +78,9 @@ class UnusedStatesVisitor extends BaseRuleVisitor {
 
       return
     }
+  }
 
+  visitERBContentNode(node: ERBContentNode): void {
     if (isERBComment(node)) return
 
     this.markUses(node.content?.value ?? "")
@@ -146,7 +148,7 @@ export class HerbStateNoUnusedStatesRule extends ParserRule {
   }
 }
 
-function nameLocation(node: ERBContentNode, declaration: StateDeclaration): Node["location"] {
+function nameLocation(node: ERBCommentNode, declaration: StateDeclaration): Node["location"] {
   const content = node.content
 
   if (!content) return node.location

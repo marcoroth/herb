@@ -4,7 +4,7 @@ import { slotsDirectiveMode } from "../utils/state-directives-utils.js"
 import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, getTagName, hasDynamicOutput, getAttributeValueNodes, isHTMLElementNode, isBuiltInComponent, isComponentTagName, componentAttribute, COMPONENT_DEFINITIONS, DEFERRED_COMPONENTS } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBContentNode, HTMLElementNode, HTMLAttributeNode, Node, BuiltInComponent } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBCommentNode, ERBContentNode, HTMLElementNode, HTMLAttributeNode, Node, BuiltInComponent } from "@herb-tools/core"
 import type * as Nodes from "@herb-tools/core"
 
 const WHOLE_NUMBER = /^\d+$/
@@ -22,7 +22,7 @@ function componentName(node: Node): string | null {
 class SlotsDirectiveChecker extends BaseRuleVisitor {
   public declaresSlots = false
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (slotsDirectiveMode(node) !== null) {
       this.declaresSlots = true
     }

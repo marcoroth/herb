@@ -5,7 +5,7 @@ import { isStateDirective, stateSignatureOf } from "../utils/state-directives-ut
 import { isRubyParameterNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBBlockNode, ERBContentNode, ERBForNode, ERBRenderNode, Location, Node, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBBlockNode, ERBCommentNode, ERBContentNode, ERBForNode, ERBRenderNode, Location, Node, PrismNode } from "@herb-tools/core"
 
 interface Binding {
   name: string
@@ -15,7 +15,7 @@ interface Binding {
 class DeclaredStatesVisitor extends BaseRuleVisitor {
   public readonly names = new Set<string>()
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (!isStateDirective(node)) return
 
     const parsed = stateSignatureOf(node)

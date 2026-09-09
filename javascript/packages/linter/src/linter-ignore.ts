@@ -1,7 +1,7 @@
 import { isAnyERBCommentNode, isERBNode } from "@herb-tools/core"
-import { Visitor, ERBContentNode } from "@herb-tools/core"
+import { Visitor } from "@herb-tools/core"
 
-import type { Node, ParseResult } from "@herb-tools/core"
+import type { ERBNode, Node, ParseResult } from "@herb-tools/core"
 
 const HERB_LINTER_PREFIX = "herb:linter"
 const HERB_LINTER_IGNORE_PREFIX = `${HERB_LINTER_PREFIX} ignore`
@@ -38,14 +38,9 @@ export function hasLinterIgnoreDirective(parseResult: ParseResult): boolean {
 class LinterIgnoreDetector extends Visitor {
   public hasIgnoreDirective = false
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBNode(node: ERBNode): void {
     if (isHerbLinterIgnoreComment(node)) {
       this.hasIgnoreDirective = true
-      return
     }
-
-    if (this.hasIgnoreDirective) return
-
-    this.visitChildNodes(node)
   }
 }

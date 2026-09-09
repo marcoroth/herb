@@ -4,7 +4,7 @@ import { slotsDirectiveMode } from "../utils/state-directives-utils.js"
 import { getTagName, isKnownHTMLElement } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, HTMLOpenTagNode, XMLDeclarationNode } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, ERBContentNode, HTMLOpenTagNode, XMLDeclarationNode } from "@herb-tools/core"
 
 class ComponentRequiresSlotsVisitor extends BaseRuleVisitor {
   public declaresSlots = false
@@ -15,7 +15,7 @@ class ComponentRequiresSlotsVisitor extends BaseRuleVisitor {
     this.xml = true
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (slotsDirectiveMode(node) !== null) {
       this.declaresSlots = true
     }

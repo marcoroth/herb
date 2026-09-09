@@ -2,11 +2,11 @@ import { ParserRule } from "../types.js"
 import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBContentNode, ParseResult } from "@herb-tools/core"
+import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentNoRedundantAllVisitor extends HerbDisableCommentParsedVisitor {
-  protected checkParsedHerbDisable(node: ERBContentNode, _content: string, herbDisable: HerbDisableComment): void {
+  protected checkParsedHerbDisable(node: ERBCommentNode, _content: string, herbDisable: HerbDisableComment): void {
     if (!herbDisable.ruleNames.includes("all")) return
     if (herbDisable.ruleNames.length <= 1) return
 

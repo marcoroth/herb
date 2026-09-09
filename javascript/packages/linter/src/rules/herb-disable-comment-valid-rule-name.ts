@@ -4,7 +4,7 @@ import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 import { didyoumean } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBContentNode, ParseResult } from "@herb-tools/core"
+import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVisitor {
@@ -18,7 +18,7 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
     this.validRuleNamesList = Array.from(this.validRuleNames)
   }
 
-  protected checkParsedHerbDisable(node: ERBContentNode, _content: string, herbDisable: HerbDisableComment): void {
+  protected checkParsedHerbDisable(node: ERBCommentNode, _content: string, herbDisable: HerbDisableComment): void {
     herbDisable.ruleNameDetails.forEach(ruleDetail => {
       if (this.validRuleNames.has(ruleDetail.name)) return
 
