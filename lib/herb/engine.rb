@@ -39,7 +39,7 @@ module Herb
       "'" => "&#39;",
     }.freeze
 
-    class CompilationError < StandardError
+    class CompilationError < SyntaxError
     end
 
     class GeneratorTemplateError < CompilationError

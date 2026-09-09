@@ -30,7 +30,7 @@ module Herb
 
     ESCAPE_TABLE: untyped
 
-    class CompilationError < StandardError
+    class CompilationError < SyntaxError
     end
 
     class GeneratorTemplateError < CompilationError
