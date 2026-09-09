@@ -152,6 +152,7 @@ jobs:
           corpus/bin/diff-runs \
             corpus/runs/baseline.json \
             corpus/runs/branch.json \
+            --expected .github/corpus-expectations.yml \
             "${flags[@]}" | tee comparison.txt
 
       - name: Comment on the pull request

@@ -56,11 +56,17 @@ module Parser
     end
 
     test "nested HTML comment opener" do
-      assert_parsed_snapshot(%(<!-- a <!-- b --> c -->))
+      template = %(<!-- a <!-- b --> c -->)
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
     end
 
     test "nested HTML comment opener in an unclosed comment" do
-      assert_parsed_snapshot(%(<!-- outer <!-- inner))
+      template = %(<!-- outer <!-- inner)
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
     end
 
     test "conditional comment closed by an abrupt opener" do
@@ -69,6 +75,13 @@ module Parser
 
     test "nested HTML comment opener at end of file" do
       assert_parsed_snapshot(%(<!-- a <!--))
+    end
+
+    test "conditional comment with a nested opener" do
+      template = %(<!--[if !mso]><!-- -->)
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
     end
   end
 end

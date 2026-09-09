@@ -193,7 +193,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
       }
 
       // <!-- outer <!-- inner -->
-      if (next_type != TOKEN_EOF) {
+      if (next_type != TOKEN_EOF && parser->options.strict) {
         append_nested_comment_error(
           comment_start,
           parser->current_token,
