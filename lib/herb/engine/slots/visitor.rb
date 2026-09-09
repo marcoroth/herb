@@ -1000,7 +1000,7 @@ module Herb
         #: (untyped) -> bool
         def declares_slots?(node)
           node.children.any? { |child|
-            child.is_a?(Herb::AST::HerbDirectiveNode) && child.key&.value.to_s == "slots"
+            child.is_a?(Herb::AST::HerbDirectiveNode) && child.directive == "slots"
           }
         end
 
@@ -1505,9 +1505,9 @@ module Herb
         def key_directive_in(body)
           body.each do |child|
             next unless child.is_a?(Herb::AST::HerbDirectiveNode)
-            next unless child.key&.value == "key"
+            next unless child.directive == "key"
 
-            expression = child.arguments&.value.to_s.strip
+            expression = child.argument
 
             return expression unless expression.empty?
           end
