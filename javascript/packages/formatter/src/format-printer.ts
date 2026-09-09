@@ -1730,7 +1730,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   /**
    * Render an ERB node as a string
    */
-  renderERBAsString(node: ERBContentNode): string {
+  renderERBAsString(node: ERBContentNode | ERBCommentNode): string {
     return this.withInlineMode(() => this.capture(() => this.visit(node)).join(""))
   }
 

@@ -1,7 +1,7 @@
 import { isAnyERBCommentNode, isERBNode } from "@herb-tools/core"
 import { Visitor } from "@herb-tools/core"
 
-import type { Node, ERBContentNode } from "@herb-tools/core"
+import type { Node, ERBNode } from "@herb-tools/core"
 
 const HERB_FORMATTER_PREFIX = "herb:formatter"
 const HERB_FORMATTER_IGNORE_PREFIX = `${HERB_FORMATTER_PREFIX} ignore`
@@ -33,14 +33,9 @@ export function hasFormatterIgnoreDirective(node: Node): boolean {
 class FormatterIgnoreDetector extends Visitor {
   public hasIgnoreDirective = false
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBNode(node: ERBNode): void {
     if (isHerbFormatterIgnoreComment(node)) {
       this.hasIgnoreDirective = true
-      return
     }
-
-    if (this.hasIgnoreDirective) return
-
-    this.visitChildNodes(node)
   }
 }

@@ -1,5 +1,5 @@
 import { isNode, getTagName, isAnyERBCommentNode, isPureWhitespaceNode } from "@herb-tools/core"
-import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
+import { Node, HTMLTextNode, HTMLElementNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
 
@@ -8,6 +8,7 @@ import {
   isInlineElement,
   isLineBreakingElement,
   isMultilineERBComment,
+  isERBTagNode,
 } from "./format-helpers.js"
 
 import {
@@ -25,7 +26,7 @@ import {
  */
 export interface TextFlowAnalyzerDelegate {
   tryRenderInlineElement(element: HTMLElementNode): string | null
-  renderERBAsString(node: ERBContentNode): string
+  renderERBAsString(node: ERBContentNode | ERBCommentNode): string
   tryRenderControlFlowInline(node: Node): string | null
 }
 
@@ -100,7 +101,7 @@ export class TextFlowAnalyzer {
         })
 
         lastProcessedIndex = i
-      } else if (isNode(child, ERBContentNode)) {
+      } else if (isERBTagNode(child)) {
         const merged = this.processERBContentNode(result, children, child, i, lastProcessedIndex)
 
         if (merged) {
@@ -258,7 +259,7 @@ export class TextFlowAnalyzer {
     return false
   }
 
-  private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode, index: number, lastProcessedIndex: number): boolean {
+  private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode | ERBCommentNode, index: number, lastProcessedIndex: number): boolean {
     const erbContent = this.delegate.renderERBAsString(child)
 
     if (lastProcessedIndex >= 0) {

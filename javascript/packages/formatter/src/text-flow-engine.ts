@@ -1,5 +1,5 @@
 import { isNode, getTagName, isPureWhitespaceNode } from "@herb-tools/core"
-import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
+import { Node, HTMLTextNode, HTMLElementNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
 
@@ -11,6 +11,7 @@ import {
   isInlineElement,
   isLineBreakingElement,
   isMultilineERBComment,
+  isERBTagNode,
   needsSpaceBetween,
 } from "./format-helpers.js"
 
@@ -103,7 +104,7 @@ export class TextFlowEngine {
           this.delegate.pushWithIndent(inlineContent)
           inlineContent = ""
         }
-      } else if (isNode(child, ERBContentNode) && !isMultilineERBComment(child)) {
+      } else if (isERBTagNode(child) && !isMultilineERBComment(child)) {
         inlineContent += this.delegate.renderERBAsString(child)
         processedCount++
         lastProcessedIndex = index
@@ -123,7 +124,7 @@ export class TextFlowEngine {
           break
         }
 
-        if (isNode(child, ERBContentNode) && !isMultilineERBComment(child)) {
+        if (isERBTagNode(child) && !isMultilineERBComment(child)) {
           inlineContent += this.delegate.renderERBAsString(child)
           processedIndices.add(index)
           lastProcessedIndex = index

@@ -1,6 +1,6 @@
 import { Node, HTMLTextNode, HTMLElementNode, HTMLDoctypeNode, ERBContentNode, WhitespaceNode, XMLDeclarationNode } from "@herb-tools/core"
 import { isNode, getTagName, isERBNode, isERBOutputNode, isAnyERBCommentNode, isCommentNode, isERBControlFlowNode } from "@herb-tools/core"
-import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode, countBlankLines } from "./format-helpers.js"
+import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode, countBlankLines, isERBTagNode } from "./format-helpers.js"
 
 import { INLINE_ELEMENTS, SPACEABLE_CONTAINERS } from "./format-helpers.js"
 
@@ -173,7 +173,7 @@ export class SpacingAnalyzer {
    * Check if a node will render as multiple lines when formatted.
    */
   private isMultilineElement(node: Node): boolean {
-    if (isNode(node, ERBContentNode)) {
+    if (isERBTagNode(node)) {
       return (node.content?.value || "").includes("\n")
     }
 

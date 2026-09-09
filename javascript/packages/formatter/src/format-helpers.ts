@@ -1,5 +1,5 @@
-import { isNode, isERBNode, isAnyERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
-import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
+import { isNode, isERBNode, isAnyERBCommentNode, isERBCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
+import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
 
@@ -245,10 +245,18 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
 }
 
 /**
+ * Check if a node is a plain ERB tag: `<% %>`, `<%= %>` or `<%# %>`, as opposed
+ * to a control flow node like `ERBIfNode` that owns children.
+ */
+export function isERBTagNode(node: Node | null | undefined): node is ERBContentNode | ERBCommentNode {
+  return isERBContentNode(node) || isERBCommentNode(node)
+}
+
+/**
  * Check if a node is an ERB comment that renders as a block.
  */
 export function isMultilineERBComment(node: Node): boolean {
-  return isNode(node, ERBContentNode) && isAnyERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+  return isERBTagNode(node) && isAnyERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
 }
 
 /**
@@ -267,7 +275,7 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
     return isAdjacentToPreviousInline(siblings, index)
   }
 
-  if (isNode(child, ERBContentNode)) {
+  if (isERBTagNode(child)) {
     if (isMultilineERBComment(child)) return false
 
     for (let i = index - 1; i >= 0; i--) {
@@ -456,7 +464,7 @@ export function countAdjacentInlineElements(children: Node[], startIndex = 0, pr
       break
     }
 
-    const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isNode(child, ERBContentNode)
+    const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isERBTagNode(child)
 
     if (!isInlineOrERB) {
       break
@@ -562,8 +570,8 @@ export function setEdgeWhitespace(text: string, keepLeading: boolean, keepTraili
 /**
  * Check if an ERB content node is a herb:disable comment
  */
-export function isHerbDisableComment(node: Node): node is ERBContentNode & { tag_opening: { value: "<%#" } } {
-  if (!isNode(node, ERBContentNode)) return false
+export function isHerbDisableComment(node: Node): node is ERBContentNode | ERBCommentNode {
+  if (!isERBTagNode(node)) return false
   if (node.tag_opening?.value !== "<%#") return false
 
   const content = node?.content?.value || ""

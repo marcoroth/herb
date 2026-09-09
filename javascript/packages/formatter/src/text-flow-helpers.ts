@@ -8,6 +8,7 @@ import {
   hasWhitespaceBetween,
   isInlineElement,
   isMultilineERBComment,
+  isERBTagNode,
   normalizeAndSplitWords,
   startsWithWhitespace,
 } from "./format-helpers.js"
@@ -21,7 +22,7 @@ import {
  * keeps the existing block layout for free-standing control flow.
  */
 export function isTextFlowNode(node: Node, children?: Node[], index?: number): boolean {
-  if (isNode(node, ERBContentNode)) return !isMultilineERBComment(node)
+  if (isERBTagNode(node)) return !isMultilineERBComment(node)
   if (isNode(node, HTMLTextNode) && node.content.trim() !== "") return true
   if (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) return true
 
@@ -87,7 +88,7 @@ export function collectTextFlowRun(body: Node[], startIndex: number): { nodes: N
   if (textFlowCount >= 2) {
     const hasText = nodes.some(node => isNode(node, HTMLTextNode) && node.content.trim() !== "")
     const hasAtomicContent = nodes.some((node, nodeIndex) =>
-      isNode(node, ERBContentNode) ||
+      isERBTagNode(node) ||
       (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) ||
       isGluedControlFlowNode(nodes, nodeIndex)
     )
@@ -112,7 +113,7 @@ export function isInTextFlowContext(children: Node[]): boolean {
   if (nonTextChildren.length === 0) return false
 
   const allInline = nonTextChildren.every(child => {
-    if (isNode(child, ERBContentNode)) return true
+    if (isERBTagNode(child)) return true
 
     if (isNode(child, HTMLElementNode)) {
       return isInlineElement(getTagName(child))
