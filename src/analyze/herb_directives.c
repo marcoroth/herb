@@ -634,19 +634,6 @@ static AST_NODE_T* create_herb_directive_node(
   );
 }
 
-static bool is_erb_comment_node(const AST_ERB_COMMENT_NODE_T* node) {
-  if (!node->tag_opening || !node->content) { return false; }
-  if (hb_string_is_empty(node->tag_opening->value)) { return false; }
-
-  hb_string_T opening = node->tag_opening->value;
-
-  for (uint32_t index = 0; index < opening.length; index++) {
-    if (opening.data[index] == '#') { return true; }
-  }
-
-  return false;
-}
-
 static void transform_herb_directives_in_array(hb_array_T* array, analyze_ruby_context_T* context) {
   if (!array) { return; }
 
@@ -658,7 +645,7 @@ static void transform_herb_directives_in_array(hb_array_T* array, analyze_ruby_c
 
     AST_ERB_COMMENT_NODE_T* erb_node = (AST_ERB_COMMENT_NODE_T*) child;
 
-    if (!is_erb_comment_node(erb_node)) { continue; }
+    if (!erb_node->tag_opening || !erb_node->content) { continue; }
 
     directive_content_T content = {
       .bytes = erb_node->content->value.data,
