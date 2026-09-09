@@ -43,7 +43,7 @@ export function isHTMLNode(node: Node): boolean {
  * Checks if a node is any ERB node type
  */
 export function isERBNode(node: Node): node is ERBNode {
-<%- erb_nodes = nodes.select { |n| n.name.start_with?("ERB") } -%>
+<%- erb_nodes = nodes.select(&:erb_tag?) -%>
   return <%= erb_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
 

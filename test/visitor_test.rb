@@ -226,4 +226,25 @@ class VisitorTest < Minitest::Spec
     assert_equal({ prism_program: true, strict: false }, Herb::Visitor.parser_options_for([visitor]))
     assert_equal({ prism_program: true, strict: false }, klass.parser_options_for([visitor]))
   end
+
+  class ERBNodeCollector < Herb::Visitor
+    attr_reader :erb_nodes
+
+    def initialize
+      super
+      @erb_nodes = []
+    end
+
+    def visit_erb_node(node)
+      @erb_nodes << node.class.to_s.split("::").last
+    end
+  end
+
+  test "visit_erb_node fires for every node written as an ERB tag" do
+    visitor = ERBNodeCollector.new
+
+    Herb.parse(%(<%# herb:slots %><%# a comment %><%= value %><% code %>), herb_directives: true).visit(visitor)
+
+    assert_equal ["HerbDirectiveNode", "ERBCommentNode", "ERBContentNode", "ERBContentNode"], visitor.erb_nodes
+  end
 end

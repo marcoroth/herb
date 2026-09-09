@@ -443,6 +443,8 @@ module Herb
     class NodeType
       include ConfigType
 
+      ERB_TAG_FIELDS = ["tag_opening", "content", "tag_closing"].freeze
+
       attr_reader :name, :type, :struct_type, :struct_name, :human, :fields
 
       def initialize(config)
@@ -460,6 +462,12 @@ module Herb
 
           type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
+      end
+
+      def erb_tag?
+        names = fields.map(&:name)
+
+        ERB_TAG_FIELDS.all? { |field| names.include?(field) }
       end
 
       def c_type
