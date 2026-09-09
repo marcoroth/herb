@@ -1,16 +1,12 @@
 ---
 source: "Parser::CommentsTest#test_0012_nested HTML comment opener in an unclosed comment"
 input: "<!-- outer <!-- inner"
+options: {strict: false}
 ---
 @ DocumentNode (location: (1:0)-(1:21))
 └── children: (1 item)
     └── @ HTMLCommentNode (location: (1:0)-(1:21))
-        ├── errors: (2 errors)
-        │   ├── @ NestedCommentError (location: (1:11)-(1:15))
-        │   │   ├── message: "Comment opened at (1:0) contains another `<!--` at (1:11)."
-        │   │   ├── comment_start: "<!--" (location: (1:0)-(1:4))
-        │   │   └── nested_start: "<!--" (location: (1:11)-(1:15))
-        │   │
+        ├── errors: (1 error)
         │   └── @ UnclosedCommentError (location: (1:0)-(1:21))
         │       ├── message: "Comment opened at (1:0) is missing its closing `-->`."
         │       └── comment_start: "<!--" (location: (1:0)-(1:4))

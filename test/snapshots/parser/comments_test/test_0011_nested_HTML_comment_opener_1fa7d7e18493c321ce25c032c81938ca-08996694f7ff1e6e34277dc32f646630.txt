@@ -1,6 +1,7 @@
 ---
 source: "Parser::CommentsTest#test_0011_nested HTML comment opener"
 input: "<!-- a <!-- b --> c -->"
+options: {strict: true}
 ---
 @ DocumentNode (location: (1:0)-(1:23))
 └── children: (2 items)
