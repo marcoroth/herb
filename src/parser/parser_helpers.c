@@ -69,6 +69,16 @@ static const foreign_content_element_T* parser_find_foreign_content_element(hb_s
   return NULL;
 }
 
+// raise HERB_MAX_FOREIGN_CONTENT_ELEMENTS when config/html_elements.yml outgrows it
+typedef char
+  herb_foreign_content_capacity_check[(FOREIGN_CONTENT_ELEMENTS_COUNT <= HERB_MAX_FOREIGN_CONTENT_ELEMENTS) ? 1 : -1];
+
+int parser_foreign_content_element_index(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? (int) (element - FOREIGN_CONTENT_ELEMENTS) : -1;
+}
+
 foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
   const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
 
