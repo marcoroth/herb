@@ -22,6 +22,7 @@ require_relative "herb/ast/nodes"
 require_relative "herb/ast/erb_content_node"
 require_relative "herb/ast/helpers"
 require_relative "herb/ast/erb_render_node"
+require_relative "herb/ast/herb_directive_node"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"

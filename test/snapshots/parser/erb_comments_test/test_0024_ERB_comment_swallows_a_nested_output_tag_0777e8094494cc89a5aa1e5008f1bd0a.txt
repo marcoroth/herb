@@ -1,0 +1,17 @@
+---
+source: "Parser::ERBCommentsTest#test_0024_ERB comment swallows a nested output tag"
+input: "<%# a <%= b %> c %>"
+---
+@ DocumentNode (location: (1:0)-(1:19))
+├── errors: (1 error)
+│   └── @ StrayERBClosingTagError (location: (1:17)-(1:19))
+│       └── message: "Stray `%>` found at (1:17). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+│
+└── children: (2 items)
+    ├── @ ERBCommentNode (location: (1:0)-(1:14))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " a <%= b " (location: (1:3)-(1:12))
+    │   └── tag_closing: "%>" (location: (1:12)-(1:14))
+    │
+    └── @ HTMLTextNode (location: (1:14)-(1:19))
+        └── content: " c %>"

@@ -10,6 +10,7 @@ import { lspLine } from "./range_utils"
 import type {
   Node,
   ERBNode,
+  ERBCommentNode,
   ERBContentNode,
   HTMLElementNode,
   HTMLOpenTagNode,
@@ -105,6 +106,14 @@ export class FoldingRangeCollector extends Visitor {
   }
 
   visitERBContentNode(node: ERBContentNode): void {
+    this.foldERBTag(node)
+  }
+
+  visitERBCommentNode(node: ERBCommentNode): void {
+    this.foldERBTag(node)
+  }
+
+  private foldERBTag(node: ERBContentNode | ERBCommentNode): void {
     if (node.tag_opening && node.tag_closing) {
       this.addRange(node.tag_opening.location.end, node.tag_closing.location.start)
     }

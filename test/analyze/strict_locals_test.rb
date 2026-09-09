@@ -136,7 +136,7 @@ module Analyze
       HTML
     end
 
-    test "strict locals comment without option enabled stays as ERBContentNode" do
+    test "strict locals comment without option enabled stays an ERBCommentNode" do
       assert_parsed_snapshot(<<~HTML)
         <%# locals: (message:) %>
       HTML

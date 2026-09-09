@@ -235,7 +235,7 @@ module Engine
       contents = []
 
       collect = lambda do |node|
-        contents << node.content&.value if node.is_a?(Herb::AST::ERBContentNode)
+        contents << node.content&.value if node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBCommentNode)
         node.compact_child_nodes.each { |child| collect.call(child) }
       end
 
@@ -310,7 +310,7 @@ module Engine
       comments = []
 
       collect = lambda do |node|
-        comments << node if node.is_a?(Herb::AST::HTMLCommentNode) || node.is_a?(Herb::AST::ERBContentNode)
+        comments << node if node.is_a?(Herb::AST::HTMLCommentNode) || node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBCommentNode)
         node.compact_child_nodes.each { |child| collect.call(child) }
       end
 

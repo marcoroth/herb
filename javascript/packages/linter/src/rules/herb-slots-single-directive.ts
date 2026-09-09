@@ -3,17 +3,17 @@ import { ParserRule } from "../types.js"
 import { slotsDirectiveMode } from "../utils/state-directives-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 
 interface SlotsDirective {
-  node: ERBContentNode
+  node: ERBCommentNode
   mode: "server" | "client"
 }
 
 class SlotsSingleDirectiveVisitor extends BaseRuleVisitor {
   public directives: SlotsDirective[] = []
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     const mode = slotsDirectiveMode(node)
 
     if (mode !== null) {

@@ -12,6 +12,7 @@ import { slotNameGroupAt } from "./herb_attribute_links"
 import type {
   Node,
   ERBNode,
+  ERBCommentNode,
   ERBContentNode,
   HTMLElementNode,
   HTMLConditionalElementNode,
@@ -36,6 +37,11 @@ export class DocumentHighlightCollector extends Visitor {
   }
 
   visitERBContentNode(node: ERBContentNode): void {
+    this.addGroup([tokenToRange(node.tag_opening), tokenToRange(node.tag_closing)])
+    this.visitChildNodes(node)
+  }
+
+  visitERBCommentNode(node: ERBCommentNode): void {
     this.addGroup([tokenToRange(node.tag_opening), tokenToRange(node.tag_closing)])
     this.visitChildNodes(node)
   }

@@ -579,4 +579,48 @@ describe("@herb-tools/formatter", () => {
       expectFormattedToMatch(result, { passes: 2 })
     })
   })
+
+  describe("a silent tag whose ruby is a comment", () => {
+    test("stays an ERBContentNode and is still treated as a comment", () => {
+      const result = Herb.parse("<% # a ruby comment %>")
+      const node = result.value.children[0]
+
+      expect(node.type).toBe("AST_ERB_CONTENT_NODE")
+      expect(formatter.format("<% # a ruby comment %>")).toEqual("<% # a ruby comment %>")
+    })
+
+    test("keeps its block layout over several lines", () => {
+      const source = dedent`
+        <%
+          # a ruby comment
+          # over several lines
+        %>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(source)
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+
+    test("flows inline alongside text", () => {
+      expect(formatter.format("hello <% # note %> world")).toEqual("hello <% # note %> world")
+    })
+
+    test("a tag that only starts with a comment and then runs code is not a comment", () => {
+      const source = dedent`
+        <%
+          # a note
+          puts 1
+        %>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(source)
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+  })
 })

@@ -5,14 +5,14 @@ import { isERBComment } from "../utils/state-directives-utils.js"
 import { Location } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 
 const SLOTS_DIRECTIVE = /^(-?\s*)(herb:slots)\b(.*?)-?\s*$/s
 const RESOLVED_MODE = /\b(server|client)\b/
 const MODES = new Set(["client", "server"])
 
 class SlotsValidModeVisitor extends BaseRuleVisitor {
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (!isERBComment(node)) return
 
     const content = node.content?.value ?? ""
@@ -35,7 +35,7 @@ class SlotsValidModeVisitor extends BaseRuleVisitor {
     )
   }
 
-  private optionLocation(node: ERBContentNode, remainderOffset: number, remainder: string, tokens: string[]): Location {
+  private optionLocation(node: ERBCommentNode, remainderOffset: number, remainder: string, tokens: string[]): Location {
     const content = node.content
 
     if (!content) return node.location

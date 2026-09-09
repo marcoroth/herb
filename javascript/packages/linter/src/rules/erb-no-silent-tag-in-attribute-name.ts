@@ -1,13 +1,13 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
-import { filterERBContentNodes } from "@herb-tools/core"
+import { isERBCommentNode, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLAttributeNameNode, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNameNode, ERBCommentNode, ERBContentNode, Node } from "@herb-tools/core"
 
 class ERBNoSilentTagInAttributeNameVisitor extends BaseRuleVisitor {
   visitHTMLAttributeNameNode(node: HTMLAttributeNameNode): void {
-    const erbNodes = filterERBContentNodes(node.children)
+    const erbNodes = node.children.filter((child: Node): child is ERBContentNode | ERBCommentNode => isERBContentNode(child) || isERBCommentNode(child))
     const silentNodes = erbNodes.filter(this.isSilentERBTag)
 
     for (const node of silentNodes) {
@@ -19,7 +19,7 @@ class ERBNoSilentTagInAttributeNameVisitor extends BaseRuleVisitor {
   }
 
   // TODO: might be worth to extract
-  private isSilentERBTag(node: ERBContentNode): boolean {
+  private isSilentERBTag(node: ERBContentNode | ERBCommentNode): boolean {
     const silentTags = ["<%", "<%-", "<%#"]
 
     return silentTags.includes(node.tag_opening?.value || "")

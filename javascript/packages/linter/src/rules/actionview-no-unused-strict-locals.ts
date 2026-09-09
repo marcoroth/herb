@@ -6,7 +6,7 @@ import { PrismVisitor } from "@herb-tools/core"
 import { isPrismNodeType, isRubyParameterNode } from "@herb-tools/core"
 import { isPartialFile } from "../utils/file-utils.js"
 
-import type { ERBContentNode, ERBStrictLocalsNode, ParseResult, ParserOptions, PrismNodes, RubyParameterNode } from "@herb-tools/core"
+import type { ERBCommentNode, ERBContentNode, ERBStrictLocalsNode, ParseResult, ParserOptions, PrismNodes, RubyParameterNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const IGNORED_PREFIX = "_"
@@ -87,7 +87,7 @@ class LocalReferenceCollector extends PrismVisitor {
 class StateDefaultCollector extends BaseRuleVisitor {
   public readonly defaults: string[] = []
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     const parsed = stateSignatureOf(node)
 
     if (!parsed || parsed.malformed) return

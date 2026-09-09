@@ -230,6 +230,10 @@ module Herb
         process_erb_tag(node)
       end
 
+      def visit_erb_comment_node(node)
+        process_erb_tag(node)
+      end
+
       def visit_erb_control_node(node, &)
         if node.content
           code_index = @tokens.length

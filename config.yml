@@ -865,6 +865,7 @@ nodes:
           kind:
             - "LiteralNode"
             - "ERBContentNode"
+            - "ERBCommentNode"
 
     - name: "HTMLAttributeNode"
       fields:
@@ -1669,3 +1670,14 @@ nodes:
           type: "array"
           kind:
             - "HerbStateDeclarationNode"
+
+    - name: "ERBCommentNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
