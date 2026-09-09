@@ -607,5 +607,20 @@ describe("@herb-tools/formatter", () => {
     test("flows inline alongside text", () => {
       expect(formatter.format("hello <% # note %> world")).toEqual("hello <% # note %> world")
     })
+
+    test("a tag that only starts with a comment and then runs code is not a comment", () => {
+      const source = dedent`
+        <%
+          # a note
+          puts 1
+        %>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(source)
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
   })
 })

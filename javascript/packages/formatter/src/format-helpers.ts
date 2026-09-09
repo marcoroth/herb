@@ -1,4 +1,4 @@
-import { isNode, isERBNode, isAnyERBCommentNode, isERBCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, isInlineRubyCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -256,7 +256,7 @@ export function isERBTagNode(node: Node | null | undefined): node is ERBContentN
  * Check if a node is an ERB comment that renders as a block.
  */
 export function isMultilineERBComment(node: Node): boolean {
-  return isERBTagNode(node) && isAnyERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+  return isERBTagNode(node) && (isERBCommentNode(node) || isInlineRubyCommentNode(node)) && (node.content?.value ?? "").trim().includes("\n")
 }
 
 /**

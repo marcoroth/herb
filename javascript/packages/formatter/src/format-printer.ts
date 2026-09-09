@@ -29,7 +29,8 @@ import {
   isNoneOf,
   isERBNode,
   isERBControlFlowNode,
-  isAnyERBCommentNode,
+  isERBCommentNode,
+  isInlineRubyCommentNode,
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
@@ -1077,7 +1078,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    if (isAnyERBCommentNode(node)) {
+    if ((isERBCommentNode(node) || isInlineRubyCommentNode(node))) {
       this.visitERBCommentNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)
