@@ -1003,6 +1003,8 @@ module Herb
             case child
             when Herb::AST::HerbDirectiveNode
               child.key&.value.to_s == "slots"
+            when Herb::AST::ERBCommentNode
+              child.content&.value.to_s.match?(/\bherb:slots\b/)
             when Herb::AST::ERBContentNode
               child.tag_opening&.value.to_s.include?("#") && child.content&.value.to_s.match?(/\bherb:slots\b/)
             else

@@ -67,12 +67,10 @@ input: |2-
     │   │       │   ├── @ HTMLTextNode (location: (3:31)-(4:2))
     │   │       │   │   └── content: "\n  "
     │   │       │   │
-    │   │       │   ├── @ ERBContentNode (location: (4:2)-(4:15))
+    │   │       │   ├── @ ERBCommentNode (location: (4:2)-(4:15))
     │   │       │   │   ├── tag_opening: "<%#" (location: (4:2)-(4:5))
     │   │       │   │   ├── content: " no-tag " (location: (4:5)-(4:13))
-    │   │       │   │   ├── tag_closing: "%>" (location: (4:13)-(4:15))
-    │   │       │   │   ├── parsed: false
-    │   │       │   │   └── valid: true
+    │   │       │   │   └── tag_closing: "%>" (location: (4:13)-(4:15))
     │   │       │   │
     │   │       │   └── @ HTMLTextNode (location: (4:15)-(5:0))
     │   │       │       └── content: "\n"

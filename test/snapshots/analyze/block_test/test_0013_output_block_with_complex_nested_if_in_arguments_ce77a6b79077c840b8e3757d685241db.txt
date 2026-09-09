@@ -35,12 +35,10 @@ input: |2-
     │   │   ├── @ HTMLTextNode (location: (11:7)-(12:4))
     │   │   │   └── content: "\n    "
     │   │   │
-    │   │   ├── @ ERBContentNode (location: (12:4)-(12:14))
+    │   │   ├── @ ERBCommentNode (location: (12:4)-(12:14))
     │   │   │   ├── tag_opening: "<%#" (location: (12:4)-(12:7))
     │   │   │   ├── content: " ... " (location: (12:7)-(12:12))
-    │   │   │   ├── tag_closing: "%>" (location: (12:12)-(12:14))
-    │   │   │   ├── parsed: false
-    │   │   │   └── valid: true
+    │   │   │   └── tag_closing: "%>" (location: (12:12)-(12:14))
     │   │   │
     │   │   └── @ HTMLTextNode (location: (12:14)-(13:0))
     │   │       └── content: "\n"

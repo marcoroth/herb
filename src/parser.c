@@ -26,7 +26,7 @@
 static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, hb_array_T** errors);
 static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children, hb_array_T** errors);
 static bool parser_element_has_foreign_content(parser_T* parser, hb_string_T tag_name);
-static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
+static AST_NODE_T* parser_parse_erb_tag(parser_T* parser);
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, hb_array_T* children);
 static void parser_consume_whitespace(parser_T* parser, hb_array_T* children);
 static void parser_skip_erb_content(lexer_T* lexer);
@@ -94,7 +94,7 @@ static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
   while (token_is_none_of(parser, TOKEN_CDATA_END, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
       start = parser->current_token->location.start;
       continue;
@@ -171,7 +171,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
       start = parser->current_token->location.start;
@@ -269,7 +269,7 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
       continue;
@@ -315,7 +315,7 @@ static AST_XML_DECLARATION_NODE_T* parser_parse_xml_declaration(parser_T* parser
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
       start = parser->current_token->location.start;
@@ -362,7 +362,7 @@ static AST_XML_PROCESSING_INSTRUCTION_NODE_T* parser_parse_xml_processing_instru
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
       start = parser->current_token->location.start;
@@ -524,7 +524,7 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
 
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
       start = parser->current_token->location.start;
@@ -745,10 +745,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
-      value_end = erb_node->base.location.end;
+      value_end = erb_node->location.end;
       start = parser->current_token->location.start;
 
       continue;
@@ -1504,7 +1504,7 @@ static AST_NODE_T* parser_parse_html_element(parser_T* parser) {
   return (AST_NODE_T*) open_tag;
 }
 
-static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
+static AST_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   hb_array_T* errors = NULL;
 
   token_T* opening_tag = parser_consume_expected(parser, TOKEN_ERB_START, &errors);
@@ -1557,7 +1557,19 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     end_position = parser->current_token->location.start;
   }
 
-  return ast_erb_content_node_init(
+  if (hb_string_equals(opening_tag->value, hb_string("<%#"))) {
+    return (AST_NODE_T*) ast_erb_comment_node_init(
+      opening_tag,
+      content,
+      closing_tag,
+      opening_tag->location.start,
+      end_position,
+      errors,
+      parser->allocator
+    );
+  }
+
+  return (AST_NODE_T*) ast_erb_content_node_init(
     opening_tag,
     content,
     closing_tag,
@@ -1666,7 +1678,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_foreign_content_from_buffer(parser, &content, children, start);
 
-      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      AST_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
 
       start = parser->current_token->location.start;

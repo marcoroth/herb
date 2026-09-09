@@ -12,7 +12,7 @@ module Herb
       #: (Herb::AST::Node?) -> String
       def erb_opening(node)
         token = case node
-                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
+                when Herb::AST::ERBContentNode, Herb::AST::ERBCommentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
                   node.tag_opening
                 end
 
@@ -42,6 +42,7 @@ module Herb
 
       #: (Herb::AST::Node?) -> bool
       def erb_comment_node?(node)
+        return true if node.is_a?(Herb::AST::ERBCommentNode)
         return false unless node.is_a?(Herb::AST::ERBContentNode)
 
         erb_comment?(erb_opening(node)) || inline_ruby_comment?(node)

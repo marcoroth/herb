@@ -401,7 +401,7 @@ static bool append_canonical_directive(
 
 static bool append_directive_source(
   hb_buffer_T* buffer,
-  const AST_ERB_CONTENT_NODE_T* erb_node,
+  const AST_ERB_COMMENT_NODE_T* erb_node,
   const directive_content_T* content,
   hb_allocator_T* allocator
 ) {
@@ -441,7 +441,7 @@ static bool content_has_newline(const directive_content_T* content, const size_t
 }
 
 static void report_non_canonical(
-  const AST_ERB_CONTENT_NODE_T* erb_node,
+  const AST_ERB_COMMENT_NODE_T* erb_node,
   const directive_content_T* content,
   const directive_key_T* key,
   const size_t signature_start,
@@ -501,7 +501,7 @@ static void report_non_canonical(
 }
 
 static AST_NODE_T* create_herb_state_directive_node(
-  AST_ERB_CONTENT_NODE_T* erb_node,
+  AST_ERB_COMMENT_NODE_T* erb_node,
   const directive_content_T* content,
   const directive_key_T* key,
   hb_allocator_T* allocator,
@@ -609,7 +609,7 @@ static AST_NODE_T* create_herb_state_directive_node(
 }
 
 static AST_NODE_T* create_herb_directive_node(
-  AST_ERB_CONTENT_NODE_T* erb_node,
+  AST_ERB_COMMENT_NODE_T* erb_node,
   const directive_content_T* content,
   const directive_key_T* key,
   hb_allocator_T* allocator
@@ -634,7 +634,7 @@ static AST_NODE_T* create_herb_directive_node(
   );
 }
 
-static bool is_erb_comment_node(const AST_ERB_CONTENT_NODE_T* node) {
+static bool is_erb_comment_node(const AST_ERB_COMMENT_NODE_T* node) {
   if (!node->tag_opening || !node->content) { return false; }
   if (hb_string_is_empty(node->tag_opening->value)) { return false; }
 
@@ -654,9 +654,9 @@ static void transform_herb_directives_in_array(hb_array_T* array, analyze_ruby_c
 
   for (size_t index = 0; index < hb_array_size(array); index++) {
     AST_NODE_T* child = hb_array_get(array, index);
-    if (!child || child->type != AST_ERB_CONTENT_NODE) { continue; }
+    if (!child || child->type != AST_ERB_COMMENT_NODE) { continue; }
 
-    AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
+    AST_ERB_COMMENT_NODE_T* erb_node = (AST_ERB_COMMENT_NODE_T*) child;
 
     if (!is_erb_comment_node(erb_node)) { continue; }
 

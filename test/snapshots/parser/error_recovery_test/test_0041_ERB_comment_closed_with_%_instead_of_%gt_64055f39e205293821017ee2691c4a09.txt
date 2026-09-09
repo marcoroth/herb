@@ -15,7 +15,7 @@ input: "<h1><%# note %</h1>"
         │
         ├── tag_name: "h1" (location: (1:1)-(1:3))
         ├── body: (1 item)
-        │   └── @ ERBContentNode (location: (1:4)-(1:14))
+        │   └── @ ERBCommentNode (location: (1:4)-(1:14))
         │       ├── errors: (1 error)
         │       │   └── @ MalformedERBClosingTagError (location: (1:4)-(1:14))
         │       │       ├── message: "ERB tag `<%#` at (1:4) is closed with `%` at (1:13) instead of `%>`."
@@ -24,9 +24,7 @@ input: "<h1><%# note %</h1>"
         │       │
         │       ├── tag_opening: "<%#" (location: (1:4)-(1:7))
         │       ├── content: " note " (location: (1:7)-(1:13))
-        │       ├── tag_closing: "%" (location: (1:13)-(1:14))
-        │       ├── parsed: false
-        │       └── valid: true
+        │       └── tag_closing: "%" (location: (1:13)-(1:14))
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:14)-(1:19))
