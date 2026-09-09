@@ -238,6 +238,10 @@ export class IdentityPrinter extends Printer {
     this.printERBNode(node)
   }
 
+  visitERBCommentNode(node: Nodes.ERBCommentNode): void {
+    this.printERBNode(node)
+  }
+
   visitERBIfNode(node: Nodes.ERBIfNode): void {
     this.printERBNode(node)
 
