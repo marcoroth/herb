@@ -1,0 +1,69 @@
+---
+source: "Parser::IframeTest#test_0006_unclosed iframe is recovered as markup"
+input: |2-
+<iframe src="/embed">
+<p>after</p>
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (4 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:21))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingClosingTagError (location: (1:0)-(1:21))
+    │   │       ├── message: "Opening tag `<iframe>` at (1:1) doesn't have a matching closing tag `</iframe>` in the same scope."
+    │   │       └── opening_tag: "iframe" (location: (1:1)-(1:7))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "iframe" (location: (1:1)-(1:7))
+    │   ├── tag_closing: ">" (location: (1:20)-(1:21))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLAttributeNode (location: (1:8)-(1:20))
+    │   │       ├── name:
+    │   │       │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:11))
+    │   │       │       └── children: (1 item)
+    │   │       │           └── @ LiteralNode (location: (1:8)-(1:11))
+    │   │       │               └── content: "src"
+    │   │       │
+    │   │       │
+    │   │       ├── equals: "=" (location: (1:11)-(1:12))
+    │   │       └── value:
+    │   │           └── @ HTMLAttributeValueNode (location: (1:12)-(1:20))
+    │   │               ├── open_quote: """ (location: (1:12)-(1:13))
+    │   │               ├── children: (1 item)
+    │   │               │   └── @ LiteralNode (location: (1:13)-(1:19))
+    │   │               │       └── content: "/embed"
+    │   │               │
+    │   │               ├── close_quote: """ (location: (1:19)-(1:20))
+    │   │               └── quoted: true
+    │   │
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (1:21)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(2:12))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:3))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "p" (location: (2:1)-(2:2))
+    │   │       ├── tag_closing: ">" (location: (2:2)-(2:3))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "p" (location: (2:1)-(2:2))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (2:3)-(2:8))
+    │   │       └── content: "after"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (2:8)-(2:12))
+    │   │       ├── tag_opening: "</" (location: (2:8)-(2:10))
+    │   │       ├── tag_name: "p" (location: (2:10)-(2:11))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (2:11)-(2:12))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (2:12)-(3:0))
+        └── content: "\n"

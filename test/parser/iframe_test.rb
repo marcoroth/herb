@@ -26,7 +26,7 @@ module Parser
       assert_parsed_snapshot(%(<iframe>text</IFRAME>))
     end
 
-    test "unclosed iframe swallows the rest of the document" do
+    test "unclosed iframe is recovered as markup" do
       assert_parsed_snapshot(<<~HTML)
         <iframe src="/embed">
         <p>after</p>

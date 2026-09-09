@@ -3,26 +3,30 @@ source: "Parser::TitleTest#test_0006_unclosed title"
 input: "<title>never closed<div>"
 ---
 @ DocumentNode (location: (1:0)-(1:24))
-└── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:7))
+└── children: (3 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingClosingTagError (location: (1:0)-(1:7))
+    │   │       ├── message: "Opening tag `<title>` at (1:1) doesn't have a matching closing tag `</title>` in the same scope."
+    │   │       └── opening_tag: "title" (location: (1:1)-(1:6))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "title" (location: (1:1)-(1:6))
+    │   ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   ├── children: []
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (1:7)-(1:19))
+    │   └── content: "never closed"
+    │
+    └── @ HTMLOpenTagNode (location: (1:19)-(1:24))
         ├── errors: (1 error)
-        │   └── @ MissingClosingTagError (location: (1:1)-(1:6))
-        │       ├── message: "Opening tag `<title>` at (1:1) doesn't have a matching closing tag `</title>` in the same scope."
-        │       └── opening_tag: "title" (location: (1:1)-(1:6))
+        │   └── @ MissingClosingTagError (location: (1:19)-(1:24))
+        │       ├── message: "Opening tag `<div>` at (1:20) doesn't have a matching closing tag `</div>` in the same scope."
+        │       └── opening_tag: "div" (location: (1:20)-(1:23))
         │
-        ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
-        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
-        │       ├── tag_name: "title" (location: (1:1)-(1:6))
-        │       ├── tag_closing: ">" (location: (1:6)-(1:7))
-        │       ├── children: []
-        │       └── is_void: false
-        │
-        ├── tag_name: "title" (location: (1:1)-(1:6))
-        ├── body: (1 item)
-        │   └── @ HTMLTextNode (location: (1:7)-(1:24))
-        │       └── content: "never closed<div>"
-        │
-        ├── close_tag: ∅
-        ├── is_void: false
-        └── element_source: "HTML"
+        ├── tag_opening: "<" (location: (1:19)-(1:20))
+        ├── tag_name: "div" (location: (1:20)-(1:23))
+        ├── tag_closing: ">" (location: (1:23)-(1:24))
+        ├── children: []
+        └── is_void: false

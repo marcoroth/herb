@@ -1568,11 +1568,44 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   );
 }
 
+static bool is_tag_name_character(char character) {
+  return (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z')
+      || (character >= '0' && character <= '9') || character == '-';
+}
+
+static bool parser_foreign_content_end_tag_ahead(const parser_T* parser, hb_string_T tag_name) {
+  hb_string_T source = parser->lexer->source;
+
+  if (hb_string_is_empty(source) || hb_string_is_empty(tag_name)) { return false; }
+
+  for (uint32_t index = parser->current_token->range.from; index + 2 < source.length; index++) {
+    if (source.data[index] != '<' || source.data[index + 1] != '/') { continue; }
+
+    uint32_t name_start = index + 2;
+
+    if (name_start + tag_name.length > source.length) { return false; }
+
+    hb_string_T candidate = { .data = source.data + name_start, .length = tag_name.length };
+
+    if (!hb_string_equals_case_insensitive(candidate, tag_name)) { continue; }
+
+    uint32_t after = name_start + tag_name.length;
+
+    if (after >= source.length || !is_tag_name_character(source.data[after])) { return true; }
+  }
+
+  return false;
+}
+
 // <title> and <plaintext> are ordinary elements in XML documents, <title> also inside <svg>
 static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name) {
   if (parser_get_foreign_content_kind(tag_name) == FOREIGN_CONTENT_NONE) { return false; }
   if (parser_foreign_content_is_html_only(tag_name) && parser->xml_document) { return false; }
   if (hb_string_equals_case_insensitive(tag_name, hb_string("title")) && parser_in_svg_context(parser)) {
+    return false;
+  }
+
+  if (parser_foreign_content_has_end_tag(tag_name) && !parser_foreign_content_end_tag_ahead(parser, tag_name)) {
     return false;
   }
 
