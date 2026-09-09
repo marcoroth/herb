@@ -1,0 +1,19 @@
+---
+source: "Parser::ERBCommentsTest#test_0023_ERB comment ends at the first closing tag"
+input: "<%# <%= hello %> %>"
+---
+@ DocumentNode (location: (1:0)-(1:19))
+├── errors: (1 error)
+│   └── @ StrayERBClosingTagError (location: (1:17)-(1:19))
+│       └── message: "Stray `%>` found at (1:17). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+│
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:16))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " <%= hello " (location: (1:3)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:16)-(1:19))
+        └── content: " %>"

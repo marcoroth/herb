@@ -30,6 +30,7 @@ typedef struct LEXER_STRUCT {
   char current_character;
   lexer_state_T state;
   erb_openers_T erb_openers;
+  bool in_erb_comment;
   uint8_t malformed_erb_close_length;
   uint32_t stall_counter;
   uint32_t last_position;

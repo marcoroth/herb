@@ -112,5 +112,17 @@ module Parser
 
       assert_parsed_snapshot(content)
     end
+
+    test "ERB comment ends at the first closing tag" do
+      assert_parsed_snapshot(%(<%# <%= hello %> %>))
+    end
+
+    test "ERB comment swallows a nested output tag" do
+      assert_parsed_snapshot(%(<%# a <%= b %> c %>))
+    end
+
+    test "ERB comment swallows a nested statement tag" do
+      assert_parsed_snapshot(%(<%# a <% b %> c %>))
+    end
   end
 end
