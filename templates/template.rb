@@ -729,7 +729,7 @@ module Herb
         @end_tag = config.fetch("end_tag", true)
         @html_only = config.fetch("html_only", false)
 
-        raise "Unknown foreign content kind #{@kind.inspect} for #{@name}" unless %w[raw_text rcdata].include?(@kind)
+        raise "Unknown foreign content kind #{@kind.inspect} for #{@name}" unless ["raw_text", "rcdata"].include?(@kind)
       end
 
       def raw_text? = @kind == "raw_text"
