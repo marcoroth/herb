@@ -533,6 +533,25 @@ export type NodeType =
   | "<%= node.type %>"
   <%- end -%>
 
+export type HTMLNodeType =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.html? -%>
+  | "<%= node.type %>"
+  <%- end -%>
+
+export type HTMLNode =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.html? -%>
+  | <%= node.name %>
+  <%- end -%>
+
+export const HTMLNodeClasses = [
+  <%- nodes.each do |node| -%>
+  <%- next unless node.html? -%>
+  <%= node.name %>,
+  <%- end -%>
+]
+
 export type ERBNodeType =
   <%- nodes.each do |node| -%>
     <%- next unless node.erb_tag? -%>

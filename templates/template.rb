@@ -470,6 +470,10 @@ module Herb
         ERB_TAG_FIELDS.all? { |field| names.include?(field) }
       end
 
+      def html?
+        name.start_with?("HTML")
+      end
+
       def c_type
         @struct_type
       end

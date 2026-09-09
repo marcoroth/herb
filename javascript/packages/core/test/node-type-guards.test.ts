@@ -128,6 +128,16 @@ describe('Node Type Guards', () => {
       expect(isERBNode(htmlTextNode)).toBe(false)
     })
 
+    it('narrows to HTMLNode so a caller can reach a shared field', () => {
+      const node: Node = htmlTextNode
+
+      expect(isHTMLNode(node)).toBe(true)
+
+      if (isHTMLNode(node)) {
+        expect(node.type).toBe('AST_HTML_TEXT_NODE')
+      }
+    })
+
     it('counts a directive as an ERB node, since it is written as an ERB tag', () => {
       expect(isHerbDirectiveNode(herbDirectiveNode)).toBe(true)
       expect(isERBNode(herbDirectiveNode)).toBe(true)
