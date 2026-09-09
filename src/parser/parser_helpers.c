@@ -6,6 +6,7 @@
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
+#include "../include/parser/foreign_content_elements.h"
 #include "../include/parser/parser.h"
 
 #include <stdarg.h>
@@ -56,28 +57,44 @@ bool parser_in_svg_context(const parser_T* parser) {
 
 // ===== Foreign Content Handling =====
 
-typedef struct {
-  const char* name;
-  foreign_content_kind_T kind;
-} foreign_content_element_T;
+static const foreign_content_element_T* parser_find_foreign_content_element(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return NULL; }
 
-static const foreign_content_element_T FOREIGN_CONTENT_ELEMENTS[] = {
-  { "script", FOREIGN_CONTENT_RAW_TEXT },
-  { "style", FOREIGN_CONTENT_RAW_TEXT },
-  { "textarea", FOREIGN_CONTENT_RCDATA },
-  { "title", FOREIGN_CONTENT_RCDATA },
-};
-
-foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
-  if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_NONE; }
-
-  for (size_t i = 0; i < sizeof(FOREIGN_CONTENT_ELEMENTS) / sizeof(FOREIGN_CONTENT_ELEMENTS[0]); i++) {
+  for (size_t i = 0; i < FOREIGN_CONTENT_ELEMENTS_COUNT; i++) {
     if (hb_string_equals_case_insensitive(tag_name, hb_string(FOREIGN_CONTENT_ELEMENTS[i].name))) {
-      return FOREIGN_CONTENT_ELEMENTS[i].kind;
+      return &FOREIGN_CONTENT_ELEMENTS[i];
     }
   }
 
-  return FOREIGN_CONTENT_NONE;
+  return NULL;
+}
+
+// raise HERB_MAX_FOREIGN_CONTENT_ELEMENTS when config/html_elements.yml outgrows it
+typedef char
+  herb_foreign_content_capacity_check[(FOREIGN_CONTENT_ELEMENTS_COUNT <= HERB_MAX_FOREIGN_CONTENT_ELEMENTS) ? 1 : -1];
+
+int parser_foreign_content_element_index(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? (int) (element - FOREIGN_CONTENT_ELEMENTS) : -1;
+}
+
+foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->kind : FOREIGN_CONTENT_NONE;
+}
+
+bool parser_foreign_content_has_end_tag(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->has_end_tag : false;
+}
+
+bool parser_foreign_content_is_html_only(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->html_only : false;
 }
 
 bool parser_is_foreign_content_tag(hb_string_T tag_name) {

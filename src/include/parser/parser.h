@@ -9,6 +9,8 @@
 
 #include <stdint.h>
 
+#define HERB_MAX_FOREIGN_CONTENT_ELEMENTS 16
+
 typedef enum {
   FOREIGN_CONTENT_NONE = 0,
   FOREIGN_CONTENT_RAW_TEXT,
@@ -90,6 +92,7 @@ typedef struct PARSER_STRUCT {
   hb_string_T foreign_content_tag_name;
   size_t svg_depth;
   bool xml_document;
+  uint32_t foreign_content_absent_from[HERB_MAX_FOREIGN_CONTENT_ELEMENTS];
   parser_options_T options;
   size_t consecutive_error_count;
   bool in_recovery_mode;

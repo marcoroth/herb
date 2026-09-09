@@ -42,6 +42,9 @@ bool parser_in_svg_context(const parser_T* parser);
 
 foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name);
 bool parser_is_foreign_content_tag(hb_string_T tag_name);
+bool parser_foreign_content_has_end_tag(hb_string_T tag_name);
+bool parser_foreign_content_is_html_only(hb_string_T tag_name);
+int parser_foreign_content_element_index(hb_string_T tag_name);
 
 void parser_enter_foreign_content(parser_T* parser, foreign_content_kind_T kind, hb_string_T tag_name);
 void parser_exit_foreign_content(parser_T* parser);

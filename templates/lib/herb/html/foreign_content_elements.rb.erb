@@ -1,0 +1,8 @@
+module Herb
+  module HTML
+    module ForeignContentElements
+      RAW_TEXT_ELEMENTS = [<%= foreign_content_elements.select(&:raw_text?).map { |element| element.name.inspect }.join(", ") %>].freeze #: Array[String]
+      RCDATA_ELEMENTS = [<%= foreign_content_elements.select(&:rcdata?).map { |element| element.name.inspect }.join(", ") %>].freeze #: Array[String]
+    end
+  end
+end

@@ -16,5 +16,6 @@ src/include/ast/ast_nodes.h
 src/include/ast/ast_pretty_print.h
 src/include/errors.h
 src/include/lib/hb_foreach.h
+src/include/parser/foreign_content_elements.h
 src/parser/match_tags.c
 src/visitor.c

@@ -25,7 +25,7 @@
 #define MAX_CONSECUTIVE_ERRORS 10
 static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, hb_array_T** errors);
 static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children, hb_array_T** errors);
-static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name);
+static bool parser_element_has_foreign_content(parser_T* parser, hb_string_T tag_name);
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, hb_array_T* children);
 static void parser_consume_whitespace(parser_T* parser, hb_array_T* children);
@@ -76,6 +76,10 @@ void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options
   parser->options = options;
   parser->consecutive_error_count = 0;
   parser->in_recovery_mode = false;
+
+  for (size_t index = 0; index < HERB_MAX_FOREIGN_CONTENT_ELEMENTS; index++) {
+    parser->foreign_content_absent_from[index] = UINT32_MAX;
+  }
 }
 
 static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
@@ -404,6 +408,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
     TOKEN_HTML_TAG_START_CLOSE,
     TOKEN_HTML_DOCTYPE,
     TOKEN_HTML_COMMENT_START,
+    TOKEN_XML_DECLARATION,
     TOKEN_XML_PROCESSING_INSTRUCTION_START,
     TOKEN_ERB_START,
     TOKEN_EOF
@@ -1410,8 +1415,10 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   parser_push_open_tag(parser, open_tag->tag_name);
 
   if (parser_element_has_foreign_content(parser, open_tag->tag_name->value)) {
-    foreign_content_kind_T kind = parser_get_foreign_content_kind(open_tag->tag_name->value);
-    parser_enter_foreign_content(parser, kind, open_tag->tag_name->value);
+    hb_string_T tag_name = open_tag->tag_name->value;
+    hb_string_T end_tag_name = parser_foreign_content_has_end_tag(tag_name) ? tag_name : HB_STRING_NULL;
+
+    parser_enter_foreign_content(parser, parser_get_foreign_content_kind(tag_name), end_tag_name);
     parser_parse_foreign_content(parser, body, &errors);
   } else {
     parser_parse_in_data_state(parser, body, &errors);
@@ -1565,14 +1572,59 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   );
 }
 
-// <title> is raw text in HTML, an ordinary element inside <svg> and in XML documents
-static bool parser_element_has_foreign_content(const parser_T* parser, hb_string_T tag_name) {
-  if (hb_string_is_empty(tag_name)) { return false; }
+static bool is_tag_name_character(char character) {
+  return (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z')
+      || (character >= '0' && character <= '9') || character == '-';
+}
 
+static bool parser_scan_for_end_tag(const parser_T* parser, hb_string_T tag_name) {
+  hb_string_T source = parser->lexer->source;
+
+  if (hb_string_is_empty(source) || hb_string_is_empty(tag_name)) { return false; }
+
+  for (uint32_t index = parser->current_token->range.from; index + 2 < source.length; index++) {
+    if (source.data[index] != '<' || source.data[index + 1] != '/') { continue; }
+
+    uint32_t name_start = index + 2;
+
+    if (name_start + tag_name.length > source.length) { return false; }
+
+    hb_string_T candidate = { .data = source.data + name_start, .length = tag_name.length };
+
+    if (!hb_string_equals_case_insensitive(candidate, tag_name)) { continue; }
+
+    uint32_t after = name_start + tag_name.length;
+
+    if (after >= source.length || !is_tag_name_character(source.data[after])) { return true; }
+  }
+
+  return false;
+}
+
+static bool parser_foreign_content_end_tag_ahead(parser_T* parser, hb_string_T tag_name) {
+  int index = parser_foreign_content_element_index(tag_name);
+  uint32_t position = parser->current_token->range.from;
+
+  if (index >= 0 && position >= parser->foreign_content_absent_from[index]) { return false; }
+
+  if (parser_scan_for_end_tag(parser, tag_name)) { return true; }
+
+  if (index >= 0 && position < parser->foreign_content_absent_from[index]) {
+    parser->foreign_content_absent_from[index] = position;
+  }
+
+  return false;
+}
+
+// <title> and <plaintext> are ordinary elements in XML documents, <title> also inside <svg>
+static bool parser_element_has_foreign_content(parser_T* parser, hb_string_T tag_name) {
   if (parser_get_foreign_content_kind(tag_name) == FOREIGN_CONTENT_NONE) { return false; }
+  if (parser_foreign_content_is_html_only(tag_name) && parser->xml_document) { return false; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("title")) && parser_in_svg_context(parser)) {
+    return false;
+  }
 
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("title"))
-      && (parser_in_svg_context(parser) || parser->xml_document)) {
+  if (parser_foreign_content_has_end_tag(tag_name) && !parser_foreign_content_end_tag_ahead(parser, tag_name)) {
     return false;
   }
 

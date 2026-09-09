@@ -1,4 +1,4 @@
-import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -52,9 +52,7 @@ export const INLINE_ELEMENTS = new Set([
   'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
 ])
 
-export const CONTENT_PRESERVING_ELEMENTS = new Set([
-  'script', 'style', 'pre', 'textarea'
-])
+export const CONTENT_PRESERVING_ELEMENTS = new Set([...RAW_TEXT_ELEMENTS, 'pre', 'textarea'])
 
 // https://tailwindcss.com/docs/white-space
 export const WHITESPACE_PRESERVING_CLASSES = [

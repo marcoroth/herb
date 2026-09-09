@@ -1,0 +1,106 @@
+---
+source: "Parser::ObsoleteRawTextElementsTest#test_0005_plaintext in an xml document is an ordinary element"
+input: |2-
+<?xml version="1.0" encoding="utf-8"?>
+<unattend>
+  <PlainText>false</PlainText>
+  <Value><%= password %></Value>
+</unattend>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (4 items)
+    ├── @ XMLDeclarationNode (location: (1:0)-(1:38))
+    │   ├── tag_opening: "<?xml" (location: (1:0)-(1:5))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:5)-(1:36))
+    │   │       └── content: " version=\"1.0\" encoding=\"utf-8\""
+    │   │
+    │   └── tag_closing: "?>" (location: (1:36)-(1:38))
+    │
+    ├── @ HTMLTextNode (location: (1:38)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(5:11))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:10))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "unattend" (location: (2:1)-(2:9))
+    │   │       ├── tag_closing: ">" (location: (2:9)-(2:10))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "unattend" (location: (2:1)-(2:9))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (2:10)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:30))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:13))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "PlainText" (location: (3:3)-(3:12))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:12)-(3:13))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "PlainText" (location: (3:3)-(3:12))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (3:13)-(3:18))
+    │   │   │   │       └── content: "false"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:18)-(3:30))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:18)-(3:20))
+    │   │   │   │       ├── tag_name: "PlainText" (location: (3:20)-(3:29))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:29)-(3:30))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:30)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:2)-(4:32))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:9))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │   │   │       ├── tag_name: "Value" (location: (4:3)-(4:8))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:8)-(4:9))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "Value" (location: (4:3)-(4:8))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ ERBContentNode (location: (4:9)-(4:24))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (4:9)-(4:12))
+    │   │   │   │       ├── content: " password " (location: (4:12)-(4:22))
+    │   │   │   │       ├── tag_closing: "%>" (location: (4:22)-(4:24))
+    │   │   │   │       ├── parsed: true
+    │   │   │   │       └── valid: true
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:24)-(4:32))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:24)-(4:26))
+    │   │   │   │       ├── tag_name: "Value" (location: (4:26)-(4:31))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:31)-(4:32))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:32)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:11))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "unattend" (location: (5:2)-(5:10))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:10)-(5:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (5:11)-(6:0))
+        └── content: "\n"
