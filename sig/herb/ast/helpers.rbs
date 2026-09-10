@@ -36,6 +36,12 @@ module Herb
       # : (Herb::AST::Node?) -> bool
       def omitted_close_tag?: (Herb::AST::Node?) -> bool
 
+      # : (Herb::AST::Node?) -> Array[untyped]
+      def open_tags_for: (Herb::AST::Node?) -> Array[untyped]
+
+      # : (Herb::AST::Node?) -> Array[untyped]
+      def branch_open_tags: (Herb::AST::Node?) -> Array[untyped]
+
       # : (Herb::AST::ERBContentNode) -> bool
       def inline_ruby_comment?: (Herb::AST::ERBContentNode) -> bool
     end

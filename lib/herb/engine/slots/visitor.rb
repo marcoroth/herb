@@ -1879,7 +1879,9 @@ module Herb
           return unless node.is_a?(Herb::AST::HTMLElementNode)
 
           open_tag = node.open_tag
-          return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode) || open_tag.is_a?(Herb::AST::ERBOpenTagNode)
+          targets = open_tags_for(open_tag)
+
+          return if targets.empty?
 
           anchors = (@element_anchored[open_tag] || []).map { |annotation|
             slot = @slots.fetch(annotation.survivor.index)
@@ -1891,7 +1893,9 @@ module Herb
 
           return if anchors.empty?
 
-          open_tag.children << attribute_node("data-herb-slot", @markers.element_anchors(anchors))
+          value = @markers.element_anchors(anchors)
+
+          targets.each { |target| target.children << attribute_node("data-herb-slot", value) }
         end
 
         #: (Slot) -> String?

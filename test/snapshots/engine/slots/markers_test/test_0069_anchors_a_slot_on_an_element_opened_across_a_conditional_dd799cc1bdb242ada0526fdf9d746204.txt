@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0069_anchors a slot on an element opened across a conditional"
+input: "{source: \"<% if @c %><div class=\\\"a\\\"><% else %><div class=\\\"b\\\"><% end %><%= @value %></div>\", locals: {\"@c\" => false, \"@value\" => \"v\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:83ab2bfd:0--><div class="b" data-herb-slot="1:child">v</div><!--/herb-region:app/views/test.html.erb-->
