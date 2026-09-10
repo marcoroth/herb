@@ -11,7 +11,7 @@ import { ElementObserver } from "../shared/element-observer"
 
 import { report } from "../shared/report"
 import { printValue } from "./values"
-import { elementOf, hostOf } from "../markup/anchors"
+import { connected, elementOf, hostOf } from "../markup/anchors"
 import { armMutationRefresh } from "../shared/mutation-refresh"
 import { armOf, evaluate, matches, mentions } from "./conditions"
 import { steeringNames } from "./refresh"
@@ -405,6 +405,10 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   }
 
   setState(values: StateValues, options: ScopedSetOptions = {}): boolean {
+    return this.slots.building("client", () => this.writeState(values, options))
+  }
+
+  private writeState(values: StateValues, options: ScopedSetOptions): boolean {
     const names = Object.keys(values)
     if (names.length === 0) {
       return false
@@ -1024,37 +1028,60 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
 
         this.slots.claim(slot)
 
-        const host = hostOf(slot.anchor)
-        const leaving = slot.branch !== target && Boolean(host?.querySelector(TRANSITION_SELECTOR))
+        if (slot.branch === target) {
+          continue
+        }
 
-        if (leaving) {
-          void transitionMutation(() => {
-            if (!this.slots.switchBranch(slot, target) && slot.branch !== target && this.options.refetch !== "off") {
-              void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+        const held = this.slots.holdBranch(slot, target)
+
+        if (held) {
+          void held.then(() => {
+            const settled = this.targetBranch(conditional, placed.scope)
+
+            if (slot.branch !== settled && connected(slot.anchor)) {
+              this.switchTo(slot, settled, scope.region.file)
             }
-          }, host ?? document)
+          })
 
           continue
         }
 
-        if (!this.slots.switchBranch(slot, target) && slot.branch !== target) {
-          if (this.options.refetch !== "off") {
-            void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
-
-            continue
-          }
-
-          report({
-            template: scope.region.file,
-            element: hostOf(slot.anchor),
-            message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
-            code: "herb-no-parked-branch",
-            severity: "warning",
-            suggestion: "the template renders in server mode; compile it with `herb:slots client`, or leave `refetch` on to pull the branch from the server",
-          })
-        }
+        this.switchTo(slot, target, scope.region.file)
       }
     }
+  }
+
+  private switchTo(slot: Slot, target: number | null, file: string): void {
+    const host = hostOf(slot.anchor)
+
+    if (host?.querySelector(TRANSITION_SELECTOR)) {
+      void transitionMutation(() => {
+        if (!this.slots.switchBranch(slot, target) && slot.branch !== target && this.options.refetch !== "off") {
+          void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+        }
+      }, host)
+
+      return
+    }
+
+    if (this.slots.switchBranch(slot, target) || slot.branch === target) {
+      return
+    }
+
+    if (this.options.refetch !== "off") {
+      void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+
+      return
+    }
+
+    report({
+      template: file,
+      element: host,
+      message: `branch ${target ?? "else"} of slot ${slot.index} was never parked, so it cannot be shown`,
+      code: "herb-no-parked-branch",
+      severity: "warning",
+      suggestion: "the template renders in server mode; compile it with `herb:slots client`, or leave `refetch` on to pull the branch from the server",
+    })
   }
 
   private targetBranch(conditional: Conditional, scope: StateScope): number | null {

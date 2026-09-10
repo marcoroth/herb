@@ -250,7 +250,12 @@ function applyItems(slots: Slots, payload: Payload, slot: Slot, value: Collected
     parkItemStatics(slots, payload, slot, value)
 
     const wanted = value.order ?? Object.keys(value.items)
-    const unbuilt = slots.reconcileItems(slot, wanted, mode)
+
+    for (const key of wanted) {
+      slots.keepItem(slot, key)
+    }
+
+    const unbuilt = slots.reconcileItems(slot, withLeaving(slots, slot, wanted, mode), mode)
 
     if (unbuilt.length > 0) {
       defer(report, payload, slot.index, "items", unbuilt)
@@ -272,6 +277,47 @@ function applyItems(slots: Slots, payload: Payload, slot: Slot, value: Collected
       applySlots(slots, payload, item.slots, rest, report, mode)
     }
   }
+
+function withLeaving(slots: Slots, slot: Slot, wanted: string[], mode: ApplyMode): string[] {
+  if (mode === "merge") {
+    return wanted
+  }
+
+  const ordered = [...wanted]
+
+  for (const key of slots.reconcile(slot, wanted).removed) {
+    const item = slot.items.get(key)
+
+    if (!item) {
+      continue
+    }
+
+    if (!slots.isLeaving(item)) {
+      slots.dismissItem(slot, key)
+    }
+
+    if (slots.isLeaving(item)) {
+      ordered.splice(positionAmong(slots, slot, ordered, key), 0, key)
+    }
+  }
+
+  return ordered
+}
+
+function positionAmong(slots: Slots, slot: Slot, ordered: string[], key: string): number {
+  const present = slots.itemsInOrder(slot).map((item) => item.key)
+  const before = present.slice(0, present.indexOf(key)).reverse()
+
+  for (const previous of before) {
+    const position = ordered.indexOf(previous)
+
+    if (position !== -1) {
+      return position + 1
+    }
+  }
+
+  return 0
+}
 
 function defer(report: ApplyReport, payload: Payload, index: number | null, reason: DeferredReason, keys?: string[]): void {
     const deferred = { file: payload.template, occurrence: payload.occurrence, index, reason }
