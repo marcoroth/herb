@@ -57,6 +57,7 @@ export interface LinterOptions {
 export interface VersionSkippedRule {
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
 }
 
 export interface FilterRulesResult {
@@ -204,12 +205,15 @@ export class Linter {
         continue
       }
 
-      if (allRulesDefault !== true && configVersion && ruleClass.introducedIn) {
-        if (semverGreaterThan(ruleClass.introducedIn, configVersion)) {
+      const gateVersion = ruleClass.defaultEnabledIn ?? ruleClass.introducedIn
+
+      if (allRulesDefault !== true && configVersion && gateVersion) {
+        if (semverGreaterThan(gateVersion, configVersion)) {
           if (defaultEnabled) {
             skippedByVersion.push({
               ruleName: ruleClass.ruleName,
               introducedIn: ruleClass.introducedIn,
+              defaultEnabledIn: ruleClass.defaultEnabledIn,
             })
           } else {
             notEnabledByDefault++

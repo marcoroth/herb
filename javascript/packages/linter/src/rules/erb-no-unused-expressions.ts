@@ -224,6 +224,7 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
 export class ERBNoUnusedExpressionsRule extends ParserRule {
   static ruleName = "erb-no-unused-expressions"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

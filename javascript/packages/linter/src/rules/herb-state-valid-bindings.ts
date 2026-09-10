@@ -170,6 +170,7 @@ function capitalize(word: string): string {
 export class HerbStateValidBindingsRule extends ParserRule {
   static ruleName = "herb-state-valid-bindings"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

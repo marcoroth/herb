@@ -6,6 +6,7 @@ import type { ParseResult, HerbError } from "@herb-tools/core"
 export class ParserNoErrorsRule extends ParserRule {
   static ruleName = "parser-no-errors"
   static introducedIn = this.version("0.5.0")
+  static defaultEnabledIn = this.version("0.5.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

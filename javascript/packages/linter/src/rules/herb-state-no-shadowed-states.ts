@@ -100,6 +100,7 @@ class NoShadowedStatesVisitor extends BaseRuleVisitor {
 export class HerbStateNoShadowedStatesRule extends ParserRule {
   static ruleName = "herb-state-no-shadowed-states"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

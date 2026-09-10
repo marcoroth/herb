@@ -242,6 +242,7 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
 export class HerbStateValidActionsRule extends ParserRule {
   static ruleName = "herb-state-valid-actions"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

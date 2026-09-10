@@ -271,10 +271,14 @@ export class SummaryReporter {
 
     const ruleCount = skippedRules.length
     const suggestedVersion = toolVersion || configVersion || "latest"
+    const wasReEnabled = (rule: VersionSkippedRule) => rule.defaultEnabledIn !== undefined && compareSemver(rule.defaultEnabledIn, rule.introducedIn) > 0
+    const hasNewlyEnabled = skippedRules.every(wasReEnabled)
+    const heading = hasNewlyEnabled ? "Rules available" : "New rules available"
+    const noun = hasNewlyEnabled ? this.pluralize(ruleCount, "rule") : `new ${this.pluralize(ruleCount, "rule")}`
 
     console.log("")
-    console.log(` ${colorize(`New rules available:`, "bold")}`)
-    console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
+    console.log(` ${colorize(`${heading}:`, "bold")}`)
+    console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} ${noun} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
 
     if (configPath) {
       console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)
@@ -283,11 +287,15 @@ export class SummaryReporter {
     console.log("")
 
     const grouped = new Map<string, string[]>()
+    const labels = new Map<string, string>()
 
     for (const rule of skippedRules) {
-      const existing = grouped.get(rule.introducedIn) || []
+      const version = rule.defaultEnabledIn ?? rule.introducedIn
+      const existing = grouped.get(version) || []
+
       existing.push(rule.ruleName)
-      grouped.set(rule.introducedIn, existing)
+      grouped.set(version, existing)
+      labels.set(rule.ruleName, wasReEnabled(rule) ? "enabled by default in" : "introduced in")
     }
 
     const sortedVersions = Array.from(grouped.keys()).sort((a, b) => compareSemver(a, b))
@@ -299,7 +307,7 @@ export class SummaryReporter {
       for (const ruleName of ruleNames) {
         const ruleText = colorize(ruleName, "white")
         const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(ruleName))
-        console.log(`  ${ruleLink}${colorize(` (introduced in ${versionLabel})`, "gray")}`)
+        console.log(`  ${ruleLink}${colorize(` (${labels.get(ruleName)} ${versionLabel})`, "gray")}`)
       }
     }
 

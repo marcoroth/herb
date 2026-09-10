@@ -175,6 +175,7 @@ class ImplicitPolymorphicURLCollector extends PrismVisitor {
 export class ActionViewNoImplicitPolymorphicURLRule extends ParserRule {
   static ruleName = "actionview-no-implicit-polymorphic-url"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -343,6 +343,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 export class HTMLNoDuplicateIdsRule extends ParserRule {
   static ruleName = "html-no-duplicate-ids"
   static introducedIn = this.version("0.4.1")
+  static defaultEnabledIn = this.version("0.4.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

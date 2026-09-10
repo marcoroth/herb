@@ -101,6 +101,7 @@ class ERBNoUnsafeRawVisitor extends ElementStackVisitor {
 export class ERBNoUnsafeRawRule extends ParserRule {
   static ruleName = "erb-no-unsafe-raw"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -121,6 +121,7 @@ function keysItems(node: Node): boolean {
 export class HerbIntoRequiresCollectionRule extends ParserRule {
   static ruleName = "herb-into-requires-collection"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

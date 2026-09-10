@@ -49,6 +49,7 @@ class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
 export class HerbDisableCommentMalformedRule extends ParserRule {
   static ruleName = "herb-disable-comment-malformed"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

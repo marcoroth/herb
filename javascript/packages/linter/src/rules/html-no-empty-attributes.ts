@@ -124,6 +124,7 @@ class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
 export class HTMLNoEmptyAttributesRule extends ParserRule {
   static ruleName = "html-no-empty-attributes"
   static introducedIn = this.version("0.7.0")
+  static defaultEnabledIn = this.version("0.7.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -38,6 +38,7 @@ class SlotsSingleDirectiveVisitor extends BaseRuleVisitor {
 export class HerbSlotsSingleDirectiveRule extends ParserRule {
   static ruleName = "herb-slots-single-directive"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

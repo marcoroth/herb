@@ -32,6 +32,7 @@ class StateRequiresSlotsVisitor extends BaseRuleVisitor {
 export class HerbStateRequiresSlotsRule extends ParserRule {
   static ruleName = "herb-state-requires-slots"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

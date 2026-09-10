@@ -6,6 +6,7 @@ import type { ParseResult, ParserOptions } from "@herb-tools/core"
 export class ActionViewNoVoidElementContentRule extends ParserRule {
   static ruleName = "actionview-no-void-element-content"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
   static consumesParserErrors = true
 
   get defaultConfig(): FullRuleConfig {

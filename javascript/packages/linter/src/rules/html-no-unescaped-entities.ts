@@ -124,6 +124,7 @@ class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAu
 export class HTMLNoUnescapedEntitiesRule extends ParserRule<UnescapedEntitiesAutofixContext> {
   static ruleName = "html-no-unescaped-entities"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
   static unsafeAutocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

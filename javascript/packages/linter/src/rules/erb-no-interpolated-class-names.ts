@@ -48,6 +48,7 @@ class ERBNoInterpolatedClassNamesVisitor extends AttributeVisitorMixin {
 export class ERBNoInterpolatedClassNamesRule extends ParserRule {
   static ruleName = "erb-no-interpolated-class-names"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

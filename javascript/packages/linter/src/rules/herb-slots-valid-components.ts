@@ -182,6 +182,7 @@ class SlotsValidComponentsVisitor extends BaseRuleVisitor {
 export class HerbSlotsValidComponentsRule extends ParserRule {
   static ruleName = "herb-slots-valid-components"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

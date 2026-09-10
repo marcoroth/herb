@@ -24,6 +24,7 @@ class HerbDisableCommentMissingRulesVisitor extends HerbDisableCommentBaseVisito
 export class HerbDisableCommentMissingRulesRule extends ParserRule {
   static ruleName = "herb-disable-comment-missing-rules"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

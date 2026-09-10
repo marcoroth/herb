@@ -77,6 +77,7 @@ export class HerbStateDirectiveSyntaxRule extends ParserRule<HerbStateDirectiveS
   static consumesParserErrors = true
   static ruleName = "herb-state-directive-syntax"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions() {
     return {
