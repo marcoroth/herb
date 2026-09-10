@@ -71,7 +71,7 @@ module Herb
 
       #: (Herb::AST::HTMLElementNode) -> void
       def visit_html_element_node(node)
-        stamp(node.open_tag)
+        stamp_open_tag(node.open_tag)
 
         super
       end
@@ -102,6 +102,26 @@ module Herb
       #: () -> String
       def current_file
         @file || context.relative_file_path
+      end
+
+      #: (Herb::AST::Node?) -> void
+      def stamp_open_tag(open_tag)
+        if open_tag.is_a?(Herb::AST::HTMLConditionalOpenTagNode)
+          branch_open_tags(open_tag.conditional).each { |branch| stamp(branch) }
+
+          return
+        end
+
+        stamp(open_tag)
+      end
+
+      #: (Herb::AST::Node?) -> Array[Herb::AST::HTMLOpenTagNode]
+      def branch_open_tags(node)
+        return [] unless node
+        return [] if node.is_a?(Herb::AST::HTMLElementNode)
+        return [node] if node.is_a?(Herb::AST::HTMLOpenTagNode)
+
+        node.compact_child_nodes.flat_map { |child| branch_open_tags(child) }
       end
 
       #: (Herb::AST::Node?) -> void
