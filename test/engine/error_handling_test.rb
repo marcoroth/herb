@@ -447,5 +447,14 @@ module Engine
       assert_instance_of Herb::Engine, engine
       assert_instance_of String, engine.src
     end
+
+    test "compile errors are syntax errors" do
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new("check <% [ %>\n")
+      end
+
+      assert_kind_of SyntaxError, error
+      refute_kind_of StandardError, error
+    end
   end
 end
