@@ -79,6 +79,27 @@ module Herb
         !omitted_close_tag(node).nil?
       end
 
+      #: (Herb::AST::Node?) -> Array[untyped]
+      def open_tags_for(open_tag)
+        case open_tag
+        when Herb::AST::HTMLConditionalOpenTagNode
+          branch_open_tags(open_tag.conditional)
+        when Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode
+          [open_tag]
+        else
+          []
+        end
+      end
+
+      #: (Herb::AST::Node?) -> Array[untyped]
+      def branch_open_tags(node)
+        return [] unless node
+        return [] if node.is_a?(Herb::AST::HTMLElementNode)
+        return [node] if node.is_a?(Herb::AST::HTMLOpenTagNode)
+
+        node.compact_child_nodes.flat_map { |child| branch_open_tags(child) }
+      end
+
       #: (Herb::AST::ERBContentNode) -> bool
       def inline_ruby_comment?(node)
         return false unless node.is_a?(Herb::AST::ERBContentNode)

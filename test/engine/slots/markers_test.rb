@@ -548,6 +548,13 @@ module Engine
           options
         )
       end
+
+      test "anchors a slot on an element opened across a conditional" do
+        template = %(<% if @c %><div class="a"><% else %><div class="b"><% end %><%= @value %></div>)
+
+        assert_evaluated_snapshot(template, { "@c" => true, "@value" => "v" }, options)
+        assert_evaluated_snapshot(template, { "@c" => false, "@value" => "v" }, options)
+      end
     end
   end
 end
