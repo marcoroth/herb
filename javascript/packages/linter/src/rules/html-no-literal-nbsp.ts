@@ -80,6 +80,7 @@ export class HTMLNoLiteralNBSPRule extends ParserRule<LiteralNbspAutofixContext>
   static autocorrectable = true
   static ruleName = "html-no-literal-nbsp"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

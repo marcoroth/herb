@@ -55,6 +55,7 @@ class NoUnknownTagVisitor extends BaseRuleVisitor {
 export class HTMLNoUnknownTagRule extends ParserRule {
   static ruleName = "html-no-unknown-tag"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

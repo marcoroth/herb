@@ -199,6 +199,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 export class HerbStateValidDeclarationRule extends ParserRule {
   static ruleName = "herb-state-valid-declaration"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

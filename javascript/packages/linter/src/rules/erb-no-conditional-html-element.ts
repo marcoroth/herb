@@ -36,6 +36,7 @@ class ERBNoConditionalHTMLElementRuleVisitor extends BaseRuleVisitor {
 export class ERBNoConditionalHTMLElementRule extends ParserRule {
   static ruleName = "erb-no-conditional-html-element"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

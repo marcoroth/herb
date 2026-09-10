@@ -160,6 +160,7 @@ class ActionViewNoUnusedStrictLocalsVisitor extends BaseRuleVisitor {
 export class ActionViewNoUnusedStrictLocalsRule extends ParserRule {
   static ruleName = "actionview-no-unused-strict-locals"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

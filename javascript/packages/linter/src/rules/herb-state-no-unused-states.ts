@@ -124,6 +124,7 @@ class UnusedStatesVisitor extends BaseRuleVisitor {
 export class HerbStateNoUnusedStatesRule extends ParserRule {
   static ruleName = "herb-state-no-unused-states"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

@@ -74,6 +74,7 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
 export class HerbDisableCommentUnnecessaryRule extends ParserRule {
   static ruleName = "herb-disable-comment-unnecessary"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

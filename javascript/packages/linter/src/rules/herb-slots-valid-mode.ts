@@ -55,6 +55,7 @@ class SlotsValidModeVisitor extends BaseRuleVisitor {
 export class HerbSlotsValidModeRule extends ParserRule {
   static ruleName = "herb-slots-valid-mode"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

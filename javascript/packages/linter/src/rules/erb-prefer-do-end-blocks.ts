@@ -66,6 +66,7 @@ class PreferDoEndBlocksVisitor extends BaseRuleVisitor<PreferDoEndBlocksAutofixC
 export class ERBPreferDoEndBlocksRule extends ParserRule<PreferDoEndBlocksAutofixContext> {
   static ruleName = "erb-prefer-do-end-blocks"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

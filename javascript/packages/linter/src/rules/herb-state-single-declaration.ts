@@ -39,6 +39,7 @@ class StateSingleDeclarationVisitor extends BaseRuleVisitor {
 export class HerbStateSingleDeclarationRule extends ParserRule {
   static ruleName = "herb-state-single-declaration"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

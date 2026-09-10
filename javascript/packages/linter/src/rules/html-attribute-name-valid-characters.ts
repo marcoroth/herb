@@ -113,6 +113,7 @@ class HTMLAttributeNameValidCharactersVisitor extends AttributeVisitorMixin {
 export class HTMLAttributeNameValidCharactersRule extends ParserRule {
   static ruleName = "html-attribute-name-valid-characters"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

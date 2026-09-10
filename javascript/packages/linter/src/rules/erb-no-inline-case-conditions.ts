@@ -33,6 +33,7 @@ class ERBNoInlineCaseConditionsVisitor extends BaseRuleVisitor {
 export class ERBNoInlineCaseConditionsRule extends ParserRule {
   static ruleName = "erb-no-inline-case-conditions"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

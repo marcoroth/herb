@@ -498,6 +498,7 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocals
   static consumesParserErrors = true
   static ruleName = "erb-strict-locals-comment-syntax"
   static introducedIn = this.version("0.8.8")
+  static defaultEnabledIn = this.version("0.8.8")
 
   get parserOptions() {
     return {

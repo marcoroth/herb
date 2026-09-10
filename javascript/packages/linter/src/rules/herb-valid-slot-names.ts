@@ -193,6 +193,7 @@ function containsERB(node: Node): boolean {
 export class HerbValidSlotNamesRule extends ParserRule {
   static ruleName = "herb-valid-slot-names"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
