@@ -1,3 +1,8 @@
+inherit_from: .rubocop_todo.yml
+
+require:
+  - ./rubocop/cop/herb/includes_assertion.rb
+
 plugins:
   - rubocop-performance
 
@@ -266,3 +271,8 @@ Style/DocumentDynamicEvalDefinition:
 
 Performance/MapCompact:
   Enabled: false
+
+Herb/IncludesAssertion:
+  Enabled: true
+  Include:
+    - test/**/*
