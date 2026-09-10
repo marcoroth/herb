@@ -196,6 +196,14 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for slot setter taking a helper in a brace block", () => {
+      expectNoOffenses(dedent`
+        <%= render CardComponent.new do |card| %>
+          <% card.with_header { tag.h3("Title") } %>
+        <% end %>
+      `)
+    })
+
     test("passes for multiple block locals in render", () => {
       expectNoOffenses(dedent`
         <%= render TableComponent.new do |table, index| %>
