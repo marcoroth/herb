@@ -20,7 +20,7 @@ describe("ActionViewStrictLocalsFirstLineRule", () => {
   })
 
   test("flags strict locals not on the first line", () => {
-    expectError("Strict locals declaration must be on the first line of the partial.")
+    expectError("Strict locals declaration must be on the first line of the template.")
 
     assertOffenses(dedent`
       <div class="card">
@@ -31,13 +31,13 @@ describe("ActionViewStrictLocalsFirstLineRule", () => {
   })
 
   test("flags strict locals after a leading blank line", () => {
-    expectError("Strict locals declaration must be on the first line of the partial.")
+    expectError("Strict locals declaration must be on the first line of the template.")
 
     assertOffenses(`\n<%# locals: (user:) %>`, { fileName: "_partial.html.erb" })
   })
 
   test("flags strict locals after other content", () => {
-    expectError("Strict locals declaration must be on the first line of the partial.")
+    expectError("Strict locals declaration must be on the first line of the template.")
 
     assertOffenses(dedent`
       <%# This is a comment %>
@@ -63,12 +63,31 @@ describe("ActionViewStrictLocalsFirstLineRule", () => {
     `, { fileName: "_partial.html.erb" })
   })
 
-  test("does not flag non-partial files", () => {
-    expectNoOffenses(dedent`
+  test("flags a declaration that is not on the first line of a non-partial template", () => {
+    expectError("Strict locals declaration must be on the first line of the template.")
+
+    assertOffenses(dedent`
       <div class="card">
         <%# locals: (user:) %>
       </div>
     `, { fileName: "show.html.erb" })
+  })
+
+  test("allows a declaration on line 1 of a non-partial template", () => {
+    expectNoOffenses(dedent`
+      <%# locals: (user:) %>
+
+      <div><%= user.name %></div>
+    `, { fileName: "show.html.erb" })
+  })
+
+  test("flags a layout declaration that is missing the blank line after it", () => {
+    expectError("Add a blank line after the strict locals declaration.")
+
+    assertOffenses(dedent`
+      <%# locals: (**) %>
+      <html><body><%= yield %></body></html>
+    `, { fileName: "app/views/layouts/application.html.erb" })
   })
 
   test("does not flag when no strict locals declaration", () => {
@@ -77,8 +96,10 @@ describe("ActionViewStrictLocalsFirstLineRule", () => {
     `, { fileName: "_partial.html.erb" })
   })
 
-  test("does not flag when filename is not provided", () => {
-    expectNoOffenses(`<%# locals: (user:) %>`, { fileName: undefined })
+  test("checks a declaration even when the filename is not provided", () => {
+    expectError("Strict locals declaration must be on the first line of the template.")
+
+    assertOffenses(`\n<%# locals: (user:) %>`, { fileName: undefined })
   })
 
   test("allows strict locals with whitespace trimming marker on line 1 with blank line", () => {
@@ -90,7 +111,7 @@ describe("ActionViewStrictLocalsFirstLineRule", () => {
   })
 
   test("flags strict locals inside an HTML element", () => {
-    expectError("Strict locals declaration must be on the first line of the partial.")
+    expectError("Strict locals declaration must be on the first line of the template.")
 
     assertOffenses(dedent`
       <div>
