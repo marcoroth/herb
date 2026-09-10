@@ -5,7 +5,7 @@ require_relative "../diagnostic"
 
 module Herb
   class Engine
-    class CompilationError < StandardError
+    class CompilationError < SyntaxError
       attr_reader :details, :diagnostics, :visitors, :parser_options
 
       def initialize(message, details: nil, diagnostics: [], visitors: [], parser_options: {})

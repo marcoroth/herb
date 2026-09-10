@@ -61,7 +61,7 @@ module Herb
         #: (untyped) -> untyped
         def call(env)
           @app.call(env)
-        rescue StandardError => e
+        rescue Herb::Engine::CompilationError, StandardError => e
           error = @enabled ? compilation_error(e) : nil
 
           raise e unless error
