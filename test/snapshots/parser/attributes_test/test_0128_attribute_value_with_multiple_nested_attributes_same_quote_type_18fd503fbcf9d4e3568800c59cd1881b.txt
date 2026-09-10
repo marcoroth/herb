@@ -60,7 +60,7 @@ input: "<iframe srcdoc=\"<div class=\"test\">\"></iframe>"
         │
         ├── tag_name: "iframe" (location: (1:1)-(1:7))
         ├── body: (1 item)
-        │   └── @ HTMLTextNode (location: (1:34)-(1:36))
+        │   └── @ LiteralNode (location: (1:34)-(1:36))
         │       └── content: "\">"
         │
         ├── close_tag:

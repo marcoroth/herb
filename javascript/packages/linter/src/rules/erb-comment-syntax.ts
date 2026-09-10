@@ -42,6 +42,7 @@ export class ERBCommentSyntax extends ParserRule<ERBCommentSyntaxAutofixContext>
   static autocorrectable = true
   static ruleName = "erb-comment-syntax"
   static introducedIn = this.version("0.7.5")
+  static defaultEnabledIn = this.version("0.7.5")
 
   get defaultConfig(): FullRuleConfig {
     return {

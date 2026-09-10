@@ -158,5 +158,17 @@ module Engine
       assert_compiled_snapshot(template)
       assert_erubi_line_parity(template)
     end
+
+    test "evaluation: a nested output tag inside a comment is not evaluated" do
+      template = %(<%# a <%= 1 + 1 %>)
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "evaluation: a nested statement tag inside a comment is not evaluated" do
+      template = %(<%# a <% raise "boom" %>)
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

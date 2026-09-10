@@ -83,6 +83,7 @@ class ContentArgumentWithBlockCollector extends PrismVisitor {
 export class ActionViewNoContentArgumentWithBlockRule extends ParserRule {
   static ruleName = "actionview-no-content-argument-with-block"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

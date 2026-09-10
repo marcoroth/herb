@@ -1,0 +1,27 @@
+---
+source: "Engine::Slots::ComponentsTest#test_0002_the compiled program holds the fragment as a conditional and no component tags"
+input: |2-
+<%# herb:slots client %>
+<%# herb:state (peek: "basel") %>
+<input value="<%= peek %>">
+<Fragment>
+  <p id="card">located <%= peek.upcase %></p>
+  <Fallback>
+    <p id="card" class="pulse">Looking up <%= @hint %> now</p>
+  </Fallback>
+</Fragment>
+options: {mode: "client"}
+---
+_buf = ::String.new; @_herb_covered ||= {} ; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1; _buf << '<!--herb-region:app/views/test.html.erb:22caf89f:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '-->
+'.freeze; ; peek = "basel" ; _buf << '<input value="'.freeze; _buf << ::Herb::Engine.attr((peek)); _buf << '" data-herb-slot="0:attribute:value">
+<!--herb-slot:1:conditional-->'.freeze; if true; _buf << '<!--herb-branch:1:0-->
+  <p id="card">located <!--herb-slot:2-->'.freeze; _buf << (peek.upcase).to_s; _buf << '<!--/herb-slot:2--></p>
+  
+'.freeze; end ; _buf << '<!--/herb-slot:1-->
+<!--/herb-region:app/views/test.html.erb-->'.freeze; unless @_herb_covered["app/views/test.html.erb:1:0"] && @_herb_covered["app/views/test.html.erb:1:1"]; _buf << '<template data-herb-region="app/views/test.html.erb:22caf89f">'.freeze; unless @_herb_covered["app/views/test.html.erb:1:0"]; _buf << '<!--herb-branch:1:0-->
+  <p id="card">located <!--herb-slot:2--><!--/herb-slot:2--></p>
+  
+'.freeze; @_herb_covered["app/views/test.html.erb:1:0"] = true ; end; unless @_herb_covered["app/views/test.html.erb:1:1"]; _buf << '<!--herb-branch:1:1-->
+    <p id="card" class="pulse">Looking up '.freeze; _buf << (@hint).to_s; _buf << ' now</p>
+  '.freeze;   @_herb_covered["app/views/test.html.erb:1:1"] = true ; end; _buf << '</template>'.freeze; end; ::Herb::Engine::Slots::Manifest::Channel.record("app/views/test.html.erb:22caf89f", "{\"file\":\"app\\/views\\/test.html.erb\",\"identifier\":\"app\\/views\\/test.html.erb\",\"version\":\"22caf89f\",\"names\":{},\"parts\":{},\"states\":{\"version\":\"22caf89f\",\"declarations\":[{\"name\":\"peek\",\"kind\":\"string\",\"default\":\"\\\"basel\\\"\",\"derived\":null,\"line\":2,\"column\":16,\"scope\":\"region\",\"value\":\"basel\"}],\"reads\":{\"peek\":[0]},\"conditionals\":{},\"presence\":{},\"computed\":{},\"server\":{\"branches\":{},\"reads\":{\"peek\":[{\"index\":2,\"node_path\":[6,1,1]}]}},\"fragments\":{\"1\":{\"fallback\":1,\"reads\":[2]}}}}");
+_buf.to_s

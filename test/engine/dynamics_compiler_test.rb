@@ -38,6 +38,18 @@ module Engine
       View.new(**assigns).instance_eval(compiled)
     end
 
+    class SteeredView < View
+      attr_accessor :__herb_state_overrides
+    end
+
+    def steered(source, overrides, **assigns)
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+      view = SteeredView.new(**assigns)
+      view.__herb_state_overrides = overrides
+
+      view.instance_eval(compiled)
+    end
+
     def dynamics(source, **assigns)
       payload(source, **assigns)[:slots]
     end
@@ -293,6 +305,137 @@ module Engine
 
       test "leaves the static markup out" do
         refute_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+      end
+    end
+
+    STEERABLE = %(<%# herb:state (editing: false, q: "") %><% if editing %><b>on</b><% else %><i>off</i><% end %><span><%= q.length + 1 %></span>)
+
+    describe "state overrides" do
+      test "the values program initializes states through the override channel" do
+        source = Herb::Engine::Slots::DynamicsCompiler.new(STEERABLE, filename: "app/views/test.html.erb").src
+
+        assert_includes source, "StateOverrides.resolve"
+        assert_includes source, %(StateOverrides.fetch(_herb_state_overrides, "editing", :boolean))
+      end
+
+      test "an override steers the branch and the dependent reads" do
+        values = steered(STEERABLE, { "app/views/test.html.erb" => { "editing" => true, "q" => "abc" } })
+
+        assert_equal 0, values[:slots][0][:branch]
+        assert_equal "4", values[:slots][1]
+      end
+
+      test "no hook and no overrides both fall back to the defaults" do
+        assert_equal 1, payload(STEERABLE)[:slots][0][:branch]
+        assert_equal 1, steered(STEERABLE, nil)[:slots][0][:branch]
+      end
+
+      test "a wrongly typed override falls back to the default" do
+        values = steered(STEERABLE, { "app/views/test.html.erb" => { "editing" => "sideways" } })
+
+        assert_equal 1, values[:slots][0][:branch]
+      end
+
+      test "a derived state re-derives from its overridden base" do
+        template = %(<%# herb:state (count: 0, loud: count > 2) %><% if loud %>a<% else %>b<% end %>)
+        values = steered(template, { "app/views/test.html.erb" => { "count" => 5 } })
+
+        assert_equal 0, values[:slots][0][:branch]
+      end
+    end
+
+    describe "branch statics in the payload" do
+      def parity(mode)
+        <<~ERB
+          <%# herb:slots #{mode} %>
+          <% if @on %>
+            <b>lit <%= @watts %></b>
+          <% else %>
+            <i>dark</i>
+          <% end %>
+        ERB
+      end
+
+      test "a server-mode payload brings the taken branch's markup along" do
+        entry = dynamics(parity("server"), on: false).fetch(0)
+
+        assert_equal 1, entry.fetch(:branch)
+        assert_includes entry.fetch(:statics), "<i>dark</i>"
+
+        lit = dynamics(parity("server"), on: true, watts: 60).fetch(0)
+
+        assert_equal 0, lit.fetch(:branch)
+        assert_includes lit.fetch(:statics), "<b>"
+      end
+
+      test "a client-mode payload sends no statics, since the page parks them" do
+        entry = dynamics(parity("client"), on: false).fetch(0)
+
+        refute entry.key?(:statics)
+      end
+    end
+
+    KNOB = %(<%# herb:slots client %>\n<span class="knob <%= @dark ? "far" : "" %>" id="k"></span>) #: String
+
+    describe "a conditional inside an attribute" do
+      test "the payload carries the taken branch's text as the attribute's part" do
+        assert_equal ["far"], dynamics(KNOB, dark: true).fetch(0)
+        assert_equal [""], dynamics(KNOB, dark: false).fetch(0)
+      end
+
+      test "the slot the payload fills is the attribute the visitor modeled" do
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(KNOB, filename: "app/views/test.html.erb")
+
+        assert_equal :attribute_interpolation, compiler.slot_visitor.slots.fetch(0).type
+      end
+
+      test "a fragment's values always take the primary branch and skip the fallback" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <Fragment>
+            <p><%= helper_with_argument(1) %></p>
+            <Fallback><p>waiting for <%= @never %></p></Fallback>
+          </Fragment>
+        ERB
+
+        values = dynamics(source)
+
+        assert_equal({ 0 => { branch: 0, slots: { 1 => "helper(1)" } } }, values)
+      end
+
+      test "a fragment numbers identically in the values and page compiles" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <span><%= @before %></span>
+          <Fragment>
+            <p><%= @inside %></p>
+            <Fallback><p>waiting</p></Fallback>
+          </Fragment>
+          <em><%= @after %></em>
+        ERB
+
+        values_visitor = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").slot_visitor
+
+        page_visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [page_visitor], filename: "app/views/test.html.erb")
+
+        assert_equal(page_visitor.slots.map { |slot| [slot.index, slot.type] }, values_visitor.slots.map { |slot| [slot.index, slot.type] })
+      end
+
+      test "a whole-value attribute conditional assigns the scalar the visitor expects" do
+        source = %(<%# herb:slots client %>\n<span class="<%= @on ? "is-\#{@tone}" : "off" %>"></span>)
+
+        assert_equal "is-calm", dynamics(source, on: true, tone: "calm").fetch(0)
+        assert_equal "off", dynamics(source, on: false).fetch(0)
+      end
+
+      test "a keyed element groups its key with the slots inside it" do
+        source = %(<%# herb:slots client %>\n<div herb-key="<%= @track %>:<%= @number %>" data-playing="<%= @playing %>">beat <%= @number %></div>)
+
+        assert_equal(
+          { key: "warehouse:3", slots: { 1 => "true", 2 => "3" } },
+          dynamics(source, track: "warehouse", number: 3, playing: true).fetch(0)
+        )
       end
     end
   end

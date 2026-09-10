@@ -48,6 +48,7 @@ class DetailsHasSummaryVisitor extends BaseRuleVisitor {
 export class HTMLDetailsHasSummaryRule extends ParserRule {
   static ruleName = "html-details-has-summary"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

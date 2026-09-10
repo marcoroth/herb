@@ -103,15 +103,19 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-component-requires-slots`](./herb-component-requires-slots.md) - Require a `herb:slots` directive on templates using component tags.
 - [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
 - [`herb-scoped-style-no-unused-selector`](./herb-scoped-style-no-unused-selector.md) - No unused selector in a `<style scoped>` block.
 - [`herb-scoped-style-require-top-level`](./herb-scoped-style-require-top-level.md) - Require a `<style scoped>` block to be a top-level element.
 - [`herb-scoped-style-single-declaration`](./herb-scoped-style-single-declaration.md) - One `<style scoped>` block per file.
+- [`herb-slots-single-directive`](./herb-slots-single-directive.md) - Allow one `herb:slots` directive per template.
+- [`herb-slots-valid-components`](./herb-slots-valid-components.md) - Validate component structure and attributes in slots templates.
 - [`herb-slots-valid-mode`](./herb-slots-valid-mode.md) - Validate the `herb:slots` mode.
 - [`herb-state-no-silent-reads`](./herb-state-no-silent-reads.md) - Disallow bare state reads in silent tags.
 - [`herb-state-no-server-writes`](./herb-state-no-server-writes.md) - Disallow server-side writes to declared states.
+- [`herb-state-no-shadowed-states`](./herb-state-no-shadowed-states.md) - Disallow block arguments that shadow a declared `herb:state` name.
 - [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
-- [`herb-state-requires-client-mode`](./herb-state-requires-client-mode.md) - Require client mode for `herb:state`.
+- [`herb-state-requires-slots`](./herb-state-requires-slots.md) - Require a `herb:slots` directive for `herb:state`.
 - [`herb-state-directive-syntax`](./herb-state-directive-syntax.md) - Spell the `herb:state` directive in its canonical form.
 - [`herb-state-single-declaration`](./herb-state-single-declaration.md) - One `herb:state` declaration per scope.
 - [`herb-state-valid-actions`](./herb-state-valid-actions.md) - Validate `data-herb-*` action attributes.
@@ -132,6 +136,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - The `role` attribute must have a valid WAI-ARIA Role.
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
 - [`html-attribute-equals-spacing`](./html-attribute-equals-spacing.md) - No whitespace around `=` in HTML attributes
+- [`html-attribute-name-valid-characters`](./html-attribute-name-valid-characters.md) - Requires letters, digits, and hyphens in attribute names
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-body-only-elements`](./html-body-only-elements.md) - Require content elements inside `<body>`.

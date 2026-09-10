@@ -306,7 +306,13 @@ describe("diffStateManifests", () => {
   })
 
   test("a server read is never derivable", () => {
-    const delta = diffStateManifests(manifest(), manifest({ server: { count: [{ index: 1, node_path: [0] }] } }))
+    const delta = diffStateManifests(manifest(), manifest({ server: { reads: { count: [{ index: 1, node_path: [0] }] } } }))
+
+    expect(delta.stateDerivable).toBe(false)
+  })
+
+  test("a server branch read is never derivable", () => {
+    const delta = diffStateManifests(manifest(), manifest({ server: { branches: { view: [{ index: 2, node_path: [0] }] } } }))
 
     expect(delta.stateDerivable).toBe(false)
   })
@@ -345,5 +351,26 @@ describe("the per-file diagnostics sink", () => {
     } finally {
       devTools?.stop()
     }
+  })
+})
+
+describe("a rebuilt asset", () => {
+  test("a script build output reloads the page", () => {
+    const reload = vi.fn()
+    const hotReload = new HotReload({ runtime: () => null, reload })
+
+    hotReload.onAsset({ type: "asset", kind: "script", file: "app/assets/builds/application.js" })
+
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  test("hot reloading off leaves the page alone", () => {
+    const reload = vi.fn()
+    const hotReload = new HotReload({ runtime: () => null, reload })
+
+    hotReload.setEnabled(false)
+    hotReload.onAsset({ type: "asset", kind: "script", file: "app/assets/builds/application.js" })
+
+    expect(reload).not.toHaveBeenCalled()
   })
 })

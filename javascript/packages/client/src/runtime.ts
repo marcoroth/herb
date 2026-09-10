@@ -91,6 +91,10 @@ export class Runtime {
     return instance
   }
 
+  refresh(): ReturnType<State["refresh"]> {
+    return this.state.refresh()
+  }
+
   stop(): void {
     this.slots.disconnect()
     this.state.disconnect()

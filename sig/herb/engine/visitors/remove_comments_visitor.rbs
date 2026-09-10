@@ -59,8 +59,8 @@ module Herb
       # : (Herb::AST::HTMLCommentNode) -> String
       def comment_text: (Herb::AST::HTMLCommentNode) -> String
 
-      # : (Herb::AST::ERBContentNode) -> bool
-      def directive?: (Herb::AST::ERBContentNode) -> bool
+      # : (Herb::AST::ERBCommentNode | Herb::AST::ERBContentNode) -> bool
+      def directive?: (Herb::AST::ERBCommentNode | Herb::AST::ERBContentNode) -> bool
     end
   end
 end

@@ -540,6 +540,21 @@ module Engine
 
         assert_equal [], recognized
       end
+
+      test "delimits a standalone keyed element with its key in the slot marker" do
+        assert_evaluated_snapshot(
+          %(<%# herb:slots %>\n<div herb-key="<%= @id %>"><%= @name %></div>),
+          { "@id" => 7, "@name" => "Marco" },
+          options
+        )
+      end
+
+      test "anchors a slot on an element opened across a conditional" do
+        template = %(<% if @c %><div class="a"><% else %><div class="b"><% end %><%= @value %></div>)
+
+        assert_evaluated_snapshot(template, { "@c" => true, "@value" => "v" }, options)
+        assert_evaluated_snapshot(template, { "@c" => false, "@value" => "v" }, options)
+      end
     end
   end
 end

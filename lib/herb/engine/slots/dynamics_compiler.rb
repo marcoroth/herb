@@ -4,6 +4,7 @@
 require_relative "../../../herb"
 require_relative "../../engine"
 require_relative "visitor"
+require_relative "state_overrides"
 
 module Herb
   class Engine
@@ -135,6 +136,7 @@ module Herb
             @current_attribute = nil
             @current_rcdata = nil
             @rendering = false
+            @capturing_part = false
             @block_depth = 0
 
             branch_counts = {} #: Hash[Integer, Integer]
@@ -158,10 +160,21 @@ module Herb
           def visit_html_element_node(node)
             index = @slot_visitor.index_for(node)
             previous = @current_rcdata
+            slot = index ? @slot_visitor.slots[index] : nil #: untyped
 
-            @current_rcdata = node if index && @slot_visitor.slots[index]&.type == :raw_text_interpolation
+            @current_rcdata = node if slot&.type == :raw_text_interpolation
 
-            super
+            if slot&.type == :keyed
+              @tokens << [:scope, "", nil, [:open_keyed, index, slot.key_expression]]
+
+              begin
+                super
+              ensure
+                @tokens << [:scope, "", nil, [:close_keyed, index]]
+              end
+            else
+              super
+            end
           ensure
             @current_rcdata = previous
           end
@@ -208,7 +221,7 @@ module Herb
             branched = lambda do
               @tokens << [:scope, "", nil, [:branch, index, next_branch(index)]]
 
-              block.call
+              yield
             end
 
             super(node, &branched)
@@ -323,6 +336,8 @@ module Herb
 
           #: (untyped) -> Integer?
           def claim(node)
+            return nil if @capturing_part
+
             @slot_visitor.index_for(@current_attribute || @current_rcdata || node)
           end
 
@@ -359,6 +374,24 @@ module Herb
           #: (untyped) { () -> void } -> void
           def conditional(node)
             return yield if branch?(node)
+
+            if @current_attribute || @current_rcdata
+              return yield if @capturing_part
+
+              index = claim(node)
+
+              return yield unless index
+
+              @capturing_part = true
+              @tokens << [:scope, "", nil, [:part_open]]
+
+              yield
+
+              @tokens << [:scope, "", nil, [:part_close, index]]
+              @capturing_part = false
+
+              return
+            end
 
             index = claim(node)
 
@@ -434,14 +467,78 @@ module Herb
             end
           end
         end
+
+        class Prune < Herb::Visitor
+          #: (Visitor, Integer) -> void
+          def initialize(slot_visitor, index)
+            super()
+
+            @slot_visitor = slot_visitor
+            @index = index
+          end
+
+          #: (untyped) -> void
+          def visit_document_node(node)
+            target = @slot_visitor.slot_nodes[@index]
+
+            return unless target
+
+            keep(node, target)
+          end
+
+          private
+
+          #: (untyped, untyped) -> void
+          def keep(node, target)
+            Visitor::BRANCH_BODY_PROPERTIES.each do |property|
+              next unless node.respond_to?(property)
+
+              value = node.send(property)
+
+              case value
+              when Array
+                if property == :conditions
+                  value.each { |arm| keep(arm, target) if contains?(arm, target) }
+                else
+                  value.replace(value.select { |child| child.equal?(target) || contains?(child, target) || @slot_visitor.assignment_node?(child) })
+                  value.each { |child| keep(child, target) if !child.equal?(target) && contains?(child, target) }
+                end
+              when Herb::AST::Node
+                keep(value, target) if contains?(value, target)
+              end
+            end
+
+            Visitor::BRANCH_CONTINUATION_PROPERTIES.each do |property|
+              next unless node.respond_to?(property)
+
+              continuation = node.send(property)
+
+              keep(continuation, target) if continuation && contains?(continuation, target)
+            end
+          end
+
+          #: (untyped, untyped) -> bool
+          def contains?(node, target)
+            return true if node.equal?(target)
+            return false unless node.is_a?(Herb::AST::Node)
+
+            node.compact_child_nodes.any? { |child| contains?(child, target) }
+          end
+        end
+
         attr_reader :slot_visitor #: Visitor
 
         #: (String, ?Hash[Symbol, untyped]) -> void
         def initialize(input, properties = {})
           @block_depth = 0
           @scopes = [] #: Array[Integer]
+          @withheld = {} #: Hash[Integer, bool]
+          @input = input
+          @filename = properties[:filename]
           @slot_visitor = properties[:slot_visitor] || Visitor.new(mode: :server, mark: false)
+          @slot_visitor.state_overrides!
           visitors = [*properties[:visitors], @slot_visitor]
+          visitors << Prune.new(@slot_visitor, properties[:block]) if properties[:block]
 
           super(
             input,
@@ -574,14 +671,56 @@ module Herb
         def scope_branch(index, branch)
           leave_scope(index)
 
-          @src << "; #{SLOT_BUFFER}#{index} = { branch: #{branch}, slots: (#{SCOPE_BUFFER}#{index} = ::Hash.new) };"
+          @withheld[index] = withheld?(index, branch)
+
+          statics = payload_statics(index, branch)
+          parked = statics ? " statics: #{statics.inspect}," : ""
+
+          @src << "; #{SLOT_BUFFER}#{index} = { branch: #{branch},#{parked} slots: (#{SCOPE_BUFFER}#{index} = ::Hash.new) };"
 
           @scopes.push(index)
+        end
+
+        #: (Integer, Integer) -> String?
+        def payload_statics(index, branch)
+          return nil unless server_mode? || withheld?(index, branch)
+
+          branch_statics["#{index}:#{branch}"]
+        end
+
+        #: () -> bool
+        def server_mode?
+          @input.is_a?(String) && Visitor.directive_mode(@input) == :server
+        end
+
+        #: (Integer, Integer) -> bool
+        def withheld?(index, branch)
+          branch.zero? && @slot_visitor.deferred_entries.key?(index)
+        end
+
+        #: (Integer) -> String?
+        def item_statics(index)
+          return nil unless server_mode? || @scopes.any? { |scope| @withheld[scope] }
+
+          branch_statics["#{index}:#{Markers::ITEM_STATICS}"]
+        end
+
+        #: () -> Hash[String, String]
+        def branch_statics
+          @branch_statics ||= begin
+            visitor = Visitor.new(fatal: false)
+
+            Herb::Engine.new(@input, visitors: [visitor], filename: @filename)
+
+            visitor.statics || {}
+          end
         end
 
         #: (Integer) -> void
         def scope_close_conditional(index)
           leave_scope(index)
+
+          @withheld.delete(index)
 
           @src << "; #{current_scope}[#{index}] = (#{SLOT_BUFFER}#{index} || { branch: nil });"
         end
@@ -627,7 +766,25 @@ module Herb
 
         #: (Integer) -> void
         def scope_close_collection(index)
-          @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index}, order: #{ITEMS_BUFFER}#{index}.keys };"
+          statics = item_statics(index)
+          parked = statics ? ", statics: #{statics.inspect}" : ""
+
+          @src << "; #{current_scope}[#{index}] = { items: #{ITEMS_BUFFER}#{index}, order: #{ITEMS_BUFFER}#{index}.keys#{parked} };"
+        end
+
+        #: (Integer, String) -> void
+        def scope_open_keyed(index, key)
+          @src << "; #{KEY_BUFFER}#{index} = (#{key}).to_s"
+          @src << "; #{SCOPE_BUFFER}#{index} = ::Hash.new;"
+
+          @scopes.push(index)
+        end
+
+        #: (Integer) -> void
+        def scope_close_keyed(index)
+          leave_scope(index)
+
+          @src << "; #{current_scope}[#{index}] = { key: #{KEY_BUFFER}#{index}, slots: #{SCOPE_BUFFER}#{index} };"
         end
 
         #: (Integer) -> void
@@ -662,6 +819,20 @@ module Herb
         #: (String) -> void
         def add_block_dynamic(value)
           @src << "; " << @bufvar << " << (" << value << ");"
+        end
+
+        #: () -> void
+        def scope_part_open
+          open_block
+        end
+
+        #: (Integer) -> void
+        def scope_part_close(index)
+          buffer = @bufvar
+
+          close_block
+
+          @src << "; " << assignment(index, buffer) << ";"
         end
 
         #: () -> void

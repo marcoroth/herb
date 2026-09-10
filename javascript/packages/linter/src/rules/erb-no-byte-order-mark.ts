@@ -23,6 +23,7 @@ export class ERBNoByteOrderMarkRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "erb-no-byte-order-mark"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

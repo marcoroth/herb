@@ -65,6 +65,7 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
 export class HTMLAriaLevelMustBeValidRule extends ParserRule {
   static ruleName = "html-aria-level-must-be-valid"
   static introducedIn = this.version("0.4.3")
+  static defaultEnabledIn = this.version("0.4.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

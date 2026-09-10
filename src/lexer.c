@@ -77,6 +77,7 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
+  lexer->in_erb_comment = false;
   lexer->malformed_erb_close_length = 0;
 }
 
@@ -229,6 +230,7 @@ static bool lexer_matches_erb_opener(const lexer_T* lexer, hb_string_T opener) {
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
   lexer->state = STATE_ERB_CONTENT;
+  lexer->in_erb_comment = false;
 
   if (lexer_peek(lexer, 2) == '%' && lexer_peek(lexer, 3) == '>') {
     return lexer_advance_with(lexer, hb_string("<%"), TOKEN_ERB_START);
@@ -255,7 +257,12 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
   }
 
   if (custom_length > longest_default.length) { return lexer_advance_with_next(lexer, custom_length, TOKEN_ERB_START); }
-  if (longest_default.length > 0) { return lexer_advance_with(lexer, longest_default, TOKEN_ERB_START); }
+
+  if (longest_default.length > 0) {
+    lexer->in_erb_comment = hb_string_equals(longest_default, hb_string("<%#"));
+
+    return lexer_advance_with(lexer, longest_default, TOKEN_ERB_START);
+  }
 
   return lexer_error(lexer, "Unexpected ERB start");
 }
@@ -321,7 +328,7 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   size_t candidate_count = 0;
 
   while (!lexer_peek_erb_end(lexer, 0)) {
-    if (lexer_eof(lexer) || lexer_peek_erb_start(lexer, 0)) {
+    if (lexer_eof(lexer) || (!lexer->in_erb_comment && lexer_peek_erb_start(lexer, 0))) {
       if (!lexer_recover_erb_tag_end(lexer, start_position, candidates, candidate_count) && !lexer_eof(lexer)) {
         lexer->state = STATE_DATA;
       }
@@ -387,6 +394,7 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
+  lexer->in_erb_comment = false;
 
   if (lexer->malformed_erb_close_length > 0) {
     uint8_t length = lexer->malformed_erb_close_length;

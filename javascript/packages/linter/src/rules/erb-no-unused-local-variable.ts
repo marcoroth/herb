@@ -113,6 +113,7 @@ class LocalVariableCollector extends PrismVisitor {
 export class ERBNoUnusedLocalVariableRule extends ParserRule {
   static ruleName = "erb-no-unused-local-variable"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

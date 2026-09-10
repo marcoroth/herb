@@ -101,4 +101,14 @@ describe("ERBNoEmptyTagsRule", () => {
 
     assertOffenses(`<div <%= %>></div>`)
   })
+
+  test("should handle empty ERB comment", () => {
+    expectError("ERB tag should not be empty. Remove empty ERB tags or add content.")
+
+    assertOffenses(`<%# %>`)
+  })
+
+  test("should not report an ERB comment with content", () => {
+    expectNoOffenses(`<%# a comment %>`)
+  })
 })

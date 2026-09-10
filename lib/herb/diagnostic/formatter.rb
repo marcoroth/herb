@@ -43,7 +43,7 @@ module Herb
       private
 
       def format_diagnostic(diagnostic)
-        output = String.new
+        output = +""
         output << "#{Colors.red("\u2718")} [#{diagnostic.code || "UnknownError"}] #{diagnostic.message}\n"
 
         location = diagnostic.location
@@ -71,7 +71,7 @@ module Herb
         marker_gutter = "#{prefix}#{" " * line_number.to_s.length} \u2575 "
         span = location.end.column && location.end.column > column_nummber ? location.end.column - column_nummber : 1
 
-        output = String.new
+        output = +""
         output << Colors.dimmed(gutter) << line << "\n"
         output << Colors.dimmed(marker_gutter) << (" " * column_nummber) << Colors.red("~" * span) << "\n"
 

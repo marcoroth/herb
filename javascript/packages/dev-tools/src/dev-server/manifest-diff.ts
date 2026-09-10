@@ -16,7 +16,11 @@ function keysWhereDifferent(before: Record<string, unknown>, after: Record<strin
 }
 
 function serverReads(manifest: StateManifest): number {
-  return Object.values(manifest.server ?? {}).reduce((count, reads) => count + reads.length, 0)
+  const server = manifest.server ?? {}
+
+  return [server.reads ?? {}, server.branches ?? {}]
+    .flatMap((group) => Object.values(group))
+    .reduce((count, reads) => count + reads.length, 0)
 }
 
 export function diffStateManifests(before: StateManifest | null, after: StateManifest | null): ManifestDelta {

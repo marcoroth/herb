@@ -1,7 +1,8 @@
 import { ITEM_STATICS } from "../markup/markers"
 
+import { buildSubtree } from "./build"
 import { connected, markers, outerRange } from "../markup/anchors"
-import { attributeNames, blankSeeds, blankSlots, fillSlots } from "../markup/fragments"
+import { attributeNames, blankSeeds, blankSlots } from "../markup/fragments"
 import { itemMarker, itemStaticsKey, parseMarker } from "../markup/markers"
 
 import type { Journal } from "./journal"
@@ -146,8 +147,41 @@ export class Collections {
   }
 
   private buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}, text = false): void {
-    const copy = template.cloneNode(true) as DocumentFragment
+    const target = this.insertionPoint(slot, anchor)
 
+    if (!target) {
+      return
+    }
+
+    const added = buildSubtree({
+      template,
+      target,
+      values,
+      text,
+      resolve: this.partsResolver(slot),
+      prepare: (copy) => this.prepareItem(copy, slot, key),
+    })
+
+    this.delegate.scan(added, { region: slot.region, slot, item: slot.item })
+
+    this.journal.record(slot, () => (live) => {
+      const made = live.items.get(key)
+
+      if (made) {
+        this.dropItem(live, made)
+      }
+    })
+
+    const item = slot.items.get(key) ?? null
+
+    if (item) {
+      this.delegate.recordBuilt(slot, item)
+    }
+
+    this.delegate.announceItemAdded(slot, key, item)
+  }
+
+  private prepareItem(copy: DocumentFragment, slot: Slot, key: string): void {
     for (const marker of markers(copy)) {
       if (marker.nodeType !== Node.COMMENT_NODE) {
         continue
@@ -174,35 +208,6 @@ export class Collections {
         node.remove()
       }
     }
-
-    fillSlots(copy, values, text, this.partsResolver(slot))
-
-    const added = [...copy.childNodes]
-    const target = this.insertionPoint(slot, anchor)
-
-    if (!target) {
-      return
-    }
-
-    target.parentNode?.insertBefore(copy, target)
-
-    this.delegate.scan(added, { region: slot.region, slot, item: slot.item })
-
-    this.journal.record(slot, () => (live) => {
-      const made = live.items.get(key)
-
-      if (made) {
-        this.dropItem(live, made)
-      }
-    })
-
-    const item = slot.items.get(key) ?? null
-
-    if (item) {
-      this.delegate.recordBuilt(slot, item)
-    }
-
-    this.delegate.announceItemAdded(slot, key, item)
   }
 
   private insertionPoint(slot: Slot, anchor?: Node | null): Node | null {

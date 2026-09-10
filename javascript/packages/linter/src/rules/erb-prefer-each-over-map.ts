@@ -32,6 +32,7 @@ class PreferEachOverMapVisitor extends BaseRuleVisitor {
 export class ERBPreferEachOverMapRule extends ParserRule {
   static ruleName = "erb-prefer-each-over-map"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -254,5 +254,26 @@ module Dev
       assert_includes types, "schema"
       assert_equal [], server.messages.find { |message, _| message[:type] == "schema" }.first[:diagnostics]
     end
+
+    test "a rebuilt stylesheet broadcasts an asset message to browsers" do
+      server = FakeServer.new
+      subject = pipeline(server)
+
+      subject.handle_event(event(:stylesheet, "app/assets/builds/tailwind.css", nil, nil))
+
+      message, to = server.messages.first
+
+      assert_equal({ type: "asset", kind: "stylesheet", file: "app/assets/builds/tailwind.css" }, message)
+      assert_equal :browsers, to
+    end
+
+    test "a rebuilt script broadcasts its own asset kind" do
+      server = FakeServer.new
+      subject = pipeline(server)
+
+      subject.handle_event(event(:script, "app/assets/builds/application.js", nil, nil))
+
+      assert_equal({ type: "asset", kind: "script", file: "app/assets/builds/application.js" }, server.messages.first.first)
+    end
   end
 end

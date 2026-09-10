@@ -4,6 +4,7 @@
 require "pathname"
 
 require_relative "context/origin"
+require_relative "context/replacements"
 
 module Herb
   class Visitor
@@ -40,9 +41,17 @@ module Herb
         @project_path_cache << self.class.coerce_project_path(project_path) if project_path
         @relative_file_path_cache = [] #: Array[String]
         @options = options.dup.freeze
-        @data = data.tap { |values| values[:origin] ||= Origin.new }.freeze
+        @data = self.class.with_records(data).freeze
 
         freeze
+      end
+
+      #: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+      def self.with_records(data)
+        data[:origin] ||= Origin.new
+        data[:replacements] ||= Replacements.new
+
+        data
       end
 
       #: () -> Pathname
@@ -58,6 +67,11 @@ module Herb
       #: () -> Herb::Visitor::Context::Origin
       def origin
         data[:origin]
+      end
+
+      #: () -> Herb::Visitor::Context::Replacements
+      def replacements
+        data[:replacements]
       end
 
       #: (Symbol) -> untyped

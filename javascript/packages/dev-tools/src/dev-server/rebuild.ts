@@ -41,7 +41,7 @@ function reshapable(region: Region, options: RebuildOptions): boolean {
 }
 
 function capturable(slot: Slot): boolean {
-  if (slot.type === "conditional" || slot.type === "collection" || slot.type === "block") {
+  if (slot.type === "conditional" || slot.type === "collection" || slot.type === "keyed" || slot.type === "block") {
     return false
   }
 

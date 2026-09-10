@@ -20,6 +20,19 @@ module Engine
       def self.inlines_renders? = true
     end
 
+    class StyleRewritingVisitor < Herb::Visitor
+      def self.rewrites_style_blocks? = true
+    end
+
+    class StyleReadingVisitor < Herb::Visitor
+      def self.reads_style_blocks? = true
+    end
+
+    class ReadingAndRewritingVisitor < Herb::Visitor
+      def self.reads_erb_source? = true
+      def self.rewrites_erb_source? = true
+    end
+
     def stack
       @stack ||= Herb::Visitor::Stack.build([FirstVisitor.new, SecondVisitor.new])
     end
@@ -165,6 +178,74 @@ module Engine
         engine = compile(visitors: [ThirdVisitor.new, Herb::Engine::DebugVisitor.new])
 
         assert engine.visitors.include_visitor?(Herb::Engine::DebugVisitor)
+      end
+    end
+
+    describe "#arrange" do
+      def arrange(*visitors)
+        Herb::Visitor::Stack.arrange(visitors)
+      end
+
+      test "leaves a stack that already validates as it was" do
+        visitors = [InliningVisitor.new, ReadingVisitor.new, FirstVisitor.new, RewritingVisitor.new]
+
+        assert_equal classes(visitors), classes(arrange(*visitors))
+      end
+
+      test "keeps visitors that declare nothing in the order they were given" do
+        assert_equal [FirstVisitor, SecondVisitor, ThirdVisitor], classes(arrange(FirstVisitor.new, SecondVisitor.new, ThirdVisitor.new))
+      end
+
+      test "moves a reader before the rewriter it was placed after" do
+        assert_equal [ReadingVisitor, RewritingVisitor], classes(arrange(RewritingVisitor.new, ReadingVisitor.new))
+      end
+
+      test "moves a style reader after the style rewriter it was placed before" do
+        assert_equal [StyleRewritingVisitor, StyleReadingVisitor], classes(arrange(StyleReadingVisitor.new, StyleRewritingVisitor.new))
+      end
+
+      test "moves an inlining visitor to the front" do
+        assert_equal [InliningVisitor, FirstVisitor, SecondVisitor], classes(arrange(FirstVisitor.new, SecondVisitor.new, InliningVisitor.new))
+      end
+
+      test "holds a rewriter back until its reader has run and leaves the rest in place" do
+        arranged = arrange(FirstVisitor.new, RewritingVisitor.new, SecondVisitor.new, ReadingVisitor.new, ThirdVisitor.new)
+
+        assert_equal [FirstVisitor, SecondVisitor, ReadingVisitor, RewritingVisitor, ThirdVisitor], classes(arranged)
+      end
+
+      test "produces an order validate_order! accepts" do
+        assert_nil arrange(StyleReadingVisitor.new, RewritingVisitor.new, FirstVisitor.new, ReadingVisitor.new, StyleRewritingVisitor.new, InliningVisitor.new).validate_order!
+      end
+
+      test "returns a stack, so placement keeps working on the result" do
+        arranged = arrange(RewritingVisitor.new, ReadingVisitor.new).insert_after(ReadingVisitor, FirstVisitor.new)
+
+        assert_equal [ReadingVisitor, FirstVisitor, RewritingVisitor], classes(arranged)
+      end
+
+      test "refuses two visitors that each have to run before the other" do
+        error = assert_raises(Herb::Visitor::Stack::OrderError) do
+          arrange(ReadingAndRewritingVisitor.new, ReadingAndRewritingVisitor.new)
+        end
+
+        assert_equal "Engine::VisitorStackTest::ReadingAndRewritingVisitor each have to run before the other, so no order of the stack satisfies what they declare. Drop one of them, or change what it declares.", error.message
+      end
+
+      test "refuses two inlining visitors, since only one can run first" do
+        error = assert_raises(Herb::Visitor::Stack::OrderError) do
+          arrange(FirstVisitor.new, InliningVisitor.new, InliningVisitor.new)
+        end
+
+        assert_equal "Engine::VisitorStackTest::InliningVisitor each have to run before the other, so no order of the stack satisfies what they declare. Drop one of them, or change what it declares.", error.message
+      end
+
+      test "names only the visitors in the knot, not the ones waiting behind it" do
+        error = assert_raises(Herb::Visitor::Stack::OrderError) do
+          arrange(RewritingVisitor.new, ReadingAndRewritingVisitor.new, ReadingAndRewritingVisitor.new)
+        end
+
+        assert_equal "Engine::VisitorStackTest::ReadingAndRewritingVisitor each have to run before the other, so no order of the stack satisfies what they declare. Drop one of them, or change what it declares.", error.message
       end
     end
 

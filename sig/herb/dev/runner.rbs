@@ -57,11 +57,14 @@ module Herb
       # : (Herb::Configuration, String) -> void
       def print_header: (Herb::Configuration, String) -> void
 
-      # : (Watcher) -> void
-      def index_files: (Watcher) -> void
+      # : (Watcher, Pipeline) -> Array[String]
+      def index_files: (Watcher, Pipeline) -> Array[String]
 
-      # : () -> Thread
-      def watch_stdin: () -> Thread
+      # : (Integer) -> String
+      def broken_summary: (Integer) -> String
+
+      # : () -> Thread?
+      def watch_stdin: () -> Thread?
 
       # : () -> void
       def announce_first_change: () -> void

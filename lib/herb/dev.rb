@@ -52,8 +52,8 @@ module Herb
     #
     #     Rails.application.server { Herb::Dev.boot(Rails.root.to_s) }
     #
-    #: (String, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
-    def self.boot(root, environment: nil, logger: ->(message) { warn(message) })
+    #: (String, ?watch_paths: Array[String]?, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
+    def self.boot(root, watch_paths: nil, environment: nil, logger: ->(message) { warn(message) })
       environment ||= ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
 
       return nil unless environment == "development"
@@ -95,6 +95,8 @@ module Herb
       server = Server.new(port: port, project_path: expanded, kind: "embedded")
       pipeline = Pipeline.new(server: server, configuration: configuration)
 
+      server.on_welcome { pipeline.broken_entries }
+
       server.on_client do |event, count|
         logger.call("Herb dev server client #{event} (#{count} #{count == 1 ? "connection" : "connections"} open)")
       end
@@ -105,11 +107,12 @@ module Herb
         logger.call(line) if line
       end
 
-      watcher = Watcher.new(config: configuration, root: expanded) do |event|
+      watcher = Watcher.new(config: configuration, root: expanded, watch_paths: watch_paths) do |event|
         pipeline.handle_event(event)
       end
 
       watcher.index
+      pipeline.remember_broken(watcher.sources)
       server.start
       watcher.spawn
 
@@ -117,7 +120,9 @@ module Herb
 
       at_exit { shutdown }
 
-      logger.call("Herb dev server watching #{expanded} on ws://localhost:#{port}")
+      watching = watcher.watch_paths.map { |path| path == expanded ? path : path.delete_prefix("#{expanded}/") }.join(", ")
+
+      logger.call("Herb dev server watching #{watching} on ws://localhost:#{port}")
 
       @booted
     end

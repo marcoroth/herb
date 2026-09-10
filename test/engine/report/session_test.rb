@@ -632,5 +632,154 @@ module Engine
       assert_same channel, session.channel(:thing) { channel }
       assert_same channel, session.report.channel(:thing) { Object.new }
     end
+
+    describe "measurements a producer registered up front" do
+      after do
+        Herb::Engine::Runtime::Session.clear_measurements
+      end
+
+      def observed(count)
+        Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+            count.times { Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1") }
+          end
+        end
+      end
+
+      def register(**options)
+        Herb::Engine::Runtime::Session.measurement(:queries, origin: "Herb Engine", code: "sql-queries", **options) do |queries|
+          "#{queries.size} SQL queries"
+        end
+      end
+
+      test "turns what was observed into findings without the closer knowing who was watching" do
+        register
+
+        session = observed(3)
+
+        assert_empty session.diagnostics
+
+        session.apply_measurements
+
+        assert_equal ["3 SQL queries"], session.diagnostics.map(&:message)
+      end
+
+      test "leaves a session nobody registered anything for alone" do
+        session = observed(3)
+
+        assert_empty session.apply_measurements
+        assert_empty session.diagnostics
+      end
+
+      test "says nothing about a tag that saw nothing" do
+        register
+
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) { nil }
+        end
+
+        assert_empty session.apply_measurements
+      end
+
+      test "can be applied more than once without saying it twice" do
+        register
+
+        session = observed(3)
+
+        session.apply_measurements
+        session.apply_measurements
+
+        assert_equal 1, session.diagnostics.length
+      end
+
+      test "reports a measurement as a measurement instead of as a fault" do
+        register
+
+        session = observed(3)
+        session.apply_measurements
+
+        diagnostic = session.diagnostics.first
+
+        assert_equal :metric, diagnostic.kind
+        assert_nil diagnostic.severity
+      end
+
+      test "carries the sentence its producer wrote for it" do
+        register(description: ->(queries) { "This ERB tag ran #{queries.size} SQL queries." })
+
+        session = observed(3)
+        session.apply_measurements
+
+        assert_equal "This ERB tag ran 3 SQL queries.", session.diagnostics.first.description
+      end
+
+      test "lets a producer say its finding is a value instead of a measurement" do
+        register(kind: :value)
+
+        session = observed(3)
+        session.apply_measurements
+
+        assert_equal :value, session.diagnostics.first.kind
+      end
+
+      test "keeps one finding per occurrence by default" do
+        register
+
+        session = Herb::Engine::Runtime::Session.capture do
+          2.times do
+            Herb::Engine::Runtime::Session.render("app/views/a.html.erb") do
+              Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+              end
+            end
+          end
+        end
+
+        assert_equal ["1 SQL queries", "1 SQL queries"], session.measure(:queries, origin: "Herb Engine") { |queries| "#{queries.size} SQL queries" }.map(&:value)
+      end
+
+      test "merges every occurrence at one position when asked to" do
+        session = Herb::Engine::Runtime::Session.capture do
+          2.times do
+            Herb::Engine::Runtime::Session.render("app/views/a.html.erb") do
+              Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+              end
+            end
+          end
+        end
+
+        found = session.measure(:queries, origin: "Herb Engine", per: :position) { |queries| "#{queries.size} SQL queries" }
+
+        assert_equal ["2 SQL queries"], found.map(&:value)
+      end
+    end
+
+    describe "where a tag begins and ends" do
+      test "spans the whole tag when the compiler said how far it reaches" do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4, nil, end_line: 3, end_column: 22) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        location = session.entries.first.location
+
+        assert_equal [3, 4], [location.start.line, location.start.column]
+        assert_equal [3, 22], [location.end.line, location.end.column]
+      end
+
+      test "falls back to a point for a tag that did not say" do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        location = session.entries.first.location
+
+        assert_equal [3, 4], [location.end.line, location.end.column]
+      end
+    end
   end
 end

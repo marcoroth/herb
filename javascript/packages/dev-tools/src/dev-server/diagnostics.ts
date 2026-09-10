@@ -1,6 +1,6 @@
 import type { SlotsRequestFailure } from "@herb-tools/client"
 
-import type { ErrorMessage } from "./types"
+import type { BrokenFile, ErrorMessage } from "./types"
 import type { RuntimeDiagnostic } from "../runtime/report"
 
 export const DEV_SERVER_ORIGIN = "Herb Dev Server"
@@ -18,6 +18,14 @@ export function diagnosticsFromError(message: ErrorMessage): RuntimeDiagnostic[]
     ...(error.suggestion ? { suggestion: error.suggestion } : {}),
     ...(message.source === undefined ? {} : { source: message.source }),
   }))
+}
+
+export function diagnosticsFromBrokenFile(broken: BrokenFile): RuntimeDiagnostic[] {
+  if (broken.errors) {
+    return diagnosticsFromError({ type: "error", file: broken.file, errors: broken.errors, source: broken.source })
+  }
+
+  return broken.diagnostics ?? []
 }
 
 export function diagnosticFromRefreshFailure(file: string, status: number, failure: SlotsRequestFailure | null): RuntimeDiagnostic {

@@ -82,6 +82,7 @@ import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
+import { HerbComponentRequiresSlotsRule } from "./rules/herb-component-requires-slots.js"
 import { HerbConfigFrameworkOptionRule } from "./rules/herb-config-framework-option.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
@@ -90,11 +91,14 @@ import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comme
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbSlotsSingleDirectiveRule } from "./rules/herb-slots-single-directive.js"
+import { HerbSlotsValidComponentsRule } from "./rules/herb-slots-valid-components.js"
 import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
 import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
 import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
+import { HerbStateNoShadowedStatesRule } from "./rules/herb-state-no-shadowed-states.js"
 import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
-import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
+import { HerbStateRequiresSlotsRule } from "./rules/herb-state-requires-slots.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
 import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
 import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
@@ -115,6 +119,7 @@ import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-hea
 import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-valid.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
+import { HTMLAttributeNameValidCharactersRule } from "./rules/html-attribute-name-valid-characters.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
@@ -251,6 +256,7 @@ export const rules: RuleClass[] = [
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 
+  HerbComponentRequiresSlotsRule,
   HerbConfigFrameworkOptionRule,
   HerbDisableCommentMalformedRule,
   HerbDisableCommentMissingRulesRule,
@@ -259,11 +265,14 @@ export const rules: RuleClass[] = [
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
   HerbIntoRequiresCollectionRule,
+  HerbSlotsSingleDirectiveRule,
+  HerbSlotsValidComponentsRule,
   HerbSlotsValidModeRule,
   HerbStateNoSilentReadsRule,
   HerbStateNoServerWritesRule,
+  HerbStateNoShadowedStatesRule,
   HerbStateNoUnusedStatesRule,
-  HerbStateRequiresClientModeRule,
+  HerbStateRequiresSlotsRule,
   HerbStateValidActionsRule,
   HerbStateValidBindingsRule,
   HerbScopedStyleNoUnusedSelectorRule,
@@ -284,6 +293,7 @@ export const rules: RuleClass[] = [
   HTMLAriaRoleMustBeValidRule,
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeEqualsSpacingRule,
+  HTMLAttributeNameValidCharactersRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,

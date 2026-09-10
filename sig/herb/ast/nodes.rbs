@@ -444,21 +444,21 @@ module Herb
     end
 
     # : type serialized_html_attribute_name_node = {
-    # |  children: Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]?,
+    # |  children: Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::ERBCommentNode)]?,
     # | }
     class HTMLAttributeNameNode < Node
       include Colors
 
-      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]?
+      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::ERBCommentNode]?
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]?) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]?) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::ERBCommentNode)]?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::ERBCommentNode]?) -> void
 
       # : () -> String
       def self.type: () -> String
 
-      # : (?children: Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HTMLAttributeNameNode
-      def self.build: (?children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HTMLAttributeNameNode
+      # : (?children: Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::ERBCommentNode)]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HTMLAttributeNameNode
+      def self.build: (?children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::ERBCommentNode]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HTMLAttributeNameNode
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
@@ -2337,6 +2337,48 @@ module Herb
 
       # : () -> serialized_herb_state_directive_node
       def to_hash: () -> serialized_herb_state_directive_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_comment_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # | }
+    class ERBCommentNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
+
+      # : () -> String
+      def self.type: () -> String
+
+      # : (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> ERBCommentNode
+      def self.build: (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> ERBCommentNode
+
+      # : () -> serialized_erb_comment_node
+      def to_hash: () -> serialized_erb_comment_node
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void

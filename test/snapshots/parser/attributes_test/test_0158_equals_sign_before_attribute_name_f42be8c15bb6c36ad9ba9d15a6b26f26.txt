@@ -1,0 +1,42 @@
+---
+source: "Parser::AttributesTest#test_0158_equals sign before attribute name"
+input: "<div =foo></div>"
+---
+@ DocumentNode (location: (1:0)-(1:16))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:16))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:10))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnexpectedEqualsSignBeforeAttributeNameError (location: (1:5)-(1:6))
+        │       │       ├── message: "Unexpected `=` before attribute name at (1:5)."
+        │       │       └── equals: "=" (location: (1:5)-(1:6))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:9)-(1:10))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:9))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:9))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:9))
+        │       │       │               └── content: "=foo"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:10)-(1:16))
+        │       ├── tag_opening: "</" (location: (1:10)-(1:12))
+        │       ├── tag_name: "div" (location: (1:12)-(1:15))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:15)-(1:16))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

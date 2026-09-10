@@ -440,5 +440,14 @@ module Engine
         assert_includes error.detailed_message, "plain"
       end
     end
+
+    test "compile errors are syntax errors" do
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new("check <% [ %>\n")
+      end
+
+      assert_kind_of SyntaxError, error
+      refute_kind_of StandardError, error
+    end
   end
 end

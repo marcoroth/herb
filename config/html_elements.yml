@@ -1,0 +1,33 @@
+---
+# https://html.spec.whatwg.org/multipage/parsing.html#rawtext-state
+# https://html.spec.whatwg.org/multipage/parsing.html#rcdata-state
+foreign_content_elements:
+  - name: "script"
+    kind: "raw_text"
+
+  - name: "style"
+    kind: "raw_text"
+
+  - name: "iframe"
+    kind: "raw_text"
+
+  - name: "xmp"
+    kind: "raw_text"
+
+  - name: "noembed"
+    kind: "raw_text"
+
+  - name: "noframes"
+    kind: "raw_text"
+
+  - name: "plaintext"
+    kind: "raw_text"
+    end_tag: false
+    html_only: true
+
+  - name: "textarea"
+    kind: "rcdata"
+
+  - name: "title"
+    kind: "rcdata"
+    html_only: true

@@ -1,0 +1,11 @@
+# Generated from lib/herb/html/foreign_content_elements.rb with RBS::Inline
+
+module Herb
+  module HTML
+    module ForeignContentElements
+      RAW_TEXT_ELEMENTS: Array[String]
+
+      RCDATA_ELEMENTS: Array[String]
+    end
+  end
+end

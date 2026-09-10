@@ -25,7 +25,7 @@ cli = ["dep:colored"]
 colored = { version = "3", optional = true }
 herb = { path = ".." }
 herb-config = { path = "../herb-config" }
-rubydex = { git = "https://github.com/Shopify/rubydex", tag = "v0.4.0" }
+rubydex = { git = "https://github.com/Shopify/rubydex", tag = "v0.4.1" }
 
 [dev-dependencies]
 insta = "1.40"

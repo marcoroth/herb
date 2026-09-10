@@ -9,13 +9,13 @@
 
 #include <stdint.h>
 
+#define HERB_MAX_FOREIGN_CONTENT_ELEMENTS 16
+
 typedef enum {
-  FOREIGN_CONTENT_UNKNOWN = 0,
-  FOREIGN_CONTENT_SCRIPT,
-  FOREIGN_CONTENT_STYLE,
-  // FOREIGN_CONTENT_RUBY,
-  // FOREIGN_CONTENT_TEMPLATE
-} foreign_content_type_T;
+  FOREIGN_CONTENT_NONE = 0,
+  FOREIGN_CONTENT_RAW_TEXT,
+  FOREIGN_CONTENT_RCDATA,
+} foreign_content_kind_T;
 
 typedef enum { PARSER_STATE_DATA, PARSER_STATE_FOREIGN_CONTENT } parser_state_T;
 
@@ -88,7 +88,11 @@ typedef struct PARSER_STRUCT {
   token_T* current_token;
   hb_array_T* open_tags_stack;
   parser_state_T state;
-  foreign_content_type_T foreign_content_type;
+  foreign_content_kind_T foreign_content_kind;
+  hb_string_T foreign_content_tag_name;
+  size_t svg_depth;
+  bool xml_document;
+  uint32_t foreign_content_absent_from[HERB_MAX_FOREIGN_CONTENT_ELEMENTS];
   parser_options_T options;
   size_t consecutive_error_count;
   bool in_recovery_mode;

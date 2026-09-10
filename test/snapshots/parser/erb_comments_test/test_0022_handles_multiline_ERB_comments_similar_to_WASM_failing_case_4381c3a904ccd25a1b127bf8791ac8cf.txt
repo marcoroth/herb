@@ -1006,7 +1006,7 @@ Line 999 with some content
 ---
 @ DocumentNode (location: (1:0)-(1002:2))
 └── children: (1 item)
-    └── @ ERBContentNode (location: (1:0)-(1002:2))
+    └── @ ERBCommentNode (location: (1:0)-(1002:2))
         ├── tag_opening: "<%#" (location: (1:0)-(1:3))
         ├── content: "
         Line 0 with some content
@@ -2010,6 +2010,4 @@ Line 999 with some content
         Line 998 with some content
         Line 999 with some content
         " (location: (1:3)-(1002:0))
-        ├── tag_closing: "%>" (location: (1002:0)-(1002:2))
-        ├── parsed: false
-        └── valid: true
+        └── tag_closing: "%>" (location: (1002:0)-(1002:2))

@@ -43,8 +43,8 @@ module Herb
     #
     #     Rails.application.server { Herb::Dev.boot(Rails.root.to_s) }
     #
-    # : (String, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
-    def self.boot: (String, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
+    # : (String, ?watch_paths: Array[String]?, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
+    def self.boot: (String, ?watch_paths: Array[String]?, ?environment: String?, ?logger: ^(String) -> void) -> Embedded?
 
     # : (Watcher::Event, Classifier::Classification?) -> String?
     def self.activity_line: (Watcher::Event, Classifier::Classification?) -> String?
