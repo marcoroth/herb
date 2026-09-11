@@ -64,8 +64,6 @@ module Engine
     test "the rewrite reaches the compiled output" do
       engine = compile_snapshot("<marquee>Hello</marquee>", visitors: [RewritingReporter.new])
 
-      assert_includes engine.src, "'<div>Hello</div>'"
-
       assert_snapshot_matches(engine.src, "diagnostics_test-0")
     end
 
@@ -95,9 +93,6 @@ module Engine
 
       codes = render_into_session(engine).diagnostics.map(&:code)
 
-      assert_includes codes, "InvalidNestingError"
-      assert_includes codes, "ObsoleteElement"
-
       assert_equal ["InvalidNestingError", "ObsoleteElement"], codes
     end
 
@@ -111,15 +106,11 @@ module Engine
     test "emits nothing for a template with nothing to say" do
       engine = compile_snapshot("<div>Hello</div>", visitors: reporting_stack(RewritingReporter.new))
 
-      refute_includes engine.src, "record_compile_diagnostics"
-
       assert_snapshot_matches(engine.src, "diagnostics_test-2")
     end
 
     test "a visitor without the mixin is left alone" do
       engine = compile_snapshot("<div>Hello</div>", visitors: Herb::Engine::Validators.all(fatal: false))
-
-      refute_includes engine.src, "record_compile_diagnostics"
 
       assert_snapshot_matches(engine.src, "diagnostics_test-3")
     end
@@ -146,8 +137,6 @@ module Engine
       end
 
       engine = compile("<marquee>Hello</marquee>", visitors: [reporter])
-
-      assert_includes engine.src, "record_compile_diagnostics"
 
       assert_snapshot_matches(engine.src, "diagnostics_test-4")
     end

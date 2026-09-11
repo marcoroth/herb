@@ -78,10 +78,7 @@ module Engine
       herb = Herb::Engine.new(template, bufvar: BUFVAR, bufval: BUFVAL).src
       erubi = Erubi::CaptureBlockEngine.new(template, bufvar: BUFVAR).src
 
-      assert_includes herb, "@bufvar << (wrap do;"
-
       assert_snapshot_matches(herb, "engine_erubi_capture_block_test-0")
-      assert_includes erubi, "@bufvar <<=  wrap do ;"
 
       assert_snapshot_matches(erubi, "engine_erubi_capture_block_test-1")
     end

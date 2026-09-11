@@ -81,8 +81,6 @@ module Engine
       test "a literal default is not shipped, since the client already knows it" do
         seeds = dynamics(seeded_rows, rows: [1]).fetch(0).fetch(:items).fetch("1").fetch(:seeds)
 
-        refute_includes seeds.keys, "flag"
-
         assert_equal ["draft"], seeds.keys
       end
 
@@ -97,8 +95,6 @@ module Engine
             <% end %>
           </ul>
         ERB
-
-        refute_includes dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys, :seeds
 
         assert_equal([1, 2], dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys)
       end
@@ -168,8 +164,6 @@ module Engine
 
       test "leaves out the slots of a branch that did not run" do
         result = dynamics(CONDITIONAL, admin: true, secret: "s", public: "p")
-
-        refute_includes result[0][:slots].keys, 2
 
         assert_equal [1], result[0][:slots].keys
       end
@@ -301,8 +295,6 @@ module Engine
 
     describe "what it compiles to" do
       test "collects into a Hash rather than a String" do
-        assert_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
-
         assert_snapshot_matches(Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "dynamics_compiler_test-3")
       end
 
@@ -310,15 +302,10 @@ module Engine
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %>)
         compiled = Herb::Engine::Slots::DynamicsCompiler.new(source).src
 
-        assert_includes compiled, "__herb_block1"
-        refute_includes compiled, "_buf"
-
         assert_snapshot_matches(compiled, "dynamics_compiler_test-4")
       end
 
       test "leaves the static markup out" do
-        refute_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "hello"
-
         assert_snapshot_matches(Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "dynamics_compiler_test-5")
       end
     end
@@ -328,9 +315,6 @@ module Engine
     describe "state overrides" do
       test "the values program initializes states through the override channel" do
         source = Herb::Engine::Slots::DynamicsCompiler.new(STEERABLE, filename: "app/views/test.html.erb").src
-
-        assert_includes source, "StateOverrides.resolve"
-        assert_includes source, %(StateOverrides.fetch(_herb_state_overrides, "editing", :boolean))
 
         assert_snapshot_matches(source, "dynamics_compiler_test-6")
       end
@@ -377,14 +361,12 @@ module Engine
         entry = dynamics(parity("server"), on: false).fetch(0)
 
         assert_equal 1, entry.fetch(:branch)
-        assert_includes entry.fetch(:statics), "<i>dark</i>"
 
         assert_snapshot_matches(entry.fetch(:statics), "dynamics_compiler_test-7")
 
         lit = dynamics(parity("server"), on: true, watts: 60).fetch(0)
 
         assert_equal 0, lit.fetch(:branch)
-        assert_includes lit.fetch(:statics), "<b>"
 
         assert_snapshot_matches(lit.fetch(:statics), "dynamics_compiler_test-8")
       end

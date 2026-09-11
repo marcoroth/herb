@@ -349,8 +349,6 @@ module Engine
           "#{queries.size} SQL query"
         }
 
-        assert_includes session.report.to_json, %("value":"1 SQL query")
-
         assert_snapshot_matches(session.report.to_json, "session_test-0")
       end
 
@@ -534,8 +532,6 @@ module Engine
             end
           end
         end
-
-        refute_includes session.report.render_tree.last.keys, :via
 
         assert_equal [:id, :template, :parent, :location], session.report.render_tree.last.keys
       end

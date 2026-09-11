@@ -191,8 +191,6 @@ class VisitorTest < Minitest::Spec
       Herb::Visitor.parser_options_for(visitors, { prism_program: false })
     end
 
-    assert_includes error.message, "requires the `prism_program` parser option to be true, but it is set to false"
-
     assert_match(/\A\#<Class:0x[0-9a-f]+>\ requires\ the\ `prism_program`\ parser\ option\ to\ be\ true,\ but\ it\ is\ set\ to\ false\z/, error.message)
   end
 
@@ -203,8 +201,6 @@ class VisitorTest < Minitest::Spec
     _out, err = capture_io do
       options = Herb::Visitor.parser_options_for(visitors, { prism_program: false })
     end
-
-    assert_includes err, "recommends the `prism_program` parser option to be true, but it is set to false"
 
     assert_match(/\A\[Herb\]\ \#<Class:0x[0-9a-f]+>\ recommends\ the\ `prism_program`\ parser\ option\ to\ be\ true,\ but\ it\ is\ set\ to\ false\n\z/, err)
     assert_equal({ prism_program: false }, options)

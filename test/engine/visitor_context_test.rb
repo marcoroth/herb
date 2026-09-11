@@ -152,7 +152,6 @@ module Engine
       subject = context(file_path: "app/x.erb", project_path: "/proj")
 
       assert_equal %(#<Herb::Visitor::Context file_path="app/x.erb" relative_file_path="app/x.erb">), subject.inspect
-      refute_includes subject.inspect, "/proj"
 
       assert_snapshot_matches(subject.inspect, "visitor_context_test-0")
     end

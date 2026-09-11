@@ -91,8 +91,6 @@ module Diff
 
       types = result.operations.map(&:type)
 
-      assert_includes types, :node_moved
-
       assert_equal [:node_moved], types
     end
 
@@ -105,9 +103,6 @@ module Diff
       refute result.identical?
 
       types = result.operations.map(&:type)
-
-      refute_includes types, :node_moved
-      assert_includes types, :text_changed
 
       assert_equal [:text_changed, :text_changed], types
     end
@@ -122,9 +117,6 @@ module Diff
 
       types = result.operations.map(&:type)
 
-      assert_includes types, :node_moved
-      assert_includes types, :attribute_value_changed
-
       assert_equal [:node_moved, :attribute_value_changed], types
     end
 
@@ -137,9 +129,6 @@ module Diff
       refute result.identical?
 
       types = result.operations.map(&:type)
-
-      assert_includes types, :node_moved
-      assert_includes types, :text_changed
 
       assert_equal [:node_moved, :text_changed], types
     end
@@ -154,9 +143,6 @@ module Diff
       assert_equal 2, result.operation_count
 
       types = result.operations.map(&:type)
-
-      assert_includes types, :attribute_value_changed
-      assert_includes types, :text_changed
 
       assert_equal [:attribute_value_changed, :text_changed], types
     end
@@ -220,9 +206,6 @@ module Diff
 
       types = result.operations.map(&:type)
 
-      assert_includes types, :attribute_value_changed
-      assert_includes types, :erb_content_changed
-
       assert_equal [:attribute_value_changed, :erb_content_changed], types
     end
 
@@ -265,8 +248,6 @@ module Diff
 
       types = result.operations.map(&:type)
 
-      refute_includes types, :node_wrapped
-
       assert_equal [:node_removed, :node_inserted], types
     end
 
@@ -304,7 +285,6 @@ module Diff
       assert_kind_of Enumerable, result
 
       types = result.map(&:type)
-      assert_includes types, :text_changed
 
       assert_equal [:text_changed], types
     end
@@ -366,8 +346,6 @@ module Diff
       refute result.identical?
 
       types = result.map(&:type)
-      assert_includes types, :node_removed
-      assert_includes types, :node_inserted
 
       assert_equal [:node_removed, :node_inserted], types
     end
@@ -408,7 +386,6 @@ module Diff
       refute result.identical?
 
       types = result.map(&:type)
-      assert_includes types, :node_moved
 
       assert_equal [:node_moved, :attribute_removed, :text_changed], types
       assert_operator result.operation_count, :>=, 2
@@ -443,8 +420,6 @@ module Diff
       refute result.identical?
 
       types = result.map(&:type)
-      assert_includes types, :node_moved
-      assert_includes types, :attribute_value_changed
 
       assert_equal [:node_moved, :attribute_value_changed], types
     end
@@ -458,7 +433,6 @@ module Diff
       refute result.identical?
 
       types = result.map(&:type)
-      assert_includes types, :node_wrapped
 
       assert_equal [:node_wrapped], types
     end
@@ -472,7 +446,6 @@ module Diff
       refute result.identical?
 
       types = result.map(&:type)
-      assert_includes types, :node_unwrapped
 
       assert_equal [:node_unwrapped], types
     end
@@ -486,7 +459,6 @@ module Diff
       refute result.identical?
 
       types = result.map(&:type)
-      refute_includes types, :node_moved
 
       assert_equal [:text_changed, :text_changed, :text_changed], types
     end

@@ -336,10 +336,8 @@ module Engine
       with_optimize = Herb::Engine.new(template, visitors: [Herb::Engine::OptimizeVisitor.new]).src
 
       refute_equal without_optimize, with_optimize
-      assert_includes without_optimize, "tag.div"
 
       assert_snapshot_matches(without_optimize, "engine_test-0")
-      refute_includes with_optimize, "tag.div"
 
       assert_snapshot_matches(with_optimize, "engine_test-1")
     end

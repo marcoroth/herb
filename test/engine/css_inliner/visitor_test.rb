@@ -114,15 +114,10 @@ module Engine
       test "reads selectors narrowed by an attribute, which is the only kind it can match" do
         compiled = compile([scoper, Herb::Engine::CSSInliner::Visitor.new])
 
-        assert_includes compiled, "[data-herb-scope-"
-        refute_includes compiled, ":where("
-
         assert_snapshot_matches(compiled, "visitor_test-0")
       end
 
       test "asks for nothing when the block it would have read was taken out" do
-        refute_includes compile([scoper(deliver: :hoist), Herb::Engine::CSSInliner::Visitor.new]), "CSSInliner.inline"
-
         assert_snapshot_matches(compile([scoper(deliver: :hoist), Herb::Engine::CSSInliner::Visitor.new]), "visitor_test-1")
       end
 
@@ -130,8 +125,6 @@ module Engine
         error = assert_raises(Herb::Visitor::Stack::OrderError) do
           compile([Herb::Engine::CSSInliner::Visitor.new, scoper])
         end
-
-        assert_includes error.message, "has to run after"
 
         assert_snapshot_matches(error.message, "visitor_test-2")
       end

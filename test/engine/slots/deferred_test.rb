@@ -238,7 +238,6 @@ module Engine
         assert_equal [:second], Thread.current[:deferred_effects]
         assert_equal [second.to_s], values["slots"].keys
         assert_equal({ (second + 1).to_s => "second steered" }, values["slots"][second.to_s]["slots"])
-        assert_includes values["slots"][second.to_s]["statics"], "herb-branch:#{second}:0"
 
         assert_equal "<!--herb-branch:3:0-->\n  \n  <p data-herb-slot=\"4:child\"></p>\n  \n", values["slots"][second.to_s]["statics"]
       end
@@ -291,8 +290,6 @@ module Engine
         ERB
 
         visitor, = compile(source)
-
-        assert_includes visitor.diagnostics.map(&:message).join, "only takes `delay` and `hold`"
 
         assert_equal "`<Fragment>` only takes `delay` and `hold` and `on`.", visitor.diagnostics.map(&:message).join
       end

@@ -464,8 +464,6 @@ module Engine
 
       engine = assert_compiled_snapshot(template, trim: false)
 
-      assert_includes engine.src, "'\nafter\n'"
-
       assert_snapshot_matches(engine.src, "whitespace_trimming_test-0")
     end
 

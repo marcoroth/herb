@@ -60,9 +60,6 @@ module Engine
       test "the slots inside it keep the numbering of the template that wrote them" do
         markup = render("<% content_for :title do %><h1><%= @title %></h1><% end %><p><%= @body %></p>", title: "T", body: "B")
 
-        assert_includes markup, %(<h1 data-herb-slot="0:child">)
-        assert_includes markup, %(<p data-herb-slot="1:child">)
-
         assert_snapshot_matches(markup, "displaced_test-0")
       end
 

@@ -63,7 +63,6 @@ class RenderAnalyzerTest < Minitest::Spec
     result = check(directory)
 
     assert_equal 1, result.unused.count
-    assert_includes result.unused.keys, "shared/orphan"
 
     assert_equal ["shared/orphan"], result.unused.keys
   end
@@ -106,8 +105,6 @@ class RenderAnalyzerTest < Minitest::Spec
     result = check(directory)
 
     assert_equal 2, result.unused.count
-    assert_includes result.unused.keys, "shared/orphan"
-    assert_includes result.unused.keys, "shared/orphan_child"
 
     assert_equal ["shared/orphan", "shared/orphan_child"], result.unused.keys
   end
@@ -123,9 +120,6 @@ class RenderAnalyzerTest < Minitest::Spec
     result = check(directory)
 
     assert_equal 2, result.unused.count
-    assert_includes result.unused.keys, "shared/unused_parent"
-    assert_includes result.unused.keys, "shared/unused_child"
-    refute_includes result.unused.keys, "shared/used"
 
     assert_equal ["shared/unused_child", "shared/unused_parent"], result.unused.keys
   end
@@ -221,8 +215,6 @@ class RenderAnalyzerTest < Minitest::Spec
 
     result = check(directory)
 
-    refute_includes result.unused.keys, "shared/from_controller"
-
     assert_equal [], result.unused.keys
   end
 
@@ -235,9 +227,6 @@ class RenderAnalyzerTest < Minitest::Spec
     )
 
     result = check(directory)
-
-    refute_includes result.unused.keys, "cards/basic"
-    refute_includes result.unused.keys, "cards/premium"
 
     assert_equal [], result.unused.keys
   end
@@ -289,7 +278,6 @@ class RenderAnalyzerTest < Minitest::Spec
     assert_equal 1, result.unresolved.count
     assert_equal "shared/missing", result.unresolved.first[:partial]
     assert_equal 1, result.unused.count
-    assert_includes result.unused.keys, "shared/unused"
 
     assert_equal ["shared/unused"], result.unused.keys
   end
@@ -355,7 +343,6 @@ class RenderAnalyzerTest < Minitest::Spec
     assert result.issues?
     assert_empty result.unresolved
     assert_equal 1, result.unused.count
-    assert_includes result.unused.keys, "shared/orphan"
 
     assert_equal ["shared/orphan"], result.unused.keys
   end

@@ -103,10 +103,6 @@ class RubyLocalsIndexTest < Minitest::Spec
     source = "<% total = 0 %>\n<% posts.each do |post| %>\n  <% total += 1 %>\n<% end %>\n"
     index = index_for(source)
 
-    assert_includes index.assignment_names, "total"
-    refute_includes index.assignment_names, "post"
-    assert_includes index.names, "post"
-
     assert_equal ["total"], index.assignment_names.to_a.sort
     assert_equal ["post", "total"], index.names.to_a.sort
   end
@@ -133,9 +129,6 @@ class RubyLocalsIndexTest < Minitest::Spec
     source = "<%# herb:state (pending: false, attempts: 0) %>\n<p><%= attempts %></p>\n<% if pending? %><b>x</b><% end %>\n"
     index = index_for(source)
 
-    assert_includes index.names, "pending"
-    assert_includes index.names, "attempts"
-
     assert_equal ["attempts", "pending"], index.names.to_a.sort
     assert_equal 1, index.locals.find { |local| local.name == "attempts" }.usages.size
     assert_equal 1, index.locals.find { |local| local.name == "pending" }.usages.size
@@ -144,9 +137,6 @@ class RubyLocalsIndexTest < Minitest::Spec
   test "a state seeded from a strict local indexes both names" do
     source = "<%# locals: (open_initially: false) %>\n<%# herb:state (open: open_initially) %>\n<div><% if open %>a<% end %></div>\n"
     index = index_for(source)
-
-    assert_includes index.names, "open_initially"
-    assert_includes index.names, "open"
 
     assert_equal ["open", "open_initially"], index.names.to_a.sort
   end

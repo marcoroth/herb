@@ -86,13 +86,7 @@ module Engine
     test "escapes through its own module instead of Erubi's" do
       herb, erubi = assert_diverges_from_erubi("<%= content %>", { escape: true })
 
-      assert_includes herb, "__herb = ::Herb::Engine;"
-      assert_includes herb, "__herb.h((content))"
-
       assert_snapshot_matches(herb, "engine_erubi_divergence_test-0")
-
-      assert_includes erubi, "__erubi = ::Erubi;"
-      assert_includes erubi, "__erubi.h(( content ))"
 
       assert_snapshot_matches(erubi, "engine_erubi_divergence_test-1")
 
@@ -102,10 +96,7 @@ module Engine
     test "names its own module in the default escape function" do
       herb, erubi = assert_diverges_from_erubi("<%== content %>", { escape: false })
 
-      assert_includes herb, "::Herb::Engine.h((content))"
-
       assert_snapshot_matches(herb, "engine_erubi_divergence_test-2")
-      assert_includes erubi, "::Erubi.h(( content ))"
 
       assert_snapshot_matches(erubi, "engine_erubi_divergence_test-3")
 
@@ -115,10 +106,7 @@ module Engine
     test "leaves out the escape module when no tag in the template escapes" do
       herb, erubi = assert_diverges_from_erubi("<%== content %>", { escape: true })
 
-      refute_includes herb, "__herb"
-
       assert_snapshot_matches(herb, "engine_erubi_divergence_test-4")
-      assert_includes erubi, "__erubi = ::Erubi;"
 
       assert_snapshot_matches(erubi, "engine_erubi_divergence_test-5")
 
@@ -134,19 +122,13 @@ module Engine
 
       herb, erubi = assert_diverges_from_erubi(template)
 
-      assert_includes herb, "::Herb::Engine.attr((field_name))"
-
       assert_snapshot_matches(herb, "engine_erubi_divergence_test-6")
-      assert_includes erubi, "( field_name ).to_s"
 
       assert_snapshot_matches(erubi, "engine_erubi_divergence_test-7")
 
       injection = 'a" onload="alert(1)'
 
-      assert_includes evaluate(erubi, field_name: injection), injection
-
       assert_snapshot_matches(evaluate(erubi, field_name: injection), "engine_erubi_divergence_test-8")
-      refute_includes evaluate(herb, field_name: injection), injection
 
       assert_snapshot_matches(evaluate(herb, field_name: injection), "engine_erubi_divergence_test-9")
     end
@@ -162,20 +144,13 @@ module Engine
 
       herb, erubi = assert_diverges_from_erubi(template)
 
-      assert_includes herb, "::Herb::Engine.js((data))"
-
       assert_snapshot_matches(herb, "engine_erubi_divergence_test-10")
-      assert_includes erubi, "( data ).to_s"
 
       assert_snapshot_matches(erubi, "engine_erubi_divergence_test-11")
 
       injection = "</script>"
 
-      assert_includes evaluate(erubi, data: injection), "var data = </script>;"
-
       assert_snapshot_matches(evaluate(erubi, data: injection), "engine_erubi_divergence_test-12")
-      refute_includes evaluate(herb, data: injection), "var data = </script>;"
-      assert_includes evaluate(herb, data: injection), "var data = \\x3c/script\\x3e;"
 
       assert_snapshot_matches(evaluate(herb, data: injection), "engine_erubi_divergence_test-13")
     end
@@ -226,10 +201,7 @@ module Engine
       options = { preamble: "@buf = []", postamble: "@buf.join" }
       herb, erubi = assert_diverges_from_erubi("<div><%= title %></div>", options)
 
-      assert_includes herb, "@buf = [];"
-
       assert_snapshot_matches(herb, "engine_erubi_divergence_test-14")
-      assert_includes erubi, "@buf = [] _buf"
 
       assert_snapshot_matches(erubi, "engine_erubi_divergence_test-15")
 
@@ -250,8 +222,6 @@ module Engine
     test "refuses an escaped ERB tag that Erubi passes through" do
       template = "<%% literal %>\n"
 
-      assert_includes Erubi::Engine.new(template).src, "'<% literal %>"
-
       assert_snapshot_matches(Erubi::Engine.new(template).src, "engine_erubi_divergence_test-16")
 
       assert_raises(Herb::Engine::GeneratorTemplateError) { Herb::Engine.new(template) }
@@ -264,8 +234,6 @@ module Engine
           <p>You chose a cat!</p>
         <% end %>
       ERB
-
-      assert_includes Erubi::Engine.new(template).src, "case animal\nwhen \"cat\""
 
       assert_snapshot_matches(Erubi::Engine.new(template).src, "engine_erubi_divergence_test-17")
 

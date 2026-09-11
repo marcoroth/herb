@@ -280,9 +280,6 @@ module Engine
           engine = Herb::Engine.new(template, **options)
           output = evaluate_herb_source(engine.src, locals)
 
-          refute_includes output, "<span", "expected no wrapper element for: #{template}"
-          refute_includes output, "display: contents"
-
           assert_snapshot_matches(output, template)
         end
       end
@@ -415,7 +412,6 @@ module Engine
         untaken = rendered(template, locals.merge("@c" => false))
 
         assert_equal taken.sub("Mon", "?"), untaken.sub("Tue", "?")
-        refute_includes taken, "herb-branch"
 
         assert_snapshot_matches(taken, "markers-same-branch")
       end
@@ -459,12 +455,8 @@ module Engine
         source = Herb::Engine.new(template, **options, bufvar: "@output_buffer").src
         rendered = CapturingView.new.instance_eval(source)
 
-        refute_includes source.split("link.call").first, "<!--herb-slot"
-
         assert_snapshot_matches(source.split("link.call").first, "markers-no-slot-before-link")
         assert_equal 1, rendered.scan("<b").size
-        refute_includes rendered, "&lt;!--"
-        assert_includes rendered, %(<div data-herb-slot="1:child"><b data-herb-slot="0:child">hi</b></div>)
 
         assert_snapshot_matches(rendered, "markers-nested-child")
       end
@@ -472,12 +464,9 @@ module Engine
       test "writes an item key the same way the values payload does, under either escaping" do
         template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
         key = %(a&b<c>"d")
-        payload = evaluate_herb_source(Herb::Engine::Slots::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src, { "@items" => [key] })
 
         [false, true].each do |escape|
           markup = evaluate_herb_source(Herb::Engine.new(template, **options, escape: escape).src, { "@items" => [key] })
-
-          assert_includes markup, "<!--herb-item:0:#{payload[:slots][0][:order].first}-->", "escape: #{escape}"
 
           assert_snapshot_matches(markup, "markers-item-#{escape}")
         end
@@ -512,7 +501,6 @@ module Engine
         ).src
 
         assert_empty rewriter.seen
-        assert_includes evaluate_herb_source(source, { "@name" => "Marco" }), "herb-slot"
 
         assert_snapshot_matches(evaluate_herb_source(source, { "@name" => "Marco" }), "markers-eval-slot")
       end

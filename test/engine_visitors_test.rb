@@ -104,8 +104,6 @@ class EngineVisitorsTest < Minitest::Spec
       Herb::Engine.new(HTML, visitors: [visitor], parser_options: { prism_program: false })
     end
 
-    assert_includes error.message, "requires the `prism_program` parser option to be true, but it is set to false"
-
     assert_match(/\A\#<Class:0x[0-9a-f]+>\ requires\ the\ `prism_program`\ parser\ option\ to\ be\ true,\ but\ it\ is\ set\ to\ false\z/, error.message)
   end
 
@@ -136,8 +134,6 @@ class EngineVisitorsTest < Minitest::Spec
     _out, err = capture_io do
       engine = Herb::Engine.new(HTML, visitors: [visitor], parser_options: { prism_program: false })
     end
-
-    assert_includes err, "recommends the `prism_program` parser option to be true, but it is set to false"
 
     assert_match(/\A\[Herb\]\ \#<Class:0x[0-9a-f]+>\ recommends\ the\ `prism_program`\ parser\ option\ to\ be\ true,\ but\ it\ is\ set\ to\ false\n\z/, err)
     refute_nil engine.src

@@ -93,9 +93,6 @@ module Engine
       template2 = '<button type="submit"<% if true %> disabled<% end %><% if true %> aria-busy="true"<% end %> class="btn">Submit</button>'
       result2 = evaluate_template(template2)
 
-      assert_includes result2, "disabled"
-      assert_includes result2, "aria-busy"
-
       assert_snapshot_matches(result2, "secure_compiler_test-0")
     end
 
@@ -106,10 +103,7 @@ module Engine
         compile_template(template)
       end
 
-      assert_includes error.message, "ERB output tags (<%= %>) are not allowed in attribute position"
-
       assert_snapshot_matches(error.message, "secure_compiler_test-1")
-      assert_includes error.suggestion, "Use control flow (<% %>) with static attributes instead"
 
       assert_snapshot_matches(error.suggestion, "secure_compiler_test-2")
       assert_equal 1, error.line
@@ -123,10 +117,7 @@ module Engine
         compile_template(template)
       end
 
-      assert_includes error.message, "ERB output in attribute names is not allowed for security reasons"
-
       assert_snapshot_matches(error.message, "secure_compiler_test-3")
-      assert_includes error.suggestion, "Use static attribute names with dynamic values instead"
 
       assert_snapshot_matches(error.suggestion, "secure_compiler_test-4")
     end
@@ -159,8 +150,6 @@ module Engine
         compile_template(template)
       end
 
-      assert_includes error.message, "ERB output tags (<%= %>) are not allowed in attribute position"
-
       assert_snapshot_matches(error.message, "secure_compiler_test-5")
     end
 
@@ -171,10 +160,7 @@ module Engine
         compile_template(template)
       end
 
-      assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
-
       assert_snapshot_matches(error.message, "secure_compiler_test-6")
-      assert_includes error.suggestion, "Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead."
 
       assert_snapshot_matches(error.suggestion, "secure_compiler_test-7")
     end
@@ -186,8 +172,6 @@ module Engine
         compile_template(template)
       end
 
-      assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
-
       assert_snapshot_matches(error.message, "secure_compiler_test-8")
     end
 
@@ -198,8 +182,6 @@ module Engine
         compile_template(template)
       end
 
-      assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
-
       assert_snapshot_matches(error.message, "secure_compiler_test-9")
     end
 
@@ -207,17 +189,12 @@ module Engine
       template = "<div>Hello</div><span>World</span><p><%= @name %></p>"
       compiled = compile_template(template)
 
-      assert_includes compiled, "'<div>Hello</div><span>World</span><p>'"
-
       assert_snapshot_matches(compiled, "secure_compiler_test-10")
     end
 
     test "mixed contexts" do
       template = '<div class="<%= @css_class %>" onclick="alert(\'<%= @name %>\')">Content</div>'
       result = evaluate_template(template, css_class: "test", name: "Alice")
-
-      assert_includes result, 'class="test"'
-      assert_includes result, "alert('Alice')"
 
       assert_snapshot_matches(result, "secure_compiler_test-11")
     end
@@ -231,17 +208,13 @@ module Engine
     test "html comments with erb" do
       template = '<!-- Generated at <%= Time.now.strftime("%Y-%m-%d") %> -->'
       result = evaluate_template(template)
-      assert_includes result, "<!-- Generated at"
-      assert_includes result, "-->"
 
-      assert_snapshot_matches(result, "secure_compiler_test-12")
+      assert_match(/\A<!-- Generated at \d{4}-\d{2}-\d{2} -->\z/, result)
     end
 
     test "mixed quote types" do
       template = '<div class=\'<%= @class %>\' data-value="<%= @value %>"></div>'
       result = evaluate_template(template, class: "test", value: "data")
-      assert_includes result, "class='test'"
-      assert_includes result, 'data-value="data"'
 
       assert_snapshot_matches(result, "secure_compiler_test-13")
     end
@@ -276,13 +249,6 @@ module Engine
       }
 
       result = evaluate_template(template, context)
-
-      assert_includes result, 'class="user-card featured"'
-      assert_includes result, 'src="https://example.com/avatar.jpg"'
-      assert_includes result, 'alt="Alice Smith\'s avatar"'
-      assert_includes result, "<h3>Alice Smith</h3>"
-      assert_includes result, 'name: "Alice Smith"'
-      assert_includes result, "isActive: true"
 
       assert_snapshot_matches(result, "secure_compiler_test-14")
     end

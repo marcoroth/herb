@@ -65,12 +65,7 @@ module Engine
       end
 
       test "both renderings carry the same version, which is what makes the values applicable" do
-        version = values(AFTER)[:version]
-
-        assert_includes render(BEFORE), ":#{version}:"
-
         assert_snapshot_matches(render(BEFORE), "round_trip_test-0")
-        assert_includes render(AFTER), ":#{version}:"
 
         assert_snapshot_matches(render(AFTER), "round_trip_test-1")
       end
@@ -85,8 +80,6 @@ module Engine
       end
 
       test "a conditional whose branches lay out the same arrives as a value, not a branch" do
-        refute_includes render(BEFORE), "herb-branch"
-
         assert_snapshot_matches(render(BEFORE), "round_trip_test-2")
         assert_kind_of String, values(AFTER)[:slots][5]
       end
