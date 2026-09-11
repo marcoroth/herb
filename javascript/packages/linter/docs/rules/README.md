@@ -38,7 +38,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-prefer-link-to-helper`](./actionview-prefer-link-to-helper.md) - Prefer `link_to` over a manual `<a>` tag with an ERB `href`
 - [`actionview-prefer-pluralize-helper`](./actionview-prefer-pluralize-helper.md) - Prefer the `pluralize` helper over a separate count and `String#pluralize`
 - [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
-- [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
+- [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of a template with a blank line after.
 - [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 
 
