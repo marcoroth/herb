@@ -92,7 +92,7 @@ export class Outbox {
     this.records.delete(key)
 
     if (record.slot) {
-      return this.slots.removeItem(record.slot, key)
+      return this.slots.dismissItem(record.slot, key)
     }
 
     return true

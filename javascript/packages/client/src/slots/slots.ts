@@ -51,6 +51,8 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
   private collections = new Collections(this, this.journal, this.statics, this.manifests)
   private cause: BuildCause = "client"
   private built: Built | null = null
+  private wrote = false
+  private leaving = new Set<Item>()
   private delegates = new Set<SlotsDelegate>()
   private elements: ElementObserver | null = null
   private unobserve: (() => void) | null = null
@@ -248,6 +250,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
     this.built = built
     this.cause = cause
+    this.wrote = false
 
     try {
       return work()
@@ -257,6 +260,14 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
       if (built.branches.length > 0 || built.items.length > 0) {
         this.announceBuilt(built, cause)
+      }
+
+      if (this.wrote) {
+        this.wrote = false
+
+        for (const delegate of [...this.delegates]) {
+          delegate.settled?.()
+        }
       }
     }
   }
@@ -486,6 +497,8 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
   private announce(slot: Slot, operation: SlotOperation, tell: (delegate: SlotsDelegate) => void, { key = null, item = null, previousKey = null }: { key?: string | null; item?: Item | null; previousKey?: string | null } = {}): void {
     const region = slot.region ?? null
+
+    this.wrote = true
 
     for (const delegate of [...this.delegates]) {
       tell(delegate)
@@ -738,6 +751,88 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
   materialize(file: string, key: string, dynamics: SlotValues = {}): DocumentFragment | null {
     return this.statics.materialize(file, key, dynamics, (index) => this.manifests.partsForFile(file, index))
+  }
+
+  holdBranch(slot: Slot, branch: number | null): Promise<void> | null {
+    return this.held((delegate) => delegate.holdBranch?.(slot, branch))
+  }
+
+  holdItem(slot: Slot, item: Item): Promise<void> | null {
+    return this.held((delegate) => delegate.holdItem?.(slot, item))
+  }
+
+  private held(ask: (delegate: SlotsDelegate) => Promise<void> | void): Promise<void> | null {
+    const holds: Promise<void>[] = []
+
+    for (const delegate of [...this.delegates]) {
+      const held = ask(delegate)
+
+      if (held) {
+        holds.push(held)
+      }
+    }
+
+    if (holds.length === 0) {
+      return null
+    }
+
+    return Promise.allSettled(holds).then(() => undefined)
+  }
+
+  dismissItem(slot: Slot, key: string): boolean {
+    const item = slot.items.get(key)
+
+    if (!item) {
+      return false
+    }
+
+    const held = this.holdItem(slot, item)
+
+    if (!held) {
+      return this.removeItem(slot, key)
+    }
+
+    this.leaving.add(item)
+
+    void held.then(() => {
+      if (!this.leaving.delete(item)) {
+        return
+      }
+
+      if (slot.items.get(key) === item) {
+        this.removeItem(slot, key)
+      }
+    })
+
+    return true
+  }
+
+  keepItem(slot: Slot, key: string): void {
+    const item = slot.items.get(key)
+
+    if (item) {
+      this.leaving.delete(item)
+    }
+  }
+
+  isLeaving(item: Item): boolean {
+    return this.leaving.has(item)
+  }
+
+  itemsInOrder(slot: Slot): Item[] {
+    return this.collections.itemsInDocumentOrder(slot)
+  }
+
+  announceItemsMoving(slot: Slot, items: Item[]): void {
+    for (const delegate of [...this.delegates]) {
+      delegate.itemsMoving?.(slot, items)
+    }
+  }
+
+  announceItemsMoved(slot: Slot, items: Item[]): void {
+    for (const delegate of [...this.delegates]) {
+      delegate.itemsMoved?.(slot, items)
+    }
   }
 
   switchBranch(slot: Slot, branch: number | null, dynamics: SlotValues = {}): boolean {
