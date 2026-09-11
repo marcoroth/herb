@@ -162,6 +162,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-literal-nbsp`](./html-no-literal-nbsp.md) - Disallow literal non-breaking spaces, prefer `&nbsp;`
 - [`html-no-nested-forms`](./html-no-nested-forms.md) - Prevents nested form elements, including Rails form helpers
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
+- [`html-no-obsolete-tags`](./html-no-obsolete-tags.md) - Disallow obsolete HTML tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags

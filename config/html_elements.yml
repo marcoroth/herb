@@ -74,6 +74,7 @@ elements:
 
   - name: "basefont"
     description: "Default document font"
+    void: true
     deprecated: true
 
   - name: "bdi"
@@ -84,6 +85,7 @@ elements:
 
   - name: "bgsound"
     description: "Background sound"
+    void: true
     deprecated: true
 
   - name: "big"
@@ -192,6 +194,7 @@ elements:
 
   - name: "frame"
     description: "Frame within a frame set"
+    void: true
     deprecated: true
 
   - name: "frameset"
@@ -258,6 +261,7 @@ elements:
 
   - name: "keygen"
     description: "Key pair generator"
+    void: true
     deprecated: true
 
   - name: "label"
