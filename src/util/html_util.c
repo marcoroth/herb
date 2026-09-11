@@ -2,6 +2,7 @@
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
+#include "../include/util/html_elements.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -9,66 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
-static hb_string_T void_tags[] = HB_STRING_LIST(
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr"
-);
-
 // https://html.spec.whatwg.org/multipage/rendering.html#the-page
 static hb_string_T whitespace_preserving_tags[] = HB_STRING_LIST("pre", "script", "style", "textarea");
-
-// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
-static hb_string_T boolean_attributes[] = HB_STRING_LIST(
-  "allowfullscreen",
-  "async",
-  "autofocus",
-  "autoplay",
-  "checked",
-  "compact",
-  "controls",
-  "declare",
-  "default",
-  "defer",
-  "disabled",
-  "formnovalidate",
-  "hidden",
-  "inert",
-  "ismap",
-  "itemscope",
-  "loop",
-  "multiple",
-  "muted",
-  "nomodule",
-  "nohref",
-  "noresize",
-  "noshade",
-  "novalidate",
-  "nowrap",
-  "open",
-  "playsinline",
-  "readonly",
-  "required",
-  "reversed",
-  "scoped",
-  "seamless",
-  "selected",
-  "sortable",
-  "truespeed",
-  "typemustmatch"
-);
 
 // https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
 static hb_string_T optional_end_tags[] = HB_STRING_LIST(

@@ -732,6 +732,20 @@ module Herb
       end
     end
 
+    class HTMLElement
+      attr_reader :name, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @description = config.fetch("description")
+        @void = config.fetch("void", false)
+        @deprecated = config.fetch("deprecated", false)
+      end
+
+      def void? = @void
+      def deprecated? = @deprecated
+    end
+
     class ForeignContentElement
       attr_reader :name, :kind
 
@@ -1116,7 +1130,7 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements, html_elements: html_elements, boolean_attributes: boolean_attributes }
       )
       content = heading_for(name, template_file_display) + rendered_template
 
@@ -1208,6 +1222,14 @@ module Herb
       config = YAML.load_file("config/state/operators.yml")
 
       (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
+    end
+
+    def self.html_elements
+      YAML.load_file("config/html_elements.yml")["elements"].map { |element| HTMLElement.new(element) }
+    end
+
+    def self.boolean_attributes
+      YAML.load_file("config/html_elements.yml")["boolean_attributes"]
     end
 
     def self.foreign_content_elements
