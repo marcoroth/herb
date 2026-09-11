@@ -99,7 +99,7 @@ module Herb
         "prism_program=#{@prism_program}\n  " \
         "erb_openers=#{@erb_openers.inspect}\n  " \
         "timeout=#{@timeout}\n  " \
-        "max_errors=#{@max_errors}>\n  " \
+        "max_errors=#{@max_errors}\n  " \
         "arena_stats=#{@arena_stats}>"
     end
   end
