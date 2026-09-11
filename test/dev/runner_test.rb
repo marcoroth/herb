@@ -86,6 +86,8 @@ module Dev
       refute_includes types, "fixed"
       assert_includes types, "schema"
 
+      assert_equal ["error", "schema", "invalidate"], types
+
       schema = websocket.messages.find { |message| message[:type] == "schema" }
 
       assert_equal [], schema[:diagnostics]

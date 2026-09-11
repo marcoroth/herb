@@ -3,11 +3,14 @@
 require "json"
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
     class RoundTripTest < Minitest::Spec
+      include SnapshotUtils
+
       FILE = "app/views/greet.html.erb"
       FIXTURE = File.expand_path("../../../javascript/packages/client/test/fixtures/round-trip.json", __dir__)
 
@@ -65,7 +68,11 @@ module Engine
         version = values(AFTER)[:version]
 
         assert_includes render(BEFORE), ":#{version}:"
+
+        assert_snapshot_matches(render(BEFORE), "round_trip_test-0")
         assert_includes render(AFTER), ":#{version}:"
+
+        assert_snapshot_matches(render(AFTER), "round_trip_test-1")
       end
 
       test "every value that changed is named by the payload" do
@@ -79,6 +86,8 @@ module Engine
 
       test "a conditional whose branches lay out the same arrives as a value, not a branch" do
         refute_includes render(BEFORE), "herb-branch"
+
+        assert_snapshot_matches(render(BEFORE), "round_trip_test-2")
         assert_kind_of String, values(AFTER)[:slots][5]
       end
     end

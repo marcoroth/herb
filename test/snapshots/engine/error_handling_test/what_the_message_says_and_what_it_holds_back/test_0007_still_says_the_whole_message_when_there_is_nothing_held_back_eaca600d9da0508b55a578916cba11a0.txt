@@ -1,0 +1,5 @@
+---
+source: "Engine::ErrorHandlingTest::what the message says and what it holds back#test_0007_still says the whole message when there is nothing held back"
+input: "error_handling_test-5"
+---
+plain (Herb::Engine::CompilationError)

@@ -92,6 +92,8 @@ module Diff
       types = result.operations.map(&:type)
 
       assert_includes types, :node_moved
+
+      assert_equal [:node_moved], types
     end
 
     test "plain reorder without attributes reports text changes not moves" do
@@ -106,6 +108,8 @@ module Diff
 
       refute_includes types, :node_moved
       assert_includes types, :text_changed
+
+      assert_equal [:text_changed, :text_changed], types
     end
 
     test "move with attribute value change" do
@@ -120,6 +124,8 @@ module Diff
 
       assert_includes types, :node_moved
       assert_includes types, :attribute_value_changed
+
+      assert_equal [:node_moved, :attribute_value_changed], types
     end
 
     test "move with content change" do
@@ -134,6 +140,8 @@ module Diff
 
       assert_includes types, :node_moved
       assert_includes types, :text_changed
+
+      assert_equal [:node_moved, :text_changed], types
     end
 
     test "multiple changes with unchanged subtree" do
@@ -149,6 +157,8 @@ module Diff
 
       assert_includes types, :attribute_value_changed
       assert_includes types, :text_changed
+
+      assert_equal [:attribute_value_changed, :text_changed], types
     end
 
     test "operations have path" do
@@ -212,6 +222,8 @@ module Diff
 
       assert_includes types, :attribute_value_changed
       assert_includes types, :erb_content_changed
+
+      assert_equal [:attribute_value_changed, :erb_content_changed], types
     end
 
     test "wrap with ERB conditional" do
@@ -254,6 +266,8 @@ module Diff
       types = result.operations.map(&:type)
 
       refute_includes types, :node_wrapped
+
+      assert_equal [:node_removed, :node_inserted], types
     end
 
     test "wrapped operation has old and new nodes" do
@@ -291,6 +305,8 @@ module Diff
 
       types = result.map(&:type)
       assert_includes types, :text_changed
+
+      assert_equal [:text_changed], types
     end
 
     test "Diff::Result#each yields operations" do
@@ -352,6 +368,8 @@ module Diff
       types = result.map(&:type)
       assert_includes types, :node_removed
       assert_includes types, :node_inserted
+
+      assert_equal [:node_removed, :node_inserted], types
     end
 
     test "multiple moves with distinguishing attributes" do
@@ -391,6 +409,8 @@ module Diff
 
       types = result.map(&:type)
       assert_includes types, :node_moved
+
+      assert_equal [:node_moved, :attribute_removed, :text_changed], types
       assert_operator result.operation_count, :>=, 2
     end
 
@@ -425,6 +445,8 @@ module Diff
       types = result.map(&:type)
       assert_includes types, :node_moved
       assert_includes types, :attribute_value_changed
+
+      assert_equal [:node_moved, :attribute_value_changed], types
     end
 
     test "wrap detection with multiple candidates" do
@@ -437,6 +459,8 @@ module Diff
 
       types = result.map(&:type)
       assert_includes types, :node_wrapped
+
+      assert_equal [:node_wrapped], types
     end
 
     test "unwrap detection with multiple candidates" do
@@ -449,6 +473,8 @@ module Diff
 
       types = result.map(&:type)
       assert_includes types, :node_unwrapped
+
+      assert_equal [:node_unwrapped], types
     end
 
     test "move does not match nodes without attributes" do
@@ -461,6 +487,8 @@ module Diff
 
       types = result.map(&:type)
       refute_includes types, :node_moved
+
+      assert_equal [:text_changed, :text_changed, :text_changed], types
     end
 
     test "simultaneous moves and unchanged nodes" do

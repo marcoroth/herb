@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0002_escapes through its own module instead of Erubi's"
+input: "engine_erubi_divergence_test-1"
+---
+__erubi = ::Erubi; _buf = ::String.new; _buf << __erubi.h(( content ));
+_buf.to_s

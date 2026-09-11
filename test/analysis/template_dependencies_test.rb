@@ -59,6 +59,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_equal ["user"], avatar.names
     assert_includes avatar.nodes.map { |node| node[:expression] }, "user.name"
+
+    assert_equal(["user.name"], avatar.nodes.map { |node| node[:expression] })
   end
 
   test "reports the nodes each template renders from the state" do
@@ -67,6 +69,8 @@ class TemplateDependenciesTest < Minitest::Spec
     flow = analyzer.state_flow(entry, "@post")
 
     assert_includes flow.nodes.map { |node| node[:expression] }, "@post.title"
+
+    assert_equal(["@post.title"], flow.nodes.map { |node| node[:expression] })
   end
 
   test "branches when state flows into two partials" do
@@ -86,6 +90,8 @@ class TemplateDependenciesTest < Minitest::Spec
     flow = analyzer.state_flow(entry, "@post")
 
     assert_includes flow.children.first.names, "comment"
+
+    assert_equal ["comment"], flow.children.first.names
   end
 
   test "does not trace state the template never reads" do
@@ -109,6 +115,8 @@ class TemplateDependenciesTest < Minitest::Spec
     sibling = write_template("posts/_header.html.erb", "<h1><%= post.title %></h1>")
 
     assert_includes analyzer.affected_templates(entry, "@post"), sibling
+
+    assert_equal ["posts/_header.html.erb", "posts/show.html.erb"], analyzer.affected_templates(entry, "@post").map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "traces state into a partial in the application directory" do
@@ -116,6 +124,8 @@ class TemplateDependenciesTest < Minitest::Spec
     shared = write_template("application/_flash.html.erb", "<p><%= post %></p>")
 
     assert_includes analyzer.affected_templates(entry, "@post"), shared
+
+    assert_equal ["application/_flash.html.erb", "posts/show.html.erb"], analyzer.affected_templates(entry, "@post").map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "traces state in a project that does not keep templates in app/views" do
@@ -132,10 +142,14 @@ class TemplateDependenciesTest < Minitest::Spec
 
       assert_includes a.analyze(entry).instance_variables, "@post"
 
+      assert_equal(["@post"], a.analyze(entry).instance_variables)
+
       affected = a.affected_templates(entry, "@post")
 
       assert_includes affected, entry
       assert_includes affected, File.join(flat_root, "posts", "_header.html.erb")
+
+      assert_equal ["posts/_header.html.erb", "posts/show.html.erb"], affected.map { |p| p.delete_prefix("#{flat_root}/") }.sort
     ensure
       FileUtils.rm_rf(flat_root)
     end
@@ -148,6 +162,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes result.instance_variables, "@post"
     assert_includes result.instance_variables, "@user"
+
+    assert_equal ["@post", "@user"], result.instance_variables
   end
 
   test "detects constants with method calls" do
@@ -157,6 +173,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes result.constants, "Current.user"
     assert_includes result.constants, "Post.count"
+
+    assert_equal ["Current.user", "Post.count"], result.constants
   end
 
   test "detects strict locals" do
@@ -166,6 +184,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes result.locals_declared, "title"
     assert_includes result.locals_declared, "body"
+
+    assert_equal ["body", "title"], result.locals_declared
   end
 
   test "detects locals passed to render calls" do
@@ -183,6 +203,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.helper_calls, "link_to"
+
+    assert_equal ["link_to"], result.helper_calls
   end
 
   test "detects custom helpers after scanning" do
@@ -201,7 +223,11 @@ class TemplateDependenciesTest < Minitest::Spec
     result = a.analyze(path)
 
     assert_includes result.helper_calls, "markdown"
+
+    assert_equal ["markdown"], result.helper_calls
     refute_includes result.unknown_calls, "markdown"
+
+    assert_equal [], result.unknown_calls
   end
 
   test "flags unknown method calls" do
@@ -210,6 +236,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.unknown_calls, "current_user"
+
+    assert_equal ["current_user"], result.unknown_calls
   end
 
   test "does not flag declared locals as unknown" do
@@ -219,6 +247,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_empty result.unknown_calls
     assert_includes result.locals_declared, "title"
+
+    assert_equal ["title"], result.locals_declared
   end
 
   test "detects instance variables in conditionals" do
@@ -227,6 +257,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.instance_variables, "@admin"
+
+    assert_equal ["@admin"], result.instance_variables
   end
 
   test "detects constants in conditionals" do
@@ -235,6 +267,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.constants, "Current.user"
+
+    assert_equal ["Current.user"], result.constants
   end
 
   test "tracks instance variables from render local values" do
@@ -244,6 +278,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.instance_variables, "@current_user"
+
+    assert_equal ["@current_user"], result.instance_variables
     assert_equal "@current_user", result.locals_received["user"]
   end
 
@@ -254,6 +290,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.instance_variables, "@posts"
+
+    assert_equal ["@posts"], result.instance_variables
   end
 
   test "instance variables are deduplicated" do
@@ -282,7 +320,11 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     refute_includes result.unknown_calls, "title"
+
+    assert_equal [], result.unknown_calls
     assert_includes result.instance_variables, "@post"
+
+    assert_equal ["@post"], result.instance_variables
   end
 
   test "does not flag block parameters as unknown" do
@@ -291,7 +333,11 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     refute_includes result.unknown_calls, "post"
+
+    assert_equal [], result.unknown_calls
     assert_includes result.instance_variables, "@posts"
+
+    assert_equal ["@posts"], result.instance_variables
   end
 
   test "does not flag nested block parameters as unknown" do
@@ -301,6 +347,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     refute_includes result.unknown_calls, "post"
     refute_includes result.unknown_calls, "index"
+
+    assert_equal [], result.unknown_calls
   end
 
   test "detects instance variables inside string interpolation" do
@@ -309,6 +357,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.instance_variables, "@user"
+
+    assert_equal ["@user"], result.instance_variables
   end
 
   test "conditional assignment registers as local" do
@@ -317,6 +367,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     refute_includes result.unknown_calls, "title"
+
+    assert_equal [], result.unknown_calls
   end
 
   test "operator assignment registers as local" do
@@ -325,6 +377,8 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     refute_includes result.unknown_calls, "count"
+
+    assert_equal [], result.unknown_calls
   end
 
   test "multiple assignment registers all locals" do
@@ -334,6 +388,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     refute_includes result.unknown_calls, "a"
     refute_includes result.unknown_calls, "b"
+
+    assert_equal [], result.unknown_calls
   end
 
   test "detects multiple instance variables in ternary" do
@@ -343,6 +399,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes result.instance_variables, "@admin"
     assert_includes result.instance_variables, "@post"
+
+    assert_equal ["@admin", "@post"], result.instance_variables
   end
 
   test "block parameters are scoped and not treated as template-wide locals" do
@@ -352,7 +410,11 @@ class TemplateDependenciesTest < Minitest::Spec
     result = analyzer.analyze(path)
 
     assert_includes result.unknown_calls, "user"
+
+    assert_equal ["user"], result.unknown_calls
     assert_includes result.instance_variables, "@users"
+
+    assert_equal ["@users"], result.instance_variables
   end
 
   test "affected_templates traces state through render graph" do
@@ -364,6 +426,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes affected, File.join(@view_root, "posts/show.html.erb")
     assert_includes affected, File.join(@view_root, "posts/_header.html.erb")
+
+    assert_equal ["posts/_header.html.erb", "posts/show.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "affected_templates does not include unrelated templates" do
@@ -375,6 +439,8 @@ class TemplateDependenciesTest < Minitest::Spec
     affected = a.affected_templates(entry, "@post")
 
     refute_includes affected, File.join(@view_root, "pages/about.html.erb")
+
+    assert_equal ["posts/_header.html.erb", "posts/show.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "affected_templates traces through nested renders" do
@@ -388,6 +454,8 @@ class TemplateDependenciesTest < Minitest::Spec
     assert_includes affected, File.join(@view_root, "posts/show.html.erb")
     assert_includes affected, File.join(@view_root, "posts/_header.html.erb")
     assert_includes affected, File.join(@view_root, "posts/_title.html.erb")
+
+    assert_equal ["posts/_header.html.erb", "posts/_title.html.erb", "posts/show.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "affected_templates handles constants" do
@@ -397,6 +465,8 @@ class TemplateDependenciesTest < Minitest::Spec
     affected = a.affected_templates(entry, "Post.count")
 
     assert_includes affected, File.join(@view_root, "posts/index.html.erb")
+
+    assert_equal ["posts/index.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "dependency_index maps state to affected nodes" do
@@ -430,6 +500,8 @@ class TemplateDependenciesTest < Minitest::Spec
     affected = analyzer.affected_templates(entry, "@posts")
 
     assert_includes affected, File.join(@view_root, "posts/_card.html.erb")
+
+    assert_equal ["posts/_card.html.erb", "posts/index.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "names the local an each block's partial received the state as" do
@@ -441,6 +513,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert child
     assert_includes child.names.to_a, "card"
+
+    assert_equal ["card"], child.names.to_a
   end
 
   test "does not trace a block parameter used after its block closed" do
@@ -450,6 +524,8 @@ class TemplateDependenciesTest < Minitest::Spec
     affected = analyzer.affected_templates(entry, "@posts")
 
     refute_includes affected, File.join(@view_root, "posts/_card.html.erb")
+
+    assert_equal ["posts/index.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "does not trace state through a block that runs once" do
@@ -459,6 +535,8 @@ class TemplateDependenciesTest < Minitest::Spec
     affected = analyzer.affected_templates(entry, "@post")
 
     refute_includes affected, File.join(@view_root, "posts/_field.html.erb")
+
+    assert_equal ["posts/index.html.erb"], affected.map { |p| p.delete_prefix("#{@view_root}/") }.sort
   end
 
   test "affected_nodes tells a loop apart from a block that runs once" do
@@ -522,6 +600,8 @@ class TemplateDependenciesTest < Minitest::Spec
     expressions = nodes.map { |node| node[:expression] }
 
     assert_includes expressions, "item.name"
+
+    assert_equal ["@items.each do |item|", "item.name"], expressions
   end
 
   test "affected_nodes follows state through every parameter a block binds" do
@@ -531,6 +611,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes expressions, "i"
     assert_includes expressions, "row.title"
+
+    assert_equal ["@rows.each_with_index do |row, i|", "i", "row.title"], expressions
   end
 
   test "affected_nodes leaves an expression a block parameter does not reach" do
@@ -539,6 +621,8 @@ class TemplateDependenciesTest < Minitest::Spec
     expressions = analyzer.affected_nodes(path, "@items").map { |node| node[:expression] }
 
     refute_includes expressions, "other"
+
+    assert_equal ["@items.each do |item|"], expressions
   end
 
   test "affected_nodes stops a block parameter at the end of its block" do
@@ -557,6 +641,8 @@ class TemplateDependenciesTest < Minitest::Spec
 
     assert_includes expressions, "@post.title"
     refute_includes expressions, "@posts.count"
+
+    assert_equal ["@post.title"], expressions
   end
 
   test "dependency_index marks if-blocks containing state as conditional" do
@@ -569,6 +655,8 @@ class TemplateDependenciesTest < Minitest::Spec
     types = index["@post"].map { |n| n[:type] }
     assert_includes types, :conditional
     assert_includes types, :text_content
+
+    assert_equal [:conditional, :text_content], types
 
     assert index.key?("@admin")
     assert_equal :conditional, index["@admin"].first[:type]

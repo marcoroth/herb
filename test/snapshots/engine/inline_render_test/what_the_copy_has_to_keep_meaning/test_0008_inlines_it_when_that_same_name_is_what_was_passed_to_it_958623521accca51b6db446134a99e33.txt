@@ -1,0 +1,7 @@
+---
+source: "Engine::InlineRenderTest::what the copy has to keep meaning#test_0008_inlines it when that same name is what was passed to it"
+input: "inline_render_test-3"
+---
+_buf = ::String.new; label = "t" ; ->(label) { ; _buf << '<i>'.freeze; _buf << (label).to_s; _buf << '</i>
+'.freeze; }.call(("x")) ;
+_buf.to_s

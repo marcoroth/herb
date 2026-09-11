@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   class DynamicsCompilerTest < Minitest::Spec
+    include SnapshotUtils
+
     class View
       def initialize(**assigns)
         assigns.each { |name, value| instance_variable_set(:"@#{name}", value) }
@@ -79,6 +82,8 @@ module Engine
         seeds = dynamics(seeded_rows, rows: [1]).fetch(0).fetch(:items).fetch("1").fetch(:seeds)
 
         refute_includes seeds.keys, "flag"
+
+        assert_equal ["draft"], seeds.keys
       end
 
       test "an item with only literal defaults carries no seeds" do
@@ -94,6 +99,8 @@ module Engine
         ERB
 
         refute_includes dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys, :seeds
+
+        assert_equal([1, 2], dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys)
       end
 
       test "a value the client cannot hold is dropped" do
@@ -163,6 +170,8 @@ module Engine
         result = dynamics(CONDITIONAL, admin: true, secret: "s", public: "p")
 
         refute_includes result[0][:slots].keys, 2
+
+        assert_equal [1], result[0][:slots].keys
       end
 
       test "reports a conditional whose branches lay out the same as one value" do
@@ -293,6 +302,8 @@ module Engine
     describe "what it compiles to" do
       test "collects into a Hash rather than a String" do
         assert_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
+
+        assert_snapshot_matches(Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "dynamics_compiler_test-3")
       end
 
       test "names its buffers so a template's own locals cannot collide" do
@@ -301,10 +312,14 @@ module Engine
 
         assert_includes compiled, "__herb_block1"
         refute_includes compiled, "_buf"
+
+        assert_snapshot_matches(compiled, "dynamics_compiler_test-4")
       end
 
       test "leaves the static markup out" do
         refute_includes Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+
+        assert_snapshot_matches(Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "dynamics_compiler_test-5")
       end
     end
 
@@ -316,6 +331,8 @@ module Engine
 
         assert_includes source, "StateOverrides.resolve"
         assert_includes source, %(StateOverrides.fetch(_herb_state_overrides, "editing", :boolean))
+
+        assert_snapshot_matches(source, "dynamics_compiler_test-6")
       end
 
       test "an override steers the branch and the dependent reads" do
@@ -362,10 +379,14 @@ module Engine
         assert_equal 1, entry.fetch(:branch)
         assert_includes entry.fetch(:statics), "<i>dark</i>"
 
+        assert_snapshot_matches(entry.fetch(:statics), "dynamics_compiler_test-7")
+
         lit = dynamics(parity("server"), on: true, watts: 60).fetch(0)
 
         assert_equal 0, lit.fetch(:branch)
         assert_includes lit.fetch(:statics), "<b>"
+
+        assert_snapshot_matches(lit.fetch(:statics), "dynamics_compiler_test-8")
       end
 
       test "a client-mode payload sends no statics, since the page parks them" do

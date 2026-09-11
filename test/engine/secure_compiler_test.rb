@@ -95,6 +95,8 @@ module Engine
 
       assert_includes result2, "disabled"
       assert_includes result2, "aria-busy"
+
+      assert_snapshot_matches(result2, "secure_compiler_test-0")
     end
 
     test "erb output in attribute position blocked" do
@@ -105,7 +107,11 @@ module Engine
       end
 
       assert_includes error.message, "ERB output tags (<%= %>) are not allowed in attribute position"
+
+      assert_snapshot_matches(error.message, "secure_compiler_test-1")
       assert_includes error.suggestion, "Use control flow (<% %>) with static attributes instead"
+
+      assert_snapshot_matches(error.suggestion, "secure_compiler_test-2")
       assert_equal 1, error.line
       assert_equal 5, error.column
     end
@@ -118,7 +124,11 @@ module Engine
       end
 
       assert_includes error.message, "ERB output in attribute names is not allowed for security reasons"
+
+      assert_snapshot_matches(error.message, "secure_compiler_test-3")
       assert_includes error.suggestion, "Use static attribute names with dynamic values instead"
+
+      assert_snapshot_matches(error.suggestion, "secure_compiler_test-4")
     end
 
     test "erb control flow in attribute position allowed" do
@@ -150,6 +160,8 @@ module Engine
       end
 
       assert_includes error.message, "ERB output tags (<%= %>) are not allowed in attribute position"
+
+      assert_snapshot_matches(error.message, "secure_compiler_test-5")
     end
 
     test "conditional tag.attributes in attribute position blocked" do
@@ -160,7 +172,11 @@ module Engine
       end
 
       assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
+
+      assert_snapshot_matches(error.message, "secure_compiler_test-6")
       assert_includes error.suggestion, "Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead."
+
+      assert_snapshot_matches(error.suggestion, "secure_compiler_test-7")
     end
 
     test "tag.attributes with && operator blocked" do
@@ -171,6 +187,8 @@ module Engine
       end
 
       assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
+
+      assert_snapshot_matches(error.message, "secure_compiler_test-8")
     end
 
     test "tag.attributes with ternary blocked" do
@@ -181,6 +199,8 @@ module Engine
       end
 
       assert_includes error.message, "Avoid using conditional `tag.attributes` in attribute position."
+
+      assert_snapshot_matches(error.message, "secure_compiler_test-9")
     end
 
     test "token optimization basic" do
@@ -188,6 +208,8 @@ module Engine
       compiled = compile_template(template)
 
       assert_includes compiled, "'<div>Hello</div><span>World</span><p>'"
+
+      assert_snapshot_matches(compiled, "secure_compiler_test-10")
     end
 
     test "mixed contexts" do
@@ -196,6 +218,8 @@ module Engine
 
       assert_includes result, 'class="test"'
       assert_includes result, "alert('Alice')"
+
+      assert_snapshot_matches(result, "secure_compiler_test-11")
     end
 
     test "void elements" do
@@ -209,6 +233,8 @@ module Engine
       result = evaluate_template(template)
       assert_includes result, "<!-- Generated at"
       assert_includes result, "-->"
+
+      assert_snapshot_matches(result, "secure_compiler_test-12")
     end
 
     test "mixed quote types" do
@@ -216,6 +242,8 @@ module Engine
       result = evaluate_template(template, class: "test", value: "data")
       assert_includes result, "class='test'"
       assert_includes result, 'data-value="data"'
+
+      assert_snapshot_matches(result, "secure_compiler_test-13")
     end
 
     test "user profile card" do
@@ -255,6 +283,8 @@ module Engine
       assert_includes result, "<h3>Alice Smith</h3>"
       assert_includes result, 'name: "Alice Smith"'
       assert_includes result, "isActive: true"
+
+      assert_snapshot_matches(result, "secure_compiler_test-14")
     end
 
     test "security error provides location info" do

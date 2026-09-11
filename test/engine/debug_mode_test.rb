@@ -649,6 +649,8 @@ module Engine
       assert_includes compiled, %(data-herb-debug-line="1")
       assert_includes compiled, %(data-herb-debug-column="1")
       refute_includes compiled, %(data-herb-debug-line="0")
+
+      assert_snapshot_matches(compiled, "debug_mode_test-0")
     end
 
     describe "marking which render a tag came from" do

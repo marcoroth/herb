@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 
 module Engine
   class VisitorContextTest < Minitest::Spec
+    include SnapshotUtils
+
     def context(**)
       Herb::Visitor::Context.new(**)
     end
@@ -150,6 +153,8 @@ module Engine
 
       assert_equal %(#<Herb::Visitor::Context file_path="app/x.erb" relative_file_path="app/x.erb">), subject.inspect
       refute_includes subject.inspect, "/proj"
+
+      assert_snapshot_matches(subject.inspect, "visitor_context_test-0")
     end
 
     test "to_hash exposes every part" do

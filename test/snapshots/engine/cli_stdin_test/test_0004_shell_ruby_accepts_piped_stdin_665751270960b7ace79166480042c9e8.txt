@@ -1,0 +1,5 @@
+---
+source: "Engine::CLIStdinTest#test_0004_shell: ruby accepts piped stdin"
+input: "cli_stdin_test-3"
+---
+         user.name  ;      

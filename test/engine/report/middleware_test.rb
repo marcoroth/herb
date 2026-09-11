@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 
 require "tmpdir"
 require "json"
@@ -9,6 +10,8 @@ require "herb/engine/runtime/journal"
 
 module Engine
   class ReportMiddlewareTest < Minitest::Spec
+    include SnapshotUtils
+
     PAGE = "<html><body><h1>Hello</h1></body></html>"
 
     before do
@@ -106,6 +109,8 @@ module Engine
         ).call(nil)
 
         assert_includes body_of(response), "data-herb-diagnostics"
+
+        assert_snapshot_matches(body_of(response), "middleware_test-0")
       end
     end
 
@@ -114,6 +119,8 @@ module Engine
       body = body_of(response)
 
       assert_includes body, 'data-herb-diagnostics data-count="1"'
+
+      assert_snapshot_matches(body, "middleware_test-1")
       assert_match(%r{#{Regexp.escape(%(</script>))}</body>}, body)
     end
 
@@ -151,6 +158,8 @@ module Engine
       )
 
       assert_includes body_of(response), "data-herb-diagnostics"
+
+      assert_snapshot_matches(body_of(response), "middleware_test-2")
     end
 
     test "corrects the content length it just changed" do
@@ -211,7 +220,11 @@ module Engine
       second = call(app { Herb::Engine::Runtime::Session.record(diagnostic(message: "second")) })
 
       assert_includes body_of(first), "first"
+
+      assert_snapshot_matches(body_of(first), "middleware_test-3")
       refute_includes body_of(second), "first"
+
+      assert_snapshot_matches(body_of(second), "middleware_test-4")
     end
 
     DOCUMENT = "<html><head><title>t</title></head><body><h1>Hello</h1></body></html>"
@@ -369,6 +382,8 @@ module Engine
           codes = File.readlines(written(dir).first).map { |line| JSON.parse(line)["code"] }
 
           assert_includes codes, "sql-queries"
+
+          assert_equal [nil, "sql-queries"], codes
         end
       end
 
@@ -387,6 +402,8 @@ module Engine
 
         assert_equal 200, response[0]
         assert_includes body_of(response), "Hello"
+
+        assert_snapshot_matches(body_of(response), "middleware_test-6")
       end
 
       test "returns the page even when the journal cannot write" do
@@ -394,6 +411,8 @@ module Engine
 
         assert_equal 200, response[0]
         assert_includes body_of(response), "Hello"
+
+        assert_snapshot_matches(body_of(response), "middleware_test-7")
       end
     end
   end

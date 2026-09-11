@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::StatesTest#test_0117_a keyed collection with item states parks its template only when empty"
+input: "states_test-48"
+---
+<!--herb-region:app/views/test.html.erb:b14cc5c6:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a--><li id="row_a" data-herb-slot="1:attribute_interpolation:id 2:child">a</li><!--/herb-item:0--><!--/herb-slot:0--></ul>
+<!--/herb-region:app/views/test.html.erb-->

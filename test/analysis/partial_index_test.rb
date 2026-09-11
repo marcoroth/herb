@@ -72,6 +72,8 @@ class PartialIndexTest < Minitest::Spec
     write("app/views/posts/_card.turbo_stream.erb")
 
     assert_includes Herb::Analysis::PartialIndex.build(@project_path).names, "posts/card"
+
+    assert_equal ["posts/card"], Herb::Analysis::PartialIndex.build(@project_path).names
   end
 
   test "finds partials written with the herb extension" do

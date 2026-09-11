@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0012_refuses a case with its first condition in the same tag that Erubi compiles"
+input: "engine_erubi_divergence_test-17"
+---
+_buf = ::String.new; case animal
+when "cat" 
+ _buf << '  <p>You chose a cat!</p>
+'.freeze; end 
+_buf.to_s

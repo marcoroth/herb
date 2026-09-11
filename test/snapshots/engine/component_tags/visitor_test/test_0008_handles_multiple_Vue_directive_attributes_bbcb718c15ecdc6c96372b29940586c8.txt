@@ -1,0 +1,5 @@
+---
+source: "Engine::ComponentTags::VisitorTest#test_0008_handles multiple Vue directive attributes"
+input: "visitor_test-0"
+---
+<%= render ComplexComponent.new(user: @user, settings: @settings, active: true) %>

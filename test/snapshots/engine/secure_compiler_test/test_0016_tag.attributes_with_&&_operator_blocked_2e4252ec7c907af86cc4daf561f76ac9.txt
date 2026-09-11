@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0016_tag.attributes with && operator blocked"
+input: "secure_compiler_test-8"
+---
+1:5 - Avoid using conditional `tag.attributes` in attribute position. - Suggestion: Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead.

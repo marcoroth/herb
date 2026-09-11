@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
 require_relative "../../../lib/herb/engine/slots/visitor"
 
 module Engine
   module Slots
     class DisplacedTest < Minitest::Spec
+      include SnapshotUtils
+
       FILE = "app/views/page/show.html.erb"
 
       class View
@@ -59,6 +62,8 @@ module Engine
 
         assert_includes markup, %(<h1 data-herb-slot="0:child">)
         assert_includes markup, %(<p data-herb-slot="1:child">)
+
+        assert_snapshot_matches(markup, "displaced_test-0")
       end
 
       test "capture is wrapped too, being the same displacement by another name" do
