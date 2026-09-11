@@ -50,6 +50,10 @@ module Herb
 
     def file_exclude_patterns: () -> untyped
 
+    def user_file_include_patterns: () -> untyped
+
+    def user_tool_include_patterns: (untyped tool) -> untyped
+
     def parser: () -> untyped
 
     # : () -> Array[String]
@@ -83,6 +87,8 @@ module Herb
 
     def enabled_for_path?: (untyped path, untyped tool) -> untyped
 
+    def include_override?: (untyped path, untyped tool_include, untyped user_includes) -> untyped
+
     def linter_enabled_for_path?: (untyped path) -> untyped
 
     def formatter_enabled_for_path?: (untyped path) -> untyped
@@ -94,6 +100,8 @@ module Herb
     def find_files: (?untyped search_path) -> untyped
 
     def find_files_for_tool: (untyped tool, ?untyped search_path) -> untyped
+
+    def collect_files: (untyped search_path, untyped include_patterns, untyped exclude_patterns, untyped override_includes, ?untyped override_excludes) -> untyped
 
     def find_files_for_linter: (?untyped search_path) -> untyped
 

@@ -503,7 +503,7 @@ Result for linter:
 - Excludes: All defaults + `public/**/*` + `legacy/**/*`
 
 ::: tip Including Previously Excluded Files
-If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
+If you want to include files from a default-excluded directory (e.g., `vendor/**` or `coverage/**`), add a more specific pattern to your `.herb.yml`'s `files.include`. User-configured `files.include` patterns take precedence over `files.exclude` patterns (including the built-in defaults), so files matching your explicit include pattern are kept even when they also match an exclude pattern. Tool-level `exclude` (e.g. `linter.exclude`) still applies on top.
 :::
 
 ## Anchors, Aliases, and Merge Keys <Badge type="tip" text="^0.11.0" />

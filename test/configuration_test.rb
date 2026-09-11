@@ -478,6 +478,73 @@ class ConfigurationTest < Minitest::Spec
     assert files.first.end_with?("index.html.erb")
   end
 
+  test "user files.include overrides default excludes in find_files" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "keep"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "skip"))
+    File.write(File.join(@temp_dir, "vendor", "keep", "kept.html.erb"), "")
+    File.write(File.join(@temp_dir, "vendor", "skip", "skipped.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("vendor/keep/kept.html.erb") })
+    refute(files.any? { |f| f.end_with?("vendor/skip/skipped.html.erb") })
+  end
+
+  test "user files.include overrides default excludes in enabled_for_path?" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("vendor/keep/file.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/other/file.html.erb", :linter)
+  end
+
+  test "user files.include override still respects tool-level excludes" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*"
+      linter:
+        exclude:
+          - "vendor/keep/legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("vendor/keep/file.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/keep/legacy/old.html.erb", :linter)
+  end
+
+  test "user files.include overrides default excludes in find_files_for_tool" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "keep"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "node_modules", "pkg"))
+    File.write(File.join(@temp_dir, "vendor", "keep", "kept.html.erb"), "")
+    File.write(File.join(@temp_dir, "node_modules", "pkg", "excluded.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files_for_linter
+
+    assert(files.any? { |f| f.end_with?("vendor/keep/kept.html.erb") })
+    refute(files.any? { |f| f.end_with?("node_modules/pkg/excluded.html.erb") })
+  end
+
   test "find_files_for_tool uses tool-specific patterns" do
     write_config(<<~YAML)
       linter:
