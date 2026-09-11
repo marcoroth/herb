@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0062_puts no marker around a block whose value is not output"
+input: "markers-no-slot-before-link"
+---
+@output_buffer = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 ; @output_buffer << '<!--herb-region:app/views/test.html.erb:7f51843e:'.freeze; @output_buffer << (_herb_occurrence).to_s; @output_buffer << '-->'.freeze; link = ->(label) do; grab do; @output_buffer << '<b data-herb-slot="0:child">'.freeze; @output_buffer << (label).to_s; @output_buffer << '</b>'.freeze; end; end; @output_buffer << '<div data-herb-slot="1:child">'.freeze; @output_buffer << (

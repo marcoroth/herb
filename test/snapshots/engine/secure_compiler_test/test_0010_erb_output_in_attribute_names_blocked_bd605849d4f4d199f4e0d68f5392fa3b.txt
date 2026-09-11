@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0010_erb output in attribute names blocked"
+input: "secure_compiler_test-3"
+---
+1:10 - ERB output in attribute names is not allowed for security reasons. - Suggestion: Use static attribute names with dynamic values instead.

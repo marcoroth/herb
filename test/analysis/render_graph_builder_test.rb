@@ -182,6 +182,8 @@ class RenderGraphBuilderTest < Minitest::Spec
     row = write("_row.html.erb", "<tr></tr>")
 
     assert_includes graph_for.context_of(row).chains.first.tags, "section"
+
+    assert_equal ["html", "section"], graph_for.context_of(row).chains.first.tags
   end
 
   test "records the layout as the caller" do

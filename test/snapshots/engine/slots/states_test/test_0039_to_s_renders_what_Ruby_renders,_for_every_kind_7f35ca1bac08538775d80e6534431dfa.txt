@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0039_to_s renders what Ruby renders, for every kind"
+input: "<%# herb:state (count: -5) %><p><%= count.to_s %></p>"
+---
+<!--herb-region:app/views/test.html.erb:005c9802:0--><p data-herb-slot="0:child">-5</p><!--/herb-region:app/views/test.html.erb-->

@@ -54,6 +54,8 @@ module Engine
       collapsed = optimize(HTML_ONLY_TEMPLATE)
 
       refute_includes collapsed, "_buf"
+
+      assert_snapshot_matches(collapsed, "static_template_optimization_test-0")
       assert_equal HTML_ONLY_TEMPLATE, eval(collapsed)
     end
 
@@ -86,7 +88,11 @@ module Engine
       source = "<div>Static</div>"
 
       assert_includes Herb::Engine.new(source).src, "_buf"
+
+      assert_snapshot_matches(Herb::Engine.new(source).src, "static_template_optimization_test-1")
       refute_includes optimize(source), "_buf"
+
+      assert_snapshot_matches(optimize(source), "static_template_optimization_test-2")
     end
 
     test "a template with dynamic ERB stays buffered" do
@@ -94,6 +100,8 @@ module Engine
 
       assert_includes collapsed, "_buf"
       assert_includes collapsed, "(name).to_s"
+
+      assert_snapshot_matches(collapsed, "static_template_optimization_test-3")
     end
 
     test "a helper that resolves to static markup collapses too" do
@@ -104,10 +112,14 @@ module Engine
 
     test "a custom preamble keeps the buffer" do
       assert_includes optimize("<div>hi</div>", preamble: "@output = +''"), "@output"
+
+      assert_snapshot_matches(optimize("<div>hi</div>", preamble: "@output = +''"), "static_template_optimization_test-4")
     end
 
     test "a custom postamble keeps the buffer" do
       assert_includes optimize("<div>hi</div>", postamble: "@output_buffer"), "_buf"
+
+      assert_snapshot_matches(optimize("<div>hi</div>", postamble: "@output_buffer"), "static_template_optimization_test-5")
     end
 
     test "the ensure wrapper keeps the buffer" do
@@ -115,6 +127,8 @@ module Engine
 
       assert_includes collapsed, "__original_outvar"
       assert_includes collapsed, "_buf"
+
+      assert_snapshot_matches(collapsed, "static_template_optimization_test-6")
     end
 
     test "a recorded diagnostic keeps the buffer so the report survives" do
@@ -125,6 +139,8 @@ module Engine
 
       assert_includes compiled, "record_compile_diagnostics"
       assert_includes compiled, "_buf"
+
+      assert_snapshot_matches(compiled, "static_template_optimization_test-7")
     end
 
     test "a fatal diagnostic still raises instead of collapsing" do

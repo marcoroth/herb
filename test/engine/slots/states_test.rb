@@ -50,19 +50,27 @@ module Engine
         rendered = render("<%# herb:state (attempts: 0, draft: \"hi\") %><p><%= attempts %>-<%= draft %></p>")
 
         assert_includes rendered, ">0<!--/herb-slot:0-->-<!--herb-slot:1-->hi<"
+
+        assert_snapshot_matches(rendered, "states_test-0")
       end
 
       test "rendered rows take the else arm while every arm is parked" do
         rendered = render(STATUS)
 
         assert_includes rendered, "Sent"
+
+        assert_snapshot_matches(rendered, "states_test-1")
         refute_includes rendered.sub(/<template.*template>/m, ""), "Sending…"
+
+        assert_snapshot_matches(rendered.sub(/<template.*template>/m, ""), "states_test-2")
 
         markup = parked(STATUS)
 
         assert_includes markup, "Sending…"
         assert_includes markup, "Not sent"
         assert_includes markup, "Sent"
+
+        assert_snapshot_matches(markup, "states_test-3")
       end
 
       test "a default that selects an arm still parks every arm" do
@@ -75,16 +83,22 @@ module Engine
 
         assert_includes rendered, "Profile"
 
+        assert_snapshot_matches(rendered, "states_test-4")
+
         markup = parked(template)
 
         assert_includes markup, "Settings"
         assert_includes markup, "None"
+
+        assert_snapshot_matches(markup, "states_test-5")
       end
 
       test "a conditional with no else parks its one arm" do
         template = %(<%# herb:state (open: false) %><div><% if open? %><nav>menu</nav><% end %></div>)
 
         assert_includes parked(template), "menu"
+
+        assert_snapshot_matches(parked(template), "states_test-6")
       end
 
       test "records the arm table against the slot it belongs to" do
@@ -130,6 +144,8 @@ module Engine
 
         assert_equal(["selected"], visitor.state_declarations[:items].values.flatten.map { |declaration| declaration[:name] })
         assert_includes render(template, { "@items" => ["a"] }), "-"
+
+        assert_snapshot_matches(render(template, { "@items" => ["a"] }), "states_test-7")
       end
 
       test "a seeded default from a declared strict local compiles and coerces booleans" do
@@ -249,12 +265,16 @@ module Engine
         rendered = render(%(<%# herb:state (pending: false) %><div class="<%= pending? %>">x</div>))
 
         assert_includes rendered, 'class="false"'
+
+        assert_snapshot_matches(rendered, "states_test-8")
       end
 
       test "a state declared inside an else arm is registered" do
         rendered = render(%(<% if @a %>x<% else %><%# herb:state (open: false) %><span><%= open %></span><% end %>), { "@a" => false })
 
         assert_includes rendered, "<span"
+
+        assert_snapshot_matches(rendered, "states_test-9")
       end
 
       test "a state declared inside a when arm is registered" do
@@ -262,18 +282,24 @@ module Engine
         rendered = render(template, { "@x" => 1 })
 
         assert_includes rendered, "<span"
+
+        assert_snapshot_matches(rendered, "states_test-10")
       end
 
       test "a case on a predicate spelling rewrites its subject" do
         rendered = render(%(<%# herb:state (pending: false) %><div><% case pending? %><% when true %>a<% else %>b<% end %></div>))
 
         assert_includes rendered, "b"
+
+        assert_snapshot_matches(rendered, "states_test-11")
       end
 
       test "a predicate read in a textarea rewrites for the server" do
         rendered = render(%(<%# herb:state (pending: false) %><textarea><%= pending? %></textarea>))
 
         assert_includes rendered, "false</textarea>"
+
+        assert_snapshot_matches(rendered, "states_test-12")
       end
 
       test "the `?` spelling reads a state for its truth, the way the bare name does" do
@@ -368,6 +394,8 @@ module Engine
         rendered = render(%(<%# herb:state (pending: true) %><div><% if pending? %>Present<% else %>None<% end %></div>))
 
         assert_includes rendered, "Present"
+
+        assert_snapshot_matches(rendered, "states_test-13")
       end
 
       test "a state mistake is coded under the directive it belongs to" do
@@ -434,6 +462,8 @@ module Engine
         rendered = render(%(<%# herb:state (count: 1) %><div><% if count.one? %>one<% else %>many<% end %></div>))
 
         assert_includes rendered, "one"
+
+        assert_snapshot_matches(rendered, "states_test-14")
       end
 
       test "a predicate on a state of another kind is refused" do
@@ -500,6 +530,8 @@ module Engine
           %(<%# herb:state (tab: :first) %><p><%= tab.to_s %></p>) => ">first<",
         }.each do |template, expected|
           assert_includes render(template), expected
+
+          assert_snapshot_matches(render(template), template)
         end
       end
 
@@ -535,6 +567,8 @@ module Engine
         rendered = render(%(<%# herb:state (draft: "hello") %><p><%= draft.length %></p>))
 
         assert_includes rendered, ">5<"
+
+        assert_snapshot_matches(rendered, "states_test-16")
       end
 
       test "length on a state of another kind is refused" do
@@ -569,6 +603,8 @@ module Engine
         rendered = render(%(<%# herb:state (draft: "abc", other: "ab") %><div><% if draft.length > other.length %>longer<% end %></div>))
 
         assert_includes rendered, "longer"
+
+        assert_snapshot_matches(rendered, "states_test-17")
       end
 
       test "two transformed sides keep their kinds compatible" do
@@ -663,6 +699,8 @@ module Engine
         rendered = render(%(<%# herb:state (open: false) %><button disabled="<%= !open %>">Send</button>))
 
         assert_includes rendered, "<button disabled"
+
+        assert_snapshot_matches(rendered, "states_test-18")
       end
 
       test "a negated combination distributes over its parts" do
@@ -740,6 +778,8 @@ module Engine
         rendered = render(%(<%# herb:state (draft: "") %><p><%= draft == "" %></p>))
 
         assert_includes rendered, ">true<"
+
+        assert_snapshot_matches(rendered, "states_test-19")
       end
 
       test "a computed read in a textarea becomes a server read" do
@@ -770,6 +810,8 @@ module Engine
         end
 
         assert_includes error.message, "This scope already declares its states."
+
+        assert_snapshot_matches(error.message, "states_test-20")
       end
 
       test "a trim-marker state directive is refused, since one spelling declares states" do
@@ -778,18 +820,24 @@ module Engine
         end
 
         assert_includes error.message, "The `herb:state` directive has to be spelled `<%# herb:state (...) %>`."
+
+        assert_snapshot_matches(error.message, "states_test-21")
       end
 
       test "a state read compiles as an interpolated attribute's only output" do
         rendered = render(%(<%# herb:state (status: "") %><div class="row-<%= status %>">x</div>))
 
         assert_includes rendered, 'class="row-"'
+
+        assert_snapshot_matches(rendered, "states_test-22")
       end
 
       test "a predicate read in an interpolated attribute rewrites for the server" do
         rendered = render(%(<%# herb:state (pending: false) %><div class="row-<%= pending? %>">x</div>))
 
         assert_includes rendered, 'class="row-false"'
+
+        assert_snapshot_matches(rendered, "states_test-23")
       end
 
       test "a state mixed with other dynamics in an interpolated attribute is refused" do
@@ -824,6 +872,8 @@ module Engine
         rendered = render(%(<%# herb:state (attempts: 5) %><video muted="<%= attempts >= 2 %>"></video>))
 
         assert_includes rendered, "<video muted"
+
+        assert_snapshot_matches(rendered, "states_test-24")
       end
 
       test "a negated equality compiles for any kind" do
@@ -846,6 +896,8 @@ module Engine
         rendered = render(template)
 
         assert_includes rendered, "Behind"
+
+        assert_snapshot_matches(rendered, "states_test-25")
       end
 
       test "a state pair keeps its kinds compatible" do
@@ -864,6 +916,8 @@ module Engine
         rendered = render(%(<%# herb:state (counter1: 1, counter2: 1) %><video muted="<%= counter1 == counter2 %>"></video>))
 
         assert_includes rendered, "<video muted"
+
+        assert_snapshot_matches(rendered, "states_test-26")
       end
 
       test "ordering refuses non-integer states and comparands" do
@@ -891,9 +945,13 @@ module Engine
 
         assert_includes rendered, "Out"
 
+        assert_snapshot_matches(rendered, "states_test-27")
+
         markup = parked(template)
 
         assert_includes markup, "In"
+
+        assert_snapshot_matches(markup, "states_test-28")
       end
 
       test "a disjunction compiles as an any combo" do
@@ -955,9 +1013,13 @@ module Engine
 
         refute_includes off, "<input disabled"
 
+        assert_snapshot_matches(off, "states_test-29")
+
         on = render(%(<%# herb:state (pending: true, failed: false) %><input disabled="<%= pending? || failed? %>">))
 
         assert_includes on, "<input disabled"
+
+        assert_snapshot_matches(on, "states_test-30")
       end
 
       test "a pure-state default declares a derived state" do
@@ -984,6 +1046,8 @@ module Engine
         ERB
 
         assert_includes rendered, "Busy"
+
+        assert_snapshot_matches(rendered, "states_test-31")
       end
 
       test "a derived default mixing states with other Ruby raises" do
@@ -1061,6 +1125,8 @@ module Engine
         rendered = render(COUNTED, { "@messages" => [1, 2, 3] })
 
         assert_includes rendered, %(>2<)
+
+        assert_snapshot_matches(rendered, "states_test-32")
       end
 
       test "a bare increment counts every item" do
@@ -1074,6 +1140,8 @@ module Engine
 
         assert_equal [{ name: "total", collection: 0, by: 2, when: nil }], visitor.state_count_entries
         assert_includes render(template, { "@items" => [1, 2] }), %(>4<)
+
+        assert_snapshot_matches(render(template, { "@items" => [1, 2] }), "states_test-33")
       end
 
       test "assigning a state outside a fold raises" do
@@ -1169,6 +1237,8 @@ module Engine
 
         assert_equal [:attribute, "value", "draft", "input"], [slot.type, slot.attribute, slot.expression, slot.tag]
         assert_includes render(template), %(<input value="" data-herb-slot="0:attribute:value">)
+
+        assert_snapshot_matches(render(template), "states_test-34")
       end
 
       test "a tag helper boolean attribute reading a state renders presence" do
@@ -1180,9 +1250,13 @@ module Engine
         assert visitor.state_presence.key?(0)
         assert_includes render(template), %(<input type="checkbox" checked data-herb-slot="0:boolean_attribute:checked">)
 
+        assert_snapshot_matches(render(template), "states_test-35")
+
         off = render(%(<%# herb:slots client %><%# herb:state (agreed: false) %><%= tag.input type: "checkbox", checked: agreed %>))
 
         assert_includes off, %(<input type="checkbox" data-herb-slot="0:boolean_attribute:checked">)
+
+        assert_snapshot_matches(off, "states_test-36")
       end
 
       test "a tag helper boolean attribute takes a predicate and a comparison" do
@@ -1190,9 +1264,13 @@ module Engine
 
         assert_includes rendered, %(<button disabled data-herb-slot="0:boolean_attribute:disabled">)
 
+        assert_snapshot_matches(rendered, "states_test-37")
+
         rendered = render(%(<%# herb:slots client %><%# herb:state (sort: "name") %><%= tag.option "Name", value: "name", selected: sort == "name" %>))
 
         assert_includes rendered, %(<option value="name" selected data-herb-slot="0:boolean_attribute:selected">)
+
+        assert_snapshot_matches(rendered, "states_test-38")
       end
 
       test "a tag helper boolean attribute on a server value stays a presence slot" do
@@ -1202,7 +1280,11 @@ module Engine
         assert_equal :boolean_attribute, visitor.slots.fetch(0).type
         refute visitor.state_presence.key?(0)
         assert_includes render(template, { "done" => true }), %(<input disabled data-herb-slot="0:boolean_attribute:disabled">)
+
+        assert_snapshot_matches(render(template, { "done" => true }), "states_test-39")
         assert_includes render(template, { "done" => false }), %(<input data-herb-slot="0:boolean_attribute:disabled">)
+
+        assert_snapshot_matches(render(template, { "done" => false }), "states_test-40")
       end
 
       test "a computed tag helper attribute becomes a server read" do
@@ -1240,6 +1322,8 @@ module Engine
 
         assert_equal "a-->b", seeds_in(rendered).fetch(0).fetch("label")
         assert_includes rendered, "<!--herb-seeds:"
+
+        assert_snapshot_matches(rendered, "states_test-41")
         refute_match(/<!--herb-seeds:[^>]*-->b/, rendered)
       end
 
@@ -1252,10 +1336,14 @@ module Engine
         only_shape = render(%(<%# herb:slots client %><%# herb:state (shape: @shape) %><p><%= shape %></p>), { "@shape" => [1, 2] })
 
         assert_includes only_shape, "<!--herb-seeds:{}-->"
+
+        assert_snapshot_matches(only_shape, "states_test-42")
       end
 
       test "a template with only literal defaults ships no seeds" do
         refute_includes render(STATUS), "herb-seeds"
+
+        assert_snapshot_matches(render(STATUS), "states_test-43")
       end
 
       test "the seeds marker writes to the buffer the engine was configured with" do
@@ -1269,6 +1357,8 @@ module Engine
 
         assert_includes engine.src, '@output_buffer << ::Herb::Engine.raw("<!--herb-seeds:'
         refute_includes engine.src, "_buf <<"
+
+        assert_snapshot_matches(engine.src, "states_test-44")
       end
 
       test "the seeds marker survives a buffer that escapes what it appends" do
@@ -1291,9 +1381,13 @@ module Engine
 
         assert_includes rendered, "Idle"
 
+        assert_snapshot_matches(rendered, "states_test-45")
+
         markup = parked(template)
 
         assert_includes markup, "Busy"
+
+        assert_snapshot_matches(markup, "states_test-46")
       end
 
       test "an unless with no else points its truthy arm at nothing" do
@@ -1306,6 +1400,8 @@ module Engine
         rendered = render(%(<%# herb:state (pending: false) %><div><% unless pending? %>Idle<% end %></div>))
 
         assert_includes rendered, "Idle"
+
+        assert_snapshot_matches(rendered, "states_test-47")
       end
 
       test "a computed unless still raises" do
@@ -1325,7 +1421,11 @@ module Engine
         ERB
 
         refute_includes render(template, { "@items" => ["a"] }), "herb-branch:0:item"
+
+        assert_snapshot_matches(render(template, { "@items" => ["a"] }), "states_test-48")
         assert_includes parked(template, { "@items" => [] }), "herb-branch:0:item"
+
+        assert_snapshot_matches(parked(template, { "@items" => [] }), "states_test-49")
       end
 
       BOOLEAN_ATTRIBUTES = <<~ERB
@@ -1342,6 +1442,8 @@ module Engine
         refute_includes rendered, 'disabled="'
         refute_includes rendered, "<video muted"
         refute_includes rendered, "<audio loop"
+
+        assert_snapshot_matches(rendered, "states_test-50")
       end
 
       test "a boolean attribute reading a state is retyped for the client" do
@@ -1350,6 +1452,8 @@ module Engine
         assert_includes rendered, "0:boolean_attribute:disabled"
         assert_includes rendered, "1:boolean_attribute:muted"
         assert_includes rendered, "2:boolean_attribute:loop"
+
+        assert_snapshot_matches(rendered, "states_test-51")
       end
 
       test "the visitor records what each presence compares" do
@@ -1377,6 +1481,8 @@ module Engine
         ERB
 
         assert_includes rendered, 'disabled="false"'
+
+        assert_snapshot_matches(rendered, "states_test-52")
       end
 
       test "a bare non-boolean state in a boolean attribute raises" do
@@ -1449,6 +1555,8 @@ module Engine
         end
 
         assert_includes error.message, "which lives on an item"
+
+        assert_snapshot_matches(error.message, "states_test-53")
       end
 
       test "a mismatched comparand in a boolean attribute still raises" do
@@ -1460,6 +1568,8 @@ module Engine
         end
 
         assert_includes error.message, "Integer literal"
+
+        assert_snapshot_matches(error.message, "states_test-54")
       end
 
       test "a collection reading a state joins its branch's members" do
@@ -1563,6 +1673,8 @@ module Engine
 
         assert_empty visitor.diagnostics
         assert_includes server_reads, parts_key.to_i
+
+        assert_equal [1], server_reads
       end
     end
   end

@@ -132,6 +132,8 @@ class RenderGraphTest < Minitest::Spec
     )
 
     assert_includes graph.infer_signature("_card.html.erb").strict_locals_declaration, "**"
+
+    assert_equal "<%# locals: (title: nil, **) %>", graph.infer_signature("_card.html.erb").strict_locals_declaration
   end
 
   test "counts occurrences of a repeated chain" do

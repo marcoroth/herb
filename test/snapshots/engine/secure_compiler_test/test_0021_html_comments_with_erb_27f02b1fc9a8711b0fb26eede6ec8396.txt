@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0021_html comments with erb"
+input: "secure_compiler_test-12"
+---
+<!-- Generated at 2026-09-11 -->

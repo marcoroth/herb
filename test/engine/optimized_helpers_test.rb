@@ -76,6 +76,8 @@ module Engine
         assert_equal FILENAME, diagnostic.template
         assert_equal 1, diagnostic.location.start.line
         assert_includes diagnostic.message, "`tag` was compiled away as #{TAG_OWNER}"
+
+        assert_equal %(`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag), diagnostic.message
       end
 
       test "names the module that took the helper over" do

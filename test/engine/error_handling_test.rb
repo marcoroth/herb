@@ -415,22 +415,32 @@ module Engine
         ERB
 
         assert_includes error_for(template).message, "more error"
+
+        assert_snapshot_matches(error_for(template).message, "error_handling_test-0")
       end
 
       test "puts the rendered source in the detailed message instead" do
         error = error_for
 
         refute_includes error.message, "\u2502"
+
+        assert_snapshot_matches(error.message, "error_handling_test-1")
         assert_includes error.detailed_message, "\u2502"
         assert_includes error.detailed_message, "~"
+
+        assert_snapshot_matches(error.detailed_message, "error_handling_test-2")
       end
 
       test "leaves the detailed message plain unless asked to highlight" do
         refute_includes error_for.detailed_message, "\e["
+
+        assert_snapshot_matches(error_for.detailed_message, "error_handling_test-3")
       end
 
       test "colors the detailed message when asked" do
         assert_includes error_for.detailed_message(highlight: true), "\e["
+
+        assert_snapshot_matches(error_for.detailed_message(highlight: true), "error_handling_test-4")
       end
 
       test "still says the whole message when there is nothing held back" do
@@ -438,6 +448,8 @@ module Engine
 
         assert_equal "plain", error.message
         assert_includes error.detailed_message, "plain"
+
+        assert_snapshot_matches(error.detailed_message, "error_handling_test-5")
       end
     end
 

@@ -1,0 +1,7 @@
+---
+source: "Engine::InlineRenderTest::what the copy has to keep meaning#test_0010_resolves against the template it is compiling rather than the first it ever saw"
+input: "inline_render_test-5"
+---
+_buf = ::String.new; ->() { ; _buf << '<b>root card</b>
+'.freeze; }.call() ;
+_buf.to_s

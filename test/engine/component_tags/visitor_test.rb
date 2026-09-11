@@ -82,6 +82,8 @@ module Engine
         assert_includes erb_content, "user: @user"
         assert_includes erb_content, "settings: @settings"
         assert_includes erb_content, "active: true"
+
+        assert_snapshot_matches(erb_content, "visitor_test-0")
       end
 
       test "component visitor transforms Vue components to ERB" do

@@ -1,0 +1,5 @@
+---
+source: "Engine::ErrorHandlingTest::what the message says and what it holds back#test_0003_counts the errors it held back"
+input: "error_handling_test-0"
+---
+app/views/posts/index.html.erb:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 2 more errors)

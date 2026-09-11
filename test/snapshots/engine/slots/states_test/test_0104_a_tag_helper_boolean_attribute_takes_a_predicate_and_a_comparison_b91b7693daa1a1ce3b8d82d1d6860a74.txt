@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0104_a tag helper boolean attribute takes a predicate and a comparison"
+input: "states_test-37"
+---
+<!--herb-region:app/views/test.html.erb:4948ce81:0--><button disabled data-herb-slot="0:boolean_attribute:disabled">Send</button><!--/herb-region:app/views/test.html.erb-->
