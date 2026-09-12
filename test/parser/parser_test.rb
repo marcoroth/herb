@@ -14,6 +14,44 @@ module Parser
       assert_parsed_snapshot("")
     end
 
+    test "parse releases the GVL and leaves its input mutable" do
+      source = "<div><%= value %></div>\n" * 10_000
+      parser = Thread.new { Herb.parse(source, track_locations: false) }
+      observed_without_gvl = false
+
+      while parser.alive?
+        observed_without_gvl ||= parser.status == "sleep"
+        Thread.pass
+      end
+
+      parser.value
+      assert observed_without_gvl
+
+      source << "<p>still mutable</p>"
+      assert_predicate source, :valid_encoding?
+    end
+
+    test "parse allows concurrent parses of the same mutable source" do
+      source = "<div><%= value %></div>\n" * 10_000
+
+      expected = Herb.parse(source, track_locations: false).value.children.size
+      results = Array.new(4) { Thread.new { Herb.parse(source, track_locations: false) } }.map(&:value)
+
+      assert_equal [expected], results.map { |result| result.value.children.size }.uniq
+      refute(results.any?(&:failed?))
+    end
+
+    test "parse is unaffected by mutating the source from another thread" do
+      source = "<div><%= value %></div>\n" * 10_000
+      expected = Herb.parse(source, track_locations: false).value.children.size
+
+      parser = Thread.new { Herb.parse(source, track_locations: false) }
+      Thread.pass while parser.status != "sleep"
+      source << "<p>appended mid-parse</p>"
+
+      assert_equal expected, parser.value.value.children.size
+    end
+
     test "parse_file" do
       file = Tempfile.new
       file.write(%(<h1><%= RUBY_VERSION %></h1>))

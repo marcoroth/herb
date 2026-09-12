@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/thread.h>
 
 #include "../../src/include/lib/hb_allocator.h"
 #include "../../src/include/lib/hb_arena_debug.h"
@@ -20,8 +21,10 @@ VALUE cParserOptions;
 
 typedef struct {
   AST_DOCUMENT_NODE_T* root;
+  const char* input;
   VALUE source;
   const parser_options_T* parser_options;
+  bool print_arena_stats;
   hb_allocator_T allocator;
 } parse_args_T;
 
@@ -36,8 +39,20 @@ typedef struct {
   hb_allocator_T allocator;
 } buffer_args_T;
 
-static VALUE parse_convert_body(VALUE arg) {
+static void* parse_without_gvl(void* arg) {
   parse_args_T* args = (parse_args_T*) arg;
+
+  args->root = herb_parse(args->input, args->parser_options, &args->allocator);
+
+  return NULL;
+}
+
+static VALUE parse_body(VALUE arg) {
+  parse_args_T* args = (parse_args_T*) arg;
+
+  rb_thread_call_without_gvl(parse_without_gvl, (void*) arg, NULL, NULL);
+
+  if (args->print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args->allocator.context); }
 
   return create_parse_result(args->root, args->source, args->parser_options);
 }
@@ -258,14 +273,20 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   parse_args_T args = { 0 };
   args.source = source;
   args.parser_options = &parser_options;
+  args.print_arena_stats = print_arena_stats;
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
-  args.root = herb_parse(string, &parser_options, &args.allocator);
+  if (string != NULL) {
+    args.input = hb_allocator_strndup(&args.allocator, string, (size_t) RSTRING_LEN(source));
 
-  if (print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args.allocator.context); }
+    if (args.input == NULL) {
+      hb_allocator_destroy(&args.allocator);
+      rb_raise(rb_eNoMemError, "failed to allocate a parser input buffer");
+    }
+  }
 
-  return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
+  return rb_ensure(parse_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
