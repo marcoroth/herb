@@ -5,7 +5,6 @@ import { Formatter } from "../../src"
 import dedent from "dedent"
 
 let formatter: Formatter
-let nonStrictFormatter: Formatter
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,13 +13,6 @@ describe("@herb-tools/formatter", () => {
     formatter = new Formatter(Herb, {
       indentWidth: 2,
       maxLineLength: 80
-    })
-
-    nonStrictFormatter = new Formatter(Herb, {
-      indentWidth: 2,
-      maxLineLength: 80
-    }, {
-      strict: false
     })
   })
 
@@ -285,7 +277,7 @@ describe("@herb-tools/formatter", () => {
         B
       <% end %>
     `
-    const result = nonStrictFormatter.format(source)
+    const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% case variable %>
       <% when "a" %>
@@ -303,7 +295,7 @@ describe("@herb-tools/formatter", () => {
         A
       <% end %>
     `
-    const result = nonStrictFormatter.format(source)
+    const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% case variable %>
       <% when "a" %>
@@ -318,7 +310,7 @@ describe("@herb-tools/formatter", () => {
         A
       <% end %>
     `
-    const result = nonStrictFormatter.format(source)
+    const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% case variable %>
       <% when "a" then %>
@@ -336,7 +328,7 @@ describe("@herb-tools/formatter", () => {
         Two
       <% end %>
     `
-    const result = nonStrictFormatter.format(source)
+    const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% case value %>
       <% in 1 %>
@@ -347,11 +339,32 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("leaves an inline case alone under the default strict parse", () => {
+  test("leaves a case and its first in pattern sharing a line alone", () => {
+    const source = dedent`
+      <% case value in 1 %>
+        One
+      <% in 2 %>
+        Two
+      <% end %>
+    `
+    expect(formatter.format(source)).toEqual(source)
+  })
+
+  test("leaves a template alone when an error other than the shared tag remains", () => {
     const source = dedent`
       <% case variable when "a" %>
-        A
+        <div><span></div>
       <% end %>
+    `
+    expect(formatter.format(source)).toEqual(source)
+  })
+
+  test("leaves a template with an omitted closing tag alone", () => {
+    const source = dedent`
+      <ul>
+        <li>a
+        <li>b
+      </ul>
     `
     expect(formatter.format(source)).toEqual(source)
   })
