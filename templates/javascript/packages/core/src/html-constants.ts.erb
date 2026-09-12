@@ -19,3 +19,14 @@ export const HTML_WHITESPACE_PRESERVING_ELEMENTS: ReadonlySet<string> = new Set(
 export function isWhitespacePreservingElement(tagName: string): boolean {
   return HTML_WHITESPACE_PRESERVING_ELEMENTS.has(tagName.toLowerCase())
 }
+
+// https://html.spec.whatwg.org/multipage/rendering.html#phrasing-content-3
+export const HTML_INLINE_ELEMENTS: ReadonlySet<string> = new Set([
+<%- inline_elements.each do |element| -%>
+  <%= element.inspect %>,
+<%- end -%>
+])
+
+export function isInlineElement(tagName: string): boolean {
+  return HTML_INLINE_ELEMENTS.has(tagName.toLowerCase())
+}

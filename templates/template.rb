@@ -741,11 +741,13 @@ module Herb
         @void = config.fetch("void", false)
         @deprecated = config.fetch("deprecated", false)
         @whitespace_preserving = config.fetch("whitespace_preserving", false)
+        @inline = config.fetch("inline", false)
       end
 
       def void? = @void
       def deprecated? = @deprecated
       def whitespace_preserving? = @whitespace_preserving
+      def inline? = @inline
     end
 
     class ForeignContentElement
@@ -1132,7 +1134,7 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements, html_elements: html_elements, boolean_attributes: boolean_attributes, whitespace_preserving_elements: whitespace_preserving_elements }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements, html_elements: html_elements, boolean_attributes: boolean_attributes, whitespace_preserving_elements: whitespace_preserving_elements, inline_elements: inline_elements }
       )
       content = heading_for(name, template_file_display) + rendered_template
 
@@ -1239,6 +1241,10 @@ module Herb
       flagged = html_elements.select(&:whitespace_preserving?).map(&:name)
 
       (raw_text + flagged).sort
+    end
+
+    def self.inline_elements
+      html_elements.select(&:inline?).map(&:name).sort
     end
 
     def self.foreign_content_elements
