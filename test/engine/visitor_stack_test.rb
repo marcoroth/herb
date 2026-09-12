@@ -130,7 +130,8 @@ module Engine
         visitors = [
           Herb::Engine::Validators::SecurityValidator,
           Herb::Engine::Validators::NestingValidator,
-          Herb::Engine::Validators::AccessibilityValidator
+          Herb::Engine::Validators::AccessibilityValidator,
+          Herb::Engine::Validators::GeneratorTemplateValidator
         ]
 
         assert_equal(visitors, classes(Herb::Engine::Validators.all))
@@ -145,7 +146,7 @@ module Engine
       test "lets a caller build on the defaults rather than instead of them" do
         engine = compile(visitors: Herb::Engine::Validators.all.use(ThirdVisitor.new))
 
-        assert_equal(3, engine.visitors.count { |visitor| visitor.is_a?(Herb::Engine::Validators::Base) })
+        assert_equal(4, engine.visitors.count { |visitor| visitor.is_a?(Herb::Engine::Validators::Base) })
         assert_equal ThirdVisitor, classes(engine.visitors).last
       end
 

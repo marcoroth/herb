@@ -1,0 +1,19 @@
+# Generated from lib/herb/engine/validators/generator_template_validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Validators
+      # Reports a template that writes literal ERB, which is a generator template and not a page.
+      #
+      # The engine itself compiles `<%%` to the literal `<%` the way Erubi does, so a sweep over a
+      # project's templates gets one of these instead of a file it cannot make sense of.
+      class GeneratorTemplateValidator < Base
+        def visit_erb_node: (untyped node) -> untyped
+
+        private
+
+        def validate_not_escaped: (untyped node) -> untyped
+      end
+    end
+  end
+end

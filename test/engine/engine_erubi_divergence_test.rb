@@ -219,14 +219,6 @@ module Engine
       assert_raises(SyntaxError) { RubyVM::InstructionSequence.compile(erubi) }
     end
 
-    test "refuses an escaped ERB tag that Erubi passes through" do
-      template = "<%% literal %>\n"
-
-      assert_snapshot_matches(Erubi::Engine.new(template).src, "engine_erubi_divergence_test-16")
-
-      assert_raises(Herb::Engine::GeneratorTemplateError) { Herb::Engine.new(template) }
-    end
-
     test "refuses a case with its first condition in the same tag that Erubi compiles" do
       template = <<~ERB
         <% case animal

@@ -567,7 +567,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_equal({ security: false, nesting: true, accessibility: true }, config.enabled_validators)
+    assert_equal({ security: false, nesting: true, accessibility: true, generator_template: true }, config.enabled_validators)
   end
 
   test "enabled_validators accepts overrides" do

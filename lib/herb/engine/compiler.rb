@@ -318,7 +318,7 @@ module Herb
       def visit_erb_block_node(node)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_block(node) if erb_escaped?(opening)
 
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
@@ -393,13 +393,22 @@ module Herb
 
       private
 
-      def check_for_escaped_erb_tag!(opening)
-        return unless opening.start_with?("<%%")
+      def add_escaped_erb_tag(node)
+        add_text("#{node.tag_opening.value.sub("<%%", "<%")}#{node.content.value}#{node.tag_closing&.value}")
+      end
 
-        raise Herb::Engine::GeneratorTemplateError,
-              "This file appears to be a generator template (a template used to generate ERB files) " \
-              "rather than a standard ERB template. It contains escaped ERB tags like <%%= %> which " \
-              "produce literal ERB output in the generated file."
+      def add_escaped_erb_block(node)
+        add_escaped_erb_tag(node)
+        visit_all(node.body)
+
+        end_node = node.end_node
+        return unless end_node
+
+        if erb_escaped?(end_node.tag_opening.value)
+          add_escaped_erb_tag(end_node)
+        else
+          visit(end_node)
+        end
       end
 
       def current_context
@@ -439,7 +448,7 @@ module Herb
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_tag(node) if erb_escaped?(opening)
 
         if !skip_comment_check && erb_omitted?(opening)
           unless @trim

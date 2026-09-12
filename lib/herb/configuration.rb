@@ -125,6 +125,7 @@ module Herb
         security: config.fetch("security", true),
         nesting: config.fetch("nesting", true),
         accessibility: config.fetch("accessibility", true),
+        generator_template: config.fetch("generator_template", true),
       }.merge(
         overrides.to_h { |key, value| [key.to_sym, !!value] }
       )

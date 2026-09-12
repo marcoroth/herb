@@ -123,5 +123,30 @@ module Engine
 
       assert_equal "ok", output.strip
     end
+
+    test "a fatal generator template validator raises GeneratorTemplateError" do
+      template = "<%% form_with url: x do |form| %>\n  <%%= form.submit \"Save\" %>\n<%% end %>\n"
+
+      error = assert_raises(Herb::Engine::GeneratorTemplateError) do
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
+      end
+
+      assert_equal 1, error.line
+      assert_equal 0, error.column
+    end
+
+    test "the engine compiles a generator template to literal ERB without the validator" do
+      template = "<%%= form.submit \"Save\" %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "a non-fatal generator template validator reports and still compiles" do
+      template = "<%%= form.submit \"Save\" %>\n"
+      engine = Herb::Engine.new(template, visitors: Herb::Engine::Validators.all(fatal: false))
+
+      assert_equal ["GeneratorTemplate"], engine.visitors.flat_map { |visitor| visitor.respond_to?(:diagnostics) ? visitor.diagnostics.map(&:code) : [] }.compact
+    end
   end
 end

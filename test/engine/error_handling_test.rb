@@ -29,7 +29,8 @@ module Engine
           [
             "#<Herb::Engine::Validators::SecurityValidator fatal=true>",
             "#<Herb::Engine::Validators::NestingValidator fatal=true>",
-            "#<Herb::Engine::Validators::AccessibilityValidator fatal=true>"
+            "#<Herb::Engine::Validators::AccessibilityValidator fatal=true>",
+            "#<Herb::Engine::Validators::GeneratorTemplateValidator fatal=true>"
           ],
           error.visitors
         )

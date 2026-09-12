@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0038_emits an escaped ERB block as literal text"
+input: "{source: \"<%% foo do %>\\nx\\n<%% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<% foo do %>
+x
+<% end %>
+'.freeze;
+_buf.to_s

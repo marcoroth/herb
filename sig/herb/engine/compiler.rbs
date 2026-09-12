@@ -109,7 +109,9 @@ module Herb
 
       private
 
-      def check_for_escaped_erb_tag!: (untyped opening) -> untyped
+      def add_escaped_erb_tag: (untyped node) -> untyped
+
+      def add_escaped_erb_block: (untyped node) -> untyped
 
       def current_context: () -> untyped
 

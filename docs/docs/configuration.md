@@ -370,6 +370,7 @@ engine:
     security: true       # Enable/disable security validation (default: true)
     nesting: true        # Enable/disable HTML nesting validation (default: true)
     accessibility: true  # Enable/disable accessibility validation (default: true)
+    generator_template: true # Enable/disable the generator template check (default: true)
 ```
 
 The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
@@ -381,6 +382,7 @@ The engine runs validators on templates during compilation. Each validator can b
 - **`security`**: Detects ERB output tags (`<%= %>`) in unsafe positions like attribute names or attribute positions. Prevents potential XSS vulnerabilities. _(default: `true`)_
 - **`nesting`**: Validates HTML nesting rules, such as block elements inside `<p>`, nested anchors, or interactive elements inside `<button>`. _(default: `true`)_
 - **`accessibility`**: Validates accessibility-related attributes. _(default: `true`)_
+- **`generator_template`**: Reports a template that writes literal ERB through `<%% %>`, which makes it a generator template instead of a page to render. Turning it off compiles such a file to its literal ERB output. _(default: `true`)_
 
 A validator that is disabled (`false`) is not built into the stack that `Herb::Engine::Validators.all` returns, so it never runs.
 
