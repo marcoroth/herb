@@ -52,12 +52,7 @@ describe("HTMLOpenTagNode Printing", () => {
     expectPrintRoundTrip(`<a id="id"        <%= content %>        class="class">Content</a>`)
   })
 
-  test("does not double a space when a synthesized WhitespaceNode child precedes an attribute whose own location doesn't line up with the tag name (e.g. rewriter-inserted attributes)", () => {
-    // Rewriters (e.g. ActionViewTagHelperToHTMLRewriter) insert a synthetic
-    // WhitespaceNode ahead of an attribute pulled in from elsewhere in the
-    // source, so the attribute's own location never lines up with the tag
-    // name's end position. The gap-fill logic must not add its own space on
-    // top of the one the WhitespaceNode already prints.
+  test("does not double the space of a WhitespaceNode child that precedes an attribute located elsewhere in the source", () => {
     const attributeName = HTMLAttributeNameNode.build({
       location: createLocation(1, 20),
       children: [
@@ -97,5 +92,28 @@ describe("HTMLOpenTagNode Printing", () => {
     })
 
     expectNodeToPrint(node, `<div class="content">`)
+  })
+
+  describe("without track_whitespace", () => {
+    const untracked = { track_whitespace: false }
+
+    test("keeps the tag name and the attributes apart", () => {
+      expectPrintRoundTrip(`<span class="x">Content</span>`, true, untracked)
+      expectPrintRoundTrip(`<span class="x" id="y">Content</span>`, true, untracked)
+      expectPrintRoundTrip(`<input type="text" disabled>`, true, untracked)
+      expectPrintRoundTrip(`<div <%= attributes %>>Content</div>`, true, untracked)
+    })
+
+    test("recovers the separating whitespace from the source", () => {
+      expectPrintRoundTrip(`<span   class="x">Content</span>`, true, untracked)
+      expectPrintRoundTrip(`<span class="x"    id="y">Content</span>`, true, untracked)
+      expectPrintRoundTrip(`<span\tclass="x">Content</span>`, true, untracked)
+      expectPrintRoundTrip(`<a   id="id"  >Content</a>`, true, untracked)
+      expectPrintRoundTrip(`<a id="id"        <%= content %>        class="class">Content</a>`, true, untracked)
+    })
+
+    test("recovers whitespace that wraps the attributes across lines", () => {
+      expectPrintRoundTrip(`<span\n  class="x"\n  id="y"\n>Content</span>`, true, untracked)
+    })
   })
 })

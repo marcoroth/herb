@@ -1,5 +1,5 @@
 import { Printer } from "./printer.js"
-import { getNodesBeforePosition, getNodesAfterPosition, isWhitespaceNode } from "@herb-tools/core"
+import { getNodesBeforePosition, getNodesAfterPosition, isWhitespaceNode, sliceBetweenPositions } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
 
@@ -11,6 +11,11 @@ import type * as Nodes from "@herb-tools/core"
  * - Testing parser accuracy (input should equal output)
  * - Baseline printing before applying transformations
  * - Verifying AST round-trip fidelity
+ *
+ * A byte-exact round-trip requires a tree parsed with `track_whitespace: true`, since that is
+ * the only mode in which every whitespace token is represented by a node. Without it the
+ * whitespace inside an open tag is recovered from the source the nodes were parsed from, and
+ * falls back to a single separating space when that source is unavailable.
  */
 export class IdentityPrinter extends Printer {
   static printERBNode(node: Nodes.ERBNode) {
@@ -44,46 +49,25 @@ export class IdentityPrinter extends Printer {
       this.write(node.tag_name.value)
     }
 
-    // Without `track_whitespace: true` the parser doesn't emit a node for the
-    // whitespace that separates the tag name from the first attribute, or the
-    // whitespace between attributes, so reconstructing children back-to-back
-    // would merge them together (e.g. `<span class="x">` becoming
-    // `<spanclass="x">`). Restore a single separating space wherever the
-    // previous node's end position doesn't line up with the next node's start.
-    //
-    // WhitespaceNode children already print their own whitespace (including
-    // synthetic ones inserted by autofixers/rewriters, whose location doesn't
-    // line up with the surrounding nodes), so the gap-fill check is skipped
-    // both for the WhitespaceNode itself and for whatever child follows it -
-    // otherwise the gap-fill logic would see the following child's position
-    // doesn't line up with `previousEnd` (which the WhitespaceNode leaves
-    // untouched) and write a second, duplicate separating space.
     let previousEnd = node.tag_name?.location.end ?? node.tag_opening?.location.end
-    let previousWasWhitespace = false
 
     node.children.forEach(child => {
-      const childIsWhitespace = isWhitespaceNode(child)
-
-      if (previousEnd && !childIsWhitespace && !previousWasWhitespace && !this.samePosition(previousEnd, child.location.start)) {
-        this.write(" ")
+      if (previousEnd && !isWhitespaceNode(child) && !this.context.endsWithWhitespace()) {
+        this.write(this.separatorBetween(node.source, previousEnd, child.location.start, " "))
       }
 
       this.visit(child)
 
-      previousWasWhitespace = childIsWhitespace
-
-      if (!childIsWhitespace) {
-        previousEnd = child.location.end
-      }
+      previousEnd = child.location.end
     })
 
     if (node.tag_closing) {
+      if (previousEnd && !this.context.endsWithWhitespace()) {
+        this.write(this.separatorBetween(node.source, previousEnd, node.tag_closing.location.start, ""))
+      }
+
       this.write(node.tag_closing.value)
     }
-  }
-
-  private samePosition(a: Nodes.Position, b: Nodes.Position): boolean {
-    return a.line === b.line && a.column === b.column
   }
 
   visitHTMLCloseTagNode(node: Nodes.HTMLCloseTagNode): void {
@@ -559,6 +543,22 @@ export class IdentityPrinter extends Printer {
     if (node.end_node) {
       this.visit(node.end_node)
     }
+  }
+
+  /**
+   * Recover the whitespace separating two adjacent parts of an open tag
+   *
+   * A WhitespaceNode is its own separator, so nothing is written on either side of one.
+   */
+  protected separatorBetween(source: string | null, from: Nodes.Position, to: Nodes.Position, fallback: string): string {
+    if (!from.isBefore(to)) return ""
+    if (!source) return fallback
+
+    const separator = sliceBetweenPositions(source, from, to)
+
+    if (separator === null || separator === "" || separator.trim() !== "") return fallback
+
+    return separator
   }
 
   /**
