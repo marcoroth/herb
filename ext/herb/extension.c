@@ -47,25 +47,10 @@ static void* parse_without_gvl(void* arg) {
   return NULL;
 }
 
-static VALUE parse_without_gvl_body(VALUE arg) {
-  rb_thread_call_without_gvl(parse_without_gvl, (void*) arg, RUBY_UBF_IO, NULL);
-
-  return Qnil;
-}
-
-static VALUE parse_unlock_source(VALUE source) {
-  return rb_str_unlocktmp(source);
-}
-
 static VALUE parse_body(VALUE arg) {
   parse_args_T* args = (parse_args_T*) arg;
 
-  if (NIL_P(args->source) || RB_OBJ_FROZEN(args->source)) {
-    parse_without_gvl_body(arg);
-  } else {
-    rb_str_locktmp(args->source);
-    rb_ensure(parse_without_gvl_body, arg, parse_unlock_source, args->source);
-  }
+  rb_thread_call_without_gvl(parse_without_gvl, (void*) arg, NULL, NULL);
 
   if (args->print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args->allocator.context); }
 
@@ -286,12 +271,20 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   parser_options.error_count = &error_count;
 
   parse_args_T args = { 0 };
-  args.input = string;
   args.source = source;
   args.parser_options = &parser_options;
   args.print_arena_stats = print_arena_stats;
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  if (string != NULL) {
+    args.input = hb_allocator_strndup(&args.allocator, string, (size_t) RSTRING_LEN(source));
+
+    if (args.input == NULL) {
+      hb_allocator_destroy(&args.allocator);
+      rb_raise(rb_eNoMemError, "failed to allocate a parser input buffer");
+    }
+  }
 
   return rb_ensure(parse_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
