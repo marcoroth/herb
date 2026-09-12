@@ -498,5 +498,117 @@ module Parser
       assert_equal "<%", condition.tag_opening.value
       assert_equal "%>", condition.tag_closing.value
     end
+    test "else and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% if a %>
+          x
+        <%
+        else
+          y
+        end
+        %>
+      ERB
+    end
+
+    test "elsif and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% if a %>
+          x
+        <% elsif b
+          y
+        end %>
+      ERB
+    end
+
+    test "when and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case t %>
+        <% when 1
+          a
+        end %>
+      ERB
+    end
+
+    test "rescue and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% begin %>
+          x
+        <% rescue
+          y
+        end %>
+      ERB
+    end
+
+    test "ensure and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% begin %>
+          x
+        <% ensure
+          y
+        end %>
+      ERB
+    end
+
+    test "else and end in same ERB tag splits the tag across both nodes" do
+      result = Herb.parse(<<~ERB)
+        <% if a %>
+          x
+        <% else
+          y
+        end %>
+      ERB
+
+      if_node = result.value.children.first
+      else_node = if_node.subsequent
+
+      assert_equal "<%", else_node.tag_opening.value
+      assert_equal " else\n  y\n", else_node.content.value
+      assert_nil else_node.tag_closing
+
+      end_node = if_node.end_node
+
+      assert_nil end_node.tag_opening
+      assert_equal "end ", end_node.content.value
+      assert_equal "%>", end_node.tag_closing.value
+    end
+
+    test "when and end in same ERB tag keeps the condition" do
+      result = Herb.parse(<<~ERB)
+        <% case t %>
+        <% when 1
+          a
+        end %>
+      ERB
+
+      case_node = result.value.children.first
+
+      assert_equal 1, case_node.conditions.size
+      refute_nil case_node.end_node
+    end
+
+    test "else and end in same ERB tag closes the block" do
+      result = Herb.parse(<<~ERB)
+        <% if a %>
+          x
+        <% else
+          y
+        end %>
+      ERB
+
+      assert_empty result.value.recursive_errors.reject { |error| error.is_a?(Herb::Errors::RubyParseError) }
+    end
+
+    test "two end keywords in same ERB tag stay one end node" do
+      result = Herb.parse(<<~ERB)
+        <% if true; if true %>
+          <p>content</p>
+        <% end; end %>
+      ERB
+
+      if_node = result.value.children.first
+
+      assert_equal " end; end ", if_node.end_node.content.value
+      assert_equal "%>", if_node.end_node.tag_closing.value
+    end
   end
 end

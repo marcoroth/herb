@@ -1,0 +1,38 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0052_when and end in same ERB tag"
+input: |2-
+<% case t %>
+<% when 1
+  a
+end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:6))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case t " (location: (1:2)-(1:10))
+    │   ├── tag_closing: "%>" (location: (1:10)-(1:12))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:12)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(4:0))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 1
+    │   │         a
+    │   │       " (location: (2:2)-(4:0))
+    │   │       ├── tag_closing: ∅
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: []
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:6))
+    │           ├── tag_opening: ∅
+    │           ├── content: "end " (location: (4:0)-(4:4))
+    │           └── tag_closing: "%>" (location: (4:4)-(4:6))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:6)-(5:0))
+        └── content: "\n"
