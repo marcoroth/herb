@@ -19,15 +19,9 @@ module Engine
         <% end %>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, parser_options: { strict: true })
-      end
-
-      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
-
-      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false, parser_options: { strict: false } })
-      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false, parser_options: { strict: false } })
-      assert_evaluated_snapshot(template, { status: "other" }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false })
+      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false })
+      assert_evaluated_snapshot(template, { status: "other" }, { escape: false })
     end
 
     test "case in pattern in same ERB tag" do
@@ -42,7 +36,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, parser_options: { strict: true })
+        Herb::Engine.new(template)
       end
 
       assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
@@ -58,14 +52,8 @@ module Engine
         <% end %>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, parser_options: { strict: true })
-      end
-
-      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
-
-      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false, parser_options: { strict: false } })
-      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false })
+      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false })
     end
 
     test "case in on newline in same ERB tag" do
@@ -78,14 +66,8 @@ module Engine
         <% end %>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, parser_options: { strict: true })
-      end
-
-      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
-
-      assert_evaluated_snapshot(template, { count: 1 }, { escape: false, parser_options: { strict: false } })
-      assert_evaluated_snapshot(template, { count: 2 }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { count: 1 }, { escape: false })
+      assert_evaluated_snapshot(template, { count: 2 }, { escape: false })
     end
   end
 end

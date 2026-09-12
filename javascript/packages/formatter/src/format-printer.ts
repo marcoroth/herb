@@ -35,6 +35,8 @@ import {
   isPureWhitespaceNode,
   filterNodes,
   getHelper,
+  continuesIntoNextNode,
+  continuesFromPreviousNode,
 } from "@herb-tools/core"
 
 import {
@@ -600,8 +602,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * @param withFormatting - if true, format the content; if false, preserve original
    */
   reconstructERBNode(node: ERBNode, withFormatting: boolean = true): string {
-    const open = node.tag_opening?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
+    const open = node.tag_opening?.value ?? (continuesFromPreviousNode(node) ? "<%" : "")
+    const close = node.tag_closing?.value ?? (continuesIntoNextNode(node) ? "%>" : "")
     const content = node.content?.value ?? ""
     const inner = withFormatting ? this.formatERBContent(content) : content
 

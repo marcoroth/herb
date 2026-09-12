@@ -219,20 +219,6 @@ module Engine
       assert_raises(SyntaxError) { RubyVM::InstructionSequence.compile(erubi) }
     end
 
-    test "refuses a case with its first condition in the same tag that Erubi compiles" do
-      template = <<~ERB
-        <% case animal
-        when "cat" %>
-          <p>You chose a cat!</p>
-        <% end %>
-      ERB
-
-      assert_snapshot_matches(Erubi::Engine.new(template).src, "engine_erubi_divergence_test-17")
-
-      assert_raises(Herb::Engine::ParseError) { Herb::Engine.new(template) }
-
-      assert_equal Erubi::Engine.new(template).src, Herb::Engine.new(template, parser_options: { strict: false }).src
-    end
 
     test "compiles a block expression that Erubi turns into invalid Ruby" do
       template = "<%= wrapper do %>\n  <p>hi</p>\n<% end %>\n"

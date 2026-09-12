@@ -9,6 +9,13 @@
 
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node);
 
+location_T* compute_then_keyword_for_content(
+  token_T* content,
+  analyzed_ruby_T* analyzed_ruby,
+  control_type_t control_type,
+  hb_allocator_T* allocator
+);
+
 location_T* compute_then_keyword(
   AST_ERB_CONTENT_NODE_T* erb_node,
   control_type_t control_type,

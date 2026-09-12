@@ -259,8 +259,8 @@ describe("ERB Formatter Compatibility Tests", () => {
   describe("Case statements", () => {
     test("formats case/when statements", () => {
       expectFormattedToMatch(dedent`
-        <% case status
-           when 'active' %>
+        <% case status %>
+        <% when 'active' %>
           <span class="badge-active">Active</span>
         <% when 'inactive' %>
           <span class="badge-inactive">Inactive</span>

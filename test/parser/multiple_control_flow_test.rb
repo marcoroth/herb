@@ -415,5 +415,88 @@ module Parser
       assert_parsed_snapshot(template, strict: true)
       assert_parsed_snapshot(template, strict: false)
     end
+    test "case and when in same ERB tag splits the tag content across both nodes" do
+      result = Herb.parse(<<~ERB)
+        <% case variable when "a" %>
+          A
+        <% end %>
+      ERB
+
+      case_node = result.value.children.first
+
+      assert_equal " case variable ", case_node.content.value
+      assert_nil case_node.tag_closing
+
+      condition = case_node.conditions.first
+
+      assert_nil condition.tag_opening
+      assert_equal "when \"a\" ", condition.content.value
+      assert_equal "%>", condition.tag_closing.value
+    end
+
+    test "case and when in same ERB tag keeps the split halves adjacent" do
+      result = Herb.parse(<<~ERB)
+        <% case variable
+           when "a" %>
+          A
+        <% end %>
+      ERB
+
+      case_node = result.value.children.first
+      condition = case_node.conditions.first
+
+      assert_equal case_node.content.location.end.line, condition.content.location.start.line
+      assert_equal case_node.content.location.end.column, condition.content.location.start.column
+    end
+
+    test "case and when in same ERB tag keeps the then keyword on the condition" do
+      result = Herb.parse(<<~ERB)
+        <% case variable when "a" then %>
+          A
+        <% end %>
+      ERB
+
+      condition = result.value.children.first.conditions.first
+
+      assert_equal "when \"a\" then ", condition.content.value
+      refute_nil condition.then_keyword
+    end
+
+    test "case in pattern in same ERB tag splits the tag content across both nodes" do
+      result = Herb.parse(<<~ERB)
+        <% case value in 1 %>
+          One
+        <% end %>
+      ERB
+
+      case_node = result.value.children.first
+
+      assert_equal " case value ", case_node.content.value
+      assert_nil case_node.tag_closing
+
+      condition = case_node.conditions.first
+
+      assert_nil condition.tag_opening
+      assert_equal "in 1 ", condition.content.value
+      assert_equal "%>", condition.tag_closing.value
+    end
+
+    test "case and when in separate ERB tags keeps both tags intact" do
+      result = Herb.parse(<<~ERB)
+        <% case variable %>
+        <% when "a" %>
+          A
+        <% end %>
+      ERB
+
+      case_node = result.value.children.first
+
+      assert_equal "%>", case_node.tag_closing.value
+
+      condition = case_node.conditions.first
+
+      assert_equal "<%", condition.tag_opening.value
+      assert_equal "%>", condition.tag_closing.value
+    end
   end
 end

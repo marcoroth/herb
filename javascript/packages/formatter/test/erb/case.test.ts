@@ -269,4 +269,84 @@ describe("@herb-tools/formatter", () => {
       expect(output).toEqual(input)
     })
   })
+  test("splits a case and its first when condition into separate ERB tags", () => {
+    const source = dedent`
+      <% case variable when "a" %>
+        A
+      <% when "b" %>
+        B
+      <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% case variable %>
+      <% when "a" %>
+        A
+      <% when "b" %>
+        B
+      <% end %>
+    `)
+  })
+
+  test("splits a case and its first when condition written on a second line", () => {
+    const source = dedent`
+      <% case variable
+         when "a" %>
+        A
+      <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% case variable %>
+      <% when "a" %>
+        A
+      <% end %>
+    `)
+  })
+
+  test("keeps a then keyword when splitting a case and its first when condition", () => {
+    const source = dedent`
+      <% case variable when "a" then %>
+        A
+      <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% case variable %>
+      <% when "a" then %>
+        A
+      <% end %>
+    `)
+  })
+
+  test("splits a case and its first in pattern written on a second line", () => {
+    const source = dedent`
+      <% case value
+         in 1 %>
+        One
+      <% in 2 %>
+        Two
+      <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% case value %>
+      <% in 1 %>
+        One
+      <% in 2 %>
+        Two
+      <% end %>
+    `)
+  })
+
+  test("leaves a case and its conditions alone when they are already separate tags", () => {
+    const source = dedent`
+      <% case variable %>
+      <% when "a" %>
+        A
+      <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
+  })
 })

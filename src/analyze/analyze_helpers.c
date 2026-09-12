@@ -88,9 +88,51 @@ bool has_then_keyword(analyzed_ruby_T* analyzed) {
   return analyzed && analyzed->then_keyword_count > 0;
 }
 
-bool has_inline_case_condition(analyzed_ruby_T* analyzed) {
-  return (has_case_node(analyzed) && has_when_node(analyzed))
-      || (has_case_match_node(analyzed) && has_in_node(analyzed));
+typedef struct {
+  const uint8_t* source_start;
+  uint32_t offset;
+  bool found;
+} inline_condition_offset_T;
+
+static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
+  inline_condition_offset_T* context = (inline_condition_offset_T*) data;
+
+  uint32_t keyword_offset = UINT32_MAX;
+
+  if (node->type == PM_WHEN_NODE) {
+    keyword_offset = (uint32_t) (((const pm_when_node_t*) node)->keyword_loc.start - context->source_start);
+  } else if (node->type == PM_IN_NODE) {
+    keyword_offset = (uint32_t) (((const pm_in_node_t*) node)->in_loc.start - context->source_start);
+  } else if (node->type == PM_MATCH_PREDICATE_NODE) {
+    keyword_offset = (uint32_t) (((const pm_match_predicate_node_t*) node)->operator_loc.start - context->source_start);
+  }
+
+  if (keyword_offset != UINT32_MAX && (!context->found || keyword_offset < context->offset)) {
+    context->offset = keyword_offset;
+    context->found = true;
+  }
+
+  pm_visit_child_nodes(node, search_inline_condition_offset, context);
+
+  return false;
+}
+
+bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {
+  if (!analyzed || !analyzed->root || !offset) { return false; }
+
+  inline_condition_offset_T context = {
+    .source_start = analyzed->parser.start,
+    .offset = UINT32_MAX,
+    .found = false,
+  };
+
+  pm_visit_node(analyzed->root, search_inline_condition_offset, &context);
+
+  if (!context.found) { return false; }
+
+  *offset = context.offset;
+
+  return true;
 }
 
 bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {

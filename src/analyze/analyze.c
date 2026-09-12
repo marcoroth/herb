@@ -97,16 +97,6 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           options
         );
       }
-
-      if (options && options->strict && !analyzed->valid && has_inline_case_condition(analyzed)) {
-        append_erb_case_with_conditions_error(
-          erb_content_node->base.location.start,
-          erb_content_node->base.location.end,
-          allocator,
-          &erb_content_node->base.errors,
-          options
-        );
-      }
     } else {
       erb_content_node->parsed = false;
       erb_content_node->valid = true;
@@ -314,6 +304,34 @@ static size_t process_case_structure(
   bool has_inline_when = has_case_node(analyzed) && has_when_node(analyzed);
   bool has_inline_in = has_case_match_node(analyzed) && has_in_node(analyzed);
 
+  token_T* case_content = erb_node->content;
+  token_T* case_tag_closing = erb_node->tag_closing;
+  token_T* condition_content = NULL;
+  token_T* split_case_content = NULL;
+  uint32_t condition_offset = 0;
+
+  if ((has_inline_when || has_inline_in) && inline_condition_keyword_offset(analyzed, &condition_offset)) {
+    token_T* head = NULL;
+    token_T* tail = NULL;
+
+    if (token_split(erb_node->content, condition_offset, allocator, &head, &tail)) {
+      split_case_content = head;
+      case_content = head;
+      case_tag_closing = NULL;
+      condition_content = tail;
+
+      if (has_inline_in && head->location.start.line == head->location.end.line) {
+        append_erb_case_with_conditions_error(
+          erb_node->base.location.start,
+          erb_node->base.location.end,
+          allocator,
+          &erb_node->base.errors,
+          context->options
+        );
+      }
+    }
+  }
+
   index++;
 
   const control_type_t prelude_stop[] = { CONTROL_TYPE_WHEN, CONTROL_TYPE_IN, CONTROL_TYPE_END };
@@ -330,21 +348,31 @@ static size_t process_case_structure(
     hb_array_T* statements = non_when_non_in_children;
     non_when_non_in_children = hb_array_init(8, allocator);
 
-    position_T start_position =
+    position_T start_position = condition_content ? condition_content->location.start
+                                                  : (erb_node->tag_closing ? erb_node->tag_closing->location.end
+                                                                           : erb_node->content->location.end);
+    position_T end_position =
       erb_node->tag_closing ? erb_node->tag_closing->location.end : erb_node->content->location.end;
-    position_T end_position = start_position;
 
     if (hb_array_size(statements) > 0) {
       AST_NODE_T* last_child = hb_array_last(statements);
       end_position = last_child->location.end;
     }
 
+    token_T* condition_tag_closing = condition_content ? token_copy(erb_node->tag_closing, allocator) : NULL;
+    location_T* then_keyword = compute_then_keyword_for_content(
+      condition_content,
+      analyzed,
+      has_inline_when ? CONTROL_TYPE_WHEN : CONTROL_TYPE_IN,
+      allocator
+    );
+
     if (has_inline_when) {
       AST_NODE_T* synthetic_node = (AST_NODE_T*) ast_erb_when_node_init(
         NULL,
-        NULL,
-        NULL,
-        NULL,
+        condition_content,
+        condition_tag_closing,
+        then_keyword,
         statements,
         start_position,
         end_position,
@@ -356,9 +384,9 @@ static size_t process_case_structure(
     } else {
       AST_NODE_T* synthetic_node = (AST_NODE_T*) ast_erb_in_node_init(
         NULL,
-        NULL,
-        NULL,
-        NULL,
+        condition_content,
+        condition_tag_closing,
+        then_keyword,
         statements,
         start_position,
         end_position,
@@ -488,8 +516,8 @@ static size_t process_case_structure(
   if (hb_array_size(in_conditions) > 0) {
     AST_ERB_CASE_MATCH_NODE_T* case_match_node = ast_erb_case_match_node_init(
       token_copy(erb_node->tag_opening, allocator),
-      token_copy(erb_node->content, allocator),
-      token_copy(erb_node->tag_closing, allocator),
+      token_copy(case_content, allocator),
+      token_copy(case_tag_closing, allocator),
       non_when_non_in_children,
       HERB_PRISM_NODE_EMPTY,
       in_conditions,
@@ -501,6 +529,7 @@ static size_t process_case_structure(
       allocator
     );
 
+    token_free(split_case_content, allocator);
     ast_node_free((AST_NODE_T*) erb_node, allocator);
     hb_array_append(output_array, (AST_NODE_T*) case_match_node);
     hb_array_free(&when_conditions);
@@ -509,8 +538,8 @@ static size_t process_case_structure(
 
   AST_ERB_CASE_NODE_T* case_node = ast_erb_case_node_init(
     token_copy(erb_node->tag_opening, allocator),
-    token_copy(erb_node->content, allocator),
-    token_copy(erb_node->tag_closing, allocator),
+    token_copy(case_content, allocator),
+    token_copy(case_tag_closing, allocator),
     non_when_non_in_children,
     HERB_PRISM_NODE_EMPTY,
     when_conditions,
@@ -522,6 +551,7 @@ static size_t process_case_structure(
     allocator
   );
 
+  token_free(split_case_content, allocator);
   ast_node_free((AST_NODE_T*) erb_node, allocator);
   hb_array_append(output_array, (AST_NODE_T*) case_node);
   hb_array_free(&in_conditions);

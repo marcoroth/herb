@@ -12,20 +12,16 @@ options: {strict: true}
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(6:9))
-    │   ├── errors: (1 error)
-    │   │   └── @ ERBCaseWithConditionsError (location: (1:0)-(2:10))
-    │   │       └── message: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
-    │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case value
-    │      in 1 " (location: (1:2)-(2:8))
-    │   ├── tag_closing: "%>" (location: (2:8)-(2:10))
+    │      " (location: (1:2)-(2:3))
+    │   ├── tag_closing: ∅
     │   ├── children: []
     │   ├── conditions: (2 items)
-    │   │   ├── @ ERBInNode (location: (2:10)-(4:0))
+    │   │   ├── @ ERBInNode (location: (2:3)-(4:0))
     │   │   │   ├── tag_opening: ∅
-    │   │   │   ├── content: ∅
-    │   │   │   ├── tag_closing: ∅
+    │   │   │   ├── content: "in 1 " (location: (2:3)-(2:8))
+    │   │   │   ├── tag_closing: "%>" (location: (2:8)-(2:10))
     │   │   │   ├── then_keyword: ∅
     │   │   │   └── statements: (1 item)
     │   │   │       └── @ HTMLTextNode (location: (2:10)-(4:0))
