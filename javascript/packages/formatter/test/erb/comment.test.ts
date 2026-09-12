@@ -637,16 +637,27 @@ describe("@herb-tools/formatter", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toEqual(dedent`
-        <%
-        =begin
-        %>
-        commented out
-        <%
-        =end
-        %>
-        <div>Content</div>
-      `)
+      expect(result).toEqual(source)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+
+    test("leaves a delimiter in column 0 when the tag itself is indented", () => {
+      const source = dedent`
+        <div>
+          <%
+        =begin %>
+          x
+          <%
+        =end %>
+        </div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(source)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
 
       expectFormattedToMatch(result, { passes: 2 })
     })
@@ -671,6 +682,29 @@ describe("@herb-tools/formatter", () => {
         }
       }
 
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+    })
+
+    test("keeps a heredoc carrying the delimiter text on its own lines inside a text flow", () => {
+      const source = dedent`
+        <p>before <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %> after</p>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        <p>
+          before
+          <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %>
+          after
+        </p>
+      `)
       expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
     })
 

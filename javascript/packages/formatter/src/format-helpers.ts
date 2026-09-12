@@ -262,25 +262,31 @@ export function isMultilineERBComment(node: Node): boolean {
 }
 
 /**
- * Matches a Ruby block-comment delimiter (`=begin` / `=end`) that sits at the
- * very start of a line inside an ERB tag's content. Ruby only recognizes these
- * delimiters when they are in column 0, so the formatter must keep them on their
- * own line and never indent or inline them.
+ * Matches a Ruby block-comment delimiter (`=begin` / `=end`) at the start of a line.
  */
 export const ERB_BLOCK_COMMENT_DELIMITER = /\n=(begin|end)\b/
 
 /**
- * Check if an ERB content node contains a Ruby block-comment delimiter
- * (`=begin` / `=end`) anchored to the start of a line. Such tags are
- * whitespace-significant: collapsing them onto a preceding line, or indenting
- * the delimiter, changes the delimiter's column and breaks the Ruby semantics.
+ * Check if an ERB tag carries a Ruby block-comment delimiter (`=begin` / `=end`).
  */
 export function isERBBlockCommentDelimiter(node: Node): boolean {
   if (!isNode(node, ERBContentNode)) return false
 
   const content = node.content?.value ?? ""
 
-  return !NON_SQUIGGLY_HEREDOC.test(content) && ERB_BLOCK_COMMENT_DELIMITER.test(content)
+  return ERB_BLOCK_COMMENT_DELIMITER.test(content)
+}
+
+/**
+ * Check if an ERB tag has to sit on a line of its own.
+ *
+ * Ruby only recognizes `=begin` / `=end` as block-comment delimiters at the start of a
+ * line, and a comment that already spans lines cannot be joined onto one. Both are lost
+ * as soon as the tag is inlined, appended to a preceding line, or fused into a text-flow
+ * run, so both are kept block-level.
+ */
+export function isOwnLineERBTag(node: Node): boolean {
+  return isMultilineERBComment(node) || isERBBlockCommentDelimiter(node)
 }
 
 /**
@@ -300,7 +306,7 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
   }
 
   if (isERBTagNode(child)) {
-    if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) return false
+    if (isOwnLineERBTag(child)) return false
 
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]

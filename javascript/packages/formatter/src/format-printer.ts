@@ -47,7 +47,7 @@ import {
   endsWithWhitespace,
   isFrontmatter,
   isInlineElement,
-  isMultilineERBComment,
+  isOwnLineERBTag,
   isERBBlockCommentDelimiter,
   NON_SQUIGGLY_HEREDOC,
   setEdgeWhitespace,
@@ -1083,7 +1083,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if ((isERBCommentNode(node) || isInlineRubyCommentNode(node))) {
       this.visitERBCommentNode(node)
     } else if (isERBBlockCommentDelimiter(node)) {
-      this.printExpandedERBNode(node)
+      this.printVerbatimERBNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)
     } else {
@@ -1142,17 +1142,26 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     this.withIndent(() => {
       dedentedLines.forEach(line => {
-        if (line === "") {
-          this.push("")
-        } else if (/^=(begin|end)\b/.test(line)) {
-          this.push(line)
-        } else {
-          this.push(this.indent + line)
-        }
+        this.push(line === "" ? "" : this.indent + line)
       })
     })
 
     this.pushWithIndent(close)
+  }
+
+  /**
+   * Print an ERB tag exactly as it was written, indenting only its first line.
+   *
+   * Ruby recognizes `=begin` / `=end` only at the start of a line, so a tag carrying one
+   * is reproduced byte for byte and its later lines are left in the column the author put
+   * them in.
+   */
+  private printVerbatimERBNode(node: ERBContentNode) {
+    const [first, ...rest] = IdentityPrinter.print(node).split("\n")
+
+    this.pushWithIndent(first)
+
+    rest.forEach(line => this.push(line))
   }
 
   visitERBOpenTagNode(node: ERBOpenTagNode) {
@@ -1873,7 +1882,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
-      if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) {
+      if (isOwnLineERBTag(child)) {
         return null
       }
 
@@ -1950,7 +1959,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
       } else if (isNode(child, ERBContentNode)) {
-        if (isMultilineERBComment(child) || isERBBlockCommentDelimiter(child)) {
+        if (isOwnLineERBTag(child)) {
           return null
         }
       } else {
