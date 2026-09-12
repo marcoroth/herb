@@ -623,4 +623,120 @@ describe("@herb-tools/formatter", () => {
       expectFormattedToMatch(result, { passes: 2 })
     })
   })
+
+  describe("Ruby block comments (=begin/=end)", () => {
+    test("keeps `=begin`/`=end` delimiters anchored to column 0", () => {
+      const source = dedent`
+        <%
+        =begin %>
+        commented out
+        <%
+        =end %>
+        <div>Content</div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(source)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+
+    test("leaves a delimiter in column 0 when the tag itself is indented", () => {
+      const source = dedent`
+        <div>
+          <%
+        =begin %>
+          x
+          <%
+        =end %>
+        </div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(source)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+
+    test("does not collapse a block comment onto a single line", () => {
+      const source = dedent`
+        <%
+        =begin %>
+        <span class="x">x</span>
+        <%
+        =end %>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).not.toContain("<% =begin %>")
+      expect(result).not.toContain("<% =end %>")
+
+      for (const line of result.split("\n")) {
+        if (/=(begin|end)\b/.test(line)) {
+          expect(line).toMatch(/^=(begin|end)\b/)
+        }
+      }
+
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+    })
+
+    test("keeps a heredoc carrying the delimiter text on its own lines inside a text flow", () => {
+      const source = dedent`
+        <p>before <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %> after</p>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        <p>
+          before
+          <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %>
+          after
+        </p>
+      `)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+    })
+
+    test("does not treat heredoc body text as a block-comment delimiter", () => {
+      const source = dedent`
+        <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <%= <<HEREDOC
+        =begin literal
+        HEREDOC
+        %>
+      `)
+      expect(Herb.parse(result).value.recursiveErrors()).toEqual([])
+    })
+
+    test("an already-expanded block comment is a fixed point", () => {
+      expectFormattedToMatch(dedent`
+        <%
+        =begin
+        %>
+        commented out
+        <%
+        =end
+        %>
+      `, { passes: 2 })
+    })
+  })
 })

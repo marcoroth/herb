@@ -10,7 +10,7 @@ import {
   isClosingPunctuation,
   isInlineElement,
   isLineBreakingElement,
-  isMultilineERBComment,
+  isOwnLineERBTag,
   isERBTagNode,
   needsSpaceBetween,
 } from "./format-helpers.js"
@@ -104,7 +104,7 @@ export class TextFlowEngine {
           this.delegate.pushWithIndent(inlineContent)
           inlineContent = ""
         }
-      } else if (isERBTagNode(child) && !isMultilineERBComment(child)) {
+      } else if (isERBTagNode(child) && !isOwnLineERBTag(child)) {
         inlineContent += this.delegate.renderERBAsString(child)
         processedCount++
         lastProcessedIndex = index
@@ -124,7 +124,7 @@ export class TextFlowEngine {
           break
         }
 
-        if (isERBTagNode(child) && !isMultilineERBComment(child)) {
+        if (isERBTagNode(child) && !isOwnLineERBTag(child)) {
           inlineContent += this.delegate.renderERBAsString(child)
           processedIndices.add(index)
           lastProcessedIndex = index

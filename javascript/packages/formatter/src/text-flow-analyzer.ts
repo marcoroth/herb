@@ -8,7 +8,7 @@ import {
   hasWhitespaceBetween,
   isInlineElement,
   isLineBreakingElement,
-  isMultilineERBComment,
+  isOwnLineERBTag,
   isERBTagNode,
 } from "./format-helpers.js"
 
@@ -95,7 +95,7 @@ export class TextFlowAnalyzer {
         }
 
         lastProcessedIndex = i
-      } else if (isMultilineERBComment(child)) {
+      } else if (isOwnLineERBTag(child)) {
         result.push({
           unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
           node: child

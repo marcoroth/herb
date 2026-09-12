@@ -39,6 +39,40 @@ export interface ContentUnitWithNode {
  */
 export const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
+export const NON_SQUIGGLY_HEREDOC = /<<(?!~)-?['"`]?[A-Za-z_]/
+
+/**
+ * Matches a line break, with or without a carriage return.
+ */
+export const LINE_BREAK = /\r?\n/
+
+/**
+ * Matches ASCII whitespace at the very start of a string.
+ *
+ * Deliberately not `\s`, for the reason {@link ASCII_WHITESPACE} gives.
+ */
+export const LEADING_ASCII_WHITESPACE = /^[ \t\n\r]+/
+
+/**
+ * Matches an ERB tag appearing anywhere inside a string.
+ */
+export const ERB_TAG = /<%[^%]*%>/
+
+/**
+ * Matches a line break at the very start of a string, after optional horizontal space.
+ */
+export const LEADING_LINE_BREAK = /^[ \t]*\r?\n/
+
+/**
+ * Matches a newline at the start of a string, after optional whitespace.
+ */
+export const LEADING_NEWLINE = /^\s*\n/
+
+/**
+ * Matches a string that is empty or entirely whitespace.
+ */
+export const WHITESPACE_ONLY = /^\s*$/
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
@@ -260,6 +294,34 @@ export function isMultilineERBComment(node: Node): boolean {
 }
 
 /**
+ * Matches a Ruby block-comment delimiter (`=begin` / `=end`) at the start of a line.
+ */
+export const ERB_BLOCK_COMMENT_DELIMITER = /\n=(begin|end)\b/
+
+/**
+ * Check if an ERB tag carries a Ruby block-comment delimiter (`=begin` / `=end`).
+ */
+export function isERBBlockCommentDelimiter(node: Node): boolean {
+  if (!isNode(node, ERBContentNode)) return false
+
+  const content = node.content?.value ?? ""
+
+  return ERB_BLOCK_COMMENT_DELIMITER.test(content)
+}
+
+/**
+ * Check if an ERB tag has to sit on a line of its own.
+ *
+ * Ruby only recognizes `=begin` / `=end` as block-comment delimiters at the start of a
+ * line, and a comment that already spans lines cannot be joined onto one. Both are lost
+ * as soon as the tag is inlined, appended to a preceding line, or fused into a text-flow
+ * run, so both are kept block-level.
+ */
+export function isOwnLineERBTag(node: Node): boolean {
+  return isMultilineERBComment(node) || isERBBlockCommentDelimiter(node)
+}
+
+/**
  * Check if a node should be appended to the last line (for adjacent inline elements and punctuation)
  */
 export function shouldAppendToLastLine(child: Node, siblings: Node[], index: number): boolean {
@@ -276,7 +338,7 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
   }
 
   if (isERBTagNode(child)) {
-    if (isMultilineERBComment(child)) return false
+    if (isOwnLineERBTag(child)) return false
 
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]

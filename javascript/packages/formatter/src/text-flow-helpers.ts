@@ -7,7 +7,7 @@ import {
   endsWithWhitespace,
   hasWhitespaceBetween,
   isInlineElement,
-  isMultilineERBComment,
+  isOwnLineERBTag,
   isERBTagNode,
   normalizeAndSplitWords,
   startsWithWhitespace,
@@ -22,7 +22,7 @@ import {
  * keeps the existing block layout for free-standing control flow.
  */
 export function isTextFlowNode(node: Node, children?: Node[], index?: number): boolean {
-  if (isERBTagNode(node)) return !isMultilineERBComment(node)
+  if (isERBTagNode(node)) return !isOwnLineERBTag(node)
   if (isNode(node, HTMLTextNode) && node.content.trim() !== "") return true
   if (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) return true
 
