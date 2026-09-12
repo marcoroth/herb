@@ -1,0 +1,33 @@
+{
+  "name": "@herb-tools/minifier",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "javascript/packages/minifier/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "outputs": ["{projectRoot}/dist"],
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      },
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "@herb-tools/printer:build",
+        "@herb-tools/rewriter:build"
+      ]
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "clean"
+      }
+    }
+  },
+  "tags": []
+}
