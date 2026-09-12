@@ -89,10 +89,6 @@ module Engine
           carried = shapes(evaluate(compiler, assigns))
           known = recorded(compiler)
 
-          carried.each_key do |index|
-            assert_includes known.keys, index, "index #{index} carries a value but names no slot, so nothing on the page can receive it"
-          end
-
           assert_empty carried.keys - known.keys
         end
 
@@ -117,7 +113,6 @@ module Engine
         interpolated = compiler.slot_visitor.slots.find { |slot| slot.type == :attribute_interpolation }
 
         assert_equal ["7"], values.fetch(interpolated.index)
-        assert_includes values.values.grep(String).join, 'id="row_7"'
 
         assert_equal %(<form><li id="row_7">x</li></form>), values.values.grep(String).join
       end
@@ -130,7 +125,6 @@ module Engine
         presence = compiler.slot_visitor.slots.find { |slot| slot.type == :boolean_attribute }
 
         assert_equal true, values.fetch(presence.index)
-        assert_includes values.values.grep(String).join, "muted"
 
         assert_equal "<form><video muted></video></form>", values.values.grep(String).join
       end

@@ -28,8 +28,6 @@ module Engine
       output = `echo '<div>Hello</div>' | exe/herb lex`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "TOKEN_HTML_TAG_START"
-      assert_includes output, "div"
 
       assert_snapshot_matches(output, "cli_stdin_test-0")
     end
@@ -38,8 +36,6 @@ module Engine
       output = `echo '<div>Hello</div>' | exe/herb parse`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "DocumentNode"
-      assert_includes output, "HTMLElementNode"
 
       assert_snapshot_matches(output, "cli_stdin_test-1")
     end
@@ -48,8 +44,6 @@ module Engine
       output = `echo '<div><%= name %></div>' | exe/herb compile`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "_buf = ::String.new"
-      assert_includes output, "__herb.h((name))"
 
       assert_snapshot_matches(output, "cli_stdin_test-2")
     end
@@ -58,7 +52,6 @@ module Engine
       output = `echo '<div><%= user.name %></div>' | exe/herb ruby`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "user.name"
 
       assert_snapshot_matches(output, "cli_stdin_test-3")
     end
@@ -67,8 +60,6 @@ module Engine
       output = `echo '<div><%= user.name %></div>' | exe/herb html`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "<div>"
-      assert_includes output, "</div>"
 
       assert_snapshot_matches(output, "cli_stdin_test-4")
     end
@@ -77,7 +68,6 @@ module Engine
       output = `echo '<div>Static</div>' | exe/herb render`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "<div>Static</div>"
 
       assert_snapshot_matches(output, "cli_stdin_test-5")
     end
@@ -88,7 +78,6 @@ module Engine
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       json_data = JSON.parse(output)
       assert_equal true, json_data["success"]
-      assert_includes json_data["source"], "_buf = ::String.new"
 
       assert_snapshot_matches(json_data["source"], "cli_stdin_test-6")
     end
@@ -106,8 +95,6 @@ module Engine
       output = `echo '<div><%= x %></div>' | exe/herb compile --no-escape --freeze`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-      assert_includes output, "# frozen_string_literal: true"
-      assert_includes output, "(x).to_s"
 
       assert_snapshot_matches(output, "cli_stdin_test-7")
     end
@@ -117,8 +104,6 @@ module Engine
         output = `exe/herb lex - < #{file_path}`
 
         assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-        assert_includes output, "TOKEN_HTML_TAG_START"
-        assert_includes output, "article"
 
         assert_snapshot_matches(output, "cli_stdin_test-8")
       end
@@ -129,8 +114,6 @@ module Engine
         output = `cat #{file_path} | exe/herb lex`
 
         assert $CHILD_STATUS.success?, "Command failed with: #{output}"
-        assert_includes output, "TOKEN_HTML_TAG_START"
-        assert_includes output, "section"
 
         assert_snapshot_matches(output, "cli_stdin_test-9")
       end

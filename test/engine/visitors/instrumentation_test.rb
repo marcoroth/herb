@@ -190,23 +190,16 @@ module Engine
       end
 
       test "frames a render tag at all" do
-        assert_includes compile(%(<%= render "posts/card" %>)), "Session.enter"
-
         assert_snapshot_matches(compile(%(<%= render "posts/card" %>)), "instrumentation_test-0")
       end
 
       test "leaves a render tag a render tag" do
         compiled = compile(%(<%= render "posts/card" %>))
 
-        assert_includes compiled, %(_buf << (render "posts/card").to_s)
-        refute_includes compiled, "Session.at("
-
         assert_snapshot_matches(compiled, "instrumentation_test-1")
       end
 
       test "keeps the body of a render that takes a block" do
-        assert_includes compile(%(<%= render layout: "box" do %>inner<% end %>)), "inner"
-
         assert_snapshot_matches(compile(%(<%= render layout: "box" do %>inner<% end %>)), "instrumentation_test-2")
       end
     end
@@ -225,8 +218,6 @@ module Engine
       end
 
       test "captures nothing unless it was asked to" do
-        refute_includes compile(%(<div><%= t(".title") %></div>)), "Session.output("
-
         assert_snapshot_matches(compile(%(<div><%= t(".title") %></div>)), "instrumentation_test-3")
       end
 
@@ -243,14 +234,10 @@ module Engine
       end
 
       test "takes anything that answers to call" do
-        assert_includes captured(%(<%= post.body %>), capture_output: ->(source) { source.include?("body") }), "Session.output("
-
         assert_snapshot_matches(captured(%(<%= post.body %>), capture_output: ->(source) { source.include?("body") }), "instrumentation_test-4")
       end
 
       test "leaves a tag it cannot make sense of alone" do
-        refute_includes captured(%(<%= post.body %>), capture_output: ->(_source) { raise "boom" }), "Session.output("
-
         assert_snapshot_matches(captured(%(<%= post.body %>), capture_output: ->(_source) { raise "boom" }), "instrumentation_test-5")
       end
 

@@ -131,8 +131,6 @@ class RenderGraphTest < Minitest::Spec
       unresolved: { "a.html.erb" => 1 }
     )
 
-    assert_includes graph.infer_signature("_card.html.erb").strict_locals_declaration, "**"
-
     assert_equal "<%# locals: (title: nil, **) %>", graph.infer_signature("_card.html.erb").strict_locals_declaration
   end
 

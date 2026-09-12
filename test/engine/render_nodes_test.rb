@@ -85,7 +85,6 @@ module Engine
       diagnostics = flat_project_diagnostics("posts/nope")
 
       assert_equal 1, diagnostics.size
-      assert_includes diagnostics.first.message, "could not be resolved"
 
       assert_equal %(Partial 'posts/nope' could not be resolved.
      Looked in:
@@ -116,7 +115,6 @@ module Engine
 
       assert_equal 1, diagnostics.length
       assert_equal :error, diagnostics.first.severity
-      assert_includes diagnostics.first.message, "Partial 'nonexistent/missing' could not be resolved"
 
       assert_equal %(Partial 'nonexistent/missing' could not be resolved.
      Looked in:
@@ -135,7 +133,6 @@ module Engine
 
       assert_equal 1, diagnostics.length
       assert_equal :warning, diagnostics.first.severity
-      assert_includes diagnostics.first.message, "Dynamic render call cannot be statically resolved"
 
       assert_equal %(Dynamic render call cannot be statically resolved), diagnostics.first.message
       assert_equal "RenderDynamic", diagnostics.first.code
@@ -151,7 +148,6 @@ module Engine
       diagnostics = render_diagnostics('<%= render partial: "missing/partial" %>')
 
       assert_equal 1, diagnostics.length
-      assert_includes diagnostics.first.message, "Partial 'missing/partial' could not be resolved"
 
       assert_equal %(Partial 'missing/partial' could not be resolved.
      Looked in:

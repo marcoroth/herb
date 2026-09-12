@@ -46,7 +46,6 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
     assert_equal "0.10.3", config.version
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
 
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
@@ -63,12 +62,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
-    assert_includes config.file_include_patterns, "**/*.other.erb"
-
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb", "**/*.other.erb"], config.file_include_patterns
-    assert_includes config.file_exclude_patterns, "**/*.custom.erb"
-    assert_includes config.file_exclude_patterns, "**/*.other.erb"
 
     assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "**/*.custom.erb", "**/*.other.erb"], config.file_exclude_patterns
   end
@@ -87,7 +81,6 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(subdir)
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
 
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
@@ -101,10 +94,6 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_include_patterns, "**/*.html"
-    assert_includes config.file_include_patterns, "**/*.html.erb"
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
-
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
 
@@ -116,10 +105,6 @@ class ConfigurationTest < Minitest::Spec
     YAML
 
     config = Herb::Configuration.load(@temp_dir)
-
-    assert_includes config.file_exclude_patterns, "node_modules/**/*"
-    assert_includes config.file_exclude_patterns, "vendor/**/*"
-    assert_includes config.file_exclude_patterns, "custom/**/*"
 
     assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "custom/**/*"], config.file_exclude_patterns
   end
@@ -149,10 +134,6 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.linter_include_patterns, "**/*.html.erb"
-    assert_includes config.linter_include_patterns, "**/*.xml.erb"
-    assert_includes config.linter_include_patterns, "**/*.custom.erb"
-
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.xml.erb", "**/*.custom.erb"], config.linter_include_patterns
   end
 
@@ -167,10 +148,6 @@ class ConfigurationTest < Minitest::Spec
     YAML
 
     config = Herb::Configuration.load(@temp_dir)
-
-    assert_includes config.linter_exclude_patterns, "node_modules/**/*"
-    assert_includes config.linter_exclude_patterns, "public/**/*"
-    assert_includes config.linter_exclude_patterns, "legacy/**/*"
 
     assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "public/**/*", "legacy/**/*"], config.linter_exclude_patterns
   end
@@ -187,10 +164,6 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.formatter_include_patterns, "**/*.html.erb"
-    assert_includes config.formatter_include_patterns, "**/*.xml.erb"
-    assert_includes config.formatter_include_patterns, "**/*.custom.erb"
-
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.xml.erb", "**/*.custom.erb"], config.formatter_include_patterns
   end
 
@@ -205,10 +178,6 @@ class ConfigurationTest < Minitest::Spec
     YAML
 
     config = Herb::Configuration.load(@temp_dir)
-
-    assert_includes config.formatter_exclude_patterns, "node_modules/**/*"
-    assert_includes config.formatter_exclude_patterns, "public/**/*"
-    assert_includes config.formatter_exclude_patterns, "generated/**/*"
 
     assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "public/**/*", "generated/**/*"], config.formatter_exclude_patterns
   end
@@ -337,8 +306,6 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config["files"]["include"], "**/*.custom.erb"
-
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config["files"]["include"]
     assert_equal({ "key" => "value" }, config["custom"])
   end
@@ -352,8 +319,6 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.dig(:files, :include), "**/*.custom.erb"
-
     assert_equal(["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.dig(:files, :include))
   end
 
@@ -365,8 +330,6 @@ class ConfigurationTest < Minitest::Spec
     YAML
 
     Herb.configure(@temp_dir)
-
-    assert_includes Herb.configuration.file_include_patterns, "**/*.custom.erb"
 
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], Herb.configuration.file_include_patterns
   end
@@ -392,18 +355,11 @@ class ConfigurationTest < Minitest::Spec
   test "default_file_patterns class method returns defaults" do
     patterns = Herb::Configuration.default_file_patterns
 
-    assert_includes patterns, "**/*.html"
-    assert_includes patterns, "**/*.html.erb"
-    assert_includes patterns, "**/*.turbo_stream.erb"
-
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb"], patterns
   end
 
   test "default_exclude_patterns class method returns defaults" do
     patterns = Herb::Configuration.default_exclude_patterns
-
-    assert_includes patterns, "node_modules/**/*"
-    assert_includes patterns, "vendor/**/*"
 
     assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*"], patterns
   end

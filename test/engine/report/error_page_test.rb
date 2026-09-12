@@ -111,7 +111,6 @@ module Engine
         status, _headers, body = middleware(wrapped_app(parse_error)).call(HTML_ENV)
 
         assert_equal 500, status
-        assert_includes body.first, "does not have a matching closing tag"
 
         assert_snapshot_matches(body.first, "error_page_test-0")
       end
@@ -199,10 +198,6 @@ module Engine
       test "says what is wrong without any JavaScript" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
-        assert_includes body.first, "This template could not be compiled"
-        assert_includes body.first, "app/views/posts/_post.html.erb:2:3"
-        assert_includes body.first, "Close the `&lt;form&gt;` before"
-
         assert_snapshot_matches(body.first, "error_page_test-1")
       end
 
@@ -218,10 +213,7 @@ module Engine
       test "escapes the source it prints" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
-        assert_includes body.first, "&lt;form&gt;"
-
         assert_snapshot_matches(body.first, "error_page_test-2")
-        refute_includes body.first[%r{<pre>.+?</pre>}m], "<form>"
 
         assert_snapshot_matches(body.first[%r{<pre>.+?</pre>}m], "error_page_test-3")
       end
@@ -230,8 +222,6 @@ module Engine
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
         main = body.first[%r{<main class="herb-error">.+?</main>}m]
-
-        assert_includes main, %(<footer class="herb-error-provenance">)
 
         assert_snapshot_matches(main, "error_page_test-4")
         assert_equal 1, body.first.scan("herb-error-provenance\"").size
@@ -269,7 +259,6 @@ module Engine
 
         assert_equal 2, body.first.scan("<section>").size
         assert_equal 2, payload(body.first)["diagnostics"].size
-        assert_includes body.first, "without a matching opening tag"
 
         assert_snapshot_matches(body.first, "error_page_test-5")
       end
@@ -279,7 +268,6 @@ module Engine
 
         assert_equal 2, body.first.scan("<section>").size
         assert_equal 2, body.first.scan("<pre>").size
-        assert_includes body.first, "app/views/posts/_post.html.erb:3:5"
 
         assert_snapshot_matches(body.first, "error_page_test-6")
       end
@@ -287,17 +275,11 @@ module Engine
       test "starts the dev tools when it is told where they are" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
 
-        assert_includes body.first, %(import { HerbDevTools } from "/assets/herb.js")
-        assert_includes body.first, "HerbDevTools.start("
-
         assert_snapshot_matches(body.first, "error_page_test-7")
       end
 
       test "reloads itself once the dev server says the file compiles again" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
-
-        assert_includes body.first, "onFixed: () => window.location.reload()"
-        refute_includes body.first, "devServer: false"
 
         assert_snapshot_matches(body.first, "error_page_test-8")
       end
@@ -305,15 +287,11 @@ module Engine
       test "hears that even when something else started the dev tools first" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
 
-        assert_includes body.first, %(document.addEventListener("herb:dev-server-fixed", () => window.location.reload()))
-
         assert_snapshot_matches(body.first, "error_page_test-9")
       end
 
       test "names the dev server port, so the tools reach a project that moved it" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: 9999).call(HTML_ENV)
-
-        assert_includes body.first, %(<meta name="herb-dev-server-port" content="9999">)
 
         assert_snapshot_matches(body.first, "error_page_test-10")
       end
@@ -321,15 +299,11 @@ module Engine
       test "asks for that port at the time it serves too" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: -> { 4321 }).call(HTML_ENV)
 
-        assert_includes body.first, %(<meta name="herb-dev-server-port" content="4321">)
-
         assert_snapshot_matches(body.first, "error_page_test-11")
       end
 
       test "leaves the port out when nobody named one, so the default still applies" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
-
-        refute_includes body.first, "herb-dev-server-port"
 
         assert_snapshot_matches(body.first, "error_page_test-12")
       end
@@ -339,16 +313,11 @@ module Engine
 
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: resolved).call(HTML_ENV)
 
-        assert_includes body.first, %(import { HerbDevTools } from "/assets/herb-abc123.js")
-
         assert_snapshot_matches(body.first, "error_page_test-13")
       end
 
       test "costs the overlay and not the page when it cannot answer" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> { raise "no pipeline" }).call(HTML_ENV)
-
-        refute_includes body.first, "HerbDevTools"
-        assert_includes body.first, "This template could not be compiled"
 
         assert_snapshot_matches(body.first, "error_page_test-14")
       end
@@ -356,15 +325,11 @@ module Engine
       test "leaves the script out when it names nothing yet" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> {}).call(HTML_ENV)
 
-        refute_includes body.first, "HerbDevTools"
-
         assert_snapshot_matches(body.first, "error_page_test-15")
       end
 
       test "leaves the script out when it is not" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
-
-        refute_includes body.first, "HerbDevTools"
 
         assert_snapshot_matches(body.first, "error_page_test-16")
       end

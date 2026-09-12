@@ -109,10 +109,6 @@ module Engine
 
           refute_empty reported, template
 
-          reported.each do |node_path|
-            assert_includes recorded, node_path, template
-          end
-
           assert_empty reported - recorded
         end
       end
@@ -390,9 +386,6 @@ module Engine
       test "the engine emits no markers unless the visitor is in the stack" do
         engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>")
 
-        refute_includes engine.src, "herb-slot"
-        refute_includes engine.src, "herb-region"
-
         assert_snapshot_matches(engine.src, "visitor_test-no-markers")
       end
 
@@ -412,7 +405,6 @@ module Engine
         Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
 
         assert_match(/\A[0-9a-f]{12}\z/, visitor.identifier)
-        refute_includes visitor.identifier, "views"
 
         assert_equal "19aa24b9908e", visitor.identifier
       end

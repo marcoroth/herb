@@ -203,7 +203,6 @@ module Dev
 
       assert_equal "schema", schema[:type]
       assert_equal 1, schema[:diagnostics].length
-      assert_includes schema[:diagnostics].first[:message], "boom"
 
       assert_equal "RuntimeError: boom", schema[:diagnostics].first[:message]
     end
@@ -252,8 +251,6 @@ module Dev
       subject.handle_event(event(:changed, "a.html.erb", "<div>\n  <form>\n</div>\n", "<div>\n  <form></form>\n</div>\n"))
 
       types = server.messages.map { |message, _| message[:type] }
-
-      assert_includes types, "schema"
 
       assert_equal ["schema", "invalidate"], types
       assert_equal [], server.messages.find { |message, _| message[:type] == "schema" }.first[:diagnostics]
