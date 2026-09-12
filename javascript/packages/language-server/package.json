@@ -60,6 +60,6 @@
     "vscode-languageserver-textdocument": "^1.0.14"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2"
+    "@types/node": "^26.5.0"
   }
 }
