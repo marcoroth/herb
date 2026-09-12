@@ -43,7 +43,7 @@ module Herb
         Engine.new(source || File.read(file), **engine_options(file, visitor))
 
         yield visitor
-      rescue StandardError => e
+      rescue Herb::Engine::CompilationError, StandardError => e
         @failures << Failure.new(file: file.to_s, error: e)
 
         nil

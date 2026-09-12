@@ -3,6 +3,7 @@
 require "did_you_mean"
 
 require_relative "state_directives"
+require_relative "state_overrides"
 
 module Herb
   class Engine
@@ -24,9 +25,11 @@ module Herb
         }.freeze #: Hash[String, Symbol]
 
         SEEDS_LOCAL = "_herb_seeds" #: String
+        OVERRIDES_LOCAL = "_herb_state_overrides" #: String
         BARE_IDENTIFIER = /\A[a-z_][a-zA-Z0-9_]*\z/ #: Regexp
         BINDABLE_ATTRIBUTES = ["value", "checked", "selected"].freeze #: Array[String]
         BINDABLE_ELEMENTS = ["input", "textarea", "select", "option"].freeze #: Array[String]
+        COLLECTION_SLOT_TYPES = [:collection, :keyed].freeze #: Array[Symbol]
 
         attr_reader :state_presence #: Hash[Integer, untyped]
         attr_reader :state_values #: Hash[Integer, untyped]
@@ -47,11 +50,30 @@ module Herb
           @state_counts = [] #: Array[Hash[Symbol, untyped]]
           @state_presence = {} #: Hash[Integer, untyped]
           @state_values = {} #: Hash[Integer, untyped]
+          @server_reads = {} #: Hash[String, Array[Hash[String, untyped]]]
+          @internal_states = {} #: Hash[String, StateDirectives::Declaration]
         end
 
         #: () -> bool
         def any?
-          !(@region_states.empty? && @item_states.empty?)
+          !(@region_states.empty? && @item_states.empty? && @internal_states.empty?)
+        end
+
+        #: () -> String
+        def declare_internal_block
+          name = "_herb_block_#{@internal_states.size}"
+
+          @internal_states[name] = StateDirectives::Declaration.new(name: name, kind: :boolean, default: "false", derived: nil, line: nil, column: nil)
+
+          name
+        end
+
+        #: (String) -> String
+        def internal_assignment(name)
+          declaration = @internal_states.fetch(name)
+          assignment = state_assignment(declaration)
+
+          @visitor.state_overrides? ? "#{overrides_prelude}; #{assignment}" : assignment
         end
 
         #: () -> Array[String]
@@ -68,12 +90,14 @@ module Herb
         #: () -> Hash[String, untyped]?
         def manifest
           declared = state_declarations
-          names = declared[:region].map { |declaration| declaration[:name] } + declared[:items].values.flatten.map { |declaration| declaration[:name] }
+          names = declared[:region].map { |declaration| declaration[:name] } + declared[:items].values.flatten.map { |declaration| declaration[:name] } + @internal_states.keys
 
           return nil if names.empty?
 
           reads = {} #: Hash[String, Array[Integer]]
           declarations = declared[:region].map { |declaration| declared_entry(declaration, "region") } + declared[:items].flat_map { |index, list| list.map { |declaration| declared_entry(declaration, index) } }
+
+          declarations += @internal_states.values.map { |declaration| declared_entry(declaration.to_h, "region").merge("internal" => true) }
 
           @visitor.slots.each do |slot|
             next unless slot.valued?
@@ -85,6 +109,10 @@ module Herb
 
               next
             end
+
+            scope_and_depth = @visitor.scope_of(@visitor.slot_nodes[slot.index])
+
+            next if scope_and_depth && @visitor.block_locals(scope_and_depth[0]).include?(name)
 
             (reads[name] ||= []) << slot.index
 
@@ -121,8 +149,6 @@ module Herb
             declaration["count"] = { "collection" => count[:collection], "when" => count[:when], "by" => count[:by] }
           end
 
-          warn_branch_orphans(reads, computed, presence)
-
           {
             "version" => @visitor.version,
             "declarations" => declarations,
@@ -130,7 +156,8 @@ module Herb
             "conditionals" => conditionals,
             "presence" => presence,
             "computed" => computed,
-            "server" => {},
+            "server" => { "branches" => branch_orphans(reads, computed, presence, steerable_names(declarations)), "reads" => @server_reads },
+            "fragments" => fragment_entries,
           }
         end
 
@@ -198,22 +225,193 @@ module Herb
           )
         end
 
-        #: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped]) -> void
-        def warn_branch_orphans(reads, computed, presence)
-          return unless @visitor.client?
+        #: () -> Hash[String, untyped]
+        def fragment_entries
+          refetchable = @server_reads.values.flatten.to_set { |entry| entry["index"] }
+          entries = {} #: Hash[String, untyped]
+
+          @visitor.fragment_indexes.each do |index|
+            inside = (@visitor.slots_by_branch(index)[0] || []).select { |slot_index| refetchable.include?(slot_index) }
+
+            entries[index.to_s] = { "fallback" => 1, "reads" => inside }.merge(@visitor.fragment_timing_for(index)) unless inside.empty?
+          end
+
+          @visitor.deferred_entries.each do |index, info|
+            inside = (@visitor.slots_by_branch(index)[0] || []).select { |slot_index| refetchable.include?(slot_index) }
+
+            entries[index.to_s] = { "mode" => info[:mode], "state" => info[:state], "fallback" => 1, "reads" => inside }.merge(info[:timing])
+          end
+
+          entries
+        end
+
+        #: (Array[Hash[String, untyped]]) -> Set[String]
+        def steerable_names(declarations)
+          declarations.filter_map { |entry| entry["name"] if entry["scope"] == "region" && !entry["derived"] && !entry["count"] }.to_set
+        end
+
+        #: (untyped) -> Array[String]
+        def condition_names(condition)
+          if condition.is_a?(Hash)
+            parts = condition["all"] || condition["any"]
+
+            return parts.to_a.flat_map { |part| condition_names(part) }
+          end
+
+          return [] unless condition.is_a?(Array)
+
+          names = [] #: Array[String]
+          names << condition[0] if condition[0].is_a?(String)
+
+          comparand = condition[1]
+          names << comparand["state"] if comparand.is_a?(Hash) && comparand["state"].is_a?(String)
+
+          names
+        end
+
+        #: (Hash[Symbol, untyped], Set[String]) -> bool
+        def steered_conditional?(info, steerable)
+          names = info[:arms].flat_map { |arm| condition_names(arm["condition"]) }
+
+          !names.empty? && names.all? { |name| steerable.include?(name) }
+        end
+
+        #: (Integer, Hash[Symbol, untyped]) -> Set[Integer]
+        def default_branch_slots(index, info)
+          none = Set.new #: Set[Integer]
+          node = @visitor.slot_nodes[index]
+
+          return none unless node
+
+          scope, = @visitor.scope_of(node)
+          states = states_for(scope)
+
+          info[:arms].each do |arm|
+            verdict = static_condition(arm["condition"], states)
+
+            return none if verdict.nil?
+            next unless verdict
+            return none if arm["branch"].nil?
+
+            return branch_slot_set(index, arm.fetch("branch"))
+          end
+
+          return none if info[:else].nil?
+
+          branch_slot_set(index, info.fetch(:else))
+        end
+
+        #: (Integer, Integer) -> Set[Integer]
+        def branch_slot_set(index, branch)
+          slots = @visitor.slots_by_branch(index)[branch] || [] #: Array[Integer]
+
+          slots.to_set
+        end
+
+        #: (untyped, Hash[String, StateDirectives::Declaration]) -> bool?
+        def static_condition(condition, states)
+          return static_combo(condition, states) if condition.is_a?(Hash)
+          return nil unless condition.is_a?(Array)
+          return nil if condition[3]
+
+          name, comparand, operator = condition
+          value = static_default(name, states)
+
+          return nil if value == :__herb_undecided
+
+          if comparand.nil?
+            case operator
+            when nil then return !value.nil? && value != false
+            when "blank" then return value.nil? || value == false || value == ""
+            when "present" then return !(value.nil? || value == false || value == "")
+            else return nil
+            end
+          end
+
+          return nil unless comparand.is_a?(Hash)
+
+          against = static_comparand(comparand, states)
+
+          return nil if against == :__herb_undecided
+
+          compare_statics(value, against, operator || "==")
+        end
+
+        #: (Hash[String, untyped], Hash[String, StateDirectives::Declaration]) -> untyped
+        def static_comparand(comparand, states)
+          return comparand["value"] if comparand.key?("value")
+          return :__herb_undecided if comparand["transform"] || !comparand["state"].is_a?(String)
+
+          static_default(comparand.fetch("state"), states)
+        end
+
+        #: (Hash[String, untyped], Hash[String, StateDirectives::Declaration]) -> bool?
+        def static_combo(condition, states)
+          parts = (condition["all"] || condition["any"]).to_a.map { |part| static_condition(part, states) }
+
+          if condition.key?("all")
+            return false if parts.any?(false)
+            return true if parts.all?(true)
+          else
+            return true if parts.any?(true)
+            return false if parts.all?(false)
+          end
+
+          nil
+        end
+
+        #: (String, Hash[String, StateDirectives::Declaration]) -> untyped
+        def static_default(name, states)
+          declaration = states[name]
+
+          return :__herb_undecided if declaration.nil? || declaration.derived
+          return :__herb_undecided if @state_counts.any? { |count| count[:name] == name }
+          return :__herb_undecided unless StateDirectives.literal?(declaration.default)
+
+          StateDirectives.literal_value(declaration.default)
+        end
+
+        #: (untyped, untyped, String) -> bool?
+        def compare_statics(value, against, operator)
+          case operator
+          when "==" then value == against
+          when "!=" then value != against
+          when ">", ">=", "<", "<="
+            return nil unless value.is_a?(Integer) && against.is_a?(Integer)
+
+            value.public_send(operator, against)
+          end
+        end
+
+        #: (Hash[String, Array[Integer]], Hash[String, untyped], Hash[String, untyped], Set[String]) -> void
+        def branch_orphans(reads, computed, presence, steerable)
+          branches = {} #: Hash[String, Array[Hash[String, untyped]]]
+
+          return branches unless @visitor.client?
 
           covered = (reads.values.flatten + computed.keys.map(&:to_i) + presence.keys.map(&:to_i)).to_set
-          warned = Set.new #: Set[Integer]
+          refetchable = @server_reads.values.flatten.to_set { |entry| entry["index"] }
+          seen = Set.new #: Set[Integer]
 
-          state_conditional_entries.each_key do |index|
+          state_conditional_entries.each do |index, info|
+            steered = steered_conditional?(info, steerable)
+            served = default_branch_slots(index, info)
+
             @visitor.slots_inside(index).each do |inside|
-              next unless warned.add?(inside)
+              next unless seen.add?(inside)
 
               slot = @visitor.slots[inside]
 
-              next unless slot&.valued?
+              next unless slot
+              next unless slot.valued? || refetchable.include?(inside)
               next if covered.include?(inside)
               next if @near_missed.include?(inside)
+
+              (branches[index.to_s] ||= []) << { "index" => inside, "node_path" => slot.node_path }
+
+              next if steered
+              next if served.include?(inside)
+              next if refetchable.include?(inside)
 
               expression = slot.expression.to_s.strip
 
@@ -225,6 +423,8 @@ module Herb
               )
             end
           end
+
+          branches
         end
 
         #: (Hash[Symbol, untyped], (String | Integer)) -> Hash[String, untyped]
@@ -397,7 +597,12 @@ module Herb
 
         #: (untyped) -> Hash[String, StateDirectives::Declaration]
         def states_for(scope)
-          scope ? @region_states.merge(@item_states[scope] || {}) : @region_states.dup
+          region = @region_states.merge(@internal_states)
+          states = scope ? region.merge(@item_states[scope] || {}) : region
+          none = [] #: Array[String]
+          shadowed = scope ? @visitor.block_locals(scope) : none
+
+          shadowed.empty? ? states : states.except(*shadowed)
         end
 
         #: () -> void
@@ -411,16 +616,61 @@ module Herb
             scope = directive[:scope]
             bucket = scope ? (@item_states[scope] || {}) : @region_states
             assignments = bucket.values.map { |declaration| state_assignment(declaration) }.join("; ")
+            assignments = "#{overrides_prelude}; #{assignments}" if @visitor.state_overrides?
             seeds = directive[:inline] || @visitor.degraded? ? nil : seeds_marker(bucket.values)
 
-            parent[position] = @visitor.erb_code_node(seeds ? "#{assignments}; #{seeds}" : assignments)
+            parent[position] = @visitor.record_assignment(@visitor.erb_code_node(seeds ? "; #{assignments}; #{seeds}" : "; #{assignments}"))
           end
 
-          return if @region_states.empty? && @item_states.empty?
+          if @region_states.empty? && @item_states.empty? && @internal_states.empty?
+            check_fragments
+
+            return
+          end
 
           classify_state_conditionals
           check_state_value_reads
+          check_collection_reads
           check_state_count_reads
+          check_fragments
+          check_deferred_placement
+        end
+
+        #: () -> void
+        def check_deferred_placement
+          collections = @visitor.slots.select { |slot| slot.type == :collection }
+
+          @visitor.deferred_entries.each do |index, info|
+            slot = @visitor.slots[index]
+
+            next unless slot
+            next if collections.none? { |collection| slot.node_path.first(collection.node_path.length) == collection.node_path }
+
+            @visitor.slot_error(
+              "A `<#{info[:mode].capitalize}>` sits inside a collection, and a deferred block cannot stand per item yet.",
+              @visitor.slot_nodes[index]&.location,
+              :component,
+              suggestion: "Move the block outside the loop, or defer around the whole collection."
+            )
+          end
+        end
+
+        #: () -> void
+        def check_fragments
+          refetchable = @server_reads.values.flatten.to_set { |entry| entry["index"] }
+
+          @visitor.fragment_indexes.each do |index|
+            inside = @visitor.slots_by_branch(index)[0] || []
+
+            next if inside.any? { |slot_index| refetchable.include?(slot_index) }
+
+            @visitor.slot_warning(
+              "Nothing inside this `<Fragment>` is derived on the server, so its `<Fallback>` can never appear.",
+              @visitor.slot_nodes[index]&.location,
+              :component,
+              suggestion: "Compute something with a declared state inside the fragment, or unwrap it."
+            )
+          end
         end
 
         #: (Array[StateDirectives::Declaration]) -> String?
@@ -446,9 +696,24 @@ module Herb
             end
           end
 
-          return "#{declaration.name} = !!(#{source})" if declaration.kind == :boolean
+          default = declaration.kind == :boolean ? "!!(#{source})" : source
 
-          "#{declaration.name} = #{source}"
+          return "#{declaration.name} = #{default}" unless overridable?(declaration)
+
+          "#{declaration.name} = ::Herb::Engine::Slots::StateOverrides.fetch(#{OVERRIDES_LOCAL}, #{declaration.name.inspect}, #{declaration.kind.inspect}) { #{default} }"
+        end
+
+        #: (StateDirectives::Declaration) -> bool
+        def overridable?(declaration)
+          return false unless @visitor.state_overrides?
+          return false if declaration.derived
+
+          @state_counts.none? { |count| count[:name] == declaration.name }
+        end
+
+        #: () -> String
+        def overrides_prelude
+          "#{OVERRIDES_LOCAL} = ::Herb::Engine::Slots::StateOverrides.resolve((#{StateOverrides::HOOK} if defined?(#{StateOverrides::HOOK})), #{@visitor.identifier.inspect})"
         end
 
         #: () -> void
@@ -702,7 +967,7 @@ module Herb
           return if states.empty?
 
           content = node.content&.value.to_s
-          assigned = StateDirectives.assigned_state_names(content, states)
+          assigned = StateDirectives.assigned_state_names(content, states) - @internal_states.keys
 
           return if assigned.empty?
 
@@ -819,15 +1084,59 @@ module Herb
           outputs.one? ? outputs.fetch(0).content : nil
         end
 
+        #: (untyped) -> Array[untyped]
+        def interpolation_children(node)
+          if node.is_a?(Herb::AST::HTMLElementNode)
+            Array(node.body)
+          elsif node.respond_to?(:value)
+            node.value&.children || []
+          else
+            [] #: Array[untyped]
+          end
+        end
+
+        #: (untyped, Integer, untyped) -> void
+        def register_segment_reads(node, index, slot)
+          segments = interpolation_children(node).select { |child| child.is_a?(Herb::AST::ERBIfNode) || child.is_a?(Herb::AST::ERBUnlessNode) || child.is_a?(Herb::AST::ERBCaseNode) }
+
+          return if segments.empty?
+
+          code = segments.map { |segment| segment_code(segment) }.join(" ")
+          mentioned = @region_states.each_value.select { |declaration| mentioned_state(code, { declaration.name => declaration }) } # steep:ignore UnannotatedEmptyCollection
+
+          return if mentioned.empty?
+
+          entry = { "index" => index, "node_path" => slot.node_path }
+
+          mentioned.each do |declaration|
+            @server_reads[declaration.name] ||= [] # steep:ignore UnannotatedEmptyCollection
+            @server_reads.fetch(declaration.name) << entry
+          end
+        end
+
+        #: (untyped) -> String
+        def segment_code(node)
+          collected = [] #: Array[String]
+
+          gather = lambda do |current|
+            content = current.respond_to?(:content) ? current.content : nil #: untyped
+
+            collected << content.value.to_s if content.respond_to?(:value)
+
+            none = [] #: Array[untyped]
+            children = current.respond_to?(:child_nodes) ? current.child_nodes : none
+
+            children.compact.each { |child| gather.call(child) }
+          end
+
+          gather.call(node)
+
+          collected.join(" ")
+        end
+
         #: (untyped, Hash[String, StateDirectives::Declaration]) -> void
         def check_interpolated_state_read(node, states)
-          children = if node.is_a?(Herb::AST::HTMLElementNode)
-                       Array(node.body)
-                     elsif node.respond_to?(:value)
-                       node.value&.children || []
-                     else
-                       [] #: Array[untyped]
-                     end
+          children = interpolation_children(node)
 
           outputs = children.grep(Herb::AST::ERBContentNode)
           read = outputs.map { |output| output.content&.value.to_s.strip }.find { |expression| StateDirectives.mentions_any?(expression, states) }
@@ -859,6 +1168,8 @@ module Herb
 
             if slot.interpolated? && slot.expression.to_s.strip.empty?
               check_interpolated_state_read(node, states)
+              register_segment_reads(node, index, slot)
+
               next
             end
 
@@ -888,12 +1199,58 @@ module Herb
           return if read == :reported
 
           unless read.is_a?(StateDirectives::Read) || read.is_a?(StateDirectives::Combo)
-            return @visitor.slot_error("`#{expression}` computes with the state `#{mentioned_state(expression, states)&.name}`. The client cannot run Ruby to keep the result current.", condition_anchor(node, expression).location, :read, suggestion: "Show the value with `<%= #{mentioned_state(expression, states)&.name} %>`, or declare a second state for the computed answer and set it from app code.")
+            return register_server_read(node, index, slot, expression, states)
           end
 
           StateDirectives.read_names(read).each { |name| rewrite_predicate(node, name) }
 
           @state_values[index] = read
+        end
+
+        #: () -> void
+        def check_collection_reads
+          @visitor.slot_nodes.each do |node|
+            index = @visitor.index_for(node)
+
+            next unless index
+
+            slot = @visitor.slots[index]
+
+            next unless COLLECTION_SLOT_TYPES.include?(slot.type)
+
+            expression = (slot.type == :keyed ? slot.key_expression : slot.expression).to_s.strip
+
+            next if expression.empty?
+
+            mentioned = @region_states.each_value.select { |declaration| mentioned_state(expression, { declaration.name => declaration }) } # steep:ignore UnannotatedEmptyCollection
+
+            next if mentioned.empty?
+
+            entry = { "index" => index, "node_path" => slot.node_path }
+
+            mentioned.each do |declaration|
+              @server_reads[declaration.name] ||= [] # steep:ignore UnannotatedEmptyCollection
+              @server_reads.fetch(declaration.name) << entry
+            end
+          end
+        end
+
+        #: (untyped, Integer, untyped, String, Hash[String, StateDirectives::Declaration]) -> nil
+        def register_server_read(node, index, slot, expression, states)
+          mentioned = @region_states.each_value.select { |declaration| mentioned_state(expression, { declaration.name => declaration }) } # steep:ignore UnannotatedEmptyCollection
+
+          if mentioned.empty?
+            return @visitor.slot_error("`#{expression}` computes with the state `#{mentioned_state(expression, states)&.name}`, which lives on an item. The server cannot be asked for an item's answer yet.", condition_anchor(node, expression).location, :read, suggestion: "Show the value with `<%= #{mentioned_state(expression, states)&.name} %>`, or declare a second state for the computed answer and set it from app code.")
+          end
+
+          entry = { "index" => index, "node_path" => slot.node_path }
+
+          mentioned.each do |declaration|
+            @server_reads[declaration.name] ||= [] # steep:ignore UnannotatedEmptyCollection
+            @server_reads.fetch(declaration.name) << entry
+          end
+
+          nil
         end
 
         #: (untyped, untyped, String) -> Symbol?

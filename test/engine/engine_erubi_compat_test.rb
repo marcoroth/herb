@@ -56,6 +56,14 @@ module Engine
       assert_compiled_snapshot(template)
     end
 
+    test "compiles an erb comment to the same lines as erubi" do
+      assert_compiled_snapshot("<%# a comment %>\n<div>Content</div>\n", enforce_erubi_equality: true)
+    end
+
+    test "compiles an erb comment followed by text to the same lines as erubi" do
+      assert_compiled_snapshot("<%# comment %>\nhi\n", enforce_erubi_equality: true)
+    end
+
     test "handles escape option" do
       template = "<%= content %>"
 

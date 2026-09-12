@@ -1,0 +1,97 @@
+---
+source: "Parser::IframeTest#test_0001_empty iframe with attributes"
+input: "<iframe src=\"https://example.com/embed\" width=\"560\" height=\"315\" allowfullscreen></iframe>"
+---
+@ DocumentNode (location: (1:0)-(1:90))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:90))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:81))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "iframe" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:80)-(1:81))
+        │       ├── children: (4 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:8)-(1:39))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:11))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:8)-(1:11))
+        │       │   │   │               └── content: "src"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:11)-(1:12))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:39))
+        │       │   │           ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:13)-(1:38))
+        │       │   │           │       └── content: "https://example.com/embed"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:38)-(1:39))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:40)-(1:51))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:40)-(1:45))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:40)-(1:45))
+        │       │   │   │               └── content: "width"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:45)-(1:46))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:46)-(1:51))
+        │       │   │           ├── open_quote: """ (location: (1:46)-(1:47))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:47)-(1:50))
+        │       │   │           │       └── content: "560"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:50)-(1:51))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:52)-(1:64))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:52)-(1:58))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:52)-(1:58))
+        │       │   │   │               └── content: "height"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:58)-(1:59))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:59)-(1:64))
+        │       │   │           ├── open_quote: """ (location: (1:59)-(1:60))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:60)-(1:63))
+        │       │   │           │       └── content: "315"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:63)-(1:64))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:65)-(1:80))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:65)-(1:80))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:65)-(1:80))
+        │       │       │               └── content: "allowfullscreen"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "iframe" (location: (1:1)-(1:7))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:81)-(1:90))
+        │       ├── tag_opening: "</" (location: (1:81)-(1:83))
+        │       ├── tag_name: "iframe" (location: (1:83)-(1:89))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:89)-(1:90))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

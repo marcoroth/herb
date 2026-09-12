@@ -2,10 +2,10 @@
 source: "Engine::ERBCommentsTest#test_0023_a multi-line comment closed with content after it keeps the following line"
 input: "{source: \"<%#-- a\\nb\\nc\\n--#%><div>hi</div>\\n<%= z %>\\n\", options: {}}"
 ---
-_buf = ::String.new; _buf << '<div>hi</div>
-'.freeze; 
+_buf = ::String.new;
 
 
- _buf << (z).to_s; _buf << '
+ _buf << '<div>hi</div>
+'.freeze; _buf << (z).to_s; _buf << '
 '.freeze;
 _buf.to_s

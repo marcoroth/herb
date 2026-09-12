@@ -145,5 +145,30 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "a comment followed by text keeps the line the text was written on" do
+      template = "<%# comment %>\nhi\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "erb comment lines preserve line count parity with erubi" do
+      template = "<%# comment 1 %>\n<%# comment 2 %>\n<% code = 1 %>\n<%= code %>"
+
+      assert_compiled_snapshot(template)
+      assert_erubi_line_parity(template)
+    end
+
+    test "evaluation: a nested output tag inside a comment is not evaluated" do
+      template = %(<%# a <%= 1 + 1 %>)
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "evaluation: a nested statement tag inside a comment is not evaluated" do
+      template = %(<%# a <% raise "boom" %>)
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

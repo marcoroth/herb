@@ -71,7 +71,7 @@ module Herb
 
       #: (Herb::AST::HTMLElementNode) -> void
       def visit_html_element_node(node)
-        stamp(node.open_tag)
+        stamp_open_tag(node.open_tag)
 
         super
       end
@@ -102,6 +102,11 @@ module Herb
       #: () -> String
       def current_file
         @file || context.relative_file_path
+      end
+
+      #: (Herb::AST::Node?) -> void
+      def stamp_open_tag(open_tag)
+        open_tags_for(open_tag).each { |tag| stamp(tag) }
       end
 
       #: (Herb::AST::Node?) -> void

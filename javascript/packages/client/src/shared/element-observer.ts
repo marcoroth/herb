@@ -12,7 +12,25 @@ export class ElementObserver {
   private root: Node | null = null
 
   constructor(attributeFilter: string[] = []) {
-    this.attributeFilter = attributeFilter
+    this.attributeFilter = [...attributeFilter]
+  }
+
+  watch(attributes: string[]): void {
+    const added = attributes.filter((name) => !this.attributeFilter.includes(name))
+
+    if (added.length === 0) {
+      return
+    }
+
+    this.attributeFilter.push(...added)
+
+    const root = this.root
+
+    if (this.observer && root) {
+      this.deliver(this.observer.takeRecords())
+      this.root = null
+      this.observe(root)
+    }
   }
 
   add(delegate: ElementObserverDelegate): () => void {

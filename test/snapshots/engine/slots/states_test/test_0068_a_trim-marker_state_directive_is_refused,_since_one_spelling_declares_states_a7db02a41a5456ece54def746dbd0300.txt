@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0068_a trim-marker state directive is refused, since one spelling declares states"
+input: "states_test-21"
+---
+app/views/test.html.erb:1:4: The `herb:state` directive has to be spelled `<%# herb:state (...) %>`. Found `<%#- herb:state (open: false) -%>` where `<%# herb:state (open: false) %>` was expected.

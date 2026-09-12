@@ -1,0 +1,6 @@
+---
+source: "Engine::InlineRenderTest::what the copy has to keep meaning#test_0012_leaves a render that does not output"
+input: "inline_render_test-6"
+---
+_buf = ::String.new; render "shared/header" ;
+_buf.to_s

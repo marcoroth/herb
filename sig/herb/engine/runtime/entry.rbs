@@ -14,10 +14,14 @@ module Herb
 
         attr_reader column: Integer
 
+        attr_reader end_line: Integer?
+
+        attr_reader end_column: Integer?
+
         attr_reader observations: Hash[Symbol, Array[untyped]]
 
-        # : (String?, Integer, Integer) -> void
-        def initialize: (String?, Integer, Integer) -> void
+        # : (String?, Integer, Integer, ?Integer?, ?Integer?) -> void
+        def initialize: (String?, Integer, Integer, ?Integer?, ?Integer?) -> void
 
         # : (Symbol, untyped) -> void
         def observe: (Symbol, untyped) -> void

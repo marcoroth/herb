@@ -75,9 +75,8 @@ module Engine
 
       test "names the version the region marker names" do
         output = render("<div><% if @a %>x<% end %></div>", { "@a" => false })
-        version = output[/<!--herb-region:[^:]+:([0-9a-f]+):\d+-->/, 1]
 
-        assert_includes output, %(<template data-herb-region="app/views/test.html.erb:#{version}">)
+        assert_snapshot_matches(output, "statics_test-0")
       end
 
       test "sits outside the region it belongs to" do

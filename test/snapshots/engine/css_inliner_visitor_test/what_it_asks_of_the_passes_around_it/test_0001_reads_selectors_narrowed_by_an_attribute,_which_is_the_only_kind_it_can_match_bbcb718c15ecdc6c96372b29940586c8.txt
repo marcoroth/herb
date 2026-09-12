@@ -1,0 +1,6 @@
+---
+source: "Engine::CSSInlinerVisitorTest::what it asks of the passes around it#test_0001_reads selectors narrowed by an attribute, which is the only kind it can match"
+input: "visitor_test-0"
+---
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.title[data-herb-scope-2940ba8a]{color:red}</style><h1 class="title" data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+::Herb::Engine::CSSInliner.inline((_buf.to_s), keep: false)

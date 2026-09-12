@@ -136,6 +136,7 @@ class ActionViewNoStrictLocalsErrorVisitor extends BaseRuleVisitor {
 export class ActionViewNoStrictLocalsErrorRule extends ParserRule {
   static ruleName = "actionview-no-strict-locals-error"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

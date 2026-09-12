@@ -1,0 +1,53 @@
+---
+source: "Parser::AttributesTest#test_0161_solidus ends attribute name"
+input: "<div a/b></div>"
+---
+@ DocumentNode (location: (1:0)-(1:15))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:15))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:9))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnexpectedSolidusInTagError (location: (1:6)-(1:7))
+        │       │       ├── message: "Unexpected `/` in tag at (1:6)."
+        │       │       └── solidus: "/" (location: (1:6)-(1:7))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:8)-(1:9))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:6))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:6))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:6))
+        │       │   │   │               └── content: "a"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:7)-(1:8))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:8))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:7)-(1:8))
+        │       │       │               └── content: "b"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:9)-(1:15))
+        │       ├── tag_opening: "</" (location: (1:9)-(1:11))
+        │       ├── tag_name: "div" (location: (1:11)-(1:14))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:14)-(1:15))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

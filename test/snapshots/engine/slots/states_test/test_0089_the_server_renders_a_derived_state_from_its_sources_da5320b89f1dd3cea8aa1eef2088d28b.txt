@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::StatesTest#test_0089_the server renders a derived state from its sources"
+input: "states_test-31"
+---
+<!--herb-region:app/views/test.html.erb:364d570c:0-->
+<div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->Busy<!--/herb-slot:0--></div>
+<!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:364d570c"><!--herb-branch:0:0-->Busy<!--herb-branch:0:1-->Idle</template>

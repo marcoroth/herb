@@ -6,6 +6,7 @@ _buf = ::String.new;
 =begin
 This is a comment
 =end 
+
  _buf << '<p>Content</p>
-'.freeze; 
+'.freeze;
 _buf.to_s

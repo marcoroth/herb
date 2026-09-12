@@ -7,23 +7,16 @@ input: "<Namespace.Dialog.Button></Namespace.Dialog.Button>"
     ├── @ HTMLElementNode (location: (1:0)-(1:36))
     │   ├── open_tag:
     │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:25))
-    │   │       ├── errors: (1 error)
-    │   │       │   └── @ UnexpectedError (location: (1:10)-(1:11))
-    │   │       │       ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-    │   │       │       ├── description: "Unexpected Token"
-    │   │       │       ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-    │   │       │       └── found: "a character"
-    │   │       │
     │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
     │   │       ├── tag_name: "Namespace" (location: (1:1)-(1:10))
     │   │       ├── tag_closing: ">" (location: (1:24)-(1:25))
     │   │       ├── children: (1 item)
-    │   │       │   └── @ HTMLAttributeNode (location: (1:11)-(1:24))
+    │   │       │   └── @ HTMLAttributeNode (location: (1:10)-(1:24))
     │   │       │       ├── name:
-    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:24))
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:10)-(1:24))
     │   │       │       │       └── children: (1 item)
-    │   │       │       │           └── @ LiteralNode (location: (1:11)-(1:24))
-    │   │       │       │               └── content: "Dialog.Button"
+    │   │       │       │           └── @ LiteralNode (location: (1:10)-(1:24))
+    │   │       │       │               └── content: ".Dialog.Button"
     │   │       │       │
     │   │       │       │
     │   │       │       ├── equals: ∅

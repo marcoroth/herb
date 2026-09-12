@@ -1,9 +1,17 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
+
+require "tmpdir"
+require "json"
+
+require "herb/engine/runtime/journal"
 
 module Engine
   class ReportMiddlewareTest < Minitest::Spec
+    include SnapshotUtils
+
     PAGE = "<html><body><h1>Hello</h1></body></html>"
 
     before do
@@ -100,7 +108,7 @@ module Engine
           app { Herb::Engine::Runtime::Session.record(diagnostic) }
         ).call(nil)
 
-        assert_includes body_of(response), "data-herb-diagnostics"
+        assert_snapshot_matches(body_of(response), "middleware_test-0")
       end
     end
 
@@ -108,7 +116,7 @@ module Engine
       response = call(app { Herb::Engine::Runtime::Session.record(diagnostic) })
       body = body_of(response)
 
-      assert_includes body, 'data-herb-diagnostics data-count="1"'
+      assert_snapshot_matches(body, "middleware_test-1")
       assert_match(%r{#{Regexp.escape(%(</script>))}</body>}, body)
     end
 
@@ -145,7 +153,7 @@ module Engine
         end
       )
 
-      assert_includes body_of(response), "data-herb-diagnostics"
+      assert_snapshot_matches(body_of(response), "middleware_test-2")
     end
 
     test "corrects the content length it just changed" do
@@ -158,8 +166,8 @@ module Engine
     test "leaves a file-backed response alone rather than buffering it" do
       streamed = Object.new
 
-      def streamed.each(&block)
-        block.call("<html><body></body></html>")
+      def streamed.each
+        yield("<html><body></body></html>")
       end
 
       def streamed.to_path
@@ -205,8 +213,9 @@ module Engine
       first = call(app { Herb::Engine::Runtime::Session.record(diagnostic(message: "first")) })
       second = call(app { Herb::Engine::Runtime::Session.record(diagnostic(message: "second")) })
 
-      assert_includes body_of(first), "first"
-      refute_includes body_of(second), "first"
+      assert_snapshot_matches(body_of(first), "middleware_test-3")
+
+      assert_snapshot_matches(body_of(second), "middleware_test-4")
     end
 
     DOCUMENT = "<html><head><title>t</title></head><body><h1>Hello</h1></body></html>"
@@ -265,6 +274,132 @@ module Engine
 
       test "returns the response untouched when nothing collected" do
         assert_equal DOCUMENT, respond_with
+      end
+    end
+
+    describe "handing the session to a journal" do
+      after do
+        Herb::Engine::Runtime::Middleware.journal = nil
+        Herb::Engine::Runtime::Session.clear_measurements
+      end
+
+      def rendered(journal, env: { "REQUEST_METHOD" => "GET", "PATH_INFO" => "/posts" })
+        Herb::Engine::Runtime::Middleware.new(
+          app {
+            Herb::Engine::Runtime::Session.current.enter_render("app/views/a.html.erb", "a" * 64)
+            Herb::Engine::Runtime::Session.record(diagnostic)
+          },
+          journal: journal
+        ).call(env)
+      end
+
+      def written(dir)
+        Dir.glob(File.join(dir, "journal", "**", "*.jsonl"))
+      end
+
+      test "writes nothing when it was not given one" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(nil)
+
+          assert_empty written(dir)
+        end
+      end
+
+      test "writes the session it opened, keyed by the text that was rendered" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(Herb::Engine::Runtime::Journal.new(root: dir))
+
+          assert_path_exists File.join(dir, "journal", "app/views/a.html.erb.#{"a" * 8}.jsonl")
+        end
+      end
+
+      test "takes a path and builds the journal itself" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(dir)
+
+          refute_empty written(dir)
+        end
+      end
+
+      test "falls back to the journal set on the class, since the host often mounts this" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          Herb::Engine::Runtime::Middleware.journal = dir
+
+          rendered(nil)
+
+          refute_empty written(dir)
+        end
+      end
+
+      test "prefers the journal it was given over the one on the class" do
+        Dir.mktmpdir("herb-class") do |ignored|
+          Dir.mktmpdir("herb-given") do |dir|
+            Herb::Engine::Runtime::Middleware.journal = ignored
+
+            rendered(dir)
+
+            refute_empty written(dir)
+            assert_empty written(ignored)
+          end
+        end
+      end
+
+      test "says what request a record came from" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          rendered(dir)
+
+          record = JSON.parse(File.readlines(written(dir).first).last)
+
+          assert_equal "/posts", record["request_path"]
+        end
+      end
+
+      test "applies what producers registered, so observations reach the journal" do
+        Herb::Engine::Runtime::Session.measurement(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+          "#{queries.size} SQL queries"
+        end
+
+        Dir.mktmpdir("herb-middleware") do |dir|
+          Herb::Engine::Runtime::Middleware.new(
+            app {
+              Herb::Engine::Runtime::Session.current.enter_render("app/views/a.html.erb", "a" * 64)
+              Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 1, 0) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+              end
+            },
+            journal: dir
+          ).call({})
+
+          codes = File.readlines(written(dir).first).map { |line| JSON.parse(line)["code"] }
+
+          assert_equal [nil, "sql-queries"], codes
+        end
+      end
+
+      test "leaves a borrowed session to whoever opened it" do
+        Dir.mktmpdir("herb-middleware") do |dir|
+          Herb::Engine::Runtime::Session.capture { rendered(dir) }
+
+          assert_empty written(dir)
+        end
+      end
+
+      test "returns the page even when a measurement raises" do
+        Herb::Engine::Runtime::Session.measurement(:queries, origin: "Herb Engine") { |_| raise "boom" }
+
+        response = rendered(nil)
+
+        assert_equal 200, response[0]
+
+        assert_snapshot_matches(body_of(response), "middleware_test-6")
+      end
+
+      test "returns the page even when the journal cannot write" do
+        response = rendered("/does/not/exist/and/cannot/be/made")
+
+        assert_equal 200, response[0]
+
+        assert_snapshot_matches(body_of(response), "middleware_test-7")
       end
     end
   end

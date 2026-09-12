@@ -2,7 +2,7 @@
 
 module Herb
   class Engine
-    class CompilationError < StandardError
+    class CompilationError < SyntaxError
       attr_reader details: untyped
 
       attr_reader diagnostics: untyped

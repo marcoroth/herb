@@ -1,5 +1,6 @@
 import { Runtime } from "../runtime"
 
+import type { State } from "./state"
 import type { StateValue } from "./values"
 import type { ScopedSetOptions, StateScope } from "./types"
 
@@ -15,11 +16,12 @@ export interface ScopedState {
 }
 
 export function stateFor(element: Element): ScopedState {
-  const runtime = Runtime.get()
-  const state = runtime?.state
+  return scopedState(Runtime.get()?.state, element)
+}
 
+export function scopedState(state: State | undefined, element: Element): ScopedState {
   const resolve = (name: string): ScopedSetOptions => {
-    const scope = runtime?.state.scopeFor(element, name)
+    const scope = state?.scopeFor(element, name)
 
     if (!scope) {
       return {}

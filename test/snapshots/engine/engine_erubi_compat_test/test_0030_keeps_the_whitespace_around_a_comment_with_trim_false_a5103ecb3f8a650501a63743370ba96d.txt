@@ -1,9 +1,0 @@
----
-source: "Engine::EngineErubiCompatTest#test_0030_keeps the whitespace around a comment with trim: false"
-input: "{source: \"before\\n  <%# comment %>\\nafter\\n\", options: {trim: false}}"
----
-_buf = ::String.new; _buf << 'before
-  
-after
-'.freeze;
-_buf.to_s

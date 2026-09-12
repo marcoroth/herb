@@ -13,11 +13,32 @@ module Herb
       # One request is the right scope because a page is what the dev tools show: findings from every
       # template that took part in it, in one payload, whoever found them.
       #
+      # Given a journal, the same session is also written to disk, where it outlives the page and an
+      # editor can read it. Whoever mounts this middleware is often not the application, so the
+      # journal can be set on the class instead of passed:
+      #
+      #     Herb::Engine::Runtime::Middleware.journal = "tmp/herb"
+      #
       # Nothing here is allowed to be the reason a page fails. A response it cannot safely touch is
-      # returned untouched, and any error while injecting is swallowed in favour of the original
-      # response.
+      # returned untouched, and any error while injecting, measuring or writing is swallowed in
+      # favour of the original response.
       #
       class Middleware
+        # Where a session goes when whoever mounted this middleware did not say. Left unset, nothing
+        # is written.
+        #
+        # Written out instead of as an `attr_accessor` in a `class << self` block, because rbs-inline
+        # emits that as an instance accessor and the signature would be wrong.
+        #: () -> untyped
+        def self.journal # rubocop:disable Style/TrivialAccessors
+          @journal
+        end
+
+        #: (untyped) -> void
+        def self.journal=(journal) # rubocop:disable Style/TrivialAccessors
+          @journal = journal
+        end
+
         HTML_CONTENT_TYPE = %r{\Atext/html}i #: Regexp
         BODY_END_TAG = %r{</body>}i #: Regexp
         HEAD_END_TAG = %r{</head>}i #: Regexp
@@ -32,10 +53,11 @@ module Herb
         #
         ENV_KEY = "herb.report_session" #: String
 
-        #: (untyped, ?inject: bool) -> void
-        def initialize(app, inject: true)
+        #: (untyped, ?inject: bool, ?journal: untyped) -> void
+        def initialize(app, inject: true, journal: nil)
           @app = app
           @inject = inject
+          @journal = journal
         end
 
         #: (untyped) -> untyped
@@ -47,6 +69,11 @@ module Herb
 
           response = @app.call(env)
 
+          unless borrowed
+            measure(session)
+            persist(session, env, response)
+          end
+
           return response unless @inject
           return response if session.empty?
 
@@ -56,6 +83,50 @@ module Herb
         end
 
         private
+
+        #: (Herb::Engine::Runtime::Session) -> void
+        def measure(session)
+          session.apply_measurements
+
+          nil
+        rescue StandardError
+          nil
+        end
+
+        #: (Herb::Engine::Runtime::Session, untyped, untyped) -> void
+        def persist(session, env, response)
+          journal = coerce(@journal || self.class.journal)
+
+          return unless journal
+          return if session.empty?
+
+          journal.write(session.report, request: request_of(env, response))
+
+          nil
+        rescue StandardError
+          nil
+        end
+
+        #: (untyped, untyped) -> Hash[Symbol, untyped]
+        def request_of(env, response)
+          {
+            method: env["REQUEST_METHOD"],
+            path: env["PATH_INFO"],
+            status: response.is_a?(Array) ? response[0] : nil,
+          }.compact
+        end
+
+        #: (untyped) -> untyped
+        def coerce(journal)
+          return nil unless journal
+
+          require_relative "journal"
+
+          return journal if journal.is_a?(Journal)
+          return Journal.new if journal == true
+
+          Journal.new(root: journal)
+        end
 
         #: (untyped, Herb::Engine::Runtime::Report) -> untyped
         def inject(response, report)

@@ -2,12 +2,12 @@ import { DEV_SERVER_ORIGIN } from "../src/dev-server/diagnostics"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { stripAnsiColors } from "@herb-tools/highlighter"
-import { diagnosticsFromError } from "../src/dev-server/diagnostics"
+import { diagnosticsFromError, diagnosticsFromBrokenFile } from "../src/dev-server/diagnostics"
 
 import { HerbClient } from "../src/dev-server/client"
 import { RuntimePanel } from "../src/runtime/panel"
 
-import type { ErrorMessage } from "../src/dev-server/types"
+import type { BrokenFile, ErrorMessage, WelcomeMessage } from "../src/dev-server/types"
 
 let panels: RuntimePanel[] = []
 
@@ -144,6 +144,89 @@ describe("diagnostics from a dev server error", () => {
   })
 })
 
+describe("templates the server says were already broken", () => {
+  function collectingSink() {
+    const reported: Array<[string, number]> = []
+
+    return {
+      reported,
+      sink: {
+        report: (file: string, diagnostics: unknown[]) => {
+          reported.push([file, diagnostics.length])
+        },
+        clear: () => {},
+        clearAll: () => {},
+      },
+    }
+  }
+
+  function welcome(broken?: BrokenFile[]): WelcomeMessage {
+    return { type: "welcome", project: "/app", ...(broken === undefined ? {} : { broken_files: broken }) } as WelcomeMessage
+  }
+
+  test("reports one diagnostic for every template the welcome names", () => {
+    const { reported, sink } = collectingSink()
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    const errors = errorMessage().errors
+
+    client["handleWelcome"](welcome([{ file: "a.html.erb", errors }, { file: "b.html.erb", errors }]))
+
+    expect(reported).toEqual([["a.html.erb", 1], ["b.html.erb", 1]])
+  })
+
+  test("reports nothing when the project has nothing broken", () => {
+    const { reported, sink } = collectingSink()
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleWelcome"](welcome([]))
+
+    expect(reported).toEqual([])
+  })
+
+  test("reports nothing when the server is old enough not to say", () => {
+    const { reported, sink } = collectingSink()
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleWelcome"](welcome())
+
+    expect(reported).toEqual([])
+  })
+
+  test("turns a parse failure into the same diagnostics a live error would", () => {
+    const message = errorMessage()
+    const broken = { file: message.file, source: "<div>\n  <form>\n</div>\n", errors: message.errors }
+
+    expect(diagnosticsFromBrokenFile(broken)).toEqual(diagnosticsFromError({ ...message, source: broken.source }))
+  })
+
+  test("passes a compiled template's diagnostics through untouched", () => {
+    const diagnostics = [{ template: "b.html.erb", message: "slot outside a region", severity: "error" as const }]
+
+    expect(diagnosticsFromBrokenFile({ file: "b.html.erb", diagnostics })).toEqual(diagnostics)
+  })
+
+  test("reports nothing for an entry carrying neither errors nor diagnostics", () => {
+    expect(diagnosticsFromBrokenFile({ file: "a.html.erb" })).toEqual([])
+  })
+
+  test("opens a card with the real error, not a placeholder", () => {
+    const panel = createPanel()
+    const message = errorMessage()
+
+    panel.report(diagnosticsFromBrokenFile({ file: message.file, source: "<div>\n  <form>\n</div>\n", errors: message.errors }))
+
+    const card = document.querySelector(".herb-dev-tools-card")?.textContent
+
+    expect(card).toContain("missing-closing-tag")
+    expect(card).toContain("has no matching closing tag")
+
+    panel.clear(DEV_SERVER_ORIGIN)
+
+    expect(document.querySelector(".herb-dev-tools-card")).toBeNull()
+  })
+})
+
 describe("a dev server error in the panel", () => {
   test("opens a dismissible screen and clears again by origin", () => {
     const panel = createPanel()
@@ -223,17 +306,32 @@ describe("a dev server error in the panel", () => {
     expect(document.querySelectorAll(".herb-dev-tools-connection-dot")).toHaveLength(1)
   })
 
-  test("announces a fix on the document, for a page that did not start the dev tools", async () => {
-    const client = new HerbClient({})
-    const heard: string[] = []
+  test("a schema with no diagnostics clears exactly the file it names", () => {
+    const files: Array<[string, number]> = []
+    const sink = {
+      report: (file: string, diagnostics: unknown[]) => {
+        files.push([file, diagnostics.length])
+      },
+      clear: () => {},
+      clearAll: () => {},
+    }
 
-    document.addEventListener("herb:dev-server-fixed", (event) => {
-      heard.push((event as CustomEvent).detail.file)
+    const client = new HerbClient({ diagnostics: () => sink })
+
+    client["handleSchema"]({
+      type: "schema",
+      file: "app/views/posts/index.html.erb",
+      mode: "client",
+      version: { from: "a", to: "b" },
+      manifest: null,
+      static_markup: null,
+      statics: null,
+      remap: null,
+      diagnostics: [],
+      source: null,
     })
 
-    client["handleFixed"]({ type: "fixed", file: "app/views/posts/index.html.erb" })
-
-    expect(heard).toEqual(["app/views/posts/index.html.erb"])
+    expect(files).toEqual([["app/views/posts/index.html.erb", 0]])
   })
 
   test("renders no excerpt when the server sent no source", () => {

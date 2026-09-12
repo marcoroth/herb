@@ -190,18 +190,80 @@ module Engine
       end
 
       test "frames a render tag at all" do
-        assert_includes compile(%(<%= render "posts/card" %>)), "Session.enter"
+        assert_snapshot_matches(compile(%(<%= render "posts/card" %>)), "instrumentation_test-0")
       end
 
       test "leaves a render tag a render tag" do
         compiled = compile(%(<%= render "posts/card" %>))
 
-        assert_includes compiled, %(_buf << (render "posts/card").to_s)
-        refute_includes compiled, "Session.at("
+        assert_snapshot_matches(compiled, "instrumentation_test-1")
       end
 
       test "keeps the body of a render that takes a block" do
-        assert_includes compile(%(<%= render layout: "box" do %>inner<% end %>)), "inner"
+        assert_snapshot_matches(compile(%(<%= render layout: "box" do %>inner<% end %>)), "instrumentation_test-2")
+      end
+    end
+
+    describe "capturing what a tag rendered" do
+      def captured(source, capture_output:)
+        Herb::Engine.new(
+          source,
+          filename: FILENAME,
+          visitors: [Herb::Engine::InstrumentationVisitor.new(capture_output: capture_output)]
+        ).src
+      end
+
+      def calls(compiled)
+        compiled.scan(/Session\.(output|at)\(/).flatten.tally
+      end
+
+      test "captures nothing unless it was asked to" do
+        assert_snapshot_matches(compile(%(<div><%= t(".title") %></div>)), "instrumentation_test-3")
+      end
+
+      test "captures only the tags that match" do
+        compiled = captured(%(<div><%= t(".title") %><%= post.body %></div>), capture_output: /\A\s*t[\s(]/)
+
+        assert_equal({ "output" => 1, "at" => 1 }, calls(compiled))
+      end
+
+      test "captures every output tag when told to capture everything" do
+        compiled = captured(%(<div><%= t(".title") %><%= post.body %></div>), capture_output: true)
+
+        assert_equal({ "output" => 2 }, calls(compiled))
+      end
+
+      test "takes anything that answers to call" do
+        assert_snapshot_matches(captured(%(<%= post.body %>), capture_output: ->(source) { source.include?("body") }), "instrumentation_test-4")
+      end
+
+      test "leaves a tag it cannot make sense of alone" do
+        assert_snapshot_matches(captured(%(<%= post.body %>), capture_output: ->(_source) { raise "boom" }), "instrumentation_test-5")
+      end
+
+      test "records the value the tag rendered, filed against the tag" do
+        compiled = captured(%(<div><%= title %></div>), capture_output: true)
+        context = Class.new { def title = "Upcoming events" }.new
+
+        session = Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }
+
+        assert_equal([["Upcoming events"]], session.entries.map { |entry| entry[:output] })
+      end
+
+      test "records one value per render of a tag inside a collection" do
+        compiled = captured(%(<% items.each do |item| %><%= item %><% end %>), capture_output: true)
+        context = Struct.new(:items).new(["alpha", "beta", "gamma"])
+
+        session = Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }
+
+        assert_equal([["alpha", "beta", "gamma"]], session.entries.map { |entry| entry[:output] })
+      end
+
+      test "still renders what it would have rendered" do
+        source = %(<div><%= title %></div>)
+        context = Class.new { def title = "Upcoming events" }.new
+
+        assert_equal "<div>Upcoming events</div>", context.instance_eval(captured(source, capture_output: true))
       end
     end
   end

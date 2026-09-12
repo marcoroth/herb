@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineTest#test_0043_a shovel operator in a control tag keeps the line the next tag is on"
+input: "{source: \"<% list << item %><%= z %>\\n\", options: {}}"
+---
+_buf = ::String.new; list << item ; _buf << (z).to_s; _buf << '
+'.freeze;
+_buf.to_s

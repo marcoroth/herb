@@ -290,6 +290,23 @@ module SnapshotUtils
     expected_snapshot_path
   end
 
+  def assert_erubi_line_parity(source, options = {})
+    require_erubi_silently
+
+    herb = Herb::Engine.new(source, options).src
+    erubi = Erubi::Engine.new(source, options).src
+
+    assert_equal erubi.lines.count, herb.lines.count, <<~MESSAGE
+      Herb and Erubi compile #{source.inspect} to a different number of lines, so a
+      backtrace through Template#render would name a different line in each.
+
+      Erubi (#{erubi.lines.count} lines):
+      #{erubi}
+      Herb (#{herb.lines.count} lines):
+      #{herb}
+    MESSAGE
+  end
+
   def should_compare_with_erubi?
     return false if class_name.include?("DebugMode") || class_name.include?("SourceAttribution")
 

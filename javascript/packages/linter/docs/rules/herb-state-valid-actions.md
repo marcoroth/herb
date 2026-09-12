@@ -4,13 +4,15 @@
 
 ## Description
 
-Validates the declarative action attributes `data-herb-set`, `data-herb-toggle`, `data-herb-increment`, `data-herb-decrement`, `data-herb-reset` and `data-herb-by`. Clause syntax must parse, quotes must balance, a named state must be declared in a scope enclosing the element, the operation must match the state's declared kind, and a `set` value must parse to that kind. A derived state cannot be the target of any action, since its value follows from the states it reads.
+Validates the declarative action attributes `data-herb-set`, `data-herb-toggle`, `data-herb-increment`, `data-herb-decrement`, `data-herb-reset` and `data-herb-by`. Clause syntax must parse, quotes must balance, the event spec must follow the Stimulus grammar, a named state must be declared in a scope enclosing the element, the operation must match the state's declared kind, and a `set` value must parse to that kind. A derived state cannot be the target of any action, since its value follows from the states it reads.
 
 ## Rationale
 
 An action attribute is wiring the browser executes, so a typo in it fails silently at runtime. The client runtime reports these same problems as diagnostics when the page runs in debug mode. This rule reports them in the editor, using the same messages, before the page runs at all.
 
 Type checks come from the declaration. `toggle` needs a boolean, `increment` and `decrement` need an integer, and a `set` value is read as whatever the state was declared to hold, so `attempts=lots` against `attempts: 0` can never parse. A state seeded from an expression has no static kind and is exempt.
+
+The event check covers what can never fire. Modifiers join the key with `+`, as in `keydown.meta+k`, a key filter belongs to `keydown`, `keyup` and `keypress`, and an event listens on the element, `@window`, `@document` or `@outside`, which listens globally and fires only when the event lands outside the element. A dotted name on any other event stays a custom event name, so `library.change` is fine and never flagged.
 
 The scope check follows the runtime's resolution. A name resolves through the scopes enclosing the element, the loop body for an item-scoped state and the template for a region-scoped one. When the template declares no states at all the rule stays quiet, since the states an element writes may be declared by an enclosing template.
 
@@ -26,6 +28,7 @@ The scope check follows the runtime's resolution. A name resolves through the sc
 <button data-herb-set="open=true,sort=date">Both</button>
 <button data-herb-increment="attempts" data-herb-by="2">More</button>
 <select data-herb-set="change->sort=$value"></select>
+<button data-herb-set="keydown.meta+k@window->open=true">Palette</button>
 <input data-herb-reset="blur->draft" autocomplete="off">
 <button data-herb-set="draft='hello, world'">Quote</button>
 ```
@@ -42,6 +45,8 @@ The scope check follows the runtime's resolution. A name resolves through the sc
 <button data-herb-set="attempts=lots">More</button>
 <button data-herb-increment="attempts" data-herb-by="two">More</button>
 <button data-herb-set="sort='oops">Sort</button>
+<button data-herb-set="keydown.meta.k@window->open=true">Palette</button>
+<button data-herb-set="keydown.esc@body->open=false">Close</button>
 ```
 
 ## References

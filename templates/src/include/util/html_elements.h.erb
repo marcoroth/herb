@@ -1,0 +1,21 @@
+#ifndef HERB_HTML_ELEMENTS_H
+#define HERB_HTML_ELEMENTS_H
+
+#include "../lib/hb_string.h"
+
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+static hb_string_T void_tags[] = HB_STRING_LIST(
+<%- void_elements = html_elements.select(&:void?) -%>
+<%- void_elements.each_with_index do |element, index| -%>
+  <%= element.name.inspect %><%= index < void_elements.size - 1 ? "," : "" %>
+<%- end -%>
+);
+
+// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+static hb_string_T boolean_attributes[] = HB_STRING_LIST(
+<%- boolean_attributes.each_with_index do |attribute, index| -%>
+  <%= attribute.inspect %><%= index < boolean_attributes.size - 1 ? "," : "" %>
+<%- end -%>
+);
+
+#endif

@@ -1,7 +1,9 @@
 import { attributeValue } from "../markup/fragments"
+import { itemStaticsKey } from "../markup/markers"
+import { report as reportDiagnostic } from "../shared/report"
 
 import type { Slots } from "./slots"
-import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, Payload, PayloadSlots, PayloadValue, SeededSlots, Slot, SlotMap, SlotValue, SlotValues } from "../types"
+import type { AppliedValue, ApplyMode, ApplyReport, Branched, Collected, DeferredReason, KeyedValue, Payload, PayloadSlots, PayloadValue, SeededSlots, Slot, SlotMap, SlotValue, SlotValues } from "../types"
 
 export function isPayload(value: PayloadValue | unknown): value is Payload {
   return typeof value === "object" && value !== null && "template" in value
@@ -82,6 +84,12 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
           !("items" in value) &&
           value.slots
         ) {
+          const parked = parkBranchStatics(slots, payload, slot, value as Branched)
+
+          if (parked) {
+            slots.announceBranchMaterial(slot)
+          }
+
           if (value.branch === slot.branch) {
             applySlots(slots, payload, owner(slot), value.slots, report, mode)
           } else if (value.branch !== null) {
@@ -128,9 +136,25 @@ function applyValue(slots: Slots, payload: Payload, slot: Slot, index: number, v
 
     if ("items" in value) {
       applyItems(slots, payload, slot, value, report, mode)
+    } else if ("key" in value) {
+      applyKeyed(slots, payload, slot, value, report, mode)
     } else {
       applyBranch(slots, payload, slot, value, report, mode)
     }
+  }
+
+function applyKeyed(slots: Slots, payload: Payload, slot: Slot, value: KeyedValue, report: ApplyReport, mode: ApplyMode): void {
+    if (value.key !== slot.key) {
+      if (!slots.rebuildKeyed(slot, value.key, leaves(value.slots))) {
+        defer(report, payload, slot.index, "keyed")
+
+        return
+      }
+    }
+
+    const held = slot.items.get(value.key)
+
+    applySlots(slots, payload, held?.slots ?? owner(slot), value.slots ?? {}, report, mode)
   }
 
 function applyLeaf(slots: Slots, payload: Payload, slot: Slot, index: number, value: SlotValue, report: ApplyReport): void {
@@ -173,9 +197,31 @@ function applyLeaf(slots: Slots, payload: Payload, slot: Slot, index: number, va
     report.applied += 1
   }
 
+function parkBranchStatics(slots: Slots, payload: Payload, slot: Slot, value: Branched): boolean {
+    if (value.branch === null || !value.statics) {
+      return false
+    }
+
+    slots.holdStatics(
+      { file: payload.template, version: payload.version },
+      { [`${slot.index}:${value.branch}`]: value.statics },
+    )
+
+    return true
+  }
+
 function applyBranch(slots: Slots, payload: Payload, slot: Slot, value: Branched, report: ApplyReport, mode: ApplyMode): void {
+    parkBranchStatics(slots, payload, slot, value)
+
     if (value.branch !== slot.branch) {
       if (!slots.switchBranch(slot, value.branch, leaves(value.slots))) {
+        reportDiagnostic({
+          template: payload.template,
+          message: `The payload picked branch ${value.branch} of a conditional this page has no material for, so the branch cannot be shown.`,
+          code: "herb-slots-materialize",
+          severity: "warning",
+          suggestion: "Render the page with `herb:slots client` to park every branch, or serve the values from a build that sends the branch statics along.",
+        })
         defer(report, payload, slot.index, "branch")
 
         return
@@ -189,9 +235,27 @@ function applyBranch(slots: Slots, payload: Payload, slot: Slot, value: Branched
     }
   }
 
+function parkItemStatics(slots: Slots, payload: Payload, slot: Slot, value: Collected): void {
+    if (!value.statics) {
+      return
+    }
+
+    slots.holdStatics(
+      { file: payload.template, version: payload.version },
+      { [itemStaticsKey(slot.index)]: value.statics },
+    )
+  }
+
 function applyItems(slots: Slots, payload: Payload, slot: Slot, value: Collected, report: ApplyReport, mode: ApplyMode): void {
+    parkItemStatics(slots, payload, slot, value)
+
     const wanted = value.order ?? Object.keys(value.items)
-    const unbuilt = slots.reconcileItems(slot, wanted, mode)
+
+    for (const key of wanted) {
+      slots.keepItem(slot, key)
+    }
+
+    const unbuilt = slots.reconcileItems(slot, withLeaving(slots, slot, wanted, mode), mode)
 
     if (unbuilt.length > 0) {
       defer(report, payload, slot.index, "items", unbuilt)
@@ -213,6 +277,47 @@ function applyItems(slots: Slots, payload: Payload, slot: Slot, value: Collected
       applySlots(slots, payload, item.slots, rest, report, mode)
     }
   }
+
+function withLeaving(slots: Slots, slot: Slot, wanted: string[], mode: ApplyMode): string[] {
+  if (mode === "merge") {
+    return wanted
+  }
+
+  const ordered = [...wanted]
+
+  for (const key of slots.reconcile(slot, wanted).removed) {
+    const item = slot.items.get(key)
+
+    if (!item) {
+      continue
+    }
+
+    if (!slots.isLeaving(item)) {
+      slots.dismissItem(slot, key)
+    }
+
+    if (slots.isLeaving(item)) {
+      ordered.splice(positionAmong(slots, slot, ordered, key), 0, key)
+    }
+  }
+
+  return ordered
+}
+
+function positionAmong(slots: Slots, slot: Slot, ordered: string[], key: string): number {
+  const present = slots.itemsInOrder(slot).map((item) => item.key)
+  const before = present.slice(0, present.indexOf(key)).reverse()
+
+  for (const previous of before) {
+    const position = ordered.indexOf(previous)
+
+    if (position !== -1) {
+      return position + 1
+    }
+  }
+
+  return 0
+}
 
 function defer(report: ApplyReport, payload: Payload, index: number | null, reason: DeferredReason, keys?: string[]): void {
     const deferred = { file: payload.template, occurrence: payload.occurrence, index, reason }

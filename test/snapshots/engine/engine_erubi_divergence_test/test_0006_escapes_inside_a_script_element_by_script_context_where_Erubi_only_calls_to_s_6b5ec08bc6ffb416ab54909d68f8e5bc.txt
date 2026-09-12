@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0006_escapes inside a script element by script context where Erubi only calls to_s"
+input: "engine_erubi_divergence_test-12"
+---
+<script>
+<![CDATA[
+  var data = </script>;
+]]>
+</script>

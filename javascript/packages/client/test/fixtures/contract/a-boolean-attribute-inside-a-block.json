@@ -69,7 +69,11 @@
         ]
       },
       "computed": {},
-      "server": {}
+      "server": {
+        "branches": {},
+        "reads": {}
+      },
+      "fragments": {}
     }
   },
   "dependencies": {

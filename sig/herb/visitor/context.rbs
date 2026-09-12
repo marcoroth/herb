@@ -32,6 +32,9 @@ module Herb
       # : (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
       def initialize: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
 
+      # : (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+      def self.with_records: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+
       # : () -> Pathname
       def project_path: () -> Pathname
 
@@ -40,6 +43,9 @@ module Herb
 
       # : () -> Herb::Visitor::Context::Origin
       def origin: () -> Herb::Visitor::Context::Origin
+
+      # : () -> Herb::Visitor::Context::Replacements
+      def replacements: () -> Herb::Visitor::Context::Replacements
 
       # : (Symbol) -> untyped
       def []: (Symbol) -> untyped

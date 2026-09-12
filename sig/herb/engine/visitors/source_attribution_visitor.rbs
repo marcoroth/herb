@@ -69,6 +69,9 @@ module Herb
       def current_file: () -> String
 
       # : (Herb::AST::Node?) -> void
+      def stamp_open_tag: (Herb::AST::Node?) -> void
+
+      # : (Herb::AST::Node?) -> void
       def stamp: (Herb::AST::Node?) -> void
 
       # : ((Herb::AST::HTMLOpenTagNode | Herb::AST::ERBOpenTagNode)) -> Herb::serialized_position?

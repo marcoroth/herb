@@ -63,6 +63,8 @@ module Herb
 
       def visit_erb_content_node: (untyped node) -> untyped
 
+      def visit_erb_comment_node: (untyped node) -> untyped
+
       def visit_erb_control_node: (untyped node) ?{ (?) -> untyped } -> untyped
 
       def visit_erb_if_node: (untyped node) -> untyped

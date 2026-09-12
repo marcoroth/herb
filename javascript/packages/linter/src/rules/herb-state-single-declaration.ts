@@ -3,11 +3,11 @@ import { ParserRule } from "../types.js"
 import { isStateDirective } from "../utils/state-directives-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBBlockNode, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, ERBBlockNode, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 
 class StateSingleDeclarationVisitor extends BaseRuleVisitor {
   private stack: (ERBBlockNode | null)[] = [null]
-  private firstInScope = new Map<ERBBlockNode | null, ERBContentNode>()
+  private firstInScope = new Map<ERBBlockNode | null, ERBCommentNode>()
 
   visitERBBlockNode(node: ERBBlockNode): void {
     this.stack.push(node)
@@ -17,7 +17,7 @@ class StateSingleDeclarationVisitor extends BaseRuleVisitor {
     this.stack.pop()
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     if (!isStateDirective(node)) return
 
     const scope = this.stack[this.stack.length - 1]
@@ -39,6 +39,7 @@ class StateSingleDeclarationVisitor extends BaseRuleVisitor {
 export class HerbStateSingleDeclarationRule extends ParserRule {
   static ruleName = "herb-state-single-declaration"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

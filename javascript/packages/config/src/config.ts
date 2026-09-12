@@ -50,6 +50,9 @@ export interface PersonalHerbSettings {
     minimumLines?: number
     maximumClasses?: number
   }
+  runtimeReports?: {
+    inlayHints?: boolean
+  }
 }
 
 export const defaultPersonalSettings: PersonalHerbSettings = {
@@ -67,6 +70,9 @@ export const defaultPersonalSettings: PersonalHerbSettings = {
     enabled: true,
     minimumLines: 10,
     maximumClasses: 2
+  },
+  runtimeReports: {
+    inlayHints: true
   }
 }
 

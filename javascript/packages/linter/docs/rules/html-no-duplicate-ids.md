@@ -55,6 +55,15 @@ A dynamic ID can never be statically proven to collide: the same source expressi
 <% end %>
 ```
 
+A component's `<Fallback>` renders in place of the component's body, never alongside it, so the two count as exclusive branches the way `if`/`else` arms do. The same ID may appear once in the body and once in the fallback:
+
+```erb
+<Fragment>
+  <div id="card"></div>
+  <Fallback><div id="card"></div></Fallback>
+</Fragment>
+```
+
 The same dynamic expression repeated within the same scope (same document level, same conditional branch) is surfaced as a hint rather than an error:
 
 ```erb

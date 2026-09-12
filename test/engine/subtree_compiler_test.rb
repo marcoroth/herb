@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine/slots/subtree_compiler"
 
 module Engine
   class SubtreeCompilerTest < Minitest::Spec
+    include SnapshotUtils
+
     class View
       attr_reader :ran
 
@@ -78,7 +81,7 @@ module Engine
       end
 
       test "the output of everything outside the target is thrown away" do
-        refute_includes render(TEMPLATE, [4], title: "T"), "T"
+        assert_snapshot_matches(render(TEMPLATE, [4], title: "T"), "subtree_compiler_test-0")
       end
     end
 
@@ -124,7 +127,7 @@ module Engine
           compile("<div><p>a</p></div>", [9])
         end
 
-        assert_includes error.message, "[9]"
+        assert_snapshot_matches(error.message, "subtree_compiler_test-1")
       end
 
       test "does not treat an open tag as a position" do
@@ -138,8 +141,7 @@ module Engine
       test "keeps the discarded output out of the buffer it returns" do
         compiled = compile("<div>outside<p>inside</p></div>", [0, 1])
 
-        assert_includes compiled, "__herb_sink << '<div>outside'"
-        assert_includes compiled, "__herb_subtree << '<p>inside</p>'"
+        assert_snapshot_matches(compiled, "subtree_compiler_test-2")
       end
 
       test "returns the subtree buffer rather than the sink" do

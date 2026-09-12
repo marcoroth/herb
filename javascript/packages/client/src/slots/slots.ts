@@ -30,9 +30,9 @@ import { ElementObserver } from "../shared/element-observer"
 import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
-import { branchKey } from "../markup/markers"
-import { interpolateParts, valuesIn, withoutMarkers } from "../markup/fragments"
-import { currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor } from "../markup/anchors"
+import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker, slotOpenIndex } from "../markup/markers"
+import { blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
+import { anchoredSlots, currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor, slotOpeners } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
 import type { TemplateManifest } from "./manifests"
@@ -41,7 +41,7 @@ import type { CollectionsDelegate } from "./collections"
 import type { RegionIndexDelegate } from "./region-index"
 import type { JournalDelegate } from "./journal"
 
-import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotsDelegate, ApplyOptions, ApplyReport, Item, ItemMap, ItemPlan, ItemStep, Payload, Placement, Region, ScanContext, RenderMode, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotOperation, SlotValue, SlotValues, StaticsIdentity, TransactionResult } from "../types"
+import type { AddItemOptions, AttributeParts, ApplyMode, BuildCause, Built, SlotsDelegate, ApplyOptions, ApplyReport, Item, ItemMap, ItemPlan, ItemStep, Payload, Placement, Region, ScanContext, RenderMode, RevertToken, ScanResult, Slot, SlotAddress, SlotEventDetail, SlotMap, SlotOperation, SlotValue, SlotValues, StaticsIdentity, TransactionResult } from "../types"
 
 export class Slots implements ElementObserverDelegate, JournalDelegate, CollectionsDelegate, RegionIndexDelegate {
   private journal = new Journal(this)
@@ -51,6 +51,8 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
   private collections = new Collections(this, this.journal, this.statics, this.manifests)
   private cause: BuildCause = "client"
   private built: Built | null = null
+  private wrote = false
+  private leaving = new Set<Item>()
   private delegates = new Set<SlotsDelegate>()
   private elements: ElementObserver | null = null
   private unobserve: (() => void) | null = null
@@ -162,6 +164,30 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     return this.index.files()
   }
 
+  parkedRoots(): DocumentFragment[] {
+    const roots = this.statics.all()
+
+    for (const region of this.regions()) {
+      for (const slot of region.slots.values()) {
+        this.capturedIn(slot, roots)
+      }
+    }
+
+    return roots
+  }
+
+  private capturedIn(slot: Slot, roots: DocumentFragment[]): void {
+    for (const fragment of slot.captured?.values() ?? []) {
+      roots.push(fragment)
+    }
+
+    for (const item of slot.items.values()) {
+      for (const inner of item.slots.values()) {
+        this.capturedIn(inner, roots)
+      }
+    }
+  }
+
   slotsFor(file: string, index: number): Slot[] {
     return this.index.slotsFor(file, index)
   }
@@ -224,6 +250,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
     this.built = built
     this.cause = cause
+    this.wrote = false
 
     try {
       return work()
@@ -233,6 +260,14 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
       if (built.branches.length > 0 || built.items.length > 0) {
         this.announceBuilt(built, cause)
+      }
+
+      if (this.wrote) {
+        this.wrote = false
+
+        for (const delegate of [...this.delegates]) {
+          delegate.settled?.()
+        }
       }
     }
   }
@@ -281,7 +316,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       return true
     }
 
-    const markup = this.materialize(slot.region.file, branchKey(slot.index, branch), { ...(slot.shown?.get(branch) ?? {}), ...dynamics })
+    const markup = this.branchMarkup(slot, branch, dynamics)
 
     if (!markup) {
       return false
@@ -292,8 +327,43 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     slot.branch = branch
 
     this.built?.branches.push(slot)
+    this.focusAutofocus(slot)
 
     return true
+  }
+
+  private branchMarkup(slot: Slot, branch: number, dynamics: SlotValues): DocumentFragment | null {
+    const captured = slot.captured?.get(branch)
+
+    if (captured) {
+      const copy = captured.cloneNode(true) as DocumentFragment
+
+      fillSlots(copy, { ...(slot.shown?.get(branch) ?? {}), ...dynamics }, false, (index) => this.manifests.partsForFile(slot.region.file, index))
+
+      return copy
+    }
+
+    return this.materialize(slot.region.file, branchKey(slot.index, branch), { ...(slot.shown?.get(branch) ?? {}), ...dynamics })
+  }
+
+  private focusAutofocus(slot: Slot): void {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    if (slot.anchor.kind !== "range" || !slot.anchor.start.isConnected) {
+      return
+    }
+
+    const range = this.rangeOf(slot)
+    const holder = range.commonAncestorContainer
+    const root = holder instanceof Element ? holder : holder.parentElement
+
+    const target = root?.querySelector<HTMLElement>("[autofocus]")
+
+    if (target && range.intersectsNode(target) && document.activeElement !== target) {
+      target.focus()
+    }
   }
 
   private partsFor(region: Region, index: number): AttributeParts | null {
@@ -427,6 +497,8 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
   private announce(slot: Slot, operation: SlotOperation, tell: (delegate: SlotsDelegate) => void, { key = null, item = null, previousKey = null }: { key?: string | null; item?: Item | null; previousKey?: string | null } = {}): void {
     const region = slot.region ?? null
+
+    this.wrote = true
 
     for (const delegate of [...this.delegates]) {
       tell(delegate)
@@ -643,6 +715,10 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     }
 
     const contents = this.rangeOf(slot).cloneContents()
+    const captured = slot.captured ?? new Map<number, DocumentFragment>()
+
+    captured.set(slot.branch, contents.cloneNode(true) as DocumentFragment)
+    slot.captured = captured
 
     this.remember(slot, slot.branch, valuesIn(contents))
 
@@ -677,6 +753,88 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     return this.statics.materialize(file, key, dynamics, (index) => this.manifests.partsForFile(file, index))
   }
 
+  holdBranch(slot: Slot, branch: number | null): Promise<void> | null {
+    return this.held((delegate) => delegate.holdBranch?.(slot, branch))
+  }
+
+  holdItem(slot: Slot, item: Item): Promise<void> | null {
+    return this.held((delegate) => delegate.holdItem?.(slot, item))
+  }
+
+  private held(ask: (delegate: SlotsDelegate) => Promise<void> | void): Promise<void> | null {
+    const holds: Promise<void>[] = []
+
+    for (const delegate of [...this.delegates]) {
+      const held = ask(delegate)
+
+      if (held) {
+        holds.push(held)
+      }
+    }
+
+    if (holds.length === 0) {
+      return null
+    }
+
+    return Promise.allSettled(holds).then(() => undefined)
+  }
+
+  dismissItem(slot: Slot, key: string): boolean {
+    const item = slot.items.get(key)
+
+    if (!item) {
+      return false
+    }
+
+    const held = this.holdItem(slot, item)
+
+    if (!held) {
+      return this.removeItem(slot, key)
+    }
+
+    this.leaving.add(item)
+
+    void held.then(() => {
+      if (!this.leaving.delete(item)) {
+        return
+      }
+
+      if (slot.items.get(key) === item) {
+        this.removeItem(slot, key)
+      }
+    })
+
+    return true
+  }
+
+  keepItem(slot: Slot, key: string): void {
+    const item = slot.items.get(key)
+
+    if (item) {
+      this.leaving.delete(item)
+    }
+  }
+
+  isLeaving(item: Item): boolean {
+    return this.leaving.has(item)
+  }
+
+  itemsInOrder(slot: Slot): Item[] {
+    return this.collections.itemsInDocumentOrder(slot)
+  }
+
+  announceItemsMoving(slot: Slot, items: Item[]): void {
+    for (const delegate of [...this.delegates]) {
+      delegate.itemsMoving?.(slot, items)
+    }
+  }
+
+  announceItemsMoved(slot: Slot, items: Item[]): void {
+    for (const delegate of [...this.delegates]) {
+      delegate.itemsMoved?.(slot, items)
+    }
+  }
+
   switchBranch(slot: Slot, branch: number | null, dynamics: SlotValues = {}): boolean {
     if (branch === slot.branch) {
       return false
@@ -685,8 +843,159 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     return this.building("client", () => this.swapBranch(slot, branch, dynamics))
   }
 
+  rebuildKeyed(slot: Slot, key: string, dynamics: SlotValues = {}): boolean {
+    if (slot.type !== "keyed" || slot.anchor.kind !== "range" || key === slot.key) {
+      return false
+    }
+
+    return this.building("client", () => this.swapKeyed(slot, key, dynamics))
+  }
+
+  private swapKeyed(slot: Slot, key: string, dynamics: SlotValues): boolean {
+    if (slot.anchor.kind !== "range") {
+      return false
+    }
+
+    const fragment = this.keyedMarkup(slot, dynamics)
+
+    if (!fragment) {
+      return false
+    }
+
+    this.journal.record(slot, () => {
+      const before = this.current(slot)
+      const previous = slot.key
+
+      return (live) => {
+        if (live.anchor.kind === "range") {
+          live.items.clear()
+          live.items.set(previous ?? "", { key: previous ?? "", start: live.anchor.start, end: live.anchor.end, slots: new Map(), collection: live })
+          live.anchor.start.data = keyedSlotMarker(live.index, previous ?? "")
+        }
+
+        live.key = previous
+
+        this.update(live, before)
+      }
+    })
+
+    const previous = slot.key
+    const held: Item = { key, start: slot.anchor.start, end: slot.anchor.end, slots: new Map(), collection: slot }
+
+    this.index.forgetChildren(slot)
+
+    slot.items.clear()
+    slot.items.set(key, held)
+
+    this.rewrite(this.rangeOf(slot), fragment, { region: slot.region, slot, item: held })
+
+    slot.anchor.start.data = keyedSlotMarker(slot.index, key)
+    slot.key = key
+
+    this.focusAutofocus(slot)
+    this.announce(slot, "keyed", (delegate) => delegate.keyedRebuilt?.(slot, key, previous), { key, previousKey: previous })
+
+    return true
+  }
+
+  private keyedMarkup(slot: Slot, dynamics: SlotValues): DocumentFragment | null {
+    const parked = this.materialize(slot.region.file, itemStaticsKey(slot.index), dynamics)
+
+    if (parked) {
+      for (const node of [...parked.childNodes]) {
+        if (node.nodeType !== Node.COMMENT_NODE) {
+          continue
+        }
+
+        const marker = branchOf((node as Comment).data.trim())
+
+        if (marker && marker.branch === ITEM_STATICS) {
+          node.remove()
+        }
+      }
+
+      return parked
+    }
+
+    const fragment = document.createRange().createContextualFragment("")
+
+    fragment.append(this.rangeOf(slot).cloneContents())
+
+    blankSlots(fragment)
+    blankSeeds(fragment)
+    fillSlots(fragment, dynamics, false, (index) => this.manifests.partsForFile(slot.region.file, index))
+
+    return fragment
+  }
+
+  invalidateStale(region: Region, stale: Set<number>): void {
+    const walk = (slots: SlotMap): void => {
+      for (const slot of slots.values()) {
+        if (slot.shown) {
+          for (const values of slot.shown.values()) {
+            for (const index of Object.keys(values)) {
+              if (stale.has(Number(index)) || this.embedsStale(values[Number(index)], stale)) {
+                delete values[Number(index)]
+              }
+            }
+          }
+        }
+
+        if (slot.captured) {
+          for (const [branch, fragment] of [...slot.captured]) {
+            if (this.holdsAny(fragment, stale)) {
+              slot.captured.delete(branch)
+            }
+          }
+        }
+
+        for (const item of slot.items.values()) {
+          walk(item.slots)
+        }
+      }
+    }
+
+    walk(region.slots)
+  }
+
+  private embedsStale(value: SlotValue, stale: Set<number>): boolean {
+    if (typeof value !== "string") {
+      return false
+    }
+
+    for (const match of value.matchAll(/<!--\s*herb-slot:(\d+)/g)) {
+      if (stale.has(Number(match[1]))) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private holdsAny(fragment: DocumentFragment, stale: Set<number>): boolean {
+    for (const open of slotOpeners(fragment)) {
+      const index = slotOpenIndex(open.data.trim())
+
+      if (index !== null && stale.has(index)) {
+        return true
+      }
+    }
+
+    for (const [, entry] of anchoredSlots(fragment)) {
+      if (stale.has(entry.index)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   recordBuilt(slot: Slot, item: Item): void {
     this.built?.items.push({ slot, item })
+  }
+
+  announceBranchMaterial(slot: Slot): void {
+    this.announce(slot, "branch-material", (delegate) => delegate.branchMaterial?.(slot), {})
   }
 
   announceItemAdded(slot: Slot, key: string, item: Item | null): void {

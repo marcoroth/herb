@@ -64,6 +64,14 @@ module Herb
         true
       end
 
+      #: (?capture_output: (bool | ^(String) -> boolish | Regexp | Array[untyped])?) -> void
+      def initialize(capture_output: nil)
+        super()
+
+        @capture_everything = capture_output == true
+        @capture_output = (capture_output == true ? [] : Array(capture_output)) #: Array[untyped]
+      end
+
       def visit_document_node(node)
         @file = context.relative_file_path
 
@@ -81,7 +89,7 @@ module Herb
       private
 
       def frame_render(node)
-        template = context.relative_file_path.dump
+        template = render_arguments(context.relative_file_path)
 
         node.children.unshift(erb_node(node, "<%", "#{SESSION}.enter_render(#{template}); begin"))
         node.children.push(erb_node(node, "<%", "ensure; #{SESSION}.leave_render; end"))
@@ -135,12 +143,19 @@ module Herb
         if framed?(node)
           [enter_node(node), node, leave_node(node)]
         elsif erb_outputs?(node)
-          [wrapped_output(node)]
+          [replacing(node, wrapped_output(node))]
         elsif erb_statement?(node)
-          [wrapped_statement(node)]
+          [replacing(node, wrapped_statement(node))]
         else
           [node]
         end
+      end
+
+      #: (Herb::AST::Node, Herb::AST::Node) -> Herb::AST::Node
+      def replacing(node, replacement)
+        context.replacements.record(node, replacement)
+
+        replacement
       end
 
       def framed?(node)
@@ -180,10 +195,26 @@ module Herb
 
       def wrapped_output(node)
         body = code(node)
+        call = captured?(node) ? "output" : "at"
 
-        return erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
+        return erb_node(node, "<%=", "#{SESSION}.#{call}(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
 
-        erb_node(node, "<%=", "#{SESSION}.at(#{position(node)}) { #{body} }")
+        erb_node(node, "<%=", "#{SESSION}.#{call}(#{position(node)}) { #{body} }")
+      end
+
+      def captured?(node)
+        return false if !@capture_everything && @capture_output.empty?
+
+        source = code(node)
+
+        return false if source.empty?
+        return true if @capture_everything
+
+        @capture_output.any? do |matcher|
+          matcher.is_a?(Regexp) ? matcher.match?(source) : matcher.call(source)
+        end
+      rescue StandardError
+        false
       end
 
       def wrapped_statement(node)
@@ -210,7 +241,19 @@ module Herb
       end
 
       def enter_render_node(node, file)
-        erb_node(node, "<%", "#{SESSION}.enter_render(#{file.dump}); begin")
+        erb_node(node, "<%", "#{SESSION}.enter_render(#{render_arguments(file)}); begin")
+      end
+
+      def render_arguments(file)
+        digest = digest_for(file)
+
+        digest ? "#{file.dump}, #{digest.dump}" : file.dump
+      end
+
+      def digest_for(file)
+        Herb::Fingerprint.template_file(context.project_path + file)
+      rescue StandardError
+        nil
       end
 
       def leave_render_node(node)
@@ -219,10 +262,10 @@ module Herb
 
       def position(node)
         location = node.location
-        parts = [@file.dump, location.start.line, location.start.column]
-        kind = via(node)
+        parts = [@file.dump, location.start.line, location.start.column, via(node).inspect]
 
-        parts << kind.inspect if kind
+        parts << "end_line: #{location.end.line}"
+        parts << "end_column: #{location.end.column}"
 
         parts.join(", ")
       end

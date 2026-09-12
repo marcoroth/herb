@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 
 require "erubi"
@@ -8,6 +9,8 @@ require "erubi/capture_block"
 
 module Engine
   class EngineErubiCaptureBlockTest < Minitest::Spec
+    include SnapshotUtils
+
     BUFVAR = "@bufvar"
     BUFVAL = "::Erubi::CaptureBlockEngine::Buffer.new"
 
@@ -75,8 +78,9 @@ module Engine
       herb = Herb::Engine.new(template, bufvar: BUFVAR, bufval: BUFVAL).src
       erubi = Erubi::CaptureBlockEngine.new(template, bufvar: BUFVAR).src
 
-      assert_includes herb, "@bufvar << (wrap do;"
-      assert_includes erubi, "@bufvar <<=  wrap do ;"
+      assert_snapshot_matches(herb, "engine_erubi_capture_block_test-0")
+
+      assert_snapshot_matches(erubi, "engine_erubi_capture_block_test-1")
     end
 
     test "needs a capture-aware buffer, which the default bufval is not" do

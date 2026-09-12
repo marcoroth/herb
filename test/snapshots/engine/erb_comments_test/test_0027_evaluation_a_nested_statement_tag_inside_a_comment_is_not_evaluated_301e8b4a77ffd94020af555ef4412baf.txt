@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBCommentsTest#test_0027_evaluation: a nested statement tag inside a comment is not evaluated"
+input: "{source: \"<%# a <% raise \\\"boom\\\" %>\", locals: {}, options: {}}"
+---

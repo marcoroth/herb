@@ -518,7 +518,7 @@ describe("html-head-only-elements", () => {
     })
 
     test("treats a javascript_tag body as script text rather than markup", () => {
-      expectNoOffenses(`<html><head><%= javascript_tag do %>\n  var s = '<title>' + 'x';\n<% end %></head></html>`)
+      expectNoOffenses(`<html><body><%= javascript_tag do %>\n  var s = '<meta charset="utf-8">' + 'x';\n<% end %></body></html>`)
     })
   })
 

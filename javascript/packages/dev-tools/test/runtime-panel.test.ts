@@ -158,6 +158,7 @@ function diagnostic(overrides: Partial<RuntimeDiagnostic> = {}): RuntimeDiagnost
 beforeEach(() => {
   resetRuntimeReportWarnings()
   sessionStorage.clear()
+  localStorage.clear()
 
   document.body.innerHTML = ""
   panels = []
@@ -170,6 +171,7 @@ afterEach(() => {
 
   document.body.innerHTML = ""
   sessionStorage.clear()
+  localStorage.clear()
 })
 
 describe("clear control", () => {
@@ -212,18 +214,28 @@ describe("clear control", () => {
     const groups = () => document.querySelectorAll(".herb-dev-tools-group").length
 
     expect(groups()).toBeGreaterThan(1)
-    expect(toggle().textContent).toBe("Collapse all")
+    expect(toggle().getAttribute("aria-label")).toBe("Collapse all")
     expect(collapsed()).toBe(0)
 
     toggle().click()
 
     expect(collapsed()).toBe(groups())
-    expect(toggle().textContent).toBe("Expand all")
+    expect(toggle().getAttribute("aria-label")).toBe("Expand all")
 
     toggle().click()
 
     expect(collapsed()).toBe(0)
-    expect(toggle().textContent).toBe("Collapse all")
+    expect(toggle().getAttribute("aria-label")).toBe("Collapse all")
+  })
+
+  test("can show the tooltip that says what it does", () => {
+    embed(PAYLOAD)
+    createPanel().open()
+
+    const button = clearButton()!
+
+    expect(button.getAttribute("data-herb-dev-tools-tip")).toContain("Clear all")
+    expect(getComputedStyle(button).overflow).not.toBe("hidden")
   })
 
   test("empties everything while the All filter is active", () => {
@@ -234,7 +246,7 @@ describe("clear control", () => {
     panel.open()
 
     expect(cards()).toHaveLength(3)
-    expect(clearButton()!.textContent).toBe("Clear")
+    expect(clearButton()!.getAttribute("aria-label")).toBe("Clear all 3 entries and empty the panel")
 
     clearButton()!.click()
 
@@ -250,7 +262,7 @@ describe("clear control", () => {
     panel.open()
     chip("Herb Linter").click()
 
-    expect(clearButton()!.textContent).toBe("Clear")
+    expect(clearButton()!.getAttribute("aria-label")).toBe("Clear all 3 entries and empty the panel")
 
     clearButton()!.click()
 
@@ -3937,5 +3949,848 @@ describe("what a blocking screen calls itself", () => {
     ])
 
     expect(title()).toBe("Herb Parser")
+  })
+})
+
+describe("muting metrics", () => {
+  const METRICS = {
+    version: 1,
+    diagnostics: [
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "This tag rendered once, taking 1.4 ms.",
+        code: "render-time",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "1.4 ms",
+        location: { start: { line: 2, column: 1 } },
+      },
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "This ERB tag ran 3 SQL queries while the page rendered.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 5, column: 1 } },
+      },
+      {
+        template: "app/views/posts/_actions.html.erb",
+        message: "Image is missing an alt attribute.",
+        code: "html-img-require-alt",
+        severity: "warning",
+        origin: "Herb Linter",
+        location: { start: { line: 3, column: 3 } },
+      },
+    ],
+  }
+
+  function mute(key: string) {
+    return document.querySelector(`.herb-dev-tools-mute[data-herb-dev-tools-metric="${key}"]`) as HTMLButtonElement | null
+  }
+
+  function chooser() {
+    return document.querySelector(".herb-dev-tools-metrics-toggle") as HTMLButtonElement | null
+  }
+
+  function choosing() {
+    chooser()!.click()
+  }
+
+  function messages() {
+    return cards().map(card => card.textContent ?? "")
+  }
+
+  test("keeps the chips out of the way until they are asked for", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+    expect(chooser()!.textContent).toBe("")
+    expect(chooser()!.getAttribute("aria-expanded")).toBe("false")
+
+    choosing()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).not.toBeNull()
+    expect(chooser()!.getAttribute("aria-expanded")).toBe("true")
+
+    choosing()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+  })
+
+  test("says how many are off once the chips are closed again", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+    choosing()
+
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+    expect(chooser()!.textContent).toBe("1")
+  })
+
+  test("counts every metric as off while the switch for all of them is on", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("*")!.click()
+
+    expect(chooser()!.textContent).toBe("2")
+  })
+
+  test("names every metric it was told about, and the switch for all of them", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+
+    const chips = Array.from(document.querySelectorAll(".herb-dev-tools-mutes .herb-dev-tools-mute"))
+
+    expect(chips.map(chip => chip.textContent)).toEqual(["All metrics (2)", "render-time (1)", "sql-queries (1)"])
+  })
+
+  test("takes a muted metric out of the panel and leaves the rest", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    expect(messages().some(message => message.includes("1.4 ms"))).toBe(false)
+    expect(messages().some(message => message.includes("3 SQL queries"))).toBe(true)
+    expect(messages().some(message => message.includes("alt attribute"))).toBe(true)
+  })
+
+  test("stops counting what it stopped showing", () => {
+    embed(METRICS)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.metricCount).toBe(2)
+
+    choosing()
+    mute("sql-queries")!.click()
+
+    expect(panel.metricCount).toBe(1)
+    expect(panel.diagnosticCount).toBe(1)
+  })
+
+  test("brings a metric back when its chip is pressed again", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    expect(mute("render-time")!.getAttribute("aria-pressed")).toBe("false")
+
+    mute("render-time")!.click()
+
+    expect(mute("render-time")!.getAttribute("aria-pressed")).toBe("true")
+    expect(messages().some(message => message.includes("1.4 ms"))).toBe(true)
+  })
+
+  test("leaves only the way back once every metric is off", () => {
+    embed(METRICS)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    choosing()
+    mute("*")!.click()
+
+    expect(panel.metricCount).toBe(0)
+    expect(messages().some(message => message.includes("alt attribute"))).toBe(true)
+    expect(document.querySelectorAll(".herb-dev-tools-mutes .herb-dev-tools-mute")).toHaveLength(1)
+
+    mute("*")!.click()
+
+    expect(panel.metricCount).toBe(2)
+  })
+
+  test("keeps what was muted somewhere the session does not reach", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    expect(JSON.parse(localStorage.getItem("herb-dev-tools-muted-metrics")!)).toEqual(["render-time"])
+    expect(JSON.parse(sessionStorage.getItem("herb-dev-tools-runtime-panel")!).muted).toBeUndefined()
+  })
+
+  test("is still muted for a panel that never saw the click", () => {
+    embed(METRICS)
+    createPanel().open()
+
+    choosing()
+    mute("render-time")!.click()
+
+    panels.forEach(panel => panel.destroy())
+    document.body.innerHTML = ""
+    sessionStorage.clear()
+
+    embed(METRICS)
+
+    const reopened = createPanel()
+
+    reopened.open()
+
+    expect(reopened.metricCount).toBe(1)
+    expect(chooser()!.textContent).toBe("1")
+  })
+
+  test("says nothing is muted when the browser refuses to remember", () => {
+    const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("denied")
+    })
+
+    embed(METRICS)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.metricCount).toBe(2)
+
+    getItem.mockRestore()
+  })
+
+  test("counts a metric its producer left uncoded without offering a chip for it", () => {
+    embed({
+      version: 1,
+      diagnostics: [
+        ...METRICS.diagnostics,
+        {
+          template: "app/views/posts/index.html.erb",
+          message: "This component rendered twice on this page.",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "2 renders",
+          location: { start: { line: 9, column: 1 } },
+        },
+      ],
+    })
+
+    const panel = createPanel()
+
+    panel.open()
+
+    choosing()
+
+    const chips = Array.from(document.querySelectorAll(".herb-dev-tools-mutes .herb-dev-tools-mute"))
+
+    expect(chips.map(chip => chip.textContent)).toEqual(["All metrics (3)", "render-time (1)", "sql-queries (1)"])
+
+    mute("*")!.click()
+
+    expect(panel.metricCount).toBe(0)
+  })
+
+  test("says nothing about muting when nothing reported a metric", () => {
+    embed(fixPayload(null, null))
+    createPanel().open()
+
+    expect(chooser()).toBeNull()
+    expect(document.querySelector(".herb-dev-tools-mutes")).toBeNull()
+  })
+})
+
+describe("pointing a frame at what it rendered", () => {
+  const STACKED = {
+    version: 1,
+    renderTree: [
+      { id: "0", template: "app/views/layouts/application.html.erb", parent: null, via: "layout" },
+      { id: "1", template: "app/views/posts/index.html.erb", parent: "0", via: "template", location: { line: 7, column: 10 } },
+      { id: "2", template: "app/views/posts/_post.html.erb", parent: "1", via: "partial", location: { line: 12, column: 4 } },
+    ],
+    diagnostics: [
+      {
+        template: "app/views/posts/_post.html.erb",
+        node: "2",
+        message: "This partial issued 3 SQL queries while rendering.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 2, column: 1 } },
+      },
+    ],
+  }
+
+  function stamp(template: string, line: number, text: string, column = 1) {
+    const element = document.createElement("article")
+
+    element.setAttribute("data-herb-source", `${template}:${line}:${column}`)
+    element.textContent = text
+    element.getBoundingClientRect = () => ({ top: 0, left: 0, width: 100, height: 40, right: 100, bottom: 40, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+
+    document.body.appendChild(element)
+
+    return element
+  }
+
+  function highlight() {
+    return document.querySelector(".herb-dev-tools-highlight") as HTMLButtonElement | null
+  }
+
+  test("offers nothing when the page carries no stamps", () => {
+    embed(STACKED)
+    createPanel().open()
+
+    expect(document.querySelector(".herb-dev-tools-frame")).not.toBeNull()
+    expect(highlight()).toBeNull()
+  })
+
+  test("offers the innermost frame alone, and says how many it found", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "first post")
+    stamp("app/views/posts/_post.html.erb", 1, "second post")
+    stamp("app/views/posts/index.html.erb", 3, "the page")
+
+    embed(STACKED)
+    createPanel().open()
+
+    const buttons = Array.from(document.querySelectorAll(".herb-dev-tools-highlight"))
+
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0].closest(".herb-dev-tools-frame")!.textContent).toContain("_post.html.erb")
+    expect(buttons[0].getAttribute("data-herb-dev-tools-source")).toBe("app/views/posts/_post.html.erb")
+    expect(buttons[0].textContent).toBe("2")
+    expect(buttons[0].getAttribute("aria-label")).toBe("Show all 2 of these on the page")
+  })
+
+  test("says it plainly when the frame rendered once", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "only post")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()!.textContent).toBe("")
+    expect(highlight()!.getAttribute("aria-label")).toBe("Show what this rendered on the page")
+  })
+
+  test("outlines every node the frame rendered while the control is under the pointer", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "first post")
+    stamp("app/views/posts/_post.html.erb", 1, "second post")
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(document.querySelectorAll(".herb-element-outline")).toHaveLength(2)
+
+    highlight()!.dispatchEvent(new MouseEvent("mouseleave"))
+
+    expect(document.querySelectorAll(".herb-element-outline")).toHaveLength(0)
+  })
+
+  test("flashes them all when the control is pressed", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "first post")
+    stamp("app/views/posts/_post.html.erb", 1, "second post")
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.click()
+
+    expect(document.querySelectorAll(".herb-element-flash")).toHaveLength(2)
+  })
+
+  test("answers with what was opened above the finding, not with the whole template", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "the article")
+    stamp("app/views/posts/_post.html.erb", 2, "the heading beside it")
+    stamp("app/views/posts/_post.html.erb", 9, "something written below")
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.dispatchEvent(new MouseEvent("mouseenter"))
+
+    const outlined = Array.from(document.querySelectorAll(".herb-element-outline"))
+
+    expect(outlined).toHaveLength(1)
+    expect(highlight()!.getAttribute("aria-label")).toBe("Show what this rendered on the page")
+  })
+
+  test("answers with every copy when the same element was rendered again", () => {
+    stamp("app/views/posts/_post.html.erb", 2, "first copy")
+    stamp("app/views/posts/_post.html.erb", 2, "second copy")
+    stamp("app/views/posts/_post.html.erb", 2, "third copy")
+    stamp("app/views/posts/_post.html.erb", 9, "written below all of them")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()!.textContent).toBe("3")
+
+    highlight()!.click()
+
+    expect(document.querySelectorAll(".herb-element-flash")).toHaveLength(3)
+  })
+
+  test("takes the innermost tag opened above, when two were opened on the way", () => {
+    stamp("app/views/posts/_post.html.erb", 1, "the outer one", 1)
+    stamp("app/views/posts/_post.html.erb", 1, "the inner one", 5)
+
+    embed(STACKED)
+    createPanel().open()
+
+    highlight()!.click()
+
+    const flashed = document.querySelectorAll(".herb-element-flash")
+
+    expect(flashed).toHaveLength(1)
+  })
+
+  test("falls back to everything the template rendered when nothing was opened above", () => {
+    stamp("app/views/posts/_post.html.erb", 40, "written well below the finding")
+    stamp("app/views/posts/_post.html.erb", 41, "and another")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()!.textContent).toBe("2")
+  })
+
+  test("does not answer for a template whose name it only starts with", () => {
+    stamp("app/views/posts/_post_actions.html.erb", 1, "a different partial")
+
+    embed(STACKED)
+    createPanel().open()
+
+    expect(highlight()).toBeNull()
+  })
+})
+
+describe("hovering a frame in the render stack", () => {
+  const STACKED = {
+    version: 1,
+    renderTree: [
+      { id: "0", template: "app/views/layouts/application.html.erb", parent: null, via: "layout" },
+      { id: "1", template: "app/views/posts/index.html.erb", parent: "0", via: "template", location: { line: 7, column: 10 } },
+      { id: "2", template: "app/views/posts/_post.html.erb", parent: "1", via: "partial", location: { line: 12, column: 4 } },
+    ],
+    diagnostics: [
+      {
+        template: "app/views/posts/_post.html.erb",
+        node: "2",
+        message: "This partial issued 3 SQL queries while rendering.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 6, column: 1 } },
+      },
+    ],
+  }
+
+  function stamp(template: string, line: number, column = 1, box = { top: 0, left: 0, width: 80, height: 20 }) {
+    const element = document.createElement("article")
+
+    element.setAttribute("data-herb-source", `${template}:${line}:${column}`)
+    element.getBoundingClientRect = () => ({
+      ...box,
+      right: box.left + box.width,
+      bottom: box.top + box.height,
+      x: box.left,
+      y: box.top,
+      toJSON: () => ({}),
+    }) as DOMRect
+
+    document.body.appendChild(element)
+  }
+
+  function frames() {
+    return Array.from(document.querySelectorAll(".herb-dev-tools-frame .herb-dev-tools-frame-target")) as HTMLElement[]
+  }
+
+  function outlines() {
+    return document.querySelectorAll(".herb-element-outline").length
+  }
+
+  test("outlines the region a file covers, for any frame", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 60, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/index.html.erb", 3, 1, { top: 200, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/index.html.erb", 5, 1, { top: 300, left: 0, width: 100, height: 40 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    const [innermost, middle] = frames()
+
+    middle.dispatchEvent(new MouseEvent("mouseenter"))
+
+    const covering = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect(outlines()).toBe(1)
+    expect([covering.style.top, covering.style.height]).toEqual(["200px", "140px"])
+
+    middle.dispatchEvent(new MouseEvent("mouseleave"))
+
+    expect(outlines()).toBe(0)
+
+    innermost.dispatchEvent(new MouseEvent("mouseenter"))
+
+    const inner = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect([inner.style.top, inner.style.height]).toEqual(["0px", "100px"])
+  })
+
+  test("shows the whole file, where the control beside it shows one element", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 300, left: 0, width: 100, height: 40 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    const path = frames()[0]
+    const control = document.querySelector(".herb-dev-tools-highlight") as HTMLElement
+
+    path.dispatchEvent(new MouseEvent("mouseenter"))
+
+    const region = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect([region.style.top, region.style.height]).toEqual(["0px", "340px"])
+
+    path.dispatchEvent(new MouseEvent("mouseleave"))
+    control.dispatchEvent(new MouseEvent("mouseenter"))
+
+    const narrowed = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect(outlines()).toBe(1)
+    expect([narrowed.style.top, narrowed.style.height]).toEqual(["0px", "40px"])
+  })
+
+  test("draws one region around everything the file covers", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 100, left: 20, width: 200, height: 50 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 400, left: 60, width: 300, height: 80 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    frames()[0].dispatchEvent(new MouseEvent("mouseenter"))
+
+    const boxes = Array.from(document.querySelectorAll(".herb-element-outline")) as HTMLElement[]
+
+    expect(boxes).toHaveLength(1)
+    expect(boxes[0].style.top).toBe("100px")
+    expect(boxes[0].style.left).toBe("20px")
+    expect(boxes[0].style.width).toBe("340px")
+    expect(boxes[0].style.height).toBe("380px")
+  })
+
+  test("covers a sibling in between that the template never stamped", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/index.html.erb", 3, 1, { top: 50, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 9, 1, { top: 100, left: 0, width: 100, height: 40 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    frames()[0].dispatchEvent(new MouseEvent("mouseenter"))
+
+    const box = document.querySelector(".herb-element-outline") as HTMLElement
+
+    expect(box.style.top).toBe("0px")
+    expect(box.style.height).toBe("140px")
+  })
+
+  test("keeps a box per copy for the control that narrows to one element", () => {
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 0, left: 0, width: 100, height: 40 })
+    stamp("app/views/posts/_post.html.erb", 2, 1, { top: 200, left: 0, width: 100, height: 40 })
+
+    embed(STACKED)
+    createPanel().open()
+
+    const control = document.querySelector(".herb-dev-tools-highlight") as HTMLElement
+
+    control.dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(document.querySelectorAll(".herb-element-outline")).toHaveLength(2)
+  })
+
+  test("outlines nothing for a frame whose file left no mark", () => {
+    stamp("app/views/posts/_post.html.erb", 2)
+
+    embed(STACKED)
+    createPanel().open()
+
+    frames()[2].dispatchEvent(new MouseEvent("mouseenter"))
+
+    expect(outlines()).toBe(0)
+  })
+})
+
+describe("what a tag rendered", () => {
+  const RENDERED = {
+    version: 1,
+    diagnostics: [
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "Latest posts",
+        code: "rendered-output",
+        kind: "value",
+        origin: "Herb Engine",
+        value: "Latest posts",
+        location: { start: { line: 4, column: 5 } },
+      },
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "Image is missing an alt attribute.",
+        code: "html-img-require-alt",
+        severity: "warning",
+        origin: "Herb Linter",
+        location: { start: { line: 9, column: 3 } },
+      },
+    ],
+  }
+
+  test("is not an error just because nobody gave it a severity", () => {
+    embed(RENDERED)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.badgeSeverity).toBe("warning")
+    expect(document.querySelectorAll(".herb-dev-tools-badge-error")).toHaveLength(0)
+    expect(cards().some(card => (card.textContent ?? "").includes("Latest posts"))).toBe(true)
+  })
+
+  test("is counted beside the metrics instead of against the page", () => {
+    embed(RENDERED)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(panel.metricCount).toBe(1)
+    expect(panel.diagnosticCount).toBe(1)
+  })
+
+  test("wears a chip the same height as the ones beside it", () => {
+    embed({
+      version: 1,
+      renderTree: [
+        { id: "0", template: "app/views/posts/index.html.erb", parent: null, via: "template" },
+      ],
+      diagnostics: [
+        {
+          template: "app/views/posts/index.html.erb",
+          node: "0",
+          message: "This ERB tag ran 3 SQL queries while the page rendered.",
+          code: "sql-queries",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "3 SQL queries",
+          location: { start: { line: 4, column: 5 } },
+        },
+      ],
+    })
+
+    createPanel().open()
+
+    const height = (selector: string) => {
+      const element = document.querySelector(selector) as HTMLElement
+
+      return Math.round(element.getBoundingClientRect().height)
+    }
+
+    expect(height(".herb-dev-tools-metric")).toBe(height(".herb-dev-tools-code"))
+    expect(height(".herb-dev-tools-metric")).toBe(height(".herb-dev-tools-frame-via"))
+  })
+
+  test("can be put away like a metric", () => {
+    embed(RENDERED)
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const chooser = document.querySelector(".herb-dev-tools-metrics-toggle") as HTMLButtonElement
+
+    chooser.click()
+
+    const chip = document.querySelector('.herb-dev-tools-mute[data-herb-dev-tools-metric="rendered-output"]') as HTMLButtonElement
+
+    expect(chip).not.toBeNull()
+
+    chip.click()
+
+    expect(panel.metricCount).toBe(0)
+    expect(cards().some(card => (card.textContent ?? "").includes("Latest posts"))).toBe(false)
+    expect(cards().some(card => (card.textContent ?? "").includes("alt attribute"))).toBe(true)
+  })
+})
+
+describe("what was observed behind a count", () => {
+  const OBSERVED = {
+    version: 1,
+    diagnostics: [
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "This ERB tag ran 3 SQL queries while the page rendered.",
+        code: "sql-queries",
+        kind: "metric",
+        origin: "Herb Engine",
+        value: "3 SQL queries",
+        location: { start: { line: 4, column: 5 } },
+        data: {
+          queries: ["SELECT 1 FROM posts", "SELECT 2 FROM posts", "SELECT 3 FROM posts"],
+          render: [{ duration: 1.6, allocations: 3373 }],
+        },
+      },
+      {
+        template: "app/views/posts/index.html.erb",
+        message: "Image is missing an alt attribute.",
+        code: "html-img-require-alt",
+        severity: "warning",
+        origin: "Herb Linter",
+        location: { start: { line: 9, column: 3 } },
+      },
+    ],
+  }
+
+  function observed() {
+    return document.querySelector(".herb-dev-tools-observed") as HTMLDetailsElement | null
+  }
+
+  test("shows the statements a count was counting", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    const text = observed()!.textContent ?? ""
+
+    expect(text).toContain("SELECT 1 FROM posts")
+    expect(text).toContain("SELECT 3 FROM posts")
+  })
+
+  test("puts a blank line between statements long enough to wrap into each other", () => {
+    const first = `SELECT "events".* FROM "events" WHERE "events"."id" IN (20, 320, 137, 556, 85) ORDER BY "events"."id"`
+    const second = `SELECT "talks".* FROM "talks" WHERE "talks"."event_id" IN (20, 320, 137, 556, 85) ORDER BY "talks"."id"`
+
+    embed({
+      version: 1,
+      diagnostics: [
+        {
+          template: "app/views/posts/index.html.erb",
+          message: "This ERB tag ran 2 SQL queries while the page rendered.",
+          code: "sql-queries",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "2 SQL queries",
+          location: { start: { line: 4, column: 5 } },
+          data: { queries: [first, second] },
+        },
+      ],
+    })
+
+    createPanel().open()
+
+    expect(observed()!.querySelector("code")!.textContent).toBe(`${first}\n\n${second}`)
+  })
+
+  test("leaves observations that fit on a line packed together", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    const text = observed()!.querySelector("code")!.textContent ?? ""
+
+    expect(text).not.toContain("\n\n")
+  })
+
+  test("spells out an observation recorded as an object", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    expect(observed()!.textContent).toContain("duration: 1.6  allocations: 3373")
+    expect(observed()!.textContent).not.toContain("[object Object]")
+  })
+
+  test("counts what it holds, and stays folded until asked", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    expect(observed()!.open).toBe(false)
+    expect(observed()!.querySelector("summary")!.textContent).toBe("What was observed (4)")
+    expect(observed()!.querySelectorAll(".herb-dev-tools-observed-key")).toHaveLength(2)
+  })
+
+  test("says nothing for a finding that observed nothing", () => {
+    embed(OBSERVED)
+    createPanel().open()
+
+    const linter = cards().find(card => (card.textContent ?? "").includes("alt attribute"))!
+
+    expect(linter.querySelector(".herb-dev-tools-observed")).toBeNull()
+  })
+})
+
+describe("naming the tag a rendered value came from", () => {
+  function payload(overrides: Record<string, unknown> = {}) {
+    return {
+      version: 1,
+      diagnostics: [
+        {
+          template: "app/views/page/home.html.erb",
+          message: "Hello World from en.yml",
+          code: "rendered-output",
+          kind: "value",
+          origin: "Herb Engine",
+          value: "Hello World from en.yml",
+          location: { start: { line: 5, column: 6 }, end: { line: 5, column: 29 } },
+          ...overrides,
+        },
+      ],
+    }
+  }
+
+  function chip() {
+    return document.querySelector(".herb-dev-tools-metric") as HTMLElement
+  }
+
+  test("wears the tag, and keeps what it rendered on the hover", () => {
+    embed(payload({ tag: '<%= t("hello_world") %>' }))
+    createPanel().open()
+
+    expect(chip().textContent).toBe('<%= t("hello_world") %>')
+    expect(chip().getAttribute("title")).toBe("Hello World from en.yml")
+  })
+
+  test("falls back to what it rendered when the report carried no tag", () => {
+    embed(payload())
+    createPanel().open()
+
+    expect(chip().textContent).toBe("Hello World from en.yml")
+  })
+
+  test("leaves a metric wearing its number", () => {
+    embed({
+      version: 1,
+      diagnostics: [
+        {
+          template: "app/views/page/home.html.erb",
+          message: "This ERB tag ran 3 SQL queries while the page rendered.",
+          code: "sql-queries",
+          kind: "metric",
+          origin: "Herb Engine",
+          value: "3 SQL queries",
+          tag: "<%= render @posts %>",
+          location: { start: { line: 5, column: 6 }, end: { line: 5, column: 29 } },
+        },
+      ],
+    })
+
+    createPanel().open()
+
+    expect(chip().textContent).toBe("3 SQL queries")
   })
 })

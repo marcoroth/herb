@@ -1,8 +1,0 @@
----
-source: "Engine::EngineErubiCompatTest#test_0028_keeps the whitespace around a standalone code tag with trim: false"
-input: "{source: \"<% a = 1 %>\\ntext\\n\", options: {trim: false}}"
----
-_buf = ::String.new; a = 1; _buf << '
-text
-'.freeze;
-_buf.to_s

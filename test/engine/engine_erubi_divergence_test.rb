@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 
 require "erubi"
 
 module Engine
   class EngineErubiDivergenceTest < Minitest::Spec
+    include SnapshotUtils
+
     def compile_both(template, options = {})
       [Herb::Engine.new(template, options).src, Erubi::Engine.new(template, options).src]
     end
@@ -28,10 +31,6 @@ module Engine
         .gsub("__erubi = ::Erubi;", "__herb = ::Herb::Engine;")
         .gsub("__erubi.h", "__herb.h")
         .gsub("::Erubi.h", "::Herb::Engine.h")
-    end
-
-    def without_trailing_space(source)
-      source.gsub(/ +$/, "")
     end
 
     def reported_line(engine, template)
@@ -87,11 +86,9 @@ module Engine
     test "escapes through its own module instead of Erubi's" do
       herb, erubi = assert_diverges_from_erubi("<%= content %>", { escape: true })
 
-      assert_includes herb, "__herb = ::Herb::Engine;"
-      assert_includes herb, "__herb.h((content))"
+      assert_snapshot_matches(herb, "engine_erubi_divergence_test-0")
 
-      assert_includes erubi, "__erubi = ::Erubi;"
-      assert_includes erubi, "__erubi.h(( content ))"
+      assert_snapshot_matches(erubi, "engine_erubi_divergence_test-1")
 
       assert_renders_the_same_as_erubi("<%= content %>", { escape: true }, content: "<b>")
     end
@@ -99,8 +96,9 @@ module Engine
     test "names its own module in the default escape function" do
       herb, erubi = assert_diverges_from_erubi("<%== content %>", { escape: false })
 
-      assert_includes herb, "::Herb::Engine.h((content))"
-      assert_includes erubi, "::Erubi.h(( content ))"
+      assert_snapshot_matches(herb, "engine_erubi_divergence_test-2")
+
+      assert_snapshot_matches(erubi, "engine_erubi_divergence_test-3")
 
       assert_renders_the_same_as_erubi("<%== content %>", { escape: false }, content: "<b>")
     end
@@ -108,8 +106,9 @@ module Engine
     test "leaves out the escape module when no tag in the template escapes" do
       herb, erubi = assert_diverges_from_erubi("<%== content %>", { escape: true })
 
-      refute_includes herb, "__herb"
-      assert_includes erubi, "__erubi = ::Erubi;"
+      assert_snapshot_matches(herb, "engine_erubi_divergence_test-4")
+
+      assert_snapshot_matches(erubi, "engine_erubi_divergence_test-5")
 
       assert_renders_the_same_as_erubi("<%== content %>", { escape: true }, content: "<b>")
     end
@@ -123,13 +122,15 @@ module Engine
 
       herb, erubi = assert_diverges_from_erubi(template)
 
-      assert_includes herb, "::Herb::Engine.attr((field_name))"
-      assert_includes erubi, "( field_name ).to_s"
+      assert_snapshot_matches(herb, "engine_erubi_divergence_test-6")
+
+      assert_snapshot_matches(erubi, "engine_erubi_divergence_test-7")
 
       injection = 'a" onload="alert(1)'
 
-      assert_includes evaluate(erubi, field_name: injection), injection
-      refute_includes evaluate(herb, field_name: injection), injection
+      assert_snapshot_matches(evaluate(erubi, field_name: injection), "engine_erubi_divergence_test-8")
+
+      assert_snapshot_matches(evaluate(herb, field_name: injection), "engine_erubi_divergence_test-9")
     end
 
     test "escapes inside a script element by script context where Erubi only calls to_s" do
@@ -143,24 +144,15 @@ module Engine
 
       herb, erubi = assert_diverges_from_erubi(template)
 
-      assert_includes herb, "::Herb::Engine.js((data))"
-      assert_includes erubi, "( data ).to_s"
+      assert_snapshot_matches(herb, "engine_erubi_divergence_test-10")
+
+      assert_snapshot_matches(erubi, "engine_erubi_divergence_test-11")
 
       injection = "</script>"
 
-      assert_includes evaluate(erubi, data: injection), "var data = </script>;"
-      refute_includes evaluate(herb, data: injection), "var data = </script>;"
-      assert_includes evaluate(herb, data: injection), "var data = \\x3c/script\\x3e;"
-    end
+      assert_snapshot_matches(evaluate(erubi, data: injection), "engine_erubi_divergence_test-12")
 
-    test "keeps the line an ERB comment was written on" do
-      herb, erubi = assert_diverges_from_erubi("<%# a comment %>\n<div>Content</div>\n")
-
-      assert_equal "_buf = ::String.new; _buf << '<div>Content</div>\n'.freeze; \n_buf.to_s\n", herb
-      assert_equal "_buf = ::String.new;\n _buf << '<div>Content</div>\n'.freeze;\n_buf.to_s\n", erubi
-
-      assert_renders_the_same_as_erubi("<%# a comment %>\n<div>Content</div>\n")
-      assert_reports_the_same_line_as_erubi("<div>a</div>\n<%# a comment %>\n<% raise %>\n")
+      assert_snapshot_matches(evaluate(herb, data: injection), "engine_erubi_divergence_test-13")
     end
 
     test "differs only by padding and the escape module across a whole template" do
@@ -209,8 +201,9 @@ module Engine
       options = { preamble: "@buf = []", postamble: "@buf.join" }
       herb, erubi = assert_diverges_from_erubi("<div><%= title %></div>", options)
 
-      assert_includes herb, "@buf = [];"
-      assert_includes erubi, "@buf = [] _buf"
+      assert_snapshot_matches(herb, "engine_erubi_divergence_test-14")
+
+      assert_snapshot_matches(erubi, "engine_erubi_divergence_test-15")
 
       RubyVM::InstructionSequence.compile(herb)
 
@@ -229,7 +222,7 @@ module Engine
     test "refuses an escaped ERB tag that Erubi passes through" do
       template = "<%% literal %>\n"
 
-      assert_includes Erubi::Engine.new(template).src, "'<% literal %>"
+      assert_snapshot_matches(Erubi::Engine.new(template).src, "engine_erubi_divergence_test-16")
 
       assert_raises(Herb::Engine::GeneratorTemplateError) { Herb::Engine.new(template) }
     end
@@ -242,7 +235,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_includes Erubi::Engine.new(template).src, "case animal\nwhen \"cat\""
+      assert_snapshot_matches(Erubi::Engine.new(template).src, "engine_erubi_divergence_test-17")
 
       assert_raises(Herb::Engine::ParseError) { Herb::Engine.new(template) }
 

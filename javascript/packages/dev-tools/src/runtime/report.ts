@@ -6,11 +6,12 @@ export const UNKNOWN_TEMPLATE = '(unknown template)';
 export const DEFAULT_SEVERITY: RuntimeSeverity = 'error';
 export const RENDER_VIA_VALUES = ['layout', 'template', 'partial', 'component'] as const;
 export const RUNTIME_SEVERITIES = ['error', 'warning', 'info', 'hint'] as const;
-export const RUNTIME_KINDS = ['diagnostic', 'metric'] as const;
+export const RUNTIME_KINDS = ['diagnostic', 'metric', 'value'] as const;
 export const OVERLAY_MODES = ['blocking', 'dismissible'] as const;
 export const PHASES = ['compile', 'runtime'] as const;
 export const FIX_KINDS = ['safe', 'unsafe'] as const;
 export const DEFAULT_FIX_KIND: FixKind = 'safe';
+export const MAX_BACKTRACE_FRAMES = 5;
 
 export type RenderVia = typeof RENDER_VIA_VALUES[number];
 export type RuntimeSeverity = typeof RUNTIME_SEVERITIES[number];
@@ -73,6 +74,7 @@ export interface RuntimeDiagnostic {
   overlay?: OverlayMode | false;
   phase?: Phase;
   source?: string;
+  backtrace?: string[];
   element?: Element | null;
 }
 
@@ -106,7 +108,10 @@ export interface NormalizedDiagnostic {
   fix: NormalizedFix | null;
   overlay: OverlayMode | null;
   phase: Phase | null;
+  backtrace: string[];
   element: Element | null;
+  observations: Record<string, unknown[]>;
+  tag: string | null;
 }
 
 export interface NormalizedRuntimeReport {
@@ -281,7 +286,7 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     message,
     node: asString(value.node),
     code: asString(value.code),
-    severity: kind === 'metric' ? null : severity ?? DEFAULT_SEVERITY,
+    severity: kind === 'diagnostic' ? severity ?? DEFAULT_SEVERITY : null,
     kind,
     origin: trimOrigin(value.origin),
     location: normalizeRange(value.location),
@@ -291,8 +296,37 @@ export function normalizeDiagnostic(value: unknown, sources: Record<string, stri
     fix: normalizeFix(value.fix, template, sources),
     overlay: normalizeOverlay(value.overlay),
     phase: normalizePhase(value.phase),
+    backtrace: normalizeBacktrace(value.backtrace),
     element: asElement(value.element),
+    observations: normalizeObservations(value.data),
+    tag: asString(value.tag),
   };
+}
+
+function normalizeBacktrace(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((frame): frame is string => typeof frame === 'string' && frame.length > 0)
+    .slice(0, MAX_BACKTRACE_FRAMES);
+}
+
+function normalizeObservations(value: unknown): Record<string, unknown[]> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const observations: Record<string, unknown[]> = {};
+
+  for (const [key, observed] of Object.entries(value)) {
+    if (Array.isArray(observed) && observed.length > 0) {
+      observations[key] = observed;
+    }
+  }
+
+  return observations;
 }
 
 function asElement(value: unknown): Element | null {
@@ -486,8 +520,10 @@ export function buildRenderStack(tree: RenderTreeNode[], diagnostic: NormalizedD
 }
 
 export function diagnosticKey(diagnostic: NormalizedDiagnostic): string {
-  const line = diagnostic.location?.start.line ?? '';
-  const discriminator = diagnostic.code ?? diagnostic.message;
-
-  return [diagnostic.template, line, diagnostic.code ?? '', discriminator].join(' ');
+  return JSON.stringify([
+    diagnostic.template,
+    diagnostic.location?.start.line ?? null,
+    diagnostic.code ?? null,
+    diagnostic.location && diagnostic.code ? null : diagnostic.message
+  ]);
 }

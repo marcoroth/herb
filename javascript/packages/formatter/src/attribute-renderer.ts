@@ -3,7 +3,7 @@ import { HTMLAttributeNode, HTMLAttributeValueNode, HTMLTextNode, LiteralNode, E
 
 import { getCombinedAttributeName, getCombinedStringFromNodes, isNode, TOKEN_LIST_ATTRIBUTES } from "@herb-tools/core"
 
-import { ASCII_WHITESPACE, FORMATTABLE_ATTRIBUTES } from "./format-helpers.js"
+import { ASCII_WHITESPACE, FORMATTABLE_ATTRIBUTES, isERBTagNode } from "./format-helpers.js"
 
 import type { Node, ERBNode } from "@herb-tools/core"
 
@@ -266,7 +266,7 @@ export class AttributeRenderer {
           htmlTextContent += child.content
 
           return child.content
-        } else if (isNode(child, ERBContentNode)) {
+        } else if (isERBTagNode(child)) {
           return this.delegate.reconstructERBNode(child, true)
         } else {
           const printed = IdentityPrinter.print(child)

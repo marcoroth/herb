@@ -443,6 +443,8 @@ module Herb
     class NodeType
       include ConfigType
 
+      ERB_TAG_FIELDS = ["tag_opening", "content", "tag_closing"].freeze
+
       attr_reader :name, :type, :struct_type, :struct_name, :human, :fields
 
       def initialize(config)
@@ -460,6 +462,16 @@ module Herb
 
           type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
+      end
+
+      def erb_tag?
+        names = fields.map(&:name)
+
+        ERB_TAG_FIELDS.all? { |field| names.include?(field) }
+      end
+
+      def html?
+        name.start_with?("HTML")
       end
 
       def c_type
@@ -717,6 +729,69 @@ module Herb
 
       def prism_constants
         prism_nodes.map { |node| "PM_#{Template.underscore(node).upcase}" }
+      end
+    end
+
+    class HTMLElement
+      attr_reader :name, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @description = config.fetch("description")
+        @void = config.fetch("void", false)
+        @deprecated = config.fetch("deprecated", false)
+      end
+
+      def void? = @void
+      def deprecated? = @deprecated
+    end
+
+    class ForeignContentElement
+      attr_reader :name, :kind
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @kind = config.fetch("kind")
+        @end_tag = config.fetch("end_tag", true)
+        @html_only = config.fetch("html_only", false)
+
+        raise "Unknown foreign content kind #{@kind.inspect} for #{@name}" unless ["raw_text", "rcdata"].include?(@kind)
+      end
+
+      def raw_text? = @kind == "raw_text"
+      def rcdata? = @kind == "rcdata"
+      def end_tag? = @end_tag
+      def html_only? = @html_only
+    end
+
+    class SlotsComponentAttribute
+      attr_reader :name, :type, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = config.fetch("type")
+        @description = config.fetch("description")
+      end
+    end
+
+    class SlotsComponent
+      attr_reader :name, :parents, :description, :attributes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @parents = config.fetch("parents", nil)
+        @description = config.fetch("description")
+        @attributes = config.fetch("attributes", []).map { |attribute| SlotsComponentAttribute.new(attribute) }
+        @deferred = config.fetch("deferred", false)
+        @void = config.fetch("void", false)
+      end
+
+      def deferred?
+        @deferred
+      end
+
+      def void?
+        @void
       end
     end
 
@@ -1055,9 +1130,9 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements, html_elements: html_elements, boolean_attributes: boolean_attributes }
       )
-      content = heading_for(name, template_file) + rendered_template
+      content = heading_for(name, template_file_display) + rendered_template
 
       check_gitignore(name)
 
@@ -1147,6 +1222,26 @@ module Herb
       config = YAML.load_file("config/state/operators.yml")
 
       (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
+    end
+
+    def self.html_elements
+      YAML.load_file("config/html_elements.yml")["elements"].map { |element| HTMLElement.new(element) }
+    end
+
+    def self.boolean_attributes
+      YAML.load_file("config/html_elements.yml")["boolean_attributes"]
+    end
+
+    def self.foreign_content_elements
+      config = YAML.load_file("config/html_elements.yml")
+
+      (config["foreign_content_elements"] || []).map { |element| ForeignContentElement.new(element) }
+    end
+
+    def self.slots_components
+      config = YAML.load_file("config/slots/components.yml", aliases: true)
+
+      (config["components"] || []).map { |component| SlotsComponent.new(component) }
     end
 
     def self.config

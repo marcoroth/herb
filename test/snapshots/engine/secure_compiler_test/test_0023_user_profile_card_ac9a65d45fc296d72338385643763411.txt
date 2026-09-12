@@ -1,0 +1,18 @@
+---
+source: "Engine::SecureCompilerTest#test_0023_user profile card"
+input: "secure_compiler_test-14"
+---
+<div class="user-card featured">
+    <img src="https://example.com/avatar.jpg" alt="Alice Smith's avatar">
+
+  <h3>Alice Smith</h3>
+  <p class="email">alice@example.com</p>
+
+  <script>
+    window.userProfile = {
+      name: "Alice Smith",
+      email: "alice@example.com",
+      isActive: true
+    };
+  </script>
+</div>

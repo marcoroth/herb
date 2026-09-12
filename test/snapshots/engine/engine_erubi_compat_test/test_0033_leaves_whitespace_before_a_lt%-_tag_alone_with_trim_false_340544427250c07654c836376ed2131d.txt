@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0033_leaves whitespace before a <%- tag alone with trim: false"
+input: "{source: \"before\\n  <%- a = 1 %>\\nafter\\n\", options: {trim: false}}"
+---
+_buf = ::String.new; _buf << 'before
+  '.freeze; a = 1; _buf << '
+after
+'.freeze;
+_buf.to_s

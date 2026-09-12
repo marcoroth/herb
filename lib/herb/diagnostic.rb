@@ -17,6 +17,7 @@ module Herb
     attr_reader :origin #: String
     attr_reader :location #: Herb::Location?
     attr_reader :suggestion #: String?
+    attr_reader :description #: String?
     attr_reader :docs_url #: String?
     attr_reader :value #: String?
     attr_reader :overlay #: Symbol?
@@ -24,8 +25,8 @@ module Herb
     attr_reader :data #: Hash[Symbol, untyped]
     attr_reader :error_class #: Class?
 
-    #: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?overlay: Symbol?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
-    def initialize(template:, message:, severity: :error, kind: :diagnostic, origin: UNKNOWN_ORIGIN, node: nil, code: nil, location: nil, suggestion: nil, docs_url: nil, value: nil, overlay: nil, phase: :runtime, data: {}, error_class: nil)
+    #: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?description: String?, ?docs_url: String?, ?value: String?, ?overlay: Symbol?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+    def initialize(template:, message:, severity: :error, kind: :diagnostic, origin: UNKNOWN_ORIGIN, node: nil, code: nil, location: nil, suggestion: nil, description: nil, docs_url: nil, value: nil, overlay: nil, phase: :runtime, data: {}, error_class: nil)
       @template = template
       @message = message
       @node = node
@@ -35,6 +36,7 @@ module Herb
       @origin = origin
       @location = location
       @suggestion = suggestion
+      @description = description
       @docs_url = docs_url
       @value = value
       @overlay = overlay
@@ -110,6 +112,7 @@ module Herb
         origin: origin,
         location: location && serialized_location(location),
         suggestion: suggestion,
+        description: description,
         docs_url: docs_url,
         value: value,
         overlay: overlay,

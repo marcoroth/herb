@@ -1,5 +1,6 @@
 import { elementOf } from "../markup/anchors"
 import { slotsRequest } from "../shared/slots-request"
+import { transitionMutation } from "../shared/transitions"
 
 import type { Slots } from "../slots/slots"
 import type { ApplyReport, Payload, Slot } from "../types"
@@ -82,7 +83,7 @@ export class ServerState {
       this.values.set(name, next)
     }
 
-    this.restores.push(...this.optimistic(changed))
+    this.restores.push(...this.slots.building("client", () => this.optimistic(changed)))
 
     if (this.options.debounce <= 0) {
       return this.flush()
@@ -105,13 +106,15 @@ export class ServerState {
     const changes = this.pending
     const restores = this.restores
     const previous = this.previous
+    const waiting = this.waiting
 
     this.pending = new Map()
     this.restores = []
     this.previous = new Map()
+    this.waiting = []
 
     if (changes.size === 0) {
-      return this.settle(IDLE)
+      return this.settle(IDLE, waiting)
     }
 
     const changed = [...changes.keys()]
@@ -127,10 +130,10 @@ export class ServerState {
       payload = await this.options.transport({ state: this.all(), changed }, controller.signal)
     } catch (error) {
       if (controller.signal.aborted || this.superseded(taken)) {
-        return this.settle({ ...IDLE, written: restores.length, stale: true })
+        return this.settle({ ...IDLE, written: restores.length, stale: true }, waiting)
       }
 
-      this.restore(restores)
+      this.slots.building("client", () => this.restore(restores))
 
       for (const [name, was] of previous) {
         if (was === undefined) {
@@ -140,27 +143,27 @@ export class ServerState {
         }
       }
 
-      return this.settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true })
+      return this.settle({ ...IDLE, written: restores.length, restored: restores.length, failed: true }, waiting)
     }
 
     if (this.superseded(taken)) {
-      return this.settle({ ...IDLE, written: restores.length, stale: true })
+      return this.settle({ ...IDLE, written: restores.length, stale: true }, waiting)
     }
 
     let report: ApplyReport = { applied: 0, deferred: [] }
 
     if (payload) {
-      report = this.slots.apply(payload)
+      const applied = payload
+
+      await transitionMutation(() => {
+        report = this.slots.apply(applied)
+      })
     }
 
-    return this.settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false })
+    return this.settle({ ...report, written: restores.length, restored: 0, stale: false, failed: false }, waiting)
   }
 
-  private settle(report: StateReport): StateReport {
-    const waiting = this.waiting
-
-    this.waiting = []
-
+  private settle(report: StateReport, waiting: StateWaiter[]): StateReport {
     for (const resolve of waiting) {
       resolve(report)
     }

@@ -30,6 +30,7 @@ import {
   isERBNode,
   isERBControlFlowNode,
   isERBCommentNode,
+  isInlineRubyCommentNode,
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
@@ -78,6 +79,7 @@ import {
   HTMLCommentNode,
   HTMLDoctypeNode,
   WhitespaceNode,
+  ERBCommentNode,
   ERBContentNode,
   ERBBlockNode,
   ERBIterationBlockNode,
@@ -1030,7 +1032,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.pushWithIndent(open + inner + close)
   }
 
-  visitERBCommentNode(node: ERBContentNode) {
+  visitERBCommentNode(node: ERBCommentNode | ERBContentNode) {
     const result = formatERBCommentLines(
       node.tag_opening?.value || "<%#",
       node?.content?.value || "",
@@ -1076,7 +1078,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    if (isERBCommentNode(node)) {
+    if ((isERBCommentNode(node) || isInlineRubyCommentNode(node))) {
       this.visitERBCommentNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)
@@ -1729,7 +1731,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   /**
    * Render an ERB node as a string
    */
-  renderERBAsString(node: ERBContentNode): string {
+  renderERBAsString(node: ERBContentNode | ERBCommentNode): string {
     return this.withInlineMode(() => this.capture(() => this.visit(node)).join(""))
   }
 

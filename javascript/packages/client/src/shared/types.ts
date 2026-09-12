@@ -24,6 +24,8 @@ export interface RuntimeDiagnostic extends DiagnosticSpot {
   value?: string
   overlay?: "blocking" | "dismissible" | false
   element?: Element | null
+  phase?: string
+  backtrace?: string[]
 }
 
 export interface DevToolsGlobal {

@@ -1,0 +1,6 @@
+---
+source: "Engine::StaticTemplateOptimizationTest#test_0010_a custom postamble keeps the buffer"
+input: "static_template_optimization_test-5"
+---
+_buf = ::String.new; _buf << '<div>hi</div>'.freeze;
+@output_buffer

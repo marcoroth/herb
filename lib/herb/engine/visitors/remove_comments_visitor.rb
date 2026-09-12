@@ -71,7 +71,7 @@ module Herb
         case node
         when Herb::AST::HTMLCommentNode
           !marker?(node)
-        when Herb::AST::ERBContentNode
+        when Herb::AST::ERBCommentNode, Herb::AST::ERBContentNode
           erb_comment_node?(node) && !directive?(node)
         else
           false
@@ -97,7 +97,7 @@ module Herb
         "#{node.comment_start&.value}#{opening}"
       end
 
-      #: (Herb::AST::ERBContentNode) -> bool
+      #: (Herb::AST::ERBCommentNode | Herb::AST::ERBContentNode) -> bool
       def directive?(node)
         DIRECTIVE.match?(node.content&.value.to_s)
       end

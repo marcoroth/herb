@@ -1,24 +1,16 @@
-import { Connection } from "./connection"
 import { Toast } from "./toast"
+import { Connection } from "./connection"
 import { ConnectionDot } from "./connection-dot"
 import { MismatchAlert } from "./mismatch-alert"
+import { UnavailableAlert } from "./unavailable-alert"
 
-import { applyPatch } from "./patch"
-import { diagnosticsFromError } from "./diagnostics"
-import { DEV_SERVER_FIXED_EVENT } from "./types"
+import { diagnosticsFromError, diagnosticsFromBrokenFile } from "./diagnostics"
+import { heldRuntime } from "./runtime-handle"
 
-import type {
-  DiagnosticSink,
-  HerbClientOptions,
-  HerbMessage,
-  WelcomeMessage,
-  PatchMessage,
-  ReloadMessage,
-  ErrorMessage,
-  FixedMessage,
-} from "./types"
+import type { AssetMessage, BrokenFile, DiagnosticSink, HerbClientOptions, HerbMessage, WelcomeMessage, SchemaMessage, InvalidateMessage, ErrorMessage } from "./types"
 
 const DEFAULT_PORT = 8592
+const UNAVAILABLE_HINT_AFTER_ATTEMPTS = 3
 
 type ClientState = "connected" | "disconnected" | "given-up"
 
@@ -55,10 +47,14 @@ export class HerbClient {
   }
 
   disconnect(): void {
+    UnavailableAlert.hide()
+
     this.connection.disconnect()
   }
 
   retry(): void {
+    UnavailableAlert.hide()
+
     this.updateState("disconnected")
     this.connection.retry()
   }
@@ -86,9 +82,25 @@ export class HerbClient {
       Toast.show("Herb Dev Server reconnected", "connected")
     }
 
+    UnavailableAlert.reset()
+
     this.hasConnectedBefore = true
     this.updateState("connected")
+    this.sendHello()
     this.options.onConnect?.()
+  }
+
+  private sendHello(): void {
+    const runtime = heldRuntime()
+
+    this.connection.send({
+      type: "hello",
+      role: "browser",
+      capabilities: {
+        runtime: Boolean(runtime),
+        regions: runtime?.slots.regions().length ?? 0,
+      },
+    })
   }
 
   private onDisconnect(): void {
@@ -101,13 +113,21 @@ export class HerbClient {
   }
 
   private onReconnecting(attempt: number, maxAttempts: number, delay: number): void {
-    console.debug(`[herb-client] reconnecting (attempt ${attempt}/${maxAttempts}, next try in ${(delay / 1000).toFixed(1)}s)...`)
+    console.debug(`[Herb Dev Client] reconnecting (attempt ${attempt}/${maxAttempts}, next try in ${(delay / 1000).toFixed(1)}s)...`)
     this.connectionDot.updateReconnectCountdown(attempt, maxAttempts, delay)
+
+    if (!this.hasConnectedBefore && attempt >= UNAVAILABLE_HINT_AFTER_ATTEMPTS) {
+      this.showUnavailableAlert()
+    }
   }
 
   private onGivenUp(): void {
     this.updateState("given-up")
-    Toast.show("Herb Dev Server not available — click the dot to retry", "warning")
+    this.showUnavailableAlert()
+  }
+
+  private showUnavailableAlert(): void {
+    UnavailableAlert.show({ port: this.port, onRetry: () => this.retry() })
   }
 
   private handleMessage(message: HerbMessage): void {
@@ -117,17 +137,17 @@ export class HerbClient {
       case "welcome":
         this.handleWelcome(message)
         break
-      case "patch":
-        this.handlePatch(message)
+      case "schema":
+        this.handleSchema(message)
         break
-      case "reload":
-        this.handleReload(message)
+      case "invalidate":
+        this.handleInvalidate(message)
         break
       case "error":
         this.handleError(message)
         break
-      case "fixed":
-        this.handleFixed(message)
+      case "asset":
+        this.handleAsset(message)
         break
     }
   }
@@ -137,45 +157,52 @@ export class HerbClient {
 
     if (clientProject && message.project && clientProject !== message.project) {
       this.projectMatch = false
-      console.warn(`[herb-client] project mismatch — server: ${message.project}, client: ${clientProject}. Ignoring messages.`)
+      console.warn(`[Herb Dev Client] project mismatch — server: ${message.project}, client: ${clientProject}. Ignoring messages.`)
       this.updateState("disconnected")
 
       MismatchAlert.show(message.project, clientProject)
     } else {
       this.projectMatch = true
+
+      this.reportBroken(message.broken_files ?? [])
     }
   }
 
-  private handlePatch(message: PatchMessage): void {
-    this.options.onPatch?.(message)
+  private reportBroken(files: BrokenFile[]): void {
+    const sink = this.getDiagnostics()
 
-    const applied = applyPatch(message)
+    if (!sink) return
 
-    if (!applied) {
-      window.location.reload()
+    for (const broken of files) {
+      sink.report(broken.file, diagnosticsFromBrokenFile(broken))
     }
   }
 
-  private handleReload(message: ReloadMessage): void {
-    this.options.onReload?.(message)
-    window.location.reload()
+  private handleSchema(message: SchemaMessage): void {
+    this.options.onSchema?.(message)
+
+    this.getDiagnostics()?.report(message.file, message.diagnostics ?? [])
+
+    this.options.hotReload?.onSchema(message)
+  }
+
+  private handleInvalidate(message: InvalidateMessage): void {
+    this.options.onInvalidate?.(message)
+    this.options.hotReload?.onInvalidate(message)
+  }
+
+  private handleAsset(message: AssetMessage): void {
+    this.options.onAsset?.(message)
+
+    this.options.hotReload?.onAsset(message)
   }
 
   private handleError(message: ErrorMessage): void {
     this.options.onError?.(message)
 
-    const sink = this.getDiagnostics()
-    if (!sink) return
+    this.getDiagnostics()?.report(message.file, diagnosticsFromError(message))
 
-    sink.clear()
-    sink.report(diagnosticsFromError(message))
-  }
-
-  private handleFixed(message: FixedMessage): void {
-    this.options.onFixed?.(message)
-    this.getDiagnostics()?.clear()
-
-    document.dispatchEvent(new CustomEvent(DEV_SERVER_FIXED_EVENT, { detail: message }))
+    this.options.hotReload?.onError(message)
   }
 
   private updateState(state: ClientState): void {

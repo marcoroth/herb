@@ -1,4 +1,5 @@
 import { colors } from "./colors"
+import { DEV_SERVER_COMMAND } from "./types"
 
 import type { HerbClient } from "./client"
 
@@ -9,6 +10,7 @@ type UpdatePanelOptions = {
   statusText: string
   statusColor: string
   retryVisible: boolean
+  tipText?: string
   retryHandler?: (e: MouseEvent) => void
   keepStatusWhileRetrying?: boolean
 }
@@ -53,6 +55,8 @@ export class ConnectionDot {
 
     const state = this.client.getState()
 
+    this.applyHotReloadingAvailability(state === "connected")
+
     switch (state) {
       case "connected": {
         this.applyBadge(dot, colors.green, "Connected to herb dev server", true, true, "default", null)
@@ -68,12 +72,13 @@ export class ConnectionDot {
       }
 
       case "disconnected": {
-        this.applyBadge(dot, colors.red, "Disconnected from herb dev server", false, false, "default", null)
+        this.applyBadge(dot, colors.red, `Disconnected from herb dev server. Make sure it is running with \`${DEV_SERVER_COMMAND}\``, false, false, "default", null)
 
         this.updatePanel(panelDot, panelStatus, panelRetry, {
           dotColor: colors.red,
           statusText: "Dev Server disconnected",
           statusColor: colors.gray,
+          tipText: `Dev Server disconnected. Make sure it is running with \`${DEV_SERVER_COMMAND}\``,
           retryVisible: true,
           retryHandler,
           keepStatusWhileRetrying: true,
@@ -83,12 +88,13 @@ export class ConnectionDot {
       }
 
       case "given-up": {
-        this.applyBadge(dot, colors.amber, "Connection to herb dev server failed — click to retry", false, false, "pointer", retryHandler)
+        this.applyBadge(dot, colors.amber, `Herb dev server not available. Start it with \`${DEV_SERVER_COMMAND}\`, or click to retry`, false, false, "pointer", retryHandler)
 
         this.updatePanel(panelDot, panelStatus, panelRetry, {
           dotColor: colors.amber,
           statusText: "Dev Server not available",
           statusColor: colors.amberDarker,
+          tipText: `Dev Server not available. Start it with \`${DEV_SERVER_COMMAND}\``,
           retryVisible: true,
           retryHandler,
         })
@@ -184,6 +190,24 @@ export class ConnectionDot {
     dot.onclick = handler
   }
 
+  private applyHotReloadingAvailability(connected: boolean): void {
+    const toggle = document.getElementById("herbToggleHotReloading") as HTMLInputElement | null
+
+    if (!toggle) {
+      return
+    }
+
+    toggle.disabled = !connected
+    document.getElementById("herbHotReloadingItem")?.classList.toggle("herb-toggle-item-disabled", !connected)
+
+    const flashes = document.getElementById("herbToggleHotReloadFlashes") as HTMLInputElement | null
+
+    if (flashes) {
+      flashes.disabled = !connected
+      document.getElementById("herbHotReloadFlashesItem")?.classList.toggle("herb-toggle-item-disabled", !connected)
+    }
+  }
+
   private updatePanel(panelDot: HTMLElement[], panelStatus: HTMLElement[], panelRetry: HTMLButtonElement[], options: UpdatePanelOptions): void {
     for (const element of panelDot) {
       this.setDotStyle(element, options.dotColor, false, false)
@@ -194,7 +218,7 @@ export class ConnectionDot {
     }
 
     for (const element of panelStatus) {
-      element.parentElement?.setAttribute("data-herb-dev-tools-tip", options.statusText)
+      element.parentElement?.setAttribute("data-herb-dev-tools-tip", options.tipText ?? options.statusText)
     }
 
     for (const element of panelRetry) {

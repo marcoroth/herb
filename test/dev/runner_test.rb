@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+require "fileutils"
+
 require_relative "../test_helper"
 require_relative "../../lib/herb/dev/runner"
-require "fileutils"
-require "tmpdir"
+require_relative "../../lib/herb/dev"
 
 module Dev
   class RunnerTest < Minitest::Spec
@@ -18,7 +20,7 @@ module Dev
         1
       end
 
-      def broadcast(message)
+      def broadcast(message, **)
         @messages << message
       end
     end
@@ -27,22 +29,17 @@ module Dev
 
     def broadcast_for(current_content, previous_content)
       websocket = FakeWebSocket.new
-      parse = Herb.parse(current_content, strict: true, analyze: true)
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
 
-      capture_io do
-        Herb::Dev::Runner.new.send(
-          :broadcast_errors,
-          "/app/views/posts/index.html.erb",
-          "app/views/posts/index.html.erb",
-          parse,
-          current_content,
-          previous_content,
-          {},
-          Set.new,
-          websocket,
-          "12:00:00"
-        )
-      end
+      event = Herb::Dev::Watcher::Event.new(
+        kind: :changed,
+        path: "/app/views/posts/index.html.erb",
+        relative_path: "app/views/posts/index.html.erb",
+        previous: previous_content,
+        current: current_content
+      )
+
+      capture_io { pipeline.handle_event(event) }
 
       websocket.messages.first
     end
@@ -70,6 +67,27 @@ module Dev
 
     test "sends the content it just read, not the content it replaced" do
       assert_equal BROKEN, broadcast_for(BROKEN, "<div>\n</div>\n")[:source]
+    end
+
+    test "a fixed file broadcasts a clearing schema and never a fixed message" do
+      websocket = FakeWebSocket.new
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
+
+      broken = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/a", relative_path: "a.html.erb", previous: "<div></div>", current: BROKEN)
+      fixed = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/a", relative_path: "a.html.erb", previous: BROKEN, current: "<div>\n  <form></form>\n</div>\n")
+
+      capture_io do
+        pipeline.handle_event(broken)
+        pipeline.handle_event(fixed)
+      end
+
+      types = websocket.messages.map { |message| message[:type] }
+
+      assert_equal ["error", "schema", "invalidate"], types
+
+      schema = websocket.messages.find { |message| message[:type] == "schema" }
+
+      assert_equal [], schema[:diagnostics]
     end
 
     test "text_changed is patchable" do
@@ -155,31 +173,42 @@ module Dev
 
       config = Herb::Configuration.load(directory)
 
+      watcher = Herb::Dev::Watcher.new(config: config, root: directory) { |event| event }
+      pipeline = Herb::Dev::Pipeline.new(server: FakeWebSocket.new, compiler: -> {})
+
       output, = capture_io do
-        Herb::Dev::Runner.new(path: directory).send(:index_files, config, directory)
+        Herb::Dev::Runner.new(path: directory).send(:index_files, watcher, pipeline)
       end
 
-      assert_equal "  Files:     1 templates indexed\n", output
+      assert_equal "  Files:     1 template indexed\n", output
     ensure
       FileUtils.rm_rf(directory)
       Herb.reset_configuration!
     end
 
-    test "prints the diagnostic with its source context and suggestion" do
+    def paint_error(previous, current, broken: [])
+      runner = Herb::Dev::Runner.new
+      runner.instance_variable_set(:@broken_files, Set.new(broken))
+
+      classification = Herb::Dev::Classifier.new.call(previous, current)
+
+      event = Herb::Dev::Watcher::Event.new(
+        kind: :changed,
+        path: "/app/views/posts/index.html.erb",
+        relative_path: "app/views/posts/index.html.erb",
+        previous: previous,
+        current: current
+      )
+
       output, = capture_io do
-        Herb::Dev::Runner.new.send(
-          :broadcast_errors,
-          "/app/views/posts/index.html.erb",
-          "app/views/posts/index.html.erb",
-          Herb.parse(BROKEN, strict: true, analyze: true),
-          BROKEN,
-          "",
-          {},
-          Set.new,
-          FakeWebSocket.new,
-          "12:00:00"
-        )
+        runner.send(:paint_change, event, classification, "12:00:00", "index.html.erb")
       end
+
+      output
+    end
+
+    test "prints the diagnostic with its source context and suggestion" do
+      output = paint_error("", BROKEN)
 
       expected = [
         "    12:00:00 \u2717 error  \u2718 [MissingClosingTagError] Opening tag `<form>` at (2:3) doesn't have a matching closing tag `</form>` in the same scope.",
@@ -196,49 +225,137 @@ module Dev
       assert_equal expected, output
     end
 
-    test "a repeated event for unchanged content reports the error only once" do
-      runner = Herb::Dev::Runner.new
+    test "logs nothing when the template still carries only errors it already reported" do
+      assert_equal "", paint_error(BROKEN, "<div id=\"x\">\n  <form>\n</div>\n")
+    end
+
+    test "a template indexed as broken paints clear without a diff against the source that never parsed" do
+      output = paint_error(BROKEN, "<div>\n  <form></form>\n</div>\n", broken: ["app/views/posts/index.html.erb"])
+
+      assert_equal "    12:00:00 \u2713 clear   index.html.erb\n\n", output
+    end
+
+    test "indexing counts the templates that do not parse" do
+      directory = Dir.mktmpdir("herb_dev_runner_test")
+
+      File.write(File.join(directory, "good.html.erb"), "<div>Hello</div>\n")
+      File.write(File.join(directory, "broken.html.erb"), BROKEN)
+
+      config = Herb::Configuration.load(directory)
+      watcher = Herb::Dev::Watcher.new(config: config, root: directory) { |event| event }
+      pipeline = Herb::Dev::Pipeline.new(server: FakeWebSocket.new, compiler: -> {})
+      broken = nil
+
+      output, = capture_io do
+        broken = Herb::Dev::Runner.new(path: directory).send(:index_files, watcher, pipeline)
+      end
+
+      assert_equal "  Files:     2 templates indexed, 1 doesn't parse\n", output
+      assert_equal ["broken.html.erb"], broken
+    ensure
+      FileUtils.rm_rf(directory)
+      Herb.reset_configuration!
+    end
+
+    test "a template remembered as broken broadcasts a clearing schema when it is repaired" do
       websocket = FakeWebSocket.new
-      file_states = { "/app/views/posts/index.html.erb" => "<div>\n</div>\n" }
-      errored_files = Set.new
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
+      pipeline.remember_broken({ "a.html.erb" => BROKEN })
+
+      fixed = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/a", relative_path: "a.html.erb", previous: BROKEN, current: "<div>\n  <form></form>\n</div>\n")
+
+      capture_io { pipeline.handle_event(fixed) }
+
+      assert_equal(["schema", "invalidate"], websocket.messages.map { |message| message[:type] })
+    end
+
+    test "a template remembered as broken stays on the list until it is repaired" do
+      websocket = FakeWebSocket.new
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
+      pipeline.remember_broken({ "a.html.erb" => BROKEN })
+
+      assert_equal ["a.html.erb"], pipeline.broken_files
+
+      fixed = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/a", relative_path: "a.html.erb", previous: BROKEN, current: "<div>\n  <form></form>\n</div>\n")
+
+      capture_io { pipeline.handle_event(fixed) }
+
+      assert_equal [], pipeline.broken_files
+    end
+
+    test "a template that only fails to compile is broken too, and carries its diagnostics" do
+      websocket = FakeWebSocket.new
+      compiled = Struct.new(:mode, :manifest, :version, :slot_entries, :statics, :static_markup, :diagnostics)
+      diagnostics = [{ message: "slot outside a region", severity: :error }]
+      compiler = ->(_source, _path) { compiled.new(:client, {}, "v1", [], {}, nil, diagnostics) }
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> { compiler })
+
+      event = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/b", relative_path: "b.html.erb", previous: "<div>Hello</div>\n", current: "<div>Bye</div>\n")
+
+      capture_io { pipeline.handle_event(event) }
+
+      assert_equal ["b.html.erb"], pipeline.broken_files
+      assert_equal [{ file: "b.html.erb", diagnostics: diagnostics }], pipeline.broken_entries
+    end
+
+    test "a broken template carries the source and errors, so a late browser can render them" do
+      websocket = FakeWebSocket.new
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> {})
+
+      pipeline.remember_broken({ "a.html.erb" => BROKEN })
+
+      entry = pipeline.broken_entries.first
+      expected = Herb::Dev::Protocol.error(file: "a.html.erb", source: BROKEN, errors: Herb.parse(BROKEN, strict: true, analyze: true).errors)
+
+      assert_equal BROKEN, entry[:source]
+      assert_equal expected[:errors], entry[:errors]
+    end
+
+    test "a template that compiles clean drops off the broken list" do
+      websocket = FakeWebSocket.new
+      compiled = Struct.new(:mode, :manifest, :version, :slot_entries, :statics, :static_markup, :diagnostics)
+      compiler = ->(_source, _path) { compiled.new(:client, {}, "v1", [], {}, nil, []) }
+      pipeline = Herb::Dev::Pipeline.new(server: websocket, compiler: -> { compiler })
+
+      pipeline.remember_broken({ "b.html.erb" => BROKEN })
+
+      assert_equal ["b.html.erb"], pipeline.broken_files
+
+      event = Herb::Dev::Watcher::Event.new(kind: :changed, path: "/b", relative_path: "b.html.erb", previous: BROKEN, current: "<div>Bye</div>\n")
+
+      capture_io { pipeline.handle_event(event) }
+
+      assert_equal [], pipeline.broken_files
+    end
+
+    test "a repeated event for unchanged content emits nothing from the watcher" do
       directory = Dir.mktmpdir("herb_dev_runner_test")
       path = File.join(directory, "index.html.erb")
 
       File.write(path, BROKEN)
-      file_states[path] = "<div>\n</div>\n"
 
-      first, = capture_io do
-        runner.send(:handle_file_change, path, "index.html.erb", file_states, errored_files, websocket, "12:00:00", "index.html.erb")
-      end
+      config = Herb::Configuration.load(directory)
+      events = []
+      watcher = Herb::Dev::Watcher.new(config: config, root: directory) { |event| events << event }
 
-      second, = capture_io do
-        runner.send(:handle_file_change, path, "index.html.erb", file_states, errored_files, websocket, "12:00:01", "index.html.erb")
-      end
+      watcher.index
 
-      refute_equal "", first
-      assert_equal "", second
+      raw = Struct.new(:kind, :path).new("modified", path)
+
+      watcher.send(:handle, raw)
+      watcher.send(:handle, raw)
+
+      assert_empty events
     ensure
       FileUtils.rm_rf(directory)
+      Herb.reset_configuration!
     end
 
     test "an error already reported is not repeated when a new one joins it" do
       broken_once = "<div>\n  <form>\n</div>\n"
       broken_twice = "<div>\n  <form>\n  <span>\n</div>\n"
 
-      output, = capture_io do
-        Herb::Dev::Runner.new.send(
-          :broadcast_errors,
-          "/app/views/posts/index.html.erb",
-          "app/views/posts/index.html.erb",
-          Herb.parse(broken_twice, strict: true, analyze: true),
-          broken_twice,
-          broken_once,
-          {},
-          Set.new,
-          FakeWebSocket.new,
-          "12:00:00"
-        )
-      end
+      output = paint_error(broken_once, broken_twice)
 
       expected = [
         "    12:00:00 \u2717 error  \u2718 [MissingClosingTagError] Opening tag `<span>` at (3:3) doesn't have a matching closing tag `</span>` in the same scope.",

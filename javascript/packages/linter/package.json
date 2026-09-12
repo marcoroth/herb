@@ -22,7 +22,7 @@
     "watch": "tsc --emitDeclarationOnly -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n\u2717 Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
+    "check:rule-versions": "! grep -rlE '(introducedIn|defaultEnabledIn) = (this\\.version\\()?\"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n\u2717 Found linter rules with a version of \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
     "typecheck": "tsc -p tsconfig.test.json && tsc -p tsconfig.browser-test.json",
     "prepublishOnly": "yarn check:rule-versions && yarn clean && yarn build && yarn test"
   },
@@ -64,7 +64,7 @@
     "@ruby/prism": "^1.9.0",
     "picomatch": "^4.0.7",
     "postcss": "^8.5.26",
-    "postcss-selector-parser": "^7.1.5",
+    "postcss-selector-parser": "^7.1.6",
     "tinyglobby": "^0.2.15"
   },
   "files": [

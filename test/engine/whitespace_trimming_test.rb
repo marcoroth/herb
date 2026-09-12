@@ -464,7 +464,7 @@ module Engine
 
       engine = assert_compiled_snapshot(template, trim: false)
 
-      assert_includes engine.src, "'\nafter\n'"
+      assert_snapshot_matches(engine.src, "whitespace_trimming_test-0")
     end
 
     test "a multi-line control tag keeps the line its code starts on" do
@@ -477,6 +477,13 @@ module Engine
       template = "<% a = 1 %>\n\n<% provide :t do %><%= x %><% end %>\n\n<% b = 2 %>\n"
 
       assert_compiled_snapshot(template)
+    end
+
+    test "multi-line code block preserves line count parity with erubi" do
+      template = "<%\n  x = 1\n  y = 2\n%>\n<%= x %>"
+
+      assert_compiled_snapshot(template)
+      assert_erubi_line_parity(template)
     end
   end
 end

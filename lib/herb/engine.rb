@@ -82,7 +82,7 @@ module Herb
       @attrfunc = properties.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
       @jsfunc = properties.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
       @cssfunc = properties.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
-      @src = properties[:src] || String.new
+      @src = properties[:src] || +""
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
@@ -218,7 +218,8 @@ module Herb
       else
         @src.chomp! if @src.end_with?("\n") && code.start_with?(" ") && !code.end_with?("\n")
 
-        @src << " " << code
+        @src << " " unless code.match?(/\A\n+\z/)
+        @src << code
 
         if Helpers.comment?(code) || Helpers.heredoc?(code)
           @src << "\n" unless code[-1] == "\n"
@@ -385,7 +386,7 @@ module Herb
     def write_buffer_prelude(properties, preamble)
       if properties[:ensure]
         @src << "begin; __original_outvar = #{@bufvar}"
-        @src << (/\A@[^@]/ =~ @bufvar ? "; " : " if defined?(#{@bufvar}); ")
+        @src << (/\A@[^@]/.match?(@bufvar) ? "; " : " if defined?(#{@bufvar}); ")
       end
 
       @herb_alias_index = (@src.length if @escape && @escapefunc == "__herb.h")

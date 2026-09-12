@@ -37,7 +37,7 @@ export type StateIndices = Record<string, number[]>
 export type ConditionalMap = Record<string, Conditional>
 export type PresenceMap = Record<string, StateCondition>
 export type ComputedMap = Record<string, StateCondition>
-export type ResolvedStateOptions = Required<Omit<StateOptions, "transport">> & { transport: StateTransport }
+export type ResolvedStateOptions = Required<Omit<StateOptions, "transport" | "refetchTransport">> & { transport: StateTransport; refetchTransport?: RefreshTransport }
 
 export type StateBucket = Map<string, StateValue>
 export type ScopeStore = Map<Region, Map<string, StateBucket>>
@@ -60,6 +60,11 @@ export interface StateCount {
   by?: number
 }
 
+export interface ServerMap {
+  branches?: Record<string, ServerRead[]>
+  reads?: Record<string, ServerRead[]>
+}
+
 export interface ServerRead {
   index: number
   node_path: number[]
@@ -73,7 +78,19 @@ export interface StateManifest {
   conditionals: ConditionalMap
   presence?: PresenceMap
   computed?: ComputedMap
-  server?: Record<string, ServerRead[]>
+  server?: ServerMap
+  fragments?: Record<string, FragmentEntry>
+}
+
+export interface FragmentEntry {
+  fallback: number
+  reads?: number[]
+  delay?: number
+  hold?: number
+  poll?: number
+  mode?: "lazy" | "async"
+  state?: string
+  on?: string[]
 }
 
 export interface StateScope {
@@ -139,6 +156,16 @@ export interface StateOptions {
   transport?: StateTransport
   debounce?: number
   format?: string
+  refetch?: "auto" | "off"
+  refetchDebounce?: number
+  refetchTransport?: RefreshTransport
+}
+
+export type RefreshTransport = (state: Record<string, Record<string, unknown>>, signal: AbortSignal, block?: BlockAddress) => Promise<Payload>
+
+export interface BlockAddress {
+  template: string
+  index: number
 }
 
 export interface StateReport extends ApplyReport {

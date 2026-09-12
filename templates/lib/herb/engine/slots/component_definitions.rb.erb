@@ -1,0 +1,38 @@
+module Herb
+  class Engine
+    module Slots
+      # The built-in components a slots template may use, and what each one takes.
+      #
+      module ComponentDefinitions
+        COMPONENTS = {
+<%- slots_components.each do |component| -%>
+          <%= component.name.inspect %> => {
+            void: <%= component.void? %>,
+            deferred: <%= component.deferred? %>,
+            parents: <%= component.parents ? "[#{component.parents.map(&:inspect).join(", ")}].freeze" : "nil" %>,
+            description: <%= component.description.inspect %>,
+<%- if component.attributes.empty? -%>
+            attributes: {}, #: Hash[String, Hash[Symbol, String]]
+<%- else -%>
+            attributes: {
+<%- component.attributes.each do |attribute| -%>
+              <%= attribute.name.inspect %> => { type: <%= attribute.type.inspect %>, description: <%= attribute.description.inspect %> }.freeze,
+<%- end -%>
+            }.freeze,
+<%- end -%>
+          }.freeze,
+<%- end -%>
+        }.freeze #: Hash[String, { void: bool, deferred: bool, parents: Array[String]?, description: String, attributes: Hash[String, Hash[Symbol, String]] }]
+
+        BUILT_IN = COMPONENTS.keys.freeze #: Array[String]
+
+        DEFERRED = COMPONENTS.select { |_, component| component[:deferred] }.keys.freeze #: Array[String]
+
+        #: (String) -> Hash[String, Hash[Symbol, String]]
+        def self.attributes_for(name)
+          COMPONENTS.dig(name, :attributes) || {}
+        end
+      end
+    end
+  end
+end

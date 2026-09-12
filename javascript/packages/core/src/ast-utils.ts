@@ -28,6 +28,7 @@ import {
   isAnyOf,
   isLiteralNode,
   isERBNode,
+  isERBCommentNode,
   isERBContentNode,
   isHTMLCommentNode,
   isHTMLElementNode,
@@ -61,12 +62,6 @@ export type ERBOutputNode = ERBNode & {
   }
 }
 
-export type ERBCommentNode = ERBNode & {
-  tag_opening: {
-    value: "<%#"
-  }
-}
-
 export type ERBEscapedNode = ERBNode & {
   tag_opening: {
     value: "<%%" | "<%%="
@@ -94,13 +89,20 @@ export function isERBEscapedNode(node: Node): node is ERBEscapedNode {
 }
 
 /**
- * Checks if a node is a ERB comment node (control flow: <%# %>)
+ * Checks if a node is an ERB tag whose Ruby is a single-line comment, like
+ * `<% # a note %>`. The parser keeps those as an `ERBContentNode`, since the
+ * opening is not `<%#`.
+ *
+ * A tag that only starts with a comment and then runs code is not one of
+ * these, which is why the content has to be a single line.
  */
-export function isERBCommentNode(node: Node): node is ERBCommentNode {
-  if (!isERBNode(node)) return false
-  if (!node.tag_opening?.value) return false
+export function isInlineRubyCommentNode(node: Node): boolean {
+  if (!isERBContentNode(node)) return false
+  if (node.tag_opening?.value === "<%#") return false
 
-  return node.tag_opening?.value === "<%#" || (node.tag_opening?.value !== "<%#" && (node.content?.value || "").trimStart().startsWith("#"))
+  const content = node.content?.value || ""
+
+  return content.trimStart().startsWith("#") && !content.includes("\n")
 }
 
 
@@ -304,8 +306,8 @@ export function getTagLocalName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCl
 /**
  * Check if a node is a comment (HTML comment or ERB comment)
  */
-export function isCommentNode(node: Node): node is HTMLCommentNode | ERBCommentNode {
-  return isHTMLCommentNode(node) || isERBCommentNode(node)
+export function isCommentNode(node: Node): boolean {
+  return isHTMLCommentNode(node) || isERBCommentNode(node) || isInlineRubyCommentNode(node)
 }
 
 /**

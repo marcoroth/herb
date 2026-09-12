@@ -1,4 +1,3 @@
-export { DEV_SERVER_FIXED_EVENT } from './dev-server/types.js'
 export { DEV_TOOLS_START_EVENT } from './herb-dev-tools.js'
 export { HERB_LINTER_EVENT } from './overlay/overlay.js'
 

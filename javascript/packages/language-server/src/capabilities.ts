@@ -5,6 +5,7 @@ import type { PersonalHerbSettings } from "./user_settings"
 export interface HerbInitializationOptions extends PersonalHerbSettings {
   experimental?: {
     extractToPartialCommand?: boolean
+    runtimeOverlays?: boolean
   }
 }
 
@@ -46,6 +47,12 @@ export class Capabilities {
 
   get supportsResourceCreation(): boolean {
     return this.client.workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKind.Create) ?? false
+  }
+
+  get supportsRuntimeOverlays(): boolean {
+    const options = this.params.initializationOptions as HerbInitializationOptions | undefined | null
+
+    return options?.experimental?.runtimeOverlays === true
   }
 
   get supportsExtractToPartialCommand(): boolean {

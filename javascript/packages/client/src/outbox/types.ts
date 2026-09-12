@@ -49,4 +49,5 @@ export interface Sending {
   options: SubmitOptions
   key: string
   slot: Slot | null
+  inserted?: Promise<void>
 }

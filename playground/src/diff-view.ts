@@ -81,7 +81,7 @@ function extractNodeValue(node: RenderableNode | null | undefined, operationType
     return node.content || null
   }
 
-  if (operationType === "erb_content_changed" || node.type === "AST_ERB_CONTENT_NODE") {
+  if (operationType === "erb_content_changed" || node.type === "AST_ERB_CONTENT_NODE" || node.type === "AST_ERB_COMMENT_NODE") {
     if (node.content && node.content.value) return node.content.value
 
     return null
@@ -127,6 +127,10 @@ function describeNode(node: RenderableNode | null | undefined, operationType: Di
     const trimmed = (node.content || "").trim()
 
     return trimmed.length > 30 ? `"${trimmed.slice(0, 30)}..."` : `"${trimmed}"`
+  }
+
+  if (node.type === "AST_ERB_COMMENT_NODE" && node.content && node.content.value) {
+    return `<%# ${node.content.value.trim()} %>`
   }
 
   if (node.type === "AST_ERB_CONTENT_NODE" && node.content && node.content.value) {

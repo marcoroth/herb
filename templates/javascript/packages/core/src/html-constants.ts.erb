@@ -1,0 +1,10 @@
+// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+export const HTML_BOOLEAN_ATTRIBUTES = new Set([
+<%- boolean_attributes.each do |attribute| -%>
+  <%= attribute.inspect %>,
+<%- end -%>
+])
+
+export function isBooleanAttribute(attributeName: string): boolean {
+  return HTML_BOOLEAN_ATTRIBUTES.has(attributeName.toLowerCase())
+}

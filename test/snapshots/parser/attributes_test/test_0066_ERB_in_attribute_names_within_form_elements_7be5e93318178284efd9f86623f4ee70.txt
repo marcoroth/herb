@@ -144,12 +144,10 @@ input: |2-
     │   │   │   │       │       │           ├── @ LiteralNode (location: (5:18)-(5:25))
     │   │   │   │       │       │           │   └── content: "prefix-"
     │   │   │   │       │       │           │
-    │   │   │   │       │       │           ├── @ ERBContentNode (location: (5:25)-(5:39))
+    │   │   │   │       │       │           ├── @ ERBCommentNode (location: (5:25)-(5:39))
     │   │   │   │       │       │           │   ├── tag_opening: "<%#" (location: (5:25)-(5:28))
     │   │   │   │       │       │           │   ├── content: " comment " (location: (5:28)-(5:37))
-    │   │   │   │       │       │           │   ├── tag_closing: "%>" (location: (5:37)-(5:39))
-    │   │   │   │       │       │           │   ├── parsed: false
-    │   │   │   │       │       │           │   └── valid: true
+    │   │   │   │       │       │           │   └── tag_closing: "%>" (location: (5:37)-(5:39))
     │   │   │   │       │       │           │
     │   │   │   │       │       │           └── @ LiteralNode (location: (5:39)-(5:46))
     │   │   │   │       │       │               └── content: "-suffix"

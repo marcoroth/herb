@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@types/picomatch": "^4.0.3",
-    "zod": "^4.4.3",
+    "zod": "^4.5.4",
     "zod-validation-error": "^5.0.0"
   },
   "files": [

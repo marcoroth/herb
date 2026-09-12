@@ -1,0 +1,46 @@
+---
+source: "Parser::AttributesTest#test_0152_unquoted attribute value with slashes"
+input: "<a href=/foo/bar></a>"
+---
+@ DocumentNode (location: (1:0)-(1:21))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:21))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:17))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "a" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:16)-(1:17))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:3)-(1:16))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:3)-(1:7))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:3)-(1:7))
+        │       │       │               └── content: "href"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:7)-(1:8))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:8)-(1:16))
+        │       │               ├── open_quote: ∅
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:8)-(1:16))
+        │       │               │       └── content: "/foo/bar"
+        │       │               │
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: false
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "a" (location: (1:1)-(1:2))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:17)-(1:21))
+        │       ├── tag_opening: "</" (location: (1:17)-(1:19))
+        │       ├── tag_name: "a" (location: (1:19)-(1:20))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:20)-(1:21))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

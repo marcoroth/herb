@@ -1,8 +1,14 @@
+import { mutationSettled } from "./mutation-refresh"
+import { report } from "./report"
+
 import type { Payload } from "../types"
+import type { RuntimeDiagnostic } from "./types"
 
 export const SLOTS_MIME_TYPE = "application/vnd.herb.slots+json"
 export const SCHEMA_HEADER = "Herb-Schema"
 export const NODE_PATH_HEADER = "Herb-Node-Path"
+export const BLOCK_HEADER = "Herb-Block"
+export const STATE_HEADER = "Herb-State"
 
 export type SlotsResponse = Payload & { schema?: SchemaEnvelope }
 
@@ -11,6 +17,7 @@ export interface SlotsRequestFailure {
   message?: string
   template?: string | null
   line?: number | null
+  backtrace?: string[] | null
 }
 
 export class SlotsRequestError extends Error {
@@ -29,18 +36,22 @@ export interface SchemaEnvelope {
   mode: string | null
   version: string
   manifest: Record<string, unknown> | null
-  skeleton: string | null
+  static_markup: string | null
   statics: Record<string, string> | null
 }
 
 export interface SlotsRequestOptions {
   method?: string
-  body?: FormData | URLSearchParams
+  body?: FormData | URLSearchParams | Record<string, unknown>
   headers?: Record<string, string>
   format?: string
   schema?: boolean
   nodePath?: number[]
+  block?: number
+  state?: Record<string, Record<string, unknown>>
   signal?: AbortSignal
+  report?: boolean
+  refresh?: boolean
 }
 
 export function slotsHeaders(options: SlotsRequestOptions = {}): Record<string, string> {
@@ -54,27 +65,88 @@ export function slotsHeaders(options: SlotsRequestOptions = {}): Record<string, 
     headers[NODE_PATH_HEADER] = options.nodePath.join(",")
   }
 
+  if (options.block !== undefined) {
+    headers[BLOCK_HEADER] = String(options.block)
+  }
+
+  if (options.state && Object.keys(options.state).length > 0) {
+    headers[STATE_HEADER] = asciiJSON(options.state)
+  }
+
   return headers
 }
 
-// TODO: should this use @rails/request.js?
+function asciiJSON(value: unknown): string {
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`)
+}
+
 export async function slotsRequest(url: string | URL, options: SlotsRequestOptions = {}): Promise<SlotsResponse> {
   const target = new URL(url.toString(), window.location.href)
+  const method = (options.method ?? "GET").toUpperCase()
+  const headers = slotsHeaders(options)
+
+  let body: FormData | URLSearchParams | string | undefined
+
+  if (options.body instanceof FormData || options.body instanceof URLSearchParams) {
+    body = options.body
+  } else if (options.body) {
+    body = JSON.stringify(options.body)
+    headers["Content-Type"] ??= "application/json"
+  }
+
+  if (method !== "GET" && method !== "HEAD") {
+    const token = csrfToken()
+
+    if (token) {
+      headers["X-CSRF-Token"] ??= token
+    }
+  }
 
   target.searchParams.set("format", options.format ?? "slots")
 
-  const response = await fetch(target.toString(), {
-    method: options.method ?? "GET",
-    body: options.body,
-    headers: slotsHeaders(options),
-    signal: options.signal,
-  })
+  const response = await fetch(target.toString(), { method, body, headers, signal: options.signal })
 
   if (!response.ok) {
-    throw new SlotsRequestError(response.status, await failureOf(response))
+    const failure = await failureOf(response)
+
+    if (options.report !== false) {
+      report(failureDiagnostic(response.status, failure))
+    }
+
+    throw new SlotsRequestError(response.status, failure)
+  }
+
+  if (method !== "GET" && method !== "HEAD" && options.refresh !== false) {
+    mutationSettled()
+  }
+
+  if (response.status === 204) {
+    return { template: "", version: "", occurrence: 0, slots: {} }
   }
 
   return (await response.json()) as SlotsResponse
+}
+
+function csrfToken(): string | null {
+  if (typeof document === "undefined") {
+    return null
+  }
+
+  return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? null
+}
+
+function failureDiagnostic(status: number, failure: SlotsRequestFailure | null): RuntimeDiagnostic {
+  return {
+    template: failure?.template ?? "",
+    message: failure?.message ?? `The application answered ${status}. Check the server log.`,
+    code: failure?.class ?? "RuntimeError",
+    severity: "error",
+    origin: "Web Application",
+    phase: "runtime",
+    overlay: "dismissible",
+    ...(failure?.line ? { location: { start: { line: failure.line, column: 1 } } } : {}),
+    ...(failure?.backtrace?.length ? { backtrace: failure.backtrace } : {}),
+  }
 }
 
 async function failureOf(response: Response): Promise<SlotsRequestFailure | null> {

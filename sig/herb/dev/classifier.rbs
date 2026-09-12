@@ -1,0 +1,57 @@
+# Generated from lib/herb/dev/classifier.rb with RBS::Inline
+
+module Herb
+  module Dev
+    # Says what kind of change an edit to a template is.
+    #
+    # The watcher hands it the previous and current source, and everything downstream decides
+    # what to do from the kind alone. `:none` and `:whitespace` render the same as before, so
+    # nothing needs to happen. `:static` moved markup without touching any ERB. `:dynamic` is
+    # everything else. `:parse_error` carries the errors instead of a diff.
+    #
+    # The kinds are ordered checks, and the whitespace check has to come before the patchable
+    # one. `whitespace_changed` is not a patchable operation, so a reindent classified in the
+    # wrong order would read as `:dynamic` and cost a page reload.
+    #
+    # The diff parses without the configured ERB openers, so a custom opener reads as text on
+    # both sides and its edits would pass the patchable check. With openers configured, no
+    # change classifies better than `:dynamic`.
+    class Classifier
+      PATCHABLE_TYPES: Array[String]
+
+      class Classification < Data
+        attr_reader kind(): Symbol
+
+        attr_reader operations(): Array[Herb::Diff::Operation]
+
+        attr_reader node_path(): Array[Integer]
+
+        attr_reader errors(): Array[Herb::Errors::Error]
+
+        def self.new: (Symbol kind, Array[Herb::Diff::Operation] operations, Array[Integer] node_path, Array[Herb::Errors::Error] errors) -> instance
+                    | (kind: Symbol, operations: Array[Herb::Diff::Operation], node_path: Array[Integer], errors: Array[Herb::Errors::Error]) -> instance
+
+        def self.members: () -> [ :kind, :operations, :node_path, :errors ]
+
+        def members: () -> [ :kind, :operations, :node_path, :errors ]
+      end
+
+      # : (Array[Herb::Diff::Operation]) -> bool
+      def self.can_patch?: (Array[Herb::Diff::Operation]) -> bool
+
+      # : (?configuration: Herb::Configuration?) -> void
+      def initialize: (?configuration: Herb::Configuration?) -> void
+
+      # : (String, String) -> Classification
+      def call: (String, String) -> Classification
+
+      private
+
+      # : (Symbol, ?operations: Array[Herb::Diff::Operation], ?node_path: Array[Integer], ?errors: Array[Herb::Errors::Error]) -> Classification
+      def classification: (Symbol, ?operations: Array[Herb::Diff::Operation], ?node_path: Array[Integer], ?errors: Array[Herb::Errors::Error]) -> Classification
+
+      # : (Array[Herb::Diff::Operation]) -> Array[Integer]
+      def covering_path: (Array[Herb::Diff::Operation]) -> Array[Integer]
+    end
+  end
+end

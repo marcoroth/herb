@@ -1,0 +1,37 @@
+# Generated from lib/herb/fingerprint.rb with RBS::Inline
+
+module Herb
+  # Identifies content by what it is instead of by where it lives or when it was touched.
+  #
+  #     Herb::Fingerprint.file(asset)      #=> "9f2a1c4e…"
+  #     Herb::Fingerprint.template(source) #=> "d242d277…"
+  module Fingerprint
+    BOM: String
+
+    SHORT_LENGTH: Integer
+
+    # : (String?) -> String?
+    def self.of: (String?) -> String?
+
+    # : ((String | Pathname)?) -> String?
+    def self.file: ((String | Pathname)?) -> String?
+
+    # : (String?) -> String?
+    def self.template: (String?) -> String?
+
+    # : ((String | Pathname)?) -> String?
+    def self.template_file: ((String | Pathname)?) -> String?
+
+    # : (String?) -> String?
+    def self.short: (String?) -> String?
+
+    # : () -> void
+    def self.clear_cache: () -> void
+
+    # : () -> Hash[Array[untyped], String]
+    def self.cache: () -> Hash[Array[untyped], String]
+
+    # : (String) -> String
+    def self.strip_bom: (String) -> String
+  end
+end
