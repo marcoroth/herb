@@ -1,5 +1,6 @@
 import { ASTRewriter } from "@herb-tools/rewriter"
 import { MinifierVisitor } from "./minifier-visitor.js"
+import { removeComments } from "./comment-remover.js"
 
 import type { RewriteContext } from "@herb-tools/rewriter"
 import type { Node } from "@herb-tools/core"
@@ -15,6 +16,8 @@ export class MinifyRewriter extends ASTRewriter {
 
   rewrite<T extends Node>(node: T, _context?: RewriteContext): T {
     const visitor = new MinifierVisitor()
+
+    removeComments(node)
 
     node.accept(visitor)
 

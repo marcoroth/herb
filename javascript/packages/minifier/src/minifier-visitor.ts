@@ -23,7 +23,11 @@ import {
   isWhitespaceNode,
   isERBIfNode,
   isHTMLAttributeNode,
+  isHTMLElementNode,
   isERBNode,
+  getTagName,
+  isInlineElement,
+  isWhitespacePreservingElement,
 } from "@herb-tools/core"
 
 /**
@@ -31,7 +35,6 @@ import {
  */
 export class MinifierVisitor extends Visitor {
   private preserveWhitespaceDepth = 0
-  private preserveWhitespaceTags = new Set(["pre", "code"])
   private currentParent: HTMLElementNode | null = null
   private currentAttributeName: string | null = null
   private currentOpenTag: HTMLOpenTagNode | null = null
@@ -42,20 +45,20 @@ export class MinifierVisitor extends Visitor {
     return this.preserveWhitespaceDepth > 0
   }
 
-  private isPreserveWhitespaceTag(tagName: string): boolean {
-    return this.preserveWhitespaceTags.has(tagName.toLowerCase())
+  private isInlineNeighbour(node: Node | undefined): boolean {
+    if (!node) return false
+    if (isHTMLTextNode(node) || isLiteralNode(node)) return true
+    if (isERBNode(node)) return true
+    if (isHTMLElementNode(node)) return isInlineElement(getTagName(node) ?? "")
+
+    return false
   }
 
-  private isFirstChild(node: Node): boolean {
-    if (!this.currentParent?.body) return true
-    return this.currentParent.body[0] === node
-  }
+  private endsWithSpace(node: Node | undefined): boolean {
+    if (!node) return false
+    if (isHTMLTextNode(node) || isLiteralNode(node)) return node.content.endsWith(" ")
 
-  private isLastChild(node: Node): boolean {
-    if (!this.currentParent?.body) return true
-    const body = this.currentParent.body
-
-    return body[body.length - 1] === node
+    return false
   }
 
   private hasAdjacentInlineContent(node: Node): { before: boolean; after: boolean } {
@@ -66,43 +69,27 @@ export class MinifierVisitor extends Visitor {
 
     if (index === -1) return { before: false, after: false }
 
-    const isInlineNode = (node: Node | undefined): boolean => {
-      if (!node) return false
+    const previous = body[index - 1]
 
-      return isHTMLTextNode(node) || isERBContentNode(node) || isLiteralNode(node)
+    return {
+      before: this.isInlineNeighbour(previous) && !this.endsWithSpace(previous),
+      after: this.isInlineNeighbour(body[index + 1]),
     }
-
-    const before = index > 0 && isInlineNode(body[index - 1])
-    const after = index < body.length - 1 && isInlineNode(body[index + 1])
-
-    return { before, after }
   }
 
   private minifyWhitespace(content: string, node: Node): string {
     let minified = content.replace(/\s+/g, " ")
 
-    const isFirst = this.isFirstChild(node)
-    const isLast = this.isLastChild(node)
     const { before, after } = this.hasAdjacentInlineContent(node)
 
-    if (minified === " " && !before && !after) {
-      return ""
-    }
-
-    if (isFirst || !before) {
-      minified = minified.replace(/^\s+/, "")
-    }
-
-    if (isLast || !after) {
-      minified = minified.replace(/\s+$/, "")
-    }
+    if (!before) minified = minified.replace(/^ /, "")
+    if (!after) minified = minified.replace(/ $/, "")
 
     return minified
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = node.tag_name?.value || ""
-    const shouldPreserve = this.isPreserveWhitespaceTag(tagName)
+    const shouldPreserve = isWhitespacePreservingElement(getTagName(node) ?? "")
 
     if (shouldPreserve) {
       this.preserveWhitespaceDepth++

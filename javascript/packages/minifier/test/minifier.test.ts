@@ -68,6 +68,44 @@ describe("Minifier", () => {
     })
   })
 
+  describe("whitespace between elements", () => {
+    test("keeps the space between text and a following inline element", () => {
+      expect(minifier.minifyString(`<div>Hello <b>world</b></div>`)).toBe(`<div>Hello <b>world</b></div>`)
+    })
+
+    test("keeps the space between an inline element and following text", () => {
+      expect(minifier.minifyString(`<div><b>Hello</b> world</div>`)).toBe(`<div><b>Hello</b> world</div>`)
+    })
+
+    test("keeps the space between two inline elements", () => {
+      expect(minifier.minifyString(`<p><span>a</span> <span>b</span></p>`)).toBe(`<p><span>a</span> <span>b</span></p>`)
+    })
+
+    test("collapses a run of whitespace between two inline elements to one space", () => {
+      expect(minifier.minifyString(`<p><span>a</span>   \n   <span>b</span></p>`)).toBe(`<p><span>a</span> <span>b</span></p>`)
+    })
+
+    test("keeps the spaces around an inline element inside a sentence", () => {
+      expect(minifier.minifyString(`<p>one <a href="/x">two</a> three</p>`)).toBe(`<p>one <a href="/x">two</a> three</p>`)
+    })
+
+    test("drops the whitespace between two block elements", () => {
+      expect(minifier.minifyString(`<div><p>a</p>   <p>b</p></div>`)).toBe(`<div><p>a</p><p>b</p></div>`)
+    })
+
+    test("drops the whitespace between text and a following block element", () => {
+      expect(minifier.minifyString(`<div>Hello <p>world</p></div>`)).toBe(`<div>Hello<p>world</p></div>`)
+    })
+
+    test("drops the leading and trailing whitespace of a block", () => {
+      expect(minifier.minifyString(`<div>  Hello  </div>`)).toBe(`<div>Hello</div>`)
+    })
+
+    test("keeps the space between text and a void inline element", () => {
+      expect(minifier.minifyString(`<div>Hello <img src="x.png"> world</div>`)).toBe(`<div>Hello <img src="x.png"> world</div>`)
+    })
+  })
+
   describe("preserve whitespace in special tags", () => {
     test("preserves whitespace in <pre> tags", () => {
       const template = dedent`
@@ -90,7 +128,7 @@ describe("Minifier", () => {
       `)
     })
 
-    test("preserves whitespace in <code> tags", () => {
+    test("collapses whitespace in <code> tags, which render with `white-space: normal`", () => {
       const template = dedent`
         <div>
           <code>const x = 1
@@ -99,9 +137,61 @@ describe("Minifier", () => {
       `
       const result = minifier.minifyString(template)
 
+      expect(result).toBe(`<div><code>const x = 1 const y = 2</code></div>`)
+    })
+
+    test("preserves whitespace in <textarea> tags", () => {
+      const template = dedent`
+        <div>
+          <textarea>
+        line 1
+          line 2
+        </textarea>
+        </div>
+      `
+      const result = minifier.minifyString(template)
+
       expect(result).toBe(dedent`
-        <div><code>const x = 1
-          const y = 2</code></div>
+        <div><textarea>
+        line 1
+          line 2
+        </textarea></div>
+      `)
+    })
+
+    test("preserves whitespace in <script> tags", () => {
+      const template = dedent`
+        <div>
+          <script>
+            // a comment
+            const x = 1
+          </script>
+        </div>
+      `
+      const result = minifier.minifyString(template)
+
+      expect(result).toBe(dedent`
+        <div><script>
+            // a comment
+            const x = 1
+          </script></div>
+      `)
+    })
+
+    test("preserves whitespace in <style> tags", () => {
+      const template = dedent`
+        <div>
+          <style>
+            .a { color: red }
+          </style>
+        </div>
+      `
+      const result = minifier.minifyString(template)
+
+      expect(result).toBe(dedent`
+        <div><style>
+            .a { color: red }
+          </style></div>
       `)
     })
 
@@ -305,6 +395,49 @@ describe("Minifier", () => {
       const result = minifier.minifyString(template)
 
       expect(result).toBe(`<div <%if valid?%>class="one <%=two%> three" id="one"<%end%> disabled>Hello <%=world%> !</div>`)
+    })
+  })
+
+  describe("comments", () => {
+    test("removes HTML comments", () => {
+      expect(minifier.minifyString(`<div><!-- a comment --><p>x</p></div>`)).toBe(`<div><p>x</p></div>`)
+    })
+
+    test("removes ERB comments", () => {
+      expect(minifier.minifyString(`<div><%# a comment %><p>x</p></div>`)).toBe(`<div><p>x</p></div>`)
+    })
+
+    test("removes the whitespace a removed comment leaves behind", () => {
+      const template = dedent`
+        <div>
+          <!-- a comment -->
+          <p>x</p>
+        </div>
+      `
+
+      expect(minifier.minifyString(template)).toBe(`<div><p>x</p></div>`)
+    })
+
+    test("collapses the whitespace around a comment between inline elements to one space", () => {
+      const template = `<p><span>a</span> <!-- a comment --> <span>b</span></p>`
+
+      expect(minifier.minifyString(template)).toBe(`<p><span>a</span> <span>b</span></p>`)
+    })
+
+    test("keeps downlevel-revealed conditional comments", () => {
+      const template = `<div><!--[if lt IE 9]><script src="shim.js"></script><![endif]--><p>x</p></div>`
+
+      expect(minifier.minifyString(template)).toBe(`<div><!--[if lt IE 9]><script src="shim.js"></script><![endif]--><p>x</p></div>`)
+    })
+
+    test("keeps Herb directives, which reach the minifier as ERB comments", () => {
+      const template = `<div><%# herb:state count = 0 %><p>x</p></div>`
+
+      expect(minifier.minifyString(template)).toBe(`<div><%# herb:state count = 0 %><p>x</p></div>`)
+    })
+
+    test("removes comments inside inline elements", () => {
+      expect(minifier.minifyString(`<span>a<!-- c -->b</span>`)).toBe(`<span>ab</span>`)
     })
   })
 
