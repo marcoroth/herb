@@ -10,6 +10,8 @@ module Herb
       VOID_ELEMENTS: Array[String]
 
       BOOLEAN_ATTRIBUTES: Array[String]
+
+      WHITESPACE_PRESERVING_ELEMENTS: Array[String]
     end
   end
 end

@@ -18,4 +18,11 @@ static hb_string_T boolean_attributes[] = HB_STRING_LIST(
 <%- end -%>
 );
 
+// https://html.spec.whatwg.org/multipage/rendering.html#the-page
+static hb_string_T whitespace_preserving_tags[] = HB_STRING_LIST(
+<%- whitespace_preserving_elements.each_with_index do |element, index| -%>
+  <%= element.inspect %><%= index < whitespace_preserving_elements.size - 1 ? "," : "" %>
+<%- end -%>
+);
+
 #endif

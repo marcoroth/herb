@@ -31,6 +31,12 @@ TEST(html_util_is_whitespace_preserving_element)
   ck_assert(is_whitespace_preserving_element(hb_string("textarea")));
   ck_assert(is_whitespace_preserving_element(hb_string("script")));
   ck_assert(is_whitespace_preserving_element(hb_string("style")));
+  ck_assert(is_whitespace_preserving_element(hb_string("iframe")));
+  ck_assert(is_whitespace_preserving_element(hb_string("xmp")));
+  ck_assert(is_whitespace_preserving_element(hb_string("noembed")));
+  ck_assert(is_whitespace_preserving_element(hb_string("noframes")));
+  ck_assert(is_whitespace_preserving_element(hb_string("plaintext")));
+  ck_assert(is_whitespace_preserving_element(hb_string("listing")));
   ck_assert(is_whitespace_preserving_element(hb_string("PRE")));
 
   ck_assert(!is_whitespace_preserving_element((hb_string_T) { .data = NULL, .length = 0 }));
