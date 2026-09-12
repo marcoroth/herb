@@ -346,5 +346,26 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "emits an escaped ERB conditional as literal text" do
+      template = "<%% if admin? %>\n  <p>hi</p>\n<%% else %>\n  <p>bye</p>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB iteration as literal text" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB case as literal text" do
+      template = "<%% case status %>\n<%% when :active %>\n  on\n<%% else %>\n  off\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

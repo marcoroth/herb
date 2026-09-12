@@ -105,6 +105,8 @@ module Herb
 
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
+      def case_parts: (untyped node) -> untyped
+
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private

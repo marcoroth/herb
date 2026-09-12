@@ -236,10 +236,14 @@ module Herb
 
       def visit_erb_control_node(node, &)
         if node.content
-          code_index = @tokens.length
+          if erb_escaped?(node.tag_opening.value)
+            add_escaped_erb_tag(node)
+          else
+            code_index = @tokens.length
 
-          apply_trim(node, node.content.value.strip)
-          keep_line_count(node, at: code_index)
+            apply_trim(node, node.content.value.strip)
+            keep_line_count(node, at: code_index)
+          end
         end
 
         yield if block_given?
@@ -268,7 +272,7 @@ module Herb
       end
 
       def visit_erb_case_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_when_node(node)
@@ -304,7 +308,7 @@ module Herb
       end
 
       def visit_erb_case_match_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_in_node(node)
@@ -373,6 +377,12 @@ module Herb
         else
           @tokens << [:expr_block_end, code, current_context, escaped]
         end
+      end
+
+      def case_parts(node)
+        parts = [:conditions, :else_clause, :end_node]
+
+        erb_escaped?(node.tag_opening.value) ? [:children, *parts] : parts
       end
 
       def visit_erb_control_with_parts(node, *parts)
