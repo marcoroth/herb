@@ -469,13 +469,6 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
 /**
  * Common HTML element categorization
  */
-export const HTML_INLINE_ELEMENTS = new Set([
-  "a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code",
-  "dfn", "em", "i", "img", "input", "kbd", "label", "map", "object", "output",
-  "q", "samp", "script", "select", "small", "span", "strong", "sub", "sup",
-  "textarea", "time", "tt", "var"
-])
-
 export const HTML_BLOCK_ELEMENTS = new Set([
   "address", "article", "aside", "blockquote", "canvas", "dd", "div", "dl",
   "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2",
@@ -484,6 +477,7 @@ export const HTML_BLOCK_ELEMENTS = new Set([
 ])
 
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
+export { HTML_INLINE_ELEMENTS, isInlineElement } from "@herb-tools/core"
 export { HTML_ELEMENTS, HTML_ELEMENT_NAMES, HTML_VOID_ELEMENTS, HTML_DEPRECATED_ELEMENTS, isKnownHTMLElement, isVoidElement, isDeprecatedElement, isCustomElement } from "@herb-tools/core"
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
@@ -701,13 +695,6 @@ export function createEndOfFileLocation(source: string): Location {
   const startColumn = lastColumnNumber > 0 ? lastColumnNumber - 1 : 0
 
   return Location.from(lastLineNumber, startColumn, lastLineNumber, lastColumnNumber)
-}
-
-/**
- * Checks if an element is inline
- */
-export function isInlineElement(tagName: string): boolean {
-  return HTML_INLINE_ELEMENTS.has(tagName.toLowerCase())
 }
 
 /**

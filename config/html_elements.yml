@@ -116,6 +116,7 @@ elements:
 
   - name: "button"
     description: "Clickable button"
+    inline: true
 
   - name: "canvas"
     description: "Drawing surface"
@@ -264,6 +265,7 @@ elements:
   - name: "input"
     description: "Input control"
     void: true
+    inline: true
 
   - name: "ins"
     description: "Inserted text"
@@ -374,6 +376,7 @@ elements:
 
   - name: "output"
     description: "Output result"
+    inline: true
 
   - name: "p"
     description: "Paragraph"
@@ -437,6 +440,7 @@ elements:
 
   - name: "select"
     description: "Select control"
+    inline: true
 
   - name: "selectedcontent"
     description: "Selected content placeholder"
@@ -500,6 +504,7 @@ elements:
   - name: "textarea"
     description: "Text area"
     whitespace_preserving: true
+    inline: true
 
   - name: "tfoot"
     description: "Table footer"
