@@ -11,6 +11,10 @@ options: {strict: false}
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(5:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBCaseInlinePatternMatchError (location: (1:0)-(1:21))
+    │   │       └── message: "A `case` statement and its first `in` pattern on the same line read as Ruby's one-line pattern match, not as a `case`/`in`. Put the `in` pattern on its own line, or in its own ERB tag (e.g., `<% case x %>` followed by `<% in y %>`)."
+    │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case value " (location: (1:2)-(1:14))
     │   ├── tag_closing: ∅

@@ -98,14 +98,24 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
         );
       }
 
-      if (options && options->strict && !analyzed->valid && has_inline_case_condition(analyzed)) {
-        append_erb_case_with_conditions_error(
-          erb_content_node->base.location.start,
-          erb_content_node->base.location.end,
-          allocator,
-          &erb_content_node->base.errors,
-          options
-        );
+      if (!analyzed->valid && has_inline_case_condition(analyzed)) {
+        if (has_inline_pattern_match(analyzed, erb_content_node->content->value)) {
+          append_erb_case_inline_pattern_match_error(
+            erb_content_node->base.location.start,
+            erb_content_node->base.location.end,
+            allocator,
+            &erb_content_node->base.errors,
+            options
+          );
+        } else if (options && options->strict) {
+          append_erb_case_with_conditions_error(
+            erb_content_node->base.location.start,
+            erb_content_node->base.location.end,
+            allocator,
+            &erb_content_node->base.errors,
+            options
+          );
+        }
       }
     } else {
       erb_content_node->parsed = false;
