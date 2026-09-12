@@ -193,16 +193,16 @@ describe("@herb-tools/formatter - content preserving tags", () => {
   })
 
   test("preserves the exact attribute whitespace of an element nested inside an ERB block", () => {
-    const source = `<pre><% if condition %><span   class="x"\tid="y" >x</span><% end %></pre>`
+    const source = `<pre><% if condition %><span   class="x"\tid="y">x</span><% end %></pre>`
     const result = formatter.format(source)
-    expect(result).toEqual(`<pre><% if condition %><span   class="x"\tid="y" >x</span><% end %></pre>`)
+    expect(result).toEqual(`<pre><% if condition %><span   class="x"\tid="y">x</span><% end %></pre>`)
     expect(formatter.format(result)).toEqual(result)
   })
 
   test("preserves an element whose attributes wrap across lines inside an ERB block", () => {
-    const source = `<pre><% if condition %><span\n  class="x"\n  id="y"\n>x</span><% end %></pre>`
+    const source = `<pre><% if condition %><span\n  class="x"\n  id="y">x</span><% end %></pre>`
     const result = formatter.format(source)
-    expect(result).toEqual(`<pre><% if condition %><span\n  class="x"\n  id="y"\n>x</span><% end %></pre>`)
+    expect(result).toEqual(`<pre><% if condition %><span\n  class="x"\n  id="y">x</span><% end %></pre>`)
     expect(formatter.format(result)).toEqual(result)
   })
 

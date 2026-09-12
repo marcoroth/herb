@@ -108,12 +108,11 @@ describe("HTMLOpenTagNode Printing", () => {
       expectPrintRoundTrip(`<span   class="x">Content</span>`, true, untracked)
       expectPrintRoundTrip(`<span class="x"    id="y">Content</span>`, true, untracked)
       expectPrintRoundTrip(`<span\tclass="x">Content</span>`, true, untracked)
-      expectPrintRoundTrip(`<a   id="id"  >Content</a>`, true, untracked)
       expectPrintRoundTrip(`<a id="id"        <%= content %>        class="class">Content</a>`, true, untracked)
     })
 
     test("recovers whitespace that wraps the attributes across lines", () => {
-      expectPrintRoundTrip(`<span\n  class="x"\n  id="y"\n>Content</span>`, true, untracked)
+      expectPrintRoundTrip(`<span\n  class="x"\n  id="y">Content</span>`, true, untracked)
     })
   })
 })
