@@ -34,7 +34,9 @@ export function is<%= node.name %>(node: Node | null | undefined): node is <%= 
 /**
  * Checks if a node is any HTML node type
  */
-export function isHTMLNode(node: Node): node is HTMLNode {
+export function isHTMLNode(node: Node | null | undefined): node is HTMLNode {
+  if (!node) return false
+
 <%- html_nodes = nodes.select(&:html?) -%>
   return <%= html_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
@@ -42,7 +44,9 @@ export function isHTMLNode(node: Node): node is HTMLNode {
 /**
  * Checks if a node is any ERB node type
  */
-export function isERBNode(node: Node): node is ERBNode {
+export function isERBNode(node: Node | null | undefined): node is ERBNode {
+  if (!node) return false
+
 <%- erb_nodes = nodes.select(&:erb_tag?) -%>
   return <%= erb_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
