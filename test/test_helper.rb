@@ -15,10 +15,13 @@ else
   puts "TIP: If a segfault in the native C extension crashes the test runner, run with FORK_TESTS=true to isolate each test in a forked process and identify which test causes the crash."
 end
 
+require "herb/cli"
+require "herb/engine"
 require "herb/engine/validators"
-require "herb/engine/debug_visitor"
-require "herb/engine/optimize_visitor"
-require "herb/engine/report/middleware"
+require "herb/engine/visitors/debug_visitor"
+require "herb/engine/visitors/optimize_visitor"
+require "herb/engine/runtime/middleware"
+require "herb/engine/runtime/error_page"
 
 require_relative "snapshot_utils"
 

@@ -39,8 +39,8 @@ module Engine
     end
 
     test "<%graphql %>" do
-      assert_compiled_snapshot("<%graphql query { users { id } } %>")
-      assert_evaluated_snapshot("<%graphql query { users { id } } %>")
+      assert_compiled_snapshot("<%graphql query { users { id } } %>", parser_options: { erb_openers: ["graphql"] })
+      assert_evaluated_snapshot("<%graphql query { users { id } } %>", {}, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "<%graphql %> multiline" do
@@ -52,8 +52,8 @@ module Engine
         %>
       ERB
 
-      assert_compiled_snapshot(template)
-      assert_evaluated_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
+      assert_evaluated_snapshot(template, {}, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "<%# comment %>" do

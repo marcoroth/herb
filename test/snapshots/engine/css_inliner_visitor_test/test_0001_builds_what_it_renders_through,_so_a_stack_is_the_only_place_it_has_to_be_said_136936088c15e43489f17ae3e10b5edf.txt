@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0001_builds what it renders through, so a stack is the only place it has to be said"
+input: "{source: \"<style>.built { color: #ff0000 }</style><h1 class=\\\"built\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<h1 class="built" style="color: #ff0000;">Hi</h1>

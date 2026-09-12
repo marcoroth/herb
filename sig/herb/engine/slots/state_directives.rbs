@@ -1,0 +1,278 @@
+# Generated from lib/herb/engine/slots/state_directives.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # Parses `<%# herb:state (name: default, …) %>` directives and classifies how the body
+      # reads the states they declare.
+      class StateDirectives
+        BARE: Regexp
+
+        KINDS: Hash[String, Symbol]
+
+        NODE_KINDS: Hash[String, Symbol]
+
+        class Declaration < Data
+          attr_reader name(): String
+
+          attr_reader kind(): Symbol
+
+          attr_reader default(): String
+
+          attr_reader derived(): untyped
+
+          attr_reader line(): Integer?
+
+          attr_reader column(): Integer?
+
+          def self.new: (String name, Symbol kind, String default, untyped derived, Integer? line, Integer? column) -> instance
+                      | (name: String, kind: Symbol, default: String, derived: untyped, line: Integer?, column: Integer?) -> instance
+
+          def self.members: () -> [ :name, :kind, :default, :derived, :line, :column ]
+
+          def members: () -> [ :name, :kind, :default, :derived, :line, :column ]
+        end
+
+        class Read < Data
+          attr_reader name(): String
+
+          attr_reader comparand(): String?
+
+          attr_reader kind(): Symbol?
+
+          attr_reader operator(): String?
+
+          attr_reader against(): String?
+
+          attr_reader transform(): String?
+
+          attr_reader against_transform(): String?
+
+          def self.new: (String name, String? comparand, Symbol? kind, String? operator, String? against, String? transform, String? against_transform) -> instance
+                      | (name: String, comparand: String?, kind: Symbol?, operator: String?, against: String?, transform: String?, against_transform: String?) -> instance
+
+          def self.members: () -> [ :name, :comparand, :kind, :operator, :against, :transform, :against_transform ]
+
+          def members: () -> [ :name, :comparand, :kind, :operator, :against, :transform, :against_transform ]
+        end
+
+        class Combo < Data
+          attr_reader op(): String
+
+          attr_reader parts(): Array[untyped]
+
+          def self.new: (String op, Array[untyped] parts) -> instance
+                      | (op: String, parts: Array[untyped]) -> instance
+
+          def self.members: () -> [ :op, :parts ]
+
+          def members: () -> [ :op, :parts ]
+        end
+
+        class FoldIncrement < Data
+          attr_reader name(): String
+
+          attr_reader by(): Integer
+
+          def self.new: (String name, Integer by) -> instance
+                      | (name: String, by: Integer) -> instance
+
+          def self.members: () -> [ :name, :by ]
+
+          def members: () -> [ :name, :by ]
+        end
+
+        ORDERED_OPERATORS: Array[Symbol]
+
+        MIRRORED_OPERATORS: Hash[String, String]
+
+        NEGATED_OPERATORS: Hash[String, String]
+
+        FALSY_OPERATOR: String
+
+        PREDICATES: Hash[String, Hash[Symbol, untyped]]
+
+        UNARY_OPERATORS: Hash[String, String]
+
+        NEGATED_UNARY: Hash[String, String]
+
+        TRANSFORMS: Hash[String, Hash[Symbol, untyped]]
+
+        TRANSFORM_SPELLINGS: Hash[String, String]
+
+        class Parsing < Data
+          attr_reader locals(): Hash[String, Symbol]
+
+          attr_reader declared(): Hash[String, Declaration]
+
+          attr_reader names(): Array[String]
+
+          attr_reader enclosing(): Hash[String, Declaration]
+
+          attr_reader visitor(): untyped
+
+          attr_reader location(): Herb::Location?
+
+          def self.new: (Hash[String, Symbol] locals, Hash[String, Declaration] declared, Array[String] names, Hash[String, Declaration] enclosing, untyped visitor, Herb::Location? location) -> instance
+                      | (locals: Hash[String, Symbol], declared: Hash[String, Declaration], names: Array[String], enclosing: Hash[String, Declaration], visitor: untyped, location: Herb::Location?) -> instance
+
+          def self.members: () -> [ :locals, :declared, :names, :enclosing, :visitor, :location ]
+
+          def members: () -> [ :locals, :declared, :names, :enclosing, :visitor, :location ]
+        end
+
+        module Silent
+          # : (String, Herb::Location?, Symbol, **untyped) -> nil
+          def self.slot_error: (String, Herb::Location?, Symbol, **untyped) -> nil
+
+          # : (?Symbol?) -> Integer
+          def self.diagnostic_count: (?Symbol?) -> Integer
+        end
+
+        # : (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+        def self.parse: (untyped, Hash[String, Symbol], visitor: untyped, ?enclosing: Hash[String, Declaration]) -> Array[Declaration]
+
+        # : (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?, ?untyped) -> (Read | Combo | Symbol)?
+        def self.condition_read: (String, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?, ?untyped) -> (Read | Combo | Symbol)?
+
+        # : (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+        def self.tree_read: (untyped, Hash[String, Declaration], untyped, (StateAnchor | Herb::Location)?) -> (Read | Combo | Symbol)?
+
+        # : (untyped) -> untyped
+        def self.unwrap_parentheses: (untyped) -> untyped
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Combo | Symbol)?
+        def self.combo_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Combo | Symbol)?
+
+        # : (untyped, untyped, untyped, untyped, StateAnchor) -> nil
+        def self.mixed_combo: (untyped, untyped, untyped, untyped, StateAnchor) -> nil
+
+        # : (untyped, untyped) -> Array[untyped]
+        def self.flatten_combo: (untyped, untyped) -> Array[untyped]
+
+        # : (Read | Combo) -> Array[String]
+        def self.read_names: (Read | Combo) -> Array[String]
+
+        # : (Read | Combo) -> untyped
+        def self.condition_entry: (Read | Combo) -> untyped
+
+        # : (Read) -> untyped
+        def self.comparand_entry: (Read) -> untyped
+
+        # : (String) -> untyped
+        def self.literal_value: (String) -> untyped
+
+        # : (String) -> bool
+        def self.literal?: (String) -> bool
+
+        # : (Read | Combo) -> String
+        def self.condition_source: (Read | Combo) -> String
+
+        # : (String) -> FoldIncrement?
+        def self.fold_increment: (String) -> FoldIncrement?
+
+        # : (String, Hash[String, Declaration]) -> Array[String]
+        def self.assigned_state_names: (String, Hash[String, Declaration]) -> Array[String]
+
+        # : (String, Declaration) -> (Array[String] | Symbol)
+        def self.when_comparands: (String, Declaration) -> (Array[String] | Symbol)
+
+        # : (Symbol?, String) -> String
+        def self.predicate_advice: (Symbol?, String) -> String
+
+        # : ((Read | Combo)) -> Read?
+        def self.never_falsy_read: (Read | Combo) -> Read?
+
+        # : (Declaration) -> bool
+        def self.literal_default?: (Declaration) -> bool
+
+        # : (Declaration, String) -> String
+        def self.default_example: (Declaration, String) -> String
+
+        # : (Declaration) -> bool
+        def self.seeded?: (Declaration) -> bool
+
+        # : (Read) -> String
+        def self.subject_phrase: (Read) -> String
+
+        # : ((Symbol | String)?) -> String
+        def self.kind_article: ((Symbol | String)?) -> String
+
+        # : (String, String, ?untyped) -> String
+        def self.rewrite_reads: (String, String, ?untyped) -> String
+
+        # : (String, Hash[String, Declaration]) -> bool
+        def self.mentions_any?: (String, Hash[String, Declaration]) -> bool
+
+        # : (untyped, Hash[String, Declaration]) -> bool
+        def self.mentions?: (untyped, Hash[String, Declaration]) -> bool
+
+        # : (untyped, String) -> untyped
+        private def self.resolved_expression: (untyped, String) -> untyped
+
+        # : (Array[untyped], Hash[String, Declaration]) -> bool
+        private def self.reads_any?: (Array[untyped], Hash[String, Declaration]) -> bool
+
+        # : (String, String, untyped) -> Array[[Integer, Integer, String]]
+        private def self.read_splices: (String, String, untyped) -> Array[[ Integer, Integer, String ]]
+
+        # : (String) -> Array[untyped]
+        private def self.expression_nodes: (String) -> Array[untyped]
+
+        # : (untyped) -> Array[untyped]
+        private def self.descendants: (untyped) -> Array[untyped]
+
+        # : (untyped) -> String?
+        private def self.bare_name: (untyped) -> String?
+
+        # : (untyped, Parsing) -> Declaration
+        private def self.declaration_for: (untyped, Parsing) -> Declaration
+
+        # : (untyped, Parsing) -> Declaration
+        private def self.classify: (untyped, Parsing) -> Declaration
+
+        # : (String, String, untyped, Herb::Location?, **untyped) -> Declaration
+        private def self.refused: (String, String, untyped, Herb::Location?, **untyped) -> Declaration
+
+        # : (String, String, Herb::Location?, Parsing) -> Declaration?
+        private def self.derived_default: (String, String, Herb::Location?, Parsing) -> Declaration?
+
+        # : (Read | Combo) -> Symbol
+        private def self.derived_kind: (Read | Combo) -> Symbol
+
+        # : (String, String, Herb::Location?, Parsing) -> Declaration
+        private def self.bare_default: (String, String, Herb::Location?, Parsing) -> Declaration
+
+        # : (String) -> untyped
+        private def self.expression_node: (String) -> untyped
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.bare_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.operand_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.transform_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.predicate_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+
+        # : (untyped, Read, untyped, StateAnchor, **untyped) -> nil
+        private def self.nil_check_error: (untyped, Read, untyped, StateAnchor, **untyped) -> nil
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
+        private def self.negated_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> (Read | Combo)?
+
+        # : (Read | Combo) -> (Read | Combo)
+        private def self.negate: (Read | Combo) -> (Read | Combo)
+
+        # : (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+        private def self.equality_read: (untyped, Hash[String, Declaration], untyped, StateAnchor) -> Read?
+
+        # : (untyped, Read, Read, untyped, StateAnchor) -> Read?
+        private def self.state_pair_read: (untyped, Read, Read, untyped, StateAnchor) -> Read?
+      end
+    end
+  end
+end

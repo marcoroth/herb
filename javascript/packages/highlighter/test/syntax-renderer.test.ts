@@ -5,6 +5,7 @@ import { Range } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 import { ANSI_REGEX } from "../src/ansi.js"
+import { colorize } from "../src/color.js"
 
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer
@@ -169,6 +170,51 @@ describe("SyntaxRenderer", () => {
       const result = erbRenderer.highlight(content)
 
       expect(result).toMatchSnapshot()
+    })
+
+    it("highlights ERB comments as comments", async () => {
+      const result = renderer.highlight("<%# if true %>")
+
+      expect(result).toMatchSnapshot()
+    })
+
+    it("highlights trim mode ERB comments as comments", async () => {
+      const result = renderer.highlight("<%-# if true -%>")
+
+      expect(result).toMatchSnapshot()
+    })
+
+    it("keeps Ruby colors for escaped ERB tags starting with a hash", async () => {
+      const result = renderer.highlight("<%%# if true %>")
+
+      expect(result).toMatchSnapshot()
+    })
+
+    it("preserves ERB comment state across nested openers and resets after the closing delimiter", () => {
+      const nestedHerb = {
+        isLoaded: true,
+        load: async () => {},
+        lex: () => ({
+          errors: [],
+          value: [
+            { type: "TOKEN_ERB_START", range: Range.from(0, 3) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(3, 12) },
+            { type: "TOKEN_ERB_START", range: Range.from(12, 14) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(14, 23) },
+            { type: "TOKEN_ERB_END", range: Range.from(23, 25) },
+            { type: "TOKEN_ERB_START", range: Range.from(25, 27) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(27, 36) },
+            { type: "TOKEN_ERB_END", range: Range.from(36, 38) },
+          ],
+        }),
+      }
+      const nestedRenderer = new SyntaxRenderer(themes.onedark, nestedHerb as any)
+      const content = "<%# mention <% if true %><% if true %>"
+      const result = nestedRenderer.highlight(content)
+
+      expect(result.replace(ANSI_REGEX, "")).toBe(content)
+      expect(result).toContain(colorize(" if true ", themes.onedark.TOKEN_HTML_COMMENT_START))
+      expect(result.split(colorize("if", themes.onedark.RUBY_KEYWORD)).length - 1).toBe(1)
     })
   })
 

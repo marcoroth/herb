@@ -52,7 +52,8 @@ errors:
           - "closing_tag->value"
           - "closing_tag->location.start.line"
           - "closing_tag->location.start.column"
-
+      suggestion:
+        template: "Add the matching opening tag, or remove this closing tag."
       fields:
         - name: "closing_tag"
           type: "token"
@@ -65,7 +66,8 @@ errors:
           - "opening_tag->location.start.line"
           - "opening_tag->location.start.column"
           - "opening_tag->value"
-
+      suggestion:
+        template: "Add the closing tag, or make it self-closing."
       fields:
         - name: "opening_tag"
           type: "token"
@@ -80,7 +82,10 @@ errors:
           - "closing_tag->value"
           - "closing_tag->location.start.line"
           - "closing_tag->location.start.column"
-
+      suggestion:
+        template: "Change the closing tag to `</%s>`."
+        arguments:
+          - "opening_tag->value"
       fields:
         - name: "opening_tag"
           type: "token"
@@ -96,7 +101,10 @@ errors:
           - "tag_name->value"
           - "tag_name->value"
           - "tag_name->value"
-
+      suggestion:
+        template: "A void element cannot have a closing tag. Remove it, or write `<%s />`."
+        arguments:
+          - "tag_name->value"
       fields:
         - name: "tag_name"
           type: "token"
@@ -114,7 +122,8 @@ errors:
           - "opening_tag->value"
           - "opening_tag->location.start.line"
           - "opening_tag->location.start.column"
-
+      suggestion:
+        template: "Close this element before the end of the template."
       fields:
         - name: "opening_tag"
           type: "token"
@@ -125,7 +134,8 @@ errors:
         arguments:
           - "diagnostic_id"
           - "error_message"
-
+      suggestion:
+        template: "Check the Ruby syntax inside the ERB tag."
       fields:
         - name: "error_message"
           type: "string"
@@ -218,6 +228,35 @@ errors:
         - name: "close_column"
           type: "size_t"
 
+    - name: "UnclosedCommentError"
+      message:
+        template: "Comment opened at (%u:%u) is missing its closing `-->`."
+        arguments:
+          - "comment_start->location.start.line"
+          - "comment_start->location.start.column"
+      suggestion:
+        template: "Add `-->` where the comment should end."
+      fields:
+        - name: "comment_start"
+          type: "token"
+
+    - name: "NestedCommentError"
+      message:
+        template: "Comment opened at (%u:%u) contains another `<!--` at (%u:%u)."
+        arguments:
+          - "comment_start->location.start.line"
+          - "comment_start->location.start.column"
+          - "nested_start->location.start.line"
+          - "nested_start->location.start.column"
+      suggestion:
+        template: "Comments cannot nest. The outer comment ends at the first `-->`, so remove the inner `<!--` or close the outer comment before it."
+      fields:
+        - name: "comment_start"
+          type: "token"
+
+        - name: "nested_start"
+          type: "token"
+
     - name: "InvalidCommentClosingTagError"
       message:
         template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."
@@ -272,6 +311,19 @@ errors:
         - name: "tag_name"
           type: "token"
 
+    - name: "EndTagWithTrailingSolidusError"
+      message:
+        template: "Closing tag `</%s>` at (%u:%u) ends with `/>` instead of `>`."
+        arguments:
+          - "tag_name->value"
+          - "tag_name->location.start.line"
+          - "tag_name->location.start.column"
+      suggestion:
+        template: "Close it with `>`. A closing tag cannot self-close."
+      fields:
+        - name: "tag_name"
+          type: "token"
+
     - name: "UnclosedQuoteError"
       message:
         template: "Attribute value opened with %s at (%u:%u) was never closed."
@@ -291,10 +343,76 @@ errors:
           - "attribute_name"
           - "start.line"
           - "start.column"
-
+      suggestion:
+        template: "Give `%s` a value, or drop the equals sign."
+        arguments:
+          - "attribute_name"
       fields:
         - name: "attribute_name"
           type: "string"
+
+    - name: "MissingWhitespaceBetweenAttributesError"
+      message:
+        template: "Missing whitespace between attributes at (%u:%u). `%s` is parsed as the start of a new attribute."
+        arguments:
+          - "found->location.start.line"
+          - "found->location.start.column"
+          - "found->value"
+      suggestion:
+        template: "Add a space before it."
+      fields:
+        - name: "found"
+          type: "token"
+
+    - name: "UnexpectedCharacterInAttributeNameError"
+      message:
+        template: "Unexpected `%s` in attribute name at (%u:%u)."
+        arguments:
+          - "character->value"
+          - "character->location.start.line"
+          - "character->location.start.column"
+      suggestion:
+        template: "Quotes cannot appear in an attribute name. Check the quoting of the previous attribute value."
+      fields:
+        - name: "character"
+          type: "token"
+
+    - name: "UnexpectedCharacterInUnquotedAttributeValueError"
+      message:
+        template: "Unexpected `%s` in unquoted attribute value at (%u:%u)."
+        arguments:
+          - "character->value"
+          - "character->location.start.line"
+          - "character->location.start.column"
+      suggestion:
+        template: "Wrap the value in quotes."
+      fields:
+        - name: "character"
+          type: "token"
+
+    - name: "UnexpectedEqualsSignBeforeAttributeNameError"
+      message:
+        template: "Unexpected `=` before attribute name at (%u:%u)."
+        arguments:
+          - "equals->location.start.line"
+          - "equals->location.start.column"
+      suggestion:
+        template: "Remove the `=`, or put an attribute name in front of it."
+      fields:
+        - name: "equals"
+          type: "token"
+
+    - name: "UnexpectedSolidusInTagError"
+      message:
+        template: "Unexpected `/` in tag at (%u:%u)."
+        arguments:
+          - "solidus->location.start.line"
+          - "solidus->location.start.column"
+      suggestion:
+        template: "Remove it, or use `/>` to self-close the tag."
+      fields:
+        - name: "solidus"
+          type: "token"
 
     - name: "UnclosedERBTagError"
       message:
@@ -473,6 +591,47 @@ errors:
     - name: "StrictLocalsDuplicateDeclarationError"
       message:
         template: "Duplicate strict locals declaration. Only the first `<%# locals: (...) %>` declaration is used by Rails."
+        arguments: []
+
+      fields: []
+
+    - name: "HerbStateMissingParenthesisError"
+      message:
+        template: "The `herb:state` directive requires parentheses. Expected `herb:state (...)` but got `herb:state %s`."
+        arguments:
+          - "rest"
+
+      fields:
+        - name: "rest"
+          type: "string"
+
+    - name: "HerbStateNonCanonicalDirectiveError"
+      message:
+        template: "The `herb:state` directive has to be spelled `<%%# herb:state (...) %%>`. Found `%s` where `%s` was expected."
+        arguments:
+          - "found"
+          - "expected"
+
+      fields:
+        - name: "found"
+          type: "string"
+
+        - name: "expected"
+          type: "string"
+
+    - name: "HerbStateInvalidParameterError"
+      message:
+        template: "The `herb:state` directive only declares keyword arguments with defaults. `%s` is not one. Declare each state with a default, like `(pending: false)`."
+        arguments:
+          - "parameter"
+
+      fields:
+        - name: "parameter"
+          type: "string"
+
+    - name: "HerbStateDuplicateDeclarationError"
+      message:
+        template: "This scope already declares its states. Merge these states into the first `<%# herb:state (...) %>` directive of the scope, so every state of the scope reads from one declaration."
         arguments: []
 
       fields: []
@@ -706,6 +865,7 @@ nodes:
           kind:
             - "LiteralNode"
             - "ERBContentNode"
+            - "ERBCommentNode"
 
     - name: "HTMLAttributeNode"
       fields:
@@ -1459,3 +1619,65 @@ nodes:
         - name: "statements"
           type: "array"
           kind: "Node"
+
+    - name: "HerbDirectiveNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "key"
+          type: "token"
+
+        - name: "arguments"
+          type: "token"
+
+    - name: "HerbStateDeclarationNode"
+      fields:
+        - name: "name"
+          type: "token"
+
+        - name: "default_value"
+          type: "node"
+          kind: "RubyLiteralNode"
+
+        - name: "kind"
+          type: "string"
+
+    - name: "HerbStateDirectiveNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "key"
+          type: "token"
+
+        - name: "signature"
+          type: "token"
+
+        - name: "states"
+          type: "array"
+          kind:
+            - "HerbStateDeclarationNode"
+
+    - name: "ERBCommentNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"

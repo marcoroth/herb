@@ -1,7 +1,0 @@
----
-source: "Engine::HTMLSafeAssertionsVisitorTest#test_0006_html_safe in a control flow fragment is wrapped - compilation"
-input: "{source: \"<% if a %>A<% elsif b.html_safe %>B<% end %>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
----
-_buf = ::String.new; if a 
- _buf << 'A'.freeze; elsif ::Herb::Engine::HTMLSafeAssertions.check(b, file: "app/views/test.html.erb".freeze, line: 1, column: 12, source: "<% elsif b.html_safe %>".freeze, mode: :raise).html_safe; _buf << 'B'.freeze; end;
-_buf.to_s

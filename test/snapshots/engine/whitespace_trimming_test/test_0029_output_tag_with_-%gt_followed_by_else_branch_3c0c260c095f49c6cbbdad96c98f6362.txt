@@ -6,5 +6,5 @@ _buf = ::String.new; if false
  _buf << 'X
 '.freeze; _buf << ().to_s; else 
  _buf << 'Y
-'.freeze; end 
+'.freeze; end ;
 _buf.to_s

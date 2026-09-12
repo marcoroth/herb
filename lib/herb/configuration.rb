@@ -89,6 +89,22 @@ module Herb
       files["exclude"] || DEFAULTS.dig("files", "exclude") || []
     end
 
+    def parser
+      @config["parser"] || {}
+    end
+
+    #: () -> Array[String]
+    def erb_openers
+      parser["erb_openers"] || []
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def parser_options
+      openers = erb_openers
+
+      openers.empty? ? {} : { erb_openers: openers }
+    end
+
     def linter
       @config["linter"] || {}
     end
@@ -109,6 +125,7 @@ module Herb
         security: config.fetch("security", true),
         nesting: config.fetch("nesting", true),
         accessibility: config.fetch("accessibility", true),
+        generator_template: config.fetch("generator_template", true),
       }.merge(
         overrides.to_h { |key, value| [key.to_sym, !!value] }
       )

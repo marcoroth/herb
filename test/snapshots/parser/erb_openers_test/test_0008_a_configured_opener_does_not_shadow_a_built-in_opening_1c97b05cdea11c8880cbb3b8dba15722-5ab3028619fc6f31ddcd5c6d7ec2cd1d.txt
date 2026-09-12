@@ -1,0 +1,13 @@
+---
+source: "Parser::ERBOpenersTest#test_0008_a configured opener does not shadow a built-in opening"
+input: "<%== value %>"
+options: {erb_openers: ["="]}
+---
+@ DocumentNode (location: (1:0)-(1:13))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:13))
+        ├── tag_opening: "<%==" (location: (1:0)-(1:4))
+        ├── content: " value " (location: (1:4)-(1:11))
+        ├── tag_closing: "%>" (location: (1:11)-(1:13))
+        ├── parsed: true
+        └── valid: true

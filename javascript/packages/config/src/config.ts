@@ -4,16 +4,18 @@ import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
-import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
+import { stringify, parse, parseDocument, isMap, isScalar, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
-import { promises as fs } from "fs"
+
+import type { ParseOptions } from "@herb-tools/core"
+import { promises as fs, accessSync, readFileSync, readdirSync, statSync } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
 import { ZodError, z } from "zod"
 import { HerbConfigSchema } from "./config-schema.js"
 
-import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+import type { FrameworkSchema, EnvironmentSchema, TemplateEngineSchema } from "./config-schema.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -48,6 +50,9 @@ export interface PersonalHerbSettings {
     minimumLines?: number
     maximumClasses?: number
   }
+  runtimeReports?: {
+    inlayHints?: boolean
+  }
 }
 
 export const defaultPersonalSettings: PersonalHerbSettings = {
@@ -65,6 +70,9 @@ export const defaultPersonalSettings: PersonalHerbSettings = {
     enabled: true,
     minimumLines: 10,
     maximumClasses: 2
+  },
+  runtimeReports: {
+    inlayHints: true
   }
 }
 
@@ -80,6 +88,10 @@ export interface ConfigValidationError {
 export type FilesConfig = {
   include?: string[]
   exclude?: string[]
+}
+
+export type ParserConfig = {
+  erb_openers?: string[]
 }
 
 import { resolveSeverity, ALL_RULES_KEY } from "./config-schema.js"
@@ -98,6 +110,7 @@ export type RuleConfig = {
   include?: string[]
   only?: string[]
   exclude?: string[]
+  environments?: Environment[]
 }
 
 export type LinterConfig = {
@@ -128,12 +141,14 @@ export type HerbConfigOptions = {
   framework?: Framework
   template_engine?: TemplateEngine
   files?: FilesConfig
+  parser?: ParserConfig
   engine?: EngineConfig
   linter?: LinterConfig
   formatter?: FormatterConfig
 }
 
 export type Framework = z.infer<typeof FrameworkSchema>
+export type Environment = z.infer<typeof EnvironmentSchema>
 export type TemplateEngine = z.infer<typeof TemplateEngineSchema>
 
 export type HerbConfig = HerbConfigOptions & {
@@ -221,6 +236,7 @@ export class Config {
   get options(): HerbConfigOptions {
     return {
       files: this.config.files,
+      parser: this.config.parser,
       linter: this.config.linter,
       formatter: this.config.formatter
     }
@@ -228,6 +244,16 @@ export class Config {
 
   get framework() {
     return this.config.framework
+  }
+
+  get parser() {
+    return this.config.parser
+  }
+
+  get parserOptions(): ParseOptions {
+    const erbOpeners = this.config.parser?.erb_openers
+
+    return erbOpeners ? { erb_openers: erbOpeners } : {}
   }
 
   get linter() {
@@ -603,7 +629,7 @@ export class Config {
         configPath = this.configPathFromProjectPath(pathOrFile)
       }
 
-      require('fs').statSync(configPath)
+      statSync(configPath)
 
       return true
     } catch {
@@ -672,11 +698,10 @@ export class Config {
    * @returns The project root directory path
    */
   static findProjectRootSync(startPath: string): string {
-    const fsSync = require('fs')
     let currentPath = path.resolve(startPath)
 
     try {
-      const stats = fsSync.statSync(currentPath)
+      const stats = statSync(currentPath)
 
       if (stats.isFile()) {
         currentPath = path.dirname(currentPath)
@@ -691,7 +716,7 @@ export class Config {
       const configPath = path.join(currentPath, this.configPath)
 
       try {
-        fsSync.accessSync(configPath)
+        accessSync(configPath)
 
         return currentPath
       } catch {
@@ -724,7 +749,7 @@ export class Config {
       ? pathOrFile
       : this.configPathFromProjectPath(pathOrFile)
 
-    return require('fs').readFileSync(configPath, 'utf-8')
+    return readFileSync(configPath, 'utf-8')
   }
 
   /**
@@ -1172,12 +1197,11 @@ export class Config {
    * it to `access` would look for a file named `*.gemspec` literally.
    */
   private static isProjectRootSync(dirPath: string): boolean {
-    const fsSync = require('fs')
 
     for (const indicator of this.PROJECT_INDICATORS) {
       if (indicator.startsWith("*")) {
         try {
-          const entries: string[] = fsSync.readdirSync(dirPath)
+          const entries: string[] = readdirSync(dirPath)
 
           if (entries.some(entry => entry.endsWith(indicator.slice(1)))) return true
         } catch {
@@ -1188,7 +1212,7 @@ export class Config {
       }
 
       try {
-        fsSync.accessSync(path.join(dirPath, indicator))
+        accessSync(path.join(dirPath, indicator))
 
         return true
       } catch {

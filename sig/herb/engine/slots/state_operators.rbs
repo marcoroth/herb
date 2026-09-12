@@ -1,0 +1,19 @@
+# Generated from lib/herb/engine/slots/state_operators.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The comparison operators a `herb:state` read may use, and what swapping or negating one
+      # turns it into.
+      module StateOperators
+        MIRRORED: Hash[String, String]
+
+        NEGATED: Hash[String, String]
+
+        ORDERED: Array[Symbol]
+
+        COMPARISONS: Array[String]
+      end
+    end
+  end
+end

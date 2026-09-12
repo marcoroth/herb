@@ -6,7 +6,6 @@ _buf = ::String.new; _buf << '<a>
 '.freeze;   if true 
  _buf << '    <strong>Title</strong>
 '.freeze;   end 
- _buf << '  '.freeze;   unless false 
- _buf << ("content").to_s; _buf << '#L'.freeze; _buf << (1).to_s; end; _buf << '
+ _buf << '  '.freeze;   unless false ; _buf << ("content").to_s; _buf << '#L'.freeze; _buf << (1).to_s; end; _buf << '
 </a>'.freeze;
 _buf.to_s

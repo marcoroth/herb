@@ -3,7 +3,7 @@
 module Herb
   class Engine
     module Validators
-      class NestingValidator < Validator
+      class NestingValidator < Base
         def visit_html_element_node: (untyped node) -> untyped
 
         private

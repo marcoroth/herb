@@ -18,7 +18,7 @@ module Engine
         Herb::Engine.new(@security_violation_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "ERB output tags"
+      assert_equal "1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.", error.message
       assert_equal 1, error.line
       assert_equal 5, error.column
     end
@@ -35,7 +35,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "invalid-nesting"
+      assert_equal ["InvalidNestingError"], error.diagnostics.map(&:code)
     end
 
     test "nesting validator can be disabled" do
@@ -49,7 +49,7 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all(security: false))
       end
 
-      assert_includes error.message, "invalid-nesting"
+      assert_equal ["InvalidNestingError"], error.diagnostics.map(&:code)
     end
 
     test "disabling nesting does not disable security" do
@@ -57,7 +57,7 @@ module Engine
         Herb::Engine.new(@security_violation_template, visitors: Herb::Engine::Validators.all(nesting: false))
       end
 
-      assert_includes error.message, "ERB output tags"
+      assert_equal "1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.", error.message
     end
 
     test "multiple validators can be disabled" do

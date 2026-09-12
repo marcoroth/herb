@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::StaticsTest#test_0004_parks a conditional nested in a branch on its own rather than inside its parent"
-input: "{source: \"<p><% if @a %><% if @b %>deep<% end %>outer<% end %></p>\", locals: {\"@a\" => false, \"@b\" => false}, options: {visitors: [#<Herb::Engine::SlotVisitor client>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:bf795402:0--><p><!--herb-slot:0:conditional--><!--/herb-slot:0--></p><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:bf795402"><!--herb-branch:0:0--><!--herb-slot:1:conditional--><!--/herb-slot:1-->outer<!--herb-branch:1:0-->deep</template>

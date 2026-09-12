@@ -1,10 +1,11 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
-import type { DiagnosticTag, HerbError } from "@herb-tools/core"
+import type { DiagnosticTag, HerbError, SourcePath } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
 import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
-import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
+import type { DOMNodeLike } from "./browser/dom-to-ast.js"
+import type { Framework, Environment, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
 
@@ -55,6 +56,10 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   severity?: LintSeverity
   /** The call chain that justified the offense */
   renderedFrom?: AncestorChain
+  /** The template the offense was written in */
+  file?: SourcePath
+  /** The element the offense is about, when what was linted is a live DOM */
+  element?: DOMNodeLike
 }
 
 /**
@@ -98,6 +103,15 @@ export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
 }
 
 /**
+ * Where a rule runs when neither the rule nor config says.
+ *
+ * The linter decides this, because it is the thing that runs rules. The config package only
+ * records what a user asked for.
+ * Config only has to know which names are valid.
+ */
+export const DEFAULT_ENVIRONMENT: Environment = "cli"
+
+/**
  * Base class for parser rules.
  */
 export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -105,6 +119,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
   static introducedIn: RuleVersion
+  /** The version in which this rule started being enabled by default. Falls back to `introducedIn`. */
+  static defaultEnabledIn?: RuleVersion
 
   static version(version: RuleVersion): RuleVersion { return version }
   /** Indicates whether this rule supports autofix. Defaults to false. */
@@ -186,6 +202,8 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
   static introducedIn: RuleVersion
+  /** The version in which this rule started being enabled by default. Falls back to `introducedIn`. */
+  static defaultEnabledIn?: RuleVersion
 
   static version(version: RuleVersion): RuleVersion { return version }
 
@@ -244,6 +262,7 @@ export interface LexerRuleConstructor {
   new (): LexerRule
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
@@ -262,10 +281,16 @@ export interface LintContext {
   indentWidth: number | undefined
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
+  environment: Environment | undefined
   partials: PartialIndex | undefined
   partialCallers: RenderGraph | undefined
   projectPath: string | undefined
   herb: HerbBackend | undefined
+  parkedRoots: (() => ArrayLike<ParkedRoot>) | undefined
+}
+
+export interface ParkedRoot {
+  querySelectorAll(selectors: string): ArrayLike<unknown>
 }
 
 /**
@@ -279,10 +304,12 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   indentWidth: undefined,
   indentStyle: undefined,
   framework: undefined,
+  environment: undefined,
   partials: undefined,
   partialCallers: undefined,
   projectPath: undefined,
-  herb: undefined
+  herb: undefined,
+  parkedRoots: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -290,6 +317,8 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
   static introducedIn: RuleVersion
+  /** The version in which this rule started being enabled by default. Falls back to `introducedIn`. */
+  static defaultEnabledIn?: RuleVersion
 
   static version(version: RuleVersion): RuleVersion { return version }
 
@@ -348,6 +377,7 @@ export interface SourceRuleConstructor {
   new (): SourceRule
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
@@ -363,6 +393,7 @@ export type ParserRuleClass = (new () => ParserRule) & {
   type?: "parser"
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean

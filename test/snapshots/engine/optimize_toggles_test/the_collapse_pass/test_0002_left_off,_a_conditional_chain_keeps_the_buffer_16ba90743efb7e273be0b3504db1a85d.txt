@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizeTogglesTest::the collapse pass#test_0002_left off, a conditional chain keeps the buffer"
+input: "{source: \"<% if signed_in? %><p>Hello</p><% else %><p>Bye</p><% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor collapse=false>]}}"
+---
+_buf = ::String.new; if signed_in? ; _buf << '<p>Hello</p>'.freeze; else; _buf << '<p>Bye</p>'.freeze; end;
+_buf.to_s

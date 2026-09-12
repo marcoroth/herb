@@ -28,6 +28,7 @@ class ScopedStyleSingleDeclarationVisitor extends BaseRuleVisitor {
 export class HerbScopedStyleSingleDeclarationRule extends ParserRule {
   static ruleName = "herb-scoped-style-single-declaration"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

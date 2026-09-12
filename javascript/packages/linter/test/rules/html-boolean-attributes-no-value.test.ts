@@ -89,6 +89,10 @@ describe("html-boolean-attributes-no-value", () => {
     expectNoOffenses('<%# herb:state (draft: "") %>\n<p><%= draft %></p>\n<button disabled="<%= draft == \'\' %>">Send</button>')
   })
 
+  test("allows a boolean attribute reading a declared state with a predicate", () => {
+    expectNoOffenses('<%# herb:state (draft: "") %>\n<p><%= draft %></p>\n<button disabled="<%= draft.blank? %>">Send</button>')
+  })
+
   test("fails for a state read outside the loop that declares it", () => {
     expectError('Boolean attribute `muted` should not have a value. Use `muted` instead of `muted="<%= starred %>"`.')
 

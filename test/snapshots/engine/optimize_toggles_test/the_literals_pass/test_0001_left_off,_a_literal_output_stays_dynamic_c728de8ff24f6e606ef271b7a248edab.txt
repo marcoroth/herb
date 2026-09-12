@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizeTogglesTest::the literals pass#test_0001_left off, a literal output stays dynamic"
+input: "{source: \"<h1><%= \\\"hello\\\" %></h1>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor literals=false>]}}"
+---
+_buf = ::String.new; _buf << '<h1>'.freeze; _buf << ("hello").to_s; _buf << '</h1>'.freeze;
+_buf.to_s

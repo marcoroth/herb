@@ -19,6 +19,18 @@ impl Location {
     }
   }
 
+  pub fn contains(&self, position: Position) -> bool {
+    position >= self.start && position < self.end
+  }
+
+  pub fn covers(&self, other: Location) -> bool {
+    self.start <= other.start && other.end <= self.end
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.start == self.end
+  }
+
   pub fn inspect(&self) -> String {
     format!("{}-{}", self.start, self.end)
   }

@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses inside a kept buffer#test_0003_each chain collapses on its own when text sits between them"
+input: "{source: \"a <% if flag %>x<% end %> b <% if other %>y<% end %> c <%= name %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor subtrees=true>]}}"
+---
+_buf = ::String.new; _buf << (if flag; "a x b ".freeze; else "a  b ".freeze;end;).to_s; _buf << (if other; "y c ".freeze; else " c ".freeze;end;).to_s; _buf << (name).to_s;
+_buf.to_s

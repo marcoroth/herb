@@ -11,6 +11,8 @@
     "isolatedModules": true,
     "noEmit": false,
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,

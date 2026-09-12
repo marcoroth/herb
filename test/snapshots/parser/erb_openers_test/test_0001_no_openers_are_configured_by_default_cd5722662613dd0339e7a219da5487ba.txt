@@ -1,0 +1,12 @@
+---
+source: "Parser::ERBOpenersTest#test_0001_no openers are configured by default"
+input: "<%graphql query { users { id } } %>"
+---
+@ DocumentNode (location: (1:0)-(1:35))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:35))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: "graphql query { users { id } } " (location: (1:2)-(1:33))
+        ├── tag_closing: "%>" (location: (1:33)-(1:35))
+        ├── parsed: true
+        └── valid: true

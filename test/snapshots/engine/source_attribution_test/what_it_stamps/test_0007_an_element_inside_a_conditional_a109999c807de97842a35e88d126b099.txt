@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0007_an element inside a conditional"
+input: "{source: \"<% if visible %><span>x</span><% end %>\", locals: {visible: true}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<span data-herb-source="app/views/posts/_card.html.erb:1:17">x</span>

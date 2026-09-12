@@ -1,0 +1,6 @@
+---
+source: "Engine::ScopedStyleVisitorTest::delivering the CSS as style attributes#test_0001_writes the CSS onto the markup once the file has rendered"
+input: "{source: \"<style scoped>.a { color: red; }</style><h1 class=\\\"a\\\">Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Narrowing deliver=style_attributes>]}}"
+---
+_buf = ::String.new; _buf << '<style>.a[data-herb-scope-2940ba8a]{color: red;}</style><h1 class="a" data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+::Herb::Engine::ScopedStyle.inline((_buf.to_s), keep: false)

@@ -1,0 +1,11 @@
+---
+source: "Engine::ERBCommentsTest#test_0022_a tag whose content is only comments keeps every line"
+input: "{source: \"<%\\n  # a\\n  # b\\n%>\\n<%= x %>\\n\", options: {}}"
+---
+_buf = ::String.new;
+ # a
+ 
+
+ _buf << (x).to_s; _buf << '
+'.freeze;
+_buf.to_s

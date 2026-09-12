@@ -39,6 +39,24 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for attribute writers", () => {
+      expectNoOffenses(dedent`
+        <% row_data.index = 1 %>
+        <% row_data[:index] = 2 %>
+        <% row_data = 3 %>
+        <% self.title = "Hello" %>
+        <% form.object.name = @user.name %>
+      `)
+    })
+
+    test("passes for attribute operator assignments", () => {
+      expectNoOffenses(dedent`
+        <% row_data.index += 1 %>
+        <% row_data.index ||= 0 %>
+        <% row_data[:index] &&= 1 %>
+      `)
+    })
+
     test("passes for control flow", () => {
       expectNoOffenses(dedent`
         <% if logged_in? %>
@@ -178,6 +196,14 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for slot setter taking a helper in a brace block", () => {
+      expectNoOffenses(dedent`
+        <%= render CardComponent.new do |card| %>
+          <% card.with_header { tag.h3("Title") } %>
+        <% end %>
+      `)
+    })
+
     test("passes for multiple block locals in render", () => {
       expectNoOffenses(dedent`
         <%= render TableComponent.new do |table, index| %>
@@ -238,6 +264,44 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
           <% list.with_footer do |footer| %>
             <% footer.with_link("More") %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot setters on a builder yielded by a wrapper helper block", () => {
+      expectNoOffenses(dedent`
+        <%= card_component do |card| %>
+          <% card.with_title("Title") %>
+        <% end %>
+      `)
+    })
+
+    test("passes for chained slot setters on a builder yielded by a wrapper helper block", () => {
+      expectNoOffenses(dedent`
+        <%= card_component(variant: :compact) do |card| %>
+          <% card.with_header(classes: "title").with_body("Body") %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot setters on a builder yielded by a nested wrapper helper block", () => {
+      expectNoOffenses(dedent`
+        <%= render LayoutComponent.new do |layout| %>
+          <%= card_component do |card| %>
+            <% card.with_title("Title") %>
+          <% end %>
+
+          <% layout.with_sidebar %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot setters on a slot builder nested inside a wrapper helper block", () => {
+      expectNoOffenses(dedent`
+        <%= card_component do |card| %>
+          <% card.with_header do |header| %>
+            <% header.with_title("Title") %>
           <% end %>
         <% end %>
       `)
@@ -308,6 +372,18 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
       assertOffenses(dedent`
         <% @user.name %>
+      `)
+    })
+
+    test("fails for comparison operators that end in an equals sign", () => {
+      expectError("Avoid unused expressions in silent ERB tags. `<% @user.role == \"admin\" %>` is evaluated but its return value is discarded. Use `<%= @user.role == \"admin\" %>` to output the value or remove the expression.")
+      expectError("Avoid unused expressions in silent ERB tags. `<% @count <= 10 %>` is evaluated but its return value is discarded. Use `<%= @count <= 10 %>` to output the value or remove the expression.")
+      expectError("Avoid unused expressions in silent ERB tags. `<% @name =~ /admin/ %>` is evaluated but its return value is discarded. Use `<%= @name =~ /admin/ %>` to output the value or remove the expression.")
+
+      assertOffenses(dedent`
+        <% @user.role == "admin" %>
+        <% @count <= 10 %>
+        <% @name =~ /admin/ %>
       `)
     })
 
@@ -448,6 +524,44 @@ describe("ERBNoUnusedExpressionsRule", () => {
         <% plain_method do |x| %>
           <% x.slot_setter("d") %>
         <% end %>
+      `)
+    })
+
+    test("still fails for a bare block local read inside a wrapper helper block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% card %>` is evaluated but its return value is discarded. Use `<%= card %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= card_component do |card| %>
+          <% card %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for slot setters on a receiver that is not a block local inside a wrapper helper block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% @card.with_title(\"Title\") %>` is evaluated but its return value is discarded. Use `<%= @card.with_title(\"Title\") %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= card_component do |card| %>
+          <% @card.with_title("Title") %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for slot setters on a block local outside its block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% card.with_title(\"Title\") %>` is evaluated but its return value is discarded. Use `<%= card.with_title(\"Title\") %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= card_component do |card| %>
+          <% card.with_header %>
+        <% end %>
+
+        <% card.with_title("Title") %>
       `)
     })
 

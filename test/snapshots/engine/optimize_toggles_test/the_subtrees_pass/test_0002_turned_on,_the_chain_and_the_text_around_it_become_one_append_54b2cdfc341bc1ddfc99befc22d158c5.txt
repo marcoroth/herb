@@ -1,0 +1,9 @@
+---
+source: "Engine::OptimizeTogglesTest::the subtrees pass#test_0002_turned on, the chain and the text around it become one append"
+input: "{source: \"<div>\\n  <%= name %>\\n  <% if flag %>Admin<% else %>Member<% end %>\\n</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor subtrees=true>]}}"
+---
+_buf = ::String.new; _buf << '<div>
+  '.freeze; _buf << (name).to_s; _buf << (
+  if flag ; "\n  Admin\n</div>".freeze;else; "\n  Member\n</div>".freeze;end;
+).to_s;
+_buf.to_s

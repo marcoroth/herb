@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::ManifestChannelTest#test_0015_and inlines nothing either"
+input: "{source: \"<p><%= @n %></p>\", options: {visitors: [#<Herb::Engine::Slots::Visitor client deliver=inline>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/posts/_card.html.erb"] += 1) - 1 ; _buf << '<!--herb-region:app/views/posts/_card.html.erb:0417e5d5:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '--><p data-herb-slot="0:child">'.freeze; _buf << (@n).to_s; _buf << '</p><!--/herb-region:app/views/posts/_card.html.erb-->'.freeze;
+_buf.to_s

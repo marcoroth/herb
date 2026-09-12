@@ -74,13 +74,9 @@ module Herb
     end
 
     def self.find_prism_from_gem_spec
-      path = Gem::Specification.find_by_name("prism").full_gem_path
-
-      return path if File.directory?(File.join(path, "src"))
-
-      nil
-    rescue Gem::MissingSpecError
-      nil
+      Gem::Specification.find_all_by_name("prism")
+                        .map(&:full_gem_path)
+                        .find { |path| File.directory?(File.join(path, "src")) }
     end
   end
 end

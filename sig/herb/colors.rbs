@@ -8,6 +8,9 @@ module Herb
 
     CLEAR_SCREEN: ::String
 
+    # : [T] (bool) { () -> T } -> T
+    def self?.with_color: [T] (bool) { () -> T } -> T
+
     # : () -> bool
     def self?.enabled?: () -> bool
 

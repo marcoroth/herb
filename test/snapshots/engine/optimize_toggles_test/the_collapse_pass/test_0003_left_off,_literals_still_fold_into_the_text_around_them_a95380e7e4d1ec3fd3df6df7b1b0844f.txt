@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizeTogglesTest::the collapse pass#test_0003_left off, literals still fold into the text around them"
+input: "{source: \"<h1><%= \\\"hello\\\" %></h1>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor collapse=false>]}}"
+---
+_buf = ::String.new; _buf << '<h1>hello</h1>'.freeze;
+_buf.to_s

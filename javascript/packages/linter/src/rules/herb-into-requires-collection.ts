@@ -1,9 +1,8 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
-import { isERBComment } from "../utils/state-directives-utils.js"
 import { HERB_ATTRIBUTES } from "@herb-tools/client/directives"
 
-import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
+import { forEachAttribute, getAttributeName, getStaticAttributeValueContent, hasDynamicOutput, getAttributeValueNodes, isERBCommentNode, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
@@ -92,7 +91,7 @@ function containsKeyedBlock(node: Node): boolean {
 }
 
 function keyedBody(children: Node[]): boolean {
-  if (children.some((child) => isERBContentNode(child) && isERBComment(child) && KEY_DIRECTIVE.test(child.content?.value ?? ""))) {
+  if (children.some((child) => isERBCommentNode(child) && KEY_DIRECTIVE.test(child.content?.value ?? ""))) {
     return true
   }
 
@@ -122,6 +121,7 @@ function keysItems(node: Node): boolean {
 export class HerbIntoRequiresCollectionRule extends ParserRule {
   static ruleName = "herb-into-requires-collection"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

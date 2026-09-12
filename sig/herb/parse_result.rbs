@@ -14,14 +14,14 @@ module Herb
     # : () -> Array[Herb::Errors::Error]
     def errors: () -> Array[Herb::Errors::Error]
 
-    # : () -> bool
-    def failed?: () -> bool
-
-    # : () -> bool
-    def success?: () -> bool
-
     # : () -> String
     def pretty_errors: () -> String
+
+    # : (Herb::Position) -> Herb::Locate::Result?
+    def locate: (Herb::Position) -> Herb::Locate::Result?
+
+    # : (Herb::Position) -> bool
+    def locatable?: (Herb::Position) -> bool
 
     # : (Visitor) -> void
     def visit: (Visitor) -> void

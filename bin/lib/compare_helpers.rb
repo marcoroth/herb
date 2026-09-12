@@ -45,6 +45,7 @@ module CompareHelpers
   def load_dependencies
     $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
     require "herb"
+    require "herb/engine"
 
     begin
       original_verbose = $VERBOSE

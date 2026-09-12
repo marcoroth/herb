@@ -1,0 +1,28 @@
+# Generated from lib/herb/diagnostic/formatter.rb with RBS::Inline
+
+module Herb
+  class Diagnostic
+    class Formatter
+      attr_reader source: String
+
+      attr_reader filename: String | Pathname
+
+      # : (String, Array[Herb::Diagnostic], **untyped) -> void
+      def initialize: (String, Array[Herb::Diagnostic], **untyped) -> void
+
+      # : () -> String
+      def summary: () -> String
+
+      # : (?highlight: bool) -> String
+      def format_all: (?highlight: bool) -> String
+
+      private
+
+      def format_diagnostic: (untyped diagnostic) -> untyped
+
+      def format_source_context: (untyped diagnostic) -> untyped
+
+      def format_details: (untyped diagnostic) -> untyped
+    end
+  end
+end

@@ -1,0 +1,26 @@
+---
+source: "Engine::ErrorHandlingTest#test_0025_invalid erb structure - else outside scope before tag closing"
+input: |2-
+<div
+  <% if some_condition %>
+    class="a"
+  <% else %>
+>
+<% end %>
+
+</div>
+options: {validators: true}
+---
+[source]:2:3: `<% if %>` started here but never closed with an end tag. The end tag may be in a different scope. (and 1 more error) (Herb::Engine::ParseError)
+
+✘ [MissingERBEndTagError] `<% if %>` started here but never closed with an end tag. The end tag may be in a different scope.
+
+    [source]:2:3:
+      2 │   <% if some_condition %>
+        ╵   ~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERBControlFlowScopeError] `<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content).
+
+    [source]:6:1:
+      6 │ <% end %>
+        ╵ ~~~~~~~~~

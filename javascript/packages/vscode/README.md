@@ -153,9 +153,11 @@ If a `.herb.yml` exists in the project root, its configuration always takes prec
 | `languageServerHerb.inlayHints.enabled`        | `true`    | Annotate closing tags with what they close                        |
 | `languageServerHerb.inlayHints.minimumLines`   | `10`      | How far below its opening tag a closing tag must be to get a hint |
 | `languageServerHerb.inlayHints.maximumClasses` | `2`       | How many of an element's classes to include in its hint           |
+| `languageServerHerb.runtimeReports.inlayHints` | `true`    | Annotate tags with what the application recorded at runtime       |
+| `languageServerHerb.runtimeOverlays.display`   | `replace` | How to show what an ERB tag rendered                              |
 | `languageServerHerb.trace.server`              | `verbose` | Trace the communication with the language server (for debugging)  |
 
-`languageServerHerb.trace.server` is the exception: it is editor-only and is never read from `.herb.yml`.
+`languageServerHerb.trace.server` and the `inlayHints`, `runtimeReports` and `runtimeOverlays` settings are the exceptions. They are editor-only and are never read from `.herb.yml`.
 
 
 ## Commands

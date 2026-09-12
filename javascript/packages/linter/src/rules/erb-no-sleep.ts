@@ -21,6 +21,7 @@ class SleepCallCollector extends PrismVisitor {
 export class ERBNoSleepRule extends ParserRule {
   static ruleName = "erb-no-sleep"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

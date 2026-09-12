@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
-require_relative "../../lib/herb/engine/dynamics_compiler"
+require_relative "../snapshot_utils"
+require_relative "../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   class DynamicsCompilerTest < Minitest::Spec
+    include SnapshotUtils
+
     class View
       def initialize(**assigns)
         assigns.each { |name, value| instance_variable_set(:"@#{name}", value) }
@@ -13,7 +16,7 @@ module Engine
       def form_with(**) = "<form>#{yield(Field.new)}</form>"
 
       def render(*)
-        source = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
+        source = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
 
         View.new(inner: "inner").instance_eval(source)
       end
@@ -30,12 +33,24 @@ module Engine
     end
 
     CONDITIONAL = "<% if @admin %><b><%= @secret %></b><% else %><%= @public %><% end %>"
-    PARTIAL_VERSION = Herb::Engine::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
+    PARTIAL_VERSION = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
 
     def payload(source, **assigns)
-      compiled = Herb::Engine::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
 
       View.new(**assigns).instance_eval(compiled)
+    end
+
+    class SteeredView < View
+      attr_accessor :__herb_state_overrides
+    end
+
+    def steered(source, overrides, **assigns)
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+      view = SteeredView.new(**assigns)
+      view.__herb_state_overrides = overrides
+
+      view.instance_eval(compiled)
     end
 
     def dynamics(source, **assigns)
@@ -66,7 +81,7 @@ module Engine
       test "a literal default is not shipped, since the client already knows it" do
         seeds = dynamics(seeded_rows, rows: [1]).fetch(0).fetch(:items).fetch("1").fetch(:seeds)
 
-        refute_includes seeds.keys, "flag"
+        assert_equal ["draft"], seeds.keys
       end
 
       test "an item with only literal defaults carries no seeds" do
@@ -81,7 +96,7 @@ module Engine
           </ul>
         ERB
 
-        refute_includes dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys, :seeds
+        assert_equal([1, 2], dynamics(source, rows: [1]).fetch(0).fetch(:items).fetch("1").keys)
       end
 
       test "a value the client cannot hold is dropped" do
@@ -150,7 +165,7 @@ module Engine
       test "leaves out the slots of a branch that did not run" do
         result = dynamics(CONDITIONAL, admin: true, secret: "s", public: "p")
 
-        refute_includes result[0][:slots].keys, 2
+        assert_equal [1], result[0][:slots].keys
       end
 
       test "reports a conditional whose branches lay out the same as one value" do
@@ -164,49 +179,49 @@ module Engine
     describe "collections" do
       test "groups by item rather than by slot" do
         users = [View::User.new("Marco", "Roth"), View::User.new("Joe", "Doe")]
-        source = "<% @users.each do |u| %><li><%= u.firstname %> <%= u.lastname %></li><% end %>"
+        source = %(<% @users.each do |u| %><li id="<%= u.firstname %>"><%= u.lastname %></li><% end %>)
 
-        assert_equal({ 0 => { items: { "1" => { 1 => "Marco", 2 => "Roth" }, "2" => { 1 => "Joe", 2 => "Doe" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "Marco" => { 1 => "Marco", 2 => "Roth" }, "Joe" => { 1 => "Joe", 2 => "Doe" } }, order: ["Marco", "Joe"] } }, dynamics(source, users: users))
       end
 
       test "reports a collection that rendered no items" do
-        assert_equal({ 0 => { items: {} } }, dynamics("<% @users.each do |u| %><%= u %><% end %>", users: []))
+        assert_equal({ 0 => { items: {}, order: [] } }, dynamics(%(<% @users.each do |u| %><li id="<%= u %>"><%= u %></li><% end %>), users: []))
       end
 
       test "keeps the items of a nested collection inside the item that produced them" do
-        source = "<% @items.each do |r| %><% r.each do |c| %><%= c %><% end %><% end %>"
+        source = %(<% @items.each do |r| %><ul id="<%= r.first %>"><% r.each do |c| %><li id="<%= c %>"><%= c %></li><% end %></ul><% end %>)
 
-        assert_equal({ 0 => { items: { "1" => { 1 => { items: { "1" => { 2 => "1" }, "2" => { 2 => "2" } } } }, "2" => { 1 => { items: { "1" => { 2 => "3" } } } } } } }, dynamics(source, items: [[1, 2], [3]]))
+        assert_equal({ 0 => { items: { "1" => { 1 => "1", 2 => { items: { "1" => { 3 => "1", 4 => "1" }, "2" => { 3 => "2", 4 => "2" } }, order: ["1", "2"] } }, "3" => { 1 => "3", 2 => { items: { "3" => { 3 => "3", 4 => "3" } }, order: ["3"] } } }, order: ["1", "3"] } }, dynamics(source, items: [[1, 2], [3]]))
       end
 
       test "nests a conditional inside the item it ran in" do
-        source = "<% @xs.each do |x| %><% if x %><%= x %><% end %><% end %>"
+        source = %(<% @xs.each_with_index do |x, i| %><li id="<%= i %>"><% if x %><%= x %><% end %></li><% end %>)
 
-        assert_equal({ 0 => { items: { "1" => { 1 => { branch: 0, slots: { 2 => "a" } } }, "2" => { 1 => { branch: nil } } } } }, dynamics(source, xs: ["a", nil]))
+        assert_equal({ 0 => { items: { "0" => { 1 => "0", 2 => { branch: 0, slots: { 3 => "a" } } }, "1" => { 1 => "1", 2 => { branch: nil } } }, order: ["0", "1"] } }, dynamics(source, xs: ["a", nil]))
       end
 
       test "nests a collection inside the branch it ran in" do
-        source = "<% if @on %><% @xs.each do |x| %><%= x %><% end %><% end %>"
+        source = %(<% if @on %><% @xs.each do |x| %><li id="<%= x %>"><%= x %></li><% end %><% end %>)
 
-        assert_equal({ 0 => { branch: 0, slots: { 1 => { items: { "1" => { 2 => "a" }, "2" => { 2 => "b" } } } } } }, dynamics(source, on: true, xs: ["a", "b"]))
+        assert_equal({ 0 => { branch: 0, slots: { 1 => { items: { "a" => { 2 => "a", 3 => "a" }, "b" => { 2 => "b", 3 => "b" } }, order: ["a", "b"] } } } }, dynamics(source, on: true, xs: ["a", "b"]))
       end
 
       test "keys items by the key the template declared" do
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
         source = %(<% @users.each do |u| %><li id="<%= u.firstname %>"><%= u.lastname %></li><% end %>)
 
-        assert_equal({ 0 => { items: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } }, order: ["Ada", "Grace"] } }, dynamics(source, users: users))
       end
 
-      test "keys items by position when the template declares no key" do
+      test "reports an unkeyed collection as holding nothing addressable" do
         source = %(<% @users.each do |u| %><%= u.firstname %><% end %>)
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
 
-        assert_equal({ 0 => { items: { "1" => { 1 => "Ada" }, "2" => { 1 => "Grace" } } } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: {}, order: [] } }, dynamics(source, users: users))
       end
 
       test "treats a for loop as a collection" do
-        assert_equal({ 0 => { items: { "1" => { 1 => "a" }, "2" => { 1 => "b" } } } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
+        assert_equal({ 0 => { items: {}, order: [] } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
       end
     end
 
@@ -280,19 +295,150 @@ module Engine
 
     describe "what it compiles to" do
       test "collects into a Hash rather than a String" do
-        assert_includes Herb::Engine::DynamicsCompiler.new("<p>x</p>").src, "__herb_dynamics = ::Hash.new"
+        assert_snapshot_matches(Herb::Engine::Slots::DynamicsCompiler.new("<p>x</p>").src, "dynamics_compiler_test-3")
       end
 
       test "names its buffers so a template's own locals cannot collide" do
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %>)
-        compiled = Herb::Engine::DynamicsCompiler.new(source).src
+        compiled = Herb::Engine::Slots::DynamicsCompiler.new(source).src
 
-        assert_includes compiled, "__herb_block1"
-        refute_includes compiled, "_buf"
+        assert_snapshot_matches(compiled, "dynamics_compiler_test-4")
       end
 
       test "leaves the static markup out" do
-        refute_includes Herb::Engine::DynamicsCompiler.new("<p>hello</p>").src, "hello"
+        assert_snapshot_matches(Herb::Engine::Slots::DynamicsCompiler.new("<p>hello</p>").src, "dynamics_compiler_test-5")
+      end
+    end
+
+    STEERABLE = %(<%# herb:state (editing: false, q: "") %><% if editing %><b>on</b><% else %><i>off</i><% end %><span><%= q.length + 1 %></span>)
+
+    describe "state overrides" do
+      test "the values program initializes states through the override channel" do
+        source = Herb::Engine::Slots::DynamicsCompiler.new(STEERABLE, filename: "app/views/test.html.erb").src
+
+        assert_snapshot_matches(source, "dynamics_compiler_test-6")
+      end
+
+      test "an override steers the branch and the dependent reads" do
+        values = steered(STEERABLE, { "app/views/test.html.erb" => { "editing" => true, "q" => "abc" } })
+
+        assert_equal 0, values[:slots][0][:branch]
+        assert_equal "4", values[:slots][1]
+      end
+
+      test "no hook and no overrides both fall back to the defaults" do
+        assert_equal 1, payload(STEERABLE)[:slots][0][:branch]
+        assert_equal 1, steered(STEERABLE, nil)[:slots][0][:branch]
+      end
+
+      test "a wrongly typed override falls back to the default" do
+        values = steered(STEERABLE, { "app/views/test.html.erb" => { "editing" => "sideways" } })
+
+        assert_equal 1, values[:slots][0][:branch]
+      end
+
+      test "a derived state re-derives from its overridden base" do
+        template = %(<%# herb:state (count: 0, loud: count > 2) %><% if loud %>a<% else %>b<% end %>)
+        values = steered(template, { "app/views/test.html.erb" => { "count" => 5 } })
+
+        assert_equal 0, values[:slots][0][:branch]
+      end
+    end
+
+    describe "branch statics in the payload" do
+      def parity(mode)
+        <<~ERB
+          <%# herb:slots #{mode} %>
+          <% if @on %>
+            <b>lit <%= @watts %></b>
+          <% else %>
+            <i>dark</i>
+          <% end %>
+        ERB
+      end
+
+      test "a server-mode payload brings the taken branch's markup along" do
+        entry = dynamics(parity("server"), on: false).fetch(0)
+
+        assert_equal 1, entry.fetch(:branch)
+
+        assert_snapshot_matches(entry.fetch(:statics), "dynamics_compiler_test-7")
+
+        lit = dynamics(parity("server"), on: true, watts: 60).fetch(0)
+
+        assert_equal 0, lit.fetch(:branch)
+
+        assert_snapshot_matches(lit.fetch(:statics), "dynamics_compiler_test-8")
+      end
+
+      test "a client-mode payload sends no statics, since the page parks them" do
+        entry = dynamics(parity("client"), on: false).fetch(0)
+
+        refute entry.key?(:statics)
+      end
+    end
+
+    KNOB = %(<%# herb:slots client %>\n<span class="knob <%= @dark ? "far" : "" %>" id="k"></span>) #: String
+
+    describe "a conditional inside an attribute" do
+      test "the payload carries the taken branch's text as the attribute's part" do
+        assert_equal ["far"], dynamics(KNOB, dark: true).fetch(0)
+        assert_equal [""], dynamics(KNOB, dark: false).fetch(0)
+      end
+
+      test "the slot the payload fills is the attribute the visitor modeled" do
+        compiler = Herb::Engine::Slots::DynamicsCompiler.new(KNOB, filename: "app/views/test.html.erb")
+
+        assert_equal :attribute_interpolation, compiler.slot_visitor.slots.fetch(0).type
+      end
+
+      test "a fragment's values always take the primary branch and skip the fallback" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <Fragment>
+            <p><%= helper_with_argument(1) %></p>
+            <Fallback><p>waiting for <%= @never %></p></Fallback>
+          </Fragment>
+        ERB
+
+        values = dynamics(source)
+
+        assert_equal({ 0 => { branch: 0, slots: { 1 => "helper(1)" } } }, values)
+      end
+
+      test "a fragment numbers identically in the values and page compiles" do
+        source = <<~ERB
+          <%# herb:slots client %>
+          <span><%= @before %></span>
+          <Fragment>
+            <p><%= @inside %></p>
+            <Fallback><p>waiting</p></Fallback>
+          </Fragment>
+          <em><%= @after %></em>
+        ERB
+
+        values_visitor = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").slot_visitor
+
+        page_visitor = Herb::Engine::Slots::Visitor.new(mode: :client, fatal: false)
+        Herb::Engine.new(source, visitors: [page_visitor], filename: "app/views/test.html.erb")
+
+        assert_equal(page_visitor.slots.map { |slot| [slot.index, slot.type] }, values_visitor.slots.map { |slot| [slot.index, slot.type] })
+      end
+
+      test "a whole-value attribute conditional assigns the scalar the visitor expects" do
+        source = %(<%# herb:slots client %>\n<span class="<%= @on ? "is-\#{@tone}" : "off" %>"></span>)
+
+        assert_equal "is-calm", dynamics(source, on: true, tone: "calm").fetch(0)
+        assert_equal "off", dynamics(source, on: false).fetch(0)
+      end
+
+      test "a keyed element groups its key with the slots inside it" do
+        source = %(<%# herb:slots client %>\n<div herb-key="<%= @track %>:<%= @number %>" data-playing="<%= @playing %>">beat <%= @number %></div>)
+
+        assert_equal(
+          { key: "warehouse:3", slots: { 1 => "true", 2 => "3" } },
+          dynamics(source, track: "warehouse", number: 3, playing: true).fetch(0)
+        )
       end
     end
   end

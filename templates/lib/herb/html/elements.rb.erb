@@ -1,0 +1,10 @@
+module Herb
+  module HTML
+    module Elements
+      RAW_TEXT_ELEMENTS = [<%= foreign_content_elements.select(&:raw_text?).map { |element| element.name.inspect }.join(", ") %>].freeze #: Array[String]
+      RCDATA_ELEMENTS = [<%= foreign_content_elements.select(&:rcdata?).map { |element| element.name.inspect }.join(", ") %>].freeze #: Array[String]
+      VOID_ELEMENTS = [<%= html_elements.select(&:void?).map { |element| element.name.inspect }.join(", ") %>].freeze #: Array[String]
+      BOOLEAN_ATTRIBUTES = [<%= boolean_attributes.map(&:inspect).join(", ") %>].freeze #: Array[String]
+    end
+  end
+end

@@ -1,0 +1,8 @@
+---
+source: "Engine::CLIStdinTest#test_0009_shell: compile with multiple flags and stdin"
+input: "cli_stdin_test-7"
+---
+# frozen_string_literal: true
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (x).to_s; _buf << '</div>
+'.freeze;
+_buf.to_s

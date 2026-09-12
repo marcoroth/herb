@@ -1,0 +1,13 @@
+---
+source: "Parser::GraphQLTest#test_0007_erb tag whose code starts with the letters graphql is not a graphql tag"
+input: "<%graphqlish %>"
+options: {erb_openers: ["graphql"]}
+---
+@ DocumentNode (location: (1:0)-(1:15))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:15))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: "graphqlish " (location: (1:2)-(1:13))
+        ├── tag_closing: "%>" (location: (1:13)-(1:15))
+        ├── parsed: true
+        └── valid: true

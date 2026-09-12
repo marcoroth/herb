@@ -1,0 +1,10 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0004_an elsif chain"
+input: "{source: \"<div>\\n  <% if flag %>\\n    one\\n  <% elsif other %>\\n    two\\n  <% end %>\\n</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+
+  if flag 
+ "<div>\n    one\n</div>".freeze;
+  elsif other 
+ "<div>\n    two\n</div>".freeze;
+ else "<div>\n</div>".freeze;  end 

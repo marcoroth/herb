@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0042_slots directive naming both modes"
+input: |2-
+<%# herb:slots client server %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbDirectiveNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:slots client server " (location: (1:3)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   ├── key: "slots" (location: (1:9)-(1:14))
+    │   └── arguments: "client server" (location: (1:15)-(1:28))
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

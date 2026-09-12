@@ -19,15 +19,15 @@ This package is the browser half. The index at its core stays passive. It answer
 Nothing starts on its own. A page that has not asked for the runtime does not get an observer:
 
 ```typescript
-import { HerbRuntime } from "@herb-tools/client"
+import { Runtime } from "@herb-tools/client"
 
-const { slots, state, mutations, actions } = HerbRuntime.start()
+const { slots, state, outbox, actions } = Runtime.start()
 ```
 
 `start` is idempotent and returns the same runtime every time, so anything that needs the runtime can ask for it and get the one already running:
 
 ```typescript
-const runtime = HerbRuntime.get()
+const runtime = Runtime.get()
 ```
 
 Constructing it directly throws. A second runtime would be a second index over the same document, and neither would see the other's updates. To stop watching:
@@ -90,11 +90,11 @@ slots.setAttribute(slot, "active")
 
 Markup is parsed against the range it is going into, so a replacement `<tr>` lands correctly inside a table.
 
-`rangeFor` gives the live range a slot covers, when you would rather write the update yourself:
+`rangeOf` gives the live range a slot or an item covers, when you would rather write the update yourself:
 
 ```typescript
-slots.rangeFor(slot)
-slots.rangeForItem(item)
+slots.rangeOf(slot)
+slots.rangeOf(item)
 ```
 
 ## Applying a whole payload
@@ -108,6 +108,8 @@ const report = slots.apply(payload)
 
 `applied` counts what was written, not what arrived. A value equal to the one already there is not written, since writing it would cost a re-parse, destroy whatever the slot contained, and announce a change that did not happen, so a payload matching the page reports `{ applied: 0, deferred: [] }` and touches nothing.
 
+A value arrives as the server would have written it into the page. A slot that stands in the markup takes those bytes as they are. An attribute is set through the DOM, which holds what the browser parsed out of the markup, so an attribute's value is read back from `&amp;` and `&lt;` to the characters they stand for before it is written.
+
 A payload names the template, the version and which rendering it is, so nothing has to be said about where it goes. A partial's values arrive nested inside the slot that rendered it and are handed to that partial's own region, so one call covers a page however many templates it was built from.
 
 Values alone cannot do everything, and the report is the difference. `applied` counts what was written and `deferred` says what was not, with enough to act on:
@@ -118,6 +120,7 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 - `stale-version` and `no-region` mean nothing was applied at all. A version that does not match says the payload's indices were compiled against a different template, so the values would land in the wrong places, and there is no partial credit to take.
 - `branch` means the conditional took a branch whose markup the page never had and nothing was parked for it. Ask the server for that subtree.
+- `block` means a helper built the markup around the slot and its own output no longer matches what the page has. The interior of a block is written from the slots inside it, so a helper whose wrapper depends on state, as in `form_with(model: @record)`, has a value nothing on the page can write. Ask the server for that subtree.
 - `items` means the collection had no item to copy a new one from, and `keys` lists the ones it could not build. Removing and moving need no markup, and an item the page has never had is built from one it has, because every item of a collection is the same shape by construction. A collection that rendered nothing has no item to copy, which is why a template in client mode parks one for exactly that case. Emptying a collection on the page reaches the same state, so the last item out leaves its shape behind, and this is only reached when neither exists.
 - `partial-attribute` means the slot is a word interpolated into an attribute, as in `class="card <%= state %>"`. A marker says which attribute a slot is and not which stretch of it, so writing the value would drop what the template wrote around it, and refusing is the only honest answer.
 - `no-slot` means the payload named an index the page has no marker for, which is usually a region that was only partly scanned.
@@ -129,22 +132,14 @@ A branch the server parked is built for you, so a template in client mode toggle
 `apply` answers what to do with values once you have them. `state` is how a page asks for them.
 
 ```typescript
-const { state } = HerbRuntime.start()
+const { state } = Runtime.start()
 
 await state.set({ query: "ruby", page: 1 })
 state.set("query", "")
 state.get("query")
 ```
 
-By default the query string is where the state lives, so the address bar keeps matching the page and back, forward and bookmarking all keep working without the server holding a session. `set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
-
-That default fits a view's inputs, which is what a search box, a filter and a page number are. It does not fit everything. A form about to save a row is a mutation and not a view, a long value runs into what a URL can hold, and anything private has no business in a server log or a `Referer` header. Those pages keep their state in memory:
-
-```typescript
-HerbRuntime.start({ state: { persist: "none" } })
-```
-
-A page that keeps state in memory never reads the query string and never writes to it, and everything else is unchanged. It still sends the whole state, and it still writes the slots it can.
+`set` takes a whole object because one interaction usually changes several things at once, and everything set together travels as one request.
 
 A page that has told the client which slots read which state can write some of them itself. The compiler marks each slot with where its next value comes from:
 
@@ -164,21 +159,22 @@ const report = await state.set("query", "ruby")
 The map is delivered the way parked statics are, and is taken out of the document once read:
 
 ```html
-<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0,"mode":"identity"}]},"params":{"query":"@query"}}</template>
+<template data-herb-dependencies>{"state":{"@query":[{"file":"app/views/posts/index.html.erb","version":"a1b2c3d4","index":0}]},"params":{"query":"@query"}}</template>
 ```
 
 A partial knows the state under whatever name its caller passed it, so the map names every slot under the name the page uses. `Herb::Engine::SlotDependencies` builds it.
+
+The slots it lists for a state are the ones a page may write itself, which is why a state that only decides what renders is named with none. Those are written when `set` is called and put back if the request fails. Everything else is what the reply is for.
 
 A template reads `@query` and a request carries `query`, and what joins them is a line in a controller that no template sees. So the map says which request name feeds which state, and `set` takes the request name. A name the map says nothing about is tried as the state's own name, so `state.set("@query", …)` reaches it too.
 
 Nothing about the transport is assumed. The default asks the same URL for the `slots` format, which is what `ReActionView` serves, and any other protocol is a function:
 
 ```typescript
-HerbRuntime.start({
+Runtime.start({
   state: {
     transport: async (request, signal) => fetch(build(request), { signal }).then((response) => response.json()),
     debounce: 150,
-    persist: "none",
   },
 })
 ```
@@ -228,7 +224,7 @@ export default class extends Controller {
 }
 ```
 
-`useState` assigns `this.state`, `this.mutations` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
+`useState` assigns `this.state`, `this.outbox` and `this.slots`, and dispatches `<name>Changed` for whichever states the controller defines a method for.
 
 ## Actions in markup
 
@@ -250,12 +246,68 @@ A button that only writes a state does not need a controller. Four attributes co
 
 `$value` stands for the event target's value and is the only interpolation. A value is read as whatever the state was declared to hold, so `pending=true` sets a boolean where `draft=true` sets a four-letter string.
 
-## Sending
+## Behaviors
 
-A mutation is a send that must not lose what the user did. `mutations` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
+Actions cover writes. Anything richer, such as a drawer that follows a finger, is JavaScript that has to find its elements, learn when they arrive and leave, and notice when their attribute changes. The runtime already watches the document for its own attributes, so a behavior registers with that observer instead of opening another:
 
 ```typescript
-mutations.submit({
+const { behaviors } = Runtime.start()
+
+behaviors.define("data-drawer", {
+  connect(element, context) {},
+  enter(element, context) {},
+  valueChanged(element, value, context) {},
+  updated(element, slot, context) {},
+  moved(element, { from, to }, context) {},
+  settled(element, context) {},
+  leave(element, context) {},
+  disconnect(element, context) {},
+  transition(element, context) {},
+})
+```
+
+Every callback is optional, and every one receives the element it is about and the same context, described below. The attribute does not need a value, so `<aside data-drawer>` connects too. The name is yours to choose, and it should stay out of `data-herb-`, which is the runtime's own namespace and the one the linter and language service validate. A behavior that throws is reported and the others still run.
+
+The callbacks carry the facts only the runtime has. Everything else a behavior reads off the element it was handed.
+
+- `connect` runs for every element carrying the attribute, the ones on the page when the behavior is defined and the ones that arrive later, however deep in the markup they arrived in.
+- `enter` runs after `connect`, only for markup the runtime built, a branch that materialized or a row that was added. A drawer rendered open by the server does not slide in, one that just opened does. Markup in the initial HTML or brought by a Turbo visit connects without entering.
+- `valueChanged` runs when the attribute's value changes on an element that is already connected.
+- `updated` runs when a slot inside the element is written, with the slot, so a counter can roll a digit or a pill can flash without subscribing to the whole document.
+- `moved` runs after a collection reorder for each element whose position changed, with the rect it came from and the one it is at now, which is everything a FLIP animation needs. The rect before a move is not something an observer outside the runtime can get.
+- `settled` runs once at the end of a batch, a payload or a state write, for each element that was updated or moved in it, so a behavior measuring layout runs once and not per write.
+- `leave` runs when the runtime is about to destroy the element, and may hold it. See below.
+- `disconnect` runs when the element leaves the document, which includes Turbo replacing the body, when the attribute is removed, when the behavior is undefined through the function `define` returns, and when the runtime stops.
+- `transition` returns a view transition name for the element, or nothing. It is asked on connect and whenever the value changes, and its answer is written to `data-herb-transition`, so the element takes part in the runtime's view transitions exactly as if the template had named it.
+
+## What a behavior is handed
+
+The context is one object with three members, the same three `useState` hands a Stimulus controller:
+
+```typescript
+behaviors.define("data-drawer", {
+  connect(element, { state, slots, outbox }) {
+    state.get("open")
+    state.set({ open: false })
+    state.on("open", (value, previous) => {})
+
+    slots.locate(element)
+
+    outbox.submit({ url, body, into })
+  },
+})
+```
+
+`state` is the element's own scoped state, what `stateFor(element)` returns. `get`, `set`, `toggle`, `increment`, `decrement`, `reset` and `on` resolve to whatever row encloses the element, so a behavior inside a keyed collection writes that row's state without saying which row. `slots` and `outbox` are the runtime's own, for a behavior that needs to find a slot, hold one, or send a mutation.
+
+The context is built the first time any callback runs for an element and cached for the life of that element, so it is the same object in `connect`, `leave` and `disconnect`, and anything a behavior sets on it in one callback is there in the next.
+
+## Sending
+
+A mutation is a send that must not lose what the user did. `outbox` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
+
+```typescript
+outbox.submit({
   url: form.action,
   body: new FormData(form),
   into: { file: "app/views/chat/show.html.erb", name: "messages" },
@@ -305,7 +357,14 @@ slots.reconcile(collection, ["3", "1", "2"])
 // { added: [], removed: [], moved: ["3", "1"], kept: [...], unchanged: false }
 ```
 
-One limit worth knowing: JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. Ascending is what an append wants and what most collections already are, so it rarely shows, but a collection whose order the server decides has to be keyed by something that is not a number.
+`reconcileItems` carries that plan out: it builds, drops and reorders a collection's rows so its items are exactly the keys given, and returns the keys it could not build because the collection had no row to copy. `apply` uses it; a page doing its own optimistic collection edits can call it directly.
+
+```typescript
+slots.reconcileItems(collection, ["3", "1", "2"])
+// [] — or ["4"] if key 4 had no row to build from
+```
+
+JavaScript sorts integer-like object keys numerically, so `JSON.parse` loses the order a payload was written in for a collection keyed by id. The payload carries an explicit `order` alongside `items`, so a collection is put in the order the server rendered whatever its keys are.
 
 ## Branches that never rendered
 
@@ -319,12 +378,6 @@ A conditional that was false rendered nothing, so its markup was never on the pa
 ```
 
 Naming its own region frees it from where it sits, so it can be parked once for the page, not once per rendering, and the parser moving it is of no consequence. Which branch is which comes out of the payload, because `herb-branch` is the same marker the rendered output carries. A branch runs to the next branch marker among the payload's own children, so a conditional nested inside a branch stays with the branch containing it.
-
-A `<template>` that says nothing about its region belongs to the region it was delivered in, and names one branch by attribute:
-
-```html
-<template data-herb-statics="0:1"><!--herb-branch:0:1--><b>Hello</b></template>
-```
 
 The runtime takes each one out of the document once it has read it, the way a `<turbo-stream>` element removes itself after acting. A `<template>` keeps its content when it leaves the document, so nothing is lost. What is left is the rendered output and its markers, with no trace of the parked copy. This matters for one delivered inside its region, which until it is removed sits inside the range of that region and of any slot spanning it, where an update would copy it into the page or destroy it.
 
@@ -363,6 +416,24 @@ Some conditionals never reach any of this. A conditional whose branches lay out 
 ```
 
 is one child slot inside an `<h1>`, whichever way the condition goes. There is no branch to rebuild and nothing to park, and the update is a value.
+
+## Leaving
+
+A conditional that turns false destroys its branch, a payload that drops a key destroys its row, and destroying is instant. An element that wants to leave on its own terms, sliding out from wherever a drag left it, has to be asked first. A behavior is asked through `leave`:
+
+```typescript
+behaviors.define("data-drawer", {
+  leave(element) {
+    return slideOut(element)
+  },
+})
+```
+
+`leave` runs for a connected element when the branch or the row around it is about to go, while the element is still on the page. Returning nothing lets the destruction happen at once. Returning a promise defers it, and `disconnect` follows once the markup is gone. Rows are held wherever they are, so a list keeps its shape while a row animates out, and the rows around it are placed as the payload asked.
+
+When the promise settles, resolved or rejected, the runtime looks again. A branch whose state flipped back while the drawer was still sliding stays, and a row a later payload wanted again stays, and in both cases no `disconnect` comes. A behavior that moved its element on the way out can watch for that through `state.on`. Writes into a departing branch are skipped while it is held, the same as for a branch that is already leaving.
+
+Branches are held for the switches the client makes for declared state. Rows are held whether the payload came from the server or `outbox.discard` dropped them. A branch switched by a payload is applied as it arrives and is not held. Underneath, `leave` is the `holdBranch(slot, branch)` and `holdItem(slot, item)` delegates on `slots.subscribe`, which anything without an element of its own can use directly, and `slots.dismissItem(slot, key)` is `removeItem` with the hold in front of it.
 
 ## Who renders a branch
 

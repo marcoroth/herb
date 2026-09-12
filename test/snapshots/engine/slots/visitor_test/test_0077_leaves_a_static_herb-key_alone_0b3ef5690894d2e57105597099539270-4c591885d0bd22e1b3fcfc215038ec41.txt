@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0077_leaves a static herb-key alone"
+input: |2-
+<%# herb:slots %>
+<div herb-key="fixed">x</div>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: e3b0c442
+
+slots: (none)

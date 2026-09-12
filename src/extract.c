@@ -11,7 +11,10 @@
 
 const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicolons = true,
                                                                         .comments = false,
-                                                                        .preserve_positions = true };
+                                                                        .preserve_positions = true,
+                                                                        .custom_tags = false,
+                                                                        .erb_openers = NULL,
+                                                                        .erb_opener_count = 0 };
 
 void herb_extract_ruby_to_buffer_with_options(
   const char* source,
@@ -21,7 +24,11 @@ void herb_extract_ruby_to_buffer_with_options(
 ) {
   herb_extract_ruby_options_T extract_options = options ? *options : HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
 
-  hb_array_T* tokens = herb_lex(source, allocator);
+  parser_options_T lex_options = HERB_DEFAULT_PARSER_OPTIONS;
+  lex_options.erb_openers = extract_options.erb_openers;
+  lex_options.erb_opener_count = extract_options.erb_opener_count;
+
+  hb_array_T* tokens = herb_lex_with_options(source, &lex_options, allocator);
   bool skip_erb_content = false;
   bool is_comment_tag = false;
   bool is_erb_comment_tag = false;
@@ -75,7 +82,7 @@ void herb_extract_ruby_to_buffer_with_options(
             if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
           }
         } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
-                   || hb_string_equals(token->value, hb_string("<%graphql"))) {
+                   || (erb_opening_is_custom(token->value) && !extract_options.custom_tags)) {
           skip_erb_content = true;
           is_comment_tag = false;
           if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
@@ -218,15 +225,28 @@ void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output, hb_all
   herb_free_tokens(&tokens, allocator);
 }
 
-char* herb_extract_ruby_with_semicolons(const char* source, hb_allocator_T* allocator) {
+char* herb_extract_ruby_with_semicolons_and_openers(
+  const char* source,
+  const hb_string_T* erb_openers,
+  size_t erb_opener_count,
+  hb_allocator_T* allocator
+) {
   if (!source) { return NULL; }
 
   hb_buffer_T output;
   hb_buffer_init(&output, strlen(source), allocator);
 
-  herb_extract_ruby_to_buffer(source, &output, allocator);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  extract_options.erb_openers = erb_openers;
+  extract_options.erb_opener_count = erb_opener_count;
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &extract_options, allocator);
 
   return output.value;
+}
+
+char* herb_extract_ruby_with_semicolons(const char* source, hb_allocator_T* allocator) {
+  return herb_extract_ruby_with_semicolons_and_openers(source, NULL, 0, allocator);
 }
 
 char* herb_extract(const char* source, const herb_extract_language_T language, hb_allocator_T* allocator) {

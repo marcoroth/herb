@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses inside a kept buffer#test_0004_a chain the buffer already renders in one append stays as it was"
+input: "{source: \"<% if flag %>a<% end %><%= name %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor subtrees=true>]}}"
+---
+_buf = ::String.new; if flag ; _buf << 'a'.freeze; end; _buf << (name).to_s;
+_buf.to_s

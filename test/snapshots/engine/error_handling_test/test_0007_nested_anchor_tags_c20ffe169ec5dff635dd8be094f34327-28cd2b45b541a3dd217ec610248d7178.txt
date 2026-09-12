@@ -1,0 +1,16 @@
+---
+source: "Engine::ErrorHandlingTest#test_0007_nested anchor tags"
+input: |2-
+<a href="/page1">
+  Link to page 1
+  <a href="/page2">Nested link</a>
+</a>
+options: {validators: true}
+---
+[source]:3:3: Anchor <a> cannot be nested inside another anchor at line 3 (Herb::Engine::CompilationError)
+
+✘ [NestedAnchorError] Anchor <a> cannot be nested inside another anchor at line 3
+
+    [source]:3:3:
+      3 │   <a href="/page2">Nested link</a>
+        ╵   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

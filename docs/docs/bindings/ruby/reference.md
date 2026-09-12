@@ -238,6 +238,43 @@ result.visit(visitor)
 
 This allows you to analyze the parsed HTML+ERB programmatically.
 
+### Locating a node
+
+Finds the most specific node at a position, and the nodes it sits inside. A position that comes back from a rendered page, an editor, or a diagnostic is a node before it is anything anyone can act on, and this is what turns one into the other.
+
+A node's location contains its start and stops short of its end, so two nodes sitting next to each other never both answer for the character between them. A node with no location of its own answers for nothing, which keeps a synthesized node from swallowing the position of the node it was built next to. A position outside everything the given node covers belongs to no node.
+
+Ancestors read nearest first, so the enclosing element a caller wants is the first one that answers.
+
+Columns are 0-based character offsets into their line, which is what the parser reports.
+
+:::code-group
+```ruby
+result = Herb.parse("<div><span>hi</span></div>")
+found = result.locate(Herb::Position[1, 12])
+
+found.node
+# => #<Herb::AST::HTMLTextNode>
+
+found.ancestors.map(&:class)
+# => [Herb::AST::HTMLElementNode, Herb::AST::HTMLElementNode, Herb::AST::DocumentNode]
+
+found.innermost(Herb::AST::HTMLElementNode).tag_name.value
+# => "span"
+
+found.path.map(&:class)
+# => [Herb::AST::DocumentNode, ..., Herb::AST::HTMLTextNode]
+```
+:::
+
+`innermost` starts with the node itself, so it answers with the node when the node is already of that kind. `path` reads the other way around, outermost first, and ends with the node that was found. A position that belongs to no node answers `nil`.
+
+Every node answers too, so a walk can start from the node a caller already holds. `result.locate(position)` and `node.locate(position)` are the same walk from different starting points. `locatable?` asks the same question without walking, and answers whether a position falls anywhere inside a node or what it holds.
+
+The walk goes by how much source a node and everything it holds cover together, which is not the same as the node's own location. A branch of an `if` holds the branch after it, and each branch is positioned where it was written, so the node holding the chain ends before what it holds. Walking by a node's own location would leave every branch but the first unreachable. `ancestors` is therefore the walk that was taken, whether or not each node along it covers the position itself, and a caller that wants only the nodes the position is really inside filters on `location.contains?`.
+
+The positions this reads come from `Herb::Location#contains?`, `Herb::Location#covers?` and `Herb::Position`, which orders the way it reads through `Comparable`.
+
 ## Metadata
 
 ### `Herb.version`

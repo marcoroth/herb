@@ -174,6 +174,7 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
 export class HTMLNoDuplicateAttributesRule extends ParserRule {
   static ruleName = "html-no-duplicate-attributes"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

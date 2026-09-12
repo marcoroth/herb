@@ -66,17 +66,28 @@ describe("ERB Formatter Fixture Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <button class="text-gray-700 bg-transparent hover:bg-gray-50 active:bg-gray-100 focus:bg-gray-50 focus:ring-gray-300 focus:ring-2
-        disabled:text-gray-300 disabled:bg-transparent disabled:border-gray-300 disabled:cursor-not-allowed
-        aria-disabled:text-gray-300 aria-disabled:bg-transparent aria-disabled:border-gray-300 aria-disabled:cursor-not-allowed">Button</button>
+        <button
+          class="
+            text-gray-700 bg-transparent hover:bg-gray-50 active:bg-gray-100 focus:bg-gray-50 focus:ring-gray-300 focus:ring-2
+            disabled:text-gray-300 disabled:bg-transparent disabled:border-gray-300 disabled:cursor-not-allowed
+            aria-disabled:text-gray-300 aria-disabled:bg-transparent aria-disabled:border-gray-300 aria-disabled:cursor-not-allowed
+          "
+        >
+          Button
+        </button>
 
-        <nav class="
-        flex flex-col bg-gray-15 p-4 w-full       " data-controller="<%= stimulus_id %>" data-<%= stimulus_id %>-cookie-value="solidus_admin"> Foooo </nav>
+        <nav
+          class="flex flex-col bg-gray-15 p-4 w-full"
+          data-controller="<%= stimulus_id %>"
+          data-<%= stimulus_id %>-cookie-value="solidus_admin"
+        >
+          Foooo
+        </nav>
 
         <p
-        single-double-quotes='"double" quotes'
-        double-single-quotes="'single' quotes"
-        escaped-quotes=escaped&quote;quotes
+          single-double-quotes='"double" quotes'
+          double-single-quotes="'single' quotes"
+          escaped-quotes="escaped&quote;quotes"
         ></p>
       `)
     })

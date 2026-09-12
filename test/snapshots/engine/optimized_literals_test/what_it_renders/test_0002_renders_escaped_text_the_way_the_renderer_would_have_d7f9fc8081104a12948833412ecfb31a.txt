@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::what it renders#test_0002_renders escaped text the way the renderer would have"
+input: "{source: \"<img alt=\\\"<%= \\\"Herb's logo\\\" %>\\\" title=\\\"<%= title %>\\\">\", locals: {title: \"Herb\"}, options: {visitors: [#<Herb::Engine::OptimizeVisitor>], escape: true}}"
+---
+<img alt="Herb&#39;s logo" title="Herb">

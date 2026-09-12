@@ -30,6 +30,7 @@ import {
   isERBNode,
   isERBControlFlowNode,
   isERBCommentNode,
+  isInlineRubyCommentNode,
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
@@ -80,6 +81,7 @@ import {
   HTMLCommentNode,
   HTMLDoctypeNode,
   WhitespaceNode,
+  ERBCommentNode,
   ERBContentNode,
   ERBBlockNode,
   ERBIterationBlockNode,
@@ -1032,7 +1034,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.pushWithIndent(open + inner + close)
   }
 
-  visitERBCommentNode(node: ERBContentNode) {
+  visitERBCommentNode(node: ERBCommentNode | ERBContentNode) {
     const result = formatERBCommentLines(
       node.tag_opening?.value || "<%#",
       node?.content?.value || "",
@@ -1078,12 +1080,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    if (isERBCommentNode(node)) {
+    if ((isERBCommentNode(node) || isInlineRubyCommentNode(node))) {
       this.visitERBCommentNode(node)
     } else if (isERBBlockCommentDelimiter(node)) {
-      // Ruby block-comment delimiters (`=begin` / `=end`) are only recognized in
-      // column 0, so they must always stay expanded on their own line and never
-      // be collapsed inline, regardless of the surrounding flow context.
       this.printExpandedERBNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)
@@ -1146,8 +1145,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         if (line === "") {
           this.push("")
         } else if (/^=(begin|end)\b/.test(line)) {
-          // Ruby only treats `=begin` / `=end` as block-comment delimiters when
-          // they start at column 0, so they must never be indented.
           this.push(line)
         } else {
           this.push(this.indent + line)
@@ -1744,7 +1741,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   /**
    * Render an ERB node as a string
    */
-  renderERBAsString(node: ERBContentNode): string {
+  renderERBAsString(node: ERBContentNode | ERBCommentNode): string {
     return this.withInlineMode(() => this.capture(() => this.visit(node)).join(""))
   }
 

@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import type { Payload } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
+import type { Payload } from "../src/types"
 
 const FILE = "app/views/posts/index.html.erb"
 
@@ -16,7 +16,7 @@ function payload(items: Record<string, Record<number, string>>): Payload {
   return { template: FILE, version: "aaaaaaaa", occurrence: 0, slots: { 0: { items } } }
 }
 
-let index: SlotIndex
+let index: Slots
 
 function ids(): string[] {
   return [...document.querySelectorAll("li")].map((li) => li.id)
@@ -25,7 +25,7 @@ function ids(): string[] {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  index = new SlotIndex()
+  index = new Slots()
   index.scan(document.body)
 })
 
@@ -85,7 +85,7 @@ describe("apply with merge", () => {
       `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
       `<ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul>` +
       `<!--/herb-region:${FILE}-->`
-    index = new SlotIndex()
+    index = new Slots()
     index.scan(document.body)
 
     const report = index.apply(payload({ c: { 2: "third" } }), { items: "merge" })

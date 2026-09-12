@@ -92,6 +92,7 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor<ERBNoOutputContr
 export class ERBNoOutputControlFlowRule extends ParserRule<ERBNoOutputControlFlowAutofixContext> {
   static ruleName = "erb-no-output-control-flow"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

@@ -1,0 +1,6 @@
+---
+source: "Engine::GraphQLTest#test_0001_graphql tag is omitted from compilation"
+input: "{source: \"<%graphql\\n  fragment HumanFragment on Human {\\n    name\\n    homePlanet\\n  }\\n%>\\n\", options: {parser_options: {erb_openers: [\"graphql\"]}}}"
+---
+_buf = ::String.new;
+_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::SourceAttributionTest::a tag helper the parser resolved#test_0006_is left alone when the host turns the recommendation down"
+input: "{source: \"<div><%= link_to \\\"Home\\\", \\\"/\\\" %></div>\", options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], parser_options: {action_view_helpers: false, track_locations: true}, filename: \"app/views/posts/_card.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-source="app/views/posts/_card.html.erb:1:1">'.freeze; _buf << (link_to "Home", "/").to_s; _buf << '</div>'.freeze;
+_buf.to_s

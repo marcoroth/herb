@@ -6,12 +6,14 @@
 require "optparse"
 
 require_relative "../herb"
-require_relative "engine/slot_visitor"
+require_relative "project"
+require_relative "configuration"
+require_relative "engine/slots/visitor"
 
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :scoped_styles, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :no_trim, :optimize, :slots, :scoped_styles, :inline_css, :file_timeout
 
   def initialize(args)
     @args = args
@@ -333,11 +335,11 @@ class Herb::CLI
         self.action_view_helpers = true
       end
 
-      parser.on("--trim", "Enable trimming of leading/trailing whitespace (for compile/render commands)") do
-        self.trim = true
+      parser.on("--no-trim", "Disable whitespace trimming around standalone ERB tags (for compile/render commands)") do
+        self.no_trim = true
       end
 
-      parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
+      parser.on("--optimize", "Enable compile-time optimizations for helpers and static output (for compile/render commands) (default: false)") do
         self.optimize = true
       end
 
@@ -345,12 +347,16 @@ class Herb::CLI
         self.scoped_styles = true
       end
 
+      parser.on("--inline-css [STYLESHEET]", "Write every stylesheet the template renders into `style` attributes, reading one from a file first if given (for compile/render commands) (default: false)") do |stylesheet|
+        self.inline_css = Array(inline_css) + Array(stylesheet)
+      end
+
       parser.on("--slots [MODE]", "Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)") do |mode|
         self.slots = (mode || "server").to_sym
 
-        unless Herb::Engine::SlotVisitor::MODES.include?(slots)
+        unless Herb::Engine::Slots::Visitor::MODES.include?(slots)
           puts "Unknown --slots mode: #{mode}"
-          puts "Expected one of: #{Herb::Engine::SlotVisitor::MODES.join(", ")}"
+          puts "Expected one of: #{Herb::Engine::Slots::Visitor::MODES.join(", ")}"
 
           exit(1)
         end
@@ -1123,7 +1129,20 @@ class Herb::CLI
     require_relative "engine/scoped_style/visitor"
     Herb.ensure_installed("lightningcss")
 
-    Herb::Engine::ScopedStyle::Visitor.new(transform: LightningCSS::Transformer.new)
+    Herb::Engine::ScopedStyle::Visitor.new
+  end
+
+  def css_inliner_visitor
+    require_relative "engine/css_inliner/visitor"
+    Herb.ensure_installed("css_inline")
+
+    Herb::Engine::CSSInliner::Visitor.new(stylesheets: inline_css)
+  end
+
+  def optimize_visitor
+    require_relative "engine/visitors/optimize_visitor"
+
+    Herb::Engine::OptimizeVisitor.new
   end
 
   def compile_template
@@ -1133,25 +1152,26 @@ class Herb::CLI
       source = file_content
       options = {}
 
-      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
-      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+      slot_mode = slots || Herb::Engine::Slots::Visitor.directive_mode(source)
+      slot_visitor = Herb::Engine::Slots::Visitor.new(mode: slot_mode) if slot_mode
       visitors = []
 
       visitors << slot_visitor if slot_visitor
       visitors << scoped_style_visitor if scoped_styles
+      visitors << css_inliner_visitor if inline_css
+      visitors << optimize_visitor if optimize
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? || strict
+      options[:parser_options] = (options[:parser_options] || {}).merge(strict: strict.nil? || strict)
 
       if debug
         options[:debug] = true
         options[:debug_filename] = @file if @file
       end
 
-      options[:optimize] = true if optimize
-      options[:trim] = true if trim
+      options[:trim] = false if no_trim
       options[:validate_ruby] = true
       options[:visitors] = visitors unless visitors.empty?
 
@@ -1165,7 +1185,7 @@ class Herb::CLI
           source: engine.src,
           filename: engine.filename,
           bufvar: engine.bufvar,
-          strict: options[:strict],
+          strict: options[:parser_options][:strict],
         }
 
         puts result.to_json
@@ -1190,7 +1210,7 @@ class Herb::CLI
       else
         puts e.compiled_source if e.compiled_source
         puts
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)
@@ -1205,7 +1225,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)
@@ -1250,25 +1270,26 @@ class Herb::CLI
       source = file_content
       options = {}
 
-      slot_mode = slots || Herb::Engine::SlotVisitor.directive_mode(source)
-      slot_visitor = Herb::Engine::SlotVisitor.new(mode: slot_mode) if slot_mode
+      slot_mode = slots || Herb::Engine::Slots::Visitor.directive_mode(source)
+      slot_visitor = Herb::Engine::Slots::Visitor.new(mode: slot_mode) if slot_mode
 
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? || strict
+      options[:parser_options] = (options[:parser_options] || {}).merge(strict: strict.nil? || strict)
 
       if debug
         options[:debug] = true
         options[:debug_filename] = @file if @file
       end
 
-      options[:optimize] = true if optimize
-      options[:trim] = true if trim
+      options[:trim] = false if no_trim
 
       visitors = []
       visitors << slot_visitor if slot_visitor
       visitors << scoped_style_visitor if scoped_styles
+      visitors << css_inliner_visitor if inline_css
+      visitors << optimize_visitor if optimize
       options[:visitors] = visitors unless visitors.empty?
 
       engine = Herb::Engine.new(source, options)
@@ -1283,7 +1304,7 @@ class Herb::CLI
           success: true,
           output: rendered_output,
           filename: engine.filename,
-          strict: options[:strict],
+          strict: options[:parser_options][:strict],
         }
 
         result[:slots] = slot_visitor.schema if slot_visitor
@@ -1307,7 +1328,7 @@ class Herb::CLI
       elsif silent
         puts "Failed"
       else
-        puts e.message
+        puts e.formatted_errors(highlight: Herb::Colors.enabled?) || e.message
       end
 
       exit(1)

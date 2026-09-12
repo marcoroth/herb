@@ -9,13 +9,13 @@
 
 #include <stdint.h>
 
+#define HERB_MAX_FOREIGN_CONTENT_ELEMENTS 16
+
 typedef enum {
-  FOREIGN_CONTENT_UNKNOWN = 0,
-  FOREIGN_CONTENT_SCRIPT,
-  FOREIGN_CONTENT_STYLE,
-  // FOREIGN_CONTENT_RUBY,
-  // FOREIGN_CONTENT_TEMPLATE
-} foreign_content_type_T;
+  FOREIGN_CONTENT_NONE = 0,
+  FOREIGN_CONTENT_RAW_TEXT,
+  FOREIGN_CONTENT_RCDATA,
+} foreign_content_kind_T;
 
 typedef enum { PARSER_STATE_DATA, PARSER_STATE_FOREIGN_CONTENT } parser_state_T;
 
@@ -27,6 +27,7 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool transform_conditionals;
   bool render_nodes;
   bool strict_locals;
+  bool herb_directives;
   bool iteration_nodes;
   bool prism_program;
   bool prism_nodes;
@@ -40,6 +41,8 @@ typedef struct PARSER_OPTIONS_STRUCT {
   uint32_t max_errors;
   uint32_t* error_count;
   uint64_t deadline_ms;
+  const hb_string_T* erb_openers;
+  size_t erb_opener_count;
 } parser_options_T;
 
 typedef struct MATCH_TAGS_CONTEXT_STRUCT {
@@ -49,6 +52,12 @@ typedef struct MATCH_TAGS_CONTEXT_STRUCT {
 } match_tags_context_T;
 
 extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+
+static inline void lexer_apply_erb_openers(lexer_T* lexer, const parser_options_T* options) {
+  if (options == NULL || options->erb_openers == NULL) { return; }
+
+  lexer->erb_openers = (erb_openers_T) { .items = options->erb_openers, .count = options->erb_opener_count };
+}
 
 static inline bool parser_options_past_deadline(const parser_options_T* options) {
   if (options == NULL || options->timeout_ms == 0) { return false; }
@@ -79,7 +88,11 @@ typedef struct PARSER_STRUCT {
   token_T* current_token;
   hb_array_T* open_tags_stack;
   parser_state_T state;
-  foreign_content_type_T foreign_content_type;
+  foreign_content_kind_T foreign_content_kind;
+  hb_string_T foreign_content_tag_name;
+  size_t svg_depth;
+  bool xml_document;
+  uint32_t foreign_content_absent_from[HERB_MAX_FOREIGN_CONTENT_ELEMENTS];
   parser_options_T options;
   size_t consecutive_error_count;
   bool in_recovery_mode;

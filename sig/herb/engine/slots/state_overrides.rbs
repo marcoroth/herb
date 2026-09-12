@@ -1,0 +1,28 @@
+# Generated from lib/herb/engine/slots/state_overrides.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # Resolves the state values a client sent along with a values request.
+      #
+      # The values program evaluates the branch the state picks, so a client that wants the
+      # values for its own branches sends its state and the program initializes each declared
+      # state from it. A host makes that possible by answering `__herb_state_overrides` in the
+      # render context with a hash keyed by template identifier. Everything here degrades to
+      # the compiled defaults, since a missing, malformed or wrongly typed override must never
+      # break a render the defaults could serve.
+      module StateOverrides
+        HOOK: String
+
+        # : (untyped, String) -> Hash[String, untyped]?
+        def self.resolve: (untyped, String) -> Hash[String, untyped]?
+
+        # : (Hash[String, untyped]?, String, Symbol) { () -> untyped } -> untyped
+        def self.fetch: (Hash[String, untyped]?, String, Symbol) { () -> untyped } -> untyped
+
+        # : (untyped, Symbol) -> untyped
+        def self.coerce: (untyped, Symbol) -> untyped
+      end
+    end
+  end
+end

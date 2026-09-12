@@ -1,0 +1,67 @@
+export type BuiltInComponent =
+<%- slots_components.each do |component| -%>
+  | <%= component.name.inspect %>
+<%- end -%>
+
+export type ComponentAttributeType =
+<%- slots_components.flat_map { |component| component.attributes.map(&:type) }.uniq.each do |type| -%>
+  | <%= type.inspect %>
+<%- end -%>
+
+export interface ComponentAttributeDefinition {
+  name: string
+  type: ComponentAttributeType
+  description: string
+}
+
+export interface ComponentDefinition {
+  name: BuiltInComponent
+  void: boolean
+  deferred: boolean
+  parents: readonly BuiltInComponent[] | null
+  description: string
+  attributes: readonly ComponentAttributeDefinition[]
+}
+
+export const COMPONENT_DEFINITIONS: Readonly<Record<BuiltInComponent, ComponentDefinition>> = {
+<%- slots_components.each do |component| -%>
+  <%= component.name %>: {
+    name: <%= component.name.inspect %>,
+    void: <%= component.void? %>,
+    deferred: <%= component.deferred? %>,
+    parents: <%= component.parents ? "[#{component.parents.map(&:inspect).join(", ")}]" : "null" %>,
+    description: <%= component.description.inspect %>,
+<%- if component.attributes.empty? -%>
+    attributes: [],
+<%- else -%>
+    attributes: [
+<%- component.attributes.each do |attribute| -%>
+      { name: <%= attribute.name.inspect %>, type: <%= attribute.type.inspect %>, description: <%= attribute.description.inspect %> },
+<%- end -%>
+    ],
+<%- end -%>
+  },
+<%- end -%>
+}
+
+export const BUILT_IN_COMPONENTS: readonly BuiltInComponent[] = Object.keys(COMPONENT_DEFINITIONS) as BuiltInComponent[]
+
+export const BUILT_IN_COMPONENT_NAMES: ReadonlySet<string> = new Set(BUILT_IN_COMPONENTS)
+
+export const DEFERRED_COMPONENTS: ReadonlySet<string> = new Set(BUILT_IN_COMPONENTS.filter((name) => COMPONENT_DEFINITIONS[name].deferred))
+
+export function isBuiltInComponent(tagName: string | null | undefined): tagName is BuiltInComponent {
+  if (!tagName) return false
+
+  return BUILT_IN_COMPONENT_NAMES.has(tagName)
+}
+
+export function isComponentTagName(tagName: string | null | undefined): boolean {
+  if (!tagName) return false
+
+  return /^[A-Z][A-Za-z0-9]*$/.test(tagName) && /[a-z]/.test(tagName)
+}
+
+export function componentAttribute(component: BuiltInComponent, attributeName: string): ComponentAttributeDefinition | undefined {
+  return COMPONENT_DEFINITIONS[component].attributes.find((attribute) => attribute.name === attributeName)
+}

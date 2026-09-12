@@ -5,10 +5,12 @@ import type { ParseResult, HerbBackend, ParserOptions } from "@herb-tools/core"
 
 export class ParseCache {
   private herb: HerbBackend
+  private baseOptions: Partial<ParserOptions>
   private cache = new Map<string, ParseResult>()
 
-  constructor(herb: HerbBackend) {
+  constructor(herb: HerbBackend, baseOptions: Partial<ParserOptions> = {}) {
     this.herb = herb
+    this.baseOptions = baseOptions
   }
 
   get(source: string, parserOptions: Partial<ParserOptions> = {}): ParseResult {
@@ -33,6 +35,7 @@ export class ParseCache {
     return {
       ...DEFAULT_PARSER_OPTIONS,
       ...DEFAULT_LINTER_PARSER_OPTIONS,
+      ...this.baseOptions,
       ...parserOptions
     }
   }

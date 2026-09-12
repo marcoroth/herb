@@ -4,8 +4,7 @@ input: "{source: \"<input\\n  type=\\\"text\\\"\\n  <% if required %>required<% 
 ---
 _buf = ::String.new; _buf << '<input
   type="text"
-  '.freeze;   if required 
- _buf << 'required'.freeze; end; _buf << '
+  '.freeze;   if required ; _buf << 'required'.freeze; end; _buf << '
 >
 '.freeze;
 _buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::DiagnosticsTest#test_0011_a visitor that reports an error without being fatal still compiles"
+input: "diagnostics_test-4"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "Not allowed.", severity: :error, code: "NotAllowed", origin: "Herb Compiler", line: 1, column: 0, end_line: 1, end_column: 24 }].freeze); _buf << '<marquee>Hello</marquee>'.freeze;
+_buf.to_s

@@ -403,12 +403,14 @@ module Herb
     class ErrorType
       include ConfigType
 
-      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments
+      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments, :suggestion_template, :suggestion_arguments
 
       def initialize(config)
         @name = config.fetch("name")
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
+        @suggestion_template = config.dig("suggestion", "template")
+        @suggestion_arguments = config.dig("suggestion", "arguments") || []
 
         camelized = Template.underscore(@name)
         @type = camelized.upcase
@@ -425,6 +427,14 @@ module Herb
         end
       end
 
+      def ruby_suggestion_arguments
+        suggestion_arguments.map { |argument| argument.gsub("->", ".") }
+      end
+
+      def ruby_suggestion_guards
+        suggestion_arguments.map { |argument| argument.split("->").first }.uniq
+      end
+
       def c_type
         @struct_type
       end
@@ -432,6 +442,8 @@ module Herb
 
     class NodeType
       include ConfigType
+
+      ERB_TAG_FIELDS = ["tag_opening", "content", "tag_closing"].freeze
 
       attr_reader :name, :type, :struct_type, :struct_name, :human, :fields
 
@@ -450,6 +462,16 @@ module Herb
 
           type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
+      end
+
+      def erb_tag?
+        names = fields.map(&:name)
+
+        ERB_TAG_FIELDS.all? { |field| names.include?(field) }
+      end
+
+      def html?
+        name.start_with?("HTML")
       end
 
       def c_type
@@ -668,6 +690,173 @@ module Herb
 
       def receiver_call_detect?
         @detect_style == "receiver_call"
+      end
+    end
+
+    class StateKind
+      attr_reader :name, :article, :prism_nodes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @article = config.fetch("article")
+        @prism_nodes = config.fetch("prism_nodes", [])
+        @literal = config.fetch("literal", false)
+        @value = config.fetch("value", false)
+        @unknown = config.fetch("unknown", false)
+        @falsy = config.fetch("falsy", false)
+        @nilable = config.fetch("nilable", false)
+      end
+
+      def literal?
+        @literal
+      end
+
+      def value?
+        @value
+      end
+
+      def unknown?
+        @unknown
+      end
+
+      def falsy?
+        @falsy
+      end
+
+      def nilable?
+        @nilable
+      end
+
+      def prism_constants
+        prism_nodes.map { |node| "PM_#{Template.underscore(node).upcase}" }
+      end
+    end
+
+    class HTMLElement
+      attr_reader :name, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @description = config.fetch("description")
+        @void = config.fetch("void", false)
+        @deprecated = config.fetch("deprecated", false)
+      end
+
+      def void? = @void
+      def deprecated? = @deprecated
+    end
+
+    class ForeignContentElement
+      attr_reader :name, :kind
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @kind = config.fetch("kind")
+        @end_tag = config.fetch("end_tag", true)
+        @html_only = config.fetch("html_only", false)
+
+        raise "Unknown foreign content kind #{@kind.inspect} for #{@name}" unless ["raw_text", "rcdata"].include?(@kind)
+      end
+
+      def raw_text? = @kind == "raw_text"
+      def rcdata? = @kind == "rcdata"
+      def end_tag? = @end_tag
+      def html_only? = @html_only
+    end
+
+    class SlotsComponentAttribute
+      attr_reader :name, :type, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = config.fetch("type")
+        @description = config.fetch("description")
+      end
+    end
+
+    class SlotsComponent
+      attr_reader :name, :parents, :description, :attributes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @parents = config.fetch("parents", nil)
+        @description = config.fetch("description")
+        @attributes = config.fetch("attributes", []).map { |attribute| SlotsComponentAttribute.new(attribute) }
+        @deferred = config.fetch("deferred", false)
+        @void = config.fetch("void", false)
+      end
+
+      def deferred?
+        @deferred
+      end
+
+      def void?
+        @void
+      end
+    end
+
+    class StateOperator
+      attr_reader :operator, :mirrored, :negated
+
+      def initialize(config)
+        @operator = config.fetch("operator")
+        @mirrored = config.fetch("mirrored", nil)
+        @negated = config.fetch("negated")
+        @ordered = config.fetch("ordered", false)
+      end
+
+      def ordered?
+        @ordered
+      end
+    end
+
+    class StateTransform
+      attr_reader :name, :operation, :kinds, :returns, :only
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @operation = config.fetch("operation")
+        @kinds = config.fetch("kinds", nil)
+        @returns = config.fetch("returns")
+        @only = config.fetch("only")
+      end
+
+      def ruby_kinds
+        kinds ? "[#{kinds.map { |kind| ":#{kind}" }.join(", ")}]" : "nil"
+      end
+
+      def typescript_kinds
+        kinds ? "[#{kinds.map(&:inspect).join(", ")}]" : "null"
+      end
+    end
+
+    class StatePredicate
+      attr_reader :name, :comparand, :operator, :kinds, :only, :rewrite, :negated
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @comparand = config.fetch("comparand", nil)
+        @operator = config.fetch("operator", nil)
+        @kinds = config.fetch("kinds", nil)
+        @only = config.fetch("only")
+        @rewrite = config.fetch("rewrite", nil)
+        @negated = config.fetch("negated", nil)
+      end
+
+      def unary?
+        !operator.nil? && comparand.nil?
+      end
+
+      def ruby_kinds
+        kinds ? "[#{kinds.map { |kind| ":#{kind}" }.join(", ")}]" : "nil"
+      end
+
+      def typescript_kinds
+        kinds ? "[#{kinds.map(&:inspect).join(", ")}]" : "null"
+      end
+
+      def literal(value)
+        value.inspect
       end
     end
 
@@ -941,9 +1130,9 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements, html_elements: html_elements, boolean_attributes: boolean_attributes }
       )
-      content = heading_for(name, template_file) + rendered_template
+      content = heading_for(name, template_file_display) + rendered_template
 
       check_gitignore(name)
 
@@ -1009,6 +1198,50 @@ module Herb
       Dir.glob("config/action_view_helpers/**/*.yml").map do |file|
         HelperType.new(YAML.load_file(file))
       end
+    end
+
+    def self.state_predicates
+      config = YAML.load_file("config/state/predicates.yml")
+
+      (config["predicates"] || []).map { |predicate| StatePredicate.new(predicate) }
+    end
+
+    def self.state_kinds
+      config = YAML.load_file("config/state/kind.yml")
+
+      (config["kinds"] || []).map { |kind| StateKind.new(kind) }
+    end
+
+    def self.state_transforms
+      config = YAML.load_file("config/state/transforms.yml")
+
+      (config["transforms"] || []).map { |transform| StateTransform.new(transform) }
+    end
+
+    def self.state_operators
+      config = YAML.load_file("config/state/operators.yml")
+
+      (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
+    end
+
+    def self.html_elements
+      YAML.load_file("config/html_elements.yml")["elements"].map { |element| HTMLElement.new(element) }
+    end
+
+    def self.boolean_attributes
+      YAML.load_file("config/html_elements.yml")["boolean_attributes"]
+    end
+
+    def self.foreign_content_elements
+      config = YAML.load_file("config/html_elements.yml")
+
+      (config["foreign_content_elements"] || []).map { |element| ForeignContentElement.new(element) }
+    end
+
+    def self.slots_components
+      config = YAML.load_file("config/slots/components.yml", aliases: true)
+
+      (config["components"] || []).map { |component| SlotsComponent.new(component) }
     end
 
     def self.config

@@ -10,15 +10,5 @@ module Herb
       @value = TokenList.new(value)
       super(source, warnings, errors)
     end
-
-    #: () -> bool
-    def success?
-      errors.empty?
-    end
-
-    #: () -> bool
-    def failed?
-      errors.any?
-    end
   end
 end

@@ -825,8 +825,7 @@ static size_t calculate_byte_offset_from_pos(const char* source, position_T posi
 static bool is_erb_comment_tag(token_T* tag_opening) {
   if (!tag_opening || hb_string_is_empty(tag_opening->value)) { return false; }
 
-  const char* opening_string = tag_opening->value.data;
-  return opening_string && strstr(opening_string, "#") != NULL;
+  return hb_string_contains_character(tag_opening->value, '#');
 }
 
 static AST_ERB_RENDER_NODE_T* try_transform_content_node(

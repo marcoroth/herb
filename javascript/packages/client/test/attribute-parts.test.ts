@@ -1,7 +1,18 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
 
 const FILE = "app/views/chat/show.html.erb"
+
+const MANIFEST = {
+  file: FILE,
+  identifier: FILE,
+  version: "aaaaaaaa",
+  names: {},
+  parts: { 1: ["message_", ""], 2: ["row-", "-of-", ""] },
+  states: null,
+}
+
+const MANIFEST_TAG = `<template data-herb-manifests>${JSON.stringify({ [`${FILE}:aaaaaaaa`]: MANIFEST })}</template>`
 
 const PAGE =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
@@ -12,12 +23,10 @@ const PAGE =
   `<template data-herb-region="${FILE}:aaaaaaaa">` +
   `<!--herb-branch:0:item--><!--herb-item:0:--><li id="" class="" data-herb-slot="1:attribute_interpolation:id 2:attribute_interpolation:class">` +
   `<span data-herb-slot="3:child"></span></li><!--/herb-item:0-->` +
-  `<!--herb-branch:1:parts-->message_<!--herb-part-->` +
-  `<!--herb-branch:2:parts-->row-<!--herb-part-->-of-<!--herb-part-->` +
   `</template>` +
-  `<!--/herb-region:${FILE}-->`
+  `<!--/herb-region:${FILE}-->` + MANIFEST_TAG
 
-let slots: SlotIndex
+let slots: Slots
 
 function row(selector: string): HTMLElement | null {
   return document.querySelector(selector)
@@ -26,7 +35,7 @@ function row(selector: string): HTMLElement | null {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 })
 
@@ -45,21 +54,21 @@ describe("interpolated attribute slots", () => {
   })
 
   test("the revert restores the previous whole value", () => {
-    const report = slots.apply({
+    const { token } = slots.transaction(() => slots.apply({
       template: FILE,
       version: "aaaaaaaa",
       occurrence: 0,
       slots: { 0: { items: { 1: { 1: ["9"] } } } },
-    })
+    }))
 
     expect(row("li")?.id).toBe("message_9")
 
-    if (report.token) slots.revert(report.token)
+    slots.revert(token!)
 
     expect(row("li")?.id).toBe("message_1")
   })
 
-  test("a skeleton-built row interpolates the values it is given", () => {
+  test("a row built from parked statics interpolates the values it is given", () => {
     const collection = slots.slot(FILE, 0)!
     const item = slots.addItem(collection, "7", { values: { id: "7", class: ["x", "y"] } })
 
@@ -85,10 +94,10 @@ describe("interpolated attribute slots", () => {
     expect(row("li")?.id).toBe(before)
   })
 
-  test("a slot whose parts were never parked still defers", () => {
-    document.body.innerHTML = PAGE.replace("<!--herb-branch:1:parts-->message_<!--herb-part-->", "")
+  test("a slot whose parts the manifest does not carry still defers", () => {
+    document.body.innerHTML = PAGE.replace(JSON.stringify(MANIFEST.parts), JSON.stringify({ 2: MANIFEST.parts[2] }))
 
-    const bare = new SlotIndex()
+    const bare = new Slots()
     bare.scan(document.body)
 
     const report = bare.apply({

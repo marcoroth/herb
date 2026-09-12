@@ -1,0 +1,85 @@
+# Generated from lib/herb/engine/css_inliner/visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module CSSInliner
+      # Writes the CSS a template rendered into `style` attributes on the markup it applies to.
+      #
+      #     Herb::Engine.new(source, filename: path, visitors: [
+      #       Herb::Engine::CSSInliner::Visitor.new(stylesheets: ["app/assets/email.css"])
+      #     ])
+      #
+      # A `style` attribute is the only way to say something an email client reads, and this is how a
+      # stylesheet gets there. The CSS is matched against the markup once the file has rendered, not
+      # when it is compiled, because that is the first moment the markup exists.
+      #
+      # Every `<style>` block the template rendered is inlined, whoever wrote it. A block the author
+      # wrote by hand, and a block `ScopedStyle::Visitor` narrowed, are both read out of the markup
+      # by the inliner itself. `stylesheets` are files read when the template is compiled and carried
+      # in the compiled template, so nothing reads a file to render one and the CSS a template was
+      # compiled against cannot change under it.
+      #
+      # Because it inlines every block it finds, this belongs in a stack that wants all of its CSS on
+      # the elements. That is what an email wants. A page that meant a `<style>` block to stay a
+      # `<style>` block does not.
+      #
+      # What a template holds when this runs is what it decides about, so it has to run after anything
+      # that rewrites the blocks, which the stack checks. A `ScopedStyle::Visitor` delivering anywhere
+      # other than `:inline` takes its block out of the markup, and reading a template before that
+      # happens is reading a block that will not be there to inline.
+      class Visitor < Herb::Visitor
+        include Herb::Visitor::ContextAware
+
+        include Herb::Visitor::Diagnostics
+
+        AT_RULES: Regexp
+
+        STATEFUL: Regexp
+
+        # : () -> bool
+        def self.reads_style_blocks?: () -> bool
+
+        # : (?stylesheets: Array[String]) -> void
+        def initialize: (?stylesheets: Array[String]) -> void
+
+        # : (Herb::AST::DocumentNode) -> void
+        def visit_document_node: (Herb::AST::DocumentNode) -> void
+
+        # : (Herb::AST::HTMLElementNode) -> void
+        def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
+
+        # : (Herb::AST::DocumentNode) -> void
+        def finish: (Herb::AST::DocumentNode) -> void
+
+        # : (String) -> String
+        def postamble: (String) -> String
+
+        # : () -> String
+        def inspect: () -> String
+
+        private
+
+        # : () -> void
+        def report_missing_inliner: () -> void
+
+        # : (Herb::AST::HTMLElementNode) -> String?
+        def block_css: (Herb::AST::HTMLElementNode) -> String?
+
+        # : () -> bool
+        def keeping?: () -> bool
+
+        # : (String) -> Herb::AST::LiteralNode
+        def literal_node: (String) -> Herb::AST::LiteralNode
+
+        # : () -> String?
+        def read_stylesheets: () -> String?
+
+        # : (String) -> String
+        def resolve: (String) -> String
+
+        # : (String) -> String?
+        def read_stylesheet: (String) -> String?
+      end
+    end
+  end
+end

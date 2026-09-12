@@ -18,6 +18,7 @@ module Herb
     #
     # `Herb::Visitor` includes this, so every visitor has it. Anything else that is passed to
     # `Herb::Engine` as a visitor can include it too.
+    #
     module ParserOptionRequirements
       #: (untyped) -> void
       def self.included(base)

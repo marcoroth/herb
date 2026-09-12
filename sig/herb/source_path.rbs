@@ -1,0 +1,132 @@
+# Generated from lib/herb/source_path.rb with RBS::Inline
+
+module Herb
+  # A path, and optionally where in it something is.
+  #
+  #     Herb::SourcePath.new("app/views/posts/_card.html.erb", line: 8, column: 2).to_s
+  #     #=> "app/views/posts/_card.html.erb:8:3"
+  #
+  #     Herb::SourcePath.parse("app/views/posts/_card.html.erb:8:3").position
+  #     #=> #<Herb::Position (8:2)>
+  #
+  # `path:line:column` is what an editor linkifies, what a terminal makes clickable, and what
+  # `data-herb-source` holds. Herb wrote it by hand in five places and they did not agree, because
+  # the column the parser reports is 0-based and the column an editor shows is 1-based. Everything
+  # that reads or writes one of these strings goes through here so that conversion happens once.
+  #
+  # A part that is not known is left out, so a path on its own stays a path:
+  #
+  #     Herb::SourcePath.new("index.html.erb").to_s        #=> "index.html.erb"
+  #     Herb::SourcePath.new("index.html.erb", line: 8).to_s #=> "index.html.erb:8"
+  #
+  # A scheme is optional too, and turns the same reference into something an editor opens:
+  #
+  #     Herb::SourcePath.new(path, line: 8, column: 2, scheme: "vscode").to_s
+  #     #=> "vscode://file/app/views/posts/_card.html.erb:8:3"
+  #
+  # A project turns the same reference into either form. A stamp and a diagnostic show the relative
+  # path, and an editor scheme needs the absolute one:
+  #
+  #     reference = Herb::SourcePath.at(path, position, project_path: Rails.root)
+  #
+  #     reference.relative.to_s                    #=> "app/views/posts/_card.html.erb:8:3"
+  #     reference.absolute.with_scheme("vscode").to_s
+  #     #=> "vscode://file/Users/marco/blog/app/views/posts/_card.html.erb:8:3"
+  #
+  # Neither is guessed. `to_s` writes the path it was handed, so a caller says which one it wants.
+  # An editor scheme names a file from the root, so call `absolute` before putting one on.
+  #
+  # Lines count from one and columns count from zero, which is what the parser reports and what
+  # `Herb::Position` carries. Only `to_s` and `parse` speak the 1-based column an editor shows.
+  class SourcePath
+    PATTERN: Regexp
+
+    FILE_SCHEME_SEPARATOR: String
+
+    attr_reader path: Pathname
+
+    attr_reader project_path: Pathname?
+
+    attr_reader line: Integer?
+
+    attr_reader column: Integer?
+
+    attr_reader scheme: String?
+
+    # : ((String | Pathname), ?project_path: (String | Pathname)?, ?line: Integer?, ?column: Integer?, ?scheme: String?) -> void
+    def initialize: (String | Pathname, ?project_path: (String | Pathname)?, ?line: Integer?, ?column: Integer?, ?scheme: String?) -> void
+
+    # : ((String | Pathname), Herb::Position?, ?project_path: (String | Pathname)?, ?scheme: String?) -> SourcePath
+    def self.at: (String | Pathname, Herb::Position?, ?project_path: (String | Pathname)?, ?scheme: String?) -> SourcePath
+
+    # : ((String | Pathname)) -> Pathname
+    def self.coerce: (String | Pathname) -> Pathname
+
+    # : (String, ?project_path: (String | Pathname)?) -> SourcePath?
+    def self.parse: (String, ?project_path: (String | Pathname)?) -> SourcePath?
+
+    # : (String?) -> Integer?
+    def self.reported_column: (String?) -> Integer?
+
+    # : () -> Herb::Position?
+    def position: () -> Herb::Position?
+
+    # : () -> bool
+    def position?: () -> bool
+
+    # : ((String | Pathname)) -> SourcePath
+    def with_path: (String | Pathname) -> SourcePath
+
+    # : ((String | Pathname)?) -> SourcePath
+    def with_project_path: ((String | Pathname)?) -> SourcePath
+
+    # : () -> bool
+    def absolute?: () -> bool
+
+    # : () -> Pathname
+    def absolute_path: () -> Pathname
+
+    # : () -> Pathname
+    def relative_path: () -> Pathname
+
+    # : () -> SourcePath
+    def absolute: () -> SourcePath
+
+    # : () -> SourcePath
+    def relative: () -> SourcePath
+
+    # : (Herb::Position?) -> SourcePath
+    def with_position: (Herb::Position?) -> SourcePath
+
+    # : (String?) -> SourcePath
+    def with_scheme: (String?) -> SourcePath
+
+    # : () -> String
+    def to_s: () -> String
+
+    # : () -> Pathname
+    def to_pathname: () -> Pathname
+
+    # : (untyped) -> bool
+    def ==: (untyped) -> bool
+
+    alias eql? ==
+
+    # : () -> Integer
+    def hash: () -> Integer
+
+    # : () -> String
+    def inspect: () -> String
+
+    private
+
+    # : () -> String
+    def prefix: () -> String
+
+    # : () -> String
+    def written_path: () -> String
+
+    # : () -> String
+    def suffix: () -> String
+  end
+end

@@ -9,7 +9,7 @@ import { Capabilities } from "./capabilities"
 import { WorkspaceFolders } from "./workspace_folders"
 import { Documents } from "./documents"
 import { DiagnosticsPublisher } from "./diagnostics_publisher"
-import { ParserService, FoldingRangeProvider, SelectionRangeProvider, DocumentHighlightProvider, InlayHintProvider, HoverProvider, RewriteCodeActionProvider, CommentProvider, DocumentSymbolProvider, ExtractCodeActionProvider, DefinitionProvider } from "@herb-tools/language-service"
+import { ParserService, FoldingRangeProvider, SelectionRangeProvider, DocumentHighlightProvider, InlayHintProvider, HoverProvider, RewriteCodeActionProvider, CommentProvider, DocumentSymbolProvider, ExtractCodeActionProvider, DefinitionProvider, OnTypeFormattingProvider } from "@herb-tools/language-service"
 import { ConfigService } from "./config_service"
 import { SaveOrchestrator } from "./save_orchestrator"
 
@@ -42,6 +42,7 @@ export class Session {
   definitionProvider: DefinitionProvider
   commentProvider: CommentProvider
   documentSymbolProvider: DocumentSymbolProvider
+  onTypeFormattingProvider: OnTypeFormattingProvider
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -77,6 +78,7 @@ export class Session {
     this.rewriteCodeActionProvider = new RewriteCodeActionProvider(this.parserService, process.cwd())
     this.commentProvider = new CommentProvider(this.parserService)
     this.documentSymbolProvider = new DocumentSymbolProvider(this.parserService)
+    this.onTypeFormattingProvider = new OnTypeFormattingProvider()
 
     this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, this.capabilities, existsSync)
 

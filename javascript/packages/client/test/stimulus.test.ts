@@ -1,6 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { HerbRuntime, stateFor } from "../src/runtime"
+import { stateFor } from "../src/state/for-element"
 import { useState } from "../src/stimulus"
+
+import { Runtime } from "../src/runtime"
 
 const FILE = "app/views/page/card.html.erb"
 
@@ -22,11 +24,11 @@ const PAGE =
     },
   })}</template>`
 
-let runtime: HerbRuntime
+let runtime: Runtime
 
 beforeEach(() => {
   document.body.innerHTML = PAGE
-  runtime = HerbRuntime.start({ state: { persist: "none" } })
+  runtime = Runtime.start({ state: {} })
   runtime.slots.scan(document.body)
   runtime.state.adopt()
 })
@@ -62,17 +64,17 @@ describe("stateFor and useState", () => {
     expect(seen).toEqual([[true, false]])
   })
 
-  test("useState also hands the host the mutations", () => {
+  test("useState also hands the host the outbox", () => {
     const host = {
       element: document.querySelector("#go")!,
-      mutations: undefined,
+      outbox: undefined,
       slots: undefined,
       disconnect() {},
     }
 
     const state = useState(host)
 
-    expect(host.mutations).toBe(runtime.mutations)
+    expect(host.outbox).toBe(runtime.outbox)
     expect(host.slots).toBe(runtime.slots)
     expect(state.get("expanded")).toBe(false)
   })

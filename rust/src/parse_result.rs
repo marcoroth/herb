@@ -1,6 +1,8 @@
 use crate::errors::{AnyError, ErrorNode};
 use crate::herb::ParserOptions;
+use crate::locate::{locatable, locate, LocateResult};
 use crate::nodes::{DocumentNode, Node};
+use crate::position::Position;
 use std::fmt;
 
 pub struct ParseResult {
@@ -14,6 +16,14 @@ pub struct ParseResult {
 impl ParseResult {
   pub fn new(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions) -> Self {
     Self::with_error_count(value, source, errors, options, None)
+  }
+
+  pub fn locate(&self, position: Position) -> Option<LocateResult<'_>> {
+    locate(self, position)
+  }
+
+  pub fn locatable(&self, position: Position) -> bool {
+    locatable(self, position)
   }
 
   pub fn with_error_count(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions, error_count: Option<u32>) -> Self {

@@ -5,6 +5,7 @@ input: "{source: \"<div><% text = <<~TEXT\\n    Hello, world!\\n  TEXT\\n%></div
 _buf = ::String.new; _buf << '<div>'.freeze; text = <<~TEXT
     Hello, world!
   TEXT
+
  _buf << '</div>
 '.freeze;
 _buf.to_s

@@ -1,7 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotActions } from "../src/actions"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState, STATE_EVENT } from "../src/state"
+import { Actions } from "../src/actions/actions"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
+import { STATE_EVENT } from "../src/shared/events"
+import { resetReport } from "../src/shared/report"
 
 const FILE = "app/views/page/panel.html.erb"
 
@@ -9,7 +11,12 @@ const PAGE =
   `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
   `<section>` +
   `<button id="toggle" data-herb-toggle="open">Details</button>` +
-  `<button id="both" data-herb-set="pending=false,failed=true">Fail</button>` +
+  `<button id="both" data-herb-set="pending=false failed=true">Fail</button>` +
+  `<button id="blank" data-herb-set="sort=''">Clear</button>` +
+  `<div id="esc" data-herb-set="keydown.escape@window->open=false"></div>` +
+  `<input id="enter-input" data-herb-set="keydown.enter->sort=$value">` +
+  `<input id="debounced" data-herb-set="sort=$value" data-herb-debounce="30">` +
+  `<button id="throttled" data-herb-increment="attempts" data-herb-throttle="1000">T</button>` +
   `<button id="bump" data-herb-increment="attempts" data-herb-by="2">More</button>` +
   `<button id="combo" data-herb-increment="attempts" data-herb-set="open=true">Both</button>` +
   `<button id="same" data-herb-increment="attempts" data-herb-set="attempts=10">Same</button>` +
@@ -60,9 +67,9 @@ const PAGE =
     },
   })}</template>`
 
-let slots: SlotIndex
-let state: SlotState
-let actions: SlotActions
+let slots: Slots
+let state: State
+let actions: Actions
 
 function click(selector: string): void {
   document.querySelector<HTMLElement>(selector)!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -71,13 +78,13 @@ function click(selector: string): void {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
 
-  actions = new SlotActions(state)
+  actions = new Actions(state)
   actions.start(document.body)
 })
 
@@ -95,7 +102,7 @@ describe("declarative actions", () => {
     expect(state.getState("open")).toBe(false)
   })
 
-  test("a comma pair lands as one transition", () => {
+  test("two clauses on one attribute both write", () => {
     const order: string[] = []
     const handler = (event: Event): void => {
       order.push((event as CustomEvent<{ name: string }>).detail.name)
@@ -108,6 +115,274 @@ describe("declarative actions", () => {
     expect(state.getState("pending")).toBe(false)
     expect(state.getState("failed")).toBe(true)
     expect(order).toEqual(["pending", "failed"])
+  })
+
+  test("a comma list is no longer a clause, and writes nothing", () => {
+    const entries: { code?: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(...[input].flat() as { code?: string }[]),
+    }
+
+    const legacy = document.createElement("button")
+
+    legacy.id = "legacy"
+    legacy.setAttribute("data-herb-set", "pending=true,failed=true")
+    document.querySelector("section")!.append(legacy)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    click("#legacy")
+
+    expect(state.getState("pending")).not.toBe(true)
+    expect(state.getState("failed")).not.toBe(true)
+    expect(entries.some((entry) => entry.code === "herb-invalid-action")).toBe(true)
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("a clause with the old dot chord reports what to write instead", () => {
+    const entries: { code?: string; message?: string }[] = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(...[input].flat() as { code?: string; message?: string }[]),
+    }
+
+    const chord = document.createElement("button")
+
+    chord.id = "chord"
+    chord.setAttribute("data-herb-set", "keydown.meta.k@window->open=true")
+    document.querySelector("section")!.append(chord)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    const entry = entries.find((held) => held.code === "herb-invalid-action")
+
+    expect(entry?.message).toContain("`keydown.meta+k`")
+
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("an outside clause fires for a click anywhere but inside the element", () => {
+    const panel = document.createElement("div")
+
+    panel.id = "panel"
+    panel.setAttribute("data-herb-set", "click@outside->open=false")
+    panel.innerHTML = `<button id="inside">stay</button>`
+    document.querySelector("section")!.append(panel)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    click("#toggle")
+
+    expect(state.getState("open")).toBe(true)
+
+    click("#inside")
+
+    expect(state.getState("open")).toBe(true)
+
+    click("#blank")
+
+    expect(state.getState("open")).toBe(false)
+  })
+
+  test("a window-scoped key clause fires from anywhere, filtered by key", () => {
+    click("#toggle")
+
+    expect(state.getState("open")).toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }))
+
+    expect(state.getState("open")).toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
+
+    expect(state.getState("open")).toBe(false)
+  })
+
+  test("a modifier key clause fires only with the modifier held", () => {
+    const shortcut = document.createElement("button")
+
+    shortcut.id = "shortcut"
+    shortcut.setAttribute("data-herb-set", "keydown.meta+k@window->open=true")
+    document.querySelector("section")!.append(shortcut)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k" }))
+
+    expect(state.getState("open")).not.toBe(true)
+
+    const chord = new KeyboardEvent("keydown", { key: "k", metaKey: true, cancelable: true })
+
+    window.dispatchEvent(chord)
+
+    expect(state.getState("open")).toBe(true)
+    expect(chord.defaultPrevented).toBe(true)
+  })
+
+  test("a key clause without modifiers ignores the key inside a chord", () => {
+    click("#toggle")
+
+    expect(state.getState("open")).toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", metaKey: true }))
+
+    expect(state.getState("open")).toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
+
+    expect(state.getState("open")).toBe(false)
+  })
+
+  test("a modifier key clause ignores a chord holding more than it names", () => {
+    const shortcut = document.createElement("button")
+
+    shortcut.id = "strict"
+    shortcut.setAttribute("data-herb-set", "keydown.ctrl+k@window->open=true")
+    document.querySelector("section")!.append(shortcut)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, shiftKey: true }))
+
+    expect(state.getState("open")).not.toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))
+
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("a letter filter still matches when the layout types another alphabet", () => {
+    const shortcut = document.createElement("button")
+
+    shortcut.id = "layout"
+    shortcut.setAttribute("data-herb-set", "keydown.j@window->open=true")
+    document.querySelector("section")!.append(shortcut)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "й", code: "KeyQ" }))
+
+    expect(state.getState("open")).not.toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "й", code: "KeyJ" }))
+
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("a dotted name outside the keyboard events stays one event name", () => {
+    const custom = document.createElement("button")
+
+    custom.id = "custom"
+    custom.setAttribute("data-herb-set", "library.change->open=true")
+    document.querySelector("section")!.append(custom)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    custom.dispatchEvent(new CustomEvent("library.change", { bubbles: true }))
+
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("a modifier prefixed to a mouse event filters the click", () => {
+    const picker = document.createElement("button")
+
+    picker.id = "picker"
+    picker.setAttribute("data-herb-set", "meta+click->open=true")
+    document.querySelector("section")!.append(picker)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    picker.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(state.getState("open")).not.toBe(true)
+
+    picker.dispatchEvent(new MouseEvent("click", { bubbles: true, metaKey: true }))
+
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("the arrow key names Stimulus uses filter on the arrow keys", () => {
+    const stepper = document.createElement("button")
+
+    stepper.id = "stepper"
+    stepper.setAttribute("data-herb-set", "keydown.up@window->open=true")
+    document.querySelector("section")!.append(stepper)
+
+    actions.stop()
+    actions = new Actions(state)
+    actions.start(document.body)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Up" }))
+
+    expect(state.getState("open")).not.toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp" }))
+
+    expect(state.getState("open")).toBe(true)
+  })
+
+  test("an element-scoped key clause fires only for its key", () => {
+    const input = document.querySelector<HTMLInputElement>("#enter-input")!
+
+    input.value = "typed"
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }))
+
+    expect(state.getState("sort")).not.toBe("typed")
+
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
+
+    expect(state.getState("sort")).toBe("typed")
+  })
+
+  test("data-herb-debounce holds a write until the input settles", async () => {
+    const input = document.querySelector<HTMLInputElement>("#debounced")!
+
+    input.value = "dr"
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+    input.value = "draft"
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+
+    expect(state.getState("sort")).not.toBe("draft")
+
+    await new Promise((resolve) => setTimeout(resolve, 80))
+
+    expect(state.getState("sort")).toBe("draft")
+  })
+
+  test("data-herb-throttle lets the first click through and swallows the burst", () => {
+    click("#throttled")
+    click("#throttled")
+    click("#throttled")
+
+    expect(state.getState("attempts")).toBe(1)
+  })
+
+  test("an empty quoted value sets the state to the empty string", () => {
+    click("#tab-a")
+
+    expect(state.getState("sort")).toBe("name")
+
+    click("#blank")
+
+    expect(state.getState("sort")).toBe("")
   })
 
   test("a set writes through to the bound input", () => {
@@ -179,7 +454,7 @@ describe("declarative actions", () => {
     menu.dispatchEvent(new Event("mouseleave"))
     expect(state.getState("open")).toBe(true)
 
-    actions = new SlotActions(state)
+    actions = new Actions(state)
     actions.start(document.body)
   })
 
@@ -255,6 +530,17 @@ describe("declarative actions", () => {
     expect(document.querySelector("#b em")?.textContent).toContain("plain")
   })
 
+  test("a second row's button resolves its own scope, not the one the last run pinned", () => {
+    click("#a .star")
+
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+
+    click("#b .star")
+
+    expect(document.querySelector("#b em")?.textContent).toContain("starred")
+    expect(document.querySelector("#a em")?.textContent).toContain("starred")
+  })
+
   test("a dynamically added element works through delegation", () => {
     const late = document.createElement("button")
 
@@ -315,7 +601,7 @@ describe("declarative actions", () => {
     }
 
     actions.stop()
-    actions = new SlotActions(state)
+    actions = new Actions(state)
     actions.start(document.body)
 
     expect(entries).toEqual([])
@@ -332,7 +618,7 @@ describe("declarative actions", () => {
 
     const rogue = document.createElement("button")
 
-    rogue.setAttribute("data-herb-toggle", "sort,open")
+    rogue.setAttribute("data-herb-toggle", "sort")
     document.querySelector("section")!.append(rogue)
     rogue.dispatchEvent(new MouseEvent("click", { bubbles: true }))
 
@@ -370,14 +656,14 @@ describe("a tag helper input bound to a state", () => {
   test("a quoted set writes the value into the input", () => {
     document.body.innerHTML = HELPER_PAGE
 
-    const helperSlots = new SlotIndex()
+    const helperSlots = new Slots()
     helperSlots.scan(document.body)
 
-    const helperState = new SlotState(helperSlots, { persist: "none" })
+    const helperState = new State(helperSlots, {})
     helperState.adopt()
     helperState.observe()
 
-    const helperActions = new SlotActions(helperState)
+    const helperActions = new Actions(helperState)
     helperActions.start(document.body)
 
     document.querySelector<HTMLElement>("#quoted")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -424,12 +710,11 @@ describe("an action on an element its own sibling action removes", () => {
   test("the later action still resolves the scope the element had", () => {
     document.body.innerHTML = SWAP_PAGE
 
-    const swapSlots = new SlotIndex()
+    const swapSlots = new Slots()
 
     swapSlots.scan(document.body)
 
-    const swapState = new SlotState(swapSlots, {
-      persist: "none",
+    const swapState = new State(swapSlots, {
       transport: () => {
         throw new Error("a declared state must never reach the transport")
       },
@@ -437,7 +722,7 @@ describe("an action on an element its own sibling action removes", () => {
 
     swapState.adopt()
 
-    const actions = new SlotActions(swapState)
+    const actions = new Actions(swapState)
 
     actions.start(document.body)
     swapState.setState({ draft: "typed" })
@@ -450,5 +735,99 @@ describe("an action on an element its own sibling action removes", () => {
     expect(swapState.getState("draft", { scope })).toBe("original")
 
     actions.stop()
+  })
+})
+
+describe("an action attribute that is rewritten", () => {
+  test("runs what the attribute says now, not what it said when it was scanned", async () => {
+    document.body.innerHTML = PAGE
+
+    const rewriteSlots = new Slots()
+    rewriteSlots.scan(document.body)
+
+    const rewriteState = new State(rewriteSlots, { transport: async () => null })
+    rewriteState.adopt()
+
+    const actions = new Actions(rewriteState)
+    actions.start(document.body)
+
+    const button = document.createElement("button")
+
+    button.setAttribute("data-herb-set", "sort=date")
+    document.querySelector("section")!.appendChild(button)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    button.click()
+
+    expect(rewriteState.getState("sort")).toBe("date")
+
+    button.setAttribute("data-herb-set", "sort=name")
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    button.click()
+
+    expect(rewriteState.getState("sort")).toBe("name")
+
+    actions.stop()
+  })
+})
+
+describe("a template the compiler refused", () => {
+  const REFUSED = "app/views/page/refused.html.erb"
+
+  const REFUSED_PAGE =
+    `<!--herb-region:${REFUSED}:bbbbbbbb:0-->` +
+    `<section>` +
+    `<button id="refused-toggle" data-herb-toggle="open">Details</button>` +
+    `<button id="refused-reset" data-herb-reset="sort">Reset</button>` +
+    `</section>` +
+    `<!--/herb-region:${REFUSED}-->`
+
+  let refusedActions: Actions
+  let entries: { code: string }[]
+
+  beforeEach(() => {
+    actions.stop()
+    resetReport()
+
+    document.body.innerHTML = REFUSED_PAGE
+    entries = []
+
+    ;(window as unknown as { HerbDevTools?: unknown }).HerbDevTools = {
+      report: (input: unknown) => entries.push(input as { code: string }),
+    }
+
+    const refusedSlots = new Slots()
+
+    refusedSlots.scan(document.body)
+
+    const refusedState = new State(refusedSlots, {})
+
+    refusedState.adopt()
+
+    refusedActions = new Actions(refusedState)
+    refusedActions.start(document.body)
+  })
+
+  afterEach(() => {
+    refusedActions.stop()
+    delete (window as unknown as { HerbDevTools?: unknown }).HerbDevTools
+  })
+
+  test("the page still says which template the markup came from", () => {
+    const slots = new Slots()
+
+    slots.scan(document.body)
+
+    expect(slots.regions().map((region) => region.file)).toEqual([REFUSED])
+  })
+
+  test("says nothing about the controls inside it, because the compiler already did", () => {
+    document.querySelector<HTMLElement>("#refused-toggle")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    document.querySelector<HTMLElement>("#refused-reset")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(entries.map((entry) => entry.code)).toEqual([])
   })
 })

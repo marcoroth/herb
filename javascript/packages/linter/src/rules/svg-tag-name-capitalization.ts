@@ -51,6 +51,7 @@ export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitaliz
   static autocorrectable = true
   static ruleName = "svg-tag-name-capitalization"
   static introducedIn = this.version("0.4.2")
+  static defaultEnabledIn = this.version("0.4.2")
 
   get defaultConfig(): FullRuleConfig {
     return {

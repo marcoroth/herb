@@ -1,0 +1,102 @@
+# Generated from lib/herb/engine/inline_render/visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module InlineRender
+      # Replaces a `render` of a static partial with the partial itself, so the rendered page costs
+      # no partial lookup at run time.
+      #
+      #     require "herb/engine/inline_render/visitor"
+      #
+      #     Herb::Engine.new(source, visitors: [Herb::Engine::InlineRender::Visitor.new])
+      #
+      # It has to run first, and the engine refuses a stack that puts it anywhere else. Everything
+      # after it sees the partial's markup as part of the template it landed in, which is what holds
+      # a partial to whatever the template around it is held to: a validator that refuses markup in a
+      # template refuses it in a partial, and a transform that rewrites a tag rewrites it wherever it
+      # was written. Were it to run last, moving markup into a partial would be a way of turning
+      # those off.
+      #
+      # What it moves is recorded on `Herb::Visitor::Context::Origin`, because a tree alone cannot say that a
+      # node was written somewhere else or that nobody wrote it at all. That is what lets a position
+      # reported from inside an inlined partial name the partial rather than the template it landed
+      # in, and leaves the wrapper written here attributed to nobody.
+      #
+      # A partial is inlined only when the file it names is knowable and the copy would mean what the
+      # original did. Some of what a partial means is answered by where it is rather than by what it
+      # says, and none of that survives being copied, so `Inliner` reads the partial and leaves it
+      # alone when it finds any of it. Anything left alone stays the `render` call it was written as.
+      class Visitor < Herb::Visitor
+        include Herb::Visitor::ContextAware
+
+        ARRAY_PROPERTIES: Array[Symbol]
+
+        NODE_PROPERTIES: Array[Symbol]
+
+        ASSIGNMENT_NODES: Array[Symbol]
+
+        # : () -> bool
+        def self.inlines_renders?: () -> bool
+
+        # : (Herb::AST::DocumentNode) -> void
+        def visit_document_node: (Herb::AST::DocumentNode) -> void
+
+        # : () -> String
+        def inspect: () -> String
+
+        private
+
+        # : (Herb::AST::Node) -> void
+        def inline: (Herb::AST::Node) -> void
+
+        # : (Array[Herb::AST::Node]) -> void
+        def expand: (Array[Herb::AST::Node]) -> void
+
+        # : (Herb::AST::Node) -> bool
+        def inlinable?: (Herb::AST::Node) -> bool
+
+        # : (Herb::AST::Node) -> Array[String]
+        def shadowed: (Herb::AST::Node) -> Array[String]
+
+        # : (Herb::AST::Node, ?Array[String]) -> Array[String]
+        def assigned_locals: (Herb::AST::Node, ?Array[String]) -> Array[String]
+
+        # : (Herb::AST::Node) -> String?
+        def assigned_name: (Herb::AST::Node) -> String?
+
+        # : (Herb::AST::Node) -> bool
+        def outputs?: (Herb::AST::Node) -> bool
+
+        # : (Herb::AST::Node) -> Array[Herb::AST::Node]
+        def spliced: (Herb::AST::Node) -> Array[Herb::AST::Node]
+
+        # : (Pathname) -> String
+        def relative: (Pathname) -> String
+
+        # : (Array[Herb::AST::Node]) -> void
+        def inline_nested: (Array[Herb::AST::Node]) -> void
+
+        # : (String) -> Herb::AST::DocumentNode?
+        def parse: (String) -> Herb::AST::DocumentNode?
+
+        # : (Herb::AST::Node, Array[String]) -> String
+        def opening_for: (Herb::AST::Node, Array[String]) -> String
+
+        # : (Array[String], Array[String]) -> String
+        def block_locals: (Array[String], Array[String]) -> String
+
+        # : (Herb::AST::Node) -> String
+        def closing_for_code: (Herb::AST::Node) -> String
+
+        # : (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
+        def block: (Herb::AST::Node, Array[Herb::AST::Node], Pathname, Array[String]) -> Herb::AST::ERBBlockNode
+
+        # : (Herb::AST::Node) -> Herb::AST::ERBEndNode
+        def closing_for: (Herb::AST::Node) -> Herb::AST::ERBEndNode
+
+        # : () -> untyped
+        def inliner: () -> untyped
+      end
+    end
+  end
+end

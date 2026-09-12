@@ -1,5 +1,0 @@
----
-source: "Engine::Slots::MarkersTest#test_0047_delimits each item of a keyed collection"
-input: "{source: \"<% @users.each do |user| %><li herb-key=\\\"<%= user[:id] %>\\\"><%= user[:name] %></li><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\"}, {id: 2, name: \"Alice\"}]}, options: {visitors: [#<Herb::Engine::SlotVisitor server>], filename: \"app/views/test.html.erb\"}}"
----
-<!--herb-region:app/views/test.html.erb:8dda4bae:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li herb-key="1" data-herb-slot="1:attribute:herb-key 2:child">Marco</li><!--/herb-item:0--><!--herb-item:0:2--><li herb-key="2" data-herb-slot="1:attribute:herb-key 2:child">Alice</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

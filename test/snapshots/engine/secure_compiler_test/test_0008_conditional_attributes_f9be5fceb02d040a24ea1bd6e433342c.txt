@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0008_conditional attributes"
+input: "secure_compiler_test-0"
+---
+<button type="submit" disabled aria-busy="true" class="btn">Submit</button>

@@ -1,5 +1,5 @@
 import { Printer } from "./printer.js"
-import { getNodesBeforePosition, getNodesAfterPosition } from "@herb-tools/core"
+import { getNodesBeforePosition, getNodesAfterPosition, isWhitespaceNode, sliceBetweenPositions } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
 
@@ -11,6 +11,11 @@ import type * as Nodes from "@herb-tools/core"
  * - Testing parser accuracy (input should equal output)
  * - Baseline printing before applying transformations
  * - Verifying AST round-trip fidelity
+ *
+ * A byte-exact round-trip requires a tree parsed with `track_whitespace: true`, since that is
+ * the only mode in which every whitespace token is represented by a node. Without it the
+ * whitespace separating the parts of an open tag is recovered from the source the nodes were
+ * parsed from, and falls back to a single separating space when that source is unavailable.
  */
 export class IdentityPrinter extends Printer {
   static printERBNode(node: Nodes.ERBNode) {
@@ -44,7 +49,17 @@ export class IdentityPrinter extends Printer {
       this.write(node.tag_name.value)
     }
 
-    this.visitChildNodes(node)
+    let previousEnd = node.tag_name?.location.end ?? node.tag_opening?.location.end
+
+    node.children.forEach(child => {
+      if (previousEnd && !isWhitespaceNode(child) && !this.context.endsWithWhitespace()) {
+        this.write(this.separatorBetween(node.source, previousEnd, child.location.start))
+      }
+
+      this.visit(child)
+
+      previousEnd = child.location.end
+    })
 
     if (node.tag_closing) {
       this.write(node.tag_closing.value)
@@ -235,6 +250,10 @@ export class IdentityPrinter extends Printer {
   }
 
   visitERBContentNode(node: Nodes.ERBContentNode): void {
+    this.printERBNode(node)
+  }
+
+  visitERBCommentNode(node: Nodes.ERBCommentNode): void {
     this.printERBNode(node)
   }
 
@@ -474,6 +493,18 @@ export class IdentityPrinter extends Printer {
     this.printERBNode(node)
   }
 
+  visitHerbDirectiveNode(node: Nodes.HerbDirectiveNode): void {
+    this.printERBNode(node)
+  }
+
+  visitHerbStateDirectiveNode(node: Nodes.HerbStateDirectiveNode): void {
+    this.printERBNode(node)
+  }
+
+  visitHerbStateDeclarationNode(_node: Nodes.HerbStateDeclarationNode): void {
+    // extracted metadata, nothing to print
+  }
+
   visitRubyParameterNode(_node: Nodes.RubyParameterNode): void {
     // extracted metadata, nothing to print
   }
@@ -508,6 +539,22 @@ export class IdentityPrinter extends Printer {
     if (node.end_node) {
       this.visit(node.end_node)
     }
+  }
+
+  /**
+   * Recover the whitespace separating two adjacent parts of an open tag
+   *
+   * A WhitespaceNode is its own separator, so nothing is written on either side of one.
+   */
+  protected separatorBetween(source: string | null, from: Nodes.Position, to: Nodes.Position): string {
+    if (!from.isBefore(to)) return ""
+    if (!source) return " "
+
+    const separator = sliceBetweenPositions(source, from, to)
+
+    if (separator === null || separator === "" || separator.trim() !== "") return " "
+
+    return separator
   }
 
   /**

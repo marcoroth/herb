@@ -1,15 +1,21 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "tmpdir"
+
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 
 module Engine
   class ReportSessionTest < Minitest::Spec
+    include SnapshotUtils
+
     before do
-      Herb::Engine::Report::Session.reset!
+      Herb::Engine::Runtime::Session.reset!
     end
 
     after do
-      Herb::Engine::Report::Session.reset!
+      Herb::Engine::Runtime::Session.reset!
     end
 
     def diagnostic(message: "m", code: "c")
@@ -23,15 +29,15 @@ module Engine
     end
 
     test "records outside a scope, so a producer never has to guard its calls" do
-      Herb::Engine::Report::Session.record(diagnostic)
+      Herb::Engine::Runtime::Session.record(diagnostic)
 
-      assert_equal 1, Herb::Engine::Report::Session.current.diagnostics.length
-      refute_predicate Herb::Engine::Report::Session, :scoped?
+      assert_equal 1, Herb::Engine::Runtime::Session.current.diagnostics.length
+      refute_predicate Herb::Engine::Runtime::Session, :scoped?
     end
 
     test "collects what was recorded during a capture" do
-      session = Herb::Engine::Report::Session.capture do
-        Herb::Engine::Report::Session.record(diagnostic(message: "inside"))
+      session = Herb::Engine::Runtime::Session.capture do
+        Herb::Engine::Runtime::Session.record(diagnostic(message: "inside"))
       end
 
       assert_equal ["inside"], session.diagnostics.map(&:message)
@@ -39,20 +45,20 @@ module Engine
     end
 
     test "closes the scope when the capture ends" do
-      Herb::Engine::Report::Session.capture { nil }
+      Herb::Engine::Runtime::Session.capture { nil }
 
-      refute_predicate Herb::Engine::Report::Session, :scoped?
+      refute_predicate Herb::Engine::Runtime::Session, :scoped?
     end
 
     test "gives the outer session back after a nested one, rather than discarding it" do
-      outer = Herb::Engine::Report::Session.capture do
-        Herb::Engine::Report::Session.record(diagnostic(code: "outer"))
+      outer = Herb::Engine::Runtime::Session.capture do
+        Herb::Engine::Runtime::Session.record(diagnostic(code: "outer"))
 
-        Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.record(diagnostic(code: "inner"))
+        Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.record(diagnostic(code: "inner"))
         end
 
-        Herb::Engine::Report::Session.record(diagnostic(code: "outer-again"))
+        Herb::Engine::Runtime::Session.record(diagnostic(code: "outer-again"))
       end
 
       assert_equal ["outer", "outer-again"], outer.diagnostics.map(&:code)
@@ -61,9 +67,9 @@ module Engine
     test "keeps a nested session's findings out of the outer one" do
       inner = nil
 
-      Herb::Engine::Report::Session.capture do
-        inner = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.record(diagnostic(code: "inner"))
+      Herb::Engine::Runtime::Session.capture do
+        inner = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.record(diagnostic(code: "inner"))
         end
       end
 
@@ -72,97 +78,153 @@ module Engine
 
     test "restores the scope even when the block raises" do
       assert_raises(RuntimeError) do
-        Herb::Engine::Report::Session.capture { raise "boom" }
+        Herb::Engine::Runtime::Session.capture { raise "boom" }
       end
 
-      refute_predicate Herb::Engine::Report::Session, :scoped?
+      refute_predicate Herb::Engine::Runtime::Session, :scoped?
     end
 
     test "carries sources through to the payload" do
-      session = Herb::Engine::Report::Session.capture do
-        Herb::Engine::Report::Session.record(diagnostic)
-        Herb::Engine::Report::Session.source("app/views/a.html.erb", "<div></div>\n")
+      session = Herb::Engine::Runtime::Session.capture do
+        Herb::Engine::Runtime::Session.record(diagnostic)
+        Herb::Engine::Runtime::Session.source("app/views/a.html.erb", "<div></div>\n")
       end
 
       assert_equal({ "app/views/a.html.erb" => "<div></div>\n" }, session.report.to_h[:sources])
     end
 
+    def compiled_entry
+      { message: "m", code: "herb-state-declaration", severity: :error, origin: "Herb Compiler", phase: :compile }
+    end
+
+    def in_project(contents = "<div>\n  <span>\n</div>\n")
+      Dir.mktmpdir do |directory|
+        Dir.chdir(directory) do
+          FileUtils.mkdir_p("app/views")
+          File.write("app/views/a.html.erb", contents)
+
+          yield
+        end
+      end
+    end
+
+    test "reads the template off disk, so a finding can be shown in context" do
+      in_project do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+        end
+
+        assert_equal({ "app/views/a.html.erb" => "<div>\n  <span>\n</div>\n" }, session.report.sources)
+      end
+    end
+
+    test "reads it once, however many times the template renders" do
+      in_project do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+
+          File.write("app/views/a.html.erb", "<p>rewritten after the first read</p>\n")
+
+          Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+        end
+
+        assert_equal({ "app/views/a.html.erb" => "<div>\n  <span>\n</div>\n" }, session.report.sources)
+      end
+    end
+
+    test "reads nothing when nobody opened a session to read it" do
+      in_project do
+        Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/a.html.erb", [compiled_entry])
+
+        assert_empty Herb::Engine::Runtime::Session.current.report.sources
+      end
+    end
+
+    test "records the findings even when the template leads nowhere on disk" do
+      session = Herb::Engine::Runtime::Session.capture do
+        Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/gone.html.erb", [compiled_entry])
+      end
+
+      assert_equal ["herb-state-declaration"], session.report.diagnostics.map(&:code)
+      assert_empty session.report.sources
+    end
+
     test "is empty until something is recorded" do
-      session = Herb::Engine::Report::Session.capture { nil }
+      session = Herb::Engine::Runtime::Session.capture { nil }
 
       assert_predicate session, :empty?
     end
 
     describe "open and close, for somewhere a block will not reach" do
       test "collects between the two calls" do
-        session = Herb::Engine::Report::Session.open
-        Herb::Engine::Report::Session.record(diagnostic)
-        Herb::Engine::Report::Session.close
+        session = Herb::Engine::Runtime::Session.open
+        Herb::Engine::Runtime::Session.record(diagnostic)
+        Herb::Engine::Runtime::Session.close
 
         assert_equal 1, session.diagnostics.length
-        refute_predicate Herb::Engine::Report::Session, :scoped?
+        refute_predicate Herb::Engine::Runtime::Session, :scoped?
       end
 
       test "nests the same way capture does" do
-        outer = Herb::Engine::Report::Session.open
-        inner = Herb::Engine::Report::Session.open
+        outer = Herb::Engine::Runtime::Session.open
+        inner = Herb::Engine::Runtime::Session.open
 
-        Herb::Engine::Report::Session.record(diagnostic(code: "inner"))
-        Herb::Engine::Report::Session.close
+        Herb::Engine::Runtime::Session.record(diagnostic(code: "inner"))
+        Herb::Engine::Runtime::Session.close
 
-        Herb::Engine::Report::Session.record(diagnostic(code: "outer"))
-        Herb::Engine::Report::Session.close
+        Herb::Engine::Runtime::Session.record(diagnostic(code: "outer"))
+        Herb::Engine::Runtime::Session.close
 
         assert_equal ["inner"], inner.diagnostics.map(&:code)
         assert_equal ["outer"], outer.diagnostics.map(&:code)
       end
 
       test "closing when nothing is open leaves nothing open" do
-        assert_nil Herb::Engine::Report::Session.close
-        refute_predicate Herb::Engine::Report::Session, :scoped?
+        assert_nil Herb::Engine::Runtime::Session.close
+        refute_predicate Herb::Engine::Runtime::Session, :scoped?
       end
     end
 
     test "does not leak between threads" do
-      Herb::Engine::Report::Session.record(diagnostic)
+      Herb::Engine::Runtime::Session.record(diagnostic)
 
-      other = Thread.new { Herb::Engine::Report::Session.current.diagnostics.length }.value
+      other = Thread.new { Herb::Engine::Runtime::Session.current.diagnostics.length }.value
 
       assert_equal 0, other
-      assert_equal 1, Herb::Engine::Report::Session.current.diagnostics.length
+      assert_equal 1, Herb::Engine::Runtime::Session.current.diagnostics.length
     end
 
     test "a thread spawned while a session is open records into its own" do
-      session = Herb::Engine::Report::Session.open
+      session = Herb::Engine::Runtime::Session.open
 
-      Thread.new { Herb::Engine::Report::Session.record(diagnostic(code: "background")) }.join
+      Thread.new { Herb::Engine::Runtime::Session.record(diagnostic(code: "background")) }.join
 
       assert_empty session.diagnostics
     end
 
     test "reaches a render happening in a fiber, the way a streaming response renders" do
-      session = Herb::Engine::Report::Session.open
+      session = Herb::Engine::Runtime::Session.open
 
-      Fiber.new { Herb::Engine::Report::Session.record(diagnostic(code: "streamed")) }.resume
+      Fiber.new { Herb::Engine::Runtime::Session.record(diagnostic(code: "streamed")) }.resume
 
       assert_equal ["streamed"], session.diagnostics.map(&:code)
       refute_predicate session, :empty?
     end
 
     test "a session opened inside a fiber does not escape it" do
-      session = Herb::Engine::Report::Session.open
+      session = Herb::Engine::Runtime::Session.open
 
-      Fiber.new { Herb::Engine::Report::Session.open }.resume
+      Fiber.new { Herb::Engine::Runtime::Session.open }.resume
 
-      assert_same session, Herb::Engine::Report::Session.current
+      assert_same session, Herb::Engine::Runtime::Session.current
     end
 
     test "a ractor collects into its own, even reaching the one in fiber storage" do
-      session = Herb::Engine::Report::Session.open
-      Herb::Engine::Report::Session.record(diagnostic(code: "main"))
+      session = Herb::Engine::Runtime::Session.open
+      Herb::Engine::Runtime::Session.record(diagnostic(code: "main"))
 
       ractor = Ractor.new do
-        klass = Herb::Engine::Report::Session
+        klass = Herb::Engine::Runtime::Session
 
         reached = !Fiber[klass::STATE_KEY].nil?
         refused = klass.stored.nil?
@@ -182,14 +244,14 @@ module Engine
 
     describe "attributing what happens to the tag that caused it" do
       def session_with_frames
-        Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 3, 7) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 2")
+        Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 3, 7) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 2")
           end
 
-          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 3")
+          Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 3")
           end
         end
       end
@@ -207,18 +269,18 @@ module Engine
       end
 
       test "drops what happens outside any tag" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
         end
 
         assert_empty session.entries
       end
 
       test "attributes to the innermost tag" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-            Herb::Engine::Report::Session.at("a.html.erb", 2, 4) do
-              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Runtime::Session.at("a.html.erb", 2, 4) do
+              Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
             end
           end
         end
@@ -227,24 +289,24 @@ module Engine
       end
 
       test "leaves the frame even when the tag raises" do
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           begin
-            Herb::Engine::Report::Session.at("a.html.erb", 1, 0) { raise "boom" }
+            Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) { raise "boom" }
           rescue RuntimeError
             nil
           end
 
-          Herb::Engine::Report::Session.observe(:queries, "after the failure")
+          Herb::Engine::Runtime::Session.observe(:queries, "after the failure")
         end
 
         assert_empty session.entries
       end
 
       test "turns what one tag observed into a metric carrying a badge and no severity" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 7, 8) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 2")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 7, 8) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 2")
           end
         end
 
@@ -261,13 +323,13 @@ module Engine
       end
 
       test "measures only the tags that observed something" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-            Herb::Engine::Report::Session.observe(:renders, "partial")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Runtime::Session.observe(:renders, "partial")
           end
 
-          Herb::Engine::Report::Session.at("a.html.erb", 2, 0) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          Herb::Engine::Runtime::Session.at("a.html.erb", 2, 0) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
           end
         end
 
@@ -277,9 +339,9 @@ module Engine
       end
 
       test "puts what it measured into the payload" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
           end
         end
 
@@ -287,17 +349,17 @@ module Engine
           "#{queries.size} SQL query"
         }
 
-        assert_includes session.report.to_json, %("value":"1 SQL query")
+        assert_snapshot_matches(session.report.to_json, "session_test-0")
       end
 
       test "reports every tag still rendering, innermost first" do
         stack = nil
 
-        Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("layouts/application.html.erb", 2, 2) do
-            Herb::Engine::Report::Session.at("posts/index.html.erb", 4, 4) do
-              Herb::Engine::Report::Session.at("posts/_card.html.erb", 1, 2) do
-                stack = Herb::Engine::Report::Session.stack
+        Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("layouts/application.html.erb", 2, 2) do
+            Herb::Engine::Runtime::Session.at("posts/index.html.erb", 4, 4) do
+              Herb::Engine::Runtime::Session.at("posts/_card.html.erb", 1, 2) do
+                stack = Herb::Engine::Runtime::Session.stack
               end
             end
           end
@@ -311,9 +373,9 @@ module Engine
       end
 
       test "writes an entry the way an editor would take it" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 3, 8) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/posts/_card.html.erb", 3, 8) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
           end
         end
 
@@ -321,9 +383,9 @@ module Engine
       end
 
       test "writes a tag with no location of its own as the first line" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 0, 0) do
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/posts/_card.html.erb", 0, 0) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
           end
         end
 
@@ -331,15 +393,15 @@ module Engine
       end
 
       test "reports an empty stack outside of any tag" do
-        assert_empty Herb::Engine::Report::Session.capture { nil }.stack
+        assert_empty Herb::Engine::Runtime::Session.capture { nil }.stack
       end
 
       test "hands out a stack that cannot be used to corrupt the live one" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-            Herb::Engine::Report::Session.stack.each(&:clear)
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Runtime::Session.stack.each(&:clear)
 
-            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
           end
         end
 
@@ -349,11 +411,11 @@ module Engine
       end
 
       test "collects a tag reached twice in one render into one entry" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("a.html.erb") do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("a.html.erb") do
             2.times do
-              Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-                Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+              Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
               end
             end
           end
@@ -364,11 +426,11 @@ module Engine
       end
 
       test "keeps two renders of the same partial apart" do
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           2.times do
-            Herb::Engine::Report::Session.render("_card.html.erb") do
-              Herb::Engine::Report::Session.at("_card.html.erb", 1, 5) do
-                Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Runtime::Session.render("_card.html.erb") do
+              Herb::Engine::Runtime::Session.at("_card.html.erb", 1, 5) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
               end
             end
           end
@@ -381,11 +443,11 @@ module Engine
       end
 
       test "gives each of them its own metric rather than one summed one" do
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           2.times do
-            Herb::Engine::Report::Session.render("_card.html.erb") do
-              Herb::Engine::Report::Session.at("_card.html.erb", 1, 5) do
-                Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Runtime::Session.render("_card.html.erb") do
+              Herb::Engine::Runtime::Session.at("_card.html.erb", 1, 5) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
               end
             end
           end
@@ -399,11 +461,11 @@ module Engine
 
     describe "annotating a render" do
       test "gives every occurrence of a template its own node" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("index.html.erb") do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("index.html.erb") do
             2.times do
-              Herb::Engine::Report::Session.render("_card.html.erb") do
-                Herb::Engine::Report::Session.annotate(:queries, 3, origin: "Herb Engine")
+              Herb::Engine::Runtime::Session.render("_card.html.erb") do
+                Herb::Engine::Runtime::Session.annotate(:queries, 3, origin: "Herb Engine")
               end
             end
           end
@@ -414,24 +476,24 @@ module Engine
       end
 
       test "says where in the parent each render was called from" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("index.html.erb") do
-            Herb::Engine::Report::Session.at("index.html.erb", 3, 4) do
-              Herb::Engine::Report::Session.render("_card.html.erb") { nil }
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("index.html.erb") do
+            Herb::Engine::Runtime::Session.at("index.html.erb", 3, 4) do
+              Herb::Engine::Runtime::Session.render("_card.html.erb") { nil }
             end
           end
         end
 
         assert_equal(
-          { id: "2", template: "_card.html.erb", parent: "1", line: 3, column: 5 },
+          { id: "2", template: "_card.html.erb", parent: "1", location: { line: 3, column: 5 } },
           session.report.render_tree.last
         )
       end
 
       test "tells a diagnostic which render it was recorded during" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("_card.html.erb") do
-            Herb::Engine::Report::Session.record(
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("_card.html.erb") do
+            Herb::Engine::Runtime::Session.record(
               Herb::Diagnostic.new(template: "_card.html.erb", message: "This element has a problem.")
             )
           end
@@ -441,8 +503,8 @@ module Engine
       end
 
       test "leaves a diagnostic recorded outside a render without one" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.record(
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.record(
             Herb::Diagnostic.new(template: "_card.html.erb", message: "This element has a problem.")
           )
         end
@@ -451,10 +513,10 @@ module Engine
       end
 
       test "says what kind of render reached each template" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("index.html.erb") do
-            Herb::Engine::Report::Session.at("index.html.erb", 3, 4, :collection) do
-              Herb::Engine::Report::Session.render("_card.html.erb") { nil }
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("index.html.erb") do
+            Herb::Engine::Runtime::Session.at("index.html.erb", 3, 4, :collection) do
+              Herb::Engine::Runtime::Session.render("_card.html.erb") { nil }
             end
           end
         end
@@ -463,38 +525,38 @@ module Engine
       end
 
       test "leaves out a kind the tag could not name" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("index.html.erb") do
-            Herb::Engine::Report::Session.at("index.html.erb", 3, 4) do
-              Herb::Engine::Report::Session.render("_card.html.erb") { nil }
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("index.html.erb") do
+            Herb::Engine::Runtime::Session.at("index.html.erb", 3, 4) do
+              Herb::Engine::Runtime::Session.render("_card.html.erb") { nil }
             end
           end
         end
 
-        refute_includes session.report.render_tree.last.keys, :via
+        assert_equal [:id, :template, :parent, :location], session.report.render_tree.last.keys
       end
 
       test "keeps the kind out of the frames it hands back" do
-        Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.at("a.html.erb", 1, 0, :partial) do
-            assert_equal [["a.html.erb", 1, 0]], Herb::Engine::Report::Session.stack
+        Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("a.html.erb", 1, 0, :partial) do
+            assert_equal [["a.html.erb", 1, 0]], Herb::Engine::Runtime::Session.stack
           end
         end
       end
 
       test "leaves the call site off a render nothing was rendering" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("index.html.erb") { nil }
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("index.html.erb") { nil }
         end
 
         assert_equal({ id: "1", template: "index.html.erb" }, session.report.render_tree.first)
       end
 
       test "says which render each one happened inside" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("layout.html.erb") do
-            Herb::Engine::Report::Session.render("index.html.erb") do
-              Herb::Engine::Report::Session.render("_card.html.erb") { nil }
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("layout.html.erb") do
+            Herb::Engine::Runtime::Session.render("index.html.erb") do
+              Herb::Engine::Runtime::Session.render("_card.html.erb") { nil }
             end
           end
         end
@@ -507,10 +569,10 @@ module Engine
       end
 
       test "keeps two producers apart under one render" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("index.html.erb") do
-            Herb::Engine::Report::Session.annotate(:render_time, 12.4, origin: "reactionview")
-            Herb::Engine::Report::Session.annotate(:queries, 3, origin: "Herb Engine")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("index.html.erb") do
+            Herb::Engine::Runtime::Session.annotate(:render_time, 12.4, origin: "reactionview")
+            Herb::Engine::Runtime::Session.annotate(:queries, 3, origin: "Herb Engine")
           end
         end
 
@@ -521,43 +583,43 @@ module Engine
       end
 
       test "reports the render it is inside of" do
-        Herb::Engine::Report::Session.capture do
-          assert_nil Herb::Engine::Report::Session.current_node
+        Herb::Engine::Runtime::Session.capture do
+          assert_nil Herb::Engine::Runtime::Session.current_node
 
-          Herb::Engine::Report::Session.render("a.html.erb") do
-            assert_equal "1", Herb::Engine::Report::Session.current_node
+          Herb::Engine::Runtime::Session.render("a.html.erb") do
+            assert_equal "1", Herb::Engine::Runtime::Session.current_node
           end
 
-          assert_nil Herb::Engine::Report::Session.current_node
+          assert_nil Herb::Engine::Runtime::Session.current_node
         end
       end
 
       test "drops an annotation made outside any render rather than inventing a node" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.annotate(:render_time, 1.0, origin: "reactionview")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.annotate(:render_time, 1.0, origin: "reactionview")
         end
 
         assert_empty session.report.nodes
       end
 
       test "leaves the render even when it raises" do
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           begin
-            Herb::Engine::Report::Session.render("a.html.erb") { raise "boom" }
+            Herb::Engine::Runtime::Session.render("a.html.erb") { raise "boom" }
           rescue RuntimeError
             nil
           end
 
-          Herb::Engine::Report::Session.annotate(:render_time, 1.0, origin: "reactionview")
+          Herb::Engine::Runtime::Session.annotate(:render_time, 1.0, origin: "reactionview")
         end
 
         assert_empty session.report.nodes
       end
 
       test "counts as something worth delivering even with no diagnostics" do
-        session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.render("a.html.erb") do
-            Herb::Engine::Report::Session.annotate(:render_time, 1.0, origin: "reactionview")
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.render("a.html.erb") do
+            Herb::Engine::Runtime::Session.annotate(:render_time, 1.0, origin: "reactionview")
           end
         end
 
@@ -567,11 +629,160 @@ module Engine
     end
 
     test "hands a channel through to the report it is collecting into" do
-      session = Herb::Engine::Report::Session.open
+      session = Herb::Engine::Runtime::Session.open
       channel = Object.new
 
       assert_same channel, session.channel(:thing) { channel }
       assert_same channel, session.report.channel(:thing) { Object.new }
+    end
+
+    describe "measurements a producer registered up front" do
+      after do
+        Herb::Engine::Runtime::Session.clear_measurements
+      end
+
+      def observed(count)
+        Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+            count.times { Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1") }
+          end
+        end
+      end
+
+      def register(**options)
+        Herb::Engine::Runtime::Session.measurement(:queries, origin: "Herb Engine", code: "sql-queries", **options) do |queries|
+          "#{queries.size} SQL queries"
+        end
+      end
+
+      test "turns what was observed into findings without the closer knowing who was watching" do
+        register
+
+        session = observed(3)
+
+        assert_empty session.diagnostics
+
+        session.apply_measurements
+
+        assert_equal ["3 SQL queries"], session.diagnostics.map(&:message)
+      end
+
+      test "leaves a session nobody registered anything for alone" do
+        session = observed(3)
+
+        assert_empty session.apply_measurements
+        assert_empty session.diagnostics
+      end
+
+      test "says nothing about a tag that saw nothing" do
+        register
+
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) { nil }
+        end
+
+        assert_empty session.apply_measurements
+      end
+
+      test "can be applied more than once without saying it twice" do
+        register
+
+        session = observed(3)
+
+        session.apply_measurements
+        session.apply_measurements
+
+        assert_equal 1, session.diagnostics.length
+      end
+
+      test "reports a measurement as a measurement instead of as a fault" do
+        register
+
+        session = observed(3)
+        session.apply_measurements
+
+        diagnostic = session.diagnostics.first
+
+        assert_equal :metric, diagnostic.kind
+        assert_nil diagnostic.severity
+      end
+
+      test "carries the sentence its producer wrote for it" do
+        register(description: ->(queries) { "This ERB tag ran #{queries.size} SQL queries." })
+
+        session = observed(3)
+        session.apply_measurements
+
+        assert_equal "This ERB tag ran 3 SQL queries.", session.diagnostics.first.description
+      end
+
+      test "lets a producer say its finding is a value instead of a measurement" do
+        register(kind: :value)
+
+        session = observed(3)
+        session.apply_measurements
+
+        assert_equal :value, session.diagnostics.first.kind
+      end
+
+      test "keeps one finding per occurrence by default" do
+        register
+
+        session = Herb::Engine::Runtime::Session.capture do
+          2.times do
+            Herb::Engine::Runtime::Session.render("app/views/a.html.erb") do
+              Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+              end
+            end
+          end
+        end
+
+        assert_equal ["1 SQL queries", "1 SQL queries"], session.measure(:queries, origin: "Herb Engine") { |queries| "#{queries.size} SQL queries" }.map(&:value)
+      end
+
+      test "merges every occurrence at one position when asked to" do
+        session = Herb::Engine::Runtime::Session.capture do
+          2.times do
+            Herb::Engine::Runtime::Session.render("app/views/a.html.erb") do
+              Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+                Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+              end
+            end
+          end
+        end
+
+        found = session.measure(:queries, origin: "Herb Engine", per: :position) { |queries| "#{queries.size} SQL queries" }
+
+        assert_equal ["2 SQL queries"], found.map(&:value)
+      end
+    end
+
+    describe "where a tag begins and ends" do
+      test "spans the whole tag when the compiler said how far it reaches" do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4, nil, end_line: 3, end_column: 22) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        location = session.entries.first.location
+
+        assert_equal [3, 4], [location.start.line, location.start.column]
+        assert_equal [3, 22], [location.end.line, location.end.column]
+      end
+
+      test "falls back to a point for a tag that did not say" do
+        session = Herb::Engine::Runtime::Session.capture do
+          Herb::Engine::Runtime::Session.at("app/views/a.html.erb", 3, 4) do
+            Herb::Engine::Runtime::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        location = session.entries.first.location
+
+        assert_equal [3, 4], [location.end.line, location.end.column]
+      end
     end
   end
 end

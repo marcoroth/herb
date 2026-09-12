@@ -111,7 +111,7 @@ describe("actionview-strict-locals-first-line autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test("does not modify non-partial files", () => {
+  test("adds the blank line in a non-partial template", () => {
     const input = dedent`
       <%# locals: (user:) %>
       <div><%= user.name %></div>
@@ -120,8 +120,23 @@ describe("actionview-strict-locals-first-line autofix", () => {
     const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
     const result = linter.autofix(input, { fileName: "show.html.erb", framework: "actionview" })
 
-    expect(result.source).toBe(input)
-    expect(result.fixed).toHaveLength(0)
+    expect(result.source).toBe(dedent`
+      <%# locals: (user:) %>
+
+      <div><%= user.name %></div>
+    `)
+    expect(result.fixed).toHaveLength(1)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("moves a layout declaration up to the first line", () => {
+    const input = `\n<%# locals: (**) %>\n\n<html><body><%= yield %></body></html>`
+
+    const linter = new Linter(Herb, [ActionViewStrictLocalsFirstLineRule])
+    const result = linter.autofix(input, { fileName: "app/views/layouts/application.html.erb", framework: "actionview" })
+
+    expect(result.source).toBe(`<%# locals: (**) %>\n\n<html><body><%= yield %></body></html>`)
+    expect(result.fixed).toHaveLength(1)
     expect(result.unfixed).toHaveLength(0)
   })
 })

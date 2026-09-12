@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require "action_view"
-require "herb/engine/optimize_visitor"
+require "herb/engine/visitors/optimize_visitor"
 
 module Engine
   class OptimizedHelpersTest < Minitest::Spec
@@ -38,7 +38,7 @@ module Engine
     end
 
     def diagnostics_from(context, compiled = compile)
-      Herb::Engine::Report::Session.capture { context.instance_eval(compiled) }.diagnostics
+      Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }.diagnostics
     end
 
     describe "what it compiles in" do
@@ -75,20 +75,27 @@ module Engine
         assert_equal :warning, diagnostic.severity
         assert_equal FILENAME, diagnostic.template
         assert_equal 1, diagnostic.location.start.line
-        assert_includes diagnostic.message, "`tag` was compiled away as #{TAG_OWNER}"
+
+        assert_equal %(`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag), diagnostic.message
       end
 
       test "names the module that took the helper over" do
         diagnostic = diagnostics_from(overriding_context).first
 
-        assert_match(/defined by \S*OverriddenTag\z/, diagnostic.message)
+        assert_equal(
+          "`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag",
+          diagnostic.message
+        )
       end
 
       test "still names an override that has no name of its own" do
         anonymous = Module.new { def tag(*) = "anonymous" }
         context = Class.new { include ::ActionView::Helpers::TagHelper }.tap { |k| k.include(anonymous) }.new
 
-        assert_match(/defined by #<Module:0x[0-9a-f]+>\z/, diagnostics_from(context).first.message)
+        assert_match(
+          /\A`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by #<Module:0x[0-9a-f]+>\z/,
+          diagnostics_from(context).first.message
+        )
       end
 
       test "stays quiet when the helper is still Action View's" do
@@ -115,7 +122,7 @@ module Engine
         compiled = compile
         context = overriding_context
 
-        session = Herb::Engine::Report::Session.capture do
+        session = Herb::Engine::Runtime::Session.capture do
           5.times { context.instance_eval(compiled) }
         end
 
@@ -126,8 +133,8 @@ module Engine
         compiled = compile
         context = overriding_context
 
-        counts = 3.times.map do
-          Herb::Engine::Report::Session.capture { context.instance_eval(compiled) }.diagnostics.length
+        counts = Array.new(3) do
+          Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }.diagnostics.length
         end
 
         assert_equal [1, 1, 1], counts

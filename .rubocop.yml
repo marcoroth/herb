@@ -1,3 +1,11 @@
+inherit_from: .rubocop_todo.yml
+
+require:
+  - ./rubocop/cop/herb/includes_assertion.rb
+
+plugins:
+  - rubocop-performance
+
 AllCops:
   NewCops: enable
   SuggestExtensions: false
@@ -44,6 +52,7 @@ Style/BlockDelimiters:
 Style/SafeNavigationChainLength:
   Exclude:
     - lib/herb/ast/erb_render_node.rb
+    - lib/herb/dev/classifier.rb
     - lib/herb/dev/runner.rb
 
 Style/GlobalVars:
@@ -68,9 +77,11 @@ Metrics/CyclomaticComplexity:
     - bench/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - templates/template.rb
@@ -83,11 +94,13 @@ Metrics/MethodLength:
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/diagnostic.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - templates/template.rb
@@ -100,15 +113,21 @@ Metrics/AbcSize:
     - bench/**/*
     - bin/**/*
     - lib/herb/ast/erb_render_node.rb
+    - lib/herb/diagnostic/formatter.rb
     - lib/herb/ast/node.rb
+    - lib/herb/dev/watcher.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev.rb
+    - lib/herb/dev/classifier.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/diagnostic.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/errors.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - lib/herb/token.rb
@@ -126,13 +145,18 @@ Metrics/ClassLength:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/configuration.rb
+    - lib/herb/dev/pipeline.rb
     - lib/herb/dev/runner.rb
+    - lib/herb/dev/server_entry.rb
     - lib/herb/dev/server.rb
+    - lib/herb/dev/watcher.rb
     - lib/herb/diagnostic.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/project.rb
+    - lib/herb/source_path.rb
     - lib/herb/visitor.rb
+    - lib/herb/visitor/stack.rb
     - templates/template.rb
     - test/**/*_test.rb
 
@@ -142,6 +166,7 @@ Metrics/ModuleLength:
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
     - bench/**/*
+    - lib/herb/dev/protocol.rb
 
 Metrics/BlockLength:
   Max: 30
@@ -156,16 +181,26 @@ Metrics/BlockLength:
 
 Metrics/ParameterLists:
   Exclude:
+    - lib/herb.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/diagnostic.rb
     - lib/herb/diff_operation.rb
-    - lib/herb/engine/diagnostics.rb
+    - lib/herb/engine/errors.rb
+    - lib/herb/engine/runtime/journal/summary.rb
+    - lib/herb/engine/runtime/session.rb
+    - lib/herb/engine/slots/schema_compiler.rb
+    - lib/herb/engine/slots/visitor.rb
     - lib/herb/errors.rb
     - lib/herb/parse_result.rb
     - lib/herb/parser_options.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/visitor/diagnostics.rb
+    - lib/herb/engine/visitors/optimize_visitor.rb
+    - test/engine/runtime/journal_test.rb
 
 Metrics/PerceivedComplexity:
   Exclude:
@@ -174,10 +209,15 @@ Metrics/PerceivedComplexity:
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/watcher.rb
+    - lib/herb/dev.rb
+    - lib/herb/dev/classifier.rb
+    - lib/herb/dev/protocol.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - templates/template.rb
@@ -233,3 +273,11 @@ Style/IfUnlessModifier:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: false
+
+Performance/MapCompact:
+  Enabled: false
+
+Herb/IncludesAssertion:
+  Enabled: true
+  Include:
+    - test/**/*

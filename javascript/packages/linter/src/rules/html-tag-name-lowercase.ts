@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor, ElementStackVisitor, findParent } from "../utils/rule-utils.js"
-import { getTagName, getOpenTag, isHTMLOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
+import { getTagName, getOpenTag, isHTMLOpenTagNode, isHTMLElementNode, isKnownHTMLElement, isBuiltInComponent } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
@@ -61,6 +61,10 @@ class TagNameLowercaseVisitor extends ElementStackVisitor<TagNameAutofixContext>
 
     if (!tagName) return
 
+    if (isBuiltInComponent(tagName)) return
+
+    if (/^[A-Z]/.test(tagName) && /[a-z]/.test(tagName) && !isKnownHTMLElement(tagName.toLowerCase())) return
+
     const lowercaseTagName = tagName.toLowerCase()
 
     const type = isHTMLOpenTagNode(node) ? "Opening" : "Closing"
@@ -84,6 +88,7 @@ export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> 
   static autocorrectable = true
   static ruleName = "html-tag-name-lowercase"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

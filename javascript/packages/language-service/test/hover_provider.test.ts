@@ -896,7 +896,7 @@ describe("scoped style hover", () => {
 
     expect(value).toContain("**`<style scoped>`** · Herb Engine")
     expect(value).toContain("applies only to the markup in this file")
-    expect(value).toContain(".title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *)")
+    expect(value).toContain(".title[data-herb-scope-1a2b3c4d]")
     expect(value).toContain("https://herb-tools.dev/projects/engine#scopedstyle-visitor")
   })
 

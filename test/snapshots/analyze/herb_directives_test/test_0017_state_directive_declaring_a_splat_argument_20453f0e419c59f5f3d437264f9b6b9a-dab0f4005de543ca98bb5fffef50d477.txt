@@ -1,0 +1,23 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0017_state directive declaring a splat argument"
+input: |2-
+<%# herb:state (*rest) %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbStateDirectiveNode (location: (1:0)-(1:25))
+    │   ├── errors: (1 error)
+    │   │   └── @ HerbStateInvalidParameterError (location: (1:16)-(1:21))
+    │   │       ├── message: "The `herb:state` directive only declares keyword arguments with defaults. `*rest` is not one. Declare each state with a default, like `(pending: false)`."
+    │   │       └── parameter: "*rest"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state (*rest) " (location: (1:3)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── key: "state" (location: (1:9)-(1:14))
+    │   ├── signature: "(*rest)" (location: (1:15)-(1:22))
+    │   └── states: []
+    │
+    └── @ HTMLTextNode (location: (1:25)-(2:0))
+        └── content: "\n"

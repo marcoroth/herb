@@ -2,6 +2,6 @@
 source: "Engine::ScopedStyleVisitorTest#test_0001_scopes a block to the markup written in the same file"
 input: "{source: \"<style scoped>.title { color: red; }</style>\\n<h1 class=\\\"title\\\">Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>]}}"
 ---
-_buf = ::String.new; _buf << '<style>.title { color: red; }/* narrowed */</style>
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.title { color: red; }/* narrowed */</style>
 <h1 class="title" data-herb-scope-2940ba8a>Hi</h1>'.freeze;
 _buf.to_s

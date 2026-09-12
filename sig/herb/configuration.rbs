@@ -50,6 +50,14 @@ module Herb
 
     def file_exclude_patterns: () -> untyped
 
+    def parser: () -> untyped
+
+    # : () -> Array[String]
+    def erb_openers: () -> Array[String]
+
+    # : () -> Hash[Symbol, untyped]
+    def parser_options: () -> Hash[Symbol, untyped]
+
     def linter: () -> untyped
 
     def engine: () -> untyped

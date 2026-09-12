@@ -18,17 +18,13 @@ options: {action_view_helpers: true}
     │   │   │
     │   │   ├── @ HTMLOpenTagNode (location: (2:5)-(2:25))
     │   │   │   ├── errors: (2 errors)
-    │   │   │   │   ├── @ UnexpectedError (location: (2:11)-(2:12))
-    │   │   │   │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: `/`."
-    │   │   │   │   │   ├── description: "Unexpected Token"
-    │   │   │   │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-    │   │   │   │   │   └── found: "`/`"
+    │   │   │   │   ├── @ UnexpectedSolidusInTagError (location: (2:11)-(2:12))
+    │   │   │   │   │   ├── message: "Unexpected `/` in tag at (2:11)."
+    │   │   │   │   │   └── solidus: "/" (location: (2:11)-(2:12))
     │   │   │   │   │
-    │   │   │   │   └── @ UnexpectedError (location: (2:12)-(2:13))
-    │   │   │   │       ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: `/`."
-    │   │   │   │       ├── description: "Unexpected Token"
-    │   │   │   │       ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-    │   │   │   │       └── found: "`/`"
+    │   │   │   │   └── @ UnexpectedSolidusInTagError (location: (2:12)-(2:13))
+    │   │   │   │       ├── message: "Unexpected `/` in tag at (2:12)."
+    │   │   │   │       └── solidus: "/" (location: (2:12)-(2:13))
     │   │   │   │
     │   │   │   ├── tag_opening: "<" (location: (2:5)-(2:6))
     │   │   │   ├── tag_name: "http:" (location: (2:6)-(2:11))

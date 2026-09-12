@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
-require_relative "../../lib/herb/engine/instrumentation_visitor"
+require_relative "../../lib/herb/engine/visitors/instrumentation_visitor"
 
 module Engine
   class DebugModeTest < Minitest::Spec
@@ -646,9 +646,7 @@ module Engine
         visitors: [ZeroLocationInjector.new, Herb::Engine::DebugVisitor.new]
       ).src
 
-      assert_includes compiled, %(data-herb-debug-line="1")
-      assert_includes compiled, %(data-herb-debug-column="1")
-      refute_includes compiled, %(data-herb-debug-line="0")
+      assert_snapshot_matches(compiled, "debug_mode_test-0")
     end
 
     describe "marking which render a tag came from" do
@@ -675,7 +673,7 @@ module Engine
 
         html = [] #: Array[String]
 
-        Herb::Engine::Report::Session.capture do
+        Herb::Engine::Runtime::Session.capture do
           renders.times { html << object.instance_eval(source) }
         end
 

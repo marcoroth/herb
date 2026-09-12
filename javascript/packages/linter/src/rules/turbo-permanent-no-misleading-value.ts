@@ -46,6 +46,7 @@ export class TurboPermanentNoMisleadingValueRule extends ParserRule<TurboPermane
   static autocorrectable = true
   static ruleName = "turbo-permanent-no-misleading-value"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

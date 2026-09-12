@@ -77,6 +77,7 @@ class NoShadowedBlockArgumentVisitor extends BaseRuleVisitor {
 export class ERBNoShadowedBlockArgumentRule extends ParserRule {
   static ruleName = "erb-no-shadowed-block-argument"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

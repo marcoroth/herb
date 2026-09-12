@@ -5,11 +5,11 @@ import { isRubyParameterNode, Location } from "@herb-tools/core"
 import { extractRubyCommentContent, looksLikeLocalsDeclaration } from "../utils/strict-locals-utils.js"
 
 import type { BaseAutofixContext, Mutable, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, ERBContentNode, ERBStrictLocalsNode, RubyParseError, HerbError } from "@herb-tools/core"
 
 const LOCALS_PREFIX = "locals:"
 
-type StrictLocalsCommentNode = ERBContentNode | ERBStrictLocalsNode
+type StrictLocalsCommentNode = ERBCommentNode | ERBContentNode | ERBStrictLocalsNode
 
 type StrictLocalsFix =
   | { type: "erb-comment-tag" }
@@ -360,21 +360,22 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
     const content = node.content?.value
     if (!content) return
 
-    if (openingTag === "<%" || openingTag === "<%-") {
-      const rubyComment = extractRubyCommentContent(content)
+    if (openingTag !== "<%" && openingTag !== "<%-") return
 
-      if (rubyComment && looksLikeLocalsDeclaration(rubyComment)) {
-        this.addOffense(
-          `Use \`<%#\` instead of \`${openingTag} #\` for strict locals comments. Only ERB comment syntax is recognized.`,
-          node.tag_opening?.location ?? node.location,
-          this.contextFor(node, { type: "erb-comment-tag" }),
-        )
-      }
+    const rubyComment = extractRubyCommentContent(content)
 
-      return
+    if (rubyComment && looksLikeLocalsDeclaration(rubyComment)) {
+      this.addOffense(
+        `Use \`<%#\` instead of \`${openingTag} #\` for strict locals comments. Only ERB comment syntax is recognized.`,
+        node.tag_opening?.location ?? node.location,
+        this.contextFor(node, { type: "erb-comment-tag" }),
+      )
     }
+  }
 
-    if (openingTag !== "<%#") return
+  visitERBCommentNode(node: ERBCommentNode): void {
+    const content = node.content?.value
+    if (!content) return
 
     const commentContent = extractERBCommentContent(content)
     const remainder = commentContent.match(/^locals?\b(.*)/s)?.[1]
@@ -481,7 +482,10 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
   private contextFor(node: StrictLocalsCommentNode, fix: StrictLocalsFix): ERBStrictLocalsCommentSyntaxAutofixContext {
     return {
       node: node as Mutable<StrictLocalsCommentNode>,
-      nodeType: "AST_ERB_CONTENT_NODE",
+      // autofix re-parses without `strict_locals`, so an `ERBStrictLocalsNode`
+      // comes back as the `<%#` comment it was written as. Only `<% #` is an
+      // `ERBContentNode`.
+      nodeType: node.type === "AST_ERB_CONTENT_NODE" ? "AST_ERB_CONTENT_NODE" : "AST_ERB_COMMENT_NODE",
       fix,
     }
   }
@@ -494,6 +498,7 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule<ERBStrictLocals
   static consumesParserErrors = true
   static ruleName = "erb-strict-locals-comment-syntax"
   static introducedIn = this.version("0.8.8")
+  static defaultEnabledIn = this.version("0.8.8")
 
   get parserOptions() {
     return {

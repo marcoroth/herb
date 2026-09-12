@@ -140,6 +140,7 @@ class ActionViewPreferLinkToHelperVisitor extends BaseRuleVisitor<PreferLinkToHe
 export class ActionViewPreferLinkToHelperRule extends ParserRule<PreferLinkToHelperAutofixContext> {
   static ruleName = "actionview-prefer-link-to-helper"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static autocorrectable = true
   static autofixRequiresContext = true
 

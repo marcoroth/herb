@@ -10,11 +10,13 @@ import {
   Connection,
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
+  DocumentOnTypeFormattingParams,
   CodeActionParams,
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
   SelectionRangeParams,
+  InlayHint,
   InlayHintParams,
   DocumentSymbolParams,
   HoverParams,
@@ -22,6 +24,7 @@ import {
   DefinitionParams,
   ReferenceParams,
   TextDocumentIdentifier,
+  OptionalVersionedTextDocumentIdentifier,
   Range,
   FileChangeType,
   ExecuteCommandParams,
@@ -34,6 +37,7 @@ import { isPartialPath } from "@herb-tools/analysis"
 import { isConfigDocument, isPathInside } from "./utils"
 import { OPEN_DOCUMENT_COMMAND, SERVER_COMMANDS } from "./commands"
 import { serverVersion } from "./build_info"
+import { ON_TYPE_FORMATTING_OPTIONS } from "./on_type_formatting"
 
 import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "@herb-tools/language-service"
@@ -75,6 +79,7 @@ export class Server {
           },
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
+          documentOnTypeFormattingProvider: ON_TYPE_FORMATTING_OPTIONS,
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
           },
@@ -202,6 +207,38 @@ export class Server {
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.session.projects.get(params.textDocument.uri)?.formattingProvider.formatRange(params) ?? []
+    })
+
+    this.connection.onDocumentOnTypeFormatting(async (params: DocumentOnTypeFormattingParams) => {
+      const document = this.session.documents.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const provider = this.session.onTypeFormattingProvider
+
+      if (!this.session.capabilities.supportsSnippetEdits) {
+        return provider.getTextEdits(document, params.position, params.ch, params.options)
+      }
+
+      const edits = provider.getSnippetTextEdits(document, params.position, params.ch, params.options)
+
+      if (edits.length === 0) return []
+
+      try {
+        await this.connection.workspace.applyEdit({
+          label: "Close ERB block",
+          edit: {
+            documentChanges: [{
+              textDocument: OptionalVersionedTextDocumentIdentifier.create(document.uri, document.version),
+              edits
+            }]
+          }
+        })
+      } catch (error) {
+        this.connection.console.error(`Failed to close ERB block: ${error}`)
+      }
+
+      return []
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
@@ -335,12 +372,24 @@ export class Server {
 
       const settings = await this.session.userSettings.getDocumentSettings(params.textDocument.uri)
 
-      if (!settings.inlayHints?.enabled) return []
+      const hints: InlayHint[] = []
 
-      return this.session.inlayHintProvider.getInlayHints(document, {
-        minimumLines: settings.inlayHints.minimumLines,
-        maximumClasses: settings.inlayHints.maximumClasses
-      })
+      if (settings.inlayHints?.enabled) {
+        hints.push(...this.session.inlayHintProvider.getInlayHints(document, {
+          minimumLines: settings.inlayHints.minimumLines,
+          maximumClasses: settings.inlayHints.maximumClasses
+        }))
+      }
+
+      if (settings.runtimeReports?.inlayHints) {
+        hints.push(...this.runtimeHints(params.textDocument.uri, document))
+      }
+
+      return hints
+    })
+
+    this.connection.onRequest("herb/runtimeOverlays", (params: { textDocument: TextDocumentIdentifier }) => {
+      return this.runtimeOverlays(params.textDocument.uri)
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
@@ -358,6 +407,57 @@ export class Server {
 
       return this.session.commentProvider.toggleBlockComment(document, params.range)
     })
+  }
+
+  private runtimeHints(uri: string, document: { getText: () => string }): InlayHint[] {
+    const project = this.session.projects.get(uri)
+
+    if (!project) return []
+
+    try {
+      this.watchRuntimeReports(uri)
+
+      return project.runtimeReports.inlayHintsFor(
+        project.index.relativePathFor(uri),
+        document.getText(),
+        !this.session.capabilities.supportsRuntimeOverlays,
+      )
+    } catch {
+      return []
+    }
+  }
+
+  private runtimeOverlays(uri: string) {
+    const document = this.session.documents.get(uri)
+    const project = this.session.projects.get(uri)
+
+    if (!document || !project) return []
+
+    try {
+      this.watchRuntimeReports(uri)
+
+      return project.runtimeReports.overlaysFor(project.index.relativePathFor(uri), document.getText())
+    } catch {
+      return []
+    }
+  }
+
+  private watchRuntimeReports(uri: string) {
+    this.session.projects.get(uri)?.runtimeReports.watch(() => {
+      this.refreshInlayHints()
+
+      this.connection.sendNotification("herb/runtimeReportsChanged", { uri })
+    })
+  }
+
+  private async refreshInlayHints(): Promise<void> {
+    if (!this.session.capabilities.supportsInlayHintRefresh) return
+
+    try {
+      await this.connection.languages.inlayHint.refresh()
+    } catch {
+      // the client went away, and there is nothing to refresh for
+    }
   }
 
   private async updatePartialIndex(event: FileEvent): Promise<boolean> {

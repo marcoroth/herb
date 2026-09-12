@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsTest#test_0017_commented out erb output tag - render"
+input: "{source: \"<div><%#= raise('should not run') %></div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<div></div>

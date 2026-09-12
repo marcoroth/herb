@@ -112,6 +112,20 @@ describe("parseRuntimeReport", () => {
   })
 })
 
+describe("overlay mode", () => {
+  test("keeps the two modes it understands", () => {
+    expect(diagnostic({ overlay: "blocking" } as never).overlay).toBe("blocking")
+    expect(diagnostic({ overlay: "dismissible" } as never).overlay).toBe("dismissible")
+  })
+
+  test("reads no overlay from an absent, false, or unknown value", () => {
+    expect(diagnostic().overlay).toBeNull()
+    expect(diagnostic({ overlay: false } as never).overlay).toBeNull()
+    expect(diagnostic({ overlay: "modal" } as never).overlay).toBeNull()
+    expect(diagnostic({ overlay: true } as never).overlay).toBeNull()
+  })
+})
+
 describe("normalizeDiagnostic", () => {
   test("requires template and message", () => {
     expect(normalizeDiagnostic({ message: "no template" })).toBeNull()
@@ -362,6 +376,20 @@ describe("diagnosticKey", () => {
   test("separates codeless entries by message", () => {
     expect(diagnosticKey(diagnostic({ message: "one" }))).not.toBe(diagnosticKey(diagnostic({ message: "two" })))
   })
+
+  test("separates locationless findings of one rule by message", () => {
+    const first = diagnostic({ code: "browser-scoped-style-no-unused-selector", message: "Selector `.detail` matches nothing" })
+    const second = diagnostic({ code: "browser-scoped-style-no-unused-selector", message: "Selector `.tracks` matches nothing" })
+
+    expect(diagnosticKey(first)).not.toBe(diagnosticKey(second))
+  })
+
+  test("collapses repeated locationless reports of the same message", () => {
+    const first = diagnostic({ code: "herb-unknown-state", message: "`$refresh` is not a state" })
+    const second = diagnostic({ code: "herb-unknown-state", message: "`$refresh` is not a state" })
+
+    expect(diagnosticKey(first)).toBe(diagnosticKey(second))
+  })
 })
 
 describe("readRuntimeReport", () => {
@@ -369,7 +397,7 @@ describe("readRuntimeReport", () => {
     const script = document.createElement("script")
 
     script.type = "application/json"
-    script.setAttribute("data-herb-runtime-report", "")
+    script.setAttribute("data-herb-diagnostics", "")
     script.textContent = JSON.stringify({ version: 1, diagnostics: [{ template: "a.html.erb", message: "hi" }] })
 
     document.body.appendChild(script)

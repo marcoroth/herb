@@ -1,0 +1,26 @@
+---
+source: "Engine::ErrorHandlingTest#test_0004_void element with closing tag"
+input: |2-
+<div>
+  <img src="photo.jpg"></img>
+  <br></br>
+</div>
+options: {validators: true}
+---
+[source]:2:24: `img` is a void element and should not be used as a closing tag. Use `<img>` or `<img />` instead of `</img>`. (and 1 more error) (Herb::Engine::ParseError)
+
+✘ [VoidElementClosingTagError] `img` is a void element and should not be used as a closing tag. Use `<img>` or `<img />` instead of `</img>`.
+
+    [source]:2:24:
+      2 │   <img src="photo.jpg"></img>
+        ╵                        ~~~~~~
+
+  A void element cannot have a closing tag. Remove it, or write `<img />`.
+
+✘ [VoidElementClosingTagError] `br` is a void element and should not be used as a closing tag. Use `<br>` or `<br />` instead of `</br>`.
+
+    [source]:3:7:
+      3 │   <br></br>
+        ╵       ~~~~~
+
+  A void element cannot have a closing tag. Remove it, or write `<br />`.

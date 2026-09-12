@@ -1622,6 +1622,8 @@ export default class extends Controller {
       const optionName = input.dataset.option
       if (input.type === 'checkbox') {
         options[optionName] = input.checked
+      } else if (input.dataset.optionType === 'list') {
+        options[optionName] = input.value.split(',').map(entry => entry.trim()).filter(Boolean)
       } else {
         options[optionName] = input.value
       }
@@ -1639,6 +1641,9 @@ export default class extends Controller {
       if (options.hasOwnProperty(optionName)) {
         if (input.type === 'checkbox') {
           input.checked = Boolean(options[optionName])
+        } else if (input.dataset.optionType === 'list') {
+          const value = options[optionName]
+          input.value = Array.isArray(value) ? value.join(', ') : value
         } else {
           input.value = options[optionName]
         }
@@ -1802,12 +1807,14 @@ export default class extends Controller {
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
       dot_notation_tags: false,
       html: true,
+      erb_openers: [],
     }
 
     const nonDefaultOptions = {}
@@ -1815,6 +1822,12 @@ export default class extends Controller {
     Object.keys(options).forEach(key => {
       const value = options[key]
       const defaultValue = defaults[key]
+
+      if (Array.isArray(value)) {
+        if (value.length > 0) nonDefaultOptions[key] = value
+
+        return
+      }
 
       if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
         nonDefaultOptions[key] = value

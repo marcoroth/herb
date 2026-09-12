@@ -6,13 +6,14 @@ module Herb
     module Helpers
       #: (Herb::AST::Node?) -> bool
       def erb_node?(node)
-        node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBRenderNode)
+        !erb_opening(node).empty?
       end
 
       #: (Herb::AST::Node?) -> String
       def erb_opening(node)
         token = case node
-                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode then node.tag_opening
+                when Herb::AST::ERBContentNode, Herb::AST::ERBCommentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
+                  node.tag_opening
                 end
 
         token&.value.to_s
@@ -39,9 +40,27 @@ module Herb
         opening.start_with?("<%#")
       end
 
+      #: (Herb::AST::Node?) -> bool
+      def erb_comment_node?(node)
+        return true if node.is_a?(Herb::AST::ERBCommentNode)
+        return false unless node.is_a?(Herb::AST::ERBContentNode)
+
+        erb_comment?(erb_opening(node)) || inline_ruby_comment?(node)
+      end
+
       #: (String) -> bool
-      def erb_graphql?(opening)
-        opening.start_with?("<%graphql")
+      def erb_custom_opening?(opening)
+        opening.start_with?("<%") && !Herb.default_erb_openings.include?(opening)
+      end
+
+      #: (String) -> bool
+      def erb_omitted?(opening)
+        erb_comment?(opening) || erb_custom_opening?(opening)
+      end
+
+      #: (String) -> bool
+      def erb_escaped?(opening)
+        opening.start_with?("<%%")
       end
 
       #: (String) -> bool
@@ -55,12 +74,35 @@ module Herb
 
         close_tag = node.close_tag
 
-        close_tag if close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+        return unless close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+
+        close_tag
       end
 
       #: (Herb::AST::Node?) -> bool
       def omitted_close_tag?(node)
         !omitted_close_tag(node).nil?
+      end
+
+      #: (Herb::AST::Node?) -> Array[untyped]
+      def open_tags_for(open_tag)
+        case open_tag
+        when Herb::AST::HTMLConditionalOpenTagNode
+          branch_open_tags(open_tag.conditional)
+        when Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode
+          [open_tag]
+        else
+          []
+        end
+      end
+
+      #: (Herb::AST::Node?) -> Array[untyped]
+      def branch_open_tags(node)
+        return [] unless node
+        return [] if node.is_a?(Herb::AST::HTMLElementNode)
+        return [node] if node.is_a?(Herb::AST::HTMLOpenTagNode)
+
+        node.compact_child_nodes.flat_map { |child| branch_open_tags(child) }
       end
 
       #: (Herb::AST::ERBContentNode) -> bool

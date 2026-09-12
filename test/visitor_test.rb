@@ -17,6 +17,10 @@ class VisitorTest < Minitest::Spec
     end
   end
 
+  def visited_node_names(visitor)
+    visitor.visited_nodes.map { |node| node.class.to_s }
+  end
+
   test "visitor" do
     visitor = VisitedNodesVisitor.new
 
@@ -38,7 +42,7 @@ class VisitorTest < Minitest::Spec
     ]
 
     assert result.success?
-    assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
+    assert_equal expected_nodes, visited_node_names(visitor)
   end
 
   test "document with nil in child_nodes" do
@@ -54,7 +58,7 @@ class VisitorTest < Minitest::Spec
     ]
 
     assert result.failed?
-    assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
+    assert_equal expected_nodes, visited_node_names(visitor)
   end
 
   test "visitor requires and recommends no parser options by default" do
@@ -187,7 +191,7 @@ class VisitorTest < Minitest::Spec
       Herb::Visitor.parser_options_for(visitors, { prism_program: false })
     end
 
-    assert_includes error.message, "requires the `prism_program` parser option to be true, but it is set to false"
+    assert_match(/\A\#<Class:0x[0-9a-f]+>\ requires\ the\ `prism_program`\ parser\ option\ to\ be\ true,\ but\ it\ is\ set\ to\ false\z/, error.message)
   end
 
   test "parser_options_for warns and keeps the given value when a recommended option conflicts" do
@@ -198,7 +202,7 @@ class VisitorTest < Minitest::Spec
       options = Herb::Visitor.parser_options_for(visitors, { prism_program: false })
     end
 
-    assert_includes err, "recommends the `prism_program` parser option to be true, but it is set to false"
+    assert_match(/\A\[Herb\]\ \#<Class:0x[0-9a-f]+>\ recommends\ the\ `prism_program`\ parser\ option\ to\ be\ true,\ but\ it\ is\ set\ to\ false\n\z/, err)
     assert_equal({ prism_program: false }, options)
   end
 
@@ -221,5 +225,26 @@ class VisitorTest < Minitest::Spec
     assert_equal({ strict: false }, visitor.recommended_parser_options)
     assert_equal({ prism_program: true, strict: false }, Herb::Visitor.parser_options_for([visitor]))
     assert_equal({ prism_program: true, strict: false }, klass.parser_options_for([visitor]))
+  end
+
+  class ERBNodeCollector < Herb::Visitor
+    attr_reader :erb_nodes
+
+    def initialize
+      super
+      @erb_nodes = []
+    end
+
+    def visit_erb_node(node)
+      @erb_nodes << node.class.to_s.split("::").last
+    end
+  end
+
+  test "visit_erb_node fires for every node written as an ERB tag" do
+    visitor = ERBNodeCollector.new
+
+    Herb.parse(%(<%# herb:slots %><%# a comment %><%= value %><% code %>), herb_directives: true).visit(visitor)
+
+    assert_equal ["HerbDirectiveNode", "ERBCommentNode", "ERBContentNode", "ERBContentNode"], visitor.erb_nodes
   end
 end

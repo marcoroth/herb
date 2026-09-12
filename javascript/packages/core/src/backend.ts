@@ -1,11 +1,11 @@
 import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
-import type { ParseOptions } from "./parser-options.js"
+import type { LexOptions, ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { DiffOptions, DiffResult } from "./diff-result.js"
 
 interface LibHerbBackendFunctions {
-  lex: (source: string) => SerializedLexResult
+  lex: (source: string, options?: LexOptions) => SerializedLexResult
 
   parse: (source: string, options?: ParseOptions) => SerializedParseResult
 
@@ -15,6 +15,8 @@ interface LibHerbBackendFunctions {
   extractHTML: (source: string) => string
 
   parseRuby: (source: string) => Uint8Array | null
+
+  defaultERBOpenings: () => string[]
 
   version: () => string
 }
@@ -28,6 +30,7 @@ const expectedFunctions = [
   "extractRuby",
   "extractHTML",
   "parseRuby",
+  "defaultERBOpenings",
   "version",
 ] as const
 

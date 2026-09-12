@@ -7,7 +7,7 @@ module Parser
     include SnapshotUtils
 
     test "graphql tag" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, erb_openers: ["graphql"])
         <%graphql
           fragment HumanFragment on Human {
             name
@@ -18,7 +18,7 @@ module Parser
     end
 
     test "graphql tag with comment and html" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, erb_openers: ["graphql"])
         <%# app/views/humans/human.html.erb %>
         <%graphql
           fragment HumanFragment on Human {
@@ -32,11 +32,11 @@ module Parser
     end
 
     test "graphql tag inline" do
-      assert_parsed_snapshot(%(<%graphql query { users { id } } %>))
+      assert_parsed_snapshot(%(<%graphql query { users { id } } %>), erb_openers: ["graphql"])
     end
 
     test "graphql tag with query variables" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, erb_openers: ["graphql"])
         <%graphql
           query Products($first: Int!) {
             products(first: $first) {
@@ -51,7 +51,15 @@ module Parser
     end
 
     test "erb tag with graphql variable is not a graphql tag" do
-      assert_parsed_snapshot(%(<% graphql = "query" %>))
+      assert_parsed_snapshot(%(<% graphql = "query" %>), erb_openers: ["graphql"])
+    end
+
+    test "erb tag calling a method starting with graphql is not a graphql tag" do
+      assert_parsed_snapshot(%(<%graphql_helper %>), erb_openers: ["graphql"])
+    end
+
+    test "erb tag whose code starts with the letters graphql is not a graphql tag" do
+      assert_parsed_snapshot(%(<%graphqlish %>), erb_openers: ["graphql"])
     end
   end
 end

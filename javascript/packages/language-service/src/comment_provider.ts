@@ -5,9 +5,9 @@ import { ParserService } from "./parser_service"
 import { LineContextCollector } from "./line_context_collector"
 
 import { lspLine } from "./range_utils"
-import { determineStrategy, commentLineContent, uncommentLineContent } from "./comment_ast_utils"
+import { determineStrategy, commentLineContent, uncommentLineContent, carriesCommentedTagPrefix } from "./comment_ast_utils"
 
-import { isERBCommentNode } from "@herb-tools/core"
+import { isERBCommentNode, isInlineRubyCommentNode } from "@herb-tools/core"
 
 import type { LineInfo } from "./line_context_collector"
 import type { ERBContentNode, HTMLCommentNode } from "@herb-tools/core"
@@ -233,7 +233,7 @@ export class CommentProvider {
       const node = info.node as ERBContentNode | null
       if (!node?.tag_opening || !node?.tag_closing) return null
 
-      if (!isERBCommentNode(node) || lspLine(node.tag_opening.location.start) !== info.line) {
+      if (!(isERBCommentNode(node) || isInlineRubyCommentNode(node)) || lspLine(node.tag_opening.location.start) !== info.line) {
         return this.uncommentRubyLine(lineText, info.line)
       }
 
@@ -255,14 +255,7 @@ export class CommentProvider {
 
       const hashColumn = node.tag_opening.location.start.column + 2
 
-      if (
-        contentValue?.startsWith(" graphql ") ||
-        contentValue?.startsWith(" %= ") ||
-        contentValue?.startsWith(" == ") ||
-        contentValue?.startsWith(" % ") ||
-        contentValue?.startsWith(" = ") ||
-        contentValue?.startsWith(" - ")
-      ) {
+      if (carriesCommentedTagPrefix(contentValue ?? "", this.parserService.commentedERBTagPrefixes())) {
         return TextEdit.del(Range.create(info.line, hashColumn, info.line, hashColumn + 2))
       }
 

@@ -1,23 +1,21 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
-import { isHTMLTextNode } from "@herb-tools/core"
 import { isPartialFile } from "../utils/file-utils.js"
 
 import type { ParseResult, ERBStrictLocalsNode } from "@herb-tools/core"
-import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 class ActionViewStrictLocalsPartialOnlyVisitor extends BaseRuleVisitor {
   visitERBStrictLocalsNode(node: ERBStrictLocalsNode): void {
     this.addOffense(
-      "Strict locals declarations are only supported in partials. This file is not a partial.",
+      "Only partials should declare strict locals. Use instance variables in a template, or `content_for` in a layout.",
       node.location,
     )
   }
 }
 
 export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
-  static unsafeAutocorrectable = true
   static ruleName = "actionview-strict-locals-partial-only"
   static introducedIn = this.version("0.9.3")
 
@@ -27,7 +25,7 @@ export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
 
   get defaultConfig(): FullRuleConfig {
     return {
-      enabled: true,
+      enabled: false,
       severity: "warning",
       frameworks: ["actionview"],
     }
@@ -40,28 +38,5 @@ export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
     visitor.visit(result.value)
 
     return visitor.offenses
-  }
-
-  autofix(offense: LintOffense, result: ParseResult): ParseResult | null {
-    const children = result.value.children
-
-    const index = children.findIndex(child =>
-      child.location.start.line === offense.location.start.line &&
-      child.location.start.column === offense.location.start.column
-    )
-
-    if (index === -1) return null
-
-    children.splice(index, 1)
-
-    if (index < children.length) {
-      const next = children[index]
-
-      if (isHTMLTextNode(next) && /^\s*\n/.test(next.content)) {
-        children.splice(index, 1)
-      }
-    }
-
-    return result
   }
 }

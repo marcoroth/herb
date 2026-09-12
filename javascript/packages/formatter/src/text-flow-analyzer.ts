@@ -1,5 +1,6 @@
-import { isNode, getTagName, isERBCommentNode, isPureWhitespaceNode } from "@herb-tools/core"
-import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
+import { isNode, getTagName, isERBCommentNode,
+  isInlineRubyCommentNode, isPureWhitespaceNode } from "@herb-tools/core"
+import { Node, HTMLTextNode, HTMLElementNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
 
@@ -9,6 +10,7 @@ import {
   isLineBreakingElement,
   isMultilineERBComment,
   isERBBlockCommentDelimiter,
+  isERBTagNode,
 } from "./format-helpers.js"
 
 import {
@@ -26,7 +28,7 @@ import {
  */
 export interface TextFlowAnalyzerDelegate {
   tryRenderInlineElement(element: HTMLElementNode): string | null
-  renderERBAsString(node: ERBContentNode): string
+  renderERBAsString(node: ERBContentNode | ERBCommentNode): string
   tryRenderControlFlowInline(node: Node): string | null
 }
 
@@ -101,7 +103,7 @@ export class TextFlowAnalyzer {
         })
 
         lastProcessedIndex = i
-      } else if (isNode(child, ERBContentNode)) {
+      } else if (isERBTagNode(child)) {
         const merged = this.processERBContentNode(result, children, child, i, lastProcessedIndex)
 
         if (merged) {
@@ -259,7 +261,7 @@ export class TextFlowAnalyzer {
     return false
   }
 
-  private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode, index: number, lastProcessedIndex: number): boolean {
+  private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode | ERBCommentNode, index: number, lastProcessedIndex: number): boolean {
     const erbContent = this.delegate.renderERBAsString(child)
 
     if (lastProcessedIndex >= 0) {
@@ -293,7 +295,7 @@ export class TextFlowAnalyzer {
       node: child
     })
 
-    if (isERBCommentNode(child)) {
+    if ((isERBCommentNode(child) || isInlineRubyCommentNode(child))) {
       for (let j = index + 1; j < children.length; j++) {
         const nextChild = children[j]
         if (isNode(nextChild, WhitespaceNode)) continue

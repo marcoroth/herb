@@ -23,6 +23,7 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
   static ruleName = "html-aria-role-heading-requires-level"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

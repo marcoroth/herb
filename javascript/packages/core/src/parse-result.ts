@@ -1,10 +1,13 @@
-import { Result } from "./result.js"
+import { locate, locatable } from "./locate.js"
 
-import { DocumentNode } from "./nodes.js"
+import { Result } from "./result.js"
 import { HerbError } from "./errors.js"
+import { DocumentNode } from "./nodes.js"
 import { HerbWarning } from "./warning.js"
 import { ParserOptions } from "./parser-options.js"
 
+import type { Position } from "./position.js"
+import type { LocateResult } from "./locate.js"
 import type { SerializedHerbError } from "./errors.js"
 import type { SerializedHerbWarning } from "./warning.js"
 import type { SerializedDocumentNode } from "./nodes.js"
@@ -141,6 +144,16 @@ export class ParseResult extends Result {
    */
   inspect(): string {
     return this.value.inspect()
+  }
+
+  /** The most specific node at a position, and the nodes it sits inside. */
+  locate(position: Position): LocateResult | null {
+    return locate(this, position)
+  }
+
+  /** Whether a position falls anywhere inside the document this parsed. */
+  locatable(position: Position): boolean {
+    return locatable(this, position)
   }
 
   /**

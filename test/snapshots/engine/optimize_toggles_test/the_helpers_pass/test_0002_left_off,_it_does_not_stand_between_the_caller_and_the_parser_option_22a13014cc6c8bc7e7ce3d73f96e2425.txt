@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizeTogglesTest::the helpers pass#test_0002_left off, it does not stand between the caller and the parser option"
+input: "{source: \"<p><%= tag.br %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor helpers=false>], parser_options: {action_view_helpers: true}}}"
+---
+'<p><br></p>'.freeze

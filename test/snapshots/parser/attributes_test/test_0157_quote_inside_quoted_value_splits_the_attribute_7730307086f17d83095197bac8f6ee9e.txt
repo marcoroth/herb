@@ -1,0 +1,78 @@
+---
+source: "Parser::AttributesTest#test_0157_quote inside quoted value splits the attribute"
+input: "<div title=\"It\"s fine\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:29))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:29))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:23))
+        │       ├── errors: (1 error)
+        │       │   └── @ MissingWhitespaceBetweenAttributesError (location: (1:15)-(1:16))
+        │       │       ├── message: "Missing whitespace between attributes at (1:15). `s` is parsed as the start of a new attribute."
+        │       │       └── found: "s" (location: (1:15)-(1:16))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:22)-(1:23))
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:15))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │   │   │               └── content: "title"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:15))
+        │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:12)-(1:14))
+        │       │   │           │       └── content: "It"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:14)-(1:15))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:15)-(1:16))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:15)-(1:16))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:15)-(1:16))
+        │       │   │   │               └── content: "s"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:17)-(1:22))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:17)-(1:22))
+        │       │       │       ├── errors: (1 error)
+        │       │       │       │   └── @ UnexpectedCharacterInAttributeNameError (location: (1:21)-(1:22))
+        │       │       │       │       ├── message: "Unexpected `\"` in attribute name at (1:21)."
+        │       │       │       │       └── character: """ (location: (1:21)-(1:22))
+        │       │       │       │
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:17)-(1:22))
+        │       │       │               └── content: "fine\""
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:23)-(1:29))
+        │       ├── tag_opening: "</" (location: (1:23)-(1:25))
+        │       ├── tag_name: "div" (location: (1:25)-(1:28))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:28)-(1:29))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

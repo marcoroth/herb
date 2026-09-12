@@ -4,13 +4,17 @@ module Herb
   module Analysis
     class RubyLocalsIndex
       # Prism reports byte offsets into the whole template while the Herb AST
-      # reports lines and columns, so one of them has to be translated.
+      # reports lines and 0-based character columns, so one of them has to be
+      # translated. The line table stays in bytes to index into the source, and
+      # only the column is counted in characters.
+      #
       class OffsetTable
-        # @rbs!
-        #   @line_starts: Array[Integer]
+        attr_reader :source #: String
+        attr_reader :line_starts #: Array[Integer]
 
         #: (String) -> void
         def initialize(source)
+          @source = source
           @line_starts = [0]
 
           source.each_byte.with_index do |byte, index|
@@ -29,10 +33,10 @@ module Herb
         #: (Integer) -> [Integer, Integer]
         def position_at(offset)
           following = @line_starts.bsearch_index { |start| start > offset }
-          index = following ? following - 1 : @line_starts.length - 1
+          index = following ? following - 1 : line_starts.length - 1
           start = @line_starts[index] || 0
 
-          [index + 1, offset - start]
+          [index + 1, source.byteslice(start, offset - start).to_s.length]
         end
       end
     end

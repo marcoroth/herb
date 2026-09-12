@@ -38,7 +38,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a plain assignment to a state", () => {
-    expectError("`<% pending = true %>` assigns the state `pending`, and the client never sees a server-side write. Seed the initial value in the declaration, derive it from other states, count items with `pending += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
+    expectError("`<% pending = true %>` assigns the state `pending`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered. Seed the initial value in the declaration, derive it from other states, count items with `pending += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false) %>
@@ -48,7 +48,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags an increment gated by a server condition", () => {
-    expectError("`<% total += 1 %>` assigns the state `total`, and the client never sees a server-side write. Seed the initial value in the declaration, derive it from other states, count items with `total += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
+    expectError("`<% total += 1 %>` assigns the state `total`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered. Seed the initial value in the declaration, derive it from other states, count items with `total += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
 
     assertOffenses(dedent`
       <%# herb:state (total: 0) %>
@@ -58,7 +58,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags an assignment inside an output tag", () => {
-    expectError("`<%= draft = \"x\" %>` assigns the state `draft`, and the client never sees a server-side write. Seed the initial value in the declaration, derive it from other states, count items with `draft += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
+    expectError("`<%= draft = \"x\" %>` assigns the state `draft`. The client never sees a server-side write, so the value it holds would drift from the one the server rendered. Seed the initial value in the declaration, derive it from other states, count items with `draft += 1` behind a state condition in a keyed loop, or write it at runtime with `data-herb-set` or `state.set`.")
 
     assertOffenses(dedent`
       <%# herb:state (draft: "") %>
@@ -68,7 +68,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a fold into an item state", () => {
-    expectError("`mine += 1` counts into `mine`, which is an item state. A count lives once per region, so declare `mine` at the top of the template.")
+    expectError("`mine += 1` counts into `mine`, which is an item state. A count lives once per region, not once per item. Declare `mine` at the top of the template, outside the loop.")
 
     assertOffenses(dedent`
       <%# herb:slots client %>
@@ -77,7 +77,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a fold into a non-integer state", () => {
-    expectError("`label += 1` counts into the String state `label`. A count is a number, so declare it as an Integer, like `(label: 0)`.")
+    expectError("`label += 1` counts into the String state `label`. A count is a number. Declare `label` as an Integer, like `(label: 0)`.")
 
     assertOffenses(dedent`
       <%# herb:state (label: "x") %>
@@ -86,7 +86,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a fold into a derived state", () => {
-    expectError("`busy += 1` counts into `busy`, which is derived from `pending`. A state is either derived or counted, so drop one of the two.")
+    expectError("`busy += 1` counts into `busy`, which is derived from `pending`. A state is either derived or counted, never both. Drop the derivation from `busy`, or count into a second state.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, busy: pending) %>
@@ -95,7 +95,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a state counted twice", () => {
-    expectError("`total` is counted twice. One state holds one count, so declare a second state for the second count.")
+    expectError("`total` is counted twice. One state holds one count. Declare a second state for the second count.")
 
     assertOffenses(dedent`
       <%# herb:state (total: 0) %>
@@ -105,7 +105,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a count read before its loop", () => {
-    expectError("`total` is read before its count is complete. The server renders this read mid-count and the client cannot keep it current here, so move it after the loop.")
+    expectError("`total` is read before its count is complete. The server renders that read mid-count and the client cannot keep it current. Move the read below the loop that counts `total`.")
 
     assertOffenses(dedent`
       <%# herb:state (total: 0) %>
@@ -115,7 +115,7 @@ describe("HerbStateNoServerWritesRule", () => {
   })
 
   test("flags a count read inside its loop", () => {
-    expectError("`total` is read inside the loop that counts it. The count is complete only after the loop, so move this read below it.")
+    expectError("`total` is read inside the loop that counts it. The count is complete only after the loop. Move the read below the loop.")
 
     assertOffenses(dedent`
       <%# herb:state (total: 0) %>

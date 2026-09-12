@@ -7,6 +7,7 @@ import { Config } from "@herb-tools/config"
 import { registerWorkspaceSuggestion } from "./workspace-suggestion"
 
 import { Client } from "./client"
+import { RuntimeOverlayProvider } from "./runtime-overlay-provider"
 import { HerbAnalysisProvider } from "./herb-analysis-provider"
 import { HerbCodeActionProvider } from "./code-action-provider"
 import { HerbConfigProvider } from "./config-provider"
@@ -130,6 +131,34 @@ export async function activate(context: vscode.ExtensionContext) {
   )
 
   await client.start()
+
+  const runtimeOverlayProvider = new RuntimeOverlayProvider(client)
+
+  context.subscriptions.push(
+    ...runtimeOverlayProvider.register(),
+    vscode.commands.registerCommand('herb.changeRuntimeOverlayDisplay', async () => {
+      const current = runtimeOverlayProvider.display()
+
+      const picked = await vscode.window.showQuickPick(
+        [
+          { label: 'Replace the tag', description: 'Show what it rendered in place of the tag', value: 'replace' as const },
+          { label: 'Report the tag', description: 'Underline it and show what it rendered on hover', value: 'report' as const },
+          { label: 'Off', description: 'Show nothing', value: 'off' as const },
+        ].map(item => (item.value === current ? { ...item, label: `$(check) ${item.label}` } : item)),
+        { placeHolder: 'How should Herb show what an ERB tag rendered?' }
+      )
+
+      if (!picked) return
+
+      await vscode.workspace
+        .getConfiguration('languageServerHerb')
+        .update('runtimeOverlays.display', picked.value, vscode.ConfigurationTarget.Workspace)
+
+      runtimeOverlayProvider.refreshAll()
+    })
+  )
+
+  runtimeOverlayProvider.refreshAll()
 
   informationProvider = new HerbInformationProvider(context)
   supportProvider = new HerbSupportProvider()

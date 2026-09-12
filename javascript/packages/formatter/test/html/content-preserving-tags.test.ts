@@ -178,6 +178,34 @@ describe("@herb-tools/formatter - content preserving tags", () => {
     expect(formatter.format(result)).toEqual(result)
   })
 
+  test("preserves attribute spacing on an element nested inside an ERB block (#2142)", () => {
+    const source = `<pre><% if condition %><span class="x">x</span><% end %></pre>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<pre><% if condition %><span class="x">x</span><% end %></pre>`)
+    expect(formatter.format(result)).toEqual(result)
+  })
+
+  test("preserves spacing between multiple attributes on an element nested inside an ERB block", () => {
+    const source = `<pre><% if condition %><span class="x" id="y">x</span><% end %></pre>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<pre><% if condition %><span class="x" id="y">x</span><% end %></pre>`)
+    expect(formatter.format(result)).toEqual(result)
+  })
+
+  test("preserves the exact attribute whitespace of an element nested inside an ERB block", () => {
+    const source = `<pre><% if condition %><span   class="x"\tid="y">x</span><% end %></pre>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<pre><% if condition %><span   class="x"\tid="y">x</span><% end %></pre>`)
+    expect(formatter.format(result)).toEqual(result)
+  })
+
+  test("preserves an element whose attributes wrap across lines inside an ERB block", () => {
+    const source = `<pre><% if condition %><span\n  class="x"\n  id="y">x</span><% end %></pre>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<pre><% if condition %><span\n  class="x"\n  id="y">x</span><% end %></pre>`)
+    expect(formatter.format(result)).toEqual(result)
+  })
+
   test("preserves textarea with ERB control flow", () => {
     const source = dedent`
       <textarea>

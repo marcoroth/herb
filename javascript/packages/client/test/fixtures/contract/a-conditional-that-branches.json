@@ -1,0 +1,98 @@
+{
+  "file": "app/views/contract/a-conditional-that-branches.html.erb",
+  "template": "<% if @on %><b><%= @x %></b><% else %><%= @y %><% end %><%= @z %>",
+  "rendered": "<!--herb-region:app/views/contract/a-conditional-that-branches.html.erb:15f51fc3:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot=\"1:child\">x</b><!--/herb-slot:0--><!--herb-slot:3-->z<!--/herb-slot:3--><!--/herb-region:app/views/contract/a-conditional-that-branches.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-conditional-that-branches.html.erb:15f51fc3:0--><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b data-herb-slot=\"1:child\">x</b><!--/herb-slot:0--><!--herb-slot:3-->z<!--/herb-slot:3--><!--/herb-region:app/views/contract/a-conditional-that-branches.html.erb--><template data-herb-region=\"app/views/contract/a-conditional-that-branches.html.erb:15f51fc3\"><!--herb-branch:0:0--><b data-herb-slot=\"1:child\"></b><!--herb-branch:0:1--><!--herb-slot:2--><!--/herb-slot:2--></template>",
+  "values": {
+    "template": "app/views/contract/a-conditional-that-branches.html.erb",
+    "version": "15f51fc3",
+    "occurrence": 0,
+    "slots": {
+      "0": {
+        "branch": 1,
+        "slots": {
+          "2": "Y"
+        }
+      },
+      "3": "Z"
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-conditional-that-branches.html.erb:15f51fc3:0--><!--herb-slot:0:conditional--><!--herb-branch:0:1--><!--herb-slot:2-->Y<!--/herb-slot:2--><!--/herb-slot:0--><!--herb-slot:3-->Z<!--/herb-slot:3--><!--/herb-region:app/views/contract/a-conditional-that-branches.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-conditional-that-branches.html.erb",
+    "identifier": "app/views/contract/a-conditional-that-branches.html.erb",
+    "version": "15f51fc3",
+    "slots": [
+      {
+        "index": 0,
+        "type": "conditional",
+        "node_path": [
+          0
+        ]
+      },
+      {
+        "index": 1,
+        "type": "child",
+        "node_path": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "index": 2,
+        "type": "child",
+        "node_path": [
+          0
+        ]
+      },
+      {
+        "index": 3,
+        "type": "child",
+        "node_path": [
+          1
+        ]
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/a-conditional-that-branches.html.erb",
+    "identifier": "app/views/contract/a-conditional-that-branches.html.erb",
+    "version": "15f51fc3",
+    "names": {},
+    "parts": {},
+    "states": null
+  },
+  "dependencies": {
+    "state": {
+      "@on": [],
+      "@x": [
+        {
+          "file": "app/views/contract/a-conditional-that-branches.html.erb",
+          "version": "15f51fc3",
+          "index": 1
+        }
+      ],
+      "@y": [
+        {
+          "file": "app/views/contract/a-conditional-that-branches.html.erb",
+          "version": "15f51fc3",
+          "index": 2
+        }
+      ],
+      "@z": [
+        {
+          "file": "app/views/contract/a-conditional-that-branches.html.erb",
+          "version": "15f51fc3",
+          "index": 3
+        }
+      ]
+    },
+    "params": {
+      "on": "@on",
+      "x": "@x",
+      "y": "@y",
+      "z": "@z"
+    }
+  }
+}

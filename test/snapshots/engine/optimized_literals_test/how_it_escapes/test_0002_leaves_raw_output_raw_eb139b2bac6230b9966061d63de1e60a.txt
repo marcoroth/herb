@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::how it escapes#test_0002_leaves raw output raw"
+input: "{source: \"<p><%= \\\"<b>bold</b>\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<p><b>bold</b></p>'.freeze

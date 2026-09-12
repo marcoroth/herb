@@ -1,0 +1,6 @@
+---
+source: "Engine::ERBOpenersTest#test_0002_a tag that only shares a prefix with a configured opener is compiled as Ruby"
+input: "{source: \"<%herbal_tea %>\", options: {parser_options: {erb_openers: [\"herb\"]}}}"
+---
+_buf = ::String.new; herbal_tea ;
+_buf.to_s

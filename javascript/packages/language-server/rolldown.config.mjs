@@ -85,6 +85,18 @@ export default [
     resolve: { conditionNames: ["node", "import", "require", "default"] },
   },
 
+  // Library exports (ESM)
+  {
+    input: "src/index.ts",
+    output: {
+      file: "dist/index.js",
+      format: "esm",
+      sourcemap: enableSourcemaps,
+    },
+    transform,
+    external: allExternal,
+  },
+
   // Library exports (CommonJS)
   {
     input: "src/index.ts",

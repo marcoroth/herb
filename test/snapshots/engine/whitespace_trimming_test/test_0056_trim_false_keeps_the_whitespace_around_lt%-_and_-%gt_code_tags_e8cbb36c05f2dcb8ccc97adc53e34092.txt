@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0056_trim: false keeps the whitespace around <%- and -%> code tags"
+input: "{source: \"<%- if true -%>\\n  <h1>Content</h1>\\n<%- end -%>\\n\", locals: {}, options: {trim: false}}"
+---
+
+  <h1>Content</h1>
+

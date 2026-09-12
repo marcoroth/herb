@@ -157,5 +157,29 @@ module Extractor
 
       assert_equal expected, actual
     end
+
+    test "custom tag content is left out by default" do
+      actual = Herb.extract_ruby(%(<%herb slot :header %><%= name %>), erb_openers: ["herb"])
+
+      assert_equal "                     ;    name  ;", actual
+    end
+
+    test "custom tag content is extracted with custom_tags" do
+      actual = Herb.extract_ruby(%(<%herb slot :header %><%= name %>), erb_openers: ["herb"], custom_tags: true)
+
+      assert_equal "       slot :header  ;    name  ;", actual
+    end
+
+    test "custom_tags does nothing without a configured opener" do
+      actual = Herb.extract_ruby(%(<%herb slot :header %>), custom_tags: true)
+
+      assert_equal "  herb slot :header  ;", actual
+    end
+
+    test "a tag that is not a configured opener is extracted either way" do
+      actual = Herb.extract_ruby(%(<%herb_helper %>), erb_openers: ["herb"])
+
+      assert_equal "  herb_helper  ;", actual
+    end
   end
 end

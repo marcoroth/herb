@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedLiteralsTest::what stays dynamic#test_0003_a literal in a trimming tag"
+input: "{source: \"<p><%= \\\"hi\\\" -%>\\ntail</p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << ("hi").to_s; _buf << 'tail</p>'.freeze;
+_buf.to_s

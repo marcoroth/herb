@@ -85,7 +85,7 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%# comment %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<% comment %>")
     })
@@ -94,7 +94,7 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%= output %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<%= output %>")
     })
@@ -103,7 +103,7 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%# = render "thing" %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe(`<%= render "thing" %>`)
     })
@@ -112,7 +112,7 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%# == raw_html %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<%== raw_html %>")
     })
@@ -121,7 +121,7 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%# - code %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<%- code %>")
     })
@@ -130,7 +130,7 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%# % code %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<%% code %>")
     })
@@ -139,18 +139,27 @@ describe("comment_ast_utils", () => {
       const { parseResult, collector } = parseAndCollect(`<%# %= expression %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<%%= expression %>")
     })
 
-    it("restores graphql from linter-formatted <%# graphql query %>", () => {
+    it("restores graphql from linter-formatted <%# graphql query %> when it is a configured opener", () => {
       const { parseResult, collector } = parseAndCollect(`<%# graphql { user { name } } %>`)
       const erbNode = collector.erbNodesPerLine.get(0)![0]
 
-      uncommentERBNode(erbNode)
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes(["graphql"]))
 
       expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<%graphql { user { name } } %>")
+    })
+
+    it("leaves graphql alone when it is not a configured opener", () => {
+      const { parseResult, collector } = parseAndCollect(`<%# graphql { user { name } } %>`)
+      const erbNode = collector.erbNodesPerLine.get(0)![0]
+
+      uncommentERBNode(erbNode, parserService.commentedERBTagPrefixes())
+
+      expect(IdentityPrinter.print(parseResult.value, { ignoreErrors: true })).toBe("<% graphql { user { name } } %>")
     })
   })
 

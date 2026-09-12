@@ -5,7 +5,7 @@ import { isDerived, stateSignatureOf } from "../utils/state-directives-utils.js"
 import { isRubyParameterNode, Location } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBContentNode, ERBBlockNode, ERBStrictLocalsNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBCommentNode, ERBContentNode, ERBBlockNode, ERBStrictLocalsNode } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 class StrictLocalsCollector extends BaseRuleVisitor {
@@ -45,7 +45,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     }
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     const parsed = stateSignatureOf(node)
 
     if (!parsed) return
@@ -73,13 +73,13 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     }
   }
 
-  private checkDeclaration(node: ERBContentNode, declaration: StateDeclaration): void {
+  private checkDeclaration(node: ERBCommentNode, declaration: StateDeclaration): void {
     const nameLocation = this.contentLocation(node, declaration.nameOffset, declaration.name.length)
     const defaultLocation = this.contentLocation(node, declaration.defaultOffset, Math.max(declaration.defaultSource.length, 1))
 
     if (declaration.derived === "mixed") {
       this.addOffense(
-        `The state \`${declaration.name}\` defaults to \`${declaration.defaultSource}\`, which mixes state reads with other Ruby. A derived state reads only other states, and a seed reads none, so split the two apart.`,
+        `The state \`${declaration.name}\` defaults to \`${declaration.defaultSource}\`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none. Split the two apart, so \`${declaration.name}\` derives from states only.`,
         defaultLocation,
       )
 
@@ -88,7 +88,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 
     if (declaration.derived === "forward") {
       this.addOffense(
-        `The state \`${declaration.name}\` reads a state that is declared after it. Reorder the signature, since a derived state reads only states declared before it.`,
+        `The state \`${declaration.name}\` reads a state that is declared after it. A derived state reads only states declared before it. Move \`${declaration.name}\` after the states it reads.`,
         defaultLocation,
       )
 
@@ -98,21 +98,21 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     switch (declaration.kind) {
       case "missing":
         this.addOffense(
-          `The state \`${declaration.name}\` has no default. Add one, like \`${declaration.name}: false\`. The server renders a state as its default, so a state always has a value.`,
+          `The state \`${declaration.name}\` has no default. The server renders a value for every state, so there is nothing to render or to seed the client with. Give it a default, like \`${declaration.name}: false\`.`,
           nameLocation,
         )
 
         return
       case "float":
         this.addOffense(
-          `The state \`${declaration.name}\` has a Float default. Use an Integer or a String instead, since Ruby and JavaScript print floats differently.`,
+          `The state \`${declaration.name}\` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text. Declare it as an Integer or a String instead.`,
           defaultLocation,
         )
 
         return
       case "array":
         this.addOffense(
-          `The state \`${declaration.name}\` has an Array default. Declare a per-row boolean inside the loop instead, like \`${declaration.name}: false\`. A list on the page is a collection of items, not a state.`,
+          `The state \`${declaration.name}\` has an Array default. A list on the page is a collection of items, not one state holding many values. Declare an item-scoped state inside the loop instead, like \`${declaration.name}: false\`.`,
           defaultLocation,
         )
 
@@ -129,7 +129,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 
         if (this.scopes.some((outer) => outer !== this.scopes[this.scopes.length - 1] && outer.has(declaration.defaultSource))) {
           this.addOffense(
-            `The state \`${declaration.name}\` reads \`${declaration.defaultSource}\` from an enclosing scope. Declare it beside its sources, since a derived state reads states declared in its own signature.`,
+            `The state \`${declaration.name}\` reads \`${declaration.defaultSource}\` from an enclosing scope. A derived state reads only states from its own signature. Declare \`${declaration.name}\` beside the states it reads.`,
             defaultLocation,
           )
 
@@ -148,7 +148,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 
     if (this.locals.has(declaration.name)) {
       this.addOffense(
-        `\`${declaration.name}\` is both a strict local and a state. Rename one of them. A local comes from the caller and a state is client-owned, so one name cannot be both.`,
+        `\`${declaration.name}\` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so the name has two owners. Rename one of the two.`,
         nameLocation,
       )
 
@@ -159,7 +159,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 
     if (scope.has(declaration.name)) {
       this.addOffense(
-        `The state \`${declaration.name}\` is declared twice in the same scope. Remove one of the declarations.`,
+        `The state \`${declaration.name}\` is declared twice in the same scope. Remove one of the two declarations.`,
         nameLocation,
       )
 
@@ -173,7 +173,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 
     if (shadowed) {
       this.addOffense(
-        `The state \`${declaration.name}\` is declared in both an item and its region. Rename one of them, since a read of \`${declaration.name}\` could mean either.`,
+        `The state \`${declaration.name}\` is declared in both an item and its region, so a later read could mean either one. Give them different names, like \`item_${declaration.name}\` for the one inside the loop.`,
         nameLocation,
       )
 
@@ -183,7 +183,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     scope.add(declaration.name)
   }
 
-  private contentLocation(node: ERBContentNode, offset: number, length: number): Location {
+  private contentLocation(node: ERBCommentNode, offset: number, length: number): Location {
     const content = node.content
 
     if (!content) return node.location
@@ -199,6 +199,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 export class HerbStateValidDeclarationRule extends ParserRule {
   static ruleName = "herb-state-valid-declaration"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

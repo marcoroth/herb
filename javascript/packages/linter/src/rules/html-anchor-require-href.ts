@@ -85,11 +85,13 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
 export class HTMLAnchorRequireHrefRule extends ParserRule {
   static ruleName = "html-anchor-require-href"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

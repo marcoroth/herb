@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0067_a second directive in the same scope is refused, since one declaration owns the scope"
+input: "states_test-20"
+---
+app/views/test.html.erb:1:32: This scope already declares its states. Merge these states into the first `<%# herb:state (...) %>` directive of the scope, so every state of the scope reads from one declaration.

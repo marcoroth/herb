@@ -4,15 +4,16 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, cloneNode } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, getTagLocalName, hasAttribute, getAttribute, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLElementNode, isERBCommentNode, isERBContentNode, getNamedCharacterReference, getTagLocalName, hasAttribute, getAttribute, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation, nodeToRange } from "./range_utils"
 import { RubyLocalsIndex } from "./ruby_locals_index"
 import { collectStateDirectives } from "./herb_attribute_links"
+import { LITERAL_STATE_KINDS } from "@herb-tools/client/directives"
 
 import type { DocumentNode } from "@herb-tools/core"
 
-import type { Node, HTMLElementNode, ERBOpenTagNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
+import type { Node, HTMLElementNode, ERBOpenTagNode, ERBCommentNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
 import type { FrameworkOptions } from "./types.js"
 
 class ActionViewElementCollector extends Visitor {
@@ -136,7 +137,7 @@ function blockParameter(scope: Node): string | null {
 }
 
 function declaredStateKind(kind: string): string {
-  return ["boolean", "integer", "string", "symbol", "nil"].includes(kind) ? kind : "seeded"
+  return LITERAL_STATE_KINDS.has(kind) ? kind : "seeded"
 }
 
 function stateUsageLines(name: string, kind: string, defaultSource: string, derived = false): string[] {
@@ -204,7 +205,7 @@ const SCOPED_STYLE_DOC = dedent(`
 
   \`\`\`html
   <style>
-    .title:where([data-herb-scope-1a2b3c4d], [data-herb-scope-1a2b3c4d] *) {
+    .title[data-herb-scope-1a2b3c4d] {
       color: red;
     }
   </style>
@@ -276,10 +277,10 @@ const DIRECTIVE_DOCS: Record<string, string> = {
 const DIRECTIVE_KEYWORD = /herb:(?:state|slots|key)\b/
 
 class DirectiveKeywordCollector extends Visitor {
-  readonly found: { node: ERBContentNode, keyword: string, offset: number }[] = []
+  readonly found: { node: ERBCommentNode, keyword: string, offset: number }[] = []
 
   visitChildNodes(node: Node): void {
-    if (isERBContentNode(node) && node.tag_opening?.value === "<%#") {
+    if (isERBCommentNode(node)) {
       const content = node.content?.value ?? ""
       const match = DIRECTIVE_KEYWORD.exec(content)
 
@@ -290,7 +291,7 @@ class DirectiveKeywordCollector extends Visitor {
   }
 }
 
-function contentTokenRange(node: ERBContentNode, offset: number, length: number): Range {
+function contentTokenRange(node: ERBCommentNode, offset: number, length: number): Range {
   const content = node.content
 
   if (!content) return Range.create(lspPosition(node.location.start), lspPosition(node.location.end))

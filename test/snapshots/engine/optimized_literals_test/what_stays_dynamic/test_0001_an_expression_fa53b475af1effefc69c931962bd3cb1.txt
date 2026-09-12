@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedLiteralsTest::what stays dynamic#test_0001_an expression"
+input: "{source: \"<p><%= greeting %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << (greeting).to_s; _buf << '</p>'.freeze;
+_buf.to_s

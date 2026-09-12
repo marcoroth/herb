@@ -1,0 +1,11 @@
+---
+source: "Engine::EngineTest#test_0041_heredoc ending an output tag keeps the following line"
+input: "{source: \"<p><%= <<~TEXT\\n  hello\\nTEXT\\n%></p>\\n<%= z %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << (<<~TEXT
+  hello
+TEXT
+).to_s; _buf << '</p>
+'.freeze; _buf << (z).to_s; _buf << '
+'.freeze;
+_buf.to_s

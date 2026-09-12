@@ -18,13 +18,13 @@ module Engine
         %>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql tag inline is omitted from compilation" do
       template = %(<%graphql query { users { id } } %>)
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql tag with surrounding html" do
@@ -40,7 +40,7 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql tag with comment and html" do
@@ -56,7 +56,7 @@ module Engine
         <p><%= human.name %> lives on <%= human.home_planet %>.</p>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql tag with query variables" do
@@ -78,13 +78,13 @@ module Engine
         </ul>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql variable assignment is not omitted" do
       template = %(<% graphql = "query" %>)
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql tag evaluated produces empty output" do
@@ -96,7 +96,7 @@ module Engine
         %>
       ERB
 
-      assert_evaluated_snapshot(template)
+      assert_evaluated_snapshot(template, {}, parser_options: { erb_openers: ["graphql"] })
     end
 
     test "graphql tag with html evaluated" do
@@ -109,7 +109,19 @@ module Engine
         <p>Hello World</p>
       ERB
 
-      assert_evaluated_snapshot(template)
+      assert_evaluated_snapshot(template, {}, parser_options: { erb_openers: ["graphql"] })
+    end
+
+    test "method call starting with graphql is compiled as Ruby" do
+      template = %(<%graphql_helper %>)
+
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
+    end
+
+    test "code starting with the letters graphql is compiled as Ruby" do
+      template = %(<%graphqlish %>)
+
+      assert_compiled_snapshot(template, parser_options: { erb_openers: ["graphql"] })
     end
   end
 end

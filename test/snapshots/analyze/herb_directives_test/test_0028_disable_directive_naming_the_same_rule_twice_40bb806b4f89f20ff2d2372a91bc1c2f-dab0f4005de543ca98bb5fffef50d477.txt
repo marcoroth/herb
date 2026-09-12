@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0028_disable directive naming the same rule twice"
+input: |2-
+<%# herb:disable erb-comment-syntax, erb-comment-syntax %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbDirectiveNode (location: (1:0)-(1:58))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:disable erb-comment-syntax, erb-comment-syntax " (location: (1:3)-(1:56))
+    │   ├── tag_closing: "%>" (location: (1:56)-(1:58))
+    │   ├── key: "disable" (location: (1:9)-(1:16))
+    │   └── arguments: "erb-comment-syntax, erb-comment-syntax" (location: (1:17)-(1:55))
+    │
+    └── @ HTMLTextNode (location: (1:58)-(2:0))
+        └── content: "\n"

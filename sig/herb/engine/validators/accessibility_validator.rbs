@@ -3,7 +3,7 @@
 module Herb
   class Engine
     module Validators
-      class AccessibilityValidator < Validator
+      class AccessibilityValidator < Base
         def visit_html_attribute_node: (untyped node) -> untyped
 
         private

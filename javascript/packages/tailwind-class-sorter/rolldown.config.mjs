@@ -1,3 +1,19 @@
+import { createRequire } from "module"
+
+const { dependencies, peerDependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = [
+  ...Object.keys(dependencies ?? {}),
+  ...Object.keys(peerDependencies ?? {}),
+]
+
+const nodeBuiltins = ["fs", "fs/promises", "path", "url"]
+
+function isExternal(id) {
+  return [...nodeBuiltins, ...runtimeDependencies].some(
+    (pkg) => id === pkg || id.startsWith(pkg + "/")
+  )
+}
+
 export default [
   {
     input: "src/index.ts",
@@ -6,16 +22,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: [
-      "tailwindcss",
-      "tailwindcss/loadConfig.js",
-      "tailwindcss/resolveConfig.js",
-      "tailwindcss/lib/lib/generateRules.js",
-      "tailwindcss/lib/lib/setupContextUtils.js",
-      "fs/promises",
-      "path",
-      "url"
-    ],
+    external: isExternal,
     platform: "node",
   },
 
@@ -26,16 +33,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: [
-      "tailwindcss",
-      "tailwindcss/loadConfig.js",
-      "tailwindcss/resolveConfig.js",
-      "tailwindcss/lib/lib/generateRules.js",
-      "tailwindcss/lib/lib/setupContextUtils.js",
-      "fs/promises",
-      "path",
-      "url"
-    ],
+    external: isExternal,
     platform: "node",
   },
 ]

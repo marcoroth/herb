@@ -1,0 +1,51 @@
+# Generated from lib/herb/engine/slots/dependencies/channel.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      class Dependencies
+        # The state map a page is driven by, carried once for the response it belongs to.
+        #
+        # A map is built from the template an action rendered, so there is one for a page however
+        # many templates it is made of. The host decides which template that is and hands the map
+        # over as it renders:
+        #
+        #     ::Herb::Engine::Slots::Dependencies::Channel.record(json)
+        #
+        # Where it lands is the middleware's business, which is what keeps a host from splicing
+        # markup into a response itself.
+        class Channel
+          NAME: Symbol
+
+          ATTRIBUTE: String
+
+          ANCHOR: Symbol
+
+          # : () -> String?
+          attr_reader json: untyped
+
+          # : (String) -> String
+          def self.tag: (String) -> String
+
+          # : (String) -> void
+          def self.record: (String) -> void
+
+          # : () -> void
+          def initialize: () -> void
+
+          # : (String) -> void
+          def add: (String) -> void
+
+          # : () -> Symbol
+          def anchor: () -> Symbol
+
+          # : () -> bool
+          def empty?: () -> bool
+
+          # : () -> String
+          def to_html: () -> String
+        end
+      end
+    end
+  end
+end

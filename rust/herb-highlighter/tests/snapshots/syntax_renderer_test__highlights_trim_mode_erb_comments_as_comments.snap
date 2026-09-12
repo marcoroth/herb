@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/syntax_renderer_test.rs
+expression: "renderer(Theme::OneDark).highlight(\"<%-# if true -%>\")"
+---
+[38;2;92;99;112m<%-[0m[38;2;92;99;112m# if true [0m[38;2;92;99;112m-%>[0m

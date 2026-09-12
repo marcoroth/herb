@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import { SlotState } from "../src/state"
+import { Slots } from "../src/slots/slots"
+import { State } from "../src/state/state"
 
 const FILE = "app/views/chat/show.html.erb"
 
@@ -27,8 +27,8 @@ const PAGE =
     },
   })}</template>`
 
-let slots: SlotIndex
-let state: SlotState
+let slots: Slots
+let state: State
 
 function button(): HTMLButtonElement {
   return document.querySelector("button")!
@@ -41,17 +41,17 @@ function video(): HTMLVideoElement {
 beforeEach(() => {
   document.body.innerHTML = PAGE
 
-  slots = new SlotIndex()
+  slots = new Slots()
   slots.scan(document.body)
 
-  state = new SlotState(slots, { persist: "none" })
+  state = new State(slots, {})
   state.adopt()
   state.observe()
 })
 
 afterEach(() => state.disconnect())
 
-describe("a skeleton derived from a live row", () => {
+describe("a row template taken from a live row", () => {
   test("is born without the row's boolean attributes", () => {
     document.body.innerHTML =
       `<!--herb-region:${FILE}:aaaaaaaa:0-->` +
@@ -60,7 +60,7 @@ describe("a skeleton derived from a live row", () => {
       `<!--/herb-slot:9--></ul>` +
       `<!--/herb-region:${FILE}-->`
 
-    const index = new SlotIndex()
+    const index = new Slots()
 
     index.scan(document.body)
 
@@ -122,27 +122,27 @@ describe("state-driven boolean attributes", () => {
   test("a bare presence seeds from what the page rendered", () => {
     document.body.innerHTML = PAGE.replace("<video ", "<video muted ")
 
-    const freshSlots = new SlotIndex()
+    const freshSlots = new Slots()
     freshSlots.scan(document.body)
 
-    const fresh = new SlotState(freshSlots, { persist: "none" })
+    const fresh = new State(freshSlots, {})
     fresh.adopt()
 
     expect(fresh.getState("sending")).toBe(true)
   })
 
   test("a payload boolean applies as presence and reverts as one", () => {
-    const report = slots.apply({
+    const { token, result: report } = slots.transaction(() => slots.apply({
       template: FILE,
       version: "aaaaaaaa",
       occurrence: 0,
       slots: { 2: true },
-    })
+    }))
 
     expect(report.applied).toBe(1)
     expect(video().hasAttribute("muted")).toBe(true)
 
-    if (report.token) slots.revert(report.token)
+    slots.revert(token!)
 
     expect(video().hasAttribute("muted")).toBe(false)
   })

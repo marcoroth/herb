@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCaptureBlockTest#test_0006_generates the same append structure, with <<= standing in for <<"
+input: "engine_erubi_capture_block_test-1"
+---
+@bufvar = ::Erubi::CaptureBlockEngine::Buffer.new; @bufvar <<=  wrap do ; @bufvar << 'x'.freeze; end ;
+@bufvar.to_s

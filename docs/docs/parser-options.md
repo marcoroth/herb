@@ -43,6 +43,7 @@ Any option you leave out falls back to its default. `Herb.parse_file`/`Herb.pars
 | `strict_locals`                         | `Boolean` | `false`                                   | Analyze `<%# locals: (…) %>` strict locals magic comments                                              |
 | `iteration_nodes`                       | `Boolean` | `false`                                   | Represent iteration blocks (`each`, `map`, …) as dedicated nodes                                       |
 | `dot_notation_tags`                     | `Boolean` | `false`                                   | Parse dot-notation component tags (like `<Dialog.Button>`) as HTML elements                            |
+| [`erb_openers`](#erb-openers)           | `Array`   | `[]`                                      | Extra ERB tag openers to recognize, written without the leading `<%`                                   |
 | `prism_nodes`                           | `Boolean` | `false`                                   | Attach the Prism node for each ERB tag's Ruby code                                                     |
 | `prism_nodes_deep`                      | `Boolean` | `false`                                   | Attach Prism nodes including their full subtrees                                                       |
 | `prism_program`                         | `Boolean` | `false`                                   | Attach the full Prism `ProgramNode` to the `DocumentNode`                                              |
@@ -284,6 +285,48 @@ Everything else about the tree is unchanged. The same nodes are built in the sam
 > [!WARNING]
 > Most tooling built on Herb reads locations, so disabling them is only safe for a pipeline you control end to end. The linter, formatter, printer, rewriter, and language server all require locations, and the type definitions in every binding still declare `location` as present. Use this when you parse purely to compile or inspect content, such as rendering a template with validation disabled.
 
+## `erb_openers` <Badge type="tip" text="^0.11.0" />
+
+**Type:** `Array` **Default:** `[]`
+
+Some ERB dialects carry tags whose body is not Ruby. The `graphql-client` gem writes queries as `<%graphql … %>`, for example. Herb has no such tag built in, so by default `<%graphql` lexes as a plain `<%` and the query body is treated as Ruby, which reports it as a pile of syntax errors.
+
+`erb_openers` names the extra openers to recognize. Write each one without the leading `<%`:
+
+:::code-group
+```ruby [Ruby]
+source = <<~ERB
+  <%graphql
+    query Products($first: Int!) {
+      products(first: $first) { id }
+    }
+  %>
+ERB
+
+Herb.parse(source).errors.size
+# => 7
+
+Herb.parse(source, erb_openers: ["graphql"]).errors.size
+# => 0
+```
+
+```js [JavaScript]
+Herb.parse(source).errors.length
+// => 7
+
+Herb.parse(source, { erb_openers: ["graphql"] }).errors.length
+// => 0
+```
+:::
+
+A configured tag's body is never parsed as Ruby, so it is left out of the compiled template and is never reported as a Ruby error.
+
+An opener that ends in a letter, digit, or underscore only matches on a word boundary. With `erb_openers: ["graphql"]`, the tag `<%graphql query %>` is a GraphQL tag, while `<%graphql_helper %>` and `<%graphqlish %>` stay ordinary Ruby. Openers that end in punctuation carry no such requirement, so `"?"` makes `<%?maybe %>` a tag.
+
+Configured openers never shadow the openings Herb already knows. The longest match wins, and a built-in opening wins a tie, so `erb_openers: ["="]` leaves `<%==` alone. `Herb.default_erb_openings` returns the openings that are always recognized.
+
+Every Herb tool reads this from the `parser` section of your [configuration file](/configuration#parser-configuration), so a project using such tags does not have to pass the option by hand.
+
 ## Inspecting the Options Used for a Parse
 
 Every parse result carries back the options that produced it, which is useful when the options came from a config file or a tool you do not control:
@@ -311,4 +354,4 @@ result.options.analyze           // => true
 
 ## Trying Options Out
 
-The [Herb Playground](/playground/) exposes `strict`, `analyze`, and `track_whitespace` as checkboxes, so you can see how each one changes the syntax tree for a given template without writing any code.
+The [Herb Playground](/playground/) exposes `strict`, `analyze`, and `track_whitespace` as checkboxes and `erb_openers` as a text field, so you can see how each one changes the syntax tree for a given template without writing any code.

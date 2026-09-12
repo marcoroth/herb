@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentTags::VisitorTest#test_0028_a component with an HTML body compiles the body inside the block"
+input: "{source: \"<Card><div>x</div></Card>\", options: {visitors: [#<Herb::Engine::ComponentTags::Visitor>]}}"
+---
+_buf = ::String.new; _buf << (render Card.new do; _buf << '<div>x</div>'.freeze; end);
+_buf.to_s

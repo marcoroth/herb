@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::the attribute#test_0002_escapes a value that would close it"
+input: "{source: \"<div>x</div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"a\\\"b.html.erb\"}}"
+---
+<div data-herb-source="a&quot;b.html.erb:1:1">x</div>

@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0008_keeps the blocks when the CSS holds something a style attribute cannot say"
+input: "{source: \"<style>.title { color: #ff0000 } .title:hover { color: #0000ff }</style><h1 class=\\\"title\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<style>.title { color: #ff0000 } .title:hover { color: #0000ff }</style><h1 class="title" style="color: #ff0000;">Hi</h1>

@@ -1,0 +1,12 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0015_a case chain nested inside a branch"
+input: "{source: \"<% if flag %>\\n<% case status %>\\n<% when :active %>\\nA\\n<% end %>\\n<% else %>\\nB\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag 
+case status 
+when :active 
+ "A\n".freeze;
+ else "".freeze;end 
+else 
+ "B\n".freeze;
+end ;

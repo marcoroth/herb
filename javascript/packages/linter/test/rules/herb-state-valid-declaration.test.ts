@@ -42,7 +42,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a state with no default", () => {
-    expectError("The state `pending` has no default. Add one, like `pending: false`. The server renders a state as its default, so a state always has a value.", [1, 16])
+    expectError("The state `pending` has no default. The server renders a value for every state, so there is nothing to render or to seed the client with. Give it a default, like `pending: false`.", [1, 16])
 
     assertOffenses(dedent`
       <%# herb:state (pending:) %>
@@ -51,7 +51,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a Float default", () => {
-    expectError("The state `rate` has a Float default. Use an Integer or a String instead, since Ruby and JavaScript print floats differently.", [1, 22])
+    expectError("The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text. Declare it as an Integer or a String instead.", [1, 22])
 
     assertOffenses(dedent`
       <%# herb:state (rate: 1.0) %>
@@ -59,8 +59,24 @@ describe("HerbStateValidDeclarationRule", () => {
     `)
   })
 
+  test("flags a Float default written with an exponent", () => {
+    expectError("The state `rate` has a Float default. Ruby and JavaScript disagree on how to print a float, so the server and the client would render different text. Declare it as an Integer or a String instead.", [1, 22])
+
+    assertOffenses(dedent`
+      <%# herb:state (rate: 1e3) %>
+      <div></div>
+    `)
+  })
+
+  test("allows an Integer default written in another radix", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (mask: 0b1010, color: 0xff, mode: 0o17) %>
+      <div></div>
+    `)
+  })
+
   test("flags an Array default", () => {
-    expectError("The state `selected` has an Array default. Declare a per-row boolean inside the loop instead, like `selected: false`. A list on the page is a collection of items, not a state.")
+    expectError("The state `selected` has an Array default. A list on the page is a collection of items, not one state holding many values. Declare an item-scoped state inside the loop instead, like `selected: false`.")
 
     assertOffenses(dedent`
       <%# herb:state (selected: []) %>
@@ -87,7 +103,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a state colliding with a strict local", () => {
-    expectError("`open` is both a strict local and a state. Rename one of them. A local comes from the caller and a state is client-owned, so one name cannot be both.")
+    expectError("`open` is both a strict local and a state. A local comes from the caller and a state is owned by the client, so the name has two owners. Rename one of the two.")
 
     assertOffenses(dedent`
       <%# locals: (open: false) %>
@@ -97,7 +113,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a state declared twice in the same scope", () => {
-    expectError("The state `pending` is declared twice in the same scope. Remove one of the declarations.")
+    expectError("The state `pending` is declared twice in the same scope. Remove one of the two declarations.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, pending: true) %>
@@ -106,7 +122,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a state declared twice across two directives in one scope", () => {
-    expectError("The state `pending` is declared twice in the same scope. Remove one of the declarations.")
+    expectError("The state `pending` is declared twice in the same scope. Remove one of the two declarations.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false) %>
@@ -116,7 +132,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags an item state shadowing a region state", () => {
-    expectError("The state `open` is declared in both an item and its region. Rename one of them, since a read of `open` could mean either.")
+    expectError("The state `open` is declared in both an item and its region, so a later read could mean either one. Give them different names, like `item_open` for the one inside the loop.")
 
     assertOffenses(dedent`
       <%# herb:state (open: false) %>
@@ -128,7 +144,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a region state shadowing an earlier item state", () => {
-    expectError("The state `open` is declared in both an item and its region. Rename one of them, since a read of `open` could mean either.")
+    expectError("The state `open` is declared in both an item and its region, so a later read could mean either one. Give them different names, like `item_open` for the one inside the loop.")
 
     assertOffenses(dedent`
       <% @rows.each do |row| %>
@@ -195,7 +211,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a derived default mixing states with other Ruby", () => {
-    expectError("The state `busy` defaults to `pending || current_user.admin?`, which mixes state reads with other Ruby. A derived state reads only other states, and a seed reads none, so split the two apart.")
+    expectError("The state `busy` defaults to `pending || current_user.admin?`, which mixes state reads with other Ruby. A derived state reads only other states and a seed reads none. Split the two apart, so `busy` derives from states only.")
 
     assertOffenses(dedent`
       <%# herb:state (pending: false, busy: pending || current_user.admin?) %>
@@ -204,7 +220,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags a derived state reading forward", () => {
-    expectError("The state `busy` reads a state that is declared after it. Reorder the signature, since a derived state reads only states declared before it.")
+    expectError("The state `busy` reads a state that is declared after it. A derived state reads only states declared before it. Move `busy` after the states it reads.")
 
     assertOffenses(dedent`
       <%# herb:state (busy: pending || failed, pending: false, failed: false) %>
@@ -213,7 +229,7 @@ describe("HerbStateValidDeclarationRule", () => {
   })
 
   test("flags an item state deriving from the region", () => {
-    expectError("The state `mirror` reads `open` from an enclosing scope. Declare it beside its sources, since a derived state reads states declared in its own signature.")
+    expectError("The state `mirror` reads `open` from an enclosing scope. A derived state reads only states from its own signature. Declare `mirror` beside the states it reads.")
 
     assertOffenses(dedent`
       <%# herb:state (open: false) %>

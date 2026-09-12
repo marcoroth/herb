@@ -27,4 +27,28 @@ class PositionTest < Minitest::Spec
       assert_equal({ line: 3, column: 8 }, JSON.parse(position.to_json, symbolize_names: true))
     end
   end
+
+  describe "comparison" do
+    test "orders by line first" do
+      assert Herb::Position[1, 99] < Herb::Position[2, 0]
+    end
+
+    test "orders by column within a line" do
+      assert Herb::Position[1, 4] < Herb::Position[1, 9]
+    end
+
+    test "treats two positions on the same character as equal" do
+      assert_equal Herb::Position[3, 2], Herb::Position[3, 2]
+    end
+
+    test "sorts a list the way it reads" do
+      positions = [Herb::Position[2, 0], Herb::Position[1, 9], Herb::Position[1, 4]]
+
+      assert_equal([[1, 4], [1, 9], [2, 0]], positions.sort.map { |position| [position.line, position.column] })
+    end
+
+    test "answers with nothing when compared with something else" do
+      assert_nil Herb::Position[1, 0] <=> "1:0"
+    end
+  end
 end

@@ -1,0 +1,8 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0013_a case chain without an else, rendering nothing when no value matches"
+input: "{source: \"<% case status %>\\n<% when :active %>\\nOn\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+case status 
+when :active 
+ "On\n".freeze;
+ else "".freeze;end ;
