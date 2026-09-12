@@ -253,19 +253,19 @@ module Engine
       assert_compiled_snapshot(template, parser_options: { strict: false }, enforce_erubi_equality: true)
     end
 
-    test "handles case with its first condition in the same erb tag when strict" do
+    test "rejects case with its first condition in the same erb tag when strict" do
       template = <<~ERB
         <% case animal
         when "cat" %>
           <p>You chose a cat!</p>
-        <% when "dog" %>
-          <p>You chose a dog!</p>
-        <% else %>
-          <p>Unknown animal</p>
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, parser_options: { strict: true }, enforce_erubi_equality: true)
+      error = assert_raises(Herb::Engine::ParseError) do
+        Herb::Engine.new(template)
+      end
+
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
     end
 
     test "keeps the whitespace around a standalone code tag with trim: false" do
@@ -355,7 +355,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+      assert_compiled_snapshot(template, parser_options: { strict: false }, enforce_erubi_equality: true)
     end
   end
 end

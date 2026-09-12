@@ -5,6 +5,7 @@ import { Formatter } from "../../src"
 import dedent from "dedent"
 
 let formatter: Formatter
+let nonStrictFormatter: Formatter
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -13,6 +14,13 @@ describe("@herb-tools/formatter", () => {
     formatter = new Formatter(Herb, {
       indentWidth: 2,
       maxLineLength: 80
+    })
+
+    nonStrictFormatter = new Formatter(Herb, {
+      indentWidth: 2,
+      maxLineLength: 80
+    }, {
+      strict: false
     })
   })
 
@@ -277,7 +285,7 @@ describe("@herb-tools/formatter", () => {
         B
       <% end %>
     `
-    const result = formatter.format(source)
+    const result = nonStrictFormatter.format(source)
     expect(result).toEqual(dedent`
       <% case variable %>
       <% when "a" %>
@@ -295,7 +303,7 @@ describe("@herb-tools/formatter", () => {
         A
       <% end %>
     `
-    const result = formatter.format(source)
+    const result = nonStrictFormatter.format(source)
     expect(result).toEqual(dedent`
       <% case variable %>
       <% when "a" %>
@@ -310,7 +318,7 @@ describe("@herb-tools/formatter", () => {
         A
       <% end %>
     `
-    const result = formatter.format(source)
+    const result = nonStrictFormatter.format(source)
     expect(result).toEqual(dedent`
       <% case variable %>
       <% when "a" then %>
@@ -328,7 +336,7 @@ describe("@herb-tools/formatter", () => {
         Two
       <% end %>
     `
-    const result = formatter.format(source)
+    const result = nonStrictFormatter.format(source)
     expect(result).toEqual(dedent`
       <% case value %>
       <% in 1 %>
@@ -337,6 +345,15 @@ describe("@herb-tools/formatter", () => {
         Two
       <% end %>
     `)
+  })
+
+  test("leaves an inline case alone under the default strict parse", () => {
+    const source = dedent`
+      <% case variable when "a" %>
+        A
+      <% end %>
+    `
+    expect(formatter.format(source)).toEqual(source)
   })
 
   test("leaves a case and its conditions alone when they are already separate tags", () => {

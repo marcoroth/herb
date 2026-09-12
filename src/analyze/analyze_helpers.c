@@ -88,6 +88,11 @@ bool has_then_keyword(analyzed_ruby_T* analyzed) {
   return analyzed && analyzed->then_keyword_count > 0;
 }
 
+bool has_inline_case_condition(analyzed_ruby_T* analyzed) {
+  return (has_case_node(analyzed) && has_when_node(analyzed))
+      || (has_case_match_node(analyzed) && has_in_node(analyzed));
+}
+
 typedef struct {
   const uint8_t* source_start;
   uint32_t offset;
@@ -115,6 +120,17 @@ static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
   pm_visit_child_nodes(node, search_inline_condition_offset, context);
 
   return false;
+}
+
+bool has_inline_pattern_match(analyzed_ruby_T* analyzed, hb_string_T content) {
+  if (!has_case_match_node(analyzed) || !has_in_node(analyzed)) { return false; }
+
+  uint32_t offset = 0;
+
+  if (!inline_condition_keyword_offset(analyzed, &offset)) { return false; }
+  if (offset > content.length) { return false; }
+
+  return memchr(content.data, '\n', offset) == NULL;
 }
 
 bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {

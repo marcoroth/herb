@@ -19,9 +19,15 @@ module Engine
         <% end %>
       ERB
 
-      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false })
-      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false })
-      assert_evaluated_snapshot(template, { status: "other" }, { escape: false })
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template, parser_options: { strict: true })
+      end
+
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+
+      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { status: "other" }, { escape: false, parser_options: { strict: false } })
     end
 
     test "case in pattern in same ERB tag" do
@@ -35,11 +41,13 @@ module Engine
         <% end %>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
-      end
+      [true, false].each do |strict|
+        error = assert_raises(Herb::Engine::CompilationError) do
+          Herb::Engine.new(template, parser_options: { strict: strict })
+        end
 
-      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+        assert_equal ["ERBCaseInlinePatternMatchError"], error.diagnostics.map(&:code)
+      end
     end
 
     test "case when on newline in same ERB tag" do
@@ -52,8 +60,14 @@ module Engine
         <% end %>
       ERB
 
-      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false })
-      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false })
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template, parser_options: { strict: true })
+      end
+
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+
+      assert_evaluated_snapshot(template, { status: "pending" }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { status: "approved" }, { escape: false, parser_options: { strict: false } })
     end
 
     test "case in on newline in same ERB tag" do
@@ -66,8 +80,14 @@ module Engine
         <% end %>
       ERB
 
-      assert_evaluated_snapshot(template, { count: 1 }, { escape: false })
-      assert_evaluated_snapshot(template, { count: 2 }, { escape: false })
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template, parser_options: { strict: true })
+      end
+
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+
+      assert_evaluated_snapshot(template, { count: 1 }, { escape: false, parser_options: { strict: false } })
+      assert_evaluated_snapshot(template, { count: 2 }, { escape: false, parser_options: { strict: false } })
     end
   end
 end
