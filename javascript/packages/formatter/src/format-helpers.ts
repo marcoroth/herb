@@ -41,6 +41,38 @@ export const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
 export const NON_SQUIGGLY_HEREDOC = /<<(?!~)-?['"`]?[A-Za-z_]/
 
+/**
+ * Matches a line break, with or without a carriage return.
+ */
+export const LINE_BREAK = /\r?\n/
+
+/**
+ * Matches ASCII whitespace at the very start of a string.
+ *
+ * Deliberately not `\s`, for the reason {@link ASCII_WHITESPACE} gives.
+ */
+export const LEADING_ASCII_WHITESPACE = /^[ \t\n\r]+/
+
+/**
+ * Matches an ERB tag appearing anywhere inside a string.
+ */
+export const ERB_TAG = /<%[^%]*%>/
+
+/**
+ * Matches a line break at the very start of a string, after optional horizontal space.
+ */
+export const LEADING_LINE_BREAK = /^[ \t]*\r?\n/
+
+/**
+ * Matches a newline at the start of a string, after optional whitespace.
+ */
+export const LEADING_NEWLINE = /^\s*\n/
+
+/**
+ * Matches a string that is empty or entirely whitespace.
+ */
+export const WHITESPACE_ONLY = /^\s*$/
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],

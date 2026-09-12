@@ -50,6 +50,9 @@ import {
   isOwnLineERBTag,
   isERBBlockCommentDelimiter,
   NON_SQUIGGLY_HEREDOC,
+  LEADING_LINE_BREAK,
+  LEADING_NEWLINE,
+  WHITESPACE_ONLY,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -1106,7 +1109,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private shouldExpandERBContent(node: ERBContentNode): boolean {
     const content = node.content?.value ?? ""
 
-    if (!/^[ \t]*\r?\n/.test(content)) return false
+    if (!LEADING_LINE_BREAK.test(content)) return false
     if (!content.trim().includes("\n")) return false
 
     return !NON_SQUIGGLY_HEREDOC.test(content)
@@ -1563,7 +1566,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (openTagClosing && this.startsItsOwnLine(node)) {
       const first = children[0]
       const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
-      const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
+      const hasLeadingNewline = isNode(first, HTMLTextNode) && LEADING_NEWLINE.test(first.content)
 
       if (startsOnNewLine || hasLeadingNewline) {
         return false
@@ -1589,7 +1592,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (!isInlineElement(tagName) && openTagClosing) {
       const first = children[0]
       const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
-      const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
+      const hasLeadingNewline = isNode(first, HTMLTextNode) && LEADING_NEWLINE.test(first.content)
       const contentStartsOnNewLine = startsOnNewLine || hasLeadingNewline
 
       if (contentStartsOnNewLine) {
@@ -1672,7 +1675,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const line = this.sourceLines[start.line - 1]
     if (line === undefined) return false
 
-    return /^\s*$/.test(line.slice(0, start.column))
+    return WHITESPACE_ONLY.test(line.slice(0, start.column))
   }
 
   private fitsOnCurrentLine(content: string): boolean {
