@@ -33,6 +33,7 @@ bool has_then_keyword(analyzed_ruby_T* analyzed);
 bool has_inline_case_condition(analyzed_ruby_T* analyzed);
 bool has_inline_pattern_match(analyzed_ruby_T* analyzed, hb_string_T content);
 bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* offset);
+bool control_role_split_offset(const analyzed_ruby_T* analyzed, uint32_t* offset);
 
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message);
 
