@@ -367,5 +367,11 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+    test "emits an escaped ERB case sharing a tag with its condition as literal text" do
+      template = "<%% case status when :active %>\n  on\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, parser_options: { strict: false })
+      assert_evaluated_snapshot(template, {}, { parser_options: { strict: false } }, enforce_erubi_equality: true)
+    end
   end
 end

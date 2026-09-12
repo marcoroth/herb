@@ -948,3 +948,25 @@ export function createERBSilentNode(expression: string, tagOpening = "<%", tagCl
     valid: true,
   })
 }
+
+/**
+ * A control-flow node continues into the next node when its ERB tag holds more than one
+ * control-flow role, such as `<% case x when y %>`. The parser splits that tag so each node
+ * owns the Ruby it introduces, which leaves the first node without a `%>` and every node after
+ * it without a `<%`.
+ */
+export function continuesIntoNextNode(node: ERBNode): boolean {
+  if (node.tag_closing !== null) return false
+
+  const conditions = (node as ERBCaseNode | ERBCaseMatchNode).conditions
+
+  if (!Array.isArray(conditions) || conditions.length === 0) return false
+
+  return continuesFromPreviousNode(conditions[0])
+}
+
+export function continuesFromPreviousNode(node: Node): boolean {
+  if (!isERBNode(node)) return false
+
+  return node.tag_opening === null && node.content !== null
+}

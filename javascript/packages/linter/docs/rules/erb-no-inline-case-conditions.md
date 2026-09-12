@@ -4,18 +4,15 @@
 
 ## Description
 
-Disallow placing `case` and its first `when`/`in` condition in the same ERB tag. When a `case` statement and its condition appear in a single ERB tag (e.g., `<% case x when y %>`), the parser cannot reliably process, compile, or format the template. This rule flags such patterns and guides users toward separate ERB tags.
+Disallow placing `case` and its first `when`/`in` condition in the same ERB tag. This rule flags such patterns and guides users toward separate ERB tags.
 
 ## Rationale
 
-ERB templates that combine `case` with a `when` or `in` condition in a single tag create parsing ambiguity. The parser creates synthetic condition nodes to handle this pattern in non-strict mode, but the resulting AST cannot be reliably formatted or compiled.
+The parser handles this pattern by splitting the tag, so the `case` and its first condition each own the Ruby they introduce. The template compiles and formats the same as one written with separate tags, and the formatter rewrites it into that shape.
 
-Using separate ERB tags for `case` and its conditions:
+What the shared tag costs is readability. The `case` expression and its first branch run together in one tag while every later branch gets its own, so the branches no longer line up. Separate tags also match the conventional ERB style used across the Ruby on Rails ecosystem.
 
-- Makes the template structure unambiguous for the parser
-- Enables proper formatting and compilation
-- Improves readability by clearly separating the case expression from its branches
-- Follows the conventional ERB style used across the Ruby on Rails ecosystem
+One shape is a parse error rather than a style offense. A `case` and its first `in` pattern on the same line (`<% case x in y %>`) is Ruby's one-line pattern match, not a `case`/`in`, so the parser reports `ERB_CASE_WITH_CONDITIONS_ERROR` for it.
 
 ## Examples
 

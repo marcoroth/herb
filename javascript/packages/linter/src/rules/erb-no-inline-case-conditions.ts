@@ -21,7 +21,7 @@ class ERBNoInlineCaseConditionsVisitor extends BaseRuleVisitor {
     for (const condition of node.conditions as (ERBWhenNode | ERBInNode)[]) {
       if (condition.tag_opening === null) {
         this.addOffense(
-          `A \`case\` statement with \`${type}\` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for \`case\` and its conditions (e.g., \`<% case x %>\` followed by \`<% ${type} y %>\`).`,
+          `A \`case\` statement and its first \`${type}\` condition share an ERB tag. Use separate ERB tags for \`case\` and its conditions (e.g., \`<% case x %>\` followed by \`<% ${type} y %>\`).`,
           node.location,
         )
         break

@@ -129,7 +129,7 @@ module Herb
       # : (untyped, ?extra: Integer) -> void
       def keep_span_line_count: (untyped, ?extra: Integer) -> void
 
-      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped, ?absorbed: untyped) -> untyped
+      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped, ?absorbed: untyped, ?raw: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
 
@@ -193,6 +193,8 @@ module Herb
       def extract_and_remove_leading_space!: () -> untyped
 
       def apply_trim: (untyped node, untyped code) -> untyped
+
+      def continues_into_next_node?: (untyped node) -> untyped
 
       # : (untyped) -> bool
       def without_source?: (untyped) -> bool

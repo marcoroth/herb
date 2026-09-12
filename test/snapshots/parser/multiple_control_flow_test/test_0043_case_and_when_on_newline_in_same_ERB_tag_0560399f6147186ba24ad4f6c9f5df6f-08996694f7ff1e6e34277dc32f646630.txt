@@ -18,14 +18,14 @@ options: {strict: true}
     │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case variable
-    │      when "a" " (location: (1:2)-(2:12))
-    │   ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │      " (location: (1:2)-(2:3))
+    │   ├── tag_closing: ∅
     │   ├── children: []
     │   ├── conditions: (2 items)
-    │   │   ├── @ ERBWhenNode (location: (2:14)-(4:0))
+    │   │   ├── @ ERBWhenNode (location: (2:3)-(4:0))
     │   │   │   ├── tag_opening: ∅
-    │   │   │   ├── content: ∅
-    │   │   │   ├── tag_closing: ∅
+    │   │   │   ├── content: "when "a" " (location: (2:3)-(2:12))
+    │   │   │   ├── tag_closing: "%>" (location: (2:12)-(2:14))
     │   │   │   ├── then_keyword: ∅
     │   │   │   └── statements: (1 item)
     │   │   │       └── @ HTMLTextNode (location: (2:14)-(4:0))

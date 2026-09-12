@@ -18,14 +18,14 @@ options: {strict: true}
     │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case value
-    │      in 1 " (location: (1:2)-(2:8))
-    │   ├── tag_closing: "%>" (location: (2:8)-(2:10))
+    │      " (location: (1:2)-(2:3))
+    │   ├── tag_closing: ∅
     │   ├── children: []
     │   ├── conditions: (2 items)
-    │   │   ├── @ ERBInNode (location: (2:10)-(4:0))
+    │   │   ├── @ ERBInNode (location: (2:3)-(4:0))
     │   │   │   ├── tag_opening: ∅
-    │   │   │   ├── content: ∅
-    │   │   │   ├── tag_closing: ∅
+    │   │   │   ├── content: "in 1 " (location: (2:3)-(2:8))
+    │   │   │   ├── tag_closing: "%>" (location: (2:8)-(2:10))
     │   │   │   ├── then_keyword: ∅
     │   │   │   └── statements: (1 item)
     │   │   │       └── @ HTMLTextNode (location: (2:10)-(4:0))
