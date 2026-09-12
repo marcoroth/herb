@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# herb-rails-doctor — diagnose Herb readiness for a Rails app.
+# Exit 0 if a Rails app is detected (with or without Herb), non-zero otherwise.
+
+set -u
+
+root="$(pwd)"
+fail=0
+warn=0
+
+color() { printf '\033[%sm%s\033[0m' "$1" "$2"; }
+ok()   { printf '  %s %s\n' "$(color '32' '✓')" "$1"; }
+miss() { printf '  %s %s\n' "$(color '33' '∅')" "$1"; warn=$((warn+1)); }
+bad()  { printf '  %s %s\n' "$(color '31' '✗')" "$1"; fail=$((fail+1)); }
+info() { printf '  %s %s\n' "$(color '36' 'ℹ')" "$1"; }
+
+have() { command -v "$1" >/dev/null 2>&1; }
+version_of() { "$1" --version 2>/dev/null | head -n1 || echo "unknown"; }
+
+echo
+echo "Herb Rails Doctor"
+echo "================="
+echo "Working dir: $root"
+echo
+
+# Rails detection
+echo "Rails app"
+if [ -f "$root/Gemfile" ]; then ok "Gemfile present"; else bad "no Gemfile (not a Ruby project)"; fi
+if [ -d "$root/app/views" ]; then ok "app/views/ present"; else miss "no app/views/ (is this a Rails app?)"; fi
+if [ -f "$root/config/application.rb" ]; then ok "config/application.rb present"; else miss "no config/application.rb"; fi
+
+if [ "$fail" -gt 0 ]; then
+  echo
+  echo "Not a Rails app — stop here."
+  exit 2
+fi
+
+# Toolchain
+echo
+echo "Toolchain"
+if have ruby; then ok "ruby: $(version_of ruby)"; else miss "ruby not on PATH (version manager may need activation)"; fi
+if have bundle; then ok "bundle: $(version_of bundle)"; else miss "bundle not on PATH"; fi
+if have node;  then ok "node:  $(version_of node)"; else miss "node not on PATH (npx-based tools need it)"; fi
+if have npx;   then ok "npx:   $(version_of npx)"; else miss "npx not on PATH"; fi
+
+# Herb gem state
+echo
+echo "Herb"
+if grep -E '^\s*gem\s+["'\'']herb["'\'']' "$root/Gemfile" >/dev/null 2>&1; then
+  ok 'gem "herb" in Gemfile'
+else
+  miss 'gem "herb" not in Gemfile'
+fi
+
+if grep -E '^\s*gem\s+["'\'']reactionview["'\'']' "$root/Gemfile" >/dev/null 2>&1; then
+  ok 'gem "reactionview" in Gemfile (full profile)'
+else
+  info 'gem "reactionview" not in Gemfile (optional, full profile)'
+fi
+
+if [ -f "$root/.herb.yml" ]; then ok ".herb.yml present"; else miss ".herb.yml missing"; fi
+if [ -d "$root/.herb/rules" ]; then ok ".herb/rules/ present (custom rules)"; else info ".herb/rules/ not present (optional)"; fi
+if [ -f "$root/.github/workflows/herb.yml" ]; then ok ".github/workflows/herb.yml present"; else miss "no Herb CI workflow"; fi
+
+# Can the CLI run?
+if [ -f "$root/Gemfile.lock" ] && grep -q '^\s*herb\s' "$root/Gemfile.lock" 2>/dev/null; then
+  ok "herb gem installed (Gemfile.lock)"
+  if have bundle && bundle exec herb --version >/dev/null 2>&1; then
+    ok "bundle exec herb runs: $(bundle exec herb --version 2>/dev/null | head -n1)"
+  else
+    miss "bundle exec herb does not run yet (try: bundle install)"
+  fi
+else
+  miss "herb gem not installed (run: bundle install after editing Gemfile)"
+fi
+
+echo
+echo "Summary: $warn missing item(s), $fail blocking issue(s)."
+echo
+exit 0
