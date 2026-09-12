@@ -63,6 +63,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
 - [`erb-no-method-definitions`](./erb-no-method-definitions.md) - Disallow method definitions in ERB templates
 - [`erb-no-module-definitions`](./erb-no-module-definitions.md) - Disallow module definitions in ERB templates
+- [`erb-no-multiple-statements`](./erb-no-multiple-statements.md) - Disallow multiple Ruby statements in a single-line ERB tag
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
