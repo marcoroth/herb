@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0041_emits an escaped ERB iteration as literal text"
+input: "{source: \"<%% for item in @items %>\\n  <li><%%= item %></li>\\n<%% end %>\\n\", locals: {}, options: {}}"
+---
+<% for item in @items %>
+  <li><%= item %></li>
+<% end %>
