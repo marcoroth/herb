@@ -33,6 +33,7 @@ foreign_content_elements:
     html_only: true
 
 # https://html.spec.whatwg.org/multipage/indices.html#elements-3
+# https://html.spec.whatwg.org/multipage/rendering.html#the-page
 # https://html.spec.whatwg.org/multipage/obsolete.html#non-conforming-features
 elements:
   - name: "a"
@@ -280,6 +281,7 @@ elements:
   - name: "listing"
     description: "Preformatted code listing"
     deprecated: true
+    whitespace_preserving: true
 
   - name: "main"
     description: "Main content"
@@ -369,6 +371,7 @@ elements:
 
   - name: "pre"
     description: "Preformatted text"
+    whitespace_preserving: true
 
   - name: "progress"
     description: "Progress indicator"
@@ -467,6 +470,7 @@ elements:
 
   - name: "textarea"
     description: "Text area"
+    whitespace_preserving: true
 
   - name: "tfoot"
     description: "Table footer"

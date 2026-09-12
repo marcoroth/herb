@@ -233,4 +233,17 @@ describe("@herb-tools/formatter - content preserving tags", () => {
       </textarea>
     `)
   })
+
+  test("preserves listing tag content with whitespace", () => {
+    const source = dedent`
+      <listing>
+        one     two
+          three
+      </listing>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toEqual(source)
+  })
 })

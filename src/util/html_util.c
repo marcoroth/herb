@@ -10,9 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// https://html.spec.whatwg.org/multipage/rendering.html#the-page
-static hb_string_T whitespace_preserving_tags[] = HB_STRING_LIST("pre", "script", "style", "textarea");
-
 // https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
 static hb_string_T optional_end_tags[] = HB_STRING_LIST(
   "li",
