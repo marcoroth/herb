@@ -84,8 +84,8 @@ describe("erb-no-multiple-statements", () => {
 
   test("fails for multiple statements inside a block", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [2],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [2, 25],
     )
 
     assertOffenses(dedent`
@@ -97,8 +97,8 @@ describe("erb-no-multiple-statements", () => {
 
   test("fails for multiple statements inside a conditional branch", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [4],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [4, 23],
     )
 
     assertOffenses(dedent`
@@ -112,8 +112,8 @@ describe("erb-no-multiple-statements", () => {
 
   test("fails for two statements separated by a semicolon", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [1],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 24],
     )
 
     assertOffenses('<% user = User.find(1); post = user.posts.first %>')
@@ -121,8 +121,8 @@ describe("erb-no-multiple-statements", () => {
 
   test("fails for two statements in an output ERB tag", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [1],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 25],
     )
 
     assertOffenses('<%= user = User.find(1); user.name %>')
@@ -130,8 +130,13 @@ describe("erb-no-multiple-statements", () => {
 
   test("fails for three statements separated by semicolons", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [1],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 10],
+    )
+
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 17],
     )
 
     assertOffenses('<% a = 1; b = 2; c = 3 %>')
@@ -139,8 +144,8 @@ describe("erb-no-multiple-statements", () => {
 
   test("fails for multiple statements in a template context", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [2],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [2, 26],
     )
 
     assertOffenses(dedent`
@@ -152,13 +157,13 @@ describe("erb-no-multiple-statements", () => {
 
   test("reports multiple offenses for multiple single-line ERB tags with multiple statements", () => {
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [1],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 10],
     )
 
     expectWarning(
-      "Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.",
-      [2],
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [2, 10],
     )
 
     assertOffenses(dedent`

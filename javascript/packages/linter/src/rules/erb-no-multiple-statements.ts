@@ -1,4 +1,4 @@
-import { PrismVisitor } from "@herb-tools/core"
+import { PrismVisitor, locationFromByteOffset } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
@@ -27,11 +27,13 @@ class StatementsCollector extends PrismVisitor {
 
 class NoMultipleStatementsVisitor extends BaseRuleVisitor {
   private readonly scopes: StatementsScope[]
+  private readonly source: string
 
-  constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[]) {
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[], source: string) {
     super(ruleName, context)
 
     this.scopes = scopes
+    this.source = source
   }
 
   visitERBContentNode(node: ERBContentNode): void {
@@ -42,40 +44,44 @@ class NoMultipleStatementsVisitor extends BaseRuleVisitor {
 
     if (!contentRange) return
 
-    const statementCount = this.shallowestStatementCountIn(contentRange.from, contentRange.to)
+    const statements = this.shallowestStatementsIn(contentRange.from, contentRange.to)
 
-    if (statementCount <= 1) return
+    if (statements.length <= 1) return
 
-    this.addOffense(
-      `Avoid multiple Ruby statements in a single-line ERB tag. Split each statement into its own ERB tag for better readability.`,
-      node.location,
-    )
+    for (const statement of statements.slice(1)) {
+      const { startOffset, length } = statement.location
+
+      this.addOffense(
+        `Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.`,
+        locationFromByteOffset(this.source, startOffset, length),
+      )
+    }
   }
 
-  private shallowestStatementCountIn(from: number, to: number): number {
+  private shallowestStatementsIn(from: number, to: number): PrismNodes.Node[] {
     let shallowestDepth = Infinity
-    let statementCount = 0
+    let statements: PrismNodes.Node[] = []
 
     for (const scope of this.scopes) {
       if (scope.depth > shallowestDepth) continue
 
-      const count = scope.statements.filter(statement => {
+      const inRange = scope.statements.filter(statement => {
         const statementOffset = statement.location.startOffset
 
         return statementOffset >= from && statementOffset < to
-      }).length
+      })
 
-      if (count === 0) continue
+      if (inRange.length === 0) continue
 
       if (scope.depth < shallowestDepth) {
         shallowestDepth = scope.depth
-        statementCount = count
+        statements = inRange
       } else {
-        statementCount += count
+        statements = statements.concat(inRange)
       }
     }
 
-    return statementCount
+    return statements.sort((left, right) => left.location.startOffset - right.location.startOffset)
   }
 }
 
@@ -99,8 +105,9 @@ export class ERBNoMultipleStatementsRule extends ParserRule {
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const program = result.value.prismNode
+    const source = result.value.source
 
-    if (!program) return []
+    if (!program || !source) return []
 
     const collector = new StatementsCollector()
 
@@ -108,7 +115,7 @@ export class ERBNoMultipleStatementsRule extends ParserRule {
 
     if (collector.scopes.length === 0) return []
 
-    const visitor = new NoMultipleStatementsVisitor(this.ruleName, context, collector.scopes)
+    const visitor = new NoMultipleStatementsVisitor(this.ruleName, context, collector.scopes, source)
 
     visitor.visit(result.value)
 
