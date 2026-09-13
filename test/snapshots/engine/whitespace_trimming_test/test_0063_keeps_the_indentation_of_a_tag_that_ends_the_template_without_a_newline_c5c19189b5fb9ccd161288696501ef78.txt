@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0063_keeps the indentation of a tag that ends the template without a newline"
+input: "{source: \"  <% x = 1 %>\", options: {}}"
+---
+_buf = ::String.new; _buf << '  '.freeze;   x = 1 ;
+_buf.to_s
