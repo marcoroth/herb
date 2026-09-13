@@ -37,7 +37,7 @@ export class RubyLocalsIndex {
 
     const empty = { stateUsages: [], slotNames: [] }
 
-    const result = parserService.parseContent(text, PARSER_OPTIONS)
+    const result = parserService.parseContent(text, PARSER_OPTIONS, textDocument.uri)
     if (result.failed) return new RubyLocalsIndex([], empty)
 
     const document = result.value as DocumentNode

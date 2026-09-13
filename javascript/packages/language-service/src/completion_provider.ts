@@ -214,7 +214,7 @@ export class CompletionProvider {
   getCompletions(document: TextDocument, position: Position): CompletionList | null {
     const parseResult = this.parserService.parseContent(document.getText(), {
       track_whitespace: true,
-    })
+    }, document.uri)
 
     const herb = this.getHerbAttributeCompletions(document, position, parseResult.value as DocumentNode)
 
@@ -903,7 +903,7 @@ export class CompletionProvider {
 
   private variablesIn(document: TextDocument, contentStart: Position): string[] {
     const text = document.getText()
-    const result = this.parserService.parseContent(text, { prism_program: true })
+    const result = this.parserService.parseContent(text, { prism_program: true }, document.uri)
 
     if (!result.value.prismNode) return []
 

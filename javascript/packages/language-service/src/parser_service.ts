@@ -1,12 +1,10 @@
-import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
+import { lspRangeFromLocation } from "./range_utils"
+import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver-types"
 import { Visitor, commentedERBTagPrefixes } from "@herb-tools/core"
 
-import type { HerbBackend, Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/core"
-
-import { lspRangeFromLocation } from "./range_utils"
-
 import type { ProjectConfig } from "./types.js"
+import type { HerbBackend, Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/core"
 
 class ErrorVisitor extends Visitor {
   private readonly source = "Herb Parser "
@@ -40,9 +38,12 @@ export interface ParseServiceResult {
   diagnostics: Diagnostic[]
 }
 
+export type ProjectConfigResolver = (uri: string) => ProjectConfig | undefined
+
 export class ParserService {
   private readonly backend: HerbBackend
   private config?: ProjectConfig
+  private resolveConfig?: ProjectConfigResolver
 
   constructor(backend: HerbBackend) {
     this.backend = backend
@@ -52,13 +53,23 @@ export class ParserService {
     this.config = config
   }
 
-  private get parserOptions(): ParseOptions {
-    return this.config?.parserOptions ?? {}
+  setConfigResolver(resolveConfig?: ProjectConfigResolver) {
+    this.resolveConfig = resolveConfig
+  }
+
+  private configFor(uri?: string): ProjectConfig | undefined {
+    if (uri === undefined) return this.config
+
+    return this.resolveConfig?.(uri) ?? this.config
+  }
+
+  private parserOptionsFor(uri?: string): ParseOptions {
+    return this.configFor(uri)?.parserOptions ?? {}
   }
 
   parseDocument(textDocument: TextDocument): ParseServiceResult {
     const content = textDocument.getText()
-    const result = this.backend.parse(content, this.parserOptions)
+    const result = this.backend.parse(content, this.parserOptionsFor(textDocument.uri))
 
     const errorVisitor = new ErrorVisitor()
     result.visit(errorVisitor)
@@ -69,11 +80,11 @@ export class ParserService {
     }
   }
 
-  parseContent(content: string, options?: ParseOptions): ParseResult {
-    return this.backend.parse(content, { ...this.parserOptions, ...options })
+  parseContent(content: string, options?: ParseOptions, uri?: string): ParseResult {
+    return this.backend.parse(content, { ...this.parserOptionsFor(uri), ...options })
   }
 
-  commentedERBTagPrefixes(erbOpeners?: string[]): string[] {
-    return commentedERBTagPrefixes(this.backend.defaultERBOpenings(), erbOpeners ?? this.parserOptions.erb_openers ?? [])
+  commentedERBTagPrefixes(erbOpeners?: string[], uri?: string): string[] {
+    return commentedERBTagPrefixes(this.backend.defaultERBOpenings(), erbOpeners ?? this.parserOptionsFor(uri).erb_openers ?? [])
   }
 }
