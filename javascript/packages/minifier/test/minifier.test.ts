@@ -18,10 +18,8 @@ describe("Minifier", () => {
       const template = `<div>  <span>Hello</span>  </div>`
       const parseResult = Herb.parse(template)
 
-      const { output, node } = minify(parseResult.value)
-
-      expect(output).toBe(`<div><span>Hello</span></div>`)
-      expect(IdentityPrinter.print(node)).toBe(`<div><span>Hello</span></div>`)
+      expect(minify(parseResult.value)).toBe(`<div><span>Hello</span></div>`)
+      expect(IdentityPrinter.print(parseResult.value)).toBe(template)
     })
   })
 
@@ -268,7 +266,7 @@ describe("Minifier", () => {
       `
       const result = minifier.minifyString(template)
 
-      expect(result).toBe(`<div><%if admin?%> <span>Admin</span> <%else%> <span>User</span> <%end%></div>`)
+      expect(result).toBe(`<div><%if admin?%><span>Admin</span><%else%> <span>User</span><%end%></div>`)
     })
 
     test("handles ERB output", () => {
@@ -277,7 +275,7 @@ describe("Minifier", () => {
       `
       const result = minifier.minifyString(template)
 
-      expect(result).toBe(`<div>Hello <%= world %></div>`)
+      expect(result).toBe(`<div>Hello <%=world%></div>`)
     })
 
     test("handles ERB output-2", () => {
@@ -318,7 +316,7 @@ describe("Minifier", () => {
 
       const result = minifier.minifyString(template)
 
-      expect(result).toBe(`<div class="one <%= two %>" id=" abc "></div>`)
+      expect(result).toBe(`<div class="one <%=two%>" id=" abc "></div>`)
     })
 
     test("non-class", () => {
@@ -530,7 +528,7 @@ describe("Minifier", () => {
       const result = minifier.minifyString(template)
 
       expect(Herb.parse(result).failed).toBe(false)
-      expect(result).toBe(`<%anchor = "#" + slug%> <%= link_to(\n  "x", anchor\n) %>`)
+      expect(result).toBe(`<%anchor = "#" + slug%><%= link_to(\n  "x", anchor\n) %>`)
     })
   })
 

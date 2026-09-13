@@ -44,7 +44,7 @@ function attributeValue(attribute: HTMLAttributeNode): string {
     if (isLiteralNode(child) || isHTMLTextNode(child)) {
       parts.push(child.content)
     } else if (isERBNode(child)) {
-      parts.push(ERB_PLACEHOLDER)
+      if (!isERBCommentNode(child) || erbSource(child).startsWith("herb:")) parts.push(ERB_PLACEHOLDER)
     }
   }
 
@@ -58,7 +58,7 @@ function attributeName(attribute: HTMLAttributeNode): string {
     if (isLiteralNode(child) || isHTMLTextNode(child)) {
       parts.push(child.content)
     } else if (isERBNode(child)) {
-      parts.push(ERB_PLACEHOLDER)
+      if (!isERBCommentNode(child) || erbSource(child).startsWith("herb:")) parts.push(ERB_PLACEHOLDER)
     }
   }
 
