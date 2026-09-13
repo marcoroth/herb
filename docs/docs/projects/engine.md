@@ -261,6 +261,7 @@ Herb ships the following transform visitors:
 | `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                             |
 | `ComponentTags::Visitor`      | Rewrites capitalized tags into `render` calls (experimental)                 |
 | `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
+| `CSSInliner::Visitor`         | Writes the CSS a template rendered into `style` attributes (experimental)    |
 | `DebugVisitor`                | Annotates output with the template and position it came from                 |
 | `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
 | `InlineRender::Visitor`       | Replaces a `render` of a static partial with the partial (experimental)      |
@@ -268,6 +269,7 @@ Herb ships the following transform visitors:
 | `OptimizeVisitor`             | Compile-time optimizations for helpers and literal output (experimental)     |
 | `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
 | `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
+| `Slots::Visitor`              | Marks every dynamic part so a client can update it in place (experimental)   |
 | `SourceAttributionVisitor`    | Stamps every element with the template and position it was written at        |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
@@ -1029,7 +1031,7 @@ transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
 
 A return value answering `warnings` has each of them reported as a diagnostic, which is how a `LightningCSS::Result` surfaces what Lightning CSS kept without acting on. CSS a transform could not act on is CSS that does nothing once the page renders, so it is worth saying so at compile time. A transform answering with a plain string reports nothing.
 
-### Writing CSS into style attributes
+### `CSSInliner::Visitor` <Badge type="warning" text="experimental" />
 
 A `style` attribute is the only way to say something an email client reads, and `CSSInliner::Visitor` is how a stylesheet gets there.
 
