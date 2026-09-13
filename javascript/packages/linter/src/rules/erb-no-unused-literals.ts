@@ -59,6 +59,24 @@ class LiteralCollector extends PrismVisitor {
   visitBreakNode(): void {}
   visitNextNode(): void {}
 
+  visitIfNode(node: PrismNodes.IfNode): void {
+    this.visit(node.statements)
+    this.visit(node.subsequent)
+  }
+
+  visitUnlessNode(node: PrismNodes.UnlessNode): void {
+    this.visit(node.statements)
+    this.visit(node.elseClause)
+  }
+
+  visitWhileNode(node: PrismNodes.WhileNode): void {
+    this.visit(node.statements)
+  }
+
+  visitUntilNode(node: PrismNodes.UntilNode): void {
+    this.visit(node.statements)
+  }
+
   visitCaseNode(node: PrismNodes.CaseNode): void {
     node.conditions.forEach((condition) => this.visit(condition))
 
